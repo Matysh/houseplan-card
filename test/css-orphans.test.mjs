@@ -7,7 +7,6 @@ import { spawnSync } from 'node:child_process';
 import { classesOf, parseCss, parseRules, selectorClasses, splitSelectors } from '../scripts/css-lex.mjs';
 import { cssOfSource } from '../scripts/css-source.mjs';
 import { scanCssOrphans } from '../scripts/css-orphans.mjs';
-import { parallelSteps, summarize } from '../scripts/gate-small.mjs';
 import { loadForeignCss, assertForeignCssWitness } from '../scripts/css-foreign.mjs';
 
 const template = text => String.fromCharCode(96) + text + String.fromCharCode(96);
@@ -192,16 +191,6 @@ test('negative class predicates stay applicable; positive alternative tokens are
     const result = scanCssOrphans(root);
     assert.deepEqual(names(result,'class'), ['missing','required']);
     assert.match(result.diagnostics[0].message, /not a whole-rule/);
-  }));
-
-test('CLI --root gives file/name failures and is a mandatory gate step', () => fixture(
-  'const css=null;const s=css' + template('.orphan{color:red}@keyframes abandoned{to{opacity:1}}') + ';', root => {
-    const child = spawnSync(process.execPath, [resolve('scripts/css-orphans.mjs'),'--root',root], {encoding:'utf8'});
-    assert.equal(child.status, 1); assert.match(child.stderr, /src\/view.ts:\d+ class "orphan"/);
-    assert.match(child.stderr, /keyframes "abandoned"/);
-    const step = parallelSteps('origin/dev').find(row => row.args.includes('scripts/css-orphans.mjs'));
-    assert.ok(step && !step.informational);
-    assert.equal(summarize([{...step,code:child.status,ms:1}]).failed, 1);
   }));
 
 test('opaque CSS-bearing sinks and native nested CSS cannot silently pass', () => {

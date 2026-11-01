@@ -1,0 +1,54 @@
+{
+  "id": "20261101T082704016-bd78185e",
+  "name": "Тесты для задачи #1105 (перед ревью)",
+  "status": "passed",
+  "durationMs": 45801,
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "linux",
+    "arch": "x64",
+    "runner": "1ab26c299efc3912bd6bd6ec92b598afd4e09776577ae1aaca046037173197ad"
+  },
+  "steps": [
+    {
+      "id": "product-build",
+      "name": "Сборка и типы продукта",
+      "status": "passed",
+      "durationMs": 42151,
+      "counts": {}
+    },
+    {
+      "id": "test-build",
+      "name": "Подготовка модулей для тестов",
+      "status": "passed",
+      "durationMs": 14633,
+      "counts": {}
+    },
+    {
+      "id": "demo-assets",
+      "name": "Подготовка карточки для браузера",
+      "status": "passed",
+      "durationMs": 70,
+      "counts": {}
+    },
+    {
+      "id": "critical-data-rights",
+      "name": "Критичные данные, сохранение и права",
+      "status": "passed",
+      "durationMs": 515,
+      "counts": {
+        "tests": 151,
+        "passed": 151,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "startup-view",
+      "name": "Открытие сохранённого плана в View",
+      "status": "passed",
+      "durationMs": 2210,
+      "counts": {}
+    }
+  ]
+}

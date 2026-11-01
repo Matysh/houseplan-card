@@ -13,7 +13,7 @@ const BUNDLE_CORPUS = new Set(fingerprintCorpus(repoRoot));
 const BUNDLE_TREES = ['dist', 'demo/srv/assets'];
 
 export function guardNeedsBundle(guard) {
-  return guard.includes('demo/') || guard.includes('bundle:sync');
+  return guard.includes('demo/') || guard.includes('process-next/catalog/golden-runner.mjs') || guard.includes('bundle:sync');
 }
 
 export function mutantPatchesNeedBundle(patches, corpus = BUNDLE_CORPUS) {

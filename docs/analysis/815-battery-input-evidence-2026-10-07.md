@@ -1,5 +1,10 @@
 # #815 — battery input witness, 2026-10-07
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 ## Observed failure and evidence limits
 
 The [nightly run](https://github.com/Matysh/houseplan-card/actions/runs/37581891450)

@@ -1,0 +1,4462 @@
+{
+  "schema": 2,
+  "mode": "verify",
+  "selection": "beta",
+  "selectionRevision": "beta-75-2026-11-01",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "296ac3a7333f2d84e9116e979bea2537996957842715a2a9c5ff6352f6a383ef",
+    "ci": null
+  },
+  "generatedAt": "2026-11-01T09:33:04.294Z",
+  "matrixVersion": 109,
+  "buildFingerprint": "296ac3a7333f2d84e9116e979bea2537996957842715a2a9c5ff6352f6a383ef",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 107,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "panel-wide-view-light-en",
+      "host": "panel",
+      "sourceSceneId": "panel-wide-view-light-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "2651e538da15d8270aed44785b9ae5979606bb17b7f3ea42177ebaf8d4e15e8c",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1280,
+            800
+          ],
+          "content": [
+            1280,
+            800
+          ],
+          "card": [
+            1280,
+            800
+          ],
+          "stage": [
+            1280,
+            735
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-wide-view-light-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-wide-view-light-en.png",
+      "baselineSha256": "3d8bbfe652bedbc35d9dff10e0eee5f8eb80022d21c7d17a624c10364c7a7d0a",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1280,
+        800
+      ],
+      "baselineSize": [
+        1280,
+        800
+      ],
+      "differingPixels": 2503,
+      "diffRatio": 0.0024443359375,
+      "maxObservedDelta": 223,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/panel-wide-view-light-en.png"
+    },
+    {
+      "id": "panel-compact-ui-1132",
+      "host": "panel",
+      "sourceSceneId": "panel-compact-ui-1132",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "5fc06efcbe6c306ba4e42889450531fb7ff0e48f35ae0de2afbee1e1f8dfb63f",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1200,
+            850
+          ],
+          "content": [
+            1200,
+            850
+          ],
+          "card": [
+            1200,
+            850
+          ],
+          "stage": [
+            1200,
+            785
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-compact-ui-1132.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-compact-ui-1132.png",
+      "baselineSha256": "df430896d21839677016fdc92e1078a3f2fb180d3f718056d4c8d8fd7bdd3f09",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1200,
+        850
+      ],
+      "baselineSize": [
+        1200,
+        850
+      ],
+      "differingPixels": 2466,
+      "diffRatio": 0.0024176470588235296,
+      "maxObservedDelta": 198,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/panel-compact-ui-1132.png"
+    },
+    {
+      "id": "panel-three-rows-ui-1132",
+      "host": "panel",
+      "sourceSceneId": "panel-three-rows-ui-1132",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "4e8018e6c04bf260cf67e8fafc12a786e892287e429fbb7d3fb02e25ab0a49ae",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            844
+          ],
+          "content": [
+            390,
+            844
+          ],
+          "card": [
+            390,
+            844
+          ],
+          "stage": [
+            390,
+            661
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-three-rows-ui-1132.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-three-rows-ui-1132.png",
+      "baselineSha256": "1eb54d359ec83b49d14be5b2e558fcedc8e8c040d5eb9362f5dfca2fda71b632",
+      "dimensionsMatch": true,
+      "actualSize": [
+        390,
+        844
+      ],
+      "baselineSize": [
+        390,
+        844
+      ],
+      "differingPixels": 2582,
+      "diffRatio": 0.007844209502977276,
+      "maxObservedDelta": 198,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/panel-three-rows-ui-1132.png"
+    },
+    {
+      "id": "panel-narrow-kiosk-fixed",
+      "host": "panel",
+      "sourceSceneId": "panel-narrow-kiosk-fixed",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "passed",
+      "actualSha256": "781e524ceaeb8163e4b86aa56478ac8bbca289883b9ec0405913815ab1d4f806",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            390,
+            844
+          ],
+          "content": [
+            390,
+            844
+          ],
+          "card": [
+            390,
+            844
+          ],
+          "stage": [
+            390,
+            844
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 2,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-narrow-kiosk-fixed.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-narrow-kiosk-fixed.png",
+      "baselineSha256": "781e524ceaeb8163e4b86aa56478ac8bbca289883b9ec0405913815ab1d4f806",
+      "dimensionsMatch": true,
+      "actualSize": [
+        390,
+        844
+      ],
+      "baselineSize": [
+        390,
+        844
+      ],
+      "differingPixels": 0,
+      "diffRatio": 0,
+      "maxObservedDelta": 0,
+      "passed": true
+    },
+    {
+      "id": "panel-device-icon-state-table-light",
+      "host": "panel",
+      "sourceSceneId": "device-icon-state-table-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "86a21be652f1495eb4b0f6d44e6666dd857fc26882fa899f75773c5bb3165bbb",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-device-icon-state-table-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-device-icon-state-table-light.png"
+    },
+    {
+      "id": "panel-device-icon-state-table-dark",
+      "host": "panel",
+      "sourceSceneId": "device-icon-state-table-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "ccacf0f0972958ecb1e228c06079a5146e1c05a90624b373f7dcb45ff651c8a5",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-device-icon-state-table-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-device-icon-state-table-dark.png"
+    },
+    {
+      "id": "panel-lighting-glow-sun-dark",
+      "host": "panel",
+      "sourceSceneId": "lighting-glow-sun-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "a69ecfe0e2ac25f475b9954ef71f0d9f710b46a5333ff3fd43d040fa7f299671",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-glow-sun-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-glow-sun-dark.png"
+    },
+    {
+      "id": "panel-lighting-temp-glow-light",
+      "host": "panel",
+      "sourceSceneId": "lighting-temp-glow-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "eda8de2d5ee2a8331c0f375c5f86d588310a0a02627d5121a80b8da5d13eac5b",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-temp-glow-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-temp-glow-light.png"
+    },
+    {
+      "id": "panel-lighting-sun-transparent-chain-flat",
+      "host": "panel",
+      "sourceSceneId": "lighting-sun-transparent-chain-flat",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "24fe43ea0011a1f5a9b975658f37b1245e092357fcc4b4d23720625323e4cb61",
+      "runtime": {
+        "space": "f1",
+        "mode": "view",
+        "devices": 0,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1100,
+            1000
+          ],
+          "content": [
+            1100,
+            1000
+          ],
+          "card": [
+            1100,
+            1000
+          ],
+          "stage": [
+            1100,
+            935
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "sunTransparent": {
+          "receivers": [
+            [
+              "W",
+              "R"
+            ]
+          ],
+          "fills": 1
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-sun-transparent-chain-flat.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-sun-transparent-chain-flat.png"
+    },
+    {
+      "id": "panel-lighting-led-strip-glow-dark",
+      "host": "panel",
+      "sourceSceneId": "lighting-led-strip-glow-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "404e1179757b8abb94d0c0e98e8250cd08a7cedee2e8e69d076fd298656acc64",
+      "runtime": {
+        "space": "golden-led",
+        "mode": "view",
+        "devices": 13,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            760
+          ],
+          "content": [
+            1000,
+            760
+          ],
+          "card": [
+            1000,
+            760
+          ],
+          "stage": [
+            1000,
+            695
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-led-strip-glow-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-led-strip-glow-dark.png"
+    },
+    {
+      "id": "panel-wall-junctions-view-dark",
+      "host": "panel",
+      "sourceSceneId": "wall-junctions-view-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "eb684601b559c680cded5925ed204b57d36ce82adb1c494ad7f101f9cd042b7e",
+      "runtime": {
+        "space": "golden-wall-junctions",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-wall-junctions-view-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-wall-junctions-view-dark.png"
+    },
+    {
+      "id": "panel-geometry-diagonal-45-opening-dark",
+      "host": "panel",
+      "sourceSceneId": "geometry-diagonal-45-opening-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "1b2b15ef3277bb46403f65edcf78809325efaf775894390af12b0f0875fe5b11",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "openingGeometry": {
+        "type": "window",
+        "angle": 45,
+        "width": 76.9718017578125,
+        "height": 76.97183227539062,
+        "visibleParts": 5
+      },
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-geometry-diagonal-45-opening-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-geometry-diagonal-45-opening-dark.png"
+    },
+    {
+      "id": "panel-opening-symbol-flip-pairs-light",
+      "host": "panel",
+      "sourceSceneId": "opening-symbol-flip-pairs-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "6427f08110e9319d1cbc2d479909e00a80b280a6fd85b55efecac5b6c5e134a9",
+      "runtime": {
+        "space": "golden-opening-symbols",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "openingSymbolContract": {
+        "surface": "flat",
+        "rows": [
+          {
+            "id": "golden-door-default",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": null
+          },
+          {
+            "id": "golden-door-flipped",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": null
+          },
+          {
+            "id": "golden-window-default",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": null
+          },
+          {
+            "id": "golden-window-flipped",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": null
+          },
+          {
+            "id": "golden-gate-default",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": 10
+          },
+          {
+            "id": "golden-gate-flipped",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": -10
+          }
+        ]
+      },
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-opening-symbol-flip-pairs-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-opening-symbol-flip-pairs-light.png"
+    },
+    {
+      "id": "panel-isometric-geometry-view-light",
+      "host": "panel",
+      "sourceSceneId": "isometric-geometry-view-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "26d051b0a3d4b4a003f4a6d96b7d4d1a44931c138d47066b9239821e2a9f1d09",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-isometric-geometry-view-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-isometric-geometry-view-light.png"
+    },
+    {
+      "id": "panel-isometric-stage3-overlays-dark",
+      "host": "panel",
+      "sourceSceneId": "isometric-stage3-overlays-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "8c307ef189d7c75cc644eac80ffeb753aa723e8b605342bc90a63887d96d5f75",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 10,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-isometric-stage3-overlays-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-isometric-stage3-overlays-dark.png"
+    },
+    {
+      "id": "panel-isometric-opening-symbol-parity-dark",
+      "host": "panel",
+      "sourceSceneId": "isometric-opening-symbol-parity-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "297036f72c0317334f1c23ad9c190181edc0925d073bdde77373fe065df6a109",
+      "runtime": {
+        "space": "golden-opening-symbols",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "openingSymbolContract": {
+        "surface": "iso",
+        "rows": [
+          {
+            "id": "golden-iso-door",
+            "offset": 12.5,
+            "faceOffset": 0,
+            "turn": null
+          },
+          {
+            "id": "golden-iso-window",
+            "offset": 0,
+            "faceOffset": 12.5,
+            "turn": null
+          },
+          {
+            "id": "golden-iso-gate-default",
+            "offset": 12.5,
+            "faceOffset": 0,
+            "turn": 10
+          },
+          {
+            "id": "golden-iso-gate-flipped",
+            "offset": 12.5,
+            "faceOffset": 0,
+            "turn": -10
+          }
+        ]
+      },
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-isometric-opening-symbol-parity-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-isometric-opening-symbol-parity-dark.png"
+    },
+    {
+      "id": "panel-wide-plan-editor-dark-en",
+      "host": "panel",
+      "sourceSceneId": "panel-wide-plan-editor-dark-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "37acdb1b3d89025777b42bb9561996adf2b990fc686245c8a3f9930034cffe00",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1280,
+            800
+          ],
+          "content": [
+            1280,
+            800
+          ],
+          "card": [
+            1280,
+            800
+          ],
+          "stage": [
+            920,
+            678
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-wide-plan-editor-dark-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-wide-plan-editor-dark-en.png",
+      "baselineSha256": "615e2edd93616a017bd1cc59290340518f1a5dff5e8b8336daa0f10b9e90030d",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1280,
+        800
+      ],
+      "baselineSize": [
+        1280,
+        800
+      ],
+      "differingPixels": 22235,
+      "diffRatio": 0.0217138671875,
+      "maxObservedDelta": 217,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/panel-wide-plan-editor-dark-en.png"
+    },
+    {
+      "id": "panel-geometry-devices-editor-dark",
+      "host": "panel",
+      "sourceSceneId": "geometry-devices-editor-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "cb7d00848267802ac02bb74363fa5680be9f0745a07cf5576ddd1e1561b16d53",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "devices",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            820,
+            724
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-geometry-devices-editor-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-geometry-devices-editor-dark.png"
+    },
+    {
+      "id": "panel-geometry-decor-editor-dark",
+      "host": "panel",
+      "sourceSceneId": "geometry-decor-editor-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "8b022567efdb5736c3bb4a26b5e79fa1fddd7a4104246e814f2cb2b4f45da6ea",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "decor",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            820,
+            720
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-geometry-decor-editor-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-geometry-decor-editor-dark.png"
+    },
+    {
+      "id": "panel-device-dialog-mobile-ru",
+      "host": "panel",
+      "sourceSceneId": "device-dialog-mobile-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "47338d09fd5805c412a4412705d9d4701a0dffcde0862896922b2fecfae70ef5",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "devices",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            1000
+          ],
+          "content": [
+            390,
+            1000
+          ],
+          "card": [
+            390,
+            1000
+          ],
+          "stage": [
+            390,
+            687
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-device-dialog-mobile-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-device-dialog-mobile-ru.png"
+    },
+    {
+      "id": "panel-room-temperature-dialog-desktop-en",
+      "host": "panel",
+      "sourceSceneId": "room-temperature-dialog-desktop-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "f9c7e687b774556e863acc2b66db71327e76f1c7d1c02e66138d3a57aa1ba442",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            900,
+            900
+          ],
+          "content": [
+            900,
+            900
+          ],
+          "card": [
+            900,
+            900
+          ],
+          "stage": [
+            900,
+            724
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-room-temperature-dialog-desktop-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-room-temperature-dialog-desktop-en.png"
+    },
+    {
+      "id": "panel-view-device-menu-readonly-light-ru",
+      "host": "panel",
+      "sourceSceneId": "view-device-menu-readonly-light-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "67d9f52d9747438ad18819012972f70710bbe7d3affe1cd5363147fa7c608dbf",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            800
+          ],
+          "content": [
+            1000,
+            800
+          ],
+          "card": [
+            1000,
+            800
+          ],
+          "stage": [
+            1000,
+            735
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "viewDeviceMenu": {
+          "text": [
+            "Настройки устройства",
+            "HA more-info",
+            "Карточка устройства",
+            "Скрыть",
+            "Удалить"
+          ],
+          "disabled": [
+            true,
+            false,
+            false,
+            true,
+            true
+          ],
+          "bounds": {
+            "left": 372,
+            "top": 397,
+            "right": 552,
+            "bottom": 627
+          },
+          "fits": true,
+          "horizontalOverflow": false,
+          "styled": true
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-view-device-menu-readonly-light-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-view-device-menu-readonly-light-ru.png"
+    },
+    {
+      "id": "panel-narrow-read-only-empty-light-en",
+      "host": "panel",
+      "sourceSceneId": "panel-narrow-read-only-empty-light-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "c51930cbcf59dd841f85fb70b140048c96cd686763cdfe8711b7713b4766366d",
+      "runtime": {
+        "space": "",
+        "mode": "view",
+        "devices": 0,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            320,
+            720
+          ],
+          "content": [
+            320,
+            720
+          ],
+          "card": [
+            320,
+            720
+          ],
+          "stage": null,
+          "horizontalOverflow": 0,
+          "emptyReadOnly": true
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-narrow-read-only-empty-light-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-narrow-read-only-empty-light-en.png",
+      "baselineSha256": "ee4ad848144c3ef1e3ad18d434ac10022d940a918cd461051dab4ae854325ec5",
+      "dimensionsMatch": true,
+      "actualSize": [
+        320,
+        720
+      ],
+      "baselineSize": [
+        320,
+        720
+      ],
+      "differingPixels": 13788,
+      "diffRatio": 0.05984375,
+      "maxObservedDelta": 244,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/panel-narrow-read-only-empty-light-en.png"
+    },
+    {
+      "id": "panel-version-mismatch-touch-light-ru",
+      "host": "panel",
+      "sourceSceneId": "version-mismatch-touch-light-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "2090199bb1692c73fb58c7f8b2f76e9266346c9b9fff7bf4c1d5fc8deff75036",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            760
+          ],
+          "content": [
+            390,
+            760
+          ],
+          "card": [
+            390,
+            760
+          ],
+          "stage": [
+            390,
+            577
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-version-mismatch-touch-light-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-version-mismatch-touch-light-ru.png"
+    },
+    {
+      "id": "panel-kiosk-profile-no-controls",
+      "host": "panel",
+      "sourceSceneId": "panel-kiosk-profile-no-controls",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "3db556537ba0c0a831291be0264929e45b2ccb2ab16bcdeb5f800192d96dbf45",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1280,
+            920
+          ],
+          "content": [
+            1280,
+            920
+          ],
+          "card": [
+            1280,
+            920
+          ],
+          "stage": [
+            1280,
+            920
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-kiosk-profile-no-controls.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-kiosk-profile-no-controls.png",
+      "baselineSha256": "413a6f53fcdfe817f2499a55b1abd3c572ed5fd0d5174a8a38d0669b3da3a7db",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1280,
+        920
+      ],
+      "baselineSize": [
+        1280,
+        920
+      ],
+      "differingPixels": 6025,
+      "diffRatio": 0.005116338315217391,
+      "maxObservedDelta": 198,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/panel-kiosk-profile-no-controls.png"
+    },
+    {
+      "id": "panel-plan-snap-endpoint-light",
+      "host": "panel",
+      "sourceSceneId": "plan-snap-endpoint-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "1b828aee2448db9f96aff199532e08c5398d7d346c90f229ccdbc7f841ddbdd3",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "editor-secondary kind-tool",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            820,
+            692
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-plan-snap-endpoint-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-plan-snap-endpoint-light.png"
+    },
+    {
+      "id": "panel-opening-placement-door-thick-wall-dark",
+      "host": "panel",
+      "sourceSceneId": "opening-placement-door-thick-wall-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "af80ac66caf348630b4f3649d1c67f4476b62402a5e47b961e03258a296b566f",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            820,
+            692
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-opening-placement-door-thick-wall-dark.png",
+      "openingPreviewParts": 2,
+      "openingPreviewChangedPixels": 439,
+      "openingPreviewMaxChannelDelta": 96,
+      "openingPreviewPixelsInsideWall": 64,
+      "openingPreviewWallSamples": 912,
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png"
+    },
+    {
+      "id": "panel-tray-narrow-tool-ru",
+      "host": "panel",
+      "sourceSceneId": "tray-narrow-tool-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "6f8bd10c6037ff743f28d01bb32984c7dee073c008752a437d19c6b25a7eb73f",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "decor",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "editor-secondary kind-tool",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            760
+          ],
+          "content": [
+            390,
+            760
+          ],
+          "card": [
+            390,
+            760
+          ],
+          "stage": [
+            390,
+            434
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-tray-narrow-tool-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-tray-narrow-tool-ru.png"
+    },
+    {
+      "id": "panel-decor-multiselect-dark",
+      "host": "panel",
+      "sourceSceneId": "decor-multiselect-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "2a5d8015fdf70c92641a513c32116b84bd84108734c2b0462102d0187bdee196",
+      "runtime": {
+        "space": "golden-decor-multiselect",
+        "mode": "decor",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1440,
+            1000
+          ],
+          "content": [
+            1440,
+            1000
+          ],
+          "card": [
+            1440,
+            1000
+          ],
+          "stage": [
+            1080,
+            874
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "decorMultiselect": {
+          "selected": 2
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-decor-multiselect-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-decor-multiselect-dark.png"
+    },
+    {
+      "id": "panel-furniture-placement-preview-light",
+      "host": "panel",
+      "sourceSceneId": "furniture-placement-preview-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "b35e96f825ae40b20e40788ce267d4178b8492e6599909f9e5a14a16d383d69d",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "decor",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "editor-secondary kind-palette",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            774
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-furniture-placement-preview-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-furniture-placement-preview-light.png"
+    },
+    {
+      "id": "panel-furniture-transform-dark",
+      "host": "panel",
+      "sourceSceneId": "furniture-transform-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "0ff168801552644406efe458f7b22f40ae1a8fc081b46c3c302092ab7c3d660c",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-furniture-transform-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-furniture-transform-dark.png"
+    },
+    {
+      "id": "panel-device-inbox-narrow-ru-dark",
+      "host": "panel",
+      "sourceSceneId": "device-inbox-narrow-ru-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "d449ae6af1c7c5b8ad75ac0e4cda65cad99e2024ce008f80427ba3bcd453e9d2",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "devices",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            900
+          ],
+          "content": [
+            390,
+            900
+          ],
+          "card": [
+            390,
+            900
+          ],
+          "stage": [
+            390,
+            587
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-device-inbox-narrow-ru-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-device-inbox-narrow-ru-dark.png"
+    },
+    {
+      "id": "panel-device-state-source-unknown-en",
+      "host": "panel",
+      "sourceSceneId": "device-state-source-unknown-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "1dd28ff788441d78243147b5a1c0d064a82cddd047fc7c2457332d709fad0107",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "devices",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            1200
+          ],
+          "content": [
+            1180,
+            1200
+          ],
+          "card": [
+            1180,
+            1200
+          ],
+          "stage": [
+            820,
+            1024
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-device-state-source-unknown-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-device-state-source-unknown-en.png"
+    },
+    {
+      "id": "panel-hidden-devices-view-light",
+      "host": "panel",
+      "sourceSceneId": "hidden-devices-view-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "6c3f6d6613e6cb980e906b1e4ea6992b50d24f58511e502223d282fb4dba3e9c",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            1180,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-hidden-devices-view-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-hidden-devices-view-light.png"
+    },
+    {
+      "id": "panel-large-house-warm-remount-dark",
+      "host": "panel",
+      "sourceSceneId": "large-house-warm-remount-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "945aef970bc193d6195f3ef5a87a2683f67cdb6524116a6df8fa68d640bd75a3",
+      "runtime": {
+        "space": "perf-floor-2",
+        "mode": "view",
+        "devices": 200,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            1180,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-large-house-warm-remount-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-large-house-warm-remount-dark.png"
+    },
+    {
+      "id": "panel-isometric-large-warm-remount-dark",
+      "host": "panel",
+      "sourceSceneId": "isometric-large-warm-remount-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "648548e7bda73b45f34550061fb40e04c15bc5e13e7c6320f54c57b5bacdd3ab",
+      "runtime": {
+        "space": "perf-floor-2",
+        "mode": "view",
+        "devices": 200,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1180,
+            900
+          ],
+          "content": [
+            1180,
+            900
+          ],
+          "card": [
+            1180,
+            900
+          ],
+          "stage": [
+            1180,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-isometric-large-warm-remount-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-isometric-large-warm-remount-dark.png"
+    },
+    {
+      "id": "panel-stairs-flat-normal-light",
+      "host": "panel",
+      "sourceSceneId": "stairs-flat-normal-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "0630259944a3ab56209635c6f91828cf514e0e4d077726c53b43a027f9af15fb",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-stairs-flat-normal-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-stairs-flat-normal-light.png"
+    },
+    {
+      "id": "panel-stairs-isometric-dark",
+      "host": "panel",
+      "sourceSceneId": "stairs-isometric-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "8acacb360751ed20f58b68b775a94f23024ef84d04bb94aca838a7e1d5a1f3d7",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-stairs-isometric-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-stairs-isometric-dark.png"
+    },
+    {
+      "id": "panel-isometric-stage3-forced-colors-dark",
+      "host": "panel",
+      "sourceSceneId": "isometric-stage3-forced-colors-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "77ecb11ca682f8b570eca22462a62c8554510cfbf9f81449acc0bdaea3cc70c9",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-isometric-stage3-forced-colors-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-isometric-stage3-forced-colors-dark.png"
+    },
+    {
+      "id": "panel-isometric-stage6-hover-light",
+      "host": "panel",
+      "sourceSceneId": "isometric-stage6-hover-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "79c15e5d2add5d2f4150df39a49d9173eb34df9c5979dce4c157872da9427658",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-isometric-stage6-hover-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-isometric-stage6-hover-light.png"
+    },
+    {
+      "id": "panel-day-cycle-dawn-dark",
+      "host": "panel",
+      "sourceSceneId": "day-cycle-dawn-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "a733faca5658ef45c89e6698c30fd0bd3b1245fa4ce65c9cc62951b4e133957c",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-day-cycle-dawn-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-day-cycle-dawn-dark.png"
+    },
+    {
+      "id": "panel-day-cycle-night-moon-gibbous-dark",
+      "host": "panel",
+      "sourceSceneId": "day-cycle-night-moon-gibbous-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "d9a0bfec31d12342063a99014d4a04e26c4761d8b1af15f4c01f9e844edcd70b",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-day-cycle-night-moon-gibbous-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-day-cycle-night-moon-gibbous-dark.png"
+    },
+    {
+      "id": "panel-lighting-interior-window-dark",
+      "host": "panel",
+      "sourceSceneId": "lighting-interior-window-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "60c763d71919d2454abf3243ad3a2ce6db0ec2577e5ad77903ff8492c985f99e",
+      "runtime": {
+        "space": "f1",
+        "mode": "view",
+        "devices": 1,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1100,
+            1000
+          ],
+          "content": [
+            1100,
+            1000
+          ],
+          "card": [
+            1100,
+            1000
+          ],
+          "stage": [
+            1100,
+            935
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "interiorWindowLight": {
+          "target": true,
+          "shadow": false,
+          "paths": 1
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-interior-window-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-interior-window-dark.png"
+    },
+    {
+      "id": "panel-lighting-sun-transparent-sealed",
+      "host": "panel",
+      "sourceSceneId": "lighting-sun-transparent-sealed",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "0534c923b3b9effb1093687792561f3dd6e57e7ca9fafdf41e993941b3afa068",
+      "runtime": {
+        "space": "f1",
+        "mode": "view",
+        "devices": 0,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1100,
+            1000
+          ],
+          "content": [
+            1100,
+            1000
+          ],
+          "card": [
+            1100,
+            1000
+          ],
+          "stage": [
+            1100,
+            935
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "sunTransparent": {
+          "receivers": [],
+          "fills": 0
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-sun-transparent-sealed.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-sun-transparent-sealed.png"
+    },
+    {
+      "id": "panel-lighting-sun-window-outer-occluded-dpr2-dark",
+      "host": "panel",
+      "sourceSceneId": "lighting-sun-window-outer-occluded-dpr2-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.001
+      },
+      "status": "missing-baseline",
+      "actualSha256": "c5569fea63c83a676779494e7790965c3904354499b5c13a2aa955133705c278",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "sun": {
+          "raw": {
+            "azimuth": 240,
+            "elevation": 24
+          },
+          "plan": {
+            "azimuth": 240,
+            "elevation": 24
+          },
+          "render": {
+            "azimuth": 240,
+            "elevation": 24
+          },
+          "north": 90,
+          "enabled": true,
+          "editing": false,
+          "cachedRays": 1
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 2,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-sun-window-outer-occluded-dpr2-dark.png",
+      "sunRayShapes": 2,
+      "sunRayChangedPixels": 13649,
+      "sunRayMaxChannelDelta": 110,
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-sun-window-outer-occluded-dpr2-dark.png"
+    },
+    {
+      "id": "panel-lighting-opaque-glow-two-doorways-dark",
+      "host": "panel",
+      "sourceSceneId": "lighting-opaque-glow-two-doorways-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "d6558d6e0ea52ac9cc6a2779a8f65796aacb834078cd4c3f151c78d09c5fe1f9",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-lighting-opaque-glow-two-doorways-dark.png",
+      "warmPixels": 16318,
+      "warmPixelBounds": [
+        500,
+        0,
+        1000,
+        837
+      ],
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-lighting-opaque-glow-two-doorways-dark.png"
+    },
+    {
+      "id": "panel-vacuum-trail-smoothing-dark",
+      "host": "panel",
+      "sourceSceneId": "vacuum-trail-smoothing-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "79299b3b74d1a1db88244917ce118a8ba167bc8fbbdd45f91b0ab5c4b52becea",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 10,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-vacuum-trail-smoothing-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-vacuum-trail-smoothing-dark.png"
+    },
+    {
+      "id": "panel-vacuum-history-seconds-narrow",
+      "host": "panel",
+      "sourceSceneId": "vacuum-history-seconds-narrow",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "47c5fba586bea6d42f6e70fcb3a78b28fdeeaca3a81175a9a494d9cfe552fd25",
+      "runtime": {
+        "space": "golden-history-space",
+        "mode": "devices",
+        "devices": 1,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            844
+          ],
+          "content": [
+            390,
+            844
+          ],
+          "card": [
+            390,
+            844
+          ],
+          "stage": [
+            390,
+            531
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "vacuumHistory": {
+          "shown": true,
+          "local": true,
+          "kind": "seconds"
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-vacuum-history-seconds-narrow.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-vacuum-history-seconds-narrow.png"
+    },
+    {
+      "id": "panel-vacuum-live-tail-pending-dialog-dark",
+      "host": "panel",
+      "sourceSceneId": "vacuum-live-tail-pending-dialog-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "3fd3f988d74ff7dc7aed422d57b4e87242c7f35b0a2505d4ccd3f64857c7f349",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "devices",
+        "devices": 10,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1200,
+            1000
+          ],
+          "content": [
+            1200,
+            1000
+          ],
+          "card": [
+            1200,
+            1000
+          ],
+          "stage": [
+            840,
+            824
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-vacuum-live-tail-pending-dialog-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-vacuum-live-tail-pending-dialog-dark.png"
+    },
+    {
+      "id": "panel-room-co2-flat-light",
+      "host": "panel",
+      "sourceSceneId": "room-co2-flat-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "acfab6d846d5450c84af2a7252e0e9b3e553ad40e90b9b83c469fa096d04c658",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-room-co2-flat-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-room-co2-flat-light.png"
+    },
+    {
+      "id": "panel-room-label-parity-plan-dark",
+      "host": "panel",
+      "sourceSceneId": "room-label-parity-plan-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "4efd4102a9d5658e7e114829a731022e60e0f2170e7af4717f4bcfbd085d91fc",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            778
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-room-label-parity-plan-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-room-label-parity-plan-dark.png"
+    },
+    {
+      "id": "panel-approved-ui-summary-light-1119",
+      "host": "panel",
+      "sourceSceneId": "approved-ui-summary-light-1119",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "779536632189514128d5d63e559a2edc93a22f6dbfbc224b049d52287e4d2c10",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1280,
+            1000
+          ],
+          "content": [
+            1280,
+            1000
+          ],
+          "card": [
+            1280,
+            1000
+          ],
+          "stage": [
+            1280,
+            935
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": "",
+        "approvedUi": {
+          "kind": "summary",
+          "title": "Summary panel settings",
+          "header": 78,
+          "fields": 1,
+          "inputs": 5,
+          "sources": 3
+        }
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-approved-ui-summary-light-1119.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-approved-ui-summary-light-1119.png"
+    },
+    {
+      "id": "panel-backup-full-preview-desktop-en",
+      "host": "panel",
+      "sourceSceneId": "backup-full-preview-desktop-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "ffdcd35be9506283e455c99fd7de8c7e626092cf05f3c920769fe4d612de5a6e",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-backup-full-preview-desktop-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-backup-full-preview-desktop-en.png"
+    },
+    {
+      "id": "panel-backup-space-preview-mobile-ru",
+      "host": "panel",
+      "sourceSceneId": "backup-space-preview-mobile-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "70c1553fde6a5ee071596cc8abf77eeacba24bd3ba9dc41cf0b7973c9593a724",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            820
+          ],
+          "content": [
+            390,
+            820
+          ],
+          "card": [
+            390,
+            820
+          ],
+          "stage": [
+            390,
+            637
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-backup-space-preview-mobile-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-backup-space-preview-mobile-ru.png"
+    },
+    {
+      "id": "panel-more-info-dialog-mobile-ru",
+      "host": "panel",
+      "sourceSceneId": "more-info-dialog-mobile-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "b2eb29dbc629d9acb41ffd7ca5e569ba95768235ff4f992ddbc24d4926a9dacd",
+      "runtime": {
+        "space": "golden-appliance",
+        "mode": "devices",
+        "devices": 10,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            360,
+            1000
+          ],
+          "content": [
+            360,
+            1000
+          ],
+          "card": [
+            360,
+            1000
+          ],
+          "stage": [
+            360,
+            605
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-more-info-dialog-mobile-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-more-info-dialog-mobile-ru.png"
+    },
+    {
+      "id": "panel-toggle-entity-dialog-mobile-ru",
+      "host": "panel",
+      "sourceSceneId": "toggle-entity-dialog-mobile-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "890d4ef4c4d5d866359639a0e0333e8faadc8208838fb7598436936d001f4cc2",
+      "runtime": {
+        "space": "golden-appliance",
+        "mode": "devices",
+        "devices": 10,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": true,
+          "innerMenu": true,
+          "outerReserve": false,
+          "panel": [
+            390,
+            1000
+          ],
+          "content": [
+            390,
+            1000
+          ],
+          "card": [
+            390,
+            1000
+          ],
+          "stage": [
+            390,
+            687
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-toggle-entity-dialog-mobile-ru.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-toggle-entity-dialog-mobile-ru.png"
+    },
+    {
+      "id": "panel-support-relay-error-light-en",
+      "host": "panel",
+      "sourceSceneId": "support-relay-error-light-en",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "08fd237a49a7bd69819779031705884c60708463b6fbbff37f8fac2dd602c0d6",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            900,
+            900
+          ],
+          "content": [
+            900,
+            900
+          ],
+          "card": [
+            900,
+            900
+          ],
+          "stage": [
+            900,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-support-relay-error-light-en.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-support-relay-error-light-en.png"
+    },
+    {
+      "id": "panel-pdf-export-stepped-dimensions-light",
+      "host": "panel",
+      "sourceSceneId": "pdf-export-stepped-dimensions-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "1f94ab9c5b9cdaa02459aad1ec2beec7c6c679915f4c1c37b21fca1a5696bf26",
+      "runtime": {
+        "space": "golden-pdf-stepped",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "pdfExport": {
+        "pages": 1,
+        "width": 595.28,
+        "height": 841.89,
+        "semantic": {
+          "text": "2.40 m 3.60 m 1.20 m 3.75 m 7.35 m 9.75 m 70.8 m² 2.40 m 3.45 m 3.60 m 1.20 m 7.05 m 9.45 m Stepped exterior PDF House plan Scale 1:75 1 m North 2026-09-07 · House Plan v0.0.0-golden",
+          "fieldPixels": {
+            "left": 34,
+            "top": 86,
+            "right": 569,
+            "bottom": 750
+          },
+          "sceneBoundsPixels": {
+            "minX": 111,
+            "minY": 210,
+            "maxX": 491,
+            "maxY": 624
+          },
+          "wallBoundsPixels": {
+            "minX": 138,
+            "minY": 225,
+            "maxX": 464,
+            "maxY": 595
+          },
+          "compassRegionPixels": {
+            "left": 278,
+            "right": 325,
+            "top": 784,
+            "bottom": 822
+          },
+          "sceneInkPixels": 13715,
+          "sceneCoverage": 0.44509345794392524,
+          "centerOffsetMm": 0.3481829816334505,
+          "sceneClearanceMm": 26.816119034457337,
+          "wallGrayPixels": 3619,
+          "wallGrayOutsideFieldPixels": 2,
+          "wallGrayOutsideFieldRatio": 0.0005526388505111909,
+          "interiorHatchPixels": 664,
+          "opening": null,
+          "compassInkPixels": 175,
+          "dimensionLabels": [
+            "2.40 m",
+            "3.60 m",
+            "1.20 m",
+            "3.75 m",
+            "7.35 m",
+            "9.75 m",
+            "2.40 m",
+            "3.45 m",
+            "3.60 m",
+            "1.20 m",
+            "7.05 m",
+            "9.45 m",
+            "1 m"
+          ],
+          "maxDimensionAxisErrorDeg": 0,
+          "repeatedDimensionLabels": 3
+        }
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-pdf-export-stepped-dimensions-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-pdf-export-stepped-dimensions-light.png"
+    },
+    {
+      "id": "panel-wall-union-isolation-view-dark",
+      "host": "panel",
+      "sourceSceneId": "wall-union-isolation-view-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "c1c6e3aeed72fa228632b1aa2a5cfbd68c446ef304ddc6915fa77bb7700a4c45",
+      "runtime": {
+        "space": "golden-wall-union-isolation",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-wall-union-isolation-view-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-wall-union-isolation-view-dark.png"
+    },
+    {
+      "id": "panel-multiwall-junction-bevel-view-dark",
+      "host": "panel",
+      "sourceSceneId": "multiwall-junction-bevel-view-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "bd2abb2544200393d79706a38de1f07d6617533d36daf060780dc9cfb563fb39",
+      "runtime": {
+        "space": "golden-multiwall-junction",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-multiwall-junction-bevel-view-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-multiwall-junction-bevel-view-dark.png"
+    },
+    {
+      "id": "panel-opening-symbol-diagonal-partition-dark",
+      "host": "panel",
+      "sourceSceneId": "opening-symbol-diagonal-partition-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "87552e08a66fc14d3ee2d370578f40e1cab94ad20d6b1ee802b23c00d4818ca1",
+      "runtime": {
+        "space": "golden-opening-symbols",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "panelHost": {
+          "narrow": false,
+          "innerMenu": false,
+          "outerReserve": false,
+          "panel": [
+            1000,
+            900
+          ],
+          "content": [
+            1000,
+            900
+          ],
+          "card": [
+            1000,
+            900
+          ],
+          "stage": [
+            1000,
+            835
+          ],
+          "horizontalOverflow": 0,
+          "emptyReadOnly": false
+        },
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "panel",
+      "deviceScaleFactor": 1,
+      "openingSymbolContract": {
+        "surface": "flat",
+        "rows": [
+          {
+            "id": "golden-diagonal-door",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": null
+          },
+          {
+            "id": "golden-diagonal-window",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": null
+          },
+          {
+            "id": "golden-diagonal-gate",
+            "offset": 0,
+            "jambDepth": 25,
+            "turn": 10
+          }
+        ]
+      },
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/panel-opening-symbol-diagonal-partition-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/panel-opening-symbol-diagonal-partition-dark.png"
+    },
+    {
+      "id": "geometry-view-light-fit",
+      "host": "lovelace",
+      "sourceSceneId": "geometry-view-light-fit",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "passed",
+      "actualSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/geometry-view-light-fit.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/geometry-view-light-fit.png",
+      "baselineSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+      "dimensionsMatch": true,
+      "actualSize": [
+        988,
+        775
+      ],
+      "baselineSize": [
+        988,
+        775
+      ],
+      "differingPixels": 0,
+      "diffRatio": 0,
+      "maxObservedDelta": 0,
+      "passed": true
+    },
+    {
+      "id": "plan-rotation-phone-view-320-1070",
+      "host": "lovelace",
+      "sourceSceneId": "plan-rotation-phone-view-320-1070",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "32a7b337a2e664d50177647d9966c6c957bbaad5dffd6b074515a35caaf7d123",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "rotation": {
+          "expected": 90,
+          "direction": [
+            0,
+            1
+          ],
+          "length": 32.61802557602755
+        },
+        "phoneHeader": {
+          "rows": 1,
+          "height": 55,
+          "width": 304,
+          "close": null
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/plan-rotation-phone-view-320-1070.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
+      "baselineSha256": "f0889d8257835cf91e70f3f826ebd7f5b530a44f712aae437bb649abf40b7dbd",
+      "dimensionsMatch": true,
+      "actualSize": [
+        320,
+        844
+      ],
+      "baselineSize": [
+        320,
+        844
+      ],
+      "differingPixels": 933,
+      "diffRatio": 0.003454531990521327,
+      "maxObservedDelta": 223,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/plan-rotation-phone-view-320-1070.png"
+    },
+    {
+      "id": "geometry-plan-editor-dark",
+      "host": "lovelace",
+      "sourceSceneId": "geometry-plan-editor-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "3148c4a8b30c5659cd822291f1b9bd0b916d70a760bc57693df77cb73a5d43b5",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/geometry-plan-editor-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/geometry-plan-editor-dark.png",
+      "baselineSha256": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1180,
+        900
+      ],
+      "baselineSize": [
+        1180,
+        900
+      ],
+      "differingPixels": 281111,
+      "diffRatio": 0.26469962335216574,
+      "maxObservedDelta": 240,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/geometry-plan-editor-dark.png"
+    },
+    {
+      "id": "first-space-empty-light",
+      "host": "lovelace",
+      "sourceSceneId": "first-space-empty-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "6e87b4c67f5b3ab49e6fb01dd0abc0bb10c6668e08f2d5a9c5a535ccf7e9962e",
+      "runtime": {
+        "space": "",
+        "mode": "view",
+        "devices": 0,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/first-space-empty-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/first-space-empty-light.png",
+      "baselineSha256": "40d4382b9381fbe1cce65b5718701b8835e766a0d21e58253f838a45eebec167",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1180,
+        900
+      ],
+      "baselineSize": [
+        1180,
+        900
+      ],
+      "differingPixels": 50238,
+      "diffRatio": 0.04730508474576271,
+      "maxObservedDelta": 244,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/first-space-empty-light.png"
+    },
+    {
+      "id": "first-space-floors-narrow-dark",
+      "host": "lovelace",
+      "sourceSceneId": "first-space-floors-narrow-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "b437754f772507b83c4c296dd21a1eb37334d647585c8deeced005de0439b932",
+      "runtime": {
+        "space": "",
+        "mode": "view",
+        "devices": 0,
+        "dialog": true,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/first-space-floors-narrow-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/first-space-floors-narrow-dark.png",
+      "baselineSha256": "7d3b89c1960aa41d8a8349462d239d6bf42b96cd73c435202e24f2b5eef86aa6",
+      "dimensionsMatch": true,
+      "actualSize": [
+        390,
+        844
+      ],
+      "baselineSize": [
+        390,
+        844
+      ],
+      "differingPixels": 36338,
+      "diffRatio": 0.11039615992222628,
+      "maxObservedDelta": 217,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/first-space-floors-narrow-dark.png"
+    },
+    {
+      "id": "first-space-no-storage-light",
+      "host": "lovelace",
+      "sourceSceneId": "first-space-no-storage-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "e83c7f72ce525a3ab32765d51ddc2f3acc5c20c7b05d8122ee74db233594e7ce",
+      "runtime": {
+        "space": "f1",
+        "mode": "view",
+        "devices": 0,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/first-space-no-storage-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/first-space-no-storage-light.png",
+      "baselineSha256": "3dbde7f25a337bb6fe7b6fe846f56b36cd4078383ca8b4ab74f9785fe96415b6",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1180,
+        900
+      ],
+      "baselineSize": [
+        1180,
+        900
+      ],
+      "differingPixels": 48409,
+      "diffRatio": 0.04558286252354049,
+      "maxObservedDelta": 244,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/first-space-no-storage-light.png"
+    },
+    {
+      "id": "device-battery-board-light",
+      "host": "lovelace",
+      "sourceSceneId": "device-battery-board-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "different",
+      "actualSha256": "4f9d3be0f89d24cf7c7f99afb46003a7fee0efc6ff8d515abe3a487cfc2dfe3d",
+      "runtime": {
+        "space": "golden-battery",
+        "mode": "view",
+        "devices": 21,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "batteryBoard": {
+          "iconSize": 1.5525529542920846,
+          "loadedIcons": 4,
+          "samples": [
+            {
+              "id": "battery-32-normal",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 253.03125,
+              "y": 270.953125,
+              "width": 19,
+              "height": 19
+            },
+            {
+              "id": "battery-32-warning",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 460.65625,
+              "y": 270.953125,
+              "width": 19,
+              "height": 19
+            },
+            {
+              "id": "battery-32-low",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 668.28125,
+              "y": 270.953125,
+              "width": 19,
+              "height": 19
+            },
+            {
+              "id": "battery-32-unknown",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 875.90625,
+              "y": 270.953125,
+              "width": 19,
+              "height": 19
+            },
+            {
+              "id": "battery-56-normal",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 267.015625,
+              "y": 435.4609375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-56-warning",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 474.640625,
+              "y": 435.4609375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-56-low",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 682.265625,
+              "y": 435.4609375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-56-unknown",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 889.890625,
+              "y": 435.4609375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-96-normal",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 290.046875,
+              "y": 595.484375,
+              "width": 56.03125,
+              "height": 56.03125
+            },
+            {
+              "id": "battery-96-warning",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 497.671875,
+              "y": 595.484375,
+              "width": 56.03125,
+              "height": 56.03125
+            },
+            {
+              "id": "battery-96-low",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 705.296875,
+              "y": 595.484375,
+              "width": 56.03125,
+              "height": 56.03125
+            },
+            {
+              "id": "battery-96-unknown",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 912.921875,
+              "y": 595.484375,
+              "width": 56.03125,
+              "height": 56.03125
+            },
+            {
+              "id": "battery-layout-none",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 212.84375,
+              "y": 787.5234375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-layout-right",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 422.453125,
+              "y": 787.5234375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-layout-left",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 646.15625,
+              "y": 787.5234375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-layout-top",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 816.953125,
+              "y": 767.9296875,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-layout-bottom",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 979.4375,
+              "y": 807.1015625,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-extra-0",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 308.53125,
+              "y": 950.0234375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-extra-1",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 528.96875,
+              "y": 950.0234375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-extra-2",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 673.234375,
+              "y": 950.0234375,
+              "width": 33.015625,
+              "height": 33.015625
+            },
+            {
+              "id": "battery-extra-3",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 880.859375,
+              "y": 950.0234375,
+              "width": 33.015625,
+              "height": 33.015625
+            }
+          ]
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/device-battery-board-light.png",
+      "batteryPixels": [
+        {
+          "id": "battery-32-normal",
+          "matching": 132,
+          "minimum": 12
+        },
+        {
+          "id": "battery-32-warning",
+          "matching": 76,
+          "minimum": 12
+        },
+        {
+          "id": "battery-32-low",
+          "matching": 48,
+          "minimum": 12
+        },
+        {
+          "id": "battery-32-unknown",
+          "matching": 123,
+          "minimum": 12
+        },
+        {
+          "id": "battery-56-normal",
+          "matching": 372,
+          "minimum": 38
+        },
+        {
+          "id": "battery-56-warning",
+          "matching": 218,
+          "minimum": 38
+        },
+        {
+          "id": "battery-56-low",
+          "matching": 152,
+          "minimum": 38
+        },
+        {
+          "id": "battery-56-unknown",
+          "matching": 360,
+          "minimum": 38
+        },
+        {
+          "id": "battery-96-normal",
+          "matching": 1209,
+          "minimum": 109
+        },
+        {
+          "id": "battery-96-warning",
+          "matching": 789,
+          "minimum": 109
+        },
+        {
+          "id": "battery-96-low",
+          "matching": 549,
+          "minimum": 109
+        },
+        {
+          "id": "battery-96-unknown",
+          "matching": 1051,
+          "minimum": 109
+        },
+        {
+          "id": "battery-layout-none",
+          "matching": 372,
+          "minimum": 38
+        },
+        {
+          "id": "battery-layout-right",
+          "matching": 229,
+          "minimum": 38
+        },
+        {
+          "id": "battery-layout-left",
+          "matching": 152,
+          "minimum": 38
+        },
+        {
+          "id": "battery-layout-top",
+          "matching": 368,
+          "minimum": 38
+        },
+        {
+          "id": "battery-layout-bottom",
+          "matching": 398,
+          "minimum": 38
+        },
+        {
+          "id": "battery-extra-0",
+          "matching": 372,
+          "minimum": 38
+        },
+        {
+          "id": "battery-extra-1",
+          "matching": 238,
+          "minimum": 38
+        },
+        {
+          "id": "battery-extra-2",
+          "matching": 152,
+          "minimum": 38
+        },
+        {
+          "id": "battery-extra-3",
+          "matching": 360,
+          "minimum": 38
+        }
+      ],
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/device-battery-board-light.png",
+      "baselineSha256": "2fff08afeaa7fdf52174b0a08f390067b4002303ad8fd8c6d14b028ca3462091",
+      "dimensionsMatch": false,
+      "actualSize": [
+        1108,
+        995
+      ],
+      "baselineSize": [
+        1108,
+        1004
+      ],
+      "differingPixels": null,
+      "diffRatio": 1,
+      "maxObservedDelta": 255,
+      "passed": false
+    },
+    {
+      "id": "device-battery-mobile-dark",
+      "host": "lovelace",
+      "sourceSceneId": "device-battery-mobile-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "passed",
+      "actualSha256": "f968127a092cd5081a18864ce883f791e398136b5cbc0fcd319eab6a855c7cc8",
+      "runtime": {
+        "space": "golden-battery",
+        "mode": "view",
+        "devices": 8,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "batteryBoard": {
+          "iconSize": 4.127563722584469,
+          "loadedIcons": 4,
+          "samples": [
+            {
+              "id": "battery-mobile-0",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 117.8125,
+              "y": 328.3828125,
+              "width": 19.015625,
+              "height": 19.015625
+            },
+            {
+              "id": "battery-mobile-1",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 315,
+              "y": 328.3828125,
+              "width": 19.015625,
+              "height": 19.015625
+            },
+            {
+              "id": "battery-mobile-2",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 117.8125,
+              "y": 403.1796875,
+              "width": 19.015625,
+              "height": 19.015625
+            },
+            {
+              "id": "battery-mobile-3",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 277.3203125,
+              "y": 391.9765625,
+              "width": 19.015625,
+              "height": 19.015625
+            },
+            {
+              "id": "battery-mobile-4",
+              "state": "normal",
+              "color": [
+                29,
+                194,
+                29
+              ],
+              "x": 127.7265625,
+              "y": 489.1953125,
+              "width": 19.015625,
+              "height": 19.015625
+            },
+            {
+              "id": "battery-mobile-5",
+              "state": "warning",
+              "color": [
+                240,
+                160,
+                12
+              ],
+              "x": 296.3125,
+              "y": 477.9921875,
+              "width": 19.015625,
+              "height": 19.015625
+            },
+            {
+              "id": "battery-mobile-6",
+              "state": "low",
+              "color": [
+                240,
+                65,
+                12
+              ],
+              "x": 131.84375,
+              "y": 545.7734375,
+              "width": 33.046875,
+              "height": 33.046875
+            },
+            {
+              "id": "battery-mobile-7",
+              "state": "unknown",
+              "color": [
+                112,
+                119,
+                129
+              ],
+              "x": 281.4375,
+              "y": 545.7734375,
+              "width": 33.046875,
+              "height": 33.046875
+            }
+          ]
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/device-battery-mobile-dark.png",
+      "batteryPixels": [
+        {
+          "id": "battery-mobile-0",
+          "matching": 132,
+          "minimum": 12
+        },
+        {
+          "id": "battery-mobile-1",
+          "matching": 72,
+          "minimum": 12
+        },
+        {
+          "id": "battery-mobile-2",
+          "matching": 44,
+          "minimum": 12
+        },
+        {
+          "id": "battery-mobile-3",
+          "matching": 129,
+          "minimum": 12
+        },
+        {
+          "id": "battery-mobile-4",
+          "matching": 120,
+          "minimum": 12
+        },
+        {
+          "id": "battery-mobile-5",
+          "matching": 75,
+          "minimum": 12
+        },
+        {
+          "id": "battery-mobile-6",
+          "matching": 152,
+          "minimum": 38
+        },
+        {
+          "id": "battery-mobile-7",
+          "matching": 360,
+          "minimum": 38
+        }
+      ],
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/device-battery-mobile-dark.png",
+      "baselineSha256": "f968127a092cd5081a18864ce883f791e398136b5cbc0fcd319eab6a855c7cc8",
+      "dimensionsMatch": true,
+      "actualSize": [
+        378,
+        783
+      ],
+      "baselineSize": [
+        378,
+        783
+      ],
+      "differingPixels": 0,
+      "diffRatio": 0,
+      "maxObservedDelta": 0,
+      "passed": true
+    },
+    {
+      "id": "device-offline-dark",
+      "host": "lovelace",
+      "sourceSceneId": "device-offline-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "different",
+      "actualSha256": "3e3316b5856ae03bd9017c52b2ac83b3b578def53d34b8c9dd8bdf91f337e0a1",
+      "runtime": {
+        "space": "golden-offline",
+        "mode": "view",
+        "devices": 17,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "offlineBoard": {
+          "markers": [
+            {
+              "id": "icon",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "down",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "text",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "unknown",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "missing",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "source",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "double",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "static",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "controller",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "exact",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "alarm",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "legacy",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "whole",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "alarm-whole",
+              "offline": false,
+              "glyphOpacity": 1
+            }
+          ],
+          "leds": 3,
+          "actualText": true,
+          "wholeOrdinaryMarker": true,
+          "ledGeometryUnchanged": true
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/device-offline-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/device-offline-dark.png",
+      "baselineSha256": "d962f8c8d44bb8fc6a8c70b32d8b02d69394c92c219eaa92540cd24312a84305",
+      "dimensionsMatch": false,
+      "actualSize": [
+        1088,
+        975
+      ],
+      "baselineSize": [
+        1088,
+        984
+      ],
+      "differingPixels": null,
+      "diffRatio": 1,
+      "maxObservedDelta": 255,
+      "passed": false
+    },
+    {
+      "id": "safe-resize-handles-clamp-dark",
+      "host": "lovelace",
+      "sourceSceneId": "safe-resize-handles-clamp-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "4a1404607bf541c703f980484c5aa02f65cfd6a643848cda288ae72ea0108f03",
+      "runtime": {
+        "space": "golden-safe-resize",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "editor-secondary kind-tool",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-safe-resize",
+          "tool": "resize",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/safe-resize-handles-clamp-dark.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/safe-resize-handles-clamp-dark.png",
+      "baselineSha256": "18c0bc4babd14e02eac6442fd51e5e9bce966fac54893ac45d3470d79ce67936",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1180,
+        900
+      ],
+      "baselineSize": [
+        1180,
+        900
+      ],
+      "differingPixels": 313477,
+      "diffRatio": 0.29517608286252356,
+      "maxObservedDelta": 240,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/safe-resize-handles-clamp-dark.png"
+    },
+    {
+      "id": "device-alert-alarm-flat",
+      "host": "lovelace",
+      "sourceSceneId": "device-alert-alarm-flat",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "passed",
+      "actualSha256": "c203e5fd677ff4003a04cb850ce6056076878571de42f23ab564a9a1f17a5409",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 1,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "markerAlerts": {
+          "attention": 0,
+          "maintenance": 0,
+          "alarm": 1
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/device-alert-alarm-flat.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/device-alert-alarm-flat.png",
+      "baselineSha256": "c203e5fd677ff4003a04cb850ce6056076878571de42f23ab564a9a1f17a5409",
+      "dimensionsMatch": true,
+      "actualSize": [
+        888,
+        575
+      ],
+      "baselineSize": [
+        888,
+        575
+      ],
+      "differingPixels": 0,
+      "diffRatio": 0,
+      "maxObservedDelta": 0,
+      "passed": true
+    },
+    {
+      "id": "device-alert-maintenance-iso",
+      "host": "lovelace",
+      "sourceSceneId": "device-alert-maintenance-iso",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "passed",
+      "actualSha256": "3dbd63dd82baae2c38f84b9fd28d3b39b110d2f39003c08234b12185e12560a9",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 1,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "markerAlerts": {
+          "attention": 1,
+          "maintenance": 1,
+          "alarm": 0
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/device-alert-maintenance-iso.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/device-alert-maintenance-iso.png",
+      "baselineSha256": "3dbd63dd82baae2c38f84b9fd28d3b39b110d2f39003c08234b12185e12560a9",
+      "dimensionsMatch": true,
+      "actualSize": [
+        888,
+        575
+      ],
+      "baselineSize": [
+        888,
+        575
+      ],
+      "differingPixels": 0,
+      "diffRatio": 0,
+      "maxObservedDelta": 0,
+      "passed": true
+    },
+    {
+      "id": "device-alert-form-numeric",
+      "host": "lovelace",
+      "sourceSceneId": "device-alert-form-numeric",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "a9fde4b173843ddfc211715a188e9b8e7d6cd11f822f90557a1ad58af548d1d1",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "devices",
+        "devices": 1,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "markerAlerts": {
+          "form": "numeric"
+        }
+      },
+      "actualHost": "lovelace",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/device-alert-form-numeric.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/device-alert-form-numeric.png",
+      "baselineSha256": "079bfbfa35d9fb23210e023a1ae32ca53cc918c897dfe6b5a810e4e3251ae532",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1280,
+        1000
+      ],
+      "baselineSize": [
+        1280,
+        1000
+      ],
+      "differingPixels": 76926,
+      "diffRatio": 0.0600984375,
+      "maxObservedDelta": 127,
+      "passed": false,
+      "diff": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/diff/device-alert-form-numeric.png"
+    },
+    {
+      "id": "static-wall-openings-house-phone-light",
+      "host": "static",
+      "sourceSceneId": "static-wall-openings-house-phone-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "missing-baseline",
+      "actualSha256": "34489ace59fc49eef929ef402e67f5977b94a8c4d85ad948c4aabd4afe3ec290",
+      "runtime": {
+        "space": "f1",
+        "mode": "view",
+        "devices": 0,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "staticWallOpenings": {
+          "wallDoorPainted": true,
+          "wallDoorCut": true,
+          "solidControl": true,
+          "visibleSymbols": 5,
+          "fit": "house",
+          "width": 360,
+          "diagonal": false,
+          "linePlan": false
+        }
+      },
+      "actualHost": "static",
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/houseplan-process-next-1105/artifacts/process-next/golden-beta/actual/static-wall-openings-house-phone-light.png",
+      "baseline": "/home/matysh/houseplan-process-next-1105/demo/golden/baselines/static-wall-openings-house-phone-light.png"
+    }
+  ]
+}

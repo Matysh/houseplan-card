@@ -1,0 +1,223 @@
+#!/usr/bin/env node
+/** Agent-authored release accounting. Never classifies tasks or generates prose. */
+import { execFileSync } from 'node:child_process';
+import { isMainModule } from './spawn-portable.mjs';
+import { previousStableTag } from './release-notes.mjs';
+import { issueTrailers } from './release-membership.mjs';
+import { readTaskCommit, taskDelivery } from './task-delivery.mjs';
+import { classify } from './change-classes.mjs';
+
+export const LEDGER = 'docs/release-ledger';
+export const CATEGORIES = Object.freeze(['major', 'infra', 'stable-fix', 'line-fix']);
+export const isUserReleaseEntry = (entry) => ['major', 'stable-fix'].includes(entry.category);
+const stable = (tag) => /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(tag || '');
+const positive = (value) => Number.isSafeInteger(value) && value > 0;
+const nonempty = (value) => typeof value === 'string' && !!value.trim();
+
+export function validateCycle(cycle) {
+  if (cycle?.schema !== 1 || !stable(cycle.baseStable) || !stable(cycle.targetStable)
+    || previousStableTag(cycle.targetStable, [cycle.baseStable]) !== cycle.baseStable
+    || !positive(cycle.milestone?.number) || !nonempty(cycle.milestone?.title)
+    || /["\r\n]/.test(cycle.milestone.title))
+    throw new Error('Invalid release cycle: schema, previous/target stable and explicit milestone required');
+  return cycle;
+}
+
+/** Permanent milestone naming (owner decision 2026-10-31): the target stable without `v`, e.g. `1.84.0`. */
+export const milestoneTitle = (targetStable) => targetStable.slice(1);
+
+/**
+ * The cycle being merged into or released must follow the permanent naming.
+ * Published history (cycle.json at v1.81.0…v1.83.0 tags) keeps its original titles and stays readable.
+ */
+export function assertMilestoneNaming(cycle) {
+  validateCycle(cycle);
+  if (cycle.milestone.title !== milestoneTitle(cycle.targetStable))
+    throw new Error(`Milestone ${cycle.milestone.number} must be titled ${milestoneTitle(cycle.targetStable)}: permanent X.Y.Z naming of the target stable`);
+  return cycle;
+}
+
+export function validateEntry(entry, { issue, baseStable } = {}) {
+  if (entry?.schema !== 1 || !positive(entry.issue) || !stable(entry.baseStable)
+    || !CATEGORIES.includes(entry.category) || !nonempty(entry.rationale))
+    throw new Error('Invalid release classification: schema, issue, baseStable, category and rationale required');
+  if ((issue !== undefined && entry.issue !== Number(issue))
+    || (baseStable && entry.baseStable !== baseStable))
+    throw new Error(`Stale/mismatched release classification for #${issue ?? entry.issue}; base ${baseStable}`);
+  if (isUserReleaseEntry(entry) && (!nonempty(entry.summary?.ru) || !nonempty(entry.summary?.en)))
+    throw new Error(`#${entry.issue}: eligible classification needs user-facing RU/EN facts`);
+  if (entry.category === 'line-fix' && !positive(entry.introducedBy))
+    throw new Error(`#${entry.issue}: line-fix needs introducedBy issue (absent from previous stable)`);
+  return entry;
+}
+
+/** Release collection link: the milestone page by number with closed issues; a rename cannot break it. */
+export function milestoneLink(repo, cycle) {
+  validateCycle(cycle);
+  return `https://github.com/${repo}/milestone/${cycle.milestone.number}?closed=1`;
+}
+
+/** Title query used by bodies published before 2026-10-31 (v1.81.0…v1.83.0); accepted only for immutable published notes. */
+export function legacyMilestoneQuery(repo, cycle) {
+  validateCycle(cycle);
+  return `https://github.com/${repo}/issues?q=${encodeURIComponent(`is:issue milestone:"${cycle.milestone.title}"`)}`;
+}
+
+export const git = (args) => execFileSync('git', args, {
+  encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+}).trim();
+
+export function readMergeEntry(candidate, issue, gitRunner = git) {
+  candidate = gitRunner(['rev-parse', `${candidate}^{commit}`]).trim();
+  const cycle = assertMilestoneNaming(JSON.parse(gitRunner(['show', `${candidate}:${LEDGER}/cycle.json`])));
+  const tags = gitRunner(['tag', '--merged', candidate, '--list', 'v*']).split('\n');
+  if (tags.includes(cycle.targetStable)) throw new Error('This stable cycle has shipped; open the next cycle before merging tasks');
+  if (previousStableTag(cycle.targetStable, tags) !== cycle.baseStable)
+    throw new Error('Release cycle is stale: reclassify against the latest reachable previous stable');
+  const path = `${LEDGER}/${cycle.baseStable}/${Number(issue)}.json`;
+  const entry = validateEntry(JSON.parse(gitRunner(['show', `${candidate}:${path}`])), {
+    issue, baseStable: cycle.baseStable,
+  });
+  const commits = readDeliveryHistory(cycle.baseStable, candidate, gitRunner);
+  if (!commits.some(commit => issueTrailers(commit.message).includes(Number(issue))
+    && !/^Release:\s*/m.test(commit.message) && taskDelivery(commit) === 'implementation'
+    && commit.files.some(file => !file.startsWith('docs/reviews/'))))
+    throw Error(`#${issue}: only SPEC delivery exists; implementation required before merge accounting`);
+  assertImplementationClassification({ candidate, issue: Number(issue), path, commits, gitRunner });
+  return { cycle, entry };
+}
+
+function readDeliveryHistory(base, candidate, gitRunner) {
+  // A merge may name its own task while delivering another task through its
+  // second parent. Reachability, not the chosen mainline, proves delivery.
+  const raw = gitRunner(['log', '--topo-order', '--format=%H%x1f%B%x1e', `${base}..${candidate}`]);
+  return raw.split('\x1e').map(record => record.trim()).filter(Boolean).map(record => {
+    const [sha, ...message] = record.split('\x1f');
+    return readTaskCommit({ sha, message: message.join('\x1f') }, gitRunner);
+  });
+}
+
+function assertImplementationClassification({ candidate, issue, path, commits, gitRunner }) {
+  const first = commits.filter(commit => !/^Release:\s*/m.test(commit.message)
+    && issueTrailers(commit.message).includes(issue)
+    && commit.files.some(file => ['A', 'B'].includes(classify(file)))).at(-1);
+  if (!first) return;
+  const previous = gitRunner(['ls-tree', `${first.sha}^`, '--', path]).trim();
+  if (!previous) return;
+  const facts = entry => JSON.stringify([entry.schema, entry.issue, entry.baseStable, entry.category,
+    entry.rationale?.trim(), entry.summary?.ru?.trim(), entry.summary?.en?.trim(), entry.introducedBy]);
+  if (previous === gitRunner(['ls-tree', candidate, '--', path]).trim()
+    || facts(JSON.parse(gitRunner(['show', `${first.sha}^:${path}`])))
+      === facts(JSON.parse(gitRunner(['show', `${candidate}:${path}`]))))
+    throw Error(`#${issue}: stale doc-only classification predates first A/B implementation; agent must reclassify it`);
+}
+
+export function catalogueFromCommits({ cycle, entries, commits }) {
+  validateCycle(cycle);
+  const byIssue = new Map();
+  const specDeliveries = [];
+  for (const commit of commits) {
+    // A release promotion repeats issue trailers, but is not task delivery.
+    if (/^Release:\s*/m.test(commit.message)) continue;
+    if (taskDelivery(commit) === 'spec-review') {
+      specDeliveries.push({ issue: issueTrailers(commit.message)[0], commit: commit.sha, phase: 'spec-review' });
+      continue;
+    }
+    for (const issue of issueTrailers(commit.message)) {
+      if (!byIssue.has(issue)) byIssue.set(issue, []);
+      byIssue.get(issue).push(commit.sha);
+    }
+  }
+  const rows = [...byIssue].sort(([a], [b]) => a - b).map(([issue, evidence]) => {
+    const entry = validateEntry(entries.get(issue), { issue, baseStable: cycle.baseStable });
+    return { ...entry, commits: [...new Set(evidence)].sort() };
+  });
+  return { cycle, entries: rows, userIssues: rows.filter(isUserReleaseEntry).map((entry) => entry.issue),
+    specDeliveries: specDeliveries.sort((a, b) => a.issue - b.issue || a.commit.localeCompare(b.commit)) };
+}
+
+export function readCatalogue({ candidate = 'HEAD', tag, gitRunner = git } = {}) {
+  const candidateSha = gitRunner(['rev-parse', `${candidate}^{commit}`]).trim();
+  const cycle = validateCycle(JSON.parse(gitRunner(['show', `${candidateSha}:${LEDGER}/cycle.json`])));
+  if (tag && tag !== cycle.targetStable) throw new Error(`Cycle target ${cycle.targetStable} != ${tag}; curate a new cycle explicitly`);
+  const tags = gitRunner(['tag', '--merged', candidateSha, '--list', 'v*']).split('\n');
+  if (previousStableTag(cycle.targetStable, tags) !== cycle.baseStable)
+    throw new Error('Release cycle base does not match the latest reachable previous stable');
+  const commits = readDeliveryHistory(cycle.baseStable, candidateSha, gitRunner);
+  const entries = new Map();
+  for (const commit of commits) {
+    if (/^Release:\s*/m.test(commit.message)) continue;
+    if (taskDelivery(commit) === 'spec-review') continue;
+    for (const issue of issueTrailers(commit.message)) {
+      if (entries.has(issue)) continue;
+      try {
+        entries.set(issue, JSON.parse(gitRunner(['show', `${candidateSha}:${LEDGER}/${cycle.baseStable}/${issue}.json`])));
+      } catch { throw new Error(`Missing classification for #${issue} against ${cycle.baseStable}; agent must classify it`); }
+      assertImplementationClassification({ candidate: candidateSha, issue,
+        path: `${LEDGER}/${cycle.baseStable}/${issue}.json`, commits, gitRunner });
+    }
+  }
+  return { ...catalogueFromCommits({ cycle, entries, commits }), candidate: candidateSha };
+}
+
+export function reconcileEntry({ cycle, entry, api, repo }) {
+  assertMilestoneNaming(cycle);
+  validateEntry(entry, { baseStable: cycle.baseStable });
+  const milestone = api('GET', `repos/${repo}/milestones/${cycle.milestone.number}`);
+  if (milestone.title !== cycle.milestone.title || milestone.state !== 'open')
+    throw new Error('Configured milestone was renamed or closed: it must be open and titled X.Y.Z of the target stable; restore the title or update the release cycle explicitly');
+  const current = api('GET', `repos/${repo}/issues/${entry.issue}`);
+  const desired = isUserReleaseEntry(entry) ? cycle.milestone.number : null;
+  if ((current.milestone?.number ?? null) === desired) return { changed: false, milestone: desired };
+  // Never silently steal a task from an unrelated planning/historical milestone.
+  if (current.milestone && current.milestone.number !== cycle.milestone.number)
+    throw new Error(`#${entry.issue} belongs to another milestone; curator must resolve the conflict`);
+  api('PATCH', `repos/${repo}/issues/${entry.issue}`, { milestone: desired });
+  const after = api('GET', `repos/${repo}/issues/${entry.issue}`);
+  if ((after.milestone?.number ?? null) !== desired) throw new Error(`Milestone write for #${entry.issue} not confirmed`);
+  return { changed: true, milestone: desired };
+}
+
+export const ghApi = (method, endpoint, body, execute = execFileSync) => JSON.parse(execute('gh', [
+  'api', '--method', method, endpoint, ...(body ? ['--input', '-'] : []),
+], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, ...(body ? { input: JSON.stringify(body) } : {}) }));
+
+export function verifyMilestone({ catalogue, repo, api = ghApi }) {
+  const { cycle, userIssues } = catalogue;
+  assertMilestoneNaming(cycle);
+  const milestone = api('GET', `repos/${repo}/milestones/${cycle.milestone.number}`);
+  if (milestone.title !== cycle.milestone.title)
+    throw new Error('Milestone title must stay X.Y.Z of the target stable (permanent naming); restore it or fix the release cycle');
+  const actual = [];
+  for (let page = 1; ; page++) {
+    const rows = api('GET', `repos/${repo}/issues?milestone=${cycle.milestone.number}&state=all&per_page=100&page=${page}`);
+    actual.push(...rows.filter((row) => !row.pull_request).map((row) => row.number));
+    if (rows.length < 100) break;
+  }
+  if ([...new Set(actual)].sort((a, b) => a - b).join(',') !== userIssues.join(','))
+    throw new Error(`Milestone must contain exactly candidate user issues: expected [${userIssues}], actual [${actual.sort((a,b) => a-b)}]`);
+}
+
+if (isMainModule(import.meta.url)) {
+  try {
+    const arg = (key) => process.argv.find((value) => value.startsWith(`--${key}=`))?.slice(key.length + 3);
+    const candidate = arg('candidate') || 'HEAD';
+    const repo = arg('repo') || process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card';
+    const command = process.argv[2];
+    if (command === 'reconcile') {
+      const issue = Number(arg('issue'));
+      if (!positive(issue)) throw new Error('--issue=<number> required');
+      // Recovery changes GitHub bookkeeping only, and only for already merged material.
+      git(['merge-base', '--is-ancestor', candidate, 'origin/dev']);
+      const { cycle, entry } = readMergeEntry(candidate, issue);
+      console.log(JSON.stringify(reconcileEntry({ cycle, entry, repo, api: ghApi })));
+    } else if (command === 'catalogue' || command === 'verify-milestone') {
+      const catalogue = readCatalogue({ candidate, tag: arg('tag') });
+      if (command === 'verify-milestone') verifyMilestone({ catalogue, repo });
+      console.log(JSON.stringify(catalogue, null, 2));
+    } else throw new Error('usage: release-ledger.mjs catalogue|verify-milestone|reconcile --candidate=<ref> [--tag=<stable>] [--issue=N]');
+  } catch (error) {
+    console.error(`release ledger: ${error.message}`);
+    process.exitCode = 1;
+  }
+}

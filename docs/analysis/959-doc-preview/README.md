@@ -1,5 +1,10 @@
 # #959 — canonical device preview capture
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Unchanged accepted dev `0031dd58ddca7fe7d77052198fd07d24e0690842` refused
 the ordinary canonical capture in [run39173950661](https://github.com/Matysh/houseplan-card/actions/runs/39173950661):
 `documentation viewport does not show the device presentation preview` at

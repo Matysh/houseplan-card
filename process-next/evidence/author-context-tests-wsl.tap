@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: spec/code review receive issue discussion, source attribution, previous round and S6 receipts
+ok 1 - spec/code review receive issue discussion, source attribution, previous round and S6 receipts
+  ---
+  duration_ms: 11.679792
+  type: 'test'
+  ...
+# Subtest: a comment publication failure preserves the paid verdict and retries without calling model
+ok 2 - a comment publication failure preserves the paid verdict and retries without calling model
+  ---
+  duration_ms: 2.298638
+  type: 'test'
+  ...
+# Subtest: real spec/code job passes executor context from the issue and preserves its original snapshot on publication retry
+ok 3 - real spec/code job passes executor context from the issue and preserves its original snapshot on publication retry
+  ---
+  duration_ms: 49.572489
+  type: 'test'
+  ...
+# Subtest: a new workflow run reuses a matching artifact, never trusts a comment as verdict
+ok 4 - a new workflow run reuses a matching artifact, never trusts a comment as verdict
+  ---
+  duration_ms: 1.818334
+  type: 'test'
+  ...
+# Subtest: artifact with another request or changed patch does not replace the intended review
+ok 5 - artifact with another request or changed patch does not replace the intended review
+  ---
+  duration_ms: 0.807511
+  type: 'test'
+  ...
+# Subtest: discussion is paginated and disabled template never contacts GitHub
+ok 6 - discussion is paginated and disabled template never contacts GitHub
+  ---
+  duration_ms: 1.178819
+  type: 'test'
+  ...
+# Subtest: a manually supplied ownerAssigned flag cannot waive a dispatched review
+ok 7 - a manually supplied ownerAssigned flag cannot waive a dispatched review
+  ---
+  duration_ms: 0.609016
+  type: 'test'
+  ...
+# Subtest: review reads exact base/head and useful history without touching worktree
+ok 8 - review reads exact base/head and useful history without touching worktree
+  ---
+  duration_ms: 73.885945
+  type: 'test'
+  ...
+# Subtest: no command execution, path traversal, arbitrary ref flags or symlink reads
+ok 9 - no command execution, path traversal, arbitrary ref flags or symlink reads
+  ---
+  duration_ms: 42.007309
+  type: 'test'
+  ...
+# Subtest: owner ship never invokes individual review or demands a spec/key
+ok 10 - owner ship never invokes individual review or demands a spec/key
+  ---
+  duration_ms: 26.832845
+  type: 'test'
+  ...
+# Subtest: offline preview requires no provider and exposes only analytical tools
+ok 11 - offline preview requires no provider and exposes only analytical tools
+  ---
+  duration_ms: 27.470926
+  type: 'test'
+  ...
+# Subtest: executor context is freeform task data; fenced examples and following requirements do not become the briefing
+ok 12 - executor context is freeform task data; fenced examples and following requirements do not become the briefing
+  ---
+  duration_ms: 0.526968
+  type: 'test'
+  ...
+# Subtest: different executor contexts change only task data, never policy, review scope, tools or S6 results
+ok 13 - different executor contexts change only task data, never policy, review scope, tools or S6 results
+  ---
+  duration_ms: 43.710535
+  type: 'test'
+  ...
+# Subtest: API tool conversation preserves thinking and saves only the submitted report
+ok 14 - API tool conversation preserves thinking and saves only the submitted report
+  ---
+  duration_ms: 30.831561
+  type: 'test'
+  ...
+# Subtest: unknown tools, truncation and provider errors cannot become green reports
+ok 15 - unknown tools, truncation and provider errors cannot become green reports
+  ---
+  duration_ms: 29.52712
+  type: 'test'
+  ...
+# Subtest: transient API errors retry the same request twice, honour bounded retry-after, never switch models
+ok 16 - transient API errors retry the same request twice, honour bounded retry-after, never switch models
+  ---
+  duration_ms: 27.933907
+  type: 'test'
+  ...
+# Subtest: persistent transient failure is bounded and authentication errors are not retried
+ok 17 - persistent transient failure is bounded and authentication errors are not retried
+  ---
+  duration_ms: 27.508673
+  type: 'test'
+  ...
+# Subtest: one content reminder preserves the reply and permits a substantive submission
+ok 18 - one content reminder preserves the reply and permits a substantive submission
+  ---
+  duration_ms: 26.54365
+  type: 'test'
+  ...
+# Subtest: report writes reject symlink roots and inconsistent green verdicts
+ok 19 - report writes reject symlink roots and inconsistent green verdicts
+  ---
+  duration_ms: 25.675315
+  type: 'test'
+  ...
+# Subtest: author template check identifies missing/empty sections without pretending to review meaning
+ok 20 - author template check identifies missing/empty sections without pretending to review meaning
+  ---
+  duration_ms: 2.176427
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 438.08469

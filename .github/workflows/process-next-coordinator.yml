@@ -1,0 +1,74 @@
+# Canonical workflow source; deployed as .github/workflows/process-next-coordinator.yml.
+name: Очередь завершения задач
+run-name: Очередь завершения задач · ${{ github.event_name }}
+on:
+  issues:
+    types: [labeled, unlabeled, closed, reopened]
+  workflow_run:
+    workflows: [Содержательное ревью задачи]
+    types: [completed]
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'
+permissions:
+  contents: write
+  issues: write
+  actions: write
+jobs:
+  progress:
+    concurrency:
+      group: process-next-coordinator
+      cancel-in-progress: false
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      dev_build_sha: ${{ steps.progress.outputs.dev_build_sha }}
+      dev_build_issue: ${{ steps.progress.outputs.dev_build_issue }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: dev
+          fetch-depth: 0
+          token: ${{ secrets.HP_PROCESS_TOKEN }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .nvmrc
+      - name: Продвинуть очередь без запуска тестов
+        id: progress
+        env:
+          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+          HP_PROCESS_NEXT_ACTIVATE: '1'
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}
+        run: node process-next/templates/coordinator-job.mjs
+  dev-build:
+    needs: progress
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' && needs.progress.outputs.dev_build_sha != '' }}
+    concurrency:
+      group: process-next-dev-build
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.progress.outputs.dev_build_sha }}
+          fetch-depth: 0
+          token: ${{ secrets.HP_PROCESS_TOKEN }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .nvmrc
+      - name: Подготовить зависимости без старых hooks
+        run: npm ci --ignore-scripts
+      - name: Собрать публикуемый dev-build
+        run: node process-next/catalog/prepare.mjs build
+      - name: Опубликовать dev-build после merge
+        env:
+          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+          HP_PROCESS_NEXT_ACTIVATE: '1'
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          DEV_BUILD_SHA: ${{ needs.progress.outputs.dev_build_sha }}
+          DEV_BUILD_ISSUE: ${{ needs.progress.outputs.dev_build_issue }}
+          HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}
+        run: node process-next/templates/coordinator-dev-build.mjs

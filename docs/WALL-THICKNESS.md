@@ -399,6 +399,13 @@ safe physical fallback. The full card keeps the structural result in
 structural geometry fingerprint, and cursor or HA state updates never repeat the
 O(N²) `physicalBodySet()` node search.
 
+Static's room masonry also consumes `geometryRoomOpeningInputs` (#1171),
+including door/window/gate cuts as well as passages. Partition cuts still reach
+room masonry only under the shared exact composite-wall rule. The structural
+cache fingerprints actual cut geometry, so moving, resizing, rehosting or
+deleting an opening cannot retain its old aperture. A retained wall-face index
+serves symbols and tunnel association; contact ticks leave this structure warm.
+
 ## 3. Body render
 
 Production body is the **ring** `outset(poly, half) − inset(poly, half)` per
@@ -788,7 +795,8 @@ Purpose-built checks for node material: `junctionContractHoles` (the objective
 a deliberately holed fixture), the `smoke_junction_holes` wiring probe that
 verifies the same contract against the rendered `d` path, sixteen close-up
 golden scenes (`junction-*`) plus the owner's repro scene, and the
-`junction-*` mutants in `scripts/mutation-gate.mjs`.
+`junction-*` mutants in `scripts/mutation-registry.mjs`. Mutation execution is
+background work under [PROCESS.md](../PROCESS.md), outside the task/release checks.
 
 ## 9. Independent partitions and columns
 

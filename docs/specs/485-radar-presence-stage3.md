@@ -1,5 +1,10 @@
 # #485 — Radar presence, stage 3: coverage and use of room results
 
+> **Историческое ТЗ.** Процессные предписания ниже (гейты, прогоны, трейлеры,
+> передача на ревью) описывают прежнюю обвязку и не задают текущих действий.
+> Правила работы — [PROCESS.md](../../PROCESS.md); текущая постановка — в issue.
+> Продуктовые требования и исходные решения сохранены как контекст.
+
 Issue: [#485](https://github.com/Matysh/houseplan-card/issues/485).
 Prerequisites: [stage 1](485-radar-presence-stage1.md) and
 [stage 2](485-radar-presence-stage2.md). This is a proposed implementation

@@ -1,0 +1,3 @@
+.state/
+*.local.json
+node_modules/

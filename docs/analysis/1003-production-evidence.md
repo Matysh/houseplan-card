@@ -1,5 +1,10 @@
 # #1003 implementation evidence
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 This is an execution record, not a second spec. The canonical spec and its
 owner decisions remain in issue #1003. Product material is the commits through
 29f45c464; the final test-only addition drives a physically tight group through

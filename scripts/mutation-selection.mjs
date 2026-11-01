@@ -5,7 +5,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { closure, trackedFiles } from './check-inputs.mjs';
+import { closure, trackedFiles } from './mutation-inputs.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 export const MUTATION_REGISTRY_FILES = ['scripts/mutation-registry.mjs'];

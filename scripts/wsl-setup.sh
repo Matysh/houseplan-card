@@ -96,7 +96,7 @@ if [ "$MODE" = "--verify" ]; then
   echo "visual capture: panel-wide-view-light-en"
   npm run build
   node scripts/bundle-sync.mjs
-  node demo/golden/run.mjs --mode=capture --scenario=panel-wide-view-light-en
+  node process-next/catalog/golden-runner.mjs --mode=capture --scenario=panel-wide-view-light-en
   CAPTURE="$PWD/artifacts/golden/actual/panel-wide-view-light-en.png"
   test -s "$CAPTURE"
   echo "capture: $CAPTURE ($(wc -c < "$CAPTURE") bytes)"

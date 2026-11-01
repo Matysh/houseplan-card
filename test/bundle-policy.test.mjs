@@ -12,23 +12,11 @@ import {
   BUNDLE_RELEASE_ONLY_ERROR, BUNDLE_RELEASE_ONLY_SINCE, BUNDLE_ROOTS, bundleCommitErrors,
   assertCommittedBundleFresh, committedBundleMustMatch, isBundlePath, isCandidateSubject, releaseTrailers,
 } from '../scripts/bundle-policy.mjs';
-import { validateCommitMessage } from '../scripts/validate-commit-provenance.mjs';
-import { GENERATED_ROOTS } from '../scripts/rebase-on-dev.mjs';
 
 const POLICY = fileURLToPath(new URL('../scripts/bundle-policy.mjs', import.meta.url));
 const TREE = fileURLToPath(new URL('../scripts/bundle-tree.mjs', import.meta.url));
 const WORK = 'feat: x\n\nIssue: #657\nUser-Visible: no\n';
 const RELEASE = 'Release v1.79.0-beta.1 candidate\n\nIssue: #657\nUser-Visible: yes\nRelease: v1.79.0-beta.1\n';
-
-test('#657 пути бандла — один источник для политики и ребейза', () => {
-  assert.deepEqual([...BUNDLE_ROOTS], ['dist/', 'custom_components/houseplan/frontend/']);
-  assert.equal(GENERATED_ROOTS, BUNDLE_ROOTS, 'rebase-on-dev читает корни отсюда');
-  assert.equal(isBundlePath('dist/houseplan-card.js'), true);
-  assert.equal(isBundlePath('custom_components\\houseplan\\frontend\\houseplan-assets.json'), true);
-  assert.equal(isBundlePath('custom_components/houseplan/const.py'), false);
-  assert.equal(isBundlePath('demo/srv/assets/houseplan-card.js'), false, 'копия стенда не коммитится вовсе (#255)');
-  assert.equal(isBundlePath('distribution.md'), false);
-});
 
 test('#657 правило коммита: бандл — только с трейлером Release', () => {
   assert.deepEqual(bundleCommitErrors(WORK, ['src/a.ts', 'dist/houseplan-card.js']), [BUNDLE_RELEASE_ONLY_ERROR]);
@@ -50,25 +38,6 @@ test('#657 история до правила не переписывается:
   assert.deepEqual(bundleCommitErrors(WORK, ['dist/a.js']), [BUNDLE_RELEASE_ONLY_ERROR], 'хук: даты нет — судится всегда');
 });
 
-test('#1021 only proven dist deletions retire the duplicate without Release; HACS stays protected', () => {
-  const dist = 'dist/houseplan-card.js';
-  const frontend = 'custom_components/houseplan/frontend/houseplan-card.js';
-  assert.deepEqual(bundleCommitErrors(WORK, [dist], { deletedFiles: [dist] }), []);
-  assert.deepEqual(bundleCommitErrors(WORK, [dist]), [BUNDLE_RELEASE_ONLY_ERROR]);
-  assert.deepEqual(bundleCommitErrors(WORK, [dist, frontend], { deletedFiles: [dist, frontend] }), [BUNDLE_RELEASE_ONLY_ERROR]);
-  assert.deepEqual(validateCommitMessage(WORK, [dist], { deletedFiles: [dist] }), []);
-  assert.equal(committedBundleMustMatch({ files: [dist], deletedFiles: [dist] }), false);
-  assert.equal(committedBundleMustMatch({ subject: 'Release v1.83.0-beta.1 candidate', files: [dist], deletedFiles: [dist] }), true);
-});
-
-test('#657 правило исполняет validate-commit-provenance — и хук, и история', () => {
-  assert.ok(validateCommitMessage(WORK, ['dist/houseplan-card.js']).includes(BUNDLE_RELEASE_ONLY_ERROR));
-  assert.ok(!validateCommitMessage(RELEASE, ['dist/houseplan-card.js', 'docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'])
-    .includes(BUNDLE_RELEASE_ONLY_ERROR));
-  assert.ok(!validateCommitMessage(WORK, ['dist/houseplan-card.js'], { authorDate: '2026-09-20T10:00:00+03:00' })
-    .includes(BUNDLE_RELEASE_ONLY_ERROR), 'коммит до порога проходит по-старому');
-});
-
 test('#657 сверка копий: коммит меняет бандл или объявлен кандидатом', () => {
   assert.equal(committedBundleMustMatch({ subject: 'feat: x', files: ['src/a.ts'] }), false);
   assert.equal(committedBundleMustMatch({ subject: 'chore(golden): эталоны', files: ['demo/golden/baselines/a.png'] }), false,
@@ -86,9 +55,6 @@ test('#657 публикация беты: закоммиченный бандл 
   assert.throws(() => assertCommittedBundleFresh({ fingerprint: 'a'.repeat(64) }, 'b'.repeat(64)),
     /Committed bundle is stale.*bundle:release/);
   assert.throws(() => assertCommittedBundleFresh({}, 'b'.repeat(64)), /stale/);
-  // Проводка: проверку вызывает сам оркестратор публикации, а не только Validate.
-  const source = readFileSync(fileURLToPath(new URL('../scripts/release-prerelease.mjs', import.meta.url)), 'utf8');
-  assert.match(source, /assertCommittedBundleFresh\(manifest, sourceFingerprint\(root\)\)/);
 });
 
 // --- CLI на настоящем git-репозитории ---------------------------------------
@@ -132,25 +98,6 @@ function fixture({ legacyDist = false } = {}) {
   return root;
 }
 const cli = (root, ...args) => spawnSync(process.execPath, ['scripts/bundle-policy.mjs', ...args], { cwd: root, encoding: 'utf8' });
-
-test('#1021 actual Git deletion is not a release; staged provenance keeps frontend deletion protected', () => {
-  const root = fixture({ legacyDist: true });
-  try {
-    git(root, 'rm', '-qr', 'dist');
-    const message = join(root, 'message.txt');
-    writeFileSync(message, WORK);
-    const hook = () => spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/validate-commit-provenance.mjs', import.meta.url)),
-      '--message-file', message, '--staged'], { cwd: root, encoding: 'utf8' });
-    const retired = hook();
-    assert.equal(retired.status, 0, retired.stderr);
-    git(root, 'commit', '-q', '-m', WORK);
-    assert.equal(cli(root, '--must-match').status, 1, 'proven retirement does not claim a candidate');
-    git(root, 'rm', '-q', 'custom_components/houseplan/frontend/houseplan-card.js');
-    const rejected = hook();
-    assert.notEqual(rejected.status, 0);
-    assert.match(rejected.stderr, /changes only in a.*Release/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
 
 test('#657 CLI --verify: кандидат сверяет копии, обычный коммит — только свежую сборку', () => {
   const root = fixture();

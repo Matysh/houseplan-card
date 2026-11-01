@@ -1,5 +1,10 @@
 # External screens #1113 — acceptance evidence, 29 October 2026
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Authority: issue #1113 SPEC r1 (GREEN comment6468121860), and
 [approved UI-002r3, immutable c0a4fa9278e0](https://github.com/Matysh/houseplan-card/tree/c0a4fa9278e0d5f1b0924e38bcb3e8eb959d1636/docs/design/1113-external-screens/2026-10-28).
 Owner [#1120](https://github.com/Matysh/houseplan-card/issues/1120) supersedes

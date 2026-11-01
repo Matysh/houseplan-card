@@ -1,5 +1,10 @@
 # #903 delivery evidence — 2026-10-15
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Initial phase implementation: `5dbd8c65` (branch `issue/903-spec-delivery-ledger`).
 The green full local gate preceded a clean rebase over the documentation-only
 SPEC #911 commit `eda7fabd`; a byte comparison confirmed no implementation,

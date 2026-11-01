@@ -1,5 +1,10 @@
 # Dialog picker acceptance — #998
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 The implementation uses accepted UI-029 from
 `3a559559d68d0475db88d0f26cdf594be784351a`, independently replayed with its
 published beta.1 assets and unmodified accepted adapter. The candidate uses

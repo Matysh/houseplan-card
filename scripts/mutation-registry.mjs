@@ -77,6 +77,51 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'plan-rotation-phone-close-white-on-light-1070',
+    guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=plan-rotation-phone-editor-320-1070',
+    because: '#1070 AC12: the actual captured light phone header must paint a contrasting close glyph while desktop active-tab colour stays intact. Pixel witness, registered only; nightly execution.',
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "@media(min-width:481px) {",
+    "replace": "@media(min-width:0px) {"
+  }
+],
+  },
+  {
+    id: 'golden-lamp-out-of-reach',
+    guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=panel-lighting-opaque-glow-two-doorways-dark',
+    because: 'сцена заведена как защита дверного света (#71) и однажды уже была '
+      + 'пустой: лампа стояла так, что пятно не доходило до стены. Уведённая лампа '
+      + 'обязана ронять семантический ассерт warmPixelRegion, а не только пиксельный дифф. '
+      + 'Режим capture, а не verify: политика запрещает verify по одной сцене '
+      + '(demo/golden/policy.mjs) — частичный verify это лазейка «чтобы CI позеленел». '
+      + 'На capture семантический провал даёт status error, и goldenRunFailed '
+      + 'краснеет в любом режиме — то есть проверка сохраняется полностью',
+    // Мутируется фикстура сцены, не продуктовый код: пустота сцены — свойство
+    // фикстуры. Пересборка бандла всё равно нужна, путь тот же.
+    patches: [{
+      file: 'demo/golden/matrix.mjs',
+      find: "layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.40, y: 0.48 } },",
+      replace: "layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.06, y: 0.90 } },",
+    }],
+  },
+  {
+    id: 'golden-filled-tunnel-removed',
+    guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=openings-filled-tunnel-dark',
+    because: 'сцена защищает непрерывную room-coloured заливку толстого тоннеля (#81): '
+      + 'если fixture перестаёт рисовать заливку, semantic tunnelContinuity обязан упасть, '
+      + 'а не принять пустой проём как корректный golden',
+    // Ломаем только заявленное условие fixture. Capture сохраняет полный
+    // semantic gate даже для одной сцены и не зависит от pixel baseline.
+    patches: [{
+      file: 'demo/golden/matrix.mjs',
+      find: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'custom', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
+      replace: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'none', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
+    }],
+  },
+
+  {
     id: 'opening-drag-hides-direct-physical-producer-1097',
     guard: compiledNodeSmoke('smoke_partition_openings_preview'),
     because: '#1097 AC1: pool misses cannot see direct constructor work. The native CDP cold positive and observed crop constructor must cover the exact bundled physical producer. Declaration only; nightly execution.',
@@ -185,14 +230,6 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'custom_components/houseplan/const.py',
       find: 'MAX_CONFIG_TEXT = 500  # persisted names/models/IDs; shared strict decoder bound',
       replace: 'MAX_CONFIG_TEXT = 501  # deliberately widened floor' }],
-  },
-  {
-    id: 'plan-rotation-phone-close-white-on-light-1070',
-    guard: 'node demo/golden/run.mjs --mode=capture --scenario=plan-rotation-phone-editor-320-1070',
-    because: '#1070 AC12: the actual captured light phone header must paint a contrasting close glyph while desktop active-tab colour stays intact. Pixel witness, registered only; nightly execution.',
-    patches: [{ file: 'src/styles/chrome.styles.ts',
-      find: '    @media (min-width: 481px) {\n      .modetab.active + .editor-close-slot .closex {',
-      replace: '    @media (min-width: 0px) {\n      .modetab.active + .editor-close-slot .closex {' }],
   },
   {
     id: 'plan-rotation-mode-fractional-height-unquantized-1070',
@@ -410,22 +447,6 @@ const MUTANT_DEFINITIONS = [
       replace: '    return (connection.user.id, connection.user.id)'}],
   },
   {
-    id: 'docs-link-deadline-extended-1083',
-    guard: 'node --test test/doc-link-observation.test.mjs',
-    because: '#1083 AC2: a real silent HTTP peer must hit the original total eight-second deadline; passive diagnostics must not lengthen it. Registered only; nightly execution.',
-    patches: [{ file: 'scripts/doc-link-observation.mjs',
-      find: "method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(8000),",
-      replace: "method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(16000)," }],
-  },
-  {
-    id: 'docs-link-observation-exposes-url-secrets-1083',
-    guard: 'node --test test/doc-link-observation.test.mjs',
-    because: '#1083 AC1: ordinary credential/query/redirect inputs must not enter the bounded diagnostic metadata. Registered only; nightly execution.',
-    patches: [{ file: 'scripts/doc-link-observation.mjs',
-      find: '(url.origin + url.pathname).slice(0, 1024) : null;',
-      replace: 'url.href : null;' }],
-  },
-  {
     id: 'internal-window-contact-controls-glass-1079',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
     because: '#1079 AC1: a closed contact must not close internal glass; the actual visibility and opaque-source tests distinguish glass from a door. Nightly execution only.',
@@ -508,9 +529,9 @@ const MUTANT_DEFINITIONS = [
     id: 'ui-inline-opacity-loses-grid-slot-1051',
     guard: 'node demo/smoke_ui_1051.mjs',
     because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
-    patches: [{ file: 'src/editors/properties/styles.ts',
-      find: '  .hp-properties .hpf-colorfield > .hpf-opacity.hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }',
-      replace: '  .hp-properties .hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }' }],
+    patches: [{ file: 'src/styles/form-kit.styles.ts',
+      find: '  ${field} > .${p}-opacity.${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }',
+      replace: '  ${field} .${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }' }],
   },
   {
     id: 'ui-led-menu-keeps-scene-pan-1051',
@@ -768,23 +789,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'ci-python-producer-resolves-minor-again-1032',
-    guard: 'node --test test/ci-profiles.test.mjs',
-    because: 'Python producers must install the exact patch from the shared plan even when runner caches contain different patches; the ordinary workflow contract rejects independent minor/file resolution without weakening the actual-version stamp (#1032)',
-    patches: [
-      {
-        file: '.github/workflows/validate.yml',
-        find: '          python-version: ${{ needs.reuse.outputs.python_version }}\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
-        replace: '          python-version: "3.14"\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
-      },
-      {
-        file: '.github/workflows/validate-product.yml',
-        find: '          python-version: ${{ needs.reuse.outputs.python_version }}\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
-        replace: '          python-version: "3.14"\n      - run: npm ci\n      - name: Компилировать TS-зеркала стыков и идентичности/переноса стен',
-      },
-    ],
-  },
-  {
     id: 'png-comparison-reads-closed-bitmap-size-1007',
     guard: 'node demo/smoke_capture_stability.mjs',
     because: '#1007 AC6: ImageBitmap.close resets the native dimensions; known 1px and different-size PNG inputs must fail equality in the real decoder.',
@@ -840,8 +844,8 @@ const MUTANT_DEFINITIONS = [
     because: '#1007 AC3: a visually adjacent Help must not remain a descendant of the summary; trusted pointer hover and computed ancestor paint require Chromium.',
     patches: [{
       file: 'src/editors/form-kit.ts',
-      find: '<summary class=${triggerClass} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}</summary>',
-      replace: '<summary class=${triggerClass} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}${help ?? nothing}</summary>',
+      find: '<summary class=${triggerClass ? `hpf-disclosure-action ${triggerClass}` : \'\'} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}</summary>',
+      replace: '<summary class=${triggerClass ? `hpf-disclosure-action ${triggerClass}` : \'\'} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}${help ?? nothing}</summary>',
     }, {
       file: 'src/editors/form-kit.ts',
       find: '<div class="hpf-disclosure-with-help">${details}${help}</div>',
@@ -929,42 +933,6 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'custom_components/houseplan/partition_promotion.py',
       find: 'if not math.isfinite(cm) or cm <= 0 or cm != float(wall["cm"]):',
       replace: 'if not math.isfinite(cm) or cm <= 0:',
-    }],
-  },
-  {
-    id: 'ci-registry-trusts-claimed-git-inputs',
-    guard: 'node --test --test-name-pattern="independent source Git" test/ci-registry-inputs.test.mjs',
-    because: '#981: serialized producer keys cannot stand in for actual source/candidate Git object equality.',
-    patches: [{ file: 'scripts/ci-registry-equivalence.mjs',
-      find: "    else throw Error('different actual Git input: ' + path);",
-      replace: '    else continue;',
-    }],
-  },
-  {
-    id: 'ci-registry-trusts-tampered-index',
-    guard: 'node --test test/ci-proof-registry.test.mjs',
-    because: '#981: a mutable orphan index cannot replace the immutable source execution record.',
-    patches: [{ file: 'scripts/ci-registry-verify.mjs',
-      find: '    || !proof.registry?.produced?.some(item => sameRecord(item, record)))',
-      replace: '    || false)',
-    }],
-  },
-  {
-    id: 'ci-registry-accepts-absent-actual-job',
-    guard: 'node --test test/ci-proof-registry.test.mjs',
-    because: '#981: successful metadata must not stand for an absent or incomplete producer job.',
-    patches: [{ file: 'scripts/ci-registry-verify.mjs',
-      find: "    return rows.length === 1 && rows[0].status === 'completed' && rows[0].conclusion === 'success';",
-      replace: '    return true;',
-    }],
-  },
-  {
-    id: 'ci-registry-masks-whole-json',
-    guard: 'node --test --test-name-pattern="JSON mask cannot erase" test/ci-registry-inputs.test.mjs',
-    because: '#981: beta equivalence masks synchronized version scalars while preserving dependency and other JSON bytes.',
-    patches: [{ file: 'scripts/ci-registry-inputs.mjs',
-      find: '  return text;',
-      replace: '  return \'"<masked-whole-json>"\';',
     }],
   },
   {
@@ -1216,17 +1184,26 @@ const MUTANT_DEFINITIONS = [
   {
     id:'settings-led-actions-inherit-footer-border-955',
     guard:'node demo/smoke_settings_polish_955.mjs --case=led --geometry',
-    because:'#955: only the composed dialog cascade exposes the legacy footer border and inset inside the LED action row; actual border boxes and button geometry reveal the duplicate divider.',
-    patches:[{file:'src/styles/settings-dialogs.styles.ts',
-      find:'.hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}',
-      replace:'.hpf-settings-form .led-representation > .row{justify-content:flex-start;}',
-    }],
+    because:"#1148/#955: the retired broad footer no longer supplies body-row paint. Injecting an accidental divider/inset at the remaining LED layout row must fail the native border-box contract.",
+    patches:[
+  {
+    "file": "src/styles/settings-dialogs.styles.ts",
+    "find": ".hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}",
+    "replace": ".hpf-settings-form .led-representation > .row{justify-content:flex-start;border-top:1px solid var(--hpf-line);padding:12px 16px;}"
+  }
+],
   },
   {
     id:'settings-save-lettering-sits-low-955',
     guard:'node demo/smoke_ui_polish_963_reference.mjs',
-    because:'#963 supersedes the #955 optical shift with the approved unshifted footer. Paired PNG ink bounds use the frozen original prototype, genuine HA and identical four-language/two-theme rendering.',
-    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'.hpf-footer .hpf-save-label{transform:none;align-self:center;}',replace:'.hpf-footer .hpf-save-label{transform:translateY(.15em);align-self:center;}'}],
+    because:"#1148/#963: the common action line-box recipe preserves the approved unshifted Save ink. The earlier native negative check proved that restoring 20px moves ink by one pixel in all four languages and both themes.",
+    patches:[
+  {
+    "file": "src/styles/form-kit-settings.styles.ts",
+    "find": "'action-line-height': 'normal'",
+    "replace": "'action-line-height': '20px'"
+  }
+],
   },
   {
     id:'settings-help-orphans-last-line-955',
@@ -2431,22 +2408,6 @@ const MUTANT_DEFINITIONS = [
       replace: "      if (!rolledBack && host._adoption.configRev === attempt.revision && host._adoption.adoptionEpoch === epoch && String(id) === 'mutant-never-restore-new-device-ack') {" }],
   },
   {
-    id: 'candidate-optional-field-qa-becomes-mandatory',
-    guard: 'node --test test/candidate-858.test.mjs',
-    because: '#929 AC1: no release channel requires a manual owner field/GPU receipt; scene intent remains independently enforced.',
-    patches: [{ file: 'scripts/candidate-readiness.mjs',
-      find: '    else if (refusal) warnings.push(`#${entry.issue}: optional field observation: ${refusal}`);',
-      replace: '    else if (refusal || !record) blockers.push(`#${entry.issue}: manual field acceptance required`);' }],
-  },
-  {
-    id: 'candidate-beta-forgets-full-proof',
-    guard: 'node --test test/candidate-858.test.mjs',
-    because: '#889 AC3: beta field advice cannot authorise a failed, missing, pending, stale or cancelled full Validate.',
-    patches: [{ file: 'scripts/candidate-readiness.mjs',
-      find: "if (proof.status !== 'green') blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);",
-      replace: "if (proof.status !== 'green' && policy.manualAcceptanceRequired) blockers.push(`full exact-SHA Validate is ${proof.status}: ${proof.note || 'proof unavailable'} ${proof.url || ''}`);" }],
-  },
-  {
     id: 'golden-overlap-forgets-scene-repaint',
     guard: 'node --test test/golden-scene-repaint.test.mjs',
     because: '#881 AC1: the focused overlap frame must paint a temporary root background and restore it before capture, without affecting the other scenes.',
@@ -3280,15 +3241,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'merge-continuation-skips-material-fetch',
-    guard: 'node --test --test-name-pattern="#882 AC1" test/merge-continuation-882.test.mjs',
-    because: '#882 AC1: after the candidate force-push the reviewed material is on no branch; '
-      + 'without a fetch by SHA merge-base fails and a green verdict dies as a silent unverified.',
-    patches: [{ file: 'scripts/workflow-continuation.mjs',
-      find: '  try { ops.fetch(p.material); } catch (error) {',
-      replace: '  try { /* mutant: material not delivered */ } catch (error) {' }],
-  },
-  {
     id: 'room-placement-capture-disconnected',
     guard: compiledNodeSmoke('smoke_room_device_discovery'),
     because: '#879 AC1: both real room Save paths must capture first placements before new-device detection.',
@@ -3439,80 +3391,6 @@ const MUTANT_DEFINITIONS = [
       find: '    if (!wasPending || !rolledBack || restored) return;',
       replace: '    if (!wasPending || restored) return;',
     }],
-  },
-  {
-    id: 'candidate-headless-substitutes-owner-gpu',
-    guard: 'node --test --test-name-pattern="#929 optional observation" test/candidate-858.test.mjs',
-    because: '#929: an optional headless observation must not claim real-GPU evidence; this truth check is advisory, not a publication gate',
-    patches: [{ file: 'scripts/candidate-readiness.mjs',
-      find: '  if (gpu && (record.environment.realGpu !== true || !record.environment.gpu?.trim()',
-      replace: '  if (false && (record.environment.realGpu !== true || !record.environment.gpu?.trim()',
-    }],
-  },
-  {
-    id: 'candidate-accepts-unrelated-scene-drift',
-    guard: 'node --test --test-name-pattern="#858 owner scene intent" test/candidate-858.test.mjs',
-    because: '#858: owner-scoped scene intent never approves unrelated golden regions or a partial capture',
-    patches: [{ file: 'scripts/candidate-readiness.mjs',
-      find: "  return results.some(r => r.status !== 'passed') && !goldenAcceptanceRefusal(results, scenes.change, scenes.new);",
-      replace: "  return results.some(r => r.status !== 'passed') && true;",
-    }],
-  },
-  {
-    id: 'led-state-delivery-blesses-expired-lease',
-    guard: 'node --test --test-name-pattern="#863 LED oracle" test/smoke-evidence-863.test.mjs',
-    because: '#863: active paint must have contemporaneous active delivery, not a settled state or a Node timing assumption; synthetic field evidence proves this without Chromium',
-    patches: [{ file: 'demo/helpers/led-state-delivery.mjs',
-      find: "    && row.coarseAtDelivery === (phase === 'active')",
-      replace: '    && true',
-    }],
-  },
-  {
-    id: 'daycycle-raster-report-blesses-over-budget',
-    guard: 'node --test --test-name-pattern="#863 raster median" test/smoke-evidence-863.test.mjs',
-    because: '#863: retained raw paired samples must still reject a systematic ratio above the unchanged ceiling; a pure report fixture does not need browser timing',
-    patches: [{ file: 'demo/helpers/daycycle-measurement.mjs',
-      find: '    rasterRatioWithinBudget: ratio <= RATIO_CEILING };',
-      replace: '    rasterRatioWithinBudget: true };',
-    }],
-  },
-  {
-    id: 'decision-context-archive-by-default',
-    guard: 'node --test --test-name-pattern="#860 bounded lookup" test/decision-context-860.test.mjs',
-    because: '#860: explicit historical access must not turn normal addressed lookup into archive noise.',
-    patches: [{ file: 'scripts/decision-context.mjs',
-      find: "    ...(historical ? ['legacy/reviews'] : [])]).trim().split('\\n');",
-      replace: "    ...(['legacy/reviews'])]).trim().split('\\n');" }],
-  },
-  {
-    id: 'model-outcome-allows-exhausted',
-    guard: 'node --test --test-name-pattern="#857 interrupted SDK" test/model-evidence-857.test.mjs',
-    because: '#857: a known interrupted result must not authorize complete verdict publication.',
-    patches: [{ file: 'scripts/model-usage-details.mjs',
-      find: "  return !d || !['exhausted', 'error'].includes(d.outcome);",
-      replace: '  return true;' }],
-  },
-  {
-    id: 'frontend-producer-red-cache-hit',
-    guard: 'node --test --test-name-pattern="#856 frontend reuse" test/proof-loop-856.test.mjs',
-    because: '#856: red producer evidence is never a successful cache hit.',
-    patches: [{ file: 'scripts/frontend-proof.mjs',
-      find: "proof.outcome === 'success'", replace: 'true' }],
-  },
-  {
-    id: 'continuation-ignores-current-epoch',
-    guard: 'node --test --test-name-pattern="#856 merge continuation" test/proof-loop-856.test.mjs',
-    because: '#856: completion cannot apply a verdict to a newer request epoch.',
-    patches: [{ file: 'scripts/workflow-continuation.mjs',
-      find: 'current.request?.id !== p.epoch', replace: 'false' }],
-  },
-  {
-    id: 'model-failure-returns-stale-material',
-    guard: 'node --test --test-name-pattern="#857 current failed epoch" test/model-evidence-857.test.mjs',
-    because: '#857: stale code material cannot return a newer review request to its author.',
-    patches: [{ file: 'scripts/model-review-failure.mjs',
-      find: ' || current.headSha !== materialSha)',
-      replace: ' || false)' }],
   },
   {
     id: 'wall-adoption-mutates-shared-point-owners',
@@ -4988,13 +4866,14 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'ha-form-shell-loses-canvas',
     guard: 'node demo/smoke_ha_form_shell_parity.mjs',
-    because: '#609 AC3: forms in HA need the same canvas-and-card hierarchy as the reviewed '
-      + 'native shell; painting the body as the dialog surface erases that hierarchy',
-    patches: [{
-      file: 'src/styles/dialogs.styles.ts',
-      find: '      background: var(--hpf-canvas, var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000))));',
-      replace: '      background: var(--card-background-color, var(--hp-bg, #202126));',
-    }],
+    because: "#1148 supersedes the legacy body/canvas painter with the common opaque Kit body. The composed compact-dialog CSS contract in styles-split checks that owner; native dialog/HA matrices cover actual palette and scrolling.",
+    patches: [
+  {
+    "file": "src/compact-dialog-styles.ts",
+    "find": "padding:var(--hpf-kit-body-inset,20px);background:var(--hpf-surface);",
+    "replace": "padding:var(--hpf-kit-body-inset,20px);background:transparent;"
+  }
+],
   },
   {
     id: 'ha-form-shell-mobile-keeps-desktop-inset',
@@ -5347,11 +5226,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/summary-panel-presentation.test.mjs',
     because: '#505 AC3/AC4: a cancelled animation promise or timeout must not settle or remove '
       + 'the newer run after an in-place reversal; both completion ownership checks are removed',
-    patches: [{
-      file: 'src/summary-panel-presentation.ts',
-      find: '      if (token !== this.generation || animation !== this.animation) return;',
-      replace: '      void token; // mutant: stale completion can settle the current run',
-    }],
+    patches: [
+  {
+    "file": "src/control-surface-presentation.ts",
+    "find": "      if (token !== this.generation || animation !== this.animation) return;",
+    "replace": "      void token; // mutant: stale completion can settle the current run"
+  }
+],
   },
   {
     id: 'summary-animation-reset-keeps-presentation',
@@ -5360,11 +5241,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/summary-panel-presentation.test.mjs',
     because: '#505 AC4: an identity/route/disconnect reset must hide the old presentation, '
       + 'release its animation/timer/listener and prevent a late repaint into the new context',
-    patches: [{
-      file: 'src/summary-panel-presentation.ts',
-      find: '  public reset(): void {\n    this.settle(false);\n    this.side = null;',
-      replace: '  public reset(): void {\n    this.side = null; // mutant: old presentation survives reset',
-    }],
+    patches: [
+  {
+    "file": "src/control-surface-presentation.ts",
+    "find": "  public reset(): void {\n    this.settle(false);\n    this.side = null;",
+    "replace": "  public reset(): void {\n    this.side = null; // mutant: old presentation survives reset"
+  }
+],
   },
   {
     id: 'summary-animation-ignores-reduced-motion',
@@ -5373,11 +5256,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/summary-panel-presentation.test.mjs',
     because: '#505 AC4: an already enabled reduced-motion preference must settle entering '
       + 'and exiting immediately without starting a WAAPI animation or delayed removal timer',
-    patches: [{
-      file: 'src/summary-panel-presentation.ts',
-      find: "    if (!view || media?.matches || typeof element.animate !== 'function') {",
-      replace: "    if (!view || typeof element.animate !== 'function') {",
-    }],
+    patches: [
+  {
+    "file": "src/control-surface-presentation.ts",
+    "find": "    if (!view || media?.matches || typeof element.animate !== 'function') {",
+    "replace": "    if (!view || typeof element.animate !== 'function') {"
+  }
+],
   },
   {
     id: 'room-temperature-blank-becomes-zero',
@@ -5860,20 +5745,6 @@ const MUTANT_DEFINITIONS = [
         + '          line.map(([x, y]) => [x + dx, y + dy] as const)),\n'
         + '      } : undefined,\n'
         + '    };',
-    }],
-  },
-  {
-    id: 'resource-docs-flatten-current-yaml',
-    // Свежесть скриншотов — предупреждение (#479): мутант проверяет YAML-сниппет
-    // README, а не отпечаток кадров; строгий режим красил чистый прогон на любом
-    // src-диффе без пересъёмки (run 2793, #496).
-    guard: 'node scripts/check-docs.mjs --screenshots=warn',
-    because: 'the supported HA 2026.2+ resource snippet must stay nested under lovelace; '
-      + 'a plausible-looking top-level resources block is the user-facing defect from #462 AC1',
-    patches: [{
-      file: 'README.md',
-      find: 'lovelace:\n  resource_mode: yaml\n  resources:',
-      replace: 'resource_mode: yaml\nresources:',
     }],
   },
   {
@@ -6543,15 +6414,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_dialog_modal_recovery.mjs',
     because: 'an HA shell may close outside Lit; rejected close must force live() to reconcile the '
       + 'same physical modal instead of leaving its preserved draft invisible (#607)',
-    patches: [{
-      file: 'src/hp-dialog.ts',
-      find: '      return html`<ha-dialog\n'
-        + '        .hass=${this.hass}\n'
-        + '        .open=${live(!this._closing)}',
-      replace: '      return html`<ha-dialog\n'
-        + '        .hass=${this.hass}\n'
-        + '        .open=${true}',
-    }],
+    patches: [
+  {
+    "file": "src/hp-dialog.ts",
+    "find": "      return html`<ha-dialog ${haDialogMotion()}\n        .hass=${this.hass}\n        .open=${live(!this._closing)}",
+    "replace": "      return html`<ha-dialog ${haDialogMotion()}\n        .hass=${this.hass}\n        .open=${true}"
+  }
+],
   },
   {
     id: 'dialog-ha-disconnected-reject-reopen-enabled',
@@ -7624,22 +7493,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'core-budget-ignores-growth',
-    guard: 'node --test test/core-file-budget.test.mjs',
-    because: 'the two cores put on 500-1000 lines per release while everything new '
-      + 'goes into new modules — a budget that does not notice growth of its own '
-      + 'files is decoration, and the decomposition issue it replaces sat still for '
-      + '25 days precisely because nobody was counting (#425, replaces #34)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: 'export class HouseplanCard',
-      // #899: 400 lines became legal approved headroom after #898. Exceed the
-      // finite cap + band even from an empty file; a metadata unit keeps this
-      // amount above future approved caps without changing the budget itself.
-      replace: `${'\n'.repeat(20000)}export class HouseplanCard`,
-    }],
-  },
-  {
     id: 'capture-allows-partial-raster',
     guard: 'node --test test/capture-determinism-args.test.mjs',
     because: 'partial raster reuses whatever the compositor drew before, so the frame '
@@ -7663,30 +7516,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'capture-gate-forgives-a-missing-frame',
-    guard: 'node --test test/capture-determinism-gate.test.mjs',
-    because: 'comparing only the frames both runs happen to have lets a run that '
-      + 'produced nine frames pass against a run that produced ten — «совпало» then '
-      + 'means nothing, which is the opposite of what the gate is for (#422)',
-    patches: [{
-      file: 'scripts/capture-determinism.mjs',
-      find: '  const names = [...new Set([...Object.keys(first), ...Object.keys(second)])].sort();',
-      replace: '  const names = Object.keys(first).filter((name) => name in second).sort();',
-    }],
-  },
-  {
-    id: 'capture-gate-hashes-everything-in-the-folder',
-    guard: 'node --test test/capture-determinism-gate.test.mjs',
-    because: 'hashing every file in docs/images drags the manifest into the comparison, '
-      + 'and the manifest legitimately changes between runs — the gate would then cry '
-      + 'wolf on every capture and be switched off within a week (#422)',
-    patches: [{
-      file: 'scripts/capture-determinism.mjs',
-      find: "    if (!name.endsWith('.png')) continue;\n",
-      replace: '',
-    }],
-  },
-  {
     id: 'capture-drifts-between-runs',
     guard: 'node --test test/capture-clip.test.mjs',
     because: 'a crop that rounds to the nearest pixel shaves half a pixel off the '
@@ -7697,18 +7526,6 @@ const MUTANT_DEFINITIONS = [
       file: 'demo/docs/clip.mjs',
       find: '  const x = Math.floor(rect.x);',
       replace: '  const x = Math.round(rect.x);',
-    }],
-  },
-  {
-    id: 'anchor-liveness-ignores-reachability',
-    guard: 'node --test test/review-doc-guard.test.mjs',
-    because: 'asking whether the object merely exists locally lets an anchor born on '
-      + 'the author machine soften the #413 refusal exactly where the mistake was '
-      + 'made — liveness has to mean reachable from origin (#422)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: "    const probe = run(['log', '--remotes=origin', '--tags', '--format=%T']);",
-      replace: "    const probe = { status: 0, stdout: object };",
     }],
   },
   {
@@ -7888,31 +7705,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'workflow-scan-hardcodes-the-list',
-    guard: 'node --test test/validate-workflow.test.mjs',
-    because: 'scanning a fixed pair of names is how a third workflow installs '
-      + 'unpinned dependencies unnoticed — the shape #399 removed',
-    patches: [{
-      file: 'test/validate-workflow.test.mjs',
-      // Список из ДВУХ настоящих имён — самая правдоподобная форма регрессии:
-      // на сегодняшнем дереве она неотличима от корректного кода, и мутант с
-      // одним именем ловился бы по посторонней причине (замечание r1).
-      find: "  const files = readdirSync(directory).filter((name) => name.endsWith('.yml'));",
-      replace: "  const files = ['validate.yml', 'mutation-gate.yml'];",
-    }],
-  },
-  {
-    id: 'lint-scope-drifts',
-    guard: 'node --test test/lint-scope.test.mjs',
-    because: 'a declared lint scope wider than the checked one is what let '
-      + 'F401/F811 into tests_backend unnoticed (#399)',
-    patches: [{
-      file: 'pyproject.toml',
-      find: 'include = ["custom_components/houseplan/**/*.py"]',
-      replace: 'include = ["custom_components/houseplan/**/*.py", "tests_backend/**/*.py"]',
-    }],
-  },
-  {
     id: 'frontend-pin-drifts-from-ha',
     guard: 'node --test test/backend-pins.test.mjs',
     because: 'a frontend pin nobody derives from the pinned HA is how the '
@@ -7943,28 +7735,6 @@ const MUTANT_DEFINITIONS = [
       file: 'tests_backend/pure_imports.py',
       find: '            del sys.modules[key]',
       replace: '            pass',
-    }],
-  },
-  {
-    id: 'golden-accept-sandbox-leaks',
-    guard: 'node --test test/temp-dir-hygiene.test.mjs',
-    because: 'the ~20 MB baselines sandbox of accept() outliving every call is what filled the '
-      + 'shared TMPDIR to 8.5 GB and ENOSPC (#646 AC2)',
-    patches: [{
-      file: 'test/golden-capture-provenance.test.mjs',
-      find: '    rmSync(sandbox, { recursive: true, force: true });',
-      replace: '    // sandbox is left for inspection',
-    }],
-  },
-  {
-    id: 'temp-hygiene-accepts-cleanup-outside-finally',
-    guard: 'node --test test/temp-dir-hygiene.test.mjs',
-    because: 'a trailing rmSync after the asserts does not run when an assert fails, so a red '
-      + 'test still leaks; the lint must not count it as cleanup (#646 AC2)',
-    patches: [{
-      file: 'test/temp-dir-hygiene.test.mjs',
-      find: 'function inCleanupPosition(node, scope) {',
-      replace: 'function inCleanupPosition(node, scope) {\n  if (node) return true;',
     }],
   },
   {
@@ -8103,17 +7873,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'typing-gate-stops-running',
-    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
-    because: 'a strict-typing allowlist that CI never executes is a measurement '
-      + 'that measures nothing — the step must be load-bearing (#42 r6 AC4)',
-    patches: [{
-      file: '.github/workflows/validate.yml',
-      find: '          python -m mypy $modules',
-      replace: '          echo "skip: $modules"',
-    }],
-  },
-  {
     id: 'error-scanner-loses-a-class-source',
     guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
     because: 'silencing one err.code class source must redden the scanner, or the branch '
@@ -8214,74 +7973,6 @@ const MUTANT_DEFINITIONS = [
       file: 'src/editors/source-picker-overlay.ts',
       find: '        this.onClose?.();',
       replace: "        if (reason !== 'escape') this.onClose?.();",
-    }],
-  },
-  {
-    id: 'release-proof-computed-for-every-commit',
-    guard: 'node --test test/process-gate.test.mjs',
-    because: 'gating the expensive diff proof on the SAME release predicate is the #385(v) '
-      + 'contract — a narrowed or removed gate either wastes git-show spawns per commit '
-      + 'or hands release commits a null proof (false violations)',
-    patches: [{
-      file: 'scripts/process-gate.mjs',
-      find: "        releaseSourceViolations: isReleaseCommit(subject, one)\n          ? releaseSourceViolationsOf(sha, files) : null,",
-      replace: "        releaseSourceViolations: releaseSourceViolationsOf(sha, files),",
-    }],
-  },
-  {
-    id: 'task-packet-product-flow-overrides-diff',
-    guard: 'node --test test/task-packet.test.mjs',
-    because: 'a product S6 issue whose branch holds no class A yet must keep its class A rights; '
-      + 'letting the diff heuristic win again prints the false infrastructure ban of #632',
-    patches: [{
-      file: 'scripts/task-packet.mjs',
-      find: "  const infrastructure = branch?.infrastructure === true && productFlow.length === 0;",
-      replace: "  const infrastructure = branch?.infrastructure === true;",
-    }],
-  },
-  {
-    id: 'process-gate-infra-entry-covers-spec-route',
-    guard: 'node --test test/process-gate.test.mjs',
-    because: 'the #562 infrastructure entry is for a task before its first S status; letting it '
-      + 'cover S3-spec/S4-spec-review passes a pushed tests-only branch that §11.8 forbids and '
-      + 'hands the spec review a branch as material (#753)',
-    patches: [{
-      file: 'scripts/process-gate.mjs',
-      find: '    const optional = statusOptional && specRoute.length === 0;',
-      replace: '    const optional = statusOptional;',
-    }],
-  },
-  {
-    id: 'task-packet-review-docs-not-material',
-    guard: 'node --test test/task-packet.test.mjs',
-    because: 'docs/reviews/** is written by the pipeline, not by the task: counting it as '
-      + 'material makes a spec-review-only product branch look like infrastructure (#632)',
-    patches: [{
-      file: 'scripts/task-packet.mjs',
-      find: "  const material = changedFiles.filter((name) => !name.startsWith('docs/reviews/'));",
-      replace: "  const material = changedFiles;",
-    }],
-  },
-  {
-    id: 'task-packet-s6-s7-alone-not-product-flow',
-    guard: 'node --test test/task-packet.test.mjs',
-    because: 'infrastructure issues enter at S7 and return to S6, so S6/S7 alone must not '
-      + 'count as product flow — otherwise a returned infra task loses the class A ban (#632)',
-    patches: [{
-      file: 'scripts/task-packet.mjs',
-      find: "  if (PRE_CODE_STATUSES.includes(status)) reasons.push(`статус ${status}`);",
-      replace: "  if (STATUS_LABELS.includes(status)) reasons.push(`статус ${status}`);",
-    }],
-  },
-  {
-    id: 'task-packet-trivial-is-product-flow',
-    guard: 'node --test test/task-packet.test.mjs',
-    because: 'a legacy trivial task wrote no spec and no spec review, so in S6/S7 its label is '
-      + 'the only product-flow evidence; dropping it prints the false class A ban of #632 again (r1)',
-    patches: [{
-      file: 'scripts/task-packet.mjs',
-      find: "  if (labels.includes('trivial')) reasons.push('прежняя метка trivial — продуктовый поток, читается как track:show (§5.1)');",
-      replace: "",
     }],
   },
   {
@@ -8696,29 +8387,6 @@ const MUTANT_DEFINITIONS = [
       find: '  return Math.min(1, Math.max(0,\n'
         + '    Math.round(safe / OPENING_LIGHT_AMOUNT_QUANTUM) * OPENING_LIGHT_AMOUNT_QUANTUM));',
       replace: '  return safe;',
-    }],
-  },
-  // #706: исход rereview возвращает задачу в ту же метку; один вызов gh её снимал.
-  {
-    id: 'rereview-relabel-in-one-call',
-    guard: 'node --test --test-name-pattern="#706 rereview" test/status-label.test.mjs',
-    because: '#706: --add-label X --remove-label X in one gh call leaves the issue without a status; '
-      + 'the same label must be removed and set again so the labeled event starts a new round',
-    patches: [{
-      file: 'scripts/status-label.mjs',
-      find: '  if (from === to) {',
-      replace: '  if (false) { // mutant: one combined call',
-    }],
-  },
-  {
-    id: 'process-label-step-combined-again',
-    guard: 'node --test --test-name-pattern="#706 шаг конвейера" test/status-label.test.mjs',
-    because: '#706: the pipeline step must move the label through status-label.mjs, not through the '
-      + 'combined gh call that stripped S7-code-review on rereview',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          node "$TOOLS/scripts/status-label.mjs" --repo="${{ github.repository }}" \\\n            --issue="$NUM" --from="$FROM" --to="$TO"\n',
-      replace: '          gh issue edit "$NUM" --repo "${{ github.repository }}" \\\n            --add-label "$TO" --remove-label "$FROM"\n',
     }],
   },
   {
@@ -9557,19 +9225,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'unit-formatting-escapes-the-formatter',
-    guard: 'node --test --test-name-pattern="детектор действительно ловит" '
-      + 'test/single-source-numbers.test.mjs',
-    because: 'одно число, видимое дважды, обязано иметь один источник: расхождение превью и '
-      + 'записи стоило продукту #234, а расхождение подписи и площади — #233. Детектор без '
-      + 'способности сработать — это разрешение собирать подписи где угодно',
-    patches: [{
-      file: 'test/single-source-numbers.test.mjs',
-      find: "  + '\\\\s*(m²|ft²|м²|m\\\\b|cm\\\\b|см(?![а-яё])|м(?![а-яё])|′|″)',",
-      replace: "  + '\\\\s*(ЗАГЛУШКА)',",
-    }],
-  },
-  {
     id: 'invariant-loses-wall-record',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="исчезнувшая запись толщины" '
@@ -9675,62 +9330,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/mutation-gate-report.mjs',
       find: "    if (INTERRUPTED_OUTCOMES.has(evidence.outcome)) {\n      errors.push(`shard ${shard}: run was interrupted (step outcome ${evidence.outcome})`);\n    }",
       replace: "    if (false && INTERRUPTED_OUTCOMES.has(evidence.outcome)) {\n      errors.push(`shard ${shard}: run was interrupted (step outcome ${evidence.outcome})`);\n    }",
-    }],
-  },
-  // #620: ночь по неизменённому дереву и окружение шарда по гардам плана.
-  {
-    id: 'nightly-reuse-ignores-tree',
-    guard: 'node --test --test-name-pattern="маркер другого дерева" test/mutation-nightly-reuse.test.mjs',
-    because: 'a green marker proves exactly one tree; accepting it for another tree would skip the '
-      + 'nightly registry on changed code and hide rotted witnesses until release (#620)',
-    patches: [{
-      file: 'scripts/mutation-nightly-reuse.mjs',
-      find: "  if (marker.tree !== tree) return no('marker proves another tree');",
-      replace: "  if (false && marker.tree !== tree) return no('marker proves another tree');",
-    }],
-  },
-  {
-    id: 'nightly-reuse-accepts-stale-marker',
-    guard: 'node --test --test-name-pattern="старше" test/mutation-nightly-reuse.test.mjs',
-    because: 'the tree pins code, not the runner; without the age limit an unchanged dev would never '
-      + 'run the registry on a fresh environment again (#620)',
-    patches: [{
-      file: 'scripts/mutation-nightly-reuse.mjs',
-      find: '  if (now - provenAt > maxAgeDays * DAY_MS) return no(',
-      replace: '  if (now - provenAt > maxAgeDays * DAY_MS * 1000) return no(',
-    }],
-  },
-  {
-    id: 'nightly-reuse-on-manual-dispatch',
-    guard: 'node --test --test-name-pattern="ручной dispatch" test/mutation-nightly-reuse.test.mjs',
-    because: 'manual dispatch is how the gate itself is debugged; reusing a marker there would '
-      + 'answer a debugging run with an old result (#620)',
-    patches: [{
-      file: 'scripts/mutation-nightly-reuse.mjs',
-      find: "  if (event !== 'schedule') return no(",
-      replace: "  if (event === 'mutant-never-an-event') return no(",
-    }],
-  },
-  {
-    id: 'green-marker-without-green-aggregator',
-    guard: 'node --test --test-name-pattern="#620: пропуск ночи" test/mutation-gate.test.mjs',
-    because: 'a marker written after a red or partial run would let the next night skip the registry '
-      + 'and never file the failure issue again (#620, #472)',
-    patches: [{
-      file: '.github/workflows/_mutation-gate.yml',
-      find: "    if: needs.material.outputs.reuse != 'true' && needs.mutants.result == 'success' && needs.evidence.result == 'success'",
-      replace: "    if: always() && needs.material.outputs.reuse != 'true'",
-    }],
-  },
-  {
-    id: 'nightly-reuse-decision-error-skips-registry',
-    guard: 'node --test --test-name-pattern="#620: пропуск ночи" test/mutation-gate.test.mjs',
-    because: 'a skipped night must be proved by a marker; a failed decision step has to mean '
-      + 'a full run, not a silent skip (#620)',
-    patches: [{
-      file: '.github/workflows/_mutation-gate.yml',
-      find: '            echo "reuse=false" >> "$GITHUB_OUTPUT"',
-      replace: '            echo "reuse=true" >> "$GITHUB_OUTPUT"',
     }],
   },
   {
@@ -9994,113 +9593,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'manifest-drops-workflow-input',
-    guard: 'node --test --test-name-pattern="toolchain input of every job" test/gate-reuse.test.mjs',
-    because: 'validate.yml decides what a job checks; a job whose key ignores its own workflow is '
-      + 'reused after a step is added and the new step never runs (#492 §5.4, the #430 class)',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-        find: "const WORKFLOW = Object.keys(CI_WORKFLOWS).map(name => `.github/workflows/${name}`);",
-      replace: 'const WORKFLOW = [];  // mutant: the workflow is nobody\'s input',
-    }],
-  },
-  {
-    id: 'classify-unknown-input-is-unaffected',
-    guard: 'node --test --test-name-pattern="#1044: неизвестный инструмент" test/classify-changes.test.mjs',
-    because: 'a changed executable file no check claims must widen the run to the full set; treating '
-      + '"unknown" as "unaffected" is exactly how relay tests stayed unrun (#492 §5.2)',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: '  if (unknown.length) for (const name of CHECK_NAMES) affected.add(name);',
-      replace: '  // mutant: unknown inputs widen nothing',
-    }],
-  },
-  {
-    id: 'reuse-backend-hashes-ui',
-    guard: 'node --test --test-name-pattern="a version bump changes all of them" test/gate-reuse.test.mjs',
-    because: 'backend does not execute the UI; hashing src/** into its key reverts the AC6 closure '
-      + 'and rebuilds the "every frontend edit reruns pytest" skew (#492 AC6)',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: "    roots: ['custom_components/**/*.py', 'custom_components/houseplan/manifest.json', 'scripts/support-relay/**/*.py',",
-      replace: "    roots: ['src/**', 'custom_components/**/*.py', 'custom_components/houseplan/manifest.json', 'scripts/support-relay/**/*.py',",
-    }],
-  },
-  {
-    id: 'backend-dynamic-inputs-dropped',
-    guard: 'node --test --test-name-pattern="#542" test/check-inputs.test.mjs test/gate-reuse.test.mjs',
-    because: 'backend pytest reads selected TS sources and browser fixtures through os.path.join and a '
-      + 'Python f-string dynamic import; without exact roots selection and reuse silently miss them (#542)',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: '      ...BACKEND_DYNAMIC_INPUTS,',
-      replace: '      // mutant: dynamic cross-runtime inputs are absent',
-    }],
-  },
-  {
-    id: 'furniture-assets-dropped-from-frontend-inputs',
-    guard: 'node --test --test-name-pattern="#671: весь пакет мебели" test/check-inputs.test.mjs',
-    because: 'тесты frontend читают assets/furniture по составным путям; без явного корня '
-      + 'правка пакета не выбирает frontend и не запускает сверку generated-модулей (#671)',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: "    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/furniture/**', 'assets/moon/**', 'test/**',",
-      replace: "    roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/moon/**', 'test/**',  // mutant: furniture package is not a frontend input",
-    }],
-  },
-  {
-    id: 'assets-data-root-not-guarded',
-    guard: 'node --test --test-name-pattern="#671: новый assets" test/check-inputs.test.mjs',
-    because: 'лист покрытия, который смотрит только на исполняемые расширения, снова '
-      + 'пропустит любой новый бинарный или текстовый пакет данных под assets/** (#671)',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: "export const GUARDED_DATA_ROOTS = ['assets'];",
-      replace: 'export const GUARDED_DATA_ROOTS = [];  // mutant: asset data is not audited',
-    }],
-  },
-  {
-    id: 'harness-directory-docs-leak-into-inputs',
-    guard: 'node --test --test-name-pattern="#672" test/check-inputs.test.mjs test/gate-reuse.test.mjs',
-    because: '#672: строка-каталог обозначает runtime-корпус, а не документацию рядом с ним; '
-      + 'без фильтра README снова выбирает тяжёлые jobs и меняет их reuse keys',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: '          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }',
-      replace: '          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }',
-    }],
-  },
-  {
-    id: 'explicit-markdown-read-dropped-from-inputs',
-    guard: 'node --test --test-name-pattern="#672: документация каталога" test/check-inputs.test.mjs',
-    because: '#672: фильтр каталогов не должен скрывать Markdown, который код читает по точному пути',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: '    for (const m of text.matchAll(REL_DOC_LITERAL)) {',
-      replace: "    for (const m of ''.matchAll(REL_DOC_LITERAL)) {  // mutant: explicit docs disappear",
-    }],
-  },
-  {
-    id: 'browser-protocol-recaptures-guard-readme',
-    guard: 'node --test --test-name-pattern="#672: README каталогов" test/check-inputs.test.mjs',
-    because: '#672: browser protocol must name executable guards, not every document in demo/guard',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: "  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/*.mjs', 'demo/helpers/hp-test.mjs'];",
-      replace: "  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/**', 'demo/helpers/hp-test.mjs'];",
-    }],
-  },
-  {
-    id: 'golden-root-recaptures-golden-readme',
-    guard: 'node --test --test-name-pattern="#672: README каталогов" test/check-inputs.test.mjs',
-    because: '#672: golden needs the accepted baseline overlay, not a broad root that also owns README',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: '    roots: [...BUILD_INPUTS, ...BASELINE_OVERLAY, ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],',
-      replace: "    roots: [...BUILD_INPUTS, 'demo/golden/**', ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],",
-    }],
-  },
-  {
     id: 'guard-inputs-ignore-wrapper-defaults',
     guard: 'node --test --test-name-pattern="#492 §8.2" test/mutation-gate.test.mjs',
     because: 'ten backend wrappers run tests_backend/test_ha_import_export.py by default without naming '
@@ -10123,64 +9615,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'merge-pushes-unvalidated-candidate',
-    guard: 'node --test --test-name-pattern="эксперимент аудита" test/merge-candidate.test.mjs',
-    because: 'after a clean rebase onto a moved dev the candidate is a tree nobody checked; pushing '
-      + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
-      replace: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = { result: 'green', url: 'skipped' }); // mutant: no validation",
-    }],
-  },
-  {
-    id: 'merge-ignores-lease-rejection',
-    guard: 'node --test --test-name-pattern="lease отклонён" test/merge-candidate.test.mjs',
-    because: 'dev moving again between Validate and push must restart the candidate, not be '
-      + 'reported as merged: a rejected lease treated as success leaves S8-merged on code not in dev (#492 AC2)',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "    const pushed = ops.pushWithLease(candidate, 'dev', devNow);\n    decision = decideMerge(",
-      replace: "    const pushed = ops.pushWithLease(candidate, 'dev', devNow) || true;  // mutant: lease never rejected\n    decision = decideMerge(",
-    }],
-  },
-  // #702: влитая ветка задачи удаляется слиянием.
-  {
-    id: 'merged-task-branch-kept',
-    guard: 'node --test --test-name-pattern="#702" test/merge-candidate.test.mjs',
-    because: '#702: 368 merged issue/* branches piled up on origin; an agent looking a branch up by '
-      + 'number could take a stale one — the merge deletes the branch it merged',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: '    if (merged && extra.branchTip) {',
-      replace: '    if (false && merged && extra.branchTip) { // mutant: branch kept',
-    }],
-  },
-  // #705: отказ push — три исхода, а не один «lease устарел».
-  {
-    id: 'push-refusal-kinds-glued',
-    guard: 'node --test --test-name-pattern="#705 AC1" test/merge-candidate.test.mjs',
-    because: '#705: a GitHub refusal (`! [remote rejected]`, e.g. a workflow file pushed by a token '
-      + 'without the workflow permission) read as a stale lease tells the author the branch moved after '
-      + 'review (#312) and hides the reason; the old /stale info|rejected|fetch first|lease/ glued them (#700)',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: '  if (WORKFLOW_REFUSAL.test(text)) {\n',
-      replace: '  if (/stale info|rejected|fetch first|lease/i.test(text)) return out(PUSH_REFUSAL.stale); // mutant: #700 again\n'
-        + '  if (WORKFLOW_REFUSAL.test(text)) {\n',
-    }],
-  },
-  {
-    id: 'nightly-does-not-wait',
-    guard: 'node --test --test-name-pattern="#856 actual runner step" test/nightly-workflow.test.mjs',
-    because: '#856/#492: dispatch is pending, not a successful full nightly verdict; completion owns the verdict.',
-    patches: [{
-      file: 'scripts/workflow-pending.mjs',
-      find: 'result = { pending: true, candidate, note:',
-      replace: 'result = { pending: false, candidate, note:',
-    }],
-  },
-  {
     id: 'changed-selection-ignores-guard-files',
     guard: 'node --test --test-name-pattern="#475 AC2" test/mutation-gate.test.mjs',
     because: 'a witness also rots when its guard changes and stops reaching the mutated branch; '
@@ -10200,147 +9634,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/mutation-selection.mjs',
       find: "    if (!/^[\\w./-]+\\.(mjs|py)$/.test(bare) || bare.startsWith('-')) continue;",
       replace: "    if (!/\\.(mjs|py)/.test(bare)) continue;",
-    }],
-  },
-  {
-    id: 'review-comment-source-ignores-issue-number',
-    guard: 'node --test --test-name-pattern="по документу ЭТОЙ задачи|чужой номер задачи" '
-      + 'test/review-doc-guard.test.mjs',
-    because: 'matching a bare stage marker counts any comment that merely mentions another '
-      + "issue's review document as a verdict of this one — #454 gave its own first code "
-      + 'review round number r3 that way, and a contaminated yellow would burn the §4 budget '
-      + 'without a single real cycle (#89)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '  const own = new RegExp(`${marker}-${num}(?![0-9])`);',
-      replace: '  const own = new RegExp(marker);',
-    }],
-  },
-  {
-    id: 'review-round-counts-files-not-max',
-    guard: 'node --test --test-name-pattern="от максимума номеров" test/review-doc-guard.test.mjs',
-    because: 'counting how many round documents exist instead of taking the highest number '
-      + 'hands out an occupied file name whenever the numbering has a hole — and a hole is '
-      + 'exactly what the collision this fixes leaves behind (#454)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '  return known.length ? Math.max(...known) + 1 : 1;',
-      replace: '  return known.length + 1;',
-    }],
-  },
-  {
-    id: 'review-round-drops-file-source',
-    guard: 'node --test --test-name-pattern="прожитая уже с исправлением|момент коллизии" '
-      + 'test/review-doc-guard.test.mjs',
-    because: 'without the published documents the counter is back to reading prose, and a '
-      + 'verdict that never named its file silently reuses the round number (#454, #449)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '  const attemptFiles = attemptFromRounds(rounds);',
-      replace: '  const attemptFiles = 1;',
-    }],
-  },
-  {
-    id: 'review-round-drops-comment-insurance',
-    guard: 'node --test --test-name-pattern="отказ публикации" test/review-doc-guard.test.mjs',
-    because: 'the publish step can fail after the verdict is already posted; trusting only '
-      + 'the documents then loses a spent cycle and hands out a used round number (#454)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '    attempt: Math.max(attemptFiles, attemptComments),',
-      replace: '    attempt: attemptFiles,',
-    }],
-  },
-  {
-    id: 'review-doc-guard-matches-by-substring',
-    guard: 'node --test --test-name-pattern="соседний каталог" test/review-doc-guard.test.mjs',
-    because: 'сравнение подстрокой пускает docs/reviews-old и docs/reviewsx: allowlist, который '
-      + 'ошибается в свою пользу, не защищает ни от чего (#365)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: "  const prefixes = allowlist.map((item) => (item.endsWith('/') ? item : `${item}/`));",
-      replace: "  const prefixes = allowlist.map((item) => item.replace(/\\/$/, ''));",
-    }],
-  },
-  {
-    id: 'review-doc-guard-allows-empty-diff',
-    guard: 'node --test --test-name-pattern="пустой дифф" test/review-doc-guard.test.mjs',
-    because: 'пустой дифф означает, что документа нет: прежняя редакция шага выходила тут с '
-      + 'нулём, и вердикт ревью оставался без артефакта (#171, #365)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '  if (!cleaned.length) {',
-      replace: '  if (false) {',
-    }],
-  },
-  {
-    id: 'no-new-any-judges-every-line',
-    guard: 'node --test --test-name-pattern="нетронутой строке гейт не блокирует" '
-      + 'test/no-new-any.test.mjs',
-    because: 'гейт, судящий все строки вместо добавленных, краснеет на 1034 существующих '
-      + 'вхождениях и будет отключён в первый же день — а долг типизации снимается при '
-      + 'извлечении подсистем, не разовой заменой (#342)',
-    patches: [{
-      file: 'scripts/no-new-any.mjs',
-      find: '      if (!file.addedLines.has(line)) continue;',
-      replace: '      if (false) continue;',
-    }],
-  },
-  {
-    id: 'no-new-any-accepts-bare-marker',
-    guard: 'node --test --test-name-pattern="только с конкретной причиной" '
-      + 'test/no-new-any.test.mjs',
-    because: 'голый `// any-ok` — это не обоснование, а способ обойти гейт одной строкой; '
-      + 'без проверки причины исключение перестаёт что-либо значить (#342)',
-    patches: [{
-      file: 'scripts/no-new-any.mjs',
-      find: '      if (exemption?.ok) continue;',
-      replace: '      if (exemption) continue;',
-    }],
-  },
-  {
-    id: 'private-writes-ignores-update-expressions',
-    guard: 'node --test --test-name-pattern="во всех формах" test/no-new-private-writes.test.mjs',
-    because: '`c._cfgEpoch++` — одна из самых частых записей смоков в приватное состояние '
-      + '(202 на 22.09); гейт, не видящий ++/--, пропускает ровно тот обход, ради которого '
-      + 'заведён (#629 AC1)',
-    patches: [{
-      file: 'scripts/no-new-private-writes.mjs',
-      find: '    if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) && UPDATE_OPERATORS.has(node.operator)) {',
-      replace: '    if (false) {',
-    }],
-  },
-  {
-    id: 'private-writes-credits-any-field',
-    guard: 'node --test --test-name-pattern="правка зачитывается только" test/no-new-private-writes.test.mjs',
-    because: 'зачёт правки без сверки поля превращает любую уборку старой записи в индульгенцию '
-      + 'на новую запись в другое поле — гейт перестаёт держать приращение (#629 AC2)',
-    patches: [{
-      file: 'scripts/no-new-private-writes.mjs',
-      find: 'const creditKey = (site) => `${site.kind}:${site.field}`;',
-      replace: 'const creditKey = (site) => site.kind;',
-    }],
-  },
-  {
-    id: 'private-writes-accepts-bare-marker',
-    guard: 'node --test --test-name-pattern="private-ok проходит только" test/no-new-private-writes.test.mjs',
-    because: 'голый `// private-ok` — обход гейта одной строкой; без проверки причины исключение '
-      + 'перестаёт что-либо значить, как и у any-ok (#342, #629 AC3)',
-    patches: [{
-      file: 'scripts/no-new-private-writes.mjs',
-      find: '      if (exempt && exempt.ok) continue;',
-      replace: '      if (exempt) continue;',
-    }],
-  },
-  {
-    id: 'private-writes-skips-covered-calls',
-    guard: 'node --test --test-name-pattern="вызов, покрытый фасадом" test/no-new-private-writes.test.mjs',
-    because: '265 вызовов `_setMode(` продолжали бы расти рядом с фасадом, который нажимает '
-      + 'настоящую вкладку режима; без G5 фасад необязателен (#629 AC4)',
-    patches: [{
-      file: 'scripts/no-new-private-writes.mjs',
-      find: '    if (ts.isCallExpression(node)) {',
-      replace: '    if (false) {',
     }],
   },
   {
@@ -10478,77 +9771,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/docs-accept.mjs',
       find: "      throw new Error(`${scenario.id}: в артефакте нет файла ${entry.file || '(без имени)'}`);",
       replace: '      continue;',
-    }],
-  },
-  {
-    id: 'docs-fingerprint-sees-product-version',
-    guard: 'node --test --test-name-pattern="не трогает отпечаток скриншотов" '
-      + 'test/source-fingerprint.test.mjs',
-    because: 'номер версии продукта на скриншотах не нарисован, и если отпечаток документации '
-      + 'снова начнёт его видеть, каждый релизный коммит будет оставлять job docs красным — '
-      + 'красный гейт, который «всегда такой», перестают читать (#245)',
-    patches: [{
-      file: 'scripts/source-fingerprint.mjs',
-      find: '    ? (text) => text.split(version).join(\'0.0.0-product-version\')',
-      replace: '    ? (text) => text',
-    }],
-  },
-  {
-    id: 'risk-counts-module-and-local-type-rows',
-    guard: 'node --test --test-name-pattern="#755 AC1|#772" test/process-track.test.mjs',
-    because: '#772 / #755 К1: imports and non-persisted TypeScript declarations must not '
-      + 'raise ship to show; the stored-type exception must not disable that guard',
-    patches: [{
-      file: 'scripts/change-risk.mjs',
-      find: "      if (typeOnly.has(i) && p.endsWith('.ts') && !persistedType && !AREAS.migration.some((r) => r.re.test(p))) continue;",
-      replace: '      // mutant: module/type-only rows are judged as executable code',
-    }],
-  },
-  {
-    id: 'risk-ignores-persisted-stair-types',
-    guard: 'node --test --test-name-pattern="#772" test/process-track.test.mjs',
-    because: '#772: a small stored-field change outside types.ts must raise an unconfirmed '
-      + 'ship to show; ignoring StairCommon silently merges an unread schema contract',
-    patches: [{
-      file: 'scripts/change-risk.mjs',
-      find: '      const persistedType = PERSISTED_TYPES[p]?.has(typeOnly.get(i)) ? typeOnly.get(i) : null;',
-      replace: '      const persistedType = null; // mutant: stored contract ignored',
-    }],
-  },
-  {
-    id: 'smoke-select-ignores-style-file-links',
-    guard: 'node --test --test-name-pattern="#772: CSS" test/smoke-select.test.mjs',
-    because: '#772: changing a room CSS rule without a TypeScript symbol must still select '
-      + 'smoke_room_fill_transitions; the generic visual minimum does not assert this contract',
-    patches: [{
-      file: 'scripts/smoke-select.mjs',
-      find: '  registry = registeredSmokes(parsed.symbols, parsed.executable) } = {}) {',
-      replace: '  registry = registeredSmokes(parsed.symbols) } = {}) {',
-    }],
-  },
-  {
-    id: 'smoke-select-stops-at-nested-property',
-    guard: 'node --test --test-name-pattern="#772: вложенные" test/smoke-select.test.mjs',
-    because: '#772: a nested object or array property is still part of the argument; '
-      + 'stopping at its colon loses the enclosing function and its linked smoke',
-    patches: [{
-      file: 'scripts/smoke-select.mjs',
-      find: "      if (!['(', ',', '[', ':'].includes(previous(row, column))) return null;",
-      replace: "      if (!['(', ',', '['].includes(previous(row, column))) return null;",
-    }],
-  },
-  {
-    id: 'smoke-select-drops-registered-link',
-    guard: 'node --test --test-name-pattern="держится на зарегистрированной связи" '
-      + 'test/smoke-select.test.mjs',
-    because: 'связь «изменённый контракт → смок, который его не называет» доказать поиском '
-      + 'нельзя, и держится она только на реестре: без записи выборка по диффу #234 снова '
-      + 'промолчит о smoke_wall_thickness_transition — том самом классе смоков, на котором '
-      + '#234 потерял регресс (#241)',
-    patches: [{
-      file: 'scripts/smoke-links.mjs',
-      find: "    symbols: ['chainSegmentCms', 'wallChainSegments', '_wallChainSegmentCms', '_closingWallCm'],",
-      replace: '    symbols: [],',
     }],
   },
   {
@@ -10836,40 +10058,6 @@ const MUTANT_DEFINITIONS = [
       file: 'src/wall-thickness.ts',
       find: "      status: degradedExtraCount || degradedCoreCount ? 'degraded-extra' : 'ok',",
       replace: "      status: degradedExtraCount || degradedCoreCount ? 'failed-core' : 'ok',",
-    }],
-  },
-  // #690 п.1′: недоказанная связь смоков выдаёт визуальный минимум, а не пустоту.
-  {
-    id: 'visual-minimum-silent-again',
-    guard: 'node --test --test-name-pattern="#690" test/smoke-select.test.mjs',
-    because: '#690: an executable diff with no proven smoke link printed only "the reviewer decides" '
-      + 'and ran nothing; #687 missed smoke_modes that way and left dev red for #685',
-    patches: [{
-      file: 'scripts/smoke-select.mjs',
-      find: '    visualMinimum: unproven ? [...VISUAL_MINIMUM] : [],',
-      replace: '    visualMinimum: [],',
-    }],
-  },
-  {
-    id: 'visual-minimum-on-proven-link',
-    guard: 'node --test --test-name-pattern="#690" test/smoke-select.test.mjs',
-    because: '#690: the minimum is for the unproven case only; with a proven link the selection must '
-      + 'stay smaller than the matrix',
-    patches: [{
-      file: 'scripts/smoke-select.mjs',
-      find: '    visualMinimum: unproven ? [...VISUAL_MINIMUM] : [],',
-      replace: '    visualMinimum: parsed.executable.length ? [...VISUAL_MINIMUM] : [],',
-    }],
-  },
-  {
-    id: 'gate-small-skips-visual-minimum',
-    guard: 'node --test --test-name-pattern="#690" test/smoke-select.test.mjs',
-    because: '#690: gate:small -- --smokes must run the visual minimum it was handed, not only the '
-      + 'direct and registered smokes',
-    patches: [{
-      file: 'scripts/gate-small.mjs',
-      find: '  return requiredSmokeIds(selection);',
-      replace: '  return requiredSmokeIds(selection && { ...selection, visualMinimum: [] });',
     }],
   },
   // #711: значок не двигается от состояния устройства.
@@ -11700,38 +10888,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'golden-lamp-out-of-reach',
-    guard: 'node demo/golden/run.mjs --mode=capture --scenario=lighting-opaque-glow-two-doorways-dark',
-    because: 'сцена заведена как защита дверного света (#71) и однажды уже была '
-      + 'пустой: лампа стояла так, что пятно не доходило до стены. Уведённая лампа '
-      + 'обязана ронять семантический ассерт warmPixelRegion, а не только пиксельный дифф. '
-      + 'Режим capture, а не verify: политика запрещает verify по одной сцене '
-      + '(demo/golden/policy.mjs) — частичный verify это лазейка «чтобы CI позеленел». '
-      + 'На capture семантический провал даёт status error, и goldenRunFailed '
-      + 'краснеет в любом режиме — то есть проверка сохраняется полностью',
-    // Мутируется фикстура сцены, не продуктовый код: пустота сцены — свойство
-    // фикстуры. Пересборка бандла всё равно нужна, путь тот же.
-    patches: [{
-      file: 'demo/golden/matrix.mjs',
-      find: "layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.40, y: 0.48 } },",
-      replace: "layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.06, y: 0.90 } },",
-    }],
-  },
-  {
-    id: 'golden-filled-tunnel-removed',
-    guard: 'node demo/golden/run.mjs --mode=capture --scenario=openings-filled-tunnel-dark',
-    because: 'сцена защищает непрерывную room-coloured заливку толстого тоннеля (#81): '
-      + 'если fixture перестаёт рисовать заливку, semantic tunnelContinuity обязан упасть, '
-      + 'а не принять пустой проём как корректный golden',
-    // Ломаем только заявленное условие fixture. Capture сохраняет полный
-    // semantic gate даже для одной сцены и не зависит от pixel baseline.
-    patches: [{
-      file: 'demo/golden/matrix.mjs',
-      find: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'custom', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
-      replace: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'none', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
-    }],
-  },
-  {
     id: 'sun-ray-outer-jamb-occlusion-ignored',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#580:" test/sun.test.mjs',
@@ -11941,9 +11097,9 @@ const MUTANT_DEFINITIONS = [
     because: 'валидный plan-only файл без явной строки в preview выглядит обычной копией; '
       + 'browser smoke обязан проверять пользовательский статус, а не только backend-флаг',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "${p.plan_only ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
-      replace: "${false ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "${p.plan_only ? html`<span class=\"backupplanonlystatus hpf-tag\">${this.host._t('backup.plan_only_preview')}</span>` : nothing}",
+      replace: "${false ? html`<span class=\"backupplanonlystatus hpf-tag\">${this.host._t('backup.plan_only_preview')}</span>` : nothing}",
     }],
   },
   {
@@ -12088,18 +11244,6 @@ const MUTANT_DEFINITIONS = [
       file: 'custom_components/houseplan/import_export.py',
       find: '        validate_opening_passages(incoming_config, validate_all=True)',
       replace: '        if False:\n            validate_opening_passages(incoming_config, validate_all=True)',
-    }],
-  },
-  {
-    id: 'passage-static-door-cut-leak',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/space-geometry.test.mjs',
-    because: 'Static обязан менять masonry только для нового passage; добавление обычной двери '
-      + 'в cuts сломает сохранённую совместимость старых планов',
-    patches: [{
-      file: 'src/space-geometry.ts',
-      find: "    if (opening?.type !== 'passage') continue;",
-      replace: "    if (opening?.type !== 'passage' && opening?.type !== 'door') continue;",
     }],
   },
   {
@@ -13278,11 +12422,13 @@ const MUTANT_DEFINITIONS = [
     id: 'toolbar-close-slot-collapses-outside-editor',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC2: an empty slot that collapses outside an editor brings back the header width jump',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "    .editor-close-slot[aria-hidden='true'] { pointer-events: none; }",
-      replace: "    .editor-close-slot[aria-hidden='true'] { pointer-events: none; display: none; }",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": ".hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { pointer-events:none; }",
+    "replace": ".hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { pointer-events:none; display:none; }"
+  }
+],
   },
   {
     id: 'toolbar-close-back-inside-tab',
@@ -13298,11 +12444,13 @@ const MUTANT_DEFINITIONS = [
     id: 'toolbar-active-highlight-stops-at-tab',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#666: the active editor tab highlight must cover the gap and the X slot, measured as painted pixels',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "      right: calc(-1 * (var(--sp-1) + var(--hp-editor-close-size)));",
-      replace: "      right: 0;",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "inset:-1px calc(-1 * (4px + var(--hp-editor-close-size)) - 1px) -1px -1px;",
+    "replace": "inset:0;"
+  }
+],
   },
   {
     id: 'toolbar-close-slot-idle-focusable',
@@ -13318,21 +12466,25 @@ const MUTANT_DEFINITIONS = [
     id: 'toolbar-close-target-below-24',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC5 / #195: the X keeps a hit target of at least 24 x 24 px around its 13 px glyph',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "      --hp-editor-close-size: 24px;",
-      replace: "      --hp-editor-close-size: 13px;",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "--hp-editor-close-size:24px;",
+    "replace": "--hp-editor-close-size:13px;"
+  }
+],
   },
   {
     id: 'toolbar-close-hidden-at-medium-width',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC6: the X must stay visible on ordinary 721-1100 px windows, where the old count was hidden',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }",
-      replace: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }\n    @media (max-width: 1100px) { .editor-close-slot .closex { display: none; } }",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; }",
+    "replace": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; }\n@media(max-width:1100px) { .hpf-nav-modes .closex { display:none; } }"
+  }
+],
   },
   // #660: compact stable header, desktop summary controls and neutral Escape.
   {
@@ -13420,29 +12572,6 @@ const MUTANT_DEFINITIONS = [
       replace: '      .hdr > .head { flex-wrap: wrap; padding: 5px 8px; gap: 6px; }',
     }],
   },
-  // #701: документационный коммит трейлеров не требует — и только он.
-  {
-    id: 'docs-only-commit-needs-trailers-again',
-    guard: 'node --test --test-name-pattern="#701" test/commit-provenance.test.mjs',
-    because: '#701 (PROCESS §3 п.10): rule #1 guards product code, not a typo in a guide; a docs-only '
-      + 'commit carries no Issue/User-Visible trailers',
-    patches: [{
-      file: 'scripts/validate-commit-provenance.mjs',
-      find: '  const exempt = isDocsOnlyCommit(changedFiles) && !issues.length && !visible.length;',
-      replace: '  const exempt = false; // mutant: every commit needs trailers',
-    }],
-  },
-  {
-    id: 'docs-only-exemption-leaks-to-code',
-    guard: 'node --test --test-name-pattern="#701" test/commit-provenance.test.mjs',
-    because: '#701: one file outside class C makes the commit subject to rule #1 again; the exemption '
-      + 'must not cover a commit that also touches src/**',
-    patches: [{
-      file: 'scripts/validate-commit-provenance.mjs',
-      find: "  return changedFiles.length > 0 && changedFiles.every((file) => classify(file.replaceAll('\\\\', '/')) === 'C');",
-      replace: "  return changedFiles.length > 0 && changedFiles.some((file) => classify(file.replaceAll('\\\\', '/')) === 'C'); // mutant",
-    }],
-  },
   {
     id: 'header-menu-drops-pdf',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
@@ -13458,31 +12587,42 @@ const MUTANT_DEFINITIONS = [
     id: 'header-menu-item-keeps-menu-open',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC3: an item does what its button did and closes the menu; a menu left open covers the plan',
-    patches: [{
-      file: 'src/header-menu.ts',
-      find: '    const run = (item: HeaderMenuItem) => { this.close(false); item.run(); };',
-      replace: '    const run = (item: HeaderMenuItem) => { item.run(); };',
-    }],
+    patches: [
+  {
+    "file": "src/header-menu.ts",
+    "find": "invoke:() => { this.close(false); item.run(); },",
+    "replace": "invoke:() => { item.run(); },"
+  },
+  {
+    "file": "src/editor-context-menu.ts",
+    "find": "          item.invoke();\n          this.close(false);",
+    "replace": "          item.invoke();"
+  }
+],
   },
   {
     id: 'header-menu-outside-tap-reaches-plan',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC4: the tap that dismisses the menu must not toggle a light under it',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: '      position: fixed;\n      inset: 0;\n      z-index: 1;\n      background: transparent;',
-      replace: '      position: fixed;\n      inset: auto;\n      z-index: 1;\n      background: transparent;',
-    }],
+    patches: [
+  {
+    "file": "src/editor-context-menu.styles.ts",
+    "find": ".hpf-context-menu-scrim { position:fixed; inset:0;",
+    "replace": ".hpf-context-menu-scrim { position:fixed; inset:auto;"
+  }
+],
   },
   {
     id: 'header-menu-escape-ignored',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC4: Escape closes the menu and returns focus to the gear',
-    patches: [{
-      file: 'src/header-menu.ts',
-      find: "    if (event.key !== 'Escape' || !this.open) return;",
-      replace: "    if (event.key !== 'Esc' || !this.open) return;",
-    }],
+    patches: [
+  {
+    "file": "src/editor-context-menu.ts",
+    "find": "if (event.key === 'Escape') {",
+    "replace": "if (event.key === 'Esc') {"
+  }
+],
   },
   {
     id: 'active-tab-not-revealed',
@@ -13498,11 +12638,13 @@ const MUTANT_DEFINITIONS = [
     id: 'header-menu-item-below-44',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC6: menu items are touch targets of at least 44 px',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: '      min-height: 44px;\n      padding: 0 var(--sp-4);',
-      replace: '      min-height: 30px;\n      padding: 0 var(--sp-4);',
-    }],
+    patches: [
+  {
+    "file": "src/editor-context-menu.styles.ts",
+    "find": ".hpf-context-menu-touch > button { min-height:44px;",
+    "replace": ".hpf-context-menu-touch > button { min-height:30px;"
+  }
+],
   },
   {
     id: 'phone-header-at-tablet-width',
@@ -15334,9 +14476,10 @@ const MUTANT_DEFINITIONS = [
       + 'swing for 0.6s from the neighbour\'s angle — a door that never moved (#764 AC1)',
     patches: [{
       file: 'src/space-render.ts',
-      find: 'keyed(space.id, repeat<ResolvedPartitionOpening>(\n'
-        + '    resolvedHosted, (resolved, index) => resolved.opening.id || index, (resolved) => {',
-      replace: 'keyed(space.id, resolvedHosted.map((resolved: ResolvedPartitionOpening) => {',
+      find: 'keyed(space.id, repeat<GeometryOpeningProjection>(\n'
+        + "    projectedOpenings.filter((opening) => opening.type !== 'passage'),\n"
+        + '    (opening, index) => opening.id || index, (opening) => {',
+      replace: "keyed(space.id, projectedOpenings.filter((opening) => opening.type !== 'passage').map((opening: GeometryOpeningProjection) => {",
     }],
   },
   {
@@ -15347,9 +14490,51 @@ const MUTANT_DEFINITIONS = [
       + 'keeps the node, and its leaf swings from the other floor\'s state (#764 AC2, same-id case)',
     patches: [{
       file: 'src/space-render.ts',
-      find: 'keyed(space.id, repeat<ResolvedPartitionOpening>(\n',
-      replace: '(repeat<ResolvedPartitionOpening>(\n',
+      find: 'keyed(space.id, repeat<GeometryOpeningProjection>(\n',
+      replace: '(repeat<GeometryOpeningProjection>(\n',
     }],
+  },
+  {
+    id: 'static-room-opening-symbols-omitted-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: the production space card must paint room-wall and legacy symbols as well as partition neighbors.',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: "    projectedOpenings.filter((opening) => opening.type !== 'passage'),",
+      replace: "    projectedOpenings.filter((opening) => opening.type !== 'passage' && !!opening.partitionHost),",
+    }],
+  },
+  {
+    id: 'static-gate-leaks-indexed-face-to-line-openings-1171',
+    guard: 'node --test test/static-wall-openings.test.mjs',
+    because: '#1171 CODEr1 M1: a real zero-depth contour index has side+1 at the north door; only gate/partition may use it without room-wall records, ordinary openings retain classic side-1.',
+    patches: [{file:'src/space-render.ts',
+      find: ": index && (hasWalls || opening.type === 'gate') ? openingInnerFaceOffsetFromIndex(index, {",
+      replace: ': index ? openingInnerFaceOffsetFromIndex(index, {'}],
+  },
+  {
+    id: 'static-opening-missing-contact-looks-active-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: the actual static leaf must retain full-plan neutral paint when its configured contact is absent from projected HA state.',
+    patches: [{file:'src/space-render.ts',find:'    const active = amount > 0 && available;',
+      replace:'    const active = amount > 0 && !!opening.contact;'}],
+  },
+  {
+    id: 'static-wall-cut-cache-ignores-opening-geometry-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: moving/resizing/deleting an opening must replace its old masonry cut on a retained configuration.',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '    ? contentFingerprint({ structureFingerprint, extras, openings: roomOpenings })',
+      replace: '    ? contentFingerprint({ structureFingerprint, extras, openings: [] })',
+    }],
+  },
+  {
+    id: 'static-frame-omits-opening-envelope-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: both content and house must contain the maximum visible exterior leaf at phone/desktop widths.',
+    patches: [{file:'src/space-render.ts',find:'  placed.push(...openingBounds);',replace:'  // opening bounds omitted'},
+      {file:'src/space-render.ts',find:'    structure.push(...openingBounds);',replace:'    // opening bounds omitted'}],
   },
   {
     id: 'live-editor-devices-drops-align-guides',
@@ -15582,186 +14767,6 @@ const MUTANT_DEFINITIONS = [
       replace: '',
     }],
   },
-  {
-    id: 'gate-blames-the-author-for-its-own-stale-dispatch',
-    guard: 'node --test test/validate-gate.test.mjs',
-    because: '#539: `workflow_dispatch` принимает только ref, и конвейер сам переписывает '
-      + 'ветку ребейзом за секунды до запуска. Без повторной попытки собственная гонка '
-      + 'выглядит как «материал сменился», и задача уезжает автору, которому чинить нечего — '
-      + 'ровно это случилось с #536 12.09',
-    patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: '      if (elsewhere && attempts < DISPATCH_ATTEMPTS) {',
-      replace: '      if (false && elsewhere && attempts < DISPATCH_ATTEMPTS) {',
-    }],
-  },
-  {
-    id: 'rebase-dispatches-before-the-ref-settles',
-    guard: 'node --test test/review-doc-guard.test.mjs',
-    because: '#539: ссылка на стороне GitHub доезжает не мгновенно, а диспатч идёт по имени '
-      + 'ветки. Без ожидания шаг возвращается сразу после push, и запуск встаёт на вершину, '
-      + 'которой на ветке уже нет',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '            if [ "$seen" = "$after" ]; then settled=true; break; fi',
-      replace: '            settled=true; break',
-    }],
-  },
-  {
-    id: 'review-model-checks-out-moving-dev',
-    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
-    because: '#551: модель должна читать exact material, подготовленный до её запуска; checkout '
-      + 'подвижного dev разрывает контракт между зелёным gate и вердиктом',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          ref: ${{ needs.prepare.outputs.material_sha }}',
-      replace: '          ref: dev # mutant: moving material',
-    }],
-  },
-  {
-    id: 'review-model-seals-verdict-as-boolean',
-    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
-    because: '#551: результат JSON-schema review должен дойти до интеграции объектом; '
-      + 'перенаправление stdout предиката jq записывает boolean true и роняет публикацию',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          printf \'%s\' "$OUT" > "$RUNNER_TEMP/verdict.json"',
-      replace: '          printf \'%s\' "$OUT" | jq -e \'true\' > "$RUNNER_TEMP/verdict.json" # mutant: boolean payload',
-    }],
-  },
-  {
-    id: 'review-integration-delimiter-follows-json-without-newline',
-    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
-    because: '#551: structured verdict записан через printf без финального LF; GitHub output '
-      + 'delimiter обязан начинаться с новой строки, иначе integration падает после зелёной модели',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          printf \'\\nEOF_RESULT\\n\' >> "$GITHUB_OUTPUT"',
-      replace: '          printf \'EOF_RESULT\\n\' >> "$GITHUB_OUTPUT" # mutant: delimiter glued to JSON',
-    }],
-  },
-  {
-    id: 'process-canon-says-review-replaces-testing-across-line-break',
-    guard: 'node --test --test-name-pattern="#553" test/review-doc-guard.test.mjs',
-    because: '#553: запрет старой формулировки обязан переживать перенос строки; '
-      + 'дословный откат прежнего абзаца не должен проходить regression-тест',
-    patches: [{
-      file: 'PROCESS.md',
-      find: '- **Ревьюер отвечает за полноту доказательств AC, а не заменяет их исполнение.**',
-      replace: '- **Ревьюер отвечает за полноту доказательств AC, а не заменяет их исполнение.**\n'
-        + '  Код-ревью не пропускается\n'
-        + '  никогда — именно оно в этом процессе заменяет тестирование.',
-    }],
-  },
-  // #636: раунд продолжается по событию завершения Validate, а не сном раннера.
-  // Каждая защита — от второго вызова модели или от вечного ожидания.
-  {
-    id: 'gate-no-wait-still-sleeps',
-    guard: 'node --test --test-name-pattern="#636" test/validate-gate.test.mjs',
-    because: 'with --no-wait the gate must return pending for a running dispatch instead of polling '
-      + 'it inside the pipeline job — otherwise the runner sleeps 28 minutes per round again (#636)',
-    patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: "      if (!wait) {\n        // #636: прогон найден и идёт — ждать его будет событие, не раннер.",
-      replace: "      if (false && !wait) {\n        // #636: прогон найден и идёт — ждать его будет событие, не раннер.",
-    }],
-  },
-  {
-    id: 'resume-wakes-round-without-marker',
-    guard: 'node --test --test-name-pattern="#636" test/process-resume.test.mjs',
-    because: 'a successful process run without a pending marker did not wait for Validate; relabelling '
-      + 'it would spend the model a second time (#636)',
-    patches: [{
-      file: 'scripts/process-resume.mjs',
-      find: "  if (!pending) return { action: 'noop', recheck: true, reason: 'latest process run left no pending marker — it did not wait for Validate' };",
-      replace: "  if (false && !pending) return { action: 'noop', recheck: true, reason: 'latest process run left no pending marker — it did not wait for Validate' };",
-    }],
-  },
-  {
-    id: 'resume-ignores-active-run',
-    guard: 'node --test --test-name-pattern="#636" test/process-resume.test.mjs',
-    because: 'relabelling while a process run is active queues a second round for the same request (#636)',
-    patches: [{
-      file: 'scripts/process-resume.mjs',
-      find: "  if (mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', recheck: true, reason: 'a process run for this issue is already active' };",
-      replace: "  if (false && mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', recheck: true, reason: 'a process run for this issue is already active' };",
-    }],
-  },
-  {
-    id: 'pending-history-latest-200-only',
-    guard: 'node --test test/process-pending-round.test.mjs',
-    because: '#775: unrelated label traffic must not hide the pending review beyond two pages',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '  for (let page = 1; ; page++) {',
-      replace: '  for (let page = 1; page <= 2; page++) {',
-    }],
-  },
-  {
-    id: 'pending-revives-previous-request',
-    guard: 'node --test test/process-pending-round.test.mjs',
-    because: '#775: a re-applied label starts a new request even one second after the preceding run',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '      && at(run.createdAt) >= at(request.at))',
-      replace: '      && at(run.createdAt) >= at(request.at) - 120_000)',
-    }],
-  },
-  {
-    id: 'pending-resumes-another-validate',
-    guard: 'node --test test/process-pending-round.test.mjs',
-    because: '#775: the same SHA is not proof that the pending round awaited this dispatch',
-    patches: [{
-      file: 'scripts/process-resume.mjs',
-      find: '  if (pending.branch !== branch || String(pending.validate_run_id) !== String(validateRun.id)) {',
-      replace: '  if (pending.branch !== branch) {',
-    }],
-  },
-  {
-    id: 'pending-no-fresh-snapshot-before-write',
-    guard: 'node --test test/process-pending-round.test.mjs',
-    because: '#775: a stopped or already restarted round must not be woken from an old snapshot',
-    patches: [{
-      file: 'scripts/process-resume.mjs',
-      find: '    const second = inspect();',
-      replace: '    const second = first;',
-    }],
-  },
-  {
-    id: 'reconcile-wakes-pending-while-validate-active',
-    guard: 'node --test --test-name-pattern="#636" test/process-reconcile.test.mjs',
-    because: 'reconcile must wait while the Validate the round is pending on still runs; relabelling '
-      + 'early dispatches a second Validate and a second round (#636)',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: "    if (run.pendingValidate === 'active') {",
-      replace: "    if (false && run.pendingValidate === 'active') {",
-    }],
-  },
-  // #637: метрики процесса — цифры, по которым судят об ускорении; ошибка счёта
-  // хуже отсутствия счёта.
-  {
-    id: 'metrics-count-skipped-pipeline-runs',
-    guard: 'node --test --test-name-pattern="#637 pipelineMetrics" test/process-metrics.test.mjs',
-    because: 'process.yml runs on every label event and most runs are skipped by the guard; counting '
-      + 'them as review rounds would inflate S7 minutes and per-run averages (#637)',
-    patches: [{
-      file: 'scripts/process-metrics.mjs',
-      find: "    if (!match || run.conclusion === 'skipped') continue;",
-      replace: "    if (!match) continue; // mutant: skipped runs counted",
-    }],
-  },
-  {
-    id: 'metrics-rounds-by-s7-events',
-    guard: 'node --test --test-name-pattern="#637 buildReport" test/process-metrics.test.mjs',
-    because: 'review rounds come from review documents, not from S7 label events — the pipeline '
-      + 're-applies S7 itself after a pending Validate (#636), so events would overcount (#637)',
-    patches: [{
-      file: 'scripts/process-metrics.mjs',
-      find: "  const codeRounds = completed.map((issue) => rounds.get(`CODE:${issue.number}`)).filter(Boolean);",
-      replace: "  const codeRounds = completed.map((issue) => issue.s7Requests).filter(Boolean); // mutant: rounds = S7 events",
-    }],
-  },
   // #635: индекс ревью — база знаний; молчаливо неполный индекс хуже отсутствующего.
   // #657: бандл меняет только кандидат, индекс ревью — только коммиты в dev.
   {
@@ -15793,24 +14798,6 @@ const MUTANT_DEFINITIONS = [
     guard: "node --test --test-name-pattern=\"#657 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u044f \u0431\u0435\u0442\u044b\" test/bundle-policy.test.mjs",
     because: "#657: a hotfix on top of a beta candidate must not publish the candidate's stale bundle",
     patches: [{ file: "scripts/bundle-policy.mjs", find: "  if (!actual || actual !== expectedFingerprint) {", replace: "  if (!actual) {" }],
-  },
-  {
-    id: "release-prerelease-skips-fresh-bundle",
-    guard: "node --test --test-name-pattern=\"#657 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u044f \u0431\u0435\u0442\u044b\" test/bundle-policy.test.mjs",
-    because: "#657: the freshness check has to run in the publishing orchestrator, not only in a unit",
-    patches: [{ file: "scripts/release-prerelease.mjs", find: "    assertCommittedBundleFresh(manifest, sourceFingerprint(root));\n", replace: "" }],
-  },
-  {
-    id: "merge-ff-skips-review-index",
-    guard: "node --test --test-name-pattern=\"#657 r1 H1\" test/merge-candidate.test.mjs",
-    because: "#657 r1 H1: the task branch no longer carries INDEX.md, so a fast-forward merge must rebuild it or dev turns red on reviews_index",
-    patches: [{ file: "scripts/merge-candidate.mjs", find: "      const target = ops.freshIndex(tip);", replace: "      const target = tip;" }],
-  },
-  {
-    id: "provenance-skips-bundle-rule",
-    guard: "node --test --test-name-pattern=\"#657 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0435\u0442 validate-commit-provenance\" test/bundle-policy.test.mjs",
-    because: "#657: the commit-msg hook and the CI history check are where the bundle rule actually bites",
-    patches: [{ file: "scripts/validate-commit-provenance.mjs", find: "  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate, deletedFiles }));", replace: "  void bundleCommitErrors;" }],
   },
   {
     id: "bundle-sync-release-by-default",
@@ -15902,340 +14889,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: "process-index-on-task-branch",
-    guard: "node --test --test-name-pattern=\"#635/#657 \\\\(1\u0431\\\\)\" test/reviews-index.test.mjs",
-    because: "#657 (1b): the review index is rebuilt only by commits that go to dev; in a task branch it conflicts by construction",
-    patches: [{ file: ".github/workflows/_process.yml", find: "          if [ -f \"$doc\" ] && [ \"$target\" = \"dev\" ]; then", replace: "          if [ -f \"$doc\" ] && [ -n \"$target\" ]; then" }],
-  },
-  {
-    id: 'reviews-index-skips-self-check',
-    guard: 'node --test --test-name-pattern="#635 индекс покрывает" test/reviews-index.test.mjs',
-    because: 'the index must list every review document and never itself; indexing INDEX.md makes '
-      + 'the generator non-deterministic and hides documents behind its own entry (#635)',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: "  const names = readdirSync(dir).filter((name) => name.endsWith('.md') && name !== INDEX_FILE).sort();",
-      replace: "  const names = readdirSync(dir).filter((name) => name.endsWith('.md')).sort(); // mutant: indexes itself",
-    }],
-  },
-  {
-    id: 'reviews-index-release-name-unsupported',
-    guard: 'node --test --test-name-pattern="#635 индекс покрывает|#670" test/reviews-index.test.mjs',
-    because: '#670: the first line review document must be indexed instead of making the next dev Validate red',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: "  if (release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] };",
-      replace: "  if (false && release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] }; // mutant: release review is unknown",
-    }],
-  },
-  // #682: архив документов ревью — два правила, без которых перенос ломает ссылки раундов.
-  {
-    id: 'reviews-archive-moves-open-line-issue',
-    guard: 'node --test --test-name-pattern="#682 архив: задача из открытой линии" test/reviews-archive.test.mjs',
-    because: 'an issue with a trailer after the archived tag is still in flight: its next round cites '
-      + 'the previous documents under docs/reviews/, and moving them breaks «Унаследовано из r<N−1>»',
-    patches: [{
-      file: 'scripts/reviews-archive.mjs',
-      find: "    if (openSet.has(doc.issue)) { kept.push({ name, issue: doc.issue, reason: 'задача есть в открытой линии' }); continue; }",
-      replace: "    if (false && openSet.has(doc.issue)) { kept.push({ name, issue: doc.issue, reason: 'задача есть в открытой линии' }); continue; } // mutant: open line ignored",
-    }],
-  },
-  {
-    id: 'reviews-archive-first-line-wins',
-    guard: 'node --test --test-name-pattern="#682 архив: задача уходит" test/reviews-archive.test.mjs',
-    because: 'an issue with trailers in two released lines keeps all rounds in the latest one; '
-      + 'the first line winning splits one issue across two archive folders',
-    patches: [{
-      file: 'scripts/reviews-archive.mjs',
-      find: '    for (const issue of line.issues) lineOf.set(Number(issue), line.tag); // последняя линия выигрывает',
-      replace: '    for (const issue of line.issues) if (!lineOf.has(Number(issue))) lineOf.set(Number(issue), line.tag); // mutant: first line wins',
-    }],
-  },
-  {
-    id: 'reviews-archive-links-from-new-place-only',
-    guard: 'node --test --test-name-pattern="#682 r1 ссылки: перенесённый документ" test/reviews-archive.test.mjs',
-    because: 'review #682 r1: a moved document keeps links written for its old folder; resolving '
-      + 'them only from the new place leaves every ../specs/ and sibling link broken in the archive',
-    patches: [{
-      file: 'scripts/reviews-archive.mjs',
-      find: '    for (const base of [path, oldPath]) {',
-      replace: '    for (const base of [path]) { // mutant: old location ignored',
-    }],
-  },
-  {
-    id: 'reviews-index-release-counts-ignored',
-    guard: 'node --test --test-name-pattern="#635 счётчики|#635 индекс покрывает" test/reviews-index.test.mjs',
-    because: '#670: release reviews use the mandated `Итог: High N · Medium N` summary without colons',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: '  const release = releaseCounts(own);\n  if (release) return release;',
-      replace: '  const release = releaseCounts(own);\n  void release; // mutant: ignore the release summary',
-    }],
-  },
-  {
-    id: 'reviews-index-strict-cli-disabled',
-    guard: 'node --test --test-name-pattern="#670" test/reviews-index.test.mjs',
-    because: '#670: strict publication must reject a new unknown document before it writes an incomplete index',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: "  if (process.argv.includes('--strict')) assertAllDocumentsIndexed(collected);",
-      replace: "  if (false && process.argv.includes('--strict')) assertAllDocumentsIndexed(collected); // mutant: strict is disabled",
-    }],
-  },
-  {
-    id: 'release-review-index-without-strict',
-    guard: 'node --test --test-name-pattern="#638" test/release-review.test.mjs',
-    because: '#670: the publisher itself must opt into strict indexing so a future filename drift fails at its source',
-    patches: [{
-      file: '.github/workflows/release-review.yml',
-      find: 'node scripts/reviews-index.mjs --dir=docs/reviews --strict',
-      replace: 'node scripts/reviews-index.mjs --dir=docs/reviews',
-    }],
-  },
-  {
-    id: 'reviews-index-verdict-substring',
-    guard: 'node --test --test-name-pattern="#635 вердикт|#811 AC2:" test/reviews-index.test.mjs',
-    because: '#811: every verdict path shares the left token boundary; removing it reads '
-      + 'validate-red and infrared as the document\'s red verdict',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: '(?<![\\p{L}\\p{N}_-])',
-      replace: '',
-    }],
-  },
-  {
-    id: 'reviews-index-counts-first-match',
-    guard: 'node --test --test-name-pattern="#635 r2: счётчик" test/reviews-index.test.mjs',
-    because: 'r1 #635 H1: the first «High: N» in a review document is often a quote of another '
-      + 'round; counts must come from the document\'s own verdict line or section',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: "  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(own)]) {",
-      replace: "  for (const scope of [text]) { // mutant: first match anywhere in the document",
-    }],
-  },
-  {
-    id: 'reviews-index-own-verdict-any-tail',
-    guard: 'node --test --test-name-pattern="#779 пересказ" test/reviews-index.test.mjs',
-    because: '#779: the document\'s own verdict is «Вердикт: цвет» with the colon right after the word; '
-      + 'any line merely starting with «Вердикт» also matches the «Закрытие раунда r<N−1>» retelling '
-      + '«Вердикт r2 — зелёный», and the index shows the previous round\'s colour',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: '  const own = VERDICT_OWN_LINE_RE.exec(ownBody) || VERDICT_LEAD_LINE_RE.exec(ownBody);',
-      replace: '  const own = /^[ \\t]*(?:[-*]\\s*)?\\**(?:Вердикт|Verdict)[^\\n]{0,60}?\\**\\s*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m.exec(text); // mutant: any line starting with the word is own, anywhere in the document',
-    }],
-  },
-  {
-    id: 'reviews-index-retold-sections-own',
-    guard: 'node --test --test-name-pattern="#779 r2" test/reviews-index.test.mjs',
-    because: 'r1 #779 M1: the source of the verdict and counts is chosen by document structure; the order '
-      + 'of «## Вердикт» and «## Унаследовано из r1» is not fixed, so a «Закрытие раунда»/«Унаследовано» '
-      + 'section quoting the old «High: N» as its own paragraph must not count as the document\'s own text',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: '      const retold = level > 1 && (RETELL_HEADING_RE.test(heading[2]) || rounds.some((n) => n !== own));',
-      replace: '      const retold = false && rounds; // mutant: retelling sections count as the document\'s own text',
-    }],
-  },
-  {
-    id: 'reviews-index-paragraph-tail',
-    guard: 'node --test --test-name-pattern="#635 r2: первый абзац" test/reviews-index.test.mjs',
-    because: 'r2 #635 M1: a finding without a heading is its first paragraph joined from wrapped '
-      + 'lines; taking a single physical line yields the tail of a bullet («пусто). Не эскалирую…»)',
-    patches: [{
-      file: 'scripts/reviews-index.mjs',
-      find: "    current.push(line);\n  }\n  for (const paragraph of paragraphs) {",
-      replace: "    current = [line]; // mutant: last physical line instead of the paragraph\n  }\n  for (const paragraph of paragraphs) {",
-    }],
-  },
-  // #643: ребейз разрешает конфликт в генерируемом docs/reviews/INDEX.md
-  // пересборкой — и только когда ВСЕ конфликты остановки — индекс.
-  {
-    id: 'rebase-index-resolves-mixed-conflicts',
-    guard: 'node --test --test-name-pattern="#643 (planStop|AC2)" test/rebase-generated.test.mjs',
-    because: '#643 AC2: a stop where the index conflicts together with any other path is a real '
-      + 'conflict; resolving it because the index is among the paths commits conflict markers or '
-      + 'loops the rebase instead of refusing with the list of files',
-    patches: [{
-      file: 'scripts/rebase-generated.mjs',
-      find: "  if (manual.length) return { action: 'abort', reason: 'manual', manual, conflicts };",
-      replace: "  if (manual.length && !conflicts.includes(REVIEWS_INDEX_PATH)) return { action: 'abort', reason: 'manual', manual, conflicts }; // mutant: index anywhere unlocks the stop",
-    }],
-  },
-  {
-    id: 'rebase-index-takes-a-side',
-    guard: 'node --test --test-name-pattern="#643 AC1" test/rebase-generated.test.mjs',
-    because: '#643 AC1: neither side of the rebase knows the other side\'s review documents; taking '
-      + '--ours (dev) drops the branch\'s own document from the index, the result must be a rebuild',
-    patches: [{
-      file: 'scripts/rebase-generated.mjs',
-      find: '        rebuildIndex();\n',
-      replace: "        git(['checkout', '--ours', '--', REVIEWS_INDEX_PATH]); // mutant: take dev's index\n",
-    }],
-  },
-  {
-    id: 'rebase-index-failure-leaves-half-rebase',
-    guard: 'node --test --test-name-pattern="#643: сбой пересборки" test/rebase-generated.test.mjs',
-    because: 'a crash in the middle of the rebase (the generator failed) must abort it; otherwise '
-      + 'the caller\'s tree is left mid-rebase and the next step works on a detached half-result',
-    patches: [{
-      file: 'scripts/rebase-generated.mjs',
-      find: "  } catch (error) {\n    if (error.code !== 'CI_CANDIDATE_MOVED') restore();\n    throw error;\n",
-      replace: '  } catch (error) {\n    // mutant: no restore on failure\n    throw error;\n',
-    }],
-  },
-  {
-    id: 'rebase-index-refusal-exits-like-a-crash',
-    guard: 'node --test --test-name-pattern="#643 CLI" test/rebase-generated.test.mjs',
-    because: 'Node exits with 1 on its own uncaught errors; a refusal reported as 1 is '
-      + 'indistinguishable from a crashed helper, and the pipeline would call a broken tool a branch conflict',
-    patches: [{
-      file: 'scripts/rebase-generated.mjs',
-      find: '    process.exit(EXIT_CONFLICT);',
-      replace: '    process.exit(1); // mutant: refusal = generic failure code',
-    }],
-  },
-  {
-    id: 'merge-rebase-refuses-index-conflict',
-    guard: 'node --test --test-name-pattern="#643 AC1" test/merge-candidate.test.mjs',
-    because: '#643: a green task whose doc commit conflicts with dev only in the generated INDEX.md '
-      + 'must merge through Validate; a plain rebase sends it back to S6 on every move of dev',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: '      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY, refreshCi: false });',
-      replace: "      const r = spawnSync('git', [...CONVEYOR_IDENTITY, 'rebase', onto]).status === 0 ? { ok: true } : (spawnSync('git', ['rebase', '--abort']), { ok: false, conflicts: [] }); // mutant: plain rebase",
-    }],
-  },
-  {
-    id: 'rebase-on-dev-stages-index-unrebuilt',
-    guard: 'node --test --test-name-pattern="#643 AC3" test/rebase-on-dev.test.mjs',
-    because: '#643 AC3: the author\'s rebase must rebuild INDEX.md like the pipeline does; staging '
-      + 'the conflicted file as-is commits conflict markers into a generated file',
-    patches: [{
-      file: 'scripts/rebase-on-dev.mjs',
-      find: '    onto: upstream, cwd, git,\n',
-      replace: '    onto: upstream, cwd, git, rebuildIndex: () => {}, // mutant: index staged as-is\n',
-    }],
-  },
-  // #634: ролевые конспекты PROCESS.md, цена входа агента, генерируемый
-  // Snapshot и индекс приложений TESTING.md. Каждая защита — от тихого
-  // расхождения выжимки с каноном или тихого роста входа.
-  {
-    id: 'process-digest-dead-anchor',
-    guard: 'node --test --test-name-pattern="#634 конспект: каждая ссылка" test/process-digests.test.mjs',
-    because: 'a digest link to a PROCESS.md heading that does not exist sends the agent nowhere; '
-      + 'the digest must fail as soon as an anchor goes stale (#634 AC2)',
-    patches: [{
-      file: 'docs/process/AUTHOR.md',
-      find: '[§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок-и-прежние-метки)',
-      replace: '[§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок)',
-    }],
-  },
-  {
-    id: 'process-digest-bullet-without-canon-link',
-    guard: 'node --test --test-name-pattern="#634 конспект: каждый пункт" test/process-digests.test.mjs',
-    because: 'every digest item cites its canon section; an item without a link is a rule the '
-      + 'digest invented or a paraphrase nobody can check (#634 AC2)',
-    patches: [{
-      file: 'docs/process/AUTHOR.md',
-      find: '  `track:show` ([§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок-и-прежние-метки)).',
-      replace: '  `track:show`.',
-    }],
-  },
-  {
-    id: 'process-digest-key-rule-dropped',
-    guard: 'node --test --test-name-pattern="#634 конспект: ключевые правила" test/process-digests.test.mjs',
-    because: 'the empty third column is a Medium finding (PROCESS §2.7, #435); a reviewer digest '
-      + 'that softens it must fail, not pass as a shorter paraphrase (#634)',
-    patches: [{
-      file: 'docs/process/REVIEWER.md',
-      find: '  Пустой третий столбец — находка Medium, а не примечание. «Тест умеет',
-      replace: '  Пустой третий столбец желательно заполнить. «Тест умеет',
-    }],
-  },
-  {
-    id: 'entry-cost-author-route-over-budget',
-    guard: 'node --test --test-name-pattern="#634 entry-cost: вход автора" test/entry-cost.test.mjs',
-    because: 'AC1 #634: the author entry route stays within 12 000 words; a digest that grows '
-      + 'back into the canon must redden the measurement, not the next audit. The patch alone '
-      + 'exceeds the budget (#680 halved the route, and 2 000 extra words stayed green)',
-    patches: [{
-      file: 'docs/process/AUTHOR.md',
-      find: '## Запрещено\n',
-      replace: `## Запрещено\n\n${'слово '.repeat(12001)}\n`,
-    }],
-  },
-  {
-    id: 'entry-cost-budget-never-over',
-    guard: 'node --test --test-name-pattern="#634 entry-cost: превышение" test/entry-cost.test.mjs',
-    because: 'the budget verdict is the whole point of the measurement; a comparison that never '
-      + 'reports «over» turns --check into a word counter (#634 AC1)',
-    patches: [{
-      file: 'scripts/entry-cost.mjs',
-      find: '  const over = route.budget != null && total > route.budget;',
-      replace: '  const over = false; // mutant: budget never exceeded',
-    }],
-  },
-  {
-    id: 'status-snapshot-hides-version-mismatch',
-    guard: 'node --test --test-name-pattern="#634 status-snapshot: рассинхрон" test/status-snapshot.test.mjs',
-    because: 'a snapshot that reports the majority version and drops the odd source repeats the '
-      + 'hand-written row it replaced: it looks current while the tree disagrees (#634)',
-    patches: [{
-      file: 'scripts/status-snapshot.mjs',
-      find: "  const version = versions.mismatches.length\n",
-      replace: "  const version = false // mutant: mismatches hidden\n",
-    }],
-  },
-  {
-    id: 'testing-doc-drops-manual-section',
-    guard: 'node --test --test-name-pattern="#681 TESTING.md" test/testing-doc.test.mjs',
-    because: 'the per-surface checklists were removed in #681 on the promise that what automation '
-      + 'cannot see is named in one TESTING.md section; losing that section leaves manual checks '
-      + 'with no home and invites the checklists back',
-    patches: [{
-      file: 'docs/TESTING.md',
-      find: '## Чего не проверяет автоматика\n',
-      replace: '## Ручные заметки\n',
-    }],
-  },
-  // #624: гейт мёртвого кода и связности монолита — три защиты, три мутанта.
-  {
-    id: 'unused-gate-allows-everything',
-    guard: 'node --test --test-name-pattern="#624 разбор диагностик" test/monolith-metrics.test.mjs',
-    because: 'the allow-list must admit only private card members read through the port or the '
-      + 'smoke harness; admitting everything hides real dead code behind a green gate (#624 AC1)',
-    patches: [{
-      file: 'scripts/monolith-metrics.mjs',
-      find: "    if (isCard && isPrivateMember && name) {",
-      replace: "    if (name) { // mutant: any named diagnostic is allowed",
-    }],
-  },
-  {
-    id: 'monolith-metrics-baseline-strict',
-    guard: 'node --test --test-name-pattern="#699 храповик" test/monolith-metrics.test.mjs',
-    because: 'the ratchet reddens one unit over the band; a looser comparison lets bundle bytes and '
-      + 'coupling creep up one unit per commit (#624 AC1-b, AC2; band since #699)',
-    patches: [{
-      file: 'scripts/monolith-metrics.mjs',
-      find: "    if (base == null || now > base + band) grown.push({ name, base: base ?? null, now });",
-      replace: "    if (base == null || now > base + band + 1) grown.push({ name, base: base ?? null, now }); // mutant: one unit of slack",
-    }],
-  },
-  // #699: полоса над потолком беты вместо двустороннего храповика с нулевым запасом.
-  {
-    id: 'core-band-ignored',
-    guard: 'node --test --test-name-pattern="#699" test/core-file-budget.test.mjs',
-    because: '#699: the core may grow up to 50 lines over the beta ceiling; without the band every '
-      + 'task behind a neighbour hits a zero-slack ceiling again (#689 after #691)',
-    patches: [{
-      file: 'test/core-file-budget.test.mjs',
-      find: '    if (lines > cap + band) {',
-      replace: '    if (lines > cap) { // mutant: no band',
-    }],
-  },
-  {
     id: 'initial-view-band-below-ceiling-again',
     guard: 'node --test --test-name-pattern="#438/#699" test/bundle-assets.test.mjs',
     because: '#699: the bundle band sits over the beta ceiling; a task no longer re-centres the '
@@ -16244,478 +14897,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/bundle-budget.mjs',
       find: '  if (bytes > ceiling + band) {\n    return {\n      kind: \'grew\',\n      over: bytes - ceiling,\n      text: `initial View graph',
       replace: '  if (bytes > ceiling) {\n    return {\n      kind: \'grew\',\n      over: bytes - ceiling,\n      text: `initial View graph',
-    }],
-  },
-  {
-    id: 'monolith-band-exact-again',
-    guard: 'node --test --test-name-pattern="#699 храповик" test/monolith-metrics.test.mjs',
-    because: '#699: a few more host. references no longer block a show task; the five source '
-      + 'numbers get a band over the beta baseline',
-    patches: [{
-      file: 'scripts/monolith-metrics.mjs',
-      find: '    const band = bands[name] ?? 0;',
-      replace: "    const band = name === 'bundleBytes' ? bands[name] : 0; // mutant: exact again",
-    }],
-  },
-  {
-    id: 'monolith-shrink-fails-branch-again',
-    guard: 'node --test --test-name-pattern="#699 храповик" test/monolith-metrics.test.mjs',
-    because: '#699: a lower number is fixed at the beta by ratchets tighten; failing the branch '
-      + 'makes parallel tasks conflict on the baseline again',
-    patches: [{
-      file: 'scripts/unused-locals-gate.mjs',
-      find: "    for (const s of shrunk) lines.push(`info связность ниже базы: ${s.name} ${s.base} → ${s.now} — базу опустит бета`);",
-      replace: "    fail = true; for (const s of shrunk) lines.push(`info связность ниже базы: ${s.name} ${s.base} → ${s.now} — базу опустит бета`); // mutant",
-    }],
-  },
-  {
-    id: 'ratchet-report-calls-band-tight',
-    guard: 'node --test --test-name-pattern="#699 состояние" test/ratchets.test.mjs',
-    because: '#699: a fact inside the band over the ceiling must be reported for the beta to raise '
-      + 'or revert, not silently counted as tight',
-    patches: [{
-      file: 'scripts/ratchets.mjs',
-      find: "  if (fact > ceiling) return 'over';\n",
-      replace: '',
-    }],
-  },
-  {
-    id: 'release-runbook-forgets-tighten',
-    guard: 'node --test --test-name-pattern="#699 r1 M1" test/ratchets.test.mjs',
-    because: '#699 r1 M1: the second side of the ratchet lives in the candidate checklist; a warning '
-      + 'at publication time comes after the candidate commit and is ignored systematically',
-    patches: [{
-      file: 'docs/DEVELOPMENT.md',
-      find: 'facts with `node scripts/ratchets.mjs tighten` (#699',
-      replace: 'facts with `node scripts/ratchets.mjs report` (#699',
-    }],
-  },
-  {
-    id: 'monolith-delegates-return-only',
-    guard: 'node --test --test-name-pattern="#624 делегаты" test/monolith-metrics.test.mjs',
-    because: 'a delegate without `return` or with `await` is still a delegate; counting only the '
-      + 'return form undercounts and lets the metric fall without any extraction (#624 AC2)',
-    patches: [{
-      file: 'scripts/monolith-metrics.mjs',
-      find: "  else if (ts.isExpressionStatement(statement)) expression = statement.expression;",
-      replace: "  else if (ts.isExpressionStatement(statement)) return false; // mutant: return-form only",
-    }],
-  },
-  {
-    id: 'monolith-anchors-length-only',
-    guard: 'node --test --test-name-pattern="#624 AC4: подмена" test/monolith-text-anchors.test.mjs',
-    because: 'the freeze compares names, not counts: a renamed anchor test must read as a new one (#624 AC4)',
-    patches: [{
-      file: 'test/monolith-text-anchors.test.mjs',
-      find: "  return actual.filter((name) => !allowed.has(name)).sort();",
-      replace: "  return actual.length > frozen.length ? actual.slice(frozen.length).sort() : []; // mutant: length only",
-    }],
-  },
-  {
-    id: 'process-reconcile-restarts-healthy-run',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555: bounded reconciliation must not duplicate a healthy queued/running review '
-      + 'or turn metadata polling into another model invocation',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: "    if (age <= activeLimitMs) return result('wait', 'matching process run is healthy and active', { label, stage, run });",
-      replace: "    if (age <= activeLimitMs) return result('retry', 'mutant: restart healthy run', { label, stage, run });",
-    }],
-  },
-  {
-    id: 'process-reconcile-ignores-owner-stop',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555: blocked/review-4 is a current owner decision and always wins over an old '
-      + 'lost-event or cancelled-run observation',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: "  if (labels.includes('blocked') || labels.includes('review-4')) {",
-      replace: "  if (false && (labels.includes('blocked') || labels.includes('review-4'))) {",
-    }],
-  },
-  {
-    id: 'process-reconcile-accepts-foreign-prepared-evidence',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555: an artifact from another issue, stage, run or attempt is diagnosis only and '
-      + 'must never authorize recovery or verdict application',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '  if (badIdentity) return \'prepared artifact belongs to another issue/stage/run attempt\';',
-      replace: '  if (false && badIdentity) return \'mutant: foreign identity accepted\';',
-    }],
-  },
-  {
-    id: 'process-reconcile-reruns-sealed-model-result',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555: a sealed model artifact must be escalated for deterministic integration, not '
-      + 'paid for a second time by an automatic relabel',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '  if (run.resultArtifact) {',
-      replace: '  if (false && run.resultArtifact) {',
-    }],
-  },
-  {
-    id: 'process-reconcile-retries-lost-event-forever',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555: one lost wake-up gets one automatic relabel; if that event is lost too, '
-      + 'reconciliation escalates instead of generating a run/comment every schedule tick',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '    if (retryAlreadyIssued) {',
-      replace: '    if (false && retryAlreadyIssued) {',
-    }],
-  },
-  {
-    id: 'process-reconcile-relabels-before-durable-marker',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555 review r1: the dedupe/diagnostic comment must exist before a fallible label '
-      + 'mutation; otherwise a failed restore is silent and repeats on every schedule tick',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '  await ops.comment(repo, issue, commentBody(issue, request, decision, key));\n'
-        + "  if (decision.action === 'retry') await ops.relabel(repo, issue, decision.label);",
-      replace: "  if (decision.action === 'retry') await ops.relabel(repo, issue, decision.label);\n"
-        + '  await ops.comment(repo, issue, commentBody(issue, request, decision, key));',
-    }],
-  },
-  {
-    id: 'process-reconcile-ignores-failed-label-restore',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555 review r1: the bounded second add-label attempt is authoritative; ignoring '
-      + 'its failure would claim success while leaving the issue outside S4/S7',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '  if (restore.status !== 0) throw new Error(`could not restore ${label}: ${(restore.stderr || first.stderr || \'\').trim()}`);',
-      replace: '  if (false && restore.status !== 0) throw new Error(`mutant: restore ignored`);',
-    }],
-  },
-  {
-    id: 'process-reconcile-write-error-aborts-summary',
-    guard: 'node --test test/process-reconcile.test.mjs',
-    because: '#555 review r1: a write failure belongs in the machine summary and must not abort '
-      + 'the whole snapshot before its artifact can be published',
-    patches: [{
-      file: 'scripts/process-reconcile.mjs',
-      find: '        } catch (error) {\n          record.error = error instanceof Error ? error.message : String(error);',
-      replace: '        } catch (error) {\n          throw error; // mutant: summary is lost',
-    }],
-  },
-  {
-    id: 'review-tool-policy-allows-arbitrary-bash-1065',
-    guard: 'node --test --test-name-pattern="#1065 refuses unsafe" test/review-execution-policy.test.mjs',
-    because: '#1065: forbidden patch/restore/inline commands are ordinary DATA inputs to the unchanged PreToolUse policy and must be denied, never dispatched by the fixture.',
-    patches: [{
-      file: 'scripts/review-execution-policy.mjs',
-      find: "  if (call.tool_name === 'Bash') return bashProblem(call.tool_input, policy) || 'generic shell is not exposed; use declared run_check';",
-      replace: "  if (call.tool_name === 'Bash') return null;",
-    }],
-  },
-  {
-    id: 'review-sed-read-allows-extra-options-1065',
-    guard: 'node --test --test-name-pattern="#1065 refuses unsafe" test/review-execution-policy.test.mjs',
-    because: '#1065: read-only sed must validate every trailing filename, not just its initial -n/address; extra -i/-e/--file inputs are refused as DATA without executing sed.',
-    patches: [{
-      file: 'scripts/review-execution-policy.mjs',
-      find: "    && rest.slice(2).every(a => !a.startsWith('-') && canonicalFile(a, policy))) return null;",
-      replace: '    && true) return null;',
-    }],
-  },
-  {
-    id: 'review-git-read-allows-option-prefix-1065',
-    guard: 'node --test --test-name-pattern="#1065 refuses unsafe" test/review-execution-policy.test.mjs',
-    because: '#1065: Git parse-options unique prefixes cannot bypass the forbidden output/conversion/filter options; all vectors remain DATA and no Git write/filter command runs in the witness.',
-    patches: [{
-      file: 'scripts/review-execution-policy.mjs',
-      find: 'FORBIDDEN_GIT_OPTIONS.some(name => name.startsWith(option))',
-      replace: 'FORBIDDEN_GIT_OPTIONS.some(name => name === option)',
-    }],
-  },
-  {
-    id: 'review-native-hook-failure-opens-tool-1065',
-    guard: 'node --test --test-name-pattern="#1065 native hook settings" test/review-execution-policy.test.mjs',
-    because: '#1065: native SDK failure behavior must block a tool on hook startup/outer deadline failure; post-execution publication refusal is not prevention.',
-    patches: [{
-      file: 'scripts/review-execution-policy.mjs',
-      find: "    type: 'command', command, timeout: HOOK_TIMEOUT_SECONDS, onFailure: 'block',",
-      replace: "    type: 'command', command, timeout: HOOK_TIMEOUT_SECONDS, onFailure: 'ignore',",
-    }],
-  },
-  {
-    id: 'review-trace-skips-hook-journal-binding-1065',
-    guard: 'node --test --test-name-pattern="#1065 journal binds" test/review-execution-policy.test.mjs',
-    because: '#1065: complete synthetic SDK records cannot seal an absent, duplicated or foreign hook decision; nonexecuting schema output is the only exact terminal-bound exemption.',
-    patches: [{
-      file: 'scripts/review-execution-policy.mjs',
-      find: '    if (!(outputChannel && matching.length === 0) && (matching.length !== 1',
-      replace: '    if (false && !(outputChannel && matching.length === 0) && (matching.length !== 1',
-    }],
-  },
-  {
-    id: 'review-report-calls-patch-run-ordinary-1065',
-    guard: 'node --test --test-name-pattern="#1065 published historical claim" test/review-execution-policy.test.mjs',
-    because: '#1065: the old published sentence is inert report DATA, not reenacted; a known temporary patch/run/restore claim cannot become admissible ordinary evidence.',
-    patches: [{
-      file: 'scripts/review-execution-policy.mjs',
-      find: '    return patch && claimed && run ?',
-      replace: '    return false && patch && claimed && run ?',
-    }],
-  },
-  {
-    id: 'review-integration-skips-evidence-checksum',
-    guard: 'node --test test/review-result-gate.test.mjs',
-    because: '#551/#556: artifact между моделью и привилегированной интеграцией — вход '
-      + 'доверенной стадии; без сверки контрольных сумм подменённый документ или вердикт '
-      + 'публикуется и сливается. Проверка живёт в `review-result-gate.mjs` с тех пор, как '
-      + 'её стало можно прогнать враждебными фикстурами',
-    patches: [{
-      file: 'scripts/review-result-gate.mjs',
-      find: '    if (digest !== row.hash) problems.push(`контрольная сумма не сходится: ${row.name}`);',
-      replace: '    void digest; // mutant: содержимое artifact принимается на веру',
-    }],
-  },
-  {
-    id: 'review-gate-accepts-a-foreign-passport',
-    guard: 'node --test test/review-result-gate.test.mjs',
-    because: '#556: паспорт — единственное, чем привилегированная стадия отличает свой '
-      + 'результат от чужого. Без посполевой сверки чужой run, устаревший material_sha или '
-      + 'другой этап проходят как свои',
-    patches: [{
-      file: 'scripts/review-result-gate.mjs',
-      find: "    if (String(got) !== String(want)) {",
-      replace: "    if (false && String(got) !== String(want)) {",
-    }],
-  },
-  {
-    id: 'review-gate-tolerates-an-extra-file',
-    guard: 'node --test test/review-result-gate.test.mjs',
-    because: '#556: набор файлов задан точно, а не «не меньше»: лишний файл в artifact — это '
-      + 'уже не тот artifact, который запечатала модель',
-    patches: [{
-      file: 'scripts/review-result-gate.mjs',
-      find: "  if (actual.join(',') !== wanted.join(',')) {",
-      replace: "  if (wanted.some((name) => !actual.includes(name))) {",
-    }],
-  },
-  {
-    id: 'action-pins-accept-a-moving-ref',
-    guard: 'node --test test/action-pins.test.mjs',
-    because: '#556: перемещаемая ссылка в `uses:` — доверие чужому владельцу тега здесь и '
-      + 'сейчас, а не коду, который читали; `@master` и `@main` у hassfest и hacs означали '
-      + 'произвольный будущий коммит чужой ветки',
-    patches: [{
-      file: 'scripts/action-pins.mjs',
-      find: "export const isPinned = (spec) => /^[\\w.-]+\\/[\\w./-]+@[0-9a-f]{40}$/.test(spec);",
-      replace: "export const isPinned = (spec) => /^[\\w.-]+\\/[\\w./-]+@\\S+$/.test(spec);",
-    }],
-  },
-  // #623: тонкие вызывающие файлы в main и их тела из dev.
-  {
-    id: 'own-reusable-accepts-any-ref',
-    guard: 'node --test --test-name-pattern="#623" test/action-pins.test.mjs',
-    because: '#623: исключение пина для тела из dev этого репозитория, расширенное на любой ref, '
-      + 'пропустило бы перемещаемую ссылку `@main` или `@feature` мимо #556',
-    patches: [{
-      file: 'scripts/action-pins.mjs',
-      find: "export const OWN_DEV_REUSABLE = /^Matysh\\/houseplan-card\\/\\.github\\/workflows\\/_[\\w.-]+\\.ya?ml@dev$/;",
-      replace: "export const OWN_DEV_REUSABLE = /^Matysh\\/houseplan-card\\/\\.github\\/workflows\\/_[\\w.-]+\\.ya?ml@[\\w./-]+$/;",
-    }],
-  },
-  {
-    id: 'workflow-sync-forgets-a-thin-caller',
-    guard: 'node --test test/default-branch-workflows.test.mjs',
-    because: '#623: preflight сверял 3 файла из 6 исполняемых из main — правка четвёртого '
-      + 'доезжала до dev и молча не действовала',
-    patches: [{
-      file: '.github/workflows/validate.yml',
-      find: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml ship-review.yml beta-derived.yml; do',
-      replace: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml ship-review.yml beta-derived.yml; do',
-    }],
-  },
-  {
-    id: 'thin-caller-runs-the-main-body',
-    guard: 'node --test test/default-branch-workflows.test.mjs',
-    because: '#623: ссылка на тело не из dev (локальный `./` или `@main`) исполняла бы копию из '
-      + 'main — ровно то зеркалирование, которое снимает задача',
-    patches: [{
-      file: '.github/workflows/process.yml',
-      find: '    uses: Matysh/houseplan-card/.github/workflows/_process.yml@dev # #1040: reviewed execution body from dev',
-      replace: '    uses: ./.github/workflows/_process.yml',
-    }],
-  },
-  {
-    id: 'thin-caller-widens-permissions',
-    guard: 'node --test test/default-branch-workflows.test.mjs',
-    because: '#623/#556: потолок прав вызывающей job шире объединения прав тела отдал бы '
-      + 'лишнее право каждой job тела без собственного блока permissions',
-    patches: [{
-      file: '.github/workflows/mutation-gate.yml',
-      find: '      contents: read\n      actions: read\n      issues: write',
-      replace: '      contents: read\n      actions: write\n      issues: write',
-    }],
-  },
-  {
-    id: 'thin-caller-drops-secrets',
-    guard: 'node --test test/default-branch-workflows.test.mjs',
-    because: '#623: без `secrets: inherit` тело получает пустые HP_PROCESS_TOKEN и '
-      + 'CLAUDE_CODE_OAUTH_TOKEN — конвейер падает на первом шаге с меткой',
-    patches: [{
-      file: '.github/workflows/process-reconcile.yml',
-      find: '      apply: ${{ fromJSON(needs.event.outputs.parameters).apply }}\n    secrets: inherit\n',
-      replace: '      apply: ${{ fromJSON(needs.event.outputs.parameters).apply }}\n',
-    }],
-  },
-  {
-    id: 'mutation-body-keys-marker-on-caller-sha',
-    guard: 'node --test test/default-branch-workflows.test.mjs',
-    because: '#623: в вызываемом workflow github.workflow_sha — SHA вызывающего файла из main; '
-      + 'маркер повторного использования перестал бы зависеть от версии тела',
-    patches: [{
-      file: '.github/workflows/_mutation-gate.yml',
-      find: '          WORKFLOW_SHA: ${{ job.workflow_sha }}',
-      replace: '          WORKFLOW_SHA: ${{ github.workflow_sha }}',
-    }],
-  },
-  {
-    id: 'review-model-gets-repository-write',
-    guard: 'node --test --test-name-pattern="по job" test/review-doc-guard.test.mjs',
-    because: '#556: недоверенная стадия с правом записи в репозиторий может положить коммит в '
-      + 'ветку задачи в обход ревью и слияния — потолок прав этой job проверяется дословно',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '    permissions:\n      contents: read\n      issues: read\n    needs: [guard, prepare]\n',
-      replace: '    permissions:\n      contents: write\n      issues: read\n    needs: [guard, prepare]\n',
-    }],
-  },
-  {
-    id: 'review-job-trusts-the-app-token',
-    guard: 'node --test --test-name-pattern="direct native transport" test/review-doc-guard.test.mjs',
-    because: '#556/#1065: возвращение action вместо direct native вновь открывает App/OIDC fallback; '
-      + 'model job must keep its declared capability and permission boundary',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-native-runner.mjs"\n',
-      replace: '        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520\n',
-    }],
-  },
-  {
-    id: 'review-integration-trusts-failed-model',
-    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
-    because: '#551: timeout/cancel/failure модели не является вердиктом; интеграция обязана '
-      + 'остановиться, сохранить метку и назвать упавшую стадию',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          if [ "$REUSE" != "true" ] && [ "$SHIP" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then',
-      replace: '          if false; then # mutant: every model result is accepted',
-    }],
-  },
-  {
-    id: 'announce-listens-to-the-release-event-again',
-    guard: 'node --test test/release-workflow.test.mjs',
-    because: '#538: пока анонс висел на самом событии `release: published`, он бежал '
-      + 'параллельно гейту и обгонял его — проверять ему нечего. 12.09 v1.75.0 объявили в '
-      + 'канале в ту же минуту, когда проверка отказала выкладывать ассеты, и снаружи это '
-      + 'выглядело обычным релизом',
-    patches: [{
-      file: '.github/workflows/announce.yml',
-      find: 'on:\n  workflow_dispatch: {}',
-      replace: 'on:\n  release:\n    types: [published]\n  workflow_dispatch: {}',
-    }],
-  },
-  {
-    id: 'announce-job-stops-waiting-for-the-assets',
-    guard: 'node --test test/release-workflow.test.mjs',
-    because: '#538: зависимость анонса от выкладки — это и есть правило «молчание тоже '
-      + 'ответ». Без неё анонс уходит при красном гейте, то есть ровно то, что случилось',
-    patches: [{
-      file: '.github/workflows/release.yml',
-      find: '    name: Оповещение о релизе после выкладки\n    needs: [candidate, publish]\n'
-        + "    if: ${{ needs.publish.outputs.newly_published == 'true' }}",
-      replace: '    name: Оповещение о релизе после выкладки\n    needs: [candidate]\n    if: always()',
-    }],
-  },
-  {
-    id: 'asset-upload-stops-needing-the-gate',
-    guard: 'node --test test/release-workflow.test.mjs',
-    because: '#540: единственный публикатор ассетов ценен ровно тем, что стоит ЗА гейтом. '
-      + 'Снятая зависимость — это `release-zip.yml` под другим именем: ассеты уходят в '
-      + 'ту же минуту, когда Validate, Full Performance и E2E ещё идут или уже красные',
-    patches: [{
-      file: '.github/workflows/release.yml',
-      find: '  stage:\n    name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"\n    needs: [candidate, gate]',
-      replace: '  stage:\n    name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"\n    needs: [candidate]',
-    }],
-  },
-  {
-    id: 'hand-published-release-stays-public-during-the-gates',
-    guard: 'node --test test/release-workflow.test.mjs',
-    because: '#540: fail-closed держится на одном шаге — релиз, опубликованный руками, '
-      + 'немедленно возвращается в черновик. Без него всё время гейтов (час и больше) '
-      + 'снаружи висит публичный релиз с непроверенными или отсутствующими ассетами — '
-      + 'состояние v1.75.0 12.09',
-    patches: [{
-      file: '.github/workflows/release.yml',
-      find: '            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft\n',
-      replace: '            true\n',
-    }],
-  },
-  {
-    id: 'repair-clobbers-the-public-asset',
-    guard: 'node --test test/release-workflow.test.mjs',
-    because: '#540: ремонт догружает только недостающее. `--clobber` на публичном релизе '
-      + 'подменяет байты, которые кто-то уже скачал и установил, — молча и без следа; '
-      + 'расхождение хеша обязано быть отказом, а не перезаписью',
-    patches: [{
-      file: '.github/workflows/release.yml',
-      find: '              gh release upload "$TAG" $missing --repo "$GITHUB_REPOSITORY"\n',
-      replace: '              gh release upload "$TAG" $missing --repo "$GITHUB_REPOSITORY" --clobber\n',
-    }],
-  },
-  {
-    id: 'e2e-gate-tests-the-tag-instead-of-the-candidate',
-    guard: 'node --test test/e2e-gate.test.mjs',
-    because: '#540: E2E на теге качает `houseplan.zip` из публичного релиза — то есть '
-      + 'требует публикации ДО проверки, и цикл «релиз должен быть публичным, чтобы его '
-      + 'проверить» возвращается. Под тестом обязан быть SHA кандидата',
-    patches: [{
-      file: 'scripts/e2e-gate.mjs',
-      find: '    await ops.dispatch(ref, previousStable(await ops.releases(), tag));',
-      replace: '    await ops.dispatch(tag, previousStable(await ops.releases(), tag));',
-    }],
-  },
-  {
-    id: 'passport-accepts-a-different-hash',
-    guard: 'node --test test/release-assets.test.mjs',
-    because: '#540: паспорт ассетов существует ради одного сравнения — публичные байты '
-      + 'равны проверенным. Ослеплённое сравнение делает SHA256SUMS украшением: релиз с '
-      + 'подменённым ZIP проходит сверку зелёным',
-    patches: [{
-      file: 'scripts/release-assets.mjs',
-      find: '    else if (actual[name] !== expected[name]) mismatched.push(name);',
-      replace: '    else if (false) mismatched.push(name);',
-    }],
-  },
-  {
-    id: 'prerelease-membership-keeps-unproven-s8',
-    guard: 'node --test test/release-membership.test.mjs',
-    because: '#547: the mutable S8 queue is only a hint. Keeping an issue without an '
-      + 'Issue trailer in the pinned candidate recreates the A -> B -> publish A race and '
-      + 'closes B as if it had shipped',
-    patches: [{
-      file: 'scripts/release-membership.mjs',
-      find: '      .filter((number) => evidence.get(number).length > 0)',
-      replace: '      .filter(() => true) // mutant: trust the live S8 snapshot',
-    }],
-  },
-  {
-    id: 'prerelease-bookkeeping-duplicates-release-comment',
-    guard: 'node --test test/release-bookkeeping.test.mjs',
-    because: '#547: a failure after commenting but before label removal must be retryable; '
-      + 'without the marker check every retry adds another public release comment',
-    patches: [{
-      file: 'scripts/release-bookkeeping.mjs',
-      find: '    comment: !comments.some((body) => String(body).includes(marker)),',
-      replace: '    comment: true, // mutant: retries duplicate the comment',
     }],
   },
   {
@@ -17153,17 +15334,6 @@ const MUTANT_DEFINITIONS = [
       file: 'src/iso-scene-render.ts',
       find: "        const faceFlipV = opening.type === 'gate' ? !opening.flipV : opening.flipV;",
       replace: "        const faceFlipV = opening.flipV;",
-    }],
-  },
-  {
-    id: 'stage3-w10-flat-fallback-counted-as-success',
-    guard: 'node --test --test-name-pattern="runner fails closed" test/performance-workflow.test.mjs',
-    because: 'W10: a dense benchmark sample in Flat fallback is invalid evidence and must fail '
-      + 'before timings are accepted (#160)',
-    patches: [{
-      file: 'demo/benchmark_large_house.mjs',
-      find: "        if (snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');",
-      replace: "        if (false && snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');",
     }],
   },
   {
@@ -17792,152 +15962,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'wait-verdict-reuses-historical-failure',
-    guard: 'node --test --test-name-pattern="#546" test/wait-verdict.test.mjs',
-    because: 'the first snapshot must baseline pipeline comments older than the latest S4/S7 request; '
-      + 'otherwise every restarted review immediately exits on the previous round failure (#546 AC1/AC2)',
-    patches: [{
-      file: 'scripts/wait-verdict.mjs',
-      find: '    .filter((c) => c.event && eventBelongsToReview(c, snapshot.reviewRequest));',
-      replace: '    .filter((c) => c.event); // mutant: every historical event belongs to the current round',
-    }],
-  },
-  {
-    id: 'wait-verdict-merge-outcomes-unknown',
-    guard: 'node --test --test-name-pattern="#768" test/wait-verdict.test.mjs',
-    because: '#768: merge-candidate outcomes are recognised through its OUTCOME_SIGNS catalog; without it '
-      + 'a red or stuck candidate keeps the author waiting in S7 until the timeout, and after the move to S6 '
-      + 'only the label change is printed, the reason is lost',
-    patches: [{
-      file: 'scripts/wait-verdict.mjs',
-      find: '  const sign = outcomeOf(text);',
-      replace: '  const sign = null; // mutant: merge-candidate outcomes are not recognised',
-    }],
-  },
-  {
-    id: 'wait-verdict-not-run-validate-unrecognised',
-    guard: 'node --test --test-name-pattern="#810" test/wait-verdict.test.mjs',
-    because: '#810: «Ревью не запускалось» from the red or missing Validate step of _process.yml is its own '
-      + 'event, not a rebase conflict; the sign must match the body the step writes for both kinds '
-      + '(«Validate» and «Validate с мутантами»), otherwise the author is sent to the wrong action',
-    patches: [{
-      file: 'scripts/wait-verdict.mjs',
-      find: "Validate(?: с мутантами)? на материале /m, kind: 'validate-red'",
-      replace: "Validate на материале /m, kind: 'validate-red'",
-    }],
-  },
-  {
-    id: 'release-gate-counts-cancelled-runs',
-    guard: 'node --test test/release-gate.test.mjs',
-    because: 'a cancelled twin on the tag SHA proves nothing and must not block the assets; the '
-      + 'verdict is the latest non-cancelled run (#511 AC1)',
-    patches: [{
-      file: 'scripts/release-gate.mjs',
-      find: "  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => run && run.conclusion !== 'cancelled');",
-      replace: "  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => !!run); // mutant: cancelled counts",
-    }],
-  },
-  {
-    id: 'release-gate-oldest-run-wins',
-    guard: 'node --test test/release-gate.test.mjs',
-    because: 'the latest run is the verdict: a re-run or another-baseline comparison must be able to '
-      + 'refresh an older result on the same SHA (#511 AC1)',
-    patches: [{
-      file: 'scripts/release-gate.mjs',
-      find: "  return relevant.sort((a, b) => stamp(b) - stamp(a) || Number(b.id || 0) - Number(a.id || 0))[0] || null;",
-      replace: "  return relevant.sort((a, b) => stamp(a) - stamp(b) || Number(a.id || 0) - Number(b.id || 0))[0] || null; // mutant: oldest",
-    }],
-  },
-  {
-    id: 'release-proof-accepts-light-run',
-    guard: 'node --test test/ci-proof.test.mjs test/release-gate.test.mjs',
-    because: 'a later light workflow_dispatch must not hide an older full failure and release assets; '
-      + 'release accepts only a proof that requested the heavy matrix (#541)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "  if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');",
-      replace: "  if (false && policy?.full && !asBool(proof.request?.full)) return result('stale', 'mutant');",
-    }],
-  },
-  {
-    id: 'ci-proof-ignores-run-attempt',
-    guard: 'node --test test/ci-proof.test.mjs',
-    because: 'rerunning the same Actions run changes its attempt and jobs; an artifact from another '
-      + 'attempt cannot vouch for the current result (#541)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: '  if (proof.run?.id !== identity.runId || proof.run?.attempt !== identity.attempt\n',
-      replace: '  if (proof.run?.id !== identity.runId || false && proof.run?.attempt !== identity.attempt\n',
-    }],
-  },
-  {
-    id: 'ci-proof-trusts-reuse-without-source-job',
-    guard: 'node --test test/ci-proof.test.mjs',
-    because: 'a cache-hit bit and key are not proof; lawful reuse also needs the source SHA/run and '
-      + 'the independently fetched successful source job (#541)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "    if (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(rules[id], source.jobs)) {",
-      replace: "    if (false && (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(rules[id], source.jobs))) {",
-    }],
-  },
-  // #622: контракт имён job validate.yml с ci-proof / validate-gate / e2e-gate.
-  {
-    id: 'ci-proof-mutant-shards-are-a-constant',
-    guard: 'node --test --test-name-pattern="#622" test/ci-proof.test.mjs',
-    because: 'the number of mutant jobs a proof must show is the validate.yml matrix size; a fixed six '
-      + 'silently accepts an incomplete run once the matrix grows (#622 AC2)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: '    return { job: rule.job, names: jobInstanceNames(job) };',
-      replace: '    return { job: rule.job, names: jobInstanceNames(job).slice(0, 6) };',
-    }],
-  },
-  {
-    id: 'ci-proof-skips-job-name-contract',
-    guard: 'node --test --test-name-pattern="#622" test/ci-proof.test.mjs',
-    because: 'a job renamed in validate.yml must fail the proof with the job named, not pass on names '
-      + 'the scripts no longer declare nor surface later as an absent execution (#622 AC1)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: '    if (actual !== rule.name) {\n      throw new Error(',
-      replace: '    if (false && actual !== rule.name) {\n      throw new Error(',
-    }],
-  },
-  {
-    id: 'ci-proof-rule-name-drifts-from-workflow',
-    guard: 'node --test test/workflow-jobs.test.mjs',
-    because: 'a rule string edited in ci-proof without the same rename in validate.yml must turn the '
-      + 'contract test red (#622 AC1)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "  backend: [{ job: 'backend', name: 'Бэкенд: pytest в Home Assistant' }],",
-      replace: "  backend: [{ job: 'backend', name: 'Бэкенд: pytest в HA' }],",
-    }],
-  },
-  {
-    id: 'job-contract-ignores-undeclared-jobs',
-    guard: 'node --test test/workflow-jobs.test.mjs',
-    because: 'a new validate.yml job is a decision — consumed by a rule or declared unconsumed — '
-      + 'not a silent gap in the contract (#622 AC1)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: '    if (!declared.has(job)) problems.push(',
-      replace: '    if (false && !declared.has(job)) problems.push(',
-    }],
-  },
-  {
-    id: 'e2e-gate-hides-broken-name-contract',
-    guard: 'node --test --test-name-pattern="#622" test/e2e-gate.test.mjs',
-    because: 'the e2e job name lives in houseplan-e2e; when it drifts, «missing» must name the broken '
-      + 'contract instead of a plain «did not appear» (#622)',
-    patches: [{
-      file: 'scripts/e2e-gate.mjs',
-      find: "        if (kind === 'unknown' && candidate.status === 'completed' && jobs.length) offContract.add(candidate.databaseId);",
-      replace: "        if (false && kind === 'unknown' && candidate.status === 'completed' && jobs.length) offContract.add(candidate.databaseId);",
-    }],
-  },
-  {
     id: 'summary-first-paint-shows-unavailable',
     guard: 'node demo/smoke_summary_first_paint.mjs',
     because: 'до прихода ленивого чанка метрик значения ещё НЕ известны: текст «источник недоступен» '
@@ -18118,152 +16142,6 @@ const MUTANT_DEFINITIONS = [
       replace: '      let headerWidth = 0;' }],
   },
   {
-    id: 'dev-mutants-requested-again',
-    guard: 'node --test --test-name-pattern="#709" test/classify-changes.test.mjs',
-    because: '#709 (owner, 2026-09-29): mutants check the tests, not the product; Validate runs no diff '
-      + 'mutants on any event — the whole registry is the nightly run (mutation-gate.yml)',
-    patches: [{
-      file: 'scripts/classify-changes.mjs',
-      find: '  // Весь реестр проверяет только ночной прогон (mutation-gate.yml).\n  return false;',
-      replace: '  // Весь реестр проверяет только ночной прогон (mutation-gate.yml).\n  return true; // mutant',
-    }],
-  },
-  {
-    id: 'review-starts-on-red-validate',
-    guard: 'node --test test/ci-proof.test.mjs test/validate-gate.test.mjs',
-    because: 'a red dispatch run on the material must return the task without a review; treating '
-      + 'any completed run as green spends the review cycle on code CI already rejected (#510 AC2)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "  if (run.conclusion !== 'success')\n    return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);",
-      replace: "  if (false && run.conclusion !== 'success')\n    return result('failed', 'mutant'); // mutant: completed means green",
-    }],
-  },
-  {
-    id: 'release-proof-demands-mutant-jobs',
-    guard: 'node --test --test-name-pattern="#601" test/ci-proof.test.mjs',
-    because: 'with #601 the beta candidate no longer requests diff mutants, so a release policy that '
-      + 'still demands them marks every candidate proof stale and blocks publish-prerelease on a green '
-      + 'full Validate (#601 AC3); review and merge keep demanding them (#541)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "  release: Object.freeze({ name: 'release', full: true, mutants: false }),",
-      replace: "  release: Object.freeze({ name: 'release', full: true, mutants: true }), // mutant: release demands mutants",
-    }],
-  },
-  {
-    id: 'review-anchor-drops-issue-body',
-    guard: 'node --test test/review-doc-guard.test.mjs',
-    because: 'ТЗ живёт в теле issue, которое GitHub правит без diff и без истории: без хеша тела '
-      + 'в якорях доказать «вердикт вынесен на этом тексте» нечем (#517 AC1)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '    lines.push(`- Тело issue: \\`${issueBody}\\``);',
-      replace: '    // mutant: anchor without the issue body',
-    }],
-  },
-  {
-    id: 'review-ignores-changed-spec-body',
-    guard: 'node --test test/review-doc-guard.test.mjs',
-    because: 'правка ТЗ после зелёного ревью ТЗ обязана приходить ревьюеру кода находкой; '
-      + 'сравнение, которое всегда молчит, возвращает ровно ту слепоту, ради которой заведён хеш (#517 AC2)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '  return recorded === digest ? null : { doc: green.name, recorded, current: digest };',
-      replace: '  return null; // mutant: the body never changed',
-    }],
-  },
-  {
-    id: 'reuse-ignores-changed-issue-body',
-    guard: 'node --test test/review-doc-guard.test.mjs',
-    because: 'повторное применение зелёного вердикта пропускает вызов модели целиком: если оно не '
-      + 'смотрит на хеш тела, правка ТЗ между раундами проходит невидимой (#517 AC6)',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: '  if (recordedBody && issueBodyDigest && recordedBody !== issueBodyDigest) return null;',
-      replace: '  // mutant: reuse ignores the issue body',
-    }],
-  },
-  {
-    id: 'process-gate-requires-spec-file',
-    guard: 'node --test test/process-gate.test.mjs',
-    because: 'после #517 файла ТЗ не создаёт ни одна новая задача: гейт, требующий файл, краснеет '
-      + 'на каждом классе A и учит игнорировать себя (#517 AC3)',
-    patches: [{
-      file: 'scripts/process-gate.mjs',
-      find: '      if (hasSpecText(body)) continue;',
-      replace: '      if (body !== null) continue; // mutant: only the file counts',
-    }],
-  },
-  // #633: локальный контур — хук pre-push гонит gate:small, деление юнитов на части.
-  {
-    id: 'pre-push-hook-ignores-red-gate-small',
-    guard: 'node --test test/pre-push-gate.test.mjs',
-    because: 'хук, который печатает «красный» и всё равно пускает push, — ровно то, что #633 AC1 '
-      + 'запрещает: ошибка gate:small снова всплывает в Validate через полчаса',
-    patches: [{
-      file: 'scripts/pre-push-gate.mjs',
-      find: '  const code = runGate(plan.base);',
-      replace: '  const code = runGate(plan.base) && 0; // mutant: red gate passes',
-    }],
-  },
-  {
-    id: 'pre-push-gate-inherits-git-dir',
-    guard: 'node --test test/pre-push-gate.test.mjs',
-    because: 'хук git запускает набор с GIT_DIR репозитория; юниты с временными репозиториями '
-      + 'тогда пишут в настоящий — bare-флаг, коммиты фикстур, ветка dev перезаписана (#633, '
-      + 'первый живой прогон)',
-    patches: [{
-      file: 'scripts/pre-push-gate.mjs',
-      find: "      { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'], shell, env: gateEnv(env) }).status ?? 1;",
-      replace: "      { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'], shell, env }).status ?? 1;",
-    }],
-  },
-  {
-    id: 'pre-push-shell-drops-gate-status',
-    guard: 'node --test test/pre-push-gate.test.mjs',
-    because: 'pre-push-gate.mjs может вернуть 1, но решает код выхода самого .githooks/pre-push: '
-      + 'потерянный статус в шелле пропускает красный gate:small (#633 AC1)',
-    patches: [{
-      file: '.githooks/pre-push',
-      find: '    gate_status=1\n',
-      replace: '    gate_status=0\n',
-    }],
-  },
-  {
-    id: 'pre-push-hook-misses-issue-branches',
-    guard: 'node --test test/pre-push-gate.test.mjs',
-    because: 'префикс веток задач — единственное, что включает набор по умолчанию; опечатка в нём '
-      + 'молча возвращает opt-in, который #633 отменил',
-    patches: [{
-      file: 'scripts/pre-push-gate.mjs',
-      find: "    && (mode === 'force' || ref.remoteRef.startsWith('refs/heads/issue/')));",
-      replace: "    && (mode === 'force' || ref.remoteRef.startsWith('refs/heads/issues/')));",
-    }],
-  },
-  {
-    id: 'pre-push-docs-filter-swallows-executable-diff',
-    guard: 'node --test test/pre-push-gate.test.mjs',
-    because: 'пропуск «только C/D» должен требовать, чтобы ВСЕ файлы были документами; some вместо '
-      + 'every пропускает код, приложенный к одной строке документации (#633)',
-    patches: [{
-      file: 'scripts/pre-push-gate.mjs',
-      find: "  return files.length > 0 && files.every((file) => ['C', 'D'].includes(classify(file)));",
-      replace: "  return files.length > 0 && files.some((file) => ['C', 'D'].includes(classify(file)));",
-    }],
-  },
-  {
-    id: 'pre-push-hook-judges-foreign-tree',
-    guard: 'node --test test/pre-push-gate.test.mjs',
-    because: 'gate:small проверяет рабочее дерево; пуш не-HEAD ветки без отказа получает зелёный '
-      + 'вердикт чужому коду (#633)',
-    patches: [{
-      file: 'scripts/pre-push-gate.mjs',
-      find: '  const foreign = needing.filter((ref) => ref.localSha !== headSha);',
-      replace: '  const foreign = needing.filter(() => false); // mutant: any tree will do',
-    }],
-  },
-  {
     id: 'test-chunk-drops-last-file',
     guard: 'node --test test/test-chunk.test.mjs',
     because: 'деление, теряющее файл, даёт зелёные части при непрогнанном тесте — ровно то, от '
@@ -18272,173 +16150,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/test-chunk.mjs',
       find: '  return sorted.filter((_, i) => i % total === index - 1);',
       replace: '  return sorted.filter((_, i) => i % total === index - 1 && i < sorted.length - 1);',
-    }],
-  },
-  {
-    id: 'review-returns-task-on-cancelled-dispatch',
-    guard: 'node --test test/ci-proof.test.mjs test/validate-gate.test.mjs',
-    because: 'a dispatch cancelled by its replacement in the same concurrency group proves nothing; '
-      + 'reading it as red sends the task back to S6 for no reason (#510 review r1 M1, #511)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "  if (run.conclusion === 'cancelled') return result('cancelled', `Validate run ${runIdOf(run)} was cancelled`);",
-      replace: "  if (false && run.conclusion === 'cancelled') return result('cancelled', 'mutant');",
-    }],
-  },
-  {
-    id: 'merge-rereviews-own-review-doc',
-    guard: 'node --test test/merge-candidate.test.mjs',
-    because: 'the candidate carries its own review document and the material does not; a patch-id '
-      + 'that counts docs/reviews sends every green candidate back to review whenever dev moved (#516)',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "      const ordinaryDiff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES,",
-      replace: "      const ordinaryDiff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES.filter((path) => path !== ':!docs/reviews'), // mutant: review docs count",
-    }],
-  },
-  // #698: ребейз сам сливает то, в чём две задачи не противоречат друг другу.
-  {
-    id: 'changelog-union-driver-dropped',
-    guard: 'node --test --test-name-pattern="#698: записи ченджлога" test/rebase-generated.test.mjs',
-    because: '#698: two tasks adding lines to ## Unreleased must not send the second one back to S6; '
-      + 'the built-in union driver merges both sides',
-    patches: [{
-      file: '.gitattributes',
-      find: 'docs/CHANGELOG.md merge=union\n',
-      replace: '',
-    }],
-  },
-  {
-    id: 'monolith-baseline-conflict-is-manual-again',
-    guard: 'node --test --test-name-pattern="#698: конфликт в базе" test/rebase-generated.test.mjs',
-    because: '#698: the monolith metrics baseline is a snapshot, not a decision; on a rebase conflict '
-      + 'dev wins and the band test on the candidate judges the merged tree',
-    patches: [{
-      file: 'scripts/rebase-generated.mjs',
-      find: "export const UPSTREAM_WINS = Object.freeze(['scripts/monolith-baseline.json']);",
-      replace: 'export const UPSTREAM_WINS = Object.freeze([]); // mutant: every baseline conflict is manual',
-    }],
-  },
-  {
-    id: 'merge-patch-id-sees-changelog',
-    guard: 'node --test --test-name-pattern="#698: patch-id" test/rebase-generated.test.mjs',
-    because: '#698: a neighbour line next to the task entry changes the diff context, not what the '
-      + 'reviewer read; counting it re-sends a green task to review',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "  ':!docs/reviews', ':!docs/CHANGELOG.md', ':!docs/CHANGELOG.ru.md', ':!scripts/monolith-baseline.json',",
-      replace: "  ':!docs/reviews', ':!scripts/monolith-baseline.json',",
-    }],
-  },
-  {
-    id: 'merge-trusts-success-without-proof',
-    guard: 'node --test test/merge-candidate.test.mjs',
-    because: 'a workflow conclusion does not prove that mutant jobs ran; merge must require the shared '
-      + 'artifact instead of accepting a successful dispatch on the candidate SHA (#541)',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "  if (!proof) return result('missing', `Validate run ${runIdOf(run)} has no proof artifact`);",
-      replace: "  if (!proof) return result('green', 'mutant: conclusion alone');",
-    }],
-  },
-  {
-    id: 'release-ships-on-red-e2e',
-    guard: 'node --test test/e2e-gate.test.mjs',
-    because: 'a stable release must wait for a green E2E on a real Home Assistant; a gate that reads '
-      + 'a failed run as green ships the assets the run just rejected (#514 AC1)',
-    patches: [{
-      file: 'scripts/e2e-gate.mjs',
-      find: "        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${ref} зелёный` };",
-      replace: "        return { result: 'green', url: run.url, note: `E2E на ${ref} зелёный` }; // mutant: completed means green",
-    }],
-  },
-  {
-    id: 'release-upgrades-stable-onto-itself',
-    guard: 'node --test test/e2e-gate.test.mjs',
-    because: 'at release time the tag under test is already the newest stable, so upgrade_from=stable '
-      + 'makes the upgrade suite update a version onto itself and go red (#514, live run 09.09)',
-    patches: [{
-      file: 'scripts/e2e-gate.mjs',
-      find: "  return prior[0]?.tagName || 'stable';",
-      replace: "  return 'stable'; // mutant: always the newest stable, i.e. the tag itself",
-    }],
-  },
-  {
-    id: 'release-trusts-foreign-e2e-run',
-    guard: 'node --test test/e2e-gate.test.mjs',
-    because: 'the gate must follow the dispatch it made for this tag; accepting any dispatch run lets '
-      + 'a green run on another tag vouch for this release (#514 AC2)',
-    patches: [{
-      file: 'scripts/e2e-gate.mjs',
-      find: "  return (Array.isArray(jobs) ? jobs : []).some((job) => needles.some((needle) => String(job?.name || '').startsWith(needle)));",
-      replace: "  return true; // mutant: every dispatch is ours",
-    }],
-  },
-  {
-    id: 'release-waits-for-line-review',
-    guard: 'node --test test/release-workflow.test.mjs',
-    because: 'the independent line review is a recommendation, not a gate: a release job that needs it '
-      + 'turns the owner decision "never blocks the release" into a silent blocker (#638 AC2)',
-    patches: [{
-      file: '.github/workflows/release.yml',
-      find: '    name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"\n    needs: candidate\n',
-      replace: '    name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"\n    needs: [candidate, independent-review]\n',
-    }],
-  },
-  {
-    id: 'release-review-base-accepts-beta',
-    guard: 'node --test test/release-review.test.mjs',
-    because: 'the line starts at the previous STABLE tag; taking the last beta shrinks the review of '
-      + 'the whole line to its tail and hides the defects #607/#608/#611/#619 were found in (#638 AC1)',
-    patches: [{
-      file: 'scripts/release-review.mjs',
-      find: "  const older = reachable.filter((name) => STABLE_TAG_RE.test(name) && compare(name, tag) < 0);",
-      replace: "  const older = reachable.filter((name) => /^v\\d+\\.\\d+\\.\\d+/.test(name) && name !== tag && compare(name.split('-')[0], tag) <= 0);",
-    }],
-  },
-  {
-    id: 'release-review-model-gets-github-tools',
-    guard: 'node --test test/release-review.test.mjs',
-    because: 'the release reviewer is the untrusted stage and must not write anywhere; GitHub tools '
-      + 'would let it file issues and comments the owner never took into work (#638, #556)',
-    patches: [{
-      file: '.github/workflows/release-review.yml',
-      find: '        run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-native-runner.mjs"\n',
-      replace: '        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520\n'
-        + '        with:\n          claude_args: --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment\n',
-    }],
-  },
-  {
-    id: 'release-review-reruns-existing-doc',
-    guard: 'node --test test/release-review.test.mjs',
-    because: 'a repeated dispatch for a tag whose document is already in dev must not pay for a second '
-      + 'model run and overwrite the published review (#638)',
-    patches: [{
-      file: '.github/workflows/release-review.yml',
-      find: '          if [ "$FORCE" != "true" ] && git cat-file -e "origin/dev:$doc" 2>/dev/null; then\n',
-      replace: '          if false; then\n',
-    }],
-  },
-  {
-    id: 'review-trusts-push-run-without-mutants',
-    guard: 'node --test test/validate-gate.test.mjs',
-    because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '
-      + 'dispatch the mutant run instead of accepting it (#510 AC2)',
-    patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: "  return run?.event === 'workflow_dispatch';",
-      replace: "  return !!run; // mutant: any run counts",
-    }],
-  },
-  {
-    id: 'merge-waits-push-run-without-mutants',
-    guard: 'node --test test/merge-candidate.test.mjs',
-    because: 'the merged candidate is a new tree; the merge must dispatch the mutant run on it and '
-      + 'wait for that run, not for the push run that carries no mutants (#510 AC3)',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "      ops.dispatchValidate(branch);\n      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
-      replace: "      ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = await ops.waitValidate(candidate)); // mutant: push run, no dispatch",
     }],
   },
   {
@@ -18899,78 +16610,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'baseline-overlay-leaks-into-every-key',
-    guard: 'node --test --test-name-pattern="#573" test/check-inputs.test.mjs test/gate-reuse.test.mjs test/mutation-gate.test.mjs',
-    because: '#573: строка-каталог `demo/golden` в корпусе отпечатка раскрывалась во все текстовые '
-      + 'файлы под ним, и индекс эталонов становился входом smoke, perf и 181 из 183 браузерных '
-      + 'свидетелей. Без фильтра overlay приёмка кадров снова перегоняет 22 минуты чужой работы, '
-      + 'а ключи, которые proof предъявляет как «те же входы», меняются от PNG',
-    patches: [{
-      file: 'scripts/check-inputs.mjs',
-      find: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }",
-      replace: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f)) { note(f, file); seen.add(f); }",
-    }],
-  },
-  {
-    id: 'proof-trusts-evidence-it-could-verify',
-    guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs test/release-gate.test.mjs',
-    because: '#573: потребитель с checkout кандидата обязан СВЕРЯТЬ evidence, а не верить. Без '
-      + 'сравнения подменённый content-ключ, product tree или индекс эталонов проходят как свои — '
-      + 'и proof снова говорит только «вот SHA»',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: '    const mismatch = evidenceMismatch(proof.evidence, expected);',
-      replace: '    const mismatch = evidenceMismatch(proof.evidence, proof.evidence);',
-    }],
-  },
-  {
-    id: 'merge-candidate-truncates-the-candidate-diff',
-    guard: 'node --test --test-name-pattern="#596" test/merge-candidate.test.mjs',
-    because: '#596: дифф кандидата с тремя копиями бандла — семь мегабайт. Без явного maxBuffer '
-      + 'spawnSync убивает git по ENOBUFS, patch-id считается по огрызку, и слияние падает '
-      + 'с усечённым диффом вместо причины',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: MAX_COMMAND_OUTPUT_BYTES, ...opts });",
-      replace: "  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 1024 * 1024, ...opts });",
-    }],
-  },
-  {
-    id: 'declared-baseline-review-run-never-checked',
-    guard: 'node --test --test-name-pattern="#595" test/release-gate.test.mjs',
-    because: '#573/#595: коммит приёмки эталонов объявляет прогон, на кадры которого смотрели. '
-      + 'Если объявление не резолвится, трейлер Baseline-Reviewed становится честным словом: '
-      + 'сослаться можно на что угодно, включая отменённый или несуществующий прогон',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: '    const declared = proof.evidence.baselines?.reviewedRun ?? null;',
-      replace: '    const declared = null;',
-    }],
-  },
-  {
-    id: 'reused-marker-key-unchecked-against-candidate',
-    guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs',
-    because: '#573: маркер реюза несёт ключ источника; если он не сверяется с ключом кандидата, '
-      + 'зелёная job с ДРУГИМИ входами засчитывается этому дереву',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "      if (claim?.mode === 'reused' && !claim.reuse?.registry && claim.reuse?.key !== proof.evidence.keys?.[id])",
-      replace: "      if (claim?.mode === 'reused' && claim.reuse?.key !== (proof.evidence.keys?.[id] ?? claim.reuse?.key) && false)",
-    }],
-  },
-  {
-    id: 'product-tree-identity-counts-baselines',
-    guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs',
-    because: '#573: identity продуктового дерева существует ради одного сравнения — «C и B '
-      + 'отличаются только принятыми кадрами». Считая overlay, оно совпадает с `tree` кандидата и '
-      + 'перестаёт отличать приёмку эталонов от правки продукта',
-    patches: [{
-      file: 'scripts/ci-proof.mjs',
-      find: "    .filter((line) => !isBaselineOverlayPath(line.split('\\t').slice(1).join('\\t')))",
-      replace: "    .filter((line) => typeof line === 'string')",
-    }],
-  },
-  {
     id: 'room-orphan-colour-wins-again',
     guard: 'node --test test/logic.test.mjs',
     because: '#581: a room colour stored without the room\'s own `custom` mode is an orphan — the '
@@ -18981,29 +16620,6 @@ const MUTANT_DEFINITIONS = [
       find: "  if (settings?.fill_mode !== 'custom') return spaceFill;",
       // runtime-false, not statically dead (#568): tsc must still compile the mutant
       replace: "  if (settings?.fill_mode === 'never-a-fill-mode') return spaceFill;",
-    }],
-  },
-  {
-    id: 'golden-index-invents-capture-platform',
-    guard: 'node --test --test-name-pattern="#571" test/golden-capture-provenance.test.mjs',
-    because: '#571: платформу кадров знает только тот, кто их снял. Пока приёмщик писал в индекс '
-      + 'свою, артефакт Linux-прогона 34853080375, принятый на Windows, оставил в `ad4000f9` '
-      + 'запись «сняты на win32» — индекс утверждал неправду, и заметить это было нечем',
-    patches: [{
-      file: 'demo/golden/accept.mjs',
-      find: '  capturedOn: capturedOn,',
-      replace: '  capturedOn: acceptance.platform, // mutant: снова платформа приёмщика',
-    }],
-  },
-  {
-    id: 'golden-report-provenance-optional',
-    guard: 'node --test --test-name-pattern="#571 схема 2" test/golden-capture-provenance.test.mjs',
-    because: '#571: схема 2 обещает провенанс съёмки. Если его отсутствие перестаёт быть отказом, '
-      + 'сломанный инструмент съёмки тихо вернёт индекс к догадкам вместо факта',
-    patches: [{
-      file: 'scripts/capture-environment.mjs',
-      find: "      throw new Error(`отчёт схемы ${schema} обязан нести раздел capture с провенансом съёмки (#571)`);",
-      replace: "      return { provenance: null, legacy: true }; // mutant: молча считаем отчёт старым",
     }],
   },
   {
@@ -19031,55 +16647,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/furniture-path-join.mjs',
       find: "    if (d.startsWith('M')) return d;",
       replace: "    if (d.startsWith('M') || d.length >= 0) return d;",
-    }],
-  },
-  // #700: предполёт не красит ветку задачи чужими причинами.
-  {
-    id: 'task-branch-workflow-sync-red-again',
-    guard: 'node --test --test-name-pattern="#700" test/validate-workflow.test.mjs',
-    because: '#700: a thin workflow mirror mismatch has nothing to do with the task branch; 11 of 85 '
-      + 'returns in #600–#691 came from it — on issue/* it is a warning, on dev a red preflight',
-    patches: [{
-      file: '.github/workflows/validate.yml',
-      find: '            advise "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"',
-      replace: '            check "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"',
-    }],
-  },
-  {
-    id: 'workflow-sync-issue-duplicated-on-read-failure',
-    guard: 'node --test --test-name-pattern="#700: на ветке задачи" test/validate-workflow.test.mjs',
-    because: 'r1 #700: a failed read of the open issues must not fall through into gh issue create — '
-      + 'that duplicates the owner issue on every network or rate-limit failure',
-    patches: [{
-      file: '.github/workflows/validate.yml',
-      find: '            exit 0\n          fi\n          if [ -n "$existing" ]; then',
-      replace: '            :\n          fi\n          if [ -n "$existing" ]; then',
-    }],
-  },
-  {
-    id: 'external-link-warn-mode-ignored',
-    guard: 'node --test --test-name-pattern="#700: check-docs" test/validate-workflow.test.mjs',
-    because: '#700: a foreign site that is down must not turn a task branch red; --external=warn '
-      + 'routes external failures to warnings',
-    patches: [{
-      file: 'scripts/check-docs.mjs',
-      find: '  const externalErrors = EXTERNAL_WARN ? warnings : errors;',
-      replace: '  const externalErrors = errors; // mutant: warn mode ignored',
-    }],
-  },
-  {
-    id: 'screenshot-freshness-never-strict',
-    guard: 'node --test --test-name-pattern="#586" test/classify-changes.test.mjs',
-    because: '#586: preflight сравнивал со строкой `heavy=true` ВЕСЬ двухстрочный вывод CLI, '
-      + 'поэтому строгий режим свежести скриншотов не включился ни на одном кандидате, и обе '
-      + 'беты после 699ab471 уехали с устаревшим индексом кадров. Проверка, которая умеет '
-      + 'только предупреждать, не гейт',
-    patches: [{
-      file: 'scripts/classify-changes.mjs',
-      // рантайм-ложь, а не мёртвая ветка (#568): модуль обязан импортироваться
-      find: '  return heavyGatesRequested(inputs) ? \'strict\' : \'warn\';',
-      replace: '  return heavyGatesRequested(inputs) && String(inputs?.eventName) === \'mutant-never-an-event\'\n'
-        + '    ? \'strict\' : \'warn\';',
     }],
   },
   {
@@ -19180,25 +16747,10 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'no-new-any-forgives-a-single-matching-line',
-    guard: 'node --test test/no-new-any.test.mjs',
-    because: '#592 (ревью r1, M1): послабление для переноса держится на длине куска. Стоит '
-      + 'признать переносом одиночное совпадение — и гейт #342 обходится тривиально: '
-      + 'несвязанная уборка удаляет типовую строку с any, новый код добавляет такую же. '
-      + 'В базе 887 явных any, однострочники повторяются буквально',
-    patches: [{
-      file: 'scripts/no-new-any.mjs',
-      find: 'export const MOVED_BLOCK_MIN = 5;',
-      replace: 'export const MOVED_BLOCK_MIN = 1;',
-    }],
-  },
-  {
     id: 'form-kit-fragment-drifts-from-panel',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#597" test/form-kit.test.mjs',
-    because: '#597: панель подставляет фрагменты набора, и у её настроек нет ни одного '
-      + 'golden-кадра — расхождение показать пикселями нечем. Если правка фрагмента не '
-      + 'краснит побайтовое сравнение, набор может молча увести вид панели',
+    because: "#1148 retains the immutable historical Summary/Card generator API fixtures while the actual Summary composition migrates to Kit. The #597 full Card output oracle still rejects drift of this shared fragment; actual Summary paint has native coverage.",
     patches: [{
       file: 'src/styles/form-kit.styles.ts',
       find: '  return `  ${cards.join(\',\\n  \')} {\n    min-width: 0;\n    padding: 14px;',
@@ -19418,8 +16970,8 @@ const MUTANT_DEFINITIONS = [
       + 'свой, компонент внутри — свой. Встроенный режим обязан заголовок не рисовать',
     patches: [{
       file: 'src/hp-zigbee-topology-settings.ts',
-      find: '    if (this.embedded) return this._renderEmbedded();',
-      replace: '    if (this.embedded && this.savedEnabled) return this._renderEmbedded();',
+      find: '    return this._renderEmbedded();',
+      replace: "    return html`<div class=\"section\">${this._t('title')}</div>${this._renderEmbedded()}`;",
     }],
   },
   {
@@ -19902,173 +17454,6 @@ const MUTANT_DEFINITIONS = [
       replace: '        if True:  # mutant: concurrent flushes are not serialised\n',
     }],
   },
-  // r1 #695: инфраструктура без трековой метки — трек show (§5.1). С #707 трек и
-  // лимит guard берёт из process-track.mjs: якорь переехал туда, свидетель
-  // исполняет шаг guard настоящим bash.
-  {
-    id: 'guard-infra-keeps-ask-limit',
-    guard: 'node --test --test-name-pattern="r1 #695" test/review-doc-guard.test.mjs',
-    because: 'r1 #695: an infrastructure task without a track label reads as track:show (PROCESS §5.1); '
-      + 'the guard must give it the show cycle limit 2, not the ask limit 4 (#707: one rule in process-track.mjs)',
-    patches: [{
-      file: 'scripts/process-track.mjs',
-      find: "(hasTrackLabel(labels) ? trackFromLabels(labels) : (infrastructure ? 'show' : 'ask'));",
-      replace: "(hasTrackLabel(labels) ? trackFromLabels(labels) : (infrastructure ? 'ask' : 'ask')); // mutant: infra keeps the ask limit",
-    }],
-  },
-  {
-    id: 'packet-infra-track-ignores-show-default',
-    guard: 'node --test --test-name-pattern="r1 #695" test/task-packet.test.mjs',
-    because: 'r1 #695: the packet names the track an infrastructure task actually runs on — show '
-      + 'without a label, the owner label otherwise (#707: via trackOrigin, shared with the pipeline)',
-    patches: [{
-      file: 'scripts/task-packet.mjs',
-      find: '  const origin = trackOrigin({ labels, comments, owner, infrastructure: infrastructure || infrastructureHint });',
-      replace: '  const origin = trackOrigin({ labels, comments, owner, infrastructure: false }); // mutant: unlabelled infra reads as ask',
-    }],
-  },
-  // #696: цена захода по треку — мутанты, рамки ship, пакетное ревью перед бетой.
-  {
-    id: 'track-pays-for-mutants-again',
-    guard: 'node --test --test-name-pattern="#709" test/process-track.test.mjs',
-    because: '#709: no track and no label buys a mutant run during development — the 28-minute '
-      + 'run on ask and ci:mutants was the cost the owner removed',
-    patches: [{
-      file: 'scripts/process-track.mjs',
-      find: '  const mutants = false;',
-      replace: "  const mutants = track === 'ask' || labels.includes('ci:mutants'); // mutant",
-    }],
-  },
-  {
-    id: 'ship-limits-miss-new-src-file',
-    guard: 'node --test --test-name-pattern="рамки ship: новые файлы" test/process-track.test.mjs',
-    because: '#696: a new file in src/** is outside ship limits — ship merges without a model '
-      + 'review, so the mechanical limits are the only thing standing between it and dev',
-    patches: [{
-      file: 'scripts/process-track.mjs',
-      find: '  if (added.length) out.push(',
-      replace: '  if (false && added.length) out.push(',
-    }],
-  },
-  {
-    id: 'ship-limit-off-by-one',
-    guard: 'node --test --test-name-pattern="граница включительна" test/process-track.test.mjs',
-    because: '#696: the ship limit is 30 src lines inclusive (owner decision); 30 lines still ship',
-    patches: [{
-      file: 'scripts/process-track.mjs',
-      find: '  if (lines > SHIP_SRC_LINE_LIMIT) out.push(',
-      replace: '  if (lines >= SHIP_SRC_LINE_LIMIT) out.push(',
-    }],
-  },
-  {
-    // #707: решение по ship на S7 переехало из bash шага трека в decideTrack.
-    id: 'pipeline-ship-ignores-limits',
-    guard: 'node --test --test-name-pattern="#707 AC3" test/process-track.test.mjs',
-    because: '#696: ship skips the model only inside the limits; ignoring the limits merges '
-      + 'unread code of any size — even when the owner confirmed the ship track (#707)',
-    patches: [{
-      file: 'scripts/process-track.mjs',
-      find: '    if (violations.length || riskRaises) {',
-      replace: '    if (riskRaises) { // mutant: ship limits ignored',
-    }],
-  },
-  {
-    id: 'light-review-duplicates-running-push',
-    guard: 'node --test --test-name-pattern="#954 without mutants" test/validate-gate.test.mjs',
-    because: '#954: sealed push completion now wakes the round; rejecting a pending exact push creates a duplicate producer',
-    patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: "  return run?.event === 'workflow_dispatch' || run?.event === 'push';",
-      replace: "  return run?.event === 'workflow_dispatch' || (run?.event === 'push' && run?.status === 'completed');",
-    }],
-  },
-  {
-    id: 'light-merge-dispatches-second-run',
-    guard: 'node --test --test-name-pattern="слияние ждёт push-прогон" test/merge-candidate.test.mjs',
-    because: '#696: the candidate push already starts the light Validate; a second dispatch '
-      + 'doubles runner minutes on every show/ship merge',
-    patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'push', wait: !defer, expectPush }));",
-      replace: "      ops.dispatchValidate(branch); ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer })); // mutant: second run",
-    }],
-  },
-  {
-    id: 'ship-review-ignores-merge-marker',
-    guard: 'node --test --test-name-pattern="ship-задача — по маркеру" test/ship-review.test.mjs',
-    because: '#696: the pipeline marker proves a merge without model review even when the '
-      + 'label was changed afterwards; missing it lets unread code into a beta',
-    patches: [{
-      file: 'scripts/ship-review.mjs',
-      find: "  return names.includes('track:ship') || comments.some((c) => SHIP_MERGE_MARKER_RE.test(String(c?.body ?? '')));",
-      replace: "  return names.includes('track:ship'); // mutant: marker ignored",
-    }],
-  },
-  {
-    id: 'ship-review-accepts-partial-coverage',
-    guard: 'node --test --test-name-pattern="машинный блок покрывает" test/ship-review.test.mjs',
-    because: '#696: a ship task merged after the batch review ran was read by nobody; the beta '
-      + 'gate must refuse until the review is re-run',
-    patches: [{
-      file: 'scripts/ship-review.mjs',
-      find: '  if (missing.length) {',
-      replace: '  if (false && missing.length) {',
-    }],
-  },
-  {
-    id: 'ship-review-accepts-high',
-    guard: 'node --test --test-name-pattern="машинный блок покрывает" test/ship-review.test.mjs',
-    because: '#696: a High in the batch review is a defect a beta user would see; it blocks the beta',
-    patches: [{
-      file: 'scripts/ship-review.mjs',
-      find: '  else if (block.high > 0) problems.push(',
-      replace: '  else if (false && block.high > 0) problems.push(',
-    }],
-  },
-  // #697: производные артефакты — на dev, тяжёлое на ветке задачи — по меткам.
-  {
-    id: 'task-branch-release-trailer-heavy-again',
-    guard: 'node --test --test-name-pattern="#697" test/classify-changes.test.mjs',
-    because: '#697: on a task branch the Release: trailer only marks a baseline acceptance; '
-      + 'it must not switch on smokes, golden and perf again — ci:full/ci:golden do that',
-    patches: [{
-      file: 'scripts/classify-changes.mjs',
-      find: '  if (isTaskBranch(refName)) return false;\n',
-      replace: '',
-    }],
-  },
-  {
-    id: 'ci-golden-label-does-not-order-golden',
-    guard: 'node --test --test-name-pattern="#1044 connected scenes" test/browser-push-plan.test.mjs',
-    because: '#1044: separating task scenes from full regression must retain explicit golden demand even without a render-risk fallback',
-    patches: [{
-      file: 'scripts/browser-push-plan.mjs',
-      find: "labels.includes('ci:golden')",
-      replace: 'false',
-    }],
-  },
-  {
-    id: 'review-gate-accepts-light-proof-for-full',
-    guard: 'node --test --test-name-pattern="#697" test/validate-gate.test.mjs',
-    because: '#697/#954: with ci:full a light push run proves nothing about the full matrix; '
-      + 'the gate must dispatch full=true instead of accepting it',
-    patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: "  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true })",
-      replace: "  const policy = false ? Object.freeze({ ...base, name: `${base.name}-full`, full: true })",
-    }],
-  },
-  {
-    id: 'bot-golden-commit-without-provenance',
-    guard: 'node --test --test-name-pattern="провенанс" test/beta-derived.test.mjs',
-    because: '#697: the bot commit that moves baselines must carry Release: and Baseline-Reviewed:, '
-      + 'otherwise validate-commit-provenance turns dev red on the push',
-    patches: [{
-      file: '.github/workflows/_beta-derived.yml',
-      find: '              echo "Release: $TAG"\n',
-      replace: '',
-    }],
-  },
   // #694: цена переключения этажа — три правки без изменения поведения.
   {
     id: 'pointer-hover-batch-requeries-shared-subtree',
@@ -20222,39 +17607,6 @@ const MUTANT_DEFINITIONS = [
       find: '            epoch, String(index), space.id, records[index] ?? null, raw,\n',
       replace: '            epoch, String(index), space.id, (records[index] as { rooms?: unknown } | undefined)?.rooms ?? null,\n'
         + '            (raw as { rooms?: unknown }).rooms, // mutant: rooms only\n',
-    }],
-  },
-  {
-    id: 'prepare-reuse-runs-material-script',
-    guard: 'node --test --test-name-pattern="#765 AC2" test/process-prepare-tools.test.mjs',
-    because: '#765: reuse зелёного вердикта (#499) решает скрипт снимка dev; скрипт рабочей копии — '
-      + 'материал задачи, и подменённый review-doc-guard.mjs выдаёт себе reuse=true — слияние без модели',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          out=$(node "$TOOLS/scripts/review-doc-guard.mjs" --reuse --marker=CODE-REVIEW',
-      replace: '          out=$(node scripts/review-doc-guard.mjs --reuse --marker=CODE-REVIEW',
-    }],
-  },
-  {
-    id: 'usage-script-from-moving-dev',
-    guard: 'node --test --test-name-pattern="#765 AC3" test/process-prepare-tools.test.mjs',
-    because: '#765: расход снимается скриптом того коммита dev, что закрепила подготовка; архив '
-      + 'подвижной origin/dev после сдвига dev исполняет другую версию — смесь версий в одном заходе',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '          git archive "$TOOLS_SHA" scripts | tar -x -C "$tools"',
-      replace: '          git fetch -q origin dev; git archive origin/dev scripts | tar -x -C "$tools"',
-    }],
-  },
-  {
-    id: 'material-anchors-pile-separators',
-    guard: 'node --test --test-name-pattern="#765" test/review-doc-guard.test.mjs',
-    because: '#765: повторная приписка блока якорей снимает и свой разделитель; без этого каждый '
-      + 'повтор копит ещё один `---` перед блоком',
-    patches: [{
-      file: 'scripts/review-doc-guard.mjs',
-      find: "    ? body.slice(0, at).replace(/(?:\\s*\\n---)*\\s*$/, '')",
-      replace: "    ? body.slice(0, at).replace(/\\s+$/, '')",
     }],
   },
   {
@@ -20644,16 +17996,15 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'editor-styles-btn-moved-lazy',
     guard: 'node --test test/editor-dialog-styles.test.mjs',
-    because: '#805 AC6: .btn styles View controls (header, kiosk, View dialogs); moving it into the '
-      + 'lazy editor sheet leaves the cold View unstyled, and the ownership test names it',
+    because: '#805/#1150: moving the shared .btn consumer from the eager owning root to the lazy editor sheet leaves cold View controls unstyled; ownership checks reject a foreign .btn in the editor-only sheet.',
     patches: [{
       file: 'src/styles/dialogs.styles.ts',
-      find: '    .btn {\n      display: inline-flex;\n      align-items: center;\n      gap: var(--sp-3);\n      border: 1px solid var(--hp-line);',
-      replace: '    .btn-moved {\n      display: inline-flex;\n      align-items: center;\n      gap: var(--sp-3);\n      border: 1px solid var(--hp-line);',
+      find: "settingsActionsCss('.btn')",
+      replace: "settingsActionsCss('.btn-moved')",
     }, {
       file: 'src/styles/editor-dialogs.styles.ts',
-      find: 'export const editorDialogsStyles = css`\n',
-      replace: 'export const editorDialogsStyles = css`\n    .btn {\n      display: inline-flex;\n      align-items: center;\n    }\n',
+      find: 'export const editorDialogsStyles = unsafeCSS(css`\n',
+      replace: 'export const editorDialogsStyles = unsafeCSS(css`\n    .btn { display:inline-flex; align-items:center; }\n',
     }],
   },
   {
@@ -21079,28 +18430,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'golden-policy-forgets-pinned-browser',
-    guard: 'node --test --test-name-pattern="#827" test/golden-policy.test.mjs',
-    because: '#827 AC2: golden capture and verify are visual proof; without the declaration the shared '
-      + 'launch stays silent and a foreign Chromium produces candidate frames again',
-    patches: [{
-      file: 'demo/golden/policy.mjs',
-      find: '  requirePinnedBrowser(`golden ${mode}`);\n',
-      replace: '',
-    }],
-  },
-  {
-    id: 'toolchain-check-trusts-browser-path',
-    guard: 'node --test --test-name-pattern="#827" test/toolchain-pins.test.mjs',
-    because: '#827 AC1: toolchain:check must judge the running browser; accepting any launchable '
-      + 'browser restores the old existence check that passed the symlinked 141 (F33)',
-    patches: [{
-      file: 'scripts/toolchain-pins.mjs',
-      find: '      actual.version ?? verdict.status, verdict.ok,',
-      replace: "      actual.version ?? verdict.status, verdict.status !== 'missing', // mutant: launchable is enough",
-    }],
-  },
-  {
     id: 'capture-determinism-skips-browser-attestation',
     guard: 'node --test --test-name-pattern="#827 AC1/AC2 CLI" test/browser-attestation.test.mjs',
     because: '#827 AC2: CI documentation capture runs through capture-determinism, not docs:capture; '
@@ -21109,62 +18438,6 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/capture-determinism.mjs',
       find: "    await attestStandardLaunch({ reason: 'docs capture' });",
       replace: "    // mutant: the docs capture no longer judges the launched browser",
-    }],
-  },
-  {
-    id: 'render-risk-forgets-tooltip-paths',
-    guard: 'node --test --test-name-pattern="#827 AC3" test/process-track.test.mjs',
-    because: '#827 AC3 (F48): the #816/#817 tooltip and caption hunks gave no visual.render, and the '
-      + 'visible delta reached dev without golden; dropping the paths restores that false negative',
-    patches: [{
-      file: 'scripts/change-risk.mjs',
-      find: "    'device-visual', 'device-face', 'live-hover', 'device-battery', 'zigbee-topology', 'hp-zigbee-topology-overlay'].map(src),",
-      replace: "    'device-visual', 'device-face'].map(src), // mutant: #816/#817 paths dropped",
-    }],
-  },
-  {
-    id: 'track-step-never-adds-golden',
-    guard: 'node --test --test-name-pattern="#827 AC4" test/process-track.test.mjs',
-    because: '#827 AC4: render risk without ci:golden must select a golden Validate on the material '
-      + 'before model review; never adding it lets a light Validate start the review again',
-    patches: [{
-      file: 'scripts/process-track.mjs',
-      find: "  const goldenAdd = code && Boolean(risk.visual?.render) && !labels.includes('ci:golden');",
-      replace: '  const goldenAdd = false; // mutant: render risk reaches review on a light Validate',
-    }],
-  },
-  {
-    id: 'track-workflow-ignores-golden-flag',
-    guard: 'node --test --test-name-pattern="#827 AC4" test/process-track.test.mjs',
-    because: '#827 AC4: the script decides golden=add, the workflow step must apply it; printing the '
-      + 'flag without the label leaves the issue without ci:golden while Validate already ran full',
-    patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '            gh issue edit "$NUM" --repo "${{ github.repository }}" --add-label ci:golden\n',
-      replace: '            : # mutant: the label is never added\n',
-    }],
-  },
-  // #833 (F53): WSL-паспорт golden описывает фактически запущенный headless shell.
-  {
-    id: 'wsl-passport-hashes-executable-path',
-    guard: 'node --test --test-name-pattern="#833 AC1" test/golden-wsl-artifact.test.mjs',
-    because: '#833 AC1: chromium.executablePath() is the full Chromium, not the headless shell that '
-      + 'captures the frames; hashing it again lets a passport vouch for a browser that rendered nothing (F33 shape)',
-    patches: [{
-      file: 'scripts/golden-wsl-artifact.mjs',
-      find: '  const executable = verdict.actual.resolvedExecutable;',
-      replace: "  const executable = (launcher || (await import('playwright')).chromium).executablePath(); // mutant: full Chromium",
-    }],
-  },
-  {
-    id: 'wsl-acceptance-ignores-browser-binary',
-    guard: 'node --test --test-name-pattern="#833 AC2" test/golden-wsl-artifact.test.mjs',
-    because: '#833 AC2: acceptance must re-judge the headless shell against the passport; without the '
-      + 'comparison a binary swapped after the WSL capture is accepted as the one that captured the frames',
-    patches: [{
-      file: 'scripts/golden-wsl-artifact.mjs',
-      find: '  for (const key of WSL_BROWSER_KEYS) {',
-      replace: '  for (const key of []) { // mutant: the browser binary is not compared',
     }],
   },
   // #885: magnet of an exact H/V wall end to the line through a parallel wall end.
@@ -21602,8 +18875,6 @@ const UNIT_GUARD_GROUPS = [
     'registryless-opening-requires-registry-row',
   ]],
   [unitGuard('test/header-menu.test.mjs'), [
-    'header-menu-item-keeps-menu-open',
-    'header-menu-escape-ignored',
     'active-tab-not-revealed',
   ]],
   [unitGuard('test/iso-scene-render.test.mjs', 'test/iso-stage6.test.mjs'), [
@@ -21685,10 +18956,13 @@ const discardConfirmMotionGuardCases = [
     id: 'discard-confirm-ignores-reduced-motion-990',
     guard: 'node demo/smoke_discard_dialog_polish.mjs',
     because: '#990 AC1/AC3: reduced motion must remove the real native entrance and close-hover transform, without removing ordinary motion.',
-    patches: [{ file: 'src/hp-dialog.ts',
-      find: '      :host(.discard-confirm-dialog) .surface { animation: none; }',
-      replace: '      :host(.discard-confirm-dialog) .surface { animation: hp-discard-in 180ms ease; }',
-    }],
+    patches: [
+  {
+    "file": "src/styles/ui-motion.styles.ts",
+    "find": "controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after')",
+    "replace": "controlReducedMotionCss('.hpf-retired-motion')"
+  }
+],
   },
 ];
 const contact1003GuardCases=[
@@ -21902,10 +19176,6 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
-  {id:'vacuum-history-capture-inputs-untracked-999',
-    guard:'node --test --test-name-pattern="consumed history capture inputs" test/source-fingerprint.test.mjs',
-    because:'#999 AC1/AC9: changing a rendered historical path or the UI capture helper must retire old source/visual evidence, including JSON outside the ordinary Golden module roots.',
-    patches:[{file:'scripts/source-fingerprint.mjs',find:'    ...HISTORY_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),\n',replace:''}]},
   {id:'vacuum-history-initial-get-owner-keeps-preview-999',
     guard:'node scripts/backend-test-guard.mjs initial_get_owner_refusal tests_backend/test_ha_vacuum_history.py',
     because:'#999 AC5/AC6: a fresh get must distinguish a retired saved owner from an ordinary record failure before a stale client can keep painted A.',
@@ -22190,33 +19460,6 @@ const physicalCommit1099Cases = [
 ];
 
 const goldenUnchanged1114Cases = [
-  { id: 'golden-strict-check-allows-tolerated-difference-1114',
-    guard: 'node --test test/golden-unchanged-checks.test.mjs',
-    because: '#1114: a passed capture under ordinary tolerance must not satisfy an explicit byte-identical check. Registered only; execution belongs to nightly.',
-    patches: [{ file: 'scripts/browser-selected.mjs',
-      find: "if (expectation === 'unchanged') return result.status === 'passed'",
-      replace: "if (false) return result.status === 'passed'" }] },
-  { id: 'golden-strict-check-inherits-pending-delta-1114',
-    guard: 'node --test test/golden-unchanged-checks.test.mjs',
-    because: '#1114: an unrelated pending change/new declaration cannot weaken a strict check on the same scene. Registered only; no development execution.',
-    patches: [{ file: 'scripts/browser-push-plan.mjs',
-      find: 'if (checks.some(check => pending.golden.some(item => item.id === check.id)))', replace: 'if (false)' }] },
-  { id: 'golden-strict-contract-claims-full-coverage-1114',
-    guard: 'node --test test/golden-unchanged-checks.test.mjs',
-    because: '#1114: strict unchanged is a selected-task contract and cannot silently claim a full or unscoped push receipt. Registered only.',
-    patches: [{ file: 'scripts/browser-plan-proof.mjs',
-      find: "item.expectation === 'unchanged' && isTaskBrowserPlan(plan) && plan[kind].mode === 'selected'",
-      replace: "item.expectation === 'unchanged'" }] },
-  { id: 'golden-strict-check-silently-expires-1114',
-    guard: 'node --test test/golden-unchanged-checks.test.mjs',
-    because: '#1114: stale explicit check epochs fail rather than falling through to no Golden demand. Registered only.',
-    patches: [{ file: 'scripts/task-visual-intent.mjs',
-      find: 'if (!current && visual.goldenChecks?.length)', replace: 'if (false)' }] },
-  { id: 'golden-strict-declaration-validation-bypassed-1114',
-    guard: 'node --test test/golden-unchanged-checks.test.mjs',
-    because: '#1114: malformed, duplicate and overlapping check declarations must fail before selecting scenes. Registered only.',
-    patches: [{ file: 'scripts/task-intent.mjs',
-      find: 'if (visual.goldenChecks !== undefined)', replace: 'if (false)' }] },
 ];
 
 const editorGesture1098Cases = [{
@@ -22462,7 +19705,13 @@ const panelHeader1120Cases = [
     patches:[{file:'src/styles/panel-header.styles.ts',find:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }',replace:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:block; }'}]},
   {id:'panel-editor-close-target-top-aligned-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1132 replaces the24px close with the common44px target; actual glyph and target centres must still align with the editor pill. Static declaration only.',
-    patches:[{file:'src/styles/panel-header.styles.ts',find:'position:absolute; inset:-1px; width:44px; height:44px;',replace:'position:absolute; inset:1px; width:44px; height:44px;'}]},
+    patches:[
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "position:absolute; inset:-1px; width:44px; height:44px;",
+    "replace": "position:absolute; inset:1px; width:44px; height:44px;"
+  }
+]},
   {id:'panel-header-measures-outer-owner-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1120 AC3/5: Properties reserves360px; native all-three-wide-editor containment and real centre-hit must use the allocated head, not the wider hdr. Original9849 clipped Golden is preserved.',
     patches:[{file:'src/houseplan-card.ts',find:'const available = panelHeaderWidth(head);',replace:'const available = headerWidth;'}]},
@@ -22491,11 +19740,38 @@ const panelHeader1120Cases = [
 
 // #1145: declarations only; ordinary browser evidence is run, mutants are nightly.
 const uiPolish1145Cases = [
- {id:'dialog-footer-leaks-into-body-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC5: actual stairs/physical/Optimize rows must not inherit footer padding and divider.',patches:[{file:'src/styles/dialogs.styles.ts',find:"hp-dialog > .row[slot='footer'] {\n      justify-content: flex-end;",replace:'hp-dialog .row {\n      justify-content: flex-end;'}]},
- {id:'summary-touch-sticky-hover-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC6: native touch cannot retain mouse hover paint, while desktop mouse still paints.',patches:[{file:'src/summary-panel-style.ts',find:':host([data-pointer-hover]) .summary-control > button:hover',replace:'.summary-control > button:hover'}]},
- {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[{file:'src/styles/dialogs.styles.ts',find:'.btn[disabled] {\n      opacity: 0.5;\n      cursor: not-allowed;',replace:'.btn[disabled] {\n      opacity: 0.5;\n      pointer-events: none;'}]},
+ {id:'dialog-footer-leaks-into-body-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC5: actual stairs/physical/Optimize rows must not inherit footer padding and divider.',patches:[
+  {
+    "file": "src/compact-dialog-styles.ts",
+    "find": ":where(hp-dialog.ui-dialog) > .row[slot=footer]:where(:not(.hpf-footer-space)){display:flex",
+    "replace": ":where(hp-dialog.ui-dialog) .row:where(:not(.hpf-footer-space)){display:flex"
+  }
+]},
+ {id:'summary-touch-sticky-hover-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC6: native touch cannot retain mouse hover paint, while desktop mouse still paints.',patches:[
+  {
+    "file": "src/styles/icon-action.styles.ts",
+    "find": ":host([data-pointer-hover]) button.hpf-icon-action:not(:disabled):hover",
+    "replace": "button.hpf-icon-action:not(:disabled):hover"
+  }
+]},
+ {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[
+  {
+    "file": "src/styles/settings-action.styles.ts",
+    "find": "${selector}:is(:disabled,[aria-disabled=true]){cursor:not-allowed;opacity:.5;}",
+    "replace": "${selector}:is(:disabled,[aria-disabled=true]){cursor:not-allowed;opacity:.5;pointer-events:none;}"
+  }
+]},
  {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger is44px; compact swatch remains36px.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: 44px;\n      height: 44px;',replace:'.trigger {\n      width: 40px;\n      height: 40px;'}]},
 ];
+// #1150: declaration only; real missing-theme input is exercised by the native audit.
+const compactEditor1150Cases = [{
+  id:'compact-danger-missing-theme-token-1150',
+  guard:'node demo/ui-lab/editor-kit-audit.mjs',
+  because:'#1150 AC3: only mounted Chromium can resolve absent HA CSS tokens, inherited ink and the completed paint transition on the actual destructive Properties action. Ordinary missing-token input is RED on pre-fix source; this declaration is not an executed/caught mutant.',
+  patches:[{file:'src/styles/settings-action.styles.ts',
+    find:'${selector}.danger{color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));}',
+    replace:'${selector}.danger{color:var(--error-color);border-color:var(--error-color);}' }],
+}];
 // #1166: declarations for nightly; no mutant execution during this task.
 const wallContact1166Cases = [
   {id:'stored-t-room-recognition-1166',guard:'node --test test/room-contact-storage.test.mjs',
@@ -22514,7 +19790,7 @@ const wallContact1166Cases = [
     because:'#1166 a new room on existing physical walls is allowed only with a complete exact identity ring.',
     patches:[{file:'custom_components/houseplan/validation.py',find:'if len(poly) < 3 or len(poly) != len(ids):',replace:'if False:'}]},
 ];
-export const MUTANTS = [...wallContact1166Cases,...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+export const MUTANTS = [...compactEditor1150Cases,...wallContact1166Cases,...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

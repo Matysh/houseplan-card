@@ -1,0 +1,42 @@
+✔ pure docs creates no preparation, test or unavailable gate, including after-review (2.1528ms)
+✔ product minimum builds once, protects data/rights and opens one saved View (174.5703ms)
+✔ infrastructure checks only changed syntax and selected mechanism, with no product preparation (6.0503ms)
+✔ beta uses approved files, one narrowed permission run and panel-first visual selection (685.9789ms)
+✔ panel variants keep fixture contracts, own baseline IDs, and replace the old host in stable (4.5178ms)
+✔ exact selectors reject renamed, duplicated and file/title cross-product journeys (0.2465ms)
+✔ addressed golden verification uses the canonical panel identity without widening the run (10.1617ms)
+✔ stable retains beta identities for reuse and separates converter failure from the core (3233.6143ms)
+✔ release discovery excludes the retired process and addressed infrastructure tests (294.5515ms)
+✔ new product/backend/browser tests are discovered without regenerating the migration snapshot (2921.209ms)
+✔ default plan changes nothing, execute accepts selected PNGs and only their provenance (39.0363ms)
+✔ human review reference and explicit real selection are required for writes (15.9943ms)
+✔ one damaged or errored selected capture prevents all replacements (87.4405ms)
+✔ an unselected error does not force unrelated acceptance or a new capture (13.5494ms)
+✔ captured candidate SHA must match HEAD when present; absence is explicit (555.0374ms)
+✔ CLI arguments preserve default dry-run and require an explicit execute flag (0.4062ms)
+✔ #455 канон среды — linux, и чужая платформа получает отказ с командой (1.4548ms)
+✔ #455 текст отказа различает съёмку и приёмку и называет предмет (0.1514ms)
+✔ #455 обход требует причину, пустая строка причиной не считается (0.1579ms)
+✔ #455 приписка про среду появляется только при расхождении (0.136ms)
+✔ #455 провенанс среды снимается с процесса, а не выдумывается (0.6368ms)
+✔ #455 бросающая обёртка бросает и возвращает разрешённую причину (0.3644ms)
+✔ #999 edits to consumed history capture inputs retire source and visual identities (54.1887ms)
+✔ #896 capture identity follows browser flags and local helper dependencies, before candidate copying (40.4624ms)
+✔ source fingerprint is stable across LF and CRLF checkouts (5.2525ms)
+✔ source fingerprint changes with source and build inputs (17.5218ms)
+✔ source fingerprint includes deterministic visual fixtures and golden code (10.3113ms)
+✔ бамп версии продукта не трогает отпечаток скриншотов, но трогает отпечаток бандла (#245) (27.0175ms)
+✔ отпечаток скриншотов не слепнет к правкам src и версиям зависимостей (#245) (19.9815ms)
+✔ npm-скрипт не требует пересъёмки, а версия зависимости требует (#246) (28.2492ms)
+✔ правка инструмента приёмки не требует ни пересборки, ни пересъёмки (#344) (27.172ms)
+✔ файлы, определяющие кадр, из корпуса не выпали (#344) (95.0074ms)
+✔ состав исключения объявлен списком, а не угадывается по имени (#344) (0.1862ms)
+✔ в корпусе настоящего репозитория все canonical golden capture inputs (#344, #792, #881, #896, #866, #1026, #1038, #999) (23.4104ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7467.3201

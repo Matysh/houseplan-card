@@ -1,817 +1,178 @@
-# Large-house performance gate
+# Performance fixtures and diagnostics
 
-`benchmark_large_house.mjs` exercises the deterministic `large-house-v1`
-fixture. The fixture has 60 rooms, 200 devices, 100 openings, 60 partitions,
-40 columns and 500 decor objects on three floors.
+This directory contains synthetic workloads and measurement helpers.
+When to measure and what can pause a release are defined in
+[PROCESS.md](../../PROCESS.md), not by a separate CI-only policy here.
+[TESTING.md](../../docs/TESTING.md) explains their place among the test families.
 
-Issue #89 adds `large-house-isometric-v1` through the same runner. The runner
-enables the current candidate through the real `hp_alpha=1` URL/storage
-contract, selects iso per fixture space, measures the View toggle and records
-the capped `isoGeometry` cache. A compatibility-only snapshot keeps comparison
-bundles from before #448 measurable without restoring a legacy user-facing
-activation path; a comparison SHA predating #89 remains flat while reporting
-the same profile. The dedicated
-`budgets-large-house-isometric.json` applies the reviewed 20% relative allowance
-plus absolute noise/ceiling checks. Only the exact-SHA Linux workflow is gate
-evidence; a local report is diagnostic.
+Operational setup is recorded in the
+[cutover report](../../process-next/evidence/cutover-status.md).
 
-Issue #160 keeps that historical profile and budget unchanged, then adds the
-separate `isometric-stage3-dense-v1` profile. Its derived performance-only
-fixture puts all 200 devices close to walls or corners and adds deterministic
-value, LQI and new-device badges plus contact/lock-bound door, window and gate
-examples. The base invocation explicitly allows a Stage 2 renderer so an older
-`dev` SHA remains measurable; the candidate invocation fails closed unless it
-reports effective Iso, the Stage 3 revision, all required raised overlay kinds,
-no nudged overlay root (since #713 every raised tile is lifted by the one shared
-wall-top rise, so a nudge means the #651 placement search came back), a bounded
-shared material-definition set and zero structural rebuilds during HA, opening
-and hover/focus updates. The two extra
-timing windows use limits no softer than the historical HA-update budget. This
-does not change the fixture, measured windows or budget of
-`large-house-isometric-v1`, which remains the #124 regression witness.
+## Measurements in the process
 
-Issue #137 adds `large-house-plan-snap-v1` without changing the meaning or
-budgets of the original profile. The same 60-room/60-partition fixture gains
-six saved open outlines, renders the Plan snap overlay, and sends 120 real
-pointer moves across endpoint, line and miss targets. Candidate bundles fail
-inside the runner if the static DOM or geometry cache grows, more than one
-active node appears, endpoint/line paths are not both exercised, or config and
-websocket traffic change. Its dedicated budget retains every original timing,
-heap and cache ceiling and adds the measured pointer series plus a one-entry
-snap-geometry cache cap. Exact-SHA Linux output is the only gate evidence.
+Normal tasks do not automatically measure size or timing budgets. Before beta,
+the common profile records the selected size and interaction metrics, compares
+them with the last stable in comparable conditions, and shows the fixed
+v1.83.1 measurement as a diagnostic reference. Each stable saves a measurement
+for the following beta. A missing, noisy or incomparable measurement is
+reported honestly rather than converted into a confirmed regression.
 
-For #1070, that interaction profile also accepts `--rotation=90` (or 180/270).
-It configures the real card, checks the painted stage adopted and retained the
-angle, and uses the native SVG world matrix for canonical editor input and the
-SVG/HTML alignment oracle. The matrix is captured outside each timed gesture.
-Default rotation stays zero; nonzero rotation is rejected for other profiles.
-Compare base/candidate zero and candidate90 with the same runner and existing
-budgets; a one-sample diagnostic is not final gate evidence.
+The profile runs measurement after the other required work, so parallel
+browser/Node/HA activity does not distort it. The adapter is
+[`process-next/catalog/measure.mjs`](../../process-next/catalog/measure.mjs);
+its benchmark uses `large-house-v1`, one warm-up and seven measured samples.
+Comparison and reporting are in
+[`process-next/lib/metrics.mjs`](../../process-next/lib/metrics.mjs).
 
-Issue #451 adds `large-house-interaction-v1`. It dispatches 120 real
-device/room/free-background hover moves, four 20-move pans, pinch/wheel camera input, three editor
-drag series and 30 unrelated HA snapshots. It also injects relevant snapshots
-inside and outside a gesture and counts heavy `_renderBody()` passes plus full
-marker-binding diagnostic scans. Current bundles fail inside the runner unless
-hover, editor moves and unrelated ticks perform zero full renders, a relevant
-tick is deferred during pan, each terminal event reconciles at most one full
-frame, the heavy wall DOM remains identical, and the projected HTML device
-layer stays within one CSS pixel of its SVG scene position. Older comparison
-bundles still produce timing baselines; structural assertions become mandatory
-only when the target source contains the live viewport implementation. Its
-dedicated budget preserves every existing large-house ceiling and adds the
-individual interaction timing gates. Issue #850 adds one exact counter to the
-hover series: architectural light fingerprints (`_liveRt.work().lightGeometry`)
-must not grow while the pointer moves; a target whose live runtime remembers
-the fingerprint (`public geometry(record` in `src/live-interaction-runtime.ts`)
-fails the structural contract otherwise. Hover renders nothing, so the
-counter is also zero on a base — it guards against a regression, the camera
-and tick series of `led-strips-v1` carry the before/after difference.
+Inspect the common profile without executing it:
 
-Structural assertions are evaluated independently of timing budgets: a fast
-run still fails when an interaction performs an unexpected full render or
-changes the heavy scene DOM.
+```sh
+node process-next/cli.mjs plan --event beta --version "1.99.0 beta 1" --request release.json
+```
 
-By default the runner records seven measured samples after one discarded warm-up;
-explicit `--warmups=0` omits that discarded iteration (#812). Other CLI defaults
-and clamps are unchanged. With
-this intentionally small CI sample, the nearest-rank `p95` is the observed
-maximum; reports keep the conventional field name but should be read as a
-high-tail guard rather than a population estimate:
+The release request can name the previous stable measurement and observed
+machine conditions. Request fields and the execution route are described in
+[DEVELOPMENT.md](../../docs/DEVELOPMENT.md). Reports are written to
+`artifacts/process-next/measurement.json`, `metrics.json` and `metrics.md`.
+The fixed `process-next/baselines/v1.83.1.json` is not automatically remeasured.
 
-- model readiness and first stable render;
-- space switch, HA state update, pan/zoom and opening the settings dialog;
-- a shared-wall room-resize preview which is cancelled before persistence;
-- a twelve-switch navigation cycle; since #735 every fixture floor is visited
-  once before its window, and a floor build inside the window (counted by the
-  card since #769, see below, or a 2.5D structural build) fails the sample;
-- Long Tasks for every measured window;
-- heap growth after four additional navigation rounds with forced GC;
-- hot-cache size and growth after the same warmed cycles.
+The short blocking metric list, percentage thresholds and absolute tolerances
+live in the process canon and the metrics implementation. Existing
+`budgets-*.json` files describe their individual diagnostic tools; they do
+not create additional gates for every task or release.
 
-Issue #735 moved the first visit to each floor out of the navigation cycle.
-Every sample mounts a new card that had seen only floors 1 and 2, so the cycle
-used to pay one cold floor-3 build inside its window (in
-`large-house-interaction-v1` also a floor-1 rebuild, because the editor series
-moves the config epoch that keys the clean-floor cache). That single step was
-about half of `switchCycleMs` and hid the warmed switches the metric is
-meant to describe; a cold floor visit stays measured by `spaceSwitchMs`. The
-change is a level step, not a regression or a speed-up of the card: base and
-candidate are still measured by the candidate runner in the same run, so the
-comparison is unaffected, but absolute `switchCycleMs` history and the
-profile's Long Task sums before and after #735 are not comparable. Local
-diagnostics showed the median falling by roughly 1.6–2.8 times (for example
-`large-house-v1` about 2.0 s to 0.9 s); the exact-SHA Full Performance medians
-on both sides of the change are recorded in #735. Budgets and `hardMaxMs` did
-not change in #735; #747 then brought the `switchCycleMs` ceilings down to the
-warmed level (see "CI contracts" below).
+## Large-house profiles
 
-Issue #769 moved the #735 guard from cache sizes to build counters. A cold
-build in a full LRU evicts one entry and leaves every size as it was, so the
-size guard was blind once a pool filled up; and its opening wall index read
-`card._openingWallIndexCache ? 1 : 0` of a `Map`, which is always 1. The card
-now counts the real builds of each floor-geometry cache in its miss branch
-(`_floorCacheBuilds`; never on a hit, a recency refresh, a resize re-key or
-alias, or a clear), and one pure decision judges the window
-(`demo/performance/switch-cycle-guard.mjs`, shared with
-`demo/smoke_floor_geometry_cache.mjs` and `test/switch-cycle-guard.test.mjs`):
+`demo/benchmark_large_house.mjs` uses a deterministic house with 60 rooms,
+200 devices, 100 openings, 60 partitions, 40 columns and 500 decor objects on
+three floors. It records model readiness, first stable render, floor switch,
+HA update, pan/zoom, settings opening, resize preview, navigation cycles,
+Long Tasks, heap change and cache size.
 
-- judged families keep every floor warm, so any build fails the sample and the
-  message names the family and its growth: the wall union pool, inner
-  contours, clean floors, the opening wall index, light barriers and Glow
-  clips. 2.5D is still judged by `_isoStructuralBuildCount`;
-- reported families are single-slot by design and rebuild on a floor switch:
-  physical bodies, opening tunnels and light physical bodies. Each fails only
-  above one build per switch (12 in the window).
+| Profile | Workload |
+|---|---|
+| `large-house-v1` | Base View, navigation and state updates |
+| `large-house-isometric-v1` | Isometric View and geometry cache |
+| `isometric-stage3-dense-v1` | Dense devices near walls/corners, raised overlays and state updates |
+| `large-house-isometric-backdrop-v1` | Isometric rendering with the backdrop |
+| `large-house-plan-snap-v1` | Saved open outlines and 120 native pointer positions over endpoint, line and miss targets |
+| `large-house-interaction-v1` | Hover, pan/zoom, editor drags and related/unrelated HA snapshots |
 
-Each row reports `switchCycleBuilds: { supported, families, caches }`: the
-growth per family (`null` when unsupported) and, as a diagnostic, the size
-snapshot before and after the window with the real size of the opening wall
-index. A comparison bundle without the counters reads `null` and is not
-judged; a candidate whose source declares them must expose them. The budgeted
-`cacheEntries`/`cacheGrowth` keep the opening wall index as the presence flag
-their `openingWallIndex: 1` ceilings were set on (budgets are #770's). The
-family lists come from one counted sample of every `large-house*` profile and
-`isometric-stage3-dense-v1` on the dev base with the counters (#769, 7 Oct
-2026): every judged family 0, physical bodies and opening tunnels 12 of 12,
-light physical bodies 0, no structural 2.5D build, every size unchanged. No
-family had to move to the reported list.
+The interaction profile also accepts a quarter-turn `--rotation=90`,
+`180` or `270`. Its geometry oracle uses the painted SVG world matrix.
+Other profiles reject nonzero rotation.
 
-Issue #814 pools physical bodies and opening tunnels per floor (at most eight,
-LRU, `floorPoolEntry` in `src/floor-geometry-key.ts`). A target whose source
-declares both pools (`private _physicalBodiesPool`, `private _openingTunnelPool`)
-is judged with `pooled`: the two families join the judged list, so one build in
-the warm cycle fails the sample; a base before #814 keeps them reported. Light
-physical bodies stay reported. Each row's `switchCycleBuilds` adds `pooled`,
-the pool sizes in the size snapshot (`physicalBodiesPool`, `openingTunnelPool`;
-0 for a base) and `keyCost`: the mean milliseconds of one warm lookup of the
-opening wall index and of the physical bodies on the shown floor (key plus
-hit), 50 calls after one warming call, untimed and outside every Long Task
-window. The budgeted `cacheEntries`/`cacheGrowth` keys are unchanged.
+Functional/structural assertions stay meaningful independently of speed:
+a faster run is not correct if it changes data unexpectedly, performs an
+unwanted full render, rebuilds static geometry during a warmed navigation
+cycle or loses SVG/HTML alignment.
 
-For #814's AC5 the Full Performance comparison runs with `comparison_ref` set
-to the full base SHA and publishes, per profile, the raw rows of
-`large-house-interaction-v1` (with `interactionDiagnostics.resizeLongTask`:
-`labelsMs` is the live areas whose body union is now built once per gesture)
-and the Flat and 2.5D switch cycles (`large-house-v1`,
-`large-house-isometric-v1`: `switchCycleMs`, `switchCycleBuilds.families`,
-`.caches` with the pool sizes, `.keyCost`). The deterministic result is the
-build counters; milliseconds are reported as measured, without a promised
-percentage, and every budget stays as it is.
+By default the runner collects seven samples after one discarded warm-up.
+With such a small series, nearest-rank p95 is the observed maximum, not a
+reliable estimate of a population percentile. Raw samples remain in the report.
+Historical measurements made with different warm-up/fixture protocols should
+not be pooled.
 
-Issue #743 adds `large-house-isometric-backdrop-v1`, the 2.5D twin of
-`large-house-isometric-v1` with a loaded plan picture on every floor. Before it
-no Full Performance profile walked the backdrop (`imagePlan`) path, so the
-double render of #739 K1 — every warm floor switch cleared the ready paper,
-inserted the first-frame veil, probed the card background and asked for a
-second full update — was invisible to CI both by time and structurally; a
-temporary probe found it. The runner derives the fixture as it does for
-plan-snap: `large-house-v1` plus `plan_url: '/assets/f1.svg?<space id>'` and
-`plan_aspect: 1` on each floor. One shipped picture (in `demo/srv/assets` since
-v1.14.0, so every base has it) under a URL of its own per floor decodes once per
-floor; it covers the whole plan square and the room geometry is unchanged.
-`demo/fixtures/**` and the bundle fingerprint stay as they are, and the report's
-fixture counts gain `backdrops: 3`. A sample fails unless its first stable frame
-has the backdrop `<image>` in the stage SVG (`docs/TESTING.md` rule 3). The
-profile runs every window of the historical isometric profile; after the
-`switchCycle` window and its #735 guard, before forced GC and outside every
-timed and Long Task window, a structural probe makes six warm switches round the
-floors and counts the `performUpdate` passes of each, from the pick until
-`updateComplete` resolves `true`. Counting has to run to that quiescence: the K1
-second pass starts after the first `updateComplete` has resolved, in the same
-task, so a count taken right after the first `await` reads one pass on both
-sides. Late updates after the frame are not counted. Each row reports
-`floorSwitchPasses: { supported, perSwitch }`, and `evaluate.mjs` rejects a
-candidate unless every element is 1 (`candidate: a warm 2.5D floor switch with a
-backdrop took <n> update passes`, #739 AC2 and `docs/ISOMETRIC.md`). The base is
-reported, not judged: bases before #739, v1.78.0 among them, take two passes.
-`budgets-large-house-isometric-backdrop.json` is a copy of the historical
-isometric budget that differs only in `profile`, so the twin shares every
-ceiling (as #160 does); the historical profile keeps its meaning as the #124
-witness. The profile runs in Full Performance only, not in the Validate smoke.
+## Addressed local diagnostics
 
-Every report is tied to the source fingerprint embedded by Rollup. A stale
-bundle is a hard failure.
+For an explicitly selected investigation, prepare the current product build
+and demo assets, then run the profile that answers the question:
 
-## CI contracts
+```sh
+npm run build
+node scripts/bundle-sync.mjs
+node demo/benchmark_large_house.mjs --profile=large-house-v1 --samples=7 --warmups=1 --output=artifacts/performance/local.json
+```
 
-The blocking `performance_smoke` job in `validate.yml` runs when heavy checks
-are requested and no valid reuse proof covers it: on release candidates in
-`dev`, pull requests and `full=true` dispatches, not on every ordinary push.
-It measures only the candidate: the heaviest 60-source
-`large-house-glow-overlay-v1` and `large-space-card-glow-v1` states after one
-warm-up, with three recorded samples each. `compare.mjs --absolute-only`
-enforces `budgets-glow-smoke.json` and `budgets-space-glow-smoke.json`; it makes
-no base-relative claim. This is a catastrophic-regression guard, not a trend
-detector. The same job also runs the junction-limits and wall-draw-click gates.
+Change `--profile` to one of the supported profiles above. These commands
+are available diagnostics, not instructions to run every profile on a task.
+A valid local result is not repeated solely to obtain a GitHub result.
+When comparing timings, use the same fixture, runner, toolchain, warm-up
+protocol and comparable machine conditions.
 
-Two more profiles join the smoke only when the diff touches their code path
-(#473, classified by `scripts/classify-changes.mjs`): `large-house-isometric-v1`
-for `src/iso-*` and `large-house-interaction-v1` for `src/live-*`,
-`src/render-*`, `houseplan-render-lifecycle.ts` and `houseplan-card.ts`. Since
-#770 a profile also joins when the diff touches what measures or judges it
-without `src/**`: its own budgets (the smoke file and the full profile's, which
-the smoke repeats) and the shared large-house harness —
-`benchmark_large_house.mjs`, `demo/fixtures/large-house.mjs`,
-`card-contract.mjs` and `evaluate.mjs`, which bring in both. Before, a
-budget-only change ran the smoke with Glow alone, and the new ceiling was first
-judged by the beta candidate. The Glow runner and `compare.mjs` are exercised by
-the Glow smoke, which always runs. Both
-run `--samples=3 --warmups=1` against `budgets-isometric-smoke.json` and
-`budgets-interaction-smoke.json`, whose ceilings are the `hardMaxMs` values of
-the full profiles. The set of profiles is part of the `performance_smoke`
-reuse key, so a glow-only success never stands in for a run that needed the
-isometric profile.
+`wall-draw-click-v1` exercises consecutive wall segments in a five-space
+fixture. It observes local versus full physical checks, wall-artifact reuse,
+history entries and queued writes. Its diagnostic commands are:
 
-The interaction profile keeps strict per-series, Long Task, heap, cache and
-structural limits. Its aggregate `interactionSeriesMs` ceiling is 3630 ms since
-#898 (owner decision 2026-10-14: ceilings with less than 10 % headroom grow by
-10 %); it was 3300 ms over the observed hosted-runner baseline (up to 3122.6 ms).
-The new ceiling no longer stays below the known failed pre-optimization result
-(3501.5 ms) — the owner accepted that. This aggregate
-is a catastrophic guard; the full workflow's base-relative comparison remains
-the detector for smaller regressions.
-
-Its `firstStableRenderMs` ceiling is 3740 ms since #898 (owner decision
-2026-10-14, +10 % over 3400 ms of #692). The full workflow's
-7-sample median on the hosted runner was about 2790 ms across the 1.77 line
-(2769.0 on 09-21, 2838.2 on 09-23, 2777.3 and 2801.7 on `c392ad3a`) and about
-2920 ms at v1.78.0 (`7d4d75bd`: 2925.0, 2925.2 as the base). Two runs of that
-one SHA differed by 7.5 % (3144.8 vs 2925.0), so the former 3000 ms ceiling
-sat 2.7 % above the level and failed on noise — the 3-sample smoke of #689
-read 3002.4 ms. 3400 ms is +16 % over the 1.78 level and +8 % over the worst
-run in the series; the base-relative comparison of the full workflow is
-unchanged and remains the detector for smaller regressions. The +4.5 % step
-between 1.77 and 1.78.0 is not attributed here.
-
-The isometric `spaceSwitchMs` ceiling is 2200 ms, shared by the smoke, the full
-isometric profile and its Stage 3 dense twin (#675). The metric is one cold
-floor switch that builds the second floor's 2.5D geometry, so it grows with
-every 2.5D stage, and the original 1800 ms from #89 stage 1 had become the level
-itself. The hosted-runner smoke median rose from 1500 ms (2026-09-09 to 09-12,
-12 runs) to 1668 ms (09-19 to 09-25, 6 runs) and 1798 ms after #649 (9 runs, σ
-42 ms, maximum 1867.7 ms). The median inside a run is already stable (re-run
-attempts of one SHA differ by 0.4 %), separate runs of one SHA differ by up to
-5.5 %, and the level itself moved by 20 %: more samples would not change the
-verdict, so the ceiling is the lever. 2200 ms leaves 17.8 % over that maximum
-and stays below the only real isometric regression of the window, 2719.6 ms
-(#583 before its lattice fix, 2026-09-16); doubling today's level fails by a
-wide margin. Occasional hosted runners are about a quarter faster, which a
-ceiling does not mind. Smaller growth stays the job of the full workflow's
-base-relative comparison.
-
-The `switchCycleMs` ceilings are 950 ms for the flat family (`budgets.json`,
-plan-snap, interaction and the interaction smoke) and 1550 ms for the 2.5D
-family (historical isometric, Stage 3 dense, backdrop and the isometric smoke), one number per family
-(#747). Since #735 the metric is the warmed twelve-switch cycle, and the former
-7000 and 8000 ms sat 7.6–10.2 times above the #735 medians. The series is every
-Full Performance run after #735, both sides with 7 samples — the base is
-measured by the candidate runner, so it is warm too: 36821241343 (#735, base
-`76558bf2`), 36838891001 (#740), 36838952536 (#742) and 36839009721 (#739), the
-last three against `dev` `7ff2b5ae`. Flat medians span 666.9–812.7 ms (maximum:
-`large-house-v1`, the base of 36838891001). 2.5D medians span 766.5–1333.9 ms;
-the maximum is `isometric-stage3-dense-v1` in 36838952536, whose base on the
-same runner read 1249.7 ms against 849.9–982.4 ms in the other runs — runner
-noise of 27–47 %, which the series is meant to contain. Each ceiling is the
-first multiple of 50 ms at or above 1.15 × that maximum and no higher than 1.2 ×
-(the #692 band, which #675 also falls into): +16.9 % and +16.2 %. Doubling the
-level fails by a wide margin. The price of one number per family is wider
-headroom for the faster profiles (`large-house-isometric-v1`, maximum 1135.7 ms,
-gets +36 %); it keeps the plan-snap and interaction contracts of "every original
-ceiling" and the dense twin equal to the historical profile. Smaller growth
-stays the job of the full workflow's base-relative comparison (unchanged: 0.35
-flat, 0.2 2.5D, 250 ms noise allowance), and a floor built inside the window
-already fails the sample through the #735 structural guard, not through time. No
-3-sample `performance_smoke` median is in the series yet: at the time those
-profiles joined Validate only on a `src/**` diff, so the first beta candidate
-after #747 is their check.
-
-The aggregate Long Task ceilings of the same two families —
-`longTasks.maxCountP95` and `maxTotalP95Ms`, summed over every window of a
-sample, `switchCycle` included — are 18 tasks and 4350 ms for the flat family
-and 28 tasks and 6850 ms for the 2.5D family, the backdrop twin of #743
-included (#770). The former 30 / 12000 dated from the cold cycle and sat
-1.25–3.2 times above the post-#735 family maxima. The series is every Full Performance
-run from 2026-10-01 to 10-05 whose runner contains #735 (`5e318168`, landed
-2026-10-01 06:41 UTC), 14 runs: 36883292495, 36904753178, 36904816677,
-36905707715, 36905760140, 37055609391, 37062790080, 37065283633, 37134606046,
-37136641943, 37149329461, 37176616088, 37203867985 and 37302579095; both sides,
-7 samples, one runner type (linux x64, Chromium 151.0.7922.34, Node 22.23.3) —
-27 reports and 189 samples per profile. The point is what the ceiling judges:
-the nearest-rank p95 of a report, that is its largest sample. The window is
-warm in every one of them: the largest single Long Task inside `switchCycle` is
-190 ms against 427–1008 ms for the smallest cold floor switch of a profile, and
-the #735 guard fired in none. Maxima: flat count 13 / 15 / 13 and total 3301 /
-3759 / 3289 ms (`large-house-v1` / plan-snap / interaction); 2.5D count
-22 / 24 / 22 and total 5104 / 5935 / 5331 ms (isometric / Stage 3 dense /
-backdrop). The hosted runners are bimodal — on the faster ones fewer warm
-switches cross 50 ms and a sum falls to about half (isometric 2569 ms in
-37203867985 against 5104 ms in 36904816677) — which is the noise the series is
-meant to contain. Each ceiling follows the #747 rule for its metric: the first
-step (one task, 50 ms) at or above 1.15 × the family maximum and no higher than
-1.2 ×: flat 1.15 × 15 = 17.25 → 18 (+20 %) and 1.15 × 3759 = 4322.9 → 4350
-(+15.7 %); 2.5D 1.15 × 24 = 27.6 → 28 (+16.7 %) and 1.15 × 5935 = 6825.3 → 6850
-(+15.4 %). One report stays out of the maximum: the base of the v1.79.0 stable
-comparison 37149329461 is v1.78.0 (`7d4d75bd`, 2026-09-28, before #735 and the
-warm-switch work of #694, #725 and #739). Measured by the same runner as its
-candidate it reads 1.2–2 times higher — code, not runner noise — so it is the
-known slower variant the ceilings are checked against: its Stage 3 dense sum of
-8754 ms fails the 2.5D ceiling, its other points (isometric 24 / 6783 ms,
-backdrop 22 / 5159 ms, flat at most 17 / 3959 ms) pass and remain the relative
-comparison's job; three of its `switchCycleMs` medians already exceed the #747
-ceilings. Doubling the level fails both metrics. The only 3-sample smoke of the
-period, interaction in 36910217188, read 12 / 3047 ms; the isometric smoke has
-none, and a 3-sample p95 is the largest of fewer samples, so the 7-sample series
-bounds it. The relative half is unchanged: 0.35 and 0.3 with 3 tasks and 150 ms
-for the flat family, 0.2 with 5 tasks and 150 ms for the 2.5D family.
-
-The 2.5D View toggle (`viewToggleMs`) is reported by the isometric profiles but
-budgeted by none of them (#720, owner decision in #694 on 2026-09-30). Switching
-Flat ↔ 2.5D is a one-off General settings change, not something View or kiosk
-does in use. Since #649 the runner also measures different operations across
-the comparison: a full config reload with `volumetric_view` for the candidate,
-a per-device projection flip for bundles before #649 (v1.77.0: 73.8 ms against
-195.7 ms for v1.79.0-beta.1, run 36742783749). The 2.5D scene build stays gated
-by `modelReadyMs`, `firstStableRenderMs` and `spaceSwitchMs`, a UI freeze by
-`longTask.maxSingleMs`.
-
-The dedicated `performance.yml` workflow is the full comparison. It runs on
-every `main` promotion, weekly and on manual dispatch for an important beta or
-performance-sensitive change. It checks out the candidate and its base SHA,
-builds both, and runs them sequentially with the same Node.js 22 process
-family, pinned Playwright Chromium and hosted runner. `compare.mjs` then
-applies two limits:
-
-1. a relative regression allowance against the base-SHA report;
-2. an absolute safety ceiling from `budgets.json`.
-
-Which base SHA the relative half compares against is decided by
-`scripts/performance-baseline.mjs`, not by the workflow's shell (#587). A
-**stable** release candidate — its head commit carries a `Release:` trailer
-without a prerelease suffix — is compared against the **previous stable tag**;
-everything else keeps the old base (`push before`, the candidate parent, or the
-`comparison_ref` a manual dispatch names). The reason is the order the stable
-gate imposes: the candidate must be on `main` before this workflow can run on
-its exact SHA, so the *next* commit of the same line would otherwise take the
-first one as its base and compare the line with itself — a red gate would be
-cleared by any follow-up commit. The negative cases of that decision (no tag,
-a tag sitting on HEAD, a base that is no longer an ancestor) cannot be exercised
-from YAML, so they live in `test/performance-baseline.test.mjs` with an injected
-git; the mutant `stable-candidate-compares-against-itself` puts the old
-behaviour back and must be caught.
-
-The tighter limit wins. The absolute values are catastrophic safety ceilings,
-not normal-performance targets; the base-relative comparison catches smaller
-regressions. Small fast operations receive an absolute noise
-allowance so normal scheduler jitter does not become a false regression. Heap,
-Long Tasks, warmed-cache growth and the expected rendered-device count are
-gated separately. Long-Task maximum/count/total checks use the same
-relative-plus-absolute policy as timings. Each independent profile pair runs in
-parallel with the other pairs, but its base and candidate remain sequential on
-one runner. Its raw reports and comparison are uploaded as
-`full-performance-<profile>`, and the table is written to that GitHub job
-summary. Stable release assets require both exact-SHA
-`Validate` and exact-SHA `Full Performance`; prereleases require only
-`Validate`. The gate (`scripts/release-gate.mjs`, #511) judges by the latest
-non-cancelled run on the SHA: a re-run or a manual comparison against another
-baseline refreshes the verdict, and a cancelled twin is invisible.
-
-This base-vs-candidate design intentionally does not compare timings captured
-on different machines or different Chromium builds. A runtime/profile mismatch
-fails closed.
-
-Before the base checkout, CI fetches the complete commit graph and verifies the
-requested comparison revision. A `main` push uses `github.event.before`, which
-must both exist and remain an ancestor of the candidate; this catches the
-unreachable SHA left by a force-push. A manual run may name an explicit tag,
-branch or SHA, while an empty manual input and the weekly run use the candidate
-parent. An unusable requested revision falls back with a warning to the direct
-parent, then to the newest reachable semver release. If no safe comparison
-exists, the job fails closed instead of comparing against an arbitrary commit.
-
-## Resize Long Task of the interaction profile (#778)
-
-`longTask.editorSeries.maxSingleMs` (165 ms in both the full and the smoke
-interaction budgets since #898, owner decision 2026-10-14; 150 ms before) is the longest task of three editor parts; in every
-recorded CI sample it is the resize part, and that part has exactly one Long
-Task. The Validate smoke of #762 (`adc2d7c5`, run 36910217188) read 135 / 129 /
-**163** ms on its first attempt and 127 / 132 / 132 ms on the re-run of the
-same job, without any change.
-
-**What the window holds.** The part dispatches 40 moves, ten per frame. The
-pointer-move queue keeps only the last move of a task and the Safe Resize clamp
-allows a single grid step in this fixture, so exactly one move per sample
-projects a candidate (`resizeLivePreflightChecks` is 1 in every sample). Its
-task is the Long Task: the timer continuation that dispatches the batch, then
-`ResizeController.move` with the live physical preflight inside `project`, the
-`publish` of the preview and the live `labels` (`measure`). A Chrome trace and
-Long Animation Frame entries of local runs show no Lit update, no forced style or
-layout and no paint in that task; the live editor paint and the frame's style,
-layout and paint follow in the next rendering step (6–15 ms locally) and are not
-part of it. Garbage collection inside the traced task was four minor scavenges,
-about 4 % of it, and no major collection. This is the work of a real first
-resize step: a browser delivers each pointer move as its own task, and its
-handler queues the same move microtask; pointerdown stays in an earlier task
-(the runner's yield before the window). The window therefore measures a real,
-stable task, and no measurement defect was found.
-
-**The CI series.** Fourteen Full Performance runs with the interaction profile
-(2026-10-01 to 10-05, Chromium 151.0.7922.34, 28 reports of 7 samples) plus both
-attempts of the Validate smoke above give 202 samples, one of them above 150 ms.
-
-| | Full Performance (196) | Validate attempt 1 (3) | Validate attempt 2 (3) |
-|---|---|---|---|
-| resize Long Task, ms | 64–146; report medians 114–142 on the usual runners, 97–100 and 65–68 on two faster ones | 135 / 129 / 163 | 127 / 132 / 132 |
-| physical preflight, ms | 44.0–106.9 | 94.6 / 89.5 / 97.8 | 86.9 / 93.0 / 94.3 |
-| task minus preflight, ms | 20.0–46.9, within-report σ ≤ 2.2 | 40.4 / 39.5 / **65.2** | 40.1 / 39.0 / 37.7 |
-
-The preflight is 60–75 % of the task (median 69 %) and the ratio of task to
-preflight is 1.34–1.54 everywhere except the failed sample (1.67): the
-composition is constant and scales with the runner. Runner classes differ by up
-to 2× (the same `24e48935c` read 124, 65, 129 and 114 ms in four runs), while
-one report varies by σ 1–5 ms. Base and candidate on one runner differ by −5 % to
-+9 % (`24671d435` of #780 against its base; the step did not persist). The
-failed sample spent a normal 97.8 ms in the preflight and 65.2 ms elsewhere:
-25 ms above its siblings, 11–20 times the within-report σ of that remainder and
-18 ms above the remainder of any other sample. The same sample also had an
-extra Long Task in its load (3 against 2) and space-switch (2 against 1)
-windows, `editorSeriesMs` +46 ms and `irrelevantHaTicksMs` +17 ms. The verdict
-is one slow sample of the whole page, not a longer resize: runner noise on top
-of a systematic level of 112–146 ms per sample on the usual runners (report
-medians 114–142 ms), 3–25 % under the ceiling. One exceedance in 202 samples
-bounds the per-sample rate below 2.7 % (95 %, Clopper–Pearson); a three-sample
-smoke judges its maximum, so its failure rate is about three times the
-per-sample rate. The other five #762 samples (127–135 ms) lie inside that
-series, so nothing points to a regression of #762; a same-runner base and
-candidate pair for it was not recorded. The ceiling is unchanged here; the
-headroom is the budget question of #770.
-
-**Attribution in every report.** Since #778 each interaction row carries
-`interactionDiagnostics.resizeLongTask`, computed by
-`resize-attribution.mjs` from the entries of the very window the gate judges
-and from timed wrappers that the runner installs before the yield: the longest
-task (`longTaskMs`, equal to the resize part of `editorLongTaskParts`),
-`geometryMoves` inside it, and its milliseconds split into `preflightMs`,
-`projectOtherMs` (projection without the preflight: wall rekey, junction
-limits), `publishMs`, `labelsMs`, `moveOtherMs` (snap, clamp, solver),
-`updateMs` (a Lit update in the task) and `otherMs` (the rest: synthetic event
-dispatch, scheduling, collection outside the timed calls; a collection that
-interrupts a timed call stays in that call's phase). Long Task durations are
-whole milliseconds, so the parts add up within about 1 ms and `otherMs` may be
-slightly negative. `frameRenderMs` and `forcedStyleLayoutMs` come from Long
-Animation Frames and are `null` without them. The runner also prints one
-`#778 resize long task` line per sample. A base without
-`ResizeController.move` and its `project`/`publish`/`measure` callbacks (v1.68.1)
-reports `supported: false` with a reason instead of zero shares.
-
-Reading the next failure: extra time in `preflightMs` or `labelsMs` is product
-work (or a collection while it ran) and grows with the data; extra time in
-`otherMs` lies outside every timed call; `geometryMoves: 0` means the judged
-task was not the resize step at all. Local runs (Chromium 141, diagnostic only)
-split the task as about 70 % preflight, 24 % labels, 3 % projection, 1 %
-publish, 1 % move and under 1 % other; a synthetic 30 ms stall placed before the move
-moved `otherMs` by 30.8 ms and the same stall inside `measure` moved `labelsMs`
-by about 28 ms, the other phases staying put.
-
-**Product causes, left for a product task.** Point 3 of the #778 brief asks to
-hand a concrete product optimization to a product task. The owner's directive
-for the wave of 2026-10-06 forbids filing new issues while it runs, so the two
-candidates are recorded here and in the owner's findings document of that wave
-(F23) for triage; nothing in `src/**` changes in #778, and the ceiling stays.
-
-- *Labels, about 24 % of the task.* `_rszEdgeLabels`
-  (`src/houseplan-editor-runtime.ts`) computes the live area as
-  `geometryArea(floorMinusBodies(floor, physical))`, so every projected step
-  unions all physical bodies of the floor again (polyclip-ts), twice per step
-  with two resized rooms. The bodies do not change during a gesture: the union
-  could be cached for the floor and configuration epoch of the gesture.
-- *Live preflight, about 70 %.* `_checkSpacePhysicalGeometry` →
-  `wallBodiesGeometry` rebuilds the masonry union (about 45 % of the task) and
-  the junction patches (about 14 %) of the whole floor for every candidate;
-  BigNumber arithmetic inside polyclip-ts is about 29 % of the self time, with
-  minor collections. A preflight limited to the walls the candidate touches is
-  the larger, riskier change (geometry, `track:ask`).
-
-The shares come from a local Chrome CPU profile and trace of the interaction
-profile (Chromium 141, diagnostic only); a product task re-measures them on CI
-with `interactionDiagnostics.resizeLongTask`.
-
-## Private card contract
-
-The candidate benchmark runner is also executed against the base bundle, so
-every private `houseplan-card` field or method it reads is an explicit API of
-the performance harness. `card-contract.mjs` lists that surface for the
-large-house and Glow profiles. Each runner verifies it immediately after card
-creation and fails with the exact missing names or invalid runtime types before
-waiting for readiness or recording timings. Required caches must be real
-`Map` instances and must never be converted from missing/invalid values to
-plausible zeroes.
-
-The shared large-house contract names the profile actually being measured in
-its error (#812), including the backdrop and interaction variants. Its boot
-diagnostics keep the first eight epoch-change traces per card and stop capturing
-stacks at that limit; `_cfgEpoch` and all counters continue to update. The boot
-log reports `epochChanges`, `stackCaptures`, `tracesDropped` and `traceLimit`,
-so this bounded prefix is not mistaken for a complete journal. These diagnostics
-remain outside the stored timing rows; no performance ceiling changes.
-
-`fields` are required in every supported comparison base. `optionalFields` are
-newer members whose absence has an explicit safe fallback in the runner; if an
-optional member exists, its declared `fieldTypes` contract still applies. Add a
-new safely degradable field to `optionalFields` until every supported base has
-it, then promote it to `fields`. A member without a truthful fallback must be
-introduced through a compatibility revision before the benchmark consumes it.
-`optionalMethodsOf` declares methods of a declared member that the runner wraps
-(since #778, `_resize.move` for the resize attribution): optional, but a
-present one must be a function.
-
-Rename a consumed private member in two revisions:
-
-1. teach the contract and every reader to understand both the old and proposed
-   name while production still exposes the old name; land that compatibility
-   revision so it can become a comparison base;
-2. rename the production member and prefer the new name while retaining the
-   old reader fallback. Remove the fallback only after all supported comparison
-   bases expose the new member.
-
-This sequencing keeps the current harness capable of profiling both source
-trees. A one-step rename that merely edits the candidate reader is forbidden:
-it would make the same runner incompatible with its base bundle.
-
-## Local diagnostics
-
-### Wall draw terminal clicks
-
-`wall-draw-click-v1` (#461) loads the production bundle with five spaces. The
-edited space contains 12 rooms, 48 positive-thickness wall atoms and four saved
-open drafts, then places seven consecutive Walls segments after warm-up. A
-second variant doubles remote, non-interacting room geometry. The runner fails
-structurally unless every intermediate click performs zero full-space physical
-checks, exactly one local physical check, reuses its wall artifact in the
-junction proof, adds one history entry and queues one full-config write. The
-chain finish must independently return to the full-space barrier.
-
-The canonical Linux ceilings are 150 ms median and 250 ms maximum for the seven
-base clicks; the remote median may not exceed `base × 1.5 + 20 ms`. Counters are
-the primary verdict, so a fast machine cannot hide a route back through the
-generic barrier. Run against a freshly synchronized bundle:
-
-```bash
-npm run benchmark:wall-draw-click -- --output=artifacts/performance-smoke/wall-draw-click.json
+```sh
+npm run benchmark:wall-draw-click -- --output=artifacts/performance/wall-draw-click.json
 node demo/smoke_wall_draw_click.mjs
 ```
 
-Build and copy a fresh demo bundle first, then run:
+The second command also checks behavior; neither is implicitly added to all
+task profiles.
 
-```bash
-npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
-npm run benchmark:large-house-isometric -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-local.json
-npm run benchmark:large-house-isometric-backdrop -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-backdrop-local.json
-npm run benchmark:isometric-stage3-dense -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-stage3-local.json
-npm run benchmark:large-house-plan-snap -- --samples=7 --warmups=1 --output=artifacts/performance/plan-snap-local.json
-npm run benchmark:large-house-interaction -- --samples=7 --warmups=1 --output=artifacts/performance/interaction-local.json
-```
+## Glow, LED and sensor scenarios
 
-A local report is diagnostic only; it cannot replace the CI comparison.
+The separate Glow runner measures controlled source-count and occlusion
+workloads, including static card paths. Its profile names and inputs are
+declared in `demo/benchmark_glow.mjs`; use the corresponding fixture and
+reported profile when comparing results.
 
-### Historical browser mismatch is evidence, not a golden waiver (#812 / F28)
+The LED runner covers initial loading, camera changes, HA updates, cached
+geometry, unmount cleanup and a runtime response arriving after unmount.
+It records actual emitter counts and cached paths instead of hiding visual
+holes by dropping required endpoints or corners.
 
-The [author's #809 handoff](https://github.com/Matysh/houseplan-card/issues/809#issuecomment-6029190669)
-reported `device-battery-mobile-dark` as `different` on both base `53d3c790`
-and candidate `7fb609e4`, with the same screenshot SHA on the two sides.
-It named local Chromium **141** versus **151** for the baseline environment;
-exact browser builds, the PNG hash, OS, fonts and DPR were not recorded in that
-comment. The two other named scenes (`device-battery-zigbee-overlap-dark` and
-`device-battery-board-medium`) passed. These are historical claims from that
-handoff, not a new browser measurement or proof that every difference is noise.
+`sensor-tick-scenarios.mjs` separates four state-update cases:
 
-Before attributing a new difference to the environment, repeat the scene on the
-exact base and candidate SHAs with one harness/matrix revision, fresh bundles
-and the same Chromium pinned by `package-lock.json`, preferably in the canonical
-Linux CI environment. Record full browser/Node/Playwright versions, OS, scene
-viewport/DPR/fonts and image hashes with the result. If the pinned repeat is
-still different, investigate the difference; do not infer a product regression
-or an environment cause from a browser major alone. No skip, allowlist, threshold
-change or baseline acceptance follows from #809; the reviewed-source acceptance
-rules in [the golden guide](../golden/README.md#safety-contract) remain mandatory.
+- S0: an entity outside the plan;
+- S1: a displayed-floor plan sensor;
+- S1b: a sensor on another floor;
+- S2: the light of a displayed LED strip.
 
-To reproduce the comparison against another checkout using one harness and one
-browser installation:
+Reports distinguish full renders, snapshot/presentation work, LED frames and
+tubes, architectural light fingerprints, graph builds and resolutions. A
+missing counter is unknown, not zero. These scenario labels are measurement
+steps, not issue statuses.
 
-```bash
-npm run benchmark:large-house -- --target-root=../base --samples=7 --output=artifacts/performance/baseline.json
-npm run benchmark:large-house -- --target-root=. --samples=7 --output=artifacts/performance/candidate.json
-npm run benchmark:compare
-```
+## Reading interaction diagnostics
 
-## Changing budgets
+`resize-attribution.mjs` splits the measured resize Long Task into
+preflight, other projection, publish, labels, other movement, Lit update and
+remaining time. It also records `geometryMoves`, `frameRenderMs` and
+`forcedStyleLayoutMs` where supported. Whole-millisecond Long Task readings
+can leave approximately one millisecond of rounding error in the sum.
 
-Budget changes require an explicit review of recent CI artifacts and a written
-rationale in the change. Do not loosen a threshold merely to make a single red
-run pass. A new fixture profile gets a new profile id instead of silently
-changing the meaning of `large-house-v1`.
+Extra preflight or label time points to work inside those measured calls.
+Extra `otherMs` is outside them; `geometryMoves: 0` means the longest task
+was not the resize step. Timing alone does not establish CPU scheduling,
+garbage-collection or GPU causes. Unsupported browser instrumentation remains
+`null` or a stated unsupported result.
 
-An absolute ceiling is recalibrated from CI artifacts only — a local machine is
-noisy and of another class — by the method of #747 (`switchCycleMs`) and #770
-(Long Task count and total):
+For the connected-node gesture observer and clock alignment, see
+[README-node-performance.md](../helpers/README-node-performance.md).
+Keep every planned sample, including failures; do not retry until the report
+turns green.
 
-1. **Series.** Every exact-SHA Full Performance run since the last change of
-   what the window measures (#735 for `switchCycle`), both sides — the base is
-   measured by the candidate runner — with 7 samples each and one runner type:
-   equal `runtime.platform`, `chromium` and `node` in the reports. Separate the
-   reports by `sourceSha` and date: a source that predates the change, or a known
-   slower build such as the previous stable tag measured as the base of a stable
-   comparison, is code rather than runner noise. It stays out of the maximum,
-   and how the new ceiling treats it is checked and written down.
-2. **Point.** The statistic the budget judges: the median for a timing, the
-   nearest-rank p95 of a report for Long Task count and total — with 7 samples
-   that is the largest one.
-3. **Ceiling.** One number per budget family — the smoke repeats its full
-   profile (#473 AC4), twins share their parent's ceilings (#160, #743) — at the
-   first step (50 ms, one task) at or above 1.15 × the family maximum and no
-   higher than 1.2 ×. Doubling the level must fail. The ratio and noise
-   allowance of the relative half are not the lever.
-4. **Record.** The run ids, the range and the rule go to "CI contracts" above,
-   the series to `test/performance-budget.test.mjs`, which replays every point
-   through the `--absolute-only` evaluation of the smoke budget and recomputes
-   the rule.
+## Private card contract
 
-A profile with fewer comparable runs than #747 had (four runs, eight reports)
-keeps its ceiling: dispatch Full Performance (`performance.yml`,
-`workflow_dispatch` on `dev`) until the series is long enough, then recalibrate.
-A ceiling never rises to let a red run pass.
+A comparison harness may read both candidate and base bundles.
+`card-contract.mjs` declares the private card fields and methods it uses.
+Required caches must be real `Map` objects; missing state must not become a
+plausible zero. Contract failures name the missing member before measurement.
 
-`large-house-isometric-v1` and its two twins (Stage 3 dense, #160; backdrop,
-#743) carry `countNoiseAllowance: 5` (the other profiles keep 3). Owner decision 2026-09-09, #507: since v1.73.0-beta.1 the
-isometric renderer lives in the lazy `iso-scene-render` chunk (#160 Stage 3),
-so the single v1.72.0 boot task is split into two around that import. The
-load-phase work is unchanged — timings, `longTask.totalP95Ms` and
-`longTask.maxSingleMs` keep their unchanged ratios and still catch real
-growth — but `longTask.countP95` counts the split as +2 tasks and, with
-runner jitter, sat at 16 → 20 against a 19.2 limit on the v1.73.0 stable
-comparison. The allowance widens the count check alone to 16 → 21 for that
-baseline; it is not a licence for more work per task.
+`fields` are required in all supported bases. `optionalFields` need a
+truthful fallback, and their declared types still apply when present.
+`optionalMethodsOf` describes optional methods that are wrapped only when
+available.
 
-The gesture noise allowances are `resizePreviewMs` 150 ms, `panZoomMs` 60 ms and
-`stateUpdateMs` 75 ms on every large-house profile, flat and 2.5D alike;
-`test/performance-budget.test.mjs` pins them (#585). In v1.76.0 and
-v1.77.0-beta.1 the two isometric profiles carried a widened 450 / 150 / 120 ms,
-held identical on both because the #160 contract requires the Stage 3 dense twin
-to share every common ceiling with `large-house-isometric-v1`. Owner decision 2026-09-16, #585: the
-Full Performance run of the v1.76.0 stable candidate against v1.75.0 (run
-35097102695) measured resizePreview 603 → 981 ms and panZoom 91 → 205 ms in the
-hidden 2.5D view, because #583 gave that view more geometry and the
-overlay-collision search still cost about twice what it did before #583. The
-absolute ceilings did not move (panZoom 205 against 600, resize 981 against
-2200); the lever was milliseconds, not the ratio. #585 then replaced the 48 px
-disc scan with a search over obstacle boundaries (`6f226a5b`, v1.77.0-beta.2),
-and the allowances returned to 150 / 60 / 75.
+When renaming a consumed member, first teach the harness both names and let
+that compatibility revision become a comparison base. Then change production
+and keep the old reader fallback while old bases remain supported.
+A harness change must not silently make the base incomparable.
 
-The `cleanFloor` entry ceiling is 100: the reviewed fixture warms exactly 100
-deterministic room/physical-body entries. An extra 20 means that one complete
-floor was invalidated and rebuilt, so fixture extensions must recalibrate this
-ceiling explicitly instead of receiving silent cache headroom.
+## Interpreting failures
 
-## Glow profiles
+First distinguish a product defect, an invalid measurement and a confirmed
+performance change. Preserve the actual failing report and explain unknowns.
+Adjusting diagnostic budgets or accepting release regression is an explicit
+decision, not an automatic response to a red result.
 
-The full-card Glow profiles run deterministic 1/10/30/60-pool variants at DPR
-1 and Chromium CPU throttling x4, but deliberately exercise different fixtures:
+Browser mismatches require compatible environments or an honest
+incomparability report. They do not justify changing visual references:
+[the visual guide](../golden/README.md) describes addressed review and acceptance.
 
-- `large-light-blend-v1` compares the isolated screen group with the previous
-  normal-layer implementation on the shared frontend/backend schema fixture
-  `test/fixtures/glow/additive-pools.json`;
-- `large-house-glow-overlay-v1` measures simultaneous temperature fill and
-  independent Glow on the existing 60-room/200-device large-house fixture,
-  without changing `large-house-v1`.
-
-The same runner also owns the two static-card profiles introduced with #374:
-
-- `large-space-card-default-v1` proves that the default-off card keeps the
-  historical no-visibility-work path and a zero-entry Glow cache;
-- `large-space-card-glow-v1` measures the explicit `light_pools:true` path on
-  one large static space, including HA ticks, heap/cache growth and capture.
-
-```bash
-npm run benchmark:glow -- --profile=large-light-blend-v1 --output=artifacts/performance/glow.json
-npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --output=artifacts/performance/overlay.json
-npm run benchmark:glow -- --profile=large-space-card-default-v1 --output=artifacts/performance/space-default.json
-npm run benchmark:glow -- --profile=large-space-card-glow-v1 --output=artifacts/performance/space-glow.json
-npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
-npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
-npm run benchmark:glow -- --profile=large-space-card-glow-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/space-candidate.json
-npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-space-glow-smoke.json --candidate=artifacts/performance-smoke/space-candidate.json --output=artifacts/performance-smoke/space-comparison.json
-```
-
-Reports include per-variant state-update timings, render/pool counts, Long
-Tasks, screenshot time, heap and cache growth. The first CI comparison against
-a base SHA that predates `glow_enabled` bootstraps only the overlay profile's
-relative baseline from the candidate; its absolute ceilings still gate that
-introduction. Every subsequent revision compares both profiles to the real
-base SHA.
-
-The initial absolute ceilings are intentionally conservative bootstrap limits;
-they must be reviewed against the first paired Ubuntu artifacts before the
-feature is promoted from beta. Same-runner relative checks in the full workflow
-remain the primary regression signal; the candidate-only smoke only guards
-against catastrophic failures.
-
-## `led-strips-v1` (#780)
-
-`demo/benchmark_led_strips.mjs` (`npm run benchmark:led-strips -- --size=…`)
-measures the LED strips on the `large-house-v1` fixture: on every floor 10 or 50
-existing devices become lights shown as strips that are on — `10x5` (10 strips
-× 5 points) or `50x50` — without adding a device or an icon
-(`performance/led-strips-fixture.mjs`); `none` is the same build and plan
-without strips. Glow on, strip radius 30 cm, viewport 1440×1000, DPR 1,
-reduced motion; every sample is cold (a new browser and card), seven samples
-after one warm-up. The runner fails on its own against
-`budgets-led-strips.json` — the ТЗ table, median and p95: `firstStableRenderMs`
-3400/5000, `warmSpaceReadyMs` 1500, `stateUpdateMs` 1000/1500, `panZoomMs` 500,
-the longest pan/zoom Long Task 150 ms — of the interaction profile's camera
-scenario and of a 100-step series, one wheel step per frame — retained heap
-after 20 A→B→C→A cycles 64 MiB — and on exact counters: zero field geometry
-recomputes over 100 unrelated HA ticks, 100 camera steps and a colour-only
-change; the three caches of the shown space (`ledStats` of the runtime chunk)
-— shapes ≤ 50, visibility ≤ 50, compact visibility batches ≤ 2500 and
-retained SVG path text ≤ 4 Mi characters — identical
-after every cycle (the field geometry counter is judged over the #850 tick
-scenarios below); after disconnect 0 retained entries and 0 live LED
-timers/frames/observers (tracked by creation stack in the page); one extra
-cold run holds the runtime response, removes the card meanwhile and requires
-that the landed chunk renders, caches and schedules nothing for it; the LED
-chunks loaded with strips and none without them, never the editor chunk in
-the View. A runner with a short step limit may collect the samples in parts
-(`--warmup-only`, `--samples=N --no-late-import`) and judge them with
-`--merge=…` — the same cold samples, the same gates, the minimum of seven
-samples after one warm-up enforced on the merged set. Base predates the
-strips, so there is no relative comparison; the zero-LED View remains judged
-by the relative `large-house-interaction-v1` profile. Exact-SHA Linux output
-of the full performance workflow (`led-strips` matrix entry) is the gate
-evidence; a local report is diagnostic. Since #788 the actual emitter-fan
-count remains reported but is not capped by dropping required endpoints or
-corners: that old limit hid visible holes. Five fans are retained per compact
-batch; all batches render as one positive-winding clip path per strip. The
-4 Mi-character bound (at most 8 MiB UTF-16 text) explicitly measures cached
-paths, excluding the joined Lit/DOM clip string. Timing and the 64 MiB
-warm-cycle heap-growth limit are unchanged; that is not an absolute browser
-or GPU memory bound.
-
-Issue #850 — the work of one HA tick of a sensor that stands on the plan. The
-series that the runner used to call "100 unrelated HA ticks" ticked the first
-`sensor.*` of the fixture, a temperature sensor shown on the plan
-(`sensor.perf_132` at 50×50), and judged only field-geometry misses: it read 0
-while the LED frame was rebuilt on 100 ticks of 100. The series is now four
-scenarios (`performance/sensor-tick-scenarios.mjs`) on the shown floor
-(`perf-floor-2`), `--ticks=N` HA objects each (30): S0 an entity off the plan
-(added and settled before the series: its appearance is a composition change,
-not a tick; the lazy live runtime has landed and captured once, its first
-capture being complete), S1 a plan temperature sensor of that floor, S1b one
-of another floor, S2 the light of one of its strips on/off (an ordinary light
-of the floor at `none`).
-Exact counters per scenario: full renders (`_renderBody` calls, an instance
-wrapper removed after the series), new snapshots and snapshot presentations
-that changed identity (both readable on any SHA), and the product counters of
-#850 — presentations resolved and incremental/refreshed/complete captures
-(`_liveRt.work()`), LED frames built and tubes derived (`ledStats` of the
-runtime chunk), architectural light fingerprints, light-graph builds and full
-light resolutions. `budgets-led-strips.json` `ticks` judges them in every
-sample: S0 nothing at all; S1 and S1b at most two presentations per tick (the
-one device whose rows hold the sensor) and zero frames, tubes, fingerprints,
-graph builds and resolutions; S2 zero tubes, fingerprints and graph builds
-(the light state changes, the graph does not; its resolution and every
-presentation are rebuilt) and no stripe left in the old state after a tick
-(`staleStripes`). `camera.lightGeometry`
-counts fingerprints over the #789 camera cycle (0). A counter the build does not
-have is `null` and fails: a base without the #850 counters is red by design,
-never green by omission. The timing limits above are unchanged; tick medians
-and p95 are reported per scenario but not judged — on a shared runner (the
-local 2-CPU sandbox runs other agents in parallel) milliseconds are noise and
-the counters are the evidence.
-
-`--profile` turns the series into the before/after report of #850: the same
-scenarios with base-compatible observers (LED frame identity read through
-`_ledRt`, strip models replaced — each one a tube on a base — and
-`_resolveLightBarriers` calls — one fingerprint each on a base), the hover
-series H1/H2 (120 moves over a device marker and over an LED hit path: cost per
-move, full renders, tooltip DOM churn) and a CPU profile per scenario
-attributed to product JS, garbage collection and idle/program time; the
-harness overhead is S0's tick. Run it with the same runner on the base SHA for
-the "before" rows (copy the runner, its scenario module and budget file into
-the base tree): `--size=… --profile --ticks=100 --samples=3 --warmups=0
---cycles=1 --no-late-import --output=…`. A profile run is diagnostic and is
-judged like any partial run.
-
-Issue #789 retains every historical window and budget, and adds
-`cameraFullCycleLongTaskMaxMs`: one continuous observer starting before the
-first camera wheel, spanning the original scenario and 100-step series, full
-quality restoration, two animation frames, an immediate wheel restart, a second
-restoration and two frames, then at least 500 ms of tail. Raw Long Task entries
-and phase timestamps are saved in each sample's `cameraFullCycle`. The new
-metric inherits the existing 150 ms camera ceiling for median and p95; missing
-observations or quality that fails to restore within 1000 ms fail closed. Two
-frames are a paint opportunity, not proof of compositor presentation. The
-original `cameraSeriesLongTaskMaxMs` still ends at its original boundary. This
-addition prevents deferred restoration work from escaping all judged windows;
-it does not turn local timing into canonical evidence. Issue #789's acceptance
-additionally requires a 10% task margin (warm p95 ≤1350 ms and both camera-series
-and full-cycle p95 ≤135 ms), without changing the shared budget JSON.
+Past measurements and policy revisions remain in Git history and their
+issues. This guide does not reinstate former Validate/Full Performance
+release requirements or per-task hard limits.

@@ -1,5 +1,10 @@
 # Complete candidate disposition (#1018)
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Manual author decisions and exact source/caller anchors are pinned to task material
 `3d7d38e781684019d901dee23abf006a2e9a2a78`. It contains accepted #1051/#1046/#1054/#1057/#1004 plus the
 isolated first cleanup. This author audit is separate from independent CODE approval.

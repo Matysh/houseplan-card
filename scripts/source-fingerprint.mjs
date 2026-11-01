@@ -65,9 +65,15 @@ const SOLAR_CAPTURE_INPUTS = ['demo/fixtures/sun-transparent.json'];
  * влияющее на кадр, файл обязан вернуться в корпус.
  */
 const POST_CAPTURE_INPUTS = new Set([
-  'demo/golden/accept.mjs',
   'demo/golden/policy.mjs',
+  'process-next/catalog/golden-accept.mjs',
 ]);
+
+const GOLDEN_CAPTURE_INPUTS = [
+  'process-next/catalog/golden-runner.mjs',
+  'process-next/catalog/golden-selection.mjs',
+  'process-next/catalog/selections.mjs',
+];
 
 const repoRelative = (root, file) => relative(root, file).replaceAll('\\', '/');
 
@@ -101,6 +107,7 @@ const fingerprintFiles = (root) => {
   return [
     ...sourceFiles(resolve(root, 'src')),
     ...deterministicFixtureInputs,
+    ...GOLDEN_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
     ...HISTORY_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
     ...SOLAR_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
     ...browserArgumentCorpus(root).map((name) => resolve(root, name)),

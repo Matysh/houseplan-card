@@ -4,11 +4,12 @@
 same monotonic clock, source-input ledger and phase-aware paint observer. The
 workload remains three warmup and five measured gestures, each with 60 distinct
 native positions sent independently every 16 ms. It does not wait for a render
-or a CDP response before submitting the next position. Authoritative limits are
-the `budgets` in the smoke and each raw report (currently delegated flush
-wall-time p95 **55 ms**, source-input-to-paint p95 **121 ms**, longest task
-**150 ms**, owner headroom decision #898). This is wall-time, not OS CPU
-accounting. Historical reports retain their own recorded thresholds.
+or a CDP response before submitting the next position. The tool's diagnostic
+limits are recorded in `budgets` and in each raw report. They describe that
+observation, not additional per-task or release gates. When this diagnostic is
+needed and which release measurements can pause publication are defined in
+[PROCESS.md](../../PROCESS.md). This is wall-time, not OS CPU accounting.
+Historical reports retain their own recorded thresholds.
 
 ## Clock contract
 

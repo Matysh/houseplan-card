@@ -1,5 +1,10 @@
 # #931 golden acceptance
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Author visual acceptance of this task's declared shifts under PROCESS §3.13 / §8,
 not an independent code-review verdict or an owner/GPU acceptance.
 
