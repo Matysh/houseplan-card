@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 42,
-  "nextTicket": 6,
+  "revision": 43,
+  "nextTicket": 7,
   "nextFence": 6,
   "tasks": {
     "1176": {
@@ -48,14 +48,35 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1187": {
+      "issue": 1187,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/finish-completion-race",
+      "materialSha": "c0dcad875917c1b8170b4fd0a184f3ccff13e0e2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 6,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793555246977,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1187
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d": {
+      "digest": "fae2703437c100187e35305e17aa53127417f770765ab4f520af751df7022e13",
+      "issue": 1187
+    }
+  },
   "devWebhook": {
     "sourceSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
     "status": "delivered",
