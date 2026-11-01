@@ -183,16 +183,16 @@ hides the window while room highlight and every device tooltip remain active.
 The #437 summary is a screen-space View overlay, not another mode and not part
 of the plan camera. Its header control separates settings from the local
 show/hide choice. Shared block contents are available only to an authorised
-non-kiosk editor; read-only and kiosk users see the same dialog shell with
-local show and View-size controls only. In a landscape/square House Plan stage
+non-kiosk editor; read-only users see the same dialog shell with local show and
+View-size controls only. Kiosk keeps configured visibility without header controls.
+In a landscape/square House Plan stage
 the panel is on the right; in a portrait stage it is centred at the bottom.
 Native HA `narrow` controls the independent mobile permission. Insufficient
 measured stage space temporarily hides the overlay without changing the saved
-local choice. The overlay remains View-only. On windows wider than 480 px its
-settings and local show/hide buttons stay in the header in all three editors:
-settings can be opened there and the local choice can be changed, but the
-overlay appears only after returning to View. The phone gear keeps those two
-entries View-only. `houseplan-space-card` never renders any summary surface.
+local choice. The overlay remains View-only. Its settings and local show/hide
+buttons remain direct header actions at every width outside kiosk, including
+all three editors. Settings and the local choice can be changed there, but the
+overlay appears only after returning to View. `houseplan-space-card` never renders any summary surface.
 
 **General settings → Display → Show Zigbee signal** (#876), immediately after
 battery status, is writer-only outside kiosk and defaults on. Each space's

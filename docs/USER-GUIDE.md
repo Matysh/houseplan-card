@@ -417,7 +417,7 @@ it again after the editor is neutral to return to View.
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Live states, values and alarms as in View (`live_states`), no tooltips or more-info | Render only | Render only; not interactive |
 
-### Main-page header
+### Shared panel and card header
 
 The main /houseplan panel (#1120) has one full-height card header, without
 a separate outer title bar or 56 px reserve. The 44 px HA menu is first inside it:
@@ -429,53 +429,35 @@ Adaptation measures actual content, names, locale and available container
 width. In order: short Plan/Devices/Background labels with equal pencils become
 distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
 become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
-left onto a second row. Expansion restores the reverse sequence, without fixed
-width thresholds. If the wrapped first row cannot fit, the existing phone gear
-retains editor/space/settings actions. At 320/359 px there are at most two rows;
-rotation/floor/menu targets stay 44 px and editor close 24 px. Gestures retain zoom.
-Properties independently uses 1024 px of card width. Lovelace receives no HA menu
-and retains the existing fixed phone/header behavior described below.
+left onto further rows. Expansion restores the reverse sequence, without fixed
+width thresholds. Remaining actions keep wrapping and stay directly available;
+there is no phone gear fallback. Rotation, floor selection and editor close
+retain 44px targets. Gestures still zoom. Properties independently uses its
+existing 1024px card-width boundary.
 
-### Phone header in Lovelace
+Lovelace uses the same header (#1184), without a second Home Assistant menu.
+The card keeps its configured or default title. Long text is shortened with
+the full title available in a tooltip; at narrow widths it can use a separate
+row above the controls. Editors, settings, help, Summary and hidden-device
+controls remain direct actions, subject to permissions. There are no fixed
+480/360/1024px header breakpoints or one-row/56px phone limit.
 
-At a width of 480 px or less, View keeps one header row: a compact space
-selector, zoom controls and one **Actions and settings** gear. The card title
-is hidden; the field shows the current floor and the list retains full names
-in the existing order. The gear contains
-**Plan editor**, **Device editor**, **Background editor**, **Configure space**,
-**Add space**, **General settings**, **Save as PDF** and **Help & feedback** for
-an administrator. In View it also contains **Summary panel settings** and the
-local show/hide action for every user. Selecting an item closes the menu;
-Escape or a tap outside only closes it and never activates the plan below. In
-an editor the close button remains in the row, while the editor buttons live
-in the menu. Kiosk has no header.
-
-If the browser window is narrower than 360 px, an editor may use two header rows.
-Both rotation buttons remain beside zoom, and the floor selector, actions gear
-and close button stay accessible. View still uses one row. From 360–480 px the
-editors keep one row; wider windows retain the regular responsive layout.
-
-In a Lovelace card, when the header itself is 1024 px wide or narrower, the editor
-buttons show only their icons. The name stays in the tooltip and is announced
-by screen readers. Wider than 1024 px the buttons show icon and label.
-
-At the same **1024 px or narrower header width**, a dropdown replaces floor
-tabs. Long names are shortened in the field and shown in full in the list.
-Selection uses the existing navigation and unfinished-edit checks. On windows
-wider than 480 px, the current space's gear and **+** remain beside the field;
-on a phone those commands stay in the existing menu. Permissions and a fixed
-floor keep their existing rules. Wider than 1024 px, ordinary tabs remain.
+The floor dropdown keeps the existing order and full option names. Selection
+uses the ordinary unfinished-edit guard and retains the accepted floor after
+a refusal. Space settings and Add remain beside it under the existing writer
+and fixed-floor rules. Kiosk hides either placement's header.
 
 ### Summary panel
 
 The two-part control at the end of the View header opens **Summary panel
 settings** with its left gear and shows or hides the panel with its right
 sidebar icon. Only the right half is highlighted when the panel is on. In kiosk
-the control floats above the plan. The panel is off on a new screen until you
+these controls are hidden; the configured Summary visibility is retained. The panel is off on a new screen until you
 explicitly show it. Its contents are shared for the whole House Plan
 installation; the show/hide choice belongs only to your Home Assistant user
-and this particular card or sidebar panel. A read-only user and kiosk can
-change that local choice without being allowed to edit the shared contents.
+and this particular card or sidebar panel. A read-only user can change that
+local choice without being allowed to edit the shared contents; kiosk uses
+its configured visibility without rendering header controls.
 
 An administrator can name the panel, add up to ten ordered blocks, show a block
 on every space or one selected space, and add up to twenty values to a block.
@@ -515,10 +497,9 @@ panel, and restores itself after the card grows. Turning off **Display on
 mobile devices** also hides it whenever Home Assistant reports a narrow view;
 the show/hide button remains pressed because the local choice was not erased.
 The panel itself is absent from all three editors and from the static space
-card. On a screen wider than 480 px, its two header buttons stay available in
-the editors: you can open settings or change the local show/hide choice there,
-but the panel appears only after you return to View. On a phone those two gear
-menu items remain available only in View.
+card. Its two direct header buttons stay available at every width outside
+kiosk, including the editors: you can open settings or change the local
+show/hide choice there, but the overlay appears only after returning to View.
 
 The room highlight remains available in View and kiosk. To keep that highlight
 but hide the floating room summary, turn off **General settings → Show the room
@@ -824,7 +805,7 @@ never deletes the server file; deletion always requires an explicit action.
 ### Tab order
 
 Space tabs follow the order in which the spaces were created, and that order can
-be changed: make the header wider than 1024 px, then in any editor mode grab
+be changed when the header has enough room for tabs: in any editor mode grab
 a tab with the mouse and drag it to a new
 position. The new order is saved immediately and applies everywhere — the tabs,
 the kiosk swipe between floors and the carousel arrows. While dragging, a thin
@@ -1512,8 +1493,8 @@ arrow action. This does not edit drawn LED geometry.
 - **Add device** is the renamed **Add virtual device** button: it opens the
   same new-marker form without saving automatically. Enable **Show
   entities** in **Available** to place an individual entity;
-- **Show hidden on plan** mirrors the header eye **Show hidden devices** (on
-  phones, in the gear menu after Help). Active hidden devices appear normally
+- **Show hidden on plan** mirrors the direct header eye **Show hidden devices**,
+  including in a narrow header. Active hidden devices appear normally
   in every mode, with ordinary effects, lights and controls. This browser
   remembers the choice per user/card without changing the saved Hidden flag
   or switching real lamps. HA-disabled devices remain editor-only service ghosts;

@@ -1351,9 +1351,12 @@ claimed as evidence against the superseding owner decision. Contact identical-
 geometry reuse keeps the same native build-count guard with its updated anchor.
 All declarations are static readiness only; development does not execute mutants.
 
-#1120 registers one responsive DOM witness: actual320px cascade specificity
-must hide space actions already moved into the phone gear, keeping two rows.
-The original173px/third-row native failure is preserved. Six public-policy/
+Historical #1120 initially registered a phone-gear/two-row cascade witness;
+#1132 and #1184 supersede that UI. The current shared-header witness keeps all
+permitted actions direct and allows the required wrapping rows. Old #616 menu,
+filled-highlight and 24px-reserve declarations are retired in #1184; executable
+declarations in mutation-registry.mjs are authoritative. The original173px
+capture remains historical evidence, not a current two-row requirement. Six public-policy/
 ordered-cache witnesses use pure units. Static readiness only; execution zero.
 
 #1120 also registers the allocated-head witness: Properties retains its existing
