@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 52,
-  "nextTicket": 7,
+  "revision": 53,
+  "nextTicket": 8,
   "nextFence": 7,
   "tasks": {
     "1176": {
@@ -54,14 +54,14 @@
       "track": "ship",
       "layer": "infra",
       "branch": "codex/finish-completion-race",
-      "materialSha": "c0dcad875917c1b8170b4fd0a184f3ccff13e0e2",
+      "materialSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 6,
-      "queued": false,
+      "ticket": 7,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793555246977,
-      "reviewEntry": 1,
+      "readyAt": 1793555506909,
+      "reviewEntry": 2,
       "patchId": "eb5fdca51e3cb2eb49d00bb9a670b896cb3de262",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -70,10 +70,6 @@
         "process-next/remote.mjs",
         "process-next/test/remote.test.mjs"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1793555258584,
-      "automationDetail": "Selected check infra-syntax reads prepared product artifacts (demo-assets); an infrastructure-only profile cannot silently build the product",
-      "reason": "fix-infra-profile-inference",
       "notice": {
         "key": "1:fix-infra-profile-inference",
         "reason": "fix-infra-profile-inference",
@@ -92,7 +88,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1187
+  ],
   "active": null,
   "events": {
     "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d": {
@@ -133,6 +131,10 @@
     },
     "github:41333465147:1:completions:metadata:a4e37ff3-20b6-4cda-839a-2832d106780d:task-notice:1187::": {
       "digest": "bfcc384d1a54397a97ec2795696ef5156745e64bb6a939a6ab4fe4e67caa1832",
+      "issue": 1187
+    },
+    "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2": {
+      "digest": "cb661d9964222dabe60819e7216d96ad1cfbcabfaa6eb676cd9cda83820c8aee",
       "issue": 1187
     }
   },
