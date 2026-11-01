@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 357,
+  "revision": 358,
   "nextTicket": 38,
   "nextFence": 38,
   "tasks": {
@@ -109,14 +109,37 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/1172-preflight-research",
-      "materialSha": "3bbee89887b0b9e0363280bc7b8347d37cb7bb42",
+      "materialSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 37,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793570590158,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "41f42704a08db9ccf4cf946dbf6d807f7e1e9223",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/README.md",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/benchmark-history.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/current-37f59fa.cpuprofile.gz",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/current.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/fixture-history.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/fixture-wall-key-correction.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/fixture.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/historical.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/old-key-counterfactual.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/post-optimizer-current.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/profile-recovery.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/recovered-1830.cpuprofile.gz",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/recovered-1831.cpuprofile.gz",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/recovered-profile-1830.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/recovered-profile-1831.json",
+        "docs/analysis/optimize-preflight-1172-2026-11-02/summary.json",
+        "process-next/test/optimize-preflight-research.test.mjs",
+        "scripts/analyze-optimize-preflight.mjs"
+      ]
     },
     "1175": {
       "issue": 1175,
@@ -364,11 +387,12 @@
     "worker": "finish",
     "token": "37:finish:16e3de7c-c897-48c9-b567-2db070c06872:finish:1:admit",
     "fence": 37,
-    "materialSha": "3bbee89887b0b9e0363280bc7b8347d37cb7bb42",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
+    "expectedBase": "01d81fc7c02e496c9f15983ab7963f8d19cdd2e6",
+    "phase": "testing",
     "admittedAt": 1793570593105,
-    "expiresAt": 1793570893105
+    "expiresAt": 1793570902002,
+    "patchId": "41f42704a08db9ccf4cf946dbf6d807f7e1e9223"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -409,6 +433,10 @@
     },
     "finish:16e3de7c-c897-48c9-b567-2db070c06872:finish:1:admit": {
       "digest": "baffce5e76de478bae6ffd1a81f49e4900558177ed4107b660bb47a202f1d498",
+      "issue": 1172
+    },
+    "finish:16e3de7c-c897-48c9-b567-2db070c06872:finish:2:synchronized": {
+      "digest": "6270153f59f9c4a1d37310a39e0bfa856d120f621be5870e495501a2e4a95956",
       "issue": 1172
     }
   },
