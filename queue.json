@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 82,
-  "nextTicket": 11,
+  "revision": 83,
+  "nextTicket": 12,
   "nextFence": 11,
   "tasks": {
     "1176": {
@@ -34,14 +34,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "issue/1184-unified-header",
-      "materialSha": "7bc13185b6a0135979817cf3689f87754e5dc190",
+      "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 10,
-      "queued": false,
+      "ticket": 11,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793556794747,
-      "reviewEntry": 2,
+      "readyAt": 1793557165713,
+      "reviewEntry": 3,
       "patchId": "1b79417f10250c434dbfdde7d06b8bfb7da97468",
       "changedFiles": [
         "demo/smoke_color_picker_presentation.mjs",
@@ -92,14 +92,7 @@
         "materialSha": "7bc13185b6a0135979817cf3689f87754e5dc190",
         "status": "passed",
         "finishedAt": "2026-11-01T18:14:42.354Z"
-      },
-      "reviewRequest": "review:1184:2:1b79417f10250c434dbfdde7d06b8bfb7da97468:5cc253e20227415209b314bda63ff71f2a3a2655",
-      "reviewMaterial": {
-        "materialSha": "7bc13185b6a0135979817cf3689f87754e5dc190",
-        "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-        "patchId": "1b79417f10250c434dbfdde7d06b8bfb7da97468"
-      },
-      "reason": "Author found remaining obsolete golden/toolbar expectations; complete addressed update on S6 before review."
+      }
     },
     "1186": {
       "issue": 1186,
@@ -174,7 +167,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1184
+  ],
   "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -251,6 +246,10 @@
     },
     "github:41335875874:1:completions:metadata:23ad0ea4-9987-4d72-9b01-015072f52f01:task-notice:1184::": {
       "digest": "31f42697677f2bdf04dd43e4576e73368fb91712a0ba61164ec76ae22018f281",
+      "issue": 1184
+    },
+    "finish:e9b74951-6c81-453d-9c59-ac897ba09e86": {
+      "digest": "885825bc1056d7b952459c31a0a1a7d995590da68ca04a43e8c8c1ef4d0c7aba",
       "issue": 1184
     }
   },
