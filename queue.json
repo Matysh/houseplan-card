@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 331,
-  "nextTicket": 35,
+  "revision": 332,
+  "nextTicket": 36,
   "nextFence": 35,
   "tasks": {
     "1128": {
@@ -84,14 +84,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1169-wall-corner-seam",
-      "materialSha": "22167b6da6f6536b3895a88f609017eedd40f27d",
+      "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 33,
-      "queued": false,
+      "ticket": 35,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793568192143,
-      "reviewEntry": 3,
+      "readyAt": 1793569194056,
+      "reviewEntry": 4,
       "notice": {
         "key": "3:rebase-conflict",
         "reason": "rebase-conflict",
@@ -109,8 +109,7 @@
         "src/physical-geometry.ts",
         "src/wall-thickness.ts",
         "test/wall-corner-join.test.mjs"
-      ],
-      "reason": "rebase-conflict"
+      ]
     },
     "1175": {
       "issue": 1175,
@@ -402,7 +401,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1169
+  ],
   "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -873,6 +874,10 @@
     },
     "finish:d572296e-b553-4d39-a14f-db3f44249659:metadata:bbc45b15-c335-44d9-9040-aa66c48b586e:task-notice:1169::": {
       "digest": "aae3c4b0186623ebcb95201546dbabdac0ebfcca33edc516541ec01ae8902918",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf": {
+      "digest": "21c133b738b0f4b661fee59aab51d3d0523ebab3b297325cd58652c512999d75",
       "issue": 1169
     }
   },
