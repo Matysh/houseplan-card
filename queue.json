@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 333,
+  "revision": 334,
   "nextTicket": 36,
   "nextFence": 36,
   "tasks": {
@@ -97,10 +97,11 @@
         "reason": "rebase-conflict",
         "status": "delivered"
       },
-      "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2",
+      "patchId": "9cd6c30ded32c1be2d0ff98430eafa563c37e256",
       "changedFiles": [
         "demo/fixtures/wall-corner-join.mjs",
         "demo/smoke_wall_corner_join.mjs",
+        "demo/smoke_wall_smooth_joint.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -408,10 +409,11 @@
     "token": "35:finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:1:admit",
     "fence": 35,
     "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
+    "phase": "testing",
     "admittedAt": 1793569197281,
-    "expiresAt": 1793569497281
+    "expiresAt": 1793569503108,
+    "patchId": "9cd6c30ded32c1be2d0ff98430eafa563c37e256"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -890,6 +892,10 @@
     },
     "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:1:admit": {
       "digest": "2ee00c20ffca298fcdf7cea135b6649e054886d903eb82af34959c1408c3c94e",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:2:synchronized": {
+      "digest": "141c352c5072854db5b51e4af01d6ffb8eda7793a1c4e63ee89837e800c2070e",
       "issue": 1169
     }
   },
