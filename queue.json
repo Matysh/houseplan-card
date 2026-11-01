@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 188,
+  "revision": 189,
   "nextTicket": 22,
   "nextFence": 21,
   "tasks": {
@@ -39,7 +39,7 @@
       "ownerDecision": null,
       "ticket": 20,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793565861876,
       "reviewEntry": 2,
       "patchId": "ba4335f4e02a3640541d21cce8438b9681889742",
@@ -63,6 +63,13 @@
         "key": "1:checks-failed",
         "reason": "checks-failed",
         "status": "delivered"
+      },
+      "s6": {
+        "id": "20261101T204633462-73d0b5bd",
+        "reportPath": "/home/matysh/hp-s8-plan-decor-20261026/.git/process-next/runs/20261101T204633462-73d0b5bd/report.json",
+        "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+        "status": "passed",
+        "finishedAt": "2026-11-01T20:46:45.324Z"
       }
     },
     "1175": {
@@ -275,9 +282,9 @@
     "fence": 20,
     "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
     "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793565944253,
-    "expiresAt": 1793566290054,
+    "expiresAt": 1793569606422,
     "patchId": "ba4335f4e02a3640541d21cce8438b9681889742"
   },
   "events": {
@@ -430,6 +437,10 @@
     },
     "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:1:synchronized": {
       "digest": "f3f71cbffbf1832324bdcadb27aaa965a253690187dd29a01eb67b9e7b042dc9",
+      "issue": 1156
+    },
+    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:2:s6-complete": {
+      "digest": "a478d3c41f2b2e34cc95e70cdccdf73a5da4dce80931fd6aa25a5d51b16243ef",
       "issue": 1156
     }
   },
