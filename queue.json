@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 432,
+  "revision": 433,
   "nextTicket": 46,
   "nextFence": 45,
   "tasks": {
@@ -412,10 +412,23 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
+        "labels": true,
         "milestone": false,
-        "comment": false
+        "comment": true,
+        "status": "pending",
+        "errors": {
+          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
+        },
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "classificationAt": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
+        "commentCurrent": true,
+        "commentDigest": "461782c36f016e0e633c",
+        "commentFacts": {
+          "labels": true,
+          "milestone": false,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "pending"
