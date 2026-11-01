@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 329,
+  "revision": 330,
   "nextTicket": 35,
   "nextFence": 35,
   "tasks": {
@@ -93,9 +93,9 @@
       "readyAt": 1793568192143,
       "reviewEntry": 3,
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered"
+        "key": "3:rebase-conflict",
+        "reason": "rebase-conflict",
+        "status": "pending"
       },
       "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2",
       "changedFiles": [
@@ -109,7 +109,8 @@
         "src/physical-geometry.ts",
         "src/wall-thickness.ts",
         "test/wall-corner-join.test.mjs"
-      ]
+      ],
+      "reason": "rebase-conflict"
     },
     "1175": {
       "issue": 1175,
@@ -402,17 +403,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1169,
-    "worker": "github-coordinator",
-    "token": "34:github:41352894128:1:tick:0:admit",
-    "fence": 34,
-    "materialSha": "22167b6da6f6536b3895a88f609017eedd40f27d",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793569030658,
-    "expiresAt": 1793569330658
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -875,6 +866,10 @@
     "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:task-notice:1190::": {
       "digest": "667ac8327c67f133ab499b599d20b83997fbb007c3916cd81322d5cfc2732ed4",
       "issue": 1190
+    },
+    "finish:d572296e-b553-4d39-a14f-db3f44249659:finish:1:return": {
+      "digest": "a72dec2842ce47b664dff3297b027a660e22b6337d3285508578b516d180c18a",
+      "issue": 1169
     }
   },
   "devWebhook": {
