@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 76,
+  "revision": 77,
   "nextTicket": 11,
   "nextFence": 11,
   "tasks": {
@@ -42,7 +42,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793556794747,
       "reviewEntry": 2,
-      "patchId": "12a6062ee36caee00999fe01b43ed0a1346c54de",
+      "patchId": "1b79417f10250c434dbfdde7d06b8bfb7da97468",
       "changedFiles": [
         "demo/smoke_color_picker_presentation.mjs",
         "demo/smoke_e2e_hooks.mjs",
@@ -66,6 +66,8 @@
         "docs/UX-MODES.md",
         "docs/data-hp-contract.json",
         "docs/release-ledger/v1.83.0/1184.json",
+        "scripts/mutation-registry.mjs",
+        "src/editor-context-menu.ts",
         "src/header-menu.ts",
         "src/header-space-select.ts",
         "src/houseplan-card.ts",
@@ -165,10 +167,11 @@
     "token": "10:finish:70114242-1bda-4a8a-bef8-3ce4c9daf227:finish:1:admit",
     "fence": 10,
     "materialSha": "7bc13185b6a0135979817cf3689f87754e5dc190",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
+    "phase": "testing",
     "admittedAt": 1793556797622,
-    "expiresAt": 1793557097622
+    "expiresAt": 1793557102601,
+    "patchId": "1b79417f10250c434dbfdde7d06b8bfb7da97468"
   },
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -221,6 +224,10 @@
     },
     "finish:70114242-1bda-4a8a-bef8-3ce4c9daf227:finish:1:admit": {
       "digest": "42301cd492256a663355a93351c2948a314015815248bfadac43617e9854e823",
+      "issue": 1184
+    },
+    "finish:70114242-1bda-4a8a-bef8-3ce4c9daf227:finish:2:synchronized": {
+      "digest": "5ab4051000ba32776ba4b22f89cdeda7fa4b0ad8d2cc829782470290ec860352",
       "issue": 1184
     }
   },
