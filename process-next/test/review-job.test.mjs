@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { buildReviewContext } from '../lib/review.mjs';
 import { prepareReviewJob, publishReviewComment } from '../templates/review-job.mjs';
 
 function fixture(t, kind = 'code') {
@@ -58,6 +60,32 @@ test('a comment publication failure preserves the paid verdict and retries witho
   await publishReviewComment(f);
   assert.match(published, /Detailed independent report with evidence/);
   assert.equal(f.invocations, 1);
+});
+
+test('real spec/code job passes executor context from the issue and preserves its original snapshot on publication retry', async t => {
+  for (const kind of ['spec', 'code']) {
+    const f = fixture(t, kind), repoRoot = path.join(f.reportDir, 'repo'); mkdirSync(repoRoot);
+    const git = (...args) => execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', stdio: 'pipe', windowsHide: true }).trim();
+    git('init', '-q'); git('config', 'user.name', 'Fixture'); git('config', 'user.email', 'fixture@example.invalid');
+    git('config', 'core.hooksPath', path.join(f.reportDir, 'no-hooks'));
+    writeFileSync(path.join(repoRoot, 'source.mjs'), 'export const value = 1;'); git('add', '.'); git('commit', '-qm', 'fixture');
+    f.env.HP_BASE = f.env.HP_HEAD = git('rev-parse', 'HEAD'); f.env.HP_CANDIDATE_ROOT = repoRoot;
+    f.buildContext = buildReviewContext;
+    let body = '## Требования\nKeep state\n## Контекст исполнителя для ревью\nUse existing storage; review retry behavior.';
+    f.api.getIssue = async () => ({ title: 'Task', body, html_url: 'https://example.invalid/1105' });
+    const first = await prepareReviewJob(f);
+    assert.match(f.context.authorContext.text, /existing storage/);
+    assert.equal(f.context.authorContext.source.url, 'https://example.invalid/1105');
+    assert.deepEqual(first.authorContext, f.context.authorContext);
+    assert.deepEqual(f.context.receipts, [{ status: 'passed' }]);
+    f.api.comment = async () => { throw Error('Temporary transport failure'); };
+    await assert.rejects(publishReviewComment(f), /transport failure/);
+    body = '## Контекст исполнителя для ревью\nNew statement after review.';
+    const retry = await prepareReviewJob(f);
+    assert.equal(f.invocations, 1); assert.equal(retry.reused, true);
+    assert.deepEqual(retry.authorContext, first.authorContext);
+    assert.doesNotMatch(retry.authorContext.text, /New statement/);
+  }
 });
 
 test('a new workflow run reuses a matching artifact, never trusts a comment as verdict', async t => {

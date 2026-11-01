@@ -89,11 +89,42 @@ function blob(context, ref, file) {
   return git(context.repoRoot, ['show', `${ref}:${p}`]);
 }
 
+export const AUTHOR_CONTEXT_HEADING = 'Контекст исполнителя для ревью';
+
+/** A freeform section of the existing task, not executable reviewer instructions.
+ * Ignore headings inside fenced examples; preserve all matching sections rather than
+ * silently choosing one of two conflicting author descriptions.
+ */
+export function extractAuthorContext(task) {
+  const lines = String(task?.body ?? '').split(/\r?\n/), sections = [];
+  let fence = null, selected = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i], marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
+    if (marker) {
+      if (!fence) fence = marker[1];
+      else if (marker[1][0] === fence[0] && marker[1].length >= fence.length && !marker[2].trim()) fence = null;
+      continue;
+    }
+    if (fence) continue;
+    const heading = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
+    if (!heading) continue;
+    if (selected && heading[1].length <= selected.level) {
+      sections.push({ ...selected, end: i }); selected = null;
+    }
+    if (!selected && heading[2].trim() === AUTHOR_CONTEXT_HEADING) selected = { start: i + 1, level: heading[1].length };
+  }
+  if (selected) sections.push({ ...selected, end: lines.length });
+  const text = sections.map(section => lines.slice(section.start, section.end).join('\n').trim()).filter(Boolean).join('\n\n---\n\n');
+  return { status: text ? 'provided' : 'not-provided', source: { kind: 'issue-body', issue: task?.issue ?? null,
+    url: task?.url ?? null, heading: AUTHOR_CONTEXT_HEADING }, text };
+}
+
 export function buildReviewContext({ repoRoot, base, head = 'HEAD', task, track = 'show', ownerAssigned = false, kind = 'code', receipts = [], previousReview = null }) {
   const root = realpathSync(repoRoot);
   const baseSha = resolveCommit(root, base);
   const headSha = resolveCommit(root, head);
-  const context = { version: 1, repoRoot: root, base: baseSha, head: headSha, kind, track, ownerAssigned, task, receipts, previousReview };
+  const context = { version: 1, repoRoot: root, base: baseSha, head: headSha, kind, track, ownerAssigned, task,
+    authorContext: extractAuthorContext(task), receipts, previousReview };
   context.required = reviewRequired(context);
   context.changedFiles = git(root, ['diff', '--no-ext-diff', '--no-textconv', '--name-only', '-z', baseSha, headSha, '--']).split('\0').filter(Boolean);
   context.diff = bounded(git(root, ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=4', baseSha, headSha, '--']));
@@ -197,7 +228,12 @@ export function renderReviewReport({ context, report, model = REVIEW_MODEL }) {
   validateReport(report);
   const items = values => values.length ? values.map(s => `- ${s}`).join('\n') : 'Нет.';
   const analysis = report.analysis?.length ? `\n## Разбор решения\n\n${report.analysis.map(item => `### ${item.topic}\n\n${item.assessment}\n\nОснование: ${item.evidence}`).join('\n\n')}\n` : '';
-  return `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n\n## Границы анализа\n\n${report.boundaries}\n`;
+  const author = context.authorContext ?? extractAuthorContext(context.task);
+  const fence = '`'.repeat(Math.max(3, ...[...author.text.matchAll(/`+/g)].map(match => match[0].length + 1)));
+  const briefing = author.status === 'provided'
+    ? `Источник: описание задачи #${author.source.issue ?? '—'}, раздел «${AUTHOR_CONTEXT_HEADING}». Это сведения исполнителя, не выводы ревьюера.\n\n${fence}text\n${author.text}\n${fence}`
+    : 'Отдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.';
+  return `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n\n## Границы анализа\n\n${report.boundaries}\n\n## Переданный контекст исполнителя\n\n${briefing}\n`;
 }
 
 export function writeReviewReport({ context, report, reportDir, model = REVIEW_MODEL }) {

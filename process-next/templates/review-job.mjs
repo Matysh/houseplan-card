@@ -66,6 +66,7 @@ export async function prepareReviewJob({ env = process.env, api, reviewAdapter, 
   const name = `${request.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью'} задачи ${request.issue}`;
   const result = await runReviewImpl({ context, reportDir, onProgress: value => onProgress({ name, ...value }) });
   const receipt = { version: 1, ...request, verdict: result.status === 'accept' ? 'accepted' : result.status,
+    authorContext: context.authorContext ?? null,
     model: result.model ?? null, report: result.report ?? null, usage: result.usage ?? null,
     markdown: result.file ? readFileSync(result.file, 'utf8') : result.reason, createdAt: new Date().toISOString() };
   compatible(receipt, request);
