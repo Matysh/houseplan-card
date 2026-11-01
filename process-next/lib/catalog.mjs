@@ -54,7 +54,7 @@ async function finalize(root, plan) {
         // This catalog declares possible inputs/outputs; those strings are not reads by its callers.
         // Still follow its imports below so changes to planner dependencies invalidate reuse.
         if (file !== 'process-next/lib/catalog.mjs')
-          for (const match of text.matchAll(/['"]((?:src|demo|scripts|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
+          for (const match of text.matchAll(/['"]((?:src|demo|scripts|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
         // Dynamic directory readers cannot honestly be narrowed to literal imports.
         if (/\breaddirSync\b|\bimport\s*\(\s*[^'"\s]/.test(text) && file.startsWith('test/')) edges.push('src/**');
         for (const match of text.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*|new\s+URL\s*\(\s*)['"](\.[^'"]+)['"]/g)) {
@@ -73,7 +73,11 @@ async function finalize(root, plan) {
     // treat the generated bundle manifest as source and invalidate preparation.
     const iconInputs = check.id === 'demo-assets' || check.requires.includes('demo-assets')
       ? demoIconSourceFiles(root) : [];
-    const seeds = [...check.inputs, ...check.command.slice(1)].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
+    // Changed infra files are hashed data, not automatically executed modules.
+    // Syntax reads its argv as text; behavior executes only its selected tests.
+    const sourceRoots = ['infra-syntax', 'infra-behavior'].includes(check.id) ? [] : check.inputs;
+    const commandRoots = check.id === 'infra-syntax' ? check.command.slice(1, 2) : check.command.slice(1);
+    const seeds = [...sourceRoots, ...commandRoots].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
     const visited = new Set(), found = new Set(), artifactPreparations = new Set(); let pending = seeds;
     while (pending.length) {
       pending = pending.filter(file => {

@@ -1,5 +1,4 @@
-// #803: additional Select-only code has its own budget; existing graphs keep
-// their ceilings. Count shared loaded files once, not again as new traffic.
+// #803: retain the Select-only graph boundaries. Count shared loaded files once.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
@@ -21,16 +20,6 @@ const hasBaselineCache = path => cacheMarker.test(readFileSync(`dist/${path}`, '
 assert.equal([...loaded].some(hasBaselineCache), false, 'editor boolean baseline cache is not eager in View or other editors');
 assert.equal(extra.some(hasBaselineCache), true, 'the Select-only graph owns its bounded boolean baseline cache');
 const gzip = extra.reduce((sum, path) => sum + byPath.get(path).gzipBytes, 0);
-// #834: exact local boundary, ownership and winding proofs replace repeated
-// clipping. The owner permits an explicit ceiling increase, not byte golfing.
-// This is still a hard Select-only cap; View/editor ceilings remain unchanged.
-// #898, owner decision 2026-10-14: less than 10 % headroom -> +10 %, 18432 -> 20276 B.
-// #1045: approved small byte increase to the measured Delete graph, no headroom.
-// #1075 rebased onto accepted dev (2026-10-26) measures 21462 B. The same
-// owner permission adds only the observed 4 B, without reserve or other changes.
-// #1147: the shared menu now has an independent chunk. The Select-only graph
-// measures21463 B. Owner authorizes resource-limit increases, so restore the
-// existing +10% reserve (21462 ->23609), without repacking code for one byte.
-const budget = 23_609;
-assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only ${budget} B budget`);
-console.log(`Select-only node graph: ${gzip} B gzip, budget ${budget}; existing bundle ceilings unchanged`);
+// #1196: PROCESS measures release growth against the latest stable; module
+// sizes are diagnostic. Keep the behavioral graph/ownership assertions above.
+console.log(`Select-only node graph: ${gzip} B gzip (diagnostic; no absolute module-size gate)`);

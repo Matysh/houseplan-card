@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore geometry-check preparation for transitive built-manifest readers and inventory the new zero-config synthetic corner fixture without changing saved identities. Keep Select-only graph assertions while reporting module size diagnostically. [#1196](https://github.com/Matysh/houseplan-card/issues/1196)
+
 - Refresh the synthetic browser/Golden icon fixture from current sources during asset preparation, excluding local capture/private output. Capture provenance records the icon-map checksum; product runtime and visual baselines are unchanged. [#1193](https://github.com/Matysh/houseplan-card/issues/1193)
 
 - Save avoids a duplicate full-config fingerprint walk when caching an accepted config/set response. Every acceptance still computes a fresh hash and retains isolated config/layout snapshots, revisions and rollback behavior. Bounded Save profiling and comparison are recorded for #1153. [#1153](https://github.com/Matysh/houseplan-card/issues/1153)
