@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 465,
+  "revision": 466,
   "nextTicket": 50,
   "nextFence": 47,
   "tasks": {
@@ -437,145 +437,24 @@
     },
     "1197": {
       "issue": 1197,
+      "branch": "codex/ci-b-node-contracts",
       "track": "show",
       "layer": "product",
-      "branch": "codex/ci-b-node-contracts",
-      "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 44,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793572988277,
-      "reviewEntry": 1,
-      "patchId": "33052548f46b6ea625390a56ca00555d6638c9d1",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1197.json",
-        "src/i18n/de.json",
-        "src/i18n/fr.json",
-        "test/bundle-assets.test.mjs",
-        "test/styles-split.test.mjs",
-        "test/summary-panel-runtime.test.mjs"
-      ],
-      "s6": {
-        "id": "20261101T224934877-b5dac377",
-        "name": "Тесты для задачи #1197 (перед ревью)",
-        "reportPath": "/home/matysh/hp-s8-plan-decor-20261026/.git/process-next/runs/20261101T224934877-b5dac377/report.json",
-        "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "status": "passed",
-        "finishedAt": "2026-11-01T22:50:12.527Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "mergedSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
+      "mergedAt": 1793573592577,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1197:1:33052548f46b6ea625390a56ca00555d6638c9d1:bcd8773e35660bde4b207118371c19aa8a36da5e",
-      "reviewMaterial": {
-        "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "expectedBase": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-        "patchId": "33052548f46b6ea625390a56ca00555d6638c9d1"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1197,
-        "requestId": "review:1197:1:33052548f46b6ea625390a56ca00555d6638c9d1:bcd8773e35660bde4b207118371c19aa8a36da5e",
-        "kind": "code",
-        "base": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-        "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "patchId": "33052548f46b6ea625390a56ca00555d6638c9d1",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1197,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1197",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "До/после: исходный CI B сохранён в `output/release-batch-20261101/ci-b/artifact/process-next/.state/runs/20261101T221412746-c36c701b` и не редактируется. В исходном devices был TypeError удалённого phone-menu API; core — три старых budget/policy отказа и запрет общего header root; text — два отказа от отсутствующих DE/FR ключей. Реальный продуктовый diff — четыре строки locale, две в каждом словаре. Изменений TypeScript runtime нет.\n\nПодход: steady measurement тест сохраняет все 20 циклов и измерительные assertions, вызывает действующий renderControls. Scope stylesheet guard разрешает только `.hdr[data-panel-flow]`, конкретные фазы 0–4 и два точных служебных owner selector, а не произвольные не-panel правила. В mixed bundle-assets удалены только текущие HEAD/ratchet/default-ceiling условия и старые configuration assertions. Сохраняются manifest integrity/topology, hashed URLs/fallback/retry, ownership, minifier и синтетическое поведение manual budget helper с явными границами. В текущем manifest проверяется корректность числового поля panel bytes, без старой фиксированной стены. Лимиты/ratchet module не меняются и не повышаются.\n\nРиски для ревью: корректность отделения текущего release acceptance от исторических synthetic helper tests; сохранность ownership/measurement assertions; смысл DE/FR подписей. Ключевые i18n тесты не изменены и остаются строгими. Не добавлены skip/xfail, fallback-тексты вместо перевода или увеличение ceiling ради зелёного.\n\nВсе четыре адресных файла переданы finish целиком, результаты S6 будут приложены процессом; до их фактического окончания успех не заявляется. Ни полный beta CI, ни geometry/canvas/HA E2E в этой задаче не повторяются. Line-fix ledger — подписи впервые появились в текущей ещё не опубликованной линии #1156. HA E2E оценка «не надо» передана root для companion; её публикацией владеет root."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять. Исправление узкое и устраняет все четыре причины non-geometry FAIL кандидата B, не ослабляя поведенческие проверки. Продуктовые изменения — четыре строки локалей (две в de, две в fr). Подписи переведены по смыслу и совпадают с en/ru. TypeScript-runtime, лимиты и ratchet-модуль не менялись. Тест измерений по-прежнему проходит 20 циклов и проверяет инвалидацию по каждому входу. Guard таблицы стилей стал не мягче, а точнее: вместо подстрок он сверяет корни селекторов общей шапки #1184. Из `bundle-assets` убраны только проверки текущего HEAD по снятым ceiling/ratchet/bundle-policy. Topology, ownership, minifier и синтетические границы helper сохранены. Блокеров нет. Одна неточность: через `assertBundleBudget` к текущему манифесту по-прежнему применяются вшитые потолки LED-графов. Сейчас на результат это не влияет, но расходится с новым комментарием в файле — подробности в improvements.",
-          "understanding": "Кандидат B упал на адресных Node-проверках по четырём независимым причинам.\n1. `summary-panel-runtime.test` вызывал `runtime.menuItems()`. По #1184 этот метод удалён из исходников, phone-menu больше нет. В закоммиченном старом frontend `menuItems` ещё есть, но тест работает со `src`.\n2. Guard `styles-split` из #1120 требовал, чтобы селекторы panel-header sheet были под `:host([panel-host])`. По #1184 этот sheet задаёт общую intrinsic-шапку `.hdr[data-panel-flow]` для panel и Lovelace.\n3. `bundle-assets` судил свежий манифест по фиксированным стенам (`INITIAL_PANEL_ONLY_GZIP_BUDGET`, ceilings по умолчанию) и запускал `bundle-policy --must-match HEAD`. Процесс #1105 эти условия выпуска заменил.\n4. В de/fr не было ключей `space.copy_furniture`/`space.copy_decor`, введённых в #1156.\n\nЧто сделано:\n- В steady-цикле остался действующий `renderControls()`; 20 итераций, нулевые счётчики style/box и проход по девяти входам инвалидации не тронуты.\n- Guard разрешает префикс `.hdr[data-panel-flow]`, фазы `'0'..'4'` и два точных служебных селектора.\n- Из `bundle-assets` удалены freshness/policy-хелперы, тесты ratchet текущего кандидата и сравнение запаса с бюджетом по dist. Синтетические тесты helper переписаны так, чтобы бюджет View/panel брался из самого манифеста.\n- Добавлены четыре строки локалей, записи в changelog и ledger.\n\nЧто я прочитал: `src/styles/panel-header.styles.ts` целиком; `renderControls` и места его вызова; `assertBundleBudget` в `scripts/bundle-budget.mjs:1017-1141`; все оставшиеся вызовы `assertBundleBudget` и `shippedManifest()` в тесте; использование ключей в `src/space-copy-runtime.ts`.",
-          "analysis": [
-            {
-              "topic": "Тест измерений summary-panel (#725 AC1)",
-              "assessment": "Строгость сохранена. Убран только вызов несуществующего API. `renderControls()` без аргумента соответствует текущей сигнатуре: после #1132 kiosk определяется через `host._kiosk`. Число циклов, нулевые счётчики и проверка «ровно одно измерение» для каждого из девяти входов остались прежними. Покрытие стало чуть уже: пропал рендер phone-menu, но этого пути больше нет в продукте, так что потеря оправдана.",
-              "evidence": "`test/summary-panel-runtime.test.mjs:552-587`; `src/summary-panel-runtime-loaded.ts:297` `public renderControls()`; в `src` нет `menuItems`, он остался только в старом `custom_components/.../summary-panel-runtime-entry-*.js`."
-            },
-            {
-              "topic": "Guard владения стилями общей шапки",
-              "assessment": "Новое условие соответствует фактическому содержимому sheet и строже старого. Раньше допускалось любое вхождение подстрок `.panel-menu`/`.panel-header-metrics`, теперь сверяется точный селектор целиком. Селекторы с `='0'..'4'` не начинаются с `.hdr[data-panel-flow]`, но их ловит вторая ветка регулярного выражения. Составные селекторы вроде `[data-panel-phone]` идут после фазы, поэтому тоже проходят. Произвольное правило вне `.hdr[data-panel-flow]` (например, `.head`) guard по-прежнему отклонит. `.panel-menu` остаётся живым: класс используется в `src/panel-header-menu.ts:36`.",
-              "evidence": "`src/styles/panel-header.styles.ts:5-72`; `test/styles-split.test.mjs:99-108`."
-            },
-            {
-              "topic": "Отделение текущих условий выпуска от синтетики helper в bundle-assets",
-              "assessment": "Разделение в целом корректное. Удалены проверки, которые судили HEAD: freshness/`bundle-policy`, `#438 поставляемый граф в полосе`, `#593` по dist, ассерт запаса над рекалибровкой и стена panel-only. Остались синтетические CLI-фикстуры (`runBudgetCli` и абсолютная стена #792 на подставленных байтах), граничные проверки `lazyGraphCeilingViolation` и включительной полосы #896/#627, а также проверки ownership, overlap и namespace. В #896 и #627 бюджеты View и panel берутся из самого манифеста. Ассерты от этого не тривиализируются: сравнение строгое (`>`), равенство допустимо, а проверяется включительная полоса lazy-графов, которая задана явно. Одна неточность: в `assertBundleBudget` вшиты потолки `LAZY_LED_GZIP_CEILING`/`LAZY_LED_EDITOR_GZIP_CEILING`, и через #896/#627/#792 они применяются к текущему dist. Значит, новый комментарий «no assertion applies old byte ceilings ... to HEAD» не вполне верен. Это осталось из исходного кода и в S6 не стреляет, поэтому не блокер.",
-              "evidence": "`scripts/bundle-budget.mjs:1052-1064` (LED ceilings не параметризованы), `1105-1125`; `test/bundle-assets.test.mjs:36-39` (комментарий), `1350-1371`, `1391-1440`; синтетический манифест в `:316-351` не меняли, и он судит только свои факты."
-            },
-            {
-              "topic": "Немецкие и французские подписи Copy",
-              "assessment": "Переводы точные и по стилю совпадают с соседними ключами: глагол стоит так же, как в `copy_title`/`copy_create`. Варианты «Möbel kopieren» / «Dekoration kopieren» и «Copier les meubles» / «Copier le décor» соответствуют en «Copy furniture» и ru «Копировать мебель». Плейсхолдеров в ключах нет, строгие проверки keyset в i18n не изменялись.",
-              "evidence": "`src/i18n/de.json:368-369`, `src/i18n/fr.json:368-369`, `src/i18n/en.json:368`, использование в `src/space-copy-runtime.ts:122`."
-            },
-            {
-              "topic": "Границы задачи и сопроводительные документы",
-              "assessment": "Geometry, canvas, эталоны и runtime не затронуты. Changelog на двух языках и ledger `line-fix` согласуются с diff.",
-              "evidence": "Список `changedFiles`; `docs/release-ledger/v1.83.0/1197.json`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "В `test/bundle-assets.test.mjs:36-39` комментарий утверждает, что к HEAD не применяется ни один старый byte ceiling. Однако `assertBundleBudget` всегда сравнивает `lazyLedGzipBytes`/`lazyLedEditorGzipBytes` текущего dist с вшитыми `LAZY_LED_*_GZIP_CEILING` (`scripts/bundle-budget.mjs:1052-1064`), а #896, #627 и #792 вызывают его на `shippedManifest()`. Есть два варианта. Если LED-лимиты тоже сняты #1105, синтетическим тестам стоит передавать копию манифеста, где LED-байты подставлены явно ниже лимита: тогда они перестанут зависеть от размера релиза. Если LED-лимиты остаются действующими, достаточно уточнить комментарий. Цена любого варианта — одна-две строки; без этого следующий рост LED-графа может уронить тест, который по названию синтетический."
-          ],
-          "boundaries": "Ревью сделано только по исходникам на pinned SHA. Тесты, сборку и Validate я не запускал. Опирался на квитанцию S6 `20261101T224934877-b5dac377` (status passed, material `485c4d41`): по описанию задачи в неё вошли четыре адресных файла. Сам `report.json` в моих инструментах недоступен. Сохранённый CI-пакет кандидата B не открывал, состав исходных отказов взят из описания задачи. Полный beta CI, HA E2E и geometry вне объёма задачи. Утверждение, что LED-лимиты не входят в снятые #1105 условия, я не проверял: документа #1105/PROCESS среди прочитанного не было."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 58359,
-          "cache_read_input_tokens": 480847,
-          "output_tokens": 7989,
-          "output_tokens_details": {
-            "thinking_tokens": 2112
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 58359,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 817,
-              "cache_read_input_tokens": 51044,
-              "cache_creation_input_tokens": 11485,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11485
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять. Исправление узкое и устраняет все четыре причины non-geometry FAIL кандидата B, не ослабляя поведенческие проверки. Продуктовые изменения — четыре строки локалей (две в de, две в fr). Подписи переведены по смыслу и совпадают с en/ru. TypeScript-runtime, лимиты и ratchet-модуль не менялись. Тест измерений по-прежнему проходит 20 циклов и проверяет инвалидацию по каждому входу. Guard таблицы стилей стал не мягче, а точнее: вместо подстрок он сверяет корни селекторов общей шапки #1184. Из `bundle-assets` убраны только проверки текущего HEAD по снятым ceiling/ratchet/bundle-policy. Topology, ownership, minifier и синтетические границы helper сохранены. Блокеров нет. Одна неточность: через `assertBundleBudget` к текущему манифесту по-прежнему применяются вшитые потолки LED-графов. Сейчас на результат это не влияет, но расходится с новым комментарием в файле — подробности в improvements.\n\n## Понимание решения\n\nКандидат B упал на адресных Node-проверках по четырём независимым причинам.\n1. `summary-panel-runtime.test` вызывал `runtime.menuItems()`. По #1184 этот метод удалён из исходников, phone-menu больше нет. В закоммиченном старом frontend `menuItems` ещё есть, но тест работает со `src`.\n2. Guard `styles-split` из #1120 требовал, чтобы селекторы panel-header sheet были под `:host([panel-host])`. По #1184 этот sheet задаёт общую intrinsic-шапку `.hdr[data-panel-flow]` для panel и Lovelace.\n3. `bundle-assets` судил свежий манифест по фиксированным стенам (`INITIAL_PANEL_ONLY_GZIP_BUDGET`, ceilings по умолчанию) и запускал `bundle-policy --must-match HEAD`. Процесс #1105 эти условия выпуска заменил.\n4. В de/fr не было ключей `space.copy_furniture`/`space.copy_decor`, введённых в #1156.\n\nЧто сделано:\n- В steady-цикле остался действующий `renderControls()`; 20 итераций, нулевые счётчики style/box и проход по девяти входам инвалидации не тронуты.\n- Guard разрешает префикс `.hdr[data-panel-flow]`, фазы `'0'..'4'` и два точных служебных селектора.\n- Из `bundle-assets` удалены freshness/policy-хелперы, тесты ratchet текущего кандидата и сравнение запаса с бюджетом по dist. Синтетические тесты helper переписаны так, чтобы бюджет View/panel брался из самого манифеста.\n- Добавлены четыре строки локалей, записи в changelog и ledger.\n\nЧто я прочитал: `src/styles/panel-header.styles.ts` целиком; `renderControls` и места его вызова; `assertBundleBudget` в `scripts/bundle-budget.mjs:1017-1141`; все оставшиеся вызовы `assertBundleBudget` и `shippedManifest()` в тесте; использование ключей в `src/space-copy-runtime.ts`.\n\n## Разбор решения\n\n### Тест измерений summary-panel (#725 AC1)\n\nСтрогость сохранена. Убран только вызов несуществующего API. `renderControls()` без аргумента соответствует текущей сигнатуре: после #1132 kiosk определяется через `host._kiosk`. Число циклов, нулевые счётчики и проверка «ровно одно измерение» для каждого из девяти входов остались прежними. Покрытие стало чуть уже: пропал рендер phone-menu, но этого пути больше нет в продукте, так что потеря оправдана.\n\nОснование: `test/summary-panel-runtime.test.mjs:552-587`; `src/summary-panel-runtime-loaded.ts:297` `public renderControls()`; в `src` нет `menuItems`, он остался только в старом `custom_components/.../summary-panel-runtime-entry-*.js`.\n\n### Guard владения стилями общей шапки\n\nНовое условие соответствует фактическому содержимому sheet и строже старого. Раньше допускалось любое вхождение подстрок `.panel-menu`/`.panel-header-metrics`, теперь сверяется точный селектор целиком. Селекторы с `='0'..'4'` не начинаются с `.hdr[data-panel-flow]`, но их ловит вторая ветка регулярного выражения. Составные селекторы вроде `[data-panel-phone]` идут после фазы, поэтому тоже проходят. Произвольное правило вне `.hdr[data-panel-flow]` (например, `.head`) guard по-прежнему отклонит. `.panel-menu` остаётся живым: класс используется в `src/panel-header-menu.ts:36`.\n\nОснование: `src/styles/panel-header.styles.ts:5-72`; `test/styles-split.test.mjs:99-108`.\n\n### Отделение текущих условий выпуска от синтетики helper в bundle-assets\n\nРазделение в целом корректное. Удалены проверки, которые судили HEAD: freshness/`bundle-policy`, `#438 поставляемый граф в полосе`, `#593` по dist, ассерт запаса над рекалибровкой и стена panel-only. Остались синтетические CLI-фикстуры (`runBudgetCli` и абсолютная стена #792 на подставленных байтах), граничные проверки `lazyGraphCeilingViolation` и включительной полосы #896/#627, а также проверки ownership, overlap и namespace. В #896 и #627 бюджеты View и panel берутся из самого манифеста. Ассерты от этого не тривиализируются: сравнение строгое (`>`), равенство допустимо, а проверяется включительная полоса lazy-графов, которая задана явно. Одна неточность: в `assertBundleBudget` вшиты потолки `LAZY_LED_GZIP_CEILING`/`LAZY_LED_EDITOR_GZIP_CEILING`, и через #896/#627/#792 они применяются к текущему dist. Значит, новый комментарий «no assertion applies old byte ceilings ... to HEAD» не вполне верен. Это осталось из исходного кода и в S6 не стреляет, поэтому не блокер.\n\nОснование: `scripts/bundle-budget.mjs:1052-1064` (LED ceilings не параметризованы), `1105-1125`; `test/bundle-assets.test.mjs:36-39` (комментарий), `1350-1371`, `1391-1440`; синтетический манифест в `:316-351` не меняли, и он судит только свои факты.\n\n### Немецкие и французские подписи Copy\n\nПереводы точные и по стилю совпадают с соседними ключами: глагол стоит так же, как в `copy_title`/`copy_create`. Варианты «Möbel kopieren» / «Dekoration kopieren» и «Copier les meubles» / «Copier le décor» соответствуют en «Copy furniture» и ru «Копировать мебель». Плейсхолдеров в ключах нет, строгие проверки keyset в i18n не изменялись.\n\nОснование: `src/i18n/de.json:368-369`, `src/i18n/fr.json:368-369`, `src/i18n/en.json:368`, использование в `src/space-copy-runtime.ts:122`.\n\n### Границы задачи и сопроводительные документы\n\nGeometry, canvas, эталоны и runtime не затронуты. Changelog на двух языках и ledger `line-fix` согласуются с diff.\n\nОснование: Список `changedFiles`; `docs/release-ledger/v1.83.0/1197.json`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В `test/bundle-assets.test.mjs:36-39` комментарий утверждает, что к HEAD не применяется ни один старый byte ceiling. Однако `assertBundleBudget` всегда сравнивает `lazyLedGzipBytes`/`lazyLedEditorGzipBytes` текущего dist с вшитыми `LAZY_LED_*_GZIP_CEILING` (`scripts/bundle-budget.mjs:1052-1064`), а #896, #627 и #792 вызывают его на `shippedManifest()`. Есть два варианта. Если LED-лимиты тоже сняты #1105, синтетическим тестам стоит передавать копию манифеста, где LED-байты подставлены явно ниже лимита: тогда они перестанут зависеть от размера релиза. Если LED-лимиты остаются действующими, достаточно уточнить комментарий. Цена любого варианта — одна-две строки; без этого следующий рост LED-графа может уронить тест, который по названию синтетический.\n\n## Границы анализа\n\nРевью сделано только по исходникам на pinned SHA. Тесты, сборку и Validate я не запускал. Опирался на квитанцию S6 `20261101T224934877-b5dac377` (status passed, material `485c4d41`): по описанию задачи в неё вошли четыре адресных файла. Сам `report.json` в моих инструментах недоступен. Сохранённый CI-пакет кандидата B не открывал, состав исходных отказов взят из описания задачи. Полный beta CI, HA E2E и geometry вне объёма задачи. Утверждение, что LED-лимиты не входят в снятые #1105 условия, я не проверял: документа #1105/PROCESS среди прочитанного не было.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: bcd8773e35660bde4b207118371c19aa8a36da5e → 485c4d41e98e46bbfd3f73803ed5b994e652ca3a\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1197, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nДо/после: исходный CI B сохранён в `output/release-batch-20261101/ci-b/artifact/process-next/.state/runs/20261101T221412746-c36c701b` и не редактируется. В исходном devices был TypeError удалённого phone-menu API; core — три старых budget/policy отказа и запрет общего header root; text — два отказа от отсутствующих DE/FR ключей. Реальный продуктовый diff — четыре строки locale, две в каждом словаре. Изменений TypeScript runtime нет.\n\nПодход: steady measurement тест сохраняет все 20 циклов и измерительные assertions, вызывает действующий renderControls. Scope stylesheet guard разрешает только `.hdr[data-panel-flow]`, конкретные фазы 0–4 и два точных служебных owner selector, а не произвольные не-panel правила. В mixed bundle-assets удалены только текущие HEAD/ratchet/default-ceiling условия и старые configuration assertions. Сохраняются manifest integrity/topology, hashed URLs/fallback/retry, ownership, minifier и синтетическое поведение manual budget helper с явными границами. В текущем manifest проверяется корректность числового поля panel bytes, без старой фиксированной стены. Лимиты/ratchet module не меняются и не повышаются.\n\nРиски для ревью: корректность отделения текущего release acceptance от исторических synthetic helper tests; сохранность ownership/measurement assertions; смысл DE/FR подписей. Ключевые i18n тесты не изменены и остаются строгими. Не добавлены skip/xfail, fallback-тексты вместо перевода или увеличение ceiling ради зелёного.\n\nВсе четыре адресных файла переданы finish целиком, результаты S6 будут приложены процессом; до их фактического окончания успех не заявляется. Ни полный beta CI, ни geometry/canvas/HA E2E в этой задаче не повторяются. Line-fix ledger — подписи впервые появились в текущей ещё не опубликованной линии #1156. HA E2E оценка «не надо» передана root для companion; её публикацией владеет root.\n```\n\n</details>\n",
-        "createdAt": "2026-11-01T22:52:32.816Z",
-        "artifactId": 13103624300,
-        "runId": 41359126580,
-        "runAttempt": 1,
-        "completedAt": "2026-11-01T22:52:37Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41359126580",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "bcd8773e35660bde4b207118371c19aa8a36da5e"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1198": {
@@ -748,19 +627,7 @@
     1200,
     1198
   ],
-  "active": {
-    "issue": 1197,
-    "worker": "github-coordinator",
-    "token": "46:github:41358956189:1:tick:0:admit",
-    "fence": 46,
-    "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-    "expectedBase": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793573357267,
-    "expiresAt": 1793577189573,
-    "patchId": "33052548f46b6ea625390a56ca00555d6638c9d1",
-    "reviewRequest": "review:1197:1:33052548f46b6ea625390a56ca00555d6638c9d1:bcd8773e35660bde4b207118371c19aa8a36da5e"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -805,60 +672,6 @@
     "github:41358947074:1:completions:notice:6ee9978cf9c4172055c7a0d96870563bdfdc586e43553c3117ff177498e7ea8d": {
       "digest": "71a88352e1c8e283574dc9c5e901b3e2bdf23e952426196c9d6d492c9e05a670",
       "issue": 1198
-    },
-    "github:41358956189:1:completions:message:e45f7bbacc076cb28480c2db035b1716858de375e461276acb2b9343432f751c": {
-      "digest": "19912bddfbbdf5737cf3cb56c64df31476fb6561ada46927909c58d33eabeeb0",
-      "issue": 1197
-    },
-    "github:41358956189:1:completions:message:653c456c4b7650dbea05b0898d4752dfb538634c198bcac467b28ea0e44759bd": {
-      "digest": "7600c37b0fb85a344d5ecc26ecf04f2debfff637c297de078df7504a4f294bac",
-      "issue": 1197
-    },
-    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590:finish:3:synchronized": {
-      "digest": "8fdbf88c622841a38328e5be3ee39ee68ceb80ffe04f12359ffacaefe9b6f528",
-      "issue": 1197
-    },
-    "finish:df5a96ac-f25d-4065-81c1-86cec773855f": {
-      "digest": "7d6ac04405b9c11fc8a563c1b91280cf6a6813eea93ba959aa473e3848881248",
-      "issue": 1197
-    },
-    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590:finish:4:s6-label": {
-      "digest": "868bcd65f1faac88310e853c5a56c39321c79816616d87aac92385a93f5f56d9",
-      "issue": 1197
-    },
-    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590:finish:5:review-requested": {
-      "digest": "b441d0146f6f0ca77d01754f133fa2f1fe215aa2ed36d25be733e145c84bc873",
-      "issue": 1197
-    },
-    "github:41359116140:1:completions:message:f8dd1351727b4b883887df7e5b1c8bee2c2e11b5e93b2e2ff5ae5aa7c95c264d": {
-      "digest": "349ae648bca8859e7dee8c8af2d79f7f14e9eb6ffdfb8bf38524193ba0f818e6",
-      "issue": 1197
-    },
-    "github:41359116140:1:completions:message:4ceadf9a7f5a6df92fb47dea2d7aaf75d12c79dce3573a32717a789dbf6e38a4": {
-      "digest": "1f9fec5f1de48e07a58733d29b13cb4a1c86ca81b4f0e0118932030ae5067424",
-      "issue": 1197
-    },
-    "github:41359309430:1:tick:0:review-presentation": {
-      "digest": "910194a8cfca82bd93db043c3f6855aeea97e65ae8a67cd2780dc1bb5ae28312",
-      "issue": 1197
-    },
-    "github:41359309430:1:tick:0:review-complete": {
-      "digest": "261df335eab1604e70c4e72db9b61fd6b063238ff9d4d1a78f7b90b68d9718a5",
-      "issue": 1197
-    },
-    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590": {
-      "digest": "9364ede073e5842fbacb4bc9f37109f25ef787cb036ab07d44f73e88698cfb05",
-      "issue": 1197,
-      "message": {
-        "kind": "queued",
-        "issue": 1197,
-        "at": 1793572988277,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2df013c2c4b49fd185a036c4ee4572502b5b4922",
-        "delivered": true
-      }
     },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
       "digest": "04b2c5c957b052786153bf1cbee5b0b82d4b45f47cc4833eae16a40910535af0",
@@ -910,21 +723,6 @@
         "delivered": true
       }
     },
-    "github:41358956189:1:tick:0:admit": {
-      "digest": "42b1cc1bab6e6f9efde78d4bf461e2cc0efae0aa9149e3b7b603bf39d7720521",
-      "issue": 1197,
-      "message": {
-        "kind": "admitted",
-        "issue": 1197,
-        "at": 1793573357267,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2df013c2c4b49fd185a036c4ee4572502b5b4922",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5": {
       "digest": "f836b91cb5816cc958e9d6deac1e1df3681f7af2e1585a1ea14673b5a64dbd51",
       "issue": 1199,
@@ -936,33 +734,6 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "56f9226802eb8bfa25bdf4f1c6bfff9fd795f5c6",
-        "delivered": true
-      }
-    },
-    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590:finish:4:s6-complete": {
-      "digest": "1784559084960c3bc7f5e387390754e5b1abc85440dfbd6b4742c0483379c151",
-      "issue": 1197,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1197,
-        "at": 1793573413130,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "phase": "review",
-        "evidence": {
-          "id": "20261101T224934877-b5dac377",
-          "name": "Тесты для задачи #1197 (перед ревью)",
-          "reportPath": "/home/matysh/hp-s8-plan-decor-20261026/.git/process-next/runs/20261101T224934877-b5dac377/report.json",
-          "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-          "status": "passed",
-          "finishedAt": "2026-11-01T22:50:12.527Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
