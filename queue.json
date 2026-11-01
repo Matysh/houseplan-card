@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 397,
+  "revision": 398,
   "nextTicket": 42,
   "nextFence": 42,
   "tasks": {
@@ -358,7 +358,8 @@
         "docs/CHANGELOG.ru.md",
         "docs/DEVELOPMENT.md",
         "docs/process/AUTHOR.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -429,9 +430,9 @@
     "fence": 41,
     "materialSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
     "expectedBase": "bcdc82d590b99b658f16056438e1e97b7f7f0c46",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793571898714,
-    "expiresAt": 1793572233309,
+    "expiresAt": 1793575536916,
     "patchId": "906aeae93ec4505e9c78134b7d07be9c3f60f3d7"
   },
   "events": {
@@ -490,6 +491,20 @@
         "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:3:s6-complete": {
+      "digest": "8cebdad840e7eedcf085a9ce56ab1fa2fb4f4ec3f4443e11fc27c8831734dc37",
+      "issue": 1194,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1194,
+        "at": 1793571936916,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
+        "phase": "ready-to-merge"
       }
     }
   },
