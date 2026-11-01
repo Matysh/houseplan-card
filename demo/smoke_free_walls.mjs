@@ -79,7 +79,7 @@ const out = await page.evaluate(async () => {
           .mock-footer { display:flex; width:100%; box-sizing:border-box; }
         </style>
         <div class="surface">
-          <div class="mock-header"><div class="mock-title"><slot name="headerTitle"></slot></div></div>
+          <div class="mock-header"><slot name="header"><div class="mock-title"><slot name="headerTitle"></slot></div></slot></div>
           <slot></slot>
           <div class="mock-footer"><slot name="footer"></slot></div>
         </div>`;
@@ -191,7 +191,8 @@ const out = await page.evaluate(async () => {
   const partitionLayout = actionLayout();
   const haDialog = partitionLayout.dialog?.shadowRoot?.querySelector('ha-dialog');
   const title = partitionLayout.dialog?.shadowRoot?.querySelector('.title-text');
-  const mockTitle = haDialog?.shadowRoot?.querySelector('.mock-title');
+  // #1148 supplies the complete native public header slot, not headerTitle.
+  const mockTitle = haDialog?.shadowRoot?.querySelector('.mock-header');
   const titleRect = title?.getBoundingClientRect();
   const mockTitleRect = mockTitle?.getBoundingClientRect();
   const dangerRect = partitionLayout.danger?.getBoundingClientRect();

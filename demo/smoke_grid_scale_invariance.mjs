@@ -349,6 +349,21 @@ const isoDark = await pair('view', { projection: 'iso', theme: 'dark' });
 const openingEdgeAction = async (cellCm) => {
   await setTheme('light');
   await page.evaluate((cell) => window.__applyGridScaleFixture(cell, 'plan', 'flat'), cellCm);
+  const before = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
+  // The accepted shared tray now overlaps this fit's original edge point.
+  // A real zoom-out exposes the SAME right edge; never click through controls.
+  await page.locator('[data-hp="zoom-out"]').click();
+  await page.evaluate(async () => {
+    const svg = window.__card.renderRoot.querySelector('.plan-svg');
+    let previous = '', stable = 0;
+    const deadline = performance.now() + 5000;
+    while (stable < 3) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const m = svg.getScreenCTM(), next = [m.a,m.b,m.c,m.d,m.e,m.f].join(',');
+      stable = next === previous ? stable + 1 : 0; previous = next;
+      if (performance.now() > deadline) throw Error('Opening edge camera did not settle');
+    }
+  });
   const point = await page.evaluate(() => {
     const card = window.__card;
     const hit = card.renderRoot.querySelector('[data-id="grid-door"] .op-hit');
@@ -362,7 +377,6 @@ const openingEdgeAction = async (cellCm) => {
     }));
     return { x, y, stack };
   });
-  const before = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
   await page.mouse.click(point.x, point.y);
   await page.evaluate(() => window.__card.updateComplete);
   const ok = await page.evaluate((snapshot) => {
@@ -372,7 +386,8 @@ const openingEdgeAction = async (cellCm) => {
     card.requestUpdate();
     return opened && JSON.stringify(card._serverCfg) === snapshot;
   }, before);
-  return { ok, cellCm, stack: point.stack };
+  return { ok: ok && point.stack[0]?.id === 'grid-door'
+    && point.stack[0]?.class === 'op-hit', cellCm, stack: point.stack };
 };
 
 const backgroundCancel = async (cellCm) => {

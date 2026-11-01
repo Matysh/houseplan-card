@@ -1,3 +1,4 @@
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 // Household-сценарии основного View (#560).
 //
 // Шесть путей домашнего пользователя, а не шесть проверок функций: открыть
@@ -255,10 +256,17 @@ const j4Blur = await page.evaluate(() => {
   while (leaf?.shadowRoot?.activeElement) leaf = leaf.shadowRoot.activeElement;
   leaf?.blur?.();
   const tip = card.renderRoot.querySelector('[data-hp-live-tip]');
-  return { hidden: !tip || tip.hidden, stateCleared: card._tip === null };
+  return { hidden: !tip || tip.hidden
+    || (tip.getAttribute('aria-hidden') === 'true' && getComputedStyle(tip).pointerEvents === 'none'),
+    stateCleared: card._tip === null };
 });
 out.j4_blur = j4Blur;
 check('j4.blur_hides_focus_tooltip', j4Blur.hidden && j4Blur.stateCleared, true);
+await waitForUiKitPaint(page);
+check('j4.blur_retires_tooltip_paint', await page.evaluate(() => {
+  const tip = window.__card.renderRoot.querySelector('[data-hp-live-tip]');
+  return !tip || tip.hidden;
+}));
 
 // Enter above toggled the device. Compare both input sources in that SAME
 // current state, retaining the complete status line instead of stripping it.

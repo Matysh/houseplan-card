@@ -1,3 +1,4 @@
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 import { launch, check, finish } from './serve.mjs';
 import { installStaticStability, resetGoldenStability } from './golden/static-stability.mjs';
 import { prepareGoldenScenario } from './golden/harness.mjs';
@@ -53,6 +54,9 @@ try {
   check('#896 component-owned adopted sheet remains active during capture', lazy.color, 'rgb(10, 20, 30)');
   const marker = page.locator('houseplan-card').locator('[data-hp="device"][data-id="d_light1"]');
   await marker.hover(); await page.evaluate(() => window.__hpTest.settled());
+  // CSS static sheets cannot suppress the accepted JS/WAAPI tooltip enter.
+  // Observe its actual finite completion without changing reduced-motion or pixels.
+  await waitForUiKitPaint(page);
   const first = await marker.screenshot(); await page.waitForTimeout(120);
   check('#896 ordinary hovered static marker captures identical pixels', first.equals(await marker.screenshot()));
   await resetGoldenStability(page);

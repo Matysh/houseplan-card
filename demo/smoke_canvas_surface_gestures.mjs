@@ -59,13 +59,24 @@ await pause();
 await clickWorld(450, 150);
 const input = page.locator('.wallthick-dlg input');
 await input.fill('12.5');
+// Start before the text, then extend outside the input: native selection
+// owns the drag after pointerdown, even across its trailing spinner.
+const selectNumber = async (field, held) => {
+  const origin = await field.evaluate(el => {
+    const r = el.getBoundingClientRect(), style = getComputedStyle(el);
+    const inset = parseFloat(style.borderLeftWidth) + Math.max(1, parseFloat(style.paddingLeft) - 2);
+    return { x: r.left + inset, y: r.top + r.height / 2, dx: r.width + 3 - inset };
+  });
+  await drag([origin.x, origin.y], origin.dx, 0, held);
+};
 await input.click();
 check('AC6 native input receives focus', await input.evaluate(el => el.getRootNode().activeElement === el));
 let before = await state();
 let r = await box('.wallthick-dlg input');
-await drag([r.x + r.width - 24, r.y + r.height / 2], -r.width + 28, 0, async () => {
+await selectNumber(input, async () => {
   const held = await state();
   check('AC1 held selection leaves camera and dialog fixed', eq(before.camera, held.camera) && closeRect(before.rect, held.rect));
+  check('AC1 selection never activates the native spinner', held.value, before.value);
 });
 await page.keyboard.type('9');
 let after = await state();
@@ -292,9 +303,11 @@ for (const [mode, tool, fieldSelector] of [['plan', 'draw', '.drawwall input'], 
   await page.waitForFunction(() => !window.__card._modeTransitionBusy); await pause();
   const field = page.locator(fieldSelector).first();
   const original = await field.inputValue(); await field.fill('12.5'); r = await field.boundingBox(); before = await state();
-  // These 73px controls expose a native spinner: start just after the four
-  // entered glyphs, before the spinner's hit box, and finish before the text.
-  await drag([r.x + 38, r.y + r.height / 2], -30, 0); await page.keyboard.type('9');
+  await selectNumber(field, async () => {
+    check(`AC9 ${mode} held selection never spins the number`, await field.inputValue(), '12.5');
+    check(`AC9 ${mode} held selection keeps scene fixed`, eq(before.camera, (await state()).camera));
+  });
+  await page.keyboard.type('9');
   check(`AC9 ${mode} tray native selection`, await field.inputValue(), '9');
   await field.fill(original); await page.mouse.wheel(0, -300); await pause();
   r = await box('.editor-secondary'); await drag([r.x + 3, r.y + 3], 80, 40);

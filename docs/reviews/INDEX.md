@@ -1,6 +1,6 @@
 # Исторический индекс ревью
 
-Снимок прежних ревью: 22 документа по восьми issue и линии v1.83.1.
+Снимок прежних ревью: 28 документов по тринадцати issue и линии v1.83.1.
 Индекс помогает найти замечания по конкретной задаче или файлу; читать весь
 архив при входе в проект не требуется.
 
@@ -15,6 +15,12 @@ H/M — число High/Medium по строке вердикта или заг�
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | линия v1.83.1 | [RELEASE-REVIEW-v1.83.1.md](RELEASE-REVIEW-v1.83.1.md) | ревью линии · — | ⚪ — | 0 | 0 | приватный backend-хелпер пересекает границу модуля без публичного контракта | `custom_components/houseplan/partition_promotion.py` `src/wall-incidence.ts` `src/stored-wall-contact.ts` `junction_limits.py` `partition_promotion.py` `wall_incidence.py` `wall-incidence.ts` |
+| #1185 | [CODE-REVIEW-1185-r1.md](CODE-REVIEW-1185-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1185 | [CODE-REVIEW-1185-r2.md](CODE-REVIEW-1185-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1183 | [CODE-REVIEW-1183-r1.md](CODE-REVIEW-1183-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1182 | [CODE-REVIEW-1182-r1.md](CODE-REVIEW-1182-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1181 | [CODE-REVIEW-1181-r1.md](CODE-REVIEW-1181-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1180 | [CODE-REVIEW-1180-r1.md](CODE-REVIEW-1180-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1171 | [SPEC-REVIEW-1171-r1.md](SPEC-REVIEW-1171-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1171 | [SPEC-REVIEW-1171-r2.md](SPEC-REVIEW-1171-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1171 | [CODE-REVIEW-1171-r1.md](CODE-REVIEW-1171-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | face/side для не-gate проёмов ошибочно использует индексированную грань, когда индекс п… | `src/space-render.ts` `houseplan-card.ts` `demo/fixtures/static-wall-openings.mjs` `test/static-wall-openings.test.mjs` `demo/smoke_static_wall_openings.mjs` `src/houseplan-card.ts` `src/wall-thickness.ts` `docs/development-notes/static-wall-openings-1171.md` |

@@ -231,6 +231,7 @@ export function colorFieldsCss(options: FormKitCssOptions, selector?: string, de
   ${field} .${p}-hex { color:var(--primary-text-color); font:inherit; font-size:12px; padding:0; font-variant-numeric:tabular-nums; }
   ${field} .${p}-opacity { font-size:11px; color:var(${tokens.muted}); margin-left:auto; }
   ${field}:has(.${p}-inline-hex) { display:grid; grid-template-columns:24px minmax(56px,1fr) 28px 8px; gap:2px; padding-inline:4px; cursor:default; }
+  ${field}:has(.${p}-inline-hex):has(.${p}-inline-alpha:placeholder-shown) { grid-template-columns:24px minmax(56px,1fr) minmax(0,1fr) 8px; }
   ${field} > .${p}-opacity.${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }
   ${field} .${p}-inline-hex, ${field} .${p}-inline-opacity .${p}-unit > input {
     box-sizing:border-box; min-width:0; width:100%; height:28px; margin:0; padding:3px 2px;

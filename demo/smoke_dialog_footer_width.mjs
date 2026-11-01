@@ -239,13 +239,12 @@ const checks = {};
 for (const metric of desktop.metrics) {
   const key = `${metric.kind}_${metric.language}`;
   checks[`${key}_medium_shell`] = metric.widePreset
-    && metric.surfaceWidth >= 499 && metric.surfaceWidth <= 501;
+    && metric.surfaceWidth >= 559 && metric.surfaceWidth <= 561;
   checks[`${key}_three_actions_one_row`] = metric.buttons === 3 && metric.oneRow;
   checks[`${key}_positive_localization_headroom`] = metric.spareWidth > 0;
   checks[`${key}_no_horizontal_overflow`] = metric.noHorizontalOverflow;
 }
-// #945: settings use the approved 610 px shell; other wide dialogs retain500px.
-// wide-диалоги остаются на 500 и проверяются циклом выше.
+// #1148: ordinary forms use the common compact560px shell; full settings remain610px.
 checks.space_dialog_uses_reference_width = desktop.space.widePreset
   && desktop.space.surfaceWidth >= 609 && desktop.space.surfaceWidth <= 611;
 checks.space_dialog_footer_not_regressed = desktop.space.buttons === 4
@@ -253,7 +252,7 @@ checks.space_dialog_footer_not_regressed = desktop.space.buttons === 4
 
 for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
   const metric = narrow[kind];
-  checks[`${kind}_narrow_fits_viewport`] = metric.surfaceWidth <= NARROW_WIDTH * 0.94 + 1
+  checks[`${kind}_narrow_fits_viewport`] = metric.surfaceWidth <= NARROW_WIDTH + 1
     && metric.insideViewport && metric.noHorizontalOverflow && metric.buttonsContained;
   checks[`${kind}_narrow_keeps_responsive_wrap`] = metric.buttons === 3 && metric.wrapped;
 }

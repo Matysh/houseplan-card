@@ -51,7 +51,7 @@ export const DOC_SCREENSHOTS = Object.freeze([
     space: 'golden-lighting', dialog: 'device', deviceId: 'golden-light-two',
     deviceName: 'Living-room ceiling light', devicePresentationPreview: true,
     title: 'House Plan — synthetic home', language: 'en', theme: 'dark',
-    viewport: { width: 1180, height: 1100 }, capture: 'page', expectDialog: true,
+    viewport: { width: 480, height: 1100 }, capture: 'page', expectDialog: true,
   },
   {
     id: 'background-editor', file: '07-background-editor.png', fixture: 'visual',

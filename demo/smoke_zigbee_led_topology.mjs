@@ -99,11 +99,37 @@ try {
     && !card.renderRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot.querySelector('line')));
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
   await page.mouse.move(2, 2);
+  // Chromium can deliver a fresh trusted mouse-over after the CDP pen move
+  // when tooltip/layout retires. Snapshot the pen's own settled delivery before
+  // a different physical input is allowed to take ownership.
+  await root.evaluate(card => {
+    window.__ledPenReceipt = null;
+    const root = card.renderRoot;
+    const observe = event => {
+      if (event.pointerType !== 'pen') return;
+      root.removeEventListener('pointermove', observe, true);
+      queueMicrotask(async () => {
+        await card.updateComplete;
+        const overlay = root.querySelector('hp-zigbee-topology-overlay');
+        await overlay?.updateComplete;
+        window.__ledPenReceipt = {
+          trusted: event.isTrusted, pointerType: event.pointerType,
+          noEndpoint: !root.querySelector('[data-hp-zigbee-topology-endpoint]'),
+          noRoutes: !overlay?.shadowRoot.querySelector('line'),
+          noOwner: !overlay?.hasAttribute('data-tooltip-owner'),
+          noTip: !card._tip,
+        };
+      });
+    };
+    root.addEventListener('pointermove', observe, true);
+  });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', pointerType: 'pen', ...fromLed.point });
-  await page.waitForTimeout(80);
-  check('native pen over the SVG target cannot activate topology', await root.evaluate(card =>
-    !card.renderRoot.querySelector('[data-hp-zigbee-topology-endpoint]')
-    && !card.renderRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot.querySelector('line')));
+  await page.waitForFunction(() => window.__ledPenReceipt !== null);
+  const penReceipt = await page.evaluate(() => window.__ledPenReceipt);
+  samples.push({ penReceipt });
+  check('native pen over the SVG target cannot activate topology',
+    penReceipt.trusted && penReceipt.pointerType === 'pen'
+      && penReceipt.noEndpoint && penReceipt.noRoutes && penReceipt.noOwner && penReceipt.noTip);
   await cdp.detach();
   await hover('d_light1', true);
   const pendingFrames = await root.locator('hp-zigbee-topology-overlay').evaluate(async overlay => {

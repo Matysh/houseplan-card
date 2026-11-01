@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1182,
+  "baseStable": "v1.83.0",
+  "category": "infra",
+  "rationale": "Compared with v1.83.0, repairs only existing offline smoke observers for accepted UI Kit1147-1150. No product code, frozen reference, fixture content, browser pin, tolerance, budget or baseline changes. Real mixed-alpha clipping is separate product issue1183."
+}

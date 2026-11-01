@@ -1,6 +1,7 @@
 // #844: real entry/footer/runtime, a cold bundle and the actual HA transport
 // boundary. Only HA responses and network timing are substituted.
 import { readFileSync } from 'node:fs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 
 requirePinnedBrowser('844 View/editor permission boundary');
@@ -73,6 +74,8 @@ async function openInfo(f) {
     await f.page.waitForTimeout(700); await f.page.mouse.up();
   }
   await f.page.locator('hp-dialog[data-kind="info"]').waitFor();
+  // The host visibility check does not await its shadow surface enter.
+  await waitForUiKitPaint(f.page);
 }
 
 async function snapshot(page) {

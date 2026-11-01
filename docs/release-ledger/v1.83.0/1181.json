@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1181,
+  "baseStable": "v1.83.0",
+  "category": "infra",
+  "rationale": "Isolates a new Static golden fixture in its own fixed-width child instead of leaking inline dimensions into the shared host. Restores the declared viewport and existing semantic oracles for subsequent scenes. Adds ordinary Static-to-desktop sequence coverage; no product code, thresholds, renderer or user configuration changes."
+}

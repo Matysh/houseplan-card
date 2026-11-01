@@ -191,15 +191,33 @@ try{
     check(`group.matrix.${kind}.fill_matrix`,await panel.locator('[data-property="fill"] hp-color-opacity').count(),kind==='rect'||kind==='ellipse'?1:0);
     check(`group.matrix.${kind}.actions_disabled`,await panel.locator('.hp-prop-action').evaluateAll(els=>els.every(el=>el.getAttribute('aria-disabled')==='true')));
     const start=await state();
-    check(`group.matrix.${kind}.mixed_labels_readable`,await panel.locator('[data-property="stroke"] .hpf-colorfield input').evaluateAll((inputs,expected)=>{
+    const mixedLabels=async()=>panel.locator('[data-property="stroke"] .hpf-colorfield input').evaluateAll(inputs=>{
       const canvas=document.createElement('canvas'),context=canvas.getContext('2d');
-      return inputs.length===expected&&inputs.every(input=>{
-        const style=getComputedStyle(input);context.font=style.font;
+      return inputs.map(input=>{
+        const style=getComputedStyle(input);context.font=style.font||`${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        context.letterSpacing=style.letterSpacing==='normal'?'0px':style.letterSpacing;
         const bounds=input.getBoundingClientRect(),field=input.closest('[data-property]').getBoundingClientRect();
-        return !input.value&&!!input.placeholder&&bounds.width>0&&bounds.left>=field.left&&bounds.right<=field.right
-          &&input.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)>=context.measureText(input.placeholder).width;
+        return {value:input.value,placeholder:input.placeholder,width:bounds.width,left:bounds.left,right:bounds.right,
+          fieldLeft:field.left,fieldRight:field.right,height:input.closest('.hpf-colorfield').getBoundingClientRect().height,
+          font:context.font,paddingLeft:style.paddingLeft,paddingRight:style.paddingRight,
+          available:input.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),text:context.measureText(input.placeholder).width};
       });
-    },kind==='image'?1:2));
+    });
+    const readable=inputs=>inputs.length===(kind==='image'?1:2)&&inputs.every(input=>
+      !input.value&&!!input.placeholder&&input.width>0&&input.left>=input.fieldLeft&&input.right<=input.fieldRight&&input.available>=input.text);
+    const en=await mixedLabels();console.log('mixed-labels',kind,'en',JSON.stringify(en));
+    check(`group.matrix.${kind}.mixed_labels_readable`,readable(en));
+    check(`group.matrix.${kind}.mixed_fields_keep_36px`,en.every(input=>Math.abs(input.height-36)<.1));
+    {
+      await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,language:'ru'});});
+      await page.waitForFunction(()=>!window.__card.hasAttribute('aria-busy')&&window.__card.getAttribute('lang')==='ru');await settle();
+      const ru=await mixedLabels();console.log('mixed-labels',kind,'ru',JSON.stringify(ru));
+      check('group.matrix.'+kind+'.mixed_labels_readable_ru',readable(ru));
+      check('group.matrix.'+kind+'.mixed_ru_keeps_36px',ru.every(input=>Math.abs(input.height-36)<.1));
+      await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,language:'en'});});
+      await page.waitForFunction(()=>!window.__card.hasAttribute('aria-busy')&&window.__card.getAttribute('lang')==='en');await settle();
+      check('group.matrix.'+kind+'.locale_does_not_write',(await state()).writes,start.writes);
+    }
     if(kind!=='image'){
       check(`group.matrix.${kind}.mixed_hex_empty`,await hex().inputValue(),'');
       await hex().fill('#ABCDEF');await hex().press('Enter');await settle();
@@ -222,6 +240,7 @@ try{
     }
     await alpha().fill('35');await alpha().press('Enter');await settle();
     const after=await saved();check(`group.matrix.${kind}.alpha_only`,after.map(x=>x.opacity),[.35,.35]);
+    if(kind!=='image')check(`group.matrix.${kind}.filled_alpha_keeps_28px`,await alpha().evaluate(input=>Math.abs(input.getBoundingClientRect().width-28)<.1));
     check(`group.matrix.${kind}.alpha_keeps_color`,after.map(x=>x.color),kind==='image'?[undefined,undefined]:['#abcdef','#abcdef']);
     check(`group.matrix.${kind}.one_command_per_field`,(await state()).history,start.history+(kind==='image'?1:2));
   }
