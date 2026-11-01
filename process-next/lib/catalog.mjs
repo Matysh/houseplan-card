@@ -71,8 +71,8 @@ async function finalize(root, plan) {
   for (const check of plan.steps.filter(item => item.cwd === 'root' && item.command)) {
     // Use the generator's exact source closure. A broad demo/**/*.json would
     // treat the generated bundle manifest as source and invalidate preparation.
-    if (check.id === 'demo-assets' || check.requires.includes('demo-assets'))
-      check.inputs.push(...demoIconSourceFiles(root));
+    const iconInputs = check.id === 'demo-assets' || check.requires.includes('demo-assets')
+      ? demoIconSourceFiles(root) : [];
     const seeds = [...check.inputs, ...check.command.slice(1)].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
     const visited = new Set(), found = new Set(), artifactPreparations = new Set(); let pending = seeds;
     while (pending.length) {
@@ -92,7 +92,9 @@ async function finalize(root, plan) {
       const edges = await Promise.all(current.map(file => direct(file)));
       for (let index = 0; index < current.length; index++) if (edges[index] !== null) { found.add(current[index]); pending.push(...edges[index]); }
     }
-    check.inputs = [...new Set([...check.inputs, ...found])].sort();
+    // Icon scanning reads source as text. Its imports are not executed by the
+    // generator, so do not turn their artifact strings into new build edges.
+    check.inputs = [...new Set([...check.inputs, ...found, ...iconInputs])].sort();
     for (const id of artifactPreparations) {
       if (id === check.id) continue;
       if (!plan.steps.some(item => item.id === id)) throw Error(`Selected check ${check.id} reads prepared product artifacts (${id}); an infrastructure-only profile cannot silently build the product`);
