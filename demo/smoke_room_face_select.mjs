@@ -68,7 +68,7 @@ try{
    const r=window.__card._editorRuntime,c=r._roomFaceCache;
    return window.__card._wallFaceBatch.candidates[0]===[...c.candidates.values()].find(v=>v?.key===window.__card._wallFaceBatch.candidates[0].key);
   }));
-  await dialog.locator('[data-hp="dialog-cancel"]').click();await settle();
+  await dialog.locator('button.btn[data-hp="dialog-cancel"]').click();await settle();
   check(`contour${i}: Cancel preserves geometry`,equal(geometry((await state()).cfg),geometry(original)));
   await move(point);await click(point);await dialog.waitFor();await waitForUiKitPaint(page);
   await dialog.locator('#room-name').fill(`Select room ${i}`);
@@ -82,7 +82,9 @@ try{
   // Compare actual computed candidate paint with the real View hover in both themes.
   await page.evaluate(()=>window.__hpTest.setMode('view'));await waitForUiKitPaint(page);
   for(const theme of ['light','dark']){
-   await applyUiKitTheme(page,theme);await move(point);
+   await applyUiKitTheme(page,theme);
+   // The room label is a separate input owner; enter actual clear floor.
+   await page.mouse.move(5,70);await move([point[0],point[1]-70]);
    await page.waitForFunction(()=>!!window.__card._hoverRoom);
    check(`contour${i}: ${theme} paint matches View`,equal(await paint(),evidence.themes[`${i}-${theme}`]));
   }
@@ -93,9 +95,12 @@ try{
  const node=card.locator('[data-hp="wall-node"]').first();
  await node.waitFor();await node.hover();check('node hover never offers a room',!(await state()).hover);
  await node.click();check('node click never opens a room',!(await state()).roomDialog);
- const wall=card.locator('.physical-hit').first();await wall.hover();
- check('wall hover keeps object ownership',!(await state()).hover);
- await wall.click();check('wall click keeps object ownership',!(await state()).roomDialog);
+ const wallPoint=await card.evaluate(c=>{
+  const p=c._spaceModel().partitions[0];return [(p.a[0]+p.b[0])/2,(p.a[1]+p.b[1])/2];
+ });
+ // Overlapping wall hit regions may choose either saved wall, never the face.
+ await move(wallPoint);check('wall hover keeps object ownership',!(await state()).hover);
+ await click(wallPoint);check('wall click keeps object ownership',!(await state()).roomDialog);
  const partitions=[];
  for(let y=0;y<10;y++)for(let x=0;x<10;x++){
   const a=.02+x*.09,b=.02+y*.09,q=[[a,b],[a+.06,b],[a+.06,b+.06],[a,b+.06]];
@@ -128,5 +133,6 @@ try{
  await page.evaluate(()=>window.__hpTest.setMode('view'));await waitForUiKitPaint(page);
  check('View has no candidate hover',!await page.evaluate(()=>!!window.__card._editorRuntime.roomFaceHoverPaths));
  writeFileSync(`${folder}/observations.json`,JSON.stringify(evidence,null,2)+'\n');
+ console.log(JSON.stringify({observation:'1176 native hover',...evidence.large}));
 }catch(error){await page.screenshot({path:`${folder}/failure.png`}).catch(()=>{});throw error;}
 finally{await finish(browser);}
