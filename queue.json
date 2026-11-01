@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 258,
+  "revision": 259,
   "nextTicket": 28,
-  "nextFence": 26,
+  "nextFence": 27,
   "tasks": {
     "1128": {
       "issue": 1128,
@@ -63,7 +63,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 26,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793567527099,
       "reviewEntry": 1
@@ -340,10 +340,19 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1169,
     1175
   ],
-  "active": null,
+  "active": {
+    "issue": 1169,
+    "worker": "finish",
+    "token": "26:finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:1:admit",
+    "fence": 26,
+    "materialSha": "c53f2d2f098a3fee230ff0eeb5536253541d9117",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793567627412,
+    "expiresAt": 1793567927412
+  },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -761,6 +770,10 @@
     "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06": {
       "digest": "4c0a91399c82ee76986ef630d972cfa4f60ca240af32a8fd627b9bb5a3000bf0",
       "issue": 1175
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:1:admit": {
+      "digest": "0e50996676817f5af892d536c23d616d3f234af34071aadd2e8a66ca7bccd202",
+      "issue": 1169
     }
   },
   "devWebhook": {
