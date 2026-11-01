@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 138,
+  "revision": 139,
   "nextTicket": 17,
   "nextFence": 17,
   "tasks": {
@@ -30,7 +30,13 @@
         "src/styles/plan.styles.ts"
       ],
       "automationError": "checks-unavailable",
-      "automationSince": 1793563399026
+      "automationSince": 1793563399026,
+      "reason": "Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
+      "notice": {
+        "key": "1:Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
+        "reason": "Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
+        "status": "pending"
+      }
     },
     "1176": {
       "issue": 1176,
@@ -156,18 +162,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1128,
-    "worker": "finish",
-    "token": "16:finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150:finish:1:admit",
-    "fence": 16,
-    "materialSha": "4d1b09d2f2930f9b13a4c0e0629b7841ae3edbff",
-    "expectedBase": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
-    "phase": "testing",
-    "admittedAt": 1793563253612,
-    "expiresAt": 1793563732875,
-    "patchId": "27b6efa99f80284b3a1af424936e017b5eb8648e"
-  },
+  "active": null,
   "events": {
     "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150": {
       "digest": "17e7ce13ab827e64fd4b58084a2bbf6fe5c85825db43915bdb1ca032fe9e1e4f",
@@ -195,6 +190,10 @@
     },
     "finish:2be18843-d277-4983-badf-c71d6751437a": {
       "digest": "2f4bc68cd63406afbae539559134fb3e0868b49c4470f98eb7afefa1402ad350",
+      "issue": 1128
+    },
+    "author-return-1128-1793563433914": {
+      "digest": "a922b23123bb8871ef4c7906b2509d5384f985560b2307a4cb093cdd9fd80190",
       "issue": 1128
     }
   },
