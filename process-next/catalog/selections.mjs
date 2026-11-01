@@ -29,6 +29,57 @@ export const BETA_SMOKES = Object.freeze([
 
 // Main product surfaces run through the real panel host. Reuse existing panel
 // scenes where available; the other source fixtures get distinct panel IDs/PNGs.
+export const GOLDEN_ADDITIONS = Object.freeze({
+  firstLaunchAndErrors: [
+    'first-space-empty-light', 'first-space-floors-narrow-dark', 'first-space-no-storage-light',
+    'panel-narrow-read-only-empty-light-en', 'version-mismatch-touch-light-ru', 'panel-kiosk-profile-no-controls',
+  ],
+  editors: [
+    'safe-resize-handles-clamp-dark', 'plan-snap-endpoint-light', 'opening-placement-door-thick-wall-dark',
+    'tray-narrow-tool-ru', 'decor-multiselect-dark', 'furniture-placement-preview-light',
+    'furniture-transform-dark', 'device-inbox-narrow-ru-dark',
+  ],
+  deviceProblems: [
+    'device-offline-dark', 'device-alert-alarm-flat', 'device-alert-maintenance-iso',
+    'device-alert-form-numeric', 'device-battery-board-light', 'device-battery-mobile-dark',
+    'device-state-source-unknown-en', 'hidden-devices-view-light',
+  ],
+  largePlansAndIsometry: [
+    'large-house-warm-remount-dark', 'isometric-large-warm-remount-dark',
+    'stairs-flat-normal-light', 'stairs-isometric-dark',
+    'isometric-stage3-forced-colors-dark', 'isometric-stage6-hover-light',
+  ],
+  lighting: [
+    'day-cycle-dawn-dark', 'day-cycle-night-moon-gibbous-dark', 'lighting-interior-window-dark',
+    'lighting-sun-transparent-sealed', 'lighting-sun-window-outer-occluded-dpr2-dark',
+    'lighting-opaque-glow-two-doorways-dark',
+  ],
+  vacuumRoomsAndSummary: [
+    'vacuum-trail-smoothing-dark', 'vacuum-history-seconds-narrow', 'vacuum-live-tail-pending-dialog-dark',
+    'room-co2-flat-light', 'room-label-parity-plan-dark', 'approved-ui-summary-light-1119',
+  ],
+  dialogsBackupAndPdf: [
+    'backup-full-preview-desktop-en', 'backup-space-preview-mobile-ru', 'more-info-dialog-mobile-ru',
+    'toggle-entity-dialog-mobile-ru', 'support-relay-error-light-en', 'pdf-export-stepped-dimensions-light',
+  ],
+  wallsAndStatic: [
+    'wall-union-isolation-view-dark', 'multiwall-junction-bevel-view-dark',
+    'static-wall-openings-house-phone-light', 'opening-symbol-diagonal-partition-dark',
+  ],
+});
+// Narrow fixture exceptions, not another copy of the product matrix:
+// onboarding needs its empty-card contract; battery calibration remounts a card;
+// resize/offline/alerts deliberately test the public card icon_size option
+// (ignored by the panel host). Do not silently drop those fixture conditions.
+export const CARD_GOLDEN_FIXTURES = Object.freeze([
+  'first-space-empty-light', 'first-space-floors-narrow-dark', 'first-space-no-storage-light',
+  'device-battery-board-light', 'device-battery-mobile-dark', 'device-offline-dark',
+  'safe-resize-handles-clamp-dark', 'device-alert-alarm-flat',
+  'device-alert-maintenance-iso', 'device-alert-form-numeric',
+]);
+export const BETA_STATIC_GOLDEN = Object.freeze(['static-wall-openings-house-phone-light']);
+const additionalPanelSources = Object.values(GOLDEN_ADDITIONS).flat().filter(id =>
+  !CARD_GOLDEN_FIXTURES.includes(id) && !BETA_STATIC_GOLDEN.includes(id));
 export const PANEL_GOLDEN_SOURCES = Object.freeze([
   'panel-wide-view-light-en', 'panel-compact-ui-1132', 'panel-three-rows-ui-1132',
   'panel-narrow-kiosk-fixed',
@@ -41,14 +92,16 @@ export const PANEL_GOLDEN_SOURCES = Object.freeze([
   'panel-wide-plan-editor-dark-en', 'geometry-devices-editor-dark', 'geometry-decor-editor-dark',
   'device-dialog-mobile-ru', 'room-temperature-dialog-desktop-en',
   'view-device-menu-readonly-light-ru',
+  ...additionalPanelSources,
 ]);
 export const BETA_PANEL_GOLDEN = Object.freeze(PANEL_GOLDEN_SOURCES.map(id =>
   id.startsWith('panel-') ? id : `panel-${id}`));
 // Only the embedding-specific sample is repeated in Lovelace, not the product matrix.
 export const BETA_LOVELACE_GOLDEN = Object.freeze([
   'geometry-view-light-fit', 'plan-rotation-phone-view-320-1070', 'geometry-plan-editor-dark',
+  ...CARD_GOLDEN_FIXTURES,
 ]);
-export const BETA_GOLDEN = Object.freeze([...BETA_PANEL_GOLDEN, ...BETA_LOVELACE_GOLDEN]);
+export const BETA_GOLDEN = Object.freeze([...BETA_PANEL_GOLDEN, ...BETA_LOVELACE_GOLDEN, ...BETA_STATIC_GOLDEN]);
 
 export const BETA_E2E = Object.freeze([
   ['first-run', 'tests/first-run/first-space.admin.spec.mjs', 'from the sidebar page to a saved first space without any image'],

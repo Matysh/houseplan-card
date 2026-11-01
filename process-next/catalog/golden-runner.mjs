@@ -2,7 +2,7 @@
 // Side-by-side adaptation of demo/golden/run.mjs @ 96a97b8.
 // Preserve pixel and semantic assertions; only selection/report scope differs.
 // On activation consolidate with the original runner: do not maintain two copies.
-import { prepareGoldenSelection } from './golden-selection.mjs';
+import { prepareGoldenSelection, goldenHarnessScenario } from './golden-selection.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -956,18 +956,22 @@ const { page: primaryPage, browser } = await launch(
 );
 const chromium = await browser.version();
 const results = [];
-const pagesByScale = new Map([[1, primaryPage]]);
+// Static replaces the shared host with a different card. Keep its page separate
+// from panel/Lovelace scenes, including on the pre-#1181 preparation base.
+const pageKey = scenario => `${scenario.staticWallOpenings ? 'static' : 'interactive'}:${scenario.deviceScaleFactor || 1}`;
+const pagesBySurface = new Map([['interactive:1', primaryPage]]);
 const extraBrowsers = [];
-for (const scale of new Set(scenarios.map((scenario) => scenario.deviceScaleFactor || 1))) {
-  if (scale === 1) continue;
+for (const scenario of scenarios) {
+  const key = pageKey(scenario);
+  if (pagesBySurface.has(key)) continue;
   const scaled = await launch(
-    { width: 1000, height: 900 }, scale, browserArgs, browserContext,
+    { width: 1000, height: 900 }, scenario.deviceScaleFactor || 1, browserArgs, browserContext,
   );
-  pagesByScale.set(scale, scaled.page);
+  pagesBySurface.set(key, scaled.page);
   extraBrowsers.push(scaled.browser);
 }
 const pageErrors = new Map();
-for (const page of pagesByScale.values()) {
+for (const page of pagesBySurface.values()) {
   const errors = [];
   pageErrors.set(page, errors);
   page.on('pageerror', (error) => errors.push(error.message));
@@ -982,13 +986,14 @@ let buildFingerprint = null;
 try {
   buildFingerprint = await assertFreshDemoBundle(primaryPage, ROOT);
   for (const scenario of scenarios) {
+    const runtimeScenario = goldenHarnessScenario(scenario);
     const expectedScale = scenario.deviceScaleFactor || 1;
-    const page = pagesByScale.get(expectedScale);
+    const page = pagesBySurface.get(pageKey(scenario));
     if (!page) throw new Error(`golden renderer scale is unavailable: ${expectedScale}`);
     const activePageErrors = pageErrors.get(page);
     const result = {
       id: scenario.id,
-      host: scenario.panelHost ? 'panel' : 'lovelace',
+      host: scenario.staticWallOpenings ? 'static' : scenario.panelHost ? 'panel' : 'lovelace',
       sourceSceneId: scenario.sourceSceneId || scenario.id,
       threshold: scenario.threshold,
       status: 'error',
@@ -996,7 +1001,15 @@ try {
     };
     try {
       activePageErrors.length = 0;
-      result.runtime = await prepareGoldenScenario(page, scenario);
+      result.runtime = await prepareGoldenScenario(page, runtimeScenario);
+      // Some fixture helpers remount cards. Report the surface actually captured.
+      result.actualHost = await page.evaluate(() => {
+        const card = window.__goldenCard;
+        if (card?.localName === 'houseplan-space-card') return 'static';
+        return card?.panelHost === true && window.__goldenPanel?.shadowRoot?.contains(card)
+          ? 'panel' : card?.localName === 'houseplan-card' && !card.panelHost ? 'lovelace' : 'unknown';
+      });
+      if (result.actualHost !== result.host) throw Error(`Expected ${result.host} host, got ${result.actualHost}`);
       if (scenario.pdfExport) {
         result.pdfExport = await renderPdfGoldenPage(page, scenario.pdfSemantic || null);
       }
@@ -1054,7 +1067,7 @@ try {
         caret: 'hide',
         scale: 'css',
       };
-      const actual = await captureGoldenFrame(page, scenario, screenshotOptions);
+      const actual = await captureGoldenFrame(page, runtimeScenario, screenshotOptions);
       if (scenario.uiLab1081 === 'grid-pan') result.captureEvidence = await uiLab1081CaptureEvidence(page);
       if (result.runtime.phoneHeader?.close)
         result.phoneClosePixels = await inspectPhoneClosePixels(page, actual, result.runtime.phoneHeader.close);
@@ -1169,7 +1182,7 @@ try {
           );
           try {
             await assertFreshDemoBundle(highDpi.page, ROOT);
-            await prepareGoldenScenario(highDpi.page, scenario);
+            await prepareGoldenScenario(highDpi.page, runtimeScenario);
             const highDpiClip = await goldenClip(highDpi.page, scenario.capture);
             const highDpiPng = await highDpi.page.screenshot({
               ...(highDpiClip ? { clip: highDpiClip } : {}),
@@ -1257,7 +1270,7 @@ const report = {
   schema: CAPTURE_PROVENANCE_SCHEMA,
   mode,
   selection,
-  selectionRevision: 'panel-first-2026-11-01',
+  selectionRevision: 'beta-75-2026-11-01',
   capture: captureProvenance({ chromium, buildFingerprint }),
   generatedAt: new Date().toISOString(),
   matrixVersion: GOLDEN_MATRIX_VERSION,

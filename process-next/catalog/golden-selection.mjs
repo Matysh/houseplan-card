@@ -25,3 +25,8 @@ export function prepareGoldenSelection(candidates) {
   const betaIds = new Set(BETA_GOLDEN);
   return { beta, rest: all.filter(scene => !betaIds.has(scene.id)), all };
 }
+
+/** Existing fixture helpers key some semantic checks/repaint by the source ID.
+ * Report and baseline identity remain the distinct panel ID, never this alias. */
+export const goldenHarnessScenario = scene => scene.sourceSceneId
+  ? { ...scene, id: scene.sourceSceneId } : scene;

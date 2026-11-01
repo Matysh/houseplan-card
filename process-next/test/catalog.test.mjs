@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planProfile, inventory, CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E } from '../lib/catalog.mjs';
-import { selectExact, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN } from '../catalog/selections.mjs';
-import { prepareGoldenSelection } from '../catalog/golden-selection.mjs';
+import { selectExact, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, GOLDEN_ADDITIONS } from '../catalog/selections.mjs';
+import { prepareGoldenSelection, goldenHarnessScenario } from '../catalog/golden-selection.mjs';
 import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -44,12 +44,14 @@ test('infrastructure checks only changed syntax and selected mechanism, with no 
 
 test('beta uses approved files, one narrowed permission run and panel-first visual selection', async () => {
   const plan = await planProfile({ root, event: 'beta', version: '1.85.0-beta.1' });
-  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 25); assert.equal(BETA_E2E.length, 13);
+  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 75); assert.equal(BETA_E2E.length, 13);
+  assert.equal(Object.values(GOLDEN_ADDITIONS).flat().length, 50);
   assert.equal(plan.steps.filter(item => item.id.startsWith('smoke:')).length, 13);
   assert.deepEqual(BETA_SMOKES.find(item => item.file.includes('view_edit_permissions')).args, ['--only=late']);
   const { beta } = prepareGoldenSelection(GOLDEN_SCENARIOS);
-  assert.equal(beta.filter(scene => scene.panelHost).length, 22);
-  assert.equal(beta.filter(scene => !scene.panelHost).length, 3);
+  assert.equal(beta.filter(scene => scene.panelHost).length, 61);
+  assert.equal(beta.filter(scene => !scene.panelHost && !scene.staticWallOpenings).length, 13);
+  assert.equal(beta.filter(scene => scene.staticWallOpenings).length, 1);
   const golden = plan.steps.find(item => item.id === 'golden-beta');
   assert.ok(golden.inputs.includes('process-next/catalog/golden-selection.mjs'));
   assert.ok(golden.inputs.includes('process-next/catalog/selections.mjs'));
@@ -65,7 +67,8 @@ test('panel variants keep fixture contracts, own baseline IDs, and replace the o
   assert.equal(all.length, GOLDEN_SCENARIOS.length);
   assert.equal(new Set([...beta, ...rest].map(scene => scene.id)).size, all.length);
   assert.deepEqual(beta.filter(scene => scene.panelHost).map(scene => scene.id), BETA_PANEL_GOLDEN);
-  assert.deepEqual(beta.filter(scene => !scene.panelHost).map(scene => scene.id), BETA_LOVELACE_GOLDEN);
+  assert.deepEqual(beta.filter(scene => !scene.panelHost && !scene.staticWallOpenings).map(scene => scene.id), BETA_LOVELACE_GOLDEN);
+  assert.deepEqual(beta.filter(scene => scene.staticWallOpenings).map(scene => scene.id), BETA_STATIC_GOLDEN);
   assert.ok(beta.some(scene => scene.panelHost && scene.viewport.width === 390 && !scene.panelKioskUrl));
   for (const mode of ['plan', 'devices', 'decor']) assert.ok(beta.some(scene => scene.panelHost && scene.mode === mode));
   for (const variant of beta.filter(scene => scene.sourceSceneId)) {
@@ -74,7 +77,15 @@ test('panel variants keep fixture contracts, own baseline IDs, and replace the o
     assert.ok(!all.some(scene => scene.id === source.id), 'no duplicate full Lovelace matrix');
     assert.ok(!GOLDEN_SCENARIOS.some(scene => scene.id === variant.id), 'never silently reuse a card PNG');
     assert.ok(!source.panelHost, 'active matrix not mutated');
+    assert.equal(variant.iconSize, undefined, 'panel must not silently drop public card configuration');
+    assert.equal(variant.rotation, undefined);
+    assert.ok(!variant.kiosk && !variant.firstSpace && !variant.batteryBoard);
+    const runtime = goldenHarnessScenario(variant);
+    assert.deepEqual(runtime, { ...variant, id: source.id });
+    assert.equal(variant.id, `panel-${source.id}`, 'runtime alias must not change baseline identity');
   }
+  const opening = beta.find(scene => scene.sourceSceneId === 'opening-placement-door-thick-wall-dark');
+  assert.equal(goldenHarnessScenario(opening).id, 'opening-placement-door-thick-wall-dark', 'retain ID-keyed settle/repaint');
 });
 
 test('exact selectors reject renamed, duplicated and file/title cross-product journeys', () => {
