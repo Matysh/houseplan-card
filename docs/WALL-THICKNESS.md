@@ -987,7 +987,8 @@ collinear seams cannot return as durable Optimize debt (#477).
 **Room from an existing face (#1176).** With no active chain, Select queries the
 smallest exact unoccupied bounded face at the raw point. Hover and click use the
 same classified candidate; physical objects, node handles and wall picks win.
-The cached candidate floor is clipped against existing physical masonry and uses
+The per-face cached candidate floor is clipped against every component of the
+existing rendered masonry, including room walls, and uses
 View's wash/halo/outline painters. Leaving Select, the stage, mouse hover, mode
 or geometry revision retires its presentation without writing configuration.
 The existing batch fingerprint, materialization, ACK and Undo/Redo owners still

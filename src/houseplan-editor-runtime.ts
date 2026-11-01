@@ -9,6 +9,7 @@ import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelIn
  */
 import { callout, disclosure } from './editors/form-kit';
 import { html, svg, nothing, TemplateResult } from 'lit';
+import { difference, type Geom } from 'polyclip-ts';
 import { LazyBackupArchiveClient } from './backup-archive-lazy';
 import type { BackupExportState, ArchiveSummary } from './backup-archive-client';
 import { ref } from 'lit/directives/ref.js';
@@ -73,7 +74,7 @@ import {
   type IconRule, type CompiledIconRule,
 } from './rules';
 import {
-  snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding, formatLength, roomPoly,
+  snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding, formatLength, roomPoly, islandsOf,
   pointStrictlyInside, roomsOverlap, pointOnBoundary, mergeRooms, splitRoomPath, polygonArea,
   closestPointOnBoundary, pointStrictlyInside as ptInside, distToSegment, cutSegments, alignGuides,
   segmentAngle, type AlignGuide, clampScale, migratePdfUrls, snapToWall, snapPointAlongPoly,
@@ -210,7 +211,7 @@ import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import { LazyOptimizePlansDialog } from './optimize-plans-loader';
 import {
   BodyObstaclesMemo, COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusObstacles, geometryArea,
-  partitionBody, sameColumnPlacement, physicalBodyParts, floorMinusBodies, polyclipPathD, type PartitionOpeningCut,
+  partitionBody, sameColumnPlacement, physicalBodyParts, polyclipPathD, type PartitionOpeningCut,
 } from './physical-geometry';
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening, partitionOpeningJambMargin,
@@ -902,7 +903,9 @@ export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
   private _roomFaceCache: { key: string; graph: WallFaceGraph | null;
-    candidates: Map<string, WallFaceCandidate | null> } | null = null;
+    masonry: readonly Geom[];
+    candidates: Map<string, WallFaceCandidate | null>;
+    paths: Map<string, { fillD: string; outlineD: string } | null> } | null = null;
   private _roomFaceHover: { key: string; face: WallFaceCandidate;
     paths: { fillD: string; outlineD: string } } | null = null;
 
@@ -2885,7 +2888,11 @@ private _existingWallFaceAt(raw: number[]): WallFaceCandidate | null {
       let graph: WallFaceGraph | null = null;
       try { graph = this._wallFaceGraph(this._wallGraphSources([]), epsilon); }
       catch { /* Malformed legacy topology stays advisory, including on hover. */ }
-      this._roomFaceCache = { key, graph, candidates: new Map() };
+      this._roomFaceCache = { key, graph, candidates: new Map(), paths: new Map(),
+        // The rendered union already includes room walls, openings and extras.
+        // Keep every fallback component, including its holes; never union again.
+        masonry: this.host._wallUnionGeometry()?.components.map(component => component.geom as Geom) || [],
+      };
     }
     const cache = this._roomFaceCache;
     if (!cache.graph) return null;
@@ -2921,6 +2928,21 @@ public get roomFaceHoverPaths(): { fillD: string; outlineD: string } | null {
       && !this.host._roomDialog && !this.host._pointers.size ? hover.paths : null;
   }
 
+/** One clipping pass per face and structural revision; revisits are lookups. */
+private _buildRoomFacePaths(face: WallFaceCandidate): { fillD: string; outlineD: string } | null {
+    const polygon = (ring: number[][]): Geom => [ring.map(p => [p[0], p[1]] as [number, number])];
+    try {
+      let floor = polygon(face.ring);
+      for (const component of this._roomFaceCache!.masonry) floor = difference(floor, component);
+      // An occupied nested room is a hole, just as in the ordinary View hover.
+      const rooms = (this.host._spaceModel()?.rooms || []).map(roomPoly)
+        .filter((poly): poly is number[][] => !!poly);
+      for (const island of islandsOf(face.ring, rooms)) floor = difference(floor, polygon(island));
+      const d = polyclipPathD(floor);
+      return d ? { fillD: d, outlineD: d } : null;
+    } catch { return null; } // Unavailable paint never falls back onto masonry.
+  }
+
 private _hoverExistingWallFace(ev: MouseEvent, path: readonly EventTarget[]): void {
     if (!this.host._pointerModality.hoverEnabled || this.host._pointers.size
         || this.host._editorSecondaryDialogBlocked || this.host._modeTransitionBusy
@@ -2932,12 +2954,12 @@ private _hoverExistingWallFace(ev: MouseEvent, path: readonly EventTarget[]): vo
     if (!face) { this._clearRoomFaceHover(); return; }
     const key = this._roomFaceKey();
     if (this._roomFaceHover?.key === key && this._roomFaceHover.face === face) return;
-    const floor = floorMinusBodies(face.ring, this.host._physicalBodiesR());
-    const d = floor ? polyclipPathD(floor)
-      : `M ${face.ring.map(p => `${p[0]} ${p[1]}`).join(' L ')} Z`;
-    // Share View's wash/halo/outline painters and theme tokens. Clip the
-    // proposed floor against the same physical walls without creating a Room.
-    this._roomFaceHover = { key, face, paths: { fillD: d, outlineD: d } };
+    const cache = this._roomFaceCache!;
+    if (!cache.paths.has(face.key)) cache.paths.set(face.key, this._buildRoomFacePaths(face));
+    const paths = cache.paths.get(face.key);
+    if (!paths) { this._clearRoomFaceHover(); return; }
+    // Share View paint without creating a Room or rebuilding a body union.
+    this._roomFaceHover = { key, face, paths };
     this.host.requestUpdate();
   }
 
@@ -2948,6 +2970,9 @@ public _offerExistingWallFace(raw: number[]): boolean {
     if (!face) return false;
     if (!this.properties.beforeIntent(() => this._offerExistingWallFace(raw))) return true;
     this._clearRoomFaceHover();
+    this.properties.clear();
+    this.host._physicalSel = null;
+    this.stairs.clearSelection();
     this._beginWallFaceBatch([face]);
     return true;
   }

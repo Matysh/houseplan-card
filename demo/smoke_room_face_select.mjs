@@ -121,6 +121,38 @@ try{
  await move([50,50]);
  evidence.large={partitions:partitions.length,samples:21,elapsedMs:performance.now()-started,graphCalls:await page.evaluate(()=>window.__graphCalls1176)};
  check('large plan moves and HA ticks never rebuild warm graph',evidence.large.graphCalls===0);
+ // Cross six different faces, then revisit them: graph-only sampling would
+ // miss a boolean union rebuilt on every entry (review1 of #1176).
+ await page.evaluate(()=>{
+  const r=window.__card._editorRuntime,build=r._buildRoomFacePaths;
+  window.__faceClipBuilds1176=0;window.__facePaths1176=new Map();
+  r._buildRoomFacePaths=function(...args){window.__faceClipBuilds1176++;return build.apply(this,args);};
+  window.__unionBuilds1176=window.__card._floorCacheBuilds.wallUnion;
+ });
+ const route=Array.from({length:6},(_,n)=>[50+n*90,50]);
+ for(const point of route){
+  await move(point);await page.evaluate(()=>{
+   const h=window.__card._editorRuntime._roomFaceHover;
+   if(h)window.__facePaths1176.set(h.face.key,h.paths);
+  });
+ }
+ const firstClips=await page.evaluate(()=>window.__faceClipBuilds1176);
+ let retained=true;
+ for(const point of [...route].reverse()){
+  await move(point);retained&&=await page.evaluate(()=>{
+   const h=window.__card._editorRuntime._roomFaceHover;
+   return !!h&&window.__facePaths1176.get(h.face.key)===h.paths;
+  });
+ }
+ evidence.large.faceTransitions=await page.evaluate(firstClips=>({
+  uniqueFaces:window.__facePaths1176.size,firstClipBuilds:firstClips,
+  revisitClipBuilds:window.__faceClipBuilds1176-firstClips,
+  graphCalls:window.__graphCalls1176,wallUnionBuilds:window.__card._floorCacheBuilds.wallUnion-window.__unionBuilds1176,
+ }),firstClips);
+ check('large plan really visits six faces',evidence.large.faceTransitions.uniqueFaces===6&&firstClips===5);
+ check('returning across faces retains paths without clipping or unions',retained
+  &&evidence.large.faceTransitions.revisitClipBuilds===0&&evidence.large.faceTransitions.graphCalls===0
+  &&evidence.large.faceTransitions.wallUnionBuilds===0);
  await move([955,230]);check('unclosed face is not offered',!(await state()).hover);
  await click([955,230]);check('unclosed face click never creates a room',!(await state()).roomDialog);
  await move([910,900]);check('exterior is not offered',!(await state()).hover);
@@ -130,6 +162,35 @@ try{
  check('changed geometry hides stale hover before next move',!(await state()).painted);
  await move([50,50]);check('changed graph no longer offers removed face',!(await state()).hover);
  await tool('draw');await move([140,50]);check('Walls never paints an existing face',!(await state()).painted);
+ // Normal multi-room flow: the first room consumes the shared partition.
+ const adjacent={model_version:10,spaces:[{id:'adjacent',title:'Adjacent rooms',cell_cm:5,view_box:[0,0,1,1],rooms:[],wall_segments:[],openings:[],partitions:[
+  {id:'adj-top',a:[.1,.1],b:[.9,.1],cm:20},
+  {id:'adj-right',a:[.9,.1],b:[.9,.7],cm:20},
+  {id:'adj-bottom',a:[.9,.7],b:[.1,.7],cm:20},
+  {id:'adj-left',a:[.1,.7],b:[.1,.1],cm:20},
+  {id:'adj-shared',a:[.5,.1],b:[.5,.7],cm:20},
+ ]}],markers:[],settings:{}};
+ await page.evaluate(async cfg=>{await window.__hpTest.setServerConfig(cfg);await window.__hpTest.switchSpace(cfg.spaces[0].id);},adjacent);
+ await settle();await tool('select');await click([100,400]);
+ await click([300,400]);
+ const room=card.locator('hp-dialog[data-kind="room"]');await room.waitFor();await waitForUiKitPaint(page);
+ check('room creation retires the previous object selection',await card.evaluate(c=>!c._physicalSel&&!c._editorRuntime.properties.identity));
+ await room.locator('#room-name').fill('Adjacent left');
+ await room.locator('.dialog-action-commit [data-hp="dialog-confirm"]').click();await settle();
+ check('adjacent room consumes the shared partition',await card.evaluate(c=>c._serverCfg.spaces[0].rooms.length===1
+  &&c._serverCfg.spaces[0].wall_segments.some(w=>w.a[0]===.5&&w.b[0]===.5)));
+ await move([700,400]);
+ evidence.adjacent=await card.evaluate(c=>{
+  const path=c.renderRoot.querySelector('[data-hp-live-room-hover="outline"]'),box=path.getBBox();
+  return {x:box.x,width:box.width,expectedMinX:500+c._cmToUnits(20)/2,painted:!path.hasAttribute('hidden')};
+ });
+ console.log(JSON.stringify({observation:'1176 adjacent room',...evidence.adjacent}));
+ check('adjacent free hover is clipped beyond shared room masonry',evidence.adjacent.painted
+  &&evidence.adjacent.x>=evidence.adjacent.expectedMinX-.05);
+ for(const theme of ['light','dark']){
+  await applyUiKitTheme(page,theme);await move([700,400]);await waitForUiKitPaint(page);
+  await page.screenshot({path:`${folder}/adjacent-room-${theme}.png`});
+ }
  await page.evaluate(()=>window.__hpTest.setMode('view'));await waitForUiKitPaint(page);
  check('View has no candidate hover',!await page.evaluate(()=>!!window.__card._editorRuntime.roomFaceHoverPaths));
  writeFileSync(`${folder}/observations.json`,JSON.stringify(evidence,null,2)+'\n');
