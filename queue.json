@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 315,
+  "revision": 316,
   "nextTicket": 35,
   "nextFence": 34,
   "tasks": {
@@ -250,7 +250,7 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/issue-1190-comment-history",
-      "materialSha": "9628f243c65b1b7f5b9d0d8489668ca78e810c33",
+      "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 32,
@@ -258,7 +258,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793567990894,
       "reviewEntry": 4,
-      "patchId": "4155815da86360ab7a73db1d74a587371e6cee65",
+      "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
       "changedFiles": [
         "PROCESS.md",
         "docs/CHANGELOG.md",
@@ -395,11 +395,12 @@
     "worker": "github-coordinator",
     "token": "33:github:41352259279:1:tick:0:admit",
     "fence": 33,
-    "materialSha": "9628f243c65b1b7f5b9d0d8489668ca78e810c33",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+    "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
+    "phase": "testing",
     "admittedAt": 1793568594545,
-    "expiresAt": 1793568894545
+    "expiresAt": 1793568950499,
+    "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -618,6 +619,34 @@
       "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
       "issue": 1169
     },
+    "1172-spec-20261101-1:spec-request": {
+      "digest": "8aa1b7eb1c2a7e8e3ab1f6107a5a50a76dd0570c7e3e8e9197270afa1274eb6e",
+      "issue": 1172
+    },
+    "finish:d572296e-b553-4d39-a14f-db3f44249659": {
+      "digest": "6f31b450de6478754de72a26d6d30249bf3b4bde9b9702f4ea42b7fae7fbbc04",
+      "issue": 1169
+    },
+    "github:41351804140:1:spec:1172:spec-presentation": {
+      "digest": "4b2c67f0f753a7dd8b3eff393d9031ba43dbfd978f5c094935123c1bf149195e",
+      "issue": 1172
+    },
+    "github:41351804140:1:spec:1172:spec-complete": {
+      "digest": "04f92573a886fe23db32ebfb1dbe87215bd82c7dc9ca31f647a6e112308c401d",
+      "issue": 1172
+    },
+    "github:41351804140:1:completions:metadata:930e01cf-bdb5-43c2-8159-bb1d0aa7f8c3:review-presentation:1172:spec:010c910de4808179ec87": {
+      "digest": "2f1d73569e9b4783efe3f77ef3385c78971c77d0e58275bc45f8f445194f3fda",
+      "issue": 1172
+    },
+    "github:41352259279:1:tick:0:admit": {
+      "digest": "6ea4e7b9d0ed8e8c742fbbe21d30232274888c326b0484379eec303619213198",
+      "issue": 1190
+    },
+    "finish:60a095fb-1729-4d5d-bfd6-44911ddf9704:finish:1:synchronized": {
+      "digest": "243568873cba7dd385f0806ebd1f36ae5831655f205e75218de760839198abb1",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -744,30 +773,6 @@
           "failures": []
         }
       }
-    },
-    "1172-spec-20261101-1:spec-request": {
-      "digest": "8aa1b7eb1c2a7e8e3ab1f6107a5a50a76dd0570c7e3e8e9197270afa1274eb6e",
-      "issue": 1172
-    },
-    "finish:d572296e-b553-4d39-a14f-db3f44249659": {
-      "digest": "6f31b450de6478754de72a26d6d30249bf3b4bde9b9702f4ea42b7fae7fbbc04",
-      "issue": 1169
-    },
-    "github:41351804140:1:spec:1172:spec-presentation": {
-      "digest": "4b2c67f0f753a7dd8b3eff393d9031ba43dbfd978f5c094935123c1bf149195e",
-      "issue": 1172
-    },
-    "github:41351804140:1:spec:1172:spec-complete": {
-      "digest": "04f92573a886fe23db32ebfb1dbe87215bd82c7dc9ca31f647a6e112308c401d",
-      "issue": 1172
-    },
-    "github:41351804140:1:completions:metadata:930e01cf-bdb5-43c2-8159-bb1d0aa7f8c3:review-presentation:1172:spec:010c910de4808179ec87": {
-      "digest": "2f1d73569e9b4783efe3f77ef3385c78971c77d0e58275bc45f8f445194f3fda",
-      "issue": 1172
-    },
-    "github:41352259279:1:tick:0:admit": {
-      "digest": "6ea4e7b9d0ed8e8c742fbbe21d30232274888c326b0484379eec303619213198",
-      "issue": 1190
     }
   },
   "devWebhook": {
