@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2,
+  "revision": 3,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -10,8 +10,11 @@
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
       "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -344,6 +347,7 @@
   },
   "events": {
     "beta1842-create-20261102": "3a97b1d49e119ae4416633e7dd074f5af50917281686ac4aeb70af0018992aca",
-    "beta1842-prepared-b-20261102": "990ad234e7eea717aaffbbb2b3c8f21c5349d33ee63173d2ba231f79a371b5f6"
+    "beta1842-prepared-b-20261102": "990ad234e7eea717aaffbbb2b3c8f21c5349d33ee63173d2ba231f79a371b5f6",
+    "beta1842-run-b-20261102": "4f33aa93a53ab1c9e0aed4d0c4b2049a7d6f44d4ca5b12e459fee6ff20025750"
   }
 }
