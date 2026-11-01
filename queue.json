@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 410,
+  "revision": 411,
   "nextTicket": 43,
   "nextFence": 43,
   "tasks": {
@@ -371,27 +371,24 @@
     },
     "1195": {
       "issue": 1195,
+      "branch": "codex/revert-1194",
       "track": "ship",
       "layer": "docs",
-      "branch": "codex/revert-1194",
-      "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 42,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793572507381,
-      "reviewEntry": 1,
-      "patchId": "ca27a1f6a100ab1564ca6621897928bf93f7c441",
-      "changedFiles": [
-        "AGENTS.md",
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/DEVELOPMENT.md",
-        "docs/process/AUTHOR.md"
-      ],
-      "s6": null
+      "status": "S8-merged",
+      "mergedSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
+      "mergedAt": 1793572550682,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
+      }
     }
   },
   "ownerDecisions": {},
@@ -455,18 +452,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1195,
-    "worker": "finish",
-    "token": "42:finish:12a12d1a-9db4-4a5d-b55e-ec104f4756e3:finish:1:admit",
-    "fence": 42,
-    "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
-    "expectedBase": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793572510437,
-    "expiresAt": 1793576146447,
-    "patchId": "ca27a1f6a100ab1564ca6621897928bf93f7c441"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -483,47 +469,6 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
-    },
-    "finish:12a12d1a-9db4-4a5d-b55e-ec104f4756e3:finish:2:synchronized": {
-      "digest": "4a700e1cc56d114fd3b64057c9b9ae0d0a0f5048442e4734c4d29ad060bf5969",
-      "issue": 1195
-    },
-    "github:41357837768:1:completions:message:776c18c1bf5cbf3e49f40a38590e52f76bc985db1676e4ae723e1db1cd571385": {
-      "digest": "77a51114e124302b0aadb6c7fbfe90526b8c9cb8dc53730d0be7784dc4262e32",
-      "issue": 1195
-    },
-    "github:41357837768:1:completions:message:339eb300fea281879fdba466f1e011c32ada75c46aa5c227ab7413aaef329ef2": {
-      "digest": "6eef7bfb8a7abc6420aed84ce44132fa3795342b237e42ba7889a7be73d94adf",
-      "issue": 1195
-    },
-    "finish:12a12d1a-9db4-4a5d-b55e-ec104f4756e3": {
-      "digest": "2ed99767bb708b412e1724317830bfa6dc63d296496ab8d5b9fee9a479e0aaf1",
-      "issue": 1195,
-      "message": {
-        "kind": "queued",
-        "issue": 1195,
-        "at": 1793572507381,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
-        "delivered": true
-      }
-    },
-    "finish:12a12d1a-9db4-4a5d-b55e-ec104f4756e3:finish:1:admit": {
-      "digest": "d793ceb37306fc1a78e5c90430ab9cac06ed7a3c85b5d6c2eb14b5958e0ec0b7",
-      "issue": 1195,
-      "message": {
-        "kind": "admitted",
-        "issue": 1195,
-        "at": 1793572510437,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
-        "phase": "sync",
-        "delivered": true
-      }
     },
     "finish:12a12d1a-9db4-4a5d-b55e-ec104f4756e3:finish:3:s6-complete": {
       "digest": "32bb3825315ac6c811ffea17ee1e5af36e03e3c4c64451de17e77fcb5afb4924",
