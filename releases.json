@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "revision": 0,
+  "active": null,
+  "candidates": {},
+  "published": {
+    "beta": {
+      "id": "imported-v1.84.0-beta.1",
+      "sha": "6bb1b3243205f90af1b7dd6d6c315216021c7e1b",
+      "tag": "v1.84.0-beta.1",
+      "branch": "release/v1.84.0-beta.1",
+      "runner": null
+    },
+    "stable": {
+      "id": "imported-v1.83.1",
+      "sha": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+      "tag": "v1.83.1",
+      "branch": "main",
+      "runner": null
+    }
+  },
+  "events": {}
+}
