@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 171,
+  "revision": 172,
   "nextTicket": 19,
   "nextFence": 19,
   "tasks": {
@@ -41,7 +41,24 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793565758976,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "ab77addfcf9be52e5552baafff41f042cbe3148e",
+      "changedFiles": [
+        "demo/smoke_space_copy_categories.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DECOR-EDITOR.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.83.0/1156.json",
+        "src/i18n/en.json",
+        "src/i18n/ru.json",
+        "src/space-copy-runtime.ts",
+        "src/space-copy.ts",
+        "src/space-dialog.ts",
+        "test/space-copy-runtime.test.mjs",
+        "test/space-copy.test.mjs"
+      ]
     },
     "1176": {
       "issue": 1176,
@@ -203,10 +220,11 @@
     "token": "18:finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:1:admit",
     "fence": 18,
     "materialSha": "333f98685ede7f07b0df5163532f739e338dca19",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
+    "phase": "testing",
     "admittedAt": 1793565761858,
-    "expiresAt": 1793566061858
+    "expiresAt": 1793566066731,
+    "patchId": "ab77addfcf9be52e5552baafff41f042cbe3148e"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -271,6 +289,10 @@
     },
     "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:1:admit": {
       "digest": "0d48e09fd99736588a17a4aa1eef32e6515fca5741170f171c33bbec25e0c546",
+      "issue": 1156
+    },
+    "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:2:synchronized": {
+      "digest": "51f6eb122e2ee64cb81c02cc7e311cacf9698030e9567e26118a39afb56269e2",
       "issue": 1156
     }
   },
