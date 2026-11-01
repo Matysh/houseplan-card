@@ -349,6 +349,7 @@ const isoDark = await pair('view', { projection: 'iso', theme: 'dark' });
 const openingEdgeAction = async (cellCm) => {
   await setTheme('light');
   await page.evaluate((cell) => window.__applyGridScaleFixture(cell, 'plan', 'flat'), cellCm);
+  const before = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
   // The accepted shared tray now overlaps this fit's original edge point.
   // A real zoom-out exposes the SAME right edge; never click through controls.
   await page.locator('[data-hp="zoom-out"]').click();
@@ -376,7 +377,6 @@ const openingEdgeAction = async (cellCm) => {
     }));
     return { x, y, stack };
   });
-  const before = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
   await page.mouse.click(point.x, point.y);
   await page.evaluate(() => window.__card.updateComplete);
   const ok = await page.evaluate((snapshot) => {
