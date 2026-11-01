@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 90,
-  "nextTicket": 12,
+  "revision": 91,
+  "nextTicket": 13,
   "nextFence": 12,
   "tasks": {
     "1176": {
@@ -34,14 +34,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "issue/1184-unified-header",
-      "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
+      "materialSha": "922ea77262c9b2cda39b6157928c02905a92b8da",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 11,
-      "queued": false,
+      "ticket": 12,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793557165713,
-      "reviewEntry": 3,
+      "readyAt": 1793557410912,
+      "reviewEntry": 4,
       "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -94,14 +94,7 @@
         "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
         "status": "passed",
         "finishedAt": "2026-11-01T18:20:50.958Z"
-      },
-      "reviewRequest": "review:1184:3:cf8cf95f40839122cfc62be17c6b37d0f28d6777:5cc253e20227415209b314bda63ff71f2a3a2655",
-      "reviewMaterial": {
-        "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
-        "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-        "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777"
-      },
-      "reason": "Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results."
+      }
     },
     "1186": {
       "issue": 1186,
@@ -176,7 +169,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1184
+  ],
   "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -285,6 +280,10 @@
     },
     "github:41336155984:1:completions:metadata:fa577eb3-19a5-48d5-bb72-bb8acdb2dec2:task-notice:1184::": {
       "digest": "e5a4068987a8230c040f3e847ccb501ed7dcf07a6a95ac748b2f7574f711fb17",
+      "issue": 1184
+    },
+    "finish:fbafa69d-9f25-4dc2-8dc6-a1e2ec84e96d": {
+      "digest": "c1bf3860c8bfffb7e2dc24b77d9ba51034d2e12c8a0b350ebe71b4115527a1b5",
       "issue": 1184
     }
   },
