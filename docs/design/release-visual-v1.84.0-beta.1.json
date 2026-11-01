@@ -1057,5 +1057,178 @@
       "stableSvgCenterOffsetPx": 1.296875,
       "result": "No new regression: identical genuine HA icon offset in all three modes. The larger documentation mock displacement is not evidence of a product regression. Native comparison exited0, fixture.assertClean awaited."
     }
+  },
+  "ciVisualReview": {
+    "golden": {
+      "run": 41302186631,
+      "producerSha": "72d99a77030c7f8947a64b88524d38712615c123",
+      "sourceFingerprint": "39760e6c6f7b630d2ede693ff5378ebe59ffaa3f61f89eed567f2a1723058a36",
+      "byteEquivalent": 320,
+      "newlyReviewed": 6,
+      "approved": 326,
+      "additionalReviews": [
+        {
+          "id": "safe-resize-handles-clamp-light",
+          "status": "different",
+          "actualSha256": "3bd8ad4302156c7c230b7b18a000dcea3b820515c6dde492593960df52321ed0",
+          "reviewedSha256": "2e44db3bec73af5cec6889c4d4eec14d9f32a1139876bd44510a9747846e301d",
+          "equivalent": false,
+          "oldSize": [
+            1180,
+            900
+          ],
+          "newSize": [
+            1180,
+            900
+          ],
+          "changedPixels": 1,
+          "bbox": [
+            46,
+            108,
+            47,
+            109
+          ],
+          "reviewed": true,
+          "reason": "Actual CI A/B/delta viewed: exactly1pixel differs, maximum channel delta3, at toolbar icon edge. No frame/geometry movement; original scene semantic guards pass. Existing tolerances unchanged.",
+          "reviewedComparison": "golden-final-delta-1.png"
+        },
+        {
+          "id": "decor-multiselect-light",
+          "status": "different",
+          "actualSha256": "61d7c67189a3095b01710f04bf7e37f9bad3b0504a95cd094b06cf7e0ab90b7f",
+          "reviewedSha256": "69aa91d68ead784d54d82ae0d774f568ef5258fcec8202d43c27281d242986be",
+          "equivalent": false,
+          "oldSize": [
+            1440,
+            1000
+          ],
+          "newSize": [
+            1440,
+            1000
+          ],
+          "changedPixels": 1084,
+          "bbox": [
+            515,
+            98,
+            728,
+            150
+          ],
+          "reviewed": true,
+          "reason": "Actual CI A/B/delta viewed: only active-editor pill focus-outline differs from the isolated local capture. Entire Properties/stage pixels are identical to reviewed corrected1183. Selected mode and mixed placeholders are correct.",
+          "reviewedComparison": "golden-final-delta-2.png"
+        },
+        {
+          "id": "decor-multiselect-dark",
+          "status": "different",
+          "actualSha256": "4d2415642dc000e2f52758b79b88eddea8391f25edc64c54f22d1c6d62d8c838",
+          "reviewedSha256": "4736ca445915473f364314d9b554e8c2ebaccecde023c8b7bcd508d66e435c58",
+          "equivalent": false,
+          "oldSize": [
+            1440,
+            1000
+          ],
+          "newSize": [
+            1440,
+            1000
+          ],
+          "changedPixels": 1082,
+          "bbox": [
+            515,
+            98,
+            728,
+            150
+          ],
+          "reviewed": true,
+          "reason": "Actual CI A/B/delta viewed: only active-editor pill focus-outline differs from the isolated local capture. Entire Properties/stage pixels are identical to reviewed corrected1183. Selected mode and mixed placeholders are correct.",
+          "reviewedComparison": "golden-final-delta-3.png"
+        },
+        {
+          "id": "decor-group-style-applied-light",
+          "status": "different",
+          "actualSha256": "c495a066fa115193541d43d6e253cc507edd8a2af67b088b89b7c3ea8f35fc36",
+          "reviewedSha256": "d3095925aa7b4368ead931f7a85dfde6a937efc92ffc46bbc3e7647a17762561",
+          "equivalent": false,
+          "oldSize": [
+            1440,
+            1000
+          ],
+          "newSize": [
+            1440,
+            1000
+          ],
+          "changedPixels": 533,
+          "bbox": [
+            1136,
+            515,
+            1249,
+            549
+          ],
+          "reviewed": true,
+          "reason": "Actual CI A/B/delta and full-size light frame viewed: accepted1183 now displays the full mixed stroke-alpha Russian placeholder in the applied-group neighbour. Data, transformed furniture and remaining surface unchanged; original scene semantic guards pass.",
+          "reviewedComparison": "golden-final-delta-4.png"
+        },
+        {
+          "id": "decor-group-style-applied-dark",
+          "status": "different",
+          "actualSha256": "13c33ba7322f4403ed5a8d3e3b7d667327bedfc90e7b11c48d45a64f4559aeaa",
+          "reviewedSha256": "e1ef6851b3a934db88bc3f6919dcd2af1b8fc2ecd9bbbd5e225fd7f9a58e6135",
+          "equivalent": false,
+          "oldSize": [
+            1440,
+            1000
+          ],
+          "newSize": [
+            1440,
+            1000
+          ],
+          "changedPixels": 546,
+          "bbox": [
+            936,
+            515,
+            1249,
+            550
+          ],
+          "reviewed": true,
+          "reason": "Actual CI A/B/delta viewed: accepted1183 now displays the full mixed stroke-alpha Russian placeholder in the applied-group neighbour. Data, transformed furniture and remaining surface unchanged; original scene semantic guards pass.",
+          "reviewedComparison": "golden-final-delta-5.png"
+        },
+        {
+          "id": "large-house-zoom-250-dark",
+          "status": "different",
+          "actualSha256": "f3b479d80857a57d3b406266492c14a3aab7cf597333fbc99da61f012c5b784b",
+          "reviewedSha256": "d647cfcd106d19fa4155762666f236b4dfc06279b1ba1c7fb5d8da9cb21bba52",
+          "equivalent": false,
+          "oldSize": [
+            1108,
+            775
+          ],
+          "newSize": [
+            1108,
+            775
+          ],
+          "changedPixels": 16,
+          "bbox": [
+            119,
+            173,
+            134,
+            620
+          ],
+          "reviewed": true,
+          "reason": "Actual CI A/B/delta viewed: exactly16pixels differ along two rendered door arcs, maximum channel delta7. No frame/geometry movement; original scene semantic guards pass. Existing tolerances unchanged.",
+          "reviewedComparison": "golden-final-delta-6.png"
+        }
+      ],
+      "comment": "https://github.com/Matysh/houseplan-card/issues/1150#issuecomment-6557497562"
+    },
+    "documentation": {
+      "run": 41306977762,
+      "sourceFingerprint": "9672a1ee91641ac919ae91e50ce96df46a158e4086fe72853f2fcbc3343a50b7",
+      "decodedRgbaEquivalent": 11,
+      "total": 11,
+      "chromium": "151.0.7922.34",
+      "oxipng": "oxipng 10.2.0",
+      "manualCiArtifactAcceptance": true,
+      "witnessExceptionReason": "Intentional shared UI Kit migration #1147-1150 changes10/11 documentation scenes; all10 reviewed A/B with individual reasons, unchanged view-touch retained byte-identical. Canonical dev CI41306977762 captured twice independently and stability3 had zero pixel differences; pinned Chromium151.0.7922.34/oxipng10.2.0; all11 CI frames decoded-RGBA identical to reviewed captures. Only1 unchanged documentation witness remains against default floor2. Use the documented docs full-redraw path (#401/#409), recording this reason; no undeclared changes, no pin/tolerance modifications. Original bot refusal is preserved at run41306977762; manual canonical CI-artifact acceptance under PROCESS section8 because beta-derived has no reason passthrough."
+    }
   }
 }
