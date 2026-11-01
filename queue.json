@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 28,
-  "nextTicket": 5,
+  "revision": 29,
+  "nextTicket": 6,
   "nextFence": 5,
   "tasks": {
     "1176": {
@@ -9,14 +9,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1176-room-candidates",
-      "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
+      "materialSha": "87c08f2836251490443b5790f7430b9403dab8bd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 3,
-      "queued": false,
+      "ticket": 5,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793552996664,
-      "reviewEntry": 3,
+      "readyAt": 1793554539455,
+      "reviewEntry": 4,
       "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
       "changedFiles": [
         "demo/smoke_plan_drawing_repairs.mjs",
@@ -45,17 +45,7 @@
         "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
         "status": "passed",
         "finishedAt": "2026-11-01T17:10:39.201Z"
-      },
-      "reviewRequest": "review:1176:3:f5650ed2bff7868998008fcee4164c14158fe535:5862a1713ce034e232581004c262860b48a0ca52",
-      "reviewMaterial": {
-        "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
-        "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
-        "patchId": "f5650ed2bff7868998008fcee4164c14158fe535"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793553358957,
-      "automationDetail": "GitHub GET failed (415)",
-      "reason": "review-findings"
+      }
     },
     "1186": {
       "issue": 1186,
@@ -81,7 +71,9 @@
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1176
+  ],
   "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -170,6 +162,10 @@
     },
     "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:task-notice:1176::": {
       "digest": "f05d2e232a8f5b80986557867519b5aea5a91e796ba20716a08ba3635061511f",
+      "issue": 1176
+    },
+    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd": {
+      "digest": "c0d096ef51ec4dfb0769442272c5b6b43f1f566f1f1ce8fbe829ef99bd2589b4",
       "issue": 1176
     }
   }
