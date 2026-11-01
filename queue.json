@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 260,
+  "revision": 261,
   "nextTicket": 28,
   "nextFence": 27,
   "tasks": {
@@ -71,7 +71,7 @@
       "notice": {
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
-        "status": "pending"
+        "status": "delivered"
       }
     },
     "1175": {
@@ -773,6 +773,10 @@
     },
     "finish:17b52b52-6951-4f92-b89c-e841571982d8:finish:1:return": {
       "digest": "5364a0c542dc940a12fad7e6764c56ef2cd323620f7b27346638d8bcb97e4da8",
+      "issue": 1169
+    },
+    "finish:17b52b52-6951-4f92-b89c-e841571982d8:metadata:60a8966d-f8ac-4452-a17a-f4ac9b42db10:task-notice:1169::": {
+      "digest": "8185510b59371c8deddab3115ac6c723cc22f786a4a3fe20aee87bce218c6b67",
       "issue": 1169
     }
   },
