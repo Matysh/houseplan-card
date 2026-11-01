@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "issue": 1153,
+  "diagnosticOnly": true,
+  "baseline": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+  "candidate": "5f53abd26033c87718b355291c26616c511edc4e",
+  "sameEnvironment": true,
+  "changedMeasuredInputs": [
+    "src/config-adoption.ts"
+  ],
+  "acceptance": {
+    "beforeSeriesMs": [
+      1.752925580000001,
+      1.7503051199999993,
+      1.8928078099999994,
+      1.80488472,
+      1.7289943799999992
+    ],
+    "afterSeriesMs": [
+      1.1961168900000008,
+      1.3909022600000003,
+      1.31232303,
+      1.4073102799999992,
+      1.3644884400000012
+    ],
+    "beforeMedianMs": 1.752925580000001,
+    "afterMedianMs": 1.3644884400000012,
+    "deltaPercent": -22.159362863539222
+  },
+  "before": {
+    "room-name": {
+      "first": {
+        "n": 3,
+        "clientMedian": 89.5,
+        "maxLongTask": 100
+      },
+      "warm": {
+        "n": 12,
+        "clientMedian": 69.69999999995343,
+        "maxLongTask": 85
+      }
+    },
+    "room-paint": {
+      "first": {
+        "n": 3,
+        "clientMedian": 73.4000000001397,
+        "maxLongTask": 76
+      },
+      "warm": {
+        "n": 12,
+        "clientMedian": 68.69999999995343,
+        "maxLongTask": 79
+      }
+    },
+    "visible-bg": {
+      "first": {
+        "n": 3,
+        "clientMedian": 63.9000000001397,
+        "maxLongTask": 63
+      },
+      "warm": {
+        "n": 12,
+        "clientMedian": 57.800000000046566,
+        "maxLongTask": 61
+      }
+    }
+  },
+  "after": {
+    "room-name": {
+      "first": {
+        "n": 3,
+        "clientMedian": 85.3000000002794,
+        "maxLongTask": 104
+      },
+      "warm": {
+        "n": 12,
+        "clientMedian": 69.89999999990687,
+        "maxLongTask": 77
+      }
+    },
+    "room-paint": {
+      "first": {
+        "n": 3,
+        "clientMedian": 68.10000000009313,
+        "maxLongTask": 69
+      },
+      "warm": {
+        "n": 12,
+        "clientMedian": 67.10000000009313,
+        "maxLongTask": 80
+      }
+    },
+    "visible-bg": {
+      "first": {
+        "n": 3,
+        "clientMedian": 64.5,
+        "maxLongTask": 64
+      },
+      "warm": {
+        "n": 12,
+        "clientMedian": 56.59999999962747,
+        "maxLongTask": 60
+      }
+    }
+  },
+  "overallMaxLongTask": {
+    "before": 100,
+    "after": 104
+  },
+  "conclusion": "Direct accepted-cache production path improves with disjoint per-series ranges. Whole-Save medians are mixed/noisy: no universal Save speedup claimed. First-sample long-task maximum rose100\u2192104ms while most warm medians were similar/lower. Existing117ms addressed bound is unchanged; no old failure is relabelled PASS and this subset does not prove a CI matrix."
+}

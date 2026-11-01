@@ -12,6 +12,10 @@
       "bytes": 5282,
       "sha256": "fa1a740c49b5802e55a3c7dd6fee4e773838ee81f4853a8c34a08092b144b114"
     },
+    "candidate-measurement.json": {
+      "bytes": 146724,
+      "sha256": "95c85170834da79f62e1f835d3f8102f634765b2610bcb109f9a811fbcb2820a"
+    },
     "profile.mjs": {
       "bytes": 3354,
       "sha256": "e1ec396f280eb631486133e47f0c725bd18d06877523b37d6b3ca220db7e3a73"
@@ -36,6 +40,14 @@
       "bytes": 4638,
       "sha256": "914e0d755f4ea579f14dba81520aa9d859853359414bcbabb1b50345405aeb59"
     },
+    "comparison.json": {
+      "bytes": 2663,
+      "sha256": "c0c7004686deab3e6d39e199e187a80ceaa3a03ece22fa11d7868b95de10d742"
+    },
+    "README.md": {
+      "bytes": 6386,
+      "sha256": "1ff1991f3e9788bf5df3c03dfc0fb543de517f00331ab5876a3981cb42a75943"
+    },
     "baseline-measurement.json": {
       "bytes": 147163,
       "sha256": "7c3d1498dcde07273c3ae42b51396186d7a5af8a158cf263ced5a94a6d5c6319"
@@ -52,5 +64,9 @@
       "bytes": 3458,
       "sha256": "81d7d6a2ba5a6fbed12ff5df78ec955901d4eadc9619fec4b1e4ea1d5b884235"
     }
-  }
+  },
+  "candidateSource": "5f53abd26033c87718b355291c26616c511edc4e",
+  "candidateAdoptionBlob": "0d75c0381c411783fe672d4cea0c3e610c56b6eb",
+  "candidateBundleFingerprint": "54a203f32626fadd62303e57366bd2f6576590f02e62810e584648091a236356",
+  "candidateCompiledAdoptionSha256": "da68fd1e02ec6e3922d9d8208fed912864807e7dab91bff4bf0fb5852e740a1e"
 }

@@ -37,4 +37,16 @@ node docs/analysis/save-long-tasks-2026-11-02/probe.mjs
 
 `measure.mjs <simple-label>` writes its full source/environment/manifest/native samples and direct acceptance series below ignored artifacts/save-cost-1153-LABEL. It does not assert a new global timing budget. `profile` and `probe` write separate ignored folders. Analyze a profile only with its matching served bundle, identified by the saved manifest; gzip originals may be extracted outside this tracked package. Profile/probe results are diagnostic and are not wall-time comparisons with the unprofiled series.
 
-`provenance.json` binds archived bytes and raw lengths/hashes. The original profile/trace, samples, bounded attribution, separate method samples/costs and unprofiled baseline are retained. Candidate comparison is added after the same procedure runs on its immutable product commit; until then this document does not claim an improvement or completed S6.
+`provenance.json` binds archived bytes and raw lengths/hashes. The original profile/trace, samples, bounded attribution, separate method samples/costs and unprofiled baseline are retained. The same procedure completed on immutable product commit `5f53abd26033c87718b355291c26616c511edc4e`; `candidate-measurement.json` and `comparison.json` retain all results. This measurement is research evidence, not a claim that task S6 or the full CI matrix has passed.
+
+## Before / after result
+
+The production acceptance micro median is 1.752926→1.364488ms/call (-22.16%). Baseline series1.729–1.893ms and candidate1.196–1.407ms do not overlap. Environment versions/CPU/kernel match; only src/config-adoption.ts changed among product/fixture/helper/toolchain inputs. No old staged hash, clone or authority check was removed.
+
+| Native Save | Before first / warm median ms | After first / warm median ms | Before maxLongTask first / warm | After maxLongTask first / warm |
+| --- | --- | --- | --- | --- |
+| Room name |89.5 /69.7|85.3 /69.9|100 /85|104 /77|
+| Room paint |73.4 /68.7|68.1 /67.1|76 /79|69 /80|
+| Visible background |63.9 /57.8|64.5 /56.6|63 /61|64 /60|
+
+All45native saves on each source were single-write/persisted and retained the helper's geometry/contact/model invariants. The direct accepted subpath improved; total Save differences are small and mixed. In particular, first maxLongTask increased100→104ms despite a lower name median. That raw outlier is retained, and no universal whole-Save speedup or CI causality is claimed. The existing117ms addressed bound is not raised; returning100ms is unsupported even by this candidate subset. These data do not turn the historical full CI failures into passes.
