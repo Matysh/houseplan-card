@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3,
+  "revision": 4,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -9,12 +9,31 @@
       "branch": "release/v1.84.0-beta.2",
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
       "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
-      "runner": null,
-      "running": {
-        "id": null,
-        "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1"
+      "runner": {
+        "id": "20261101T221412746-c36c701b",
+        "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
+        "event": "beta",
+        "status": "failed",
+        "path": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261101T221412746-c36c701b/report.json",
+        "digest": "378de30301bd29943248836aa9c924d40dee441f20ca91f3d619946abc2f4872",
+        "finishedAt": "2026-11-01T22:34:55.811Z",
+        "materialClean": true,
+        "ready": false,
+        "required": 33,
+        "failed": [
+          "product-node:devices",
+          "product-node:geometry",
+          "product-node:core",
+          "product-node:text",
+          "smoke:smoke_canvas_surface_gestures",
+          "golden-beta",
+          "e2e-beta-journeys",
+          "e2e-beta-upgrade"
+        ],
+        "reused": 0
       },
-      "status": "testing",
+      "running": null,
+      "status": "results",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -348,6 +367,7 @@
   "events": {
     "beta1842-create-20261102": "3a97b1d49e119ae4416633e7dd074f5af50917281686ac4aeb70af0018992aca",
     "beta1842-prepared-b-20261102": "990ad234e7eea717aaffbbb2b3c8f21c5349d33ee63173d2ba231f79a371b5f6",
-    "beta1842-run-b-20261102": "4f33aa93a53ab1c9e0aed4d0c4b2049a7d6f44d4ca5b12e459fee6ff20025750"
+    "beta1842-run-b-20261102": "4f33aa93a53ab1c9e0aed4d0c4b2049a7d6f44d4ca5b12e459fee6ff20025750",
+    "beta1842-runner-20261101T221412746-c36c701b": "4fddfbbdcf0a649c1d3d14b31f9ce19f62f9bab7864568831f316c30bc2b0852"
   }
 }
