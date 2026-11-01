@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 501,
+  "revision": 502,
   "nextTicket": 51,
   "nextFence": 50,
   "tasks": {
@@ -539,14 +539,27 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/review-details-order",
-      "materialSha": "06468605e984d032275346fd6af0e6faf7cdf219",
+      "materialSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 48,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793573491847,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "b89f9db47b2a3ce17ed8624a353e765d5497c918",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/process/AUTHOR.md",
+        "docs/process/SERVICE-COMMENTS.md",
+        "docs/process/SPEC-TEMPLATE.md",
+        "process-next/lib/review-publication.mjs",
+        "process-next/lib/review.mjs",
+        "process-next/test/review-publication.test.mjs",
+        "process-next/test/review.test.mjs"
+      ]
     },
     "1201": {
       "issue": 1201,
@@ -648,11 +661,12 @@
     "worker": "github-coordinator",
     "token": "49:github:41359764100:1:tick:1:admit",
     "fence": 49,
-    "materialSha": "06468605e984d032275346fd6af0e6faf7cdf219",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
+    "expectedBase": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
+    "phase": "testing",
     "admittedAt": 1793573933708,
-    "expiresAt": 1793574233708
+    "expiresAt": 1793574328536,
+    "patchId": "b89f9db47b2a3ce17ed8624a353e765d5497c918"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -741,6 +755,10 @@
     },
     "github:41359798853:1:completions:message:1fd253004c242d3456ffe3ee4c9b06393c0009ac2ff2b06c383b6598e3322089": {
       "digest": "72f9c5745a0b45fcbf24cedd87286af6664e02a17571c07f7731596d2303be89",
+      "issue": 1200
+    },
+    "finish:477d6da4-829c-4cf6-b063-123f13e55e8b:finish:2:synchronized": {
+      "digest": "1c0b5e8162424e83d802d99239b7a9c235d7cd3d5e49e16b11238de50f905c99",
       "issue": 1200
     },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
