@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 49,
+  "revision": 50,
   "nextTicket": 7,
   "nextFence": 7,
   "tasks": {
@@ -72,25 +72,20 @@
       ],
       "automationError": "automation-error",
       "automationSince": 1793555258584,
-      "automationDetail": "Selected check infra-syntax reads prepared product artifacts (demo-assets); an infrastructure-only profile cannot silently build the product"
+      "automationDetail": "Selected check infra-syntax reads prepared product artifacts (demo-assets); an infrastructure-only profile cannot silently build the product",
+      "reason": "fix-infra-profile-inference",
+      "notice": {
+        "key": "1:fix-infra-profile-inference",
+        "reason": "fix-infra-profile-inference",
+        "status": "pending"
+      }
     }
   },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1187,
-    "worker": "finish",
-    "token": "6:finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d:finish:1:admit",
-    "fence": 6,
-    "materialSha": "c0dcad875917c1b8170b4fd0a184f3ccff13e0e2",
-    "expectedBase": "ce45c22f574810a9cde0467b1158affc0b03063e",
-    "phase": "testing",
-    "admittedAt": 1793555249823,
-    "expiresAt": 1793555729159,
-    "patchId": "eb5fdca51e3cb2eb49d00bb9a670b896cb3de262"
-  },
+  "active": null,
   "events": {
     "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d": {
       "digest": "fae2703437c100187e35305e17aa53127417f770765ab4f520af751df7022e13",
@@ -118,6 +113,10 @@
     },
     "finish:b59de5e0-0755-4039-a433-20de54f9e5a3": {
       "digest": "238202de5abbfa16a9e8b6a22e88064019bb8695a4d913d6e363a328b265eed2",
+      "issue": 1187
+    },
+    "1187-profile-fix": {
+      "digest": "af39e58222981b7a0b047298c773d8cef7de5390f1692ce83ae9cdae4285fb5d",
       "issue": 1187
     }
   },
