@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 173,
+  "revision": 174,
   "nextTicket": 20,
   "nextFence": 19,
   "tasks": {
@@ -58,7 +58,13 @@
         "src/space-dialog.ts",
         "test/space-copy-runtime.test.mjs",
         "test/space-copy.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending"
+      }
     },
     "1175": {
       "issue": 1175,
@@ -230,18 +236,7 @@
   "waiting": [
     1175
   ],
-  "active": {
-    "issue": 1156,
-    "worker": "finish",
-    "token": "18:finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:1:admit",
-    "fence": 18,
-    "materialSha": "333f98685ede7f07b0df5163532f739e338dca19",
-    "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-    "phase": "testing",
-    "admittedAt": 1793565761858,
-    "expiresAt": 1793566066731,
-    "patchId": "ab77addfcf9be52e5552baafff41f042cbe3148e"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -314,6 +309,10 @@
     "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f": {
       "digest": "ce4477b6ff09a13f20674c7fc661826c13080170784677586e4e826ef91ac072",
       "issue": 1175
+    },
+    "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:3:return": {
+      "digest": "6e1eb3ff1bfca76fb816942e46405a8439d24bbe4ff4bf2d2903c9445ad00cb9",
+      "issue": 1156
     }
   },
   "devWebhook": {
