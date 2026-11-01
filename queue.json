@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 425,
+  "revision": 426,
   "nextTicket": 46,
   "nextFence": 44,
   "tasks": {
@@ -423,8 +423,15 @@
         "test/fixtures/845-wall-corpus-identities.json",
         "test/wall-node-bundle.test.mjs"
       ],
-      "automationError": "checks-unavailable",
-      "automationSince": 1793573039894
+      "s6": {
+        "id": "20261101T224504024-25eac8c7",
+        "name": "Тесты для задачи #1196 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261101T224504024-25eac8c7/report.json",
+        "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
+        "status": "passed",
+        "finishedAt": "2026-11-01T22:45:43.545Z",
+        "failures": []
+      }
     },
     "1197": {
       "issue": 1197,
@@ -526,9 +533,9 @@
     "fence": 43,
     "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
     "expectedBase": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793572991094,
-    "expiresAt": 1793573407596,
+    "expiresAt": 1793576744619,
     "patchId": "5b17bee2120a3bb4c5a9f526a944045273b0bc73"
   },
   "events": {
@@ -630,6 +637,29 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "cde14713fbb1d1cc8cbddc7895d65a3aaaf2f132"
+      }
+    },
+    "finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81:finish:4:s6-complete": {
+      "digest": "49e9dc56f7fb3f59eac10438b46bac1139df655159a1838bc2cbb7fb02466c83",
+      "issue": 1196,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1196,
+        "at": 1793573144619,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261101T224504024-25eac8c7",
+          "name": "Тесты для задачи #1196 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261101T224504024-25eac8c7/report.json",
+          "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
+          "status": "passed",
+          "finishedAt": "2026-11-01T22:45:43.545Z",
+          "failures": []
+        }
       }
     }
   },
