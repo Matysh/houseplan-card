@@ -130,8 +130,8 @@ check('AC3 stage resize re-clamps', await page.evaluate(() => {
   const s = root.querySelector('.stage').getBoundingClientRect(); return d.right <= s.right - 7 && d.bottom <= s.bottom - 7;
 }));
 // #1184: camera buttons are desktop-only at this host width; keep the narrow clamp case above.
-await page.setViewportSize({ width: 1600, height: 920 });
-await page.evaluate(() => { document.querySelector('#host').style.width = '1400px'; });
+await page.setViewportSize({ width: 2000, height: 920 });
+await page.evaluate(() => { document.querySelector('#host').style.width = '1800px'; });
 await pause();
 // Intermediate pan and settled wheel/button frames, with and without a prior dialog drag.
 const cameraChecks = async name => {
