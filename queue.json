@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 399,
+  "revision": 400,
   "nextTicket": 42,
   "nextFence": 42,
   "tasks": {
@@ -340,27 +340,24 @@
     },
     "1194": {
       "issue": 1194,
+      "branch": "codex/1194-visible-wsl-policy",
       "track": "ship",
       "layer": "docs",
-      "branch": "codex/1194-visible-wsl-policy",
-      "materialSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 41,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793571895743,
-      "reviewEntry": 1,
-      "patchId": "906aeae93ec4505e9c78134b7d07be9c3f60f3d7",
-      "changedFiles": [
-        "AGENTS.md",
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/DEVELOPMENT.md",
-        "docs/process/AUTHOR.md"
-      ],
-      "s6": null
+      "status": "S8-merged",
+      "mergedSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
+      "mergedAt": 1793571957944,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
+      }
     }
   },
   "ownerDecisions": {},
@@ -424,18 +421,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1194,
-    "worker": "finish",
-    "token": "41:finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:1:admit",
-    "fence": 41,
-    "materialSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
-    "expectedBase": "bcdc82d590b99b658f16056438e1e97b7f7f0c46",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793571898714,
-    "expiresAt": 1793575536916,
-    "patchId": "906aeae93ec4505e9c78134b7d07be9c3f60f3d7"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -452,47 +438,6 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
-    },
-    "github:41356940782:1:completions:message:adbe36c2587c96cf2f4eb649a3e88f06e9a031595aa4fb436e8e86aa2950feac": {
-      "digest": "2a0bf53a97db0912aabca37bc717b1d72dd7d9b7fb952c74f8751d38c7e2ea6b",
-      "issue": 1194
-    },
-    "github:41356940782:1:completions:message:68e870022e42dd9cf0b4b4dc30e13ac3e8fa7e381822f64a5a3ecdf7f7d6ba92": {
-      "digest": "35b8fb9d6931495a63fe4cad68797ff2bedd80c2240f95e499b56b86b7fb8ff5",
-      "issue": 1194
-    },
-    "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:2:synchronized": {
-      "digest": "83833fbba159c60b6634a80fbf68b71bcebc7d500c011bbe45088fb2684b25a3",
-      "issue": 1194
-    },
-    "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b": {
-      "digest": "0baa12da14b55e08ce7f8fe9ce6e749f65128518151149477006bef60af007ff",
-      "issue": 1194,
-      "message": {
-        "kind": "queued",
-        "issue": 1194,
-        "at": 1793571895743,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e",
-        "delivered": true
-      }
-    },
-    "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:1:admit": {
-      "digest": "19a8737befb49cff76f0c5855fceac499a8ac4df152c9fe630f0f496651dac6d",
-      "issue": 1194,
-      "message": {
-        "kind": "admitted",
-        "issue": 1194,
-        "at": 1793571898714,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e",
-        "phase": "sync",
-        "delivered": true
-      }
     },
     "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:3:s6-complete": {
       "digest": "8cebdad840e7eedcf085a9ce56ab1fa2fb4f4ec3f4443e11fc27c8831734dc37",
