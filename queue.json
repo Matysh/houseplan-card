@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 229,
+  "revision": 230,
   "nextTicket": 26,
   "nextFence": 25,
   "tasks": {
@@ -263,6 +263,13 @@
   },
   "ownerDecisions": {},
   "specReviews": {
+    "1153": {
+      "requestId": "spec:1153:1fd4ca97212b4c7577cce8f6529eaa76ea6df0d38edf61013ef7758b36601ee6",
+      "contextDigest": "1fd4ca97212b4c7577cce8f6529eaa76ea6df0d38edf61013ef7758b36601ee6",
+      "base": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+      "status": "pending",
+      "updatedAt": 1793566790724
+    },
     "1156": {
       "requestId": "spec:1156:45bc1dac9ad530104e092b91581eac7587f08e4dea075542f5b0e07ed0a1e3b3",
       "contextDigest": "45bc1dac9ad530104e092b91581eac7587f08e4dea075542f5b0e07ed0a1e3b3",
@@ -598,6 +605,10 @@
     "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:3:s6-complete": {
       "digest": "6b647528fcb049fe71e6808e36b1bf71658cc9b5bc58fed8d77412ed5a6e7c41",
       "issue": 1175
+    },
+    "1153-spec-initial:spec-request": {
+      "digest": "e302f2a801ced702529db31e58cddb85967af363152827a1aaf309a581c4c1b4",
+      "issue": 1153
     }
   },
   "devWebhook": {
