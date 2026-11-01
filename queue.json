@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 278,
-  "nextTicket": 31,
+  "revision": 279,
+  "nextTicket": 32,
   "nextFence": 30,
   "tasks": {
     "1128": {
@@ -34,14 +34,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1153-save-cost",
-      "materialSha": "17c5d5f299b535862a600710f9437af6d9d0950f",
+      "materialSha": "be92b6912509f5846af71db131f0c87a13452ead",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 28,
-      "queued": false,
+      "ticket": 31,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793567676870,
-      "reviewEntry": 1,
+      "readyAt": 1793567981684,
+      "reviewEntry": 2,
       "patchId": "cf4ac84248cb65dd05e7275c7dee2b72162ff6f7",
       "changedFiles": [
         "demo/benchmark_selective_invalidation.mjs",
@@ -67,7 +67,6 @@
         "src/config-adoption.ts",
         "test/config-adoption.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -408,7 +407,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1175
+    1175,
+    1153
   ],
   "active": null,
   "events": {
@@ -908,6 +908,10 @@
     "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:metadata:eb560301-bef2-4074-af99-dd8adc00cd1d:task-notice:1169::": {
       "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
       "issue": 1169
+    },
+    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d": {
+      "digest": "bfe22b761fa5ee4e1fb5bad4e4dae27927ee4d37f4aae09af09a0287015f9c58",
+      "issue": 1153
     }
   },
   "devWebhook": {
