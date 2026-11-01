@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 499,
-  "nextTicket": 50,
+  "revision": 500,
+  "nextTicket": 51,
   "nextFence": 50,
   "tasks": {
     "1128": {
@@ -477,14 +477,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/canvas-surface-camera-fixture",
-      "materialSha": "449d10a2c858c67698fc290021a9241799dcb60c",
+      "materialSha": "c07fce25404713505681dc22276463d6b46f26c1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 49,
-      "queued": false,
+      "ticket": 50,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793573508291,
-      "reviewEntry": 2,
+      "readyAt": 1793573973938,
+      "reviewEntry": 3,
       "patchId": "6055ba56c42818e082b91b77506ebacc7ab85d89",
       "changedFiles": [
         "demo/smoke_canvas_surface_gestures.mjs",
@@ -500,8 +500,7 @@
         "entry": 2,
         "detail": "Браузер: canvas surface gestures: failed",
         "eventId": "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return:return:1198"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1199": {
       "issue": 1199,
@@ -641,7 +640,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1198
+  ],
   "active": {
     "issue": 1200,
     "worker": "github-coordinator",
@@ -865,6 +866,19 @@
         "materialSha": "06468605e984d032275346fd6af0e6faf7cdf219",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:05a68573-6141-4c2b-a6e5-07488ec98d15": {
+      "digest": "e260ab0135cc416f6cfa604a2ba3caabd5ae229eeb4cb013cb739952a6c39023",
+      "issue": 1198,
+      "message": {
+        "kind": "queued",
+        "issue": 1198,
+        "at": 1793573973938,
+        "entry": 3,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c07fce25404713505681dc22276463d6b46f26c1"
       }
     }
   },
