@@ -83,3 +83,23 @@ test('#1049 tail cap, geometry quota and native raw counts are independent',()=>
   assert.ok(f.frame.count<=4);assert.ok(f.frame.limited);
   assert.equal(f.provisional,512);assert.deepEqual(run(tail).paths,[[[0,0],[10,0]]]);
 });
+
+test('#1175 full native ACK still follows the painted puck during the last tween',()=>{
+  const tail=live({paths:[[[20,10,4000]]]});
+  const server={...run(tail),paths:[[[0,0],[10,0],[10,10],[20,10]]]};
+  const f=frame(server,undefined,{x:20,y:10});
+  assert.equal(f.current.allowTip,true,'a witnessed native endpoint must retain an animated tip');
+  assert.deepEqual(f.path,[[[0,0],[10,0],[10,10]]]);
+  assert.ok(!f.frame.d.endsWith('20 10'),'static native geometry must not race ahead to the target');
+  assert.deepEqual(server.paths,[[[0,0],[10,0],[10,10],[20,10]]],'accepted native geometry is immutable');
+});
+
+test('#1175 an unrelated singleton or a withheld previous native path cannot invent a connector',()=>{
+  for(const [tail,paths] of [
+    [live({paths:[[[50,50,4000]]]}),[[[0,0],[10,0]]]],
+    [live({waiting:true,paths:[[[10,0,4000]]]}),[[[0,0],[10,0]]]],
+  ]){
+    const f=frame({...run(tail),paths},undefined,{x:tail.paths[0][0][0],y:tail.paths[0][0][1]});
+    assert.equal(f.current.allowTip,false);
+  }
+});

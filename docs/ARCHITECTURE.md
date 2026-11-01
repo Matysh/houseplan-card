@@ -1223,6 +1223,9 @@ Hybrid trails (#1049) keep a bounded private shared window in
 `vacuum-live-tail.ts` owns local pending observations and epoch/cursor fences;
 `currentVacuumTrailFrame` composes both parts under one quota/opacity owner.
 Native projection is cached independently of its changing remaining budget.
+A full native ACK retains a live tip from the preceding witnessed native point;
+static target geometry cannot run ahead of the CSS-animated puck. Sparse
+telemetry animation snaps do not split physically trustworthy observed tails.
 Typed pinned Dreame activity consumes a separate persisted task proof once;
 request-start watermarks and unique calibrated endpoints acknowledge only an
 observed prefix. Neither transport metadata nor positional timestamps become

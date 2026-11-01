@@ -1,0 +1,7 @@
+{
+  "rationale": "Restore the existing continuous native/provisional vacuum path contract across sparse position telemetry and full native ACK, retaining actual animated puck endpoints and context/gap guards.",
+  "issue": 1175,
+  "baseStable": "v1.83.0",
+  "schema": 1,
+  "category": "stable-fix"
+}

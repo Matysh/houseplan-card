@@ -81,14 +81,23 @@ export function currentVacuumTrailFrame(input: {
     const fresh = vacuumLiveGeometry(live, input.livePending);
     const end = liveLast(liveLast(fresh.path));
     const target = (input.telemetry as { pos?: { x: number; y: number } } | null)?.pos;
+    const nativeEnd = liveLast(liveLast(current.path));
+    // Full native ACK can leave only the witnessed target in the live window.
+    // Keep its preceding native point as the tip anchor until the puck finishes
+    // its real CSS tween; never draw the static native segment ahead of it.
+    const nativeTip = !live.waiting && (liveLast(fresh.path)?.length ?? 0) === 1
+      && !!end && !!nativeEnd && end[0] === nativeEnd[0] && end[1] === nativeEnd[1]
+      && (liveLast(current.path)?.length ?? 0) >= 2;
     const tip = input.moving && !!end && !!target && end[0] === target.x && end[1] === target.y
-      && (liveLast(fresh.path)?.length ?? 0) >= 2 && input.budget >= 2;
-    const path = tip ? freezeVacuumPath(fresh.path.map((p, i) => i === fresh.path.length - 1 ? p.slice(0, -1) : p)) : fresh.path;
+      && ((liveLast(fresh.path)?.length ?? 0) >= 2 || nativeTip) && input.budget >= 2;
+    const trimEnd = (value: VacPath): VacPath => freezeVacuumPath(value.map((p, i) => i === value.length - 1 ? p.slice(0, -1) : p));
+    const path = tip ? trimEnd(fresh.path) : fresh.path;
+    const nativePath = tip && nativeTip ? trimEnd(current.path) : current.path;
     const tail = vacuumTrailSvg(input.cache, path, input.matrix, input.cmPerUnit, Math.max(0, input.budget - (tip ? 1 : 0)));
     const count = tail.count + (tip && !tail.limited ? 1 : 0);
-    const native = vacuumTrailSvg(input.cache, live.waiting ? [] : current.path, input.matrix, input.cmPerUnit,
+    const native = vacuumTrailSvg(input.cache, live.waiting ? [] : nativePath, input.matrix, input.cmPerUnit,
       Math.max(0, input.budget - count));
-    return { current: { ...current, hybrid: true, allowTip: tip && !tail.limited }, path: path.length ? path : current.path,
+    return { current: { ...current, hybrid: true, allowTip: tip && !tail.limited }, path: tip && nativeTip ? nativePath : path.length ? path : current.path,
       frame: { d: `${native.d} ${tail.d}`.trim(), count: native.count + count,
         rawPoints: native.rawPoints + fresh.count, limited: native.limited || tail.limited || fresh.limited },
       provisional: fresh.count, liveReceivedAt: fresh.receivedAt, waiting: live.waiting };

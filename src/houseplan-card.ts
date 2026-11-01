@@ -12240,6 +12240,7 @@ export class HouseplanCard extends LitElement {
         this._vacRt.set(d.id, rt);
       }
       if (!vacuumState || vacuumState === 'unknown' || vacuumState === 'unavailable') {
+        rt.moving = false; // Availability loss cannot keep a formerly moving puck/tip active.
         rt.gap = true;
         if (rt.livePending) rt.livePending.gap = true;
         continue;
@@ -12300,7 +12301,9 @@ export class HouseplanCard extends LitElement {
         this._liveSyncGeneration, this.hass.user?.id]);
       rt.livePending = recordVacuumLivePosition(rt.livePending, live, owner,
         moving && pos ? [pos.x, pos.y] : null, Date.parse(this.hass.states[src]?.last_updated ?? ''),
-        liveGap || rt.jump, physical);
+        // Animation snaps after sparse telemetry are not evidence of a route gap.
+        // The live recorder separately checks physical jumps, context and availability.
+        liveGap, physical);
     }
   }
 
