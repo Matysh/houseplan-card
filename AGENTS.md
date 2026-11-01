@@ -61,6 +61,13 @@ Old task-packet and entry-measurement generators are not required entry steps.
   test, build, lint, link-check or hidden-hook runs**.
 - Report actual commands and outcomes when checks are required. Missing
   prerequisites and unexecuted checks are not passing results.
+- Every local run, including `finish`, must start in a visible, non-minimized
+  Ubuntu WSL window with a meaningful task/release title and real progress.
+  Open it without activation or focus theft; updates and completion must not
+  activate it either. Keep the result/error visible until the user closes it.
+  A hidden run followed by a log window, or output only in chat/tools, does not
+  satisfy this rule. Follow PROCESS and DEVELOPMENT for launch limitations;
+  this display rule adds no checks to documentation-only tasks.
 - Use synthetic data for screenshots and labs. Do not change the owner's HA
   instance or accept visual baselines without the relevant instruction.
 - Finish an authorized task through the shared queue with `finish`; use
