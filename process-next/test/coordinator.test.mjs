@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { QueueController, MemoryQueueStore, reduceQueue, AUTOMATION_WAIT_MS, REVIEW_RETRY_VISIBILITY_MS } from '../lib/queue.mjs';
 import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, taskLayerFromDiff, devBuildTarget } from '../lib/coordinator.mjs';
+import { WorkflowReviewAdapter } from '../remote.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40);
 test('a pending product delivery follows current dev after later docs merges; docs alone do not build', () => {
   const product = { issue: 1, status: 'S8-merged', mergedSha: B, mergedAt: 10, devBuild: { status: 'pending' } };
@@ -158,6 +159,44 @@ test('a retry that never appears reaches attention without dispatching another p
   assert.equal(retries, 1); assert.equal((await h.store.read()).state.active, null);
 });
 
+test('explicit reentry after exhausted review starts a fresh bounded request for the unchanged code', async () => {
+  const h = harness('show'); await h.ready(); await h.step(); await h.step(); await h.step();
+  const runs = [], dispatched = [], rerun = [];
+  const api = { root: '/repos/owner/repo', request: async (method, path, body) => {
+    if (method === 'GET' && path.includes('/artifacts')) {
+      const run = runs.find(row => path.includes(`/runs/${row.id}/`));
+      return { artifacts: run?.report ? [{ id: run.id, name: 'review-result' }] : [] };
+    }
+    if (method === 'GET' && /\/actions\/runs\/\d+$/.test(path)) return runs.find(row => path.endsWith(`/runs/${row.id}`));
+    if (method === 'GET') return { workflow_runs: runs };
+    if (path.endsWith('/dispatches')) {
+      dispatched.push(body.inputs.requestId);
+      runs.push({ id: runs.length + 1, display_title: `Code ${body.inputs.requestId}`, status: 'completed', run_attempt: 1 });
+    } else if (path.endsWith('/rerun-failed-jobs')) {
+      const run = runs.find(row => path.includes(`/runs/${row.id}/`)); run.run_attempt++; rerun.push(run.id);
+    } else throw Error(`Unexpected API ${method} ${path}`);
+  } };
+  const review = new WorkflowReviewAdapter({ api, readArtifact: async (_artifact, run) => run.report });
+  let tick = 0;
+  const step = () => reconcileQueue({ queue: h.queue, api: h.api, activated: true, eventId: `review-tick-${++tick}`,
+    requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
+  assert.equal((await step()).action, 'review-requested');
+  assert.equal((await step()).action, 'review-request-ensured');
+  assert.equal((await step()).reason, 'review-retry-exhausted');
+  const ready = { id: 'ready-after-outage', kind: 'ready', branch: 'issue/1', materialSha: B, layer: 'infra' };
+  await handleGithubEvent({ activated: true, queue: h.queue, issue: h.issue, event: ready });
+  const reentered = (await h.store.read()).state;
+  await handleGithubEvent({ activated: true, queue: h.queue, issue: h.issue, event: ready });
+  assert.deepEqual((await h.store.read()).state, reentered);
+  assert.equal(reentered.tasks[1].reviewEntry, 2); assert.equal(reentered.tasks[1].reviewRetry, undefined);
+  await h.step(); await h.step(); await h.step();
+  assert.equal((await step()).action, 'review-requested');
+  assert.notEqual(dispatched[1], dispatched[0]); assert.equal(dispatched.length, 2); assert.deepEqual(rerun, [1]);
+  runs[1].report = { issue: 1, kind: 'code', requestId: dispatched[1], materialSha: B, verdict: 'accepted', report: {} };
+  assert.equal((await step()).action, 'ready-to-merge');
+  assert.equal((await h.step()).action, 'merged'); assert.equal(h.tests, 2);
+});
+
 test('a persistent merge failure cannot reserve the queue forever even when a worker keeps heartbeating', async () => {
   const h = harness('ship'); await h.ready(); await h.step(); await h.step(); await h.step();
   const before = (await h.store.read()).state.active; let now = 100, merges = 0; h.queue.clock = () => now;
@@ -215,6 +254,37 @@ test('S4 ship and show labels bypass model review without requiring a separate o
     assert.equal(result.action, 'spec-not-required'); assert.equal(status, 'S5-ready');
     assert.deepEqual((await queue.store.read()).state.specReviews, {});
   }
+});
+
+test('S4 passes the saved retry run only for the same specification, allowing a later successful manual retry', async () => {
+  const queue = new QueueController(new MemoryQueueStore()), issue = { number: 44, state: 'open', body: 'Specification', labels: ['S4-spec-review', 'track:ask'] };
+  const contexts = []; let requests = 0, status;
+  const options = { queue, issue, activated: true, git: { dev: 'dev', remoteHead: async () => A },
+    api: { moveStatus: async (_issue, value) => { status = value; } }, requestReview: async () => { requests++; },
+    readReviewResult: async context => {
+      contexts.push(context);
+      return context.task.reviewRetry?.runId === 88 ? { verdict: 'accepted', reportUrl: 'https://example.invalid/run/88' } : { missing: true };
+    } };
+  const first = await reconcileSpecReview({ ...options, eventId: 's4-first' });
+  await queue.dispatch({ id: 's4-retry-record', type: 'spec-retry', issue: 44, requestId: first.requestId, runId: 88, runAttempt: 1 });
+  const resumed = await reconcileSpecReview({ ...options, eventId: 's4-manual-retry-complete' });
+  assert.equal(resumed.verdict, 'accepted'); assert.equal(status, 'S5-ready');
+  assert.equal(contexts[1].task.reviewRetry.requestId, first.requestId); assert.equal(contexts[1].task.reviewRetry.runId, 88);
+  issue.body += '\nNew requirement';
+  const changed = await reconcileSpecReview({ ...options, eventId: 's4-new-body' });
+  assert.equal(changed.action, 'spec-review-requested'); assert.notEqual(changed.requestId, first.requestId);
+  assert.equal(contexts[2].task.reviewRetry, undefined); assert.equal(requests, 2);
+});
+
+test('S4 without a track remains an ask review even with old show provenance', async () => {
+  const queue = new QueueController(new MemoryQueueStore()), issue = { number: 44, state: 'open', body: 'Specification', labels: ['S4-spec-review'] };
+  await queue.dispatch({ id: 'old-show', type: 'owner-track', issue: 44, decisionId: 'old-show', source: 'chat', sourceRef: 'chat:old-show', decisionText: 'Earlier show choice', track: 'show' });
+  const calls = [];
+  const result = await reconcileSpecReview({ queue, issue, activated: true, eventId: 's4-without-track',
+    api: { moveStatus: () => { throw Error('Unreviewed spec cannot advance'); } }, git: { dev: 'dev', remoteHead: async () => A },
+    requestReview: async context => calls.push(context), readReviewResult: async () => ({ missing: true }) });
+  assert.equal(result.action, 'spec-review-requested'); assert.equal(calls.length, 1);
+  assert.equal(calls[0].task.track, 'ask'); assert.deepEqual(issue.labels, ['S4-spec-review']);
 });
 
 test('a live label event reprioritizes the waiting queue without changing GitHub labels', async () => {

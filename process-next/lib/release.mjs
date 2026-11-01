@@ -180,13 +180,17 @@ export class ReleaseGitAdapter extends GitAdapter {
     for (const commit of [expectedBase, sourceSha, materialSha]) await this.ensureCommit(commit);
     try {
       await this.assertAncestor(sourceSha, materialSha); await this.assertAncestor(expectedBase, materialSha);
-      // merge-tree does not touch the index/worktree and exits nonzero on conflicts.
-      const mergedTree = (await this.git(['merge-tree', '--write-tree', expectedBase, sourceSha])).split('\n')[0];
-      if (mergedTree !== await this.git(['rev-parse', `${materialSha}^{tree}`])) return null;
     } catch (error) {
       if (error.code === 1) return null;
       throw error;
     }
+    let mergedTree;
+    try {
+      // This optional proof needs newer Git. Unsupported options, conflicts or any
+      // merge-tree failure mean ordinary review, without blocking synchronization.
+      mergedTree = (await this.git(['merge-tree', '--write-tree', expectedBase, sourceSha])).split('\n')[0];
+    } catch { return null; }
+    if (mergedTree !== await this.git(['rev-parse', `${materialSha}^{tree}`])) return null;
     return { source: 'published-release', sourceSha, tag, verdict: 'accepted', patchId, materialSha };
   }
   async resolveSource({ kind, published }) {

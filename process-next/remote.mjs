@@ -72,26 +72,48 @@ verify-delivery: {id,candidate,assetName}; close-included: {id,candidate}.
  * a preflight report-marker check. This adapter avoids redispatching an observed run/result.
  */
 export class WorkflowReviewAdapter {
-  constructor({ api, workflow = 'process-next-review.yml', ref = 'dev', commentAuthor = 'github-actions[bot]', maxPages = 20, readArtifact } = {}) {
+  constructor({ api, workflow = 'process-next-review.yml', ref = 'dev', commentAuthor = 'github-actions[bot]', maxPages = 20, readArtifact, clock = Date.now } = {}) {
     if (!/^[\w.-]+\.ya?ml$/.test(workflow) || !ref) throw Error('Review workflow/ref required');
-    Object.assign(this, { api, workflow, ref, commentAuthor, maxPages, readArtifact });
+    Object.assign(this, { api, workflow, ref, commentAuthor, maxPages, readArtifact, clock });
   }
   validate({ requestId, active, task, kind = 'code' }) {
     if (!/^[A-Za-z0-9:-]+$/.test(requestId ?? '') || !Number.isSafeInteger(active?.issue)
       || !sha(active.materialSha) || !sha(active.expectedBase) || !['code', 'spec'].includes(kind)) throw Error('Pinned review request required');
     if (kind === 'code' && ownerShip(task)) throw Error('Owner ship never requests individual code review');
   }
-  async list(path, key) {
+  async list(path, key, firstPage) {
     const rows = [];
     for (let page = 1; page <= this.maxPages; page++) {
-      const response = await this.api.request('GET', `${path}${path.includes('?') ? '&' : '?'}per_page=100&page=${page}`);
+      const response = page === 1 && firstPage ? firstPage : await this.api.request('GET', `${path}${path.includes('?') ? '&' : '?'}per_page=100&page=${page}`);
       const batch = key ? response[key] : response;
       if (!Array.isArray(batch)) throw Error('Invalid review inventory');
-      rows.push(...batch); if (batch.length < 100) return rows;
+      rows.push(...batch);
+      if (Number.isSafeInteger(response.total_count) && rows.length >= response.total_count) return rows;
+      if (batch.length < 100) {
+        if (Number.isSafeInteger(response.total_count) && rows.length < response.total_count) throw Error('Review inventory incomplete; do not dispatch another uncertain request');
+        return rows;
+      }
     }
     throw Error('Review inventory incomplete; do not dispatch another uncertain request');
   }
-  async runs() { return this.list(`${this.api.root}/actions/workflows/${component(this.workflow)}/runs?event=workflow_dispatch`, 'workflow_runs'); }
+  async runs() {
+    // Match review.yml retention. GitHub caps each filtered search at 1000 runs;
+    // split only crowded intervals rather than loading the lifetime history.
+    const end = Math.floor(this.clock() / 1000), start = end - 60 * 24 * 60 * 60;
+    const scan = async (from, to) => {
+      const date = seconds => new Date(seconds * 1000).toISOString();
+      const created = component(`${date(from)}..${date(to)}`);
+      const path = `${this.api.root}/actions/workflows/${component(this.workflow)}/runs?event=workflow_dispatch&created=${created}`;
+      const first = await this.api.request('GET', `${path}&per_page=100&page=1`);
+      if (first.total_count > 1000) {
+        if (from === to) throw Error('More than 1000 review runs in one second; inventory cannot establish a missing request');
+        const middle = Math.floor((from + to) / 2);
+        return [...await scan(middle + 1, to), ...await scan(from, middle)];
+      }
+      return this.list(path, 'workflow_runs', first);
+    };
+    return scan(start, end);
+  }
   async artifactResult(run) {
     if (!run.id) return null;
     const artifacts = await this.list(`${this.api.root}/actions/runs/${run.id}/artifacts`, 'artifacts');
@@ -122,9 +144,13 @@ export class WorkflowReviewAdapter {
   }
   async readReviewResult(context) {
     this.validate(context);
-    const { requestId, active } = context;
+    const { requestId, active, task } = context;
     const escaped = requestId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const matches = (await this.runs()).filter(run => new RegExp(`(?:^|[^A-Za-z0-9:-])${escaped}(?:$|[^A-Za-z0-9:-])`).test(run.display_title ?? run.name ?? ''))
+    const identity = new RegExp(`(?:^|[^A-Za-z0-9:-])${escaped}(?:$|[^A-Za-z0-9:-])`);
+    const knownRunId = task.reviewRetry?.requestId === requestId ? task.reviewRetry.runId : null;
+    const inventory = knownRunId ? [await this.api.request('GET', `${this.api.root}/actions/runs/${knownRunId}`)] : await this.runs();
+    if (knownRunId && !identity.test(inventory[0].display_title ?? inventory[0].name ?? '')) throw Error('Known review run belongs to another request');
+    const matches = inventory.filter(run => identity.test(run.display_title ?? run.name ?? ''))
       .sort((a, b) => Number(b.id) - Number(a.id));
     // A completed artifact is authoritative even when comment publication failed
     // or a retry of the same workflow is currently running.
@@ -307,9 +333,11 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   if (command === 'initialize-queue' || command === 'initialize-release')
     return (command === 'initialize-queue' ? queue.store : releaseStore).initialize({ baseSha: event.baseSha, confirmed: event.confirmed });
   if (['owner-decision', 'label', 'ready', 'enqueue'].includes(command)) {
-    const issue = await initializeMissingTrack(api, await api.getIssue(event.issue), event.track ?? event.ownerDecision?.track);
-    if (['ready', 'enqueue'].includes(command) && await git.remoteHead(event.branch) !== event.materialSha)
+    let issue = await api.getIssue(event.issue);
+    const ready = ['ready', 'enqueue'].includes(command);
+    if (ready && await git.remoteHead(event.branch) !== event.materialSha)
       throw Error('Ready material differs from the current task branch');
+    if (ready) issue = await initializeMissingTrack(api, issue, event.track ?? event.ownerDecision?.track);
     if (command === 'owner-decision' && !event.ownerDecision) throw Error('Explicit attributed owner decision required');
     const result = await handleGithubEvent({ event: { ...event, kind: ['ready', 'enqueue'].includes(command) ? 'ready' : 'label' },
       issue, queue, owner, ownerDecision: event.ownerDecision, activated: true });

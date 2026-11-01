@@ -36,6 +36,8 @@ test('ready ship first; show and ask share FIFO; no interruption of an admitted 
 test('duplicate deliveries are idempotent, conflicting reuse of delivery ID refuses', () => {
   const h = harness(), event = { type: 'enqueue', id: 'same', task: task(1) };
   h.event(event); const before = h.state; h.event(event); assert.deepEqual(h.state, before);
+  assert.equal(h.state.tasks[1].reviewEntry, 1);
+  h.event({ ...event, id: 'still-waiting' }); assert.equal(h.state.tasks[1].reviewEntry, 1);
   assert.throws(() => h.event({ ...event, task: task(2) }), /another payload/);
 });
 test('show keeps exclusive admission while waiting for S7; no merge before accepted review', () => {
@@ -133,6 +135,22 @@ test('expired lease and clean rebase retain accepted patch review without a new 
   h.event({ type: 'synchronized', issue: 1, token: next, expectedBase: A, materialSha: nextSha, patchId: B });
   h.event({ type: 's6-complete', issue: 1, token: next, materialSha: nextSha, outcome: 'passed' });
   assert.equal(h.state.active.phase, 'ready-to-merge'); assert.equal(h.state.active.reviewRequest, 'review:same-patch');
+  assert.equal(h.state.tasks[1].reviewEntry, 1);
+});
+
+test('pending review and its retry allowance survive automatic continuation and clean rebase', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'review:existing-round' });
+  h.event({ type: 'review-retry', issue: 1, token, requestId: 'review:existing-round', runId: 1, runAttempt: 1 });
+  const retry = h.state.tasks[1].reviewRetry;
+  h.time(201); h.event({ type: 'expire' }); h.event({ type: 'admit' });
+  const next = h.state.active.token, nextSha = 'c'.repeat(40);
+  h.event({ type: 'resynchronize', issue: 1, token: next });
+  h.event({ type: 'synchronized', issue: 1, token: next, expectedBase: A, materialSha: nextSha, patchId: B });
+  h.event({ type: 's6-complete', issue: 1, token: next, materialSha: nextSha, outcome: 'passed' });
+  assert.equal(h.state.active.phase, 'review'); assert.equal(h.state.active.reviewRequest, 'review:existing-round');
+  assert.equal(h.state.tasks[1].reviewEntry, 1); assert.deepEqual(h.state.tasks[1].reviewRetry, retry);
 });
 
 test('departed sync and testing executors leave the queue until they explicitly submit ready again', () => {

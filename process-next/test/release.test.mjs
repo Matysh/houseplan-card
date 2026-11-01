@@ -278,8 +278,15 @@ async function returnFixture(t, { conflict = false } = {}) {
 test('a clean return merge reuses published review; extra code or a local-only tag does not', async t => {
   const f = await returnFixture(t), input = { task: f.task, expectedBase: f.expectedBase, materialSha: f.materialSha, patchId: D };
   const before = { head: await f.git(['rev-parse', 'HEAD']), status: await f.git(['status', '--porcelain']) };
-  assert.deepEqual(await f.adapter.publishedReturnReview(input), { source: 'published-release', sourceSha: f.task.mergeSourceSha,
-    tag: 'v1', verdict: 'accepted', patchId: D, materialSha: f.materialSha });
+  // Exercise the actual installed Git: old versions take the ordinary-review path.
+  let supportsMergeTree = true;
+  try { await f.git(['merge-tree', '--write-tree', f.expectedBase, f.task.mergeSourceSha]); }
+  catch (error) {
+    assert.match(error.stderr, /unknown option|unrecognized option|usage: git merge-tree/i);
+    supportsMergeTree = false;
+  }
+  assert.deepEqual(await f.adapter.publishedReturnReview(input), supportsMergeTree ? { source: 'published-release', sourceSha: f.task.mergeSourceSha,
+    tag: 'v1', verdict: 'accepted', patchId: D, materialSha: f.materialSha } : null);
   assert.deepEqual({ head: await f.git(['rev-parse', 'HEAD']), status: await f.git(['status', '--porcelain']) }, before);
   assert.equal(await f.adapter.publishedReturnReview({ ...input, task: { ...f.task, mergeSourceSha: f.expectedBase } }), null);
   await f.git(['tag', 'local-only', f.task.mergeSourceSha]);
@@ -293,4 +300,23 @@ test('manual release-return conflict resolution still requires its own review', 
   await f.adapter.assertAncestor(f.task.mergeSourceSha, f.materialSha);
   assert.equal(await f.adapter.publishedReturnReview({ task: f.task, expectedBase: f.expectedBase, materialSha: f.materialSha, patchId: D }), null);
   assert.equal(await f.git(['status', '--porcelain']), '');
+});
+
+test('unavailable merge-tree declines reuse while remote and required Git failures remain visible', async () => {
+  const input = { task: { syncMode: 'merge', mergeSourceSha: A, releaseTag: 'v1' }, expectedBase: B, materialSha: C, patchId: D };
+  for (const failure of [Object.assign(Error('unknown option: --write-tree'), { code: 128 }), Object.assign(Error('merge conflict'), { code: 1 }), Error('merge-tree unavailable')]) {
+    const adapter = new ReleaseGitAdapter({ cwd: '.' });
+    adapter.ensureCommit = adapter.assertAncestor = async () => {};
+    adapter.git = async args => {
+      if (args[0] === 'ls-remote') return `${A}\trefs/tags/v1`;
+      if (args[0] === 'merge-tree') throw failure;
+      throw Error(`Unexpected Git command: ${args[0]}`);
+    };
+    assert.equal(await adapter.publishedReturnReview(input), null);
+    adapter.git = async () => { throw Error('remote unavailable'); };
+    await assert.rejects(adapter.publishedReturnReview(input), /remote unavailable/);
+    adapter.git = async args => args[0] === 'ls-remote' ? `${A}\trefs/tags/v1` : C;
+    adapter.assertAncestor = async () => { throw Object.assign(Error('object database unreadable'), { code: 128 }); };
+    await assert.rejects(adapter.publishedReturnReview(input), /object database unreadable/);
+  }
 });

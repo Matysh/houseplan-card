@@ -102,7 +102,13 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       const decision = state.ownerDecisions?.[task.issue];
       const authority = decision ? { ownerAssigned: true, ownerDecision: decision } : { ownerAssigned: false, ownerDecision: null };
       state.tasks[task.issue] = { ...existing, ...copy(task), ...authority, ticket: existing?.queued ? existing.ticket : state.nextTicket++, queued: true,
-        status: 'S6-in-progress', readyAt: existing?.queued ? existing.readyAt : now };
+        status: 'S6-in-progress', readyAt: existing?.queued ? existing.readyAt : now,
+        reviewEntry: (existing?.reviewEntry ?? 0) + (existing?.queued ? 0 : 1) };
+      // Only an explicit new entry grants a new review request after an exhausted round.
+      // Automatic continuation and duplicate ready delivery keep their existing request.
+      if (!existing?.queued && existing?.review?.verdict !== 'accepted') {
+        delete state.tasks[task.issue].reviewRequest; delete state.tasks[task.issue].reviewMaterial; delete state.tasks[task.issue].reviewRetry;
+      }
       clearAutomation(state.tasks[task.issue]); delete state.tasks[task.issue].continuation;
       delete state.tasks[task.issue].reason;
       break;

@@ -62,8 +62,8 @@ export async function handleGithubEvent({ event, issue, queue, ownerDecision, ac
 
 export async function reconcileSpecReview({ queue, api, git, issue, requestReview, readReviewResult, eventId, activated = false }) {
   if (stopped(issue) || issueStatus(issue) !== 'S4-spec-review') return { action: 'unchanged' };
-  const initial = (await queue.store.read()).state, explicit = initial.ownerDecisions?.[issue.number];
-  const track = installedTrack(issue) ?? explicit?.track ?? 'show';
+  // Reaching S4 without a track must not silently waive the requested spec review.
+  const track = installedTrack(issue) ?? 'ask';
   if (track !== 'ask') {
     if (activated) await api.moveStatus(issue.number, 'S5-ready', issue.labels);
     return { action: 'spec-not-required', planned: !activated, reason: `installed-${track}` };
@@ -79,7 +79,8 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
   }
   const base = saved?.requestId === requestId ? saved.base : await git.remoteHead(git.dev);
   const decision = state.ownerDecisions?.[issue.number];
-  const task = { issue: issue.number, track, ownerAssigned: !!decision, ownerDecision: decision };
+  const task = { issue: issue.number, track, ownerAssigned: !!decision, ownerDecision: decision,
+    ...(saved?.requestId === requestId && saved.retry ? { reviewRetry: { ...saved.retry, requestId } } : {}) };
   const context = { kind: 'spec', requestId, active: { issue: issue.number, materialSha: base, expectedBase: base, patchId: contextDigest }, task };
   if (saved?.requestId !== requestId) await queue.dispatch({ id: `${eventId}:spec-request`, type: 'spec-requested', issue: issue.number,
     request: { requestId, contextDigest, base } });
@@ -172,7 +173,7 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
       const context = { active, task, kind: 'code' };
       if (!active.reviewRequest) {
         if (!requestReview) return { action: 'review-required', active, task };
-        const requestId = task.reviewRequest ?? `review:${active.issue}:${active.patchId ?? active.materialSha}:${active.expectedBase}`;
+        const requestId = task.reviewRequest ?? `review:${active.issue}:${task.reviewEntry ?? 1}:${active.patchId ?? active.materialSha}:${active.expectedBase}`;
         const state = await dispatch('review-requested', { materialSha: active.materialSha, requestId });
         await requestReview({ ...context, requestId }); return { action: 'review-requested', state };
       }

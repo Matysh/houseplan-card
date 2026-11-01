@@ -216,6 +216,26 @@ test('track initialization adds only a missing label and never changes an instal
   await initializeMissingTrack(api, issue, 'show'); assert.equal(writes.length, 1);
 });
 
+test('coordinator label events never assign a missing track; S4 still requests spec review', async () => {
+  for (const status of ['S4-spec-review', 'S8-merged']) {
+    const h = queueHarness(); h.issue.labels = [status];
+    h.dependencies.api.request = async () => { throw Error('Coordinator must not write a track label'); };
+    h.dependencies.review.readReviewResult = async () => ({ missing: true });
+    const result = await h.command('label', { track: 'ship' });
+    assert.equal(result.action, status === 'S4-spec-review' ? 'spec-review-requested' : 'reconcile');
+    assert.deepEqual(h.issue.labels, [status]);
+    assert.deepEqual(h.actions, status === 'S4-spec-review' ? ['review'] : []);
+  }
+});
+
+test('executor ready may initialize the missing ship label explicitly', async () => {
+  const h = queueHarness(); h.issue.labels = ['S6-in-progress']; const writes = [];
+  h.dependencies.api.request = async (method, url, body) => { writes.push({ method, url, body }); h.issue.labels.push(...body.labels); };
+  await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'product', track: 'ship' });
+  assert.deepEqual(writes.map(write => write.body), [{ labels: ['track:ship'] }]);
+  assert.equal((await h.store.read()).state.tasks[1].track, 'ship');
+});
+
 test('release return binds computed Git proof, never a caller-supplied review exemption', async () => {
   for (const clean of [true, false]) {
     const h = queueHarness();
