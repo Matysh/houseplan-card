@@ -3,5 +3,5 @@
   "issue": 1185,
   "baseStable": "v1.83.0",
   "category": "infra",
-  "rationale": "Only the existing General Settings smoke observer waits for accepted finite UI Kit enter paint before measuring the unchanged exact44px targets. No product, fixture, pin, tolerance, animation, data or baseline changes."
+  "rationale": "Only existing General Settings, native permission and accepted-UI smoke observers await real finite modal enter paint, including shadow roots. Exact44px targets, actual intermediate exit frames and all original state/authority/persistence assertions remain. No product, fixture, helper, pin, tolerance, animation, data or baseline changes."
 }

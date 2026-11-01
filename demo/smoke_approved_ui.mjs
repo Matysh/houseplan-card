@@ -1,5 +1,6 @@
 /** #1119: accepted UI contracts through public HA fixtures and native input. */
 import assert from 'node:assert/strict';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, requirePinnedBrowser, check, finish } from './serve.mjs';
 import { installDeviceOfflineFixture, readDeviceOfflinePaint, setDeviceOfflineStates,
@@ -29,11 +30,6 @@ const width = async value => {
   }, value);
   await settled();
 };
-const finiteAnimations = async locator => locator.evaluate(async node => {
-  await Promise.allSettled(node.getAnimations({ subtree: true })
-    .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
-    .map(animation => animation.finished));
-});
 const setMode = async mode => { await page.evaluate(mode => window.__hpTest.setMode(mode), mode); await settled(); };
 const record = (name, value) => { observations[name] = value; return value; };
 
@@ -52,7 +48,7 @@ try {
   const lamp = card.locator('[data-hp="device"][data-id="d_light1"]');
   await lamp.hover(); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up();
   const info = card.locator('hp-dialog[data-kind="info"]');
-  await info.waitFor(); await finiteAnimations(info);
+  await info.waitFor(); await waitForUiKitPaint(page);
   assert.deepEqual(await info.evaluate(dialog => ({
     shell: dialog.hasAttribute('form-shell'), settings: dialog.hasAttribute('settings-layout'),
     compact: dialog.hasAttribute('compact'), subtitle: !!dialog.shadowRoot.querySelector('.subtitle')?.textContent.trim(),
@@ -71,7 +67,7 @@ try {
   for (const via of ['x', 'escape', 'cancel']) {
     await card.locator('.summary-control button').first().click();
     const summary = card.locator('hp-dialog[data-kind="summary"]');
-    await summary.waitFor(); await finiteAnimations(summary);
+    await summary.waitFor(); await waitForUiKitPaint(page);
     assert.equal(await summary.evaluate(node => node.matches('[form-shell][settings-layout][compact]')), true);
     assert.equal(await summary.locator('.header').evaluate(node => Math.round(node.getBoundingClientRect().height)), 78);
     const kit = await summary.evaluate(node => {
@@ -402,7 +398,7 @@ try {
     }
     await card.locator('.summary-control button').first().click();
     const summary = card.locator('hp-dialog[data-kind="summary"]');
-    await summary.waitFor(); await finiteAnimations(summary);
+    await summary.waitFor(); await waitForUiKitPaint(page);
     const composition = await summary.evaluate(node => {
       const body = getComputedStyle(node.querySelector('.summary-editor'));
       const inputs = [...node.querySelectorAll('input[type="text"]')].map(input => { const css = getComputedStyle(input);
@@ -424,7 +420,7 @@ try {
     await page.keyboard.press('Escape'); await summary.waitFor({ state: 'detached' });
     const target = card.locator('[data-hp="device"][data-id="d_light1"]');
     await target.hover(); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up();
-    await info.waitFor(); await finiteAnimations(info);
+    await info.waitFor(); await waitForUiKitPaint(page);
     const infoComposition = await info.evaluate(node => ({ footerGap: getComputedStyle(node.querySelector('.infofooter')).gap,
       padding: getComputedStyle(node.querySelector('.body')).padding,
       header: Math.round(node.shadowRoot.querySelector('.header').getBoundingClientRect().height) }));
