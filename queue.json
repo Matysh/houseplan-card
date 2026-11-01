@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 358,
+  "revision": 359,
   "nextTicket": 38,
   "nextFence": 38,
   "tasks": {
@@ -114,7 +114,7 @@
       "ownerDecision": null,
       "ticket": 37,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793570590158,
       "reviewEntry": 1,
       "patchId": "41f42704a08db9ccf4cf946dbf6d807f7e1e9223",
@@ -139,7 +139,14 @@
         "docs/analysis/optimize-preflight-1172-2026-11-02/summary.json",
         "process-next/test/optimize-preflight-research.test.mjs",
         "scripts/analyze-optimize-preflight.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261101T220325402-a0eb70ab",
+        "reportPath": "/home/matysh/hp-wall-face-20261031-analysis/.git/process-next/runs/20261101T220325402-a0eb70ab/report.json",
+        "materialSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
+        "status": "passed",
+        "finishedAt": "2026-11-01T22:03:25.790Z"
+      }
     },
     "1175": {
       "issue": 1175,
@@ -389,9 +396,9 @@
     "fence": 37,
     "materialSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
     "expectedBase": "01d81fc7c02e496c9f15983ab7963f8d19cdd2e6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793570593105,
-    "expiresAt": 1793570902002,
+    "expiresAt": 1793574206424,
     "patchId": "41f42704a08db9ccf4cf946dbf6d807f7e1e9223"
   },
   "events": {
@@ -437,6 +444,10 @@
     },
     "finish:16e3de7c-c897-48c9-b567-2db070c06872:finish:2:synchronized": {
       "digest": "6270153f59f9c4a1d37310a39e0bfa856d120f621be5870e495501a2e4a95956",
+      "issue": 1172
+    },
+    "finish:16e3de7c-c897-48c9-b567-2db070c06872:finish:3:s6-complete": {
+      "digest": "ca0b24cf7cec49ff6c853838cb8055f2b270cb214fa6475b67266c34b31259f6",
       "issue": 1172
     }
   },
