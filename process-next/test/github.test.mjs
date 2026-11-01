@@ -69,6 +69,26 @@ test('missing state branch is not silently initialized and a read uses the obser
     observed = ref; return { sha: B, encoding: 'base64', content: Buffer.from(JSON.stringify(initialQueueState())).toString('base64') }; } });
   const value = await store.read(); assert.equal(observed, A); assert.equal(value.version.blobSha, B);
 });
+
+test('state initialization publishes only its JSON, without inheriting source workflows', async () => {
+  for (const [branch, path] of [['process-state', 'queue.json'], ['process-release-state', 'releases.json']]) {
+    const writes = [], client = { activated: true, root: '/repos/o/r',
+      getRef: async () => { throw new GitHubError(404, 'missing'); },
+      request: async (method, url, body) => { writes.push({ method, url, body }); return { sha: url.endsWith('/trees') ? A : B }; },
+      createRef: async (name, commit) => { writes.push({ name, commit }); return { object: { sha: commit } }; } };
+    const store = new GitHubQueueStore(client, { branch, path });
+    await store.initialize({ baseSha: A, confirmed: true });
+    assert.equal(writes[0].body.base_tree, undefined);
+    assert.deepEqual(writes[0].body.tree.map(row => row.path), [path]);
+    assert.deepEqual(JSON.parse(writes[0].body.tree[0].content), initialQueueState());
+    assert.deepEqual(writes[1].body.parents, [A]);
+    assert.equal(writes[1].body.tree, A);
+    assert.deepEqual(writes[2], { name: branch, commit: B });
+    client.getRef = async () => ({ object: { sha: B } }); writes.length = 0;
+    await assert.rejects(store.initialize({ baseSha: A, confirmed: true }), /already exists/);
+    assert.deepEqual(writes, []);
+  }
+});
 test('publication evidence checks the actual tag commit and downloaded bytes', async () => {
   const bytes = Buffer.from('artifact'), client = new GitHubClient({ owner: 'o', repo: 'r', fetchImpl: async url => {
     if (url.includes('/releases/tags/')) return response({ id: 1, tag_name: 'v1', draft: false, assets: [{ id: 2, name: 'houseplan.zip' }] });
