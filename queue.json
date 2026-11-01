@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 56,
+  "revision": 57,
   "nextTicket": 8,
   "nextFence": 8,
   "tasks": {
@@ -51,38 +51,20 @@
     },
     "1187": {
       "issue": 1187,
+      "branch": "codex/finish-completion-race",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/finish-completion-race",
-      "materialSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 7,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793555506909,
-      "reviewEntry": 2,
-      "patchId": "c99a51656c848292b3080c9adadc39d10363895f",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/cli.mjs",
-        "process-next/lib/catalog.mjs",
-        "process-next/remote.mjs",
-        "process-next/test/catalog.test.mjs",
-        "process-next/test/remote.test.mjs"
-      ],
-      "notice": {
-        "key": "1:fix-infra-profile-inference",
-        "reason": "fix-infra-profile-inference",
-        "status": "delivered"
+      "status": "S8-merged",
+      "mergedSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
+      "mergedAt": 1793555531142,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261101T175157237-9e53d121",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T175157237-9e53d121/report.json",
-        "materialSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
-        "status": "passed",
-        "finishedAt": "2026-11-01T17:52:05.557Z"
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -98,74 +80,11 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1187,
-    "worker": "finish",
-    "token": "7:finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2:finish:1:admit",
-    "fence": 7,
-    "materialSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
-    "expectedBase": "ce45c22f574810a9cde0467b1158affc0b03063e",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793555509833,
-    "expiresAt": 1793559126538,
-    "patchId": "c99a51656c848292b3080c9adadc39d10363895f"
-  },
+  "active": null,
   "events": {
-    "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d": {
-      "digest": "fae2703437c100187e35305e17aa53127417f770765ab4f520af751df7022e13",
-      "issue": 1187
-    },
-    "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d:finish:1:admit": {
-      "digest": "3df30d6c51b234e9c180678acc11822b1d65fd9f9d26b5f83baee31557548045",
-      "issue": 1187
-    },
-    "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d:finish:2:synchronized": {
-      "digest": "9081c91e5095166e2796674683db7d8f10631df150cbea9733d825f8e402bdb7",
-      "issue": 1187
-    },
-    "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d:finish:3:automation-pending": {
-      "digest": "add1fbda57f0ae3a4caae710f210901f28a058439816010c07c7e568a83a00aa",
-      "issue": 1187
-    },
-    "finish:848a5ce7-3c59-4004-acf7-6d6e0100d83f": {
-      "digest": "ee34f9850ab3184875f7d17cbc3298f40920cbff56122764460e0819400b67f6",
-      "issue": 1187
-    },
-    "finish:47d2c067-7538-406c-a39e-eb5f815ec9d8": {
-      "digest": "ef4d4dd7cbe0cf3ac9c2bf9e185d7e612ee58258675a35d7898df64f8265392e",
-      "issue": 1187
-    },
-    "finish:b59de5e0-0755-4039-a433-20de54f9e5a3": {
-      "digest": "238202de5abbfa16a9e8b6a22e88064019bb8695a4d913d6e363a328b265eed2",
-      "issue": 1187
-    },
-    "1187-profile-fix": {
-      "digest": "af39e58222981b7a0b047298c773d8cef7de5390f1692ce83ae9cdae4285fb5d",
-      "issue": 1187
-    },
     "github:41333465147:1:label:spec-request": {
       "digest": "9e3159668d076228e2dffa412d98abbc943bc0d55b3d68a91948c454633d083f",
       "issue": 1184
-    },
-    "github:41333465147:1:completions:metadata:a4e37ff3-20b6-4cda-839a-2832d106780d:task-notice:1187::": {
-      "digest": "bfcc384d1a54397a97ec2795696ef5156745e64bb6a939a6ab4fe4e67caa1832",
-      "issue": 1187
-    },
-    "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2": {
-      "digest": "cb661d9964222dabe60819e7216d96ad1cfbcabfaa6eb676cd9cda83820c8aee",
-      "issue": 1187
-    },
-    "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2:finish:1:admit": {
-      "digest": "7a05ca42a06a421feb56cb7888494b926e9e73159e7733d8cd749adaccb4938b",
-      "issue": 1187
-    },
-    "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2:finish:2:synchronized": {
-      "digest": "1072154a7ade9e7a570cf64d00b87cb1d3ee3a35ed70d48973f355cc4a26a938",
-      "issue": 1187
-    },
-    "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2:finish:3:s6-complete": {
-      "digest": "a44c38905df2ef8af87d3ddde1227d63ad5b3d5e20f9cb2541e38e0938392c06",
-      "issue": 1187
     }
   },
   "devWebhook": {
