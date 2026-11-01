@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 454,
-  "nextTicket": 47,
+  "revision": 455,
+  "nextTicket": 48,
   "nextFence": 47,
   "tasks": {
     "1128": {
@@ -491,6 +491,20 @@
         "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
       }
     },
+    "1199": {
+      "issue": 1199,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/ha-lab-stable-loopback",
+      "materialSha": "56f9226802eb8bfa25bdf4f1c6bfff9fd795f5c6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 47,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793573399443,
+      "reviewEntry": 1
+    },
     "1201": {
       "issue": 1201,
       "branch": "codex/catalog-negative-metadata",
@@ -583,7 +597,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1199
+  ],
   "active": {
     "issue": 1197,
     "worker": "github-coordinator",
@@ -730,6 +746,19 @@
         "materialSha": "2df013c2c4b49fd185a036c4ee4572502b5b4922",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5": {
+      "digest": "f836b91cb5816cc958e9d6deac1e1df3681f7af2e1585a1ea14673b5a64dbd51",
+      "issue": 1199,
+      "message": {
+        "kind": "queued",
+        "issue": 1199,
+        "at": 1793573399443,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "56f9226802eb8bfa25bdf4f1c6bfff9fd795f5c6"
       }
     }
   },
