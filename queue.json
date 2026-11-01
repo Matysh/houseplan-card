@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 417,
+  "revision": 418,
   "nextTicket": 45,
   "nextFence": 44,
   "tasks": {
@@ -405,14 +405,24 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/geometry-ci-corpus",
-      "materialSha": "6854fe99aa8808baacefc110a9565f253feff4b1",
+      "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 43,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793572985803,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "5b17bee2120a3bb4c5a9f526a944045273b0bc73",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/catalog.mjs",
+        "process-next/test/catalog.test.mjs",
+        "scripts/node-editor-bundle-budget.mjs",
+        "test/fixtures/845-wall-corpus-identities.json",
+        "test/wall-node-bundle.test.mjs"
+      ]
     },
     "1197": {
       "issue": 1197,
@@ -497,11 +507,12 @@
     "worker": "finish",
     "token": "43:finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81:finish:1:admit",
     "fence": 43,
-    "materialSha": "6854fe99aa8808baacefc110a9565f253feff4b1",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
+    "expectedBase": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
+    "phase": "testing",
     "admittedAt": 1793572991094,
-    "expiresAt": 1793573291094
+    "expiresAt": 1793573298885,
+    "patchId": "5b17bee2120a3bb4c5a9f526a944045273b0bc73"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -519,6 +530,10 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
+    },
+    "finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81:finish:2:synchronized": {
+      "digest": "e8ef043d6d261ed2c234e9f000e724e79146b48edfd93f479038b500a653cb40",
+      "issue": 1196
     },
     "finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81": {
       "digest": "16dcd61372b7bffb30803d98a57cdb917e654c7daa26b439fbaa01fb16f5acaf",
