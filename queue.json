@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 20,
+  "revision": 21,
   "nextTicket": 4,
   "nextFence": 4,
   "tasks": {
@@ -60,18 +60,7 @@
   },
   "ownerDecisions": {},
   "specReviews": {},
-  "reviewPublications": {
-    "code:1176:review:1176:3:f5650ed2bff7868998008fcee4164c14158fe535:5862a1713ce034e232581004c262860b48a0ca52": {
-      "issue": 1176,
-      "kind": "code",
-      "requestId": "review:1176:3:f5650ed2bff7868998008fcee4164c14158fe535:5862a1713ce034e232581004c262860b48a0ca52",
-      "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
-      "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
-      "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
-      "runId": 41330136686,
-      "status": "pending"
-    }
-  },
+  "reviewPublications": {},
   "waiting": [],
   "active": null,
   "events": {
@@ -153,6 +142,10 @@
     },
     "1176-artifact-media-20261101-reconcile:return": {
       "digest": "6e3b7fca4a526dee6228298f8a093952b427c496a475cb3c12dd0a457a205fea",
+      "issue": 1176
+    },
+    "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:review-presentation:1176:code:d2c48316f8614413a173": {
+      "digest": "37565db47c68f782074952320073cd14d24af418558367968443f1fabe0469a1",
       "issue": 1176
     }
   }
