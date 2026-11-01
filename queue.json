@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 436,
+  "revision": 437,
   "nextTicket": 46,
   "nextFence": 45,
   "tasks": {
@@ -467,7 +467,18 @@
         "demo/smoke_canvas_surface_gestures.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793573258281,
+        "entry": 1,
+        "detail": "Браузер: canvas surface gestures: failed",
+        "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
+      }
     }
   },
   "ownerDecisions": {},
@@ -533,18 +544,7 @@
   "waiting": [
     1197
   ],
-  "active": {
-    "issue": 1198,
-    "worker": "finish",
-    "token": "44:finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:1:admit",
-    "fence": 44,
-    "materialSha": "535befc0ee4f51c7355f2c09feb7e87bab0c5689",
-    "expectedBase": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
-    "phase": "testing",
-    "admittedAt": 1793573167896,
-    "expiresAt": 1793573524801,
-    "patchId": "2e3f73fa730febd4f11cca8280e3302d26ece47a"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -580,6 +580,10 @@
     },
     "finish:a31f31f3-46d9-47b5-8b32-2106a7e7e1d4": {
       "digest": "e47545b1823333bbccdf68792846984c5809bd71c836b74d66cfd3058623c439",
+      "issue": 1198
+    },
+    "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return": {
+      "digest": "9c185e111460efb787f68e60a02fe3b760383c05e59843ee931c2fd652e082cb",
       "issue": 1198
     },
     "finish:1f8a83b7-860c-4058-aa32-5231f78c6590": {
@@ -635,6 +639,26 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb"
+      }
+    },
+    "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198": {
+      "digest": "9c185e111460efb787f68e60a02fe3b760383c05e59843ee931c2fd652e082cb",
+      "issue": 1198,
+      "message": {
+        "kind": "return",
+        "issue": 1198,
+        "at": 1793573258281,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793573258281,
+          "entry": 1,
+          "detail": "Браузер: canvas surface gestures: failed",
+          "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
+        }
       }
     }
   },
