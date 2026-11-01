@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 141,
+  "revision": 142,
   "nextTicket": 18,
   "nextFence": 18,
   "tasks": {
@@ -17,7 +17,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793563465220,
       "reviewEntry": 2,
-      "patchId": "27b6efa99f80284b3a1af424936e017b5eb8648e",
+      "patchId": "df853c66f6ec05bc9504fbb04ed2d09995482bae",
       "changedFiles": [
         "demo/smoke_room_area_touch.mjs",
         "docs/CHANGELOG.md",
@@ -165,10 +165,11 @@
     "token": "17:finish:18b8190e-59c2-49ec-93cc-c870ee48e6c5:finish:1:admit",
     "fence": 17,
     "materialSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
+    "phase": "testing",
     "admittedAt": 1793563468111,
-    "expiresAt": 1793563768111
+    "expiresAt": 1793563772934,
+    "patchId": "df853c66f6ec05bc9504fbb04ed2d09995482bae"
   },
   "events": {
     "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150": {
@@ -209,6 +210,10 @@
     },
     "finish:18b8190e-59c2-49ec-93cc-c870ee48e6c5:finish:1:admit": {
       "digest": "44385a3a75a42c4eb8758f11aa085d8285ceac8a22fa47ece1d80c2350d6b808",
+      "issue": 1128
+    },
+    "finish:18b8190e-59c2-49ec-93cc-c870ee48e6c5:finish:2:synchronized": {
+      "digest": "857cc85dff285cb703643c791c9515c9b1ac4bf260235077ed1eba53cc50bab7",
       "issue": 1128
     }
   },
