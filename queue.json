@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 228,
+  "revision": 229,
   "nextTicket": 26,
   "nextFence": 25,
   "tasks": {
@@ -64,7 +64,7 @@
       "ownerDecision": null,
       "ticket": 24,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793566654117,
       "reviewEntry": 3,
       "patchId": "e5fa187f93b5363e9f605d35b650e6a14107d092",
@@ -85,6 +85,13 @@
         "key": "2:fix-generated-report-location",
         "reason": "fix-generated-report-location",
         "status": "delivered"
+      },
+      "s6": {
+        "id": "20261101T205847148-f308b6db",
+        "reportPath": "/home/matysh/hp-1117-dreame-history-20261028/.git/process-next/runs/20261101T205847148-f308b6db/report.json",
+        "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
+        "status": "passed",
+        "finishedAt": "2026-11-01T20:59:46.618Z"
       }
     },
     "1176": {
@@ -307,9 +314,9 @@
     "fence": 24,
     "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
     "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793566718781,
-    "expiresAt": 1793567076558,
+    "expiresAt": 1793570389001,
     "patchId": "e5fa187f93b5363e9f605d35b650e6a14107d092"
   },
   "events": {
@@ -587,6 +594,10 @@
         "layer": "infra",
         "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076"
       }
+    },
+    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:3:s6-complete": {
+      "digest": "6b647528fcb049fe71e6808e36b1bf71658cc9b5bc58fed8d77412ed5a6e7c41",
+      "issue": 1175
     }
   },
   "devWebhook": {
