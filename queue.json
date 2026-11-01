@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 146,
+  "revision": 147,
   "nextTicket": 18,
   "nextFence": 18,
   "tasks": {
@@ -32,7 +32,7 @@
       "notice": {
         "key": "1:Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
         "reason": "Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
-        "status": "pending"
+        "status": "delivered"
       },
       "s6": {
         "id": "20261101T200435759-86d75243",
@@ -244,6 +244,10 @@
     },
     "finish:18b8190e-59c2-49ec-93cc-c870ee48e6c5:finish:4:review-requested": {
       "digest": "e2a3cd9e6acaada98faa81e8030f133a03e83d131667c053f58ab07f1e753605",
+      "issue": 1128
+    },
+    "github:41345159968:1:completions:metadata:494e66c2-efd8-45bb-81d8-b92e6b21dd7f:task-notice:1128::": {
+      "digest": "d79e8c8f8b0fcfebe15364e6c7fc65159643c8d5fbaa0ad8a0353fdd52820ec3",
       "issue": 1128
     }
   },
