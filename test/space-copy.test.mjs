@@ -83,7 +83,7 @@ test('#876: space copy retains explicit LQI mode and leaves installation default
 test('#456 copies the complete allowed physical surface without room or device ownership', () => {
   const input = fixture();
   const before = structuredClone(input);
-  const result = createSpaceCopyCandidate(input, 'source', '  My copy  ', 'seed');
+  const result = createSpaceCopyCandidate(input, 'source', '  My copy  ', 'seed', { furniture: true, decor: true });
   const copy = result.space;
 
   assert.deepEqual(input, before, 'preview must be immutable');
@@ -181,4 +181,35 @@ test('#456 the large-house floor keeps every wall and opening after Optimize', (
   );
   assert.equal(result.space.openings.length, source.openings.length);
   assert.ok(result.space.openings.every((opening) => opening.host.kind === 'partition'));
+});
+
+
+test('#1156 copies four independent furniture/decor combinations, preserving order, fields and source', () => {
+  const input = fixture();
+  input.spaces[1].decor = [
+    { id: 'chair', kind: 'furniture', symbol: 'chair', x: .1, y: .2, w: .2, h: .2, flip_h: true },
+    { id: 'line', kind: 'line', x1: 0, y1: 0, x2: .3, y2: .3, color: '#123456' },
+    { id: 'image', kind: 'image', asset_id: 'a'.repeat(64), x: .4, y: .4, w: .2, h: .2, flip_v: true },
+    { id: 'label', kind: 'text', text: '{sensor.temperature}', entity: 'sensor.temperature', x: .2, y: .3 },
+    { id: 'future', kind: 'future-kind', future: { keep: true } },
+  ];
+  const before = structuredClone(input);
+  for (const furniture of [false, true]) for (const decor of [false, true]) {
+    const copy = createSpaceCopyCandidate(input, 'source', 'Copy', 'choices', { furniture, decor }).space;
+    const expected = input.spaces[1].decor.filter(item => item.kind === 'furniture' ? furniture : decor);
+    assert.deepEqual((copy.decor ?? []).map(({ id, ...fields }) => fields), expected.map(({ id, ...fields }) => fields));
+    assert.ok((copy.decor ?? []).every(item => !before.spaces[1].decor.some(source => source.id === item.id)));
+    assert.equal(new Set((copy.decor ?? []).map(item => item.id)).size, expected.length);
+    if (copy.decor?.length) copy.decor[0].kind = 'changed-copy-only';
+    assert.deepEqual(input, before);
+  }
+  assert.equal(createSpaceCopyCandidate(input, 'source', 'Default', 'default').space.decor, undefined);
+});
+
+test('#1156 decor limit applies to the selected output without losing the other category', () => {
+  const input = fixture();
+  input.spaces[1].decor = Array.from({ length: 1001 }, (_, n) => ({ id: `chair${n}`, kind: 'furniture' }));
+  assert.equal(createSpaceCopyCandidate(input, 'source', 'Copy', 'excluded', { decor: true }).space.decor, undefined);
+  assert.throws(() => createSpaceCopyCandidate(input, 'source', 'Copy', 'included', { furniture: true }),
+    error => error instanceof SpaceCopyError && error.code === 'decor_limit');
 });

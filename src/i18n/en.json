@@ -365,6 +365,8 @@
   "space.new": "New space",
   "space.copy_title": "Copy space",
   "space.copy_name": "New space name",
+  "space.copy_furniture": "Copy furniture",
+  "space.copy_decor": "Copy decor",
   "space.copy_fallback": "Space",
   "space.copy_create": "Create copy",
   "space.copy_optimize_title": "Optimize before copying?",

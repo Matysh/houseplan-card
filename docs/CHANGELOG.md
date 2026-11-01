@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Copy space offers independent furniture and decor checkboxes, both initially off, using the existing UI Kit. Selected objects keep their order and fields with new IDs; the source and copy validation/write lifecycle are preserved. [#1156](https://github.com/Matysh/houseplan-card/issues/1156)
+
 - Keep the room Area administration shortcut out of the touch hit plane on screens without hover, preserving stairs, pan and intentional mouse/keyboard navigation. [#1128](https://github.com/Matysh/houseplan-card/issues/1128)
 
 - `finish` recognizes a task already merged by the server coordinator after a queue admission race, reports successful completion immediately, and preserves real admission-loss diagnostics. [#1187](https://github.com/Matysh/houseplan-card/issues/1187)

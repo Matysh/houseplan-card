@@ -22,7 +22,7 @@ function runtimeHarness(overrides = {}) {
   const host = {
     _spaceDialog: {
       mode: 'edit', spaceId: 'source', title: 'unsaved settings title', busy: false,
-      copy: { title: 'Floor (2)', busy: false, token: 0 },
+      copy: { title: 'Floor (2)', furniture: false, decor: false, busy: false, token: 0 },
     },
     _saveConfigDebounced: { pending: () => false, flush: () => events.push('flush-config') },
     _writeChain: Promise.resolve(),
@@ -102,9 +102,16 @@ test('#456 opens a numbered name dialog and Cancel restores the settings dialog'
   });
   openSpaceCopyDialog(host);
   assert.equal(host._spaceDialog.copy.title, 'Floor (3)');
+  assert.equal(host._spaceDialog.copy.furniture, false);
+  assert.equal(host._spaceDialog.copy.decor, false);
+  host._spaceDialog.copy.furniture = true;
+  host._spaceDialog.copy.decor = true;
   closeSpaceCopyDialog(host);
   assert.equal(host._spaceDialog.copy, undefined);
   assert.equal(host._serverCfg.spaces.length, 2, 'opening and cancelling are read-only');
+  openSpaceCopyDialog(host);
+  assert.equal(host._spaceDialog.copy.furniture, false);
+  assert.equal(host._spaceDialog.copy.decor, false);
 });
 
 test('#456 clean input performs one config write with no extra confirmation', async () => {
@@ -251,4 +258,37 @@ test('#866 retiring the dialog while the real lazy optimizer loads stays silent 
   const pending=saveSpaceCopy(host,services);queueMicrotask(()=>{host._spaceDialog=null;});await pending;
   assert.equal(events.includes('config-write'),false);assert.equal(events.includes('houseplan/plan/optimize'),false);
   assert.equal(host._serverCfg.spaces.length,1);assert.deepEqual(toasts,[]);
+});
+
+
+test('#1156 category choices are captured before awaiting writes and copy busy prevents duplicate submission', async () => {
+  const { host, services, events } = runtimeHarness();
+  host._serverCfg.spaces[0].decor = [
+    { id: 'chair', kind: 'furniture', symbol: 'chair', x: .1, y: .1, w: .2, h: .2 },
+    { id: 'text', kind: 'text', x: .5, y: .5, text: 'Original' },
+  ];
+  host._spaceDialog.copy.furniture = true;
+  let release;
+  host._writeChain = new Promise(resolve => { release = resolve; });
+  const saving = saveSpaceCopy(host, services);
+  assert.equal(host._spaceDialog.copy.busy, true);
+  await saveSpaceCopy(host, services);
+  // Even a programmatic draft replacement during the await cannot change this operation's snapshot.
+  host._spaceDialog.copy = { ...host._spaceDialog.copy, furniture: false, decor: true };
+  release();
+  await saving;
+  assert.deepEqual(host._serverCfg.spaces[1].decor.map(item => item.kind), ['furniture']);
+  assert.deepEqual(host._serverCfg.spaces[0].decor.map(item => item.kind), ['furniture', 'text']);
+  assert.equal(events.filter(event => event === 'config-write').length, 1);
+});
+
+test('#1156 refusing Optimize retains both choices for the same operation', async () => {
+  const { host, services } = runtimeHarness({ _confirmDanger: async () => false });
+  host._spaceDialog.copy.furniture = true;
+  host._spaceDialog.copy.decor = true;
+  services.optimize = (config, layout) => ({ config, layout, changed: true, report: {} });
+  await saveSpaceCopy(host, services);
+  assert.equal(host._spaceDialog.copy.furniture, true);
+  assert.equal(host._spaceDialog.copy.decor, true);
+  assert.equal(host._spaceDialog.copy.busy, false);
 });

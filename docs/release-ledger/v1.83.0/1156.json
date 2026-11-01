@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1156,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Adds independent opt-in furniture and other-decor composition choices to space copy, retaining existing geometry, ownership, optimization and persistence."
+}

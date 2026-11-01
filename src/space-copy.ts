@@ -32,6 +32,11 @@ export class SpaceCopyError extends Error {
 type SpaceRecord = Record<string, unknown>;
 type GeometryRecord = Record<string, unknown> & { id: string };
 
+export interface SpaceCopyOptions {
+  furniture?: boolean;
+  decor?: boolean;
+}
+
 export interface SpaceCopyResult {
   config: ServerConfig;
   space: SpaceRecord & { id: string; title: string };
@@ -101,6 +106,7 @@ export function createSpaceCopyCandidate(
   sourceId: string,
   title: string,
   seed: string,
+  options: SpaceCopyOptions = {},
 ): SpaceCopyResult {
   const spaces = input.spaces as SpaceRecord[];
   if (!title.trim()) throw new SpaceCopyError('source_invalid');
@@ -113,7 +119,9 @@ export function createSpaceCopyCandidate(
   const wallSegments = geometryList(source.wall_segments, true);
   const sourcePartitions = geometryList(source.partitions);
   const openings = geometryList(source.openings);
-  const decor = geometryList(source.decor);
+  // The editor classifies furniture by kind; all other decor stays independent.
+  const decor = geometryList(source.decor).filter(item => item.kind === 'furniture'
+    ? options.furniture : options.decor);
   const columns = geometryList(source.wall_columns);
   const stairs = geometryList(source.stairs);
   const partitionCount = wallSegments.length + sourcePartitions.length;

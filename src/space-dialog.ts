@@ -8,6 +8,8 @@ export type SpacePlanSource = 'file' | 'draw';
 
 export interface SpaceCopyDraft {
   title: string;
+  furniture: boolean;
+  decor: boolean;
   busy: boolean;
   token: number;
 }

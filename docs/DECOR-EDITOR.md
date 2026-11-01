@@ -571,3 +571,13 @@ Smokes: `demo/smoke_decor.mjs`, `demo/smoke_decor_text.mjs`,
   (#883, `UX-MODES.md`): a temporary refusal keeps the step, a step that can
   never be restored is removed alone with its name and reason, and the Plan
   steps around it stay available.
+
+## Space copies (#1156)
+
+Copy space exposes two independent choices, both off at each new opening.
+Furniture is exactly kind=furniture, matching the furniture-only selection;
+lines, shapes, text and custom images belong to the other decor choice.
+Device furniture remains a marker and is not copied. Group selection is
+transient, so copying a category does not introduce saved parent/child links.
+Selected objects retain paint order, styles, asset_id and live text references
+with fresh IDs; excluding a category only affects the new space.

@@ -2465,3 +2465,15 @@ Shared header (#1184): both hosts use the same intrinsic phase measurement,
 outlined controls and natural-height boundary. panelHost selects only HA menu,
 routing and container ownership; Lovelace title participates in the common
 measurement. No legacy phone menu or parallel media-breakpoint layout remains.
+
+### Space-copy category choices (#1156)
+
+The existing copy dialog retains two transient booleans in SpaceCopyDraft, both
+false on each new opening. saveSpaceCopy captures them with the title before
+awaiting older writes. createSpaceCopyCandidate filters decor before output
+limits and ID allocation: kind=furniture uses the furniture choice, every other
+kind uses decor. Selected rows retain order, fields and asset/text references
+with fresh IDs and deep copies; source config, markers and layout are unchanged
+by filtering. There are no persisted decor groups. The existing Optimize,
+physical preflight, opening-host remapping and config adoption/rollback path
+remain the only writer; category switches are disabled while that operation runs.

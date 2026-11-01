@@ -66,6 +66,8 @@ export function openSpaceCopyDialog(host: HouseplanEditorHostPort): void {
     ...dialog,
     copy: {
       title: nextSpaceCopyTitle(source.title, host._serverCfg.spaces, host._t('space.copy_fallback')),
+      furniture: false,
+      decor: false,
       busy: false,
       token: 0,
     },
@@ -85,13 +87,19 @@ export function renderSpaceCopyDialog(
   const dialog = host._spaceDialog!;
   const copy = dialog.copy!;
   const close = () => closeSpaceCopyDialog(host);
+  const choose = (key: 'furniture' | 'decor', event: Event) => {
+    const current = host._spaceDialog;
+    if (current?.copy && !current.busy && !current.copy.busy) {
+      host._spaceDialog = { ...current, copy: { ...current.copy, [key]: (event.target as HTMLInputElement).checked } };
+    }
+  };
   return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${host.hass} data-kind="space"
     .title=${host._t('space.copy_title')}
     icon="mdi:content-copy" @hp-close=${close}>
       <div class="body hpf-form">
         <label class="hpf-label" for="space-copy-name">${host._t('space.copy_name')}</label>
         <input id="space-copy-name" class="namein hpf-input" type="text" autofocus
-          .value=${copy.title}
+          .value=${copy.title} ?disabled=${copy.busy}
           @focus=${(event: FocusEvent) => (event.currentTarget as HTMLInputElement).select()}
           @input=${(event: Event) => {
             const current = host._spaceDialog;
@@ -108,6 +116,16 @@ export function renderSpaceCopyDialog(
               submit();
             }
           }} />
+        <label class="hpf-check hpf-check-wrap">
+          <input id="space-copy-furniture" data-hp="field" data-field="space-copy-furniture" type="checkbox"
+            .checked=${copy.furniture} ?disabled=${copy.busy} @change=${(event: Event) => choose('furniture', event)} />
+          ${host._t('space.copy_furniture')}
+        </label>
+        <label class="hpf-check hpf-check-wrap">
+          <input id="space-copy-decor" data-hp="field" data-field="space-copy-decor" type="checkbox"
+            .checked=${copy.decor} ?disabled=${copy.busy} @change=${(event: Event) => choose('decor', event)} />
+          ${host._t('space.copy_decor')}
+        </label>
       </div>
       <div class="row dialog-action-footer" slot="footer">
         <span class="spacer"></span>
@@ -147,6 +165,7 @@ export async function saveSpaceCopy(
   const token = ++operationSequence;
   const sourceId = initial.spaceId;
   const title = initial.copy.title.trim();
+  const options = { furniture: initial.copy.furniture, decor: initial.copy.decor };
   host._spaceDialog = {
     ...initial,
     busy: true,
@@ -216,7 +235,7 @@ export async function saveSpaceCopy(
     if (!setBusy(host, token, true) || !host._serverCfg) return;
     const previous = host._serverCfg;
     const result = createSpaceCopyCandidate(
-      previous, sourceId, title, services.newSeed?.() ?? newSpaceCopySeed(),
+      previous, sourceId, title, services.newSeed?.() ?? newSpaceCopySeed(), options,
     );
     let safe = false;
     try { safe = host._checkSpacePhysicalGeometry(result.config, result.space.id).ok; } catch { safe = false; }

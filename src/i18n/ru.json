@@ -365,6 +365,8 @@
   "space.new": "Новое пространство",
   "space.copy_title": "Копирование пространства",
   "space.copy_name": "Название нового пространства",
+  "space.copy_furniture": "Копировать мебель",
+  "space.copy_decor": "Копировать декор",
   "space.copy_fallback": "Пространство",
   "space.copy_create": "Создать копию",
   "space.copy_optimize_title": "Оптимизировать перед копированием?",
