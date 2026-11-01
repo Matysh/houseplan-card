@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14,
+  "revision": 15,
   "nextTicket": 4,
   "nextFence": 4,
   "tasks": {
@@ -17,7 +17,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793552996664,
       "reviewEntry": 3,
-      "patchId": "27a9dbf79b0f58fe919ecd3e738bc278bedff7b5",
+      "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
       "changedFiles": [
         "demo/smoke_plan_drawing_repairs.mjs",
         "demo/smoke_room_contact_storage.mjs",
@@ -51,10 +51,11 @@
     "token": "3:finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:1:admit",
     "fence": 3,
     "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
+    "phase": "testing",
     "admittedAt": 1793552999700,
-    "expiresAt": 1793553299700
+    "expiresAt": 1793553304904,
+    "patchId": "f5650ed2bff7868998008fcee4164c14158fe535"
   },
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -111,6 +112,10 @@
     },
     "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:1:admit": {
       "digest": "f7e9031eeeb81da917496032c15498f6ab73349d7a56613a6b95cd93b476aff2",
+      "issue": 1176
+    },
+    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:2:synchronized": {
+      "digest": "d11325ae5023b9f7027e7348559a66251b9700cf680f3a9c1bc72b49d284f457",
       "issue": 1176
     }
   }
