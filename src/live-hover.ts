@@ -31,9 +31,11 @@ export interface LiveTip {
 interface HoverState {
   room: unknown;
   space: string;
+  planPaths?: { fillD: string; outlineD: string } | null;
 }
 
 interface LiveHoverHost {
+  _mode: string;
   renderRoot: ParentNode;
   _tip: LiveTip | null;
   _t: (key: 'tip.temp_avg' | 'tip.hum_avg' | 'tip.lqi' | 'space.label_co2') => string;
@@ -296,10 +298,15 @@ export function syncHouseplanHover(value: object): void {
   const previous = states.get(value);
   const space = hover?.space || '';
   const room = hover?.room || null;
-  if (previous?.room === room && previous?.space === space) return;
-  states.set(value, { room, space });
+  // Plan candidates share these SVG painters, but deliberately own no Room.
+  // Memoize their cached paths as well, so a live patch cannot erase a Lit frame.
+  const planModel = host._mode === 'plan' ? host._spaceModel() : null;
+  const planPaths = host._mode === 'plan'
+    ? (planModel ? host._roomHoverPaths(planModel) : null) : undefined;
+  if (previous?.room === room && previous?.space === space && previous?.planPaths === planPaths) return;
+  states.set(value, { room, space, planPaths });
   const model = hover && host._spaceModel();
-  const paths = model ? host._roomHoverPaths(model) : null;
+  const paths = planPaths !== undefined ? planPaths : model ? host._roomHoverPaths(model) : null;
   setRoomPath(root, '[data-hp-live-room-hover="fill"]', paths?.fillD || '');
   setRoomPath(root, '[data-hp-live-room-hover="halo"]', paths?.outlineD || '');
   setRoomPath(root, '[data-hp-live-room-hover="outline"]', paths?.outlineD || '');

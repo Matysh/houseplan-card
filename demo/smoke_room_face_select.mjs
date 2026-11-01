@@ -58,7 +58,7 @@ try{
   }
   await tool('draw');s=await state();check(`contour${i}: tool change clears candidate`,!s.painted&&!s.hover);
   await click(point);s=await state();check(`contour${i}: Walls starts freely inside contour`,s.path===1&&!s.roomDialog&&!s.painted);
-  await click([point[0]+40,point[1]]);await settle();s=await state();
+  await click([point[0]+100,point[1]]);await settle();s=await state();
   check(`contour${i}: Walls continues inside contour`,s.path===2&&!s.roomDialog);
   await history('undo');await page.keyboard.press('Escape');await settle();
   check(`contour${i}: wall Undo preserves original geometry`,equal(geometry((await state()).cfg),geometry(original)));
