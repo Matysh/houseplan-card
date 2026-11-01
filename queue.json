@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 396,
+  "revision": 397,
   "nextTicket": 42,
   "nextFence": 42,
   "tasks": {
@@ -342,14 +342,23 @@
       "track": "ship",
       "layer": "docs",
       "branch": "codex/1194-visible-wsl-policy",
-      "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e",
+      "materialSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 41,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793571895743,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "906aeae93ec4505e9c78134b7d07be9c3f60f3d7",
+      "changedFiles": [
+        "AGENTS.md",
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DEVELOPMENT.md",
+        "docs/process/AUTHOR.md"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -418,11 +427,12 @@
     "worker": "finish",
     "token": "41:finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:1:admit",
     "fence": 41,
-    "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
+    "expectedBase": "bcdc82d590b99b658f16056438e1e97b7f7f0c46",
+    "phase": "testing",
     "admittedAt": 1793571898714,
-    "expiresAt": 1793572198714
+    "expiresAt": 1793572233309,
+    "patchId": "906aeae93ec4505e9c78134b7d07be9c3f60f3d7"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -447,6 +457,10 @@
     },
     "github:41356940782:1:completions:message:68e870022e42dd9cf0b4b4dc30e13ac3e8fa7e381822f64a5a3ecdf7f7d6ba92": {
       "digest": "35b8fb9d6931495a63fe4cad68797ff2bedd80c2240f95e499b56b86b7fb8ff5",
+      "issue": 1194
+    },
+    "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b:finish:2:synchronized": {
+      "digest": "83833fbba159c60b6634a80fbf68b71bcebc7d500c011bbe45088fb2684b25a3",
       "issue": 1194
     },
     "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b": {
