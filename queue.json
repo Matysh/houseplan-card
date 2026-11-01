@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 492,
+  "revision": 493,
   "nextTicket": 50,
   "nextFence": 49,
   "tasks": {
@@ -505,143 +505,24 @@
     },
     "1199": {
       "issue": 1199,
+      "branch": "codex/ha-lab-stable-loopback",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/ha-lab-stable-loopback",
-      "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 47,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793573399443,
-      "reviewEntry": 1,
-      "patchId": "a4048749979905d38c37ee06eea3bb09ff564066",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/lib/e2e.mjs",
-        "process-next/test/e2e.test.mjs"
-      ],
-      "s6": {
-        "id": "20261101T225620514-8c7e93d0",
-        "name": "Тесты для задачи #1199 (перед ревью)",
-        "reportPath": "/home/matysh/hp-wall-face-20261031-analysis/.git/process-next/runs/20261101T225620514-8c7e93d0/report.json",
-        "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-        "status": "passed",
-        "finishedAt": "2026-11-01T22:56:21.740Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "mergedSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
+      "mergedAt": 1793573928448,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1199:1:a4048749979905d38c37ee06eea3bb09ff564066:485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-      "reviewMaterial": {
-        "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-        "expectedBase": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "patchId": "a4048749979905d38c37ee06eea3bb09ff564066"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1199,
-        "requestId": "review:1199:1:a4048749979905d38c37ee06eea3bb09ff564066:485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "kind": "code",
-        "base": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-        "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-        "patchId": "a4048749979905d38c37ee06eea3bb09ff564066",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1199,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1199",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Auxiliary beta fix по поручению владельца общей пачки, infra/show; to_release не ставилась. Полное доказательство B и ограничения сохранены координатору в output/release-batch-20261101/ci-b/ci-b-analysis.md; исходный B не переобъявлен успешным.\n\nРеализация: Node TCP port0 временно выбирает свободный loopback port, socket закрывается, Docker получает именно явный числовой127.0.0.1:PORT:8123. Actual initial mapping должен точно совпасть; этот origin передаётся readiness/Playwright и остаётся для открытой вкладки. До3 попыток только на явные Docker bind collision phrases; reservation-to-bind race не скрыт. После любого failed run сначала ownership inspect и удаление только уникального собственного имени с совпавшим label; не-bind/foreign/inspect error/rm failure/exhaustion не ретраятся и не PASS. Один общий cleanup для partial/normal paths; finally удаляет уже проверенный owned container даже при ошибке сохранения диагностических логов. Endpoint.json содержит только выбранный port/initial/final mapping/code, без env/auth. Текущие timeout480/300s и точные13HA selections не менялись.\n\nАдресные тесты: исходные9tests адаптера плюс9 регрессий, включая реальное Node socket reserve/release, весь fake-adapter pipeline, fixed origin/evidence, collision→owned cleanup→другой port,3 исчерпанных попытки, non-bind отказ, foreign/unknown ownership/rm failure, нулевой/нечисловой port, wrong mapping до readiness, отсутствующий partial container и exception при сборе evidence. Авторский короткий прогон18/18PASS, включая настоящую Playwright discovery без browser/HA. Канонический infra S6 выполняется finish после финального rebase. Product build/backend/browser/full tooling/старый Validate не требуются этой infra правке, S7 только ревью.\n\nDocker в этом WSL не установлен, локальный real HA restart/upgrade не выполнен и не заявлен. Существующие13 реальных HA сценариев, особенно same-tab restart и upgrade от1.83.1, обязательны в полном CI нового candidate C перед beta publication; локальные fakes их не заменяют. Это согласованная граница S6 infra и release proof, не основание объявить текущую B успешной.\n\nРиски/альтернативы: только обновление HA_URL после dynamic restart не спасает origin уже открытой вкладки; увеличение timeout не лечит refused. Нельзя ослаблять ownership, заменять сценарий reload вместо recovery или принимать skipped как PASS. При конфликте выбора порта удалять чужое имя запрещено. Фактический C endpoint evidence позволит увидеть mapping до/после restart. Runtime продукта и пользовательский HA не меняются.\n\nПеред finish перечитаны актуальные AGENTS/PROCESS и commits834850f6f/7cc142bca с revert: текущий итоговый diff этих документов относительно прежнего ad295 отсутствует; своих правок процесса/запускателей в задаче нет. Companion assessment «не надо»: API/ACL/хранение/продуктовые сценарии не меняются; исправляется собственный lab adapter, а существующие restart/upgrade остаются неизменным реальным proof. Координатор владеет companion и получил оценку. Короткие RU/EN changelog включены."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение устраняет причину отказа B. Адаптер больше не запускает собственную HA-лабораторию с анонимным HostPort (`127.0.0.1::8123`), который Docker мог переназначить при `docker restart`. Теперь Docker получает явный числовой `127.0.0.1:PORT:8123`, поэтому origin открытой вкладки и `HA_URL` не меняются после restart и upgrade. Повтор запуска ограничен: не больше 3 попыток и только при явной ошибке bind. Очистка удаляет контейнер только после проверки owner label. Не-bind ошибки, чужой label, ошибка inspect, сбой rm и исчерпание попыток завершаются явной ошибкой. Ожидания 480 и 300 с и выборка из 13 сценариев не менялись. Блокеров нет. Как и указано в ТЗ, реальное подтверждение restart и upgrade даст только полный CI следующего candidate; здесь оно не заявлено и не требуется.",
-          "understanding": "Проблема. Раньше `runE2E` запускал контейнер с `-p 127.0.0.1::8123` и один раз читал `docker port`. Анонимный HostPort при `docker restart` может быть назначен заново. Companion-сценарии и открытая вкладка Playwright продолжают обращаться к старому origin и получают connection refused, хотя HA снова готов.\n\nПосле изменения `reserveLoopbackPort` открывает временный сервер Node на `127.0.0.1:0`, запоминает выделенный порт и закрывает сокет. Затем `docker run` получает явный `-p 127.0.0.1:PORT:8123`. При явном HostPort Docker привязывает тот же порт при каждом старте контейнера, так что origin остаётся постоянным на всё время жизни лаборатории. Начальный `docker port` должен в точности совпасть с `127.0.0.1:PORT`, иначе запуск завершается ошибкой до readiness. В `endpoint.json` сохраняются только `requestedPort` и `initialMapping`, а при очистке дописываются `finalMapping` и `finalMappingCode`.\n\nОкно гонки между закрытием временного сокета и bind в Docker закрывает ограниченный цикл до 3 попыток. После каждого неудачного `docker run` общий `cleanupContainer` выполняет inspect по owner label и вызывает `rm -f` только для своего уникального имени. Отсутствие контейнера (`No such object`) допустимо. Повтор делается только если stderr совпадает с фразой bind collision.\n\nРазобранные пути: успешный запуск; collision с повтором; исчерпание попыток; не-bind ошибка; чужая метка, ошибка inspect и сбой rm; отмена через `signal` во время и между попытками; исключение в `execute`; несовпадение начального mapping; исключение при сборе логов в `finally`; сброс `containerStarted`, исключающий двойную очистку.",
-          "analysis": [
-            {
-              "topic": "Постоянство origin на всё время жизни лаборатории",
-              "assessment": "Подход выбран верно и минимален. Обновлять `HA_URL` после restart бесполезно: открытая вкладка всё равно держит старый origin. Увеличение таймаутов тоже не лечит refused. Явный HostPort убирает переназначение порта на уровне Docker. Совпадение начального mapping проверяется строго, и ошибка возникает до readiness, поэтому неверный origin не попадёт в Playwright.",
-              "evidence": "`process-next/lib/e2e.mjs:241-260`: явный `-p '127.0.0.1:' + port + ':8123'`, проверка `mapping !== '127.0.0.1:' + port`, `env.HA_URL = 'http://' + mapping`, `--timeout=480` без изменений. В репозитории других чтений `docker port`, кроме строк 189 и 255, нет."
-            },
-            {
-              "topic": "Ограниченный повтор и классификация bind collision",
-              "assessment": "Регулярное выражение узкое: `port is already allocated` или `bind` с последующим `address already in use`. Под него попадают обе типичные формулировки Docker (allocator и userland-proxy `listen tcp4 ...: bind: address already in use`). Строка `address already in use` без `bind` намеренно не ретраится, и это покрыто тестом. Гонка между резервированием и bind не скрывается, а явно обрабатывается повтором. Порт проверяется до любого вызова Docker: `0`, отрицательные значения, `65536`, строка и `NaN` отклоняются.",
-              "evidence": "`e2e.mjs:141-143` и `242-254`. Тесты «three bind collisions…», «non-bind launch errors…» и «invalid/anonymous ports…» в `process-next/test/e2e.test.mjs`."
-            },
-            {
-              "topic": "Владение и очистка частично созданного контейнера",
-              "assessment": "Удачное решение, его стоит сохранить: одна функция `cleanupContainer` обслуживает и неудачный старт, и нормальное завершение. Флаг `containerStarted` сбрасывается в начале очистки, поэтому `finally` не повторит inspect или rm после уже выполненной (успешной или упавшей) очистки внутри цикла. Если выброшено исключение во время `docker run` или отмена сработала между попытками, флаг остаётся `true`, и очистку выполняет `finally`. Логи собираются внутри `try/finally`, поэтому `rm` выполняется даже при сбое сбора evidence. Чужая метка, неизвестная ошибка inspect и сбой rm превращаются в ошибку без удаления.",
-              "evidence": "`e2e.mjs:180-201` и `276`. Тесты «bind collision cleans only the labelled partial container…» (проверяет порядок rm перед вторым run и одно и то же имя), «failed bind launch refuses foreign/unknown ownership…», «bind failure with no remaining container…», «an evidence collection exception still removes…»."
-            },
-            {
-              "topic": "Evidence endpoint и приватность",
-              "assessment": "В `endpoint.json` попадают только номер порта, mapping и код возврата. Переменные окружения и авторизационные данные туда не пишутся. Файл сохраняется до проверки mapping, поэтому несовпадение тоже оставляет диагностику. Итоговый mapping при очистке позволит в CI C увидеть, сохранился ли порт после restart.",
-              "evidence": "`e2e.mjs:189-190` и `255-258`. Тест «fixed loopback origin…» проверяет точное содержимое и отсутствие `password|token|authorization`."
-            },
-            {
-              "topic": "Тесты и границы доказательства",
-              "assessment": "Адресные тесты поведенческие: они проверяют сами аргументы `docker run`, `HA_URL` в readiness и Playwright, порядок вызовов и содержимое файлов, а не только факт вызова. Fake executor теперь отражает опубликованный порт, а не жёсткий 45678, поэтому прежний тест владения проверяет фиксированный origin через настоящий `reserveLoopbackPort`. Реальный Docker restart эти тесты не заменяют, и автор этого не утверждает.",
-              "evidence": "Receipt `20261101T225620514-8c7e93d0`: статус passed на материале `c1ab219c`. Автор сообщает 18/18 PASS. Diff тестового файла: `fakeExecutor` отдаёт в `docker port` значение `published`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Ошибка из `finally` может скрыть исходную. Если тело упало (например, таймаут readiness или несовпадение mapping), а затем `cleanupContainer(true)` бросает исключение из-за сбоя rm или inspect, наружу уйдёт только ошибка очистки. Так было и до этого изменения, но теперь в `finally` больше шагов: `docker port`, запись evidence, логи. Можно запоминать исходную ошибку и бросать `AggregateError` или `Error` с `cause`. Цена — несколько строк. Польза — в CI будет видна и причина падения, и проблема очистки.",
-            "Окно между `docker restart` (освобождение и повторный bind порта) и захватом порта посторонним процессом остаётся теоретическим и в рамках задачи не устраняется. Если в CI C `finalMapping` окажется пустым или ошибочным, стоит выводить в отчёт `finalMappingCode` и связь с упавшим сценарием, а не только сохранять файл."
-          ],
-          "boundaries": "Код изучен по исходникам на head `c1ab219c`: `process-next/lib/e2e.mjs` (`runE2E`, `cleanupContainer`, `call`, `executeE2ECommand`) и `process-next/test/e2e.test.mjs`, включая прежние тесты и fake executor. Проверено, что CHANGELOG RU/EN добавлены в Unreleased. Тесты, сборку и Docker я не запускал. Использован receipt S6 `20261101T225620514-8c7e93d0` со статусом passed и заявление автора о 18/18. Реальное поведение Docker 28.0.4 (сохранение явного HostPort при restart, точный текст ошибок bind) взято из общеизвестного поведения Docker и описания в ТЗ, на живом daemon не проверялось. Companion checkout со сценариями restart и upgrade и `scripts/ha.mjs` в этом репозитории не изучались. Реальное подтверждение 13 HA-сценариев остаётся за полным CI нового candidate, как и зафиксировано в ТЗ.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 10,
-          "cache_creation_input_tokens": 40818,
-          "cache_read_input_tokens": 117906,
-          "output_tokens": 7265,
-          "output_tokens_details": {
-            "thinking_tokens": 2289
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 40818,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1146,
-              "cache_read_input_tokens": 33113,
-              "cache_creation_input_tokens": 11875,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11875
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение устраняет причину отказа B. Адаптер больше не запускает собственную HA-лабораторию с анонимным HostPort (`127.0.0.1::8123`), который Docker мог переназначить при `docker restart`. Теперь Docker получает явный числовой `127.0.0.1:PORT:8123`, поэтому origin открытой вкладки и `HA_URL` не меняются после restart и upgrade. Повтор запуска ограничен: не больше 3 попыток и только при явной ошибке bind. Очистка удаляет контейнер только после проверки owner label. Не-bind ошибки, чужой label, ошибка inspect, сбой rm и исчерпание попыток завершаются явной ошибкой. Ожидания 480 и 300 с и выборка из 13 сценариев не менялись. Блокеров нет. Как и указано в ТЗ, реальное подтверждение restart и upgrade даст только полный CI следующего candidate; здесь оно не заявлено и не требуется.\n\n## Понимание решения\n\nПроблема. Раньше `runE2E` запускал контейнер с `-p 127.0.0.1::8123` и один раз читал `docker port`. Анонимный HostPort при `docker restart` может быть назначен заново. Companion-сценарии и открытая вкладка Playwright продолжают обращаться к старому origin и получают connection refused, хотя HA снова готов.\n\nПосле изменения `reserveLoopbackPort` открывает временный сервер Node на `127.0.0.1:0`, запоминает выделенный порт и закрывает сокет. Затем `docker run` получает явный `-p 127.0.0.1:PORT:8123`. При явном HostPort Docker привязывает тот же порт при каждом старте контейнера, так что origin остаётся постоянным на всё время жизни лаборатории. Начальный `docker port` должен в точности совпасть с `127.0.0.1:PORT`, иначе запуск завершается ошибкой до readiness. В `endpoint.json` сохраняются только `requestedPort` и `initialMapping`, а при очистке дописываются `finalMapping` и `finalMappingCode`.\n\nОкно гонки между закрытием временного сокета и bind в Docker закрывает ограниченный цикл до 3 попыток. После каждого неудачного `docker run` общий `cleanupContainer` выполняет inspect по owner label и вызывает `rm -f` только для своего уникального имени. Отсутствие контейнера (`No such object`) допустимо. Повтор делается только если stderr совпадает с фразой bind collision.\n\nРазобранные пути: успешный запуск; collision с повтором; исчерпание попыток; не-bind ошибка; чужая метка, ошибка inspect и сбой rm; отмена через `signal` во время и между попытками; исключение в `execute`; несовпадение начального mapping; исключение при сборе логов в `finally`; сброс `containerStarted`, исключающий двойную очистку.\n\n## Разбор решения\n\n### Постоянство origin на всё время жизни лаборатории\n\nПодход выбран верно и минимален. Обновлять `HA_URL` после restart бесполезно: открытая вкладка всё равно держит старый origin. Увеличение таймаутов тоже не лечит refused. Явный HostPort убирает переназначение порта на уровне Docker. Совпадение начального mapping проверяется строго, и ошибка возникает до readiness, поэтому неверный origin не попадёт в Playwright.\n\nОснование: `process-next/lib/e2e.mjs:241-260`: явный `-p '127.0.0.1:' + port + ':8123'`, проверка `mapping !== '127.0.0.1:' + port`, `env.HA_URL = 'http://' + mapping`, `--timeout=480` без изменений. В репозитории других чтений `docker port`, кроме строк 189 и 255, нет.\n\n### Ограниченный повтор и классификация bind collision\n\nРегулярное выражение узкое: `port is already allocated` или `bind` с последующим `address already in use`. Под него попадают обе типичные формулировки Docker (allocator и userland-proxy `listen tcp4 ...: bind: address already in use`). Строка `address already in use` без `bind` намеренно не ретраится, и это покрыто тестом. Гонка между резервированием и bind не скрывается, а явно обрабатывается повтором. Порт проверяется до любого вызова Docker: `0`, отрицательные значения, `65536`, строка и `NaN` отклоняются.\n\nОснование: `e2e.mjs:141-143` и `242-254`. Тесты «three bind collisions…», «non-bind launch errors…» и «invalid/anonymous ports…» в `process-next/test/e2e.test.mjs`.\n\n### Владение и очистка частично созданного контейнера\n\nУдачное решение, его стоит сохранить: одна функция `cleanupContainer` обслуживает и неудачный старт, и нормальное завершение. Флаг `containerStarted` сбрасывается в начале очистки, поэтому `finally` не повторит inspect или rm после уже выполненной (успешной или упавшей) очистки внутри цикла. Если выброшено исключение во время `docker run` или отмена сработала между попытками, флаг остаётся `true`, и очистку выполняет `finally`. Логи собираются внутри `try/finally`, поэтому `rm` выполняется даже при сбое сбора evidence. Чужая метка, неизвестная ошибка inspect и сбой rm превращаются в ошибку без удаления.\n\nОснование: `e2e.mjs:180-201` и `276`. Тесты «bind collision cleans only the labelled partial container…» (проверяет порядок rm перед вторым run и одно и то же имя), «failed bind launch refuses foreign/unknown ownership…», «bind failure with no remaining container…», «an evidence collection exception still removes…».\n\n### Evidence endpoint и приватность\n\nВ `endpoint.json` попадают только номер порта, mapping и код возврата. Переменные окружения и авторизационные данные туда не пишутся. Файл сохраняется до проверки mapping, поэтому несовпадение тоже оставляет диагностику. Итоговый mapping при очистке позволит в CI C увидеть, сохранился ли порт после restart.\n\nОснование: `e2e.mjs:189-190` и `255-258`. Тест «fixed loopback origin…» проверяет точное содержимое и отсутствие `password|token|authorization`.\n\n### Тесты и границы доказательства\n\nАдресные тесты поведенческие: они проверяют сами аргументы `docker run`, `HA_URL` в readiness и Playwright, порядок вызовов и содержимое файлов, а не только факт вызова. Fake executor теперь отражает опубликованный порт, а не жёсткий 45678, поэтому прежний тест владения проверяет фиксированный origin через настоящий `reserveLoopbackPort`. Реальный Docker restart эти тесты не заменяют, и автор этого не утверждает.\n\nОснование: Receipt `20261101T225620514-8c7e93d0`: статус passed на материале `c1ab219c`. Автор сообщает 18/18 PASS. Diff тестового файла: `fakeExecutor` отдаёт в `docker port` значение `published`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Ошибка из `finally` может скрыть исходную. Если тело упало (например, таймаут readiness или несовпадение mapping), а затем `cleanupContainer(true)` бросает исключение из-за сбоя rm или inspect, наружу уйдёт только ошибка очистки. Так было и до этого изменения, но теперь в `finally` больше шагов: `docker port`, запись evidence, логи. Можно запоминать исходную ошибку и бросать `AggregateError` или `Error` с `cause`. Цена — несколько строк. Польза — в CI будет видна и причина падения, и проблема очистки.\n- Окно между `docker restart` (освобождение и повторный bind порта) и захватом порта посторонним процессом остаётся теоретическим и в рамках задачи не устраняется. Если в CI C `finalMapping` окажется пустым или ошибочным, стоит выводить в отчёт `finalMappingCode` и связь с упавшим сценарием, а не только сохранять файл.\n\n## Границы анализа\n\nКод изучен по исходникам на head `c1ab219c`: `process-next/lib/e2e.mjs` (`runE2E`, `cleanupContainer`, `call`, `executeE2ECommand`) и `process-next/test/e2e.test.mjs`, включая прежние тесты и fake executor. Проверено, что CHANGELOG RU/EN добавлены в Unreleased. Тесты, сборку и Docker я не запускал. Использован receipt S6 `20261101T225620514-8c7e93d0` со статусом passed и заявление автора о 18/18. Реальное поведение Docker 28.0.4 (сохранение явного HostPort при restart, точный текст ошибок bind) взято из общеизвестного поведения Docker и описания в ТЗ, на живом daemon не проверялось. Companion checkout со сценариями restart и upgrade и `scripts/ha.mjs` в этом репозитории не изучались. Реальное подтверждение 13 HA-сценариев остаётся за полным CI нового candidate, как и зафиксировано в ТЗ.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 485c4d41e98e46bbfd3f73803ed5b994e652ca3a → c1ab219c12404505ebccb07bf0ddde996a9ce9fd\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1199, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nAuxiliary beta fix по поручению владельца общей пачки, infra/show; to_release не ставилась. Полное доказательство B и ограничения сохранены координатору в output/release-batch-20261101/ci-b/ci-b-analysis.md; исходный B не переобъявлен успешным.\n\nРеализация: Node TCP port0 временно выбирает свободный loopback port, socket закрывается, Docker получает именно явный числовой127.0.0.1:PORT:8123. Actual initial mapping должен точно совпасть; этот origin передаётся readiness/Playwright и остаётся для открытой вкладки. До3 попыток только на явные Docker bind collision phrases; reservation-to-bind race не скрыт. После любого failed run сначала ownership inspect и удаление только уникального собственного имени с совпавшим label; не-bind/foreign/inspect error/rm failure/exhaustion не ретраятся и не PASS. Один общий cleanup для partial/normal paths; finally удаляет уже проверенный owned container даже при ошибке сохранения диагностических логов. Endpoint.json содержит только выбранный port/initial/final mapping/code, без env/auth. Текущие timeout480/300s и точные13HA selections не менялись.\n\nАдресные тесты: исходные9tests адаптера плюс9 регрессий, включая реальное Node socket reserve/release, весь fake-adapter pipeline, fixed origin/evidence, collision→owned cleanup→другой port,3 исчерпанных попытки, non-bind отказ, foreign/unknown ownership/rm failure, нулевой/нечисловой port, wrong mapping до readiness, отсутствующий partial container и exception при сборе evidence. Авторский короткий прогон18/18PASS, включая настоящую Playwright discovery без browser/HA. Канонический infra S6 выполняется finish после финального rebase. Product build/backend/browser/full tooling/старый Validate не требуются этой infra правке, S7 только ревью.\n\nDocker в этом WSL не установлен, локальный real HA restart/upgrade не выполнен и не заявлен. Существующие13 реальных HA сценариев, особенно same-tab restart и upgrade от1.83.1, обязательны в полном CI нового candidate C перед beta publication; локальные fakes их не заменяют. Это согласованная граница S6 infra и release proof, не основание объявить текущую B успешной.\n\nРиски/альтернативы: только обновление HA_URL после dynamic restart не спасает origin уже открытой вкладки; увеличение timeout не лечит refused. Нельзя ослаблять ownership, заменять сценарий reload вместо recovery или принимать skipped как PASS. При конфликте выбора порта удалять чужое имя запрещено. Фактический C endpoint evidence позволит увидеть mapping до/после restart. Runtime продукта и пользовательский HA не меняются.\n\nПеред finish перечитаны актуальные AGENTS/PROCESS и commits834850f6f/7cc142bca с revert: текущий итоговый diff этих документов относительно прежнего ad295 отсутствует; своих правок процесса/запускателей в задаче нет. Companion assessment «не надо»: API/ACL/хранение/продуктовые сценарии не меняются; исправляется собственный lab adapter, а существующие restart/upgrade остаются неизменным реальным proof. Координатор владеет companion и получил оценку. Короткие RU/EN changelog включены.\n```\n\n</details>\n",
-        "createdAt": "2026-11-01T22:58:19.182Z",
-        "artifactId": 13104339316,
-        "runId": 41359617629,
-        "runAttempt": 1,
-        "completedAt": "2026-11-01T22:58:23Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41359617629",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
+      "devBuild": {
+        "status": "not-required"
       }
     },
     "1200": {
@@ -768,19 +649,7 @@
   "waiting": [
     1200
   ],
-  "active": {
-    "issue": 1199,
-    "worker": "finish",
-    "token": "48:finish:477d6da4-829c-4cf6-b063-123f13e55e8b:finish:1:admit",
-    "fence": 48,
-    "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-    "expectedBase": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793573739626,
-    "expiresAt": 1793577524616,
-    "patchId": "a4048749979905d38c37ee06eea3bb09ff564066",
-    "reviewRequest": "review:1199:1:a4048749979905d38c37ee06eea3bb09ff564066:485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -858,45 +727,9 @@
       "digest": "d101f1d017592d2bd1a7d620e0e67095d7389f5b18047b7f71fa0a2945b0520c",
       "issue": 1198
     },
-    "github:41359544914:1:completions:message:b7b63f3a3cad6c2fea96480b3a327ee4db913e3b91b22b153130c75f7c5a2496": {
-      "digest": "f56d0d05a67fb7aa5462d3b20c804a67c974bb6b9247d3460d62479897bfdb56",
-      "issue": 1199
-    },
     "github:41359544914:1:completions:notice:a6214d5223db1394744d4cb136d366f2d6443b272dfbc09abd3520d22468f217": {
       "digest": "23dacb8ba85df3c779b6676e5494d25d4c4da8c47511a6fc9aef0155745d9657",
       "issue": 1198
-    },
-    "github:41359544914:1:completions:message:a6214d5223db1394744d4cb136d366f2d6443b272dfbc09abd3520d22468f217": {
-      "digest": "6f5d796c020fafe75b5c7780d79fce00bf878e4732538c358a66e57d57777683",
-      "issue": 1199
-    },
-    "github:41359544914:1:completions:message:2fb13891aef4901ba7b56a2bba5ba4ccc72fda0002030ba0d25ed202089563df": {
-      "digest": "2b3cd7ede1434760eebdb0881b5afc192b66be963dcea9d1acd900e9d9a8a735",
-      "issue": 1199
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5:finish:1:synchronized": {
-      "digest": "fe59360d7d5032703ebe0ad4e14d4518b2f663e20aed3f6dc596ef73c022617a",
-      "issue": 1199
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5:finish:2:s6-label": {
-      "digest": "ea5f029a0293a252c4c6e2afa423557dd48590ad74165f3f7b8381a58b3085b9",
-      "issue": 1199
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5:finish:3:review-requested": {
-      "digest": "271573bd11094a534dadb5edcacf6d20e6bb3c16e23427b473194e6c490191a8",
-      "issue": 1199
-    },
-    "github:41359609446:1:completions:message:8d5b03d2297c6f6bfc16b2b6b5dd426f10e71b28bec3d8abdadd90941de241c6": {
-      "digest": "ac2c8591553f7ca650fe895a8f7324a4e6586be87d6c926d47630d1ae88b2a41",
-      "issue": 1199
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5:finish:5:review-presentation": {
-      "digest": "26ca127c910d96e9e046502e9ccbfb5acd13f078a69d2acc602f4bb55af3f7bd",
-      "issue": 1199
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5:finish:5:review-complete": {
-      "digest": "e3f305db081e9d2e786a2588d0fd463090f9a6026cf6f2d3d09ab73d09ca991a",
-      "issue": 1199
     },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
       "digest": "04b2c5c957b052786153bf1cbee5b0b82d4b45f47cc4833eae16a40910535af0",
@@ -945,20 +778,6 @@
           "detail": "Браузер: canvas surface gestures: failed",
           "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
         },
-        "delivered": true
-      }
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5": {
-      "digest": "f836b91cb5816cc958e9d6deac1e1df3681f7af2e1585a1ea14673b5a64dbd51",
-      "issue": 1199,
-      "message": {
-        "kind": "queued",
-        "issue": 1199,
-        "at": 1793573399443,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "56f9226802eb8bfa25bdf4f1c6bfff9fd795f5c6",
         "delivered": true
       }
     },
@@ -1023,48 +842,6 @@
           "detail": "Браузер: canvas surface gestures: failed",
           "eventId": "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return:return:1198"
         },
-        "delivered": true
-      }
-    },
-    "finish:477d6da4-829c-4cf6-b063-123f13e55e8b:finish:1:admit": {
-      "digest": "ee8b7f00a69ed1251d7b6aaef9c4937d876e18c49138fe069ec75e0d3717acf8",
-      "issue": 1199,
-      "message": {
-        "kind": "admitted",
-        "issue": 1199,
-        "at": 1793573739626,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "56f9226802eb8bfa25bdf4f1c6bfff9fd795f5c6",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:2ea3f697-051f-428e-9dc5-c6ec84b6eec5:finish:2:s6-complete": {
-      "digest": "d05ecb26ed6a1f51181d3d8a97cd740eab66c9772608c9219b3974d161717ab8",
-      "issue": 1199,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1199,
-        "at": 1793573782463,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-        "phase": "review",
-        "evidence": {
-          "id": "20261101T225620514-8c7e93d0",
-          "name": "Тесты для задачи #1199 (перед ревью)",
-          "reportPath": "/home/matysh/hp-wall-face-20261031-analysis/.git/process-next/runs/20261101T225620514-8c7e93d0/report.json",
-          "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-          "status": "passed",
-          "finishedAt": "2026-11-01T22:56:21.740Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
