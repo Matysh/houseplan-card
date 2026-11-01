@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 267,
+  "revision": 268,
   "nextTicket": 29,
   "nextFence": 29,
   "tasks": {
@@ -41,7 +41,32 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793567676870,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "cf4ac84248cb65dd05e7275c7dee2b72162ff6f7",
+      "changedFiles": [
+        "demo/benchmark_selective_invalidation.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/analysis/save-long-tasks-2026-11-02/README.md",
+        "docs/analysis/save-long-tasks-2026-11-02/analyze.mjs",
+        "docs/analysis/save-long-tasks-2026-11-02/baseline-measurement.json",
+        "docs/analysis/save-long-tasks-2026-11-02/bounded-costs.json",
+        "docs/analysis/save-long-tasks-2026-11-02/candidate-measurement.json",
+        "docs/analysis/save-long-tasks-2026-11-02/comparison.json",
+        "docs/analysis/save-long-tasks-2026-11-02/measure.mjs",
+        "docs/analysis/save-long-tasks-2026-11-02/method-costs.json",
+        "docs/analysis/save-long-tasks-2026-11-02/method-samples.json.gz",
+        "docs/analysis/save-long-tasks-2026-11-02/probe.mjs",
+        "docs/analysis/save-long-tasks-2026-11-02/profile-samples.json.gz",
+        "docs/analysis/save-long-tasks-2026-11-02/profile.cpuprofile.gz",
+        "docs/analysis/save-long-tasks-2026-11-02/profile.mjs",
+        "docs/analysis/save-long-tasks-2026-11-02/provenance.json",
+        "docs/analysis/save-long-tasks-2026-11-02/trace.json.gz",
+        "docs/release-ledger/v1.83.0/1153.json",
+        "src/config-adoption.ts",
+        "test/config-adoption.test.mjs"
+      ]
     },
     "1156": {
       "issue": 1156,
@@ -371,10 +396,11 @@
     "token": "28:finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit",
     "fence": 28,
     "materialSha": "17c5d5f299b535862a600710f9437af6d9d0950f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+    "phase": "testing",
     "admittedAt": 1793567745173,
-    "expiresAt": 1793568045173
+    "expiresAt": 1793568050323,
+    "patchId": "cf4ac84248cb65dd05e7275c7dee2b72162ff6f7"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -828,6 +854,10 @@
     },
     "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit": {
       "digest": "73848af86479438f063803bfc6066eefdb7d9b26b712f12f21150afa45287c41",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:3:synchronized": {
+      "digest": "1d7c32ff5361da630bc94657bd0b1fcfe4c11781c9a99be74f8d8cbd691c8480",
       "issue": 1153
     }
   },
