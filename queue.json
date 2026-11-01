@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21,
+  "revision": 22,
   "nextTicket": 4,
   "nextFence": 4,
   "tasks": {
@@ -37,7 +37,7 @@
       "notice": {
         "key": "3:review-findings",
         "reason": "review-findings",
-        "status": "pending"
+        "status": "delivered"
       },
       "s6": {
         "id": "20261101T171008124-efadd36a",
@@ -146,6 +146,10 @@
     },
     "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:review-presentation:1176:code:d2c48316f8614413a173": {
       "digest": "37565db47c68f782074952320073cd14d24af418558367968443f1fabe0469a1",
+      "issue": 1176
+    },
+    "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:task-notice:1176::": {
+      "digest": "f05d2e232a8f5b80986557867519b5aea5a91e796ba20716a08ba3635061511f",
       "issue": 1176
     }
   }
