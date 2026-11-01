@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 355,
-  "nextTicket": 37,
+  "revision": 356,
+  "nextTicket": 38,
   "nextFence": 37,
   "tasks": {
     "1128": {
@@ -103,6 +103,20 @@
         "status": "published",
         "sourceSha": "37f59faef16f6efad06387486943d51202c7d57c"
       }
+    },
+    "1172": {
+      "issue": 1172,
+      "track": "ask",
+      "layer": "infra",
+      "branch": "codex/1172-preflight-research",
+      "materialSha": "3bbee89887b0b9e0363280bc7b8347d37cb7bb42",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 37,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793570590158,
+      "reviewEntry": 1
     },
     "1175": {
       "issue": 1175,
@@ -344,7 +358,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1172
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -377,6 +393,10 @@
     },
     "github:41351804140:1:completions:metadata:930e01cf-bdb5-43c2-8159-bb1d0aa7f8c3:review-presentation:1172:spec:010c910de4808179ec87": {
       "digest": "2f1d73569e9b4783efe3f77ef3385c78971c77d0e58275bc45f8f445194f3fda",
+      "issue": 1172
+    },
+    "finish:16e3de7c-c897-48c9-b567-2db070c06872": {
+      "digest": "3be20acdbe2c72b1b6fbcdb98c1f7bf5b5904eda7268c7ce32c2e399233995a2",
       "issue": 1172
     }
   },
