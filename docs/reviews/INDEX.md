@@ -1,11 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 27, issue: 13. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 28, issue: 13. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | линия v1.83.1 | [RELEASE-REVIEW-v1.83.1.md](RELEASE-REVIEW-v1.83.1.md) | ревью линии · — | ⚪ — | 0 | 0 | приватный backend-хелпер пересекает границу модуля без публичного контракта | `custom_components/houseplan/partition_promotion.py` `src/wall-incidence.ts` `src/stored-wall-contact.ts` `junction_limits.py` `partition_promotion.py` `wall_incidence.py` `wall-incidence.ts` |
 | #1185 | [CODE-REVIEW-1185-r1.md](CODE-REVIEW-1185-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1185 | [CODE-REVIEW-1185-r2.md](CODE-REVIEW-1185-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1183 | [CODE-REVIEW-1183-r1.md](CODE-REVIEW-1183-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1182 | [CODE-REVIEW-1182-r1.md](CODE-REVIEW-1182-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1181 | [CODE-REVIEW-1181-r1.md](CODE-REVIEW-1181-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
