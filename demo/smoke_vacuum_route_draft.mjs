@@ -184,7 +184,10 @@ const out = await page.evaluate(async () => {
     === 'missing-a,missing-b,missing-z';
   o.missingRowsRemainOperable = [...(missingGroup?.querySelectorAll('.vacroute') || [])]
     .every((row) => row.querySelector('select') && row.querySelectorAll('button').length === 2);
-  o.missingSpaceWarningRemains = !!sr().querySelector('.warn');
+  const missingWarning = sr().querySelector('.hpf-callout.hpf-warning');
+  o.missingSpaceWarningRemains = !!missingWarning
+    && missingWarning.textContent.trim().length > 0
+    && /deleted space|удалённое пространство/i.test(missingWarning.textContent);
   const groupThemeStates = [];
   for (const darkMode of [false, true]) {
     c.hass = { ...c.hass, themes: { ...(c.hass.themes || {}), darkMode } };
@@ -202,5 +205,11 @@ const out = await page.evaluate(async () => {
   return o;
 });
 
+// #1149 keeps inactive panes mounted. Open the genuine Vacuum section before
+// requiring visible warning paint, rather than measuring a hidden Basics sibling.
+await page.locator('hp-dialog[data-kind="marker"] [data-hp="settings-section"][data-section="vacuum"]').click();
+const warning = page.locator('hp-dialog[data-kind="marker"] [data-settings-section="vacuum"] .hpf-callout.hpf-warning');
+out.missingSpaceWarningVisible = await warning.isVisible()
+  && /deleted space|удалённое пространство/i.test(await warning.textContent());
 checkAll(out);
 await finish(browser, out);

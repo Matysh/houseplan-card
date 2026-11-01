@@ -1,3 +1,4 @@
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 // #802: real pointer + public HA/config inputs. No private card writes: the
 // fixture delivers registry events and the integration's normal topology feed.
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -45,6 +46,13 @@ for (const provider of ['z2m', 'zha']) {
   const marker = (id) => root.locator(`[data-hp="device"][data-id="${id}"]`);
   const bubble = root.locator('[data-hp="zigbee-topology-parent-bubble"]');
   const settle = () => page.evaluate(() => window.__hpTest.settled());
+  const clearReceipt = () => page.evaluate(() => {
+    const card = window.__card, tip = card.renderRoot.querySelector('[data-hp-live-tip]');
+    const overlay = card.renderRoot.querySelector('hp-zigbee-topology-overlay');
+    return !card._tip && (!tip || tip.hidden || tip.getAttribute('aria-hidden') === 'true')
+      && !overlay?.hasAttribute('data-tooltip-owner')
+      && !card.renderRoot.querySelector('[data-hp-zigbee-topology-endpoint]');
+  });
   // Like smoke_preloader, keep the RAF-backed facade operation rooted in the
   // page and wait from Playwright: CDP can otherwise collect the returned
   // pending evaluate promise. Start once; never retry a config mutation.
@@ -394,6 +402,8 @@ for (const provider of ['z2m', 'zha']) {
       for (let i = 0; i < 12; i++) await page.mouse.move(pointer.x + i % 3, pointer.y + i % 2);
       out.pointerMotionNeverFetches = JSON.stringify((await sample('d_mower')).calls) === networkBefore;
       await page.mouse.move(2, 2); await settle();
+      out.pointerLeaveImmediatelyClearsAuthority = await clearReceipt();
+      await waitForUiKitPaint(page);
       const left = await sample('d_mower');
       out.pointerLeaveClearsBoth = !left.tipVisible && left.badges.length === 0;
       await page.evaluate(() => window.__hpTest.switchSpace('f1'));
@@ -445,6 +455,8 @@ for (const provider of ['z2m', 'zha']) {
         await marker('d_mower').dispatchEvent('pointerdown', { pointerType, pointerId: 82,
           bubbles: true, composed: true, clientX: pointer.x, clientY: pointer.y });
         await settle();
+        out[pointerType + 'ImmediatelyClearsAuthority'] = await clearReceipt();
+        await waitForUiKitPaint(page);
         const cleared = await sample('d_mower');
         out[`${pointerType}ClearsTooltipAndTopology`] = !cleared.tipVisible && cleared.badges.length === 0;
         // This probe only changes pointer modality. Finish its synthetic

@@ -36,7 +36,9 @@ try {
   check('menu opens without settings, info, write or service', await page.evaluate(() => !window.__card._markerDialog && !window.__card._infoCard)
     && (await writes()).writes.length + (await writes()).services === 0);
   check('first menu has common styled frame', await menu.evaluate(node => getComputedStyle(node).display === 'grid'
-    && getComputedStyle(node).fontSize === '12px' && getComputedStyle(node).position === 'fixed'));
+    && getComputedStyle(node).fontSize === '13px' && getComputedStyle(node).position === 'fixed'
+    && node.classList.contains('hpf-context-menu-touch')
+    && [...node.querySelectorAll('[role=menuitem]')].every(item => item.getBoundingClientRect().height >= 44)));
   check('menu opening remains cold to editor', await page.evaluate(name => !window.__card._editorRuntime && !performance.getEntriesByType('resource').some(r => r.name.includes(name)), editor));
   await page.keyboard.press('Escape'); await menu.waitFor({ state: 'detached' });
   check('Escape restores marker focus', await marker().evaluate(node => node.getRootNode().activeElement === node));

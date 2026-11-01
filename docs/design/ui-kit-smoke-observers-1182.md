@@ -1,0 +1,35 @@
+# Full-suite witnesses after UI Kit — #1182
+
+Original exact full CI: [41285641666](https://github.com/Matysh/houseplan-card/actions/runs/41285641666), author base96a97b8f74bf66d6c0c9423ec6657eabb052416d. Its RED artifacts and the diagnostic logs remain saved in the author's output/ui-kit-final-20261101. This report does not accept baseline drift or claim the beta is published.
+
+Only classes B/C change. Product source, frozen963 reference/SHA, synthetic configuration/content, pins, tolerances, budgets and baseline PNG stay unchanged. Source/build fingerprint296ac3a7333f2d84e9116e979bea2537996957842715a2a9c5ff6352f6a383ef. Product clipping found during diagnosis is #1183, not an observer waiver.
+
+## Diagnosis and preserved oracle
+
+Every command below is node demo/smoke_<name>.mjs. Targeted executions actually passed, including formerly failing checkpoints; named raw logs are in the output directory. Complete exact candidate CI remains mandatory before the beta.
+
+| Smoke | Observed RED cause; change | Preserved/stronger oracle | Targeted proof |
+|---|---|---|---|
+| card_controls | The44px button is43.99993896484375px while translated enter paint runs; computed height/min-height44px and settled rect44px. Await actual finite paint with existing waitForUiKitPaint. | Exact>=44px, containment, entity order and service guards; no epsilon reduction. | observer-card_controls-1182-v1.log PASS |
+| settings_mock_match_948 | Old150ms expectation; accepted #1147 paint is160ms. | Exact160ms ordinary, zero reduced motion, actual layout/state. | observer-settings_mock_match_948-1182-v1.log PASS |
+| optimize_cleanup | Old .rhint hook became common hpf-callout. | Same visible write-permission wording, no admin-only claim, cleanup semantics. | observer-optimize_cleanup-1182-v1.log PASS |
+| vacuum_route_draft | Old .warn became warning callout; inactive sections now remain mounted. | Exact missing-map warning meaning, native Vacuum-section click before visibility proof, rows/identity/order, draft/rejected-write guards. | observer-vacuum_route_draft-1182-v2.log PASS |
+| view_device_menu | View menu now uses explicitly accepted touch density from #1147:13px font,44px items. | Common fixed grid frame and every item>=44px; commands/order, rights, focus, exact writes/rollback remain. | observer-view_device_menu-1182-v1.log PASS |
+| capture_stability | CSS static sheets cannot suppress new finite WAAPI tooltip enter180ms; diagnostic caught that running animation. | Await actual finite completion without changing media/product motion; exact same PNG bytes mandatory; restoration/negative controls retained. | observer-capture_stability-1182-v1.log PASS |
+| household_journeys | Blur clears logical owner immediately; exit paint remains140ms. | Immediate cleared tip plus hidden/aria-hidden and noninteractive paint; actual hidden retirement after finite animation; keyboard/source/focus/service journeys retained. | observer-household_journeys-1182-v1.log PASS |
+| hidden_device_toggle | Header menu retains exit DOM140ms after input revocation. | Immediate inert+aria-hidden, then actual removal; native tap, hidden face, unchanged wire pair/no HA service. | observer-hidden_device_toggle-1182-v1.log PASS |
+| dialog_footer_width | Old500px/94vw assertions predate common compact560px/fullscreen forms from #1148. | Exact560px desktop and610px settings, native containment/wrapping/positive localization headroom/44px actions. | observer-dialog_footer_width-1182-v1.log PASS |
+| free_walls | Stub only supplied old HA headerTitle slot; accepted common Kit supplies full public header slot. Both original title rect and old slot rect were zero. | Stub supports real public slot; original localized title must wrap and fit, footer/geometry/native transactions unchanged. Genuine HA coverage remains in existing kit smokes. | observer-free_walls-1182-v1.log PASS |
+| canvas_surface_gestures | Old fixed drag coordinates land in native numeric spinner after typography/padding change. Actual field widths77/58.796875px, text27.248046875px at14px. | Real left-to-right drag from measured leading padding through trailing boundary, no keyboard SelectAll; held value cannot spin; camera/config/history/draft guards and real text replacement retained. | observer-canvas_surface_gestures-1182-v1.log PASS |
+| grid_scale_invariance | Fitted right-edge point is covered by accepted editor-secondary tray; original stack proves tray before op-hit. | One real zoom-out exposes same right edge, settle actual SVG matrix, require op-hit at top of native stack then actual dialog action/no mutation. All metrics, exact raster pairs and precision guards remain. | observer-grid_scale_invariance-1182-v2.log PASS |
+| zigbee_tooltip_layout | Cleared tip/overlay authority already absent, but retained exit paint visible and aria-hidden. | Immediate null owner/no endpoint/ARIA clearing, then actual finite exit; geometry/overlap/pointer transparency, providers, touch/pen and isolation retained. | observer-zigbee_tooltip_layout-1182-v2.log PASS |
+| zigbee_led_topology | Native trace proves trusted pen over+move followed49ms later by a new trusted mouse-over; old80ms snapshot measures later mouse owner. | Snapshot settled pen delivery before another physical input; trusted pen, no endpoint/routes/owner/tip. Native touch, subsequent real rehover, LED geometry/authority/write/service guards retained. | observer-zigbee_led_topology-1182-v2.log PASS |
+| ui_polish_963_reference | Real paint change, not serialization: old local danger ink162,87,87/white became accepted common semantic danger219,68,55/transparent. #1150 retires local paint. | Immutable old source/SHA still owns all existing<=1px panel/section/field geometry, labels/disabled state. Independent Kit idle colors from prescribed theme/pinned HA error,36px/radius5/font12, cursor/opacity; native disabled hover cannot acquire active paint/change config. No product CSS imported as expected values. | observer-ui_polish_963_reference-1182-v2.log PASS |
+
+#1180 owns full documentation-preview framing; #1181 owns Static fixture-host isolation/read-only styling hooks. Those fixes are not duplicated here.
+
+## Evidence boundary and negative witnesses
+
+Initial full CI is the ordinary negative witness for original15 failures, not a mutant run. Additional unchanged-product diagnostics captured exact footer rects, zero old header slot, actual input typography, occluded opening stack, finite tooltip animation, immediate cleared topology state, ordered trusted pen/mouse events and frozen/current action colors. Mixed alpha additionally reproduced six genuine failures and was filed separately in #1183.
+
+No new product protection, mutant execution or live HA E2E is claimed. E2E changes are **не надо**: only offline observers changed. No HA configuration, rights or persistence contract changed. This task does not supply full candidate CI, production snapshot or baseline acceptance; those remain the release producer's responsibility.

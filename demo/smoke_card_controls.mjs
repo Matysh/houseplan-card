@@ -1,3 +1,4 @@
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 // Reproduce the narrow wall-tablet/mobile dialog from the field report.
@@ -21,6 +22,8 @@ await page.evaluate(async () => {
 // A real user entry rather than inventing a private informational snapshot.
 await page.locator('[data-hp="device"][data-id="d_light1"]').click();
 await page.locator('hp-dialog[data-kind="info"]').waitFor();
+// #1148: measure settled native enter paint; keep the exact44px floor.
+await waitForUiKitPaint(page);
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;

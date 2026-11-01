@@ -1,3 +1,4 @@
+import {waitForUiKitPaint} from './helpers/ui-kit-paint.mjs';
 // Public old Git bundle + immutable approved prototype vs current product.
 // Both pages use genuine pinned HA, identical synthetic data, font, DPR and camera.
 import {launchHaDialogFixture,applyHaDialogTypography} from './helpers/ha-dialog-fixture.mjs';
@@ -48,8 +49,21 @@ const metrics=p=>p.locator('houseplan-card [data-hp=properties-panel]').evaluate
    heading:el.querySelector('.hp-prop-group-title')?.textContent.trim(),box:rect(el),
    hint:[...el.querySelectorAll('.hp-prop-hint')].filter(e=>getComputedStyle(e).display!=='none').map(e=>({text:e.textContent.trim(),box:rect(e)})),
    fields:[...el.querySelectorAll('[data-property]')].filter(e=>getComputedStyle(e).display!=='none').map(e=>({key:e.dataset.property,box:rect(e)})),
- })), title:panel.querySelector('.hp-prop-title')?.textContent.trim(),line:getComputedStyle(panel.querySelector('.hp-prop-foot')).borderTopColor,actions:[...panel.querySelectorAll('.hp-prop-action')].map(el=>{const s=getComputedStyle(el);return {key:el.dataset.action,disabled:el.matches(':disabled,[aria-disabled="true"]'),text:el.textContent.trim(),border:s.borderColor,color:s.color,background:s.backgroundColor};})};
+ })), title:panel.querySelector('.hp-prop-title')?.textContent.trim(),line:getComputedStyle(panel.querySelector('.hp-prop-foot')).borderTopColor,actions:[...panel.querySelectorAll('.hp-prop-action')].map(el=>{const s=getComputedStyle(el);return {key:el.dataset.action,disabled:el.matches(':disabled,[aria-disabled="true"]'),text:el.textContent.trim(),border:s.borderColor,color:s.color,background:s.backgroundColor,height:el.getBoundingClientRect().height,radius:s.borderRadius,fontSize:s.fontSize,opacity:s.opacity,cursor:s.cursor};})};
 });
+// #1148/#1150 moves action paint to the accepted shared Kit. The immutable
+// #963 files/SHA remain the independent oracle for geometry, labels and state.
+// Idle paint comes from this fixture's prescribed theme, not sampled product CSS.
+// Genuine pinned HA exposes semantic --error-color:#db4437 in both themes.
+const rgb=hex=>'rgb('+hex.slice(1).match(/../g).map(byte=>parseInt(byte,16)).join(', ')+')';
+const kitAction=(action,colors)=>{
+ const danger=action.key==='properties-delete',ink=danger?'rgb(219, 68, 55)':rgb(colors[2]);
+ return action.color===ink&&action.border===(danger?ink:rgb(colors[4]))
+   &&action.background==='rgba(0, 0, 0, 0)'&&action.height>=36
+   &&action.radius==='5px'&&action.fontSize==='12px'
+   &&action.opacity===(action.disabled?'0.5':'1')
+   &&action.cursor===(action.disabled?'not-allowed':'pointer');
+};
 try{
  await prepareUi963Page(page,fixture.url);await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
  const reference=await createUi963Reference(fixture);await setup(page);await setup(reference);
@@ -79,16 +93,23 @@ try{
    out[prefix+'_field_geometry']=approved.groups.every((group,i)=>group.fields.length===actual.groups[i]?.fields.length&&group.fields.every((f,j)=>f.key===actual.groups[i].fields[j].key&&near(f.box,actual.groups[i].fields[j].box)));
    const addedKeys=mode==='decor'?['properties-decor-front','properties-decor-back']:[];
    const added=actual.actions.filter(a=>addedKeys.includes(a.key));
-   // The public old prototype predates data-action; compare its complete
-   // ordered semantic paint/state records without requiring that newer hook.
-   const legacyPaint=actions=>actions.map(({key,...paint})=>paint);
-   out[prefix+'_action_paint']=JSON.stringify(legacyPaint(approved.actions))===JSON.stringify(legacyPaint(actual.actions.filter(a=>!addedKeys.includes(a.key))));
-   if(mode==='decor')out[prefix+'_order_action_paint']=JSON.stringify(added.map(a=>a.key))===JSON.stringify(addedKeys)&&added.every(a=>
-    neutral&&disabled&&a.border===(a.disabled?approved.line:neutral.border)&&a.color===(a.disabled?disabled.color:neutral.color)
-      &&a.background===(a.disabled?disabled.background:neutral.background));
+   const semantic=actions=>actions.map(({text,disabled})=>({text,disabled}));
+   out[prefix+'_action_semantics']=JSON.stringify(semantic(approved.actions))===JSON.stringify(semantic(actual.actions.filter(a=>!addedKeys.includes(a.key))));
+   out[prefix+'_action_paint']=actual.actions.filter(a=>!addedKeys.includes(a.key)).every(a=>kitAction(a,colors));
+   if(mode==='decor')out[prefix+'_order_action_paint']=JSON.stringify(added.map(a=>a.key))===JSON.stringify(addedKeys)
+     &&added.every(a=>kitAction(a,colors));
    measurements.push({scene:prefix,approved,actual});
    console.log(prefix,JSON.stringify(Object.fromEntries(Object.entries(out).filter(([k])=>k.startsWith(prefix)))));
    for(const [p,label]of [[reference,'approved'],[page,'product']])await p.screenshot({path:join(output,`${prefix}-${label}.png`)});
+   for(const action of actual.actions.filter(a=>a.disabled)){
+    const before=await page.evaluate(()=>JSON.stringify(window.__card._serverCfg));
+    await page.locator('houseplan-card .hp-prop-action[data-action="'+action.key+'"]').hover();
+    await waitForUiKitPaint(page);
+    const hovered=(await metrics(page)).actions.find(a=>a.key===action.key);
+    out[prefix+'_'+action.key+'_disabled_hover']=kitAction(hovered,colors)
+      &&before===await page.evaluate(()=>JSON.stringify(window.__card._serverCfg));
+   }
+   await page.mouse.move(0,0);await waitForUiKitPaint(page);
   }
  }
  // Same genuine form/footer and visible lettering in all supported languages/themes.

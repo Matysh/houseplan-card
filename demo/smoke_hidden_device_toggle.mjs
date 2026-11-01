@@ -1,3 +1,4 @@
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 // #919: native display toggle, immutable stored visibility and ordinary faces.
 import { launch, check, checkAll, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
@@ -267,6 +268,9 @@ await card.locator('[data-hp="header-menu"]').tap(); await settle();
 const mobileEye = card.locator('[data-hp="header-menu-item"][data-id="hidden-devices"]');
 check('touchMenuAgreesWithDesktopChoice', await mobileEye.getAttribute('aria-pressed'), 'true');
 await mobileEye.tap(); await settle();
+check('touchEyeImmediatelyRevokesMenuInput', await card.locator('#hp-header-menu').evaluateAll(nodes =>
+  nodes.every(node => node.inert && node.getAttribute('aria-hidden') === 'true')));
+await waitForUiKitPaint(page);
 check('touchEyeClosesWithoutDeviceAction', await card.locator('#hp-header-menu').count(), 0);
 check('touchEyeHidesFace', await card.locator('[data-hp="device"][data-id="hidden-far"]').count(), 0);
 check('touchEyeKeepsWirePair', await stored(), mobilePair);

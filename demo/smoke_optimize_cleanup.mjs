@@ -154,6 +154,6 @@ record('currentReadOnlyCapabilityDisablesOptimizeAndUndo', await page.evaluate((
   const prepare=buttons.find(button=>button.textContent.trim()===window.__card._t('gs.align_all'));
   return !window.__card._canEdit && prepare?.disabled===true && buttons.every(button=>button.disabled);
 }));
-record('denialHintDoesNotClaimAdminOnly', await settings().locator('.rhint').filter({ hasText: /write permission|права на изменение/ }).count() > 0);
+record('denialHintDoesNotClaimAdminOnly', await settings().locator('.hpf-callout').filter({ hasText: /write permission|права на изменение/ }).count() > 0);
 record('onlyRequestedApplyWasSent', await page.evaluate(() => window.__892.writes.length === 1));
 await finish(browser, results);
