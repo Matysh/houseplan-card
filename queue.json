@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 422,
-  "nextTicket": 45,
+  "revision": 423,
+  "nextTicket": 46,
   "nextFence": 44,
   "tasks": {
     "1128": {
@@ -439,6 +439,20 @@
       "status": "S6-in-progress",
       "readyAt": 1793572988277,
       "reviewEntry": 1
+    },
+    "1198": {
+      "issue": 1198,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/canvas-surface-camera-fixture",
+      "materialSha": "cde14713fbb1d1cc8cbddc7895d65a3aaaf2f132",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 45,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793573042384,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -502,7 +516,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1197
+    1197,
+    1198
   ],
   "active": {
     "issue": 1196,
@@ -594,6 +609,19 @@
         "materialSha": "6854fe99aa8808baacefc110a9565f253feff4b1",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
+      "digest": "04b2c5c957b052786153bf1cbee5b0b82d4b45f47cc4833eae16a40910535af0",
+      "issue": 1198,
+      "message": {
+        "kind": "queued",
+        "issue": 1198,
+        "at": 1793573042384,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "cde14713fbb1d1cc8cbddc7895d65a3aaaf2f132"
       }
     }
   },
