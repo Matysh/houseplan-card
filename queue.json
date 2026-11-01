@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 184,
+  "revision": 185,
   "nextTicket": 22,
   "nextFence": 20,
   "tasks": {
@@ -90,7 +90,13 @@
         "src/houseplan-card.ts",
         "src/vacuum-trail-material.ts",
         "test/vacuum-live-tail.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending"
+      }
     },
     "1176": {
       "issue": 1176,
@@ -263,18 +269,7 @@
     1156,
     1190
   ],
-  "active": {
-    "issue": 1175,
-    "worker": "finish",
-    "token": "19:finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:1:admit",
-    "fence": 19,
-    "materialSha": "d7909324fac9e44d5b555656b5530f2316f09aa0",
-    "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-    "phase": "testing",
-    "admittedAt": 1793565840927,
-    "expiresAt": 1793566196914,
-    "patchId": "3c51001a1e082c742f2d92810af9ae1b69824a9d"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -400,6 +395,10 @@
     "1169-spec2:spec-request": {
       "digest": "351f1823ce3eeadf6224730c0ce5699aaf2af4efaa0541dc494695d8ca0cd5f4",
       "issue": 1169
+    },
+    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:3:return": {
+      "digest": "eef2a9f6be82919ddbea741b6dbc53f8a782040f0d34cb9aba9969ef04c48fd8",
+      "issue": 1175
     }
   },
   "devWebhook": {
