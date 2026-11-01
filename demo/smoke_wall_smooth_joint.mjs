@@ -12,6 +12,9 @@ const { page, browser } = await launch({ width: 1500, height: 1200 }, Number(pro
 const evidence = { oldSource: '4b65ba2e1', oldInteriorStroke: true, checks: [] };
 try {
   const seed = async () => {
+    // Fit is present in the expanded measured header. The harness defaults
+    // to a 780px card, whose compact header intentionally hides zoom actions.
+    await page.locator('#host').evaluate(host => { host.style.width = '1400px'; host.style.maxWidth = 'none'; });
     await page.evaluate(async space => {
       await window.__hpTest.setServerConfig(cfg => ({ ...cfg, spaces: [space], markers: [],
         settings: { ...cfg.settings, filter_seeded: true } }));
