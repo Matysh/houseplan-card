@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 139,
-  "nextTicket": 17,
+  "revision": 140,
+  "nextTicket": 18,
   "nextFence": 17,
   "tasks": {
     "1128": {
@@ -9,14 +9,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1128-touch-room-link",
-      "materialSha": "4d1b09d2f2930f9b13a4c0e0629b7841ae3edbff",
+      "materialSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 16,
-      "queued": false,
+      "ticket": 17,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793563250686,
-      "reviewEntry": 1,
+      "readyAt": 1793563465220,
+      "reviewEntry": 2,
       "patchId": "27b6efa99f80284b3a1af424936e017b5eb8648e",
       "changedFiles": [
         "demo/smoke_room_area_touch.mjs",
@@ -29,9 +29,6 @@
         "docs/release-ledger/v1.83.0/1128.json",
         "src/styles/plan.styles.ts"
       ],
-      "automationError": "checks-unavailable",
-      "automationSince": 1793563399026,
-      "reason": "Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
       "notice": {
         "key": "1:Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
         "reason": "Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
@@ -161,7 +158,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1128
+  ],
   "active": null,
   "events": {
     "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150": {
@@ -194,6 +193,10 @@
     },
     "author-return-1128-1793563433914": {
       "digest": "a922b23123bb8871ef4c7906b2509d5384f985560b2307a4cb093cdd9fd80190",
+      "issue": 1128
+    },
+    "finish:18b8190e-59c2-49ec-93cc-c870ee48e6c5": {
+      "digest": "02c71aa61c84c688feff7d3e5ab0a8f98b12d5e8b8a0f064ca4296570d226522",
       "issue": 1128
     }
   },
