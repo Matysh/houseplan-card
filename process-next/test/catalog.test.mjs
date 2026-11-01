@@ -31,7 +31,7 @@ test('product minimum builds once, protects data/rights and opens one saved View
   for (const input of ['demo/gen_icons.mjs', ['src', 'houseplan-card.ts'].join('/'), 'demo/fixtures/sun-transparent.json', 'demo/srv/demo.html'])
     assert.ok(demo.inputs.includes(input), `icon fixture preparation must notice ${input}`);
   assert.ok(!demo.inputs.includes(['demo', 'srv', 'assets', 'houseplan-assets.json'].join('/')));
-  assert.ok(!demo.inputs.includes('demo/**/*.json'));
+  assert.ok(!demo.inputs.includes(['demo', '**', '*.json'].join('/')));
 });
 
 test('infrastructure checks only changed syntax and selected mechanism, with no product preparation', async () => {
@@ -55,6 +55,8 @@ test('infrastructure can check finish and its planner without consuming declared
   assert.deepEqual(plan.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
   assert.ok(plan.steps.every(item => item.requires.length === 0));
   assert.ok(plan.steps[1].inputs.includes('process-next/lib/catalog.mjs'));
+  assert.ok(plan.steps.every(item => !item.inputs.includes(['demo', '**', '*.json'].join('/'))),
+    'negative metadata assertions must not include generated manifests in source identities');
   // Actual artifact consumers must still declare preparation; only catalog declarations are metadata.
   await assert.rejects(planProfile({ root, layer: 'infra', areaTests: ['test/bundle-assets.test.mjs'] }), /prepared product artifacts/);
 });
