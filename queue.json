@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8,
+  "revision": 9,
   "nextTicket": 3,
   "nextFence": 3,
   "tasks": {
@@ -17,7 +17,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793552544967,
       "reviewEntry": 2,
-      "patchId": "3dad9af0db976395f9cbb1ba7aab2e58de69d3a1",
+      "patchId": "27a9dbf79b0f58fe919ecd3e738bc278bedff7b5",
       "changedFiles": [
         "demo/smoke_plan_drawing_repairs.mjs",
         "demo/smoke_room_contact_storage.mjs",
@@ -31,7 +31,8 @@
         "docs/release-ledger/v1.83.0/1176.json",
         "src/editors/properties/editor.ts",
         "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
+        "src/houseplan-editor-runtime.ts",
+        "src/live-hover.ts"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -50,10 +51,11 @@
     "token": "2:finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:1:admit",
     "fence": 2,
     "materialSha": "747a6ca41bdff16dab6de26f130994749097c71d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
+    "phase": "testing",
     "admittedAt": 1793552547873,
-    "expiresAt": 1793552847873
+    "expiresAt": 1793552852630,
+    "patchId": "27a9dbf79b0f58fe919ecd3e738bc278bedff7b5"
   },
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -86,6 +88,10 @@
     },
     "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:1:admit": {
       "digest": "f9d1c314da4ecf437ab030d6c261425f82baccbae0002daa63a3819a9933f9a6",
+      "issue": 1176
+    },
+    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:2:synchronized": {
+      "digest": "2fabff06ee2ffcab56aa89d4a94fa2a64cd24bfef90fdf81747ce6ef87ee86ec",
       "issue": 1176
     }
   }
