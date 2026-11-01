@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 51,
+  "revision": 52,
   "nextTicket": 7,
   "nextFence": 7,
   "tasks": {
@@ -77,7 +77,7 @@
       "notice": {
         "key": "1:fix-infra-profile-inference",
         "reason": "fix-infra-profile-inference",
-        "status": "pending"
+        "status": "delivered"
       }
     }
   },
@@ -130,6 +130,10 @@
     "github:41333465147:1:label:spec-request": {
       "digest": "9e3159668d076228e2dffa412d98abbc943bc0d55b3d68a91948c454633d083f",
       "issue": 1184
+    },
+    "github:41333465147:1:completions:metadata:a4e37ff3-20b6-4cda-839a-2832d106780d:task-notice:1187::": {
+      "digest": "bfcc384d1a54397a97ec2795696ef5156745e64bb6a939a6ab4fe4e67caa1832",
+      "issue": 1187
     }
   },
   "devWebhook": {
