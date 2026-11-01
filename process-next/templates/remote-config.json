@@ -1,0 +1,12 @@
+{
+  "enabled": false,
+  "owner": "Matysh",
+  "repo": "houseplan-card",
+  "ownerLogin": "Matysh",
+  "workspace": ".",
+  "github": { "tokenEnv": "GH_TOKEN" },
+  "git": { "remote": "origin", "dev": "dev" },
+  "queue": { "branch": "process-state", "path": "queue.json" },
+  "release": { "branch": "process-release-state", "path": "releases.json" },
+  "review": { "workflow": "process-next-review.yml", "ref": "dev", "commentAuthor": "github-actions[bot]" }
+}

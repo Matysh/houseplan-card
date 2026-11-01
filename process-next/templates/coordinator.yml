@@ -1,0 +1,33 @@
+# Inert event delivery. Installation and config.enabled are cutover actions, not preparation.
+name: Очередь завершения задач
+run-name: Очередь завершения задач · ${{ github.event_name }}
+on:
+  issues:
+    types: [labeled, unlabeled, closed, reopened]
+  workflow_run:
+    workflows: [Содержательное ревью задачи]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+  actions: write
+jobs:
+  progress:
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: dev
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .nvmrc
+      - name: Продвинуть очередь без запуска тестов
+        env:
+          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+          HP_PROCESS_NEXT_ACTIVATE: '1'
+          GH_TOKEN: ${{ github.token }}
+        run: node process-next/templates/coordinator-job.mjs

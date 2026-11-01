@@ -1,0 +1,65 @@
+# Inert preparation template; no build/tests/dependency installation in S7.
+name: Содержательное ревью задачи
+run-name: ${{ inputs.kind == 'spec' && format('Ревью ТЗ задачи {0} · {1}', inputs.issue, inputs.requestId) || format('Код-ревью задачи {0} · {1}', inputs.issue, inputs.requestId) }}
+on:
+  workflow_dispatch:
+    inputs:
+      issue: { type: string, required: true }
+      base: { type: string, required: true }
+      head: { type: string, required: true }
+      requestId: { type: string, required: true }
+      track: { type: choice, options: [ship, show, ask], default: show }
+      kind: { type: choice, options: [code, spec], default: code }
+      ownerAssigned: { type: boolean, default: false }
+      receipts: { type: string, default: '[]' }
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: process-next-review-${{ inputs.requestId }}
+  cancel-in-progress: false
+jobs:
+  review:
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    defaults:
+      run:
+        working-directory: process-runner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: process-runner
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.head }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: process-runner/.nvmrc
+      - name: Прочитать материал и выполнить содержательное ревью
+        env:
+          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+          GITHUB_TOKEN: ${{ github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HP_ISSUE: ${{ inputs.issue }}
+          HP_BASE: ${{ inputs.base }}
+          HP_HEAD: ${{ inputs.head }}
+          HP_REQUEST_ID: ${{ inputs.requestId }}
+          HP_TRACK: ${{ inputs.track }}
+          HP_KIND: ${{ inputs.kind }}
+          HP_OWNER_ASSIGNED: ${{ inputs.ownerAssigned }}
+          HP_RECEIPTS: ${{ inputs.receipts }}
+          HP_CANDIDATE_ROOT: ../candidate
+        run: node process-next/templates/review-job.mjs
+      - name: Сохранить отчёт ревью
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: review-${{ inputs.issue }}
+          path: process-runner/process-next/.state/reviews
+          if-no-files-found: ignore

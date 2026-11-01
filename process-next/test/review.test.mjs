@@ -1,0 +1,136 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, readdirSync, symlinkSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { buildReviewContext, executeReadTool, reviewRequired, checkSpecFormat, previewReview, runReview, writeReviewReport, REVIEW_MODEL } from '../lib/review.mjs';
+
+function fixture(t) {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'process-next-review-'));
+  const repoRoot = path.join(directory, 'repo');
+  mkdirSync(repoRoot);
+  const git = (...args) => execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
+  git('init', '-q');
+  git('config', 'user.name', 'Review fixture');
+  git('config', 'user.email', 'fixture@example.invalid');
+  git('config', 'core.hooksPath', path.join(directory, 'no-hooks'));
+  writeFileSync(path.join(repoRoot, 'code.mjs'), 'export const answer = 1;\n');
+  git('add', '.'); git('commit', '-qm', 'before');
+  const base = git('rev-parse', 'HEAD');
+  writeFileSync(path.join(repoRoot, 'code.mjs'), 'export const answer = 2;\n');
+  git('add', '.'); git('commit', '-qm', 'after');
+  const head = git('rev-parse', 'HEAD');
+  // Uncommitted author work must not replace the material under review.
+  writeFileSync(path.join(repoRoot, 'code.mjs'), 'uncommitted\n');
+  const context = buildReviewContext({ repoRoot, base, head, task: { issue: 1105, body: 'Change answer' } });
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  return { directory, repoRoot, context, git, reportDir: path.join(directory, 'reports') };
+}
+
+test('review reads exact base/head and useful history without touching worktree', t => {
+  const { context, repoRoot } = fixture(t);
+  assert.deepEqual(context.changedFiles, ['code.mjs']);
+  assert.match(executeReadTool(context, 'read_file', { path: 'code.mjs' }).text, /answer = 2/);
+  assert.match(executeReadTool(context, 'read_file', { path: 'code.mjs', ref: 'base' }).text, /answer = 1/);
+  assert.match(executeReadTool(context, 'git_show', { path: 'code.mjs', commit: context.base }).text, /answer = 1/);
+  assert.match(executeReadTool(context, 'git_diff', {}).text, /-export const answer = 1/);
+  assert.match(executeReadTool(context, 'git_log', {}).text, /after/);
+  assert.match(executeReadTool(context, 'git_blame', { path: 'code.mjs', count: 1 }).text, /answer = 2/);
+  assert.match(executeReadTool(context, 'search', { text: 'answer' }).text, /answer = 2/);
+  assert.equal(readFileSync(path.join(repoRoot, 'code.mjs'), 'utf8'), 'uncommitted\n');
+});
+
+test('no command execution, path traversal, arbitrary ref flags or symlink reads', t => {
+  const { context, git } = fixture(t);
+  for (const name of ['Bash', 'exec', 'test', 'Validate', 'write_file', 'Edit']) {
+    assert.throws(() => executeReadTool(context, name, { command: 'exit 0' }), /not available/);
+  }
+  for (const p of ['../secret', '/etc/passwd', 'C:/secret', 'a\\..\\secret', ':(top)secret']) {
+    assert.throws(() => executeReadTool(context, 'read_file', { path: p }), /repository-relative/);
+  }
+  assert.throws(() => executeReadTool(context, 'read_file', { path: 'code.mjs', ref: '--help' }), /full commit SHA/);
+  // Build a symlink object in Git without depending on host symlink privileges.
+  const object = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd: context.repoRoot, input: '../../secret', encoding: 'utf8' }).trim();
+  git('update-index', '--add', '--cacheinfo', `120000,${object},link`);
+  git('commit', '-qm', 'symlink fixture');
+  const withLink = { ...context, head: git('rev-parse', 'HEAD') };
+  assert.throws(() => executeReadTool(withLink, 'read_file', { path: 'link' }), /no symlinks/);
+});
+
+test('owner ship never invokes individual review or demands a spec/key', async t => {
+  const { context } = fixture(t);
+  for (const kind of ['code', 'spec']) {
+    const result = await runReview({ context: { ...context, track: 'ship', ownerAssigned: true, kind }, fetchImpl: () => { throw new Error('must not call provider'); } });
+    assert.equal(result.status, 'not-required');
+  }
+  assert.equal(reviewRequired({ track: 'show', kind: 'spec' }), false);
+  assert.equal(reviewRequired({ track: 'ship', ownerAssigned: false }), true);
+  assert.equal(checkSpecFormat('', { ownerShip: true }).applicable, false);
+});
+
+test('offline preview requires no provider and exposes only analytical tools', async t => {
+  const { context } = fixture(t);
+  const p = await runReview({ context, preview: true, fetchImpl: () => { throw new Error('network'); } });
+  assert.equal(p.network, false);
+  assert.equal(p.writes, false);
+  assert.equal(p.model, REVIEW_MODEL);
+  assert.equal(p.tools.some(t => /bash|exec|edit/i.test(t.name)), false);
+  assert.throws(() => previewReview(context, { model: 'claude-sonnet-5' }), /model migration/);
+});
+
+test('API tool conversation preserves thinking and saves only the submitted report', async t => {
+  const { context, repoRoot, reportDir } = fixture(t);
+  const requests = [];
+  const thinking = { type: 'thinking', thinking: '', signature: 'opaque-provider-signature' };
+  const fetchImpl = async (url, options) => {
+    assert.equal(url, 'https://api.anthropic.com/v1/messages');
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, REVIEW_MODEL);
+    assert.equal(body.messages.some(m => JSON.stringify(m).includes('fixture-api-key')), false);
+    requests.push(body);
+    const content = requests.length === 1 ? [thinking, { type: 'tool_use', id: 'read', name: 'read_file', input: { path: 'code.mjs' } }] : [{ type: 'tool_use', id: 'submit', name: 'submit_review', input: { verdict: 'accept', understanding: 'Changed answer in the reviewed snapshot.', blockers: [], improvements: [], boundaries: 'Read source only; S6 result supplied separately.' } }];
+    return { ok: true, json: async () => ({ model: REVIEW_MODEL, stop_reason: 'tool_use', content, usage: { input_tokens: 10, output_tokens: 20 } }) };
+  };
+  const result = await runReview({ context, reportDir, apiKey: 'fixture-api-key', fetchImpl });
+  assert.equal(result.status, 'accept');
+  assert.equal(result.turns, 2);
+  assert.deepEqual(requests[1].messages[1].content[0], thinking);
+  assert.equal(path.dirname(result.file), reportDir);
+  const report = readFileSync(result.file, 'utf8');
+  assert.match(report, /Changed answer/);
+  assert.doesNotMatch(report, /fixture-api-key|opaque-provider-signature/);
+  assert.equal(readFileSync(path.join(repoRoot, 'code.mjs'), 'utf8'), 'uncommitted\n');
+});
+
+test('unknown tools, truncation and provider errors cannot become green reports', async t => {
+  const { context, reportDir } = fixture(t);
+  const results = [
+    { ok: false, status: 429 },
+    { ok: true, json: async () => ({ stop_reason: 'max_tokens', content: [] }) },
+    { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Everything is fine' }] }) },
+    { ok: true, json: async () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', name: 'Bash', input: { command: 'npm test' } }] }) },
+    { ok: true, json: async () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', name: 'submit_review', input: {} }, { type: 'tool_use', name: 'Bash', input: { command: 'npm test' } }] }) },
+  ];
+  for (const response of results) {
+    await assert.rejects(runReview({ context, reportDir, apiKey: 'fixture', fetchImpl: async () => response }), /HTTP 429|incomplete|Unavailable review tool/);
+  }
+  assert.equal(readdirSync(path.dirname(reportDir)).includes('reports'), false);
+});
+
+test('report writes reject symlink roots and inconsistent green verdicts', t => {
+  const { context, directory, reportDir } = fixture(t);
+  const report = { verdict: 'accept', understanding: 'Understood', blockers: ['Actual defect'], improvements: [], boundaries: 'Source' };
+  assert.throws(() => writeReviewReport({ context, report, reportDir }), /cannot contain blockers/);
+  mkdirSync(reportDir);
+  const link = path.join(directory, 'linked-reports');
+  symlinkSync(reportDir, link, process.platform === 'win32' ? 'junction' : 'dir');
+  assert.throws(() => writeReviewReport({ context, report: { ...report, blockers: [] }, reportDir: link }), /symlinks/);
+});
+
+test('author template check identifies missing/empty sections without pretending to review meaning', () => {
+  const spec = `## ТЗ\n### Сценарий\nАдминистратор открывает план.\n### Что человек увидит до и после\nДо — ошибка, после — план.\n### Проблема\nОшибка.\n### Скоуп\nПлан.\n### Не-скоуп\nОстальное.\n### Контракт поведения\nЗагрузка.\n### UX\nБез изменений.\n### Модель данных и миграция\nБез изменений.\n### i18n\nНет.\n### Критерии приёмки\nAC1: готовый план; доказательство — smoke.\n### План автотестов\nАдресный smoke.\n### Риски\nОшибки загрузки.\n### Откат\nRevert.\n### Release-артефакты\nОбычный пакет.\n`;
+  assert.equal(checkSpecFormat(spec).ok, true);
+  assert.equal(checkSpecFormat(spec.replace('Revert.', 'TODO')).ok, false);
+  assert.equal(checkSpecFormat('## ТЗ\nПроизвольный текст').ok, false);
+});

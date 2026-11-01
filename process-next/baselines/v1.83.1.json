@@ -1,0 +1,142 @@
+{
+  "schema": 1,
+  "role": "frozen diagnostic anchor; never blocks publication",
+  "release": "v1.83.1",
+  "source_sha": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+  "recorded_at_utc": "2026-11-01T06:45:19.048Z",
+  "source": "published release frontend, no rebuild; ZIP and committed assets verified byte-identical",
+  "size_metrics": {
+    "zip_bytes": 1933790,
+    "frontend_all_files_raw_bytes": 3736291,
+    "frontend_all_files_gzip_bytes": 1153604,
+    "frontend_manifest_payload_gzip_bytes": 1146718,
+    "initial_view_gzip_bytes": 366204
+  },
+  "size_definitions": {
+    "frontend_all_files_gzip_bytes": "sum of gzip level 9 sizes for every delivered frontend file, including manifest, each file counted once",
+    "initial_view_gzip_bytes": "published initialViewFiles dependency closure; calculated gzip level 9; not measured network traffic"
+  },
+  "timing_metrics": {
+    "firstStableRenderMs": {
+      "unit": "ms",
+      "median": 968.3,
+      "min": 955.6,
+      "max": 990.4,
+      "mad": 12.7,
+      "samples": [
+        968.3,
+        955.6,
+        988,
+        990.4,
+        958.7,
+        966.1,
+        984
+      ]
+    },
+    "spaceSwitchMs": {
+      "unit": "ms",
+      "median": 389.4,
+      "min": 373.8,
+      "max": 438.8,
+      "mad": 9.4,
+      "samples": [
+        438.8,
+        378.8,
+        373.8,
+        392.9,
+        386.1,
+        389.4,
+        398.8
+      ]
+    },
+    "panZoomMs": {
+      "unit": "ms",
+      "median": 22.8,
+      "min": 21.8,
+      "max": 25.3,
+      "mad": 0.5,
+      "samples": [
+        22.8,
+        25.3,
+        23,
+        22.9,
+        22,
+        21.8,
+        22.3
+      ]
+    },
+    "stateUpdateMs": {
+      "unit": "ms",
+      "median": 25.8,
+      "min": 20.2,
+      "max": 32.4,
+      "mad": 1.8,
+      "samples": [
+        25.8,
+        27.6,
+        24.2,
+        20.2,
+        26.2,
+        20.7,
+        32.4
+      ]
+    }
+  },
+  "timing_protocol": {
+    "profile": "large-house-v1",
+    "warmups": 1,
+    "samples": 7,
+    "fixture": {
+      "floors": 3,
+      "rooms": 60,
+      "devices": 200,
+      "openings": 100,
+      "partitions": 60,
+      "columns": 40,
+      "decor": 500,
+      "stairs": 250
+    },
+    "runtime": {
+      "node": "v22.23.2",
+      "chromium": "151.0.7922.34",
+      "platform": "linux",
+      "arch": "x64",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "reducedMotion": true
+    },
+    "elapsed_seconds": 52,
+    "runner_sha256": "6a4bd5cc434c1c3c69efb62f3117f8828cde5131a08aba46852f46dc90a23e9c",
+    "package_lock_sha256": "df29a4af599a66a27aa28f25614e5b0ab713e26883a64ab11f240f47317f9d31",
+    "progress": "original runner completed-sample records; benchmark source unmodified"
+  },
+  "host": {
+    "cpu": "Intel Core Ultra 7 155H",
+    "physical_cores": 16,
+    "logical_processors": 22,
+    "windows": "Windows 11 Pro 10.0.26300",
+    "memory_kib": 32994680,
+    "power_scheme": "Balanced",
+    "linux": "Linux HonorMagicBook 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 GNU/Linux",
+    "wsl_distribution": "PRETTY_NAME=\"Ubuntu 26.04 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04 (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo\n"
+  },
+  "limitations": [
+    "One within-session series; does not estimate between-session variability.",
+    "Synthetic HA and warm browser harness; not real HA cold startup.",
+    "panZoomMs is one wheel zoom event, not a general pan/FPS measurement.",
+    "Full frontend gzip sums every delivered frontend file including manifest; initialView uses the published five-file dependency closure.",
+    "Absolute tolerances remain unapproved (point13B)."
+  ],
+  "raw_artifact_sha256": {
+    "houseplan.zip": "f748d7913d89bccf7cd69c4b94e0699227f811ca3b101427a3358e77dfc3fd6a",
+    "sizes.json": "cbf681ff4cbc710a87a355dc88ea3c812e4cc881da400c84205031797bfe2d60",
+    "performance-large-house.json": "4c6ac8c8013eab8001f3d23ef50479917d6bc0b52e7cca352c4e2c532b30bde8",
+    "environment.json": "7e7402d8f448225bf275991fe07b6ee92e29c354b6b65ef0725ae53c4cef4efa",
+    "runner.log": "a30aed26d28fa8d071b73d9b9b9edc002bdf84cea8307b489a739e6f06bcb702",
+    "visible_run.py": "8d6f205e1c31c6f031f9c606a5e22a75ae5631379b8824aad2996b59e8b60b45",
+    "prepare_baseline.py": "4e0de98804b45fe5cc0964a6ac46c0d62b7060637bb92144f5de3a41ec5c1cc7"
+  }
+}

@@ -1,0 +1,1281 @@
+#!/usr/bin/env node
+// Side-by-side adaptation of demo/golden/run.mjs @ 96a97b8.
+// Preserve pixel and semantic assertions; only selection/report scope differs.
+// On activation consolidate with the original runner: do not maintain two copies.
+import { BETA_GOLDEN } from './selections.mjs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { launch } from '../../demo/serve.mjs';
+import { assertFreshDemoBundle } from '../../demo/bundle-freshness.mjs';
+import { goldenClip, prepareGoldenScenario, resetGoldenStability } from '../../demo/golden/harness.mjs';
+import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
+import { inspectBatteryBoardPixels } from '../../demo/golden/device-battery.mjs';
+import { captureGoldenFrame } from '../../demo/golden/scene-repaint.mjs';
+import { uiLab1081CaptureEvidence } from '../../demo/golden/ui-lab-1081.mjs';
+import { CAPTURE_PROVENANCE_SCHEMA, captureProvenance } from '../../scripts/capture-environment.mjs';
+import {
+  assertGoldenInvocation,
+  GOLDEN_BASELINE_MANIFEST,
+  goldenResultLine,
+  goldenRunFailed,
+  goldenScenarioSetsMatch,
+} from '../../demo/golden/policy.mjs';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const mode = 'verify';
+const selection = process.argv.find(arg => arg.startsWith('--selection='))?.slice(12);
+if (!['beta', 'rest'].includes(selection)) throw Error('Expected --selection=beta|rest');
+assertGoldenInvocation(mode);
+const wanted = new Set(BETA_GOLDEN);
+const scenesById = new Map(GOLDEN_SCENARIOS.map(scene => [scene.id, scene]));
+if (wanted.size !== BETA_GOLDEN.length || scenesById.size !== GOLDEN_SCENARIOS.length) throw Error('Duplicate golden scene selection');
+for (const id of wanted) if (!scenesById.has(id)) throw Error('Unknown approved golden scene: ' + id);
+const scenarios = selection === 'beta' ? BETA_GOLDEN.map(id => scenesById.get(id)) : GOLDEN_SCENARIOS.filter(scene => !wanted.has(scene.id));
+if (!scenarios.length) throw Error('Required golden selection is empty');
+const runStarted = Date.now();
+console.log(`PROCESS_NEXT_PROGRESS ${JSON.stringify({ phase: 'golden', completed: 0, total: scenarios.length, elapsedMs: 0 })}`);
+
+const artifactRoot = resolve(ROOT, 'artifacts/process-next', 'golden-' + selection);
+const actualRoot = resolve(artifactRoot, 'actual');
+const diffRoot = resolve(artifactRoot, 'diff');
+const baselineRoot = resolve(ROOT, 'demo/golden/baselines');
+mkdirSync(actualRoot, { recursive: true });
+mkdirSync(diffRoot, { recursive: true });
+
+const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
+
+async function inspectPhoneClosePixels(page, png, rect) {
+  return page.evaluate(async ({ base64, rect }) => {
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0); image.close();
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const luminance = (x, y) => {
+      const at = (y * canvas.width + x) * 4;
+      return [0, 1, 2].map(i => pixels[at + i] / 255)
+        .map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
+        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+    };
+    const background = luminance(Math.round(rect.x + 2), Math.round(rect.y + 2));
+    let painted = 0, maxContrast = 1;
+    for (let y = Math.ceil(rect.y + 2); y < Math.floor(rect.y + rect.height - 2); y++)
+      for (let x = Math.ceil(rect.x + 2); x < Math.floor(rect.x + rect.width - 2); x++) {
+        const value = luminance(x, y);
+        const contrast = (Math.max(value, background) + .05) / (Math.min(value, background) + .05);
+        if (contrast >= 3) painted++;
+        maxContrast = Math.max(maxContrast, contrast);
+      }
+    if (painted < 4) throw Error(`phone editor close has no contrasting painted glyph: ${painted}, ${maxContrast}`);
+    return { painted, maxContrast, background, rect };
+  }, { base64: png.toString('base64'), rect });
+}
+
+async function renderPdfGoldenPage(page, semanticContract = null) {
+  const downloadPromise = page.waitForEvent('download');
+  await page.evaluate(async () => {
+    const card = window.__goldenCard;
+    if (!card || !(await card._pdfRuntimeLoader.ensure()))
+      throw new Error('golden PDF runtime did not load');
+    card._pdfDialog = true;
+    card.requestUpdate();
+    await card.updateComplete;
+    const dialog = card.renderRoot.querySelector('hp-pdf-dialog');
+    if (!dialog) throw new Error('golden PDF dialog did not open');
+    await dialog.updateComplete;
+    dialog.context.now = new Date('2026-09-07T00:00:00Z');
+    await dialog.context.save({
+      format: 'pdf',
+      options: { dimensions: true, roomNames: true, decor: false, backdrop: false },
+    });
+    dialog.context.close();
+    await card.updateComplete;
+  });
+  const download = await downloadPromise;
+  const path = await download.path();
+  if (!path) throw new Error('golden PDF download has no local path');
+  const pdfBase64 = readFileSync(path).toString('base64');
+  const rendered = await page.evaluate(async ({ base64, semanticContract }) => {
+    const pdfjs = await import('/__pdfjs/pdf.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = '/__pdfjs/pdf.worker.mjs';
+    const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+    const pdfDocument = await pdfjs.getDocument({ data: bytes }).promise;
+    if (pdfDocument.numPages !== 1) throw new Error(`golden PDF has ${pdfDocument.numPages} pages`);
+    const sheet = await pdfDocument.getPage(1);
+    const natural = sheet.getViewport({ scale: 1 });
+    const scale = Math.min((innerWidth - 48) / natural.width, (innerHeight - 48) / natural.height);
+    const viewport = sheet.getViewport({ scale });
+    const overlay = document.createElement('div');
+    overlay.id = 'golden-pdf-page';
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', zIndex: '2147483647', display: 'grid', placeItems: 'center',
+      background: '#d9dde2',
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    Object.assign(canvas.style, {
+      width: `${canvas.width}px`, height: `${canvas.height}px`, background: '#fff',
+      boxShadow: '0 8px 28px rgb(0 0 0 / 24%)',
+    });
+    overlay.append(canvas);
+    document.body.append(overlay);
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('golden PDF canvas is unavailable');
+    await sheet.render({ canvasContext: context, viewport }).promise;
+    const textContent = await sheet.getTextContent();
+    const textItems = textContent.items
+      .filter((item) => typeof item.str === 'string' && item.str.trim())
+      .map((item) => ({ str: item.str.trim(), transform: [...item.transform] }));
+
+    let semantic = null;
+    if (semanticContract) {
+      const image = context.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = image.data;
+      const pointPerMm = 72 / 25.4;
+      const pxPerPointX = canvas.width / natural.width;
+      const pxPerPointY = canvas.height / natural.height;
+      const pxPerMmX = pxPerPointX * pointPerMm;
+      const pxPerMmY = pxPerPointY * pointPerMm;
+      const field = {
+        left: Math.floor(12 * pxPerMmX),
+        top: Math.floor(30 * pxPerMmY),
+        right: Math.ceil(canvas.width - 12 * pxPerMmX),
+        bottom: Math.ceil(canvas.height - 36 * pxPerMmY),
+      };
+      const clampX = (value) => Math.max(0, Math.min(canvas.width - 1, value));
+      const clampY = (value) => Math.max(0, Math.min(canvas.height - 1, value));
+      const at = (x, y) => {
+        const offset = (clampY(y) * canvas.width + clampX(x)) * 4;
+        return [pixels[offset], pixels[offset + 1], pixels[offset + 2], pixels[offset + 3]];
+      };
+      const wallGray = ([red, green, blue, alpha]) => alpha > 0
+        && red >= 126 && red <= 128
+        && Math.max(Math.abs(red - green), Math.abs(red - blue), Math.abs(green - blue)) <= 1;
+      const wallGrayAt = (x, y) => x >= 0 && x < canvas.width && y >= 0 && y < canvas.height
+        && wallGray(at(x, y));
+      // Anti-aliased black text also crosses 127 on isolated edge pixels. A
+      // two-sided same-colour neighbour distinguishes actual wall fill from
+      // those glyph fringes before we reason about the plan-field boundary.
+      const wallGrayCoreAt = (x, y) => wallGrayAt(x, y) && (
+        (wallGrayAt(x - 1, y) && wallGrayAt(x + 1, y))
+        || (wallGrayAt(x, y - 1) && wallGrayAt(x, y + 1))
+      );
+      const darkInk = ([red, green, blue, alpha]) => alpha > 0
+        && red < 100 && green < 100 && blue < 100;
+      const sceneInk = ([red, green, blue, alpha]) => alpha > 0
+        && (red < 242 || green < 242 || blue < 242);
+      const white = ([red, green, blue, alpha]) => alpha > 0
+        && red >= 245 && green >= 245 && blue >= 245;
+      const emptyBounds = () => ({ minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+      const include = (bounds, x, y) => {
+        bounds.minX = Math.min(bounds.minX, x);
+        bounds.minY = Math.min(bounds.minY, y);
+        bounds.maxX = Math.max(bounds.maxX, x);
+        bounds.maxY = Math.max(bounds.maxY, y);
+      };
+      const validBounds = (bounds) => Number.isFinite(bounds.minX)
+        && Number.isFinite(bounds.minY) && bounds.maxX >= bounds.minX && bounds.maxY >= bounds.minY;
+
+      let sceneInkPixels = 0;
+      let wallGrayPixels = 0;
+      let wallGrayOutsideFieldPixels = 0;
+      const sceneBounds = emptyBounds();
+      const grayBounds = emptyBounds();
+      for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
+        const sample = at(x, y);
+        const insideField = x >= field.left && x < field.right && y >= field.top && y < field.bottom;
+        if (insideField && sceneInk(sample)) {
+          sceneInkPixels++;
+          include(sceneBounds, x, y);
+        }
+        if (wallGrayCoreAt(x, y)) {
+          if (insideField) {
+            wallGrayPixels++;
+            include(grayBounds, x, y);
+          } else wallGrayOutsideFieldPixels++;
+        }
+      }
+
+      let interiorHatchPixels = 0;
+      if (validBounds(grayBounds)) {
+        const oppositeOffsets = [[2, 0], [0, 2], [2, 2], [2, -2]];
+        for (let y = grayBounds.minY; y <= grayBounds.maxY; y++) {
+          for (let x = grayBounds.minX; x <= grayBounds.maxX; x++) {
+            if (!darkInk(at(x, y))) continue;
+            if (oppositeOffsets.some(([dx, dy]) =>
+              wallGrayAt(x - dx, y - dy) && wallGrayAt(x + dx, y + dy))) {
+              interiorHatchPixels++;
+            }
+          }
+        }
+      }
+
+      let opening = null;
+      if (validBounds(grayBounds) && semanticContract.opening) {
+        const width = grayBounds.maxX - grayBounds.minX + 1;
+        const height = grayBounds.maxY - grayBounds.minY + 1;
+        const bandBottom = Math.min(grayBounds.maxY,
+          grayBounds.minY + Math.max(5, Math.round(height * 0.08)));
+        let wallRow = grayBounds.minY;
+        let rowGray = -1;
+        for (let y = grayBounds.minY; y <= bandBottom; y++) {
+          let count = 0;
+          for (let x = grayBounds.minX; x <= grayBounds.maxX; x++) {
+            if (wallGrayAt(x, y)) count++;
+          }
+          if (count > rowGray) { rowGray = count; wallRow = y; }
+        }
+        const halfWidth = Math.max(2,
+          Math.round(width * semanticContract.opening.halfWidthFraction));
+        const samplePatch = (centerX) => {
+          let gray = 0, pale = 0, total = 0;
+          for (let y = wallRow - 2; y <= wallRow + 2; y++) {
+            for (let x = Math.round(centerX) - halfWidth;
+              x <= Math.round(centerX) + halfWidth; x++) {
+              const sample = at(x, y);
+              if (wallGray(sample)) gray++;
+              if (white(sample)) pale++;
+              total++;
+            }
+          }
+          return { grayFraction: gray / total, whiteFraction: pale / total };
+        };
+        const centerX = grayBounds.minX + width * semanticContract.opening.xFraction;
+        const offset = width * semanticContract.opening.controlOffsetFraction;
+        const openingPatch = samplePatch(centerX);
+        const leftControl = samplePatch(centerX - offset);
+        const rightControl = samplePatch(centerX + offset);
+        const controlGrayFraction = (leftControl.grayFraction + rightControl.grayFraction) / 2;
+        opening = {
+          wallRow, centerX, ...openingPatch, controlGrayFraction,
+          grayRatio: controlGrayFraction > 0
+            ? openingPatch.grayFraction / controlGrayFraction : Infinity,
+        };
+      }
+
+      const footerY = natural.height - 25 * pointPerMm;
+      const compassRegion = {
+        left: Math.floor((natural.width / 2 - 8 * pointPerMm) * pxPerPointX),
+        right: Math.ceil((natural.width / 2 + 8 * pointPerMm) * pxPerPointX),
+        top: Math.floor((footerY + pointPerMm) * pxPerPointY),
+        bottom: Math.ceil((footerY + 14 * pointPerMm) * pxPerPointY),
+      };
+      let compassInkPixels = 0;
+      for (let y = compassRegion.top; y < compassRegion.bottom; y++) {
+        for (let x = compassRegion.left; x < compassRegion.right; x++) {
+          if (darkInk(at(x, y))) compassInkPixels++;
+        }
+      }
+
+      const dimensionPattern = /^\d+(?:[.,]\d+)?\s*(?:m|cm|ft|in)$/i;
+      const dimensions = textItems.filter((item) => dimensionPattern.test(item.str));
+      const axisError = (transform) => {
+        const degrees = Math.atan2(Number(transform[1]), Number(transform[0])) * 180 / Math.PI;
+        const remainder = ((degrees % 90) + 90) % 90;
+        return Math.min(remainder, 90 - remainder);
+      };
+      const dimensionCounts = new Map();
+      for (const item of dimensions) {
+        dimensionCounts.set(item.str, (dimensionCounts.get(item.str) || 0) + 1);
+      }
+      const sceneWidth = validBounds(sceneBounds) ? sceneBounds.maxX - sceneBounds.minX + 1 : 0;
+      const sceneHeight = validBounds(sceneBounds) ? sceneBounds.maxY - sceneBounds.minY + 1 : 0;
+      const fieldWidth = field.right - field.left;
+      const fieldHeight = field.bottom - field.top;
+      semantic = {
+        text: textItems.map((item) => item.str).join(' '),
+        fieldPixels: field,
+        sceneBoundsPixels: sceneBounds,
+        wallBoundsPixels: grayBounds,
+        compassRegionPixels: compassRegion,
+        sceneInkPixels,
+        sceneCoverage: fieldWidth > 0 && fieldHeight > 0
+          ? sceneWidth * sceneHeight / (fieldWidth * fieldHeight) : 0,
+        centerOffsetMm: validBounds(sceneBounds) ? Math.max(
+          Math.abs((sceneBounds.minX + sceneBounds.maxX - field.left - field.right) / 2 / pxPerMmX),
+          Math.abs((sceneBounds.minY + sceneBounds.maxY - field.top - field.bottom) / 2 / pxPerMmY),
+        ) : Infinity,
+        sceneClearanceMm: validBounds(sceneBounds) ? Math.min(
+          (sceneBounds.minX - field.left) / pxPerMmX,
+          (field.right - 1 - sceneBounds.maxX) / pxPerMmX,
+          (sceneBounds.minY - field.top) / pxPerMmY,
+          (field.bottom - 1 - sceneBounds.maxY) / pxPerMmY,
+        ) : -Infinity,
+        wallGrayPixels,
+        wallGrayOutsideFieldPixels,
+        wallGrayOutsideFieldRatio: wallGrayPixels > 0
+          ? wallGrayOutsideFieldPixels / wallGrayPixels : Infinity,
+        interiorHatchPixels,
+        opening,
+        compassInkPixels,
+        dimensionLabels: dimensions.map((item) => item.str),
+        maxDimensionAxisErrorDeg: dimensions.length
+          ? Math.max(...dimensions.map((item) => axisError(item.transform))) : Infinity,
+        repeatedDimensionLabels: [...dimensionCounts.values()].filter((count) => count >= 2).length,
+      };
+    }
+    return {
+      pages: pdfDocument.numPages, width: natural.width, height: natural.height, semantic,
+    };
+  }, { base64: pdfBase64, semanticContract });
+  const a4 = [rendered.width, rendered.height].sort((a, b) => a - b);
+  if (Math.abs(a4[0] - 595.28) > 0.2 || Math.abs(a4[1] - 841.89) > 0.2)
+    throw new Error(`golden PDF is not A4: ${rendered.width}x${rendered.height}`);
+  if (semanticContract) {
+    const semantic = rendered.semantic;
+    const fail = (message) => {
+      throw new Error(`semantic golden PDF assertion failed: ${message}; ${JSON.stringify(semantic)}`);
+    };
+    if (!semantic || semantic.sceneInkPixels < semanticContract.minSceneInkPixels)
+      fail(`architectural ink is below ${semanticContract.minSceneInkPixels} pixels`);
+    if (semantic.sceneCoverage < semanticContract.minSceneCoverage)
+      fail(`scene coverage is below ${semanticContract.minSceneCoverage}`);
+    if (semantic.centerOffsetMm > semanticContract.maxCenterOffsetMm)
+      fail(`scene centre is offset by more than ${semanticContract.maxCenterOffsetMm} mm`);
+    if (semantic.sceneClearanceMm < semanticContract.minSceneClearanceMm)
+      fail(`scene clearance is below ${semanticContract.minSceneClearanceMm} mm`);
+    if (semantic.wallGrayPixels < semanticContract.minWallGrayPixels)
+      fail(`wall-grey area is below ${semanticContract.minWallGrayPixels} pixels`);
+    if (semantic.wallGrayOutsideFieldRatio > semanticContract.maxWallGrayOutsideFieldRatio)
+      fail('wall material escaped the plan field');
+    if (semantic.interiorHatchPixels < semanticContract.minInteriorHatchPixels)
+      fail(`interior hatch is below ${semanticContract.minInteriorHatchPixels} pixels`);
+    if (semanticContract.opening && (!semantic.opening
+        || semantic.opening.grayRatio > semanticContract.opening.maxGrayRatio
+        || semantic.opening.whiteFraction < semanticContract.opening.minWhiteFraction))
+      fail('the exterior opening is not clean against its wall controls');
+    if (semantic.compassInkPixels < semanticContract.minCompassInkPixels)
+      fail(`compass ink is below ${semanticContract.minCompassInkPixels} pixels`);
+    if (semantic.maxDimensionAxisErrorDeg > semanticContract.maxDimensionAxisErrorDeg)
+      fail(`a dimension label is not horizontal or vertical`);
+    if (semantic.repeatedDimensionLabels < semanticContract.minRepeatedDimensionLabels)
+      fail('equal dimensions from distinct local contexts were globally deduplicated');
+    if (semanticContract.requiredDimensionLabels
+        && semanticContract.requiredDimensionLabels.some((value) =>
+          !semantic.dimensionLabels.includes(value))) {
+      fail(`dimension labels omit the required reconstructable chain: `
+        + semanticContract.requiredDimensionLabels.join(', '));
+    }
+    const normalizedText = semantic.text.toLowerCase();
+    const forbidden = semanticContract.forbiddenText.find((token) =>
+      normalizedText.includes(String(token).toLowerCase()));
+    if (forbidden) fail(`forbidden text is present: ${forbidden}`);
+  }
+  return rendered;
+}
+
+async function comparePng(page, actual, baseline, threshold) {
+  return page.evaluate(async ({ actual64, baseline64, threshold }) => {
+    const decode = async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    };
+    const [actualImage, baselineImage] = await Promise.all([decode(actual64), decode(baseline64)]);
+    if (actualImage.width !== baselineImage.width || actualImage.height !== baselineImage.height) {
+      return {
+        dimensionsMatch: false,
+        actualSize: [actualImage.width, actualImage.height],
+        baselineSize: [baselineImage.width, baselineImage.height],
+        differingPixels: null,
+        diffRatio: 1,
+        maxObservedDelta: 255,
+        passed: false,
+        diffPngBase64: null,
+      };
+    }
+    const width = actualImage.width;
+    const height = actualImage.height;
+    const canvas = document.createElement('canvas');
+    const baselineCanvas = document.createElement('canvas');
+    const diffCanvas = document.createElement('canvas');
+    for (const item of [canvas, baselineCanvas, diffCanvas]) {
+      item.width = width;
+      item.height = height;
+    }
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const baselineContext = baselineCanvas.getContext('2d', { willReadFrequently: true });
+    const diffContext = diffCanvas.getContext('2d');
+    context.drawImage(actualImage, 0, 0);
+    baselineContext.drawImage(baselineImage, 0, 0);
+    const actualData = context.getImageData(0, 0, width, height).data;
+    const baselineData = baselineContext.getImageData(0, 0, width, height).data;
+    const diff = diffContext.createImageData(width, height);
+    let differingPixels = 0;
+    let maxObservedDelta = 0;
+    for (let offset = 0; offset < actualData.length; offset += 4) {
+      let delta = 0;
+      for (let channel = 0; channel < 4; channel++)
+        delta = Math.max(delta, Math.abs(actualData[offset + channel] - baselineData[offset + channel]));
+      maxObservedDelta = Math.max(maxObservedDelta, delta);
+      if (delta > threshold.maxChannelDelta) {
+        differingPixels++;
+        diff.data[offset] = 255;
+        diff.data[offset + 1] = 0;
+        diff.data[offset + 2] = 180;
+        diff.data[offset + 3] = 255;
+      } else {
+        const gray = Math.round((actualData[offset] + actualData[offset + 1] + actualData[offset + 2]) / 9);
+        diff.data[offset] = gray;
+        diff.data[offset + 1] = gray;
+        diff.data[offset + 2] = gray;
+        diff.data[offset + 3] = 90;
+      }
+    }
+    diffContext.putImageData(diff, 0, 0);
+    const diffRatio = differingPixels / (width * height);
+    return {
+      dimensionsMatch: true,
+      actualSize: [width, height],
+      baselineSize: [width, height],
+      differingPixels,
+      diffRatio,
+      maxObservedDelta,
+      passed: diffRatio <= threshold.maxDiffRatio,
+      diffPngBase64: differingPixels
+        ? diffCanvas.toDataURL('image/png').slice('data:image/png;base64,'.length)
+        : null,
+    };
+  }, {
+    actual64: actual.toString('base64'),
+    baseline64: baseline.toString('base64'),
+    threshold,
+  });
+}
+
+/** Capture the identical visual frame with only the rendered sun-ray SVG
+ * hidden. Comparing this control frame with the reviewed golden proves that
+ * the layer changes real browser pixels, not merely that its DOM exists. */
+async function captureWithoutSunRays(page, screenshotOptions) {
+  const layerState = await page.evaluate(async () => {
+    const layer = window.__goldenCard?.renderRoot?.querySelector('.sunlayer');
+    if (!layer) throw new Error('semantic golden sun layer is missing');
+    const shapes = layer.querySelectorAll('path, polygon').length;
+    if (!shapes) throw new Error('semantic golden sun layer has no painted shapes');
+    const previous = layer.style.visibility;
+    layer.style.visibility = 'hidden';
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    return { previous, shapes };
+  });
+  try {
+    return { png: await page.screenshot(screenshotOptions), shapes: layerState.shapes };
+  } finally {
+    await page.evaluate(async (previous) => {
+      const layer = window.__goldenCard?.renderRoot?.querySelector('.sunlayer');
+      if (layer) layer.style.visibility = previous;
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    }, layerState.previous);
+  }
+}
+
+/** Capture a control frame with only the transient opening symbol hidden.
+ * Comparing it with the actual frame proves the preview paints browser pixels;
+ * the smoke test separately locks its DOM order above the wall body. */
+async function captureWithoutOpeningPreview(page, screenshotOptions) {
+  const layerState = await page.evaluate(async () => {
+    const card = window.__goldenCard;
+    const parts = [...(card?.renderRoot?.querySelectorAll(
+      '.opening-preview, .opening-preview-dot',
+    ) || [])];
+    if (!parts.length) throw new Error('semantic golden opening preview is missing');
+    const previous = parts.map((part) => part.style.visibility);
+    for (const part of parts) part.style.visibility = 'hidden';
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    return { previous, count: parts.length };
+  });
+  try {
+    return { png: await page.screenshot(screenshotOptions), parts: layerState.count };
+  } finally {
+    await page.evaluate(async (previous) => {
+      const card = window.__goldenCard;
+      const parts = [...(card?.renderRoot?.querySelectorAll(
+        '.opening-preview, .opening-preview-dot',
+      ) || [])];
+      parts.forEach((part, index) => { part.style.visibility = previous[index] || ''; });
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    }, layerState.previous);
+  }
+}
+
+async function countChangedPixels(page, actual, control, spec) {
+  return page.evaluate(async ({ actual64, control64, minChannelDelta }) => {
+    const decode = async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    };
+    const [actualImage, controlImage] = await Promise.all([decode(actual64), decode(control64)]);
+    if (actualImage.width !== controlImage.width || actualImage.height !== controlImage.height)
+      throw new Error('semantic golden control frame has different dimensions');
+    const canvas = document.createElement('canvas');
+    const controlCanvas = document.createElement('canvas');
+    canvas.width = controlCanvas.width = actualImage.width;
+    canvas.height = controlCanvas.height = actualImage.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const controlContext = controlCanvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(actualImage, 0, 0);
+    controlContext.drawImage(controlImage, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const controlPixels = controlContext.getImageData(0, 0, canvas.width, canvas.height).data;
+    let changed = 0;
+    let maxDelta = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const delta = Math.max(
+        Math.abs(pixels[offset] - controlPixels[offset]),
+        Math.abs(pixels[offset + 1] - controlPixels[offset + 1]),
+        Math.abs(pixels[offset + 2] - controlPixels[offset + 2]),
+      );
+      maxDelta = Math.max(maxDelta, delta);
+      if (delta >= minChannelDelta) changed++;
+    }
+    return { changed, maxDelta, size: [canvas.width, canvas.height] };
+  }, {
+    actual64: actual.toString('base64'),
+    control64: control.toString('base64'),
+    minChannelDelta: spec.minChannelDelta,
+  });
+}
+
+/** Count preview pixels which are actually painted over the physical wall
+ * fill. A global changed-pixel threshold can pass even when the complete
+ * symbol is accidentally hidden below masonry because its swing arc remains
+ * outside the body. */
+async function countOpeningPreviewPixelsInsideWall(
+  page, actual, control, clip, minChannelDelta,
+) {
+  return page.evaluate(async ({ actual64, control64, clipRect, minDelta }) => {
+    const decode = async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    };
+    const [actualImage, controlImage] = await Promise.all([decode(actual64), decode(control64)]);
+    const canvas = document.createElement('canvas');
+    const controlCanvas = document.createElement('canvas');
+    canvas.width = controlCanvas.width = actualImage.width;
+    canvas.height = controlCanvas.height = actualImage.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const controlContext = controlCanvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(actualImage, 0, 0);
+    controlContext.drawImage(controlImage, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const controls = controlContext.getImageData(0, 0, canvas.width, canvas.height).data;
+    const card = window.__goldenCard;
+    const preview = card?.renderRoot?.querySelector('.opening-preview');
+    const walls = [...(card?.renderRoot?.querySelectorAll('.wallbody-fill') || [])]
+      .map((wall) => {
+        const matrix = wall.getScreenCTM?.();
+        return matrix ? { wall, rect: wall.getBoundingClientRect(), inverse: matrix.inverse() } : null;
+      })
+      .filter(Boolean);
+    if (!preview || !walls.length) return { changed: 0, sampled: 0 };
+    const previewRect = preview.getBoundingClientRect();
+    const candidates = walls.filter(({ rect }) => rect.right >= previewRect.left
+      && rect.left <= previewRect.right && rect.bottom >= previewRect.top
+      && rect.top <= previewRect.bottom);
+    if (!candidates.length) return { changed: 0, sampled: 0 };
+    const left = Math.ceil(previewRect.left);
+    const top = Math.ceil(previewRect.top);
+    const right = Math.floor(previewRect.right);
+    const bottom = Math.floor(previewRect.bottom);
+    const originX = clipRect?.x || 0;
+    const originY = clipRect?.y || 0;
+    let changed = 0;
+    let sampled = 0;
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left; x <= right; x++) {
+        const screenPoint = new DOMPoint(x + 0.5, y + 0.5);
+        const insideWall = candidates.some(({ wall, rect, inverse }) => {
+          if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return false;
+          return wall.isPointInFill(screenPoint.matrixTransform(inverse));
+        });
+        if (!insideWall) continue;
+        const px = Math.round(x - originX);
+        const py = Math.round(y - originY);
+        if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) continue;
+        sampled += 1;
+        const offset = (py * canvas.width + px) * 4;
+        const delta = Math.max(
+          Math.abs(pixels[offset] - controls[offset]),
+          Math.abs(pixels[offset + 1] - controls[offset + 1]),
+          Math.abs(pixels[offset + 2] - controls[offset + 2]),
+          Math.abs(pixels[offset + 3] - controls[offset + 3]),
+        );
+        if (delta >= minDelta) changed += 1;
+      }
+    }
+    return { changed, sampled };
+  }, {
+    actual64: actual.toString('base64'),
+    control64: control.toString('base64'),
+    clipRect: clip || null,
+    minDelta: minChannelDelta,
+  });
+}
+
+/** Assert scenario semantics against the actual capture, not only its data.
+ *  This protects a reviewed-but-empty baseline from becoming the reference. */
+async function countWarmPixels(page, png, region) {
+  return page.evaluate(async ({ png64, region }) => {
+    const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    const left = Math.max(0, Math.min(image.width, Math.floor(region.x * image.width)));
+    const top = Math.max(0, Math.min(image.height, Math.floor(region.y * image.height)));
+    const right = Math.max(left, Math.min(image.width, Math.ceil((region.x + region.w) * image.width)));
+    const bottom = Math.max(top, Math.min(image.height, Math.ceil((region.y + region.h) * image.height)));
+    const pixels = context.getImageData(left, top, right - left, bottom - top).data;
+    let warm = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      if (pixels[offset] - pixels[offset + 2] > region.minRedBlueDelta) warm++;
+    }
+    return { warm, bounds: [left, top, right, bottom] };
+  }, { png64: png.toString('base64'), region });
+}
+
+/** Semantic guard for #231. Sample named plan points from the actual browser
+ * capture; the decor node merely existing in DOM is insufficient when an
+ * opaque floor layer is painted after it. */
+async function inspectDecorPixels(page, png, clip, spec) {
+  return page.evaluate(async ({ png64, clip, spec }) => {
+    const card = window.__goldenCard;
+    const svg = card?.renderRoot?.querySelector('.stage .zoomwrap > svg');
+    const decor = card?.renderRoot?.querySelector('.decorlayer');
+    const matrix = svg?.getScreenCTM?.();
+    if (!svg || !decor || !matrix) throw new Error('semantic golden decor layer is missing');
+    const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, image.width, image.height).data;
+    const cssWidth = clip?.width || document.documentElement.clientWidth;
+    const cssHeight = clip?.height || document.documentElement.clientHeight;
+    const scaleX = image.width / Math.max(1, cssWidth);
+    const scaleY = image.height / Math.max(1, cssHeight);
+    const originX = clip?.x || 0, originY = clip?.y || 0;
+    const expected = String(spec.color || '').match(/^#([0-9a-f]{6})$/i)?.[1];
+    if (!expected) throw new Error(`semantic golden decor color is invalid: ${spec.color}`);
+    const rgb = [0, 2, 4].map((offset) => parseInt(expected.slice(offset, offset + 2), 16));
+    const radius = Math.max(0, Math.round(spec.radius || 0));
+    return spec.points.map((probe) => {
+      const point = svg.createSVGPoint();
+      point.x = Number(probe.x) * 1000; point.y = Number(probe.y) * 1000;
+      const screen = point.matrixTransform(matrix);
+      const cx = Math.round((screen.x - originX) * scaleX);
+      const cy = Math.round((screen.y - originY) * scaleY);
+      let matching = 0, sampled = 0;
+      for (let y = cy - radius; y <= cy + radius; y++) {
+        for (let x = cx - radius; x <= cx + radius; x++) {
+          if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
+          const offset = (y * image.width + x) * 4;
+          const distance = Math.max(
+            Math.abs(pixels[offset] - rgb[0]),
+            Math.abs(pixels[offset + 1] - rgb[1]),
+            Math.abs(pixels[offset + 2] - rgb[2]),
+          );
+          if (pixels[offset + 3] > 240 && distance <= 48) matching++;
+          sampled++;
+        }
+      }
+      return {
+        id: probe.id, matching, sampled,
+        fraction: sampled ? matching / sampled : 0,
+        pixel: [cx, cy],
+      };
+    });
+  }, { png64: png.toString('base64'), clip, spec });
+}
+
+/** Semantic guard for issue #68: the reviewed bubble must contain rendered
+ * glyph pixels, not just an empty surface or a stale open-state flag. */
+async function countHelpTextPixels(page, png, clip, spec) {
+  return page.evaluate(async ({ png64, clip, spec }) => {
+    const card = window.__goldenCard;
+    const help = card?.renderRoot?.querySelector(`hp-help[data-help-key="${spec.key}"]`);
+    const surface = help?.renderRoot?.querySelector('.tooltip:popover-open')
+      || card?.renderRoot?.querySelector('hp-dialog')?.renderRoot
+        ?.querySelector('[data-hp-overlay="help"]')?.shadowRoot?.querySelector('.tooltip');
+    if (!surface) throw new Error(`semantic golden help missing: ${spec.key}`);
+    const bounds = surface.getBoundingClientRect();
+    const match = getComputedStyle(surface).color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+    if (!match || match.length !== 3) throw new Error(`semantic golden help has invalid text color: ${spec.key}`);
+    const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, image.width, image.height).data;
+    const originX = clip?.x || 0, originY = clip?.y || 0;
+    const left = Math.max(0, Math.ceil(bounds.left - originX) + 5);
+    const top = Math.max(0, Math.ceil(bounds.top - originY) + 5);
+    const right = Math.min(image.width - 1, Math.floor(bounds.right - originX) - 5);
+    const bottom = Math.min(image.height - 1, Math.floor(bounds.bottom - originY) - 5);
+    let textPixels = 0;
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left; x <= right; x++) {
+        const offset = (y * image.width + x) * 4;
+        const distance = Math.abs(pixels[offset] - match[0])
+          + Math.abs(pixels[offset + 1] - match[1])
+          + Math.abs(pixels[offset + 2] - match[2]);
+        if (pixels[offset + 3] > 240 && distance <= 90) textPixels++;
+      }
+    }
+    return { textPixels, bounds: [left, top, right, bottom] };
+  }, { png64: png.toString('base64'), clip, spec });
+}
+
+/** Detect one-pixel SVG seams inside a room-coloured opening tunnel. Sample a
+ * narrow strip around local y=0: this crosses the join between both tunnel
+ * half-faces at any opening angle while excluding legitimate outer-profile
+ * steps where adjacent wall intervals have different physical thicknesses. */
+async function inspectTunnelContinuity(page, png, clip, spec) {
+  return page.evaluate(async ({ png64, clip, spec }) => {
+    const card = window.__goldenCard;
+    const tunnel = card?.renderRoot?.querySelector(
+      `.opening-tunnels[data-layer="data"] [data-hp="opening-tunnel"][data-id="${spec.openingId}"]`,
+    );
+    if (!tunnel) throw new Error(`semantic golden tunnel missing: ${spec.openingId}`);
+    const rect = tunnel.getBoundingClientRect();
+    const matrix = tunnel.getScreenCTM();
+    if (!matrix) throw new Error(`semantic golden tunnel has no screen transform: ${spec.openingId}`);
+    const inverse = matrix.inverse();
+    const localBounds = tunnel.getBBox();
+    const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    const originX = clip?.x || 0, originY = clip?.y || 0;
+    // Screenshots may be captured at DPR > 1. DOMRect/clip are CSS pixels,
+    // image coordinates are device pixels, so derive the scale instead of
+    // silently sampling the wrong strip at high DPI.
+    const cssWidth = clip?.width || document.documentElement.clientWidth;
+    const cssHeight = clip?.height || document.documentElement.clientHeight;
+    const scaleX = image.width / Math.max(1, cssWidth);
+    const scaleY = image.height / Math.max(1, cssHeight);
+    const insetX = Math.max(1, Math.round(spec.insetPx * scaleX));
+    const insetY = Math.max(1, Math.round(spec.insetPx * scaleY));
+    const left = Math.max(0, Math.ceil((rect.left - originX) * scaleX) + insetX);
+    const top = Math.max(0, Math.ceil((rect.top - originY) * scaleY) + insetY);
+    const right = Math.min(image.width - 1, Math.floor((rect.right - originX) * scaleX) - insetX);
+    const bottom = Math.min(image.height - 1, Math.floor((rect.bottom - originY) * scaleY) - insetY);
+    if (right - left < 3 || bottom - top < 3)
+      throw new Error(`semantic golden tunnel is too small: ${left},${top},${right},${bottom}`);
+    const pixels = context.getImageData(0, 0, image.width, image.height).data;
+    const rgb = (x, y) => {
+      const offset = (y * image.width + x) * 4;
+      return [pixels[offset], pixels[offset + 1], pixels[offset + 2]];
+    };
+    let maxJump = 0, maxPair = null, samplePairs = 0;
+    const compare = (a, b, x, y, direction) => {
+      const jump = Math.max(
+        Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
+      if (jump > maxJump) {
+        maxJump = jump;
+        maxPair = { x, y, direction, a, b };
+      }
+      samplePairs++;
+    };
+    const localXScale = Math.max(1e-6, Math.hypot(matrix.a, matrix.b));
+    const localYScale = Math.max(1e-6, Math.hypot(matrix.c, matrix.d));
+    const endInset = Math.max(1, spec.insetPx) / localXScale;
+    const axisBand = Math.max(1.5, spec.axisBandPx || 2.5) / localYScale;
+    const insideAxisBand = (x, y) => {
+      const cssX = originX + (x + 0.5) / scaleX;
+      const cssY = originY + (y + 0.5) / scaleY;
+      const local = new DOMPoint(cssX, cssY).matrixTransform(inverse);
+      return local.x >= localBounds.x + endInset
+        && local.x <= localBounds.x + localBounds.width - endInset
+        && Math.abs(local.y) <= axisBand;
+    };
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left + 1; x <= right; x++) {
+        if (insideAxisBand(x - 1, y) && insideAxisBand(x, y))
+          compare(rgb(x - 1, y), rgb(x, y), x, y, 'horizontal');
+      }
+    }
+    for (let x = left; x <= right; x++) {
+      for (let y = top + 1; y <= bottom; y++) {
+        if (insideAxisBand(x, y - 1) && insideAxisBand(x, y))
+          compare(rgb(x, y - 1), rgb(x, y), x, y, 'vertical');
+      }
+    }
+    if (!samplePairs) throw new Error(`semantic golden tunnel axis strip is empty: ${spec.openingId}`);
+    return {
+      maxJump, maxPair, samplePairs, bounds: [left, top, right, bottom],
+      scale: [scaleX, scaleY],
+    };
+  }, { png64: png.toString('base64'), clip, spec });
+}
+
+/** Prove the opening-centre contract from rendered geometry before a PNG is
+ * compared. The screenshot remains useful for human review, but a shifted
+ * symbol, shallow jamb or cancelled gate turn must fail semantically even
+ * when no reviewed baseline exists yet. */
+async function assertOpeningSymbolContract(page, contract) {
+  return page.evaluate((expected) => {
+    const card = window.__goldenCard;
+    const root = card?.renderRoot;
+    const space = card?._serverCfg?.spaces?.find((item) => item.id === card._space);
+    if (!card || !root || !space) throw new Error('semantic golden opening card is missing');
+    const epsilon = 1e-5;
+    const parsePair = (value, name) => {
+      const match = String(value || '').match(new RegExp(`${name}\\(([-+0-9.eE]+)[ ,]+([-+0-9.eE]+)\\)`));
+      if (!match) throw new Error(`semantic golden cannot parse ${name}: ${value}`);
+      return [Number(match[1]), Number(match[2])];
+    };
+    const parseTurn = (leaf) => {
+      const value = leaf?.style?.transform || leaf?.getAttribute?.('style') || '';
+      const match = String(value).match(/rotate\(([-+0-9.eE]+)deg\)/);
+      if (!match) throw new Error(`semantic golden cannot parse gate turn: ${value}`);
+      return Number(match[1]);
+    };
+    const openingCfg = new Map((space.openings || []).map((opening) => [opening.id, opening]));
+    const turns = new Map();
+    const rows = [];
+
+    if (expected.surface === 'flat') {
+      const renderedById = new Map((card._openingsR || []).map((opening) => [opening.id, opening]));
+      const fullDepth = (expected.wallCm / card._cellCm) * card._gridPitch;
+      for (const item of expected.openings) {
+        const cfg = openingCfg.get(item.id);
+        const rendered = renderedById.get(item.id);
+        const group = root.querySelector(`.opening[data-id="${CSS.escape(item.id)}"]`);
+        if (!cfg || !rendered || !group || cfg.type !== item.type
+            || !!cfg.flip_v !== item.flipV) {
+          throw new Error(`semantic golden opening config/render mismatch: ${item.id}`);
+        }
+        if (Math.hypot(rendered.rx - cfg.x * 1000, rendered.ry - cfg.y * 1000) > epsilon)
+          throw new Error(`semantic golden opening left its wall centerline: ${item.id}`);
+        const scale = group.querySelector(':scope > g[transform^="scale("]');
+        const body = scale?.querySelector(':scope > g[transform^="translate("]');
+        if (!scale || !body) throw new Error(`semantic golden visible group is missing: ${item.id}`);
+        const translation = parsePair(body.getAttribute('transform'), 'translate');
+        const offset = Math.hypot(...translation);
+        const expectedOffset = 0;
+        if (Math.abs(offset - expectedOffset) > epsilon) {
+          throw new Error(`semantic golden visible-group offset failed for ${item.id}: `
+            + `${offset} != ${expectedOffset}`);
+        }
+        const jambs = [...scale.querySelectorAll(':scope > line')];
+        if (jambs.length !== 2 || jambs.some((line) => {
+          const depth = Math.abs(Number(line.getAttribute('y2')) - Number(line.getAttribute('y1')));
+          return Math.abs(depth - fullDepth) > epsilon;
+        })) {
+          throw new Error(`semantic golden full-depth jamb failed: ${item.id}`);
+        }
+        if (item.type === 'window' && !body.querySelector('.op-glass'))
+          throw new Error(`semantic golden window group lost its glass: ${item.id}`);
+        let turn = null;
+        if (item.type === 'gate') {
+          const scalePair = parsePair(scale.getAttribute('transform'), 'scale');
+          if (Math.abs(scalePair[1] - 1) > epsilon)
+            throw new Error(`semantic golden gate regained scaleY flip: ${item.id}`);
+          turn = parseTurn(group.querySelector('.op-leaf'));
+          if (Math.abs(Math.abs(turn) - 10) > epsilon)
+            throw new Error(`semantic golden gate turn is not 10 degrees: ${item.id}`);
+          if (item.turnPair) turns.set(item.id, { pair: item.turnPair, flipV: item.flipV, turn });
+        }
+        rows.push({ id: item.id, offset, jambDepth: fullDepth, turn });
+      }
+    } else {
+      const bases = card._isoSource?.()?.build?.().openings || [];
+      const pointDistance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+      for (const item of expected.openings) {
+        const cfg = openingCfg.get(item.id);
+        const basis = bases.find((opening) => opening.id === item.id);
+        if (!cfg || !basis || cfg.type !== item.type || !!cfg.flip_v !== item.flipV
+            || !basis.leaves.length) {
+          throw new Error(`semantic golden Iso opening mismatch: ${item.id}`);
+        }
+        const centre = basis.leaves.length === 1
+          ? [
+              basis.leaves[0].hinge[0] + basis.leaves[0].closedVector[0] / 2,
+              basis.leaves[0].hinge[1] + basis.leaves[0].closedVector[1] / 2,
+            ]
+          : [
+              basis.leaves.reduce((sum, leaf) => sum + leaf.hinge[0], 0) / basis.leaves.length,
+              basis.leaves.reduce((sum, leaf) => sum + leaf.hinge[1], 0) / basis.leaves.length,
+            ];
+        const offset = Math.hypot(centre[0] - cfg.x * 1000, centre[1] - cfg.y * 1000);
+        const faceOffset = Math.max(...basis.leaves.map((leaf) => pointDistance(
+          leaf.hinge,
+          leaf.leaf === 0 ? basis.face.selectedStart : basis.face.selectedEnd,
+        )));
+        if (item.offset === 'center') {
+          if (item.type !== 'window' || offset > epsilon)
+            throw new Error(`semantic golden Iso centre failed for ${item.id}: ${offset}`);
+        } else if (item.offset === 'selected-face') {
+          if (item.type === 'window' || faceOffset > epsilon)
+            throw new Error(`semantic golden Iso selected face failed for ${item.id}: ${faceOffset}`);
+        } else {
+          throw new Error(`semantic golden Iso offset contract is unknown: ${item.id}`);
+        }
+        const turn = item.type === 'gate' ? basis.leaves[0].turnDeg : null;
+        if (turn != null && Math.abs(Math.abs(turn) - 10) > epsilon)
+          throw new Error(`semantic golden Iso gate turn failed: ${item.id}`);
+        if (item.turnPair) turns.set(item.id, { pair: item.turnPair, flipV: item.flipV, turn });
+        rows.push({ id: item.id, offset, faceOffset, turn });
+      }
+      if (root.querySelectorAll('.iso-opening-panel').length < expected.openings.length)
+        throw new Error('semantic golden Iso opening panels are missing');
+    }
+
+    for (const pairName of new Set([...turns.values()].map((item) => item.pair))) {
+      const pair = [...turns.values()].filter((item) => item.pair === pairName)
+        .sort((a, b) => Number(a.flipV) - Number(b.flipV));
+      if (pair.length !== 2 || pair[0].flipV || !pair[1].flipV
+          || Math.abs(pair[0].turn + pair[1].turn) > epsilon) {
+        throw new Error(`semantic golden gate flip does not reverse turn: ${pairName}`);
+      }
+    }
+    return { surface: expected.surface, rows };
+  }, contract);
+}
+
+let baselineManifest = null;
+const baselineManifestPath = resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST);
+if (existsSync(baselineManifestPath)) {
+  try { baselineManifest = JSON.parse(readFileSync(baselineManifestPath, 'utf8')); }
+  catch { baselineManifest = { invalid: true }; }
+}
+
+const browserArgs = ['--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text'];
+const browserContext = { locale: 'en-US', timezoneId: 'UTC', colorScheme: 'dark', reducedMotion: 'reduce' };
+const { page: primaryPage, browser } = await launch(
+  { width: 1000, height: 900 },
+  1,
+  browserArgs,
+  browserContext,
+);
+const chromium = await browser.version();
+const results = [];
+const pagesByScale = new Map([[1, primaryPage]]);
+const extraBrowsers = [];
+for (const scale of new Set(scenarios.map((scenario) => scenario.deviceScaleFactor || 1))) {
+  if (scale === 1) continue;
+  const scaled = await launch(
+    { width: 1000, height: 900 }, scale, browserArgs, browserContext,
+  );
+  pagesByScale.set(scale, scaled.page);
+  extraBrowsers.push(scaled.browser);
+}
+const pageErrors = new Map();
+for (const page of pagesByScale.values()) {
+  const errors = [];
+  pageErrors.set(page, errors);
+  page.on('pageerror', (error) => errors.push(error.message));
+  for (const name of ['pdf.mjs', 'pdf.worker.mjs']) {
+    await page.route(`http://demo.local/__pdfjs/${name}`, (route) => route.fulfill({
+      contentType: 'text/javascript',
+      body: readFileSync(resolve(ROOT, 'node_modules', 'pdfjs-dist', 'build', name)),
+    }));
+  }
+}
+let buildFingerprint = null;
+try {
+  buildFingerprint = await assertFreshDemoBundle(primaryPage, ROOT);
+  for (const scenario of scenarios) {
+    const expectedScale = scenario.deviceScaleFactor || 1;
+    const page = pagesByScale.get(expectedScale);
+    if (!page) throw new Error(`golden renderer scale is unavailable: ${expectedScale}`);
+    const activePageErrors = pageErrors.get(page);
+    const result = {
+      id: scenario.id,
+      threshold: scenario.threshold,
+      status: 'error',
+      actualSha256: null,
+    };
+    try {
+      activePageErrors.length = 0;
+      result.runtime = await prepareGoldenScenario(page, scenario);
+      if (scenario.pdfExport) {
+        result.pdfExport = await renderPdfGoldenPage(page, scenario.pdfSemantic || null);
+      }
+      const actualScale = await page.evaluate(() => devicePixelRatio);
+      result.deviceScaleFactor = actualScale;
+      if (Math.abs(actualScale - expectedScale) > 0.001)
+        throw new Error(`golden renderer scale mismatch: ${actualScale} != ${expectedScale}`);
+      if (activePageErrors.length)
+        throw new Error(`browser exception: ${activePageErrors.join(' | ')}`);
+      if (scenario.openingSymbolContract) {
+        result.openingSymbolContract = await assertOpeningSymbolContract(
+          page, scenario.openingSymbolContract,
+        );
+      }
+      if (scenario.openingGeometry) {
+        result.openingGeometry = await page.evaluate((expected) => {
+          const card = window.__goldenCard;
+          const opening = card?.renderRoot?.querySelector(
+            `.opening[data-id="${CSS.escape(expected.id)}"]`,
+          );
+          if (!opening) return null;
+          const transform = opening.getAttribute('transform') || '';
+          const angle = Number(transform.match(/rotate\(([-+0-9.eE]+)\)/)?.[1]);
+          const painted = [...opening.querySelectorAll('.op-leaf, .op-arc, .op-glass')]
+            .map((part) => part.getBoundingClientRect())
+            .filter((rect) => rect.width > 0 || rect.height > 0);
+          const bounds = painted.length ? {
+            width: Math.max(...painted.map((rect) => rect.right))
+              - Math.min(...painted.map((rect) => rect.left)),
+            height: Math.max(...painted.map((rect) => rect.bottom))
+              - Math.min(...painted.map((rect) => rect.top)),
+          } : { width: 0, height: 0 };
+          return {
+            type: opening.getAttribute('data-kind'), angle,
+            width: bounds.width, height: bounds.height,
+            visibleParts: opening.querySelectorAll('.op-leaf, .op-arc, .op-glass').length,
+          };
+        }, scenario.openingGeometry);
+        const expected = scenario.openingGeometry;
+        const actualOpening = result.openingGeometry;
+        if (!actualOpening || actualOpening.type !== expected.type
+            || Math.abs(actualOpening.angle - expected.angle) > 0.001
+            || actualOpening.width <= 0 || actualOpening.height <= 0
+            || actualOpening.visibleParts <= 0) {
+          throw new Error(
+            `semantic golden opening geometry failed for ${expected.id}: `
+            + JSON.stringify(actualOpening),
+          );
+        }
+      }
+      const clip = await goldenClip(page, scenario.capture);
+      const screenshotOptions = {
+        ...(clip ? { clip } : {}),
+        animations: 'disabled',
+        caret: 'hide',
+        scale: 'css',
+      };
+      const actual = await captureGoldenFrame(page, scenario, screenshotOptions);
+      if (scenario.uiLab1081 === 'grid-pan') result.captureEvidence = await uiLab1081CaptureEvidence(page);
+      if (result.runtime.phoneHeader?.close)
+        result.phoneClosePixels = await inspectPhoneClosePixels(page, actual, result.runtime.phoneHeader.close);
+      const actualPath = resolve(actualRoot, `${scenario.id}.png`);
+      writeFileSync(actualPath, actual);
+      result.actualSha256 = sha256(actual);
+      result.actual = actualPath;
+      if (scenario.batteryBoard) {
+        result.batteryPixels = await inspectBatteryBoardPixels(page, actual, clip, result.runtime.batteryBoard);
+      }
+      if (scenario.sunRayPixels) {
+        const control = await captureWithoutSunRays(page, screenshotOptions);
+        const sample = await countChangedPixels(page, actual, control.png, scenario.sunRayPixels);
+        result.sunRayShapes = control.shapes;
+        result.sunRayChangedPixels = sample.changed;
+        result.sunRayMaxChannelDelta = sample.maxDelta;
+        if (sample.changed < scenario.sunRayPixels.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: sun rays paint ${sample.changed} pixels, expected at least `
+            + `${scenario.sunRayPixels.minPixels}`,
+          );
+        }
+      }
+      if (scenario.openingPreviewPixels) {
+        const control = await captureWithoutOpeningPreview(page, screenshotOptions);
+        const sample = await countChangedPixels(
+          page, actual, control.png, scenario.openingPreviewPixels,
+        );
+        result.openingPreviewParts = control.parts;
+        result.openingPreviewChangedPixels = sample.changed;
+        result.openingPreviewMaxChannelDelta = sample.maxDelta;
+        const insideWall = await countOpeningPreviewPixelsInsideWall(
+          page, actual, control.png, clip, scenario.openingPreviewPixels.minChannelDelta,
+        );
+        result.openingPreviewPixelsInsideWall = insideWall.changed;
+        result.openingPreviewWallSamples = insideWall.sampled;
+        if (control.parts < 2) {
+          throw new Error(
+            `semantic golden assertion failed: opening preview is incomplete (${control.parts} parts)`,
+          );
+        }
+        if (sample.changed < scenario.openingPreviewPixels.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: opening preview paints ${sample.changed} pixels, `
+            + `expected at least ${scenario.openingPreviewPixels.minPixels}`,
+          );
+        }
+        if (insideWall.changed < scenario.openingPreviewPixels.minInsideWallPixels) {
+          throw new Error(
+            `semantic golden assertion failed: opening preview paints ${insideWall.changed} pixels `
+            + `inside the wall body, expected at least `
+            + `${scenario.openingPreviewPixels.minInsideWallPixels}`,
+          );
+        }
+      }
+      if (scenario.warmPixelRegion) {
+        const sample = await countWarmPixels(page, actual, scenario.warmPixelRegion);
+        result.warmPixels = sample.warm;
+        result.warmPixelBounds = sample.bounds;
+        if (sample.warm < scenario.warmPixelRegion.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: ${sample.warm} warm pixels, expected at least `
+            + `${scenario.warmPixelRegion.minPixels}`,
+          );
+        }
+      }
+      if (scenario.decorPixelProbes) {
+        const samples = await inspectDecorPixels(page, actual, clip, scenario.decorPixelProbes);
+        result.decorPixelProbes = samples;
+        const failed = samples.filter((sample) =>
+          sample.fraction < scenario.decorPixelProbes.minMatchingFraction);
+        if (failed.length) {
+          throw new Error(
+            `semantic golden assertion failed: decor is hidden/tinted at `
+            + failed.map((sample) => `${sample.id} (${sample.matching}/${sample.sampled})`).join(', '),
+          );
+        }
+      }
+      if (scenario.helpTextRegion) {
+        const sample = await countHelpTextPixels(page, actual, clip, scenario.helpTextRegion);
+        result.helpTextPixels = sample.textPixels;
+        result.helpPixelBounds = sample.bounds;
+        if (sample.textPixels < scenario.helpTextRegion.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: help ${scenario.helpTextRegion.key} contains `
+            + `${sample.textPixels} text pixels, expected at least ${scenario.helpTextRegion.minPixels}`,
+          );
+        }
+      }
+      if (scenario.tunnelContinuity) {
+        const sample = await inspectTunnelContinuity(
+          page, actual, clip, scenario.tunnelContinuity,
+        );
+        result.tunnelMaxChannelJump = sample.maxJump;
+        result.tunnelMaxJumpPair = sample.maxPair;
+        result.tunnelSamplePairs = sample.samplePairs;
+        result.tunnelPixelBounds = sample.bounds;
+        result.tunnelImageScale = sample.scale;
+        if (sample.maxJump > scenario.tunnelContinuity.maxChannelJump) {
+          throw new Error(
+            `semantic golden assertion failed: opening ${scenario.tunnelContinuity.openingId} `
+            + `has a ${sample.maxJump}-channel local jump, expected at most `
+            + `${scenario.tunnelContinuity.maxChannelJump}`,
+          );
+        }
+        if (scenario.tunnelContinuity.dpr2) {
+          // A CSS-pixel capture cannot prove that half-device-pixel joins are
+          // clean. Run the same semantic assertion once at DPR 2 without
+          // adding a second reviewed baseline to the matrix.
+          const highDpi = await launch(
+            scenario.viewport, 2, browserArgs, browserContext,
+          );
+          try {
+            await assertFreshDemoBundle(highDpi.page, ROOT);
+            await prepareGoldenScenario(highDpi.page, scenario);
+            const highDpiClip = await goldenClip(highDpi.page, scenario.capture);
+            const highDpiPng = await highDpi.page.screenshot({
+              ...(highDpiClip ? { clip: highDpiClip } : {}),
+              animations: 'disabled', caret: 'hide', scale: 'device',
+            });
+            const highDpiSample = await inspectTunnelContinuity(
+              highDpi.page, highDpiPng, highDpiClip, scenario.tunnelContinuity,
+            );
+            result.tunnelDpr2MaxChannelJump = highDpiSample.maxJump;
+            result.tunnelDpr2SamplePairs = highDpiSample.samplePairs;
+            result.tunnelDpr2PixelBounds = highDpiSample.bounds;
+            if (highDpiSample.maxJump > scenario.tunnelContinuity.maxChannelJump) {
+              throw new Error(
+                `semantic golden assertion failed at DPR 2: opening ${scenario.tunnelContinuity.openingId} `
+                + `has a ${highDpiSample.maxJump}-channel local jump, expected at most `
+                + `${scenario.tunnelContinuity.maxChannelJump}`,
+              );
+            }
+          } finally {
+            await highDpi.browser.close();
+          }
+        }
+      }
+      const baselinePath = resolve(baselineRoot, `${scenario.id}.png`);
+      result.baseline = baselinePath;
+      if (!existsSync(baselinePath)) {
+        result.status = 'missing-baseline';
+      } else {
+        const baseline = readFileSync(baselinePath);
+        const expectedBaselineSha256 = baselineManifest?.scenarios?.[scenario.id];
+        result.baselineSha256 = sha256(baseline);
+        if (!expectedBaselineSha256 || result.baselineSha256 !== expectedBaselineSha256) {
+          result.status = 'invalid-baseline';
+          result.error = expectedBaselineSha256
+            ? 'baseline PNG does not match its reviewed manifest hash'
+            : 'baseline PNG is not listed in the reviewed manifest';
+          results.push(result);
+          console.log(goldenResultLine(result));
+          continue;
+        }
+        const comparison = await comparePng(page, actual, baseline, scenario.threshold);
+        Object.assign(result, comparison);
+        result.status = comparison.passed ? 'passed' : 'different';
+        if (comparison.diffPngBase64) {
+          const diffPath = resolve(diffRoot, `${scenario.id}.png`);
+          writeFileSync(diffPath, Buffer.from(comparison.diffPngBase64, 'base64'));
+          result.diff = diffPath;
+        }
+        delete result.diffPngBase64;
+      }
+    } catch (error) {
+      result.error = error instanceof Error ? error.message : String(error);
+    } finally {
+      await resetGoldenStability(page);
+      // Tab-divider goldens deliberately hold the real pointer through the
+      // screenshot. Always release it before the shared page is reused, even
+      // when semantic validation or capture failed.
+      if (scenario.tabDrag) {
+        try { await page.mouse.up(); } catch { /* the browser may already be closing */ }
+      }
+    }
+    results.push(result);
+    console.log(goldenResultLine(result));
+    console.log(`PROCESS_NEXT_PROGRESS ${JSON.stringify({ phase: 'golden', completed: results.length, total: scenarios.length,
+      id: result.id, status: result.status, failed: results.filter(item => item.status !== 'passed').length, elapsedMs: Date.now() - runStarted })}`);
+  }
+} finally {
+  await Promise.all([...extraBrowsers.map((item) => item.close()), browser.close()]);
+}
+
+const expectedScenarioIds = scenarios.map((scenario) => scenario.id);
+const indexedScenarioIds = Object.keys(baselineManifest?.scenarios || {}).filter(id => expectedScenarioIds.includes(id));
+const baselineScenarioIds = readdirSync(baselineRoot)
+  .filter((name) => name.endsWith('.png'))
+  .map((name) => name.slice(0, -'.png'.length)).filter(id => expectedScenarioIds.includes(id));
+const manifestValid = !!baselineManifest
+  && !baselineManifest.invalid
+  && baselineManifest.chromium === chromium
+  && expectedScenarioIds.every((id) => typeof baselineManifest.scenarios?.[id] === 'string')
+  && goldenScenarioSetsMatch(expectedScenarioIds, indexedScenarioIds, baselineScenarioIds);
+const report = {
+  // #571: схема 2 обязана нести провенанс съёмки. До неё отчёт платформу не
+  // нёс, и приёмщик записывал в индекс эталонов свою — на `ad4000f9` кадры
+  // Linux-прогона 34853080375 уехали в индекс как `win32`.
+  schema: CAPTURE_PROVENANCE_SCHEMA,
+  mode,
+  selection,
+  capture: captureProvenance({ chromium, buildFingerprint }),
+  generatedAt: new Date().toISOString(),
+  matrixVersion: GOLDEN_MATRIX_VERSION,
+  buildFingerprint,
+  chromium,
+  baselineManifest: baselineManifest ? {
+    present: true,
+    valid: manifestValid,
+    matrixVersion: baselineManifest.matrixVersion ?? null,
+    chromium: baselineManifest.chromium ?? null,
+  } : { present: false, valid: false, matrixVersion: null, chromium: null },
+  results,
+};
+writeFileSync(resolve(artifactRoot, 'golden-report.json'), `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+
+if (!manifestValid) console.error('Selected golden baseline index is incomplete or differs from the pinned browser; see golden-report.json');
+console.log(`PROCESS_NEXT_RESULT ${JSON.stringify({ tests: results.length, passed: results.filter(item => item.status === 'passed').length,
+  failed: results.filter(item => item.status !== 'passed').length, skipped: 0, expected: scenarios.length,
+  status: goldenRunFailed(mode, manifestValid, results) ? 'failed' : 'passed', elapsedMs: Date.now() - runStarted })}`);
+if (goldenRunFailed(mode, manifestValid, results)) process.exitCode = 1;
