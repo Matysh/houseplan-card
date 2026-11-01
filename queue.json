@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5,
+  "revision": 6,
   "nextTicket": 2,
   "nextFence": 2,
   "tasks": {
@@ -37,7 +37,7 @@
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
-        "status": "pending"
+        "status": "delivered"
       }
     }
   },
@@ -65,6 +65,10 @@
     },
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:finish:3:return": {
       "digest": "49d641fbbce5710a137a1fb6a19fc00b6c81e562bf4dbf748e48ccf98665e08f",
+      "issue": 1176
+    },
+    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:metadata:3b91584e-e188-494c-9651-e95fc05dab1c:task-notice:1176::": {
+      "digest": "7e14eae921c35f2cb3611536fb77816ff05d6cc193300e34d976ae21889d6d11",
       "issue": 1176
     }
   }
