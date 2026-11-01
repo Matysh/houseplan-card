@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.84.0-beta.1 — 2026-11-01
+
 - Editors use shared compact UI Kit actions, trays, palettes and 36px Properties fields. Backup/import, device catalog, icon rules and Help share the same form primitives; long import options wrap on narrow screens. Toolbar dimensions and existing selection, history, save/cancel and permission rules are preserved. [#1150](https://github.com/Matysh/houseplan-card/issues/1150)
 
 - Settings content uses shared UI Kit fields, actions, toggles and surfaces: color/opacity, device preview, Summary, Zigbee, external screens, radar and vacuum. Regular settings targets remain 44px; preview demos keep HA services untouched. [#1149](https://github.com/Matysh/houseplan-card/issues/1149)
