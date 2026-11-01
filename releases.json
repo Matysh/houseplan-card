@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7,
+  "revision": 8,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -10,8 +10,11 @@
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
       "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "7274a9139966cfdd1f459615110ba70544709dc7"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -493,6 +496,7 @@
     "beta1842-runner-20261101T221412746-c36c701b": "4fddfbbdcf0a649c1d3d14b31f9ce19f62f9bab7864568831f316c30bc2b0852",
     "beta1842-b-metrics-20261102": "431bed322ded58f89ceec8765cc41e743a1465dfc157987c3479962102acb66d",
     "beta1842-fixes-c-20261102": "ab65da449851e134f85ff9d9ed6f3a56e3635f6f5bb9b965d722d195ed2a33d1",
-    "beta1842-reviewed-fixes-c-20261102": "ce0a57c9a80eea0636b1c48302c83f2232688f7308143d52468688fd5498147e"
+    "beta1842-reviewed-fixes-c-20261102": "ce0a57c9a80eea0636b1c48302c83f2232688f7308143d52468688fd5498147e",
+    "beta1842-run-c-20261102": "d510d26d36cf0c7c296a3dc2bf14cfda72a18ed50c5e571a6ec6f9333af0a0e1"
   }
 }
