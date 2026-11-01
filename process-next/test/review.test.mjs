@@ -141,6 +141,13 @@ test('report writes reject symlink roots and inconsistent green verdicts', t => 
 test('author template check identifies missing/empty sections without pretending to review meaning', () => {
   const spec = `## ТЗ\n### Сценарий\nАдминистратор открывает план.\n### Что человек увидит до и после\nДо — ошибка, после — план.\n### Проблема\nОшибка.\n### Скоуп\nПлан.\n### Не-скоуп\nОстальное.\n### Контракт поведения\nЗагрузка.\n### UX\nБез изменений.\n### Модель данных и миграция\nБез изменений.\n### i18n\nНет.\n### Критерии приёмки\nAC1: готовый план; доказательство — smoke.\n### План автотестов\nАдресный smoke.\n### Риски\nОшибки загрузки.\n### Откат\nRevert.\n### Release-артефакты\nОбычный пакет.\n`;
   assert.equal(checkSpecFormat(spec).ok, true);
+  const collapsed = spec.replace('## ТЗ\n', '## ТЗ\n\nКороткая цель.\n\n<details>\n<summary>Полное ТЗ</summary>\n\n') + '\n</details>\n';
+  assert.deepEqual(checkSpecFormat(collapsed), checkSpecFormat(spec), 'collapsed sections retain the full author-side specification');
+  assert.equal(checkSpecFormat(collapsed.replace('Revert.', 'TODO')).ok, false, 'folding cannot hide an incomplete required section');
+  for (const missing of ['', 'TODO']) {
+    assert.equal(checkSpecFormat(collapsed.replace('Обычный пакет.', missing)).ok, false,
+      'a closing details tag cannot fill the final required section');
+  }
   assert.equal(checkSpecFormat(spec.replace('Revert.', 'TODO')).ok, false);
   assert.equal(checkSpecFormat('## ТЗ\nПроизвольный текст').ok, false);
 });

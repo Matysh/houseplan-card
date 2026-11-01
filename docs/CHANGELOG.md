@@ -7,6 +7,7 @@
 - Restore geometry-check preparation for transitive built-manifest readers and inventory the new zero-config synthetic corner fixture without changing saved identities. Keep Select-only graph assertions while reporting module size diagnostically. [#1196](https://github.com/Matysh/houseplan-card/issues/1196)
 - Complete the German and French Copy furniture/decor labels. Retained Node checks follow the approved shared header and current release process while preserving measurement, stylesheet ownership and bundle behavior checks. [#1197](https://github.com/Matysh/houseplan-card/issues/1197)
 - Keep one explicit loopback port throughout an owned HA E2E lab, retry only bounded bind collisions, and verify ownership before cleaning partial starts. Preserve restart/upgrade origins and save sanitized endpoint evidence. [#1199](https://github.com/Matysh/houseplan-card/issues/1199)
+- Collapse detailed reviews and specification sections while keeping the Russian verdict and status visible. Confirm review-before-merge-comment ordering without extra checks or delaying the merge itself. [#1200](https://github.com/Matysh/houseplan-card/issues/1200)
 
 - Refresh the synthetic browser/Golden icon fixture from current sources during asset preparation, excluding local capture/private output. Capture provenance records the icon-map checksum; product runtime and visual baselines are unchanged. [#1193](https://github.com/Matysh/houseplan-card/issues/1193)
 

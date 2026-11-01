@@ -21,6 +21,65 @@ function fixture() {
   return { api, receipt, comments, issues, failOnce() { fail = true; }, loseResponseOnce() { lost = true; } };
 }
 
+test('code and specification reports collapse full analysis while verdict, status and links stay visible', async () => {
+  for (const kind of ['code', 'spec']) {
+    const f = fixture(); f.receipt.kind = kind; f.receipt.verdict = 'changes_requested';
+    f.receipt.presentation = { round: 2, currentStatus: kind === 'code' ? 'S6-in-progress' : 'S3-spec' };
+    f.receipt.reportUrl = 'https://example.test/review/42';
+    f.receipt.markdown = '## Основание\n\nОшибка при повторе. Использовать `<details>`.\n\n```js\nconst html = "<details>";\n```\n\n'
+      + '<details>\n<summary>Исходные данные</summary>\n\n[Файл](https://example.test/source)\n\n</details>\n';
+    await publishReviewReceipt(f);
+    const body = f.comments[0].body, start = body.indexOf('<details>');
+    assert.match(body.slice(0, start), new RegExp(`${kind === 'code' ? 'Код-ревью' : 'Ревью ТЗ'}.*нужны исправления.*раунд 2`));
+    assert.match(body.slice(0, start), /Статус остаётся/);
+    assert.match(body.slice(0, start), /Следующий шаг:/);
+    assert.ok(body.includes(`<summary>Подробный разбор</summary>\n\n${f.receipt.markdown}\n\n</details>`));
+    assert.doesNotMatch(body, /<details open/);
+    assert.ok(body.endsWith('[Запуск ревью](https://example.test/review/42). Полный текст сохранён в комментариях этой задачи.'));
+  }
+});
+
+test('multipart Markdown splits outside complete code fences and nested disclosures', async () => {
+  const f = fixture(), paragraph = 'Первый раздел. '.repeat(2_500) + '\n\n';
+  const code = '```js\n' + 'const value = 1;\n'.repeat(900) + '```\n\n';
+  const nested = '<details>\n<summary>Материал</summary>\n\n' + 'Справка. '.repeat(1_500) + '\n\n</details>\n';
+  f.receipt.markdown = paragraph + code + nested;
+  await publishReviewReceipt(f);
+  assert.equal(f.comments.length, 2);
+  assert.ok(f.comments[0].body.includes(paragraph));
+  assert.ok(f.comments[1].body.includes(code + nested));
+  assert.match(f.comments[1].body, /Первая часть отчёта/);
+  assert.ok(f.comments.every(row => row.body.includes('<summary>Подробный разбор</summary>') && row.body.length < 65_536));
+});
+
+test('oversized indivisible Markdown stays complete and collapsed within the escaped comment budget', async () => {
+  const f = fixture(); f.receipt.markdown = '```html\n' + '<&>😀'.repeat(15_000) + '\n```\n';
+  await publishReviewReceipt(f);
+  const text = f.comments.map(row => {
+    assert.ok(row.body.length < 65_536);
+    const match = row.body.match(/<pre>([^]*?)<\/pre>/);
+    assert.ok(match, 'an oversized block is available as source Markdown inside its spoiler');
+    assert.ok(row.body.indexOf('<summary>Подробный разбор') < row.body.indexOf('<pre>'));
+    return match[1].replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+  }).join('');
+  assert.equal(text, f.receipt.markdown);
+  const before = structuredClone(f.comments);
+  await publishReviewReceipt(f); assert.deepEqual(f.comments, before);
+});
+
+test('resuming a pre-spoiler multipart report preserves its original offsets and length budget', async () => {
+  const f = fixture(); f.receipt.markdown = 'A'.repeat(50_000) + '&'.repeat(50_000) + 'tail';
+  const old = { id: 1, user: { login: 'github-actions[bot]' },
+    body: `<!-- process-next-review:${f.receipt.requestId}:result:accepted -->\n\n${f.receipt.markdown.slice(0, 50_000)}` };
+  f.comments.push(old);
+  await publishReviewReceipt(f);
+  assert.equal(f.comments.length, 3); assert.deepEqual(f.comments[0], old);
+  assert.ok(f.comments[1].body.includes('&'.repeat(50_000)));
+  assert.ok(f.comments[2].body.includes('tail'));
+  assert.ok(f.comments.every(row => row.body.length < 65_536));
+  await publishReviewReceipt(f); assert.equal(f.comments.length, 3);
+});
+
 test('long report is fully archived in issue comments and publication retry creates no duplicates', async () => {
   const f = fixture(); f.receipt.markdown = 'A'.repeat(55_000) + '\nEND OF COMPLETE REVIEW\n' + 'B'.repeat(55_000);
   await publishReviewReceipt(f);
