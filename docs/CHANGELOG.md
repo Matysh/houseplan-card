@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `finish` recognizes a task already merged by the server coordinator after a queue admission race, reports successful completion immediately, and preserves real admission-loss diagnostics. [#1187](https://github.com/Matysh/houseplan-card/issues/1187)
+
 - The process reads Actions review/fallback ZIPs with the REST media type expected by GitHub; release asset downloads retain their binary media type. Existing review results resume without another model call. [#1186](https://github.com/Matysh/houseplan-card/issues/1186)
 - Select highlights free closed wall regions using View hover styling and opens room creation on click. Walls draws freely inside existing contours; object selection, room persistence and history keep their existing owners. [#1176](https://github.com/Matysh/houseplan-card/issues/1176)
 

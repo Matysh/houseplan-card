@@ -310,16 +310,15 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     if (ownedAdmission && ['sync', 'testing'].includes(ownedAdmission.phase)) queue.dispatch({ id: `finish:${randomUUID()}`, type: 'heartbeat',
       issue: event.issue, token: ownedAdmission.token }).catch(() => {});
   }, Math.min(60000, Math.max(1000, queue.leaseMs / 3))); heartbeat.unref();
+  const completeTask = async task => ({ action: 'merged', task,
+    bookkeeping: await finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue }) });
   let sequence = 0;
   try {
     while (!signal?.aborted && clock() - started < maxWaitMs) {
       current = (await queue.store.read()).state;
       ownedAdmission = current.active?.issue === event.issue ? current.active : null;
       onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs: clock() - started });
-      if (current.tasks[event.issue]?.status === 'S8-merged') {
-        const bookkeeping = await finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue });
-        return { action: 'merged', task: current.tasks[event.issue], bookkeeping };
-      }
+      if (current.tasks[event.issue]?.status === 'S8-merged') return completeTask(current.tasks[event.issue]);
       if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue) return { action: 'returned', task: current.tasks[event.issue] };
       const own = current.active?.issue === event.issue;
       // Waiting agents observe only; they never reconcile somebody else's task.
@@ -329,6 +328,14 @@ export async function finishTask({ config, event, queue, api, git, review, depen
       }
       const result = await reconcileQueue({ queue, api, git, activated: true, eventId: `${event.id}:finish:${++sequence}`, worker: event.worker ?? 'finish',
         ...(own ? { synchronize, runS6 } : {}), requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
+      if (result.action === 'admission-lost') {
+        // A hosted coordinator may have merged after our snapshot and invalidated our fence.
+        current = (await queue.store.read()).state;
+        if (current.tasks[event.issue]?.status === 'S8-merged') {
+          onProgress({ kind: 'transition', action: 'already-completed', issue: event.issue });
+          return completeTask(current.tasks[event.issue]);
+        }
+      }
       onProgress({ kind: 'transition', action: result.action, reason: result.reason });
       if (own && result.action === 'returned') return { ...result,
         bookkeeping: await finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue }) };

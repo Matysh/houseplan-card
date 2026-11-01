@@ -208,6 +208,40 @@ test('one finish invocation waits, synchronizes, runs S6 once and survives a los
   assert.equal(result.action, 'merged'); assert.equal(checks, 1); assert.equal(requests, 1);
   assert.equal((await h.store.read()).state.tasks[1].devBuild.status, 'pending');
 });
+test('finish recognizes a competing coordinator completion without hiding a real admission loss', async () => {
+  for (const completed of [true, false]) {
+    const h = queueHarness(), progress = []; let sleeps = 0;
+    await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'product' });
+    await h.command('admit'); const token = (await h.store.read()).state.active.token;
+    await h.command('synchronized', { token, expectedBase: A, materialSha: B });
+    await h.command('s6-complete', { token, materialSha: B, outcome: 'passed', evidence: { status: 'passed' } });
+    await h.command('reconcile'); await h.command('review-complete', { token });
+    h.actions.length = 0;
+    const assertAdmission = h.queue.assertAdmission.bind(h.queue);
+    h.queue.assertAdmission = async options => {
+      h.queue.assertAdmission = assertAdmission;
+      // Another worker completes or returns the task after our snapshot but before the fence check.
+      if (completed) await h.command('merge', { token });
+      else await h.queue.dispatch({ id: 'other-return', type: 'return', issue: 1, token, reason: 'lease-expired' });
+      return assertAdmission(options);
+    };
+    h.dependencies.sleep = async () => { sleeps++; };
+    h.dependencies.runPlan = () => { throw Error('S6 must not run again'); };
+    h.dependencies.review.requestReview = () => { throw Error('Review must not run again'); };
+    const result = await finishTask({ config, event: { id: 'finish-race', issue: 1, branch: 'issue/1' },
+      queue: h.queue, api: h.dependencies.api, git: h.dependencies.git, review: h.dependencies.review,
+      dependencies: h.dependencies, onProgress: item => progress.push(item), maxWaitMs: 1000 });
+    const transitions = progress.filter(item => item.kind === 'transition');
+    assert.equal(result.action, completed ? 'merged' : 'returned');
+    assert.deepEqual(transitions.map(item => item.action), [completed ? 'already-completed' : 'admission-lost']);
+    assert.deepEqual(h.actions, completed ? ['merge'] : []);
+    if (completed) {
+      assert.equal(sleeps, 0);
+      assert.equal(transitions[0].issue, 1);
+      assert.equal(result.task.mergedSha, B);
+    }
+  }
+});
 test('completed review transport failure reruns the same workflow instead of another paid request identity', async () => {
   const api = reviewApi({ runs: [{ id: 12, display_title: `Code ${context.requestId}`, status: 'completed', conclusion: 'failure' }] });
   const result = await new WorkflowReviewAdapter({ api }).requestReview({ ...context, retry: true });

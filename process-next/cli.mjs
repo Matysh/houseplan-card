@@ -114,6 +114,8 @@ export async function main(argv = process.argv.slice(2)) {
         onProgress: progress => {
           if (o.json) print(progress);
           else if (progress.kind === 'queue') process.stdout.write(`Очередь: ${progress.active ? `#${progress.active.issue}, ${progress.active.phase}` : 'слот свободен'}; ваша позиция: ${progress.waiting.find(item => item.issue === Number(o.issue))?.position ?? 'в слоте'}; ${Math.round(progress.elapsedMs / 1000)} сек\n`);
+          else if (progress.kind === 'transition' && progress.action === 'already-completed')
+            process.stdout.write(`Задача #${progress.issue} уже завершена серверным координатором (S8).\n`);
           else if (progress.kind === 'transition') process.stdout.write(`${progress.action}${progress.reason ? ': ' + progress.reason : ''}\n`);
           else if (progress.kind === 'checks' && progress.status) {
             const state = ({ queued: 'в очереди GitHub', in_progress: 'выполняется в GitHub', dispatching: 'запуск в GitHub', 'transport-retry': 'повтор соединения' })[progress.status] ?? progress.status;
