@@ -7,6 +7,7 @@
 
 - Copy space offers independent furniture and decor checkboxes, both initially off, using the existing UI Kit. Selected objects keep their order and fields with new IDs; the source and copy validation/write lifecycle are preserved. [#1156](https://github.com/Matysh/houseplan-card/issues/1156)
 - Keep the vacuum path connected to the actually animated puck across sparse telemetry and full native path catch-up; preserve observed turns, native authority and real context/teleport gaps. Unavailable robots retire stale active pucks. [#1175](https://github.com/Matysh/houseplan-card/issues/1175)
+- Connected independent wall corners no longer paint the positive-area join insert as internal cap seams. Union-only full-cap supports preserve the external mitre, openings, hatch depth and raw translucent drawing preview; no saved geometry changes. [#1169](https://github.com/Matysh/houseplan-card/issues/1169)
 
 - Keep the room Area administration shortcut out of the touch hit plane on screens without hover, preserving stairs, pan and intentional mouse/keyboard navigation. [#1128](https://github.com/Matysh/houseplan-card/issues/1128)
 

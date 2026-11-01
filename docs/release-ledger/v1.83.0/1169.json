@@ -1,0 +1,11 @@
+{
+  "category": "stable-fix",
+  "rationale": "Fixes positive-area pair-join cap seams in independent wall masonry already present in v1.83.0. Computed union support preserves external mitres, raw preview, opening cuts and stored geometry; no schema or migration.",
+  "summary": {
+    "ru": "Углы независимых стен отображаются без внутренних торцевых швов соединительной вставки.",
+    "en": "Independent wall corners render without internal cap seams from the joining insert."
+  },
+  "issue": 1169,
+  "baseStable": "v1.83.0",
+  "schema": 1
+}

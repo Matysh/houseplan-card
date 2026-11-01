@@ -1103,6 +1103,8 @@ export function linearWallBody(segment: LinearWallSegment): number[][] | null {
 interface JunctionRay {
   u: [number, number];
   halfDepth: number;
+  length: number;
+  sourceIndex: number;
 }
 
 function closePoint(a: number[], b: number[], epsilon: number): boolean {
@@ -1121,7 +1123,7 @@ function pointOnSegmentInterior(
   return Math.hypot(point[0] - q[0], point[1] - q[1]) <= epsilon;
 }
 
-function addJunctionRay(rays: JunctionRay[], dx: number, dy: number, halfDepth: number): void {
+function addJunctionRay(rays: JunctionRay[], dx: number, dy: number, halfDepth: number, sourceIndex: number): void {
   const len = Math.hypot(dx, dy);
   if (!(len > 1e-9) || !(halfDepth > 0)) return;
   const u: [number, number] = [dx / len, dy / len];
@@ -1129,7 +1131,7 @@ function addJunctionRay(rays: JunctionRay[], dx: number, dy: number, halfDepth: 
     Math.abs(ray.u[0] * u[1] - ray.u[1] * u[0]) < 1e-9
       && ray.u[0] * u[0] + ray.u[1] * u[1] > 1 - 1e-9);
   if (same) same.halfDepth = Math.max(same.halfDepth, halfDepth);
-  else rays.push({ u, halfDepth });
+  else rays.push({ u, halfDepth, length: len, sourceIndex });
 }
 
 /**
@@ -1260,6 +1262,7 @@ export function pairButtEndTrimWedges(
 
 export function linearWallJoinPatches(
   input: LinearWallSegment[], epsilon = 1e-6,
+  options: { unionOverlap?: boolean; trimWedges?: readonly { segmentIndex: number; wedge: number[][] }[] } = {},
 ): number[][][] {
   const segments = (input || []).filter((segment) =>
     segment && Array.isArray(segment.a) && Array.isArray(segment.b)
@@ -1278,6 +1281,7 @@ export function linearWallJoinPatches(
   }
 
   const patches: number[][][] = [];
+  const trimWedges = options.unionOverlap ? options.trimWedges ?? pairButtEndTrimWedges(segments, eps) : [];
   // #309: a node of three or more canonical rays is closed with the sector
   // fans of the multi-wall junction machinery (visual mitre limit included)
   // instead of pair patches. A pair patch lives in the sector OPPOSITE its
@@ -1295,23 +1299,23 @@ export function linearWallJoinPatches(
   for (const node of nodes) {
     if (coveredByFans(node)) continue;
     const rays: JunctionRay[] = [];
-    for (const segment of segments) {
+    for (const [sourceIndex, segment] of segments.entries()) {
       if (closePoint(node, segment.a, eps)) {
         addJunctionRay(
           rays, segment.b[0] - segment.a[0], segment.b[1] - segment.a[1],
-          segment.halfDepth,
+          segment.halfDepth, sourceIndex,
         );
       } else if (closePoint(node, segment.b, eps)) {
         addJunctionRay(
           rays, segment.a[0] - segment.b[0], segment.a[1] - segment.b[1],
-          segment.halfDepth,
+          segment.halfDepth, sourceIndex,
         );
       } else if (pointOnSegmentInterior(node, segment, eps)) {
         addJunctionRay(
-          rays, segment.a[0] - node[0], segment.a[1] - node[1], segment.halfDepth,
+          rays, segment.a[0] - node[0], segment.a[1] - node[1], segment.halfDepth, sourceIndex,
         );
         addJunctionRay(
-          rays, segment.b[0] - node[0], segment.b[1] - node[1], segment.halfDepth,
+          rays, segment.b[0] - node[0], segment.b[1] - node[1], segment.halfDepth, sourceIndex,
         );
       }
     }
@@ -1341,7 +1345,30 @@ export function linearWallJoinPatches(
         const patch = hit
           ? [node.slice(), pA, hit, pB]
           : [node.slice(), pA, pB];
-        if (Math.abs(signedArea(patch)) > eps * eps) patches.push(patch);
+        if (!(Math.abs(signedArea(patch)) > eps * eps)) continue;
+        patches.push(patch);
+        if (!options.unionOverlap || rays.length !== 2) continue;
+        // Axial cap faces share a literal X/Y, so there is no collinearity tail to repair.
+        if ((a.u[0] === 0 || a.u[1] === 0) && (b.u[0] === 0 || b.u[1] === 0)) continue;
+        // Raw preview paints each quad separately. Only union consumers need
+        // support along the FULL two cap edges, not a small bridge at node.
+        const owners = segments.filter(segment => closePoint(node, segment.a, eps) || closePoint(node, segment.b, eps));
+        if (owners.length !== 2 || owners.some(segment => ![segment.a, segment.b].some(p => p[0] === node[0] && p[1] === node[1]))) continue;
+        const r = Math.min(a.halfDepth, b.halfDepth, a.length, b.length) / 8;
+        const q = [node[0] + (a.u[0] + b.u[0]) * r, node[1] + (a.u[1] + b.u[1]) * r];
+        const dx = q[0] - node[0], dy = q[1] - node[1];
+        const roundoff = 32 * Number.EPSILON * Math.max(1, Math.abs(node[0]), Math.abs(node[1]), a.length, b.length);
+        if (!(dx * a.u[0] + dy * a.u[1] > roundoff) || !(dx * b.u[0] + dy * b.u[1] > roundoff)) continue;
+        // Each support shares the literal node/pA or node/pB edge with the
+        // old quad, and overlaps its finite strip. Its short q->node edge
+        // leaves depth/hatch inference to the original bodies and quad.
+        for (const [ray, corner] of [[a, pA], [b, pB]] as const) {
+          if (ray.u[0] === 0 || ray.u[1] === 0) continue;
+          let support: number[][] | null = [q.slice(), node.slice(), corner.slice()];
+          for (const trim of trimWedges) if (trim.segmentIndex === ray.sourceIndex && support)
+            support = clipBodyByWedge(support, trim.wedge);
+          if (support && Math.abs(signedArea(support)) > eps * eps) patches.push(support);
+        }
       }
     }
   }
@@ -1408,7 +1435,8 @@ export function drawWallPreviewD(
   const bodies = segments.map(linearWallBody);
   // #310: the preview shares the butt-end trim with persisted masonry, so the
   // rubber-band silhouette matches what the click will save.
-  for (const { segmentIndex, wedge } of pairButtEndTrimWedges(segments)) {
+  const trimWedges = pairButtEndTrimWedges(segments);
+  for (const { segmentIndex, wedge } of trimWedges) {
     const body = bodies[segmentIndex];
     if (!body) continue;
     const trimmed = clipBodyByWedge(body, wedge);
@@ -1416,7 +1444,7 @@ export function drawWallPreviewD(
   }
   const joined = [
     ...bodies.filter((body): body is number[][] => !!body),
-    ...linearWallJoinPatches(segments),
+    ...linearWallJoinPatches(segments, 1e-6, { unionOverlap: true, trimWedges }),
   ];
   const geom = unionSimpleBodies(joined);
   if (geom) return polyclipToPathD(geom);

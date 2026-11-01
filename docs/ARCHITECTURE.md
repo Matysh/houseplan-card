@@ -181,6 +181,13 @@ roundoff bound, without changing canonical bodies, caches, hit testing or saved
 coordinates. Real holes and disconnected components remain separate. The iso
 projector's existing degeneracy guard already rejects the reported tail.
 
+Exact pair-cap supports (#1169) are computed union operands, never persisted
+nodes. `linearWallJoinPatches` keeps raw quads by default for the separately
+painted translucent drawing layer; physical bodies and united drawing preview
+opt in to full-cap support triangles. They retain the mitre, butt-end trim,
+opening cuts and depth/hatch inference without changing the shared writer,
+preflight policy or numerical-ring paint projection.
+
 Editor command latency (#1075) separates node-menu authority (every idle Plan
 tool) from Select-only capture/handles. One immutable opening proof serves the
 chosen command; revision, adoption epoch, writer authority and queued floor

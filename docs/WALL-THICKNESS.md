@@ -1041,3 +1041,25 @@ Current-model identity/adoption visit only the edited floor; legacy migration
 keeps the existing atomic all-space boundary. The geometry-only baseline never
 restores marker room references into the live config. Fail-closed candidate
 checks and fail-open unprovable inheritance retain their existing order and errors.
+
+### Exact pair-cap union support (#1169)
+
+Independent non-axial two-ray joins retain the original four-point mitre.
+Union consumers add two bounded support triangles with the literal complete
+node-to-offset cap edges and positive overlap inside the finite incident
+strips. This closes floating-point cap slits along their entire length;
+no saved coordinate, global epsilon or boolean quantum changes. The same
+owner's #310 butt-end wedge and hosted opening cuts also cut its support.
+Original operands retain their depth/hatch contribution. Exactly axial cap
+faces already share a literal X/Y and require no support. Ambiguous owners,
+non-exact common endpoints and unrepresentable inward penetration retain
+the historical raw geometry and guards.
+
+`physicalBodyParts` (including opening-drag union operands) and
+`drawWallPreviewD` explicitly request union support, reusing existing trim
+wedges. The separate translucent drawing join layer keeps raw quads; it does
+not paint redundant triangles over the wall. The independent generated
+`wall-corner-join` fixture covers actual panel/Static stroke and untouched
+free caps. Geometry sweeps additionally cover translations, rotation, cell
+scale, reversed owners, short/unequal/acute/#310 joins, opening cuts, PDF and
+iso; real holes and the #1076 numerical-ring guard remain separate checks.

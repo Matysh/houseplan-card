@@ -255,7 +255,8 @@ export function physicalBodyParts(
   // past its thin partner's outer face; subtract the addressed wedge from the
   // owning body BEFORE opening cuts, so jambs inherit the clean silhouette.
   const allSegments = partitionSegments;
-  for (const { segmentIndex, wedge } of pairButtEndTrimWedges(allSegments, epsilon)) {
+  const trimWedges = pairButtEndTrimWedges(allSegments, epsilon);
+  for (const { segmentIndex, wedge } of trimWedges) {
     const target = { list: partitions, at: segmentIndex };
     const trimmed = subtractWedgeFromBody(target.list[target.at], wedge);
     if (trimmed) {
@@ -274,7 +275,7 @@ export function physicalBodyParts(
   // an opening placed close to a T/endpoint even though its raw host body was
   // correctly split. Other crossing walls remain opaque through their own raw
   // bodies; only the extra shared mitre/bevel volume is trimmed here.
-  const rawPatches = linearWallJoinPatches(partitionSegments, epsilon);
+  const rawPatches = linearWallJoinPatches(partitionSegments, epsilon, { unionOverlap: true, trimWedges });
   const patches = rawPatches.flatMap((body) => cutPartitionBody(body, partitionCuts, epsilon));
   const all = [...presentedPartitions, ...patches, ...columns];
   return Object.defineProperty({ partitions, columns, patches, all }, 'rawPatches', { value: rawPatches });
