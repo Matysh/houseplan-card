@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 144,
+  "revision": 145,
   "nextTicket": 18,
   "nextFence": 18,
   "tasks": {
@@ -14,7 +14,7 @@
       "ownerDecision": null,
       "ticket": 17,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793563465220,
       "reviewEntry": 2,
       "patchId": "df853c66f6ec05bc9504fbb04ed2d09995482bae",
@@ -33,6 +33,13 @@
         "key": "1:Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
         "reason": "Correct native outside-dismiss fixture after an addressed failure; keep applicable successful S6 results.",
         "status": "pending"
+      },
+      "s6": {
+        "id": "20261101T200435759-86d75243",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261101T200435759-86d75243/report.json",
+        "materialSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
+        "status": "passed",
+        "finishedAt": "2026-11-01T20:06:52.795Z"
       }
     },
     "1176": {
@@ -166,9 +173,9 @@
     "fence": 17,
     "materialSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
     "expectedBase": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793563468111,
-    "expiresAt": 1793563887519,
+    "expiresAt": 1793567213876,
     "patchId": "df853c66f6ec05bc9504fbb04ed2d09995482bae"
   },
   "events": {
@@ -222,6 +229,10 @@
     },
     "finish:b4cce047-7f31-4be6-b1c6-46bc2c2c8098": {
       "digest": "6c32b6efe44146f767cab0fe1acf9a7bc3f76beedea3d9011ac6c27c02fcc7b9",
+      "issue": 1128
+    },
+    "finish:18b8190e-59c2-49ec-93cc-c870ee48e6c5:finish:3:s6-complete": {
+      "digest": "0ff756ca9aa734abf6f6a7da8b70412192c08ba1abfda5568c3fef9ea9987bf3",
       "issue": 1128
     }
   },
