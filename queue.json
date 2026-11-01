@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 311,
+  "revision": 312,
   "nextTicket": 35,
   "nextFence": 33,
   "tasks": {
@@ -326,7 +326,14 @@
         "process-next/catalog/golden-runner.mjs",
         "process-next/test/golden-accept.test.mjs",
         "scripts/capture-environment.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261101T212912907-5bc57d23",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T212912907-5bc57d23/report.json",
+        "materialSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
+        "status": "passed",
+        "finishedAt": "2026-11-01T21:29:13.412Z"
+      }
     }
   },
   "ownerDecisions": {},
@@ -400,9 +407,9 @@
     "fence": 32,
     "materialSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
     "expectedBase": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793568516524,
-    "expiresAt": 1793568849484,
+    "expiresAt": 1793572153988,
     "patchId": "43c103a400ec52a9d3751f6755abbd61fcdeb3ec"
   },
   "events": {
@@ -779,6 +786,10 @@
     },
     "finish:527e5b69-1453-4c23-b160-ba6e480d0556:finish:1:synchronized": {
       "digest": "2b7e1229e4eb666ff3a829e04d9ffd35cdefb031d6f3cd5fecf9f2fc27c1b0c0",
+      "issue": 1191
+    },
+    "finish:527e5b69-1453-4c23-b160-ba6e480d0556:finish:2:s6-complete": {
+      "digest": "1f1f12da528bb28851af147e6e898d718a6caead987e61814f07c3c2fe4206bf",
       "issue": 1191
     }
   },
