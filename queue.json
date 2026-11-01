@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 81,
+  "revision": 82,
   "nextTicket": 11,
   "nextFence": 11,
   "tasks": {
@@ -84,7 +84,7 @@
       "notice": {
         "key": "2:Author found remaining obsolete golden/toolbar expectations; complete addressed update on S6 before review.",
         "reason": "Author found remaining obsolete golden/toolbar expectations; complete addressed update on S6 before review.",
-        "status": "pending"
+        "status": "delivered"
       },
       "s6": {
         "id": "20261101T181325522-f4520e41",
@@ -247,6 +247,10 @@
     },
     "author-return-1184-golden-navigation": {
       "digest": "7100c593efb0d7d333ffc9794eafddeafb68e53e2c6c4cc6952ecc33c8f785be",
+      "issue": 1184
+    },
+    "github:41335875874:1:completions:metadata:23ad0ea4-9987-4d72-9b01-015072f52f01:task-notice:1184::": {
+      "digest": "31f42697677f2bdf04dd43e4576e73368fb91712a0ba61164ec76ae22018f281",
       "issue": 1184
     }
   },
