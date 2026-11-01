@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Select the existing full Lit capture owner for the still-held SafeResize preview, matching the prior accepted frame. Semantic checks retain the live preview and complete handles; no gesture, saved geometry or visual baseline is changed. [#1203](https://github.com/Matysh/houseplan-card/issues/1203)
+
 - Keep the catalog's negative metadata pattern assertion out of executable source inputs, so a newly generated browser manifest cannot invalidate a cold addressed run. [#1201](https://github.com/Matysh/houseplan-card/issues/1201)
 
 - Restore geometry-check preparation for transitive built-manifest readers and inventory the new zero-config synthetic corner fixture without changing saved identities. Keep Select-only graph assertions while reporting module size diagnostically. [#1196](https://github.com/Matysh/houseplan-card/issues/1196)
