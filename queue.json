@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 227,
-  "nextTicket": 25,
+  "revision": 228,
+  "nextTicket": 26,
   "nextFence": 25,
   "tasks": {
     "1128": {
@@ -202,14 +202,14 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/issue-1190-comment-history",
-      "materialSha": "89ce55dfa86e4d2021c2b0646eb46bfa434f2481",
+      "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 23,
-      "queued": false,
+      "ticket": 25,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793566541835,
-      "reviewEntry": 2,
+      "readyAt": 1793566786222,
+      "reviewEntry": 3,
       "patchId": "3d522d2fa4922adc96c0be94ccdb172a715a1651",
       "changedFiles": [
         "PROCESS.md",
@@ -251,8 +251,7 @@
         "entry": 2,
         "detail": "Исправляется независимое восстановление меток и milestone при задержке комментария; слот освобождён на время правки.",
         "eventId": "1190-final-comment-repair-20261101:return:1190"
-      },
-      "reason": "executor-fix"
+      }
     }
   },
   "ownerDecisions": {},
@@ -298,7 +297,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1190
+  ],
   "active": {
     "issue": 1175,
     "worker": "finish",
@@ -496,6 +497,18 @@
       "digest": "65e793ec55356694f61b9194bdd2586696ca9b88f8d413c8ae218cb272dab729",
       "issue": 1190
     },
+    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:1:admit": {
+      "digest": "3766adbb459112c0017807b75ac7a6e167a2ac1d62679eeb7e1874e51db2b407",
+      "issue": 1175
+    },
+    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:2:synchronized": {
+      "digest": "81943c7c049c1350631b9991018c219cb3a881cafa67ebbf6171ba477690a075",
+      "issue": 1175
+    },
+    "finish:959615d4-95d6-4cbf-852e-e7d13f1246c3": {
+      "digest": "d1a073507f7a747b9fc4731bbd979712df6e8bfba446bdb6989441052537fa68",
+      "issue": 1175
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -562,17 +575,18 @@
         }
       }
     },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:1:admit": {
-      "digest": "3766adbb459112c0017807b75ac7a6e167a2ac1d62679eeb7e1874e51db2b407",
-      "issue": 1175
-    },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:2:synchronized": {
-      "digest": "81943c7c049c1350631b9991018c219cb3a881cafa67ebbf6171ba477690a075",
-      "issue": 1175
-    },
-    "finish:959615d4-95d6-4cbf-852e-e7d13f1246c3": {
-      "digest": "d1a073507f7a747b9fc4731bbd979712df6e8bfba446bdb6989441052537fa68",
-      "issue": 1175
+    "finish:78989db7-9a70-4f1d-a6ad-a4c557ba3e63": {
+      "digest": "722dcc66e959155be1beb655db054d148ba0d55d4eb82252bf35afe493e9bd85",
+      "issue": 1190,
+      "message": {
+        "kind": "queued",
+        "issue": 1190,
+        "at": 1793566786222,
+        "entry": 3,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076"
+      }
     }
   },
   "devWebhook": {
