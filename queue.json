@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 421,
+  "revision": 422,
   "nextTicket": 45,
   "nextFence": 44,
   "tasks": {
@@ -422,7 +422,9 @@
         "scripts/node-editor-bundle-budget.mjs",
         "test/fixtures/845-wall-corpus-identities.json",
         "test/wall-node-bundle.test.mjs"
-      ]
+      ],
+      "automationError": "checks-unavailable",
+      "automationSince": 1793573039894
     },
     "1197": {
       "issue": 1197,
@@ -545,6 +547,10 @@
     },
     "github:41358519688:1:completions:message:d8e608d21770a35dc8a8f22db953a346ad8700a03b32e7aad3e0ba89472eeb95": {
       "digest": "b7a12eabdad1fdb46f358da6e0c31dd98f36c43eeae557eaaca8731e3f8f963f",
+      "issue": 1196
+    },
+    "finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81:finish:3:automation-pending": {
+      "digest": "66090c8fbf740e00a279ee56923de24b464b99dcfae320cd5fedf508320fd41f",
       "issue": 1196
     },
     "finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81": {
