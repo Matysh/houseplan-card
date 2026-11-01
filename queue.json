@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 25,
+  "revision": 26,
   "nextTicket": 5,
   "nextFence": 5,
   "tasks": {
@@ -76,7 +76,14 @@
         "docs/CHANGELOG.ru.md",
         "process-next/lib/github.mjs",
         "process-next/test/github.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261101T172505684-6d3d2ad2",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T172505684-6d3d2ad2/report.json",
+        "materialSha": "bfc2d7324795183834d54794b3c103d77f100e76",
+        "status": "passed",
+        "finishedAt": "2026-11-01T17:25:07.278Z"
+      }
     }
   },
   "ownerDecisions": {},
@@ -90,9 +97,9 @@
     "fence": 4,
     "materialSha": "bfc2d7324795183834d54794b3c103d77f100e76",
     "expectedBase": "ce2a3a7706e6f52c1a70ad1d0deb561176ce00ba",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793553894785,
-    "expiresAt": 1793554202295,
+    "expiresAt": 1793557507857,
     "patchId": "8373feab94cc5592c6f0e44466ff8e1fde6eb1b8"
   },
   "events": {
@@ -194,6 +201,10 @@
     },
     "finish:cb02156f-502d-4b41-b1af-3f4462fc128c:finish:2:synchronized": {
       "digest": "a87860c135694432149c334f941a331d6c96953b645112b6ea4eb007ceeceeec",
+      "issue": 1186
+    },
+    "finish:cb02156f-502d-4b41-b1af-3f4462fc128c:finish:3:s6-complete": {
+      "digest": "afb0dcd5d591ca4714f6c7b5cd82911830f3726f0c30cb94fb7ecba7df89d4ef",
       "issue": 1186
     }
   }
