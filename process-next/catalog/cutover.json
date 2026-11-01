@@ -53,8 +53,14 @@
     {
       "stage": "retain",
       "action": "keep-manual",
-      "paths": [".github/workflows/docs-screenshots.yml", ".github/workflows/announce.yml"],
-      "reason": "Independent manual documentation capture and owner-authorized announcement; neither is an acceptance gate or implicit task action"
+      "paths": [".github/workflows/docs-screenshots.yml"],
+      "reason": "Independent explicit documentation capture; not a check for ordinary documentation changes"
+    },
+    {
+      "stage": "B",
+      "action": "reconnect-stable-announcement",
+      "paths": [".github/workflows/announce.yml"],
+      "reason": "Preserve automatic stable-only Telegram delivery of the authored RU user changelog. The old manual dispatch sends only a test message; retaining the file alone does not replace the old release caller. This connection is still missing; see AUTOMATION-PARITY.md."
     }
   ],
   "installTemplates": [
