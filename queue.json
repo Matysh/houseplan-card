@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 261,
-  "nextTicket": 28,
+  "revision": 262,
+  "nextTicket": 29,
   "nextFence": 27,
   "tasks": {
     "1128": {
@@ -28,6 +28,20 @@
         "status": "published",
         "sourceSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e"
       }
+    },
+    "1153": {
+      "issue": 1153,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1153-save-cost",
+      "materialSha": "17c5d5f299b535862a600710f9437af6d9d0950f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 28,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793567676870,
+      "reviewEntry": 1
     },
     "1156": {
       "issue": 1156,
@@ -346,7 +360,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1175
+    1175,
+    1153
   ],
   "active": null,
   "events": {
@@ -778,6 +793,10 @@
     "finish:17b52b52-6951-4f92-b89c-e841571982d8:metadata:60a8966d-f8ac-4452-a17a-f4ac9b42db10:task-notice:1169::": {
       "digest": "8185510b59371c8deddab3115ac6c723cc22f786a4a3fe20aee87bce218c6b67",
       "issue": 1169
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4": {
+      "digest": "1d3265011d2ca991cce16938fa1c1f1cca0625969dc159138516dcd93495f3e9",
+      "issue": 1153
     }
   },
   "devWebhook": {
