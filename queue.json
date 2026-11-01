@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 19,
+  "revision": 20,
   "nextTicket": 4,
   "nextFence": 4,
   "tasks": {
@@ -14,7 +14,7 @@
       "ownerDecision": null,
       "ticket": 3,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793552996664,
       "reviewEntry": 3,
       "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
@@ -35,9 +35,9 @@
         "src/live-hover.ts"
       ],
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending"
       },
       "s6": {
         "id": "20261101T171008124-efadd36a",
@@ -54,7 +54,8 @@
       },
       "automationError": "automation-error",
       "automationSince": 1793553358957,
-      "automationDetail": "GitHub GET failed (415)"
+      "automationDetail": "GitHub GET failed (415)",
+      "reason": "review-findings"
     }
   },
   "ownerDecisions": {},
@@ -72,19 +73,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1176,
-    "worker": "finish",
-    "token": "3:finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:1:admit",
-    "fence": 3,
-    "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
-    "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
-    "phase": "review",
-    "admittedAt": 1793552999700,
-    "expiresAt": 1793556640180,
-    "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
-    "reviewRequest": "review:1176:3:f5650ed2bff7868998008fcee4164c14158fe535:5862a1713ce034e232581004c262860b48a0ca52"
-  },
+  "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
       "digest": "3f1d7ee030df92004fb10bdc8126518084bd5e0d0ae5d2b1e6b23dd3adbdf112",
@@ -160,6 +149,10 @@
     },
     "1176-artifact-media-20261101-reconcile:review-presentation": {
       "digest": "e1d52d090421195af7a9deb629fcf1a2e6364fb16dd69dcb770831a871c8fe8a",
+      "issue": 1176
+    },
+    "1176-artifact-media-20261101-reconcile:return": {
+      "digest": "6e3b7fca4a526dee6228298f8a093952b427c496a475cb3c12dd0a457a205fea",
       "issue": 1176
     }
   }
