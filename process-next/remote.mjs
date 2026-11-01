@@ -198,7 +198,8 @@ export class WorkflowReviewAdapter {
     // notice. It must not pin later real review rounds behind an empty placeholder.
     if (record.exhausted && !result?.markdown && (result?.missing || result?.retryable))
       return { published: true, reportAbsent: true };
-    if (expired && !result?.markdown && (result?.missing || result?.retryable)) result = {
+    const unavailable = expired && !result?.markdown && (result?.missing || result?.retryable);
+    if (unavailable) result = {
       issue: record.issue, kind: record.kind, requestId: record.requestId, materialSha: record.materialSha,
       base: record.expectedBase, verdict: 'incomplete', runStatus: 'completed',
       markdown: 'Результат этого запроса не получен или больше недоступен: окно хранения артефактов (60 дней) истекло. '
@@ -210,10 +211,26 @@ export class WorkflowReviewAdapter {
     const current = this.api.getIssue ? await this.api.getIssue(record.issue) : null;
     const currentStatus = current?.state === 'closed' ? 'closed' : current?.labels?.map(label => typeof label === 'string' ? label : label.name).find(label => /^S[1-8]-/.test(label));
     const changedSpec = record.kind === 'spec' && current && record.requestId !== `spec:${record.issue}:${createHash('sha256').update(JSON.stringify({ body: current.body ?? '' })).digest('hex')}`;
+    const sourceStatus = record.kind === 'spec' ? 'S4-spec-review' : 'S7-code-review';
+    const delayed = Boolean(record.presentation?.delayed || changedSpec || currentStatus === 'closed'
+      || record.outcomeConsumed === false && currentStatus && currentStatus !== sourceStatus
+      || (record.presentation?.transition?.to && currentStatus && record.presentation.transition.to !== currentStatus));
+    // A request-time placeholder is not an observed verdict. Wait for the existing
+    // coordinator to consume the current result and finish its label mutation;
+    // otherwise append-only publication would permanently lose that transition.
+    // Superseded reports and a manual move away from review remain publishable.
+    const currentReview = !delayed && (!currentStatus || currentStatus === sourceStatus);
+    const needsLabel = record.kind === 'spec' && ['accepted', 'changes_requested'].includes(result.verdict)
+      || record.kind === 'code' && ['changes_requested', 'changes-requested'].includes(result.verdict);
+    if (!unavailable && currentReview && (record.outcomeConsumed === false
+      || needsLabel && currentStatus === sourceStatus && !record.presentation?.transition?.confirmed))
+      return { published: false, pending: true };
+    const mergedAfterReview = record.kind === 'code' && result.verdict === 'accepted'
+      && currentStatus === 'S8-merged' && !delayed;
     const presentation = { ...record.presentation, ...(currentStatus ? { currentStatus } : {}),
       ...(result.completedAt ? { occurredAt: result.completedAt } : {}),
-      delayed: Boolean(record.presentation?.delayed || changedSpec || currentStatus === 'closed'
-        || currentStatus === 'S8-merged' || (record.presentation?.transition?.to && currentStatus && record.presentation.transition.to !== currentStatus)) };
+      ...(mergedAfterReview ? { mergedAfterReview: true } : {}),
+      delayed: delayed || currentStatus === 'S8-merged' && !mergedAfterReview };
     return publishReviewReceipt({ api: this.api, receipt: { ...result, presentation }, reportUrl: result.reportUrl });
   }
   async readPreviousReviewResult({ issue, kind = 'code', excludeRequestId }) {
@@ -286,8 +303,12 @@ async function finishBookkeeping({ queue, api, git, review, eventId, issue, publ
         if (delivery.pending.length) deferred.add(item.issue);
       } else {
         const record = item.record;
-        const latest = record.kind === 'spec' ? snapshot.specReviews?.[record.issue]?.requestId : snapshot.tasks[record.issue]?.reviewRequest;
-        const result = await review.publishCompletedReview({ ...record, presentation: { ...record.presentation,
+        const current = record.kind === 'spec' ? snapshot.specReviews?.[record.issue] : snapshot.tasks[record.issue];
+        const latest = record.kind === 'spec' ? current?.requestId : current?.reviewRequest;
+        const outcomeConsumed = latest !== record.requestId || Boolean(record.resultKey || record.exhausted)
+          || (record.kind === 'spec' ? current.status !== 'pending'
+            : current.status !== 'S7-code-review' || current.review?.verdict === 'accepted');
+        const result = await review.publishCompletedReview({ ...record, outcomeConsumed, presentation: { ...record.presentation,
           delayed: Boolean(latest && latest !== record.requestId) } });
         if (!result?.published) { if (!result?.superseded) deferred.add(item.issue); continue; }
         const identity = createHash('sha256').update(JSON.stringify([record.kind, record.issue, record.requestId, record.resultKey ?? null])).digest('hex');

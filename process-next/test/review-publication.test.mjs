@@ -120,3 +120,18 @@ test('only confirmed transitions are stated and late reports cannot claim curren
   assert.doesNotMatch(f.comments[1].body, /Следующий шаг:/);
   assert.match(f.comments[1].body, /18:00:00 UTC/);
 });
+
+test('a current rejection explains the author action without caller-supplied wording', async () => {
+  const f = fixture(); f.receipt.verdict = 'changes_requested';
+  f.receipt.presentation = { currentStatus: 'S6-in-progress', transition: { from: 'S7-code-review', to: 'S6-in-progress', confirmed: true } };
+  await publishReviewReceipt(f);
+  assert.match(f.comments[0].body, /Следующий шаг:.*исправляет код на S6/);
+  assert.match(f.comments[0].body, /отдельным комментарием/);
+});
+
+test('accepted review followed by the ordinary merge reports completion, not delayed delivery', async () => {
+  const f = fixture(); f.receipt.presentation = { mergedAfterReview: true, currentStatus: 'S8-merged' };
+  await publishReviewReceipt(f);
+  assert.match(f.comments[0].body, /уже слито в dev/);
+  assert.doesNotMatch(f.comments[0].body, /доставлен с задержкой|Следующий шаг/);
+});

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -511,10 +512,93 @@ test('a completed old specification report is published after the body changed w
   assert.deepEqual(current.labels, ['S5-ready']);
 });
 
+test('current specification report waits for its verdict and label repair, then publishes one S4 to S3 report', async () => {
+  const h = queueHarness(); h.issue.labels = ['S4-spec-review', 'track:ask']; h.issue.body = 'ТЗ текущего раунда';
+  const transport = issueTransport(h.issue), adapter = new WorkflowReviewAdapter({ api: transport.api });
+  h.dependencies.api = transport.api; h.dependencies.review = adapter;
+  let completed = false;
+  adapter.readReviewResult = async ({ requestId, active }) => completed ? {
+    issue: 1, kind: 'spec', requestId, materialSha: active.materialSha, base: active.expectedBase,
+    verdict: 'changes_requested', markdown: 'Нужно уточнить поведение отмены.', runId: 11,
+    runStatus: 'completed', publicationPending: true,
+  } : { pending: true };
+  await h.command('label');
+  completed = true;
+  await h.command('reconcile-completions');
+  assert.equal(transport.comments.length, 0, 'a completed artifact alone is not the processed verdict');
+  const moveStatus = transport.api.moveStatus.bind(transport.api);
+  transport.api.moveStatus = async () => { throw Error('Label transport unavailable'); };
+  await assert.rejects(h.command('label'), /Label transport/);
+  assert.equal(h.store.state.specReviews[1].status, 'changes_requested');
+  await h.command('reconcile-completions');
+  assert.equal(transport.comments.length, 0, 'saved verdict must also wait for the failed label mutation');
+  transport.api.moveStatus = moveStatus;
+  await h.command('label');
+  await h.command('reconcile-completions');
+  await h.command('reconcile-completions');
+  assert.equal(transport.comments.length, 1);
+  assert.match(transport.comments[0].body, /S4 «Ревью ТЗ» → S3 «Подготовка ТЗ»/);
+  assert.match(transport.comments[0].body, /Нужно уточнить поведение отмены/);
+  assert.doesNotMatch(transport.comments[0].body, /Статус остаётся.*S4/);
+});
+
+test('current code report waits for the processed return and publishes one S7 to S6 report', async () => {
+  const h = queueHarness(), transport = issueTransport(h.issue);
+  const adapter = new WorkflowReviewAdapter({ api: transport.api });
+  h.dependencies.api = transport.api; h.dependencies.review = adapter;
+  adapter.requestReview = async () => ({ requested: true });
+  adapter.readReviewResult = async ({ requestId, active }) => ({
+    issue: 1, kind: 'code', requestId, materialSha: active.materialSha, base: active.expectedBase,
+    verdict: 'changes_requested', markdown: 'Исправить потерю отменённого изменения.', runId: 12,
+    runStatus: 'completed', publicationPending: true,
+  });
+  await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'infra' });
+  await h.command('admit'); const token = h.store.state.active.token;
+  await h.command('synchronized', { token, expectedBase: A, materialSha: B });
+  await h.command('s6-complete', { token, materialSha: B, outcome: 'passed', evidence: { sha: B, result: 'passed' } });
+  await h.command('reconcile');
+  await h.command('reconcile-completions');
+  const reports = () => transport.comments.filter(comment => comment.body.startsWith('<!-- process-next-review:'));
+  assert.equal(reports().length, 0);
+  assert.equal((await h.command('reconcile')).action, 'returned');
+  await h.command('reconcile-completions');
+  await h.command('reconcile-completions');
+  assert.equal(reports().length, 1);
+  assert.match(reports()[0].body, /S7 «Код-ревью» → S6 «Реализация и проверки»/);
+});
+
+test('a manual move away from the current review publishes its unconsumed result as history', async () => {
+  const current = { number: 1, state: 'open', labels: ['S6-in-progress'] };
+  const { api, comments } = issueTransport(current), adapter = new WorkflowReviewAdapter({ api });
+  await adapter.publishCompletedReview({ issue: 1, kind: 'code', requestId: context.requestId, outcomeConsumed: false,
+    receipt: { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B,
+      verdict: 'changes_requested', runStatus: 'completed', markdown: 'Сохранённый результат.' } });
+  assert.equal(comments.length, 1);
+  assert.match(comments[0].body, /доставлен с задержкой/);
+  assert.deepEqual(current.labels, ['S6-in-progress']);
+});
+
+test('accepted code already merged in the same round is distinguished from a superseded report', async () => {
+  for (const delayed of [false, true]) {
+    const { api, comments } = issueTransport({ number: 1, state: 'open', labels: ['S8-merged'] });
+    const adapter = new WorkflowReviewAdapter({ api });
+    await adapter.publishCompletedReview({ issue: 1, kind: 'code', requestId: context.requestId, outcomeConsumed: true,
+      presentation: { delayed }, receipt: { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B,
+        verdict: 'accepted', runStatus: 'completed', markdown: 'Код принят.' } });
+    assert.equal(comments.length, 1);
+    if (delayed) assert.match(comments[0].body, /доставлен с задержкой/);
+    else {
+      assert.match(comments[0].body, /Код-ревью принято; после этого изменение уже слито в dev/);
+      assert.doesNotMatch(comments[0].body, /доставлен с задержкой|Следующий шаг/);
+    }
+  }
+});
+
 test('superseded empty requests do not block later history and expire with an explicit unavailable report', async () => {
   const comments = [], now = Date.parse('2026-11-01T12:00:00Z');
+  const current = { state: 'open', labels: ['S5-ready'], body: 'updated specification' };
   const api = { root: '/repos/owner/repo', owner: 'owner',
-    getIssue: async () => ({ state: 'open', labels: ['S5-ready'], body: 'updated specification' }),
+    getIssue: async () => current,
     request: async (_method, path) => path.includes('/comments') ? comments : { workflow_runs: [], total_count: 0 },
     comment: async (_issue, body) => { const item = { id: comments.length + 1, body, user: { login: 'owner' } }; comments.push(item); return item; } };
   const adapter = new WorkflowReviewAdapter({ api, clock: () => now });
@@ -528,6 +612,12 @@ test('superseded empty requests do not block later history and expire with an ex
   assert.equal(comments.length, 1); assert.match(comments[0].body, /окно хранения артефактов/);
   await adapter.publishCompletedReview(record);
   assert.equal(comments.length, 1);
+  current.labels = ['S4-spec-review'];
+  const requestId = `spec:1:${createHash('sha256').update(JSON.stringify({ body: current.body })).digest('hex')}`;
+  const unavailable = await adapter.publishCompletedReview({ ...record, requestId, outcomeConsumed: false,
+    presentation: { ...record.presentation, delayed: false } });
+  assert.equal(unavailable.published, true, 'terminal unavailability is not a model verdict awaiting consumption');
+  assert.equal(comments.length, 2); assert.match(comments[1].body, /окно хранения артефактов/);
 });
 
 test('published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing', async () => {

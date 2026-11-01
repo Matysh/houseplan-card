@@ -31,7 +31,10 @@ const timeText = value => {
 
 function presentationText(receipt) {
   const p = receipt.presentation ?? {}, lines = [];
-  if (p.delayed) {
+  const verdict = normalizedVerdict(receipt.verdict);
+  if (p.mergedAfterReview && verdict === 'accepted') {
+    lines.push('Код-ревью принято; после этого изменение уже слито в dev. Сейчас задача: **S8 «Слито в dev»**.');
+  } else if (p.delayed) {
     const occurred = timeText(p.occurredAt ?? receipt.finishedAt);
     lines.push(`Отчёт доставлен с задержкой${occurred ? `; ревью завершилось ${occurred}` : ''}. Текущий статус задачи не изменён.`);
     if (p.currentStatus) lines.push(`Сейчас задача: **${statusName(p.currentStatus)}**.`);
@@ -41,8 +44,18 @@ function presentationText(receipt) {
     else if (to) lines.push(`Статус остаётся **${statusName(to)}**.`);
   } else if (p.currentStatus) lines.push(`Статус остаётся **${statusName(p.currentStatus)}**.`);
   if (p.detail) lines.push(p.detail);
-  if (p.next && !p.delayed) lines.push(`Следующий шаг: ${p.next}`);
-  if (normalizedVerdict(receipt.verdict) === 'incomplete') lines.push('Это незавершённый анализ, а не отрицательное содержательное ревью. Уже полученный отчёт сохранён.');
+  const status = p.currentStatus ?? (p.transition?.confirmed ? p.transition.to : null);
+  let next = p.next;
+  if (!next && verdict === 'changes_requested') {
+    if (status === 'S3-spec' && receipt.kind === 'spec') next = 'Исполнитель исправляет ТЗ на S3, отдельным комментарием описывает исправления и передаёт новую редакцию на ревью.';
+    if (status === 'S6-in-progress' && receipt.kind === 'code') next = 'Исполнитель исправляет код на S6, выполняет адресные проверки и отдельным комментарием описывает правки перед следующим ревью.';
+  }
+  if (!next && verdict === 'accepted') {
+    if (status === 'S5-ready' && receipt.kind === 'spec') next = 'Исполнитель начинает реализацию на S6.';
+    if (status === 'S7-code-review' && receipt.kind === 'code') next = 'Очередь выполняет слияние принятого изменения в dev.';
+  }
+  if (next && !p.delayed && !p.mergedAfterReview) lines.push(`Следующий шаг: ${next}`);
+  if (verdict === 'incomplete') lines.push('Это незавершённый анализ, а не отрицательное содержательное ревью. Уже полученный отчёт сохранён.');
   return lines.join('\n\n');
 }
 

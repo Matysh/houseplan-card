@@ -186,9 +186,9 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
       if (['S6-in-progress', 'S7-code-review'].includes(issueStatus(issue))) {
         const fromStatus = issueStatus(issue);
         await api.moveStatus(active.issue, expectedStatus, issue.labels);
-        const pending = Object.entries(snapshot.state.events).reverse().find(([, r]) => r.message?.issue === active.issue && r.message.kind === 's6-complete' && !r.message.delivered);
+        const pendingS6Message = Object.entries(snapshot.state.events).reverse().find(([, r]) => r.message?.issue === active.issue && r.message.kind === 's6-complete' && !r.message.delivered);
         await observeTransition(queue, { id: `${eventId}:label`, issue: active.issue, kind: 'code', requestId: active.reviewRequest,
-          messageId: pending?.[0], fromStatus, toStatus: expectedStatus });
+          messageId: pendingS6Message?.[0], fromStatus, toStatus: expectedStatus });
       }
       else return returned('status-changed');
     }
