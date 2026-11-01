@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 291,
+  "revision": 292,
   "nextTicket": 34,
   "nextFence": 31,
   "tasks": {
@@ -132,153 +132,20 @@
     },
     "1175": {
       "issue": 1175,
+      "branch": "codex/1175-vacuum-live-tail",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1175-vacuum-live-tail",
-      "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 30,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793567769313,
-      "reviewEntry": 5,
-      "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75",
-      "changedFiles": [
-        "demo/smoke_vacuum_camera.mjs",
-        "demo/smoke_vacuum_tail_continuity.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/VACUUM.md",
-        "docs/release-ledger/v1.83.0/1175.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/render-snapshot-capture.ts",
-        "src/support-diagnostics.ts",
-        "src/vacuum-trail-diagnostics.ts",
-        "src/vacuum-trail-material.ts",
-        "test/vacuum-live-tail.test.mjs"
-      ],
-      "notice": {
-        "key": "4:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered"
+      "status": "S8-merged",
+      "mergedSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
+      "mergedAt": 1793568280161,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261101T212026376-e272fcb5",
-        "reportPath": "/home/matysh/hp-1117-dreame-history-20261028/.git/process-next/runs/20261101T212026376-e272fcb5/report.json",
-        "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-        "status": "passed",
-        "finishedAt": "2026-11-01T21:21:27.855Z"
-      },
-      "reviewRequest": "review:1175:5:d70fca9ca6df73b41d205dc3276118c2773f5b75:de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "reviewMaterial": {
-        "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-        "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75"
-      },
-      "review": {
-        "version": 1,
-        "issue": 1175,
-        "requestId": "review:1175:5:d70fca9ca6df73b41d205dc3276118c2773f5b75:de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "kind": "code",
-        "base": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-        "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1175,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1175",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Итоговый контракт и подход\n\nВосстановить #1049: native — основной маршрут; наблюдённые позиции продолжают его с известными поворотами; последний отрезок следует за фактическим DOM-центром анимированной шайбы в Flat/2.5D. Первоначальный установленный track show сохранён. Runtime/WS/Store/model не мигрируются; source/map/calibration/epoch/physical-jump guards и квоты остаются.\n\nAnimation jump при редких (>10сек) позициях больше не передаётся как geometric gap. Реальный live recorder сам проверяет физическую скорость/clock/context/availability. Full native ACK может оставить один witnessed endpoint: только при его точном совпадении с native endpoint и соответствии текущей позиции в существующем backend JOIN_CM=2cm (валидная калибровка/масштаб) предпоследняя native точка становится tip anchor, статическая целевая точка временно не рисуется. Обычные live-фрагменты по-прежнему требуют точной текущей позиции; несвязанный singleton, waiting previous-task geometry и >2cm не получают connector. Native не мутируется. Trim memoized WeakMap сохраняет повторное использование тяжёлой native projection; существующий syncVacuumTips/RAF ведёт конец по DOM-центру, не будущей цели.\n\n### Исправление review1\n\nПолный сохранённый отчёт: workflow41349675344, материал64501c85, verdict changes_requested. Основные sparse/fullACK исправления признаны корректными, один blocker — моё обнуление rt.moving при недоступности перегружало cleanup lifecycle.\n\nБлокер воспроизведён настоящей панелью НА НЕИЗМЕННОЙ review1 сборке:4FAIL в review1-availability-red.log/json — default cleaning path пропал на outage; legacy format1 потерял старый локальный след при recovery. Теперь moving/endedTs/history на unknown/unavailable не меняются. Отдельный optional runtime.unavailable отключает лишь активную шайбу/tip. Флаг переносится в accepted immutable render snapshot и support/обычные diagnostics, чтобы их quota/count материал оставался тем же кадром. Известный текущий путь остаётся видимым в default cleaning; recovery сохраняет прежние fragments, а разрыв наблюдений через outage остаётся настоящим gap.\n\nТакже закрыта optional хрупкость битового равенства позиции после ACK: backend заменяет ACK anchor native координатами в2cm. Pure regression покрывает близкую/далёкую позицию, physical scale и недействительную матрицу; панель получает native endpoint599.5 при robot_position600 и проверяет actual endpoint в промежуточных кадрах. Это тот же существующий physical ACK bound, не глобальный epsilon/ослабление route/teleport guards. Optional переделка serializer для устранения второй разовой trimmed/full projection не включена — отдельный риск выше пользы; repeated unchanged native projection уже переиспользуется.\n\n### Фактические проверки и границы\n\nПоследний завершённый S6 до этих review fixes:20261101T205847148-f308b6db на64501c85 — PASS9/9 за59.47s,151critical+40affected Node и3browser scripts. Новый final S6 после правок поставляет finish; пока он не завершён, новый PASS не заявлен.\n\nПосле-review выборка: стандартный product minimum; vacuum-live-tail/view/trail-diagnostics/path-geometry/support-diagnostics Node suites; smoke_vacuum_tail_continuity, прежние smoke_vacuum_live_tail и smoke_vacuum_camera. Новая панельная regression включает sparse11second delay, partial/full/repeated/near ACK,22+ промежуточных кадра каждого режима, default cleaning unavailable/recovery и сохранность всех прежних format1 local points, teleport/unknown и счётчик только ожидаемых WS events. Никаких новых provider polls/client writes. Geometry/new-task/history guards из #1049 остаются. Синтетическая панель не доказывает vendor/GPU/liveHA приёмку, частные карты не использованы.\n\nОба Flat/2.5D PNG предыдущего PASS фактически просмотрены; max screen tip error≈5.7e-14px. Первичные FAIL fullACK/delay, авторский cache FAIL, ранний S6 hidden-Fit mismatch и invalidation сохранены в output/release-batch-20261101/1175 и формальных .git/process-next/runs. Соседний camera smoke теперь использует действительно широкую1800px карточку для публичного Fit после #1184 и пишет отчёт в canonical artifacts/, не в demo/out source input. Продуктовые CSS/input guards не подменены.\n\nCompanion HA E2E assessment: «не надо» — нет новых WS/API/ACL/persistence или пользовательских входов; адресная реальная панель проверяет rendering/animation. Координирующий агент публикует запись companion и ведёт последующую бету. S7 только читает код, без прогонов.\n\nМеханическая поправка перед повторным S6: после-review запуск20261101T211457349-86f74941 остановился на TS2339 — отдельный RenderSnapshotHost ещё не объявлял optional unavailable. Тип приведён к фактически захватываемому полю; первая ошибка сохранена, продуктовые проверки тогда не выполнялись. В адресную выборку добавлен существующий render-snapshot-incremental suite."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер прошлого раунда устранён. Ветка unknown/unavailable больше не трогает `rt.moving`, `endedTs` и историю, то есть восстановлено поведение base. Добавлен отдельный необязательный флаг `rt.unavailable`, который гасит только активную шайбу и кончик. В режиме `trail_mode:'cleaning'` (по умолчанию) путь текущей уборки остаётся виден во время недоступности робота. Когда робот снова доступен, правило «новая уборка» не срабатывает, и локальный след format 1 не стирается.\n\nЗакрыто и необязательное замечание о точном равенстве координат при полном ACK. Допуск применяется только к случаю `nativeTip` и использует тот же физический порог 2 см (`JOIN_CM`), что и backend, причём только при валидной калибровке. Обычные live-фрагменты по-прежнему требуют точного совпадения.\n\nОсновные исправления, принятые в первом раунде, сохранены без изменений: редкая телеметрия (анимационный `rt.jump`) больше не считается геометрическим разрывом, а при полном ACK кончик линии идёт от предпоследней native-точки. S6 `20261101T212026376-e272fcb5` прошёл на текущем head `24ae8ff9`. Препятствий для принятия не вижу.",
-          "understanding": "Задача — восстановить контракт #1049. Линия текущей уборки должна непрерывно идти от начала native-пути через наблюдённые позиции до фактически отрисованного центра шайбы, в том числе в промежуточных кадрах CSS-перехода. Native-маршрут заменяет только подтверждённый префикс временного хвоста.\n\nРешение состоит из трёх частей:\n1. `_vacTick` больше не передаёт анимационный `rt.jump` в `recordVacuumLivePosition` как разрыв. Разрыв определяют только физическая проверка скачка, контекст (owner/карта/калибровка/эпоха) и доступность.\n2. В `currentVacuumTrailFrame` добавлен случай `nativeTip`: после полного ACK в live-окне осталась одна точка, и она равна концу native-пути. Тогда последняя точка native временно обрезается (`trimLiveTarget` кешируется в WeakMap по неизменяемому VacPath), предпоследняя становится anchor для `<line class=tip>`, а `syncVacuumTips` дотягивает линию до DOM-центра шайбы. В этом раунде сопоставление с `robot_position` для `nativeTip` разрешено в пределах 2 см в физических координатах калибровки (`ackTarget`).\n3. Доступность отделена от признака уборки. `rt.unavailable` выставляется на каждом тике до раннего `continue`. В `_renderVacuums` введено `active = moving && !unavailable`: оно управляет кончиком, шайбой и параметром `moving` для расчёта кадра, а `showCur` по-прежнему зависит от `moving`. Флаг переносится в неизменяемый render snapshot и в обе диагностики, поэтому квоты и счётчики считаются по тому же кадру.\n\nРазобранные пути по исходникам:\n- `_vacTick` (`houseplan-card.ts:12231-12308`): правило сброса уборки, `endedTs`, `recordLocalVacuumPosition`, `recordVacuumLivePosition`;\n- `_renderVacuums` (`12440-12529`): путь snapshot `fact.runtime` → `currentVacuumTrailFrame` → tip/puck;\n- `vacuum-trail-material.ts` целиком;\n- backend `acknowledge_live` (`vacuum_live_tail.py:67-93`): единица и смысл `JOIN_CM`;\n- `render-snapshot-capture.ts:213-233`: факт пылесоса пересобирается при каждом захвате;\n- `support-diagnostics.ts` и `vacuum-trail-diagnostics.ts`;\n- все использования `.moving` в `src`.",
-          "analysis": [
-            {
-              "topic": "Блокер review1 (недоступность перегружала флаг уборки) — устранён",
-              "assessment": "В ветке unknown/unavailable теперь только выставляются `rt.unavailable`, `rt.gap` и `livePending.gap`. Флаги `rt.moving` и `endedTs` и локальный след не трогаются — так было и в base. Отсюда: (1) `showCur` в режиме `'cleaning'` остаётся true, путь не пропадает; (2) при возврате в cleaning условие `moving && !rt.moving` ложно, поэтому сброс `rt.trail/paths/material` (12257-12262) не срабатывает. Шайба и кончик гасятся через `active`: условие кончика на 12489, условие шайбы на 12500, а `moving: active` в кадре на 12479 убирает обрезку цели и tip-материал. Разрыв наблюдений через период недоступности остаётся настоящим разрывом (`rt.gap=true`), ложного соединения нет. Если робот вернулся уже в dock или idle, сработает обычная ветка `!moving && rt.moving` и выставит `endedTs`, так что правильная остановка сохраняется. Решение минимальное и совпадает с направлением, предложенным в прошлом ревью.",
-              "evidence": "`src/houseplan-card.ts:12242-12248`, `12257-12272`, `12461-12466`, `12479`, `12489`, `12500`. Остальные чтения `.moving` (`12645` routeWarningKey, `support-diagnostics.ts:113,202`, `vacuum-trail-diagnostics.ts:49,69`) по смыслу относятся к признаку уборки и корректно остаются на `moving`. Регрессия `availability-2`/`availability-1` в `demo/smoke_vacuum_tail_continuity.mjs:116-141` проверяет режим `'cleaning'`, неизменный `endedTs` и сохранность всех локальных точек format 1."
-            },
-            {
-              "topic": "Согласованность render snapshot и диагностики",
-              "assessment": "Флаг доходит до всех потребителей кадра. `captureRenderDeviceSnapshot` пересобирает факт пылесоса при каждом захвате (переиспользования, которое могло бы устареть, нет), а сущность пылесоса входит в `entityIds`. Support-диагностика переносит `unavailable` из принятого кадра, `diagnoseVacuumTrails` передаёт `moving && !unavailable` — тот же аргумент, что и View. Значит, счётчик `rendered` и квота совпадают с отрисованным. Типы `RenderSnapshotHost`/`HouseplanEditorHostPort` расширены необязательным полем: TS2339 из прерванного S6 этим и закрыт.",
-              "evidence": "`src/render-snapshot-capture.ts:59,213-233`; `src/support-diagnostics.ts:24,167-175`; `src/vacuum-trail-diagnostics.ts:19,68-83`; `src/houseplan-editor-runtime.ts:846`."
-            },
-            {
-              "topic": "Допуск 2 см для полного ACK (бывшее improvement)",
-              "assessment": "Разумное и узкое исправление. Backend при ACK заменяет координаты первой оставшейся точки на native-endpoint, а совпадение подтверждает только в пределах `JOIN_CM=2` см в физических координатах. Поэтому для `nativeTip` правильно сравнивать конец с `robot_position` в той же физической метрике: линейная часть матрицы применяется к разности, результат умножается на `cmPerUnit = cellCm/gridPitch`. В `_vacTick` physical считается так же. Ограничения достаточные: допуск действует только при `nativeTip` (одиночная точка, равная native-концу, не waiting); калибровка должна быть конечной и невырожденной; масштаб — положительным. Обычные live-фрагменты требуют точного совпадения, глобального ослабления нет. Pure-тест покрывает близкую и далёкую позицию, масштаб 2 и нулевую матрицу; smoke покрывает 599.5 против 600. Небольшая особенность: если шайба остановилась, а новые позиции не приходят, последняя native-точка не рисуется, и кончик идёт от предпоследней точки к шайбе. Расхождение не больше 2 см, визуально незаметно.",
-              "evidence": "`src/vacuum-trail-material.ts:98-118`; `custom_components/houseplan/vacuum_live_tail.py:10,79-93`; `src/houseplan-card.ts:12299-12300`; `test/vacuum-live-tail.test.mjs` (последний тест «calibrated two-centimetre correspondence»); `demo/smoke_vacuum_tail_continuity.mjs:101-104`."
-            },
-            {
-              "topic": "Исправления первого раунда — без изменений",
-              "assessment": "Исправления №1 (`liveGap` вместо `liveGap || rt.jump`) и №2 (кончик при `nativeTip` с WeakMap-кешем обрезки) в этом раунде не менялись. Оценка прошлого ревью остаётся в силе: причина симптома найдена верно, context/teleport-защиты не ослаблены, native не мутируется. Цена тоже прежняя и приемлема: обрезанный native — отдельный ключ кеша проекции, то есть одна дополнительная тяжёлая проекция на каждый полный ACK. Автор сознательно не стал переделывать сериализатор — обоснованно.",
-              "evidence": "`src/houseplan-card.ts:12303-12307`; `src/vacuum-trail-material.ts:7-16,112-118`."
-            },
-            {
-              "topic": "Регрессионные проверки",
-              "assessment": "Новая панельная регрессия закрывает именно тот пробел, из-за которого прошлый блокер не был пойман: она проверяет режим `'cleaning'`, переход unavailable→восстановление для format 2 и format 1, неизменность `endedTs` и сохранность каждой локальной точки. Сценарии AC1–AC4 (задержка 11 с, частичный, полный, близкий и повторный ACK, промежуточные кадры в Flat и 2.5D, телепорт, unknown, счётчик операций записи) на месте. Это синтетика: приёмку на реальных vendor-данных она не доказывает, и автор это честно указывает.",
-              "evidence": "`demo/smoke_vacuum_tail_continuity.mjs:72-148`; receipt S6 `20261101T212026376-e272fcb5`, статус passed, материал `24ae8ff93c46d3370879530d083b5aadfa6d5189`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Необязательно. Если робот ушёл в unavailable посреди уборки и так и не вернулся (интеграция «умерла»), в режиме `'cleaning'` путь текущей уборки остаётся виден неограниченно долго, потому что `rt.moving` так и остаётся true. Это поведение base, ТЗ его не регулирует, и для этой задачи оно приемлемо. Если владелец когда-нибудь захочет ограничить такой случай, правильнее сделать это отдельным правилом по времени недоступности, а не возвращать сброс `moving`.",
-            "Необязательно. Внутри одного вызова `currentVacuumTrailFrame` дважды вычисляются `liveLast(fresh.path)?.length` и `liveLast(current.path)`. Если вынести их в локальные переменные, условия `nativeTip`/`tip` станет легче читать. Выгода чисто сопроводительная."
-          ],
-          "boundaries": "Сам ничего не запускал (S7). Опирался на receipt S6 `20261101T212026376-e272fcb5` (passed, материал совпадает с текущим head `24ae8ff9`); артефакты прогона (`observations.json`, PNG, red-логи) не открывал. По исходникам изучил: `_vacTick` и `_renderVacuums` в `src/houseplan-card.ts`; `src/vacuum-trail-material.ts` целиком; `acknowledge_live`/`append_live` в `custom_components/houseplan/vacuum_live_tail.py`; захват факта в `src/render-snapshot-capture.ts`; изменения в `support-diagnostics.ts`, `vacuum-trail-diagnostics.ts`, `houseplan-editor-runtime.ts`; все использования `.moving` в `src`; новые pure-тесты и smoke. `syncVacuumTips` и `vacuumLiveGeometry` в этом раунде не перечитывал: они не менялись, разобраны в прошлом раунде. Не проверено: совпадают ли на реальных Dreame/Tasshack конец native-пути и `robot_position` в пределах 2 см и как ведёт себя облачная недоступность на живом HA. Синтетическая панель этого не доказывает."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 86162,
-          "cache_read_input_tokens": 405126,
-          "output_tokens": 8313,
-          "output_tokens_details": {
-            "thinking_tokens": 2215
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 86162,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 846,
-              "cache_read_input_tokens": 74879,
-              "cache_creation_input_tokens": 15453,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 15453
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Ревью: accept\n\nМодель: claude-opus-5-5\nМатериал: de1043f3a3b45c3aa30016a7181cf227ff352713 → 24ae8ff93c46d3370879530d083b5aadfa6d5189\nВид: code\n\n## Вывод\n\nБлокер прошлого раунда устранён. Ветка unknown/unavailable больше не трогает `rt.moving`, `endedTs` и историю, то есть восстановлено поведение base. Добавлен отдельный необязательный флаг `rt.unavailable`, который гасит только активную шайбу и кончик. В режиме `trail_mode:'cleaning'` (по умолчанию) путь текущей уборки остаётся виден во время недоступности робота. Когда робот снова доступен, правило «новая уборка» не срабатывает, и локальный след format 1 не стирается.\n\nЗакрыто и необязательное замечание о точном равенстве координат при полном ACK. Допуск применяется только к случаю `nativeTip` и использует тот же физический порог 2 см (`JOIN_CM`), что и backend, причём только при валидной калибровке. Обычные live-фрагменты по-прежнему требуют точного совпадения.\n\nОсновные исправления, принятые в первом раунде, сохранены без изменений: редкая телеметрия (анимационный `rt.jump`) больше не считается геометрическим разрывом, а при полном ACK кончик линии идёт от предпоследней native-точки. S6 `20261101T212026376-e272fcb5` прошёл на текущем head `24ae8ff9`. Препятствий для принятия не вижу.\n\n## Понимание решения\n\nЗадача — восстановить контракт #1049. Линия текущей уборки должна непрерывно идти от начала native-пути через наблюдённые позиции до фактически отрисованного центра шайбы, в том числе в промежуточных кадрах CSS-перехода. Native-маршрут заменяет только подтверждённый префикс временного хвоста.\n\nРешение состоит из трёх частей:\n1. `_vacTick` больше не передаёт анимационный `rt.jump` в `recordVacuumLivePosition` как разрыв. Разрыв определяют только физическая проверка скачка, контекст (owner/карта/калибровка/эпоха) и доступность.\n2. В `currentVacuumTrailFrame` добавлен случай `nativeTip`: после полного ACK в live-окне осталась одна точка, и она равна концу native-пути. Тогда последняя точка native временно обрезается (`trimLiveTarget` кешируется в WeakMap по неизменяемому VacPath), предпоследняя становится anchor для `<line class=tip>`, а `syncVacuumTips` дотягивает линию до DOM-центра шайбы. В этом раунде сопоставление с `robot_position` для `nativeTip` разрешено в пределах 2 см в физических координатах калибровки (`ackTarget`).\n3. Доступность отделена от признака уборки. `rt.unavailable` выставляется на каждом тике до раннего `continue`. В `_renderVacuums` введено `active = moving && !unavailable`: оно управляет кончиком, шайбой и параметром `moving` для расчёта кадра, а `showCur` по-прежнему зависит от `moving`. Флаг переносится в неизменяемый render snapshot и в обе диагностики, поэтому квоты и счётчики считаются по тому же кадру.\n\nРазобранные пути по исходникам:\n- `_vacTick` (`houseplan-card.ts:12231-12308`): правило сброса уборки, `endedTs`, `recordLocalVacuumPosition`, `recordVacuumLivePosition`;\n- `_renderVacuums` (`12440-12529`): путь snapshot `fact.runtime` → `currentVacuumTrailFrame` → tip/puck;\n- `vacuum-trail-material.ts` целиком;\n- backend `acknowledge_live` (`vacuum_live_tail.py:67-93`): единица и смысл `JOIN_CM`;\n- `render-snapshot-capture.ts:213-233`: факт пылесоса пересобирается при каждом захвате;\n- `support-diagnostics.ts` и `vacuum-trail-diagnostics.ts`;\n- все использования `.moving` в `src`.\n\n## Разбор решения\n\n### Блокер review1 (недоступность перегружала флаг уборки) — устранён\n\nВ ветке unknown/unavailable теперь только выставляются `rt.unavailable`, `rt.gap` и `livePending.gap`. Флаги `rt.moving` и `endedTs` и локальный след не трогаются — так было и в base. Отсюда: (1) `showCur` в режиме `'cleaning'` остаётся true, путь не пропадает; (2) при возврате в cleaning условие `moving && !rt.moving` ложно, поэтому сброс `rt.trail/paths/material` (12257-12262) не срабатывает. Шайба и кончик гасятся через `active`: условие кончика на 12489, условие шайбы на 12500, а `moving: active` в кадре на 12479 убирает обрезку цели и tip-материал. Разрыв наблюдений через период недоступности остаётся настоящим разрывом (`rt.gap=true`), ложного соединения нет. Если робот вернулся уже в dock или idle, сработает обычная ветка `!moving && rt.moving` и выставит `endedTs`, так что правильная остановка сохраняется. Решение минимальное и совпадает с направлением, предложенным в прошлом ревью.\n\nОснование: `src/houseplan-card.ts:12242-12248`, `12257-12272`, `12461-12466`, `12479`, `12489`, `12500`. Остальные чтения `.moving` (`12645` routeWarningKey, `support-diagnostics.ts:113,202`, `vacuum-trail-diagnostics.ts:49,69`) по смыслу относятся к признаку уборки и корректно остаются на `moving`. Регрессия `availability-2`/`availability-1` в `demo/smoke_vacuum_tail_continuity.mjs:116-141` проверяет режим `'cleaning'`, неизменный `endedTs` и сохранность всех локальных точек format 1.\n\n### Согласованность render snapshot и диагностики\n\nФлаг доходит до всех потребителей кадра. `captureRenderDeviceSnapshot` пересобирает факт пылесоса при каждом захвате (переиспользования, которое могло бы устареть, нет), а сущность пылесоса входит в `entityIds`. Support-диагностика переносит `unavailable` из принятого кадра, `diagnoseVacuumTrails` передаёт `moving && !unavailable` — тот же аргумент, что и View. Значит, счётчик `rendered` и квота совпадают с отрисованным. Типы `RenderSnapshotHost`/`HouseplanEditorHostPort` расширены необязательным полем: TS2339 из прерванного S6 этим и закрыт.\n\nОснование: `src/render-snapshot-capture.ts:59,213-233`; `src/support-diagnostics.ts:24,167-175`; `src/vacuum-trail-diagnostics.ts:19,68-83`; `src/houseplan-editor-runtime.ts:846`.\n\n### Допуск 2 см для полного ACK (бывшее improvement)\n\nРазумное и узкое исправление. Backend при ACK заменяет координаты первой оставшейся точки на native-endpoint, а совпадение подтверждает только в пределах `JOIN_CM=2` см в физических координатах. Поэтому для `nativeTip` правильно сравнивать конец с `robot_position` в той же физической метрике: линейная часть матрицы применяется к разности, результат умножается на `cmPerUnit = cellCm/gridPitch`. В `_vacTick` physical считается так же. Ограничения достаточные: допуск действует только при `nativeTip` (одиночная точка, равная native-концу, не waiting); калибровка должна быть конечной и невырожденной; масштаб — положительным. Обычные live-фрагменты требуют точного совпадения, глобального ослабления нет. Pure-тест покрывает близкую и далёкую позицию, масштаб 2 и нулевую матрицу; smoke покрывает 599.5 против 600. Небольшая особенность: если шайба остановилась, а новые позиции не приходят, последняя native-точка не рисуется, и кончик идёт от предпоследней точки к шайбе. Расхождение не больше 2 см, визуально незаметно.\n\nОснование: `src/vacuum-trail-material.ts:98-118`; `custom_components/houseplan/vacuum_live_tail.py:10,79-93`; `src/houseplan-card.ts:12299-12300`; `test/vacuum-live-tail.test.mjs` (последний тест «calibrated two-centimetre correspondence»); `demo/smoke_vacuum_tail_continuity.mjs:101-104`.\n\n### Исправления первого раунда — без изменений\n\nИсправления №1 (`liveGap` вместо `liveGap || rt.jump`) и №2 (кончик при `nativeTip` с WeakMap-кешем обрезки) в этом раунде не менялись. Оценка прошлого ревью остаётся в силе: причина симптома найдена верно, context/teleport-защиты не ослаблены, native не мутируется. Цена тоже прежняя и приемлема: обрезанный native — отдельный ключ кеша проекции, то есть одна дополнительная тяжёлая проекция на каждый полный ACK. Автор сознательно не стал переделывать сериализатор — обоснованно.\n\nОснование: `src/houseplan-card.ts:12303-12307`; `src/vacuum-trail-material.ts:7-16,112-118`.\n\n### Регрессионные проверки\n\nНовая панельная регрессия закрывает именно тот пробел, из-за которого прошлый блокер не был пойман: она проверяет режим `'cleaning'`, переход unavailable→восстановление для format 2 и format 1, неизменность `endedTs` и сохранность каждой локальной точки. Сценарии AC1–AC4 (задержка 11 с, частичный, полный, близкий и повторный ACK, промежуточные кадры в Flat и 2.5D, телепорт, unknown, счётчик операций записи) на месте. Это синтетика: приёмку на реальных vendor-данных она не доказывает, и автор это честно указывает.\n\nОснование: `demo/smoke_vacuum_tail_continuity.mjs:72-148`; receipt S6 `20261101T212026376-e272fcb5`, статус passed, материал `24ae8ff93c46d3370879530d083b5aadfa6d5189`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно. Если робот ушёл в unavailable посреди уборки и так и не вернулся (интеграция «умерла»), в режиме `'cleaning'` путь текущей уборки остаётся виден неограниченно долго, потому что `rt.moving` так и остаётся true. Это поведение base, ТЗ его не регулирует, и для этой задачи оно приемлемо. Если владелец когда-нибудь захочет ограничить такой случай, правильнее сделать это отдельным правилом по времени недоступности, а не возвращать сброс `moving`.\n- Необязательно. Внутри одного вызова `currentVacuumTrailFrame` дважды вычисляются `liveLast(fresh.path)?.length` и `liveLast(current.path)`. Если вынести их в локальные переменные, условия `nativeTip`/`tip` станет легче читать. Выгода чисто сопроводительная.\n\n## Границы анализа\n\nСам ничего не запускал (S7). Опирался на receipt S6 `20261101T212026376-e272fcb5` (passed, материал совпадает с текущим head `24ae8ff9`); артефакты прогона (`observations.json`, PNG, red-логи) не открывал. По исходникам изучил: `_vacTick` и `_renderVacuums` в `src/houseplan-card.ts`; `src/vacuum-trail-material.ts` целиком; `acknowledge_live`/`append_live` в `custom_components/houseplan/vacuum_live_tail.py`; захват факта в `src/render-snapshot-capture.ts`; изменения в `support-diagnostics.ts`, `vacuum-trail-diagnostics.ts`, `houseplan-editor-runtime.ts`; все использования `.moving` в `src`; новые pure-тесты и smoke. `syncVacuumTips` и `vacuumLiveGeometry` в этом раунде не перечитывал: они не менялись, разобраны в прошлом раунде. Не проверено: совпадают ли на реальных Dreame/Tasshack конец native-пути и `robot_position` в пределах 2 см и как ведёт себя облачная недоступность на живом HA. Синтетическая панель этого не доказывает.\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1175, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Итоговый контракт и подход\n\nВосстановить #1049: native — основной маршрут; наблюдённые позиции продолжают его с известными поворотами; последний отрезок следует за фактическим DOM-центром анимированной шайбы в Flat/2.5D. Первоначальный установленный track show сохранён. Runtime/WS/Store/model не мигрируются; source/map/calibration/epoch/physical-jump guards и квоты остаются.\n\nAnimation jump при редких (>10сек) позициях больше не передаётся как geometric gap. Реальный live recorder сам проверяет физическую скорость/clock/context/availability. Full native ACK может оставить один witnessed endpoint: только при его точном совпадении с native endpoint и соответствии текущей позиции в существующем backend JOIN_CM=2cm (валидная калибровка/масштаб) предпоследняя native точка становится tip anchor, статическая целевая точка временно не рисуется. Обычные live-фрагменты по-прежнему требуют точной текущей позиции; несвязанный singleton, waiting previous-task geometry и >2cm не получают connector. Native не мутируется. Trim memoized WeakMap сохраняет повторное использование тяжёлой native projection; существующий syncVacuumTips/RAF ведёт конец по DOM-центру, не будущей цели.\n\n### Исправление review1\n\nПолный сохранённый отчёт: workflow41349675344, материал64501c85, verdict changes_requested. Основные sparse/fullACK исправления признаны корректными, один blocker — моё обнуление rt.moving при недоступности перегружало cleanup lifecycle.\n\nБлокер воспроизведён настоящей панелью НА НЕИЗМЕННОЙ review1 сборке:4FAIL в review1-availability-red.log/json — default cleaning path пропал на outage; legacy format1 потерял старый локальный след при recovery. Теперь moving/endedTs/history на unknown/unavailable не меняются. Отдельный optional runtime.unavailable отключает лишь активную шайбу/tip. Флаг переносится в accepted immutable render snapshot и support/обычные diagnostics, чтобы их quota/count материал оставался тем же кадром. Известный текущий путь остаётся видимым в default cleaning; recovery сохраняет прежние fragments, а разрыв наблюдений через outage остаётся настоящим gap.\n\nТакже закрыта optional хрупкость битового равенства позиции после ACK: backend заменяет ACK anchor native координатами в2cm. Pure regression покрывает близкую/далёкую позицию, physical scale и недействительную матрицу; панель получает native endpoint599.5 при robot_position600 и проверяет actual endpoint в промежуточных кадрах. Это тот же существующий physical ACK bound, не глобальный epsilon/ослабление route/teleport guards. Optional переделка serializer для устранения второй разовой trimmed/full projection не включена — отдельный риск выше пользы; repeated unchanged native projection уже переиспользуется.\n\n### Фактические проверки и границы\n\nПоследний завершённый S6 до этих review fixes:20261101T205847148-f308b6db на64501c85 — PASS9/9 за59.47s,151critical+40affected Node и3browser scripts. Новый final S6 после правок поставляет finish; пока он не завершён, новый PASS не заявлен.\n\nПосле-review выборка: стандартный product minimum; vacuum-live-tail/view/trail-diagnostics/path-geometry/support-diagnostics Node suites; smoke_vacuum_tail_continuity, прежние smoke_vacuum_live_tail и smoke_vacuum_camera. Новая панельная regression включает sparse11second delay, partial/full/repeated/near ACK,22+ промежуточных кадра каждого режима, default cleaning unavailable/recovery и сохранность всех прежних format1 local points, teleport/unknown и счётчик только ожидаемых WS events. Никаких новых provider polls/client writes. Geometry/new-task/history guards из #1049 остаются. Синтетическая панель не доказывает vendor/GPU/liveHA приёмку, частные карты не использованы.\n\nОба Flat/2.5D PNG предыдущего PASS фактически просмотрены; max screen tip error≈5.7e-14px. Первичные FAIL fullACK/delay, авторский cache FAIL, ранний S6 hidden-Fit mismatch и invalidation сохранены в output/release-batch-20261101/1175 и формальных .git/process-next/runs. Соседний camera smoke теперь использует действительно широкую1800px карточку для публичного Fit после #1184 и пишет отчёт в canonical artifacts/, не в demo/out source input. Продуктовые CSS/input guards не подменены.\n\nCompanion HA E2E assessment: «не надо» — нет новых WS/API/ACL/persistence или пользовательских входов; адресная реальная панель проверяет rendering/animation. Координирующий агент публикует запись companion и ведёт последующую бету. S7 только читает код, без прогонов.\n\nМеханическая поправка перед повторным S6: после-review запуск20261101T211457349-86f74941 остановился на TS2339 — отдельный RenderSnapshotHost ещё не объявлял optional unavailable. Тип приведён к фактически захватываемому полю; первая ошибка сохранена, продуктовые проверки тогда не выполнялись. В адресную выборку добавлен существующий render-snapshot-incremental suite.\n```\n",
-        "createdAt": "2026-11-01T21:23:51.511Z",
-        "artifactId": 13101324026,
-        "runId": 41351611052,
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41351611052",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1176": {
@@ -539,19 +406,7 @@
     1190,
     1169
   ],
-  "active": {
-    "issue": 1175,
-    "worker": "finish",
-    "token": "30:finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:1:admit",
-    "fence": 30,
-    "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793567985368,
-    "expiresAt": 1793571876460,
-    "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75",
-    "reviewRequest": "review:1175:5:d70fca9ca6df73b41d205dc3276118c2773f5b75:de1043f3a3b45c3aa30016a7181cf227ff352713"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -593,10 +448,6 @@
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
       "issue": 1167
     },
-    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f": {
-      "digest": "ce4477b6ff09a13f20674c7fc661826c13080170784677586e4e826ef91ac072",
-      "issue": 1175
-    },
     "github:41348289557:1:spec:1169:spec-presentation": {
       "digest": "a5f1d6673e51813b0724a326aea2a2716900241264a76dd7e18c0799ac8464a5",
       "issue": 1169
@@ -605,37 +456,13 @@
       "digest": "6bcdde6cc3e25aeedbf4b98fa6c6e6b548eaaae5ed7a14e3aa5468d92cf856b2",
       "issue": 1169
     },
-    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:1:admit": {
-      "digest": "19d0bbe12fb7f56fbf52bdeb635e1b364a7cb7394fff35675e0295f6c2f5e5e6",
-      "issue": 1175
-    },
     "github:41348289557:1:completions:metadata:4681af50-758c-4946-bdee-565f853d969f:review-presentation:1169:spec:af0f9ccbf0986388454c": {
       "digest": "3c429fd267175eeac388b8b09f9783da6f3b1bc3deed3a3e859a0044171f9d8c",
       "issue": 1169
     },
-    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:2:synchronized": {
-      "digest": "b12b0c3c4f3ec4310e6715f705dc2574d450bdb566489c27524387b96de5e632",
-      "issue": 1175
-    },
-    "finish:c35f81e9-d4ae-44bb-a196-a63bf2e9df44": {
-      "digest": "b5b1f7cd2e54114026e1a0b1f22e5c77447e554928b7910e15ea928e38395416",
-      "issue": 1175
-    },
     "1169-spec2:spec-request": {
       "digest": "351f1823ce3eeadf6224730c0ce5699aaf2af4efaa0541dc494695d8ca0cd5f4",
       "issue": 1169
-    },
-    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:3:return": {
-      "digest": "eef2a9f6be82919ddbea741b6dbc53f8a782040f0d34cb9aba9969ef04c48fd8",
-      "issue": 1175
-    },
-    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:metadata:cbb28a78-33b3-45da-b058-1c696e514a1c:task-notice:1175::": {
-      "digest": "e6462d29e8482af19e39a3a52ddaffb524cb9b2f5a6157dc56ed2b15f89a1d90",
-      "issue": 1175
-    },
-    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81": {
-      "digest": "e1f0475ff69d8976154e141709fca8e6d7bddcaa85e66db3ef120701af65a3a3",
-      "issue": 1175
     },
     "github:41348695726:1:spec:1167:spec-presentation": {
       "digest": "47368346da12d107a4ab928c1d6f805b36aab12cd626133ccbea7fe2b633b0e4",
@@ -689,30 +516,6 @@
       "digest": "8a5dc5f1c42988f6dabaebbebf7db906df0c9e4d940ba42fa4042bdac0aa3088",
       "issue": 1190
     },
-    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:2:admit": {
-      "digest": "bd382013804b47cbaa9e5fc20211a49826574330e6c971b17e7f48c8c65429b0",
-      "issue": 1175
-    },
-    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:3:synchronized": {
-      "digest": "9300ba5619b654a75548b03e5b37064ac8ace563526ae1b507b8c000836d261e",
-      "issue": 1175
-    },
-    "finish:cb57df6c-3479-400a-bb58-61046cec0bba": {
-      "digest": "0ab53d703fb702871913c1d6aaeb1bba0e10aa6d640602a3435d0bab9d138d91",
-      "issue": 1175
-    },
-    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:4:automation-pending": {
-      "digest": "e91723e9c36b525f9791f275d4a040880c305f6ad91c3af160c069dc7609c106",
-      "issue": 1175
-    },
-    "finish:a9d0fe1e-d048-43e2-83b0-05fcd9970db0": {
-      "digest": "6c6d4d5f4d2d17a9f9027a979609c6d6b7260ca44abdea2aea381b9dcc9db924",
-      "issue": 1175
-    },
-    "1175-generated-report-location": {
-      "digest": "5d4ed10e4f46b3ffa0fa4c99a9126386a85933ca92e65eca40bb98949580e88b",
-      "issue": 1175
-    },
     "1169-spec3:spec-request": {
       "digest": "71cbe86e1e218f54d94a4d0a6a5797ec44d32bdcd02e22f6d9d6b576f7dad3df",
       "issue": 1169
@@ -721,45 +524,17 @@
       "digest": "1e10d7d97c081005c82870fba8b516b6ae1fb4258f3bbaef9e22ab349b1dc16d",
       "issue": 1190
     },
-    "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1175::": {
-      "digest": "67bb052fa17a9bfe072655db490fbfaacf7dbf4bb2c40f4786f3f933e65d533f",
-      "issue": 1175
-    },
     "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1190::": {
       "digest": "3783a3499529b1c5eb807fb403e31865953f8fca4e8fbe36f1b7c1038ccf073a",
       "issue": 1190
-    },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b": {
-      "digest": "f2582b3a46d55fb43d943e039df308a21a8487c2e63cde8469d5f754ba435e0c",
-      "issue": 1175
     },
     "1190-final-comment-repair-20261101": {
       "digest": "65e793ec55356694f61b9194bdd2586696ca9b88f8d413c8ae218cb272dab729",
       "issue": 1190
     },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:1:admit": {
-      "digest": "3766adbb459112c0017807b75ac7a6e167a2ac1d62679eeb7e1874e51db2b407",
-      "issue": 1175
-    },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:2:synchronized": {
-      "digest": "81943c7c049c1350631b9991018c219cb3a881cafa67ebbf6171ba477690a075",
-      "issue": 1175
-    },
-    "finish:959615d4-95d6-4cbf-852e-e7d13f1246c3": {
-      "digest": "d1a073507f7a747b9fc4731bbd979712df6e8bfba446bdb6989441052537fa68",
-      "issue": 1175
-    },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:3:s6-complete": {
-      "digest": "6b647528fcb049fe71e6808e36b1bf71658cc9b5bc58fed8d77412ed5a6e7c41",
-      "issue": 1175
-    },
     "1153-spec-initial:spec-request": {
       "digest": "e302f2a801ced702529db31e58cddb85967af363152827a1aaf309a581c4c1b4",
       "issue": 1153
-    },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:4:review-requested": {
-      "digest": "31d6e2c997845a706e5365110faddbbedb610703bebf178f040be648e65880e3",
-      "issue": 1175
     },
     "github:41349669592:1:completions:metadata:e1fbb7f6-70f4-4dd5-807c-f3d85cb0993d:task-notice:1190::": {
       "digest": "5fb457e5455fff6142e2923d4dc2867e7d2a00590b935acb4e150f69fc660896",
@@ -788,22 +563,6 @@
     "github:41350009968:1:completions:metadata:6d75f50e-683f-45ac-9172-5bc48a685b41:review-presentation:1153:spec:05619276b9b20b8157d7": {
       "digest": "20d1ccfa414ce715e706f54116ced08f875d967601c702e5c9fda3c6072753fe",
       "issue": 1153
-    },
-    "github:41350087617:1:tick:0:review-presentation": {
-      "digest": "21b64b72c62734b088352556e0c3cdfd9cbbf46446e43c75df6e66c42f5633ae",
-      "issue": 1175
-    },
-    "github:41350087617:1:tick:0:return": {
-      "digest": "047d7a40979ebe3eff0520f69710477fedff53726b3028d7d7b5c7619ce9e4ae",
-      "issue": 1175
-    },
-    "github:41350087617:1:completions:metadata:ec193d53-f87e-40e6-ad9a-97650d04bae8:review-presentation:1175:code:1fd4e709bd0f2ecc5c34": {
-      "digest": "aa0185f5a0b7f0d448937f9e624dd453f7bcdefaf979524625fffc43880b212f",
-      "issue": 1175
-    },
-    "github:41350087617:1:completions:metadata:ec193d53-f87e-40e6-ad9a-97650d04bae8:task-notice:1175::": {
-      "digest": "3a128f9afe031d454ef8cd9783114f9475e573891d4bbf408211e9ca975bb939",
-      "issue": 1175
     },
     "github:41350148265:1:tick:0:admit": {
       "digest": "1241c2a57582c9106a3ba69b9c921095ae4b95196894681a113d535acd1b50e1",
@@ -861,10 +620,6 @@
       "digest": "15bbe2ad2de8a6c96256a6b704b697a4507973bceb7e4b0bd978bcb41827323f",
       "issue": 1190
     },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06": {
-      "digest": "4c0a91399c82ee76986ef630d972cfa4f60ca240af32a8fd627b9bb5a3000bf0",
-      "issue": 1175
-    },
     "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:1:admit": {
       "digest": "0e50996676817f5af892d536c23d616d3f234af34071aadd2e8a66ca7bccd202",
       "issue": 1169
@@ -881,22 +636,6 @@
       "digest": "1d3265011d2ca991cce16938fa1c1f1cca0625969dc159138516dcd93495f3e9",
       "issue": 1153
     },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:1:admit": {
-      "digest": "b873433a444a28a01137940c02fe293a8b7db958a1f3b32780dfdd7fed9ef9fe",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:2:synchronized": {
-      "digest": "4992f949cc8abac186b2a85b7b229660cbb66b7df3088bddbb9f4bace1976fe2",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:3:return": {
-      "digest": "1809a02cdd13c5864a46dca67e6bf44e115db3aa3457c974ea06a660955f31d0",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:metadata:d459097c-865a-456a-a9d0-a3fc6b4ce367:task-notice:1175::": {
-      "digest": "46bf1492e9f9516a41ac231f4935da0b0383aa27e350cbf8a4a7e4ed57aa6f4b",
-      "issue": 1175
-    },
     "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit": {
       "digest": "73848af86479438f063803bfc6066eefdb7d9b26b712f12f21150afa45287c41",
       "issue": 1153
@@ -908,10 +647,6 @@
     "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
       "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
       "issue": 1169
-    },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744": {
-      "digest": "0e895d4029aed12a2ba422a816f3695a22a521a3c8d40084e115dfca9b40b0cb",
-      "issue": 1175
     },
     "finish:98926a4b-c821-4660-9609-40327d4977ca": {
       "digest": "8012286ced62f8d2c4ec69686b95fc3d0c0b3b689e896b07f6a2be44e978223c",
@@ -948,10 +683,6 @@
     "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d": {
       "digest": "bfe22b761fa5ee4e1fb5bad4e4dae27927ee4d37f4aae09af09a0287015f9c58",
       "issue": 1153
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:1:admit": {
-      "digest": "691e6c47b2ff3ea09761fbac29f42d016ca09fd35619a1fb65395c01536be3ca",
-      "issue": 1175
     },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
@@ -1080,25 +811,9 @@
         }
       }
     },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:2:synchronized": {
-      "digest": "dce34fc1b661486021c41906591ec979158a8cca4dc1f1f03c3a8a274288fc91",
-      "issue": 1175
-    },
-    "finish:056da446-2e65-4c64-948d-1d7cfb2fe4c8": {
-      "digest": "4b76588cac1ebd02b948b4f0a75c8dec7c84ddaae97731d7a02611da27a0602e",
-      "issue": 1175
-    },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:3:s6-complete": {
-      "digest": "931b26bb43c53695d9b47b21ffe520836ab26eded04f6e848bdc6e8059bc4f04",
-      "issue": 1175
-    },
     "1172-spec-20261101-1:spec-request": {
       "digest": "8aa1b7eb1c2a7e8e3ab1f6107a5a50a76dd0570c7e3e8e9197270afa1274eb6e",
       "issue": 1172
-    },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:4:review-requested": {
-      "digest": "1ef55eb46ae3578c574b7a42dfa602b8ea74c2022856c05aaf5e5f4d3d5ecce7",
-      "issue": 1175
     },
     "finish:d572296e-b553-4d39-a14f-db3f44249659": {
       "digest": "6f31b450de6478754de72a26d6d30249bf3b4bde9b9702f4ea42b7fae7fbbc04",
@@ -1111,14 +826,6 @@
     "github:41351804140:1:spec:1172:spec-complete": {
       "digest": "04f92573a886fe23db32ebfb1dbe87215bd82c7dc9ca31f647a6e112308c401d",
       "issue": 1172
-    },
-    "github:41351804140:1:tick:0:review-presentation": {
-      "digest": "96b048d2fd6665384fccd040868e96b23e20961ae03938c77d9818d2e09f09b5",
-      "issue": 1175
-    },
-    "github:41351804140:1:tick:0:review-complete": {
-      "digest": "c671dc845d3426fa8a4a6a9c868c1993960db4377255ccd1730a0cfe1a320b35",
-      "issue": 1175
     }
   },
   "devWebhook": {
