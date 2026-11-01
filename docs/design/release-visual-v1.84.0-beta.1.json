@@ -1230,5 +1230,32 @@
       "manualCiArtifactAcceptance": true,
       "witnessExceptionReason": "Intentional shared UI Kit migration #1147-1150 changes10/11 documentation scenes; all10 reviewed A/B with individual reasons, unchanged view-touch retained byte-identical. Canonical dev CI41306977762 captured twice independently and stability3 had zero pixel differences; pinned Chromium151.0.7922.34/oxipng10.2.0; all11 CI frames decoded-RGBA identical to reviewed captures. Only1 unchanged documentation witness remains against default floor2. Use the documented docs full-redraw path (#401/#409), recording this reason; no undeclared changes, no pin/tolerance modifications. Original bot refusal is preserved at run41306977762; manual canonical CI-artifact acceptance under PROCESS section8 because beta-derived has no reason passthrough."
     }
+  },
+  "finalModalObserverReview": {
+    "issue": 1185,
+    "author": "84f00b45c1a1aa1ce18d1756b2541b42ab8c32af",
+    "reviewWorkflow": 41313428000,
+    "acceptedDev": "826ec9c730f68d69a937300f4301cb443c03c8d4",
+    "ci": {
+      "product": 41312824470,
+      "docs": 41312824601
+    },
+    "scope": "The two proven modal observers await actual shadow-root enter paint. Exact44px, intermediate exit-frame and original role/persistence predicates remain. No pixel/capture/product/helper/fixture/pin changes; General47 remains accepted.",
+    "pixelFingerprint": "39760e6c6f7b630d2ede693ff5378ebe59ffaa3f61f89eed567f2a1723058a36"
+  },
+  "retainedGoldenObservation": {
+    "issue": 1133,
+    "run": 41308362320,
+    "attempt": 1,
+    "sha": "9abb412c3226260ee82bb5cd98452763e2721836",
+    "scene": "ui-1081-grid-pan-light",
+    "differingPixels": 2416,
+    "ratio": 0.0022749529190207157,
+    "maxDelta": 38,
+    "originalResult": "FAIL under10/0.0008; cause unknown, not repaired or relabelled by the modal observer changes",
+    "artifact": 13084681426,
+    "artifactSha256": "857f5791c4553d754c0b2b0d037f055c4832f5cb0b9346554185973fbd07ef9d",
+    "comment": "https://github.com/Matysh/houseplan-card/issues/1133#issuecomment-6558448852",
+    "originalRunWasNotRetried": true
   }
 }
