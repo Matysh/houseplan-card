@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 437,
-  "nextTicket": 46,
+  "revision": 438,
+  "nextTicket": 47,
   "nextFence": 45,
   "tasks": {
     "1128": {
@@ -479,6 +479,20 @@
         "detail": "Браузер: canvas surface gestures: failed",
         "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
       }
+    },
+    "1201": {
+      "issue": 1201,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/catalog-negative-metadata",
+      "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 46,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793573298445,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -542,7 +556,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1197
+    1197,
+    1201
   ],
   "active": null,
   "events": {
@@ -659,6 +674,19 @@
           "detail": "Браузер: canvas surface gestures: failed",
           "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
         }
+      }
+    },
+    "finish:150c3e14-d971-485f-823d-4c4357a1a5d5": {
+      "digest": "781359b7a036677b5f38a49e51b89a2f6d66f728e7058dfd94b51720bf918f08",
+      "issue": 1201,
+      "message": {
+        "kind": "queued",
+        "issue": 1201,
+        "at": 1793573298445,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e"
       }
     }
   },
