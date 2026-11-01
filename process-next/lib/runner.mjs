@@ -2,7 +2,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { createWriteStream, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { digest, inputIdentity, outputIdentity, matchesInputs, ResultStore, stepIdentity, writeJson } from './storage.mjs';
+import { digest, inputIdentity, outputIdentity, matchesInputs, defaultStateDir, ResultStore, stepIdentity, writeJson } from './storage.mjs';
 
 const implementation = digest(readFileSync(new URL('./runner.mjs', import.meta.url)) + readFileSync(new URL('./storage.mjs', import.meta.url)));
 
@@ -24,6 +24,12 @@ export function validatePlan(plan) {
     if (step.command !== null && (!Array.isArray(step.command) || !step.command.length || step.command.some(x => typeof x !== 'string' || x.includes('\0')))) throw new Error(`Invalid command: ${step.id}`);
     if (step.command === null && !step.unavailable) throw new Error(`Missing command reason: ${step.id}`);
     if (!['root', 'e2e', undefined].includes(step.cwd)) throw new Error(`Invalid cwd: ${step.id}`);
+    if (step.reusableReports !== undefined) {
+      const reports = step.reusableReports;
+      if (!Array.isArray(reports) || !reports.length || new Set(reports).size !== reports.length
+        || reports.some(name => typeof name !== 'string' || !/^artifacts\/process-next\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.(?:json|xml)$/.test(name))
+        || JSON.stringify([...reports].sort()) !== JSON.stringify([...(step.outputs ?? [])].sort())) throw Error(`Only named report outputs may be reused: ${step.id}`);
+    }
   }
   const seen = new Set(), active = new Set(), byId = new Map(plan.steps.map(s => [s.id, s]));
   function visit(id) {
@@ -95,11 +101,11 @@ export async function executeStep(step, { cwd, logPath, signal, onOutput = () =>
     || counts.passed + counts.failed + (counts.skipped ?? 0) + (counts.cancelled ?? 0) + (counts.todo ?? 0) !== counts.tests)) status = 'failed';
   return { ...outcome, status, counts, durationMs: Date.now() - start, error: launchError, logPath };
 }
-export async function runPlan(plan, { root, e2eRoot, stateDir = join(root, 'process-next', '.state'), jobs = 2,
+export async function runPlan(plan, { root, e2eRoot, stateDir, jobs = 2,
   reuse = true, signal, execute = executeStep, onProgress = () => {}, environment = {} } = {}) {
   validatePlan(plan); root = resolve(root);
   if (!Number.isInteger(jobs) || jobs < 1 || jobs > 16) throw new Error('jobs must be 1..16');
-  const store = new ResultStore(stateDir), id = `${new Date().toISOString().replace(/[^0-9T]/g, '')}-${randomUUID().slice(0, 8)}`;
+  const store = new ResultStore(stateDir ?? defaultStateDir(root)), id = `${new Date().toISOString().replace(/[^0-9T]/g, '')}-${randomUUID().slice(0, 8)}`;
   const directory = join(store.directory, 'runs', id); mkdirSync(directory, { recursive: true });
   const identityEnvironment = { node: process.version, platform: process.platform, arch: process.arch, ...environment, runner: implementation };
   const report = { schema: 1, id, name: plan.name, event: plan.event, issue: plan.issue, startedAt: new Date().toISOString(), status: 'running', results: [], environment: identityEnvironment };
@@ -123,8 +129,10 @@ export async function runPlan(plan, { root, e2eRoot, stateDir = join(root, 'proc
     });
     const rootIdentity = () => inputIdentity(root, step.rootInputs ?? [], { behavior: step.reuseReleaseVersion === true }).hash;
     const stepEnvironment = { ...identityEnvironment, rootInputs: rootIdentity() };
-    const identity = stepIdentity(cwd, step, stepEnvironment, dependencies), output = outputIdentity(cwd, step.outputs);
+    const identity = stepIdentity(cwd, step, stepEnvironment, dependencies);
+    let output = outputIdentity(cwd, step.outputs);
     const prior = reuse && !step.alwaysRun && store.find(identity.hash);
+    if (prior && !output.complete && store.restoreReports(prior, cwd, step.reusableReports)) output = outputIdentity(cwd, step.outputs);
     if (prior?.status === 'passed' && output.complete && (!step.outputs?.length || prior.cacheOutputHash === output.hash))
       return { ...common, status: 'reused', fingerprint: identity.hash, outputHash: prior.outputHash, cacheOutputHash: prior.cacheOutputHash, sourceRun: prior.runId, counts: prior.counts, durationMs: 0 };
     const logPath = join(directory, `${step.id.replace(/:/g, '_')}.log`);
@@ -164,6 +172,9 @@ export async function runPlan(plan, { root, e2eRoot, stateDir = join(root, 'proc
   }
   report.finishedAt = new Date().toISOString(); report.durationMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
   report.reportPath = join(directory, 'report.json');
-  if (report.status !== 'invalidated') for (const result of report.results) store.remember(result);
+  if (report.status !== 'invalidated') for (const result of report.results) {
+    const step = plan.steps.find(item => item.id === result.id);
+    store.remember(result, { root: roots[step.cwd ?? 'root'], step });
+  }
   store.save(report); notify(null, report.status); return report;
 }

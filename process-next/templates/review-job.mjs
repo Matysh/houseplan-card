@@ -13,6 +13,7 @@ function requestFrom(env) {
   if (!Number.isSafeInteger(issue) || issue < 1 || !/^[A-Za-z0-9:_.-]{1,200}$/.test(requestId ?? '')) throw Error('Review request identity required');
   if (![env.HP_BASE, env.HP_HEAD].every(value => /^[a-f0-9]{40}$/.test(value ?? ''))) throw Error('Resolved base/head SHAs required');
   if (!['code', 'spec'].includes(kind)) throw Error('Unknown review kind');
+  if (env.HP_TRACK === 'ship') throw Error('Ship never requests individual review');
   if (env.HP_PATCH_ID && !/^[a-f0-9]{40,64}$/.test(env.HP_PATCH_ID)) throw Error('Invalid patch identity');
   return { issue, requestId, kind, base: env.HP_BASE, materialSha: env.HP_HEAD, patchId: env.HP_PATCH_ID || null };
 }
@@ -43,12 +44,12 @@ export async function prepareReviewJob({ env = process.env, api, reviewAdapter, 
   buildContext = buildReviewContext, reportDir = resolve('process-next/.state/reviews'), onProgress = value => console.log(JSON.stringify(value)) } = {}) {
   const request = requestFrom(env), resultFile = join(reportDir, 'result.json');
   const existing = readJson(resultFile);
-  if (existing) return { ...compatible(existing, request), reused: true };
+  if (existing && compatible(existing, request).verdict !== 'incomplete') return { ...existing, reused: true };
   const lookup = { requestId: request.requestId, kind: request.kind,
     active: { issue: request.issue, expectedBase: request.base, materialSha: request.materialSha, patchId: request.patchId },
     task: { track: env.HP_TRACK, ownerAssigned: false } };
   const prior = await reviewAdapter.readReviewResult(lookup);
-  if (prior?.verdict && prior.markdown) {
+  if (prior?.verdict && prior.verdict !== 'incomplete' && prior.markdown) {
     const receipt = { ...compatible(prior, request), reused: true };
     writeJson(resultFile, receipt);
     return receipt;
@@ -60,7 +61,7 @@ export async function prepareReviewJob({ env = process.env, api, reviewAdapter, 
   ]);
   const context = buildContext({ repoRoot: resolve(env.HP_CANDIDATE_ROOT || '.'), base: request.base, head: request.materialSha,
     task: { issue: request.issue, title: issue.title, url: issue.html_url, body: issue.body, comments },
-    // Routing already excludes owner ship. Workflow inputs cannot grant a review exemption.
+    // Ship is routed directly to merge; every dispatched review performs analysis.
     kind: request.kind, track: env.HP_TRACK, ownerAssigned: false,
     receipts: JSON.parse(env.HP_RECEIPTS || '[]'), previousReview });
   const name = `${request.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью'} задачи ${request.issue}`;
@@ -79,13 +80,15 @@ export async function publishReviewComment({ env = process.env, api, reportDir =
   const request = requestFrom(env), receipt = compatible(readJson(join(reportDir, 'result.json')), request);
   const marker = `<!-- process-next-review:${request.requestId} -->`;
   const comments = await issueComments(api, request.issue);
-  if (comments.some(comment => comment.author === 'github-actions[bot]' && comment.body.startsWith(marker))) return { published: true, reused: true };
   const identity = { requestId: receipt.requestId, materialSha: receipt.materialSha, base: receipt.base, kind: receipt.kind, verdict: receipt.verdict, model: receipt.model };
   const reportUrl = receipt.reportUrl ?? (env.GITHUB_RUN_ID ? `${env.GITHUB_SERVER_URL ?? 'https://github.com'}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}` : null);
   const suffix = reportUrl ? `\n\nПолный отчёт: ${reportUrl} (артефакт review-result).` : '';
   const report = receipt.markdown.length > 55_000 ? `${receipt.markdown.slice(0, 55_000)}\n\n[Отчёт в комментарии сокращён; полный текст сохранён в артефакте.]` : receipt.markdown;
   const body = `${marker}\n\n\`\`\`json\n${JSON.stringify(identity)}\n\`\`\`\n\n${report}${suffix}`;
-  await api.comment(request.issue, body);
+  const existing = comments.find(comment => comment.author === 'github-actions[bot]' && comment.body.startsWith(marker));
+  if (existing?.body === body) return { published: true, reused: true };
+  if (existing) await api.request('PATCH', `${api.root}/issues/comments/${existing.id}`, { body });
+  else await api.comment(request.issue, body);
   return { published: true };
 }
 

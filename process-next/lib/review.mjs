@@ -12,7 +12,7 @@ const MAX_OUTPUT = 2 * 1024 * 1024;
 export function reviewRequired({ track = 'show', ownerAssigned = false, kind = 'code' } = {}) {
   if (!['ship', 'show', 'ask'].includes(track)) throw new Error('Unknown track');
   if (!['code', 'spec'].includes(kind)) throw new Error('Unknown review kind');
-  if (track === 'ship' && ownerAssigned) return false;
+  if (track === 'ship') return false;
   return kind === 'spec' ? track === 'ask' : true;
 }
 

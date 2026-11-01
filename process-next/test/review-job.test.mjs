@@ -129,10 +129,26 @@ test('discussion is paginated and disabled template never contacts GitHub', asyn
   await assert.rejects(prepareReviewJob(disabled), /not activated/);
 });
 
-test('a manually supplied ownerAssigned flag cannot waive a dispatched review', async t => {
+test('ship has no individual review workflow regardless of ownerAssigned metadata', async t => {
   const f = fixture(t);
   f.env.HP_TRACK = 'ship'; f.env.HP_OWNER_ASSIGNED = 'true';
-  await prepareReviewJob(f);
-  assert.equal(f.context.ownerAssigned, false);
+  await assert.rejects(prepareReviewJob(f), /Ship never requests/);
+  assert.equal(f.invocations, 0);
+});
+
+test('incomplete review is regenerated on its allowed retry and the stale comment is replaced', async t => {
+  const f = fixture(t); let body;
+  f.api.comment = async (_issue, text) => { body = text; };
+  const incomplete = await prepareReviewJob({ ...f, runReviewImpl: async () => ({ status: 'incomplete', reason: 'No submitted verdict' }) });
+  await publishReviewComment(f);
+  f.comments.push({ id: 9, user: { login: 'github-actions[bot]' }, body });
+  f.reviewAdapter.readReviewResult = async () => incomplete;
+  const complete = await prepareReviewJob(f);
+  assert.equal(complete.verdict, 'accepted'); assert.equal(f.invocations, 1);
+  const writes = [], original = f.api.request;
+  f.api.request = async (method, url, payload) => method === 'PATCH' ? writes.push({ url, body: payload.body }) : original(method, url);
+  await publishReviewComment(f);
+  assert.equal(writes.length, 1); assert.match(writes[0].url, /comments\/9$/);
+  assert.match(writes[0].body, /"verdict":"accepted"/);
   assert.equal(f.invocations, 1);
 });

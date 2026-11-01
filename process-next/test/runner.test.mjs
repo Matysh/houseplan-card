@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { runPlan, validatePlan, executeStep } from '../lib/runner.mjs';
-import { inputIdentity, outputIdentity, within } from '../lib/storage.mjs';
+import { defaultStateDir, inputIdentity, outputIdentity, within } from '../lib/storage.mjs';
 
 function fixture(t) { const root = mkdtempSync(join(tmpdir(), 'hp-next-runner-')); t.after(() => rmSync(root, { recursive: true, force: true })); writeFileSync(join(root, 'source'), 'one'); return root; }
 const step = (id, extra = {}) => ({ id, name: id, command: ['node', '-e', 'console.log("ok")'], inputs: ['source'], ...extra });
@@ -39,6 +39,62 @@ test('beta to stable version-only promotion rebuilds artifacts but reuses behavi
   const lock = JSON.parse(readFileSync(join(root, 'package-lock.json'))); lock.packages['node_modules/example'].version = '2.0.0';
   writeFileSync(join(root, 'package-lock.json'), JSON.stringify(lock));
   assert.equal((await runPlan(p, { root, execute })).results[1].status, 'passed');
+});
+
+test('beta and stable worktrees share successful reports by default without sharing build artifacts or rewriting the beta', async t => {
+  const directory = fixture(t), beta = join(directory, 'beta'), stable = join(directory, 'stable'); mkdirSync(beta);
+  const git = args => execFileSync('git', args, { cwd: beta, encoding: 'utf8', stdio: 'pipe', windowsHide: true }).trim();
+  git(['init', '-q']); git(['config', 'user.name', 'Fixture']); git(['config', 'user.email', 'fixture@example.invalid']);
+  git(['config', 'core.hooksPath', join(directory, 'no-hooks')]);
+  writeFileSync(join(beta, 'source'), 'same behavior'); writeFileSync(join(beta, 'package.json'), '{"version":"1.84.0-beta.1"}');
+  git(['add', '.']); git(['commit', '-qm', 'beta']);
+  git(['worktree', 'add', '-b', 'stable', stable, 'HEAD']);
+  writeFileSync(join(stable, 'package.json'), '{"version":"1.84.0"}');
+  git(['-C', stable, 'add', 'package.json']); git(['-C', stable, 'commit', '-qm', 'stable version']);
+  const reports = ['artifacts/process-next/backend-coverage.xml', 'artifacts/process-next/golden-beta/golden-report.json'];
+  const p = plan([step('build', { inputs: ['source', 'package.json'], outputs: ['built'] }),
+    ...reports.map((name, index) => step(`report-${index}`, { inputs: ['source', 'package.json'], outputs: [name], reusableReports: [name], reuseReleaseVersion: true }))]);
+  const execute = async (s, { cwd }) => {
+    const output = s.outputs[0]; mkdirSync(dirname(join(cwd, output)), { recursive: true });
+    writeFileSync(join(cwd, output), s.id === 'build' ? readFileSync(join(cwd, 'package.json')) : `original ${s.id} evidence`);
+    return pass();
+  };
+  const first = await runPlan(p, { root: beta, execute });
+  assert.equal(defaultStateDir(stable), defaultStateDir(beta));
+  assert.ok(first.reportPath.startsWith(defaultStateDir(beta)));
+  const calls = [], second = await runPlan(p, { root: stable, execute: async (...args) => { calls.push(args[0].id); return execute(...args); } });
+  assert.deepEqual(second.results.map(r => r.status), ['passed', 'reused', 'reused']);
+  assert.equal(second.materialClean, true);
+  assert.deepEqual(calls, ['build']);
+  for (const name of reports) assert.deepEqual(readFileSync(join(stable, name)), readFileSync(join(beta, name)));
+  assert.equal(readFileSync(join(beta, 'built'), 'utf8'), '{"version":"1.84.0-beta.1"}');
+  assert.equal(readFileSync(join(stable, 'built'), 'utf8'), '{"version":"1.84.0"}');
+  writeFileSync(join(stable, 'source'), 'changed behavior'); calls.length = 0;
+  const changed = await runPlan(p, { root: stable, execute: async (...args) => { calls.push(args[0].id); return execute(...args); } });
+  assert.ok(changed.results.every(result => result.status === 'passed'));
+  assert.equal(calls.length, 3);
+  assert.equal(readFileSync(join(beta, 'source'), 'utf8'), 'same behavior');
+});
+
+test('damaged cached report bytes rerun only that check; restoration cannot escape a symlinked output parent', async t => {
+  const root = fixture(t), name = 'artifacts/process-next/backend-coverage.xml';
+  const p = plan([step('coverage', { outputs: [name], reusableReports: [name] })]);
+  let calls = 0;
+  const execute = async () => { calls++; mkdirSync(dirname(join(root, name)), { recursive: true }); writeFileSync(join(root, name), '<coverage line-rate="1"/>'); return pass(); };
+  const first = await runPlan(p, { root, execute });
+  const cachePath = join(defaultStateDir(root), 'cache', `${first.results[0].fingerprint}.json`);
+  const cached = JSON.parse(readFileSync(cachePath)); cached.reportArtifacts[name].data = Buffer.from('corrupted').toString('base64');
+  writeFileSync(cachePath, JSON.stringify(cached)); rmSync(join(root, name));
+  const second = await runPlan(p, { root, execute }); assert.equal(second.results[0].status, 'passed'); assert.equal(calls, 2);
+  const outside = join(root, 'separate'); mkdirSync(outside);
+  const linked = join(root, 'linked'); symlinkSync(outside, linked, process.platform === 'win32' ? 'junction' : 'dir');
+  assert.doesNotThrow(() => within(root, 'linked/inside.xml'));
+  const escape = join(root, 'escape'); symlinkSync(dirname(root), escape, process.platform === 'win32' ? 'junction' : 'dir');
+  assert.throws(() => within(root, 'escape/absent-report.xml'), /Symlink leaves root/);
+  assert.equal(existsSync(join(dirname(root), 'absent-report.xml')), false);
+  for (const unsafe of ['../outside.json', 'dist/report.json', 'artifacts/process-next/../../source.json']) {
+    assert.throws(() => validatePlan(plan([step('unsafe', { outputs: [unsafe], reusableReports: [unsafe] })])), /Only named report/);
+  }
 });
 
 test('release receipts distinguish committed material from dirty source, independently of test success', async t => {

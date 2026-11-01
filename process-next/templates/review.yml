@@ -64,6 +64,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: review-result
+          include-hidden-files: true
+          overwrite: true # Replace only an incomplete result on the single allowed retry; final verdicts are reused.
           path: process-runner/process-next/.state/reviews
           if-no-files-found: ignore
       - name: Опубликовать отчёт для человека

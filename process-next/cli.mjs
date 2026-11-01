@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { planProfile } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
-import { readJson, writeJson, ResultStore } from './lib/storage.mjs';
+import { readJson, writeJson, ResultStore, defaultStateDir } from './lib/storage.mjs';
 import { LocalQueueStore, QueueController } from './lib/queue.mjs';
 import { initialReleaseState, reduceRelease, releaseReadiness } from './lib/release.mjs';
 import { buildReviewContext, runReview, previewReview, checkSpecFormat } from './lib/review.mjs';
@@ -19,7 +19,7 @@ export function parseArguments(argv) {
   const options = {}, positional = [];
   const arrays = new Set(['area-test', 'changed-file']);
   const booleans = new Set(['help', 'json', 'no-reuse', 'keep-open', 'owner-assigned', 'preview', 'execute']);
-  const values = new Set(['root','request','event','issue','track','layer','version','phase','e2e-root','state-dir','jobs','run-id','state','payload','file','base','head','kind','task-file','receipts','previous-review','report-dir','candidate','latest-stable','anchor','out','metrics-request','target-ref','candidate-root','upgrade-from','ha-version','e2e-work-root','e2e-port','mutation-shard','config','branch','scenes','report','decision']);
+  const values = new Set(['root','request','event','issue','track','layer','version','phase','e2e-root','state-dir','jobs','run-id','state','payload','file','base','head','kind','task-file','receipts','previous-review','report-dir','candidate','latest-stable','anchor','out','metrics-request','target-ref','candidate-root','upgrade-from','ha-version','e2e-work-root','e2e-port','mutation-shard','config','branch','scenes','report','decision','s6']);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]; if (!arg.startsWith('--')) { positional.push(arg); continue; }
     const [name, ...rest] = arg.slice(2).split('=');
@@ -39,6 +39,7 @@ node process-next/cli.mjs run --event task --issue 9999 --phase after-review --r
 node process-next/cli.mjs run --event beta --version "1.99.0 beta 1" --request release.json
 node process-next/cli.mjs status --run-id ID
 node process-next/cli.mjs finish --config remote.json --issue 9999 --request task.json --execute
+  --s6 github (резерв того же набора; по умолчанию local)
 node process-next/cli.mjs status --config remote.json --issue 9999 --execute
 node process-next/cli.mjs golden-accept --scenes id1,id2 --report report.json --decision source-reference [--execute]
 node process-next/cli.mjs spec-check --file specification.md
@@ -70,7 +71,7 @@ export async function main(argv = process.argv.slice(2)) {
   const { options: o, positional: [command = 'help', action] } = parseArguments(argv);
   if (o.help || command === 'help') { process.stdout.write(HELP); return 0; }
   const root = resolve(o.root ?? dirname(fileURLToPath(new URL('../package.json', import.meta.url))));
-  const stateDir = resolve(o['state-dir'] ?? join(root, 'process-next', '.state'));
+  const stateDir = resolve(o['state-dir'] ?? defaultStateDir(root));
   if (command === 'finish' || command === 'status' && o.config) {
     const config = readJson(resolve(requireValue(o.config, '--config')));
     config.workspace = resolve(config.workspace ?? root);
@@ -79,11 +80,15 @@ export async function main(argv = process.argv.slice(2)) {
     try {
       const result = await executeRemoteCommand({ command, config, execute: !!o.execute, signal: controller.signal,
         event: { id: `${command}:${randomUUID()}`, issue: Number(requireValue(o.issue, '--issue')), ...(o.branch ? { branch: o.branch } : {}),
-          request: o.request ? readJson(resolve(o.request)) : {}, areaTests: o['area-test'] },
+          request: optionsForPlan(o), track: o.track, areaTests: o['area-test'], s6: o.s6 ?? 'local' },
         onProgress: progress => {
           if (o.json) print(progress);
           else if (progress.kind === 'queue') process.stdout.write(`Очередь: ${progress.active ? `#${progress.active.issue}, ${progress.active.phase}` : 'слот свободен'}; ваша позиция: ${progress.waiting.find(item => item.issue === Number(o.issue))?.position ?? 'в слоте'}; ${Math.round(progress.elapsedMs / 1000)} сек\n`);
           else if (progress.kind === 'transition') process.stdout.write(`${progress.action}${progress.reason ? ': ' + progress.reason : ''}\n`);
+          else if (progress.kind === 'checks' && progress.status) {
+            const state = ({ queued: 'в очереди GitHub', in_progress: 'выполняется в GitHub', dispatching: 'запуск в GitHub', 'transport-retry': 'повтор соединения' })[progress.status] ?? progress.status;
+            process.stdout.write(`${progress.run}: ${state}; ${Math.round((progress.elapsedMs ?? 0) / 1000)} сек${progress.reportUrl ? '; ' + progress.reportUrl : ''}\n`);
+          }
           else if (progress.kind === 'checks' && typeof progress.state !== 'object') process.stdout.write(`${progress.run}: ${progress.completed}/${progress.total}; ${progress.state}\n`);
         } });
       print(result); return ['returned', 'interrupted'].includes(result.action) ? 1 : 0;

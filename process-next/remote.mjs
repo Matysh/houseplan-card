@@ -9,11 +9,20 @@ import { QueueController, StateConflict, ownerShip, queueSummary } from './lib/q
 import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
 import { planProfile } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
+import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
 import { initialReleaseState, reduceRelease, releaseClosePlan, ReleaseGitAdapter, ReleasePublisher,
   HacsClient, HacsDeliveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
 
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
 const component = encodeURIComponent;
+export async function initializeMissingTrack(api, issue, track = 'show') {
+  const labels = (issue.labels ?? []).map(label => typeof label === 'string' ? label : label.name);
+  if (labels.some(label => /^track:(ship|show|ask)$/.test(label))) return issue;
+  if (!['ship', 'show', 'ask'].includes(track)) throw Error('Unknown initial track');
+  // Add only the absent track; never replace labels or reinterpret an existing choice.
+  await api.request('POST', `${api.root}/issues/${issue.number}/labels`, { labels: [`track:${track}`] });
+  return api.getIssue(issue.number);
+}
 export async function readReleaseMetrics({ root, sha: materialSha, path }) {
   let report;
   try { report = JSON.parse(await readFile(resolve(root, path ?? 'artifacts/process-next/metrics.json'), 'utf8')); }
@@ -49,7 +58,7 @@ Config: {enabled:false, owner:"Matysh", repo:"houseplan-card", workspace:"/path/
 
 Every event needs a stable id reused for delivery retries. Queue events carry issue/token/materialSha
 as applicable. ready additionally carries branch/layer; synchronized carries expectedBase.
-s6-complete carries outcome and evidence from the local runner; this CLI never runs tests.
+s6-complete carries outcome and evidence; finish executes the selected local or hosted S6.
 review-complete reads the matching trusted workflow report; it never trusts a supplied verdict.
 reconcile performs ONE step (admit / await local S6 / request or read review / merge).
 initialize-* requires event.confirmed=true and baseSha. release-event takes a reducer event;
@@ -127,11 +136,16 @@ export class WorkflowReviewAdapter {
       }
     }
     if (matches.some(run => run.status !== 'completed')) return { pending: true, requestId, materialSha: active.materialSha };
-    if (matches.length) return { retryable: true, verdict: 'incomplete', requestId, materialSha: active.materialSha, runId: matches[0].id, reportUrl: matches[0].html_url };
+    if (matches.length) return { retryable: true, verdict: 'incomplete', requestId, materialSha: active.materialSha, runId: matches[0].id, runAttempt: matches[0].run_attempt ?? 1, reportUrl: matches[0].html_url };
     return { missing: true, requestId, materialSha: active.materialSha };
   }
   async readPreviousReviewResult({ issue, kind = 'code', excludeRequestId }) {
-    const runs = (await this.runs()).filter(run => run.status === 'completed').sort((a, b) => Number(b.id) - Number(a.id));
+    const identity = new RegExp(`(?:^|[^A-Za-z0-9:-])${kind === 'spec' ? 'spec' : 'review'}:${issue}:`);
+    const title = new RegExp(`${kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью'} задачи #?${issue}(?:\\D|$)`);
+    const runs = (await this.runs()).filter(run => run.status === 'completed'
+      && (identity.test(run.display_title ?? '') || title.test(run.display_title ?? ''))
+      && !(excludeRequestId && (run.display_title ?? '').includes(excludeRequestId)))
+      .sort((a, b) => Number(b.id) - Number(a.id));
     for (const run of runs) {
       const result = await this.artifactResult(run);
       if (result?.issue === issue && result.kind === kind && result.requestId !== excludeRequestId && result.report) return result;
@@ -142,6 +156,7 @@ export class WorkflowReviewAdapter {
     this.validate(context);
     const observed = await this.readReviewResult(context);
     if (observed.retryable && observed.runId) {
+      if (!context.retry || observed.runAttempt >= 2) return { requested: false, observed, needsAttention: true };
       await this.api.request('POST', `${this.api.root}/actions/runs/${observed.runId}/rerun-failed-jobs`);
       return { requested: true, retry: true, requestId: context.requestId, runId: observed.runId };
     }
@@ -175,8 +190,9 @@ function activation(config, execute, env) {
 
 /** Agent-facing route: one invocation owns queue wait, final sync, S6 and reconciliation. */
 export async function finishTask({ config, event, queue, api, git, review, dependencies = {}, signal, onProgress = () => {},
-  pollMs = 5000, maxWaitMs = 4 * 60 * 60_000 } = {}) {
-  const started = Date.now(), inspect = dependencies.inspectMaterial ?? inspectTaskMaterial;
+  pollMs = 60000, maxWaitMs = 4 * 60 * 60_000 } = {}) {
+  const clock = dependencies.clock ?? Date.now, started = clock(), inspect = dependencies.inspectMaterial ?? inspectTaskMaterial;
+  if (!['local', 'github'].includes(event.s6 ?? 'local')) throw Error('S6 executor must be local or github');
   const branch = event.branch ?? await git.git(['symbolic-ref', '--short', 'HEAD']);
   if ([git.dev, 'main', queue.store.branch].includes(branch)) throw Error('Finish requires a separate task branch');
   let current = (await queue.store.read()).state;
@@ -185,7 +201,8 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     await git.ensureCommit(dev); await git.ensureCommit(materialSha);
     const base = await git.git(['merge-base', dev, materialSha]);
     const material = await inspect(git, base, materialSha);
-    await handleGithubEvent({ queue, api, activated: true, issue: await api.getIssue(event.issue),
+    const issue = await initializeMissingTrack(api, await api.getIssue(event.issue), event.track ?? event.request?.track);
+    await handleGithubEvent({ queue, api, activated: true, issue,
       event: { ...event, ...material, branch, kind: 'ready' } });
   }
   const synchronize = async ({ task }) => {
@@ -214,9 +231,17 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     if (materialSha !== previousHead) try {
       await git.git(['push', `--force-with-lease=refs/heads/${task.branch}:${previousHead}`, git.remote, `${materialSha}:refs/heads/${task.branch}`]);
     } catch (error) { if (await git.remoteHead(task.branch) !== materialSha) throw error; }
-    return inspect(git, expectedBase, materialSha);
+    const material = await inspect(git, expectedBase, materialSha);
+    return { ...material, review: task.releaseTag ? await git.publishedReturnReview({ task, ...material }) : null };
   };
   const runS6 = async ({ active, task }) => {
+    if (event.s6 === 'github') {
+      const fallback = dependencies.fallback ?? new WorkflowFallbackAdapter({ api, ...config.fallback });
+      const result = await fallback.runS6({ active, task, request: { ...(event.request ?? {}),
+        areaTests: event.areaTests ?? event.request?.areaTests ?? [] }, signal,
+        onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
+      return { ...result, evidence: result.receipt };
+    }
     const plan = await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
       track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
     const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
@@ -224,18 +249,25 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     return { outcome: report.status, evidence: { id: report.id, reportPath: report.reportPath, materialSha: active.materialSha,
       status: report.status, finishedAt: report.finishedAt } };
   };
+  let ownedAdmission = null;
   const heartbeat = setInterval(() => {
-    queue.store.read().then(({ state }) => state.active?.issue === event.issue ? queue.dispatch({ id: `finish:${randomUUID()}`, type: 'heartbeat',
-      issue: event.issue, token: state.active.token }) : null).catch(() => {});
+    if (ownedAdmission && ['sync', 'testing'].includes(ownedAdmission.phase)) queue.dispatch({ id: `finish:${randomUUID()}`, type: 'heartbeat',
+      issue: event.issue, token: ownedAdmission.token }).catch(() => {});
   }, Math.min(60000, Math.max(1000, queue.leaseMs / 3))); heartbeat.unref();
   let sequence = 0;
   try {
-    while (!signal?.aborted && Date.now() - started < maxWaitMs) {
+    while (!signal?.aborted && clock() - started < maxWaitMs) {
       current = (await queue.store.read()).state;
-      onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs: Date.now() - started });
+      ownedAdmission = current.active?.issue === event.issue ? current.active : null;
+      onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs: clock() - started });
       if (current.tasks[event.issue]?.status === 'S8-merged') return { action: 'merged', task: current.tasks[event.issue] };
       if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue) return { action: 'returned', task: current.tasks[event.issue] };
       const own = current.active?.issue === event.issue;
+      // Waiting agents observe only; they never reconcile somebody else's task.
+      if (current.active && !own) {
+        await (dependencies.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms))))(pollMs, signal);
+        continue;
+      }
       const result = await reconcileQueue({ queue, api, git, activated: true, eventId: `${event.id}:finish:${++sequence}`, worker: event.worker ?? 'finish',
         ...(own ? { synchronize, runS6 } : {}), requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
       onProgress({ kind: 'transition', action: result.action, reason: result.reason });
@@ -275,7 +307,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   if (command === 'initialize-queue' || command === 'initialize-release')
     return (command === 'initialize-queue' ? queue.store : releaseStore).initialize({ baseSha: event.baseSha, confirmed: event.confirmed });
   if (['owner-decision', 'label', 'ready', 'enqueue'].includes(command)) {
-    const issue = await api.getIssue(event.issue);
+    const issue = await initializeMissingTrack(api, await api.getIssue(event.issue), event.track ?? event.ownerDecision?.track);
     if (['ready', 'enqueue'].includes(command) && await git.remoteHead(event.branch) !== event.materialSha)
       throw Error('Ready material differs from the current task branch');
     if (command === 'owner-decision' && !event.ownerDecision) throw Error('Explicit attributed owner decision required');
@@ -290,7 +322,8 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
       const state = (await queue.store.read()).state, task = state.tasks[event.issue];
       if (!task || await git.remoteHead(git.dev) !== event.expectedBase || await git.remoteHead(task.branch) !== event.materialSha)
         throw Error('Synchronization differs from current dev/task heads');
-      event = { ...event, ...await (dependencies.inspectMaterial ?? inspectTaskMaterial)(git, event.expectedBase, event.materialSha) };
+      const material = await (dependencies.inspectMaterial ?? inspectTaskMaterial)(git, event.expectedBase, event.materialSha);
+      event = { ...event, ...material, review: task.releaseTag ? await git.publishedReturnReview({ task, ...material }) : null };
     }
     if (command === 's6-complete' && event.outcome === 'passed' && !event.evidence) throw Error('Attach the actual S6 runner receipt');
     return { state: await queue.dispatch({ ...event, type: command }) };
@@ -326,7 +359,6 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
       if (source.sourceSha !== event.sourceSha) throw Error('Candidate source differs from the selected release source');
       // Worktree creation is explicit, separate from state delivery retries.
     }
-    if (event.type === 'accept-metrics' && event.ownerDecision?.actor !== owner) throw Error('Owner metrics decision attribution required');
     return { state: await releaseDispatch(releaseStore, event) };
   }
   if (command === 'measurement-baseline') {
@@ -349,6 +381,10 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
       const verified = await git.verifyDevReturn(candidate.sha);
       return { ...prepared, state: await releaseDispatch(releaseStore, { id: event.id, type: 'port-completed', candidate: candidate.id, fixSha: candidate.sha, devSha: verified.devSha }) };
     }
+    const issue = await initializeMissingTrack(api, await api.getIssue(event.issue), 'show');
+    const tracks = (issue.labels ?? []).map(label => typeof label === 'string' ? label : label.name).filter(label => /^track:(ship|show|ask)$/.test(label));
+    if (tracks.length !== 1) throw Error('Resolve conflicting track labels');
+    prepared.task.track = tracks[0].slice(6);
     return { ...prepared, queue: await queue.dispatch({ id: event.id, type: 'enqueue', task: prepared.task }) };
   }
   if (command === 'publish-prepared') {

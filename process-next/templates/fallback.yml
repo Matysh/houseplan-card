@@ -1,7 +1,7 @@
 # Inert preparation template. This is deliberately outside .github/workflows.
 # Activate only after the whole-process review and deployment discussion.
 name: Резервный запуск тестового набора
-run-name: ${{ inputs.title }}
+run-name: ${{ inputs.requestId != '' && format('{0} · {1}', inputs.title, inputs.requestId) || inputs.title }}
 on:
   workflow_dispatch:
     inputs:
@@ -21,6 +21,13 @@ on:
         description: 'Необязательный ID предыдущего резервного прогона: зачесть подходящие успешные результаты'
         required: false
         type: string
+      requestId:
+        description: 'Идентификатор S6 от finish; сохраняется при возобновлении ожидания'
+        required: false
+        type: string
+concurrency:
+  group: process-next-fallback-${{ inputs.requestId || github.run_id }}
+  cancel-in-progress: false
 permissions:
   contents: read
   actions: read
@@ -95,7 +102,7 @@ jobs:
         if: inputs.previous_run != ''
         run: node process-next/templates/prepare-fallback.mjs restore
       - name: Выполнить выбранный общий набор
-        run: node process-next/cli.mjs run --request process-next/.state/fallback-request.json
+        run: node process-next/cli.mjs run --request process-next/.state/fallback-request.json --state-dir process-next/.state
       - name: Сохранить применимые результаты для продолжения
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -106,6 +113,7 @@ jobs:
             artifacts/process-next/backend-coverage.xml
             artifacts/process-next/golden-*/golden-report.json
           include-hidden-files: true
+          overwrite: true
           if-no-files-found: ignore
           retention-days: 30
       - name: Сохранить результат и логи
@@ -119,3 +127,5 @@ jobs:
             artifacts/process-next-e2e-labs/*/artifacts
           if-no-files-found: ignore
           retention-days: 14
+          include-hidden-files: true
+          overwrite: true

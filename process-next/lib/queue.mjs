@@ -12,7 +12,10 @@ export function ownerDecisionRecord(value) {
   return { decisionId: value.decisionId, source: value.source, sourceRef: value.sourceRef, decisionText: value.decisionText,
     track: value.track, ...(value.recordedBy ? { recordedBy: String(value.recordedBy).slice(0, 120) } : {}) };
 }
-export const ownerShip = task => task?.track === 'ship' && task.ownerAssigned === true && !!task.ownerDecision?.sourceRef;
+// The installed track is binding; provenance is context, never a routing gate.
+export const ownerShip = task => task?.track === 'ship';
+export const AUTOMATION_WAIT_MS = 30 * 60_000;
+export const REVIEW_RETRY_VISIBILITY_MS = 2 * 60_000;
 export function queueSummary(state) {
   const order = [...state.waiting].sort((a, b) => Number(ownerShip(state.tasks[b])) - Number(ownerShip(state.tasks[a])) || state.tasks[a].ticket - state.tasks[b].ticket);
   return { revision: state.revision, active: state.active ? { issue: state.active.issue, phase: state.active.phase, expiresAt: state.active.expiresAt,
@@ -36,12 +39,24 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
     return copy(previous);
   }
   const state = copy(previous);
-  if (state.active && state.active.expiresAt <= now) {
-    const task = state.tasks[state.active.issue];
-    task.reason = 'admission-expired'; task.queued = true; task.ticket = state.nextTicket++;
-    if (!state.waiting.includes(task.issue)) state.waiting.push(task.issue);
-    // Evidence and stable review request live on the task, not the lease.
+  const duration = phase => ['sync', 'testing'].includes(phase) ? Math.min(leaseMs, 5 * 60_000) : leaseMs;
+  const clearAutomation = task => { delete task.automationError; delete task.automationSince; delete task.automationDetail; };
+  const returnTask = (task, reason) => {
+    task.status = 'S6-in-progress'; task.reason = reason; task.queued = false;
+    state.waiting = state.waiting.filter(issue => issue !== task.issue); delete task.continuation;
     state.active = null;
+  };
+  if (state.active && state.active.expiresAt <= now) {
+    const active = state.active, task = state.tasks[active.issue];
+    if (['sync', 'testing'].includes(active.phase)) returnTask(task, 'executor-admission-expired');
+    else {
+      task.reason = 'admission-expired'; task.queued = true; task.ticket = state.nextTicket++;
+      task.continuation = { phase: active.phase, expectedBase: active.expectedBase, patchId: active.patchId,
+        ...(active.reviewRequest ? { reviewRequest: active.reviewRequest } : {}) };
+      if (!state.waiting.includes(task.issue)) state.waiting.push(task.issue);
+      // Remote review/merge can continue without waiting for the departed executor.
+      state.active = null;
+    }
   }
   const admitted = () => {
     const active = state.active;
@@ -56,11 +71,22 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (!Number.isSafeInteger(event.issue) || event.issue < 1) throw Error('Invalid owner decision issue');
       const decision = ownerDecisionRecord(event);
       (state.ownerDecisions ??= {})[event.issue] = decision;
-      const task = state.tasks[event.issue], wasOwnerShip = ownerShip(task);
-      if (task) { task.track = event.track; task.ownerAssigned = true; task.ownerDecision = decision; }
-      if (state.active?.issue === event.issue && Boolean(wasOwnerShip) !== (event.track === 'ship') && ['review', 'ready-to-merge'].includes(state.active.phase)) {
-        state.active.phase = event.track === 'ship' ? 'ready-to-merge' : 'review';
-        task.status = event.track === 'ship' ? 'S6-in-progress' : 'S7-code-review';
+      const task = state.tasks[event.issue];
+      if (task) { task.ownerAssigned = true; task.ownerDecision = decision; }
+      break;
+    }
+    case 'track-observed': {
+      if (!Number.isSafeInteger(event.issue) || event.issue < 1 || !['ship', 'show', 'ask'].includes(event.track)) throw Error('Valid observed track required');
+      const task = state.tasks[event.issue];
+      if (!task || task.status === 'S8-merged' || task.track === event.track) break;
+      task.track = event.track;
+      const admission = state.active?.issue === event.issue ? state.active : task.continuation;
+      if (admission && ['review', 'ready-to-merge'].includes(admission.phase)) {
+        const accepted = task.review?.verdict === 'accepted' && task.review.patchId === admission.patchId;
+        admission.phase = event.track === 'ship' || accepted ? 'ready-to-merge' : 'review';
+        task.status = admission.phase === 'review' ? 'S7-code-review' : 'S6-in-progress';
+        if (admission === state.active) admission.expiresAt = now + duration(admission.phase);
+        clearAutomation(task);
       }
       break;
     }
@@ -74,9 +100,11 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (state.active?.issue === task.issue) throw Error('Admitted task cannot be replaced');
       if (!state.waiting.includes(task.issue)) state.waiting.push(task.issue);
       const decision = state.ownerDecisions?.[task.issue];
-      const authority = decision ? { track: decision.track, ownerAssigned: true, ownerDecision: decision } : { ownerAssigned: false, ownerDecision: null };
+      const authority = decision ? { ownerAssigned: true, ownerDecision: decision } : { ownerAssigned: false, ownerDecision: null };
       state.tasks[task.issue] = { ...existing, ...copy(task), ...authority, ticket: existing?.queued ? existing.ticket : state.nextTicket++, queued: true,
         status: 'S6-in-progress', readyAt: existing?.queued ? existing.readyAt : now };
+      clearAutomation(state.tasks[task.issue]); delete state.tasks[task.issue].continuation;
+      delete state.tasks[task.issue].reason;
       break;
     }
     case 'admit': {
@@ -89,21 +117,30 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       const task = state.tasks[order[0]], fence = state.nextFence++;
       state.waiting = state.waiting.filter(issue => issue !== task.issue);
       task.queued = false;
+      const continuation = task.continuation ?? { expectedBase: null, phase: 'sync' };
       state.active = { issue: task.issue, worker: event.worker ?? null, token: `${fence}:${event.id}`, fence,
-        materialSha: task.materialSha, expectedBase: null, phase: 'sync', admittedAt: now, expiresAt: now + leaseMs };
+        materialSha: task.materialSha, ...continuation, admittedAt: now, expiresAt: now + duration(continuation.phase) };
+      delete task.continuation;
       break;
     }
-    case 'heartbeat': admitted().expiresAt = now + leaseMs; break;
+    case 'heartbeat': {
+      const active = admitted(); active.expiresAt = now + duration(active.phase);
+      if (event.progress) clearAutomation(state.tasks[active.issue]);
+      break;
+    }
     case 'synchronized': {
       const active = admitted();
       if (active.phase !== 'sync' || !sha(event.expectedBase) || !sha(event.materialSha)) throw Error('Invalid final synchronization');
-      active.expectedBase = event.expectedBase; active.materialSha = event.materialSha; active.phase = 'testing';
+      active.expectedBase = event.expectedBase; active.materialSha = event.materialSha; active.phase = 'testing'; active.expiresAt = now + duration(active.phase);
       const task = state.tasks[active.issue];
       active.patchId = event.patchId ?? event.materialSha;
-      if (task.patchId && task.patchId !== active.patchId) { delete task.review; delete task.reviewRequest; delete task.reviewMaterial; }
+      if (task.patchId && task.patchId !== active.patchId) { delete task.review; delete task.reviewRequest; delete task.reviewMaterial; delete task.reviewRetry; }
       task.patchId = active.patchId; task.materialSha = event.materialSha;
+      if (event.review?.source === 'published-release' && event.review.patchId === active.patchId)
+        task.review = { ...copy(event.review), verdict: 'accepted' };
       if (event.layer) { if (!['docs', 'infra', 'product'].includes(event.layer)) throw Error('Invalid computed layer'); task.layer = event.layer; }
       if (event.changedFiles) task.changedFiles = copy(event.changedFiles);
+      clearAutomation(task);
       break;
     }
     case 's6-complete': {
@@ -114,14 +151,15 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       const ship = ownerShip(task);
       const retainedReview = task.review?.verdict === 'accepted' && task.review.patchId === active.patchId;
       if (task.reviewRequest) active.reviewRequest = task.reviewRequest;
-      active.phase = ship || retainedReview ? 'ready-to-merge' : 'review'; task.status = ship ? 'S6-in-progress' : 'S7-code-review';
+      active.phase = ship || retainedReview ? 'ready-to-merge' : 'review'; task.status = ship || retainedReview ? 'S6-in-progress' : 'S7-code-review';
+      active.expiresAt = now + duration(active.phase); clearAutomation(task);
       break;
     }
     case 'review-complete': {
       const active = admitted(); material(active);
       if (active.phase !== 'review' || event.verdict !== 'accepted') throw Error('Independent accepted review required');
       state.tasks[active.issue].review = { ...copy(event.review ?? {}), materialSha: active.materialSha, expectedBase: active.expectedBase, patchId: active.patchId, verdict: 'accepted' };
-      active.phase = 'ready-to-merge'; break;
+      active.phase = 'ready-to-merge'; active.expiresAt = now + duration(active.phase); clearAutomation(state.tasks[active.issue]); break;
     }
     case 'review-requested': {
       const active = admitted(); material(active);
@@ -132,12 +170,23 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       task.reviewMaterial = { materialSha: active.materialSha, expectedBase: active.expectedBase, patchId: active.patchId };
       break;
     }
+    case 'review-retry': {
+      const active = admitted(), task = state.tasks[active.issue];
+      if (active.phase !== 'review' || event.requestId !== active.reviewRequest) throw Error('Retry must identify the pending review');
+      if (task.reviewRetry?.requestId === event.requestId) break;
+      task.reviewRetry = { requestId: event.requestId, eventId: event.id, at: now,
+        runId: event.runId ?? null, runAttempt: event.runAttempt ?? null };
+      break;
+    }
     case 'automation-pending': {
-      const active = admitted(); active.expiresAt = now + leaseMs;
-      state.tasks[active.issue].automationError = String(event.reason || 'retry-pending').slice(0, 1000); break;
+      const active = admitted(), task = state.tasks[active.issue], reason = String(event.reason || 'retry-pending').slice(0, 1000);
+      if (task.automationError !== reason) { task.automationError = reason; task.automationSince = now; }
+      if (event.detail) task.automationDetail = String(event.detail).slice(0, 1000);
+      if (now - task.automationSince >= AUTOMATION_WAIT_MS) returnTask(task, `automation-timeout:${reason}`);
+      break;
     }
     case 'resynchronize': {
-      const active = admitted(); active.phase = 'sync'; active.expectedBase = null; active.expiresAt = now + leaseMs; break;
+      const active = admitted(); active.phase = 'sync'; active.expectedBase = null; active.expiresAt = now + duration(active.phase); clearAutomation(state.tasks[active.issue]); break;
     }
     case 'spec-requested': {
       if (!Number.isSafeInteger(event.issue) || !event.request?.requestId) throw Error('Specification review request required');
@@ -148,6 +197,12 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (!current || current.requestId !== event.requestId) throw Error('Specification review identity differs');
       Object.assign(current, { status: event.verdict, reportUrl: event.reportUrl ?? null, updatedAt: now }); break;
     }
+    case 'spec-retry': {
+      const current = state.specReviews?.[event.issue];
+      if (!current || current.requestId !== event.requestId) throw Error('Specification review identity differs');
+      if (current.retry) break;
+      current.retry = { eventId: event.id, at: now, runId: event.runId ?? null, runAttempt: event.runAttempt ?? null }; break;
+    }
     case 'dev-build': {
       const task = state.tasks[event.issue];
       if (task?.status !== 'S8-merged' || task.mergedSha !== event.materialSha) throw Error('Dev publication must follow an actual merge');
@@ -155,8 +210,7 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
     }
     case 'return': {
       const active = admitted();
-      state.tasks[active.issue] = { ...state.tasks[active.issue], status: 'S6-in-progress', reason: event.reason || 'returned' };
-      state.active = null; break;
+      returnTask(state.tasks[active.issue], event.reason || 'returned'); break;
     }
     case 'merged': {
       const active = admitted(); material(active);
@@ -178,7 +232,7 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
   const completed = Object.values(state.tasks).filter(task => task.status === 'S8-merged' && task.devBuild?.status !== 'pending')
     .sort((a, b) => b.mergedAt - a.mergedAt);
   for (const task of completed.slice(64)) { delete state.tasks[task.issue]; delete state.ownerDecisions[task.issue]; }
-  const specDone = Object.entries(state.specReviews ?? {}).filter(([, item]) => item.status !== 'pending').sort((a, b) => b[1].updatedAt - a[1].updatedAt);
+  const specDone = Object.entries(state.specReviews ?? {}).filter(([, item]) => ['accepted', 'changes_requested'].includes(item.status)).sort((a, b) => b[1].updatedAt - a[1].updatedAt);
   for (const [issue] of specDone.slice(64)) delete state.specReviews[issue];
   state.revision++;
   return state;

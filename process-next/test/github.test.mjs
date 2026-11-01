@@ -17,6 +17,23 @@ test('GitHub writes default to a plan without network; activation requires an ex
   assert.equal((await client.updateIssue(1, { state: 'closed' })).planned, true); assert.equal(calls, 0);
   client.activated = true; await assert.rejects(client.updateIssue(1, { state: 'closed' }), /credentials/); assert.equal(calls, 0);
 });
+
+test('GitHub API and upload transports time out; request cancellation reaches fetch', async () => {
+  const observed = [];
+  const fetchImpl = (_url, { signal }) => new Promise((resolve, reject) => {
+    observed.push(signal);
+    const timer = setTimeout(() => resolve(response({})), 1000);
+    const abort = () => { clearTimeout(timer); reject(signal.reason); };
+    if (signal.aborted) abort(); else signal.addEventListener('abort', abort, { once: true });
+  });
+  const client = new GitHubClient({ owner: 'o', repo: 'r', token: 'fixture', activated: true, fetchImpl, requestTimeoutMs: 15 });
+  await assert.rejects(client.getIssue(1), error => error.name === 'TimeoutError');
+  await assert.rejects(client.uploadReleaseAsset(1, { name: 'test.zip', bytes: Buffer.from('fixture') }), error => error.name === 'TimeoutError');
+  const controller = new AbortController(); controller.abort(Error('stopped by executor'));
+  await assert.rejects(client.request('GET', `${client.root}/issues/1`, undefined, { signal: controller.signal }), /stopped by executor/);
+  assert.equal(observed.length, 3); assert.ok(observed.every(signal => signal.aborted));
+  assert.throws(() => new GitHubClient({ owner: 'o', repo: 'r', requestTimeoutMs: Infinity }), /timeout/);
+});
 test('GitHub Contents CAS passes exact blob identity and maps a conflict to retry', async () => {
   let posted;
   const client = { activated: true, getRef: async () => ({ object: { sha: A } }), putContents: async (path, value) => {

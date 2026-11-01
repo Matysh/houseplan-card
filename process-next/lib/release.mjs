@@ -10,6 +10,13 @@ export async function readRunnerReport(path) {
   const report = JSON.parse(await readFile(path, 'utf8'));
   return { ...report, reportPath: path };
 }
+export function normalizeMetricsDecision(value) {
+  if (!value || !['chat', 'manual'].includes(value.source)
+    || !['decisionId', 'sourceRef', 'decisionText'].every(key => typeof value[key] === 'string' && value[key].trim() && value[key].length <= 2048))
+    throw Error('Explicit metrics decision requires decisionId, chat/manual source, sourceRef and decisionText; actor/login is not authority');
+  return { decisionId: value.decisionId, source: value.source, sourceRef: value.sourceRef, decisionText: value.decisionText,
+    ...(value.recordedBy ? { recordedBy: String(value.recordedBy).slice(0, 120) } : {}) };
+}
 function runnerReceipt(report, candidate) {
   if (!report?.id || report.schema !== 1 || report.materialSha !== candidate.sha || typeof report.materialClean !== 'boolean' || report.event !== candidate.kind
     || !report.finishedAt || !report.reportPath || !Array.isArray(report.results) || report.status === 'running')
@@ -96,7 +103,7 @@ export function reduceRelease(previous, event) {
     case 'accept-metrics': {
       const item = candidate(); editable(item);
       if (event.sha !== item.sha || !item.metrics || !event.ownerDecision) throw Error('An explicit owner decision requires the report for this candidate');
-      item.metricsAcceptedSha = item.sha; item.metricsDecision = copy(event.ownerDecision); break;
+      item.metricsDecision = normalizeMetricsDecision(event.ownerDecision); item.metricsAcceptedSha = item.sha; break;
     }
     case 'diagnostic': {
       const item = candidate();
@@ -160,6 +167,28 @@ export function releaseClosePlan(candidate, issues) {
 }
 
 export class ReleaseGitAdapter extends GitAdapter {
+  /** Reuse the published release's review only for its unmodified automatic return merge. */
+  async publishedReturnReview({ task, expectedBase, materialSha, patchId }) {
+    if (task?.syncMode !== 'merge' || !sha(task.mergeSourceSha) || !task.releaseTag
+      || !sha(expectedBase) || !sha(materialSha) || typeof patchId !== 'string' || !patchId) return null;
+    let tag;
+    try { tag = checkedRef(task.releaseTag); } catch { return null; }
+    const sourceSha = task.mergeSourceSha;
+    const tags = (await this.git(['ls-remote', '--tags', this.remote, `refs/tags/${tag}`, `refs/tags/${tag}^{}`])).split('\n').filter(Boolean);
+    const actualTag = (tags.find(row => row.endsWith('^{}')) ?? tags[0])?.split(/\s+/)[0];
+    if (actualTag !== sourceSha) return null;
+    for (const commit of [expectedBase, sourceSha, materialSha]) await this.ensureCommit(commit);
+    try {
+      await this.assertAncestor(sourceSha, materialSha); await this.assertAncestor(expectedBase, materialSha);
+      // merge-tree does not touch the index/worktree and exits nonzero on conflicts.
+      const mergedTree = (await this.git(['merge-tree', '--write-tree', expectedBase, sourceSha])).split('\n')[0];
+      if (mergedTree !== await this.git(['rev-parse', `${materialSha}^{tree}`])) return null;
+    } catch (error) {
+      if (error.code === 1) return null;
+      throw error;
+    }
+    return { source: 'published-release', sourceSha, tag, verdict: 'accepted', patchId, materialSha };
+  }
   async resolveSource({ kind, published }) {
     const sourceSha = kind === 'beta' ? await this.remoteHead(this.dev)
       : kind === 'stable' ? published?.beta?.sha : kind === 'hotfix' ? published?.stable?.sha : null;
@@ -193,7 +222,8 @@ export class ReleaseGitAdapter extends GitAdapter {
     const task = { issue, branch, layer: 'product', track: 'show', ownerAssigned: false,
       syncMode: 'merge', mergeSourceSha: candidate.sha, releaseTag: candidate.tag };
     if (!this.activated) return { planned: true, task, destination: this.dev, worktree,
-      operations: ['verify immutable published tag', 'merge tag into an isolated branch from dev', 'push task branch', 'enqueue normal S6/review/merge'] };
+      operations: ['verify immutable published tag', 'merge tag into an isolated branch from dev', 'push task branch',
+        'enqueue S6 and merge; reuse published review for a clean automatic merge, review any new code or conflict resolution'] };
     const tags = (await this.git(['ls-remote', '--tags', this.remote, `refs/tags/${candidate.tag}`, `refs/tags/${candidate.tag}^{}`])).split('\n').filter(Boolean);
     const actualTag = (tags.find(row => row.endsWith('^{}')) ?? tags[0])?.split(/\s+/)[0];
     if (actualTag !== candidate.sha) throw Error('Published tag differs from the return material');

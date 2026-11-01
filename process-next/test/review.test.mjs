@@ -65,7 +65,7 @@ test('owner ship never invokes individual review or demands a spec/key', async t
     assert.equal(result.status, 'not-required');
   }
   assert.equal(reviewRequired({ track: 'show', kind: 'spec' }), false);
-  assert.equal(reviewRequired({ track: 'ship', ownerAssigned: false }), true);
+  assert.equal(reviewRequired({ track: 'ship', ownerAssigned: false }), false);
   assert.equal(checkSpecFormat('', { ownerShip: true }).applicable, false);
 });
 

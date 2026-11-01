@@ -215,7 +215,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     const rows = discovered.filter(row => row.kind === 'product' && row.group === group);
     steps.push(nodeStep(`product-node:${group}`, `Поведение: ${rows[0].groupLabel}`, rows.map(row => row.path), ['test-build']));
   }
-  steps.push(step('product-backend', 'Backend и сбор покрытия', helper('backend', ...retained('backend')), pythonInputs, [], { outputs: ['artifacts/process-next/backend-coverage.xml'] }));
+  steps.push(step('product-backend', 'Backend и сбор покрытия', helper('backend', ...retained('backend')), pythonInputs, [], { outputs: ['artifacts/process-next/backend-coverage.xml'], reusableReports: ['artifacts/process-next/backend-coverage.xml'] }));
   result.prerequisites.push('Python environment with tests_backend/requirements.txt and pytest-cov installed; all HA harness dependencies required.');
   const packageSources = execFileSync('git', ['ls-files', '-z', '--', 'custom_components/houseplan', 'docs/data-hp-contract.json'],
     { cwd: root, encoding: 'utf8', windowsHide: true }).split('\0').filter(path => path && !path.startsWith('custom_components/houseplan/frontend/'));
@@ -238,7 +238,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   for (const smoke of BETA_SMOKES) steps.push(smokeStep(smoke));
   steps.push(step('golden-beta', `${BETA_GOLDEN.length} визуальных кадров: панель ${BETA_PANEL_GOLDEN.length}, Lovelace ${BETA_LOVELACE_GOLDEN.length}, Static ${BETA_STATIC_GOLDEN.length}`, helper('golden-runner', '--selection=beta'),
     [...browserInputs, ...BETA_GOLDEN.map(id => `demo/golden/baselines/${id}.png`), 'demo/golden/baselines/baselines-index.json'],
-    ['demo-assets', 'test-build'], { outputs: ['artifacts/process-next/golden-beta/golden-report.json'], timeoutMs: 1800000 }));
+    ['demo-assets', 'test-build'], { outputs: ['artifacts/process-next/golden-beta/golden-report.json'], reusableReports: ['artifacts/process-next/golden-beta/golden-report.json'], timeoutMs: 1800000 }));
   const e2eOptions = { e2eRoot, version, targetRef,
     candidateRoot: candidateRoot || resolve(root, 'artifacts/process-next/candidate'),
     expectedVersion: expectedVersion || JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8')).version,
@@ -268,7 +268,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     steps.push({ ...smokeStep({ file: 'demo/smoke_view_edit_permissions.mjs', args: [] }), id: 'smoke:permissions-full' });
     steps.push(step('golden-rest', 'Остальные визуальные эталоны', helper('golden-runner', '--selection=rest'),
       [...browserInputs, 'demo/golden/baselines/*.png', 'demo/golden/baselines/baselines-index.json'], ['demo-assets', 'test-build'],
-      { outputs: ['artifacts/process-next/golden-rest/golden-report.json'], timeoutMs: 7200000 }));
+      { outputs: ['artifacts/process-next/golden-rest/golden-report.json'], reusableReports: ['artifacts/process-next/golden-rest/golden-report.json'], timeoutMs: 7200000 }));
     steps.push(step('backend-coverage-threshold', 'Порог backend coverage перед stable', ['python3', 'process-next/catalog/coverage-threshold.py'], ['scripts/backend-coverage-baseline.txt', 'process-next/catalog/coverage-threshold.py'], ['product-backend']));
     addE2E('remainder');
     steps.push(converterStep());

@@ -59,9 +59,9 @@ test('docs use not-required without pretending tests passed', () => {
   h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'not-required' });
   assert.equal(h.state.active.phase, 'ready-to-merge');
 });
-test('unconfirmed ship has no owner exemption', () => {
+test('installed ship needs no separate provenance proof to skip individual review', () => {
   const h = harness(), token = prepared(h, { ...task(1, 'ship'), ownerAssigned: false });
-  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' }); assert.equal(h.state.active.phase, 'review');
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' }); assert.equal(h.state.active.phase, 'ready-to-merge');
 });
 test('return frees the slot and retains useful evidence; reentry has a new fence and FIFO ticket', () => {
   const h = harness(), token = prepared(h);
@@ -114,10 +114,12 @@ test('idle ticks never write state and active delivery history remains bounded',
   for (let index = 0; index < 600; index++) { h.time(101 + index); h.event({ type: 'heartbeat', issue: 1, token }); }
   assert.ok(Object.keys(h.state.events).length <= 256);
 });
-test('explicit source is required; enqueue ownerAssigned and a shared owner login confer no exemption', () => {
+test('optional decision provenance is validated but never overrides the installed task track', () => {
   let state = reduceQueue(initialQueueState(), { id: 'agent', type: 'enqueue', task: task(1, 'ship') });
   assert.equal(state.tasks[1].ownerAssigned, false);
   assert.throws(() => reduceQueue(state, { id: 'actor', type: 'owner-track', issue: 1, actor: 'Matysh', source: 'label', track: 'ship' }), /Explicit owner decision/);
+  state = reduceQueue(state, { id: 'history', ...decision(1, 'ask') });
+  assert.equal(state.tasks[1].track, 'ship'); assert.equal(state.tasks[1].ownerDecision.track, 'ask');
 });
 test('expired lease and clean rebase retain accepted patch review without a new request', () => {
   const h = harness(), token = prepared(h);
@@ -126,7 +128,74 @@ test('expired lease and clean rebase retain accepted patch review without a new 
   h.event({ type: 'review-complete', issue: 1, token, materialSha: B, verdict: 'accepted' });
   h.time(201); h.event({ type: 'expire' }); h.event({ type: 'admit' });
   const next = h.state.active.token, nextSha = 'c'.repeat(40);
+  assert.equal(h.state.active.phase, 'ready-to-merge');
+  h.event({ type: 'resynchronize', issue: 1, token: next });
   h.event({ type: 'synchronized', issue: 1, token: next, expectedBase: A, materialSha: nextSha, patchId: B });
   h.event({ type: 's6-complete', issue: 1, token: next, materialSha: nextSha, outcome: 'passed' });
   assert.equal(h.state.active.phase, 'ready-to-merge'); assert.equal(h.state.active.reviewRequest, 'review:same-patch');
+});
+
+test('departed sync and testing executors leave the queue until they explicitly submit ready again', () => {
+  for (const phase of ['sync', 'testing']) {
+    const h = harness(); h.event({ type: 'enqueue', task: task(1) }); h.event({ type: 'admit' });
+    const token = h.state.active.token;
+    if (phase === 'testing') h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B });
+    h.time(201); h.event({ type: 'expire' });
+    for (let tick = 0; tick < 20; tick++) h.event({ type: 'admit' });
+    assert.equal(h.state.active, null); assert.deepEqual(h.state.waiting, []);
+    assert.equal(h.state.tasks[1].reason, 'executor-admission-expired'); assert.equal(h.state.tasks[1].status, 'S6-in-progress');
+    h.event({ type: 'enqueue', task: task(2, 'ship') }); h.event({ type: 'admit' }); assert.equal(h.state.active.issue, 2);
+  }
+});
+
+test('remote review resumes after lease expiry without asking a departed executor to synchronize again', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed', evidence: { report: 's6.json' } });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'same-review' });
+  h.time(201); h.event({ type: 'expire' }); h.event({ type: 'admit' });
+  assert.equal(h.state.active.phase, 'review'); assert.equal(h.state.active.reviewRequest, 'same-review');
+  assert.equal(h.state.active.expectedBase, A); assert.equal(h.state.tasks[1].s6.report, 's6.json');
+  h.event({ type: 'review-complete', issue: 1, token: h.state.active.token, materialSha: B, verdict: 'accepted' });
+  assert.equal(h.state.active.phase, 'ready-to-merge');
+});
+
+test('verified published-release review is reused only for the exact synchronized patch, without an empty S7', () => {
+  for (const patchId of ['same-patch', 'different-patch']) {
+    const h = harness(); h.event({ type: 'enqueue', task: task(1, 'show') }); h.event({ type: 'admit' }); const token = h.state.active.token;
+    h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B, patchId: 'same-patch',
+      review: { source: 'published-release', tag: 'v1.2.3', sourceSha: B, patchId } });
+    h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+    assert.equal(h.state.active.phase, patchId === 'same-patch' ? 'ready-to-merge' : 'review');
+    assert.equal(h.state.tasks[1].status, patchId === 'same-patch' ? 'S6-in-progress' : 'S7-code-review');
+  }
+});
+
+test('an observed track updates waiting priority and never skips unfinished S6', () => {
+  const h = harness(); h.event({ type: 'enqueue', task: task(1, 'show') }); h.event({ type: 'enqueue', task: task(2, 'show') });
+  h.event({ type: 'track-observed', issue: 2, track: 'ship' }); h.event({ type: 'admit' });
+  assert.equal(h.state.active.issue, 2); assert.equal(h.state.active.phase, 'sync');
+  h.event({ type: 'track-observed', issue: 2, track: 'show' });
+  assert.equal(h.state.active.phase, 'sync'); assert.equal(h.state.tasks[2].status, 'S6-in-progress');
+});
+
+test('live track changes preserve S6 and the existing review, including an accepted verdict', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed', evidence: { report: 's6.json' } });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'running-review' });
+  h.event({ type: 'track-observed', issue: 1, track: 'ship' });
+  assert.equal(h.state.active.phase, 'ready-to-merge'); assert.equal(h.state.tasks[1].status, 'S6-in-progress');
+  h.event({ type: 'track-observed', issue: 1, track: 'ask' });
+  assert.equal(h.state.active.phase, 'review'); assert.equal(h.state.tasks[1].status, 'S7-code-review');
+  assert.equal(h.state.active.reviewRequest, 'running-review'); assert.equal(h.state.tasks[1].s6.report, 's6.json');
+  h.event({ type: 'review-complete', issue: 1, token, materialSha: B, verdict: 'accepted', review: { report: 'accepted.md' } });
+  h.event({ type: 'track-observed', issue: 1, track: 'ship' }); h.event({ type: 'track-observed', issue: 1, track: 'show' });
+  assert.equal(h.state.active.phase, 'ready-to-merge'); assert.equal(h.state.tasks[1].review.report, 'accepted.md');
+});
+
+test('a track change also updates a remote continuation waiting for renewed admission', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  h.time(201); h.event({ type: 'expire' }); h.event({ type: 'track-observed', issue: 1, track: 'ship' });
+  h.event({ type: 'admit' }); assert.equal(h.state.active.phase, 'ready-to-merge');
+  assert.equal(h.state.tasks[1].status, 'S6-in-progress');
 });

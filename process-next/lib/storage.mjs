@@ -1,8 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 export const digest = value => createHash('sha256').update(value).digest('hex');
+export function defaultStateDir(root) {
+  try {
+    const common = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    return join(realpathSync(resolve(root, common)), 'process-next');
+  } catch { return join(resolve(root), 'process-next', '.state'); }
+}
 export function readJson(path, fallback = null) {
   if (!existsSync(path)) return fallback;
   return JSON.parse(readFileSync(path, 'utf8'));
@@ -16,10 +24,11 @@ export function writeJson(path, value) {
 export function within(root, name) {
   const path = resolve(root, name), rel = relative(resolve(root), path);
   if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) throw new Error(`Path leaves root: ${name}`);
-  if (existsSync(path)) {
-    const real = realpathSync(path), realRoot = realpathSync(root), inside = relative(realRoot, real);
-    if (inside === '..' || inside.startsWith(`..${sep}`) || isAbsolute(inside)) throw new Error(`Symlink leaves root: ${name}`);
-  }
+  // A missing output can still have a symlinked parent that leaves the checkout.
+  let ancestor = path;
+  while (!lstatSync(ancestor, { throwIfNoEntry: false }) && ancestor !== dirname(ancestor)) ancestor = dirname(ancestor);
+  const real = realpathSync(ancestor), realRoot = realpathSync(root), inside = relative(realRoot, real);
+  if (inside === '..' || inside.startsWith(`..${sep}`) || isAbsolute(inside)) throw new Error(`Symlink leaves root: ${name}`);
   return path;
 }
 export function walk(root, directory = root) {
@@ -115,8 +124,48 @@ export function outputIdentity(root, outputs = []) {
 }
 export class ResultStore {
   constructor(directory) { this.directory = resolve(directory); }
-  find(key) { return readJson(join(this.directory, 'cache', `${key}.json`)); }
-  remember(result) { if (result.status === 'passed') writeJson(join(this.directory, 'cache', `${result.fingerprint}.json`), result); }
+  find(key) {
+    if (!/^[a-f0-9]{64}$/.test(key)) return null;
+    try {
+      const result = readJson(join(this.directory, 'cache', `${key}.json`));
+      return result?.fingerprint === key && result.status === 'passed' ? result : null;
+    } catch { return null; } // A damaged optional cache reruns the check, not the process.
+  }
+  remember(result, { root, step } = {}) {
+    if (result.status !== 'passed') return;
+    const cached = { ...result };
+    try {
+      if (step?.reusableReports?.length && outputIdentity(root, step.outputs).hash === result.cacheOutputHash) {
+        cached.reportArtifacts = Object.fromEntries(step.reusableReports.map(name => {
+          const bytes = readFileSync(within(root, name));
+          return [name, { sha256: digest(bytes), data: bytes.toString('base64') }];
+        }));
+      }
+    } catch { /* Unavailable optional report snapshots simply prevent later reuse. */ }
+    writeJson(join(this.directory, 'cache', `${result.fingerprint}.json`), cached);
+  }
+  restoreReports(result, root, reports = []) {
+    if (!reports.length || !result?.reportArtifacts) return false;
+    try {
+      // Reports are the sole opted-in outputs. Build/package outputs are never restored.
+      const names = [...reports].sort();
+      if (JSON.stringify(Object.keys(result.reportArtifacts).sort()) !== JSON.stringify(names)) return false;
+      const files = names.map(name => {
+        const artifact = result.reportArtifacts[name], target = within(root, name);
+        if (typeof artifact?.data !== 'string' || !/^[a-f0-9]{64}$/.test(artifact.sha256 ?? '')) throw Error('Invalid cached report');
+        const bytes = Buffer.from(artifact.data, 'base64');
+        if (digest(bytes) !== artifact.sha256) throw Error('Cached report bytes differ');
+        if (existsSync(target) && (!statSync(target).isFile() || digest(readFileSync(target)) !== artifact.sha256)) throw Error('Existing output differs');
+        return { name, target, bytes, sha256: artifact.sha256 };
+      });
+      if (digest(JSON.stringify(files.map(file => [file.name, file.sha256]))) !== result.cacheOutputHash) return false;
+      for (const file of files) if (!existsSync(file.target)) {
+        mkdirSync(dirname(file.target), { recursive: true });
+        writeFileSync(file.target, file.bytes, { flag: 'wx', mode: 0o600 });
+      }
+      return true;
+    } catch { return false; }
+  }
   save(report) { writeJson(join(this.directory, 'runs', report.id, 'report.json'), report); }
   report(id) {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error('Invalid run id');

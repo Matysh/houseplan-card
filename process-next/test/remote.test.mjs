@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { executeRemoteCommand, WorkflowReviewAdapter, finishTask } from '../remote.mjs';
+import { executeRemoteCommand, WorkflowReviewAdapter, finishTask, initializeMissingTrack } from '../remote.mjs';
 import { MemoryQueueStore, QueueController, StateConflict, reduceQueue } from '../lib/queue.mjs';
 import { initialReleaseState, reduceRelease } from '../lib/release.mjs';
 import { reconcileQueue } from '../lib/coordinator.mjs';
@@ -97,9 +97,9 @@ test('remote show flow binds local S6 to workflow review and atomic merge withou
   assert.deepEqual(h.actions, ['review', 'merge']); assert.ok(h.issue.labels.includes('S8-merged'));
 });
 
-test('remote owner decision is retained before ready; ship does not use review', async () => {
+test('installed ship label needs no provenance and does not use individual review', async () => {
   const h = queueHarness();
-  await h.command('owner-decision', { ownerDecision }); h.issue.testLayer = 'docs';
+  h.issue.labels = ['S6-in-progress', 'track:ship']; h.issue.testLayer = 'docs';
   await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'docs' });
   await h.command('admit'); const token = (await h.store.read()).state.active.token;
   await h.command('synchronized', { token, expectedBase: A, materialSha: B });
@@ -109,7 +109,7 @@ test('remote owner decision is retained before ready; ship does not use review',
 
 test('queue metadata race retries the same merge without returning to S6 or rerunning review', async () => {
   const h = queueHarness();
-  await h.command('owner-decision', { ownerDecision }); h.issue.testLayer = 'docs';
+  h.issue.labels = ['S6-in-progress', 'track:ship']; h.issue.testLayer = 'docs';
   await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'docs' }); await h.command('admit');
   const token = (await h.store.read()).state.active.token;
   await h.command('synchronized', { token, expectedBase: A, materialSha: B }); await h.command('reconcile');
@@ -121,12 +121,12 @@ test('queue metadata race retries the same merge without returning to S6 or reru
 
 test('repeated queue metadata races leave accepted material ready, not failed', async () => {
   const h = queueHarness();
-  await h.command('owner-decision', { ownerDecision }); h.issue.testLayer = 'docs';
+  h.issue.labels = ['S6-in-progress', 'track:ship']; h.issue.testLayer = 'docs';
   await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'docs' }); await h.command('admit');
   const token = (await h.store.read()).state.active.token;
   await h.command('synchronized', { token, expectedBase: A, materialSha: B }); await h.command('reconcile');
   h.dependencies.git.merge = async () => { throw new StateConflict(); };
-  assert.equal((await h.command('merge', { token })).action, 'merge-pending');
+  assert.equal((await h.command('merge', { token })).action, 'automation-pending');
   assert.equal((await h.store.read()).state.active.phase, 'ready-to-merge');
 });
 
@@ -175,9 +175,95 @@ test('one finish invocation waits, synchronizes, runs S6 once and survives a los
 });
 test('completed review transport failure reruns the same workflow instead of another paid request identity', async () => {
   const api = reviewApi({ runs: [{ id: 12, display_title: `Code ${context.requestId}`, status: 'completed', conclusion: 'failure' }] });
-  const result = await new WorkflowReviewAdapter({ api }).requestReview(context);
+  const result = await new WorkflowReviewAdapter({ api }).requestReview({ ...context, retry: true });
   assert.equal(result.retry, true); assert.equal(result.requestId, context.requestId);
   assert.match(api.writes[0].path, /\/actions\/runs\/12\/rerun-failed-jobs$/);
+});
+
+test('a retry needs an explicit durable grant and cannot exceed GitHub attempt two', async () => {
+  const run = { id: 12, display_title: `Code ${context.requestId}`, status: 'completed', run_attempt: 1 };
+  const api = reviewApi({ runs: [run] }), adapter = new WorkflowReviewAdapter({ api });
+  assert.equal((await adapter.requestReview(context)).needsAttention, true);
+  run.run_attempt = 2;
+  assert.equal((await adapter.requestReview({ ...context, retry: true })).needsAttention, true);
+  assert.equal(api.writes.length, 0);
+});
+
+test('previous review lookup downloads only artifacts belonging to this issue and kind', async () => {
+  const runs = [
+    { id: 1, display_title: 'Код-ревью задачи #2 · review:2:old' },
+    { id: 2, display_title: 'Ревью ТЗ задачи #1 · spec:1:old' },
+    { id: 3, display_title: `Код-ревью задачи #1 · ${context.requestId}` },
+    { id: 4, display_title: 'Код-ревью задачи #1 · review:1:old' },
+  ].map(row => ({ ...row, status: 'completed' }));
+  const artifact = { issue: 1, kind: 'code', requestId: 'review:1:old', report: { summary: 'previous' } };
+  const api = reviewApi({ runs, artifact });
+  const result = await new WorkflowReviewAdapter({ api, readArtifact: async () => artifact })
+    .readPreviousReviewResult({ issue: 1, excludeRequestId: context.requestId });
+  assert.equal(result.runId, 4);
+  assert.equal(api.reads.filter(path => path.includes('/artifacts')).length, 1);
+});
+
+test('track initialization adds only a missing label and never changes an installed track', async () => {
+  let issue = { number: 1, labels: ['S6-in-progress', 'track:ask'] }; const writes = [];
+  const api = { root: '/repos/test/repo', getIssue: async () => issue,
+    request: async (...args) => { writes.push(args); issue.labels.push(...args[2].labels); } };
+  assert.equal((await initializeMissingTrack(api, issue, 'ship')).labels.at(-1), 'track:ask');
+  assert.equal(writes.length, 0);
+  issue = { number: 1, labels: ['S6-in-progress'] };
+  await initializeMissingTrack(api, issue, 'ship');
+  assert.deepEqual(writes[0], ['POST', '/repos/test/repo/issues/1/labels', { labels: ['track:ship'] }]);
+  await initializeMissingTrack(api, issue, 'show'); assert.equal(writes.length, 1);
+});
+
+test('release return binds computed Git proof, never a caller-supplied review exemption', async () => {
+  for (const clean of [true, false]) {
+    const h = queueHarness();
+    await h.queue.dispatch({ id: 'return-release', type: 'enqueue', task: { issue: 1, branch: 'issue/1', materialSha: B,
+      layer: 'product', track: 'show', syncMode: 'merge', mergeSourceSha: C, releaseTag: 'v1.0.1' } });
+    await h.command('admit'); const token = (await h.store.read()).state.active.token;
+    let proofs = 0;
+    h.dependencies.git.publishedReturnReview = async ({ task, expectedBase, materialSha, patchId }) => {
+      proofs++; assert.equal(task.releaseTag, 'v1.0.1'); assert.equal(expectedBase, A); assert.equal(materialSha, B);
+      return clean ? { source: 'published-release', sourceSha: C, tag: 'v1.0.1', patchId, verdict: 'accepted' } : null;
+    };
+    await h.command('synchronized', { token, expectedBase: A, materialSha: B, review: { source: 'published-release', verdict: 'accepted', patchId: 'patch' } });
+    await h.command('s6-complete', { token, materialSha: B, outcome: 'passed', evidence: { status: 'passed' } });
+    assert.equal((await h.store.read()).state.active.phase, clean ? 'ready-to-merge' : 'review');
+    assert.equal(proofs, 1);
+  }
+});
+
+test('finish uses hosted S6 on the admitted SHA and frees the slot on terminal transport failure', async () => {
+  for (const terminal of [false, true]) {
+    const h = queueHarness(); let calls = 0;
+    h.dependencies.git.git = async () => A;
+    h.dependencies.synchronize = async () => ({ expectedBase: A, materialSha: B, patchId: 'same', layer: 'product' });
+    h.dependencies.runPlan = () => { throw Error('Local tests must not run in fallback'); };
+    h.dependencies.sleep = async () => {};
+    h.dependencies.fallback = { runS6: async ({ active }) => {
+      calls++; assert.equal(active.materialSha, B);
+      return terminal ? { outcome: 'unavailable', terminal: true, reason: 'permissions' }
+        : { outcome: 'passed', receipt: { runId: 42, materialSha: B, status: 'passed' } };
+    } };
+    const result = await finishTask({ config, event: { id: 'hosted', issue: 1, branch: 'issue/1', s6: 'github' },
+      queue: h.queue, api: h.dependencies.api, git: h.dependencies.git, review: h.dependencies.review,
+      dependencies: h.dependencies, maxWaitMs: 1000 });
+    assert.equal(result.action, terminal ? 'returned' : 'merged'); assert.equal(calls, 1);
+    assert.equal((await h.store.read()).state.active, null);
+  }
+});
+
+test('waiting finish observes once per minute without reconciling another admitted task', async () => {
+  const h = queueHarness();
+  await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'product' }); await h.command('admit');
+  await h.queue.dispatch({ id: 'ready2', type: 'enqueue', task: { issue: 2, branch: 'issue/2', materialSha: C, layer: 'product', track: 'show' } });
+  let now = 0; const sleeps = [], before = (await h.store.read()).state;
+  const result = await finishTask({ config, event: { id: 'wait2', issue: 2, branch: 'issue/2' }, queue: h.queue,
+    api: h.dependencies.api, git: h.dependencies.git, review: h.dependencies.review, maxWaitMs: 120000,
+    dependencies: { clock: () => now, sleep: async ms => { sleeps.push(ms); now += ms; } } });
+  assert.equal(result.action, 'waiting'); assert.deepEqual(sleeps, [60000, 60000]);
+  assert.deepEqual((await h.store.read()).state, before); assert.deepEqual(h.actions, []);
 });
 
 test('publication reads the completed runner JSON and exact-SHA metrics without manual per-step events', async t => {

@@ -22,18 +22,20 @@ export class GitHubError extends Error {
 /** No ambient token. Writes return a plan unless activation and credentials are explicit. */
 export class GitHubClient {
   constructor({ owner, repo, token = null, activated = false, fetchImpl = globalThis.fetch,
-    apiBase = 'https://api.github.com', uploadBase = 'https://uploads.github.com' }) {
+    apiBase = 'https://api.github.com', uploadBase = 'https://uploads.github.com', requestTimeoutMs = 60000 }) {
     if (![owner, repo].every(value => typeof value === 'string' && /^[\w.-]+$/.test(value))) throw Error('Invalid repository');
-    Object.assign(this, { owner, repo, token, activated, fetchImpl, apiBase: apiBase.replace(/\/$/, ''), uploadBase: uploadBase.replace(/\/$/, '') });
+    if (!Number.isInteger(requestTimeoutMs) || requestTimeoutMs < 1 || requestTimeoutMs > 60000) throw Error('GitHub request timeout must be within 1–60000 ms');
+    Object.assign(this, { owner, repo, token, activated, fetchImpl, requestTimeoutMs, apiBase: apiBase.replace(/\/$/, ''), uploadBase: uploadBase.replace(/\/$/, '') });
   }
   get root() { return `/repos/${component(this.owner)}/${component(this.repo)}`; }
-  async request(method, path, body, { binary = false } = {}) {
+  async request(method, path, body, { binary = false, signal } = {}) {
     if (!path.startsWith(this.root + '/') || path.includes('://')) throw Error('Request outside configured repository');
     if (!['GET', 'HEAD'].includes(method)) {
       if (!this.activated) return { planned: true, method, path, body };
       if (!this.token) throw Error('Activated GitHub writes require explicit credentials');
     }
-    const response = await this.fetchImpl(this.apiBase + path, { method,
+    const timeout = AbortSignal.timeout(this.requestTimeoutMs);
+    const response = await this.fetchImpl(this.apiBase + path, { method, signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
       headers: { Accept: binary ? 'application/octet-stream' : 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28', ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
         ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -97,6 +99,7 @@ export class GitHubClient {
     if (!this.activated) return { planned: true, release: id, name, bytes: bytes.length };
     if (!this.token) throw Error('Activated GitHub writes require explicit credentials');
     const response = await this.fetchImpl(`${this.uploadBase}${this.root}/releases/${id}/assets?name=${component(name)}`, {
+      signal: AbortSignal.timeout(this.requestTimeoutMs),
       method: 'POST', headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/vnd.github+json',
         'Content-Type': contentType, 'Content-Length': String(bytes.length), 'X-GitHub-Api-Version': '2022-11-28' }, body: bytes });
     if (!response.ok) throw new GitHubError(response.status, `GitHub asset upload failed (${response.status})`);

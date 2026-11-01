@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, unlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleasePublisher, readPublishedMeasurement, readRunnerReport } from '../lib/release.mjs';
+import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleaseGitAdapter, ReleasePublisher, readPublishedMeasurement, readRunnerReport, normalizeMetricsDecision } from '../lib/release.mjs';
 import { runPlan } from '../lib/runner.mjs';
 import { runGit } from '../lib/github.mjs';
 import { sha256 } from '../lib/github.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40), D = 'd'.repeat(64);
+const metricsDecision = { decisionId: 'metrics-beta1', source: 'chat', sourceRef: 'chat:release#metrics-beta1', decisionText: 'Accept these metric changes for this beta.' };
 function report(materialSha = A, event = 'beta', overrides = {}) {
   return { schema: 1, id: 'run', event, materialSha, materialClean: true, finishedAt: '2026-11-01T00:00:00Z', reportPath: 'runs/run/report.json', status: 'passed',
     results: [{ id: 'core', status: 'passed' }, { id: 'area', status: 'passed' }], ...overrides };
@@ -76,14 +77,27 @@ test('publication failure retries the same checked material without a new test r
 test('beta metrics decision belongs to one candidate and accepted retry does not ask twice', () => {
   const h = harness(); create(h); passed(h); h.event({ type: 'metrics', sha: A, report: { requiresDecision: true } });
   assert.throws(() => h.event({ type: 'publication-started', sha: A, tag: 'v1-beta.1' }), /owner-metrics-decision/);
-  h.event({ type: 'accept-metrics', sha: A, ownerDecision: { actor: 'owner', action: 'accept' } }); publish(h);
+  h.event({ type: 'accept-metrics', sha: A, ownerDecision: metricsDecision }); publish(h);
   assert.equal(h.candidate.status, 'published');
 });
 test('missing/noisy/incomparable measurements remain visible but do not block or prevent owner acknowledgement', () => {
   const h = harness(); create(h); passed(h); h.event({ type: 'metrics', sha: A, report: { requiresDecision: false, needsMeasurement: true } });
   assert.equal(releaseReadiness(h.candidate).ready, true);
-  h.event({ type: 'accept-metrics', sha: A, ownerDecision: { actor: 'owner' } });
+  h.event({ type: 'accept-metrics', sha: A, ownerDecision: metricsDecision });
   assert.equal(h.candidate.metrics.needsMeasurement, true); publish(h);
+});
+test('metrics approval requires an explicit decision source, never a shared actor login', () => {
+  const h = harness(); create(h); passed(h); h.event({ type: 'metrics', sha: A, report: { requiresDecision: true } });
+  for (const value of [{ actor: 'owner', action: 'accept' }, { ...metricsDecision, source: 'github-login' },
+    ...['decisionId', 'sourceRef', 'decisionText'].map(key => ({ ...metricsDecision, [key]: ' ' }))]) {
+    assert.throws(() => normalizeMetricsDecision(value), /Explicit metrics decision/);
+    assert.throws(() => h.event({ type: 'accept-metrics', sha: A, ownerDecision: value }), /Explicit metrics decision/);
+    assert.equal(h.candidate.metricsAcceptedSha, null);
+  }
+  const manual = { ...metricsDecision, source: 'manual', sourceRef: 'manual:owner-release-session', recordedBy: 'shared-login' };
+  h.event({ type: 'accept-metrics', sha: A, ownerDecision: manual });
+  assert.deepEqual(h.candidate.metricsDecision, manual); assert.equal(releaseReadiness(h.candidate).ready, true);
+  h.event({ type: 'fix', sha: B }); assert.equal(h.candidate.metricsAcceptedSha, null);
 });
 test('hotfix uses last stable and cannot run in parallel with a preparing release', () => {
   const h = harness(initialReleaseState({ stable: { sha: C, tag: 'v0', branch: 'release/old' } })); create(h);
@@ -237,4 +251,46 @@ test('actual runner report authorizes its clean Git candidate; dirty and deleted
     assert.throws(() => fresh.event({ type: 'publication-started', sha: materialSha, tag: 'v1' }), /dirty-material/);
     fresh.event({ type: 'fix', sha: B }); assert.equal(fresh.candidate.sha, B, 'a finished dirty run must not keep the candidate locked');
   }
+});
+
+async function returnFixture(t, { conflict = false } = {}) {
+  const directory = await mkdtemp(join(tmpdir(), 'hp-release-return-')), cwd = join(directory, 'work');
+  t.after(() => rm(directory, { recursive: true, force: true })); await mkdir(cwd);
+  const git = async args => (await runGit(args, { cwd })).stdout.trim();
+  await git(['init', '-b', 'dev']); await git(['config', 'user.name', 'Fixture']); await git(['config', 'user.email', 'fixture@example.invalid']);
+  await git(['config', 'core.hooksPath', join(directory, 'no-hooks')]);
+  await git(['init', '--bare', join(directory, 'remote.git')]); await git(['remote', 'add', 'origin', join(directory, 'remote.git')]);
+  await writeFile(join(cwd, 'model.txt'), 'base\n'); await git(['add', '.']); await git(['commit', '-m', 'base']);
+  await git(['checkout', '-b', 'release/stable']); await writeFile(join(cwd, 'model.txt'), 'published fix\n');
+  await git(['commit', '-am', 'reviewed release fix']); const sourceSha = await git(['rev-parse', 'HEAD']);
+  await git(['tag', '-a', 'v1', '-m', 'published stable']); await git(['push', 'origin', 'refs/tags/v1']);
+  await git(['checkout', 'dev']); await writeFile(join(cwd, conflict ? 'model.txt' : 'next.txt'), 'new dev work\n');
+  await git(['add', '.']); await git(['commit', '-m', 'next task']); const expectedBase = await git(['rev-parse', 'HEAD']);
+  await git(['push', 'origin', 'dev']); await git(['checkout', '-b', 'issue/1-return']);
+  const merge = () => git(['merge', '--no-ff', '-m', 'return published v1', sourceSha]);
+  if (conflict) {
+    await assert.rejects(merge()); await writeFile(join(cwd, 'model.txt'), 'manually reconciled fix and dev\n');
+    await git(['add', 'model.txt']); await git(['commit', '-m', 'resolve return conflict']);
+  } else await merge();
+  return { cwd, git, expectedBase, materialSha: await git(['rev-parse', 'HEAD']),
+    task: { syncMode: 'merge', mergeSourceSha: sourceSha, releaseTag: 'v1' }, adapter: new ReleaseGitAdapter({ cwd }) };
+}
+test('a clean return merge reuses published review; extra code or a local-only tag does not', async t => {
+  const f = await returnFixture(t), input = { task: f.task, expectedBase: f.expectedBase, materialSha: f.materialSha, patchId: D };
+  const before = { head: await f.git(['rev-parse', 'HEAD']), status: await f.git(['status', '--porcelain']) };
+  assert.deepEqual(await f.adapter.publishedReturnReview(input), { source: 'published-release', sourceSha: f.task.mergeSourceSha,
+    tag: 'v1', verdict: 'accepted', patchId: D, materialSha: f.materialSha });
+  assert.deepEqual({ head: await f.git(['rev-parse', 'HEAD']), status: await f.git(['status', '--porcelain']) }, before);
+  assert.equal(await f.adapter.publishedReturnReview({ ...input, task: { ...f.task, mergeSourceSha: f.expectedBase } }), null);
+  await f.git(['tag', 'local-only', f.task.mergeSourceSha]);
+  assert.equal(await f.adapter.publishedReturnReview({ ...input, task: { ...f.task, releaseTag: 'local-only' } }), null);
+  assert.equal(await f.adapter.publishedReturnReview({ ...input, materialSha: f.expectedBase }), null);
+  await writeFile(join(f.cwd, 'unreviewed.txt'), 'new work\n'); await f.git(['add', '.']); await f.git(['commit', '-m', 'unreviewed addition']);
+  assert.equal(await f.adapter.publishedReturnReview({ ...input, materialSha: await f.git(['rev-parse', 'HEAD']) }), null);
+});
+test('manual release-return conflict resolution still requires its own review', async t => {
+  const f = await returnFixture(t, { conflict: true });
+  await f.adapter.assertAncestor(f.task.mergeSourceSha, f.materialSha);
+  assert.equal(await f.adapter.publishedReturnReview({ task: f.task, expectedBase: f.expectedBase, materialSha: f.materialSha, patchId: D }), null);
+  assert.equal(await f.git(['status', '--porcelain']), '');
 });
