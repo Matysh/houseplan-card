@@ -16,6 +16,7 @@
 | Резерв тех же наборов в GitHub | `.github/workflows/process-next-fallback.yml`, `finish --s6 github` |
 | Фоновые мутации и диагностическое JS/TS coverage | `.github/workflows/process-next-background.yml` |
 | Подготовка, публикация и завершение выпуска | `cli.mjs release prepare/publish/complete` |
+| Завершение уже опубликованного выпуска с GitHub-секретами Telegram | Ручной `.github/workflows/process-next-release-complete.yml`, тот же `complete-release` |
 | Снимки и адресное принятие эталонов | `catalog/golden-runner.mjs`, `cli.mjs golden-accept` |
 
 `process-next/config.json` хранит настройки без секретов. GitHub хранит очередь
@@ -67,8 +68,10 @@ workflow из этого каталога; npm не устанавливает �
 живой запуск координатора. Продуктовый beta/stable-набор ради переключения
 не добавляется. Первую настоящую задачу выбирает владелец.
 
-OAuth-доступ Claude Code, HACS и Telegram проверяются отдельно от автономных
-тестов; секреты не записываются в Git или отчёты. Anthropic API для ревью не
+OAuth-доступ Claude Code и Telegram проверяются отдельно от автономных
+тестов; секреты не записываются в Git или отчёты. Для обычного подтверждения
+доставки сохраняется прежняя проверка публичного release feed и ZIP;
+доступ к пользовательскому HA не нужен. Anthropic API для ревью не
 используется. Переключение не является командой выпустить версию, послать
 анонс или принять визуальные расхождения. Непринятые панельные эталоны
 остаются видимым незавершённым результатом.

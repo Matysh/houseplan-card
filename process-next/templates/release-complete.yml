@@ -35,8 +35,6 @@ jobs:
           HP_PROCESS_NEXT_ACTIVATE: '1'
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           HP_RELEASE_CANDIDATE: ${{ inputs.candidate }}
-          HA_URL: ${{ vars.HA_URL }}
-          HA_TOKEN: ${{ secrets.HA_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GIT_AUTHOR_NAME: Houseplan process
