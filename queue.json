@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 251,
-  "nextTicket": 26,
+  "revision": 252,
+  "nextTicket": 27,
   "nextFence": 26,
   "tasks": {
     "1128": {
@@ -53,6 +53,20 @@
         "status": "published",
         "sourceSha": "de1043f3a3b45c3aa30016a7181cf227ff352713"
       }
+    },
+    "1169": {
+      "issue": 1169,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1169-wall-corner-seam",
+      "materialSha": "c53f2d2f098a3fee230ff0eeb5536253541d9117",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 26,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793567527099,
+      "reviewEntry": 1
     },
     "1175": {
       "issue": 1175,
@@ -350,7 +364,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1169
+  ],
   "active": {
     "issue": 1190,
     "worker": "github-coordinator",
@@ -753,6 +769,10 @@
     "github:41350438850:1:completions:metadata:0bae17b5-21fe-475c-8bbd-24357d55d10b:review-presentation:1153:spec:29a7e774c8fff74a1594": {
       "digest": "44f0e2e5b0a34b523a507ac0ae59b19b9057cbd170966cd3c4c9effe936cc568",
       "issue": 1153
+    },
+    "finish:17b52b52-6951-4f92-b89c-e841571982d8": {
+      "digest": "f9adb575dba93a6aa0e2047920cbae5dd3c74b1974d4d1e84c04b4af55c9ce58",
+      "issue": 1169
     }
   },
   "devWebhook": {
