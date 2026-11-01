@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 336,
-  "nextTicket": 36,
+  "revision": 337,
+  "nextTicket": 37,
   "nextFence": 36,
   "tasks": {
     "1128": {
@@ -265,14 +265,14 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/issue-1190-comment-history",
-      "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+      "materialSha": "a322dcc570681e2572f0004f265a21e64da9fe4c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 32,
-      "queued": false,
+      "ticket": 36,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793567990894,
-      "reviewEntry": 4,
+      "readyAt": 1793569337378,
+      "reviewEntry": 5,
       "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
       "changedFiles": [
         "PROCESS.md",
@@ -325,14 +325,7 @@
         "finishedAt": "2026-11-01T21:32:18.267Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewRequest": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573",
-      "reviewMaterial": {
-        "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
-        "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-        "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4"
-      },
-      "reason": "executor-fix"
+      "reviewRound": null
     },
     "1191": {
       "issue": 1191,
@@ -415,7 +408,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1190
+  ],
   "active": {
     "issue": 1169,
     "worker": "finish",
@@ -706,6 +701,46 @@
       "digest": "f24d56bb34cd7593723ec63a88115647bbded933a9984a3b4b010ca046256952",
       "issue": 1190
     },
+    "github:41352894128:1:tick:0:admit": {
+      "digest": "70b268eda23051edd0d13a57edc8d0b3c86d44bad5c2e9157b50de445c151b68",
+      "issue": 1169
+    },
+    "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:review-presentation:1190:code:24ad3f4c65e88af31d3e": {
+      "digest": "58f7e3b8a976bf9b1b9f5b8cde3b1cadde6e9c37e7a90c0fd4a92f38f22039eb",
+      "issue": 1190
+    },
+    "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:task-notice:1190::": {
+      "digest": "667ac8327c67f133ab499b599d20b83997fbb007c3916cd81322d5cfc2732ed4",
+      "issue": 1190
+    },
+    "finish:d572296e-b553-4d39-a14f-db3f44249659:finish:1:return": {
+      "digest": "a72dec2842ce47b664dff3297b027a660e22b6337d3285508578b516d180c18a",
+      "issue": 1169
+    },
+    "finish:d572296e-b553-4d39-a14f-db3f44249659:metadata:bbc45b15-c335-44d9-9040-aa66c48b586e:task-notice:1169::": {
+      "digest": "aae3c4b0186623ebcb95201546dbabdac0ebfcca33edc516541ec01ae8902918",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf": {
+      "digest": "21c133b738b0f4b661fee59aab51d3d0523ebab3b297325cd58652c512999d75",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:1:admit": {
+      "digest": "2ee00c20ffca298fcdf7cea135b6649e054886d903eb82af34959c1408c3c94e",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:2:synchronized": {
+      "digest": "141c352c5072854db5b51e4af01d6ffb8eda7793a1c4e63ee89837e800c2070e",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:3:s6-complete": {
+      "digest": "709ec8826aa872bc6cf4338f1a46305fe6f8424b71930a6de4b13a5caf26c0f8",
+      "issue": 1169
+    },
+    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:4:review-requested": {
+      "digest": "12dc1fb76b99cbbd9bd024a027c95888304f19a05e8f78838a8d9c0609b662e7",
+      "issue": 1169
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -880,45 +915,27 @@
         }
       }
     },
-    "github:41352894128:1:tick:0:admit": {
-      "digest": "70b268eda23051edd0d13a57edc8d0b3c86d44bad5c2e9157b50de445c151b68",
-      "issue": 1169
-    },
-    "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:review-presentation:1190:code:24ad3f4c65e88af31d3e": {
-      "digest": "58f7e3b8a976bf9b1b9f5b8cde3b1cadde6e9c37e7a90c0fd4a92f38f22039eb",
-      "issue": 1190
-    },
-    "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:task-notice:1190::": {
-      "digest": "667ac8327c67f133ab499b599d20b83997fbb007c3916cd81322d5cfc2732ed4",
-      "issue": 1190
-    },
-    "finish:d572296e-b553-4d39-a14f-db3f44249659:finish:1:return": {
-      "digest": "a72dec2842ce47b664dff3297b027a660e22b6337d3285508578b516d180c18a",
-      "issue": 1169
-    },
-    "finish:d572296e-b553-4d39-a14f-db3f44249659:metadata:bbc45b15-c335-44d9-9040-aa66c48b586e:task-notice:1169::": {
-      "digest": "aae3c4b0186623ebcb95201546dbabdac0ebfcca33edc516541ec01ae8902918",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf": {
-      "digest": "21c133b738b0f4b661fee59aab51d3d0523ebab3b297325cd58652c512999d75",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:1:admit": {
-      "digest": "2ee00c20ffca298fcdf7cea135b6649e054886d903eb82af34959c1408c3c94e",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:2:synchronized": {
-      "digest": "141c352c5072854db5b51e4af01d6ffb8eda7793a1c4e63ee89837e800c2070e",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:3:s6-complete": {
-      "digest": "709ec8826aa872bc6cf4338f1a46305fe6f8424b71930a6de4b13a5caf26c0f8",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:4:review-requested": {
-      "digest": "12dc1fb76b99cbbd9bd024a027c95888304f19a05e8f78838a8d9c0609b662e7",
-      "issue": 1169
+    "finish:6f19b45e-1614-4550-b598-e41064e4579c": {
+      "digest": "4fe3b5b3b8fbe34237f64e4a284af5caeee9d086e0922821626d135857351269",
+      "issue": 1190,
+      "message": {
+        "kind": "queued",
+        "issue": 1190,
+        "at": 1793569337378,
+        "entry": 5,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "a322dcc570681e2572f0004f265a21e64da9fe4c",
+        "evidence": {
+          "id": "20261101T213054873-47638673",
+          "name": "Тесты для задачи #1190 (правки после ревью)",
+          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T213054873-47638673/report.json",
+          "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+          "status": "passed",
+          "finishedAt": "2026-11-01T21:32:18.267Z",
+          "failures": []
+        }
+      }
     }
   },
   "devWebhook": {
