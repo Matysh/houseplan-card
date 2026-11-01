@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 472,
+  "revision": 473,
   "nextTicket": 50,
   "nextFence": 48,
   "tasks": {
@@ -448,10 +448,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1197:1:33052548f46b6ea625390a56ca00555d6638c9d1:bcd8773e35660bde4b207118371c19aa8a36da5e",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 11
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "pending"
