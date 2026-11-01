@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 280,
-  "nextTicket": 32,
+  "revision": 281,
+  "nextTicket": 33,
   "nextFence": 31,
   "tasks": {
     "1128": {
@@ -290,14 +290,14 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/issue-1190-comment-history",
-      "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
+      "materialSha": "9628f243c65b1b7f5b9d0d8489668ca78e810c33",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 25,
-      "queued": false,
+      "ticket": 32,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793566786222,
-      "reviewEntry": 3,
+      "readyAt": 1793567990894,
+      "reviewEntry": 4,
       "patchId": "4155815da86360ab7a73db1d74a587371e6cee65",
       "changedFiles": [
         "PROCESS.md",
@@ -344,14 +344,7 @@
         "finishedAt": "2026-11-01T21:07:54.269Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewRequest": "review:1190:3:4155815da86360ab7a73db1d74a587371e6cee65:de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "reviewMaterial": {
-        "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
-        "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "patchId": "4155815da86360ab7a73db1d74a587371e6cee65"
-      },
-      "reason": "review-findings"
+      "reviewRound": null
     }
   },
   "ownerDecisions": {},
@@ -407,7 +400,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1153
+    1153,
+    1190
   ],
   "active": {
     "issue": 1175,
@@ -721,6 +715,106 @@
       "digest": "1ba1be39d727016ffee015a098e4ff5c8fc57cfcb10248a6b2e6eda6f17f0167",
       "issue": 1190
     },
+    "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:review-presentation:1190:code:d90acc915383cea7b6dd": {
+      "digest": "7a7c271194112b62690d17b7371c9c27b396f2e4cba03226116bdc2cc0dd05b8",
+      "issue": 1190
+    },
+    "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:task-notice:1190::": {
+      "digest": "15bbe2ad2de8a6c96256a6b704b697a4507973bceb7e4b0bd978bcb41827323f",
+      "issue": 1190
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06": {
+      "digest": "4c0a91399c82ee76986ef630d972cfa4f60ca240af32a8fd627b9bb5a3000bf0",
+      "issue": 1175
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:1:admit": {
+      "digest": "0e50996676817f5af892d536c23d616d3f234af34071aadd2e8a66ca7bccd202",
+      "issue": 1169
+    },
+    "finish:17b52b52-6951-4f92-b89c-e841571982d8:finish:1:return": {
+      "digest": "5364a0c542dc940a12fad7e6764c56ef2cd323620f7b27346638d8bcb97e4da8",
+      "issue": 1169
+    },
+    "finish:17b52b52-6951-4f92-b89c-e841571982d8:metadata:60a8966d-f8ac-4452-a17a-f4ac9b42db10:task-notice:1169::": {
+      "digest": "8185510b59371c8deddab3115ac6c723cc22f786a4a3fe20aee87bce218c6b67",
+      "issue": 1169
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4": {
+      "digest": "1d3265011d2ca991cce16938fa1c1f1cca0625969dc159138516dcd93495f3e9",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:1:admit": {
+      "digest": "b873433a444a28a01137940c02fe293a8b7db958a1f3b32780dfdd7fed9ef9fe",
+      "issue": 1175
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:2:synchronized": {
+      "digest": "4992f949cc8abac186b2a85b7b229660cbb66b7df3088bddbb9f4bace1976fe2",
+      "issue": 1175
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:3:return": {
+      "digest": "1809a02cdd13c5864a46dca67e6bf44e115db3aa3457c974ea06a660955f31d0",
+      "issue": 1175
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:metadata:d459097c-865a-456a-a9d0-a3fc6b4ce367:task-notice:1175::": {
+      "digest": "46bf1492e9f9516a41ac231f4935da0b0383aa27e350cbf8a4a7e4ed57aa6f4b",
+      "issue": 1175
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit": {
+      "digest": "73848af86479438f063803bfc6066eefdb7d9b26b712f12f21150afa45287c41",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:3:synchronized": {
+      "digest": "1d7c32ff5361da630bc94657bd0b1fcfe4c11781c9a99be74f8d8cbd691c8480",
+      "issue": 1153
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
+      "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
+      "issue": 1169
+    },
+    "finish:b3ca58cb-db68-4178-8711-f89a88197744": {
+      "digest": "0e895d4029aed12a2ba422a816f3695a22a521a3c8d40084e115dfca9b40b0cb",
+      "issue": 1175
+    },
+    "finish:98926a4b-c821-4660-9609-40327d4977ca": {
+      "digest": "8012286ced62f8d2c4ec69686b95fc3d0c0b3b689e896b07f6a2be44e978223c",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:4:return": {
+      "digest": "84dd35cbf176facdb5192f3d00bd36e2a9b13856c4cb85bc4312622ad79fc078",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:metadata:bd6a4b52-6faf-4b80-a30c-3207354e7ecc:task-notice:1153::": {
+      "digest": "0eb0c98fa7d4c6fa409be21267669cf534c5ec32203b9aaac6c9c92f0b9ab49a",
+      "issue": 1153
+    },
+    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit": {
+      "digest": "fbb2e6ae728a8c23fae5f53f430e54866510408c0a1684c04cb08c19cda53506",
+      "issue": 1169
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:1:synchronized": {
+      "digest": "95aebb73b2b39ac98abe6b5b0dcd506674b4ed22d56acc119f79d24ac4dcf8ce",
+      "issue": 1169
+    },
+    "finish:ca71860c-2087-49a1-9217-504cc1be5922": {
+      "digest": "d38254598bda2a508e4ffd5cc1ecbd8a7ef0d0402d2dc5da975a80c96e0fca6c",
+      "issue": 1169
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:2:return": {
+      "digest": "2262c07a1fae4bee7d3393c992de6254feb8be4fb629f4357d789eb625cbf5d5",
+      "issue": 1169
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:metadata:eb560301-bef2-4074-af99-dd8adc00cd1d:task-notice:1169::": {
+      "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
+      "issue": 1169
+    },
+    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d": {
+      "digest": "bfe22b761fa5ee4e1fb5bad4e4dae27927ee4d37f4aae09af09a0287015f9c58",
+      "issue": 1153
+    },
+    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:1:admit": {
+      "digest": "691e6c47b2ff3ea09761fbac29f42d016ca09fd35619a1fb65395c01536be3ca",
+      "issue": 1175
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -826,105 +920,27 @@
         "transitionConfirmed": true
       }
     },
-    "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:review-presentation:1190:code:d90acc915383cea7b6dd": {
-      "digest": "7a7c271194112b62690d17b7371c9c27b396f2e4cba03226116bdc2cc0dd05b8",
-      "issue": 1190
-    },
-    "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:task-notice:1190::": {
-      "digest": "15bbe2ad2de8a6c96256a6b704b697a4507973bceb7e4b0bd978bcb41827323f",
-      "issue": 1190
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06": {
-      "digest": "4c0a91399c82ee76986ef630d972cfa4f60ca240af32a8fd627b9bb5a3000bf0",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:1:admit": {
-      "digest": "0e50996676817f5af892d536c23d616d3f234af34071aadd2e8a66ca7bccd202",
-      "issue": 1169
-    },
-    "finish:17b52b52-6951-4f92-b89c-e841571982d8:finish:1:return": {
-      "digest": "5364a0c542dc940a12fad7e6764c56ef2cd323620f7b27346638d8bcb97e4da8",
-      "issue": 1169
-    },
-    "finish:17b52b52-6951-4f92-b89c-e841571982d8:metadata:60a8966d-f8ac-4452-a17a-f4ac9b42db10:task-notice:1169::": {
-      "digest": "8185510b59371c8deddab3115ac6c723cc22f786a4a3fe20aee87bce218c6b67",
-      "issue": 1169
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4": {
-      "digest": "1d3265011d2ca991cce16938fa1c1f1cca0625969dc159138516dcd93495f3e9",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:1:admit": {
-      "digest": "b873433a444a28a01137940c02fe293a8b7db958a1f3b32780dfdd7fed9ef9fe",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:2:synchronized": {
-      "digest": "4992f949cc8abac186b2a85b7b229660cbb66b7df3088bddbb9f4bace1976fe2",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:3:return": {
-      "digest": "1809a02cdd13c5864a46dca67e6bf44e115db3aa3457c974ea06a660955f31d0",
-      "issue": 1175
-    },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:metadata:d459097c-865a-456a-a9d0-a3fc6b4ce367:task-notice:1175::": {
-      "digest": "46bf1492e9f9516a41ac231f4935da0b0383aa27e350cbf8a4a7e4ed57aa6f4b",
-      "issue": 1175
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit": {
-      "digest": "73848af86479438f063803bfc6066eefdb7d9b26b712f12f21150afa45287c41",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:3:synchronized": {
-      "digest": "1d7c32ff5361da630bc94657bd0b1fcfe4c11781c9a99be74f8d8cbd691c8480",
-      "issue": 1153
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
-      "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
-      "issue": 1169
-    },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744": {
-      "digest": "0e895d4029aed12a2ba422a816f3695a22a521a3c8d40084e115dfca9b40b0cb",
-      "issue": 1175
-    },
-    "finish:98926a4b-c821-4660-9609-40327d4977ca": {
-      "digest": "8012286ced62f8d2c4ec69686b95fc3d0c0b3b689e896b07f6a2be44e978223c",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:4:return": {
-      "digest": "84dd35cbf176facdb5192f3d00bd36e2a9b13856c4cb85bc4312622ad79fc078",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:metadata:bd6a4b52-6faf-4b80-a30c-3207354e7ecc:task-notice:1153::": {
-      "digest": "0eb0c98fa7d4c6fa409be21267669cf534c5ec32203b9aaac6c9c92f0b9ab49a",
-      "issue": 1153
-    },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit": {
-      "digest": "fbb2e6ae728a8c23fae5f53f430e54866510408c0a1684c04cb08c19cda53506",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:1:synchronized": {
-      "digest": "95aebb73b2b39ac98abe6b5b0dcd506674b4ed22d56acc119f79d24ac4dcf8ce",
-      "issue": 1169
-    },
-    "finish:ca71860c-2087-49a1-9217-504cc1be5922": {
-      "digest": "d38254598bda2a508e4ffd5cc1ecbd8a7ef0d0402d2dc5da975a80c96e0fca6c",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:2:return": {
-      "digest": "2262c07a1fae4bee7d3393c992de6254feb8be4fb629f4357d789eb625cbf5d5",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:metadata:eb560301-bef2-4074-af99-dd8adc00cd1d:task-notice:1169::": {
-      "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
-      "issue": 1169
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d": {
-      "digest": "bfe22b761fa5ee4e1fb5bad4e4dae27927ee4d37f4aae09af09a0287015f9c58",
-      "issue": 1153
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:1:admit": {
-      "digest": "691e6c47b2ff3ea09761fbac29f42d016ca09fd35619a1fb65395c01536be3ca",
-      "issue": 1175
+    "finish:60a095fb-1729-4d5d-bfd6-44911ddf9704": {
+      "digest": "8aebb967cd97ca3e1f02ce04e1e4bbe9ba638c0d31a62a50dd0981cca8104cc3",
+      "issue": 1190,
+      "message": {
+        "kind": "queued",
+        "issue": 1190,
+        "at": 1793567990894,
+        "entry": 4,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "9628f243c65b1b7f5b9d0d8489668ca78e810c33",
+        "evidence": {
+          "id": "20261101T210626194-1403dfed",
+          "name": "Тесты для задачи #1190 (перед ревью)",
+          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T210626194-1403dfed/report.json",
+          "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
+          "status": "passed",
+          "finishedAt": "2026-11-01T21:07:54.269Z",
+          "failures": []
+        }
+      }
     }
   },
   "devWebhook": {
