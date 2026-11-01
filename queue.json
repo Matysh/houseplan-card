@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 209,
+  "revision": 210,
   "nextTicket": 23,
   "nextFence": 22,
   "tasks": {
@@ -299,7 +299,7 @@
     "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
     "phase": "testing",
     "admittedAt": 1793566172779,
-    "expiresAt": 1793566579062,
+    "expiresAt": 1793566719216,
     "patchId": "3d522d2fa4922adc96c0be94ccdb172a715a1651"
   },
   "events": {
@@ -419,6 +419,22 @@
       "digest": "138aca043891613bc33e9f4d0b6779cb724b60817905db250937c095d02caee0",
       "issue": 1190
     },
+    "github:41349027156:1:spec:1169:spec-presentation": {
+      "digest": "b2dff4432c8936c60e262ea9bada7ea08cfc01615e1d8d3cba3ad5b3c03247ba",
+      "issue": 1169
+    },
+    "github:41349027156:1:spec:1169:spec-complete": {
+      "digest": "f2aac7e8d7be38efa4ce7a2cff45b9cec3fb62f1a2d45178ff857581eae6378e",
+      "issue": 1169
+    },
+    "github:41349027156:1:completions:metadata:358a4775-9fd2-447e-b12a-fc9a82964297:review-presentation:1169:spec:f7cec9c76600e67ba55f": {
+      "digest": "ba4b27409378219f6ebd89cb357226e1a4132a9a749fdd0b3d106ba20bc979e7",
+      "issue": 1169
+    },
+    "finish:be9df8cf-30c6-40d3-bafd-a8886641515a": {
+      "digest": "0738d7f6d6c33315e2afeecab39fbb595791222bab83443a4dc6ab4889002992",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -431,18 +447,6 @@
         "layer": "infra",
         "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
       }
-    },
-    "github:41349027156:1:spec:1169:spec-presentation": {
-      "digest": "b2dff4432c8936c60e262ea9bada7ea08cfc01615e1d8d3cba3ad5b3c03247ba",
-      "issue": 1169
-    },
-    "github:41349027156:1:spec:1169:spec-complete": {
-      "digest": "f2aac7e8d7be38efa4ce7a2cff45b9cec3fb62f1a2d45178ff857581eae6378e",
-      "issue": 1169
-    },
-    "github:41349027156:1:completions:metadata:358a4775-9fd2-447e-b12a-fc9a82964297:review-presentation:1169:spec:f7cec9c76600e67ba55f": {
-      "digest": "ba4b27409378219f6ebd89cb357226e1a4132a9a749fdd0b3d106ba20bc979e7",
-      "issue": 1169
     }
   },
   "devWebhook": {
