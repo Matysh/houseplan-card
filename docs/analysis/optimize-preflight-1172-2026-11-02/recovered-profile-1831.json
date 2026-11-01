@@ -1,0 +1,249 @@
+{
+  "mode": "decomposition",
+  "warmups": 3,
+  "count": 1,
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "linux",
+    "arch": "x64",
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+    "logicalCpu": 22,
+    "power": "unknown",
+    "loadAverage": [
+      1.57,
+      0.69,
+      0.64
+    ]
+  },
+  "startedAt": "2026-11-01T21:47:36.587Z",
+  "samplesMs": [
+    503.47566699999993
+  ],
+  "summary": {
+    "min": 503.47566699999993,
+    "median": 503.47566699999993,
+    "p95": 503.47566699999993,
+    "max": 503.47566699999993
+  },
+  "phaseRows": [
+    {
+      "total": 503.47566699999993,
+      "fingerprint": 1.320116999999982,
+      "prepare": 4.328945000000203,
+      "wall": 497.49714199999994,
+      "floor": 0,
+      "residual": 0.3294629999998051,
+      "calls": {
+        "fingerprint": 1,
+        "prepare": 3,
+        "wall": 3,
+        "floor": 0
+      }
+    }
+  ],
+  "profile": {
+    "iterations": 3,
+    "samplingIntervalUs": 1000,
+    "exclusiveSamples": [
+      {
+        "function": "(garbage collector)",
+        "url": "",
+        "line": 0,
+        "milliseconds": 123.13
+      },
+      {
+        "function": "post",
+        "url": "node:inspector",
+        "line": 118,
+        "milliseconds": 37.333
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 19.461
+      },
+      {
+        "function": "compare",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 140,
+        "milliseconds": 19.438
+      },
+      {
+        "function": "P.isLessThan.P.lt",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1864,
+        "milliseconds": 18.4
+      },
+      {
+        "function": "P.multipliedBy.P.times",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 2126,
+        "milliseconds": 16.208
+      },
+      {
+        "function": "RingIn",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 1007,
+        "milliseconds": 14.069
+      },
+      {
+        "function": "P.isGreaterThan.P.gt",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1837,
+        "milliseconds": 13.971
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 13.052
+      },
+      {
+        "function": "process",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 436,
+        "milliseconds": 12.959
+      },
+      {
+        "function": "P.minus",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1930,
+        "milliseconds": 12.896
+      },
+      {
+        "function": "compare",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 630,
+        "milliseconds": 11.928
+      },
+      {
+        "function": "compare",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 630,
+        "milliseconds": 11.925
+      },
+      {
+        "function": "P.minus",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1930,
+        "milliseconds": 11.879
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 11.862
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 10.86
+      },
+      {
+        "function": "P.multipliedBy.P.times",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 2126,
+        "milliseconds": 10.839
+      },
+      {
+        "function": "compare",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 140,
+        "milliseconds": 10.813
+      },
+      {
+        "function": "P.isLessThan.P.lt",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1864,
+        "milliseconds": 10.81
+      },
+      {
+        "function": "run",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 544,
+        "milliseconds": 10.775
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 10.742
+      },
+      {
+        "function": "P.multipliedBy.P.times",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 2126,
+        "milliseconds": 9.799
+      },
+      {
+        "function": "P.isLessThanOrEqualTo.P.lte",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1873,
+        "milliseconds": 9.775
+      },
+      {
+        "function": "P.toNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 2686,
+        "milliseconds": 9.762
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 9.738
+      },
+      {
+        "function": "P.isGreaterThan.P.gt",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1837,
+        "milliseconds": 9.715
+      },
+      {
+        "function": "P.isLessThan.P.lt",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1864,
+        "milliseconds": 9.684
+      },
+      {
+        "function": "P.minus",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 1930,
+        "milliseconds": 9.673
+      },
+      {
+        "function": "bbox",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+        "line": 727,
+        "milliseconds": 8.679
+      },
+      {
+        "function": "BigNumber",
+        "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+        "line": 179,
+        "milliseconds": 8.678
+      }
+    ],
+    "sha256": "07e3692f191280c63c28778f9781d3ed9d89c966e1d8f4e3c7704f78ce761263"
+  },
+  "modelProjection": {
+    "samplesMs": [
+      0.16198399999984758,
+      0.18319199999996272,
+      0.18027799999981653,
+      0.1670680000001994,
+      0.11493500000005952
+    ],
+    "summary": {
+      "min": 0.11493500000005952,
+      "median": 0.1670680000001994,
+      "p95": 0.18319199999996272,
+      "max": 0.18319199999996272
+    },
+    "callsPerSample": 3,
+    "note": "Independent diagnostic, not subtracted from the full series; residual also includes names, guards and loops."
+  }
+}

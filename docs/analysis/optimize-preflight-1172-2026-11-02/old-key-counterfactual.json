@@ -1,0 +1,158 @@
+{
+  "diagnosticOnly": true,
+  "notThePrimaryFixture": true,
+  "note": "Old pre-260 key labels, applied only to a separate copy under unchanged v1.83.0 production; not a recreated historical environment or budget PASS",
+  "material": "cb2c71ab7b5943e607b83a4f052a734eb36b22f7",
+  "rawFixtureSha256": "eecc2b37b460bcc4d65db87462feef7633addcf5f590dc5fc8a460db70e2bf73",
+  "counterfactualFixtureSha256": "e07fdc8c177f91d5e2233975c2db471b7a092bebb24db0521a6b8054259d6c7c",
+  "realCounts": [
+    {
+      "space": "perf-floor-1",
+      "walls": 49,
+      "physicalBodies": 34
+    },
+    {
+      "space": "perf-floor-2",
+      "walls": 49,
+      "physicalBodies": 33
+    },
+    {
+      "space": "perf-floor-3",
+      "walls": 49,
+      "physicalBodies": 33
+    }
+  ],
+  "oldLabelCounts": [
+    {
+      "space": "perf-floor-1",
+      "walls": 49,
+      "physicalBodies": 34
+    },
+    {
+      "space": "perf-floor-2",
+      "walls": 49,
+      "physicalBodies": 33
+    },
+    {
+      "space": "perf-floor-3",
+      "walls": 49,
+      "physicalBodies": 33
+    }
+  ],
+  "raw": {
+    "mode": "full",
+    "warmups": 3,
+    "count": 20,
+    "environment": {
+      "node": "v22.23.2",
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+      "logicalCpu": 22,
+      "power": "unknown",
+      "loadAverage": [
+        0.35,
+        0.43,
+        0.58
+      ]
+    },
+    "startedAt": "2026-11-01T21:44:54.410Z",
+    "samplesMs": [
+      498.1086560000001,
+      502.66093899999987,
+      493.5446109999998,
+      487.72250600000007,
+      490.23377600000003,
+      494.8977960000002,
+      485.24676,
+      508.81430199999977,
+      492.49292200000036,
+      499.34882500000003,
+      493.330731,
+      481.90018000000055,
+      489.10446799999954,
+      487.3448520000002,
+      489.85697900000014,
+      506.4292089999999,
+      495.43274700000075,
+      493.6289030000007,
+      487.1905590000006,
+      483.74988699999994
+    ],
+    "summary": {
+      "min": 481.90018000000055,
+      "median": 492.49292200000036,
+      "p95": 506.4292089999999,
+      "max": 508.81430199999977
+    },
+    "phaseRows": []
+  },
+  "preparedThicknessDiagnostic": [
+    {
+      "input": "fixture",
+      "floors": [
+        {
+          "space": "perf-floor-1",
+          "resolvedIntervals": 80,
+          "resolvedPositiveIntervals": 80,
+          "walls": 49,
+          "positiveThickness": 49,
+          "thicknessSumCm": 735,
+          "physicalBodies": 34
+        },
+        {
+          "space": "perf-floor-2",
+          "resolvedIntervals": 80,
+          "resolvedPositiveIntervals": 80,
+          "walls": 49,
+          "positiveThickness": 49,
+          "thicknessSumCm": 735,
+          "physicalBodies": 33
+        },
+        {
+          "space": "perf-floor-3",
+          "resolvedIntervals": 80,
+          "resolvedPositiveIntervals": 80,
+          "walls": 49,
+          "positiveThickness": 49,
+          "thicknessSumCm": 735,
+          "physicalBodies": 33
+        }
+      ]
+    },
+    {
+      "input": "old-key-labels",
+      "floors": [
+        {
+          "space": "perf-floor-1",
+          "resolvedIntervals": 80,
+          "resolvedPositiveIntervals": 80,
+          "walls": 49,
+          "positiveThickness": 49,
+          "thicknessSumCm": 735,
+          "physicalBodies": 34
+        },
+        {
+          "space": "perf-floor-2",
+          "resolvedIntervals": 80,
+          "resolvedPositiveIntervals": 80,
+          "walls": 49,
+          "positiveThickness": 49,
+          "thicknessSumCm": 735,
+          "physicalBodies": 33
+        },
+        {
+          "space": "perf-floor-3",
+          "resolvedIntervals": 80,
+          "resolvedPositiveIntervals": 80,
+          "walls": 49,
+          "positiveThickness": 49,
+          "thicknessSumCm": 735,
+          "physicalBodies": 33
+        }
+      ]
+    }
+  ],
+  "interpretation": "Current v1.83.0 adapters recover a/b records; this control does not reproduce historical missing-wall semantics or establish the cause of the present latency."
+}

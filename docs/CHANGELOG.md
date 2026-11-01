@@ -4,6 +4,7 @@
 
 - Save avoids a duplicate full-config fingerprint walk when caching an accepted config/set response. Every acceptance still computes a fresh hash and retains isolated config/layout snapshots, revisions and rollback behavior. Bounded Save profiling and comparison are recorded for #1153. [#1153](https://github.com/Matysh/houseplan-card/issues/1153)
 - Golden capture records the checked-out candidate SHA independently of the workflow event SHA, so fallback reports identify the material correctly while preserving CI provenance and the acceptance checks. [#1191](https://github.com/Matysh/houseplan-card/issues/1191)
+- Document reproducible Optimize preflight research: pinned stable/current raw series locate the cost in the shared wall boolean pass; retain the old 250 ms failure and propose separate UI-blocking/reuse work without changing geometry or release gates. [#1172](https://github.com/Matysh/houseplan-card/issues/1172)
 
 - Copy space offers independent furniture and decor checkboxes, both initially off, using the existing UI Kit. Selected objects keep their order and fields with new IDs; the source and copy validation/write lifecycle are preserved. [#1156](https://github.com/Matysh/houseplan-card/issues/1156)
 - Keep the vacuum path connected to the actually animated puck across sparse telemetry and full native path catch-up; preserve observed turns, native authority and real context/teleport gaps. Unavailable robots retire stale active pucks. [#1175](https://github.com/Matysh/houseplan-card/issues/1175)

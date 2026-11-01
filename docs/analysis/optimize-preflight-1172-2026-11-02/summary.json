@@ -1,0 +1,360 @@
+{
+  "note": "Ordinary latency, diagnostic phase means and separate CPU samples are kept distinct. Recovered historical profiles are explicitly separate captures.",
+  "rows": [
+    {
+      "label": "stable-1.83.0",
+      "sha": "cb2c71ab7b5943e607b83a4f052a734eb36b22f7",
+      "coldDirect": {
+        "min": 594.077595,
+        "median": 612.1618159999999,
+        "p95": 612.70385,
+        "max": 612.70385
+      },
+      "coldFull": {
+        "min": 626.493429,
+        "median": 636.960897,
+        "p95": 678.8774350000001,
+        "max": 678.8774350000001
+      },
+      "warmDirect": {
+        "min": 473.8065910000005,
+        "median": 490.9826920000005,
+        "p95": 527.1604889999999,
+        "max": 541.6628060000003
+      },
+      "warmFull": {
+        "min": 482.2648360000003,
+        "median": 494.545028,
+        "p95": 559.8756920000001,
+        "max": 562.4686929999998
+      },
+      "budget": {
+        "baseline": {
+          "min": 473.8065910000005,
+          "median": 490.9826920000005,
+          "p95": 527.1604889999999,
+          "max": 541.6628060000003
+        },
+        "candidate": {
+          "min": 482.2648360000003,
+          "median": 494.545028,
+          "p95": 559.8756920000001,
+          "max": 562.4686929999998
+        },
+        "absoluteP95Ms": 250,
+        "relativeLimitP95Ms": 647.5925867999998,
+        "absolutePass": false,
+        "relativePass": true,
+        "pass": false
+      },
+      "decomposition": {
+        "total": 517.1873366000001,
+        "fingerprint": 1.4370467999998255,
+        "prepare": 3.9661095999999816,
+        "wall": 511.4963237999999,
+        "floor": 0,
+        "residual": 0.2878564000002825
+      },
+      "calls": {
+        "fingerprint": 1,
+        "prepare": 3,
+        "wall": 3,
+        "floor": 0
+      },
+      "independentModel": {
+        "min": 0.10083100000065315,
+        "median": 0.10544200000003912,
+        "p95": 0.9739749999998821,
+        "max": 0.9739749999998821
+      },
+      "profileFile": "recovered-1830.cpuprofile.gz",
+      "profileGroupsMs": {
+        "profiler-overhead": 44.424,
+        "production": 85.851,
+        "GC": 115.24599999999991,
+        "bignumber.js": 994.3389999999996,
+        "polyclip-ts": 333.484,
+        "splaytree-ts": 28.001999999999995
+      },
+      "legacy": {
+        "exitCode": 1,
+        "report": {
+          "issue": 199,
+          "fixture": {
+            "floors": 3,
+            "rooms": 60,
+            "devices": 200,
+            "openings": 100,
+            "partitions": 60,
+            "columns": 40,
+            "decor": 500,
+            "stairs": 250
+          },
+          "warmups": 3,
+          "samples": 20,
+          "baseline": {
+            "min": 483.95477700000083,
+            "median": 490.0813990000006,
+            "p95": 513.256648,
+            "max": 514.1760009999998
+          },
+          "candidate": {
+            "min": 479.08075199999985,
+            "median": 493.0278360000011,
+            "p95": 531.3634889999994,
+            "max": 536.5613759999978
+          },
+          "budgets": {
+            "absoluteP95Ms": 250,
+            "relativeRatio": 1.2,
+            "relativeNoiseMs": 15,
+            "relativeLimitP95Ms": 630.9079776
+          },
+          "pass": false
+        }
+      },
+      "inputAudit": {
+        "optimizerChanged": true,
+        "optimizedConfigSha256": "5d1c56ecc46cb638ad863e34bb19c01de0cf8e573fff53bd43824ab05b605d18",
+        "note": "Audit outside timing workers; the main comparison deliberately retains the old raw benchmark input."
+      }
+    },
+    {
+      "label": "stable-1.83.1",
+      "sha": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+      "coldDirect": {
+        "min": 591.0462,
+        "median": 611.405128,
+        "p95": 638.136031,
+        "max": 638.136031
+      },
+      "coldFull": {
+        "min": 645.152347,
+        "median": 660.865268,
+        "p95": 668.707782,
+        "max": 668.707782
+      },
+      "warmDirect": {
+        "min": 477.46939100000054,
+        "median": 492.4155030000002,
+        "p95": 534.1667189999998,
+        "max": 588.7481129999996
+      },
+      "warmFull": {
+        "min": 495.9782370000012,
+        "median": 522.5273159999997,
+        "p95": 555.3533269999998,
+        "max": 570.8809139999998
+      },
+      "budget": {
+        "baseline": {
+          "min": 477.46939100000054,
+          "median": 492.4155030000002,
+          "p95": 534.1667189999998,
+          "max": 588.7481129999996
+        },
+        "candidate": {
+          "min": 495.9782370000012,
+          "median": 522.5273159999997,
+          "p95": 555.3533269999998,
+          "max": 570.8809139999998
+        },
+        "absoluteP95Ms": 250,
+        "relativeLimitP95Ms": 656.0000627999998,
+        "absolutePass": false,
+        "relativePass": true,
+        "pass": false
+      },
+      "decomposition": {
+        "total": 504.04644399999995,
+        "fingerprint": 1.3395666000000346,
+        "prepare": 3.85902959999994,
+        "wall": 498.5706606,
+        "floor": 0,
+        "residual": 0.2771872000000258
+      },
+      "calls": {
+        "fingerprint": 1,
+        "prepare": 3,
+        "wall": 3,
+        "floor": 0
+      },
+      "independentModel": {
+        "min": 0.09572099999968486,
+        "median": 0.10679100000015751,
+        "p95": 0.17659199999980046,
+        "max": 0.17659199999980046
+      },
+      "profileFile": "recovered-1831.cpuprofile.gz",
+      "profileGroupsMs": {
+        "profiler-overhead": 37.333,
+        "production": 88.97199999999994,
+        "GC": 123.12999999999997,
+        "polyclip-ts": 384.1919999999999,
+        "bignumber.js": 906.6039999999995,
+        "splaytree-ts": 28.163999999999994,
+        "other": 2.182
+      },
+      "legacy": {
+        "exitCode": 1,
+        "report": {
+          "issue": 199,
+          "fixture": {
+            "floors": 3,
+            "rooms": 60,
+            "devices": 200,
+            "openings": 100,
+            "partitions": 60,
+            "columns": 40,
+            "decor": 500,
+            "stairs": 250
+          },
+          "warmups": 3,
+          "samples": 20,
+          "baseline": {
+            "min": 482.38107599999967,
+            "median": 493.61494300000004,
+            "p95": 518.734657,
+            "max": 518.9795940000004
+          },
+          "candidate": {
+            "min": 486.0371239999986,
+            "median": 494.7536390000023,
+            "p95": 512.2064910000008,
+            "max": 539.3624769999988
+          },
+          "budgets": {
+            "absoluteP95Ms": 250,
+            "relativeRatio": 1.2,
+            "relativeNoiseMs": 15,
+            "relativeLimitP95Ms": 637.4815884
+          },
+          "pass": false
+        }
+      },
+      "inputAudit": {
+        "optimizerChanged": true,
+        "optimizedConfigSha256": "5d1c56ecc46cb638ad863e34bb19c01de0cf8e573fff53bd43824ab05b605d18",
+        "note": "Audit outside timing workers; the main comparison deliberately retains the old raw benchmark input."
+      }
+    },
+    {
+      "label": "current-37f59fa",
+      "sha": "37f59faef16f6efad06387486943d51202c7d57c",
+      "coldDirect": {
+        "min": 591.643904,
+        "median": 607.400447,
+        "p95": 618.6555430000001,
+        "max": 618.6555430000001
+      },
+      "coldFull": {
+        "min": 627.592475,
+        "median": 633.737712,
+        "p95": 645.427119,
+        "max": 645.427119
+      },
+      "warmDirect": {
+        "min": 470.1927539999997,
+        "median": 488.9135389999992,
+        "p95": 511.9507800000001,
+        "max": 512.435105999999
+      },
+      "warmFull": {
+        "min": 481.2758509999999,
+        "median": 495.98712099999966,
+        "p95": 516.5365689999999,
+        "max": 527.9341390000009
+      },
+      "budget": {
+        "baseline": {
+          "min": 470.1927539999997,
+          "median": 488.9135389999992,
+          "p95": 511.9507800000001,
+          "max": 512.435105999999
+        },
+        "candidate": {
+          "min": 481.2758509999999,
+          "median": 495.98712099999966,
+          "p95": 516.5365689999999,
+          "max": 527.9341390000009
+        },
+        "absoluteP95Ms": 250,
+        "relativeLimitP95Ms": 629.3409360000002,
+        "absolutePass": false,
+        "relativePass": true,
+        "pass": false
+      },
+      "decomposition": {
+        "total": 514.203021,
+        "fingerprint": 1.4099710000000414,
+        "prepare": 4.220934200000056,
+        "wall": 508.2696436,
+        "floor": 0,
+        "residual": 0.30247219999982916
+      },
+      "calls": {
+        "fingerprint": 1,
+        "prepare": 3,
+        "wall": 3,
+        "floor": 0
+      },
+      "independentModel": {
+        "min": 0.09460699999999633,
+        "median": 0.10684700000001612,
+        "p95": 0.17769899999984773,
+        "max": 0.17769899999984773
+      },
+      "profileFile": "current-37f59fa.cpuprofile.gz",
+      "profileGroupsMs": {
+        "profiler-overhead": 55.718,
+        "production": 89.96399999999997,
+        "polyclip-ts": 339.092,
+        "bignumber.js": 935.0220000000012,
+        "GC": 119.09099999999994,
+        "splaytree-ts": 29.515
+      },
+      "legacy": {
+        "exitCode": 1,
+        "report": {
+          "issue": 199,
+          "fixture": {
+            "floors": 3,
+            "rooms": 60,
+            "devices": 200,
+            "openings": 100,
+            "partitions": 60,
+            "columns": 40,
+            "decor": 500,
+            "stairs": 250
+          },
+          "warmups": 3,
+          "samples": 20,
+          "baseline": {
+            "min": 478.4481049999995,
+            "median": 485.52549,
+            "p95": 498.0046430000002,
+            "max": 509.15507400000024
+          },
+          "candidate": {
+            "min": 476.9354000000003,
+            "median": 488.50285599999916,
+            "p95": 510.8145459999996,
+            "max": 516.6608789999991
+          },
+          "budgets": {
+            "absoluteP95Ms": 250,
+            "relativeRatio": 1.2,
+            "relativeNoiseMs": 15,
+            "relativeLimitP95Ms": 612.6055716000002
+          },
+          "pass": false
+        }
+      },
+      "inputAudit": {
+        "optimizerChanged": true,
+        "optimizedConfigSha256": "5d1c56ecc46cb638ad863e34bb19c01de0cf8e573fff53bd43824ab05b605d18",
+        "note": "Audit outside timing workers; the main comparison deliberately retains the old raw benchmark input."
+      }
+    }
+  ]
+}
