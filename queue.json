@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 323,
+  "revision": 324,
   "nextTicket": 35,
   "nextFence": 34,
   "tasks": {
@@ -305,7 +305,13 @@
         "finishedAt": "2026-11-01T21:32:18.267Z",
         "failures": []
       },
-      "reviewRound": null
+      "reviewRound": null,
+      "reviewRequest": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573",
+      "reviewMaterial": {
+        "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+        "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
+        "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4"
+      }
     },
     "1191": {
       "issue": 1191,
@@ -387,7 +393,21 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41347941567"
     }
   },
-  "reviewPublications": {},
+  "reviewPublications": {
+    "code:1190:review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573": {
+      "issue": 1190,
+      "kind": "code",
+      "requestId": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573",
+      "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+      "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
+      "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
+      "status": "pending",
+      "presentation": {
+        "round": null,
+        "occurredAt": "2026-11-01T21:32:28.997Z"
+      }
+    }
+  },
   "waiting": [
     1169
   ],
@@ -401,7 +421,8 @@
     "phase": "review",
     "admittedAt": 1793568594545,
     "expiresAt": 1793572341877,
-    "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4"
+    "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
+    "reviewRequest": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -666,6 +687,10 @@
     },
     "finish:60a095fb-1729-4d5d-bfd6-44911ddf9704:finish:2:s6-label": {
       "digest": "386ed6d348226d87d7287c1ee1b5cfa354c31325700bee5d3b5fc852d9565bfb",
+      "issue": 1190
+    },
+    "finish:60a095fb-1729-4d5d-bfd6-44911ddf9704:finish:3:review-requested": {
+      "digest": "b5f0933fd3648328f642f4bdbf8652202d8278f2c96bbf1f56dd8c654caf8cc5",
       "issue": 1190
     },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
