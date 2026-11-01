@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 276,
+  "revision": 277,
   "nextTicket": 31,
   "nextFence": 30,
   "tasks": {
@@ -113,9 +113,9 @@
       "readyAt": 1793567757654,
       "reviewEntry": 2,
       "notice": {
-        "key": "1:rebase-conflict",
-        "reason": "rebase-conflict",
-        "status": "delivered"
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending"
       },
       "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2",
       "changedFiles": [
@@ -129,7 +129,8 @@
         "src/physical-geometry.ts",
         "src/wall-thickness.ts",
         "test/wall-corner-join.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed"
     },
     "1175": {
       "issue": 1175,
@@ -409,18 +410,7 @@
   "waiting": [
     1175
   ],
-  "active": {
-    "issue": 1169,
-    "worker": "finish",
-    "token": "29:finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit",
-    "fence": 29,
-    "materialSha": "b484f656475f648bdb0eba4d67ab875f74c927f4",
-    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "testing",
-    "admittedAt": 1793567834138,
-    "expiresAt": 1793568240163,
-    "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -909,6 +899,10 @@
     },
     "finish:ca71860c-2087-49a1-9217-504cc1be5922": {
       "digest": "d38254598bda2a508e4ffd5cc1ecbd8a7ef0d0402d2dc5da975a80c96e0fca6c",
+      "issue": 1169
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:2:return": {
+      "digest": "2262c07a1fae4bee7d3393c992de6254feb8be4fb629f4357d789eb625cbf5d5",
       "issue": 1169
     }
   },
