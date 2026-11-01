@@ -73,6 +73,10 @@ content-based header (#1184), retaining its title but receiving no HA menu.
   old one-row/56px phone limit, viewport-based gear menu or fixed 1024px header
   threshold. Editors remain desktop-first/best effort on touch;
 - support convenient pan, pinch zoom and space switching;
+- keep the room Area administration shortcut out of the touch hit plane on
+  screens without hover. The shortcut is visually clipped and non-interactive
+  until deliberate keyboard focus; its native 44px keyboard target and desktop
+  behavior remain available. Stairs/devices and pan own the freed space (#1128);
 - treat a linked stair as a floor-navigation target only after a clean tap;
   pan, pinch, long press, swipe and cancellation tails must stay inert;
 - reserve floor switching for an inward horizontal gesture that starts in the

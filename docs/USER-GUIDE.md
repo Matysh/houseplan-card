@@ -325,6 +325,10 @@ In View the Area action is a separate button: Tab selects it and Enter or Space
 opens the HA area without fitting the room. Device settings opened in View
 retain an unsaved draft across a short card remount; renderer loading can be
 closed, and a failed load offers an explicit retry.
+On screens without hover the View Area shortcut is clipped and non-interactive
+until keyboard focus, preventing its invisible target from covering stairs or
+blocking pan. Keyboard focus restores the native 44px button; mouse-capable
+desktop presentation is unchanged (#1128).
 
 ## 3. Adding a card
 

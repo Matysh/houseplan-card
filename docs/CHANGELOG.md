@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the room Area administration shortcut out of the touch hit plane on screens without hover, preserving stairs, pan and intentional mouse/keyboard navigation. [#1128](https://github.com/Matysh/houseplan-card/issues/1128)
+
 - `finish` recognizes a task already merged by the server coordinator after a queue admission race, reports successful completion immediately, and preserves real admission-loss diagnostics. [#1187](https://github.com/Matysh/houseplan-card/issues/1187)
 - Panel and Lovelace share the adaptive outlined header, direct actions and 44px editor close. Preserve card titles and container sizing. The old phone gear hooks header-menu/header-menu-item/header-menu-scrim are retired; use the direct action hooks. [#1184](https://github.com/Matysh/houseplan-card/issues/1184)
 

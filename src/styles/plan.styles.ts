@@ -633,6 +633,21 @@ export const planStyles = css`
       outline: none;
     }
     .rlarea > ha-icon { display: inline-flex; }
+    /* #1128: the admin shortcut must not put an invisible 44px navigation
+       target over stairs on touch-only screens. Keep the native button in the
+       keyboard order; deliberate keyboard focus restores its full target. */
+    @media (hover: none) {
+      .stage.mode-view .rlarea:not(:focus-visible) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        pointer-events: none;
+      }
+    }
     .rlarea:focus-visible, .rlfit:focus-visible {
       outline: 2px solid var(--hp-accent);
       outline-offset: 2px;

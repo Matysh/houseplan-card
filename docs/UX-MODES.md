@@ -254,6 +254,10 @@ In View it is a separate native HA-admin button with an accessible name,
 keyboard activation and a 44px touch floor; activating it never fits the room.
 The room name remains an independent fit action. Other editors keep a passive
 icon, and kiosk never displays it (#894).
+On screens without hover the View Area shortcut is clipped and non-interactive
+until keyboard focus, preventing its invisible target from covering stairs or
+blocking pan. Keyboard focus restores the native 44px button; mouse-capable
+desktop presentation is unchanged (#1128).
 
 Header in View and editors uses the same outlined groups in the panel and
 Lovelace (#1184). Actual content and container width select intrinsic phases:

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1128,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Removes an existing invisible Area shortcut hit target over touch stair navigation and pan; preserves keyboard and desktop administration access.",
+  "summary": {
+    "ru": "Ссылка зоны у названия комнаты больше не перекрывает лестницы на touch.",
+    "en": "The room Area shortcut no longer covers stairs on touch-only screens."
+  }
+}
