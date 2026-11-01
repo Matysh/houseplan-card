@@ -1,0 +1,58 @@
+{
+  "diagnosticOnly": true,
+  "input": "optimizePlans(frozenRaw.config,frozenRaw.layout).config",
+  "material": "37f59faef16f6efad06387486943d51202c7d57c",
+  "fixtureSha256": "5d1c56ecc46cb638ad863e34bb19c01de0cf8e573fff53bd43824ab05b605d18",
+  "rawFixtureSha256": "eecc2b37b460bcc4d65db87462feef7633addcf5f590dc5fc8a460db70e2bf73",
+  "optimizerChanged": true,
+  "note": "Complete preflight on the actual post-optimizer input; a separate cohort, never mixed with raw-fixture budget comparison or called UI/backend Optimize latency",
+  "result": {
+    "mode": "full",
+    "warmups": 3,
+    "count": 20,
+    "environment": {
+      "node": "v22.23.2",
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+      "logicalCpu": 22,
+      "power": "unknown",
+      "loadAverage": [
+        0.74,
+        0.66,
+        0.64
+      ]
+    },
+    "startedAt": "2026-11-01T21:52:12.907Z",
+    "samplesMs": [
+      522.5386310000001,
+      536.1061030000001,
+      505.39096900000004,
+      502.67913999999973,
+      514.286865,
+      518.3195089999999,
+      513.0937829999993,
+      516.846434,
+      512.6255940000001,
+      518.7155050000001,
+      516.3423060000005,
+      520.4057889999995,
+      511.7878290000008,
+      524.325648,
+      506.86994500000037,
+      506.8454409999995,
+      495.73706800000036,
+      525.1790380000002,
+      492.8673740000013,
+      506.9414080000006
+    ],
+    "summary": {
+      "min": 492.8673740000013,
+      "median": 513.0937829999993,
+      "p95": 525.1790380000002,
+      "max": 536.1061030000001
+    },
+    "phaseRows": []
+  }
+}

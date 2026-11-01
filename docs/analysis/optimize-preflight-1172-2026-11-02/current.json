@@ -1,0 +1,845 @@
+{
+  "schema": 1,
+  "issue": 1172,
+  "harnessSha256": "6a29cfd5e242cd78a50899139d38c6cae06e1227a8c6679c33871c9d627be0e1",
+  "fixtureSha256": "eecc2b37b460bcc4d65db87462feef7633addcf5f590dc5fc8a460db70e2bf73",
+  "fixtureCounts": {
+    "floors": 3,
+    "rooms": 60,
+    "devices": 200,
+    "openings": 100,
+    "partitions": 60,
+    "columns": 40,
+    "decor": 500,
+    "stairs": 250
+  },
+  "input": "Original unoptimized large-house config, not complete UI Optimize latency",
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "linux",
+    "arch": "x64",
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+    "logicalCpu": 22,
+    "power": "unknown",
+    "loadAverage": [
+      0.6,
+      0.65,
+      0.63
+    ]
+  },
+  "coldSamples": 5,
+  "warmups": 3,
+  "samples": 20,
+  "materials": [
+    {
+      "material": {
+        "schema": 1,
+        "label": "current-37f59fa",
+        "sha": "37f59faef16f6efad06387486943d51202c7d57c",
+        "sourceTree": "83f22ba1e6e6365099ba22886f89da4cd4cf28d6",
+        "versions": {
+          "typescript": "5.9.3",
+          "polyclip-ts": "0.16.8",
+          "bignumber.js": "9.3.1",
+          "splaytree-ts": "1.0.2",
+          "lit": "3.3.3"
+        },
+        "lockSha256": "df5558ba5bacbb43a0e1a823a1de0874d348b45c4c540b63c31e180312d16841",
+        "compiledSha256": "666757d27189a539c9e9d8a7494bfd41494cca2edcfa03b03084da01397c6b18",
+        "archiveSha256": "fcbef9354bd4607b987ef9106292ebcfab54bda05516a04ab37f89e446c74d77",
+        "legacyBenchmarkSha256": "1e59d64dbc98c46a40128485dc503daa10af06e8a9699e297f35d047853f4c9f",
+        "environment": {
+          "node": "v22.23.2",
+          "platform": "linux",
+          "arch": "x64",
+          "kernel": "6.18.33.2-microsoft-standard-WSL2",
+          "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+          "logicalCpu": 22,
+          "power": "unknown",
+          "loadAverage": [
+            0.6,
+            0.65,
+            0.63
+          ]
+        }
+      },
+      "cold": {
+        "direct": [
+          {
+            "mode": "direct",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.6,
+                0.65,
+                0.63
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:24.706Z",
+            "samplesMs": [
+              591.643904
+            ],
+            "summary": {
+              "min": 591.643904,
+              "median": 591.643904,
+              "p95": 591.643904,
+              "max": 591.643904
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "direct",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.6,
+                0.65,
+                0.63
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:26.765Z",
+            "samplesMs": [
+              618.6555430000001
+            ],
+            "summary": {
+              "min": 618.6555430000001,
+              "median": 618.6555430000001,
+              "p95": 618.6555430000001,
+              "max": 618.6555430000001
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "direct",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.6,
+                0.65,
+                0.63
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:27.471Z",
+            "samplesMs": [
+              607.400447
+            ],
+            "summary": {
+              "min": 607.400447,
+              "median": 607.400447,
+              "p95": 607.400447,
+              "max": 607.400447
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "direct",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.71,
+                0.67,
+                0.64
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:29.570Z",
+            "samplesMs": [
+              618.393318
+            ],
+            "summary": {
+              "min": 618.393318,
+              "median": 618.393318,
+              "p95": 618.393318,
+              "max": 618.393318
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "direct",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.71,
+                0.67,
+                0.64
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:30.279Z",
+            "samplesMs": [
+              602.410124
+            ],
+            "summary": {
+              "min": 602.410124,
+              "median": 602.410124,
+              "p95": 602.410124,
+              "max": 602.410124
+            },
+            "phaseRows": []
+          }
+        ],
+        "full": [
+          {
+            "mode": "full",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.6,
+                0.65,
+                0.63
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:25.359Z",
+            "samplesMs": [
+              629.270271
+            ],
+            "summary": {
+              "min": 629.270271,
+              "median": 629.270271,
+              "p95": 629.270271,
+              "max": 629.270271
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "full",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.6,
+                0.65,
+                0.63
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:26.048Z",
+            "samplesMs": [
+              627.592475
+            ],
+            "summary": {
+              "min": 627.592475,
+              "median": 627.592475,
+              "p95": 627.592475,
+              "max": 627.592475
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "full",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.6,
+                0.65,
+                0.63
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:28.141Z",
+            "samplesMs": [
+              633.737712
+            ],
+            "summary": {
+              "min": 633.737712,
+              "median": 633.737712,
+              "p95": 633.737712,
+              "max": 633.737712
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "full",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.71,
+                0.67,
+                0.64
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:28.839Z",
+            "samplesMs": [
+              645.427119
+            ],
+            "summary": {
+              "min": 645.427119,
+              "median": 645.427119,
+              "p95": 645.427119,
+              "max": 645.427119
+            },
+            "phaseRows": []
+          },
+          {
+            "mode": "full",
+            "warmups": 0,
+            "count": 1,
+            "environment": {
+              "node": "v22.23.2",
+              "platform": "linux",
+              "arch": "x64",
+              "kernel": "6.18.33.2-microsoft-standard-WSL2",
+              "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+              "logicalCpu": 22,
+              "power": "unknown",
+              "loadAverage": [
+                0.71,
+                0.67,
+                0.64
+              ]
+            },
+            "startedAt": "2026-11-01T21:49:30.941Z",
+            "samplesMs": [
+              642.776365
+            ],
+            "summary": {
+              "min": 642.776365,
+              "median": 642.776365,
+              "p95": 642.776365,
+              "max": 642.776365
+            },
+            "phaseRows": []
+          }
+        ]
+      },
+      "warm": {
+        "direct": {
+          "mode": "direct",
+          "warmups": 3,
+          "count": 20,
+          "environment": {
+            "node": "v22.23.2",
+            "platform": "linux",
+            "arch": "x64",
+            "kernel": "6.18.33.2-microsoft-standard-WSL2",
+            "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+            "logicalCpu": 22,
+            "power": "unknown",
+            "loadAverage": [
+              0.76,
+              0.68,
+              0.64
+            ]
+          },
+          "startedAt": "2026-11-01T21:49:33.266Z",
+          "samplesMs": [
+            491.98714799999993,
+            511.9507800000001,
+            489.1077439999999,
+            483.35988399999997,
+            493.00718899999947,
+            490.4323800000002,
+            484.71341399999983,
+            492.07114399999955,
+            501.48080800000025,
+            489.7310749999997,
+            484.7141959999999,
+            488.5609859999995,
+            491.97598500000004,
+            485.52695200000016,
+            512.435105999999,
+            488.9135389999992,
+            481.04905599999984,
+            475.1272450000015,
+            470.1927539999997,
+            477.2595199999996
+          ],
+          "summary": {
+            "min": 470.1927539999997,
+            "median": 488.9135389999992,
+            "p95": 511.9507800000001,
+            "max": 512.435105999999
+          },
+          "phaseRows": []
+        },
+        "full": {
+          "mode": "full",
+          "warmups": 3,
+          "count": 20,
+          "environment": {
+            "node": "v22.23.2",
+            "platform": "linux",
+            "arch": "x64",
+            "kernel": "6.18.33.2-microsoft-standard-WSL2",
+            "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+            "logicalCpu": 22,
+            "power": "unknown",
+            "loadAverage": [
+              0.81,
+              0.7,
+              0.65
+            ]
+          },
+          "startedAt": "2026-11-01T21:49:44.765Z",
+          "samplesMs": [
+            496.191728,
+            506.9606739999999,
+            481.2758509999999,
+            495.98712099999966,
+            488.48878700000023,
+            496.26910399999997,
+            483.703348,
+            492.79758500000025,
+            494.4474730000002,
+            503.87034999999923,
+            501.2930120000001,
+            516.5365689999999,
+            502.5033059999996,
+            491.32513800000106,
+            501.3787489999995,
+            485.49371600000086,
+            490.2277749999994,
+            491.0846529999999,
+            527.9341390000009,
+            499.735940999999
+          ],
+          "summary": {
+            "min": 481.2758509999999,
+            "median": 495.98712099999966,
+            "p95": 516.5365689999999,
+            "max": 527.9341390000009
+          },
+          "phaseRows": []
+        }
+      },
+      "decomposition": {
+        "mode": "decomposition",
+        "warmups": 3,
+        "count": 5,
+        "environment": {
+          "node": "v22.23.2",
+          "platform": "linux",
+          "arch": "x64",
+          "kernel": "6.18.33.2-microsoft-standard-WSL2",
+          "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+          "logicalCpu": 22,
+          "power": "unknown",
+          "loadAverage": [
+            0.81,
+            0.7,
+            0.65
+          ]
+        },
+        "startedAt": "2026-11-01T21:49:56.499Z",
+        "samplesMs": [
+          499.65969300000006,
+          504.994381,
+          502.123208,
+          505.7781809999997,
+          558.4596420000003
+        ],
+        "summary": {
+          "min": 499.65969300000006,
+          "median": 504.994381,
+          "p95": 558.4596420000003,
+          "max": 558.4596420000003
+        },
+        "phaseRows": [
+          {
+            "total": 499.65969300000006,
+            "fingerprint": 1.4751949999999852,
+            "prepare": 3.494446999999809,
+            "wall": 494.353699,
+            "floor": 0,
+            "residual": 0.3363520000002609,
+            "calls": {
+              "fingerprint": 1,
+              "prepare": 3,
+              "wall": 3,
+              "floor": 0
+            }
+          },
+          {
+            "total": 504.994381,
+            "fingerprint": 1.2518850000001294,
+            "prepare": 4.082730000000538,
+            "wall": 499.2193320000001,
+            "floor": 0,
+            "residual": 0.4404339999991862,
+            "calls": {
+              "fingerprint": 1,
+              "prepare": 3,
+              "wall": 3,
+              "floor": 0
+            }
+          },
+          {
+            "total": 502.123208,
+            "fingerprint": 1.8116690000001654,
+            "prepare": 4.545144000000164,
+            "wall": 495.5244340000004,
+            "floor": 0,
+            "residual": 0.24196099999926446,
+            "calls": {
+              "fingerprint": 1,
+              "prepare": 3,
+              "wall": 3,
+              "floor": 0
+            }
+          },
+          {
+            "total": 505.7781809999997,
+            "fingerprint": 1.2906830000001719,
+            "prepare": 4.200109999999768,
+            "wall": 500.0524190000001,
+            "floor": 0,
+            "residual": 0.23496899999963716,
+            "calls": {
+              "fingerprint": 1,
+              "prepare": 3,
+              "wall": 3,
+              "floor": 0
+            }
+          },
+          {
+            "total": 558.4596420000003,
+            "fingerprint": 1.2204229999997551,
+            "prepare": 4.782240000000002,
+            "wall": 552.1983339999997,
+            "floor": 0,
+            "residual": 0.25864500000079715,
+            "calls": {
+              "fingerprint": 1,
+              "prepare": 3,
+              "wall": 3,
+              "floor": 0
+            }
+          }
+        ],
+        "profile": {
+          "iterations": 3,
+          "samplingIntervalUs": 1000,
+          "exclusiveSamples": [
+            {
+              "function": "(garbage collector)",
+              "url": "",
+              "line": 0,
+              "milliseconds": 119.091
+            },
+            {
+              "function": "post",
+              "url": "node:inspector",
+              "line": 118,
+              "milliseconds": 55.718
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 35.089
+            },
+            {
+              "function": "P.minus",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1930,
+              "milliseconds": 28.45
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 20.829
+            },
+            {
+              "function": "P.minus",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1930,
+              "milliseconds": 20.801
+            },
+            {
+              "function": "P.multipliedBy.P.times",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 2126,
+              "milliseconds": 19.686
+            },
+            {
+              "function": "RingIn",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 1007,
+              "milliseconds": 16.474
+            },
+            {
+              "function": "run",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 544,
+              "milliseconds": 16.404
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 16.367
+            },
+            {
+              "function": "factory",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 248,
+              "milliseconds": 15.424
+            },
+            {
+              "function": "process",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 436,
+              "milliseconds": 13.229
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 13.017
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 12.173
+            },
+            {
+              "function": "compare",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 140,
+              "milliseconds": 12.149
+            },
+            {
+              "function": "P.isLessThan.P.lt",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1864,
+              "milliseconds": 11.998
+            },
+            {
+              "function": "P.minus",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1930,
+              "milliseconds": 11.139
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 10.967
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 10.882
+            },
+            {
+              "function": "P.toNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 2686,
+              "milliseconds": 9.995
+            },
+            {
+              "function": "P.isLessThan.P.lt",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1864,
+              "milliseconds": 9.909
+            },
+            {
+              "function": "getBboxOverlap",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 80,
+              "milliseconds": 9.861
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 8.903
+            },
+            {
+              "function": "P.isLessThanOrEqualTo.P.lte",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1873,
+              "milliseconds": 8.791
+            },
+            {
+              "function": "P.isLessThan.P.lt",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1864,
+              "milliseconds": 8.748
+            },
+            {
+              "function": "add",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/splaytree-ts/dist/esm/index.js",
+              "line": 416,
+              "milliseconds": 8.728
+            },
+            {
+              "function": "BigNumber",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 179,
+              "milliseconds": 8.717
+            },
+            {
+              "function": "P.minus",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1930,
+              "milliseconds": 8.715
+            },
+            {
+              "function": "P.isGreaterThan.P.gt",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/bignumber.js/bignumber.mjs",
+              "line": 1837,
+              "milliseconds": 7.769
+            },
+            {
+              "function": "bbox",
+              "url": "file:///home/matysh/hp-wall-face-20261031-analysis/node_modules/polyclip-ts/dist/esm/index.js",
+              "line": 727,
+              "milliseconds": 7.74
+            }
+          ],
+          "sha256": "24c55aea9d56b2d531275454123af878fec761818daa1d7b5c2c9bf00854f1d8"
+        },
+        "modelProjection": {
+          "samplesMs": [
+            0.15770099999917875,
+            0.17769899999984773,
+            0.10684700000001612,
+            0.09871500000008382,
+            0.09460699999999633
+          ],
+          "summary": {
+            "min": 0.09460699999999633,
+            "median": 0.10684700000001612,
+            "p95": 0.17769899999984773,
+            "max": 0.17769899999984773
+          },
+          "callsPerSample": 3,
+          "note": "Independent diagnostic, not subtracted from the full series; residual also includes names, guards and loops."
+        }
+      },
+      "budget": {
+        "baseline": {
+          "min": 470.1927539999997,
+          "median": 488.9135389999992,
+          "p95": 511.9507800000001,
+          "max": 512.435105999999
+        },
+        "candidate": {
+          "min": 481.2758509999999,
+          "median": 495.98712099999966,
+          "p95": 516.5365689999999,
+          "max": 527.9341390000009
+        },
+        "absoluteP95Ms": 250,
+        "relativeLimitP95Ms": 629.3409360000002,
+        "absolutePass": false,
+        "relativePass": true,
+        "pass": false
+      },
+      "legacy": {
+        "exitCode": 1,
+        "report": {
+          "issue": 199,
+          "fixture": {
+            "floors": 3,
+            "rooms": 60,
+            "devices": 200,
+            "openings": 100,
+            "partitions": 60,
+            "columns": 40,
+            "decor": 500,
+            "stairs": 250
+          },
+          "warmups": 3,
+          "samples": 20,
+          "baseline": {
+            "min": 478.4481049999995,
+            "median": 485.52549,
+            "p95": 498.0046430000002,
+            "max": 509.15507400000024
+          },
+          "candidate": {
+            "min": 476.9354000000003,
+            "median": 488.50285599999916,
+            "p95": 510.8145459999996,
+            "max": 516.6608789999991
+          },
+          "budgets": {
+            "absoluteP95Ms": 250,
+            "relativeRatio": 1.2,
+            "relativeNoiseMs": 15,
+            "relativeLimitP95Ms": 612.6055716000002
+          },
+          "pass": false
+        }
+      },
+      "inputAudit": {
+        "optimizerChanged": true,
+        "optimizedConfigSha256": "5d1c56ecc46cb638ad863e34bb19c01de0cf8e573fff53bd43824ab05b605d18",
+        "note": "Audit outside timing workers; the main comparison deliberately retains the old raw benchmark input."
+      }
+    }
+  ]
+}

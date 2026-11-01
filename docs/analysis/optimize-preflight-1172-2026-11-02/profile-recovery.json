@@ -1,0 +1,25 @@
+{
+  "reason": "The temporary material directory disappeared after successful capture; original raw cold/warm/decomposition series and profile summaries were already retained. Archive and compiled output were restored byte-identically. Only full profiles were recaptured, never ordinary latency series.",
+  "profiles": [
+    {
+      "compiledSha256": "abfa785d0aedb917a3bb55594559159be89e9f6c69e1de31a8bc0f1fe906562c",
+      "rawWorker": "recovered-profile-1830.json",
+      "ordinaryLatencyRepeated": false,
+      "originalLostProfileSha256": "a482ce391ec89348633085b3ef93217d875b6c807cce12627328e88341721703",
+      "material": "cb2c71ab7b5943e607b83a4f052a734eb36b22f7",
+      "availableProfile": "recovered-1830.cpuprofile.gz",
+      "availableProfileSha256": "3d31115804d80bac13539d566ad1b5ba19031c0154b7952979af5e7e81511fdd"
+    },
+    {
+      "compiledSha256": "ac3447c45efee09c1e3f8da18f8ca2d1c0c154ae4bec63f7cd4a8fddabf122c3",
+      "rawWorker": "recovered-profile-1831.json",
+      "ordinaryLatencyRepeated": false,
+      "originalLostProfileSha256": "ad0e94f99e3d7def15e0096255ae667f00a0b7c781744e3577ca1fa53b3d8b2c",
+      "material": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+      "availableProfile": "recovered-1831.cpuprofile.gz",
+      "availableProfileSha256": "07e3692f191280c63c28778f9781d3ed9d89c966e1d8f4e3c7704f78ce761263"
+    }
+  ],
+  "fixtureSha256": "eecc2b37b460bcc4d65db87462feef7633addcf5f590dc5fc8a460db70e2bf73",
+  "harnessSha256": "6a29cfd5e242cd78a50899139d38c6cae06e1227a8c6679c33871c9d627be0e1"
+}
