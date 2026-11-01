@@ -176,12 +176,20 @@ export class GitHubQueueStore {
   }
   async initialize({ baseSha, confirmed = false } = {}) {
     if (!confirmed || !this.client.activated) throw Error('State initialization needs explicit activation and confirmation');
+    if (!sha(baseSha)) throw Error('State initialization requires a base commit');
+    let exists = true;
     try { await this.client.getRef(this.branch); }
-    catch (error) { if (error.status !== 404) throw error; await this.client.createRef(this.branch, baseSha); }
-    try { await this.client.getContents(this.path, this.branch); throw Error('State is already initialized'); }
-    catch (error) { if (error.status !== 404) throw error; }
-    return this.client.putContents(this.path, { branch: this.branch, content: JSON.stringify(this.initial(), null, 2) + '\n',
-      message: 'process-next: initialize queue' });
+    catch (error) { if (error.status !== 404) throw error; exists = false; }
+    if (exists) throw Error('State branch already exists; inspect it instead of reinitializing');
+    // Keep ancestry, not the source tree: inherited workflows run on state writes.
+    // Publish the ref only after the state-only tree is complete.
+    const tree = await this.client.request('POST', `${this.client.root}/git/trees`, {
+      tree: [{ path: this.path, mode: '100644', type: 'blob', content: JSON.stringify(this.initial(), null, 2) + '\n' }],
+    });
+    const commit = await this.client.request('POST', `${this.client.root}/git/commits`, {
+      message: 'process-next: initialize state-only branch', tree: tree.sha, parents: [baseSha],
+    });
+    return this.client.createRef(this.branch, commit.sha);
   }
 }
 

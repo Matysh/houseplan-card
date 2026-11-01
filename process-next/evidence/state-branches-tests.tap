@@ -1,0 +1,22 @@
+✔ S8 removes the personal to_release label without assigning it or touching unrelated labels (3.6182ms)
+✔ GitHub writes default to a plan without network; activation requires an explicit token (0.7644ms)
+✔ GitHub API and upload transports time out; request cancellation reaches fetch (51.6569ms)
+✔ GitHub Contents CAS passes exact blob identity and maps a conflict to retry (0.557ms)
+✔ missing state branch is not silently initialized and a read uses the observed immutable commit (0.404ms)
+✔ state initialization publishes only its JSON, without inheriting source workflows (0.6683ms)
+✔ publication evidence checks the actual tag commit and downloaded bytes (0.9388ms)
+✔ real Git atomically merges and records S8; failed comment cannot undo successful merge (2499.3218ms)
+✔ non-fast-forward material is refused before any remote mutation (1555.2786ms)
+✔ racing dev advance makes the whole atomic merge fail without publishing S8 or deleting the task (2944.5065ms)
+✔ new queue fence defeats a stale worker even when dev has not moved (2759.5609ms)
+✔ task branch advanced after merge material is not deleted (1626.6606ms)
+✔ release refs publish the exact tag and fast-forward main; an unrelated candidate cannot rewrite main (2925.0862ms)
+✔ two stable releases and a hotfix retain main ancestry through queued tag-return merges (16091.5224ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30546.0285
