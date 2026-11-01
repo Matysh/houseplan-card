@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1197,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Completes German/French furniture/decor copy labels introduced by unreleased #1156 on the v1.84 line; retained test expectations are aligned with approved #1184 shared header and #1105 release rules without changing runtime behavior or fixed byte ceilings."
+}

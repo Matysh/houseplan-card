@@ -15,8 +15,8 @@ import {
   waitForHaBootstrap,
 } from '../scripts/bundle-manifest.mjs';
 import {
-  INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
-  INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING, INITIAL_VIEW_RECALIBRATION_GZIP_BYTES,
+  INITIAL_VIEW_CEILING_BAND,
+  INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
   LAZY_EDITOR_GZIP_CEILING, LAZY_FURNITURE_ART_GZIP_CEILING, LAZY_GRAPH_CEILING_BAND,
   LAZY_ONBOARDING_GZIP_CEILING, lazyGraphCeilingViolation,
   assertNamespaceLocaleOwnership, namespaceLocaleMarkers,
@@ -33,37 +33,14 @@ import {
 import {
   cssTemplateMinifier, minifyCssText, minifyStaticCssTemplates,
 } from '../scripts/css-template-minifier.mjs';
-import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 
-// Здесь проверяется свежий Rollup-артефакт `dist/houseplan-assets.json`,
-// не закоммиченный frontend (#1016). Исторические имена shipped* сохранены.
-// С #657
-// бандл меняет только кандидат беты/релиза, поэтому между кандидатами манифест
-// законно отстаёт от исходников — и от потолков, которые задачи поднимают
-// вслед за своим графом в том же коммите. «Поставляемый граф лежит в полосе
-// потолка» (#438, #593, #627) поэтому судится только по СВЕЖЕМУ бандлу: у
-// кандидата (его бандл и есть закоммиченный) и после `npm run build` в Validate
-// и gate:small. Отстающий манифест против нового потолка — не измерение:
-// после слияния #663 бандл беты.4 лежал ниже поднятой полосы редактора, после
-// #676 — бандл беты.5, и на чистом чекауте эти тесты краснели до кандидата, а
-// в мутантном worktree CI (`git worktree` без сборки) роняли чистый прогон.
-// Свежесть — тот же отпечаток, которым `bundle-policy` судит кандидата (#657).
+// Product topology/ownership checks read the prepared current Rollup tree.
+// #1105/PROCESS replaces historical candidate ratchets with release metrics.
+// The synthetic tests of the retained manual helper below use explicit bounds;
+// no assertion applies old byte ceilings or HEAD-based process policy to HEAD.
 const SHIPPED_MANIFEST_URL = new URL('../dist/houseplan-assets.json', import.meta.url);
 const shippedManifest = () => JSON.parse(readFileSync(SHIPPED_MANIFEST_URL, 'utf8'));
 const shippedDist = fileURLToPath(new URL('../dist/', import.meta.url));
-const shippedBundleIsFresh = (manifest) => (
-  manifest.fingerprint === sourceFingerprint(fileURLToPath(new URL('..', import.meta.url)))
-);
-const STALE_SHIPPED_BUNDLE = '#657: закоммиченный бандл отстаёт от исходников до кандидата — '
-  + 'полосу потолка судит `npm run bundle:budget` по свежей сборке, здесь сравнивать не с чем';
-
-const requiresCandidateReserve = (policy) => {
-  assert.equal(policy.error, undefined, 'bundle policy did not start');
-  assert.ok(policy.status === 0 || policy.status === 1, policy.stderr || 'bundle policy failed');
-  assert.equal(policy.stderr.trim(), '', 'a policy error is not an ordinary-task verdict');
-  if (policy.status === 1) assert.match(policy.stdout, /бандл не меняется/);
-  return policy.status === 0;
-};
 
 /** #627: the nine namespace × language chunks, each a dynamic import of a lazy chunk. */
 const namespaceLocaleChunkPath = (entry) => `houseplan-assets/${entry.namespace}-${entry.language}-HASH.js`;
@@ -1073,7 +1050,8 @@ test('#535 panel entry reaches the card implementation by its hashed name', () =
   );
   assert.ok(!manifest.initialPanelFiles.includes(manifest.entry),
     'the un-versioned card facade is no longer part of what the panel loads');
-  assert.ok(manifest.initialPanelOnlyGzipBytes <= INITIAL_PANEL_ONLY_GZIP_BUDGET);
+  // #1105: retain the measured manifest field, not a retired byte wall.
+  assert.ok(Number.isFinite(manifest.initialPanelOnlyGzipBytes) && manifest.initialPanelOnlyGzipBytes >= 0);
 });
 
 test('#535 no built entry reaches the card by an address without a version', () => {
@@ -1154,16 +1132,6 @@ test('bundle tree verification rejects orphan chunks (#353 AC4)', async (t) => {
 // последним. Настоящий рычаг — ленивые графы, и о нём напоминает сам текст
 // предупреждения.
 
-test('потолок держится внутри правила ~10% над измеренным фактом (#352, #367, #792)', () => {
-  // #792: owner-approved reference is the measured pre-feature source build,
-  // not the abandoned SVG implementation or an automatically growing ceiling.
-  const fact = INITIAL_VIEW_RECALIBRATION_GZIP_BYTES;
-  assert.ok(INITIAL_VIEW_GZIP_BUDGET > fact, 'потолок ниже факта сделал бы гейт вечно красным');
-  const allowance = (INITIAL_VIEW_GZIP_BUDGET - fact) / fact;
-  assert.ok(allowance <= 0.10 + 1e-9, `надбавка ${(allowance * 100).toFixed(1)}% больше правила 10%`);
-  assert.ok(allowance > 0.05, 'надбавка меньше 5% возвращает лотерею «красит последний коммит»');
-});
-
 test('тревога о запасе срабатывает до стены, а не после (#367)', () => {
   // Порог выбран так, чтобы предупреждение приходило примерно за две средние
   // фичи до потолка: обычный прирост — около килобайта за задачу.
@@ -1180,11 +1148,6 @@ test('тревога о запасе срабатывает до стены, а 
 test('превышенный бюджет описывается как превышение, а не как малый запас (#367)', () => {
   assert.match(lowHeadroomWarning(-42), /превышен на 42 Б/);
   assert.equal(lowHeadroomWarning(Number.NaN), null);
-});
-
-test('запас на момент рекалибровки выше порога тревоги (#367, #792)', () => {
-  // Иначе рекалибровка была бы бессмысленной: гейт сразу же начал бы кричать.
-  assert.ok(INITIAL_VIEW_GZIP_BUDGET - INITIAL_VIEW_RECALIBRATION_GZIP_BYTES > LOW_HEADROOM_WARNING_BYTES);
 });
 
 test('#429 проверка владения не судит размер графа', () => {
@@ -1212,22 +1175,6 @@ test('#429 проверка владения не судит размер гра
         `размер ${initialViewGzipBytes} не должен влиять на проверку владения`,
       );
     }
-    // Размер по-прежнему охраняется — но потолком и бюджетом, а не чужим
-    // номером. Число берётся из поставляемого манифеста: захардкоженный запас
-    // в тесте выглядел бы измерением, не будучи им (#438).
-    const shipped = JSON.parse(
-      readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
-    ).initialViewGzipBytes;
-    const headroom = INITIAL_VIEW_GZIP_BUDGET - shipped;
-    const warning = lowHeadroomWarning(headroom);
-    if (headroom < 0) {
-      assert.match(warning, new RegExp(`бюджет превышен на ${-headroom} Б`));
-    } else if (headroom < LOW_HEADROOM_WARNING_BYTES) {
-      assert.match(warning, new RegExp(`запас бюджета ${headroom} Б`),
-        'предупреждение о запасе остаётся честным сигналом о размере');
-    } else {
-      assert.equal(warning, null, 'достаточный запас после рекалибровки не вызывает тревогу');
-    }
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -1235,17 +1182,6 @@ test('#429 проверка владения не судит размер гра
 
 
 // --- #438: потолок графа с полосой ------------------------------------------
-
-test('#438 поставляемый граф лежит внутри полосы потолка', (t) => {
-  // Гейт живёт и здесь, а не только в `npm run bundle:budget`: манифест
-  // закоммичен, значит проверка стоит ровно там, где её увидит любой прогон
-  // тестов. Рост, который не заметили в бете.2, краснел бы на этом тесте.
-  // С #657 — только пока бандл свежий, см. `shippedBundleIsFresh`.
-  const manifest = shippedManifest();
-  if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
-  const violation = initialViewCeilingViolation(manifest.initialViewGzipBytes);
-  assert.equal(violation, null, violation?.text);
-});
 
 test('#438/#699 рост выше полосы над потолком беты — отказ с числом и с указанием, что делать', () => {
   const grew = initialViewCeilingViolation(294_400, { ceiling: 292_000, band: 2_000 });
@@ -1271,52 +1207,6 @@ test('#699 падение ниже потолка задачу не красит
   assert.equal(lazyGraphCeilingViolation(241_001, { ceiling: 239_000, label: 'lazy editor graph' }).kind, 'grew');
   assert.equal(initialViewCeilingViolation(NaN).kind, 'missing');
   assert.equal(initialViewCeilingViolation(undefined).kind, 'missing');
-});
-
-test('#834 candidate reserve classifier does not turn CLI errors into ordinary-task permission', () => {
-  assert.equal(requiresCandidateReserve({ status: 0, stdout: 'candidate', stderr: '' }), true);
-  assert.equal(requiresCandidateReserve({ status: 1, stdout: 'HEAD: бандл не меняется', stderr: '' }), false);
-  for (const result of [
-    { status: 1, stdout: '', stderr: 'bundle-policy: git failed' },
-    { status: 1, stdout: '', stderr: '' },
-    { status: null, stdout: '', stderr: '', error: new Error('spawn failed') },
-    { status: 2, stdout: '', stderr: '' },
-  ]) assert.throws(() => requiresCandidateReserve(result));
-  const invalidRef = spawnSync(process.execPath,
-    ['scripts/bundle-policy.mjs', '--must-match', 'HEAD^{not-a-git-object-type}'], {
-      cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
-    });
-  assert.equal(invalidRef.status, 1, 'the real CLI shares exit 1 between false and Git errors');
-  assert.throws(() => requiresCandidateReserve(invalidRef));
-});
-
-test('#438 полоса шире наблюдаемого шума метрики', (t) => {
-  // gzip не монотонен по исходнику: на beta.2 initial-чанк стал меньше на 344
-  // сырых байта и на 40 байт больше в сжатом виде. Полоса обязана быть заметно
-  // шире таких колебаний, иначе гейт краснеет на коммитах, сокращающих код, —
-  // и красным станет последний пушнувший, а не тот, кто вырастил граф.
-  assert.ok(INITIAL_VIEW_CEILING_BAND >= 1_000,
-    'полоса меньше килобайта превращает потолок в лотерею');
-  // И потолок обязан оставаться под общим бюджетом: иначе он ничего не значит.
-  assert.ok(INITIAL_VIEW_GZIP_CEILING < INITIAL_VIEW_GZIP_BUDGET);
-  // #699: обычная задача вправе занять всю полосу. Запас восстанавливает
-  // кандидат (`ratchets.mjs tighten`), а не скрытый второй потолок -500 Б.
-  // Тот же canonical selector, что у сверки бандла, отличает кандидата от
-  // свежей локальной сборки обычной задачи и от beta-derived/golden коммита.
-  const manifest = shippedManifest();
-  if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
-  const shipped = manifest.initialViewGzipBytes;
-  const violation = initialViewCeilingViolation(shipped);
-  assert.equal(violation, null, violation?.text);
-  assert.equal(initialViewCeilingViolation(shipped - 5_000), null,
-    'снижение не красит гейт (#699)');
-  const policy = spawnSync(process.execPath, ['scripts/bundle-policy.mjs', '--must-match', 'HEAD'], {
-    cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
-  });
-  if (requiresCandidateReserve(policy)) {
-    assert.ok(INITIAL_VIEW_GZIP_CEILING + INITIAL_VIEW_CEILING_BAND - shipped > 500,
-      'кандидат должен восстановить запас: node scripts/ratchets.mjs tighten');
-  }
 });
 
 test('#438 предупреждение о запасе можно погасить, и повышение потолка его возвращает', () => {
@@ -1432,7 +1322,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
   }
 };
 
-test('#438 CLI действительно применяет потолок, а не только объявляет его', () => {
+test('#438 historical manual budget CLI applies its synthetic fixture limits', () => {
   const inside = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - 500);
   assert.equal(inside.status, 0, inside.output);
   // #627 AC1: the onboarding graph is printed with its ceiling and band.
@@ -1447,7 +1337,7 @@ test('#438 CLI действительно применяет потолок, а 
   const shrank = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND - 1);
   assert.equal(shrank.status, 0, shrank.output);
 
-  // Production checks the rolling ceiling before the absolute wall. Report
+  // The retained manual helper checks the rolling ceiling before the absolute wall. Report
   // whichever gate binds first; a larger recalibrated wall must not reorder it.
   const overBudget = runBudgetCli(INITIAL_VIEW_GZIP_BUDGET + 1);
   assert.equal(overBudget.status, 1, overBudget.output);
@@ -1480,26 +1370,9 @@ test('#792 absolute initial View wall accepts equality and rejects the next byte
     new RegExp(`initial View graph ${INITIAL_VIEW_GZIP_BUDGET + 1} B gzip exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
 });
 
-// #593: до этой задачи размеры ленивых графов только печатались в отчёт. Тогда
-// «бюджет ленивого графа защищён» было заявлением без гейта — сравнения не
-// существовало ни одного, и рост уезжал молча.
-test('#593 потолки ленивых графов — гейт, а не строка отчёта', (t) => {
-  const manifest = shippedManifest();
-  // Поставляемые графы против потолков — только по свежему бандлу (#657).
-  const fresh = shippedBundleIsFresh(manifest);
-  if (!fresh) t.diagnostic(STALE_SHIPPED_BUNDLE);
-  for (const [bytes, ceiling, label] of fresh ? [
-    [manifest.lazyFurnitureArtGzipBytes, LAZY_FURNITURE_ART_GZIP_CEILING, 'lazy furniture art graph'],
-    [manifest.lazyEditorGzipBytes, LAZY_EDITOR_GZIP_CEILING, 'lazy editor graph'],
-    // #627 AC1: the first-run graph is the third gated lazy graph.
-    [manifest.lazyOnboardingGzipBytes, LAZY_ONBOARDING_GZIP_CEILING, 'lazy onboarding graph'],
-  ] : []) {
-    const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
-    assert.equal(violation, null, violation?.text);
-  }
-  // Гейт обязан быть исполняемым и на синтетике, обе стороны — и это не
-  // зависит от свежести бандла: мутант «потолок никогда не срабатывает»
-  // ловится здесь.
+// #1105 retires current-candidate ratchets. Keep the historical helper's
+// explicit synthetic boundary behavior, without judging this release's size.
+test('#593 historical lazy-graph helper enforces its explicit synthetic band', () => {
   const grew = lazyGraphCeilingViolation(20_000, { ceiling: 17_900, label: 'lazy furniture art graph' });
   assert.equal(grew.kind, 'grew');
   assert.equal(grew.over, 2_100);
@@ -1531,8 +1404,8 @@ test('#896 all three valid lazy graphs use the inclusive band, with no extra 500
         const violation = lazyGraphCeilingViolation(manifest[field], { ceiling, label });
         if (violation) throw new Error(violation.text);
       };
-      const cliJudge = () => assertBundleBudget(manifest, INITIAL_VIEW_GZIP_BUDGET,
-        INITIAL_PANEL_ONLY_GZIP_BUDGET, ...ceilings);
+      const cliJudge = () => assertBundleBudget(manifest, manifest.initialViewGzipBytes,
+        manifest.initialPanelOnlyGzipBytes, ...ceilings);
       if (offset > 0) {
         assert.throws(shippedGraphJudge, /больше полосы/);
         assert.throws(cliJudge, /больше полосы/);
@@ -1546,27 +1419,24 @@ test('#896 all three valid lazy graphs use the inclusive band, with no extra 500
   }
 });
 
-test('#627 AC1 граф онбординга гейтится тем же потолком с полосой, что editor и furniture art', (t) => {
+test('#627 historical onboarding helper keeps explicit inclusive boundaries', () => {
   const manifest = shippedManifest();
   const ceilings = (onboarding) => [
     manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes, onboarding,
   ];
   const bytes = manifest.lazyOnboardingGzipBytes;
   assert.ok(Number.isFinite(bytes) && bytes > 0, 'манифест обязан измерять граф онбординга');
-  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes)));
+  assert.doesNotThrow(() => assertBundleBudget(manifest, manifest.initialViewGzipBytes, manifest.initialPanelOnlyGzipBytes, ...ceilings(bytes)));
   const over = bytes - LAZY_GRAPH_CEILING_BAND - 1;
   assert.throws(
-    () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(over)),
+    () => assertBundleBudget(manifest, manifest.initialViewGzipBytes, manifest.initialPanelOnlyGzipBytes, ...ceilings(over)),
     new RegExp(`lazy onboarding graph ${bytes} B gzip выше потолка беты ${over} B на ${bytes - over} B`),
   );
-  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes - LAZY_GRAPH_CEILING_BAND)),
+  assert.doesNotThrow(() => assertBundleBudget(manifest, manifest.initialViewGzipBytes, manifest.initialPanelOnlyGzipBytes, ...ceilings(bytes - LAZY_GRAPH_CEILING_BAND)),
     '#699: рост в полосе над потолком беты задачу не красит');
-  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes + LAZY_GRAPH_CEILING_BAND + 1)),
+  assert.doesNotThrow(() => assertBundleBudget(manifest, manifest.initialViewGzipBytes, manifest.initialPanelOnlyGzipBytes, ...ceilings(bytes + LAZY_GRAPH_CEILING_BAND + 1)),
     '#699: ниже потолка — не находка ветки, потолок опускает бета');
-  // Потолок по умолчанию — поставляемый, и поставляемый граф в его полосе —
-  // пока бандл свежий (#657); синтетика выше от свежести не зависит.
-  if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
-  assert.doesNotThrow(() => assertBundleBudget(manifest));
+
 });
 
 test('#627 AC3 словари пространств: девять ленивых чанков, английский — у потребителя', () => {

@@ -365,6 +365,8 @@
   "space.new": "Neuer Bereich",
   "space.copy_title": "Bereich kopieren",
   "space.copy_name": "Name des neuen Bereichs",
+  "space.copy_furniture": "Möbel kopieren",
+  "space.copy_decor": "Dekoration kopieren",
   "space.copy_fallback": "Bereich",
   "space.copy_create": "Kopie erstellen",
   "space.copy_optimize_title": "Vor dem Kopieren optimieren?",

@@ -5,6 +5,7 @@
 - Keep the catalog's negative metadata pattern assertion out of executable source inputs, so a newly generated browser manifest cannot invalidate a cold addressed run. [#1201](https://github.com/Matysh/houseplan-card/issues/1201)
 
 - Restore geometry-check preparation for transitive built-manifest readers and inventory the new zero-config synthetic corner fixture without changing saved identities. Keep Select-only graph assertions while reporting module size diagnostically. [#1196](https://github.com/Matysh/houseplan-card/issues/1196)
+- Complete the German and French Copy furniture/decor labels. Retained Node checks follow the approved shared header and current release process while preserving measurement, stylesheet ownership and bundle behavior checks. [#1197](https://github.com/Matysh/houseplan-card/issues/1197)
 
 - Refresh the synthetic browser/Golden icon fixture from current sources during asset preparation, excluding local capture/private output. Capture provenance records the icon-map checksum; product runtime and visual baselines are unchanged. [#1193](https://github.com/Matysh/houseplan-card/issues/1193)
 

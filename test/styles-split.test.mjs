@@ -97,10 +97,12 @@ test('issue 266 the media wrappers survived the move', () => {
     assert.ok(reduced.includes(selector), `${selector}: missing common reduced-motion rule`);
 });
 
-test('#1120 the appended panel header sheet owns only panel selectors and its native metrics', () => {
+test('#1184 the appended header sheet owns shared intrinsic-flow roots and its native metrics', () => {
   const rules = parseRules(panelHeaderStyles.cssText).filter(rule => rule.kind === 'rule');
   assert.ok(rules.length > 20);
   for (const rule of rules) for (const selector of rule.selectors)
-    assert.ok(/:host\(\[panel-host\](?:\[[^\]]+\])*\)/.test(selector) || selector.includes('.panel-menu')
-      || selector.includes('.panel-header-metrics'), `unscoped panel rule: ${selector}`);
+    assert.ok(selector.startsWith('.hdr[data-panel-flow]')
+      || /^\.hdr\[data-panel-flow=['"][0-4]['"]\]/.test(selector)
+      || selector === '.panel-menu'
+      || selector === '.panel-header-metrics .panel-icon-metric', `unscoped shared-header rule: ${selector}`);
 });
