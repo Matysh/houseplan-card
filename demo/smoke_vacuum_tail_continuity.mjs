@@ -32,7 +32,7 @@ try{
    connection:{...base.connection,subscribeEvents:async(cb,event)=>{
     if(event==='houseplan_trail_updated'){f.listeners.add(cb);return()=>f.listeners.delete(cb);}return subscribe(cb,event);
    }},callWS:async message=>{
-    if(message.type==='houseplan/trail/get'){f.reads++;return {trail_format:2,live_tail_format:1,trails:{[marker.id]:{current:structuredClone(f.run)}}};}
+    if(message.type==='houseplan/trail/get'){f.reads++;return {trail_format:f.format??2,live_tail_format:1,trails:f.format===1?{}:{[marker.id]:{current:structuredClone(f.run)}}};}
     if(/\/(set|save|delete|update)$/.test(message.type))f.writes++;return ws(message);
    }};
   history.replaceState(null,'','/houseplan');const host=document.getElementById('host');
@@ -52,6 +52,8 @@ try{
    return {gap:end&&box?Math.hypot(end.x-box.left-box.width/2,end.y-box.top-box.height/2):null,
     puck:box?[box.left+box.width/2,box.top+box.height/2]:null,
     d:root.querySelector('.vactrail path.core')?.getAttribute('d')||'',
+    moving:c._vacRt.get('e_tail1175')?.moving,endedTs:c._vacRt.get('e_tail1175')?.endedTs,
+    local:structuredClone(c._vacRt.get('e_tail1175')?.material),
     pending:structuredClone(c._vacRt.get('e_tail1175')?.livePending?.paths),
     native:structuredClone(c._vacSrvTrails.e_tail1175?.current?.paths)};
   };
@@ -98,18 +100,51 @@ try{
   await page.waitForFunction(()=>window.__card._vacSrvTrails.e_tail1175.current.revision===window.__tail1175.run.revision);
   const full=await samples();check(`full-${iso}: full ACK retains live endpoint in intermediate frames`,full.every(r=>r.gap!==null&&r.gap<1));
   check(`full-${iso}: static path stops before the future target`,full.every(r=>!r.d.endsWith('600 310')));
+  await page.evaluate(()=>{const f=window.__tail1175;f.run.paths[0].at(-1)[0]=599.5;
+   f.run.live_tail.paths=[[[599.5,310,f.stamp]]];f.run.revision=`near-ack-${Date.now()}`;f.publish();});
+  await page.waitForFunction(()=>window.__card._vacSrvTrails.e_tail1175.current.revision===window.__tail1175.run.revision);
+  const near=await samples();check(`near-${iso}: calibrated ACK correspondence retains the real puck endpoint`,near.every(r=>r.gap!==null&&r.gap<1));
   await page.evaluate(()=>window.__tail1175.publish());await page.waitForTimeout(80);
   const repeated=await samples();check(`repeat-${iso}: same native snapshot keeps the tip`,repeated.every(r=>r.gap!==null&&r.gap<1));
   await page.screenshot({path:`${folder}/${iso?'iso':'flat'}-full-ack.png`});
-  evidence.modes.push({iso,delay:rows,partial,full,repeated});
+  evidence.modes.push({iso,delay:rows,partial,full,near,repeated});
  }
+ // Availability is not a cleanup boundary, including the default display and format-1 reserve.
+ await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>({...cfg,markers:cfg.markers.map(m=>m.id==='e_tail1175'
+  ?{...m,vacuum:{...m.vacuum,trail_mode:'cleaning'}}:m)})));
+ controlWrites=await page.evaluate(()=>window.__tail1175.writes);
+ for(const format of [2,1]){
+  if(format===1){await page.evaluate(()=>{const f=window.__tail1175;f.format=1;f.publish();});
+   await page.waitForFunction(()=>window.__card._vacTrailFormat===1);
+   for(const x of [700,750,800]){await page.evaluate(x=>window.__tail1175.move(x,310),x);await page.waitForTimeout(50);}
+  }
+  await page.evaluate(()=>window.__hpTest.settled());
+  const before=await page.evaluate(()=>window.__tail1175.measure());
+  check(`availability-${format}: current cleanup has a path before outage`,before.moving&&!!before.d);
+  await page.evaluate(x=>window.__tail1175.move(x,310,'unavailable'),format===1?800:600);
+  await page.evaluate(()=>window.__hpTest.settled());
+  const lost=await page.evaluate(()=>window.__tail1175.measure());
+  check(`availability-${format}: default cleaning path and lifecycle survive outage`,lost.moving&&!!lost.d&&lost.endedTs===before.endedTs);
+  check(`availability-${format}: only the unavailable puck and tip disappear`,lost.puck===null&&lost.gap===null);
+  await page.evaluate(x=>window.__tail1175.move(x,310),format===1?850:650);
+  await page.evaluate(()=>window.__hpTest.settled());
+  const resumed=await page.evaluate(()=>window.__tail1175.measure());
+  check(`availability-${format}: recovery does not reset the cleanup`,resumed.moving&&!!resumed.d&&resumed.endedTs===before.endedTs);
+  if(format===1){const known=before.local.flat().map(p=>JSON.stringify(p));
+   check('availability-1: every pre-outage local point survives recovery',known.length>=2&&known.every(p=>resumed.local.flat().some(q=>JSON.stringify(q)===p)));
+  }
+  evidence[`availability${format}`]={before,lost,resumed};
+ }
+ // Return to native capability for the independent unknown/teleport guard.
+ await page.evaluate(()=>{const f=window.__tail1175;f.format=2;f.publish();});
+ await page.waitForFunction(()=>window.__card._vacTrailFormat===2);
  await page.evaluate(()=>window.__tail1175.move(9900,9900));await page.waitForTimeout(100);
  const teleport=await page.evaluate(()=>window.__tail1175.measure());
  check('teleport does not invent a connector',teleport.gap===null&&teleport.pending?.at(-1)?.length===1);
- await page.evaluate(()=>window.__tail1175.move(9900,9900,'unavailable'));await page.waitForFunction(()=>!window.__card._vacRt.get('e_tail1175')?.moving);
+ await page.evaluate(()=>window.__tail1175.move(9900,9900,'unavailable'));await page.evaluate(()=>window.__hpTest.settled());
  check('unknown state retires the active puck',await page.evaluate(()=>!window.__card.renderRoot.querySelector('.vacpuck[data-mid="e_tail1175"]')));
  const counts=await page.evaluate(()=>({reads:window.__tail1175.reads,writes:window.__tail1175.writes}));
- check('rendering never writes or polls the provider',counts.writes===controlWrites&&counts.reads<=10);
+ check('rendering never writes or polls the provider',counts.writes===controlWrites&&counts.reads<=14);
  evidence.counts=counts;evidence.teleport=teleport;
  writeFileSync(`${folder}/observations.json`,JSON.stringify(evidence,null,2));
  console.log(JSON.stringify({modes:evidence.modes.map(m=>({iso:m.iso,frames:m.full.length,maxGap:Math.max(...m.full.map(r=>r.gap??Infinity))})),counts}));

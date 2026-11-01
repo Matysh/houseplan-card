@@ -411,13 +411,16 @@ paints native and provisional in one opacity group, reserving tail quota first;
 the static tail lags the latest target while the existing RAF follows the actual
 animated puck. A render-only animation snap after sparse telemetry is not a positional gap:
 physical jump, unknown/availability and context guards alone split observations.
-When full native ACK leaves a single witnessed target matching its exact final
-endpoint, View temporarily trims that final static native point and uses the
+When full native ACK leaves a single witnessed point matching its exact final
+endpoint and the calibrated robot position within the backend's existing2cm
+ACK correspondence, View temporarily trims that final static native point and uses the
 preceding native point as the animated tip anchor. It never uses unrelated
 singletons or withheld previous-task geometry to invent a connector. The tip
 continues to follow the actual painted puck through the existing screen-matrix
 RAF; no target-position shortcut or provider read is introduced. An unavailable
 robot retires its active puck/tip without proving that its cleanup ended.
+Availability is separate from the last known cleanup flag: the default cleaning
+path remains visible and legacy local fragments survive unavailable/recovery.
 Full-native projection/simplification is cached independently
 of changing tail budgets. RAF neither rescans geometry nor reads the provider.
 

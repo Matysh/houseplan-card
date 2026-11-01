@@ -844,7 +844,7 @@ export interface HouseplanEditorHostPort {
   _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
   _vacFit: VacuumFit | null;
   _vacOpenAllCameras: (d: DevItem) => void;
-  _vacRt: Map<string, { trail: VacPt[]; material: import('./vacuum').VacPath; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; livePending?: import('./vacuum-live-tail').VacuumLivePending; }>;
+  _vacRt: Map<string, { trail: VacPt[]; material: import('./vacuum').VacPath; lastKey: string; lastTs: number; moving: boolean; unavailable?: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; livePending?: import('./vacuum-live-tail').VacuumLivePending; }>;
   _vacSource: (d: DevItem, planHass?: any) => string | null;
   _vacRuntimeSource: (d: DevItem, planHass?: any) => import('./vacuum-runtime-source').VacuumRuntimeSource; // any-ok: card projection
   _vacObservedMapId: (d: DevItem, source: string) => string | undefined;

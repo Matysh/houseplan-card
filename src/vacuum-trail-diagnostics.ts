@@ -17,7 +17,7 @@ export interface VacuumTrailDiagnostic {
 type Host = Pick<HouseplanEditorHostPort, '_vacSrvTrails' | '_vacTrailFormat'
   | '_devices' | '_isVacDev' | '_vacRuntimeSource'
   | '_space' | '_vacGeometryCache' | '_cellCm' | '_gridPitch'> & {
-    readonly _vacRt: ReadonlyMap<string, { moving: boolean; material: VacPath; livePending?: VacuumLivePending }>;
+    readonly _vacRt: ReadonlyMap<string, { moving: boolean; unavailable?: boolean; material: VacPath; livePending?: VacuumLivePending }>;
   };
 
 function routeDisplayReason(resolution: VacuumRouteResolution, unavailable: boolean): I18nKey | null {
@@ -65,7 +65,8 @@ export function diagnoseVacuumTrails(host: Host): Map<string, VacuumTrailDiagnos
     const runtime = host._vacRuntimeSource(d);
     const result = initialDiagnostic(host, d, runtime);
     results.set(d.id, result);
-    const moving = host._vacRt.get(d.id)?.moving ?? false;
+    const runtimeState = host._vacRt.get(d.id);
+    const moving = runtimeState?.moving ?? false;
     if (modeDisplayReason(host, d, moving)) continue;
     const { source, telemetry, routes, resolution } = runtime;
     if (!source) continue;
@@ -78,7 +79,7 @@ export function diagnoseVacuumTrails(host: Host): Map<string, VacuumTrailDiagnos
       server: plan.currentRunMatches ? server?.current ?? null : null,
       local: host._vacRt.get(d.id)?.material ?? [], serverFormat: host._vacTrailFormat,
       livePending: host._vacRt.get(d.id)?.livePending,
-      moving, matrix: plan.live, cache: host._vacGeometryCache,
+      moving: moving && !runtimeState?.unavailable, matrix: plan.live, cache: host._vacGeometryCache,
       cmPerUnit: host._cellCm / host._gridPitch, budget });
     budget -= frame.count;
     result.rendered = frame.count;

@@ -2566,7 +2566,7 @@ export class HouseplanCard extends LitElement {
   private _activityRt = new Map<string, FiniteActivityRuntime>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, LocalVacuumPath & {
-    lastKey: string; lastTs: number; moving: boolean; jump: boolean; gap: boolean;
+    lastKey: string; lastTs: number; moving: boolean; unavailable?: boolean; jump: boolean; gap: boolean;
     mapKey: string; endedTs: number; lastPos: VacPt | null; livePending?: VacuumLivePending }>();
   /** view signature of the previous vacuum render: a changed view (zoom, pan,
       space switch) or a tab return must TELEPORT the puck — animating left/top
@@ -12239,8 +12239,9 @@ export class HouseplanCard extends LitElement {
           moving: false, jump: false, gap: false, mapKey: '', endedTs: 0, lastPos: null };
         this._vacRt.set(d.id, rt);
       }
-      if (!vacuumState || vacuumState === 'unknown' || vacuumState === 'unavailable') {
-        rt.moving = false; // Availability loss cannot keep a formerly moving puck/tip active.
+      // Availability retires the active puck, not the last known cleanup or its history.
+      rt.unavailable = !vacuumState || vacuumState === 'unknown' || vacuumState === 'unavailable';
+      if (rt.unavailable) {
         rt.gap = true;
         if (rt.livePending) rt.livePending.gap = true;
         continue;
@@ -12458,6 +12459,7 @@ export class HouseplanCard extends LitElement {
       const matrix = plan.live;
       const rt = fact?.runtime ?? this._vacRt.get(d.id);
       const moving = rt?.moving ?? false;
+      const active = moving && !rt?.unavailable;
       const tmode = vacTrailMode(d.marker?.vacuum);
       // owner 2026-07-31: hide when the cleanup is over (default), unless the
       // mode says always; the previous run only ever shows in 'always'
@@ -12474,7 +12476,7 @@ export class HouseplanCard extends LitElement {
       // local runtime. Only drawable segments participate.
       if (!history && showCur && matrix) {
         const { current, path: raw, frame } = currentVacuumTrailFrame({ telemetry: tele, server: srvCur,
-          local: rt?.material ?? rt?.trail ?? [], serverFormat: this._vacTrailFormat, moving, matrix,
+          local: rt?.material ?? rt?.trail ?? [], serverFormat: this._vacTrailFormat, moving: active, matrix,
           livePending: rt?.livePending,
           cache: this._vacGeometryCache, cmPerUnit: this._cellCm / this._gridPitch, budget: trailBudget });
         if (raw.length) {
@@ -12484,7 +12486,7 @@ export class HouseplanCard extends LitElement {
           const pieces: unknown[] = [];
           if (pathD) pieces.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="current" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
-          if (moving && current.allowTip && (!current.native || current.hybrid) && (!frame.limited || current.hybrid) && last?.length >= (current.hybrid ? 1 : 2)) {
+          if (active && current.allowTip && (!current.native || current.hybrid) && (!frame.limited || current.hybrid) && last?.length >= (current.hybrid ? 1 : 2)) {
             hasTips = true;
             const anchor = last[last.length - 1];
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
@@ -12495,7 +12497,7 @@ export class HouseplanCard extends LitElement {
           trails.push(current.hybrid ? svg`<g class="hybrid" style=${trailStyle}>${pieces}</g>` : svg`${pieces}`);
         }
       }
-      if (!moving || !tele?.pos || !matrix) continue;
+      if (!active || !tele?.pos || !matrix) continue;
       const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
       const point = [cx, cy];
       const [left, top] = this._framePercent(point, view);

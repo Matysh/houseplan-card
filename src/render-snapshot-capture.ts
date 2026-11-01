@@ -225,6 +225,7 @@ export function captureRenderDeviceSnapshot(
         trail: runtime.material,
         lastTs: runtime.lastTs,
         moving: runtime.moving,
+        unavailable: runtime.unavailable,
         jump: runtime.jump,
         livePending: runtime.livePending,
       } : null,

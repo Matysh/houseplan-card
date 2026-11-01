@@ -98,7 +98,16 @@ export function currentVacuumTrailFrame(input: {
     const nativeTip = !live.waiting && (liveLast(fresh.path)?.length ?? 0) === 1
       && !!end && !!nativeEnd && end[0] === nativeEnd[0] && end[1] === nativeEnd[1]
       && (liveLast(current.path)?.length ?? 0) >= 2;
-    const tip = input.moving && !!end && !!target && end[0] === target.x && end[1] === target.y
+    // ACK anchors are replaced by the native endpoint within the backend's
+    // existing JOIN_CM=2 bound, so robot_position need not match bit-for-bit.
+    const m = input.matrix, dx = end && target ? end[0] - target.x : Infinity;
+    const dy = end && target ? end[1] - target.y : Infinity;
+    const ackTarget = nativeTip && m.length === 6 && m.every(Number.isFinite)
+      && Number.isFinite(input.cmPerUnit) && input.cmPerUnit > 0
+      && Math.abs(m[0] * m[4] - m[1] * m[3]) > 1e-12
+      && Math.hypot(m[0] * dx + m[1] * dy, m[3] * dx + m[4] * dy) * input.cmPerUnit <= 2;
+    const tip = input.moving && !!end && !!target
+      && (end[0] === target.x && end[1] === target.y || ackTarget)
       && ((liveLast(fresh.path)?.length ?? 0) >= 2 || nativeTip) && input.budget >= 2;
     const path = tip ? trimLiveTarget(fresh.path) : fresh.path;
     const nativePath = tip && nativeTip ? trimLiveTarget(current.path) : current.path;

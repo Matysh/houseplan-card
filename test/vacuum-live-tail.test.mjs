@@ -114,3 +114,13 @@ test('#1175 an unchanged complete native ACK reuses the heavy native projection'
   assert.equal(cache.computations-before,1,'only the bounded live window may reproject; native geometry is unchanged');
   assert.equal(first.path,second.path,'the retained native anchor material remains immutable and reusable');
 });
+test('#1175 native ACK uses only its existing calibrated two-centimetre correspondence',()=>{
+  const server={...run(live({paths:[[[20,10,4000]]]})),paths:[[[0,0],[10,0],[10,10],[20,10]]]};
+  assert.equal(frame(server,undefined,{x:21.5,y:10}).current.allowTip,true);
+  assert.equal(frame(server,undefined,{x:22.1,y:10}).current.allowTip,false);
+  for(const matrix of [[2,0,0,0,1,0],[0,0,0,0,0,0]]){
+    const f=currentVacuumTrailFrame({telemetry:{pos:{x:21.5,y:10}},server,local:[],serverFormat:2,
+      moving:true,matrix,cache:new VacuumPathGeometryCache(),cmPerUnit:1,budget:20000});
+    assert.equal(f.current.allowTip,false,'raw proximity cannot bypass physical scale or invalid calibration');
+  }
+});
