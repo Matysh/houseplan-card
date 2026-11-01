@@ -1458,7 +1458,8 @@
         "product",
         "tooling"
       ],
-      "artifact": "output/ui-kit-final-20261101/gate-small-final-1150.log"
+      "artifact": "output/ui-kit-final-20261101/gate-small-final-1150.log",
+      "material": "c8ff8ace99d7e96c7dda6c826a786830b0d33f60 before the sole smoke observer correction below; product fingerprint ead unchanged. New B correction has its own executed native proof; handoff carries the fresh gate of its final commit."
     },
     "processGate": {
       "command": "node scripts/process-gate.mjs --range origin/dev..HEAD --issues --report",
@@ -1483,6 +1484,12 @@
       "smokes": 5,
       "result": "PASS",
       "artifact": "output/ui-kit-final-20261101/gate-fixes-v2-*.log"
+    },
+    "ciAdditionalSmokes": {
+      "result": "PASS",
+      "entries": 12,
+      "reason": "Reconstructed browserPushPlan adds bounded visual minimum and mandatory selective-invalidation core to gate55; all12 additional entries ran sequentially on unchanged product ead.",
+      "artifact": "output/ui-kit-final-20261101/ci-extra-1150-*.log"
     }
   },
   "iterationCorrections": [
@@ -1499,7 +1506,8 @@
     "Retired menu radius0/border0 oracle reanchored to accepted floating radius10/border1/shadow; item32,keyboard and safety retained.",
     "Lazy styles owner is now actual common --hpf-surface in editor-tray adopted sheet. View snapshot omits only visibilityhidden AND height0 editorchrome; separately requires pointereventsnone; visible View stays strict.",
     "Retired bundle ownership markers reanchored to actual shared action/reading and lazy editor-secondary recipes. No marker-only CSS.",
-    "Support field-list style unit reflects existing common namein/areasel/tempin API."
+    "Support field-list style unit reflects existing common namein/areasel/tempin API.",
+    "Exact CI attempt1 log recovered after network failure: only tooltip_escape RED. Replace stale150ms wall-clock hide samples with immediate semantic/native140ms checks and actual popover finalization; no timing, pixel or product contract weakened."
   ],
   "missingThemeDanger": {
     "before": "Ordinary rectangle input without --error-color, settled220ms: old RGB33,33,33; expected219,84,61; RED",
@@ -1520,5 +1528,53 @@
     "parentLazyEditor": 366811,
     "sevenUiKitCaps": "unchanged",
     "method": "unchanged"
+  },
+  "tooltipObservationFix": {
+    "firstFailure": {
+      "run": 41268095337,
+      "attempt": 1,
+      "job": 124735574879,
+      "check": "smoke_ui_polish_963:tooltip_escape",
+      "result": "RED; other66smokes and all57goldens PASS",
+      "artifact": "output/ui-kit-final-20261101/ci1150-attempt1-tooltip-failure.log"
+    },
+    "cause": "Fixed150ms observation races the accepted shared140ms leave plus70ms fallback; no product change is needed.",
+    "correction": "Pointer leave and native Escape assert immediate aria-hidden=true, pointer-events:none and owner description retirement; any observed native animation must be140ms/one iteration. Await actual hidden state and native popover retirement within a1000ms observation deadline, rather than sleeping150ms. Product timing oracle stays140ms, not1000ms.",
+    "proof": {
+      "command": "node demo/smoke_ui_polish_963.mjs",
+      "result": "PASS",
+      "observations": [
+        {
+          "reason": "pointer leave",
+          "hiddenIntent": true,
+          "pointerInert": true,
+          "animations": [
+            {
+              "duration": 140,
+              "iterations": 1
+            }
+          ],
+          "descriptionRetired": true,
+          "popoverRetired": true
+        },
+        {
+          "reason": "Escape",
+          "hiddenIntent": true,
+          "pointerInert": true,
+          "animations": [
+            {
+              "duration": 140,
+              "iterations": 1
+            }
+          ],
+          "descriptionRetired": true,
+          "popoverRetired": true
+        }
+      ],
+      "artifact": "output/ui-kit-final-20261101/tooltip-fixed-1150.log"
+    },
+    "sourceBoundary": "Only existing smoke observation changes; product source/build/capture inputs and final visual evidence fingerprint ead are unchanged.",
+    "cancelledDiagnostics": "Same-SHA CI attempt2 and partial local full-selected run were cancelled once original log became readable and exact timing race was identified. Neither is reported PASS or treated as a causal fix.",
+    "mutantExecution": 0
   }
 }

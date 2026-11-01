@@ -67,6 +67,27 @@ try {
   out.decor_not_dimmed=await card.locator('.decorlayer').evaluate(el=>getComputedStyle(el).opacity==='1');
   out.decor_history_at_end=await card.locator('.decorbar .editbar-end button').count()===3;
   const tip=card.locator('.hp-chrome-tooltip');
+  const tooltipExits=[];
+  // Escape/leave retire semantics immediately; the accepted Kit exit is140ms.
+  // Observe actual finalization rather than racing a150ms wall-clock sleep.
+  const tooltipClosed=async reason=>{
+    const sample=await tip.evaluate(el=>({
+      hiddenIntent:el.getAttribute('aria-hidden')==='true',
+      pointerInert:getComputedStyle(el).pointerEvents==='none',
+      animations:el.getAnimations().map(animation=>({
+        duration:animation.effect?.getComputedTiming().duration,
+        iterations:animation.effect?.getTiming().iterations,
+      })),
+    }));
+    const id=await tip.getAttribute('id');
+    const descriptionRetired=!(await zoom.getAttribute('aria-describedby')||'').split(/\s+/).includes(id);
+    // This is an observation deadline, not the motion oracle checked below.
+    await tip.waitFor({state:'hidden',timeout:1000});
+    const popoverRetired=await tip.evaluate(el=>!el.matches(':popover-open'));
+    tooltipExits.push({reason,...sample,descriptionRetired,popoverRetired});
+    return sample.hiddenIntent&&sample.pointerInert&&descriptionRetired&&popoverRetired
+      &&sample.animations.every(animation=>animation.duration===140&&animation.iterations===1);
+  };
   const zoom=card.locator('[data-hp=zoom-in]');
   // #1070 adds two quarter-turn controls to the same group; every target stays 44px.
   out.zoom_target_sizes=await card.locator('.zoomctl button').evaluateAll(nodes=>nodes.length===5&&nodes.every(el=>{const r=el.getBoundingClientRect();return r.width===44&&r.height===44;}));
@@ -76,13 +97,13 @@ try {
   await zoom.hover();await page.waitForTimeout(180);out.tooltip_delay=!(await tip.isVisible());
   out.zoom_hover_affects_only_owner=await card.locator('.zoomctl button').evaluateAll((nodes,borders)=>nodes.every((el,i)=>el.dataset.hp==='zoom-in'?getComputedStyle(el).borderColor!==borders[i]:getComputedStyle(el).borderColor===borders[i]),zoomBorders);
   await page.waitForTimeout(220);out.tooltip_opens=await tip.isVisible();
-  await page.mouse.move(0,0);await page.waitForTimeout(150);out.tooltip_dismisses=!(await tip.isVisible());
+  await page.mouse.move(0,0);out.tooltip_dismisses=await tooltipClosed('pointer leave');
   for(let i=0;i<100;i++){
     await page.keyboard.press('Tab');
     if(await zoom.evaluate(el=>el===el.getRootNode().activeElement))break;
   }
   await page.waitForTimeout(350);out.tooltip_keyboard=await tip.isVisible()&&await zoom.getAttribute('aria-label')!==null;
-  await page.keyboard.press('Escape');await page.waitForTimeout(150);out.tooltip_escape=!(await tip.isVisible());
+  await page.keyboard.press('Escape');out.tooltip_escape=await tooltipClosed('Escape');
   await zoom.hover();await page.waitForTimeout(80);await page.mouse.move(0,0);await page.waitForTimeout(340);out.no_retired_tooltip=!(await tip.isVisible());
   await mode('view');out.stairs_restore_opacity=await card.locator('.hp-stairs-layer').evaluate(el=>getComputedStyle(el).opacity==='1');
   out.user_text_preserved=(await card.locator('.decorlayer').textContent()).includes('Keep this note');
@@ -180,5 +201,7 @@ try {
   await page.mouse.move(0,0);await zoom.hover();await page.waitForTimeout(350);
   out.remount_tooltip_works=await tip.isVisible()&&await tip.count()===1;
   mkdirSync('artifacts/ui-polish-963',{recursive:true});writeFileSync('artifacts/ui-polish-963/behavior.json',JSON.stringify(out,null,2));
+  writeFileSync('artifacts/ui-polish-963/tooltip-exits.json',JSON.stringify(tooltipExits,null,2));
+  console.log('Native tooltip exits',JSON.stringify(tooltipExits));
   await fixture.assertClean();checkAll(out);await finish(fixture.browser,out);
 } finally {await fixture.close();}
