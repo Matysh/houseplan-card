@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 274,
+  "revision": 275,
   "nextTicket": 31,
   "nextFence": 30,
   "tasks": {
@@ -116,7 +116,20 @@
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
         "status": "delivered"
-      }
+      },
+      "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2",
+      "changedFiles": [
+        "demo/fixtures/wall-corner-join.mjs",
+        "demo/smoke_wall_corner_join.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/WALL-THICKNESS.md",
+        "docs/release-ledger/v1.83.0/1169.json",
+        "src/physical-geometry.ts",
+        "src/wall-thickness.ts",
+        "test/wall-corner-join.test.mjs"
+      ]
     },
     "1175": {
       "issue": 1175,
@@ -402,10 +415,11 @@
     "token": "29:finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit",
     "fence": 29,
     "materialSha": "b484f656475f648bdb0eba4d67ab875f74c927f4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+    "phase": "testing",
     "admittedAt": 1793567834138,
-    "expiresAt": 1793568134138
+    "expiresAt": 1793568185836,
+    "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -887,6 +901,10 @@
     },
     "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit": {
       "digest": "fbb2e6ae728a8c23fae5f53f430e54866510408c0a1684c04cb08c19cda53506",
+      "issue": 1169
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:1:synchronized": {
+      "digest": "95aebb73b2b39ac98abe6b5b0dcd506674b4ed22d56acc119f79d24ac4dcf8ce",
       "issue": 1169
     }
   },
