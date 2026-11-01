@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12,
-  "nextTicket": 3,
+  "revision": 13,
+  "nextTicket": 4,
   "nextFence": 3,
   "tasks": {
     "1176": {
@@ -9,14 +9,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1176-room-candidates",
-      "materialSha": "747a6ca41bdff16dab6de26f130994749097c71d",
+      "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 2,
-      "queued": false,
+      "ticket": 3,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793552544967,
-      "reviewEntry": 2,
+      "readyAt": 1793552996664,
+      "reviewEntry": 3,
       "patchId": "27a9dbf79b0f58fe919ecd3e738bc278bedff7b5",
       "changedFiles": [
         "demo/smoke_plan_drawing_repairs.mjs",
@@ -38,14 +38,15 @@
         "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "delivered"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1176
+  ],
   "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -94,6 +95,10 @@
     },
     "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:metadata:847edf7a-2a2a-449a-b9c8-167a2e77edbc:task-notice:1176::": {
       "digest": "025de5447d0f00e31abb5219f95f2ed19cdd7966f0df6bfff8d911c627e088ef",
+      "issue": 1176
+    },
+    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e": {
+      "digest": "ae3f523d1cdfc984f25e2dbe145cbb39f88772fb5730becac973278088247ac0",
       "issue": 1176
     }
   }
