@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 376,
-  "nextTicket": 39,
+  "revision": 377,
+  "nextTicket": 40,
   "nextFence": 39,
   "tasks": {
     "1128": {
@@ -308,14 +308,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/golden-icons-preparation",
-      "materialSha": "33a9d416aa63f2589c6b8b9aac1c984f749a5eef",
+      "materialSha": "84dc95cf5d1c6c67c370f34b53b193459a22aaed",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 38,
-      "queued": false,
+      "ticket": 39,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793571429472,
-      "reviewEntry": 1,
+      "readyAt": 1793571667043,
+      "reviewEntry": 2,
       "patchId": "e550b79ac6f41d617f69f25a9787296790319d2f",
       "changedFiles": [
         "demo/gen_icons.mjs",
@@ -329,9 +329,6 @@
         "scripts/capture-environment.mjs",
         "test/bundle-sync.test.mjs"
       ],
-      "automationError": "checks-unavailable",
-      "automationSince": 1793571478689,
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -404,7 +401,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1193
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -495,6 +494,19 @@
           "eventId": "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return:return:1193"
         },
         "delivered": true
+      }
+    },
+    "finish:2377885e-722e-4968-b784-311794ab5cc3": {
+      "digest": "8f30c988973e59b603b3a0320185b36ff1e0850c99ed1e80621a61e0555f5485",
+      "issue": 1193,
+      "message": {
+        "kind": "queued",
+        "issue": 1193,
+        "at": 1793571667043,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "84dc95cf5d1c6c67c370f34b53b193459a22aaed"
       }
     }
   },
