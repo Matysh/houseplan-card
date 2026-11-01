@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 17,
+  "revision": 18,
   "nextTicket": 4,
   "nextFence": 4,
   "tasks": {
@@ -51,7 +51,10 @@
         "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
         "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
         "patchId": "f5650ed2bff7868998008fcee4164c14158fe535"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793553358957,
+      "automationDetail": "GitHub GET failed (415)"
     }
   },
   "ownerDecisions": {},
@@ -138,6 +141,10 @@
     },
     "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:4:review-requested": {
       "digest": "fb4e5c0d2bdc5d8d0038779db8781b325615919b4d8288c64275365bdfa76573",
+      "issue": 1176
+    },
+    "github:41330528380:1:tick:0:automation-pending": {
+      "digest": "13935b653da596e539be3f0aa30c9a8f0f0648e5ecc427ac2cec9a07b2e8d2f4",
       "issue": 1176
     }
   }
