@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 330,
+  "revision": 331,
   "nextTicket": 35,
   "nextFence": 35,
   "tasks": {
@@ -95,7 +95,7 @@
       "notice": {
         "key": "3:rebase-conflict",
         "reason": "rebase-conflict",
-        "status": "pending"
+        "status": "delivered"
       },
       "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2",
       "changedFiles": [
@@ -869,6 +869,10 @@
     },
     "finish:d572296e-b553-4d39-a14f-db3f44249659:finish:1:return": {
       "digest": "a72dec2842ce47b664dff3297b027a660e22b6337d3285508578b516d180c18a",
+      "issue": 1169
+    },
+    "finish:d572296e-b553-4d39-a14f-db3f44249659:metadata:bbc45b15-c335-44d9-9040-aa66c48b586e:task-notice:1169::": {
+      "digest": "aae3c4b0186623ebcb95201546dbabdac0ebfcca33edc516541ec01ae8902918",
       "issue": 1169
     }
   },
