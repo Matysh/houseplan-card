@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 201,
+  "revision": 202,
   "nextTicket": 23,
   "nextFence": 22,
   "tasks": {
@@ -265,7 +265,7 @@
     "expectedBase": null,
     "phase": "sync",
     "admittedAt": 1793566172779,
-    "expiresAt": 1793566472779
+    "expiresAt": 1793566542314
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -348,19 +348,6 @@
       "digest": "e6462d29e8482af19e39a3a52ddaffb524cb9b2f5a6157dc56ed2b15f89a1d90",
       "issue": 1175
     },
-    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
-      "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
-      "issue": 1190,
-      "message": {
-        "kind": "queued",
-        "issue": 1190,
-        "at": 1793565879599,
-        "entry": 1,
-        "track": "ask",
-        "layer": "infra",
-        "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
-      }
-    },
     "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81": {
       "digest": "e1f0475ff69d8976154e141709fca8e6d7bddcaa85e66db3ef120701af65a3a3",
       "issue": 1175
@@ -380,6 +367,23 @@
     "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:1:admit": {
       "digest": "0a6b40045133e491d538b73c547ec7e3485a5c82fb6266b800ddd47175f10516",
       "issue": 1190
+    },
+    "finish:705c4ec3-1f00-453a-9d61-822086bef65b": {
+      "digest": "709e0095e072c829709e01a1b3fc7f1c1bad5aa46ebc86228202639488a9601c",
+      "issue": 1190
+    },
+    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
+      "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
+      "issue": 1190,
+      "message": {
+        "kind": "queued",
+        "issue": 1190,
+        "at": 1793565879599,
+        "entry": 1,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
+      }
     }
   },
   "devWebhook": {
