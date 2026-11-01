@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 507,
-  "nextTicket": 51,
+  "revision": 508,
+  "nextTicket": 52,
   "nextFence": 50,
   "tasks": {
     "1128": {
@@ -607,6 +607,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1203": {
+      "issue": 1203,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/golden-safe-resize-owner",
+      "materialSha": "3ae3dc538ed34d900165e5b659fd54740885ec98",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 51,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793574181515,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -684,7 +698,8 @@
     }
   },
   "waiting": [
-    1198
+    1198,
+    1203
   ],
   "active": {
     "issue": 1200,
@@ -976,6 +991,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:fb7238d0-9d77-4205-b55c-7a33ee810a5f": {
+      "digest": "0c86365d47349d607c944e222c3fa062a02ea00d8e62021d7dd1b04eabb5c7f0",
+      "issue": 1203,
+      "message": {
+        "kind": "queued",
+        "issue": 1203,
+        "at": 1793574181515,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "3ae3dc538ed34d900165e5b659fd54740885ec98"
       }
     }
   },
