@@ -32,10 +32,12 @@ try{
           return {width:group.getBoundingClientRect().width,height:head.getBoundingClientRect().height,
             closeWidth:rect.width,closeHeight:rect.height,closeAfterActive:active.nextElementSibling===slot,
             hit:hit===close||close.contains(hit),scroll:head.scrollWidth,available:head.clientWidth,
-            x:rect.x+5,y:rect.y+rect.height/2,stage:root.querySelector('.stage').clientHeight};
+            x:rect.x+5,y:rect.y+rect.height/2,stage:root.querySelector('.stage').clientHeight,
+            nestedClose:!!group.querySelector('.modetab .closex'),count:!!head.querySelector('.count')};
         });
         assert.ok(state.closeWidth>=44&&state.closeHeight>=44&&state.closeAfterActive&&state.hit,JSON.stringify(state));
         assert.ok(state.scroll<=state.available+1&&state.stage>50,JSON.stringify(state));
+        assert.ok(!state.nestedClose&&!state.count,JSON.stringify(state));
         if(previous)assert.ok(Math.abs(previous.width-state.width)<1&&Math.abs(previous.height-state.height)<1,JSON.stringify({previous,state}));
         previous=state;
       }
@@ -43,6 +45,7 @@ try{
       await page.mouse.click(box.x+5,box.y+box.height/2);await settle();
       assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'view');
       assert.equal(await card.locator('.head [data-hp="editor-close"]').count(),0);
+      assert.ok(await card.locator('.editor-close-slot').evaluate(e=>getComputedStyle(e).display==='none'&&!e.hasAttribute('tabindex')));
     }
   }
   // Exercise the addressed golden semantic owner without accepting old PNGs.

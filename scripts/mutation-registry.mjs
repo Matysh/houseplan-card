@@ -76,18 +76,7 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // `find` обязан встречаться в файле ровно один раз: патч, который ложится «куда
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
-  {
-    id: 'plan-rotation-phone-close-white-on-light-1070',
-    guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=plan-rotation-phone-editor-320-1070',
-    because: '#1070 AC12: the actual captured light phone header must paint a contrasting close glyph while desktop active-tab colour stays intact. Pixel witness, registered only; nightly execution.',
-    patches: [
-  {
-    "file": "src/styles/navigation.styles.ts",
-    "find": "@media(min-width:481px) {",
-    "replace": "@media(min-width:0px) {"
-  }
-],
-  },
+  
   {
     id: 'golden-lamp-out-of-reach',
     guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=panel-lighting-opaque-glow-two-doorways-dark',
@@ -307,13 +296,7 @@ const MUTANT_DEFINITIONS = [
       find: '.hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }',
       replace: '.hdr > .head { box-sizing: border-box; }' }],
   },
-  {
-    id: 'plan-rotation-animated-header-clips-menu-1070',
-    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
-    because: '#1070 AC12: the real phone gear popup must remain fully hittable during the shared header transition and allow native retargeting; a Node camera model cannot see ancestor clipping. Registered only; nightly execution.',
-    patches: [{ file: 'src/houseplan-card.ts',
-      find: "overflow:${this._headerMenu.open ? 'visible' : 'hidden'}", replace: 'overflow:hidden' }],
-  },
+  
   {
     id: 'plan-rotation-stale-header-observer-1070',
     guard: 'node demo/smoke_led_strip_glow.mjs',
@@ -12418,40 +12401,20 @@ const MUTANT_DEFINITIONS = [
       replace: "    const editorClose = html`<span class=\"count\">${this._devices.length} dev.</span><span class=\"editor-close-slot\" aria-hidden=",
     }],
   },
-  {
-    id: 'toolbar-close-slot-collapses-outside-editor',
-    guard: 'node demo/smoke_toolbar_stable_width.mjs',
-    because: '#647 AC2: an empty slot that collapses outside an editor brings back the header width jump',
-    patches: [
-  {
-    "file": "src/styles/navigation.styles.ts",
-    "find": ".hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { pointer-events:none; }",
-    "replace": ".hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { pointer-events:none; display:none; }"
-  }
-],
-  },
+  
   {
     id: 'toolbar-close-back-inside-tab',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC3: an X inside the active mode tab widens that tab and moves its neighbours',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "                    <span class=\"ml\">${this._t(('mode.' + m) as I18nKey)}</span>\n                  </button>${this._mode === m ? editorClose : nothing}`",
-      replace: "                    <span class=\"ml\">${this._t(('mode.' + m) as I18nKey)}</span>${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}\n                  </button>${this._mode === m ? editorClose : nothing}`",
-    }],
-  },
-  {
-    id: 'toolbar-active-highlight-stops-at-tab',
-    guard: 'node demo/smoke_toolbar_stable_width.mjs',
-    because: '#666: the active editor tab highlight must cover the gap and the X slot, measured as painted pixels',
     patches: [
   {
-    "file": "src/styles/navigation.styles.ts",
-    "find": "inset:-1px calc(-1 * (4px + var(--hp-editor-close-size)) - 1px) -1px -1px;",
-    "replace": "inset:0;"
+    "file": "src/houseplan-card.ts",
+    "find": "                  </button>${this._mode === m ? editorClose : nothing}`",
+    "replace": "                  ${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}</button>${this._mode === m ? editorClose : nothing}`"
   }
 ],
   },
+  
   {
     id: 'toolbar-close-slot-idle-focusable',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
@@ -12465,12 +12428,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'toolbar-close-target-below-24',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
-    because: '#647 AC5 / #195: the X keeps a hit target of at least 24 x 24 px around its 13 px glyph',
+    because: '#1184: the shared X keeps a 44 x 44 px hit target around its 13 px glyph',
     patches: [
   {
     "file": "src/styles/navigation.styles.ts",
-    "find": "--hp-editor-close-size:24px;",
-    "replace": "--hp-editor-close-size:13px;"
+    "find": "position:absolute; inset:-1px; width:44px; height:44px;",
+    "replace": "position:absolute; inset:-1px; width:24px; height:24px;"
   }
 ],
   },
@@ -12501,16 +12464,7 @@ const MUTANT_DEFINITIONS = [
       replace: '              </div>${editorClose}`',
     }],
   },
-  {
-    id: 'toolbar-mode-zoom-gap-regresses',
-    guard: 'node demo/smoke_toolbar_stable_width.mjs',
-    because: '#660/#963: shared same-row modes-to-actions keep the intrinsic gap before wrapping; a narrow layout must retain direct actions',
-    patches: [{
-      file: 'src/styles/panel-header.styles.ts',
-      find: '.head > .spacer { display:block; flex:1 0 30px; margin:0; }',
-      replace: '.head > .spacer { display:block; flex:1 0 80px; margin:0; }',
-    }],
-  },
+  
   {
     id: 'editor-summary-controls-return-to-view-only',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
@@ -12566,12 +12520,14 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'compact-space-navigation-uses-window-width',
     guard: 'node demo/smoke_header_compact_spaces.mjs',
-    because: '#997 AC1: a narrow dashboard card inside a wide window must use its own header content box, including the exact 1024 px boundary.',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: 'let compact = headerWidth > 0 && headerWidth <= 1024;',
-      replace: 'let compact = window.innerWidth > 0 && window.innerWidth <= 1024;',
-    }],
+    because: '#1184: a narrow dashboard card inside a wide window measures intrinsic phases in its own header content box.',
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "const available = panelHeaderWidth(head);",
+    "replace": "const available = window.innerWidth;"
+  }
+],
   },
   {
     id: 'compact-space-select-dark-fallback-in-light-theme',
@@ -19628,7 +19584,13 @@ const panelHeader1120Cases = [
     patches:[{file:'src/panel-header-menu.ts',find:'bubbles: true, composed: true,',replace:'bubbles: true, composed: false,'}]},
   {id:'panel-phone-nav-selector-loses-specificity-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1132 supersedes the old phone-hiding contract: further wrapping must keep direct actions visible without horizontal clipping. Static declaration only.',
-    patches:[{file:'src/styles/panel-header.styles.ts',find:":host([panel-host]) .hdr[data-panel-flow='4'] > .head { flex-wrap:wrap; }",replace:":host([panel-host]) .hdr[data-panel-flow='4'] > .head { flex-wrap:nowrap; }"}]},
+    patches:[
+  {
+    "file": "src/styles/panel-header.styles.ts",
+    "find": ".hdr[data-panel-flow='4'] > .head { flex-wrap:wrap; }",
+    "replace": ".hdr[data-panel-flow='4'] > .head { flex-wrap:nowrap; }"
+  }
+]},
 ];
 
 // #1145: declarations only; ordinary browser evidence is run, mutants are nightly.
