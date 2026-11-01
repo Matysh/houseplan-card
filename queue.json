@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 368,
+  "revision": 369,
   "nextTicket": 39,
   "nextFence": 39,
   "tasks": {
@@ -328,7 +328,9 @@
         "scripts/bundle-sync.mjs",
         "scripts/capture-environment.mjs",
         "test/bundle-sync.test.mjs"
-      ]
+      ],
+      "automationError": "checks-unavailable",
+      "automationSince": 1793571478689
     }
   },
   "ownerDecisions": {},
@@ -423,6 +425,10 @@
     },
     "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:2:synchronized": {
       "digest": "f0b95b15ee75a34bb434b37a6a4178869c3575b11ccb629b524d9315bed41a53",
+      "issue": 1193
+    },
+    "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:3:automation-pending": {
+      "digest": "e8e63b56d497f6ba1de42d44c1973ace2f0aef57101b2db2b971f0df95c347ed",
       "issue": 1193
     },
     "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b": {
