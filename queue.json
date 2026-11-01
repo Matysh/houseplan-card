@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6,
-  "nextTicket": 2,
+  "revision": 7,
+  "nextTicket": 3,
   "nextFence": 2,
   "tasks": {
     "1176": {
@@ -9,14 +9,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1176-room-candidates",
-      "materialSha": "6dfbe7f1e47a8fc78e60d08ce4c20ce01a1066b5",
+      "materialSha": "747a6ca41bdff16dab6de26f130994749097c71d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 1,
-      "queued": false,
+      "ticket": 2,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793552175409,
-      "reviewEntry": 1,
+      "readyAt": 1793552544967,
+      "reviewEntry": 2,
       "patchId": "3dad9af0db976395f9cbb1ba7aab2e58de69d3a1",
       "changedFiles": [
         "demo/smoke_plan_drawing_repairs.mjs",
@@ -33,7 +33,6 @@
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -44,7 +43,9 @@
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1176
+  ],
   "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -69,6 +70,10 @@
     },
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:metadata:3b91584e-e188-494c-9651-e95fc05dab1c:task-notice:1176::": {
       "digest": "7e14eae921c35f2cb3611536fb77816ff05d6cc193300e34d976ae21889d6d11",
+      "issue": 1176
+    },
+    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86": {
+      "digest": "ab0229e32e0a315da42ffef8fde613a292cc23919bfe532ffabab2b3f7b43b45",
       "issue": 1176
     }
   }
