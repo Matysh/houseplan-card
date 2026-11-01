@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5,
+  "revision": 6,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -8,36 +8,14 @@
       "kind": "beta",
       "branch": "release/v1.84.0-beta.2",
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
-      "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
-      "runner": {
-        "id": "20261101T221412746-c36c701b",
-        "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
-        "event": "beta",
-        "status": "failed",
-        "path": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261101T221412746-c36c701b/report.json",
-        "digest": "378de30301bd29943248836aa9c924d40dee441f20ca91f3d619946abc2f4872",
-        "finishedAt": "2026-11-01T22:34:55.811Z",
-        "materialClean": true,
-        "ready": false,
-        "required": 33,
-        "failed": [
-          "product-node:devices",
-          "product-node:geometry",
-          "product-node:core",
-          "product-node:text",
-          "smoke:smoke_canvas_surface_gestures",
-          "golden-beta",
-          "e2e-beta-journeys",
-          "e2e-beta-upgrade"
-        ],
-        "reused": 0
-      },
+      "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
+      "runner": null,
       "running": null,
-      "status": "results",
+      "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "04fa2a54791def247ce19975a8f4f23218c02fe1",
+        "candidate": "7274a9139966cfdd1f459615110ba70544709dc7",
         "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
         "issues": [
           {
@@ -296,7 +274,72 @@
             "number": 1192,
             "commits": [
               "04fa2a54791def247ce19975a8f4f23218c02fe1",
-              "512c726710aeec1be0ede848aceeab7619472a01"
+              "512c726710aeec1be0ede848aceeab7619472a01",
+              "7274a9139966cfdd1f459615110ba70544709dc7"
+            ]
+          },
+          {
+            "number": 1193,
+            "commits": [
+              "33a9d416aa63f2589c6b8b9aac1c984f749a5eef",
+              "84dc95cf5d1c6c67c370f34b53b193459a22aaed",
+              "bcdc82d590b99b658f16056438e1e97b7f7f0c46"
+            ]
+          },
+          {
+            "number": 1194,
+            "commits": [
+              "834850f6fd599551adffbd3e00bd7a4f76cea6df"
+            ]
+          },
+          {
+            "number": 1195,
+            "commits": [
+              "7cc142bca283b8b244fdf4ea20a9fba6d982f836"
+            ]
+          },
+          {
+            "number": 1196,
+            "commits": [
+              "fe4fde1517af322b75aff1bbc2db08fd1c574ebb"
+            ]
+          },
+          {
+            "number": 1197,
+            "commits": [
+              "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
+            ]
+          },
+          {
+            "number": 1198,
+            "commits": [
+              "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
+              "1580240501250071feedcc3feede04a62bc5fef7",
+              "32f663809a89a28d7218f909762ff54579756e18"
+            ]
+          },
+          {
+            "number": 1199,
+            "commits": [
+              "c1ab219c12404505ebccb07bf0ddde996a9ce9fd"
+            ]
+          },
+          {
+            "number": 1200,
+            "commits": [
+              "3a5ef0524a6f12ee0382e504c84157f87db300bc"
+            ]
+          },
+          {
+            "number": 1201,
+            "commits": [
+              "bcd8773e35660bde4b207118371c19aa8a36da5e"
+            ]
+          },
+          {
+            "number": 1203,
+            "commits": [
+              "14d758f22031e74f45b60749d282523287612f23"
             ]
           }
         ]
@@ -331,254 +374,32 @@
         1189,
         1190,
         1191,
-        1192
+        1192,
+        1193,
+        1194,
+        1195,
+        1196,
+        1197,
+        1198,
+        1199,
+        1200,
+        1201,
+        1203
       ],
-      "reviewRequired": false,
+      "reviewRequired": true,
       "review": null,
-      "metrics": {
-        "schema": 1,
-        "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
-        "reference": "нет замера последнего stable",
-        "anchor": "v1.83.1",
-        "requiresDecision": false,
-        "needsMeasurement": true,
-        "primary": [
-          {
-            "key": "zip_bytes",
-            "label": "ZIP",
-            "fraction": 0.05,
-            "absolute": 32768,
-            "unit": "B",
-            "before": null,
-            "after": 1922088,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": true,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "frontend_all_files_gzip_bytes",
-            "label": "Весь frontend, gzip",
-            "fraction": 0.05,
-            "absolute": 16384,
-            "unit": "B",
-            "before": null,
-            "after": 1151574,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": true,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "initial_view_gzip_bytes",
-            "label": "Начальная загрузка View, gzip",
-            "fraction": 0.05,
-            "absolute": 8192,
-            "unit": "B",
-            "before": null,
-            "after": 383919,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": true,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "firstStableRenderMs",
-            "label": "Первый устойчивый кадр",
-            "fraction": 0.1,
-            "absolute": 50,
-            "unit": "ms",
-            "before": null,
-            "after": 1278.8,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "spaceSwitchMs",
-            "label": "Смена этажа",
-            "fraction": 0.1,
-            "absolute": 75,
-            "unit": "ms",
-            "before": null,
-            "after": 573,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "panZoomMs",
-            "label": "Один шаг масштаба",
-            "fraction": 0.1,
-            "absolute": 5,
-            "unit": "ms",
-            "before": null,
-            "after": 31,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "stateUpdateMs",
-            "label": "Обновление состояния",
-            "fraction": 0.1,
-            "absolute": 15,
-            "unit": "ms",
-            "before": null,
-            "after": 24.2,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          }
-        ],
-        "diagnostic": [
-          {
-            "key": "zip_bytes",
-            "label": "ZIP",
-            "fraction": 0.05,
-            "absolute": 32768,
-            "unit": "B",
-            "before": 1933790,
-            "after": 1922088,
-            "delta": -11702,
-            "percent": -0.6051329254986322,
-            "threshold": 96689.5,
-            "comparable": true,
-            "diagnostic": true,
-            "status": "within-tolerance",
-            "blocks": false
-          },
-          {
-            "key": "frontend_all_files_gzip_bytes",
-            "label": "Весь frontend, gzip",
-            "fraction": 0.05,
-            "absolute": 16384,
-            "unit": "B",
-            "before": 1153604,
-            "after": 1151574,
-            "delta": -2030,
-            "percent": -0.17597026362599297,
-            "threshold": 57680.200000000004,
-            "comparable": true,
-            "diagnostic": true,
-            "status": "within-tolerance",
-            "blocks": false
-          },
-          {
-            "key": "initial_view_gzip_bytes",
-            "label": "Начальная загрузка View, gzip",
-            "fraction": 0.05,
-            "absolute": 8192,
-            "unit": "B",
-            "before": 366204,
-            "after": 383919,
-            "delta": 17715,
-            "percent": 4.837467640986991,
-            "threshold": 18310.2,
-            "comparable": true,
-            "diagnostic": true,
-            "status": "within-tolerance",
-            "blocks": false
-          },
-          {
-            "key": "firstStableRenderMs",
-            "label": "Первый устойчивый кадр",
-            "fraction": 0.1,
-            "absolute": 50,
-            "unit": "ms",
-            "before": 968.3,
-            "after": 1278.8,
-            "delta": 310.5,
-            "percent": 32.066508313539195,
-            "threshold": 96.83,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          },
-          {
-            "key": "spaceSwitchMs",
-            "label": "Смена этажа",
-            "fraction": 0.1,
-            "absolute": 75,
-            "unit": "ms",
-            "before": 389.4,
-            "after": 573,
-            "delta": 183.60000000000002,
-            "percent": 47.149460708782755,
-            "threshold": 75,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          },
-          {
-            "key": "panZoomMs",
-            "label": "Один шаг масштаба",
-            "fraction": 0.1,
-            "absolute": 5,
-            "unit": "ms",
-            "before": 22.8,
-            "after": 31,
-            "delta": 8.2,
-            "percent": 35.964912280701746,
-            "threshold": 5,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          },
-          {
-            "key": "stateUpdateMs",
-            "label": "Обновление состояния",
-            "fraction": 0.1,
-            "absolute": 15,
-            "unit": "ms",
-            "before": 25.8,
-            "after": 24.2,
-            "delta": -1.6000000000000014,
-            "percent": -6.201550387596905,
-            "threshold": 15,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          }
-        ],
-        "ready": true,
-        "evidenceStatus": "complete",
-        "diagnostics": []
-      },
+      "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
         {
           "from": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
           "to": "04fa2a54791def247ce19975a8f4f23218c02fe1",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "04fa2a54791def247ce19975a8f4f23218c02fe1",
+          "to": "7274a9139966cfdd1f459615110ba70544709dc7",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -607,6 +428,7 @@
     "beta1842-prepared-b-20261102": "990ad234e7eea717aaffbbb2b3c8f21c5349d33ee63173d2ba231f79a371b5f6",
     "beta1842-run-b-20261102": "4f33aa93a53ab1c9e0aed4d0c4b2049a7d6f44d4ca5b12e459fee6ff20025750",
     "beta1842-runner-20261101T221412746-c36c701b": "4fddfbbdcf0a649c1d3d14b31f9ce19f62f9bab7864568831f316c30bc2b0852",
-    "beta1842-b-metrics-20261102": "431bed322ded58f89ceec8765cc41e743a1465dfc157987c3479962102acb66d"
+    "beta1842-b-metrics-20261102": "431bed322ded58f89ceec8765cc41e743a1465dfc157987c3479962102acb66d",
+    "beta1842-fixes-c-20261102": "ab65da449851e134f85ff9d9ed6f3a56e3635f6f5bb9b965d722d195ed2a33d1"
   }
 }
