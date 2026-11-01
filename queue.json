@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 89,
+  "revision": 90,
   "nextTicket": 12,
   "nextFence": 12,
   "tasks": {
@@ -86,7 +86,7 @@
       "notice": {
         "key": "3:Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results.",
         "reason": "Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results.",
-        "status": "pending"
+        "status": "delivered"
       },
       "s6": {
         "id": "20261101T181936576-2f5e59f5",
@@ -281,6 +281,10 @@
     },
     "author-return-1184-1793557297106": {
       "digest": "9679bdfbff289a31df93bd1ec652823d079f76b088fdd6574af77050e4bb30da",
+      "issue": 1184
+    },
+    "github:41336155984:1:completions:metadata:fa577eb3-19a5-48d5-bb72-bb8acdb2dec2:task-notice:1184::": {
+      "digest": "e5a4068987a8230c040f3e847ccb501ed7dcf07a6a95ac748b2f7574f711fb17",
       "issue": 1184
     }
   },
