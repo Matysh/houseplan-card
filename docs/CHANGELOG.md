@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.84.0-beta.2 — 2026-11-02
+
 - Save avoids a duplicate full-config fingerprint walk when caching an accepted config/set response. Every acceptance still computes a fresh hash and retains isolated config/layout snapshots, revisions and rollback behavior. Bounded Save profiling and comparison are recorded for #1153. [#1153](https://github.com/Matysh/houseplan-card/issues/1153)
 - Golden capture records the checked-out candidate SHA independently of the workflow event SHA, so fallback reports identify the material correctly while preserving CI provenance and the acceptance checks. [#1191](https://github.com/Matysh/houseplan-card/issues/1191)
 

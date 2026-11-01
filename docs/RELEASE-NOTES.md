@@ -1,18 +1,22 @@
-<!-- release: v1.84.0-beta.1 -->
+<!-- release: v1.84.0-beta.2 -->
 ## Основное
 
-- Единый UI Kit в просмотре, киоске, настройках и диалогах: общие кнопки, поля, цвета, уведомления и состояния, с поддержкой reduced motion.
-- Компактные редакторы: общие тулбары, лотки, палитры и поля свойств 36 px; инструменты целиком переносятся на узком экране. Сохранены выбор, история, сохранение и отмена.
-- Двери, окна и ворота в стенах комнат правильно отображаются в статической карточке дашборда.
-- Мелкие исправления и улучшения.
+- Общая шапка панели и карточки: согласованные действия и перенос элементов на узких экранах.
+- При копировании пространства можно независимо выбрать мебель и декор; обе опции изначально выключены.
+- «Выбрать» подсвечивает свободные замкнутые контуры и открывает создание комнаты. «Стены» свободно рисуют внутри них.
+- Путь пылесоса сохраняет живое продолжение до фактически отображаемой шайбы при задержке и обновлении маршрута.
+- Исправлена обрисовка внутренних швов в углах стен.
+- Убран повторный расчёт отпечатка при принятии сохранённой конфигурации; механизмы сохранения и конфликтов сохранены.
 
-[Подробный список изменений](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.1/docs/CHANGELOG.ru.md)
+[Подробный список изменений](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.2/docs/CHANGELOG.ru.md)
 
 ## Highlights
 
-- A shared UI Kit across View, kiosk, settings and dialogs: common actions, fields, colors, notices and states, with reduced-motion support.
-- Compact editors share toolbars, trays, palettes and 36px Properties fields; whole tools wrap on narrow screens. Selection, history, save and cancellation are preserved.
-- Doors, windows and gates on room walls render correctly in the static dashboard card.
-- Small fixes and improvements.
+- A shared panel and card header with consistent actions and wrapping on narrow screens.
+- Space copies can independently include furniture and decor; both choices start unchecked.
+- Select highlights free closed wall contours and opens room creation. Walls remains free to draw inside them.
+- The vacuum trail keeps its live tip attached to the displayed robot during delayed and partial route updates.
+- Internal seams at wall corners are fixed.
+- Accepted configuration writes avoid a duplicate fingerprint calculation while preserving persistence and conflict handling.
 
-[Full changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.1/docs/CHANGELOG.md)
+[Detailed changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.2/docs/CHANGELOG.md)
