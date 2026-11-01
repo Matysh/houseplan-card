@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 112,
+  "revision": 113,
   "nextTicket": 15,
   "nextFence": 15,
   "tasks": {
@@ -39,7 +39,7 @@
       "ownerDecision": null,
       "ticket": 14,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793558583897,
       "reviewEntry": 6,
       "patchId": "d2ab1c13881ef5914485dca6e87e96434f580e85",
@@ -94,11 +94,11 @@
         "status": "delivered"
       },
       "s6": {
-        "id": "20261101T183450112-758f21c0",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261101T183450112-758f21c0/report.json",
-        "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
+        "id": "20261101T184315362-475179bc",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261101T184315362-475179bc/report.json",
+        "materialSha": "76c0fd89c47001a24967b5314aa54e9a42cb32f3",
         "status": "passed",
-        "finishedAt": "2026-11-01T18:36:05.020Z"
+        "finishedAt": "2026-11-01T18:43:17.796Z"
       }
     },
     "1186": {
@@ -182,9 +182,9 @@
     "fence": 14,
     "materialSha": "76c0fd89c47001a24967b5314aa54e9a42cb32f3",
     "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793558587023,
-    "expiresAt": 1793558892200,
+    "expiresAt": 1793562198367,
     "patchId": "d2ab1c13881ef5914485dca6e87e96434f580e85"
   },
   "events": {
@@ -382,6 +382,10 @@
     },
     "finish:701a9841-7047-4d64-be09-6003ab85dd8a:finish:2:synchronized": {
       "digest": "aaad0daef4abeecf3305895c48dbc651e5289b850cd24963105421e2149c14fd",
+      "issue": 1184
+    },
+    "finish:701a9841-7047-4d64-be09-6003ab85dd8a:finish:3:s6-complete": {
+      "digest": "b4f37209de6b2e08cf7afda05cdfdf8b0b996c08bf6f418d772ca9d0be39c9dd",
       "issue": 1184
     }
   },
