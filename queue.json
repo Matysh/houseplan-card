@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 160,
+  "revision": 161,
   "nextTicket": 18,
   "nextFence": 18,
   "tasks": {
@@ -149,6 +149,13 @@
       "status": "pending",
       "updatedAt": 1793565411394
     },
+    "1169": {
+      "requestId": "spec:1169:6f8f20dde9ae3829f1b8c35dafd374fed469a149165ee9eec276724c85a679d9",
+      "contextDigest": "6f8f20dde9ae3829f1b8c35dafd374fed469a149165ee9eec276724c85a679d9",
+      "base": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
+      "status": "pending",
+      "updatedAt": 1793565459055
+    },
     "1184": {
       "requestId": "spec:1184:c025dfddbcda7c37564d1e5494517be674eb5f67299ecf7e16d685c0ab88e2f4",
       "contextDigest": "c025dfddbcda7c37564d1e5494517be674eb5f67299ecf7e16d685c0ab88e2f4",
@@ -189,6 +196,10 @@
     "1156-spec-initial:spec-request": {
       "digest": "9722da8526872750cd922d5074ad27cd371c4667e31b93a95b4f9eecc77d599f",
       "issue": 1156
+    },
+    "1169-spec1:spec-request": {
+      "digest": "f6466287ba1a0b0912e47110cd086acc199e7c8155433feb4882807d774ec409",
+      "issue": 1169
     }
   },
   "devWebhook": {
