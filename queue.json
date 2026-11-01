@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 253,
+  "revision": 254,
   "nextTicket": 27,
   "nextFence": 26,
   "tasks": {
@@ -235,7 +235,7 @@
       "ownerDecision": null,
       "ticket": 25,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793566786222,
       "reviewEntry": 3,
       "patchId": "4155815da86360ab7a73db1d74a587371e6cee65",
@@ -271,14 +271,9 @@
         "process-next/test/task-completion.test.mjs"
       ],
       "notice": {
-        "key": "2:executor-fix",
-        "reason": "executor-fix",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793566694874,
-        "entry": 2,
-        "detail": "Исправляется независимое восстановление меток и milestone при задержке комментария; слот освобождён на время правки.",
-        "eventId": "1190-final-comment-repair-20261101:return:1190"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending"
       },
       "s6": {
         "id": "20261101T210626194-1403dfed",
@@ -295,7 +290,8 @@
         "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
         "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
         "patchId": "4155815da86360ab7a73db1d74a587371e6cee65"
-      }
+      },
+      "reason": "review-findings"
     }
   },
   "ownerDecisions": {},
@@ -364,19 +360,7 @@
   "waiting": [
     1169
   ],
-  "active": {
-    "issue": 1190,
-    "worker": "github-coordinator",
-    "token": "25:github:41350148265:1:tick:0:admit",
-    "fence": 25,
-    "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
-    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "review",
-    "admittedAt": 1793567151232,
-    "expiresAt": 1793570875376,
-    "patchId": "4155815da86360ab7a73db1d74a587371e6cee65",
-    "reviewRequest": "review:1190:3:4155815da86360ab7a73db1d74a587371e6cee65:de1043f3a3b45c3aa30016a7181cf227ff352713"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -773,6 +757,10 @@
     },
     "github:41350844890:1:tick:0:review-presentation": {
       "digest": "7defaf66735c32221976fbd159694fb1dd9f48094fb852522b62558eca64fc21",
+      "issue": 1190
+    },
+    "github:41350844890:1:tick:0:return": {
+      "digest": "113eeba0d4d16605a330f581a0867d72d90968b3a87dfdd0882e9057cb9eb205",
       "issue": 1190
     }
   },
