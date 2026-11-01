@@ -60,9 +60,12 @@ export async function publishBackgroundFailure({ api, result, eventName, runId, 
   const report = mutationGateReport({ date: new Date(date).toISOString().slice(0, 10), ref: 'dev', sha: result.materialSha,
     runUrl, guards, logs: [{ shard: result.shard ?? 'не запущен', text, outcome: step?.status === 'passed' ? 'success' : 'failure' }] });
   const marker = `<!-- process-next-background:mutations:${runId} -->`;
-  const body = `${marker}\n\n${report.body.replace('Полный мутационный прогон', `Фоновая часть ${result.shard ?? 'не запущена'} мутационного набора`)}\n`
-    + (result.reason ? `Причина: ${result.reason}\n\n` : '')
-    + 'Это диагностика чувствительности тестов; она не блокирует задачи и выпуски. Остальные части выполняются в следующие ночи.';
+  const body = `${marker}\n\n## Фоновая проверка тестов — найдена проблема\n\n`
+    + `${new Date(date).toISOString().slice(0, 10)}, часть ${result.shard ?? 'не запущена'}, запуск ${runId}.`
+    + (result.materialSha ? ` Материал: \`${result.materialSha}\`.` : '')
+    + `\n\n${report.body.replace('Полный мутационный прогон', `Фоновая часть ${result.shard ?? 'не запущена'} мутационного набора`)}\n`
+    + (result.reason ? `Причина отказа или незавершённого запуска: ${result.reason}\n\n` : '')
+    + '**Статусы продуктовых задач и выпусков не меняются.** Это отдельная диагностика чувствительности тестов; требуется разобрать указанный отказ. Остальные части выполняются в следующие ночи.';
   const issues = await inventory(api, 'issues?state=open');
   const existing = issues.find(issue => !issue.pull_request && issue.title?.startsWith(REPORT_TITLE_MARKER));
   if (existing) {

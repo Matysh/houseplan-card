@@ -10,6 +10,25 @@ const A = 'a'.repeat(40), B = 'b'.repeat(40);
 const response = (body, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body,
   arrayBuffer: async () => Buffer.from(body) });
 
+test('comment delivery preserves the first event text and recovers a lost POST response', async () => {
+  const comments = [], writes = []; let lost = true;
+  const client = new GitHubClient({ owner: 'o', repo: 'r', token: 'fixture', activated: true,
+    fetchImpl: async (_url, options) => {
+      if (options.method === 'GET') return response(comments);
+      writes.push(options.method); assert.equal(options.method, 'POST');
+      const row = { id: comments.length + 1, ...JSON.parse(options.body) }; comments.push(row);
+      if (lost) { lost = false; throw Error('accepted POST, response lost'); }
+      return response(row);
+    } });
+  const event = { marker: '<!-- process-next-event:1 -->', body: 'Original event' };
+  assert.equal((await client.upsertComment(1, event)).reused, true);
+  const first = structuredClone(comments[0]);
+  await client.upsertComment(1, { ...event, body: 'New wording must not replace the old event' });
+  assert.deepEqual(comments, [first]); assert.deepEqual(writes, ['POST']);
+  await client.upsertComment(1, { marker: '<!-- process-next-event:2 -->', body: 'A new event' });
+  assert.equal(comments.length, 2);
+});
+
 test('S8 removes the personal to_release label without assigning it or touching unrelated labels', async () => {
   const labels = new Set(['S7-code-review', 'track:show', 'to_release', 'kind:feature']), writes = [];
   const client = new GitHubClient({ owner: 'o', repo: 'r', token: 'fixture', activated: true,

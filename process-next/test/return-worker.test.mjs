@@ -79,6 +79,21 @@ test('lost issue-create response is found by marker instead of creating another 
   assert.equal((await returnPublishedHistory(f.options)).status, 'completed'); assert.equal(f.created, 1);
 });
 
+test('release return never announces a closed service issue before closure succeeds', async t => {
+  const f = await fixture(t), update = f.options.api.updateIssue;
+  let attempts = 0;
+  f.options.api.updateIssue = async (...args) => {
+    if (++attempts === 1) throw Error('close unavailable');
+    return update(...args);
+  };
+  const first = await returnPublishedHistory(f.options);
+  assert.equal(first.status, 'pending'); assert.equal(f.comments.size, 0);
+  assert.equal(f.issues.get(9).state, 'open');
+  const next = await returnPublishedHistory({ ...f.options, previous: first });
+  assert.equal(next.status, 'completed'); assert.equal(f.issues.get(9).state, 'closed'); assert.equal(f.comments.size, 1);
+  assert.equal(f.finished, 1);
+});
+
 test('a remote return branch resumes in a new local worktree without resetting existing refs', async t => {
   const f = await fixture(t, { reusedBranch: true });
   assert.equal((await returnPublishedHistory(f.options)).status, 'completed');

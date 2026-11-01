@@ -25,9 +25,13 @@ test('partial issue completion resumes after S8 removal without duplicate commen
   const args = { api, onUpdate: f.onUpdate, verifyDelivery: async () => { hacs++; return { hacsAvailable: true, tag: f.candidate.tag, artifactDigest: D }; } };
   let result = await completePublishedRelease({ ...args, candidate: f.candidate });
   assert.equal(result.status, 'pending'); assert.equal(issue.state, 'open'); assert.deepEqual(issue.labels, ['track:show', 'bug']);
-  assert.equal(comments.length, 1); assert.match(comments[0].body, /CHANGELOG.ru.md/); assert.doesNotMatch(comments[0].body, /Validate|CI точного/);
+  assert.equal(comments.length, 1); assert.match(comments[0].body, /закрытие задачи ещё не завершено/);
+  assert.doesNotMatch(comments[0].body, /S8 → закрыта/);
+  const delayComment = comments[0].body;
   result = await completePublishedRelease({ ...args, candidate: f.candidate });
-  assert.equal(result.status, 'completed'); assert.equal(issue.state, 'closed'); assert.equal(hacs, 1); assert.equal(comments.length, 1);
+  assert.equal(result.status, 'completed'); assert.equal(issue.state, 'closed'); assert.equal(hacs, 1); assert.equal(comments.length, 2);
+  assert.equal(comments[0].body, delayComment); assert.match(comments[1].body, /S8 → закрыта/);
+  assert.match(comments[1].body, /CHANGELOG.ru.md/);
   const previousReads = reads.length;
   await completePublishedRelease({ ...args, candidate: f.candidate });
   assert.equal(reads.length, previousReads); assert.equal(closeAttempts, 2);
@@ -37,6 +41,23 @@ test('missing delivery verifier is visible and makes no issue writes', async () 
   const result = await completePublishedRelease({ candidate: f.candidate, onUpdate: f.onUpdate, api: {} });
   assert.equal(result.status, 'pending'); assert.equal(result.pending[0].step, 'hacs');
   assert.equal(f.candidate.completion, undefined);
+});
+
+test('lost closure-comment response is recovered without a second comment or reversing an owner reopen', async () => {
+  const f = fixture(), issue = { number: 1, state: 'open', labels: ['S8-merged'] }, comments = [];
+  f.candidate.delivery = { discoveryAvailable: true, source: 'github-release-feed' };
+  let closures = 0;
+  const api = { owner: 'o', repo: 'r', getIssue: async () => structuredClone(issue), listIssueComments: async () => comments,
+    removeLabel: async (_number, label) => { issue.labels = issue.labels.filter(name => name !== label); },
+    updateIssue: async () => { closures++; issue.state = 'closed'; },
+    comment: async (_number, body) => { assert.equal(issue.state, 'closed'); comments.push({ body }); throw Error('response lost'); } };
+  const args = { api, onUpdate: f.onUpdate };
+  assert.equal((await completePublishedRelease({ ...args, candidate: f.candidate })).status, 'pending');
+  assert.deepEqual(f.candidate.completion.issues.closed, [1]);
+  issue.state = 'open';
+  assert.equal((await completePublishedRelease({ ...args, candidate: f.candidate })).status, 'completed');
+  assert.equal(issue.state, 'open'); assert.equal(closures, 1); assert.equal(comments.length, 1);
+  assert.match(comments[0].body, /не подтверждение установки/);
 });
 
 test('public discovery completes bookkeeping without pretending an HA instance refreshed', async () => {

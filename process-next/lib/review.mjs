@@ -236,7 +236,9 @@ export function renderReviewReport({ context, report, model = REVIEW_MODEL }) {
   const briefing = author.status === 'provided'
     ? `Источник: описание задачи #${author.source.issue ?? '—'}, раздел «${AUTHOR_CONTEXT_HEADING}». Это сведения исполнителя, не выводы ревьюера.\n\n${fence}text\n${author.text}\n${fence}`
     : 'Отдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.';
-  return `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n${outside}\n## Границы анализа\n\n${report.boundaries}\n\n## Переданный контекст исполнителя\n\n${briefing}\n`;
+  const title = context.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью';
+  const verdict = { accept: 'принято', changes_requested: 'нужны исправления', incomplete: 'анализ не завершён' }[report.verdict];
+  return `# ${title} — ${verdict}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n${outside}\n## Границы анализа\n\n${report.boundaries}\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: ${model}\n\nМатериал: ${context.base} → ${context.head}\n\n## Переданный контекст исполнителя\n\n${briefing}\n\n</details>\n`;
 }
 
 export function writeReviewReport({ context, report, reportDir, model = REVIEW_MODEL }) {

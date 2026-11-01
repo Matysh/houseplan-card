@@ -141,11 +141,12 @@ test('ship has no individual review workflow regardless of ownerAssigned metadat
   assert.equal(f.invocations, 0);
 });
 
-test('incomplete review is regenerated on its allowed retry and the stale comment is replaced', async t => {
+test('incomplete review stays in history when the allowed retry adds its final verdict', async t => {
   const f = fixture(t); let body;
   f.api.comment = async (_issue, text) => { body = text; };
   const incomplete = await prepareReviewJob({ ...f, runReviewImpl: async () => ({ status: 'incomplete', reason: 'No submitted verdict' }) });
   await publishSaved(f);
+  const firstBody = body;
   f.comments.push({ id: 9, user: { login: 'github-actions[bot]' }, body });
   f.reviewAdapter.readReviewResult = async () => incomplete;
   const complete = await prepareReviewJob(f);
@@ -153,7 +154,19 @@ test('incomplete review is regenerated on its allowed retry and the stale commen
   const writes = [], original = f.api.request;
   f.api.request = async (method, url, payload) => method === 'PATCH' ? writes.push({ url, body: payload.body }) : original(method, url);
   await publishSaved(f);
-  assert.equal(writes.length, 1); assert.match(writes[0].url, /comments\/9$/);
-  assert.match(writes[0].body, /"verdict":"accepted"/);
+  assert.equal(writes.length, 0);
+  assert.equal(f.comments.find(comment => comment.id === 9).body, firstBody);
+  assert.match(firstBody, /"verdict":"incomplete"/);
+  assert.match(body, /"verdict":"accepted"/);
   assert.equal(f.invocations, 1);
+});
+
+test('a delayed spec workflow never reviews changed text under the previous material identity', async t => {
+  const f = fixture(t, 'spec');
+  f.env.HP_PATCH_ID = 'a'.repeat(64);
+  const receipt = await prepareReviewJob(f);
+  assert.equal(receipt.verdict, 'incomplete');
+  assert.equal(f.invocations, 0);
+  assert.match(receipt.markdown, /Предыдущая редакция не анализировалась/);
+  assert.equal(JSON.parse(readFileSync(path.join(f.reportDir, 'result.json'))).patchId, f.env.HP_PATCH_ID);
 });

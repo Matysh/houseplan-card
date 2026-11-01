@@ -29,13 +29,17 @@ export function initialQueueState() {
   return { schema: 1, revision: 0, nextTicket: 1, nextFence: 1, tasks: {}, ownerDecisions: {}, specReviews: {}, reviewPublications: {}, waiting: [], active: null, events: {} };
 }
 
-const presentationKey = record => `${record.kind}:${record.issue}:${record.requestId}`;
+const presentationKey = record => `${record.kind}:${record.issue}:${record.requestId}${record.resultKey ? `:result:${record.resultKey}` : ''}`;
+const presentationTime = record => Date.parse(record.presentation?.occurredAt ?? '') || 0;
 /** Read both current state and the earlier single-report shape without losing a paid round. */
 export function pendingReviewPublications(state) {
   const records = [...Object.values(state.tasks ?? {}).map(task => task.reviewPublication),
     ...Object.values(state.specReviews ?? {}).map(spec => spec.reviewPublication),
     ...Object.values(state.reviewPublications ?? {})].filter(record => record?.status === 'pending');
-  return [...new Map(records.map(record => [presentationKey(record), record])).values()];
+  return [...new Map(records.map(record => [presentationKey(record), record])).values()].sort((a, b) =>
+    presentationTime(a) - presentationTime(b)
+    || (a.issue === b.issue && a.requestId === b.requestId
+      ? Number(!!b.resultKey) - Number(!!a.resultKey) || (a.receipt?.runAttempt ?? 0) - (b.receipt?.runAttempt ?? 0) : 0));
 }
 
 /** Pure transitions. event.id is a delivery ID, not an authorization credential. */
@@ -52,11 +56,27 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
   for (const record of [...Object.values(state.tasks), ...Object.values(state.specReviews ?? {})]) delete record.reviewPublication;
   const duration = phase => ['sync', 'testing'].includes(phase) ? Math.min(leaseMs, 5 * 60_000) : leaseMs;
   const clearAutomation = task => { delete task.automationError; delete task.automationSince; delete task.automationDetail; };
+  const historyMessages = [];
   const returnTask = (task, reason) => {
+    const fromStatus = event.fromStatus ?? task.status;
     task.status = 'S6-in-progress'; task.reason = reason; task.queued = false;
     if (!['owner-stopped', 'status-changed'].includes(reason)) task.notice = {
       key: `${task.reviewEntry ?? 0}:${reason}`, reason, status: 'pending',
+      fromStatus, at: now, entry: task.reviewEntry ?? 0, ...(task.reviewRequest ? { requestId: task.reviewRequest } : {}),
+      ...(event.detail ? { detail: event.detail } : {}), ...(event.reportUrl ? { reportUrl: event.reportUrl } : {}),
     };
+    if (task.notice?.status === 'pending' && !['owner-stopped', 'status-changed', 'review-findings'].includes(reason)) {
+      // A later return replaces task.notice, but not the earlier event. The
+      // suffix also preserves both sides of expiry + enqueue in one delivery.
+      task.notice.eventId = `${event.id}:return:${task.issue}`;
+      historyMessages.push([task.notice.eventId, { digest: eventDigest, issue: task.issue, message: {
+        kind: 'return', issue: task.issue, at: now, entry: task.reviewEntry ?? 0, notice: copy(task.notice),
+      } }]);
+    }
+    if (reason === 'review-retry-exhausted') {
+      const publication = state.reviewPublications[presentationKey({ issue: task.issue, kind: 'code', requestId: task.reviewRequest })];
+      if (publication) publication.exhausted = true;
+    }
     state.waiting = state.waiting.filter(issue => issue !== task.issue); delete task.continuation;
     state.active = null;
   };
@@ -186,8 +206,14 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (active.phase !== 'review' || !event.requestId) throw Error('Review request needs the admitted material');
       if (active.reviewRequest && active.reviewRequest !== event.requestId) throw Error('Another review is already requested');
       active.reviewRequest = event.requestId;
-      const task = state.tasks[active.issue]; task.reviewRequest = event.requestId;
+      const task = state.tasks[active.issue];
+      if (task.reviewRequest !== event.requestId) task.reviewRound = task.reviewRound === null
+        || task.reviewRound === undefined && task.reviewEntry > 1 ? null : (task.reviewRound ?? 0) + 1;
+      task.reviewRequest = event.requestId;
       task.reviewMaterial = { materialSha: active.materialSha, expectedBase: active.expectedBase, patchId: active.patchId };
+      const record = { issue: active.issue, kind: 'code', requestId: event.requestId, ...task.reviewMaterial,
+        status: 'pending', presentation: { round: task.reviewRound, occurredAt: new Date(now).toISOString() } };
+      state.reviewPublications[presentationKey(record)] ??= record;
       break;
     }
     case 'review-retry': {
@@ -210,13 +236,36 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
     }
     case 'spec-requested': {
       if (!Number.isSafeInteger(event.issue) || !event.request?.requestId) throw Error('Specification review request required');
-      (state.specReviews ??= {})[event.issue] = { ...copy(event.request), status: 'pending', updatedAt: now }; break;
+      const prior = state.specReviews?.[event.issue];
+      const round = prior && !Number.isSafeInteger(prior.round) ? null
+        : (prior?.round ?? 0) + Number(prior?.requestId !== event.request.requestId);
+      (state.specReviews ??= {})[event.issue] = { ...copy(event.request), round, status: 'pending', updatedAt: now };
+      if (prior?.requestId && prior.requestId !== event.request.requestId && prior.status === 'pending') {
+        state.events[`${event.id}:spec-replaced:${event.issue}`] = { digest: eventDigest, issue: event.issue, message: {
+          kind: 'spec-replaced', issue: event.issue, at: now, previousRound: prior.round ?? null, round,
+        } };
+      }
+      const record = { issue: event.issue, kind: 'spec', requestId: event.request.requestId,
+        ...(event.request.base ? { materialSha: event.request.base, expectedBase: event.request.base } : {}),
+        ...(event.request.contextDigest ? { patchId: event.request.contextDigest } : {}),
+        status: 'pending', presentation: { round, occurredAt: new Date(now).toISOString() } };
+      state.reviewPublications[presentationKey(record)] ??= record;
+      break;
     }
     case 'spec-complete': {
       const current = state.specReviews?.[event.issue];
       if (!current || current.requestId !== event.requestId) throw Error('Specification review identity differs');
       Object.assign(current, { status: event.verdict, reportUrl: event.reportUrl ?? null, updatedAt: now });
-      if (event.verdict === 'attention') current.notice = { key: event.requestId, status: 'pending' };
+      if (event.verdict === 'attention') {
+        const publication = state.reviewPublications[presentationKey({ issue: event.issue, kind: 'spec', requestId: event.requestId })];
+        if (publication) publication.exhausted = true;
+        current.notice = { key: event.requestId, status: 'pending', at: now,
+          eventId: `${event.id}:spec-attention:${event.issue}` };
+        historyMessages.push([current.notice.eventId, { digest: eventDigest, issue: event.issue, message: {
+          kind: 'spec-attention', issue: event.issue, at: now, notice: copy(current.notice),
+          ...(current.reportUrl ? { reportUrl: current.reportUrl } : {}),
+        } }]);
+      }
       else delete current.notice;
       break;
     }
@@ -232,13 +281,47 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
         if (!record) throw Error('Unknown review presentation');
         if (!event.record.requestId || event.record.issue !== event.issue || event.record.kind !== event.kind)
           throw Error('Review presentation identity required');
-        state.reviewPublications[presentationKey(event.record)] = { ...copy(event.record), status: 'pending' };
+        const key = presentationKey(event.record);
+        const prior = state.reviewPublications[key] ?? (event.record.resultKey
+          ? state.reviewPublications[presentationKey({ ...event.record, resultKey: null })] : null);
+        state.reviewPublications[key] = { ...prior, ...copy(event.record),
+          presentation: { ...prior?.presentation, ...copy(event.record.presentation ?? {}) }, status: 'pending' };
+        // A stored partial attempt is a separate historical result. It must
+        // neither replace the canonical pending round nor pin its final report.
+        if (!event.record.receipt) delete state.reviewPublications[key].receipt;
       } else {
         const key = presentationKey(event), pending = state.reviewPublications[key];
         if (event.status === 'delivered') delete state.reviewPublications[key];
         else if (pending && event.status === 'pending') {
           if (event.reason) pending.reason = String(event.reason).slice(0, 500);
           else delete pending.reason;
+        }
+      }
+      break;
+    }
+    case 'message-delivered': {
+      const message = state.events[event.messageId]?.message;
+      if (message) message.delivered = true;
+      break;
+    }
+    case 'transition-observed': {
+      // Presentation only: recording an observed label change never changes task readiness.
+      if (event.kind === 'spec-skipped') historyMessages.push([`${event.id}:message`, {
+        digest: eventDigest, issue: event.issue, message: { kind: 'spec-skipped', issue: event.issue, at: now,
+          track: event.track, fromStatus: event.fromStatus, toStatus: event.toStatus, transitionConfirmed: true },
+      }]);
+      const message = state.events[event.messageId]?.message;
+      if (message) Object.assign(message, { fromStatus: event.fromStatus, toStatus: event.toStatus, transitionConfirmed: true });
+      const key = presentationKey(event), presentation = state.reviewPublications[key];
+      if (presentation) presentation.presentation = { ...presentation.presentation,
+        transition: { from: event.fromStatus, to: event.toStatus, confirmed: true } };
+      if (state.tasks[event.issue]?.notice?.requestId === event.requestId && event.toStatus === 'S6-in-progress') {
+        const notice = state.tasks[event.issue].notice;
+        notice.transitionConfirmed = true;
+        const returned = state.events[notice.eventId]?.message;
+        if (returned) {
+          returned.notice.transitionConfirmed = true;
+          Object.assign(returned, { fromStatus: event.fromStatus, toStatus: event.toStatus, transitionConfirmed: true });
         }
       }
       break;
@@ -284,6 +367,8 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       const old = state.tasks[active.issue];
       state.tasks[active.issue] = { issue: old.issue, branch: old.branch, track: old.track, layer: old.layer,
         status: 'S8-merged', mergedSha: event.actualDevSha, mergedAt: now,
+        ...(event.fromStatus ? { mergedFromStatus: event.fromStatus } : {}), branchDeleted: event.branchDeleted === true,
+        removedToRelease: event.removedToRelease === true, ...(old.reviewRequest ? { reviewRequest: old.reviewRequest } : {}),
         completion: { status: 'pending', labels: false, milestone: false, comment: false },
         ...(old.releaseTag ? { releaseTag: old.releaseTag } : {}),
         devBuild: { status: old.layer === 'product' ? 'pending' : 'not-required' } };
@@ -294,10 +379,28 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
   }
   // Idle ticks do not create JSON history, revisions or remote commits.
   if (JSON.stringify(state) === JSON.stringify(previous)) return state;
-  state.events[event.id] = { digest: eventDigest, issue: event.issue ?? event.task?.issue ?? state.active?.issue ?? null };
-  const events = Object.entries(state.events).filter(([, record]) => typeof record !== 'string' && record.issue != null
-    && state.tasks[record.issue]?.status !== 'S8-merged').slice(-256);
-  state.events = Object.fromEntries(events);
+  const number = event.issue ?? event.task?.issue ?? state.active?.issue ?? null;
+  const task = state.tasks[number];
+  const kind = event.type === 'enqueue' && !previous.tasks[number]?.queued ? 'queued'
+    : event.type === 'admit' && !previous.active && state.active ? 'admitted'
+    : event.type === 's6-complete' ? 's6-complete'
+    : event.type === 'resynchronize' && previous.active?.phase !== 'sync' ? 'resynchronize'
+    : event.type === 'dev-build' && event.notify && event.status === 'published' ? 'dev-build' : null;
+  for (const [key, record] of historyMessages) state.events[key] = record;
+  state.events[event.id] = { digest: eventDigest, issue: number, ...(kind ? { message: {
+    kind, issue: number, at: now,
+    ...(task?.reviewEntry !== undefined ? { entry: task.reviewEntry } : {}),
+    ...(task?.track ? { track: task.track } : {}), ...(task?.layer ? { layer: task.layer } : {}),
+    ...(task?.materialSha || task?.mergedSha ? { materialSha: task.materialSha ?? task.mergedSha } : {}),
+    ...(state.active?.issue === number ? { phase: state.active.phase } : {}),
+    ...(task?.s6 ? { evidence: copy(task.s6) } : {}),
+  } } : {}) };
+  // Keep undelivered messages in the existing delivery records, including after merge.
+  // Delivered records retain the same bounded replay window; no second queue/service.
+  const pendingEvents = Object.entries(state.events).filter(([, record]) => record.message && !record.message.delivered);
+  const recentEvents = Object.entries(state.events).filter(([, record]) => typeof record !== 'string' && record.issue != null
+    && (!record.message || record.message.delivered) && state.tasks[record.issue]?.status !== 'S8-merged').slice(-256);
+  state.events = Object.fromEntries([...recentEvents, ...pendingEvents].sort((a, b) => (a[1].message?.at ?? 0) - (b[1].message?.at ?? 0)));
   const pendingPresentations = Object.values(state.reviewPublications);
   const completed = Object.values(state.tasks).filter(task => task.status === 'S8-merged' && task.devBuild?.status !== 'pending'
     && task.completion?.status !== 'pending' && !pendingPresentations.some(record => record.kind === 'code' && record.issue === task.issue) && task.notice?.status !== 'pending')

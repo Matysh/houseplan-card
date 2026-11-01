@@ -58,10 +58,14 @@ async function localWorktree(git, branch, path, materialSha) {
 
 async function closeServiceIssue({ api, issue, candidate, devSha }) {
   const current = await api.getIssue(issue);
-  await api.upsertComment(issue, { marker: `<!-- process-next-release-return-complete:${candidate.tag} -->`,
-    body: `Опубликованный \`${candidate.tag}\` вошёл в dev (${devSha}). Служебный возврат завершён; исходные продуктовые задачи учтены в выпуске.` });
-  for (const name of labels(current).filter(name => /^S[1-8]-/.test(name) || name === 'to_release')) await api.removeLabel(issue, name);
+  const removed = labels(current).filter(name => /^S[1-8]-/.test(name) || name === 'to_release');
+  for (const name of removed) await api.removeLabel(issue, name);
   if (current.state !== 'closed') await api.updateIssue(issue, { state: 'closed', state_reason: 'completed' });
+  await api.upsertComment(issue, { marker: `<!-- process-next-release-return-complete:${candidate.tag} -->`,
+    body: `## Изменения выпуска ${candidate.tag} возвращены в dev\n\n`
+      + `Опубликованная история вошла в dev: [${devSha.slice(0, 9)}](https://github.com/${api.owner}/${api.repo}/commit/${devSha}).\n\n`
+      + `Служебная задача закрыта как выполненная; статусные метки сняты.${removed.includes('to_release') ? ' Снята личная метка \`to_release\`.' : ''}\n\n`
+      + 'Сам релиз уже опубликован, исходные продуктовые задачи учтены в выпуске. Повторного выпуска и общего прогона проверок не было.' });
 }
 
 /** Completes one existing queue task; publication itself never gets replayed here. */

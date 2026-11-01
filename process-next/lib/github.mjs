@@ -97,12 +97,23 @@ export class GitHubClient {
     if (!Number.isSafeInteger(issue) || issue < 1) throw Error('Invalid issue');
     return this.request('POST', `${this.root}/issues/${issue}/comments`, { body });
   }
-  async upsertComment(issue, { marker, body }) {
+  async upsertComment(issue, { marker, body, allowedAuthors }) {
     if (typeof marker !== 'string' || !marker.startsWith('<!-- process-next-') || !marker.endsWith(' -->')) throw Error('Expected process comment marker');
     const text = body.startsWith(marker) ? body : `${marker}\n${body}`;
-    const existing = (await this.listIssueComments(issue)).find(comment => comment.body?.startsWith(marker));
-    if (existing?.body === text) return { ...existing, reused: true };
-    return existing ? this.request('PATCH', `${this.root}/issues/comments/${existing.id}`, { body: text }) : this.comment(issue, text);
+    const find = async () => (await this.listIssueComments(issue)).find(comment => comment.body?.startsWith(marker)
+      && (!allowedAuthors || allowedAuthors.includes(comment.user?.login ?? comment.author)));
+    const existing = await find();
+    // The compatibility name is retained for callers. A marker identifies an
+    // event, not a mutable dashboard: changed wording never rewrites history.
+    if (existing) return { ...existing, reused: true };
+    try { return await this.comment(issue, text); }
+    catch (error) {
+      // POST may have succeeded before its response was lost. Never blindly
+      // repeat it; the existing serialized publisher can retry a later read.
+      const delivered = await find().catch(() => null);
+      if (delivered) return { ...delivered, reused: true };
+      throw error;
+    }
   }
   getRelease(tag) { return this.request('GET', `${this.root}/releases/tags/${component(tag)}`); }
   async findRelease(tag) {
@@ -251,7 +262,8 @@ export class GitAdapter {
     if (!active || active.token !== fence.token || active.issue !== fence.issue || active.expiresAt <= this.clock()) throw new LeaseLost();
     if (active.materialSha !== materialSha || active.expectedBase !== expectedBase || active.phase !== 'ready-to-merge') throw Error('Queue fence does not authorize this merge');
     const nextState = reduceQueue(fence.state, { id: fence.eventId ?? `merge:${active.token}`, type: 'merged', issue: active.issue,
-      token: active.token, materialSha, actualDevSha: materialSha }, { now: this.clock() });
+      token: active.token, materialSha, actualDevSha: materialSha, branchDeleted: true,
+      fromStatus: fence.fromStatus, removedToRelease: fence.removedToRelease }, { now: this.clock() });
     if (!this.activated) return { planned: true, expectedBase, materialSha, branch, stateBranch, nextState,
       operation: 'atomic fast-forward dev and queue state; conditionally delete unchanged task branch' };
     for (const commit of [expectedBase, materialSha, fence.headSha]) await this.ensureCommit(commit);

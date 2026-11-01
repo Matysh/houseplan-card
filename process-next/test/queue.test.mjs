@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { initialQueueState, reduceQueue, MemoryQueueStore, LocalQueueStore, QueueController, StateConflict, LeaseLost } from '../lib/queue.mjs';
+import { initialQueueState, reduceQueue, pendingReviewPublications, MemoryQueueStore, LocalQueueStore, QueueController, StateConflict, LeaseLost } from '../lib/queue.mjs';
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40);
 const task = (issue, track = 'show', layer = 'product') => ({ issue, track, layer, ownerAssigned: true, branch: `issue/${issue}`, materialSha: B });
@@ -20,6 +20,85 @@ function prepared(h, selected = task(1)) {
   h.event({ type: 'synchronized', issue: selected.issue, token, expectedBase: A, materialSha: B });
   return token;
 }
+
+test('an unpublished partial attempt and its final round remain separate through delivery acknowledgements', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'review:1:round1' });
+  const base = { issue: 1, kind: 'code', requestId: 'review:1:round1', materialSha: B, expectedBase: A, runId: 42 };
+  const partial = { ...base, resultKey: 'incomplete:42:1', receipt: { verdict: 'incomplete', markdown: 'Partial analysis', runId: 42, runAttempt: 1 } };
+  h.event({ type: 'review-presentation', issue: 1, kind: 'code', record: partial });
+  // A completed retry is observed before either report could be published.
+  h.event({ type: 'review-presentation', issue: 1, kind: 'code', record: base });
+  let pending = pendingReviewPublications(h.state);
+  assert.equal(pending.length, 2);
+  assert.equal(pending[0].resultKey, partial.resultKey); assert.equal(pending[0].receipt.markdown, 'Partial analysis');
+  assert.equal(pending[1].resultKey, undefined); assert.equal(pending[1].receipt, undefined);
+  h.event({ type: 'review-presentation', issue: 1, kind: 'code', requestId: base.requestId,
+    resultKey: partial.resultKey, status: 'delivered' });
+  pending = pendingReviewPublications(h.state);
+  assert.equal(pending.length, 1); assert.equal(pending[0].resultKey, undefined);
+  h.event({ type: 'review-presentation', issue: 1, kind: 'code', requestId: base.requestId, status: 'delivered' });
+  assert.deepEqual(pendingReviewPublications(h.state), []);
+});
+
+test('report discovery survives replacement of the current specification before its first result is read', () => {
+  const h = harness();
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:first', base: A, contextDigest: 'first' } });
+  h.time(110);
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:second', base: B, contextDigest: 'second' } });
+  const pending = pendingReviewPublications(h.state);
+  assert.deepEqual(pending.map(record => record.requestId), ['spec:55:first', 'spec:55:second']);
+  assert.deepEqual(pending.map(record => record.presentation.round), [1, 2]);
+  assert.equal(pending[0].materialSha, A);
+  assert.equal(h.state.specReviews[55].requestId, 'spec:55:second');
+});
+
+test('service-event metadata survives JSON storage without undefined fields changing the state', () => {
+  const h = harness();
+  h.event({ type: 'enqueue', task: task(1, 'ship') });
+  assert.deepEqual(h.state, JSON.parse(JSON.stringify(h.state)));
+  h.event({ type: 'admit' }); const token = h.state.active.token;
+  h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B });
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  h.event({ type: 'merged', issue: 1, token, materialSha: B, actualDevSha: B });
+  h.event({ type: 'dev-build', issue: 1, materialSha: B, status: 'published', notify: true });
+  assert.deepEqual(h.state, JSON.parse(JSON.stringify(h.state)));
+});
+
+test('fast returns keep their own notices, including expiry followed by another enqueue', () => {
+  const h = harness(); let token = prepared(h);
+  h.event({ type: 'return', issue: 1, token, reason: 'checks-failed', detail: 'First failing case' });
+  const first = structuredClone(h.state.tasks[1].notice);
+  h.event({ type: 'enqueue', task: task(1) }); h.event({ type: 'admit' }); token = h.state.active.token;
+  h.event({ type: 'return', issue: 1, token, reason: 'checks-failed', detail: 'Second failing case' });
+  const returns = Object.values(h.state.events).filter(record => record.message?.kind === 'return').map(record => record.message);
+  assert.equal(returns.length, 2);
+  assert.deepEqual(returns.map(record => record.notice.detail), ['First failing case', 'Second failing case']);
+  assert.deepEqual(returns[0].notice, first);
+  assert.notEqual(returns[0].entry, returns[1].entry);
+  h.event({ type: 'enqueue', task: task(1) }); h.event({ type: 'admit' });
+  h.time(201); h.event({ type: 'enqueue', task: task(2) });
+  const latest = Object.values(h.state.events).map(record => record.message).filter(Boolean).slice(-2);
+  assert.deepEqual(latest.map(message => [message.kind, message.issue]), [['return', 1], ['queued', 2]]);
+  assert.equal(latest[0].notice.reason, 'executor-admission-expired');
+});
+
+test('exhausted review placeholders and S4 attention survive until metadata-only handling', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'review:1:failed' });
+  h.event({ type: 'return', issue: 1, token, reason: 'review-retry-exhausted' });
+  assert.equal(pendingReviewPublications(h.state)[0].exhausted, true);
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:failed', base: A } });
+  h.event({ type: 'spec-complete', issue: 55, requestId: 'spec:55:failed', verdict: 'attention' });
+  const notice = structuredClone(h.state.specReviews[55].notice);
+  assert.equal(pendingReviewPublications(h.state).find(record => record.issue === 55).exhausted, true);
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:next', base: B } });
+  assert.deepEqual(h.state.events[notice.eventId].message.notice, notice);
+  assert.equal(h.state.events[notice.eventId].message.kind, 'spec-attention');
+  assert.equal(pendingReviewPublications(h.state).filter(record => record.issue === 55).length, 2);
+});
 
 test('ready ship first; show and ask share FIFO; no interruption of an admitted task', () => {
   const h = harness();
@@ -114,7 +193,9 @@ test('idle ticks never write state and active delivery history remains bounded',
   assert.equal(writes, 0); assert.equal((await store.read()).state.revision, 0);
   const h = harness(), token = prepared(h);
   for (let index = 0; index < 600; index++) { h.time(101 + index); h.event({ type: 'heartbeat', issue: 1, token }); }
-  assert.ok(Object.keys(h.state.events).length <= 256);
+  const pending = Object.values(h.state.events).filter(record => record.message && !record.message.delivered);
+  assert.equal(pending.length, 2); // Queue entry/admission stay until published; heartbeats add no messages.
+  assert.ok(Object.keys(h.state.events).length - pending.length <= 256);
 });
 test('optional decision provenance is validated but never overrides the installed task track', () => {
   let state = reduceQueue(initialQueueState(), { id: 'agent', type: 'enqueue', task: task(1, 'ship') });

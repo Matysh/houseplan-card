@@ -59,30 +59,54 @@ export async function completePublishedRelease({ candidate: input, api, git, ver
         work = { ...work, status: 'running', eligible: [...eligible], waitingForS8 };
         await save('issues', work);
       }
-      const complete = new Set(work.completed ?? []), errors = [];
+      const complete = new Set(work.completed ?? []), closed = new Set(work.closed ?? []), errors = [];
       for (const number of work.eligible) {
         if (complete.has(number)) continue;
         if (!included.includes(number)) throw Error('Stored closure work is outside the immutable release membership');
         try {
           const issue = await api.getIssue(number), comments = await api.listIssueComments(number);
           const marker = `<!-- houseplan-release:${candidate.tag} -->`;
+          // Closure and its publication are separate recoverable actions. Record
+          // the confirmed closure before posting; a later owner reopen wins.
+          if (!closed.has(number)) {
+            for (const label of labelNames(issue).filter(name => /^S\d+-/.test(name))) await api.removeLabel(number, label);
+            if (issue.state !== 'closed') await api.updateIssue(number, { state: 'closed', state_reason: 'completed' });
+            closed.add(number); issue.state = 'closed';
+            work = { ...work, closed: [...closed] };
+            await save('issues', work);
+          }
           if (!comments.some(comment => String(comment.body ?? comment).includes(marker))) {
             const host = api.webBase ?? 'https://github.com';
             const repository = `${api.owner}/${api.repo}`, tag = encodeURIComponent(candidate.tag);
             const releaseUrl = `${host}/${repository}/releases/tag/${tag}`;
             const docs = `${host}/${repository}/blob/${tag}/docs/`;
-            await api.comment(number, `Выпущено в \`${candidate.tag}\` · [релиз](${releaseUrl})\n\n[Changelog RU](${docs}CHANGELOG.ru.md) · [Changelog EN](${docs}CHANGELOG.md)\n\n${marker}`);
+            const discovery = candidate.delivery?.source === 'github-release-feed'
+              ? 'Версия доступна в публичном источнике релизов; ZIP соответствует опубликованному артефакту. Это не подтверждение установки в конкретном Home Assistant.'
+              : 'Доступность опубликованного обновления подтверждена проверкой доставки.';
+            await api.comment(number, `${marker}\n\n## Задача вошла в ${candidate.kind === 'beta' ? 'бету' : candidate.kind === 'hotfix' ? 'hotfix' : 'стабильный выпуск'} ${candidate.tag}\n\n`
+              + `[Опубликованный релиз](${releaseUrl}) · [Что изменилось (RU)](${docs}CHANGELOG.ru.md) · [Changelog EN](${docs}CHANGELOG.md).\n\n${discovery}\n\n`
+              + (issue.state === 'closed' ? '**S8 → закрыта как выполненная**: статусные метки сняты, issue закрыта.'
+                : 'После выпуска задача была закрыта, затем открыта вновь. Текущее состояние сохранено; повторное закрытие не выполняется.'));
           }
-          for (const label of labelNames(issue).filter(name => /^S\d+-/.test(name))) await api.removeLabel(number, label);
-          if (issue.state !== 'closed') await api.updateIssue(number, { state: 'closed', state_reason: 'completed' });
           complete.add(number);
-          work = { status: 'running', eligible: work.eligible, waitingForS8: work.waitingForS8 ?? [], completed: [...complete] };
+          work = { status: 'running', eligible: work.eligible, waitingForS8: work.waitingForS8 ?? [], closed: [...closed], completed: [...complete] };
           await save('issues', work);
-        } catch (error) { errors.push({ issue: number, reason: reason(error) }); }
+        } catch (error) {
+          errors.push({ issue: number, reason: reason(error) });
+          // One factual delay notice, never an early assertion that the issue is closed.
+          if (!closed.has(number)) try {
+            const marker = `<!-- houseplan-release-pending:${candidate.tag} -->`;
+            const comments = await api.listIssueComments(number);
+            if (!comments.some(comment => String(comment.body ?? comment).includes(marker)))
+              await api.comment(number, `${marker}\n\n## Выпуск ${candidate.tag} опубликован; закрытие задачи ещё не завершено\n\n`
+                + `Не удалось закончить оформление задачи: ${reason(error)}. Текущее закрытие не подтверждено.\n\n`
+                + 'Повторяются только снятие статусных меток и закрытие issue. Выпуск, успешные проверки и ревью повторно не выполняются.');
+          } catch { /* The release state already preserves the original failure for the next attempt. */ }
+        }
       }
       const waitingForS8 = work.waitingForS8 ?? [];
       work = { status: errors.length || waitingForS8.length ? 'pending' : 'completed', eligible: work.eligible,
-        waitingForS8, completed: [...complete], ...(errors.length ? { errors } : {}) };
+        waitingForS8, closed: [...closed], completed: [...complete], ...(errors.length ? { errors } : {}) };
       await save('issues', work);
       if (errors.length || waitingForS8.length) pending.push({ step: 'issues', reason: [
         ...errors.map(error => `#${error.issue}: ${error.reason}`),

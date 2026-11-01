@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { QueueController, MemoryQueueStore, reduceQueue, AUTOMATION_WAIT_MS, REVIEW_RETRY_VISIBILITY_MS } from '../lib/queue.mjs';
+import { QueueController, MemoryQueueStore, reduceQueue, pendingReviewPublications, AUTOMATION_WAIT_MS, REVIEW_RETRY_VISIBILITY_MS } from '../lib/queue.mjs';
 import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, taskLayerFromDiff, devBuildTarget } from '../lib/coordinator.mjs';
 import { WorkflowReviewAdapter } from '../remote.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40);
@@ -131,6 +131,37 @@ test('accepted S4 with a failed comment preserves presentation receipt after adv
   const publication = Object.values((await queue.store.read()).state.reviewPublications)[0];
   assert.equal(publication.kind, 'spec'); assert.equal(publication.status, 'pending');
   assert.equal(publication.runId, 24); assert.equal(publication.materialSha, A);
+});
+
+test('S4 keeps an unobserved previous round when the author advances the issue body', async () => {
+  const queue = new QueueController(new MemoryQueueStore()), issue = { number: 55, state: 'open', body: 'First spec', labels: ['S4-spec-review', 'track:ask'] };
+  const requested = [];
+  const options = { queue, api: { moveStatus: async () => {} }, git: { dev: 'dev', remoteHead: async () => A }, issue,
+    activated: true, requestReview: async context => requested.push(context.requestId), readReviewResult: async () => ({ missing: true }) };
+  await reconcileSpecReview({ ...options, eventId: 'first-spec' });
+  issue.body = 'Second spec, changed before the first completed result was observed';
+  await reconcileSpecReview({ ...options, eventId: 'second-spec' });
+  const pending = pendingReviewPublications((await queue.store.read()).state);
+  assert.equal(requested.length, 2); assert.deepEqual(pending.map(record => record.requestId), requested);
+  assert.deepEqual(pending.map(record => record.presentation.round), [1, 2]);
+});
+
+test('S4 final result cannot overwrite an unpublished partial technical attempt', async () => {
+  const queue = new QueueController(new MemoryQueueStore()), issue = { number: 55, state: 'open', body: 'Spec', labels: ['S4-spec-review', 'track:ask'] };
+  let result = { missing: true };
+  const options = { queue, api: { moveStatus: async (_number, label) => { issue.labels = [label, 'track:ask']; } },
+    git: { dev: 'dev', remoteHead: async () => A }, issue, activated: true, requestReview: async () => {}, readReviewResult: async () => result };
+  await reconcileSpecReview({ ...options, eventId: 'request-round' });
+  result = { verdict: 'incomplete', markdown: 'Partial analysis', publicationPending: true, runId: 24, runAttempt: 1, runStatus: 'completed' };
+  await reconcileSpecReview({ ...options, eventId: 'partial-round' });
+  result = { verdict: 'accepted', markdown: 'Completed analysis', publicationPending: true, runId: 24, runAttempt: 2, runStatus: 'completed' };
+  await reconcileSpecReview({ ...options, eventId: 'completed-round' });
+  const pending = pendingReviewPublications((await queue.store.read()).state);
+  assert.equal(pending.length, 2); assert.equal(pending[0].receipt.markdown, 'Partial analysis');
+  assert.equal(pending[1].receipt, undefined); assert.equal(pending[1].runId, 24);
+  assert.equal(pending[0].presentation.transition, undefined);
+  assert.deepEqual(pending[1].presentation.transition, { from: 'S4-spec-review', to: 'S5-ready', confirmed: true });
+  assert.ok(issue.labels.includes('S5-ready'));
 });
 test('task layer follows significant diff, not an agent docs declaration or test-directory name', () => {
   assert.equal(taskLayerFromDiff(['README.md', 'docs/guide.md']), 'docs');

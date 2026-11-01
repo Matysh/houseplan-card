@@ -2,10 +2,10 @@
 import { readFile, writeFile, mkdtemp, rm, mkdir } from 'node:fs/promises';
 import { resolve, join, dirname, relative } from 'node:path';
 import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { GitHubClient, GitHubQueueStore } from './lib/github.mjs';
-import { QueueController, StateConflict, ownerShip, queueSummary } from './lib/queue.mjs';
+import { QueueController, StateConflict, ownerShip, queueSummary, pendingReviewPublications } from './lib/queue.mjs';
 import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
 import { planProfile } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
@@ -14,6 +14,7 @@ import { initialReleaseState, reduceRelease, ReleaseGitAdapter, ReleasePublisher
   HacsClient, HacsDeliveryVerifier, ReleaseDiscoveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
 import { reconcileTaskCompletions, notifyDevWebhook } from './lib/task-completion.mjs';
 import { publishReviewReceipt } from './lib/review-publication.mjs';
+import { publishServiceMessages } from './lib/service-messages.mjs';
 import { prepareReleaseData, preparePublicationArtifacts } from './lib/release-preparation.mjs';
 import { completePublishedRelease } from './lib/release-completion.mjs';
 import { announceStableRelease } from './lib/notifications.mjs';
@@ -142,7 +143,8 @@ export class WorkflowReviewAdapter {
         payload = JSON.parse(entry.toString('utf8'));
       } finally { await rm(directory, { recursive: true, force: true }); }
     }
-    return { ...payload, artifactId: artifact.id, runId: run.id, reportUrl: run.html_url };
+    return { ...payload, artifactId: artifact.id, runId: run.id, runAttempt: run.run_attempt ?? 1,
+      completedAt: run.updated_at, reportUrl: run.html_url };
   }
   checked(result, { requestId, active, kind = 'code' }) {
     if (result.requestId !== requestId || result.issue !== active.issue || result.kind !== kind
@@ -181,11 +183,38 @@ export class WorkflowReviewAdapter {
   }
   /** Called only by the coordinator's existing serialized metadata sweep. */
   async publishCompletedReview(record) {
-    const result = await this.readReviewResult({ kind: record.kind, requestId: record.requestId,
-      active: { issue: record.issue, materialSha: record.materialSha, expectedBase: record.expectedBase, patchId: record.patchId },
-      task: { track: 'show', reviewRetry: { requestId: record.requestId, runId: record.runId } } });
+    const requestedAt = Date.parse(record.presentation?.occurredAt ?? '');
+    const expired = Number.isFinite(requestedAt) && this.clock() - requestedAt > 60 * 86400_000;
+    let result;
+    try {
+      result = record.receipt ?? await this.readReviewResult({ kind: record.kind, requestId: record.requestId,
+        active: { issue: record.issue, materialSha: record.materialSha, expectedBase: record.expectedBase, patchId: record.patchId },
+        task: { track: 'show', reviewRetry: { requestId: record.requestId, runId: record.runId } } });
+    } catch (error) {
+      if (!expired || error.status !== 404) throw error;
+      result = { missing: true };
+    }
+    // A terminal technical failure with no report is explained by its saved service
+    // notice. It must not pin later real review rounds behind an empty placeholder.
+    if (record.exhausted && !result?.markdown && (result?.missing || result?.retryable))
+      return { published: true, reportAbsent: true };
+    if (expired && !result?.markdown && (result?.missing || result?.retryable)) result = {
+      issue: record.issue, kind: record.kind, requestId: record.requestId, materialSha: record.materialSha,
+      base: record.expectedBase, verdict: 'incomplete', runStatus: 'completed',
+      markdown: 'Результат этого запроса не получен или больше недоступен: окно хранения артефактов (60 дней) истекло. '
+        + 'Это сообщение о недоступном результате, не вердикт модели. Новое ревью не запускалось; текущая работа и её статус не изменены.',
+    };
+    if (!result?.markdown && record.presentation?.delayed && (result?.missing || result?.pending || result?.retryable))
+      return { published: false, pending: true, superseded: true };
     if (!result?.verdict || result.runStatus !== 'completed') return { published: false, pending: true };
-    return publishReviewReceipt({ api: this.api, receipt: result, reportUrl: result.reportUrl });
+    const current = this.api.getIssue ? await this.api.getIssue(record.issue) : null;
+    const currentStatus = current?.state === 'closed' ? 'closed' : current?.labels?.map(label => typeof label === 'string' ? label : label.name).find(label => /^S[1-8]-/.test(label));
+    const changedSpec = record.kind === 'spec' && current && record.requestId !== `spec:${record.issue}:${createHash('sha256').update(JSON.stringify({ body: current.body ?? '' })).digest('hex')}`;
+    const presentation = { ...record.presentation, ...(currentStatus ? { currentStatus } : {}),
+      ...(result.completedAt ? { occurredAt: result.completedAt } : {}),
+      delayed: Boolean(record.presentation?.delayed || changedSpec || currentStatus === 'closed'
+        || currentStatus === 'S8-merged' || (record.presentation?.transition?.to && currentStatus && record.presentation.transition.to !== currentStatus)) };
+    return publishReviewReceipt({ api: this.api, receipt: { ...result, presentation }, reportUrl: result.reportUrl });
   }
   async readPreviousReviewResult({ issue, kind = 'code', excludeRequestId }) {
     const identity = new RegExp(`(?:^|[^A-Za-z0-9:-])${kind === 'spec' ? 'spec' : 'review'}:${issue}:`);
@@ -237,9 +266,39 @@ function activation(config, execute, env) {
 }
 
 async function finishBookkeeping({ queue, api, git, review, eventId, issue, publishReviews = false }) {
+  // The hosted coordinator already serializes this work. Local finish only observes;
+  // it must not race GET→POST against the sole service-comment publisher.
+  if (!publishReviews) return { pending: [{ issue, reason: 'Оформление выполняет координатор; завершённое слияние не повторяется.' }] };
+  const snapshot = (await queue.store.read()).state;
+  const timeline = [
+    ...Object.entries(snapshot.events).filter(([, record]) => record.message && !record.message.delivered)
+      .map(([id, record]) => ({ id, issue: record.message.issue, at: record.message.at, message: true })),
+    ...pendingReviewPublications(snapshot).map(record => ({ issue: record.issue, record,
+      at: Date.parse(record.presentation?.occurredAt ?? '') || 0 })),
+  ].filter(item => issue === undefined || item.issue === issue)
+    .sort((a, b) => a.at - b.at || Number(Boolean(b.record?.resultKey)) - Number(Boolean(a.record?.resultKey)));
+  const deferred = new Set();
+  for (const item of timeline) {
+    if (deferred.has(item.issue)) continue;
+    try {
+      if (item.message) {
+        const delivery = await publishServiceMessages({ queue, api, eventId, onlyMessageIds: [item.id] });
+        if (delivery.pending.length) deferred.add(item.issue);
+      } else {
+        const record = item.record;
+        const latest = record.kind === 'spec' ? snapshot.specReviews?.[record.issue]?.requestId : snapshot.tasks[record.issue]?.reviewRequest;
+        const result = await review.publishCompletedReview({ ...record, presentation: { ...record.presentation,
+          delayed: Boolean(latest && latest !== record.requestId) } });
+        if (!result?.published) { if (!result?.superseded) deferred.add(item.issue); continue; }
+        const identity = createHash('sha256').update(JSON.stringify([record.kind, record.issue, record.requestId, record.resultKey ?? null])).digest('hex');
+        await queue.dispatch({ id: `${eventId}:report:${identity}`, type: 'review-presentation', issue: record.issue,
+          kind: record.kind, requestId: record.requestId, ...(record.resultKey ? { resultKey: record.resultKey } : {}), status: 'delivered' });
+      }
+    } catch { deferred.add(item.issue); }
+  }
   try { return await reconcileTaskCompletions({ queue, api, git, activated: true, issue,
     eventId: `${eventId}:metadata:${randomUUID()}`,
-    ...(publishReviews ? { publishReview: record => review.publishCompletedReview(record) } : {}) }); }
+    deferredIssues: [...deferred] }); }
   catch (error) { return { pending: [{ issue, reason: error.message }], warning: 'Metadata remains pending; a completed merge is not repeated' }; }
 }
 
@@ -302,8 +361,10 @@ export async function finishTask({ config, event, queue, api, git, review, depen
       track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
     const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
       reuse: true, signal, onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
-    return { outcome: report.status, evidence: { id: report.id, reportPath: report.reportPath, materialSha: active.materialSha,
-      status: report.status, finishedAt: report.finishedAt } };
+    return { outcome: report.status, evidence: { id: report.id, name: report.name, reportPath: report.reportPath, materialSha: active.materialSha,
+      status: report.status, finishedAt: report.finishedAt,
+      failures: (report.results ?? []).filter(row => ['failed', 'unavailable', 'cancelled', 'blocked'].includes(row.status))
+        .map(row => `${row.name ?? row.id}: ${row.reason ?? row.error ?? row.status}`) } };
   };
   let ownedAdmission = null;
   const heartbeat = setInterval(() => {
@@ -414,7 +475,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
         sourceSha: marker.source, integrationTree: marker.integrationTree, status: 'pending' });
     for (const covered of Object.values(snapshot.tasks).filter(item => item.status === 'S8-merged' && item.devBuild?.status === 'pending')) {
       try { await git.assertAncestor(covered.mergedSha, marker.source); } catch { continue; }
-      state = await queue.dispatch({ id: `${event.id}:${covered.issue}`, type: 'dev-build', issue: covered.issue, materialSha: covered.mergedSha, status: 'published' });
+      state = await queue.dispatch({ id: `${event.id}:${covered.issue}`, type: 'dev-build', issue: covered.issue, materialSha: covered.mergedSha, status: 'published', notify: covered.issue === event.issue });
     }
     return { state };
   }

@@ -74,9 +74,10 @@ test('concurrent readers never publish; the completed coordinator publisher crea
   assert.equal(comments.length, 0); assert.equal(issues.length, 0); assert.equal(writes.length, 0);
   run.status = 'completed';
   await Promise.all([adapter.readReviewResult(context), adapter.publishCompletedReview(record), adapter.readReviewResult(context)]);
-  assert.equal(comments.length, 1); assert.equal(issues.length, 1);
+  assert.equal(comments.length, 2); assert.equal(issues.length, 1); // report + confirmed links to separately filed defects
+  const firstBodies = comments.map(comment => comment.body);
   await adapter.publishCompletedReview(record);
-  assert.equal(comments.length, 1); assert.equal(issues.length, 1);
+  assert.deepEqual(comments.map(comment => comment.body), firstBodies); assert.equal(issues.length, 1);
   assert.ok(writes.every(write => !write.path.includes('/dispatches') && !write.path.includes('/rerun')));
 });
 
@@ -434,7 +435,11 @@ test('documentation finish removes personal label without ledger or milestone; m
   assert.equal(h.issue.milestone, undefined); assert.equal(result.bookkeeping.pending.length, 1);
   await h.command('reconcile-completions'); await h.command('reconcile-completions');
   assert.equal((await h.store.read()).state.tasks[1].completion.status, 'complete');
-  assert.deepEqual(h.actions, ['merge']); assert.equal(transport.comments.length, 1);
+  assert.deepEqual(h.actions, ['merge']);
+  assert.equal(transport.comments.filter(comment => comment.body.includes('process-next-task-merged:')).length, 1);
+  const history = transport.comments.map(comment => comment.body);
+  await h.command('reconcile-completions');
+  assert.deepEqual(transport.comments.map(comment => comment.body), history);
   assert.ok(transport.writes.every(write => !write.body?.labels?.includes('to_release')));
 });
 
@@ -451,6 +456,78 @@ test('finish leaves paid reports for the single coordinator publisher', async ()
   assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 1);
   await h.command('reconcile-completions'); await h.command('reconcile-completions');
   assert.equal(publications, 1); assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 0);
+});
+
+test('hosted publication interleaves old review, next entry and next review; a failed delivery preserves that order', async () => {
+  const h = queueHarness(), delivered = [];
+  h.issue.labels = ['S6-in-progress', 'track:ask'];
+  const transport = issueTransport(h.issue);
+  h.dependencies.api = transport.api;
+  const append = transport.api.upsertComment.bind(transport.api);
+  transport.api.upsertComment = async (issue, message) => { delivered.push('entry'); return append(issue, message); };
+  h.store.state.specReviews[1] = { requestId: 'spec:1:new', round: 2, status: 'accepted' };
+  for (const [requestId, at] of [['spec:1:old', 1000], ['spec:1:new', 2000]]) {
+    await h.queue.dispatch({ id: requestId, type: 'review-presentation', issue: 1, kind: 'spec', record: {
+      issue: 1, kind: 'spec', requestId, materialSha: B, expectedBase: A,
+      presentation: { occurredAt: new Date(at).toISOString() },
+    } });
+  }
+  h.store.state.events.between = { digest: 'saved', issue: 1, message: {
+    kind: 'queued', issue: 1, at: 1500, entry: 2, layer: 'infra', track: 'ask',
+  } };
+  let fail = true;
+  h.dependencies.review.publishCompletedReview = async record => {
+    if (fail) throw Error('Lost transport before publication');
+    delivered.push(record.requestId); return { published: true };
+  };
+  await h.command('reconcile-completions');
+  assert.deepEqual(delivered, []);
+  fail = false;
+  await h.command('reconcile-completions');
+  assert.deepEqual(delivered, ['spec:1:old', 'entry', 'spec:1:new']);
+  await h.command('reconcile-completions');
+  assert.deepEqual(delivered, ['spec:1:old', 'entry', 'spec:1:new']);
+});
+
+test('a completed old specification report is published after the body changed without moving current labels', async () => {
+  const comments = [], run = { id: 11, status: 'completed', run_attempt: 1, display_title: 'Ревью ТЗ spec:1:old',
+    html_url: 'https://example.test/run', updated_at: '2026-11-01T10:00:00Z' };
+  const receipt = { issue: 1, kind: 'spec', requestId: 'spec:1:old', materialSha: B, base: A,
+    verdict: 'changes_requested', markdown: 'Подробное замечание первого раунда' };
+  const current = { number: 1, state: 'open', labels: ['S5-ready'], body: 'Новая принятая редакция' };
+  const api = { root: '/repos/owner/repo', owner: 'owner', getIssue: async () => current,
+    request: async (method, path) => {
+      assert.equal(method, 'GET', 'publication may not mutate labels or dispatch another review');
+      if (path.includes('/artifacts')) return { artifacts: [{ id: 41, name: 'review-result' }] };
+      if (path.includes('/actions/runs/11')) return run;
+      if (path.includes('/comments')) return comments;
+      return [];
+    }, comment: async (_issue, body) => { const comment = { id: 1, body, user: { login: 'owner' } }; comments.push(comment); return comment; } };
+  const adapter = new WorkflowReviewAdapter({ api, readArtifact: async () => receipt });
+  await adapter.publishCompletedReview({ issue: 1, kind: 'spec', requestId: 'spec:1:old', runId: 11,
+    materialSha: B, expectedBase: A, presentation: { round: 1 } });
+  assert.equal(comments.length, 1); assert.match(comments[0].body, /доставлен с задержкой/);
+  assert.match(comments[0].body, /Подробное замечание первого раунда/);
+  assert.deepEqual(current.labels, ['S5-ready']);
+});
+
+test('superseded empty requests do not block later history and expire with an explicit unavailable report', async () => {
+  const comments = [], now = Date.parse('2026-11-01T12:00:00Z');
+  const api = { root: '/repos/owner/repo', owner: 'owner',
+    getIssue: async () => ({ state: 'open', labels: ['S5-ready'], body: 'updated specification' }),
+    request: async (_method, path) => path.includes('/comments') ? comments : { workflow_runs: [], total_count: 0 },
+    comment: async (_issue, body) => { const item = { id: comments.length + 1, body, user: { login: 'owner' } }; comments.push(item); return item; } };
+  const adapter = new WorkflowReviewAdapter({ api, clock: () => now });
+  const record = { issue: 1, kind: 'spec', requestId: 'spec:1:old', materialSha: B, expectedBase: A,
+    presentation: { delayed: true, occurredAt: new Date(now - 1000).toISOString() } };
+  assert.equal((await adapter.publishCompletedReview(record)).superseded, true);
+  assert.equal(comments.length, 0);
+  assert.equal((await adapter.publishCompletedReview({ ...record, exhausted: true })).reportAbsent, true);
+  record.presentation.occurredAt = new Date(now - 61 * 86400_000).toISOString();
+  await adapter.publishCompletedReview(record);
+  assert.equal(comments.length, 1); assert.match(comments[0].body, /окно хранения артефактов/);
+  await adapter.publishCompletedReview(record);
+  assert.equal(comments.length, 1);
 });
 
 test('published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing', async () => {
@@ -480,7 +557,8 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
   assert.equal(second.completion.status, 'completed', JSON.stringify(second.completion.pending)); assert.equal(issue.state, 'closed');
   await call('complete-release');
   assert.deepEqual({ publishes, preparations, observations, returns, sends }, { publishes: 1, preparations: 1, observations: 1, returns: 1, sends: 1 });
-  assert.equal(comments.length, 1); assert.equal(second.state.candidates.beta1.announcement.status, 'sent');
+  assert.equal(comments.length, 2); // failure notice followed by confirmed closure, neither rewritten
+  assert.equal(second.state.candidates.beta1.announcement.status, 'sent');
 });
 
 test('interrupted publication resumes persisted inputs even after report files disappeared', async () => {

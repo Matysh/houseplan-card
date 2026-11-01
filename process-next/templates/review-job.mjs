@@ -1,5 +1,6 @@
 // Inert binding: only the future workflow calls main. Importing this module does no I/O.
 import { readFileSync, appendFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildReviewContext, runReview } from '../lib/review.mjs';
@@ -59,6 +60,17 @@ export async function prepareReviewJob({ env = process.env, api, reviewAdapter, 
     api.getIssue(request.issue), issueComments(api, request.issue),
     reviewAdapter.readPreviousReviewResult({ issue: request.issue, kind: request.kind, excludeRequestId: request.requestId }),
   ]);
+  // A delayed workflow must not analyze a newer issue body under the old round's
+  // identity. The new round is already handled by the coordinator, without paying
+  // for a misleading review of the same new text twice.
+  if (request.kind === 'spec' && /^[a-f0-9]{64}$/.test(request.patchId ?? '')
+    && createHash('sha256').update(JSON.stringify({ body: issue.body ?? '' })).digest('hex') !== request.patchId) {
+    const receipt = { version: 1, ...request, verdict: 'incomplete', model: null, report: null,
+      markdown: 'Текст ТЗ изменён после отправки этого запроса и до начала анализа. Предыдущая редакция не анализировалась, '
+        + 'вызова модели не было. Новая редакция рассматривается отдельным раундом; этот запрос не выдаётся за ревью нового текста.',
+      createdAt: new Date().toISOString() };
+    writeJson(resultFile, receipt); return receipt;
+  }
   const context = buildContext({ repoRoot: resolve(env.HP_CANDIDATE_ROOT || '.'), base: request.base, head: request.materialSha,
     task: { issue: request.issue, title: issue.title, url: issue.html_url, body: issue.body, comments },
     // Ship is routed directly to merge; every dispatched review performs analysis.

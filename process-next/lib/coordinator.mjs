@@ -11,7 +11,13 @@ export function devBuildTarget(state, currentDevSha) {
 const stopped = issue => issue.state === 'closed' || names(issue).includes('blocked');
 function pendingPresentation(result, { issue, kind, requestId, materialSha, expectedBase, patchId }) {
   return result?.publicationPending ? { issue, kind, requestId, materialSha, expectedBase,
-    ...(patchId ? { patchId } : {}), ...(result.runId ? { runId: result.runId } : {}) } : null;
+    ...(patchId ? { patchId } : {}), ...(result.runId ? { runId: result.runId } : {}),
+    ...(result.verdict === 'incomplete' && result.markdown ? { receipt: result,
+      resultKey: `incomplete:${result.runId ?? 'saved'}:${result.runAttempt ?? 1}` } : {}) } : null;
+}
+async function observeTransition(queue, event) {
+  // Reporting cannot undo a successful label mutation or hold a task slot.
+  try { await queue.dispatch({ ...event, type: 'transition-observed' }); } catch { /* Next publication reports current state honestly. */ }
 }
 function installedTrack(issue) {
   const tracks = names(issue).filter(name => /^track:(ship|show|ask)$/.test(name)).map(name => name.slice(6));
@@ -69,7 +75,11 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
   // Reaching S4 without a track must not silently waive the requested spec review.
   const track = installedTrack(issue) ?? 'ask';
   if (track !== 'ask') {
-    if (activated) await api.moveStatus(issue.number, 'S5-ready', issue.labels);
+    if (activated) {
+      await api.moveStatus(issue.number, 'S5-ready', issue.labels);
+      await observeTransition(queue, { id: `${eventId}:spec-skip`, issue: issue.number, kind: 'spec-skipped', track,
+        fromStatus: 'S4-spec-review', toStatus: 'S5-ready' });
+    }
     return { action: 'spec-not-required', planned: !activated, reason: `installed-${track}` };
   }
   // Comments are available to the reviewer through review-job, not a new S4 material.
@@ -79,6 +89,8 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
   if (!activated) return { action: 'spec-review', planned: true, issue: issue.number, requestId };
   if (saved?.requestId === requestId && ['accepted', 'changes_requested'].includes(saved.status)) {
     await api.moveStatus(issue.number, saved.status === 'accepted' ? 'S5-ready' : 'S3-spec', issue.labels);
+    await observeTransition(queue, { id: `${eventId}:spec-label`, issue: issue.number, kind: 'spec', requestId,
+      fromStatus: 'S4-spec-review', toStatus: saved.status === 'accepted' ? 'S5-ready' : 'S3-spec' });
     return { action: 'spec-complete', verdict: saved.status };
   }
   const base = saved?.requestId === requestId ? saved.base : await git.remoteHead(git.dev);
@@ -119,6 +131,8 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
   await savePresentation();
   await queue.dispatch({ id: `${eventId}:spec-complete`, type: 'spec-complete', issue: issue.number, requestId, verdict: result.verdict, reportUrl: result.reportUrl });
   await api.moveStatus(issue.number, result.verdict === 'accepted' ? 'S5-ready' : 'S3-spec', issue.labels);
+  await observeTransition(queue, { id: `${eventId}:spec-label`, issue: issue.number, kind: 'spec', requestId,
+    fromStatus: 'S4-spec-review', toStatus: result.verdict === 'accepted' ? 'S5-ready' : 'S3-spec' });
   return { action: 'spec-complete', verdict: result.verdict };
 }
 
@@ -137,7 +151,11 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
   if (active.expiresAt <= queue.clock()) return { action: 'expired', state: await queue.dispatch({ id: `${eventId}:expire`, type: 'expire' }) };
   let issue;
   const publishReturn = async outcome => {
-    if (issueStatus(issue ?? {}) === 'S7-code-review') try { await api.moveStatus(active.issue, 'S6-in-progress', issue.labels); }
+    if (issueStatus(issue ?? {}) === 'S7-code-review') try {
+      await api.moveStatus(active.issue, 'S6-in-progress', issue.labels);
+      await observeTransition(queue, { id: `${eventId}:return-label`, issue: active.issue, kind: 'code', requestId: active.reviewRequest,
+        fromStatus: 'S7-code-review', toStatus: 'S6-in-progress' });
+    }
     catch { outcome.warning = 'Return label needs reconciliation'; }
     return outcome;
   };
@@ -150,8 +168,9 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
   };
   try { issue = await api.getIssue(active.issue); }
   catch (error) { return pending('github-unavailable', error); }
-  const returned = async reason => {
-    const outcome = { action: 'returned', reason, state: await dispatch('return', { reason }) };
+  const returned = async (reason, detail) => {
+    const outcome = { action: 'returned', reason, state: await dispatch('return', { reason, fromStatus: issueStatus(issue),
+      ...(detail ? { detail } : {}) }) };
     return ['owner-stopped', 'status-changed'].includes(reason) ? outcome : publishReturn(outcome);
   };
   if (stopped(issue)) return returned('owner-stopped');
@@ -164,24 +183,35 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
     }
     const expectedStatus = active.phase === 'review' || active.phase === 'ready-to-merge' && task.status === 'S7-code-review' ? 'S7-code-review' : 'S6-in-progress';
     if (issueStatus(issue) !== expectedStatus) {
-      if (['S6-in-progress', 'S7-code-review'].includes(issueStatus(issue))) await api.moveStatus(active.issue, expectedStatus, issue.labels);
+      if (['S6-in-progress', 'S7-code-review'].includes(issueStatus(issue))) {
+        const fromStatus = issueStatus(issue);
+        await api.moveStatus(active.issue, expectedStatus, issue.labels);
+        const pending = Object.entries(snapshot.state.events).reverse().find(([, r]) => r.message?.issue === active.issue && r.message.kind === 's6-complete' && !r.message.delivered);
+        await observeTransition(queue, { id: `${eventId}:label`, issue: active.issue, kind: 'code', requestId: active.reviewRequest,
+          messageId: pending?.[0], fromStatus, toStatus: expectedStatus });
+      }
       else return returned('status-changed');
     }
     if (active.phase === 'sync') {
       if (!synchronize) return { action: 'synchronize-required', active, task };
       const result = await synchronize({ active, task });
-      if (result.conflict) return returned('rebase-conflict');
+      if (result.conflict) return returned('rebase-conflict', result.reason);
       return { action: 'synchronized', state: await dispatch('synchronized', result) };
     }
     if (active.phase === 'testing') {
       if (task.layer !== 'docs' && !runS6) return { action: 's6-required', active, task };
       const result = task.layer === 'docs' ? { outcome: 'not-required' } : await runS6({ active, task });
-      if (result.outcome === 'failed') return returned('checks-failed');
-      if (result.terminal) return returned(result.reason || 'checks-unavailable');
+      if (result.outcome === 'failed') return returned('checks-failed', result.detail ?? result.evidence?.failures?.join('; '));
+      if (result.terminal) return returned(result.reason || 'checks-unavailable', result.detail);
       if (!['passed', 'not-required'].includes(result.outcome)) return pending('checks-unavailable');
       const state = await dispatch('s6-complete', { materialSha: active.materialSha, ...result });
       const warnings = [];
-      if (state.tasks[active.issue].status === 'S7-code-review') try { await api.moveStatus(active.issue, 'S7-code-review', issue.labels); }
+      if (state.tasks[active.issue].status === 'S7-code-review') try {
+        const fromStatus = issueStatus(issue);
+        await api.moveStatus(active.issue, 'S7-code-review', issue.labels);
+        await observeTransition(queue, { id: `${eventId}:s6-label`, issue: active.issue, messageId: `${eventId}:s6-complete`,
+          fromStatus, toStatus: 'S7-code-review' });
+      }
       catch { warnings.push('S6 accepted; S7 label needs reconciliation'); }
       return { action: state.active.phase, state, warnings };
     }
@@ -236,7 +266,8 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
         try {
           result = await git.merge({ expectedBase: active.expectedBase, materialSha: active.materialSha, branch: task.branch,
             fence: { state: snapshot.state, headSha: snapshot.headSha ?? snapshot.version.headSha, branch: queue.store.branch,
-              path: queue.store.path, issue: active.issue, token: active.token, eventId: `${eventId}:merged` } }); break;
+              path: queue.store.path, issue: active.issue, token: active.token, eventId: `${eventId}:merged`,
+              fromStatus: issueStatus(issue), removedToRelease: names(issue).includes('to_release') } }); break;
         } catch (error) {
           if (!(error instanceof StateConflict)) throw error;
           const refreshed = await queue.assertAdmission({ issue: active.issue, token: active.token, materialSha: active.materialSha });

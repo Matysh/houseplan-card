@@ -26,7 +26,7 @@ async function fixture({ category = 'major', missing = false, currentMilestone =
     removeLabel: async (_number, name) => { writes.labels++; issue.labels = issue.labels.filter(label => label !== name); },
     updateIssue: async (_number, change) => { writes.milestone++; issue.milestone = change.milestone ? { number: change.milestone } : null; },
     upsertComment: async (_number, { marker, body }) => {
-      if (comments.get(marker) !== body) { writes.comment++; comments.set(marker, body); }
+      if (!comments.has(marker)) { writes.comment++; comments.set(marker, body); }
       if (commentFail) { commentFail = false; throw Error('response lost after comment write'); }
     },
   };
@@ -44,20 +44,23 @@ async function fixture({ category = 'major', missing = false, currentMilestone =
 test('post-merge retry repairs S8 and to_release without a second merge, test or review', async () => {
   const f = await fixture(); f.labelFailure(true);
   const failed = await f.complete('tick1');
+  const originalComment = [...f.comments.values()][0];
   assert.equal(failed.pending.length, 1); assert.equal((await f.queue.store.read()).state.active, null);
   assert.equal((await f.queue.store.read()).state.tasks[9].status, 'S8-merged');
   assert.equal(f.issue.milestone.number, 7); f.labelFailure(false);
   assert.equal((await f.complete('tick2')).completed.length, 1);
   assert.deepEqual(f.issue.labels.sort(), ['S8-merged', 'bug', 'track:ship']);
   const writes = { ...f.writes }; await f.complete('tick3'); assert.deepEqual(f.writes, writes);
-  assert.equal(f.comments.size, 1);
+  assert.equal(f.comments.size, 2);
+  assert.equal([...f.comments.values()][0], originalComment);
+  assert.match([...f.comments.values()][1], /S6 → S8/);
 });
 
 test('missing classification is visible and nonblocking; another milestone is never stolen', async () => {
   const missing = await fixture({ missing: true }); const result = await missing.complete('missing');
   assert.equal(result.pending.length, 1); assert.match(result.pending[0].errors.milestone, /classification is absent/);
   assert.ok(missing.issue.labels.includes('S8-merged')); assert.equal(missing.writes.milestone, 0);
-  assert.match([...missing.comments.values()][0], /Учёт milestone ожидает/);
+  assert.match([...missing.comments.values()][0], /milestone ожидает/);
   const foreign = await fixture({ currentMilestone: 88 }); await foreign.complete('foreign');
   assert.equal(foreign.issue.milestone.number, 88); assert.equal(foreign.writes.milestone, 0);
   const infra = await fixture({ category: 'infra', currentMilestone: 7 }); await infra.complete('infra');
@@ -74,6 +77,37 @@ test('a lost comment response retries its marker, and a released closed issue ne
   assert.ok(!f.issue.labels.includes('S8-merged'));
   const closed = await fixture(); closed.issue.state = 'closed'; closed.issue.labels = ['track:ship', 'to_release'];
   await closed.complete('closed'); assert.deepEqual(closed.issue.labels, ['track:ship']);
+});
+
+test('lost merge notice response preserves its original pending snapshot before a later recovery notice', async () => {
+  const f = await fixture(); f.labelFailure(true); f.loseCommentResponse();
+  await f.complete('failed-publication');
+  const original = [...f.comments.values()][0];
+  assert.match(original, /Обновление меток пока не удалось/);
+  f.labelFailure(false);
+  assert.equal((await f.complete('restore-publication')).pending.length, 1);
+  assert.equal(f.comments.size, 1); assert.equal([...f.comments.values()][0], original);
+  assert.equal((await f.complete('publish-recovery')).completed.length, 1);
+  assert.equal(f.comments.size, 2); assert.equal([...f.comments.values()][0], original);
+  assert.match([...f.comments.values()][1], /S6 → S8/);
+});
+
+test('different failed entries stay distinct and name their actual check without invented status transitions', async () => {
+  const f = await fixture();
+  for (const entry of [1, 2]) {
+    const snapshot = await f.queue.store.read();
+    Object.assign(snapshot.state.tasks[9], { status: 'S6-in-progress', reviewEntry: entry,
+      notice: { key: `${entry}:checks-failed`, reason: 'checks-failed', status: 'pending', entry,
+        fromStatus: 'S6-in-progress', detail: `storage-case-${entry}: expected saved revision`, reportUrl: `https://example.test/run/${entry}` } });
+    await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+    await f.complete(`return-${entry}`);
+  }
+  const messages = [...f.comments.values()];
+  assert.equal(messages.length, 2);
+  assert.match(messages[0], /вход 1/); assert.match(messages[1], /вход 2/);
+  assert.match(messages[1], /storage-case-2/); assert.match(messages[1], /Статус остаётся \*\*S6\*\*/);
+  assert.doesNotMatch(messages.join('\n'), /S7 → S6/);
+  await f.complete('same-return-delivery'); assert.equal(f.comments.size, 2);
 });
 test('a queued published-tag return completes without classification or changing its milestone', async () => {
   const f = await fixture({ releaseTag: 'v1.1.0', missing: true, currentMilestone: 88 });
@@ -118,6 +152,8 @@ test('six unchanged missing-ledger ticks write once and retry classification onl
   head = C; await f.complete('classification-repaired');
   assert.equal(stateWrites, 2); assert.equal(issueReads, 2); assert.equal(commentCalls, 2);
   assert.equal(f.issue.milestone.number, 7); assert.equal((await f.queue.store.read()).state.tasks[9].completion.status, 'complete');
+  assert.match([...f.comments.values()][1], /Статус остаётся \*\*S8\*\*/);
+  assert.doesNotMatch([...f.comments.values()][1], /S6 → S8|Снята личная метка/);
 });
 
 test('unchanged milestone conflict is read-only and an owner correction still resumes without a dev change', async () => {
@@ -132,7 +168,7 @@ test('unchanged milestone conflict is read-only and an owner correction still re
   assert.equal(f.issue.milestone.number, 7); assert.equal(writes, 2); assert.equal(reads, 2); assert.equal(commentCalls, 2);
 });
 
-test('unchanged presentation errors and unfinished runs cause no queue churn; bounded retries rotate', async () => {
+test('unchanged presentation errors cause no queue churn and later rounds wait for their earlier report', async () => {
   const queue = new QueueController(new MemoryQueueStore(), { clock: () => 0 });
   await queue.dispatch({ id: 'ready', type: 'enqueue', task: { issue: 9, track: 'show', layer: 'infra', branch: 'task/9', materialSha: B } });
   for (const round of [1, 2]) await queue.dispatch({ id: `presentation-${round}`, type: 'review-presentation', issue: 9, kind: 'code',
@@ -149,10 +185,10 @@ test('unchanged presentation errors and unfinished runs cause no queue churn; bo
       calls.push(record.requestId); throw Error('comment endpoint unavailable');
     } });
   }
-  assert.equal(writes, 2); assert.deepEqual(calls, ['review:9:1', 'review:9:2', 'review:9:1', 'review:9:2', 'review:9:1', 'review:9:2']);
+  assert.equal(writes, 1); assert.deepEqual(calls, Array(6).fill('review:9:1'));
 });
 
-test('failure notices and paid review presentation retry independently without changing statuses', async () => {
+test('a review return is explained by its full report, without a second generic notice', async () => {
   const f = await fixture(), snapshot = await f.queue.store.read();
   snapshot.state.tasks[9].notice = { key: '1:review-findings', reason: 'review-findings', status: 'pending' };
   snapshot.state.tasks[9].reviewPublication = { issue: 9, kind: 'code', requestId: 'review:9', materialSha: B, expectedBase: A, status: 'pending' };
@@ -165,14 +201,15 @@ test('failure notices and paid review presentation retry independently without c
     if (calls <= 2) throw Error('comment endpoint unavailable'); return { published: true };
   } };
   await reconcileTaskCompletions({ ...args, eventId: 'failed' });
-  assert.equal((await f.queue.store.read()).state.tasks[9].notice.status, 'delivered');
+  assert.equal((await f.queue.store.read()).state.tasks[9].notice.status, 'pending');
   await reconcileTaskCompletions({ ...args, eventId: 'retry' });
   const repaired = (await f.queue.store.read()).state;
   assert.equal(repaired.tasks[9].status, 'S8-merged'); assert.equal(repaired.specReviews[10].status, 'accepted');
   assert.deepEqual(repaired.reviewPublications, {});
   assert.equal(repaired.tasks[9].reviewPublication, undefined);
   assert.equal(repaired.specReviews[10].reviewPublication, undefined);
-  assert.equal([...f.comments.keys()].filter(marker => marker.includes('task-return')).length, 1);
+  assert.equal(repaired.tasks[9].notice.status, 'delivered');
+  assert.equal([...f.comments.keys()].filter(marker => marker.includes('task-return')).length, 0);
   await reconcileTaskCompletions({ ...args, eventId: 'done' }); assert.equal(calls, 4);
 });
 
@@ -198,7 +235,7 @@ test('new spec and code rounds retain every undelivered paid report until its ow
     return { published: true };
   } };
   await reconcileTaskCompletions({ ...args, eventId: 'first-sweep' });
-  assert.deepEqual(Object.values((await queue.store.read()).state.reviewPublications).map(record => record.requestId), ['spec:10:1']);
+  assert.deepEqual(Object.values((await queue.store.read()).state.reviewPublications).map(record => record.requestId), ['spec:10:1', 'spec:10:2']);
   await reconcileTaskCompletions({ ...args, eventId: 'second-sweep' });
   const after = (await queue.store.read()).state;
   assert.deepEqual(after.reviewPublications, {});
@@ -249,4 +286,19 @@ test('disabled preparation performs no completion writes, publication or webhook
   const noFetch = async () => assert.fail('network must remain disabled');
   assert.equal((await notifyDevWebhook({ queue: f.queue, fetchImpl: noFetch, eventId: 'dry' })).planned, true);
   await assert.rejects(runDevBuildDelivery({ env: {}, config: {}, publish: () => assert.fail('no publication') }), /not activated/);
+});
+
+test('a failed preceding service message defers later presentation and bookkeeping for that issue only', async () => {
+  const f = await fixture();
+  const { state, version } = await f.queue.store.read();
+  state.reviewPublications = {
+    old: { issue: 9, kind: 'code', requestId: 'review:9', status: 'pending', presentation: { occurredAt: '2026-11-01T10:00:00Z' } },
+    other: { issue: 10, kind: 'spec', requestId: 'spec:10', status: 'pending', presentation: { occurredAt: '2026-11-01T10:01:00Z' } },
+  };
+  await f.queue.store.compareAndSwap(version, state);
+  const published = [];
+  await reconcileTaskCompletions({ queue: f.queue, api: f.api, git: f.git, eventId: 'deferred', activated: true,
+    deferredIssues: [9], publishReview: async record => { published.push(record.issue); return { published: true }; } });
+  assert.deepEqual(published, [10]); assert.deepEqual(f.writes, { labels: 0, milestone: 0, comment: 0 });
+  assert.ok(Object.values((await f.queue.store.read()).state.reviewPublications).some(record => record.issue === 9));
 });

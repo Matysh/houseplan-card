@@ -4,7 +4,19 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, readdirSyn
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { buildReviewContext, extractAuthorContext, executeReadTool, reviewRequired, checkSpecFormat, previewReview, runReview, writeReviewReport, REVIEW_MODEL } from '../lib/review.mjs';
+import { buildReviewContext, extractAuthorContext, executeReadTool, reviewRequired, checkSpecFormat, previewReview, runReview, renderReviewReport, writeReviewReport, REVIEW_MODEL } from '../lib/review.mjs';
+
+test('human report leads with Russian review outcome and retains diagnostics behind details', () => {
+  for (const [kind, name] of [['spec', 'Ревью ТЗ'], ['code', 'Код-ревью']]) {
+    const report = renderReviewReport({ context: { kind, base: 'a'.repeat(40), head: 'b'.repeat(40), task: { issue: 1190 } },
+      report: { verdict: 'changes_requested', summary: 'Требуется исправить возврат.', understanding: 'Разобран порядок событий.',
+        blockers: ['Повтор перезаписывает прошлый вердикт.'], improvements: [], boundaries: 'Изучены исходники.' } });
+    assert.ok(report.startsWith(`# ${name} — нужны исправления`));
+    assert.ok(report.indexOf('Требуется исправить возврат.') < report.indexOf('<details>'));
+    assert.match(report, /<details>[\s\S]*Материал: a{40} → b{40}/);
+    assert.match(report, /Повтор перезаписывает прошлый вердикт/);
+  }
+});
 
 function fixture(t) {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'process-next-review-'));
