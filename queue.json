@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 321,
+  "revision": 322,
   "nextTicket": 35,
   "nextFence": 34,
   "tasks": {
@@ -256,7 +256,7 @@
       "ownerDecision": null,
       "ticket": 32,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793567990894,
       "reviewEntry": 4,
       "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
@@ -297,12 +297,12 @@
         "status": "delivered"
       },
       "s6": {
-        "id": "20261101T210626194-1403dfed",
-        "name": "Тесты для задачи #1190 (перед ревью)",
-        "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T210626194-1403dfed/report.json",
-        "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
+        "id": "20261101T213054873-47638673",
+        "name": "Тесты для задачи #1190 (правки после ревью)",
+        "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T213054873-47638673/report.json",
+        "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
         "status": "passed",
-        "finishedAt": "2026-11-01T21:07:54.269Z",
+        "finishedAt": "2026-11-01T21:32:18.267Z",
         "failures": []
       },
       "reviewRound": null
@@ -398,9 +398,9 @@
     "fence": 33,
     "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
     "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793568594545,
-    "expiresAt": 1793569039504,
+    "expiresAt": 1793572341877,
     "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4"
   },
   "events": {
@@ -787,6 +787,29 @@
           "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
           "status": "passed",
           "finishedAt": "2026-11-01T21:07:54.269Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:60a095fb-1729-4d5d-bfd6-44911ddf9704:finish:2:s6-complete": {
+      "digest": "f7b35f8fabd6137833dc48bc49b2f99e3cb97d9ca411095b0e0d3b981f7aec11",
+      "issue": 1190,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1190,
+        "at": 1793568741877,
+        "entry": 4,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+        "phase": "review",
+        "evidence": {
+          "id": "20261101T213054873-47638673",
+          "name": "Тесты для задачи #1190 (правки после ревью)",
+          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T213054873-47638673/report.json",
+          "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
+          "status": "passed",
+          "finishedAt": "2026-11-01T21:32:18.267Z",
           "failures": []
         }
       }
