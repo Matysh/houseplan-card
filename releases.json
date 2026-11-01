@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6,
+  "revision": 7,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -387,7 +387,70 @@
         1203
       ],
       "reviewRequired": true,
-      "review": null,
+      "review": {
+        "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
+        "report": {
+          "kind": "accepted-task-reviews-reused",
+          "candidateSha": "7274a9139966cfdd1f459615110ba70544709dc7",
+          "productBase": "04fa2a54791def247ce19975a8f4f23218c02fe1",
+          "productDelta": [
+            "src/i18n/de.json",
+            "src/i18n/fr.json"
+          ],
+          "sourceFiles": [
+            {
+              "path": "src/i18n/de.json",
+              "gitBlob": "aae21c1310f8a0b7c608f09b6299096e3d5e3090",
+              "sha256": "9d0f26230a5fa7e21d7ee7518f008aa2b686f16630a1e45ff91d88204bebd4e1"
+            },
+            {
+              "path": "src/i18n/fr.json",
+              "gitBlob": "b70648877376e47b7f9d8ee301ca06e04a9936f1",
+              "sha256": "b11a4d5c3bfe5a3366b1a0651b98c9dcce842deb156557e8ea01d454e88ecb10"
+            },
+            {
+              "path": "src/i18n/de.ts",
+              "gitBlob": "d91e52870c8e5bf279a7926b2a78377481d5e5f6"
+            },
+            {
+              "path": "src/i18n/fr.ts",
+              "gitBlob": "7b475c7983d755c73e79513c69812f481fac006e"
+            },
+            {
+              "path": "src/i18n/registry.ts",
+              "gitBlob": "1452fb3f02297aba4c6feb8f98a671a79ce6d1fa"
+            },
+            {
+              "path": "process-next/lib/e2e.mjs",
+              "gitBlob": "7192a0c97ecefdb3e51c70169b25498595005c3e",
+              "sha256": "5dd99670a00a6d7a4554046b6cfbf17824fc9f1bae0aec3c8710c2f336e61444",
+              "bytes": 21401
+            }
+          ],
+          "taskReviews": [
+            {
+              "runId": 41359126580,
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/41359126580",
+              "verdict": "accepted",
+              "blockers": 0,
+              "base": "bcd8773e35660bde4b207118371c19aa8a36da5e",
+              "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
+            },
+            {
+              "run": 41359617629,
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/41359617629",
+              "requestId": "review:1199:1:a4048749979905d38c37ee06eea3bb09ff564066:485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
+              "kind": "code",
+              "verdict": "accepted",
+              "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
+              "base": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
+              "patchId": "a4048749979905d38c37ee06eea3bb09ff564066",
+              "blockers": []
+            }
+          ],
+          "explanation": "Actual substantive reviews ran on the recorded task material SHAs, not on this merge SHA. All product changes from B are the two unchanged reviewed locale JSON blobs. The owned HA adapter also matches its accepted reviewed blob. Other merged changes are completed synthetic/test/process fixes and release metadata; no additional product edits or conflicts were made."
+        }
+      },
       "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
@@ -429,6 +492,7 @@
     "beta1842-run-b-20261102": "4f33aa93a53ab1c9e0aed4d0c4b2049a7d6f44d4ca5b12e459fee6ff20025750",
     "beta1842-runner-20261101T221412746-c36c701b": "4fddfbbdcf0a649c1d3d14b31f9ce19f62f9bab7864568831f316c30bc2b0852",
     "beta1842-b-metrics-20261102": "431bed322ded58f89ceec8765cc41e743a1465dfc157987c3479962102acb66d",
-    "beta1842-fixes-c-20261102": "ab65da449851e134f85ff9d9ed6f3a56e3635f6f5bb9b965d722d195ed2a33d1"
+    "beta1842-fixes-c-20261102": "ab65da449851e134f85ff9d9ed6f3a56e3635f6f5bb9b965d722d195ed2a33d1",
+    "beta1842-reviewed-fixes-c-20261102": "ce0a57c9a80eea0636b1c48302c83f2232688f7308143d52468688fd5498147e"
   }
 }
