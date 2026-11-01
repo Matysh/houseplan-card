@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10,
+  "revision": 11,
   "nextTicket": 3,
   "nextFence": 3,
   "tasks": {
@@ -35,28 +35,18 @@
         "src/live-hover.ts"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered"
-      }
+        "status": "pending"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1176,
-    "worker": "finish",
-    "token": "2:finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:1:admit",
-    "fence": 2,
-    "materialSha": "747a6ca41bdff16dab6de26f130994749097c71d",
-    "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
-    "phase": "testing",
-    "admittedAt": 1793552547873,
-    "expiresAt": 1793552907141,
-    "patchId": "27a9dbf79b0f58fe919ecd3e738bc278bedff7b5"
-  },
+  "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
       "digest": "3f1d7ee030df92004fb10bdc8126518084bd5e0d0ae5d2b1e6b23dd3adbdf112",
@@ -96,6 +86,10 @@
     },
     "finish:3169dd7f-8e3e-4d8c-9f1a-430cebd29b9b": {
       "digest": "44c4c4cc590a1e51ca643502a992dc69bb4a8d9b59044f5e655f9b8e504d4470",
+      "issue": 1176
+    },
+    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:3:return": {
+      "digest": "995be3c1b04e4f8fd5ffdefa29097cb7dd5b0c9c12f08a41b337e223a8c5c28d",
       "issue": 1176
     }
   }
