@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 257,
-  "nextTicket": 27,
+  "revision": 258,
+  "nextTicket": 28,
   "nextFence": 26,
   "tasks": {
     "1128": {
@@ -73,14 +73,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1175-vacuum-live-tail",
-      "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
+      "materialSha": "05915b336757df16c2af8f63bf535d60d53c8bf9",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 24,
-      "queued": false,
+      "ticket": 27,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793566654117,
-      "reviewEntry": 3,
+      "readyAt": 1793567624193,
+      "reviewEntry": 4,
       "patchId": "e5fa187f93b5363e9f605d35b650e6a14107d092",
       "changedFiles": [
         "demo/smoke_vacuum_camera.mjs",
@@ -106,14 +106,7 @@
         "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
         "status": "passed",
         "finishedAt": "2026-11-01T20:59:46.618Z"
-      },
-      "reviewRequest": "review:1175:3:e5fa187f93b5363e9f605d35b650e6a14107d092:de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "reviewMaterial": {
-        "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
-        "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "patchId": "e5fa187f93b5363e9f605d35b650e6a14107d092"
-      },
-      "reason": "review-findings"
+      }
     },
     "1176": {
       "issue": 1176,
@@ -347,7 +340,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1169
+    1169,
+    1175
   ],
   "active": null,
   "events": {
@@ -763,6 +757,10 @@
     "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:task-notice:1190::": {
       "digest": "15bbe2ad2de8a6c96256a6b704b697a4507973bceb7e4b0bd978bcb41827323f",
       "issue": 1190
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06": {
+      "digest": "4c0a91399c82ee76986ef630d972cfa4f60ca240af32a8fd627b9bb5a3000bf0",
+      "issue": 1175
     }
   },
   "devWebhook": {
