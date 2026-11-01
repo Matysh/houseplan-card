@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 180,
-  "nextTicket": 20,
+  "revision": 181,
+  "nextTicket": 21,
   "nextFence": 20,
   "tasks": {
     "1128": {
@@ -34,14 +34,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1156-copy-categories",
-      "materialSha": "333f98685ede7f07b0df5163532f739e338dca19",
+      "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 18,
-      "queued": false,
+      "ticket": 20,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793565758976,
-      "reviewEntry": 1,
+      "readyAt": 1793565861876,
+      "reviewEntry": 2,
       "patchId": "ab77addfcf9be52e5552baafff41f042cbe3148e",
       "changedFiles": [
         "demo/smoke_space_copy_categories.mjs",
@@ -59,7 +59,6 @@
         "test/space-copy-runtime.test.mjs",
         "test/space-copy.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -247,7 +246,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1156
+  ],
   "active": {
     "issue": 1175,
     "worker": "finish",
@@ -360,6 +361,10 @@
     "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:2:synchronized": {
       "digest": "b12b0c3c4f3ec4310e6715f705dc2574d450bdb566489c27524387b96de5e632",
       "issue": 1175
+    },
+    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d": {
+      "digest": "a461cb5396cbad15feb919fe11736a65790a594e9af503f433af7fb0cde422ac",
+      "issue": 1156
     }
   },
   "devWebhook": {
