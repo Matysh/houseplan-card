@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 408,
+  "revision": 409,
   "nextTicket": 43,
   "nextFence": 43,
   "tasks": {
@@ -390,7 +390,8 @@
         "docs/CHANGELOG.ru.md",
         "docs/DEVELOPMENT.md",
         "docs/process/AUTHOR.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -461,9 +462,9 @@
     "fence": 42,
     "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
     "expectedBase": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793572510437,
-    "expiresAt": 1793572842673,
+    "expiresAt": 1793576146447,
     "patchId": "ca27a1f6a100ab1564ca6621897928bf93f7c441"
   },
   "events": {
@@ -517,6 +518,20 @@
         "layer": "docs",
         "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
         "phase": "sync"
+      }
+    },
+    "finish:12a12d1a-9db4-4a5d-b55e-ec104f4756e3:finish:3:s6-complete": {
+      "digest": "32bb3825315ac6c811ffea17ee1e5af36e03e3c4c64451de17e77fcb5afb4924",
+      "issue": 1195,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1195,
+        "at": 1793572546447,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
+        "phase": "ready-to-merge"
       }
     }
   },
