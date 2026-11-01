@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planProfile, inventory, CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E } from '../lib/catalog.mjs';
-import { selectExact } from '../catalog/selections.mjs';
+import { selectExact, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN } from '../catalog/selections.mjs';
+import { prepareGoldenSelection } from '../catalog/golden-selection.mjs';
 import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -41,17 +42,39 @@ test('infrastructure checks only changed syntax and selected mechanism, with no 
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
-test('beta uses approved files, one narrowed permission run and 23 real unique scenes', async () => {
+test('beta uses approved files, one narrowed permission run and panel-first visual selection', async () => {
   const plan = await planProfile({ root, event: 'beta', version: '1.85.0-beta.1' });
-  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 23); assert.equal(BETA_E2E.length, 13);
+  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 25); assert.equal(BETA_E2E.length, 13);
   assert.equal(plan.steps.filter(item => item.id.startsWith('smoke:')).length, 13);
   assert.deepEqual(BETA_SMOKES.find(item => item.file.includes('view_edit_permissions')).args, ['--only=late']);
-  assert.equal(selectExact(GOLDEN_SCENARIOS, BETA_GOLDEN.map(id => ({ id })), item => item.id).length, 23);
+  const { beta } = prepareGoldenSelection(GOLDEN_SCENARIOS);
+  assert.equal(beta.filter(scene => scene.panelHost).length, 22);
+  assert.equal(beta.filter(scene => !scene.panelHost).length, 3);
+  const golden = plan.steps.find(item => item.id === 'golden-beta');
+  assert.ok(golden.inputs.includes('process-next/catalog/golden-selection.mjs'));
+  assert.ok(golden.inputs.includes('process-next/catalog/selections.mjs'));
   assert.ok(!plan.steps.some(item => item.id === 'backend-coverage-threshold' || item.id === 'converters-stable'));
   assert.ok(plan.steps.filter(item => item.id.startsWith('e2e-')).every(item => item.command === null && item.unavailable && !item.diagnostic));
   assert.ok(plan.steps.every(item => item.inputs.every(path => !/^dist(?:\/|$)|^artifacts(?:\/|$)|__pycache__/.test(path))), 'generated artifacts must not invalidate source identities');
   const assetConsumer = plan.steps.find(item => item.command?.includes('test/bundle-assets.test.mjs'));
   assert.ok(assetConsumer.requires.includes('product-build'), 'tests reading built assets wait for the actual producer');
+});
+
+test('panel variants keep fixture contracts, own baseline IDs, and replace the old host in stable', () => {
+  const { beta, rest, all } = prepareGoldenSelection(GOLDEN_SCENARIOS);
+  assert.equal(all.length, GOLDEN_SCENARIOS.length);
+  assert.equal(new Set([...beta, ...rest].map(scene => scene.id)).size, all.length);
+  assert.deepEqual(beta.filter(scene => scene.panelHost).map(scene => scene.id), BETA_PANEL_GOLDEN);
+  assert.deepEqual(beta.filter(scene => !scene.panelHost).map(scene => scene.id), BETA_LOVELACE_GOLDEN);
+  assert.ok(beta.some(scene => scene.panelHost && scene.viewport.width === 390 && !scene.panelKioskUrl));
+  for (const mode of ['plan', 'devices', 'decor']) assert.ok(beta.some(scene => scene.panelHost && scene.mode === mode));
+  for (const variant of beta.filter(scene => scene.sourceSceneId)) {
+    const source = GOLDEN_SCENARIOS.find(scene => scene.id === variant.sourceSceneId);
+    assert.deepEqual(variant, { ...source, id: `panel-${source.id}`, panelHost: true, sourceSceneId: source.id });
+    assert.ok(!all.some(scene => scene.id === source.id), 'no duplicate full Lovelace matrix');
+    assert.ok(!GOLDEN_SCENARIOS.some(scene => scene.id === variant.id), 'never silently reuse a card PNG');
+    assert.ok(!source.panelHost, 'active matrix not mutated');
+  }
 });
 
 test('exact selectors reject renamed, duplicated and file/title cross-product journeys', () => {

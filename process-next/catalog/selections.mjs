@@ -27,19 +27,28 @@ export const BETA_SMOKES = Object.freeze([
   ['space_switch_transitions'], ['live_text'], ['isometric_live_touch'], ['view_recovery'],
 ].map(([name, ...args]) => ({ file: `demo/smoke_${name}.mjs`, name: smokeLabels[name], args })));
 
-export const BETA_GOLDEN = Object.freeze([
-  'geometry-view-light-fit', 'geometry-view-dark-fit', 'panel-wide-view-light-en',
-  'panel-narrow-kiosk-fixed', 'plan-rotation-phone-view-320-1070',
+// Main product surfaces run through the real panel host. Reuse existing panel
+// scenes where available; the other source fixtures get distinct panel IDs/PNGs.
+export const PANEL_GOLDEN_SOURCES = Object.freeze([
+  'panel-wide-view-light-en', 'panel-compact-ui-1132', 'panel-three-rows-ui-1132',
+  'panel-narrow-kiosk-fixed',
   'device-icon-state-table-light', 'device-icon-state-table-dark',
   'lighting-glow-sun-dark', 'lighting-temp-glow-light',
   'lighting-sun-transparent-chain-flat', 'lighting-led-strip-glow-dark',
   'wall-junctions-view-dark', 'geometry-diagonal-45-opening-dark',
   'opening-symbol-flip-pairs-light', 'isometric-geometry-view-light',
   'isometric-stage3-overlays-dark', 'isometric-opening-symbol-parity-dark',
-  'geometry-plan-editor-dark', 'geometry-devices-editor-dark', 'geometry-decor-editor-dark',
+  'panel-wide-plan-editor-dark-en', 'geometry-devices-editor-dark', 'geometry-decor-editor-dark',
   'device-dialog-mobile-ru', 'room-temperature-dialog-desktop-en',
   'view-device-menu-readonly-light-ru',
 ]);
+export const BETA_PANEL_GOLDEN = Object.freeze(PANEL_GOLDEN_SOURCES.map(id =>
+  id.startsWith('panel-') ? id : `panel-${id}`));
+// Only the embedding-specific sample is repeated in Lovelace, not the product matrix.
+export const BETA_LOVELACE_GOLDEN = Object.freeze([
+  'geometry-view-light-fit', 'plan-rotation-phone-view-320-1070', 'geometry-plan-editor-dark',
+]);
+export const BETA_GOLDEN = Object.freeze([...BETA_PANEL_GOLDEN, ...BETA_LOVELACE_GOLDEN]);
 
 export const BETA_E2E = Object.freeze([
   ['first-run', 'tests/first-run/first-space.admin.spec.mjs', 'from the sidebar page to a saved first space without any image'],

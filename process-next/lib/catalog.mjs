@@ -2,7 +2,7 @@ import { readFile, access, stat } from 'node:fs/promises';
 import { resolve, relative, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
+import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
 
 export { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E };
@@ -196,7 +196,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   } else if (event === 'beta') steps.push(unavailable('release-measurements', 'Размеры и время относительно последнего stable',
     'Supply --metrics-request with JSON {"latestStable":"path/to/measurement.json","host":{"power_scheme":"observed power scheme"}}; baseline and comparable host facts are required.'));
   for (const smoke of BETA_SMOKES) steps.push(smokeStep(smoke));
-  steps.push(step('golden-beta', '23 ключевых визуальных эталона', helper('golden-runner', '--selection=beta'),
+  steps.push(step('golden-beta', `${BETA_GOLDEN.length} визуальных кадров: панель ${BETA_PANEL_GOLDEN.length}, Lovelace ${BETA_LOVELACE_GOLDEN.length}`, helper('golden-runner', '--selection=beta'),
     [...browserInputs, ...BETA_GOLDEN.map(id => `demo/golden/baselines/${id}.png`), 'demo/golden/baselines/baselines-index.json'],
     ['demo-assets', 'test-build'], { outputs: ['artifacts/process-next/golden-beta/golden-report.json'], timeoutMs: 1800000 }));
   const e2eOptions = { e2eRoot, version, targetRef,

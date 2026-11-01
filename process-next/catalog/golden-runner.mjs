@@ -2,7 +2,7 @@
 // Side-by-side adaptation of demo/golden/run.mjs @ 96a97b8.
 // Preserve pixel and semantic assertions; only selection/report scope differs.
 // On activation consolidate with the original runner: do not maintain two copies.
-import { BETA_GOLDEN } from './selections.mjs';
+import { prepareGoldenSelection } from './golden-selection.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -28,11 +28,7 @@ const mode = 'verify';
 const selection = process.argv.find(arg => arg.startsWith('--selection='))?.slice(12);
 if (!['beta', 'rest'].includes(selection)) throw Error('Expected --selection=beta|rest');
 assertGoldenInvocation(mode);
-const wanted = new Set(BETA_GOLDEN);
-const scenesById = new Map(GOLDEN_SCENARIOS.map(scene => [scene.id, scene]));
-if (wanted.size !== BETA_GOLDEN.length || scenesById.size !== GOLDEN_SCENARIOS.length) throw Error('Duplicate golden scene selection');
-for (const id of wanted) if (!scenesById.has(id)) throw Error('Unknown approved golden scene: ' + id);
-const scenarios = selection === 'beta' ? BETA_GOLDEN.map(id => scenesById.get(id)) : GOLDEN_SCENARIOS.filter(scene => !wanted.has(scene.id));
+const scenarios = prepareGoldenSelection(GOLDEN_SCENARIOS)[selection];
 if (!scenarios.length) throw Error('Required golden selection is empty');
 const runStarted = Date.now();
 console.log(`PROCESS_NEXT_PROGRESS ${JSON.stringify({ phase: 'golden', completed: 0, total: scenarios.length, elapsedMs: 0 })}`);
@@ -992,6 +988,8 @@ try {
     const activePageErrors = pageErrors.get(page);
     const result = {
       id: scenario.id,
+      host: scenario.panelHost ? 'panel' : 'lovelace',
+      sourceSceneId: scenario.sourceSceneId || scenario.id,
       threshold: scenario.threshold,
       status: 'error',
       actualSha256: null,
@@ -1259,6 +1257,7 @@ const report = {
   schema: CAPTURE_PROVENANCE_SCHEMA,
   mode,
   selection,
+  selectionRevision: 'panel-first-2026-11-01',
   capture: captureProvenance({ chromium, buildFingerprint }),
   generatedAt: new Date().toISOString(),
   matrixVersion: GOLDEN_MATRIX_VERSION,
