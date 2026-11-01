@@ -26,6 +26,10 @@ test('product minimum builds once, protects data/rights and opens one saved View
   assert.equal(plan.steps.filter(item => item.id.startsWith('smoke:')).length, 0);
   assert.ok(plan.steps.find(item => item.id === 'test-build').outputs.includes('test-build'));
   assert.ok(plan.steps.find(item => item.id === 'product-build').outputs.length);
+  const demo = plan.steps.find(item => item.id === 'demo-assets');
+  assert.ok(demo.outputs.includes('demo/srv/assets/icons.js'));
+  for (const input of ['demo/gen_icons.mjs', 'demo/**/*.mjs', 'demo/**/*.json', 'demo/**/*.html', 'demo/**/*.ts'])
+    assert.ok(demo.inputs.includes(input), `icon fixture preparation must notice ${input}`);
 });
 
 test('infrastructure checks only changed syntax and selected mechanism, with no product preparation', async () => {
