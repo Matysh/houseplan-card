@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 172,
-  "nextTicket": 19,
+  "revision": 173,
+  "nextTicket": 20,
   "nextFence": 19,
   "tasks": {
     "1128": {
@@ -59,6 +59,20 @@
         "test/space-copy-runtime.test.mjs",
         "test/space-copy.test.mjs"
       ]
+    },
+    "1175": {
+      "issue": 1175,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1175-vacuum-live-tail",
+      "materialSha": "d7909324fac9e44d5b555656b5530f2316f09aa0",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 19,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793565774338,
+      "reviewEntry": 1
     },
     "1176": {
       "issue": 1176,
@@ -213,7 +227,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1175
+  ],
   "active": {
     "issue": 1156,
     "worker": "finish",
@@ -294,6 +310,10 @@
     "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:2:synchronized": {
       "digest": "51f6eb122e2ee64cb81c02cc7e311cacf9698030e9567e26118a39afb56269e2",
       "issue": 1156
+    },
+    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f": {
+      "digest": "ce4477b6ff09a13f20674c7fc661826c13080170784677586e4e826ef91ac072",
+      "issue": 1175
     }
   },
   "devWebhook": {
