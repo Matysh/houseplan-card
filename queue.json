@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 84,
+  "revision": 85,
   "nextTicket": 12,
   "nextFence": 12,
   "tasks": {
@@ -42,8 +42,9 @@
       "status": "S6-in-progress",
       "readyAt": 1793557165713,
       "reviewEntry": 3,
-      "patchId": "1b79417f10250c434dbfdde7d06b8bfb7da97468",
+      "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777",
       "changedFiles": [
+        "demo/golden/harness.mjs",
         "demo/smoke_color_picker_presentation.mjs",
         "demo/smoke_e2e_hooks.mjs",
         "demo/smoke_empty_backup_import.mjs",
@@ -57,6 +58,7 @@
         "demo/smoke_signal_visibility_ui.mjs",
         "demo/smoke_support_feedback.mjs",
         "demo/smoke_svg_export.mjs",
+        "demo/smoke_toolbar_stable_width.mjs",
         "demo/smoke_ui_kit_motion.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
@@ -174,10 +176,11 @@
     "token": "11:finish:e9b74951-6c81-453d-9c59-ac897ba09e86:finish:1:admit",
     "fence": 11,
     "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
+    "phase": "testing",
     "admittedAt": 1793557168586,
-    "expiresAt": 1793557468586
+    "expiresAt": 1793557473518,
+    "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777"
   },
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -262,6 +265,10 @@
     },
     "finish:e9b74951-6c81-453d-9c59-ac897ba09e86:finish:1:admit": {
       "digest": "cb179c5edfa2f8876ecd2f69d7884932eacc809537951d1c53dcb020c2ec1edf",
+      "issue": 1184
+    },
+    "finish:e9b74951-6c81-453d-9c59-ac897ba09e86:finish:2:synchronized": {
+      "digest": "9696958a13f96dc77644b91b8b0c90b53ac8432c9382f3f3474cb62003f95a9e",
       "issue": 1184
     }
   },
