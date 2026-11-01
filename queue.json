@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 312,
+  "revision": 313,
   "nextTicket": 35,
   "nextFence": 33,
   "tasks": {
@@ -308,31 +308,20 @@
     },
     "1191": {
       "issue": 1191,
+      "branch": "codex/golden-checkout-source",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/golden-checkout-source",
-      "materialSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 34,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793568478772,
-      "reviewEntry": 1,
-      "patchId": "43c103a400ec52a9d3751f6755abbd61fcdeb3ec",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/catalog/golden-runner.mjs",
-        "process-next/test/golden-accept.test.mjs",
-        "scripts/capture-environment.mjs"
-      ],
-      "s6": {
-        "id": "20261101T212912907-5bc57d23",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T212912907-5bc57d23/report.json",
-        "materialSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-        "status": "passed",
-        "finishedAt": "2026-11-01T21:29:13.412Z"
+      "status": "S8-merged",
+      "mergedSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
+      "mergedAt": 1793568558408,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -400,18 +389,7 @@
     1190,
     1169
   ],
-  "active": {
-    "issue": 1191,
-    "worker": "github-coordinator",
-    "token": "32:github:41352141254:1:tick:1:admit",
-    "fence": 32,
-    "materialSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-    "expectedBase": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793568516524,
-    "expiresAt": 1793572153988,
-    "patchId": "43c103a400ec52a9d3751f6755abbd61fcdeb3ec"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -775,22 +753,6 @@
     "github:41351804140:1:completions:metadata:930e01cf-bdb5-43c2-8159-bb1d0aa7f8c3:review-presentation:1172:spec:010c910de4808179ec87": {
       "digest": "2f1d73569e9b4783efe3f77ef3385c78971c77d0e58275bc45f8f445194f3fda",
       "issue": 1172
-    },
-    "finish:527e5b69-1453-4c23-b160-ba6e480d0556": {
-      "digest": "4490abe5fe1e1e0db0daa99c794a36c6e1d944df670361f4472dc5daaee90c17",
-      "issue": 1191
-    },
-    "github:41352141254:1:tick:1:admit": {
-      "digest": "0d3741ee9271a76b9587fef84faa297d7f78000207504b1550bb8da5b31ac265",
-      "issue": 1191
-    },
-    "finish:527e5b69-1453-4c23-b160-ba6e480d0556:finish:1:synchronized": {
-      "digest": "2b7e1229e4eb666ff3a829e04d9ffd35cdefb031d6f3cd5fecf9f2fc27c1b0c0",
-      "issue": 1191
-    },
-    "finish:527e5b69-1453-4c23-b160-ba6e480d0556:finish:2:s6-complete": {
-      "digest": "1f1f12da528bb28851af147e6e898d718a6caead987e61814f07c3c2fe4206bf",
-      "issue": 1191
     }
   },
   "devWebhook": {
