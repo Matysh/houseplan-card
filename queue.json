@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 133,
+  "revision": 134,
   "nextTicket": 17,
   "nextFence": 17,
   "tasks": {
@@ -16,7 +16,19 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793563250686,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "27b6efa99f80284b3a1af424936e017b5eb8648e",
+      "changedFiles": [
+        "demo/smoke_room_area_touch.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/TOUCH-SUPPORT.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/UX-MODES.md",
+        "docs/release-ledger/v1.83.0/1128.json",
+        "src/styles/plan.styles.ts"
+      ]
     },
     "1176": {
       "issue": 1176,
@@ -148,10 +160,11 @@
     "token": "16:finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150:finish:1:admit",
     "fence": 16,
     "materialSha": "4d1b09d2f2930f9b13a4c0e0629b7841ae3edbff",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
+    "phase": "testing",
     "admittedAt": 1793563253612,
-    "expiresAt": 1793563553612
+    "expiresAt": 1793563558812,
+    "patchId": "27b6efa99f80284b3a1af424936e017b5eb8648e"
   },
   "events": {
     "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150": {
@@ -160,6 +173,10 @@
     },
     "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150:finish:1:admit": {
       "digest": "77cc400cfcdbce0f86ac67cf74664a662459ecded059ffba5b72919b9b6de626",
+      "issue": 1128
+    },
+    "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150:finish:2:synchronized": {
+      "digest": "61dfee96e0cffcc30c6c8d9ad5f232783f3116244ffad585a0d38242b36c6fee",
       "issue": 1128
     }
   },
