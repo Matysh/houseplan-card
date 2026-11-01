@@ -658,3 +658,32 @@ test('#1113 exact profile-only adoption retains capabilities, virtual light valu
   assert.equal((await adoptAuthoritativeGated(host,{cfgResp:{config:unsafe,rev:9},reason:'external-screens-event',profile:'screen-event'})).status,'superseded');
   assert.equal(adoption.config,next);
 });
+
+
+test('#1153 acceptance hashes the current mutable candidate and isolates every accepted snapshot', () => {
+  const adoption = adoptedWith(cfg('Before'), 3);
+  const candidate = cfg('Staged', { settings: { nested: { value: 'staged' } } });
+  adoption.stageConfigCandidate(candidate);
+  const stagedFingerprint = adoption.configFingerprint;
+  // A response may arrive after an editor mutated the same object: never reuse the stage hash.
+  candidate.settings.nested.value = 'Accepted after await';
+  adoption.acceptConfigWrite(candidate, { rev: 4 });
+  const first = adoption.snapshot(null);
+  assert.equal(first.rev, 4);
+  assert.equal(first.config.settings.nested.value, 'Accepted after await');
+  assert.equal(first.config_fingerprint, contentFingerprint(first.config));
+  assert.equal(adoption.configFingerprint, first.config_fingerprint);
+  assert.notEqual(first.config_fingerprint, stagedFingerprint);
+  candidate.settings.nested.value = 'Next accepted value';
+  assert.equal(first.config.settings.nested.value, 'Accepted after await', 'live mutation cannot alter the accepted deep copy');
+  adoption.acceptConfigWrite(candidate, { rev: 5 });
+  const second = adoption.snapshot(null);
+  assert.equal(second.rev, 5);
+  assert.equal(second.config.settings.nested.value, 'Next accepted value');
+  assert.equal(second.config_fingerprint, contentFingerprint(second.config));
+  assert.notEqual(second.config_fingerprint, first.config_fingerprint);
+  assert.equal(first.rev, 4);
+  assert.equal(first.config_fingerprint, contentFingerprint(first.config));
+  adoption.stageLocalConfig(cfg('Unsent next draft'));
+  assert.equal(adoption.snapshot(null).config.settings.nested.value, 'Next accepted value');
+});

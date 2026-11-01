@@ -1,0 +1,372 @@
+{
+  "diagnosticOnly": true,
+  "instrumented": true,
+  "source": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+  "browser": "151.0.7922.34",
+  "windows": [
+    {
+      "case": "room-name",
+      "iteration": 0,
+      "input": 3933,
+      "paint": 4038,
+      "client": 105,
+      "ackToPaint": 44.700000000186265,
+      "cpu": {
+        "contentFingerprint": 15.223999999999998,
+        "contactSync": 13.471000000000002,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 76.114
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-name",
+      "iteration": 1,
+      "input": 4448.199999999953,
+      "paint": 4524.59999999986,
+      "client": 76.39999999990687,
+      "ackToPaint": 35.39999999990687,
+      "cpu": {
+        "contentFingerprint": 13.59,
+        "contactSync": 14.184999999999999,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 48.529
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-name",
+      "iteration": 2,
+      "input": 4932.199999999953,
+      "paint": 5003.399999999907,
+      "client": 71.19999999995343,
+      "ackToPaint": 32.800000000046566,
+      "cpu": {
+        "contentFingerprint": 13.057999999999998,
+        "contactSync": 14.235999999999999,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 43.86099999999999
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-name",
+      "iteration": 3,
+      "input": 5417.09999999986,
+      "paint": 5490.199999999953,
+      "client": 73.10000000009313,
+      "ackToPaint": 36.10000000009313,
+      "cpu": {
+        "contentFingerprint": 10.451,
+        "contactSync": 18.526000000000003,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 43.49399999999999
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-name",
+      "iteration": 4,
+      "input": 5881.199999999953,
+      "paint": 5947.59999999986,
+      "client": 66.39999999990687,
+      "ackToPaint": 33.39999999990687,
+      "cpu": {
+        "contentFingerprint": 14.171000000000001,
+        "contactSync": 13.364,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 38.166000000000004
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-paint",
+      "iteration": 0,
+      "input": 6431.899999999907,
+      "paint": 6500.799999999814,
+      "client": 68.89999999990687,
+      "ackToPaint": 32.299999999813735,
+      "cpu": {
+        "contentFingerprint": 14.060000000000004,
+        "contactSync": 13.168000000000001,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 41.623999999999995
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-paint",
+      "iteration": 1,
+      "input": 6898.59999999986,
+      "paint": 6971,
+      "client": 72.4000000001397,
+      "ackToPaint": 33.60000000009313,
+      "cpu": {
+        "contentFingerprint": 17.016,
+        "contactSync": 14.157,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 41.174000000000014
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-paint",
+      "iteration": 2,
+      "input": 7364.899999999907,
+      "paint": 7435.5,
+      "client": 70.60000000009313,
+      "ackToPaint": 33.300000000046566,
+      "cpu": {
+        "contentFingerprint": 16.275000000000006,
+        "contactSync": 11.745,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 41.757
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-paint",
+      "iteration": 3,
+      "input": 7848,
+      "paint": 7917.899999999907,
+      "client": 69.89999999990687,
+      "ackToPaint": 34.89999999990687,
+      "cpu": {
+        "contentFingerprint": 11.768,
+        "contactSync": 15.186000000000002,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 43.49
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "room-paint",
+      "iteration": 4,
+      "input": 8331.199999999953,
+      "paint": 8399.5,
+      "client": 68.30000000004657,
+      "ackToPaint": 30.600000000093132,
+      "cpu": {
+        "contentFingerprint": 15.261,
+        "contactSync": 11.175000000000002,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 41.80099999999999
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 0,
+      "input": 9233.199999999953,
+      "paint": 9297.09999999986,
+      "client": 63.89999999990687,
+      "ackToPaint": 37.699999999953434,
+      "cpu": {
+        "contentFingerprint": 15.364,
+        "contactSync": 10.2,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 39.34100000000002
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 1,
+      "input": 9699.299999999814,
+      "paint": 9764.199999999953,
+      "client": 64.9000000001397,
+      "ackToPaint": 41.800000000046566,
+      "cpu": {
+        "contentFingerprint": 13.039,
+        "contactSync": 15.706,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 37.05300000000002
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 2,
+      "input": 10165.699999999953,
+      "paint": 10222.699999999953,
+      "client": 57,
+      "ackToPaint": 34.10000000009313,
+      "cpu": {
+        "contentFingerprint": 14.503,
+        "contactSync": 11.958,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 32.808
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 3,
+      "input": 10633.299999999814,
+      "paint": 10690.299999999814,
+      "client": 57,
+      "ackToPaint": 35.5999999998603,
+      "cpu": {
+        "contentFingerprint": 13.284,
+        "contactSync": 12.526000000000002,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 30.486
+      },
+      "cloneCallers": {}
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 4,
+      "input": 11099,
+      "paint": 11162,
+      "client": 63,
+      "ackToPaint": 38.5,
+      "cpu": {
+        "contentFingerprint": 10.894,
+        "contactSync": 14.187,
+        "structuredClone": 0,
+        "json": 0,
+        "other": 37.77100000000002
+      },
+      "cloneCallers": {}
+    }
+  ],
+  "totals": {
+    "contentFingerprint": 207.95799999999997,
+    "contactSync": 203.79000000000002,
+    "structuredClone": 0,
+    "json": 0,
+    "other": 637.4690000000002
+  },
+  "otherSelfTime": [
+    [
+      "(program) @ :0:0",
+      101.48400000000007
+    ],
+    [
+      "toggleAttribute @ :0:0",
+      35.027
+    ],
+    [
+      "Hv @ houseplan-card-Ddw5aukE.js:310:36896",
+      30.648000000000003
+    ],
+    [
+      "remove @ :0:0",
+      25.40100000000002
+    ],
+    [
+      "Rn @ view-frame-DiYBs2bI.js:1:69458",
+      23.257
+    ],
+    [
+      "(garbage collector) @ :0:0",
+      16.802
+    ],
+    [
+      "ra @ houseplan-card-Ddw5aukE.js:141:34747",
+      15.348
+    ],
+    [
+      "dl @ houseplan-card-Ddw5aukE.js:141:48887",
+      15.310999999999998
+    ],
+    [
+      "(anonymous) @ view-frame-DiYBs2bI.js:1:50565",
+      13.822000000000001
+    ],
+    [
+      "_cfgFingerprint @ houseplan-card-Ddw5aukE.js:570:336",
+      10.914000000000001
+    ],
+    [
+      "Vl @ houseplan-card-Ddw5aukE.js:141:58180",
+      9.773
+    ],
+    [
+      "_visualFrameFingerprint @ houseplan-card-Ddw5aukE.js:540:53231",
+      9.225999999999999
+    ],
+    [
+      "_cacheSnapshot @ houseplan-card-Ddw5aukE.js:540:50238",
+      8.857
+    ],
+    [
+      "handle @ fixture-state.js:35:11",
+      8.723
+    ],
+    [
+      "Av @ houseplan-card-Ddw5aukE.js:310:36240",
+      8.671
+    ],
+    [
+      "rememberAccepted @ houseplan-card-Ddw5aukE.js:264:80971",
+      8.592
+    ],
+    [
+      "(anonymous) @ live-interaction-runtime-BIdxGDa9.js:1:7348",
+      7.647
+    ],
+    [
+      "querySelector @ :0:0",
+      6.739
+    ],
+    [
+      "p @ lit-element-DWj2UGuQ.js:1:10809",
+      6.5969999999999995
+    ],
+    [
+      "gn @ view-frame-DiYBs2bI.js:1:64947",
+      5.516
+    ],
+    [
+      "t.snapshot @ houseplan-card-Ddw5aukE.js:570:29173",
+      5.434
+    ],
+    [
+      "querySelectorAll @ :0:0",
+      5.427
+    ],
+    [
+      "xv @ houseplan-card-Ddw5aukE.js:310:14126",
+      5.402
+    ],
+    [
+      "Ne @ editor-shared-BXQg6W9W.js:1:15773",
+      5.372999999999999
+    ],
+    [
+      "get @ lit-element-DWj2UGuQ.js:1:2432",
+      5.236
+    ]
+  ],
+  "sourceRanges": [
+    {
+      "url": "http://demo.local/assets/houseplan-assets/houseplan-card-Ddw5aukE.js",
+      "kind": "contentFingerprint",
+      "a": 164775,
+      "b": 165559
+    },
+    {
+      "url": "http://demo.local/assets/houseplan-assets/live-interaction-runtime-BIdxGDa9.js",
+      "kind": "contactSync",
+      "a": 20932,
+      "b": 24344
+    }
+  ],
+  "method": "CPU samples assigned only inside trace-anchor matched input→paint windows; disjoint attribution: fingerprint descendants, structuredClone descendants, remaining contactSync descendants, leaf JSON builtin, other. Sampling is not wall-time or causal CI proof."
+}

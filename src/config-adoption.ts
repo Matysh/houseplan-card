@@ -208,9 +208,11 @@ export class MutableConfigAdoption {
    * historical `+1` guess — centralized here, see #500 §15 п.3.
    */
   acceptConfigWrite(candidate: ServerConfig, response: { rev?: unknown } | null | undefined): void {
-    this.configFingerprint = contentFingerprint(candidate);
+    const fingerprint = contentFingerprint(candidate);
+    this.configFingerprint = fingerprint;
     this.configRev = finiteRevision(response?.rev, this.configRev + 1);
-    this.rememberAccepted(candidate, this.acceptedCache?.layout ?? this.layout, this.acceptedCache?.layout_rev ?? this.layoutRev);
+    this.rememberAccepted(candidate, this.acceptedCache?.layout ?? this.layout,
+      this.acceptedCache?.layout_rev ?? this.layoutRev, fingerprint);
   }
 
   /** Paired write (`plan/optimize`, copy, import): both bodies with both revisions. */
@@ -326,10 +328,13 @@ export class MutableConfigAdoption {
     this.adoptionEpoch++;
   }
 
-  private rememberAccepted(config: ServerConfig, layout: DeviceLayout, layoutRev = this.layoutRev): void {
+  // Only reuse a fresh hash from this synchronous acceptance. Other callers
+  // retain recomputation after their body-replacement callbacks.
+  private rememberAccepted(config: ServerConfig, layout: DeviceLayout, layoutRev = this.layoutRev,
+    freshConfigFingerprint?: string): void {
     this.acceptedCache = {
       config: structuredClone(config), rev: this.configRev,
-      config_fingerprint: contentFingerprint(config),
+      config_fingerprint: freshConfigFingerprint ?? contentFingerprint(config),
       layout: structuredClone(layout), layout_rev: layoutRev,
       layout_fingerprint: contentFingerprint(layout),
     };

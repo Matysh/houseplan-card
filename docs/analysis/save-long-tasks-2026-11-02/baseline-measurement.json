@@ -1,0 +1,5268 @@
+{
+  "diagnosticOnly": true,
+  "label": "baseline",
+  "source": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+  "node": "v22.23.2",
+  "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+  "kernel": "6.18.33.2-microsoft-standard-WSL2",
+  "platform": "linux",
+  "loadBefore": [
+    0.27,
+    0.77,
+    0.58
+  ],
+  "manifest": {
+    "schema": 1,
+    "fingerprint": "b7275456516c49886ec7c620f0c93ae69f21c0a35e7c5106b9802bf12ab3210a",
+    "entry": "houseplan-card.js",
+    "panelEntry": "houseplan-panel.js",
+    "initialViewFiles": [
+      "houseplan-assets/canvas-constants-BgqR75IP.js",
+      "houseplan-assets/houseplan-card-Ddw5aukE.js",
+      "houseplan-assets/lit-element-DWj2UGuQ.js",
+      "houseplan-assets/ref-0U-aF_2O.js",
+      "houseplan-assets/view-frame-DiYBs2bI.js",
+      "houseplan-card.js"
+    ],
+    "initialViewGzipBytes": 383188,
+    "initialPanelFiles": [
+      "houseplan-assets/canvas-constants-BgqR75IP.js",
+      "houseplan-assets/houseplan-card-Ddw5aukE.js",
+      "houseplan-assets/lit-element-DWj2UGuQ.js",
+      "houseplan-assets/ref-0U-aF_2O.js",
+      "houseplan-assets/view-frame-DiYBs2bI.js",
+      "houseplan-panel.js"
+    ],
+    "initialPanelGzipBytes": 385093,
+    "initialPanelOnlyFiles": [
+      "houseplan-panel.js"
+    ],
+    "initialPanelOnlyGzipBytes": 3240,
+    "lazyFiles": [
+      "houseplan-assets/backdrop-pick-D0MiNWNq.js",
+      "houseplan-assets/card-editor-validation-czUM4bG1.js",
+      "houseplan-assets/chrome-tooltip-m3sgJxXQ.js",
+      "houseplan-assets/context-menu-BtGk25Ww.js",
+      "houseplan-assets/de-B1iKitLR.js",
+      "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+      "houseplan-assets/device-contact-floor-C7_YRF4W.js",
+      "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+      "houseplan-assets/device-contact-scene-DnSvF8HK.js",
+      "houseplan-assets/device-contact-write-BhqmjybG.js",
+      "houseplan-assets/device-inbox-Bgy9MYCA.js",
+      "houseplan-assets/editor-DZCgH-4P.js",
+      "houseplan-assets/editor-shared-BXQg6W9W.js",
+      "houseplan-assets/en-CnQbHB7v.js",
+      "houseplan-assets/floating-surface-yWCTRI_V.js",
+      "houseplan-assets/fr-CfzaRQaw.js",
+      "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+      "houseplan-assets/houseplan-editor-runtime-JGtg8Hb5.js",
+      "houseplan-assets/houseplan-onboarding-runtime-CrBIHV1V.js",
+      "houseplan-assets/hp-color-opacity-Djo_5519.js",
+      "houseplan-assets/hp-plan-converter-info-CBYqrwcr.js",
+      "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+      "houseplan-assets/hp-zigbee-topology-overlay-VZCV_E4D.js",
+      "houseplan-assets/iso-scene-render-CJvB67l3.js",
+      "houseplan-assets/led-strip-editor-CI7a2Mn9.js",
+      "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+      "houseplan-assets/led-strip-runtime-DQyiwZOW.js",
+      "houseplan-assets/live-interaction-runtime-BIdxGDa9.js",
+      "houseplan-assets/live-tip-placement-DaQ9whTc.js",
+      "houseplan-assets/marker-alert-presentation-CB_DX_sm.js",
+      "houseplan-assets/marker-alert-view-runtime-7Q20Aqx9.js",
+      "houseplan-assets/moon-runtime-Bo6JCphL.js",
+      "houseplan-assets/namespace-language-BVfLKFhX.js",
+      "houseplan-assets/pdf-export-Dlr4lirh.js",
+      "houseplan-assets/plan-converter-3yOcVFcv.js",
+      "houseplan-assets/settings-Ct7Azkb1.js",
+      "houseplan-assets/settings-select-control-CTP6gp1O.js",
+      "houseplan-assets/space-editor-C-ZtAicl.js",
+      "houseplan-assets/stored-wall-contact-T_EcJyeo.js",
+      "houseplan-assets/summary-panel-runtime-entry-CCaNmcPA.js",
+      "houseplan-assets/summary-shared-CbjKlJ8k.js",
+      "houseplan-assets/view-device-menu-B34pOD3e.js",
+      "houseplan-assets/wall-face-graph-C5KTQKpU.js",
+      "houseplan-assets/zigbee-topology-CwOy_HWU.js",
+      "houseplan-assets/zigbee-topology-runtime-DyJvIxoj.js"
+    ],
+    "lazyGzipBytes": 630893,
+    "lazyEditorFiles": [
+      "houseplan-assets/backdrop-pick-D0MiNWNq.js",
+      "houseplan-assets/card-editor-validation-czUM4bG1.js",
+      "houseplan-assets/context-menu-BtGk25Ww.js",
+      "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+      "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+      "houseplan-assets/device-contact-scene-DnSvF8HK.js",
+      "houseplan-assets/device-contact-write-BhqmjybG.js",
+      "houseplan-assets/device-inbox-Bgy9MYCA.js",
+      "houseplan-assets/editor-DZCgH-4P.js",
+      "houseplan-assets/editor-shared-BXQg6W9W.js",
+      "houseplan-assets/en-CnQbHB7v.js",
+      "houseplan-assets/floating-surface-yWCTRI_V.js",
+      "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+      "houseplan-assets/houseplan-editor-runtime-JGtg8Hb5.js",
+      "houseplan-assets/hp-color-opacity-Djo_5519.js",
+      "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+      "houseplan-assets/marker-alert-presentation-CB_DX_sm.js",
+      "houseplan-assets/namespace-language-BVfLKFhX.js",
+      "houseplan-assets/plan-converter-3yOcVFcv.js",
+      "houseplan-assets/settings-Ct7Azkb1.js",
+      "houseplan-assets/settings-select-control-CTP6gp1O.js",
+      "houseplan-assets/stored-wall-contact-T_EcJyeo.js",
+      "houseplan-assets/wall-face-graph-C5KTQKpU.js",
+      "houseplan-assets/zigbee-topology-CwOy_HWU.js"
+    ],
+    "lazyEditorGzipBytes": 368967,
+    "lazyOnboardingFiles": [
+      "houseplan-assets/backdrop-pick-D0MiNWNq.js",
+      "houseplan-assets/floating-surface-yWCTRI_V.js",
+      "houseplan-assets/houseplan-onboarding-runtime-CrBIHV1V.js",
+      "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+      "houseplan-assets/namespace-language-BVfLKFhX.js",
+      "houseplan-assets/settings-Ct7Azkb1.js",
+      "houseplan-assets/settings-select-control-CTP6gp1O.js"
+    ],
+    "lazyOnboardingGzipBytes": 32936,
+    "lazyLocaleFiles": [
+      "houseplan-assets/de-B1iKitLR.js",
+      "houseplan-assets/fr-CfzaRQaw.js"
+    ],
+    "lazyLocaleGzipBytes": 56934,
+    "lazyIsometricFiles": [
+      "houseplan-assets/iso-scene-render-CJvB67l3.js"
+    ],
+    "lazyIsometricGzipBytes": 12812,
+    "lazyFurnitureArtFiles": [
+      "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js"
+    ],
+    "lazyFurnitureArtGzipBytes": 16938,
+    "lazyPdfFiles": [
+      "houseplan-assets/floating-surface-yWCTRI_V.js",
+      "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+      "houseplan-assets/hp-color-opacity-Djo_5519.js",
+      "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+      "houseplan-assets/pdf-export-Dlr4lirh.js",
+      "houseplan-assets/settings-select-control-CTP6gp1O.js"
+    ],
+    "lazyPdfGzipBytes": 143928,
+    "lazyMoonFiles": [
+      "houseplan-assets/moon-runtime-Bo6JCphL.js"
+    ],
+    "lazyMoonGzipBytes": 11754,
+    "lazyLedFiles": [
+      "houseplan-assets/led-strip-field-ZHFAjoBi.js",
+      "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+      "houseplan-assets/led-strip-runtime-DQyiwZOW.js"
+    ],
+    "lazyLedGzipBytes": 11567,
+    "lazyLedEditorFiles": [
+      "houseplan-assets/led-strip-editor-CI7a2Mn9.js",
+      "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+      "houseplan-assets/namespace-language-BVfLKFhX.js"
+    ],
+    "lazyLedEditorGzipBytes": 11183,
+    "lazyNamespaceLocaleFiles": [
+      "houseplan-assets/led-de-w_VfV-eP.js",
+      "houseplan-assets/led-fr-m5TgGDRk.js",
+      "houseplan-assets/led-ru-CR4HpojA.js",
+      "houseplan-assets/settings-de-DSdV4E9o.js",
+      "houseplan-assets/settings-fr-Bk5eLa3I.js",
+      "houseplan-assets/settings-ru-tl6XycKE.js",
+      "houseplan-assets/support-de-Cy0oEbB7.js",
+      "houseplan-assets/support-fr-COGxfjqA.js",
+      "houseplan-assets/support-ru-Cn4-_tMG.js",
+      "houseplan-assets/tools-de-dsa70z0v.js",
+      "houseplan-assets/tools-fr-qFxa4-Sf.js",
+      "houseplan-assets/tools-ru-BQbbH7Bw.js",
+      "houseplan-assets/topology-de-Cw6TShK_.js",
+      "houseplan-assets/topology-fr-CTVMDrw7.js",
+      "houseplan-assets/topology-ru-BFkGS1u5.js"
+    ],
+    "lazyNamespaceLocaleGzipBytes": 71884,
+    "files": [
+      {
+        "path": "houseplan-assets/backdrop-pick-D0MiNWNq.js",
+        "sha256": "ceb983b0d291fd0f6441bcbb367dc6f18370ae084c25aed1000022f45f72ec59",
+        "rawBytes": 42915,
+        "gzipBytes": 13999,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/settings-Ct7Azkb1.js",
+          "houseplan-assets/settings-select-control-CTP6gp1O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/backup-archive-client-Du3Lfk0h.js",
+        "sha256": "5505a314c378bf5e6bda167a5f48b636548da15abf83e1b15bda9b1b530ba453",
+        "rawBytes": 7276,
+        "gzipBytes": 2761,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/canvas-constants-BgqR75IP.js",
+        "sha256": "ee4e5442b5a3b7dbe32fb05e3c3b034ca9b93a1c76918c04058eba6751658975",
+        "rawBytes": 4859,
+        "gzipBytes": 1773,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/card-editor-validation-czUM4bG1.js",
+        "sha256": "878b9b00f9af6af5cbad272e891b8770fc415e9f86a3e8479b4d3baf9570d333",
+        "rawBytes": 544,
+        "gzipBytes": 409,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/chrome-tooltip-m3sgJxXQ.js",
+        "sha256": "b9976a5d14888a792250b23903c964dff8367eb7e296445eb4700bf818e5e9c9",
+        "rawBytes": 3169,
+        "gzipBytes": 1271,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/context-menu-BtGk25Ww.js",
+        "sha256": "99a754e5f6dcfbe2853fc1c15b4775ab30afe4922aa881158ee41a6dba507632",
+        "rawBytes": 5476,
+        "gzipBytes": 2000,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/de-B1iKitLR.js",
+        "sha256": "58efadaf40db392f1d5c47a6ca04f36b1e689e169d2c93b5bb540f1b98e90f1d",
+        "rawBytes": 95598,
+        "gzipBytes": 28718,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+        "sha256": "526c10e02f21f2963c75b03b119d5e449e79ba0a3923caa765e8b5452880e606",
+        "rawBytes": 1329,
+        "gzipBytes": 741,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/device-contact-floor-C7_YRF4W.js",
+        "sha256": "501434bfdc9678c96261a801da4ad20c40f335e3f407dca05eaf7d32a96b68b7",
+        "rawBytes": 1528,
+        "gzipBytes": 944,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+        "sha256": "25a5baeecbce2d017947beed6f38a5feb719117a72dd0d4db6f0e7d3b1a5bef5",
+        "rawBytes": 9180,
+        "gzipBytes": 3652,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/device-contact-scene-DnSvF8HK.js",
+        "sha256": "dccf4f902c3121a9ba2ae27434d778a28efe63931b04dc0c089d7db1eb910f48",
+        "rawBytes": 2940,
+        "gzipBytes": 1232,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/device-contact-write-BhqmjybG.js",
+        "sha256": "9e6218469e59fa7a0f257141c74cc2faeaddc087143cd8b31923149b6ab466a6",
+        "rawBytes": 4648,
+        "gzipBytes": 1988,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/device-inbox-Bgy9MYCA.js",
+        "sha256": "848328b832a472c2dee15a2b9784833ea6c9b1a722b709eb85d3382233722b77",
+        "rawBytes": 8958,
+        "gzipBytes": 3771,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/editor-DZCgH-4P.js",
+        "sha256": "913ff9606fcc98fd4537b53d042c2dfbba0ba7af8e878683896ac49be03ae557",
+        "rawBytes": 4207,
+        "gzipBytes": 1726,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/card-editor-validation-czUM4bG1.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/settings-Ct7Azkb1.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/editor-shared-BXQg6W9W.js",
+        "sha256": "7b30c18301054a873bcb44d52766974a3200f53280f651d3949a43191ac64da9",
+        "rawBytes": 39166,
+        "gzipBytes": 14656,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/en-CnQbHB7v.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/tools-de-dsa70z0v.js",
+          "houseplan-assets/tools-fr-qFxa4-Sf.js",
+          "houseplan-assets/tools-ru-BQbbH7Bw.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/en-CnQbHB7v.js",
+        "sha256": "f4f6af88ab2e43a5cbd1c8f8ddd1824ad587eff8e01ad8b4e0e6e3ab4b9d3c07",
+        "rawBytes": 13286,
+        "gzipBytes": 4552,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/floating-surface-yWCTRI_V.js",
+        "sha256": "bd951c41f7104dbaa9093ba8fcdedc763b018a78858a63b1b06c49f2099aaa88",
+        "rawBytes": 1104,
+        "gzipBytes": 580,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/fr-CfzaRQaw.js",
+        "sha256": "056c47b17b419bb88ad5574a3c8d8bb4741f9fcac8392f793c692d8e7a0aa000",
+        "rawBytes": 97871,
+        "gzipBytes": 28216,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+        "sha256": "96f859927521d231b2ee53ec8624e7c72e98d902f45bb2ff654038732928d6b1",
+        "rawBytes": 52035,
+        "gzipBytes": 16938,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/houseplan-card-Ddw5aukE.js",
+        "sha256": "5e76ed0ae59fd4907c16ae6b9fddbc59c8da22d6960caa89e85759733bb2669f",
+        "rawBytes": 934582,
+        "gzipBytes": 263283,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/chrome-tooltip-m3sgJxXQ.js",
+          "houseplan-assets/device-contact-write-BhqmjybG.js",
+          "houseplan-assets/device-contact-write-BhqmjybG.js",
+          "houseplan-assets/editor-DZCgH-4P.js",
+          "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+          "houseplan-assets/houseplan-editor-runtime-JGtg8Hb5.js",
+          "houseplan-assets/houseplan-onboarding-runtime-CrBIHV1V.js",
+          "houseplan-assets/hp-plan-converter-info-CBYqrwcr.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/hp-zigbee-topology-overlay-VZCV_E4D.js",
+          "houseplan-assets/iso-scene-render-CJvB67l3.js",
+          "houseplan-assets/led-strip-editor-CI7a2Mn9.js",
+          "houseplan-assets/led-strip-runtime-DQyiwZOW.js",
+          "houseplan-assets/live-interaction-runtime-BIdxGDa9.js",
+          "houseplan-assets/marker-alert-view-runtime-7Q20Aqx9.js",
+          "houseplan-assets/moon-runtime-Bo6JCphL.js",
+          "houseplan-assets/pdf-export-Dlr4lirh.js",
+          "houseplan-assets/space-editor-C-ZtAicl.js",
+          "houseplan-assets/summary-panel-runtime-entry-CCaNmcPA.js",
+          "houseplan-assets/view-device-menu-B34pOD3e.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/houseplan-editor-runtime-JGtg8Hb5.js",
+        "sha256": "bb681c7fa00bfd6b4a540d087b1271561a53a8a45ea37156cac6ffa8becab74e",
+        "rawBytes": 937347,
+        "gzipBytes": 264309,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/backdrop-pick-D0MiNWNq.js",
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/context-menu-BtGk25Ww.js",
+          "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/device-contact-scene-DnSvF8HK.js",
+          "houseplan-assets/device-contact-write-BhqmjybG.js",
+          "houseplan-assets/device-inbox-Bgy9MYCA.js",
+          "houseplan-assets/editor-shared-BXQg6W9W.js",
+          "houseplan-assets/en-CnQbHB7v.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/hp-color-opacity-Djo_5519.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/marker-alert-presentation-CB_DX_sm.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/plan-converter-3yOcVFcv.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/settings-Ct7Azkb1.js",
+          "houseplan-assets/settings-select-control-CTP6gp1O.js",
+          "houseplan-assets/stored-wall-contact-T_EcJyeo.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js",
+          "houseplan-assets/wall-face-graph-C5KTQKpU.js",
+          "houseplan-assets/zigbee-topology-CwOy_HWU.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/backup-archive-client-Du3Lfk0h.js",
+          "houseplan-assets/marker-deletion-6ji76CzQ.js",
+          "houseplan-assets/marker-deletion-6ji76CzQ.js",
+          "houseplan-assets/marker-deletion-6ji76CzQ.js",
+          "houseplan-assets/marker-deletion-6ji76CzQ.js",
+          "houseplan-assets/marker-deletion-6ji76CzQ.js",
+          "houseplan-assets/optimize-plans-dialog-ZjQgWuUK.js",
+          "houseplan-assets/plan-optimizer-sdOP-9fn.js",
+          "houseplan-assets/plan-optimizer-sdOP-9fn.js",
+          "houseplan-assets/support-de-Cy0oEbB7.js",
+          "houseplan-assets/support-diagnostics-CDshajzN.js",
+          "houseplan-assets/support-fr-COGxfjqA.js",
+          "houseplan-assets/support-ru-Cn4-_tMG.js",
+          "houseplan-assets/wall-node-card-adapter-BjmvTQaz.js",
+          "houseplan-assets/zigbee-topology-runtime-DyJvIxoj.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/houseplan-onboarding-runtime-CrBIHV1V.js",
+        "sha256": "87e10d2123770aa58115e1fe1ab98a37a9dad4d7e0d8958aba82ff2192afbd48",
+        "rawBytes": 10022,
+        "gzipBytes": 3461,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/backdrop-pick-D0MiNWNq.js",
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/settings-Ct7Azkb1.js",
+          "houseplan-assets/settings-select-control-CTP6gp1O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/hp-color-opacity-Djo_5519.js",
+        "sha256": "fb2350bf4db37a8b0067c96109d587ac5ece017255ed35566cfb355ceeb306b2",
+        "rawBytes": 30399,
+        "gzipBytes": 8041,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/hp-plan-converter-info-CBYqrwcr.js",
+        "sha256": "d22eb9a98cfb8fe430a8fdc2f4bfb30d331dba119872da2e555dc7b0165346f8",
+        "rawBytes": 3067,
+        "gzipBytes": 1456,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/plan-converter-3yOcVFcv.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+        "sha256": "e76bf035af455575d0e57ca998fed50154e6aa47068287e16a57f89344cf6fb0",
+        "rawBytes": 12108,
+        "gzipBytes": 4359,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/hp-zigbee-topology-overlay-VZCV_E4D.js",
+        "sha256": "ade6181271e904265bb6176422f735ca7fd3a953ec227845b4c1826f20f8a80c",
+        "rawBytes": 23630,
+        "gzipBytes": 7652,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/live-tip-placement-DaQ9whTc.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js",
+          "houseplan-assets/zigbee-topology-CwOy_HWU.js",
+          "houseplan-assets/zigbee-topology-runtime-DyJvIxoj.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/iso-scene-render-CJvB67l3.js",
+        "sha256": "c981a9b4f485ebe7c7b201835884e34f3359bd4af7a6947dc3e4e7e92c8a9465",
+        "rawBytes": 37941,
+        "gzipBytes": 12812,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/led-de-w_VfV-eP.js",
+        "sha256": "ce4890a9d757d0b8f0cee320545465931d94a9fd59927271e0bcf17dca0e07f8",
+        "rawBytes": 1907,
+        "gzipBytes": 921,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/led-fr-m5TgGDRk.js",
+        "sha256": "ac073a80c6f659b23370f72728e222c1cebfee8f3dd160cb94ade9178e2f4b97",
+        "rawBytes": 1886,
+        "gzipBytes": 907,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/led-ru-CR4HpojA.js",
+        "sha256": "2e385f8753cf0585c4d98f2f171a2735c16bcab4d4f363cbfd5b7e119e5ca3ff",
+        "rawBytes": 2525,
+        "gzipBytes": 1106,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/led-strip-editor-CI7a2Mn9.js",
+        "sha256": "ed0353564f2312d333869ca2811cee72870d6ad25384dbdd341f8c043f0aabfb",
+        "rawBytes": 23229,
+        "gzipBytes": 7859,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/led-de-w_VfV-eP.js",
+          "houseplan-assets/led-fr-m5TgGDRk.js",
+          "houseplan-assets/led-ru-CR4HpojA.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/led-strip-field-ZHFAjoBi.js",
+        "sha256": "ca28fb442542658ffcc07158affcc5c6e63d41840567d6d41a38c5db2f96ad50",
+        "rawBytes": 8207,
+        "gzipBytes": 3446,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+        "sha256": "1454da79c27b145bca0fb1a8f43ed12fe070925dcd7ad239be936230469697c9",
+        "rawBytes": 7055,
+        "gzipBytes": 2914,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/led-strip-runtime-DQyiwZOW.js",
+        "sha256": "05477d7d8cb368ab263159ae1d64d17b0cc9126330fed8d3b48888d04c9237a8",
+        "rawBytes": 13181,
+        "gzipBytes": 5207,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/led-strip-geometry-qyju-XhK.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/led-strip-field-ZHFAjoBi.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/lit-element-DWj2UGuQ.js",
+        "sha256": "eb009812bd4d324753f5c5c522d1b71e6e24e0593eb149fcbff4b9d77bbf41cd",
+        "rawBytes": 15247,
+        "gzipBytes": 5905,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/live-interaction-runtime-BIdxGDa9.js",
+        "sha256": "910fe8afead713d7cddb595d03b2e5afdf92418a6293b3741e9b9b90d41b5959",
+        "rawBytes": 34579,
+        "gzipBytes": 11859,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+          "houseplan-assets/device-contact-floor-C7_YRF4W.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/device-contact-scene-DnSvF8HK.js",
+          "houseplan-assets/editor-shared-BXQg6W9W.js",
+          "houseplan-assets/en-CnQbHB7v.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/live-tip-placement-DaQ9whTc.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/live-tip-placement-DaQ9whTc.js",
+        "sha256": "e453bc5b84fb6ffc46dbcf4df17d67c68583980264c54e2ce8fca5d9fe956d40",
+        "rawBytes": 1191,
+        "gzipBytes": 683,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/marker-alert-presentation-CB_DX_sm.js",
+        "sha256": "fd2280a3dd6587ab757577f10c4cab0723c1a483029b6173d46d640bd670b31d",
+        "rawBytes": 8071,
+        "gzipBytes": 3221,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/houseplan-card-Ddw5aukE.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/marker-alert-view-runtime-7Q20Aqx9.js",
+        "sha256": "567698fbe76561fbd8c58bbb401703e8d0b2cc80c2ac7ff8cf226893e70699b9",
+        "rawBytes": 3557,
+        "gzipBytes": 1536,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/marker-alert-presentation-CB_DX_sm.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/marker-deletion-6ji76CzQ.js",
+        "sha256": "4a4de1e40cb890c9a93ffd4bdc264a0a16129fa9c91f54d22867028fc7e94bd1",
+        "rawBytes": 7879,
+        "gzipBytes": 2830,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/editor-shared-BXQg6W9W.js",
+          "houseplan-assets/en-CnQbHB7v.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/moon-runtime-Bo6JCphL.js",
+        "sha256": "bc81d72922732cd396e741dfd26135594ab7b2ae21f7691f5f691304e0ce8258",
+        "rawBytes": 30391,
+        "gzipBytes": 11754,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/lit-element-DWj2UGuQ.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/namespace-language-BVfLKFhX.js",
+        "sha256": "5134dff87d9d266e24f308ab879368c157b502e8533a43cf89a1a25dbdf73054",
+        "rawBytes": 671,
+        "gzipBytes": 410,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/optimize-plans-dialog-ZjQgWuUK.js",
+        "sha256": "be460502ac01a879168de73254077f4186aeba4100859ffa47b4137a63987a56",
+        "rawBytes": 20879,
+        "gzipBytes": 5417,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/pdf-export-Dlr4lirh.js",
+        "sha256": "3295e027dea82e2334781e443eae78a6528f9f858d599714b395dd2f71ae598b",
+        "rawBytes": 247221,
+        "gzipBytes": 113590,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/furniture-plan-art.generated-CGeJGbEj.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/hp-color-opacity-Djo_5519.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/settings-select-control-CTP6gp1O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/plan-converter-3yOcVFcv.js",
+        "sha256": "ba8571910128b05883d3382c79c013943f07b8ed72379f1d9ef18bae8c694758",
+        "rawBytes": 384,
+        "gzipBytes": 321,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/plan-optimizer-sdOP-9fn.js",
+        "sha256": "b0cbe64c0eb4e9775fabc10f96d4a30eeeb964b88c322f536fd2b8a3e0ef6c8f",
+        "rawBytes": 25606,
+        "gzipBytes": 9695,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/device-contact-basis-B7pr_YZ1.js",
+          "houseplan-assets/device-contact-floor-C7_YRF4W.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/device-contact-scene-DnSvF8HK.js",
+          "houseplan-assets/editor-shared-BXQg6W9W.js",
+          "houseplan-assets/en-CnQbHB7v.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/stored-wall-contact-T_EcJyeo.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js",
+          "houseplan-assets/wall-face-graph-C5KTQKpU.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/ref-0U-aF_2O.js",
+        "sha256": "d72f68d0b48c9814bc41973fc236d220016abcf5c61257ab9109c255ae5c40c8",
+        "rawBytes": 3484,
+        "gzipBytes": 1651,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/lit-element-DWj2UGuQ.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/settings-Ct7Azkb1.js",
+        "sha256": "3e045a27a645766c6202153bf4fc724f3c0552591c9dbeeb7b7893044d615afb",
+        "rawBytes": 29823,
+        "gzipBytes": 9707,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/settings-de-DSdV4E9o.js",
+          "houseplan-assets/settings-fr-Bk5eLa3I.js",
+          "houseplan-assets/settings-ru-tl6XycKE.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/settings-de-DSdV4E9o.js",
+        "sha256": "a2477c4434f94881d7244ab2084dfdc2c2828aba17057f31b324b344a7c96a82",
+        "rawBytes": 32440,
+        "gzipBytes": 10553,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/settings-fr-Bk5eLa3I.js",
+        "sha256": "46baae28056356f93a43e3c4706a66133a4c798b0cf5ce484a47afa67f07913d",
+        "rawBytes": 33704,
+        "gzipBytes": 10532,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/settings-ru-tl6XycKE.js",
+        "sha256": "9403196730b8779ca1fa9270b2b071a54ac4b2e53cb7d39701cc98fa4ca8dd8e",
+        "rawBytes": 46289,
+        "gzipBytes": 12114,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/settings-select-control-CTP6gp1O.js",
+        "sha256": "d5e650b02bb3813cece1cd0440fdcea164a37353767a98270ba0cf7e94059682",
+        "rawBytes": 592,
+        "gzipBytes": 420,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/lit-element-DWj2UGuQ.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/space-editor-C-ZtAicl.js",
+        "sha256": "e9d8fef6e3b889b37c3f317db16599dedc6fc68a423e9242f37a48e03c42d115",
+        "rawBytes": 3183,
+        "gzipBytes": 1383,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/card-editor-validation-czUM4bG1.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/settings-Ct7Azkb1.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/stored-wall-contact-T_EcJyeo.js",
+        "sha256": "1a8e5d225612cea546767ed4e606fdf4675ae468952f475e0e41bb20f0062430",
+        "rawBytes": 1237,
+        "gzipBytes": 671,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/summary-panel-editor-CmJHeoUc.js",
+        "sha256": "705e3ca68b53d50d6b7de0620244299f27b178b5ba8cc44495c5f93140a16d68",
+        "rawBytes": 16122,
+        "gzipBytes": 3752,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/hp-settings-select-CbuvDL_V.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/summary-shared-CbjKlJ8k.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/summary-panel-metrics-BlN_s9u0.js",
+        "sha256": "5814de7e8371a413dd46c4fad4156d7940aa4f3703ba5f1797b747f3ed3e2c18",
+        "rawBytes": 3193,
+        "gzipBytes": 1559,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/summary-panel-runtime-entry-CCaNmcPA.js",
+        "sha256": "630d409b8f98870a655bf825156a4a5d91e5bf9ce1ece6110cc14284b6813218",
+        "rawBytes": 48730,
+        "gzipBytes": 14354,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/summary-shared-CbjKlJ8k.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/summary-panel-editor-CmJHeoUc.js",
+          "houseplan-assets/summary-panel-metrics-BlN_s9u0.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/summary-shared-CbjKlJ8k.js",
+        "sha256": "c0fce0a50532cd5458617c1784af00327b7f510b313c0ba41c9c7c96709f95c8",
+        "rawBytes": 3146,
+        "gzipBytes": 1549,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/lit-element-DWj2UGuQ.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/support-de-Cy0oEbB7.js",
+        "sha256": "53900eddf9f66421377e6cce1c92ae823407ae40f9a0341968e38661b5bcb89b",
+        "rawBytes": 7695,
+        "gzipBytes": 2869,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/support-diagnostics-CDshajzN.js",
+        "sha256": "885d89636c47ee16d2ae092e92f852a936061fd0aa7810797f1933b314a73f8b",
+        "rawBytes": 9210,
+        "gzipBytes": 3977,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/support-fr-COGxfjqA.js",
+        "sha256": "a25672af247b0e0ae71b769999b9e0bf56ac6c266ec0fb354ae3d03ff1c8ad64",
+        "rawBytes": 7938,
+        "gzipBytes": 2927,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/support-ru-Cn4-_tMG.js",
+        "sha256": "d8e7d16fcd673c9473fb886a76739e5288895cf425a5d67d0a809beabf4bb960",
+        "rawBytes": 10627,
+        "gzipBytes": 3466,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/tools-de-dsa70z0v.js",
+        "sha256": "ec93537e8784af2e9a228a7981cc03eb83f7bade477deed54d76328276e61bc4",
+        "rawBytes": 14713,
+        "gzipBytes": 5043,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/tools-fr-qFxa4-Sf.js",
+        "sha256": "cf9d1957679c649cc1bbe2a0a11214849a0667a22c2c48892d51c08aad3acd5c",
+        "rawBytes": 14807,
+        "gzipBytes": 4980,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/tools-ru-BQbbH7Bw.js",
+        "sha256": "6e74c7447fdd6f7386263217146edff1a0c3ba550e0cf3bf5df633fd08d088ba",
+        "rawBytes": 20427,
+        "gzipBytes": 5951,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/topology-de-Cw6TShK_.js",
+        "sha256": "7b1a632c7431c951697e93e14a1bb4b24891d3459281a25b0a9485a3c23ef4ca",
+        "rawBytes": 8673,
+        "gzipBytes": 3326,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/topology-fr-CTVMDrw7.js",
+        "sha256": "81a9d2201372bd6e246f2988a87d95278d1071528fb9c8cf162ac81bb7e568b3",
+        "rawBytes": 8771,
+        "gzipBytes": 3280,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/topology-ru-BFkGS1u5.js",
+        "sha256": "0682f7e4c82cd3c7131c6ab26c6d04bfbd7bda25ae5b7a4689a3851488271abf",
+        "rawBytes": 12123,
+        "gzipBytes": 3909,
+        "isEntry": false,
+        "imports": [],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/view-device-menu-B34pOD3e.js",
+        "sha256": "263c9a45d8b54ea5906a307eb09af7ba42dc8575c59c2b145d819a4a9189177a",
+        "rawBytes": 4059,
+        "gzipBytes": 1671,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/context-menu-BtGk25Ww.js",
+          "houseplan-assets/device-inbox-Bgy9MYCA.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/view-frame-DiYBs2bI.js",
+        "sha256": "e4d86f5c4b1294c9af3d58d7f8215aa260a2a472baa1e0e16bbca33f7710d55e",
+        "rawBytes": 371093,
+        "gzipBytes": 109241,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/de-B1iKitLR.js",
+          "houseplan-assets/fr-CfzaRQaw.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/wall-face-graph-C5KTQKpU.js",
+        "sha256": "74ec034683afac08e5b654f4bb00ecdb927529b6562735b4eb09f0a6c7af7026",
+        "rawBytes": 9240,
+        "gzipBytes": 3573,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/stored-wall-contact-T_EcJyeo.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/wall-node-card-adapter-BjmvTQaz.js",
+        "sha256": "f22ceec7562949d6babfa4e8465adcb37ec4ae6f03b0e232e9001bbd5a69fcf8",
+        "rawBytes": 65129,
+        "gzipBytes": 21531,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/context-menu-BtGk25Ww.js",
+          "houseplan-assets/device-contact-geometry-CvFRZmvY.js",
+          "houseplan-assets/editor-shared-BXQg6W9W.js",
+          "houseplan-assets/en-CnQbHB7v.js",
+          "houseplan-assets/floating-surface-yWCTRI_V.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-assets/zigbee-topology-CwOy_HWU.js",
+        "sha256": "e8e50b2791780290c599ecfeaa9c51e399796bdb2c2c9ee5bdc45b753fe1b2fd",
+        "rawBytes": 21437,
+        "gzipBytes": 7691,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": [
+          "houseplan-assets/topology-de-Cw6TShK_.js",
+          "houseplan-assets/topology-fr-CTVMDrw7.js",
+          "houseplan-assets/topology-ru-BFkGS1u5.js"
+        ]
+      },
+      {
+        "path": "houseplan-assets/zigbee-topology-runtime-DyJvIxoj.js",
+        "sha256": "086b09f282d056c607afcb4a1474b2aaf161daba1f3e3c0c107608cd6ac715eb",
+        "rawBytes": 8271,
+        "gzipBytes": 3037,
+        "isEntry": false,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/namespace-language-BVfLKFhX.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js",
+          "houseplan-assets/zigbee-topology-CwOy_HWU.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-card.js",
+        "sha256": "5457dc208697cf27691fc410fb182bfcbb1aea9ec0922ef39631f36340dce2ca",
+        "rawBytes": 2534,
+        "gzipBytes": 1335,
+        "isEntry": true,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      },
+      {
+        "path": "houseplan-panel.js",
+        "sha256": "fe1cd8953261a6e28157cfc52b9c667c8d47eedc82060ee5229fe7733fdcc384",
+        "rawBytes": 7924,
+        "gzipBytes": 3240,
+        "isEntry": true,
+        "imports": [
+          "houseplan-assets/canvas-constants-BgqR75IP.js",
+          "houseplan-assets/houseplan-card-Ddw5aukE.js",
+          "houseplan-assets/lit-element-DWj2UGuQ.js",
+          "houseplan-assets/ref-0U-aF_2O.js",
+          "houseplan-assets/view-frame-DiYBs2bI.js"
+        ],
+        "dynamicImports": []
+      }
+    ]
+  },
+  "micro": {
+    "method": "acceptConfigWrite, 100 evolving full config candidates per series; one warmup series then five measured. Includes fresh hashing, accepted-cache cloning and revision capture; no mock hash or no-op persistence path.",
+    "perCallMs": [
+      1.752925580000001,
+      1.7503051199999993,
+      1.8928078099999994,
+      1.80488472,
+      1.7289943799999992
+    ]
+  },
+  "samples": [
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-0",
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 3814.4000000001397,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 3,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 97,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 3858.3000000000466,
+      "ack": 3859.5,
+      "paint": 3903.9000000001397,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 5,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 98,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 43.89999999990687,
+      "ackToPaint": 44.4000000001397,
+      "client": 89.5,
+      "longTasks": [
+        {
+          "start": 3812.6999999999534,
+          "duration": 89
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": true
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-1",
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 4330.199999999953,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 5,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 98,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 4380.100000000093,
+      "ack": 4382.40000000014,
+      "paint": 4415.699999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 7,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 99,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 49.9000000001397,
+      "ackToPaint": 33.299999999813735,
+      "client": 85.5,
+      "longTasks": [
+        {
+          "start": 4329.100000000093,
+          "duration": 85
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-2",
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 4813.90000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 7,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 99,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 4850,
+      "ack": 4851.300000000047,
+      "paint": 4884,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 9,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 100,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 36.0999999998603,
+      "ackToPaint": 32.699999999953434,
+      "client": 70.0999999998603,
+      "longTasks": [
+        {
+          "start": 4811.699999999953,
+          "duration": 71
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-3",
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 5280.5,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 9,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 100,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 5312.40000000014,
+      "ack": 5313.300000000047,
+      "paint": 5345.800000000047,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 11,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 101,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 31.9000000001397,
+      "ackToPaint": 32.5,
+      "client": 65.30000000004657,
+      "longTasks": [
+        {
+          "start": 5279.100000000093,
+          "duration": 65
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-4",
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 5730.699999999953,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 11,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 101,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 5765.300000000047,
+      "ack": 5766.5,
+      "paint": 5797.90000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 13,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 102,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 34.60000000009313,
+      "ackToPaint": 31.4000000001397,
+      "client": 67.20000000018626,
+      "longTasks": [
+        {
+          "start": 5729.199999999953,
+          "duration": 67
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 6280.600000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 13,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 102,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 6316.600000000093,
+      "ack": 6317.600000000093,
+      "paint": 6353.199999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 15,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 103,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 36,
+      "ackToPaint": 35.5999999998603,
+      "client": 72.5999999998603,
+      "longTasks": [
+        {
+          "start": 6278.199999999953,
+          "duration": 74
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": true
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1,
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 6747.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 15,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 103,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 6781.90000000014,
+      "ack": 6782.800000000047,
+      "paint": 6815.100000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 17,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 104,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 34.800000000046566,
+      "ackToPaint": 32.300000000046566,
+      "client": 68,
+      "longTasks": [
+        {
+          "start": 6745.5,
+          "duration": 68
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 7196.800000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 17,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 104,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 7229.699999999953,
+      "ack": 7230.90000000014,
+      "paint": 7266.40000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 19,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 105,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 32.89999999990687,
+      "ackToPaint": 35.5,
+      "client": 69.60000000009313,
+      "longTasks": [
+        {
+          "start": 7195.100000000093,
+          "duration": 70
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1,
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 7680.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 19,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 105,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 7713.800000000047,
+      "ack": 7714.699999999953,
+      "paint": 7747,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 21,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 106,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 33.699999999953434,
+      "ackToPaint": 32.300000000046566,
+      "client": 66.89999999990687,
+      "longTasks": [
+        {
+          "start": 7678.699999999953,
+          "duration": 67
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 8182.300000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 21,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 106,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 8220.800000000047,
+      "ack": 8221.600000000093,
+      "paint": 8255.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 23,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 107,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 38.5,
+      "ackToPaint": 33.89999999990687,
+      "client": 73.19999999995343,
+      "longTasks": [
+        {
+          "start": 8180.699999999953,
+          "duration": 74
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 9100.5,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 23,
+          "presentations": 1460,
+          "lightGraphs": 96,
+          "lightResolutions": 107,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 9126.699999999953,
+      "ack": 9127.699999999953,
+      "paint": 9164.40000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 25,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 109,
+          "lightGeometry": 1
+        },
+        "models": 3
+      },
+      "inputToRequest": 26.199999999953434,
+      "ackToPaint": 36.700000000186265,
+      "client": 63.9000000001397,
+      "longTasks": [
+        {
+          "start": 9098.300000000047,
+          "duration": 63
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": true
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "static",
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 9581.40000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 25,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 109,
+          "lightGeometry": 1
+        },
+        "models": 3
+      },
+      "request": 9603.800000000047,
+      "ack": 9604.699999999953,
+      "paint": 9641.600000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 27,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 111,
+          "lightGeometry": 2
+        },
+        "models": 3
+      },
+      "inputToRequest": 22.399999999906868,
+      "ackToPaint": 36.9000000001397,
+      "client": 60.199999999953434,
+      "longTasks": [
+        {
+          "start": 9579.600000000093,
+          "duration": 60
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 10048.5,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 27,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 111,
+          "lightGeometry": 2
+        },
+        "models": 3
+      },
+      "request": 10068.699999999953,
+      "ack": 10069.699999999953,
+      "paint": 10104,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 29,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 113,
+          "lightGeometry": 3
+        },
+        "models": 3
+      },
+      "inputToRequest": 20.199999999953434,
+      "ackToPaint": 34.300000000046566,
+      "client": 55.5,
+      "longTasks": [
+        {
+          "start": 10046.90000000014,
+          "duration": 55
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "static",
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 10549.800000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 29,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 113,
+          "lightGeometry": 3
+        },
+        "models": 3
+      },
+      "request": 10574.600000000093,
+      "ack": 10575.40000000014,
+      "paint": 10610,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 31,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 115,
+          "lightGeometry": 4
+        },
+        "models": 3
+      },
+      "inputToRequest": 24.800000000046566,
+      "ackToPaint": 34.5999999998603,
+      "client": 60.199999999953434,
+      "longTasks": [
+        {
+          "start": 10547.90000000014,
+          "duration": 60
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 11013.5,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 31,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 115,
+          "lightGeometry": 4
+        },
+        "models": 3
+      },
+      "request": 11036.800000000047,
+      "ack": 11037.699999999953,
+      "paint": 11074.40000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 33,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 117,
+          "lightGeometry": 5
+        },
+        "models": 3
+      },
+      "inputToRequest": 23.300000000046566,
+      "ackToPaint": 36.700000000186265,
+      "client": 60.9000000001397,
+      "longTasks": [
+        {
+          "start": 11012.100000000093,
+          "duration": 60
+        }
+      ],
+      "persisted": true,
+      "round": 0,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-0",
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 3794.1999999999534,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 3,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 97,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 3839.3000000000466,
+      "ack": 3840.4000000001397,
+      "paint": 3880.4000000001397,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 5,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 98,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 45.10000000009313,
+      "ackToPaint": 40,
+      "client": 86.20000000018626,
+      "longTasks": [
+        {
+          "start": 3792.8000000000466,
+          "duration": 86
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": true
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-1",
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 4294.699999999953,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 5,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 98,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 4339.100000000093,
+      "ack": 4340.300000000047,
+      "paint": 4373.699999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 7,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 99,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 44.4000000001397,
+      "ackToPaint": 33.39999999990687,
+      "client": 79,
+      "longTasks": [
+        {
+          "start": 4292.699999999953,
+          "duration": 80
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-2",
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 4761.5,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 7,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 99,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 4796.300000000047,
+      "ack": 4797.199999999953,
+      "paint": 4835.100000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 9,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 100,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 34.800000000046566,
+      "ackToPaint": 37.9000000001397,
+      "client": 73.60000000009313,
+      "longTasks": [
+        {
+          "start": 4760.100000000093,
+          "duration": 73
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-3",
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 5244.40000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 9,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 100,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 5278.800000000047,
+      "ack": 5279.90000000014,
+      "paint": 5311.40000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 11,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 101,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 34.39999999990687,
+      "ackToPaint": 31.5,
+      "client": 67,
+      "longTasks": [
+        {
+          "start": 5242.90000000014,
+          "duration": 67
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-4",
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 5693.800000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 11,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 101,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 5726.90000000014,
+      "ack": 5728.100000000093,
+      "paint": 5762.600000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 13,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 102,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 33.10000000009313,
+      "ackToPaint": 34.5,
+      "client": 68.80000000004657,
+      "longTasks": [
+        {
+          "start": 5692.5,
+          "duration": 69
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 6227.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 13,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 102,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 6265.600000000093,
+      "ack": 6266.5,
+      "paint": 6303.40000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 15,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 103,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 38.5,
+      "ackToPaint": 36.9000000001397,
+      "client": 76.30000000004657,
+      "longTasks": [
+        {
+          "start": 6225,
+          "duration": 76
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": true
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1,
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 6693.5,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 15,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 103,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 6727.90000000014,
+      "ack": 6729,
+      "paint": 6762.199999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 17,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 104,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 34.4000000001397,
+      "ackToPaint": 33.199999999953434,
+      "client": 68.69999999995343,
+      "longTasks": [
+        {
+          "start": 6692.300000000047,
+          "duration": 69
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 7143,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 17,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 104,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 7175.800000000047,
+      "ack": 7176.800000000047,
+      "paint": 7208.699999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 19,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 105,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 32.800000000046566,
+      "ackToPaint": 31.899999999906868,
+      "client": 65.69999999995343,
+      "longTasks": [
+        {
+          "start": 7141.800000000047,
+          "duration": 65
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1,
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 7593.699999999953,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 19,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 105,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 7628.40000000014,
+      "ack": 7629.199999999953,
+      "paint": 7661.699999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 21,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 106,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 34.700000000186265,
+      "ackToPaint": 32.5,
+      "client": 68,
+      "longTasks": [
+        {
+          "start": 7591.300000000047,
+          "duration": 69
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 8043.800000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 21,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 106,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 8079.199999999953,
+      "ack": 8080.100000000093,
+      "paint": 8113.600000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 23,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 107,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 35.39999999990687,
+      "ackToPaint": 33.5,
+      "client": 69.80000000004657,
+      "longTasks": [
+        {
+          "start": 8042.5,
+          "duration": 69
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 8912.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 23,
+          "presentations": 1460,
+          "lightGraphs": 96,
+          "lightResolutions": 107,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 8936.600000000093,
+      "ack": 8937.600000000093,
+      "paint": 8976.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 25,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 109,
+          "lightGeometry": 1
+        },
+        "models": 3
+      },
+      "inputToRequest": 24.5,
+      "ackToPaint": 38.89999999990687,
+      "client": 64.39999999990687,
+      "longTasks": [
+        {
+          "start": 8914.100000000093,
+          "duration": 60
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": true
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "static",
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 9377.600000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 25,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 109,
+          "lightGeometry": 1
+        },
+        "models": 3
+      },
+      "request": 9399.699999999953,
+      "ack": 9400.800000000047,
+      "paint": 9435.199999999953,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 27,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 111,
+          "lightGeometry": 2
+        },
+        "models": 3
+      },
+      "inputToRequest": 22.0999999998603,
+      "ackToPaint": 34.39999999990687,
+      "client": 57.5999999998603,
+      "longTasks": [
+        {
+          "start": 9379.5,
+          "duration": 54
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 9844.90000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 27,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 111,
+          "lightGeometry": 2
+        },
+        "models": 3
+      },
+      "request": 9867,
+      "ack": 9867.90000000014,
+      "paint": 9907.100000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 29,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 113,
+          "lightGeometry": 3
+        },
+        "models": 3
+      },
+      "inputToRequest": 22.0999999998603,
+      "ackToPaint": 39.199999999953434,
+      "client": 62.199999999953434,
+      "longTasks": [
+        {
+          "start": 9843.600000000093,
+          "duration": 61
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "static",
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 10311.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 29,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 113,
+          "lightGeometry": 3
+        },
+        "models": 3
+      },
+      "request": 10329.800000000047,
+      "ack": 10330.90000000014,
+      "paint": 10366.100000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 31,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 115,
+          "lightGeometry": 4
+        },
+        "models": 3
+      },
+      "inputToRequest": 18.699999999953434,
+      "ackToPaint": 35.199999999953434,
+      "client": 55,
+      "longTasks": [
+        {
+          "start": 10308.40000000014,
+          "duration": 55
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 10777.600000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 31,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 115,
+          "lightGeometry": 4
+        },
+        "models": 3
+      },
+      "request": 10799.40000000014,
+      "ack": 10800.40000000014,
+      "paint": 10835.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 33,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 117,
+          "lightGeometry": 5
+        },
+        "models": 3
+      },
+      "inputToRequest": 21.800000000046566,
+      "ackToPaint": 35.0999999998603,
+      "client": 57.89999999990687,
+      "longTasks": [
+        {
+          "start": 10775.800000000047,
+          "duration": 58
+        }
+      ],
+      "persisted": true,
+      "round": 1,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-0",
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 3719.9000000001397,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 3,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 97,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 3771.3000000000466,
+      "ack": 3772.600000000093,
+      "paint": 3820.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 5,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 98,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 51.39999999990687,
+      "ackToPaint": 47.89999999990687,
+      "client": 100.5999999998603,
+      "longTasks": [
+        {
+          "start": 3718.5,
+          "duration": 100
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": true
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-1",
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 4219.40000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 5,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 98,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 4257.600000000093,
+      "ack": 4259.100000000093,
+      "paint": 4293.100000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 7,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 99,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 38.199999999953434,
+      "ackToPaint": 34,
+      "client": 73.69999999995343,
+      "longTasks": [
+        {
+          "start": 4218.100000000093,
+          "duration": 73
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-2",
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 4685.90000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 7,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 99,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 4721.5,
+      "ack": 4722.40000000014,
+      "paint": 4753.300000000047,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 9,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 100,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 35.5999999998603,
+      "ackToPaint": 30.899999999906868,
+      "client": 67.39999999990687,
+      "longTasks": [
+        {
+          "start": 4683.90000000014,
+          "duration": 68
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-3",
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 5136.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 9,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 100,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 5168.40000000014,
+      "ack": 5169.40000000014,
+      "paint": 5205.800000000047,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 11,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 101,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 32.300000000046566,
+      "ackToPaint": 36.39999999990687,
+      "client": 69.69999999995343,
+      "longTasks": [
+        {
+          "start": 5134.90000000014,
+          "duration": 69
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-name",
+      "kind": "room",
+      "space": "f1",
+      "expected": "R0-4",
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 5603.100000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 11,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 101,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 5635.200000000186,
+      "ack": 5637.40000000014,
+      "paint": 5669,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 13,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 102,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 32.10000000009313,
+      "ackToPaint": 31.5999999998603,
+      "client": 65.89999999990687,
+      "longTasks": [
+        {
+          "start": 5601.700000000186,
+          "duration": 66
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 6137.800000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 13,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 102,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 6176.100000000093,
+      "ack": 6177,
+      "paint": 6211.200000000186,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 15,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 103,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 38.300000000046566,
+      "ackToPaint": 34.200000000186265,
+      "client": 73.4000000001397,
+      "longTasks": [
+        {
+          "start": 6135.700000000186,
+          "duration": 74
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": true
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1,
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 6603.90000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 15,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 103,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 6639.800000000047,
+      "ack": 6640.700000000186,
+      "paint": 6674.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 17,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 104,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 35.89999999990687,
+      "ackToPaint": 33.799999999813735,
+      "client": 70.5999999998603,
+      "longTasks": [
+        {
+          "start": 6601.5,
+          "duration": 72
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 7070.90000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 17,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 104,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 7109,
+      "ack": 7110.300000000047,
+      "paint": 7148.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 19,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 105,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 38.0999999998603,
+      "ackToPaint": 38.199999999953434,
+      "client": 77.5999999998603,
+      "longTasks": [
+        {
+          "start": 7068.5,
+          "duration": 79
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1,
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 7535.40000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 19,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 105,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 7568.5,
+      "ack": 7569.5,
+      "paint": 7600.5,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 21,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 106,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 33.0999999998603,
+      "ackToPaint": 31,
+      "client": 65.0999999998603,
+      "longTasks": [
+        {
+          "start": 7534.100000000093,
+          "duration": 65
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "room-paint",
+      "kind": "room",
+      "space": "f1",
+      "expected": 1.2,
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 7985.600000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 21,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 106,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 8021.600000000093,
+      "ack": 8022.5,
+      "paint": 8052.90000000014,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 7,
+          "refreshed": 1,
+          "incremental": 23,
+          "presentations": 1220,
+          "lightGraphs": 96,
+          "lightResolutions": 107,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "inputToRequest": 36,
+      "ackToPaint": 30.4000000001397,
+      "client": 67.30000000004657,
+      "longTasks": [
+        {
+          "start": 7984.40000000014,
+          "duration": 67
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 0,
+      "delay": 0,
+      "requests": 1,
+      "input": 8854.40000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 23,
+          "presentations": 1460,
+          "lightGraphs": 96,
+          "lightResolutions": 107,
+          "lightGeometry": 0
+        },
+        "models": 3
+      },
+      "request": 8878.600000000093,
+      "ack": 8879.5,
+      "paint": 8917,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 25,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 109,
+          "lightGeometry": 1
+        },
+        "models": 3
+      },
+      "inputToRequest": 24.199999999953434,
+      "ackToPaint": 37.5,
+      "client": 62.5999999998603,
+      "longTasks": [
+        {
+          "start": 8852.800000000047,
+          "duration": 62
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": true
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "static",
+      "iteration": 1,
+      "delay": 0,
+      "requests": 1,
+      "input": 9320.800000000047,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 25,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 109,
+          "lightGeometry": 1
+        },
+        "models": 3
+      },
+      "request": 9342.300000000047,
+      "ack": 9343.200000000186,
+      "paint": 9378.600000000093,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 27,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 111,
+          "lightGeometry": 2
+        },
+        "models": 3
+      },
+      "inputToRequest": 21.5,
+      "ackToPaint": 35.39999999990687,
+      "client": 57.800000000046566,
+      "longTasks": [
+        {
+          "start": 9318.700000000186,
+          "duration": 58
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 2,
+      "delay": 0,
+      "requests": 1,
+      "input": 9786.90000000014,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 27,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 111,
+          "lightGeometry": 2
+        },
+        "models": 3
+      },
+      "request": 9807.800000000047,
+      "ack": 9809.100000000093,
+      "paint": 9843.800000000047,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 29,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 113,
+          "lightGeometry": 3
+        },
+        "models": 3
+      },
+      "inputToRequest": 20.899999999906868,
+      "ackToPaint": 34.699999999953434,
+      "client": 56.89999999990687,
+      "longTasks": [
+        {
+          "start": 9784.200000000186,
+          "duration": 58
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "static",
+      "iteration": 3,
+      "delay": 0,
+      "requests": 1,
+      "input": 10253.600000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 29,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 113,
+          "lightGeometry": 3
+        },
+        "models": 3
+      },
+      "request": 10273.700000000186,
+      "ack": 10274.800000000047,
+      "paint": 10309,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 31,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 115,
+          "lightGeometry": 4
+        },
+        "models": 3
+      },
+      "inputToRequest": 20.100000000093132,
+      "ackToPaint": 34.199999999953434,
+      "client": 55.39999999990687,
+      "longTasks": [
+        {
+          "start": 10255.600000000093,
+          "duration": 51
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    },
+    {
+      "case": "visible-bg",
+      "kind": "space",
+      "space": "f1",
+      "expected": "daynight",
+      "iteration": 4,
+      "delay": 0,
+      "requests": 1,
+      "input": 10720.600000000093,
+      "trusted": true,
+      "before": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 31,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 115,
+          "lightGeometry": 4
+        },
+        "models": 3
+      },
+      "request": 10740.200000000186,
+      "ack": 10741.100000000093,
+      "paint": 10778.200000000186,
+      "after": {
+        "floor": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 1,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 1,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "contacts": {
+          "measurements": 37,
+          "measurementBatches": 2,
+          "rebuilds": 2,
+          "paints": 35
+        },
+        "live": {
+          "full": 8,
+          "refreshed": 1,
+          "incremental": 33,
+          "presentations": 1460,
+          "lightGraphs": 97,
+          "lightResolutions": 117,
+          "lightGeometry": 5
+        },
+        "models": 3
+      },
+      "inputToRequest": 19.600000000093132,
+      "ackToPaint": 37.10000000009313,
+      "client": 57.60000000009313,
+      "longTasks": [
+        {
+          "start": 10718.800000000047,
+          "duration": 57
+        }
+      ],
+      "persisted": true,
+      "round": 2,
+      "cold": false
+    }
+  ],
+  "browser": "151.0.7922.34",
+  "load": {
+    "markers": 200,
+    "hidden": 0,
+    "visible": 120,
+    "contacts": 35,
+    "contactFaces": 2,
+    "wallPaths": 1,
+    "floorBuilds": {
+      "wallUnion": 1,
+      "innerContour": 0,
+      "cleanFloor": 24,
+      "openingWallIndex": 1,
+      "lightBarrier": 0,
+      "glowClip": 0,
+      "physicalBodies": 2,
+      "openingTunnel": 0,
+      "lightPhysicalBodies": 0,
+      "sunRays": 0,
+      "isoSun": 0
+    },
+    "registry": {
+      "devices": 214,
+      "entities": 2890,
+      "states": 1685
+    }
+  },
+  "loadAfter": [
+    0.52,
+    0.78,
+    0.59
+  ]
+}

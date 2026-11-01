@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1153,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Removes a proven duplicate synchronous accepted-config fingerprint walk without changing Save, snapshots, revisions, persistence, rollback or history; records bounded before/after investigation."
+}

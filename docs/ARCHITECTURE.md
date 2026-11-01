@@ -2480,3 +2480,13 @@ with fresh IDs and deep copies; source config, markers and layout are unchanged
 by filtering. There are no persisted decor groups. The existing Optimize,
 physical preflight, opening-host remapping and config adoption/rollback path
 remain the only writer; category switches are disabled while that operation runs.
+
+### Fresh accepted-cache fingerprints (#1153)
+
+A config/set acceptance hashes its exact candidate freshly, then supplies that
+fingerprint directly to the private accepted-cache helper in the same synchronous
+call. The helper still deep-clones accepted config/layout; a pending/live mutation
+cannot rewrite the cached revision. The value is not reused from stage or a prior
+object identity: another acceptance of the same mutated object computes again.
+Other helper callers retain recomputation after their replacement callbacks.
+The format, canonicalization, CAS/rollback, revisions and history remain unchanged.

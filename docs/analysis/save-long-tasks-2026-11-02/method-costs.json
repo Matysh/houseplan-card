@@ -1,0 +1,593 @@
+{
+  "diagnosticOnly": true,
+  "instrumented": true,
+  "source": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+  "method": "Inclusive method durations and native clone overlap clipped to unchanged input→paint windows. Nested method totals overlap and must not be added.",
+  "samples": [
+    {
+      "case": "room-name",
+      "iteration": 0,
+      "client": 94.69999999995343,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 2.0999999993946403,
+          "calls": 21
+        },
+        "contacts.sync": {
+          "ms": 13.600000000093132,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.699999999953434,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.6000000000931323,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.7000000001862645,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 3.800000000046566,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 5.599999999860302,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 1,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-name",
+      "iteration": 1,
+      "client": 78.29999999981374,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 1.8000000000465661,
+          "calls": 17
+        },
+        "contacts.sync": {
+          "ms": 15.199999999953434,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 6.400000000139698,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.5999999998603016,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.6999999999534339,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.5,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 6.399999999906868,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-name",
+      "iteration": 2,
+      "client": 72,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.8999999996740371,
+          "calls": 9
+        },
+        "contacts.sync": {
+          "ms": 14.900000000139698,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.199999999953434,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.39999999990686774,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.39999999990686774,
+          "calls": 1
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.5,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.9000000001396984,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-name",
+      "iteration": 3,
+      "client": 69.39999999990687,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 1.0000000004656613,
+          "calls": 10
+        },
+        "contacts.sync": {
+          "ms": 13.799999999813735,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.5,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.39999999990686774,
+          "calls": 1
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.3999999999068677,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-name",
+      "iteration": 4,
+      "client": 77.10000000009313,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.9000000001396984,
+          "calls": 9
+        },
+        "contacts.sync": {
+          "ms": 15.399999999906868,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 4,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.7999999998137355,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.7000000001862645,
+          "calls": 1
+        },
+        "adoption.rememberAccepted": {
+          "ms": 3.2000000001862645,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 6,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 1,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-paint",
+      "iteration": 0,
+      "client": 69.69999999995343,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 1.099999999627471,
+          "calls": 10
+        },
+        "contacts.sync": {
+          "ms": 13.299999999813735,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 4.699999999953434,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.5,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.4000000001396984,
+          "calls": 1
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.699999999953434,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4.400000000139698,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 1,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-paint",
+      "iteration": 1,
+      "client": 70.5,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 1.2999999995809048,
+          "calls": 13
+        },
+        "contacts.sync": {
+          "ms": 15.399999999906868,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.4000000001396984,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.4000000001396984,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.6999999999534339,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.800000000046566,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4.399999999906868,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-paint",
+      "iteration": 2,
+      "client": 72,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.8999999999068677,
+          "calls": 9
+        },
+        "contacts.sync": {
+          "ms": 15.99999999976717,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.300000000046566,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.39999999990686774,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.5999999998603016,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 3.800000000046566,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 5.399999999906868,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-paint",
+      "iteration": 3,
+      "client": 67.60000000009313,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.9999999997671694,
+          "calls": 7
+        },
+        "contacts.sync": {
+          "ms": 13.299999999813735,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.300000000046566,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.5,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.6999999999534339,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.4000000001396984,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 3.9000000001396984,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "room-paint",
+      "iteration": 4,
+      "client": 68.10000000009313,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 1,
+          "calls": 10
+        },
+        "contacts.sync": {
+          "ms": 13.400000000139698,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.0999999998603016,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.4000000001396984,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.5,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.199999999953434,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 3.8999999999068677,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 0,
+      "client": 63.799999999813735,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 1.2000000004190952,
+          "calls": 12
+        },
+        "contacts.sync": {
+          "ms": 12.100000000093132,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 4.300000000046566,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.5,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.6000000000931323,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 3,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 5,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6000000000931323,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 1,
+      "client": 58.199999999953434,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.5999999998603016,
+          "calls": 6
+        },
+        "contacts.sync": {
+          "ms": 11.799999999813735,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.699999999953434,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.4000000001396984,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.49999999976716936,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.6000000000931323,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4.5,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 2,
+      "client": 61.89999999990687,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.9999999993015081,
+          "calls": 10
+        },
+        "contacts.sync": {
+          "ms": 13,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.9000000001396984,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.6000000000931323,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.5999999998603016,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.5,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4.900000000139698,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.5999999998603016,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 3,
+      "client": 56.800000000046566,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.7999999998137355,
+          "calls": 8
+        },
+        "contacts.sync": {
+          "ms": 13,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 3.300000000046566,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.5,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.6000000000931323,
+          "calls": 2
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.5,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 4.100000000093132,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 1,
+          "calls": 1
+        }
+      }
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 4,
+      "client": 62,
+      "totals": {
+        "card._cfgFingerprint": {
+          "ms": 0.8000000000465661,
+          "calls": 8
+        },
+        "contacts.sync": {
+          "ms": 14.199999999953434,
+          "calls": 2
+        },
+        "adoption.stageConfigCandidate": {
+          "ms": 4.800000000046566,
+          "calls": 1
+        },
+        "structuredClone:other": {
+          "ms": 0.8000000000465661,
+          "calls": 1
+        },
+        "structuredClone:adoption.rememberAccepted": {
+          "ms": 0.7000000001862645,
+          "calls": 1
+        },
+        "adoption.rememberAccepted": {
+          "ms": 2.7000000001862645,
+          "calls": 1
+        },
+        "adoption.acceptConfigWrite": {
+          "ms": 5,
+          "calls": 1
+        },
+        "card._cacheSnapshot": {
+          "ms": 0.6999999999534339,
+          "calls": 1
+        }
+      }
+    }
+  ]
+}

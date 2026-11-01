@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "issue": 1153,
+  "diagnosticOnly": true,
+  "baselineSource": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+  "baselineAdoptionBlob": "ee12d34e09d74eaf97af7914efb66f074f238a6a",
+  "profileBrowser": "151.0.7922.34",
+  "baselineBundleFingerprint": "b7275456516c49886ec7c620f0c93ae69f21c0a35e7c5106b9802bf12ab3210a",
+  "baselineCompiledAdoptionSha256": "f872b88072f14687ff8c6fa2a5c3cd64f74b957c4e24789e60b66b0f1796df3f",
+  "files": {
+    "probe.mjs": {
+      "bytes": 5282,
+      "sha256": "fa1a740c49b5802e55a3c7dd6fee4e773838ee81f4853a8c34a08092b144b114"
+    },
+    "profile.mjs": {
+      "bytes": 3354,
+      "sha256": "e1ec396f280eb631486133e47f0c725bd18d06877523b37d6b3ca220db7e3a73"
+    },
+    "bounded-costs.json": {
+      "bytes": 8964,
+      "sha256": "dd92c81fb7632e0839dc9fce61d85bf3e6bf3c44b73e7150e1e343760da06be9"
+    },
+    "trace.json.gz": {
+      "bytes": 1127891,
+      "sha256": "951ec98daff0684378ca36643d5125711ddf6c0f3a92dd2ef4a87e8eb6330373"
+    },
+    "method-samples.json.gz": {
+      "bytes": 31324,
+      "sha256": "9c4b2afcb1fd7e8fe5b8257fd6b9f421aad7a61d55c5c52f7259df1a55f1a4fc"
+    },
+    "profile-samples.json.gz": {
+      "bytes": 8799,
+      "sha256": "ac2232a4a5c004664f8b8ee998931b9526855ee20bf0f7a89ead9e89e237a80e"
+    },
+    "analyze.mjs": {
+      "bytes": 4638,
+      "sha256": "914e0d755f4ea579f14dba81520aa9d859853359414bcbabb1b50345405aeb59"
+    },
+    "baseline-measurement.json": {
+      "bytes": 147163,
+      "sha256": "7c3d1498dcde07273c3ae42b51396186d7a5af8a158cf263ced5a94a6d5c6319"
+    },
+    "profile.cpuprofile.gz": {
+      "bytes": 61442,
+      "sha256": "e11123013bfec24116572a011d4d7357ae944a93230e5fafa9044503709af7f7"
+    },
+    "method-costs.json": {
+      "bytes": 14396,
+      "sha256": "aedb42dd4843a62c825b919f61126bab1b9ed733073a27ef7568ac791c3896f4"
+    },
+    "measure.mjs": {
+      "bytes": 3458,
+      "sha256": "81d7d6a2ba5a6fbed12ff5df78ec955901d4eadc9619fec4b1e4ea1d5b884235"
+    }
+  }
+}

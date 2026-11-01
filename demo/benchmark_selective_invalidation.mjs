@@ -35,7 +35,9 @@ export function timingFailures(samples,{iterations=20}={}) {
     for(const [field,limit] of [['inputToRequest',b?120:100],['ackToPaint',b?180:100],['client',b?300:200]])
       if(!row.cold&&row.dpr===1&&row[field].p95>limit)failures.push(`${label}: ${field} p95=${row[field].p95} >${limit}`);
     if(row.client.max>(b?600:400))failures.push(`${label}: client max=${row.client.max} >${b?600:400}`);
-    // #1145, owner 2026-10-30: accept the observed 117ms paint task for beta.5.
+    // #1145 accepted the observed 117ms paint task; #1153 retains that existing
+    // bound for this addressed benchmark in 1.84: a local 3-case/DPR1 subset
+    // cannot justify lowering the full CI matrix to 100ms. No threshold changed.
     // History, latency percentiles, maxima and correctness gates stay unchanged.
     const longTaskLimit=b?200:117;
     if(row.maxLongTask>longTaskLimit)failures.push(`${label}: long task=${row.maxLongTask} >${longTaskLimit}`);
