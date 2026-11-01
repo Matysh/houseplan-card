@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 375,
+  "revision": 376,
   "nextTicket": 39,
   "nextFence": 39,
   "tasks": {
@@ -493,7 +493,8 @@
           "entry": 1,
           "detail": "Открытие сохранённого плана в View: cancelled",
           "eventId": "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return:return:1193"
-        }
+        },
+        "delivered": true
       }
     }
   },
