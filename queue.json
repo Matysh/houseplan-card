@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 222,
-  "nextTicket": 24,
+  "revision": 223,
+  "nextTicket": 25,
   "nextFence": 24,
   "tasks": {
     "1128": {
@@ -59,14 +59,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1175-vacuum-live-tail",
-      "materialSha": "437f17dbf6286fa85ce719984a3c8c7ab601dca9",
+      "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 22,
-      "queued": false,
+      "ticket": 24,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793566047449,
-      "reviewEntry": 2,
+      "readyAt": 1793566654117,
+      "reviewEntry": 3,
       "patchId": "7d2d085fd563bebdbb1872e0960e21856fd2805c",
       "changedFiles": [
         "demo/smoke_vacuum_camera.mjs",
@@ -85,10 +85,7 @@
         "key": "2:fix-generated-report-location",
         "reason": "fix-generated-report-location",
         "status": "delivered"
-      },
-      "automationError": "checks-unavailable",
-      "automationSince": 1793566556877,
-      "reason": "fix-generated-report-location"
+      }
     },
     "1176": {
       "issue": 1176,
@@ -300,7 +297,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1175
+  ],
   "active": {
     "issue": 1190,
     "worker": "github-coordinator",
@@ -534,6 +533,10 @@
     "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1190::": {
       "digest": "3783a3499529b1c5eb807fb403e31865953f8fca4e8fbe36f1b7c1038ccf073a",
       "issue": 1190
+    },
+    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b": {
+      "digest": "f2582b3a46d55fb43d943e039df308a21a8487c2e63cde8469d5f754ba435e0c",
+      "issue": 1175
     }
   },
   "devWebhook": {
