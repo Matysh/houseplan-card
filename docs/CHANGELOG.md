@@ -3,7 +3,6 @@
 ## Unreleased
 
 - Refresh the synthetic browser/Golden icon fixture from current sources during asset preparation, excluding local capture/private output. Capture provenance records the icon-map checksum; product runtime and visual baselines are unchanged. [#1193](https://github.com/Matysh/houseplan-card/issues/1193)
-- Require visible Ubuntu WSL windows for every agent's local runs, including `finish`, with meaningful titles, actual progress, retained results and no focus theft; document current launcher limitations. [#1194](https://github.com/Matysh/houseplan-card/issues/1194)
 
 - Save avoids a duplicate full-config fingerprint walk when caching an accepted config/set response. Every acceptance still computes a fresh hash and retains isolated config/layout snapshots, revisions and rollback behavior. Bounded Save profiling and comparison are recorded for #1153. [#1153](https://github.com/Matysh/houseplan-card/issues/1153)
 - Golden capture records the checked-out candidate SHA independently of the workflow event SHA, so fallback reports identify the material correctly while preserving CI provenance and the acceptance checks. [#1191](https://github.com/Matysh/houseplan-card/issues/1191)
