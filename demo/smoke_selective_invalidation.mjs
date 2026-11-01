@@ -65,6 +65,13 @@ try {
       return original(message);
     }};
   });
+  // This correctness witness edits an inactive floor through actual wide tabs.
+  // Intrinsic header flow may compact1200px after the longer title (#1184);
+  // widen the real viewport instead of spoofing a hidden/inactive control.
+  results.inactiveHeaderBefore=await page.evaluate(()=>({compact:window.__card._compactSpaces,phase:window.__card._panelHeaderChoice.phase,width:window.__card.renderRoot.querySelector('.hdr').getBoundingClientRect().width}));
+  await page.setViewportSize({width:1920,height:1000});
+  await page.locator('#host').evaluate(host=>host.style.width='1800px');
+  await card.locator('[data-hp="space-settings"][data-id="f2"]').waitFor({state:'visible'});await tick();
   before=await counters();results.paintBefore=await page.evaluate(()=>({key:window.__card._floorKey('f1'),space:structuredClone(window.__card._curSpaceCfg)}));dialog=await open('f2');await dialog.locator('#space-title').fill('Hidden floor paint 1093');
   await page.evaluate(()=>window.__hold1093=true);
   await dialog.locator('[data-hp="dialog-confirm"]').click();await page.waitForFunction(()=>!!window.__release1093);
