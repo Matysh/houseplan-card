@@ -1,7 +1,0 @@
-{
-  "schema": 1,
-  "issue": 917,
-  "baseStable": "v1.81.0",
-  "category": "infra",
-  "rationale": "Repairs five nightly mutation witnesses and the owner-approved post-stable metadata-check prerequisite: two type-safe mutation definitions, gesture/renderer coverage, a stale-door mutation spanning redundant protections, and explicit historical verification separate from strict publication. Product runtime, behavior, budgets and nightly coverage are unchanged."
-}

@@ -1,7 +1,0 @@
-{
-  "schema": 1,
-  "issue": 638,
-  "baseStable": "v1.83.0",
-  "category": "infra",
-  "rationale": "The only delivery of issue638 reachable since v1.83.0 is commit5d9ca27e6, adding the independent RELEASE-REVIEW-v1.83.1 document and its review index entry. No product/runtime behaviour or configuration changes; historical release-review accounting only."
-}
