@@ -59,12 +59,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 11 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 107 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 67 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 282 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **581 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
-
+| Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 280 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **568 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -179,13 +178,10 @@ while the pointer remains held; a pure draft or geometry unit cannot prove that
 both live and settled renderer owners preserve the visible cut. These are
 registration declarations only; execution remains background.
 
-- `plan-rotation-phone-close-white-on-light-1070`
 
-The #1070 phone frame decodes its captured PNG and requires a contrasting close
-glyph within the measured 24 px target at 320/360 px. This observes composed
-opacity and painted pixels; a colour-token or DOM-presence check cannot prove
-that the icon is visible. This is a registered background witness, not a claim that
-the mutant has run during development.
+The historical #1070 close-glyph witness used a 24px phone target. Its
+declaration and inventory ID are retired in #1184 with that interface; current
+shared-header close controls use the accepted 44px target.
 
 - `compact-space-select-dark-fallback-in-light-theme`
 - `decor-preview-keeps-settled-footprint-1080`
@@ -404,7 +400,6 @@ pointer closes the common menu; a pure callback cannot prove that event tail.
 - `plan-rotation-mode-writes-display-camera-1070`
 - `plan-rotation-mobile-ignores-header-height-1070`
 - `plan-rotation-settled-toolbar-covers-menu-1070`
-- `plan-rotation-animated-header-clips-menu-1070`
 - `plan-rotation-reduced-terminal-keeps-stale-height-1070`
 - `lovelace-rotation-pending-locale-allows-save-1070`
 
@@ -690,31 +685,22 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `grid-scale-opening-symbol-unscaled`
 - `grid-scale-plan-chrome-unscaled`
 - `grid-scale-static-factor-missing`
-- `header-menu-item-below-44`
-- `header-menu-outside-tap-reaches-plan`
 - `hidden-room-names-compact-svg-fallback`
 - `hidden-room-names-full-svg-fallback`
 - `hidden-room-names-iso-override`
 - `hp-dialog-ignores-flex-content`
 - `panel-readonly-empty-bypasses-write-capability`
-- `phone-editor-close-hidden-with-mode-buttons`
-- `phone-header-at-tablet-width`
 - `compact-space-navigation-uses-window-width`
-- `phone-header-shows-title`
-- `phone-header-wraps`
 - `static-card-descendants-hit-testable`
 - `summary-dialog-drops-flex-content`
 - `summary-picker-hot-add-stays-filtered`
 - `tab-editing-without-write-access`
-- `toolbar-active-highlight-stops-at-tab`
 - `toolbar-close-back-inside-tab`
 - `toolbar-close-hidden-at-medium-width`
-- `toolbar-close-slot-collapses-outside-editor`
 - `toolbar-close-slot-idle-focusable`
 - `toolbar-close-slot-leaves-mode-group`
 - `toolbar-close-target-below-24`
 - `toolbar-device-count-returns`
-- `toolbar-mode-zoom-gap-regresses`
 - `warm-dialog-drops-transferred-baseline`
 - `warm-resume-collapses-pending-header`
 - `warm-memo-publishes-torn-header-stage-pair`
@@ -724,15 +710,6 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 ### Custom-element and HA browser lifecycle
 
 - `static-wall-cut-cache-ignores-opening-geometry-1171`
-
-- `header-menu-item-keeps-menu-open`
-- `header-menu-escape-ignored`
-
-#1147 moves these two witnesses back to the mounted mobile-header smoke:
-EditorContextMenu now owns the trusted click/Escape, retirement and return
-focus. Pure header composition does not execute that shared presentation.
-Only static definition readiness was checked during development; execution=0,
-caught=unknown until the background mutation run.
 
 
 - `view-menu-forgets-generation-1089`
@@ -1354,9 +1331,9 @@ All declarations are static readiness only; development does not execute mutants
 Historical #1120 initially registered a phone-gear/two-row cascade witness;
 #1132 and #1184 supersede that UI. The current shared-header witness keeps all
 permitted actions direct and allows the required wrapping rows. Old #616 menu,
-filled-highlight and 24px-reserve declarations are retired in #1184; executable
-declarations in mutation-registry.mjs are authoritative. The original173px
-capture remains historical evidence, not a current two-row requirement. Six public-policy/
+filled-highlight and 24px-reserve declarations and their inventory IDs are
+retired together in #1184. The original173px capture remains historical
+evidence, not a current two-row requirement. Six public-policy/
 ordered-cache witnesses use pure units. Static readiness only; execution zero.
 
 #1120 also registers the allocated-head witness: Properties retains its existing
@@ -1365,7 +1342,10 @@ inside the remaining head and pass real centre-hit tests. Original9849 visual
 clipping is a semantic RED despite successful capture execution. Not executed
 as a mutant; the ordinary fixed-source smoke must pass before handoff.
 
-#1120 owner correction adds two native close witnesses: actual SVG path paint and the24px close target share the active pill centre in all3editors. The natural9f glyph+6px/slot-1.5px failure and native corrected screenshots are preserved. These require actual computed SVG screen geometry; no mutant is executed during development.
+The historical #1120 owner correction covered SVG path paint and the old 24px
+close target in the active pill. #1184 retires that interface and its obsolete
+witnesses; the shared header now uses 44px close targets. Original screenshots
+remain historical evidence, not the current geometry contract.
 
 #1145 adds four browser-only witnesses: computed footer/body cascade, pointer-events and disabled hit cursor, native sticky touch hover versus desktop hover, and real44px/compact36px ShadowRoot targets. Two negative43px inputs exercise the size oracle without patching the implementation. Declarations only; no development mutant execution.
 
