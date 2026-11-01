@@ -1,7 +1,0 @@
-{
-  "schema": 1,
-  "issue": 1185,
-  "baseStable": "v1.83.0",
-  "category": "infra",
-  "rationale": "Only existing General Settings, native permission and accepted-UI smoke observers await real finite modal enter paint, including shadow roots. Exact44px targets, actual intermediate exit frames and all original state/authority/persistence assertions remain. No product, fixture, helper, pin, tolerance, animation, data or baseline changes."
-}

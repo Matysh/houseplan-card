@@ -1,7 +1,0 @@
-{
-  "schema": 1,
-  "issue": 1180,
-  "baseStable": "v1.83.0",
-  "category": "infra",
-  "rationale": "Documentation framing only: the full unchanged synthetic device preview is photographed in the native 480px responsive fullscreen dialog, keeping the 1100px height and strict full-visibility, scroll-owner, reproducibility and image acceptance checks. No product code, user configuration or runtime behaviour changes relative to v1.83.0."
-}

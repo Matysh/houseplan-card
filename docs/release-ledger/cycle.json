@@ -1,9 +1,0 @@
-{
-  "schema": 1,
-  "baseStable": "v1.83.0",
-  "targetStable": "v1.84.0",
-  "milestone": {
-    "number": 11,
-    "title": "1.84.0"
-  }
-}
