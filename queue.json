@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 37,
+  "revision": 38,
   "nextTicket": 6,
   "nextFence": 6,
   "tasks": {
@@ -45,18 +45,7 @@
   },
   "ownerDecisions": {},
   "specReviews": {},
-  "reviewPublications": {
-    "code:1176:review:1176:4:d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22:bfc2d7324795183834d54794b3c103d77f100e76": {
-      "issue": 1176,
-      "kind": "code",
-      "requestId": "review:1176:4:d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22:bfc2d7324795183834d54794b3c103d77f100e76",
-      "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-      "expectedBase": "bfc2d7324795183834d54794b3c103d77f100e76",
-      "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22",
-      "runId": 41332390172,
-      "status": "pending"
-    }
-  },
+  "reviewPublications": {},
   "waiting": [],
   "active": null,
   "events": {}
