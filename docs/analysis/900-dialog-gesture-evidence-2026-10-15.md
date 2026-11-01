@@ -1,5 +1,10 @@
 # #900 dialog gesture evidence — 2026-10-15
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Author implementation evidence, not an independent code-review verdict.
 Touch editor: best effort / intentionally degraded.
 

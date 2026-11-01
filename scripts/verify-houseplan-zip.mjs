@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listZipEntries, readZipEntries } from './release-prerelease.mjs';
+import { listZipEntries, readZipEntries } from '../process-next/lib/zip.mjs';
 import { readBundleManifest, sha256Bytes } from './bundle-tree.mjs';
 
 export function verifyHouseplanZip(zipPath, bundleRoot, expectedVersion = '') {

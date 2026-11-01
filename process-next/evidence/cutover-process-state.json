@@ -1,0 +1,20 @@
+{
+  "state": {
+    "schema": 1,
+    "revision": 0,
+    "nextTicket": 1,
+    "nextFence": 1,
+    "tasks": {},
+    "ownerDecisions": {},
+    "specReviews": {},
+    "reviewPublications": {},
+    "waiting": [],
+    "active": null,
+    "events": {}
+  },
+  "version": {
+    "blobSha": "e06c7d83d548e2513239c1cb6c50034959dde1a9",
+    "headSha": "284ff97fe8ae9261bf6da8658777e32ba2e5bddf"
+  },
+  "headSha": "284ff97fe8ae9261bf6da8658777e32ba2e5bddf"
+}

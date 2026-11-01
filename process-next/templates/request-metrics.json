@@ -1,0 +1,8 @@
+{
+  "latestStable": "process-next/.state/measurements/latest-stable.json",
+  "host": {
+    "cpu": "Use the actual host CPU",
+    "power_scheme": "Use the actual power mode",
+    "linux": "Use the same recorded host/kernel identity for both measurements"
+  }
+}

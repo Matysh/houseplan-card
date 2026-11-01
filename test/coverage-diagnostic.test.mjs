@@ -16,7 +16,8 @@ import { buildCoverageReport, diagnosticCompleteness } from '../scripts/coverage
 import { historicalCandidates } from '../scripts/parallel-path-audit.mjs';
 import { runInvocation } from '../scripts/coverage-diagnostic.mjs';
 import { coverageInventory } from '../scripts/coverage-inventory.mjs';
-import { unitGroups } from '../scripts/unit-groups.mjs';
+import { discoverReleaseTests } from '../process-next/lib/catalog.mjs';
+import { prepareGoldenSelection } from '../process-next/catalog/golden-selection.mjs';
 import { readdirSync } from 'node:fs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import YAML from 'yaml';
@@ -76,14 +77,12 @@ test('Python metadata distinguishes override/default resolution, actual version 
 });
 test('computed scope is the entire existing product unit, smoke and golden inventories', () => {
   const inventory = coverageInventory();
-  assert.deepEqual(inventory.cases.filter(c => c.family === 'unit').map(c => c.script), unitGroups().product);
+  const discovered = discoverReleaseTests(process.cwd());
+  assert.deepEqual(inventory.cases.filter(c => c.family === 'unit').map(c => c.script), discovered.filter(row => row.kind === 'product').map(row => row.path));
   assert.deepEqual(inventory.cases.filter(c => c.family === 'smoke').map(c => c.script),
-    readdirSync('demo').filter(p => /^smoke_.*\.mjs$/.test(p)).sort().map(p => `demo/${p}`));
-  assert.deepEqual(inventory.cases.filter(c => c.family === 'golden').map(c => c.variant), GOLDEN_SCENARIOS);
-  const canonicalSeconds = Number(readFileSync(inventory.smokeTimeout.source, 'utf8')
-    .match(/timeout --kill-after=\d+s (\d+)s node "\$f"/)[1]);
-  assert.equal(inventory.smokeTimeout.milliseconds, canonicalSeconds * 1000);
-  assert.ok(inventory.cases.filter(c => c.family === 'smoke').every(c => c.timeoutMs === canonicalSeconds * 1000));
+    discovered.filter(row => row.kind === 'browser').map(row => row.path));
+  assert.deepEqual(inventory.cases.filter(c => c.family === 'golden').map(c => c.variant), prepareGoldenSelection(GOLDEN_SCENARIOS).all);
+  assert.ok(inventory.cases.filter(c => c.family === 'smoke').every(c => c.timeoutMs === inventory.smokeTimeout.milliseconds));
 });
 test('real TS nested output resolves to exact candidate source bytes; an escaping producer map is incomplete', async t => {
   const root = fixture(t), text = 'export function sentinel(n:number){return n+123456};';
@@ -218,19 +217,6 @@ test('Git inventory counts formula on source only, includes seeds outside formul
   assert.equal(audit.rows.find(r => r.sha === first).cycle, 'stable-one');
   assert.equal(audit.rows.find(r => r.sha === last).cycle, 'unreleased');
   assert.ok(audit.rows.every(r => r.review.decision === 'needs-witness'));
-});
-test('nightly job uses exact immutable intent with read permissions and unconditional diagnostic upload; no proof wiring', () => {
-  const workflow = YAML.parse(readFileSync('.github/workflows/_nightly.yml', 'utf8'));
-  const job = workflow.jobs['diagnostic-coverage'];
-  assert.equal(job['continue-on-error'], true);
-  assert.deepEqual(job.permissions, { contents: 'read' }); assert.ok(job['timeout-minutes'] <= 135);
-  assert.equal(job.steps.find(s => s.uses?.startsWith('actions/upload-artifact'))['timeout-minutes'], 15);
-  assert.equal(job.steps.find(s => s.uses?.startsWith('actions/checkout')).with.ref, '${{ needs.dispatch.outputs.candidate }}');
-  assert.equal(job.steps.find(s => s.uses?.startsWith('actions/upload-artifact')).if, 'always()');
-  assert.match(job.steps.find(s => s.env?.CANDIDATE).run, /coverage-diagnostic\.mjs --sha=/);
-  for (const path of ['scripts/ci-proof-registry.mjs', 'scripts/release-evidence.mjs', 'scripts/mutation-gate.mjs']) {
-    try { assert.doesNotMatch(readFileSync(path, 'utf8'), /diagnostic-coverage|coverage-diagnostic/); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-  }
 });
 
 test('#1018 AC3 fix-test-build composes extension insertions; normal import bytes remain identical', t => {

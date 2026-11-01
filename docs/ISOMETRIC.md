@@ -147,9 +147,10 @@ Internal fail-closed evidence, not public API (`STYLING-HOOKS.md` §7.7):
   a fixed presentation ratio of `ISO_WALL_HEIGHT`.
 - No YAML/config option beyond `settings.volumetric_view`.
 
-Golden references are accepted only from the complete reviewed Linux artifact.
-The full `large-house-isometric-v1` performance comparison is also canonical on
-the exact Linux CI SHA.
+Golden references are accepted explicitly after reviewing the selected candidate
+images. Compare `large-house-isometric-v1` performance in the same measurement
+conditions. Selection, WSL execution and the GitHub fallback follow
+[PROCESS.md](../PROCESS.md); this product contract adds no separate CI requirement.
 
 ## Structural scene and cache
 

@@ -1,5 +1,10 @@
 # #1070 — quarter-turn presentation evidence
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Author evidence; independent CODE review remains the CI authority.
 
 The implementation uses one exact table-based presentation frame. Camera state,

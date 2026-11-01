@@ -8,7 +8,6 @@ import {
 } from '../test-build/device-presentation.js';
 import { buildDevices } from '../test-build/devices.js';
 import { DEVICE_PRESENTATION_DECISIONS } from './fixtures/device-presentation-decisions.mjs';
-import { MUTANTS } from '../scripts/mutation-gate.mjs';
 
 const state = (entity_id, value, attributes = {}) => ({ entity_id, state: value, attributes });
 const hass = (states = {}, entities = {}) => ({
@@ -106,7 +105,7 @@ const presentationRow = (overrides, optionOverrides, verify) => () => {
   return result;
 };
 
-test('device presentation decision document, fixture and mutation registry stay exact', () => {
+test('device presentation decision document and fixture stay exact', () => {
   const doc = readFileSync(new URL('../docs/DEVICE-PRESENTATION.md', import.meta.url), 'utf8');
   const docIds = [...doc.matchAll(/^\| ([LSFA]\d{2}) \|/gm)].map((match) => match[1]);
   const fixtureIds = DEVICE_PRESENTATION_DECISIONS.map((row) => row.id);
@@ -115,10 +114,8 @@ test('device presentation decision document, fixture and mutation registry stay 
   assert.deepEqual(fixtureIds, [...fixtureIds].sort((a, b) =>
     'LSFA'.indexOf(a[0]) - 'LSFA'.indexOf(b[0]) || Number(a.slice(1)) - Number(b.slice(1))));
 
-  const mutantIds = new Set(MUTANTS.map((mutant) => mutant.id));
   for (const row of DEVICE_PRESENTATION_DECISIONS) {
     assert.match(doc, new RegExp(`^\\| ${row.id} \\|.*\\b${row.expectedDecision.replace('.', '\\.')}`, 'm'));
-    assert.ok(mutantIds.has(row.mutation), `${row.id}: unknown mutation ${row.mutation}`);
   }
 });
 

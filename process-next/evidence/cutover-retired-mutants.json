@@ -1,0 +1,1813 @@
+{
+  "before": 2067,
+  "retired": [
+    {
+      "id": "docs-link-deadline-extended-1083",
+      "guard": "node --test test/doc-link-observation.test.mjs",
+      "targets": [
+        "scripts/doc-link-observation.mjs"
+      ]
+    },
+    {
+      "id": "docs-link-observation-exposes-url-secrets-1083",
+      "guard": "node --test test/doc-link-observation.test.mjs",
+      "targets": [
+        "scripts/doc-link-observation.mjs"
+      ]
+    },
+    {
+      "id": "ci-python-producer-resolves-minor-again-1032",
+      "guard": "node --test test/ci-profiles.test.mjs",
+      "targets": [
+        ".github/workflows/validate.yml",
+        ".github/workflows/validate-product.yml"
+      ]
+    },
+    {
+      "id": "ci-registry-trusts-claimed-git-inputs",
+      "guard": "node --test --test-name-pattern=\"independent source Git\" test/ci-registry-inputs.test.mjs",
+      "targets": [
+        "scripts/ci-registry-equivalence.mjs"
+      ]
+    },
+    {
+      "id": "ci-registry-trusts-tampered-index",
+      "guard": "node --test test/ci-proof-registry.test.mjs",
+      "targets": [
+        "scripts/ci-registry-verify.mjs"
+      ]
+    },
+    {
+      "id": "ci-registry-accepts-absent-actual-job",
+      "guard": "node --test test/ci-proof-registry.test.mjs",
+      "targets": [
+        "scripts/ci-registry-verify.mjs"
+      ]
+    },
+    {
+      "id": "ci-registry-masks-whole-json",
+      "guard": "node --test --test-name-pattern=\"JSON mask cannot erase\" test/ci-registry-inputs.test.mjs",
+      "targets": [
+        "scripts/ci-registry-inputs.mjs"
+      ]
+    },
+    {
+      "id": "candidate-optional-field-qa-becomes-mandatory",
+      "guard": "node --test test/candidate-858.test.mjs",
+      "targets": [
+        "scripts/candidate-readiness.mjs"
+      ]
+    },
+    {
+      "id": "candidate-beta-forgets-full-proof",
+      "guard": "node --test test/candidate-858.test.mjs",
+      "targets": [
+        "scripts/candidate-readiness.mjs"
+      ]
+    },
+    {
+      "id": "merge-continuation-skips-material-fetch",
+      "guard": "node --test --test-name-pattern=\"#882 AC1\" test/merge-continuation-882.test.mjs",
+      "targets": [
+        "scripts/workflow-continuation.mjs"
+      ]
+    },
+    {
+      "id": "candidate-headless-substitutes-owner-gpu",
+      "guard": "node --test --test-name-pattern=\"#929 optional observation\" test/candidate-858.test.mjs",
+      "targets": [
+        "scripts/candidate-readiness.mjs"
+      ]
+    },
+    {
+      "id": "candidate-accepts-unrelated-scene-drift",
+      "guard": "node --test --test-name-pattern=\"#858 owner scene intent\" test/candidate-858.test.mjs",
+      "targets": [
+        "scripts/candidate-readiness.mjs"
+      ]
+    },
+    {
+      "id": "led-state-delivery-blesses-expired-lease",
+      "guard": "node --test --test-name-pattern=\"#863 LED oracle\" test/smoke-evidence-863.test.mjs",
+      "targets": [
+        "demo/helpers/led-state-delivery.mjs"
+      ]
+    },
+    {
+      "id": "daycycle-raster-report-blesses-over-budget",
+      "guard": "node --test --test-name-pattern=\"#863 raster median\" test/smoke-evidence-863.test.mjs",
+      "targets": [
+        "demo/helpers/daycycle-measurement.mjs"
+      ]
+    },
+    {
+      "id": "decision-context-archive-by-default",
+      "guard": "node --test --test-name-pattern=\"#860 bounded lookup\" test/decision-context-860.test.mjs",
+      "targets": [
+        "scripts/decision-context.mjs"
+      ]
+    },
+    {
+      "id": "model-outcome-allows-exhausted",
+      "guard": "node --test --test-name-pattern=\"#857 interrupted SDK\" test/model-evidence-857.test.mjs",
+      "targets": [
+        "scripts/model-usage-details.mjs"
+      ]
+    },
+    {
+      "id": "frontend-producer-red-cache-hit",
+      "guard": "node --test --test-name-pattern=\"#856 frontend reuse\" test/proof-loop-856.test.mjs",
+      "targets": [
+        "scripts/frontend-proof.mjs"
+      ]
+    },
+    {
+      "id": "continuation-ignores-current-epoch",
+      "guard": "node --test --test-name-pattern=\"#856 merge continuation\" test/proof-loop-856.test.mjs",
+      "targets": [
+        "scripts/workflow-continuation.mjs"
+      ]
+    },
+    {
+      "id": "model-failure-returns-stale-material",
+      "guard": "node --test --test-name-pattern=\"#857 current failed epoch\" test/model-evidence-857.test.mjs",
+      "targets": [
+        "scripts/model-review-failure.mjs"
+      ]
+    },
+    {
+      "id": "resource-docs-flatten-current-yaml",
+      "guard": "node scripts/check-docs.mjs --screenshots=warn",
+      "targets": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "core-budget-ignores-growth",
+      "guard": "node --test test/core-file-budget.test.mjs",
+      "targets": [
+        "src/houseplan-card.ts"
+      ]
+    },
+    {
+      "id": "capture-gate-forgives-a-missing-frame",
+      "guard": "node --test test/capture-determinism-gate.test.mjs",
+      "targets": [
+        "scripts/capture-determinism.mjs"
+      ]
+    },
+    {
+      "id": "capture-gate-hashes-everything-in-the-folder",
+      "guard": "node --test test/capture-determinism-gate.test.mjs",
+      "targets": [
+        "scripts/capture-determinism.mjs"
+      ]
+    },
+    {
+      "id": "anchor-liveness-ignores-reachability",
+      "guard": "node --test test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "workflow-scan-hardcodes-the-list",
+      "guard": "node --test test/validate-workflow.test.mjs",
+      "targets": [
+        "test/validate-workflow.test.mjs"
+      ]
+    },
+    {
+      "id": "lint-scope-drifts",
+      "guard": "node --test test/lint-scope.test.mjs",
+      "targets": [
+        "pyproject.toml"
+      ]
+    },
+    {
+      "id": "golden-accept-sandbox-leaks",
+      "guard": "node --test test/temp-dir-hygiene.test.mjs",
+      "targets": [
+        "test/golden-capture-provenance.test.mjs"
+      ]
+    },
+    {
+      "id": "temp-hygiene-accepts-cleanup-outside-finally",
+      "guard": "node --test test/temp-dir-hygiene.test.mjs",
+      "targets": [
+        "test/temp-dir-hygiene.test.mjs"
+      ]
+    },
+    {
+      "id": "release-proof-computed-for-every-commit",
+      "guard": "node --test test/process-gate.test.mjs",
+      "targets": [
+        "scripts/process-gate.mjs"
+      ]
+    },
+    {
+      "id": "task-packet-product-flow-overrides-diff",
+      "guard": "node --test test/task-packet.test.mjs",
+      "targets": [
+        "scripts/task-packet.mjs"
+      ]
+    },
+    {
+      "id": "process-gate-infra-entry-covers-spec-route",
+      "guard": "node --test test/process-gate.test.mjs",
+      "targets": [
+        "scripts/process-gate.mjs"
+      ]
+    },
+    {
+      "id": "task-packet-review-docs-not-material",
+      "guard": "node --test test/task-packet.test.mjs",
+      "targets": [
+        "scripts/task-packet.mjs"
+      ]
+    },
+    {
+      "id": "task-packet-s6-s7-alone-not-product-flow",
+      "guard": "node --test test/task-packet.test.mjs",
+      "targets": [
+        "scripts/task-packet.mjs"
+      ]
+    },
+    {
+      "id": "task-packet-trivial-is-product-flow",
+      "guard": "node --test test/task-packet.test.mjs",
+      "targets": [
+        "scripts/task-packet.mjs"
+      ]
+    },
+    {
+      "id": "rereview-relabel-in-one-call",
+      "guard": "node --test --test-name-pattern=\"#706 rereview\" test/status-label.test.mjs",
+      "targets": [
+        "scripts/status-label.mjs"
+      ]
+    },
+    {
+      "id": "process-label-step-combined-again",
+      "guard": "node --test --test-name-pattern=\"#706 шаг конвейера\" test/status-label.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "unit-formatting-escapes-the-formatter",
+      "guard": "node --test --test-name-pattern=\"детектор действительно ловит\" test/single-source-numbers.test.mjs",
+      "targets": [
+        "test/single-source-numbers.test.mjs"
+      ]
+    },
+    {
+      "id": "manifest-drops-workflow-input",
+      "guard": "node --test --test-name-pattern=\"toolchain input of every job\" test/gate-reuse.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "classify-unknown-input-is-unaffected",
+      "guard": "node --test --test-name-pattern=\"#1044: неизвестный инструмент\" test/classify-changes.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "reuse-backend-hashes-ui",
+      "guard": "node --test --test-name-pattern=\"a version bump changes all of them\" test/gate-reuse.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "backend-dynamic-inputs-dropped",
+      "guard": "node --test --test-name-pattern=\"#542\" test/check-inputs.test.mjs test/gate-reuse.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "furniture-assets-dropped-from-frontend-inputs",
+      "guard": "node --test --test-name-pattern=\"#671: весь пакет мебели\" test/check-inputs.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "assets-data-root-not-guarded",
+      "guard": "node --test --test-name-pattern=\"#671: новый assets\" test/check-inputs.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "harness-directory-docs-leak-into-inputs",
+      "guard": "node --test --test-name-pattern=\"#672\" test/check-inputs.test.mjs test/gate-reuse.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "explicit-markdown-read-dropped-from-inputs",
+      "guard": "node --test --test-name-pattern=\"#672: документация каталога\" test/check-inputs.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "browser-protocol-recaptures-guard-readme",
+      "guard": "node --test --test-name-pattern=\"#672: README каталогов\" test/check-inputs.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "golden-root-recaptures-golden-readme",
+      "guard": "node --test --test-name-pattern=\"#672: README каталогов\" test/check-inputs.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "merge-pushes-unvalidated-candidate",
+      "guard": "node --test --test-name-pattern=\"эксперимент аудита\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "merge-ignores-lease-rejection",
+      "guard": "node --test --test-name-pattern=\"lease отклонён\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "merged-task-branch-kept",
+      "guard": "node --test --test-name-pattern=\"#702\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "push-refusal-kinds-glued",
+      "guard": "node --test --test-name-pattern=\"#705 AC1\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "nightly-does-not-wait",
+      "guard": "node --test --test-name-pattern=\"#856 actual runner step\" test/nightly-workflow.test.mjs",
+      "targets": [
+        "scripts/workflow-pending.mjs"
+      ]
+    },
+    {
+      "id": "review-comment-source-ignores-issue-number",
+      "guard": "node --test --test-name-pattern=\"по документу ЭТОЙ задачи|чужой номер задачи\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "review-round-counts-files-not-max",
+      "guard": "node --test --test-name-pattern=\"от максимума номеров\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "review-round-drops-file-source",
+      "guard": "node --test --test-name-pattern=\"прожитая уже с исправлением|момент коллизии\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "review-round-drops-comment-insurance",
+      "guard": "node --test --test-name-pattern=\"отказ публикации\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "review-doc-guard-matches-by-substring",
+      "guard": "node --test --test-name-pattern=\"соседний каталог\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "review-doc-guard-allows-empty-diff",
+      "guard": "node --test --test-name-pattern=\"пустой дифф\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "no-new-any-judges-every-line",
+      "guard": "node --test --test-name-pattern=\"нетронутой строке гейт не блокирует\" test/no-new-any.test.mjs",
+      "targets": [
+        "scripts/no-new-any.mjs"
+      ]
+    },
+    {
+      "id": "no-new-any-accepts-bare-marker",
+      "guard": "node --test --test-name-pattern=\"только с конкретной причиной\" test/no-new-any.test.mjs",
+      "targets": [
+        "scripts/no-new-any.mjs"
+      ]
+    },
+    {
+      "id": "private-writes-ignores-update-expressions",
+      "guard": "node --test --test-name-pattern=\"во всех формах\" test/no-new-private-writes.test.mjs",
+      "targets": [
+        "scripts/no-new-private-writes.mjs"
+      ]
+    },
+    {
+      "id": "private-writes-credits-any-field",
+      "guard": "node --test --test-name-pattern=\"правка зачитывается только\" test/no-new-private-writes.test.mjs",
+      "targets": [
+        "scripts/no-new-private-writes.mjs"
+      ]
+    },
+    {
+      "id": "private-writes-accepts-bare-marker",
+      "guard": "node --test --test-name-pattern=\"private-ok проходит только\" test/no-new-private-writes.test.mjs",
+      "targets": [
+        "scripts/no-new-private-writes.mjs"
+      ]
+    },
+    {
+      "id": "private-writes-skips-covered-calls",
+      "guard": "node --test --test-name-pattern=\"вызов, покрытый фасадом\" test/no-new-private-writes.test.mjs",
+      "targets": [
+        "scripts/no-new-private-writes.mjs"
+      ]
+    },
+    {
+      "id": "docs-fingerprint-sees-product-version",
+      "guard": "node --test --test-name-pattern=\"не трогает отпечаток скриншотов\" test/source-fingerprint.test.mjs",
+      "targets": [
+        "scripts/source-fingerprint.mjs"
+      ]
+    },
+    {
+      "id": "risk-counts-module-and-local-type-rows",
+      "guard": "node --test --test-name-pattern=\"#755 AC1|#772\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/change-risk.mjs"
+      ]
+    },
+    {
+      "id": "risk-ignores-persisted-stair-types",
+      "guard": "node --test --test-name-pattern=\"#772\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/change-risk.mjs"
+      ]
+    },
+    {
+      "id": "smoke-select-ignores-style-file-links",
+      "guard": "node --test --test-name-pattern=\"#772: CSS\" test/smoke-select.test.mjs",
+      "targets": [
+        "scripts/smoke-select.mjs"
+      ]
+    },
+    {
+      "id": "smoke-select-stops-at-nested-property",
+      "guard": "node --test --test-name-pattern=\"#772: вложенные\" test/smoke-select.test.mjs",
+      "targets": [
+        "scripts/smoke-select.mjs"
+      ]
+    },
+    {
+      "id": "smoke-select-drops-registered-link",
+      "guard": "node --test --test-name-pattern=\"держится на зарегистрированной связи\" test/smoke-select.test.mjs",
+      "targets": [
+        "scripts/smoke-links.mjs"
+      ]
+    },
+    {
+      "id": "visual-minimum-silent-again",
+      "guard": "node --test --test-name-pattern=\"#690\" test/smoke-select.test.mjs",
+      "targets": [
+        "scripts/smoke-select.mjs"
+      ]
+    },
+    {
+      "id": "visual-minimum-on-proven-link",
+      "guard": "node --test --test-name-pattern=\"#690\" test/smoke-select.test.mjs",
+      "targets": [
+        "scripts/smoke-select.mjs"
+      ]
+    },
+    {
+      "id": "gate-small-skips-visual-minimum",
+      "guard": "node --test --test-name-pattern=\"#690\" test/smoke-select.test.mjs",
+      "targets": [
+        "scripts/gate-small.mjs"
+      ]
+    },
+    {
+      "id": "docs-only-commit-needs-trailers-again",
+      "guard": "node --test --test-name-pattern=\"#701\" test/commit-provenance.test.mjs",
+      "targets": [
+        "scripts/validate-commit-provenance.mjs"
+      ]
+    },
+    {
+      "id": "docs-only-exemption-leaks-to-code",
+      "guard": "node --test --test-name-pattern=\"#701\" test/commit-provenance.test.mjs",
+      "targets": [
+        "scripts/validate-commit-provenance.mjs"
+      ]
+    },
+    {
+      "id": "gate-blames-the-author-for-its-own-stale-dispatch",
+      "guard": "node --test test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/validate-gate.mjs"
+      ]
+    },
+    {
+      "id": "rebase-dispatches-before-the-ref-settles",
+      "guard": "node --test test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "review-model-checks-out-moving-dev",
+      "guard": "node --test --test-name-pattern=\"#551\" test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "review-model-seals-verdict-as-boolean",
+      "guard": "node --test --test-name-pattern=\"#551\" test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "review-integration-delimiter-follows-json-without-newline",
+      "guard": "node --test --test-name-pattern=\"#551\" test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "process-canon-says-review-replaces-testing-across-line-break",
+      "guard": "node --test --test-name-pattern=\"#553\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "PROCESS.md"
+      ]
+    },
+    {
+      "id": "gate-no-wait-still-sleeps",
+      "guard": "node --test --test-name-pattern=\"#636\" test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/validate-gate.mjs"
+      ]
+    },
+    {
+      "id": "resume-wakes-round-without-marker",
+      "guard": "node --test --test-name-pattern=\"#636\" test/process-resume.test.mjs",
+      "targets": [
+        "scripts/process-resume.mjs"
+      ]
+    },
+    {
+      "id": "resume-ignores-active-run",
+      "guard": "node --test --test-name-pattern=\"#636\" test/process-resume.test.mjs",
+      "targets": [
+        "scripts/process-resume.mjs"
+      ]
+    },
+    {
+      "id": "pending-history-latest-200-only",
+      "guard": "node --test test/process-pending-round.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "pending-revives-previous-request",
+      "guard": "node --test test/process-pending-round.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "pending-resumes-another-validate",
+      "guard": "node --test test/process-pending-round.test.mjs",
+      "targets": [
+        "scripts/process-resume.mjs"
+      ]
+    },
+    {
+      "id": "pending-no-fresh-snapshot-before-write",
+      "guard": "node --test test/process-pending-round.test.mjs",
+      "targets": [
+        "scripts/process-resume.mjs"
+      ]
+    },
+    {
+      "id": "reconcile-wakes-pending-while-validate-active",
+      "guard": "node --test --test-name-pattern=\"#636\" test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "metrics-count-skipped-pipeline-runs",
+      "guard": "node --test --test-name-pattern=\"#637 pipelineMetrics\" test/process-metrics.test.mjs",
+      "targets": [
+        "scripts/process-metrics.mjs"
+      ]
+    },
+    {
+      "id": "metrics-rounds-by-s7-events",
+      "guard": "node --test --test-name-pattern=\"#637 buildReport\" test/process-metrics.test.mjs",
+      "targets": [
+        "scripts/process-metrics.mjs"
+      ]
+    },
+    {
+      "id": "release-prerelease-skips-fresh-bundle",
+      "guard": "node --test --test-name-pattern=\"#657 публикация беты\" test/bundle-policy.test.mjs",
+      "targets": [
+        "scripts/release-prerelease.mjs"
+      ]
+    },
+    {
+      "id": "merge-ff-skips-review-index",
+      "guard": "node --test --test-name-pattern=\"#657 r1 H1\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "process-index-on-task-branch",
+      "guard": "node --test --test-name-pattern=\"#635/#657 \\\\(1б\\\\)\" test/reviews-index.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "reviews-index-skips-self-check",
+      "guard": "node --test --test-name-pattern=\"#635 индекс покрывает\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-release-name-unsupported",
+      "guard": "node --test --test-name-pattern=\"#635 индекс покрывает|#670\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-archive-moves-open-line-issue",
+      "guard": "node --test --test-name-pattern=\"#682 архив: задача из открытой линии\" test/reviews-archive.test.mjs",
+      "targets": [
+        "scripts/reviews-archive.mjs"
+      ]
+    },
+    {
+      "id": "reviews-archive-first-line-wins",
+      "guard": "node --test --test-name-pattern=\"#682 архив: задача уходит\" test/reviews-archive.test.mjs",
+      "targets": [
+        "scripts/reviews-archive.mjs"
+      ]
+    },
+    {
+      "id": "reviews-archive-links-from-new-place-only",
+      "guard": "node --test --test-name-pattern=\"#682 r1 ссылки: перенесённый документ\" test/reviews-archive.test.mjs",
+      "targets": [
+        "scripts/reviews-archive.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-release-counts-ignored",
+      "guard": "node --test --test-name-pattern=\"#635 счётчики|#635 индекс покрывает\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-strict-cli-disabled",
+      "guard": "node --test --test-name-pattern=\"#670\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "release-review-index-without-strict",
+      "guard": "node --test --test-name-pattern=\"#638\" test/release-review.test.mjs",
+      "targets": [
+        ".github/workflows/release-review.yml"
+      ]
+    },
+    {
+      "id": "reviews-index-verdict-substring",
+      "guard": "node --test --test-name-pattern=\"#635 вердикт|#811 AC2:\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-counts-first-match",
+      "guard": "node --test --test-name-pattern=\"#635 r2: счётчик\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-own-verdict-any-tail",
+      "guard": "node --test --test-name-pattern=\"#779 пересказ\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-retold-sections-own",
+      "guard": "node --test --test-name-pattern=\"#779 r2\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "reviews-index-paragraph-tail",
+      "guard": "node --test --test-name-pattern=\"#635 r2: первый абзац\" test/reviews-index.test.mjs",
+      "targets": [
+        "scripts/reviews-index.mjs"
+      ]
+    },
+    {
+      "id": "rebase-index-resolves-mixed-conflicts",
+      "guard": "node --test --test-name-pattern=\"#643 (planStop|AC2)\" test/rebase-generated.test.mjs",
+      "targets": [
+        "scripts/rebase-generated.mjs"
+      ]
+    },
+    {
+      "id": "rebase-index-takes-a-side",
+      "guard": "node --test --test-name-pattern=\"#643 AC1\" test/rebase-generated.test.mjs",
+      "targets": [
+        "scripts/rebase-generated.mjs"
+      ]
+    },
+    {
+      "id": "rebase-index-failure-leaves-half-rebase",
+      "guard": "node --test --test-name-pattern=\"#643: сбой пересборки\" test/rebase-generated.test.mjs",
+      "targets": [
+        "scripts/rebase-generated.mjs"
+      ]
+    },
+    {
+      "id": "rebase-index-refusal-exits-like-a-crash",
+      "guard": "node --test --test-name-pattern=\"#643 CLI\" test/rebase-generated.test.mjs",
+      "targets": [
+        "scripts/rebase-generated.mjs"
+      ]
+    },
+    {
+      "id": "merge-rebase-refuses-index-conflict",
+      "guard": "node --test --test-name-pattern=\"#643 AC1\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "rebase-on-dev-stages-index-unrebuilt",
+      "guard": "node --test --test-name-pattern=\"#643 AC3\" test/rebase-on-dev.test.mjs",
+      "targets": [
+        "scripts/rebase-on-dev.mjs"
+      ]
+    },
+    {
+      "id": "process-digest-dead-anchor",
+      "guard": "node --test --test-name-pattern=\"#634 конспект: каждая ссылка\" test/process-digests.test.mjs",
+      "targets": [
+        "docs/process/AUTHOR.md"
+      ]
+    },
+    {
+      "id": "process-digest-bullet-without-canon-link",
+      "guard": "node --test --test-name-pattern=\"#634 конспект: каждый пункт\" test/process-digests.test.mjs",
+      "targets": [
+        "docs/process/AUTHOR.md"
+      ]
+    },
+    {
+      "id": "process-digest-key-rule-dropped",
+      "guard": "node --test --test-name-pattern=\"#634 конспект: ключевые правила\" test/process-digests.test.mjs",
+      "targets": [
+        "docs/process/REVIEWER.md"
+      ]
+    },
+    {
+      "id": "entry-cost-author-route-over-budget",
+      "guard": "node --test --test-name-pattern=\"#634 entry-cost: вход автора\" test/entry-cost.test.mjs",
+      "targets": [
+        "docs/process/AUTHOR.md"
+      ]
+    },
+    {
+      "id": "entry-cost-budget-never-over",
+      "guard": "node --test --test-name-pattern=\"#634 entry-cost: превышение\" test/entry-cost.test.mjs",
+      "targets": [
+        "scripts/entry-cost.mjs"
+      ]
+    },
+    {
+      "id": "status-snapshot-hides-version-mismatch",
+      "guard": "node --test --test-name-pattern=\"#634 status-snapshot: рассинхрон\" test/status-snapshot.test.mjs",
+      "targets": [
+        "scripts/status-snapshot.mjs"
+      ]
+    },
+    {
+      "id": "testing-doc-drops-manual-section",
+      "guard": "node --test --test-name-pattern=\"#681 TESTING.md\" test/testing-doc.test.mjs",
+      "targets": [
+        "docs/TESTING.md"
+      ]
+    },
+    {
+      "id": "unused-gate-allows-everything",
+      "guard": "node --test --test-name-pattern=\"#624 разбор диагностик\" test/monolith-metrics.test.mjs",
+      "targets": [
+        "scripts/monolith-metrics.mjs"
+      ]
+    },
+    {
+      "id": "monolith-metrics-baseline-strict",
+      "guard": "node --test --test-name-pattern=\"#699 храповик\" test/monolith-metrics.test.mjs",
+      "targets": [
+        "scripts/monolith-metrics.mjs"
+      ]
+    },
+    {
+      "id": "core-band-ignored",
+      "guard": "node --test --test-name-pattern=\"#699\" test/core-file-budget.test.mjs",
+      "targets": [
+        "test/core-file-budget.test.mjs"
+      ]
+    },
+    {
+      "id": "monolith-band-exact-again",
+      "guard": "node --test --test-name-pattern=\"#699 храповик\" test/monolith-metrics.test.mjs",
+      "targets": [
+        "scripts/monolith-metrics.mjs"
+      ]
+    },
+    {
+      "id": "monolith-shrink-fails-branch-again",
+      "guard": "node --test --test-name-pattern=\"#699 храповик\" test/monolith-metrics.test.mjs",
+      "targets": [
+        "scripts/unused-locals-gate.mjs"
+      ]
+    },
+    {
+      "id": "ratchet-report-calls-band-tight",
+      "guard": "node --test --test-name-pattern=\"#699 состояние\" test/ratchets.test.mjs",
+      "targets": [
+        "scripts/ratchets.mjs"
+      ]
+    },
+    {
+      "id": "release-runbook-forgets-tighten",
+      "guard": "node --test --test-name-pattern=\"#699 r1 M1\" test/ratchets.test.mjs",
+      "targets": [
+        "docs/DEVELOPMENT.md"
+      ]
+    },
+    {
+      "id": "monolith-delegates-return-only",
+      "guard": "node --test --test-name-pattern=\"#624 делегаты\" test/monolith-metrics.test.mjs",
+      "targets": [
+        "scripts/monolith-metrics.mjs"
+      ]
+    },
+    {
+      "id": "monolith-anchors-length-only",
+      "guard": "node --test --test-name-pattern=\"#624 AC4: подмена\" test/monolith-text-anchors.test.mjs",
+      "targets": [
+        "test/monolith-text-anchors.test.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-restarts-healthy-run",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-ignores-owner-stop",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-accepts-foreign-prepared-evidence",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-reruns-sealed-model-result",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-retries-lost-event-forever",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-relabels-before-durable-marker",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-ignores-failed-label-restore",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "process-reconcile-write-error-aborts-summary",
+      "guard": "node --test test/process-reconcile.test.mjs",
+      "targets": [
+        "scripts/process-reconcile.mjs"
+      ]
+    },
+    {
+      "id": "review-tool-policy-allows-arbitrary-bash-1065",
+      "guard": "node --test --test-name-pattern=\"#1065 refuses unsafe\" test/review-execution-policy.test.mjs",
+      "targets": [
+        "scripts/review-execution-policy.mjs"
+      ]
+    },
+    {
+      "id": "review-sed-read-allows-extra-options-1065",
+      "guard": "node --test --test-name-pattern=\"#1065 refuses unsafe\" test/review-execution-policy.test.mjs",
+      "targets": [
+        "scripts/review-execution-policy.mjs"
+      ]
+    },
+    {
+      "id": "review-git-read-allows-option-prefix-1065",
+      "guard": "node --test --test-name-pattern=\"#1065 refuses unsafe\" test/review-execution-policy.test.mjs",
+      "targets": [
+        "scripts/review-execution-policy.mjs"
+      ]
+    },
+    {
+      "id": "review-native-hook-failure-opens-tool-1065",
+      "guard": "node --test --test-name-pattern=\"#1065 native hook settings\" test/review-execution-policy.test.mjs",
+      "targets": [
+        "scripts/review-execution-policy.mjs"
+      ]
+    },
+    {
+      "id": "review-trace-skips-hook-journal-binding-1065",
+      "guard": "node --test --test-name-pattern=\"#1065 journal binds\" test/review-execution-policy.test.mjs",
+      "targets": [
+        "scripts/review-execution-policy.mjs"
+      ]
+    },
+    {
+      "id": "review-report-calls-patch-run-ordinary-1065",
+      "guard": "node --test --test-name-pattern=\"#1065 published historical claim\" test/review-execution-policy.test.mjs",
+      "targets": [
+        "scripts/review-execution-policy.mjs"
+      ]
+    },
+    {
+      "id": "review-integration-skips-evidence-checksum",
+      "guard": "node --test test/review-result-gate.test.mjs",
+      "targets": [
+        "scripts/review-result-gate.mjs"
+      ]
+    },
+    {
+      "id": "review-gate-accepts-a-foreign-passport",
+      "guard": "node --test test/review-result-gate.test.mjs",
+      "targets": [
+        "scripts/review-result-gate.mjs"
+      ]
+    },
+    {
+      "id": "review-gate-tolerates-an-extra-file",
+      "guard": "node --test test/review-result-gate.test.mjs",
+      "targets": [
+        "scripts/review-result-gate.mjs"
+      ]
+    },
+    {
+      "id": "action-pins-accept-a-moving-ref",
+      "guard": "node --test test/action-pins.test.mjs",
+      "targets": [
+        "scripts/action-pins.mjs"
+      ]
+    },
+    {
+      "id": "own-reusable-accepts-any-ref",
+      "guard": "node --test --test-name-pattern=\"#623\" test/action-pins.test.mjs",
+      "targets": [
+        "scripts/action-pins.mjs"
+      ]
+    },
+    {
+      "id": "workflow-sync-forgets-a-thin-caller",
+      "guard": "node --test test/default-branch-workflows.test.mjs",
+      "targets": [
+        ".github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "thin-caller-runs-the-main-body",
+      "guard": "node --test test/default-branch-workflows.test.mjs",
+      "targets": [
+        ".github/workflows/process.yml"
+      ]
+    },
+    {
+      "id": "thin-caller-widens-permissions",
+      "guard": "node --test test/default-branch-workflows.test.mjs",
+      "targets": [
+        ".github/workflows/mutation-gate.yml"
+      ]
+    },
+    {
+      "id": "thin-caller-drops-secrets",
+      "guard": "node --test test/default-branch-workflows.test.mjs",
+      "targets": [
+        ".github/workflows/process-reconcile.yml"
+      ]
+    },
+    {
+      "id": "mutation-body-keys-marker-on-caller-sha",
+      "guard": "node --test test/default-branch-workflows.test.mjs",
+      "targets": [
+        ".github/workflows/_mutation-gate.yml"
+      ]
+    },
+    {
+      "id": "review-model-gets-repository-write",
+      "guard": "node --test --test-name-pattern=\"по job\" test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "review-job-trusts-the-app-token",
+      "guard": "node --test --test-name-pattern=\"direct native transport\" test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "review-integration-trusts-failed-model",
+      "guard": "node --test --test-name-pattern=\"#551\" test/review-doc-guard.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "announce-listens-to-the-release-event-again",
+      "guard": "node --test test/release-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/announce.yml"
+      ]
+    },
+    {
+      "id": "announce-job-stops-waiting-for-the-assets",
+      "guard": "node --test test/release-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/release.yml"
+      ]
+    },
+    {
+      "id": "asset-upload-stops-needing-the-gate",
+      "guard": "node --test test/release-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/release.yml"
+      ]
+    },
+    {
+      "id": "hand-published-release-stays-public-during-the-gates",
+      "guard": "node --test test/release-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/release.yml"
+      ]
+    },
+    {
+      "id": "repair-clobbers-the-public-asset",
+      "guard": "node --test test/release-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/release.yml"
+      ]
+    },
+    {
+      "id": "e2e-gate-tests-the-tag-instead-of-the-candidate",
+      "guard": "node --test test/e2e-gate.test.mjs",
+      "targets": [
+        "scripts/e2e-gate.mjs"
+      ]
+    },
+    {
+      "id": "prerelease-membership-keeps-unproven-s8",
+      "guard": "node --test test/release-membership.test.mjs",
+      "targets": [
+        "scripts/release-membership.mjs"
+      ]
+    },
+    {
+      "id": "prerelease-bookkeeping-duplicates-release-comment",
+      "guard": "node --test test/release-bookkeeping.test.mjs",
+      "targets": [
+        "scripts/release-bookkeeping.mjs"
+      ]
+    },
+    {
+      "id": "stage3-w10-flat-fallback-counted-as-success",
+      "guard": "node --test --test-name-pattern=\"runner fails closed\" test/performance-workflow.test.mjs",
+      "targets": [
+        "demo/benchmark_large_house.mjs"
+      ]
+    },
+    {
+      "id": "wait-verdict-reuses-historical-failure",
+      "guard": "node --test --test-name-pattern=\"#546\" test/wait-verdict.test.mjs",
+      "targets": [
+        "scripts/wait-verdict.mjs"
+      ]
+    },
+    {
+      "id": "wait-verdict-merge-outcomes-unknown",
+      "guard": "node --test --test-name-pattern=\"#768\" test/wait-verdict.test.mjs",
+      "targets": [
+        "scripts/wait-verdict.mjs"
+      ]
+    },
+    {
+      "id": "wait-verdict-not-run-validate-unrecognised",
+      "guard": "node --test --test-name-pattern=\"#810\" test/wait-verdict.test.mjs",
+      "targets": [
+        "scripts/wait-verdict.mjs"
+      ]
+    },
+    {
+      "id": "release-gate-counts-cancelled-runs",
+      "guard": "node --test test/release-gate.test.mjs",
+      "targets": [
+        "scripts/release-gate.mjs"
+      ]
+    },
+    {
+      "id": "release-gate-oldest-run-wins",
+      "guard": "node --test test/release-gate.test.mjs",
+      "targets": [
+        "scripts/release-gate.mjs"
+      ]
+    },
+    {
+      "id": "release-proof-accepts-light-run",
+      "guard": "node --test test/ci-proof.test.mjs test/release-gate.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "ci-proof-ignores-run-attempt",
+      "guard": "node --test test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "ci-proof-trusts-reuse-without-source-job",
+      "guard": "node --test test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "ci-proof-mutant-shards-are-a-constant",
+      "guard": "node --test --test-name-pattern=\"#622\" test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "ci-proof-skips-job-name-contract",
+      "guard": "node --test --test-name-pattern=\"#622\" test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "ci-proof-rule-name-drifts-from-workflow",
+      "guard": "node --test test/workflow-jobs.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "job-contract-ignores-undeclared-jobs",
+      "guard": "node --test test/workflow-jobs.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "e2e-gate-hides-broken-name-contract",
+      "guard": "node --test --test-name-pattern=\"#622\" test/e2e-gate.test.mjs",
+      "targets": [
+        "scripts/e2e-gate.mjs"
+      ]
+    },
+    {
+      "id": "dev-mutants-requested-again",
+      "guard": "node --test --test-name-pattern=\"#709\" test/classify-changes.test.mjs",
+      "targets": [
+        "scripts/classify-changes.mjs"
+      ]
+    },
+    {
+      "id": "review-starts-on-red-validate",
+      "guard": "node --test test/ci-proof.test.mjs test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "release-proof-demands-mutant-jobs",
+      "guard": "node --test --test-name-pattern=\"#601\" test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "review-anchor-drops-issue-body",
+      "guard": "node --test test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "review-ignores-changed-spec-body",
+      "guard": "node --test test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "reuse-ignores-changed-issue-body",
+      "guard": "node --test test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "process-gate-requires-spec-file",
+      "guard": "node --test test/process-gate.test.mjs",
+      "targets": [
+        "scripts/process-gate.mjs"
+      ]
+    },
+    {
+      "id": "pre-push-hook-ignores-red-gate-small",
+      "guard": "node --test test/pre-push-gate.test.mjs",
+      "targets": [
+        "scripts/pre-push-gate.mjs"
+      ]
+    },
+    {
+      "id": "pre-push-gate-inherits-git-dir",
+      "guard": "node --test test/pre-push-gate.test.mjs",
+      "targets": [
+        "scripts/pre-push-gate.mjs"
+      ]
+    },
+    {
+      "id": "pre-push-shell-drops-gate-status",
+      "guard": "node --test test/pre-push-gate.test.mjs",
+      "targets": [
+        ".githooks/pre-push"
+      ]
+    },
+    {
+      "id": "pre-push-hook-misses-issue-branches",
+      "guard": "node --test test/pre-push-gate.test.mjs",
+      "targets": [
+        "scripts/pre-push-gate.mjs"
+      ]
+    },
+    {
+      "id": "pre-push-docs-filter-swallows-executable-diff",
+      "guard": "node --test test/pre-push-gate.test.mjs",
+      "targets": [
+        "scripts/pre-push-gate.mjs"
+      ]
+    },
+    {
+      "id": "pre-push-hook-judges-foreign-tree",
+      "guard": "node --test test/pre-push-gate.test.mjs",
+      "targets": [
+        "scripts/pre-push-gate.mjs"
+      ]
+    },
+    {
+      "id": "review-returns-task-on-cancelled-dispatch",
+      "guard": "node --test test/ci-proof.test.mjs test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "merge-rereviews-own-review-doc",
+      "guard": "node --test test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "changelog-union-driver-dropped",
+      "guard": "node --test --test-name-pattern=\"#698: записи ченджлога\" test/rebase-generated.test.mjs",
+      "targets": [
+        ".gitattributes"
+      ]
+    },
+    {
+      "id": "monolith-baseline-conflict-is-manual-again",
+      "guard": "node --test --test-name-pattern=\"#698: конфликт в базе\" test/rebase-generated.test.mjs",
+      "targets": [
+        "scripts/rebase-generated.mjs"
+      ]
+    },
+    {
+      "id": "merge-patch-id-sees-changelog",
+      "guard": "node --test --test-name-pattern=\"#698: patch-id\" test/rebase-generated.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "merge-trusts-success-without-proof",
+      "guard": "node --test test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "release-ships-on-red-e2e",
+      "guard": "node --test test/e2e-gate.test.mjs",
+      "targets": [
+        "scripts/e2e-gate.mjs"
+      ]
+    },
+    {
+      "id": "release-upgrades-stable-onto-itself",
+      "guard": "node --test test/e2e-gate.test.mjs",
+      "targets": [
+        "scripts/e2e-gate.mjs"
+      ]
+    },
+    {
+      "id": "release-trusts-foreign-e2e-run",
+      "guard": "node --test test/e2e-gate.test.mjs",
+      "targets": [
+        "scripts/e2e-gate.mjs"
+      ]
+    },
+    {
+      "id": "release-waits-for-line-review",
+      "guard": "node --test test/release-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/release.yml"
+      ]
+    },
+    {
+      "id": "release-review-base-accepts-beta",
+      "guard": "node --test test/release-review.test.mjs",
+      "targets": [
+        "scripts/release-review.mjs"
+      ]
+    },
+    {
+      "id": "release-review-model-gets-github-tools",
+      "guard": "node --test test/release-review.test.mjs",
+      "targets": [
+        ".github/workflows/release-review.yml"
+      ]
+    },
+    {
+      "id": "release-review-reruns-existing-doc",
+      "guard": "node --test test/release-review.test.mjs",
+      "targets": [
+        ".github/workflows/release-review.yml"
+      ]
+    },
+    {
+      "id": "review-trusts-push-run-without-mutants",
+      "guard": "node --test test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/validate-gate.mjs"
+      ]
+    },
+    {
+      "id": "merge-waits-push-run-without-mutants",
+      "guard": "node --test test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "baseline-overlay-leaks-into-every-key",
+      "guard": "node --test --test-name-pattern=\"#573\" test/check-inputs.test.mjs test/gate-reuse.test.mjs test/mutation-gate.test.mjs",
+      "targets": [
+        "scripts/check-inputs.mjs"
+      ]
+    },
+    {
+      "id": "proof-trusts-evidence-it-could-verify",
+      "guard": "node --test --test-name-pattern=\"#573\" test/ci-proof.test.mjs test/release-gate.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "merge-candidate-truncates-the-candidate-diff",
+      "guard": "node --test --test-name-pattern=\"#596\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "declared-baseline-review-run-never-checked",
+      "guard": "node --test --test-name-pattern=\"#595\" test/release-gate.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "reused-marker-key-unchecked-against-candidate",
+      "guard": "node --test --test-name-pattern=\"#573\" test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "product-tree-identity-counts-baselines",
+      "guard": "node --test --test-name-pattern=\"#573\" test/ci-proof.test.mjs",
+      "targets": [
+        "scripts/ci-proof.mjs"
+      ]
+    },
+    {
+      "id": "golden-index-invents-capture-platform",
+      "guard": "node --test --test-name-pattern=\"#571\" test/golden-capture-provenance.test.mjs",
+      "targets": [
+        "demo/golden/accept.mjs"
+      ]
+    },
+    {
+      "id": "golden-report-provenance-optional",
+      "guard": "node --test --test-name-pattern=\"#571 схема 2\" test/golden-capture-provenance.test.mjs",
+      "targets": [
+        "scripts/capture-environment.mjs"
+      ]
+    },
+    {
+      "id": "task-branch-workflow-sync-red-again",
+      "guard": "node --test --test-name-pattern=\"#700\" test/validate-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "workflow-sync-issue-duplicated-on-read-failure",
+      "guard": "node --test --test-name-pattern=\"#700: на ветке задачи\" test/validate-workflow.test.mjs",
+      "targets": [
+        ".github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "external-link-warn-mode-ignored",
+      "guard": "node --test --test-name-pattern=\"#700: check-docs\" test/validate-workflow.test.mjs",
+      "targets": [
+        "scripts/check-docs.mjs"
+      ]
+    },
+    {
+      "id": "screenshot-freshness-never-strict",
+      "guard": "node --test --test-name-pattern=\"#586\" test/classify-changes.test.mjs",
+      "targets": [
+        "scripts/classify-changes.mjs"
+      ]
+    },
+    {
+      "id": "no-new-any-forgives-a-single-matching-line",
+      "guard": "node --test test/no-new-any.test.mjs",
+      "targets": [
+        "scripts/no-new-any.mjs"
+      ]
+    },
+    {
+      "id": "guard-infra-keeps-ask-limit",
+      "guard": "node --test --test-name-pattern=\"r1 #695\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/process-track.mjs"
+      ]
+    },
+    {
+      "id": "packet-infra-track-ignores-show-default",
+      "guard": "node --test --test-name-pattern=\"r1 #695\" test/task-packet.test.mjs",
+      "targets": [
+        "scripts/task-packet.mjs"
+      ]
+    },
+    {
+      "id": "track-pays-for-mutants-again",
+      "guard": "node --test --test-name-pattern=\"#709\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/process-track.mjs"
+      ]
+    },
+    {
+      "id": "ship-limits-miss-new-src-file",
+      "guard": "node --test --test-name-pattern=\"рамки ship: новые файлы\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/process-track.mjs"
+      ]
+    },
+    {
+      "id": "ship-limit-off-by-one",
+      "guard": "node --test --test-name-pattern=\"граница включительна\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/process-track.mjs"
+      ]
+    },
+    {
+      "id": "pipeline-ship-ignores-limits",
+      "guard": "node --test --test-name-pattern=\"#707 AC3\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/process-track.mjs"
+      ]
+    },
+    {
+      "id": "light-review-duplicates-running-push",
+      "guard": "node --test --test-name-pattern=\"#954 without mutants\" test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/validate-gate.mjs"
+      ]
+    },
+    {
+      "id": "light-merge-dispatches-second-run",
+      "guard": "node --test --test-name-pattern=\"слияние ждёт push-прогон\" test/merge-candidate.test.mjs",
+      "targets": [
+        "scripts/merge-candidate.mjs"
+      ]
+    },
+    {
+      "id": "ship-review-ignores-merge-marker",
+      "guard": "node --test --test-name-pattern=\"ship-задача — по маркеру\" test/ship-review.test.mjs",
+      "targets": [
+        "scripts/ship-review.mjs"
+      ]
+    },
+    {
+      "id": "ship-review-accepts-partial-coverage",
+      "guard": "node --test --test-name-pattern=\"машинный блок покрывает\" test/ship-review.test.mjs",
+      "targets": [
+        "scripts/ship-review.mjs"
+      ]
+    },
+    {
+      "id": "ship-review-accepts-high",
+      "guard": "node --test --test-name-pattern=\"машинный блок покрывает\" test/ship-review.test.mjs",
+      "targets": [
+        "scripts/ship-review.mjs"
+      ]
+    },
+    {
+      "id": "task-branch-release-trailer-heavy-again",
+      "guard": "node --test --test-name-pattern=\"#697\" test/classify-changes.test.mjs",
+      "targets": [
+        "scripts/classify-changes.mjs"
+      ]
+    },
+    {
+      "id": "ci-golden-label-does-not-order-golden",
+      "guard": "node --test --test-name-pattern=\"#1044 connected scenes\" test/browser-push-plan.test.mjs",
+      "targets": [
+        "scripts/browser-push-plan.mjs"
+      ]
+    },
+    {
+      "id": "review-gate-accepts-light-proof-for-full",
+      "guard": "node --test --test-name-pattern=\"#697\" test/validate-gate.test.mjs",
+      "targets": [
+        "scripts/validate-gate.mjs"
+      ]
+    },
+    {
+      "id": "bot-golden-commit-without-provenance",
+      "guard": "node --test --test-name-pattern=\"провенанс\" test/beta-derived.test.mjs",
+      "targets": [
+        ".github/workflows/_beta-derived.yml"
+      ]
+    },
+    {
+      "id": "prepare-reuse-runs-material-script",
+      "guard": "node --test --test-name-pattern=\"#765 AC2\" test/process-prepare-tools.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "usage-script-from-moving-dev",
+      "guard": "node --test --test-name-pattern=\"#765 AC3\" test/process-prepare-tools.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "material-anchors-pile-separators",
+      "guard": "node --test --test-name-pattern=\"#765\" test/review-doc-guard.test.mjs",
+      "targets": [
+        "scripts/review-doc-guard.mjs"
+      ]
+    },
+    {
+      "id": "golden-policy-forgets-pinned-browser",
+      "guard": "node --test --test-name-pattern=\"#827\" test/golden-policy.test.mjs",
+      "targets": [
+        "demo/golden/policy.mjs"
+      ]
+    },
+    {
+      "id": "toolchain-check-trusts-browser-path",
+      "guard": "node --test --test-name-pattern=\"#827\" test/toolchain-pins.test.mjs",
+      "targets": [
+        "scripts/toolchain-pins.mjs"
+      ]
+    },
+    {
+      "id": "render-risk-forgets-tooltip-paths",
+      "guard": "node --test --test-name-pattern=\"#827 AC3\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/change-risk.mjs"
+      ]
+    },
+    {
+      "id": "track-step-never-adds-golden",
+      "guard": "node --test --test-name-pattern=\"#827 AC4\" test/process-track.test.mjs",
+      "targets": [
+        "scripts/process-track.mjs"
+      ]
+    },
+    {
+      "id": "track-workflow-ignores-golden-flag",
+      "guard": "node --test --test-name-pattern=\"#827 AC4\" test/process-track.test.mjs",
+      "targets": [
+        ".github/workflows/_process.yml"
+      ]
+    },
+    {
+      "id": "wsl-passport-hashes-executable-path",
+      "guard": "node --test --test-name-pattern=\"#833 AC1\" test/golden-wsl-artifact.test.mjs",
+      "targets": [
+        "scripts/golden-wsl-artifact.mjs"
+      ]
+    },
+    {
+      "id": "wsl-acceptance-ignores-browser-binary",
+      "guard": "node --test --test-name-pattern=\"#833 AC2\" test/golden-wsl-artifact.test.mjs",
+      "targets": [
+        "scripts/golden-wsl-artifact.mjs"
+      ]
+    },
+    {
+      "id": "vacuum-history-capture-inputs-untracked-999",
+      "guard": "node --test --test-name-pattern=\"consumed history capture inputs\" test/source-fingerprint.test.mjs",
+      "targets": [
+        "scripts/source-fingerprint.mjs"
+      ]
+    },
+    {
+      "id": "golden-strict-check-allows-tolerated-difference-1114",
+      "guard": "node --test test/golden-unchanged-checks.test.mjs",
+      "targets": [
+        "scripts/browser-selected.mjs"
+      ]
+    },
+    {
+      "id": "golden-strict-check-inherits-pending-delta-1114",
+      "guard": "node --test test/golden-unchanged-checks.test.mjs",
+      "targets": [
+        "scripts/browser-push-plan.mjs"
+      ]
+    },
+    {
+      "id": "golden-strict-contract-claims-full-coverage-1114",
+      "guard": "node --test test/golden-unchanged-checks.test.mjs",
+      "targets": [
+        "scripts/browser-plan-proof.mjs"
+      ]
+    },
+    {
+      "id": "golden-strict-check-silently-expires-1114",
+      "guard": "node --test test/golden-unchanged-checks.test.mjs",
+      "targets": [
+        "scripts/task-visual-intent.mjs"
+      ]
+    },
+    {
+      "id": "golden-strict-declaration-validation-bypassed-1114",
+      "guard": "node --test test/golden-unchanged-checks.test.mjs",
+      "targets": [
+        "scripts/task-intent.mjs"
+      ]
+    },
+    {
+      "id": "provenance-skips-bundle-rule",
+      "guard": "node --test --test-name-pattern=\"#657 правило исполняет validate-commit-provenance\" test/bundle-policy.test.mjs",
+      "targets": [
+        "scripts/validate-commit-provenance.mjs"
+      ]
+    },
+    {
+      "id": "passport-accepts-a-different-hash",
+      "guard": "node --test test/release-assets.test.mjs",
+      "targets": [
+        "scripts/release-assets.mjs"
+      ]
+    },
+    {
+      "id": "typing-gate-stops-running",
+      "guard": "python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider",
+      "targets": [
+        ".github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "nightly-reuse-ignores-tree",
+      "guard": "node --test --test-name-pattern=\"маркер другого дерева\" test/mutation-nightly-reuse.test.mjs",
+      "targets": [
+        "scripts/mutation-nightly-reuse.mjs"
+      ]
+    },
+    {
+      "id": "nightly-reuse-accepts-stale-marker",
+      "guard": "node --test --test-name-pattern=\"старше\" test/mutation-nightly-reuse.test.mjs",
+      "targets": [
+        "scripts/mutation-nightly-reuse.mjs"
+      ]
+    },
+    {
+      "id": "nightly-reuse-on-manual-dispatch",
+      "guard": "node --test --test-name-pattern=\"ручной dispatch\" test/mutation-nightly-reuse.test.mjs",
+      "targets": [
+        "scripts/mutation-nightly-reuse.mjs"
+      ]
+    },
+    {
+      "id": "green-marker-without-green-aggregator",
+      "guard": "node --test --test-name-pattern=\"#620: пропуск ночи\" test/mutation-gate.test.mjs",
+      "targets": [
+        ".github/workflows/_mutation-gate.yml"
+      ]
+    },
+    {
+      "id": "nightly-reuse-decision-error-skips-registry",
+      "guard": "node --test --test-name-pattern=\"#620: пропуск ночи\" test/mutation-gate.test.mjs",
+      "targets": [
+        ".github/workflows/_mutation-gate.yml"
+      ]
+    }
+  ],
+  "remaining": 1809
+}

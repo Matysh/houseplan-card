@@ -1,0 +1,75 @@
+# Review runtime only; no product build/tests in S7.
+name: Содержательное ревью задачи
+run-name: ${{ inputs.kind == 'spec' && format('Ревью ТЗ задачи {0} · {1}', inputs.issue, inputs.requestId) || format('Код-ревью задачи {0} · {1}', inputs.issue, inputs.requestId) }}
+on:
+  workflow_dispatch:
+    inputs:
+      issue: { type: string, required: true }
+      base: { type: string, required: true }
+      head: { type: string, required: true }
+      requestId: { type: string, required: true }
+      patchId: { type: string, default: '' }
+      track: { type: choice, options: [ship, show, ask], default: show }
+      kind: { type: choice, options: [code, spec], default: code }
+      receipts: { type: string, default: '[]' }
+permissions:
+  contents: read
+  actions: read
+  issues: read
+concurrency:
+  group: process-next-review-${{ inputs.requestId }}
+  cancel-in-progress: false
+jobs:
+  review:
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    defaults:
+      run:
+        working-directory: process-runner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: process-runner
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.head }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: process-runner/.nvmrc
+      - name: Подготовить Claude Code для ревью по подписке
+        # This pinned CLI uses postinstall to place its native executable.
+        # Global installation does not run the candidate repository's npm hooks.
+        run: npm install --global @anthropic-ai/claude-code@2.1.316 --no-audit --no-fund
+      - name: Прочитать материал и выполнить содержательное ревью
+        id: review
+        env:
+          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+          GITHUB_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          HP_ISSUE: ${{ inputs.issue }}
+          HP_BASE: ${{ inputs.base }}
+          HP_HEAD: ${{ inputs.head }}
+          HP_REQUEST_ID: ${{ inputs.requestId }}
+          HP_PATCH_ID: ${{ inputs.patchId }}
+          HP_TRACK: ${{ inputs.track }}
+          HP_KIND: ${{ inputs.kind }}
+          HP_RECEIPTS: ${{ inputs.receipts }}
+          HP_CANDIDATE_ROOT: ../candidate
+        run: node process-next/templates/review-job.mjs
+      - name: Сохранить результат для публикации координатором
+        id: artifact
+        if: ${{ always() && steps.review.outputs.artifact_reused != 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: review-result
+          retention-days: 60 # Same window as WorkflowReviewAdapter.runs().
+          include-hidden-files: true
+          overwrite: true # Replace only an incomplete result on the single allowed retry; final verdicts are reused.
+          path: process-runner/process-next/.state/reviews
+          if-no-files-found: ignore

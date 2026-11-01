@@ -1,5 +1,10 @@
 # #485 — Radar presence, stage 2: zones and bounded observations
 
+> **Историческое ТЗ.** Процессные предписания ниже (гейты, прогоны, трейлеры,
+> передача на ревью) описывают прежнюю обвязку и не задают текущих действий.
+> Правила работы — [PROCESS.md](../../PROCESS.md); текущая постановка — в issue.
+> Продуктовые требования и исходные решения сохранены как контекст.
+
 Issue: [#485](https://github.com/Matysh/houseplan-card/issues/485). Companion:
 [stage 1](485-radar-presence-stage1.md). This is an implementation contract,
 not a report that the feature exists. The issue labels remain the sole status.

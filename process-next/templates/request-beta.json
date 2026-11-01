@@ -1,0 +1,10 @@
+{
+  "event": "beta",
+  "version": "1.99.0-beta.1",
+  "e2eRoot": "/home/USER/houseplan-e2e",
+  "workRoot": "/home/USER/houseplan-e2e-labs",
+  "expectedVersion": "1.99.0-beta.1",
+  "upgradeFrom": "v1.83.1",
+  "haVersion": "2026.10.4",
+  "metricsRequest": "process-next/.state/metrics-request.json"
+}

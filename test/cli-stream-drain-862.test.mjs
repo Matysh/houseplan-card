@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { selectSmokes } from '../scripts/smoke-select.mjs';
+
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -47,53 +47,6 @@ const diff = count => Array.from({ length: count }, (_, n) => {
   const path = `src/cliTail${String(n).padStart(5, '0')}_${'x'.repeat(100)}.ts`;
   return `diff --git a/${path} b/${path}\n--- a/${path}\n+++ b/${path}\n@@ -1 +1 @@\n-old\n+new\n`;
 }).join('');
-
-test('#862 real smoke-select delivers complete JSON to fast and finitely slow readers', async () => {
-  for (const [count, pause] of [[1, 0], [1500, 0], [1500, 750]]) {
-    const input = diff(count);
-    const expected = Buffer.from(`${JSON.stringify(selectSmokes(input), null, 2)}\n`);
-    if (count > 1) assert.ok(expected.length > 300000, 'larger than a POSIX pipe');
-    const actual = await runNode(['scripts/smoke-select.mjs', '--diff', '-', '--json'], { input, pause });
-    assert.equal(actual.code, 0);
-    assert.equal(actual.signal, null);
-    assert.ok(actual.exitSeen && actual.stdoutEnded && actual.stderrEnded, 'exit and both EOFs observed');
-    assert.equal(actual.stderr.length, 0);
-    assert.equal(actual.stdout.length, expected.length, `${count} files / ${pause}ms reader delay`);
-    assert.deepEqual(actual.stdout, expected);
-    assert.deepEqual(JSON.parse(actual.stdout), JSON.parse(expected));
-  }
-});
-
-test('#862 error entry points keep codes, complete stderr and no success stdout', async () => {
-  const cases = [
-    ['smoke-select', [], 2, /^использование:.*<файл\|->\n$/s],
-    ['model-invariants', [], 2, /^использование:.*\[--json\]\n$/s],
-    ['mutation-nightly-reuse', [], 2, /^usage:.*--event=\n$/s],
-    ['docs-accept', ['--identical', '--reviewed'], 2, /^отказ:.*приёмка артефакта\n$/s],
-    ['process-gate', ['--range', 'hp862-no-such-ref..HEAD'], 2, /^git log .*hp862-no-such-ref.*\n$/s],
-    ['no-new-any', ['--base', 'hp862-no-such-ref'], 2, /^git diff .*hp862-no-such-ref.*\n$/s],
-    ['no-new-private-writes', ['--base', 'hp862-no-such-ref'], 2, /^git diff .*hp862-no-such-ref.*\n$/s],
-    ['capture-determinism', [], 1, /::error::environment failure \(browser-attestation\).*\n$/s],
-  ];
-  for (const [name, args, code, diagnostic] of cases) {
-    const env = name === 'capture-determinism' ? { PLAYWRIGHT_BROWSERS_PATH: `${ROOT}/artifacts/hp862-no-browser` } : {};
-    const actual = await runNode([`scripts/${name}.mjs`, ...args], { env });
-    assert.equal(actual.code, code, name);
-    assert.equal(actual.stdout.length, 0, name);
-    assert.match(actual.stderr.toString(), diagnostic, name);
-    assert.ok(actual.stderrEnded && actual.exitSeen, name);
-  }
-});
-
-// Windows closes anonymous pipe handles differently; POSIX EPIPE is the
-// acceptance surface for this case, not a fabricated native Windows oracle.
-test('#862 a closed output pipe does not turn a failed write into success', { skip: process.platform === 'win32' }, async () => {
-  const actual = await runNode(['scripts/smoke-select.mjs', '--diff', '-', '--json'], {
-    input: diff(1500), brokenPipe: true,
-  });
-  assert.equal(actual.code, 1);
-  assert.equal(actual.signal, null, 'not killed by the deadline');
-});
 
 test('#862 async completion cannot overwrite an earlier stdout/stderr write failure', { skip: process.platform === 'win32' }, async () => {
   for (const stream of ['stdout', 'stderr']) {

@@ -1,5 +1,10 @@
 # Kiosk clock diagnosis — #949, 2026-10-17
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Material: accepted `dev@f039a132a4178c7d9823d83c289426bf1f1b37ed`.
 Environment: WSL Ubuntu/ext4; Node 22.23.3, Playwright 1.62.0,
 actual Chromium headless-shell 151.0.7922.34. No product source, CSS,

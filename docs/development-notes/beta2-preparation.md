@@ -1,5 +1,8 @@
 # 1.83.0-beta.2: prerelease integration checks
 
+> Исторический снимок выполнения указанной задачи/выпуска. Результаты и команды ниже относятся к тому материалу;
+> они не предписывают новые прогоны, Validate или действия ревьюера. Текущие правила — [PROCESS.md](../../PROCESS.md).
+
 Accepted source `9995a8339265754a72fdb0e566f7d3001d73305f` contains all27
 release members. Canonical all-parent history since beta.1 has304 commits;
 all27 open-S8 issues have implementation evidence. Historical service issue697

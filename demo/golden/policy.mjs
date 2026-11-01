@@ -41,8 +41,8 @@ export const indexCapturedOn = (index) => (index && typeof index === 'object'
  */
 export const assertGoldenInvocation = (mode, scenarioFilter = '', options = {}) => {
   if (!['capture', 'verify'].includes(mode)) throw new Error(`unknown golden mode: ${mode}`);
-  if (mode === 'verify' && scenarioFilter)
-    throw new Error('golden verify must run the complete matrix; use capture for a diagnostic --scenario run');
+  // The caller selects task/beta/stable scope. An addressed verification is
+  // valid evidence for those scenes; it is never a receipt for the full matrix.
   // #827: и capture, и verify — визуальное доказательство. Общий launch
   // (`demo/serve.mjs`) судит каждый запущенный браузер против пинов toolchain
   // и отказывает как среда до первого кадра: каталог с пиновым именем и чужой

@@ -1,0 +1,130 @@
+# Canonical workflow source; deployed as .github/workflows/process-next-fallback.yml.
+name: Резервный запуск тестового набора
+run-name: ${{ inputs.requestId != '' && format('{0} · {1}', inputs.title, inputs.requestId) || inputs.title }}
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: 'Например: Тесты для задачи #9999 (перед ревью)'
+        required: true
+        type: string
+      candidate:
+        description: 'Полный SHA кандидата с подготовленной новой обвязкой'
+        required: true
+        type: string
+      request:
+        description: 'Общий JSON; beta/stable: e2eCommit, haVersion, upgradeFrom; metricsRequest и measurementsCommit необязательны'
+        required: true
+        type: string
+      previous_run:
+        description: 'Необязательный ID предыдущего резервного прогона: зачесть подходящие успешные результаты'
+        required: false
+        type: string
+      requestId:
+        description: 'Идентификатор S6 от finish; сохраняется при возобновлении ожидания'
+        required: false
+        type: string
+concurrency:
+  group: process-next-fallback-${{ inputs.requestId || github.run_id }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+  actions: read
+jobs:
+  selected-set:
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' && (contains(fromJSON('["beta","stable"]'), fromJSON(inputs.request).event) || !contains(fromJSON('["docs","documentation"]'), fromJSON(inputs.request).layer)) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      HP_REQUEST: ${{ inputs.request }}
+      HP_CANDIDATE: ${{ inputs.candidate }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.candidate }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Разобрать JSON как данные и определить подготовку
+        id: request
+        run: node process-next/templates/prepare-fallback.mjs plan
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        if: steps.request.outputs.needs_python == 'true'
+        with:
+          python-version-file: .python-version
+      - name: Подготовить Node без установки hooks
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Подготовить Chromium продукта
+        if: steps.request.outputs.needs_browser == 'true'
+        run: node node_modules/playwright/cli.js install --with-deps chromium
+      - name: Подготовить зависимости backend
+        if: steps.request.outputs.needs_backend == 'true'
+        run: python -m pip install -r tests_backend/requirements.txt pytest-cov
+      - name: Получить закреплённый companion E2E
+        if: steps.request.outputs.needs_e2e == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: Matysh/houseplan-e2e
+          ref: ${{ steps.request.outputs.e2e_commit }}
+          path: process-next/.state/fallback-e2e
+          persist-credentials: false
+      - name: Подготовить companion и проверить доступность Docker
+        if: steps.request.outputs.needs_e2e == 'true'
+        working-directory: process-next/.state/fallback-e2e
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          node node_modules/playwright/cli.js install --with-deps chromium
+          docker version --format '{{.Server.Version}}'
+      # Optional immutable files from this same product repository, not a moving branch or URL.
+      # metricsRequest and its latestStable path are both relative to this checkout.
+      - name: Получить сохранённые CI-замеры по отдельному SHA
+        if: steps.request.outputs.measurements_commit != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: Matysh/houseplan-card
+          ref: ${{ steps.request.outputs.measurements_commit }}
+          path: process-next/.state/fallback-measurements
+          persist-credentials: false
+      - name: Подготовить пути и фактические параметры CI
+        run: node process-next/templates/prepare-fallback.mjs materialize
+      - name: Получить результаты предыдущего набора
+        if: inputs.previous_run != ''
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: process-next-reuse
+          run-id: ${{ inputs.previous_run }}
+          github-token: ${{ github.token }}
+          path: process-next/.state/fallback-prior
+      - name: Восстановить только отчёты и кеш результатов
+        if: inputs.previous_run != ''
+        run: node process-next/templates/prepare-fallback.mjs restore
+      - name: Выполнить выбранный общий набор
+        run: node process-next/cli.mjs run --request process-next/.state/fallback-request.json --state-dir process-next/.state
+      - name: Сохранить применимые результаты для продолжения
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: process-next-reuse
+          path: |
+            process-next/.state/cache
+            artifacts/process-next/backend-coverage.xml
+            artifacts/process-next/golden-*/golden-report.json
+          include-hidden-files: true
+          overwrite: true
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Сохранить результат и логи
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: process-next-result
+          path: |
+            process-next/.state/runs
+            artifacts/process-next
+            artifacts/process-next-e2e-labs/*/artifacts
+          if-no-files-found: ignore
+          retention-days: 14
+          include-hidden-files: true
+          overwrite: true

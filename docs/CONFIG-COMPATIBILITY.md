@@ -17,8 +17,10 @@ sequence, with structured pending when it does not yet exist. Unknown provenance
 or a non-equivalent replacement means explicit keep. Retirement is allowed
 **after** that boundary, only with executed lossless migration and all-input
 proof. Reached-until diagnostics do not grant removal/merge authority.
-Task-packet reads live published releases for affected paths and reports an
-unavailable release basis explicitly, without substituting an old current stable.
+When changing a compatibility branch, establish its lifetime from published
+releases. If that basis is unavailable, say so; do not substitute an old stable
+snapshot. This product contract does not require the former task-packet generator;
+task preparation follows [PROCESS.md](../PROCESS.md).
 Older backend View remains supported, so the new migration alone does not authorize
 deleting frontend read decoders; the inventory records that boundary.
 

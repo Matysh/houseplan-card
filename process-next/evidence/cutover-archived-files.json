@@ -1,0 +1,790 @@
+{
+  "remove": [
+    "scripts/action-pins.mjs",
+    "scripts/artifact-inventory.mjs",
+    "scripts/branch-state.mjs",
+    "scripts/browser-plan-proof.mjs",
+    "scripts/browser-push-plan.mjs",
+    "scripts/browser-selected.mjs",
+    "scripts/candidate-native.mjs",
+    "scripts/candidate-readiness.mjs",
+    "scripts/candidate-reviews-index.mjs",
+    "scripts/change-classes.mjs",
+    "scripts/change-risk.mjs",
+    "scripts/check-docs.mjs",
+    "scripts/check-inputs.mjs",
+    "scripts/check-proof-transfer.mjs",
+    "scripts/ci-job-environment.mjs",
+    "scripts/ci-profile-event.mjs",
+    "scripts/ci-profile-paths.json",
+    "scripts/ci-profile-paths.mjs",
+    "scripts/ci-profile-proof.mjs",
+    "scripts/ci-profiles.mjs",
+    "scripts/ci-proof-registry.mjs",
+    "scripts/ci-proof.mjs",
+    "scripts/ci-registry-build.mjs",
+    "scripts/ci-registry-cli.mjs",
+    "scripts/ci-registry-equivalence.mjs",
+    "scripts/ci-registry-inputs.mjs",
+    "scripts/ci-registry-inventory.json",
+    "scripts/ci-registry-inventory.mjs",
+    "scripts/ci-registry-records.mjs",
+    "scripts/ci-registry-verify.mjs",
+    "scripts/ci-workflows.mjs",
+    "scripts/classify-base.mjs",
+    "scripts/classify-changes.mjs",
+    "scripts/commit-amend.mjs",
+    "scripts/content-inputs.mjs",
+    "scripts/continuation-discovery.mjs",
+    "scripts/continuation-record.mjs",
+    "scripts/decision-context.mjs",
+    "scripts/doc-link-observation.mjs",
+    "scripts/docs-freshness.mjs",
+    "scripts/e2e-gate.mjs",
+    "scripts/entry-cost.mjs",
+    "scripts/frontend-proof.mjs",
+    "scripts/frontend-units.mjs",
+    "scripts/gate-reuse.mjs",
+    "scripts/gate-small.mjs",
+    "scripts/golden-acceptance.mjs",
+    "scripts/inventory.mjs",
+    "scripts/local-gate-environment.mjs",
+    "scripts/local-gate-proof.mjs",
+    "scripts/local-registry-proof.mjs",
+    "scripts/md-anchors.mjs",
+    "scripts/merge-candidate.mjs",
+    "scripts/model-review-failure.mjs",
+    "scripts/model-usage-details.mjs",
+    "scripts/model-usage.mjs",
+    "scripts/mutation-browser-rebase.mjs",
+    "scripts/night-diagnostics.mjs",
+    "scripts/night-red.mjs",
+    "scripts/pre-push-gate.mjs",
+    "scripts/process-gate.mjs",
+    "scripts/process-metrics.mjs",
+    "scripts/process-reconcile.mjs",
+    "scripts/process-resume.mjs",
+    "scripts/process-track.mjs",
+    "scripts/ratchets.mjs",
+    "scripts/read-only-fetch.mjs",
+    "scripts/rebase-generated.mjs",
+    "scripts/rebase-on-dev.mjs",
+    "scripts/release-assets.mjs",
+    "scripts/release-bookkeeping.mjs",
+    "scripts/release-contract.mjs",
+    "scripts/release-gate.mjs",
+    "scripts/release-ledger.mjs",
+    "scripts/release-membership.mjs",
+    "scripts/release-notes.mjs",
+    "scripts/release-prepare.mjs",
+    "scripts/release-prerelease.mjs",
+    "scripts/release-review.mjs",
+    "scripts/review-approved-check.mjs",
+    "scripts/review-call-digest.mjs",
+    "scripts/review-capabilities.mjs",
+    "scripts/review-check-server.mjs",
+    "scripts/review-context.mjs",
+    "scripts/review-doc-guard.mjs",
+    "scripts/review-execution-policy.mjs",
+    "scripts/review-failure-diagnostics.mjs",
+    "scripts/review-findings-policy.mjs",
+    "scripts/review-handoff.mjs",
+    "scripts/review-inert-grep-probe.mjs",
+    "scripts/review-material.mjs",
+    "scripts/review-native-call-digest.mjs",
+    "scripts/review-native-runner.mjs",
+    "scripts/review-preflight.mjs",
+    "scripts/review-publication.mjs",
+    "scripts/review-rebase-certificate.mjs",
+    "scripts/review-result-gate.mjs",
+    "scripts/review-task-delta.mjs",
+    "scripts/review-tool-metadata.mjs",
+    "scripts/reviews-archive.mjs",
+    "scripts/reviews-index.mjs",
+    "scripts/sandbox-bootstrap.sh",
+    "scripts/service-event.mjs",
+    "scripts/service-workflows.mjs",
+    "scripts/ship-review.mjs",
+    "scripts/smoke-links.mjs",
+    "scripts/smoke-select.mjs",
+    "scripts/source-replacement.mjs",
+    "scripts/stable-field-decision.mjs",
+    "scripts/status-counter-equivalence.mjs",
+    "scripts/status-counter-rebase.mjs",
+    "scripts/status-label.mjs",
+    "scripts/status-snapshot.mjs",
+    "scripts/task-check-reuse-cli.mjs",
+    "scripts/task-check-reuse.mjs",
+    "scripts/task-check-scope.mjs",
+    "scripts/task-check-source.mjs",
+    "scripts/task-ci-plan.mjs",
+    "scripts/task-delivery.mjs",
+    "scripts/task-intent.mjs",
+    "scripts/task-packet.mjs",
+    "scripts/task-visual-intent.mjs",
+    "scripts/tooling-dependencies.mjs",
+    "scripts/ui-kit-baseline.json",
+    "scripts/ui-kit-metrics.mjs",
+    "scripts/unit-groups.mjs",
+    "scripts/user-guide-parity.mjs",
+    "scripts/validate-commit-provenance.mjs",
+    "scripts/validate-gate.mjs",
+    "scripts/wait-verdict.mjs",
+    "scripts/workflow-continuation.mjs",
+    "scripts/workflow-jobs.mjs",
+    "scripts/workflow-pending.mjs",
+    "test/action-pins.test.mjs",
+    "test/beta-derived.test.mjs",
+    "test/branch-state.test.mjs",
+    "test/browser-push-plan.test.mjs",
+    "test/bundle-tree-committed.test.mjs",
+    "test/candidate-858.test.mjs",
+    "test/candidate-reviews-index.test.mjs",
+    "test/capture-determinism-gate.test.mjs",
+    "test/check-inputs.test.mjs",
+    "test/ci-flake-evidence.test.mjs",
+    "test/ci-profiles.test.mjs",
+    "test/ci-proof-registry.test.mjs",
+    "test/ci-proof.test.mjs",
+    "test/ci-registry-inputs.test.mjs",
+    "test/classify-base.test.mjs",
+    "test/classify-changes.test.mjs",
+    "test/commit-amend.test.mjs",
+    "test/commit-provenance.test.mjs",
+    "test/continuation-discovery.test.mjs",
+    "test/core-file-budget.test.mjs",
+    "test/decision-context-860.test.mjs",
+    "test/default-branch-workflows.test.mjs",
+    "test/development-loop-954.test.mjs",
+    "test/doc-link-observation.test.mjs",
+    "test/docs-acceptance.test.mjs",
+    "test/docs-freshness.test.mjs",
+    "test/e2e-gate.test.mjs",
+    "test/entry-cost.test.mjs",
+    "test/gate-reuse.test.mjs",
+    "test/gate-small.test.mjs",
+    "test/golden-capture-provenance.test.mjs",
+    "test/golden-policy.test.mjs",
+    "test/golden-unchanged-checks.test.mjs",
+    "test/helpers/registry-probe-diagnostics.mjs",
+    "test/lint-scope.test.mjs",
+    "test/local-contour.test.mjs",
+    "test/merge-candidate.test.mjs",
+    "test/merge-continuation-882.test.mjs",
+    "test/model-evidence-857.test.mjs",
+    "test/model-usage.test.mjs",
+    "test/monolith-metrics.test.mjs",
+    "test/monolith-text-anchors.test.mjs",
+    "test/mutation-readiness.test.mjs",
+    "test/night-red.test.mjs",
+    "test/nightly-workflow.test.mjs",
+    "test/no-new-any.test.mjs",
+    "test/no-new-private-writes.test.mjs",
+    "test/performance-contract.test.mjs",
+    "test/performance-workflow.test.mjs",
+    "test/pipeline-outcomes-897.test.mjs",
+    "test/pre-push-gate.test.mjs",
+    "test/process-digests.test.mjs",
+    "test/process-gate.test.mjs",
+    "test/process-integrate-tools.test.mjs",
+    "test/process-metrics.test.mjs",
+    "test/process-pending-round.test.mjs",
+    "test/process-prepare-tools.test.mjs",
+    "test/process-reconcile.test.mjs",
+    "test/process-resume.test.mjs",
+    "test/process-track.test.mjs",
+    "test/promotion-range.test.mjs",
+    "test/proof-loop-856.test.mjs",
+    "test/publish-push-refusal.test.mjs",
+    "test/ratchets.test.mjs",
+    "test/rebase-generated.test.mjs",
+    "test/rebase-on-dev.test.mjs",
+    "test/release-assets.test.mjs",
+    "test/release-bookkeeping.test.mjs",
+    "test/release-contract.test.mjs",
+    "test/release-gate.test.mjs",
+    "test/release-ledger.test.mjs",
+    "test/release-membership.test.mjs",
+    "test/release-narrative.test.mjs",
+    "test/release-notes.test.mjs",
+    "test/release-read-retry.test.mjs",
+    "test/release-review.test.mjs",
+    "test/release-workflow.test.mjs",
+    "test/review-approved-check.test.mjs",
+    "test/review-call-digest.test.mjs",
+    "test/review-capabilities.test.mjs",
+    "test/review-check-server.test.mjs",
+    "test/review-context.test.mjs",
+    "test/review-doc-guard.test.mjs",
+    "test/review-execution-policy.test.mjs",
+    "test/review-failure-diagnostics.test.mjs",
+    "test/review-findings-policy.test.mjs",
+    "test/review-model-config.test.mjs",
+    "test/review-native-call-digest.test.mjs",
+    "test/review-native-runner.test.mjs",
+    "test/review-preflight.test.mjs",
+    "test/review-publication.test.mjs",
+    "test/review-rebase-certificate.test.mjs",
+    "test/review-result-gate.test.mjs",
+    "test/review-task-delta.test.mjs",
+    "test/review-workflow-runtime.test.mjs",
+    "test/reviews-archive.test.mjs",
+    "test/reviews-index.test.mjs",
+    "test/service-event.test.mjs",
+    "test/ship-review.test.mjs",
+    "test/single-source-numbers.test.mjs",
+    "test/smoke-evidence-863.test.mjs",
+    "test/smoke-select.test.mjs",
+    "test/source-fingerprint.test.mjs",
+    "test/source-replacement.test.mjs",
+    "test/status-counter-equivalence.test.mjs",
+    "test/status-counter-rebase.test.mjs",
+    "test/status-label.test.mjs",
+    "test/status-snapshot.test.mjs",
+    "test/task-check-reuse.test.mjs",
+    "test/task-check-scope.test.mjs",
+    "test/task-check-source.test.mjs",
+    "test/task-check-workflow.test.mjs",
+    "test/task-delivery-903.test.mjs",
+    "test/task-packet.test.mjs",
+    "test/task-visual-intent.test.mjs",
+    "test/temp-dir-hygiene.test.mjs",
+    "test/testing-doc.test.mjs",
+    "test/toolchain-pins.test.mjs",
+    "test/ui-kit-metrics.test.mjs",
+    "test/unit-groups.test.mjs",
+    "test/user-guide-parity.test.mjs",
+    "test/user-stable-changelog.test.mjs",
+    "test/validate-gate.test.mjs",
+    "test/validate-workflow.test.mjs",
+    "test/wait-verdict.test.mjs",
+    "test/wall-parity-ci.test.mjs",
+    "test/workflow-hygiene.test.mjs",
+    "test/workflow-jobs.test.mjs",
+    "test/workflow-pipefail.test.mjs",
+    "test/workflow-step.test.mjs",
+    "test/mutation-shards-899.test.mjs",
+    "test/mutation-nightly-reuse.test.mjs",
+    "scripts/mutation-nightly-reuse.mjs"
+  ],
+  "retained": [
+    {
+      "path": "scripts/no-new-private-writes.mjs",
+      "callers": [
+        "test/hp-test-facade.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/spawn-portable.mjs",
+      "callers": [
+        "demo/benchmark_selective_invalidation.mjs",
+        "scripts/browser-attestation.mjs",
+        "scripts/config-compatibility-inventory.mjs",
+        "scripts/coverage-audit-read.mjs",
+        "scripts/coverage-diagnostic.mjs",
+        "scripts/docs-accept.mjs",
+        "scripts/fix-test-build.mjs",
+        "scripts/generate-furniture-assets.mjs",
+        "scripts/mutation-gate-report.mjs",
+        "scripts/mutation-nightly-reuse.mjs",
+        "scripts/no-new-private-writes.mjs",
+        "scripts/parallel-path-audit.mjs",
+        "scripts/performance-baseline.mjs",
+        "scripts/repo-weight.mjs",
+        "scripts/sh3d-convert/build-page.mjs",
+        "scripts/sh3d-convert/build-runtime.mjs",
+        "scripts/sh3d-convert/site-page.mjs",
+        "scripts/telegram-release.mjs",
+        "scripts/test-chunk.mjs",
+        "scripts/toolchain-pins.mjs",
+        "scripts/unused-locals-gate.mjs",
+        "test/windows-portability.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/bundle-sync.mjs",
+      "callers": [
+        "demo/docs/capture.mjs",
+        "process-next/lib/catalog.mjs",
+        "scripts/coverage-diagnostic.mjs",
+        "test/bundle-sync.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/bundle-tree.mjs",
+      "callers": [
+        "demo/bundle-freshness.mjs",
+        "process-next/lib/catalog.mjs",
+        "scripts/bundle-budget.mjs",
+        "scripts/bundle-policy.mjs",
+        "scripts/bundle-sync.mjs",
+        "scripts/dev-build.mjs",
+        "scripts/verify-houseplan-zip.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/bundle-policy.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/bundle-policy.mjs",
+      "callers": [
+        "test/bundle-assets.test.mjs",
+        "test/bundle-policy.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/css-orphans.mjs",
+      "callers": [
+        "test/css-orphans.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/css-source.mjs",
+      "callers": [
+        "scripts/css-orphans.mjs",
+        "scripts/dev/styles-diff.mjs",
+        "test/css-orphans.test.mjs",
+        "test/helpers/editor-style-ownership.mjs",
+        "test/styles-split.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/css-lex.mjs",
+      "callers": [
+        "demo/ui-lab/ui-kit-audit.mjs",
+        "scripts/css-orphans.mjs",
+        "scripts/css-source.mjs",
+        "scripts/dev/styles-diff.mjs",
+        "test/css-orphans.test.mjs",
+        "test/helpers/editor-style-ownership.mjs",
+        "test/houseplan-panel.test.mjs",
+        "test/styles-split.test.mjs",
+        "test/support-feedback.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/css-foreign.mjs",
+      "callers": [
+        "demo/helpers/foreign-css-witness.mjs",
+        "demo/ui-lab/ui-kit-audit.mjs",
+        "scripts/css-orphans.mjs",
+        "test/css-orphans.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/css-foreign.json",
+      "callers": [
+        "scripts/css-foreign.mjs",
+        "test/css-orphans.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-browser-inventory.mjs",
+      "callers": [
+        "scripts/mutation-browser-policy.mjs",
+        "scripts/mutation-registry-check.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-browser-policy.mjs",
+      "callers": [
+        "scripts/mutation-registry-check.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/source-fingerprint.mjs",
+      "callers": [
+        "demo/bundle-freshness.mjs",
+        "demo/docs/capture.mjs",
+        "demo/smoke_led_strip_glow.mjs",
+        "process-next/lib/catalog.mjs",
+        "rollup.config.mjs",
+        "scripts/coverage-identity.mjs",
+        "scripts/docs-accept.mjs",
+        "scripts/mutation-bundle-cache.mjs",
+        "scripts/mutation-evidence.mjs",
+        "scripts/source-fingerprint.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/bundle-freshness.test.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/css-template-minifier.mjs",
+      "callers": [
+        "demo/smoke_css_minifier_semantics.mjs",
+        "process-next/lib/catalog.mjs",
+        "rollup.config.mjs",
+        "scripts/source-fingerprint.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/coverage-maps.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/coverage-maps.mjs",
+      "callers": [
+        "process-next/lib/catalog.mjs",
+        "rollup.config.mjs",
+        "scripts/bundle-manifest.mjs",
+        "scripts/coverage-identity.mjs",
+        "scripts/coverage-report.mjs",
+        "scripts/css-template-minifier.mjs",
+        "scripts/fix-test-build.mjs",
+        "scripts/source-fingerprint.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/coverage-diagnostic.test.mjs",
+        "test/coverage-maps.test.mjs",
+        "test/coverage-recorder.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/bundle-manifest.mjs",
+      "callers": [
+        "demo/smoke_lazy_admin_locale.mjs",
+        "process-next/lib/catalog.mjs",
+        "rollup.config.mjs",
+        "scripts/bundle-budget.mjs",
+        "scripts/source-fingerprint.mjs",
+        "test/build-identity.test.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/bundle-output-clean.test.mjs",
+        "test/coverage-maps.test.mjs",
+        "test/i18n-lazy-namespaces.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/fix-test-build.mjs",
+      "callers": [
+        "demo/smoke_edit_walk.mjs",
+        "demo/smoke_lattice_write_barrier.mjs",
+        "process-next/lib/catalog.mjs",
+        "scripts/coverage-diagnostic.mjs",
+        "scripts/mutation-preparation.mjs",
+        "scripts/test-chunk.mjs",
+        "test/coverage-diagnostic.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-gate.mjs",
+      "callers": [
+        "process-next/lib/catalog.mjs",
+        "scripts/mutation-gate-report.mjs",
+        "scripts/mutation-selection.mjs",
+        "test/mutation-gate.test.mjs",
+        "test/mutation-guard-outcome.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-registry.mjs",
+      "callers": [
+        "process-next/templates/background-job.mjs",
+        "scripts/mutation-gate.mjs",
+        "scripts/mutation-selection.mjs",
+        "test/mutation-gate.test.mjs",
+        "test/mutation-guard-outcome.test.mjs",
+        "test/mutation-shards-899.test.mjs",
+        "test/smoke-exception-guard.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-execution.mjs",
+      "callers": [
+        "scripts/mutation-attribution.mjs",
+        "scripts/mutation-environment.mjs",
+        "scripts/mutation-gate.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-guard-outcome.mjs",
+      "callers": [
+        "scripts/mutation-attribution.mjs",
+        "scripts/mutation-evidence.mjs",
+        "scripts/mutation-execution.mjs",
+        "scripts/mutation-gate.mjs",
+        "scripts/mutation-registry-check.mjs",
+        "test/mutation-gate.test.mjs",
+        "test/mutation-guard-outcome.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-registry-check.mjs",
+      "callers": [
+        "scripts/mutation-gate.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-selection.mjs",
+      "callers": [
+        "scripts/mutation-attribution.mjs",
+        "scripts/mutation-environment.mjs",
+        "scripts/mutation-evidence.mjs",
+        "scripts/mutation-gate.mjs",
+        "scripts/mutation-readiness-input.mjs",
+        "scripts/mutation-registry-check.mjs",
+        "test/mutation-gate.test.mjs",
+        "test/mutation-shards-899.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-evidence.mjs",
+      "callers": [
+        "scripts/mutation-gate.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-attribution.mjs",
+      "callers": [
+        "scripts/mutation-gate.mjs",
+        "test/mutation-guard-outcome.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/mutation-environment.mjs",
+      "callers": [
+        "scripts/mutation-gate.mjs",
+        "test/mutation-gate.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/browser-attestation.mjs",
+      "callers": [
+        "demo/golden/policy.mjs",
+        "demo/serve.mjs",
+        "demo/smoke_backdrop.mjs",
+        "demo/smoke_binding_ui.mjs",
+        "demo/smoke_canvas_surface_gestures.mjs",
+        "demo/smoke_daycycle_raster.mjs",
+        "demo/smoke_device_contact_designer.mjs",
+        "demo/smoke_led_strip_glow.mjs",
+        "demo/smoke_panel_header_overflow.mjs",
+        "demo/smoke_plan_converter.mjs",
+        "demo/smoke_room_co2.mjs",
+        "demo/smoke_ui_1051_native.mjs",
+        "demo/smoke_ui_polish_963.mjs",
+        "demo/smoke_ui_polish_963_reference.mjs",
+        "demo/smoke_ui_polish_963_touch.mjs",
+        "demo/ui-lab/capture-vacuum-reference.mjs",
+        "demo/ui-lab/editor-kit-audit.mjs",
+        "demo/ui-lab/settings-content-audit.mjs",
+        "demo/ui-lab/smoke.mjs",
+        "demo/ui-lab/ui-kit-audit.mjs",
+        "demo/ui-lab/variable-dialog-audit.mjs",
+        "demo/ui-lab/verify-icon-picker.mjs",
+        "demo/ui-lab/verify-polish.mjs",
+        "demo/ui-lab/verify-vacuum-1002.mjs",
+        "demo/wallthick-selection-scenario.mjs",
+        "process-next/lib/catalog.mjs",
+        "scripts/assert-capture-env.mjs",
+        "scripts/capture-determinism.mjs",
+        "scripts/coverage-preload.mjs",
+        "scripts/dev/css-migration-capture.mjs",
+        "scripts/dev/verify-plan-rotation-mobile-1070.mjs",
+        "scripts/toolchain-pins.mjs",
+        "test/browser-attestation.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/telegram-release.mjs",
+      "callers": [
+        "process-next/lib/notifications.mjs"
+      ]
+    },
+    {
+      "path": "scripts/user-stable-changelog.mjs",
+      "callers": [
+        "process-next/lib/release-preparation.mjs",
+        "scripts/telegram-release.mjs"
+      ]
+    },
+    {
+      "path": "scripts/relative-dependencies.mjs",
+      "callers": [
+        "test/helpers/import-closure.mjs",
+        "test/relative-dependencies.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/coverage-identity.mjs",
+      "callers": [
+        "demo/smoke_coverage_recorder.mjs",
+        "scripts/coverage-audit-read.mjs",
+        "scripts/coverage-diagnostic.mjs",
+        "scripts/coverage-inventory.mjs",
+        "scripts/coverage-preload.mjs",
+        "scripts/coverage-report.mjs",
+        "scripts/coverage-reproject-1018.mjs",
+        "scripts/parallel-path-audit.mjs",
+        "test/coverage-diagnostic.test.mjs",
+        "test/coverage-recorder.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/coverage-report.mjs",
+      "callers": [
+        "scripts/coverage-diagnostic.mjs",
+        "scripts/coverage-reproject-1018.mjs",
+        "test/coverage-diagnostic.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/bundle-budget.mjs",
+      "callers": [
+        "test/bundle-assets.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/config-schema.json",
+      "callers": [
+        "test/config-schema-parity.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/toolchain-pins.mjs",
+      "callers": [
+        "demo/benchmark_light_presentation.mjs",
+        "process-next/lib/catalog.mjs",
+        "scripts/coverage-diagnostic.mjs",
+        "test/browser-attestation.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/config-lifecycle.mjs",
+      "callers": [
+        "test/config-lifecycle.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/config-compatibility-catalog.mjs",
+      "callers": [
+        "scripts/config-compatibility-inventory.mjs",
+        "scripts/config-field-registry.mjs",
+        "scripts/config-lifecycle.mjs",
+        "test/config-lifecycle.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/config-field-registry.mjs",
+      "callers": [
+        "scripts/config-audit.mjs",
+        "scripts/config-lifecycle.mjs",
+        "test/config-lifecycle.test.mjs",
+        "test/config-schema-parity.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/capture-determinism.mjs",
+      "callers": [
+        "test/browser-attestation.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/sh3d-convert/convert.mjs",
+      "callers": [
+        "scripts/sh3d-convert/cli.mjs",
+        "scripts/sh3d-convert/page/app.mjs",
+        "test/sh3d-convert.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/sh3d-convert/output.mjs",
+      "callers": [
+        "scripts/sh3d-convert/convert.mjs",
+        "scripts/sh3d-convert/easy.mjs",
+        "scripts/sh3d-convert/picture.mjs",
+        "test/converter-output.test.mjs",
+        "test/easy-floorplan-geometry.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/sh3d-convert/geometry-runtime.generated.mjs",
+      "callers": [
+        "scripts/sh3d-convert/easy-geometry.mjs",
+        "scripts/sh3d-convert/easy.mjs",
+        "scripts/sh3d-convert/output.mjs",
+        "test/easy-floorplan-convert.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/sh3d-convert/easy-geometry.mjs",
+      "callers": [
+        "scripts/sh3d-convert/convert.mjs",
+        "scripts/sh3d-convert/easy-content.mjs",
+        "scripts/sh3d-convert/easy-markers.mjs",
+        "scripts/sh3d-convert/easy.mjs",
+        "scripts/sh3d-convert/picture.mjs",
+        "test/easy-floorplan-geometry.test.mjs",
+        "test/picture-elements-actions.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/sh3d-convert/easy-read.mjs",
+      "callers": [
+        "scripts/sh3d-convert/easy-content.mjs",
+        "scripts/sh3d-convert/easy-geometry.mjs",
+        "scripts/sh3d-convert/easy-markers.mjs",
+        "scripts/sh3d-convert/easy-style.mjs",
+        "scripts/sh3d-convert/easy.mjs",
+        "scripts/sh3d-convert/page/app.mjs",
+        "scripts/sh3d-convert/picture.mjs",
+        "test/easy-floorplan-read.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/sh3d-convert/easy-style.mjs",
+      "callers": [
+        "scripts/sh3d-convert/easy-content.mjs",
+        "scripts/sh3d-convert/easy-geometry.mjs",
+        "scripts/sh3d-convert/easy-markers.mjs",
+        "scripts/sh3d-convert/easy.mjs",
+        "scripts/sh3d-convert/picture-actions.mjs",
+        "scripts/sh3d-convert/picture.mjs",
+        "test/easy-floorplan-style.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/model-invariants.mjs",
+      "callers": [
+        "demo/smoke_edit_walk.mjs",
+        "demo/smoke_lattice_write_barrier.mjs",
+        "demo/smoke_wall_face_room_split.mjs",
+        "test/geometry-corpus.test.mjs",
+        "test/model-invariants.test.mjs",
+        "test/near-axis.test.mjs",
+        "test/plan-optimizer.test.mjs",
+        "test/resize-production-path.test.mjs",
+        "test/room-contact-grid.test.mjs",
+        "test/wall-thickness.test.mjs",
+        "test/wall-union-isolation.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/capture-environment.mjs",
+      "callers": [
+        "demo/golden/policy.mjs",
+        "process-next/catalog/golden-runner.mjs",
+        "process-next/lib/catalog.mjs",
+        "scripts/assert-capture-env.mjs",
+        "scripts/docs-accept.mjs",
+        "test/capture-environment.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/docs-accept.mjs",
+      "callers": [
+        "test/docs-accept.test.mjs"
+      ]
+    },
+    {
+      "path": "scripts/png-identical.mjs",
+      "callers": [
+        "demo/smoke_capture_stability.mjs",
+        "scripts/docs-accept.mjs",
+        "test/png-identical.test.mjs"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,10 @@
 # CI path routing evidence (#980)
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 The before sample spans 14–20 October 2026 UTC: 513 Validate push runs, with
 10 evenly spaced run IDs per day (70 sampled runs). Durations are the sum of
 actual non-skipped job seconds, including failures/cancellations; they are not

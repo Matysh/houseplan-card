@@ -1,20 +1,37 @@
-# Browser guards mutation registry (#659)
+# Browser mutation witnesses: technical inventory
 
-This is the reviewed classification of every mutation witness that still needs a browser.
-The guideline is `200` (#699: a guideline, not a wall); `mutation-gate --check`,
-`npm run inventory` and the unit contract all read this same inventory. A new browser guard
-must be added deliberately under one reason below, and its mutant `because` must explain
-the concrete browser-only invariant.
+Development and release policy lives only in [PROCESS.md](../../PROCESS.md).
+This inventory explains why particular test-sensitivity witnesses need a
+browser. It is retained as technical input to the existing registry tooling,
+not as an extra checklist for an ordinary task or reviewer. The background
+workflow is `process-next-background.yml`; activation evidence is recorded
+in [the cutover report](../../process-next/evidence/cutover-status.md).
 
-`test/mutation-gate.test.mjs` checks each category count against its listed IDs,
-the total against the browser guards in `MUTANTS`, and both guideline numbers
-against `BROWSER_GUARD_LIMIT` (#767). Category names must agree between the table
-and inventory; each current browser guard ID must occur exactly once.
+Mutations execute only in a separate background run with an explicit portion
+of the registry. They do not run on task, beta, stable, hotfix or S7 paths.
+A five-part rotation, for example, can be planned with:
 
-Converted witnesses are not listed here: their registry guard names an explicit `node --test`
-suite. The original #659 conversions also use `test/mutation-browser-offload.test.mjs`;
-new behavioral witnesses execute the consumer directly where possible. Catching the mutant
-is verified by the nightly run under PROCESS §2.7, not by a development-time mutation run.
+```bash
+node process-next/cli.mjs plan --event mutation --mutation-shard 1/5
+```
+
+`run` executes that selected background portion. The example does not establish
+a new schedule, quota or requirement to cover the whole registry every night.
+Dependencies and result semantics are described in [TESTING.md](../TESTING.md).
+A browser witness needs a built frontend and any compiled fixtures it imports;
+a missing module, timeout or failed setup is not a caught mutation. Only the
+intended failed assertion can demonstrate sensitivity. Ordinary negative-input
+tests use unchanged product code and do not count as mutation execution.
+
+Compatibility metadata for the retained registry reader follows.
+The guideline is `200` (#699), an existing diagnostic value, not an adopted
+limit of the new process or an instruction to run its old checker. The table
+and IDs below are read by the current mutation tools; category counts, IDs and
+`BROWSER_GUARD_LIMIT` describe their existing format. New witnesses should
+explain the real browser-only behavior in their `because` description.
+Converted Node witnesses are absent from this browser inventory: their registry
+entries point to their ordinary `node --test` suite. Registration or ordinary
+PASS alone never claims that the mutation has been caught.
 
 Witness repair #1012 preserves the two historical IDs. After #976, compact
 catalogue Help is deliberately 22px; `settings-help-size-leaks-into-catalogue-948`
@@ -23,7 +40,7 @@ the default. After #1007, `zigbee-incomplete-heading-enlarged-1005` needs a loca
 override strong enough to beat the shared disclosure cascade. Approved UI-023
 in #1051 supersedes the former 12px compact marker with inherited common text
 and the 8×10 triangle in both themes. These historical IDs are preserved;
-local static/ordinary success is not nightly caught evidence.
+local static/ordinary success is not background caught evidence.
 
 `led-unbound-in-view` moved to `test/led-strip-runtime.test.mjs` in #791: its guard
 requires a non-null marker absent from runtime devices, whereas the browser's
@@ -42,15 +59,15 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 11 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 103 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 107 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 67 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 279 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **574 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 282 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **581 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 
-## Measured effect
+## Historical measurements (2026-09-27)
 
 #999 adds `vacuum-history-retired-show-adopted-999` to custom-element and HA
 browser lifecycle. The named ordinary UI smoke observes Show/Hide, ordinary
@@ -62,9 +79,8 @@ HA browser lifecycle: the real mounted picker must consume trusted Escape,
 close its panel and refocus the trigger without retiring the settings form.
 
 The measurements below are GitHub-hosted Linux runs from 2026-09-27. They are
-recorded separately from the policy limit: the limit proves that browser guards
-cannot grow unnoticed, while timings show the effect actually observed on the
-shared runners.
+historical observations of the old runner and do not describe the speed, schedule
+or required checks of the current process.
 
 | Measurement | Before | After | Observed change |
 | --- | ---: | ---: | ---: |
@@ -75,7 +91,7 @@ shared runners.
 | Same converted-witness slice, critical shard | 8:05.1 | 2:19.3 | **-5:45.8 (-71.3%)** |
 
 The candidate slice compares the same 83 converted mutant ids in the baseline
-full-registry log and in the S7 candidate Validate
+full-registry log and in the historical candidate run
 [36316464432](https://github.com/Matysh/houseplan-card/actions/runs/36316464432).
 It sums the interval between consecutive per-mutant completion timestamps on
 each of the six shards. One of the 84 converted ids, `active-tab-not-revealed`,
@@ -109,7 +125,7 @@ The #1071 witness counts actual structural builds across native sidebar
 preview/confirmation and the Lit/save round trip, alongside real SVG and a cold
 card. Pure fingerprint tests cannot prove that the mounted render consumers
 reuse those keys. This is frame-work evidence, not a portable millisecond
-threshold; the mutant is registered for nightly execution only.
+threshold; the mutant is registered for background execution only.
 
 - `device-contact-measures-cold-faces-separately`
 - `device-contact-rebuilds-identical-value-geometry`
@@ -138,6 +154,12 @@ real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
 
+- `compact-danger-missing-theme-token-1150`
+
+- `static-room-opening-symbols-omitted-1171`
+- `static-frame-omits-opening-envelope-1171`
+- `static-opening-missing-contact-looks-active-1171`
+
 - `dialog-footer-leaks-into-body-1145`
 - `summary-touch-sticky-hover-1145`
 - `disabled-kit-loses-pointer-hit-1145`
@@ -155,14 +177,14 @@ real Playwright page-error channel.
 under trusted native input. Real viewport resizes force ordinary Lit host paint
 while the pointer remains held; a pure draft or geometry unit cannot prove that
 both live and settled renderer owners preserve the visible cut. These are
-registration declarations only; execution remains nightly.
+registration declarations only; execution remains background.
 
 - `plan-rotation-phone-close-white-on-light-1070`
 
 The #1070 phone frame decodes its captured PNG and requires a contrasting close
 glyph within the measured 24 px target at 320/360 px. This observes composed
 opacity and painted pixels; a colour-token or DOM-presence check cannot prove
-that the icon is visible. This is a registered nightly witness, not a claim that
+that the icon is visible. This is a registered background witness, not a claim that
 the mutant has run during development.
 
 - `compact-space-select-dark-fallback-in-light-theme`
@@ -176,7 +198,7 @@ The definition is registered and statically checked only during development.
 
 The #1081 witness checks actual grid ink on the incoming scene edge under native
 pan in all three editors. Pure bounds cannot prove retained raster coverage.
-Registered for nightly; no development-time mutation execution.
+Registered for background; no development-time mutation execution.
 
 
 - `device-own-offline-fades-whole-marker`
@@ -253,7 +275,7 @@ during development.
 
 #998 observes the genuine HA field's computed 44 px height, 8 px radius and
 accepted triangle beside an ordinary select. The adapter being mounted is not
-an oracle; its actual browser presentation is. Registered for nightly execution.
+an oracle; its actual browser presentation is. Registered for background execution.
 
 #988 observes the computed border paint around a genuine-picker host; CSS
 matching alone cannot tell whether the wrapper and HA paint two contours.
@@ -389,14 +411,14 @@ pointer closes the common menu; a pure callback cannot prove that event tail.
 The #1070 mobile witnesses observe native mode navigation and painted header,
 toolbar and stage heights on the same frame, including the zero-duration terminal.
 The Lovelace witness holds actual language-module requests and delivers public
-HA-form events while both real editor hosts are pending. Registered for nightly;
+HA-form events while both real editor hosts are pending. Registered for background;
 none of these mutations are executed during development.
 
 - `furniture-release-ignores-pan-1081`
 
 The #1081 witness crosses trusted mouse down/move/up, pointer capture and the
 existing stage camera. A return to the origin must remain a drag without an
-item or history write. Registered for nightly; not executed in development.
+item or history write. Registered for background; not executed in development.
 
 
 - `node-delete-right-down-starts-pan-1045`
@@ -440,7 +462,7 @@ pointer release. Direct calls to selection/commit would bypass the regression.
 
 These #1046 witnesses need the actual stage/keyboard routing and Properties
 owner; controller-only dispatch cannot prove their mounted event priority.
-Registered for nightly execution, not executed during development.
+Registered for background execution, not executed during development.
 
 - `decor-right-button-arms-transform-1035`
 
@@ -701,6 +723,17 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 
 ### Custom-element and HA browser lifecycle
 
+- `static-wall-cut-cache-ignores-opening-geometry-1171`
+
+- `header-menu-item-keeps-menu-open`
+- `header-menu-escape-ignored`
+
+#1147 moves these two witnesses back to the mounted mobile-header smoke:
+EditorContextMenu now owns the trusted click/Escape, retirement and return
+focus. Pure header composition does not execute that shared presentation.
+Only static definition readiness was checked during development; execution=0,
+caught=unknown until the background mutation run.
+
 
 - `view-menu-forgets-generation-1089`
 - `view-menu-info-opens-wrong-target-1089`
@@ -708,7 +741,7 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 #1089 holds the actual View module delivery through public authority changes,
 and dispatches real menu rows to distinguish the HA event from the mounted local
 card. These cross the lazy boundary and Lit owner. Static checks run locally;
-execution and caught results remain nightly.
+execution and caught results remain background.
 
 - `replaced-stage-keeps-old-resize-observer-1093`
 
@@ -721,14 +754,14 @@ execution and caught results remain nightly.
 The #1070 header witness uses the existing LED smoke to observe late updates
 after DOM removal and the original reconnect opacity transition events. Native
 ResizeObserver/rAF and Lit ownership require a browser; registration and ordinary
-PASS do not claim nightly caught execution.
+PASS do not claim background caught execution.
 
 - `threshold-cold-view-imports-without-rule-1000`
 
 #1000 observes actual cold Chromium requests from a mounted readonly card:
 without a rule it must not load the optional threshold graph. Codec and timer
 units cannot prove the real import boundary or the absence of editor/settings
-chunks. This browser witness is registered for nightly execution; task static
+chunks. This browser witness is registered for background execution; task static
 readiness is execution0/caught unknown.
 - `route-kiosk-empty-admin-onboards`
 
@@ -750,7 +783,7 @@ and route/draft lifetime; a parser-only unit cannot prove the host applies inten
 
 #1020 observes native keyboard navigation to a separate tab without losing
 checked floors, and the real card/lazy component lifecycle without writer/storage
-capability. Browser-only witnesses registered for nightly; no mutant execution
+capability. Browser-only witnesses registered for background; no mutant execution
 in task development.
 
 - `decor-preview-keeps-lost-capture-draft-1080`
@@ -762,7 +795,7 @@ rectangle or ellipse is cancelled without a saved object or retained ghost.
 
 The #1081 witness observes the actual native-popover and fallback-portal exit
 surface while animated: it must become inert immediately and retire safely
-on reopen/disable/detach. Registered for nightly; not executed in development.
+on reopen/disable/detach. Registered for background; not executed in development.
 
 
 - `zigbee-hidden-diagnostics-raw-roster-1077`
@@ -793,7 +826,7 @@ Pure group kernels and field units cannot prove native event routing, custom
 element draft ownership or the live/settled presentation handoff. Mixed labels
 also require actual column and font measurements rather than a template string.
 These witnesses are
-registered for nightly execution; development runs ordinary input only.
+registered for background execution; development runs ordinary input only.
 
 - `form-kit-inline-opacity-input-dropped-1018`
 
@@ -808,7 +841,7 @@ event path, independent of the removed unused top-level numeric fallback.
 
 The #1046 continuation needs real Lit panel inputs after the first creation;
 native identity and a live SVG frame can agree while the panel stays empty.
-Registered for nightly execution, not executed during development.
+Registered for background execution, not executed during development.
 
 - `decor-line-active-history-anchor-lost-1046`
 
@@ -825,7 +858,7 @@ DOM is clicked. A pure owner unit cannot prove native inert or rapid reopen.
 
 This #1035 witness needs an actual detached Lit menu callback and delivered
 server revision to prove the card cannot write through retired UI. It is
-registered for nightly execution and was not executed during development.
+registered for background execution and was not executed during development.
 
 - `contact-effective-point-not-painted-1003`
 - `contact-late-font-invalidation-lost-1003`
@@ -839,7 +872,7 @@ registered for nightly execution and was not executed during development.
 These #1036 witnesses need the real View/editor DOM and download boundary:
 retiring a held asset fetch, excluding live device overlays, and refusing all
 three editor frames cannot be proved by draft-default units. Registered only;
-mutations are executed by the nightly policy, not during development/review.
+mutations are executed by the background policy, not during development/review.
 
 - `e2e-primitive-field-id-not-forwarded-1011`
 - `e2e-wall-thickness-field-wrong-quantity-1011`
@@ -934,7 +967,7 @@ the pre-confirmation snapshot.
 preview, and a real registry-Area queue must supply a human error code at the
 early refused write site. Parent-only locale readiness and complete wire/toast
 observations stay separate from the child/message oracles. The owner-name
-own-string matrix uses a cheaper Node guard. Declarations only; caught is nightly.
+own-string matrix uses a cheaper Node guard. Declarations only; caught is background.
 
 - `device-preview-ignores-effective-card-locale`
 - `placement-early-refusal-loses-human-context-code`
@@ -971,7 +1004,7 @@ timer deadline. Mouse has no implicit capture or independent terminal; touch
 and immediate next-tap controls remain. Current navigation cancels through both
 explicit cancel and unconditional closeInfoCard→interrupt. The scoped compound
 mutation disables both paths for a pending no-card press, not either redundant
-line alone; source applicability is static and catching is nightly-only (#709).
+line alone; source applicability is static and catching is background-only (#709).
 
 - `view-space-change-keeps-pending-hold`
 
@@ -1036,7 +1069,7 @@ The #844 predicates and independent runtime port guard have cheap Node
 witnesses. These eleven guards instead cross the actual footer/direct caller,
 manifest-named dynamic import, disconnect/latest generation, warm memo/paint,
 browser navigation or automatic registry lifecycle in the mounted card.
-Only the selected smoke section runs per mutant; execution remains nightly.
+Only the selected smoke section runs per mutant; execution remains background.
 
 - `view-edit-footer-forgets-permission`
 - `view-edit-permission-hides-more-info`
@@ -1048,7 +1081,7 @@ Only the selected smoke section runs per mutant; execution remains nightly.
 changes public HA/config/navigation inputs before delivery. The mounted owner
 and its actual runtime consumer must jointly refuse the retired intent; pure
 binding tests alone cannot prove that browser lifecycle boundary. Execution
-remains nightly; local static readiness is not a caught result.
+remains background; local static readiness is not a caught result.
 
 - `view-edit-import-forgets-latest-owner`
 - `view-edit-import-forgets-connected-owner`
@@ -1304,7 +1337,7 @@ separately exercise the candidate and identity predicates; they cannot prove
 that the mounted UI passes the newly filtered exact targets, retains selection
 after a refused write and never merges neighbours with binding `virtual`.
 
-The #1051 witnesses are registered for nightly execution; task verification runs the
+The #1051 witnesses are registered for background execution; task verification runs the
 ordinary browser guards and static readiness, without executing mutants.
 
 #1119 adds four browser witnesses because real on-source paint visibility across
@@ -1332,3 +1365,16 @@ as a mutant; the ordinary fixed-source smoke must pass before handoff.
 #1120 owner correction adds two native close witnesses: actual SVG path paint and the24px close target share the active pill centre in all3editors. The natural9f glyph+6px/slot-1.5px failure and native corrected screenshots are preserved. These require actual computed SVG screen geometry; no mutant is executed during development.
 
 #1145 adds four browser-only witnesses: computed footer/body cascade, pointer-events and disabled hit cursor, native sticky touch hover versus desktop hover, and real44px/compact36px ShadowRoot targets. Two negative43px inputs exercise the size oracle without patching the implementation. Declarations only; no development mutant execution.
+
+#1171 registers `static-room-opening-symbols-omitted-1171`,
+`static-wall-cut-cache-ignores-opening-geometry-1171` and
+`static-frame-omits-opening-envelope-1171` and
+`static-opening-missing-contact-looks-active-1171` against the actual space-card smoke.
+These guard painted shared symbols, event-driven masonry freshness and measured
+leaf bounds at360/780px; pure projection/cache tests cannot prove those assembled
+browser results. Missing-contact fill paint has an ordinary RED before its fix.
+The accepted-code BEFORE misses symbols/cuts/tunnels. Existing
+#764 identity anchors follow the replacement shared list. Definitions only:
+static readiness is not mutation execution or a caught verdict.
+
+#1150 adds one mounted-theme witness: the genuine HA Properties action must retain semantic danger ink/border when the host theme omits --error-color. Its ordinary theme-input case is RED before the fallback fix and checks the completed paint transition; static readiness is not execution or caught evidence. Existing moved CSS/DOM witnesses keep their historical IDs and target the shared owner.

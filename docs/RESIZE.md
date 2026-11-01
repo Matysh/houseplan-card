@@ -276,11 +276,13 @@ building the preview frame itself.
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame, counted on the editor
   runtime that renders the layer; a zero count fails as unobserved (#821);
-- mutation gate: eligibility, third-room, topology, side ownership, jamb,
+- background mutation coverage: eligibility, third-room, topology, side ownership, jamb,
   fixed-topology wall endpoint mapping,
   pointer displacement/capture, shared-seam coalescing, preview rejection and
   commit-preflight bypass mutants.
 
 Targeted light/dark golden scenes cover enabled/disabled handles, opening/corner
-stops and final masonry. Full golden, smoke and performance matrices run before
-every beta; Linux CI is canonical for the complete HA harness.
+stops and final masonry. Tasks select relevant cases; beta uses its fixed subset,
+and stable completes the retained test set with reusable results.
+The same HA harness can run in prepared WSL or the explicit GitHub fallback;
+execution policy is defined in [PROCESS.md](../PROCESS.md).

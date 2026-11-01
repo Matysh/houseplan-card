@@ -97,11 +97,6 @@ test('isMainModule: запуск через симлинк исполняет ma
   }
 });
 
-test('тесты с временным git-репозиторием изолируют переводы строк от глобального конфига (#496)', () => {
-  const text = readFileSync(new URL('./rebase-on-dev.test.mjs', import.meta.url), 'utf8');
-  assert.match(text, /GIT_CONFIG_KEY_0: 'core\.autocrlf', GIT_CONFIG_VALUE_0: 'false'/);
-});
-
 test('тесты не запускают скрипты по URL.pathname — на Windows это /C:/… → C:\\C:\\… (#496)', () => {
   const TESTS = fileURLToPath(new URL('./', import.meta.url));
   const offenders = readdirSync(TESTS)
