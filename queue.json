@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 190,
-  "nextTicket": 22,
+  "revision": 191,
+  "nextTicket": 23,
   "nextFence": 21,
   "tasks": {
     "1128": {
@@ -83,14 +83,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1175-vacuum-live-tail",
-      "materialSha": "d7909324fac9e44d5b555656b5530f2316f09aa0",
+      "materialSha": "b9820be21aa26c494e99be86e8457eea1546194b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 19,
-      "queued": false,
+      "ticket": 22,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793565774338,
-      "reviewEntry": 1,
+      "readyAt": 1793566047449,
+      "reviewEntry": 2,
       "patchId": "3c51001a1e082c742f2d92810af9ae1b69824a9d",
       "changedFiles": [
         "demo/smoke_vacuum_tail_continuity.mjs",
@@ -104,7 +104,6 @@
         "src/vacuum-trail-material.ts",
         "test/vacuum-live-tail.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -279,7 +278,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1190
+    1190,
+    1175
   ],
   "active": {
     "issue": 1156,
@@ -453,6 +453,10 @@
     "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:3:review-requested": {
       "digest": "2f026cf3f1bb65588c3e531e422bd0a3f17fc4a77786aca55486bd23b811b70c",
       "issue": 1156
+    },
+    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81": {
+      "digest": "e1f0475ff69d8976154e141709fca8e6d7bddcaa85e66db3ef120701af65a3a3",
+      "issue": 1175
     }
   },
   "devWebhook": {
