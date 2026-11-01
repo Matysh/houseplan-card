@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 189,
+  "revision": 190,
   "nextTicket": 22,
   "nextFence": 21,
   "tasks": {
@@ -70,6 +70,12 @@
         "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
         "status": "passed",
         "finishedAt": "2026-11-01T20:46:45.324Z"
+      },
+      "reviewRequest": "review:1156:2:ba4335f4e02a3640541d21cce8438b9681889742:3da8f630e25f42d43cce35deec3fd3c292c7610e",
+      "reviewMaterial": {
+        "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+        "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
+        "patchId": "ba4335f4e02a3640541d21cce8438b9681889742"
       }
     },
     "1175": {
@@ -285,7 +291,8 @@
     "phase": "review",
     "admittedAt": 1793565944253,
     "expiresAt": 1793569606422,
-    "patchId": "ba4335f4e02a3640541d21cce8438b9681889742"
+    "patchId": "ba4335f4e02a3640541d21cce8438b9681889742",
+    "reviewRequest": "review:1156:2:ba4335f4e02a3640541d21cce8438b9681889742:3da8f630e25f42d43cce35deec3fd3c292c7610e"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -441,6 +448,10 @@
     },
     "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:2:s6-complete": {
       "digest": "a478d3c41f2b2e34cc95e70cdccdf73a5da4dce80931fd6aa25a5d51b16243ef",
+      "issue": 1156
+    },
+    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:3:review-requested": {
+      "digest": "2f026cf3f1bb65588c3e531e422bd0a3f17fc4a77786aca55486bd23b811b70c",
       "issue": 1156
     }
   },
