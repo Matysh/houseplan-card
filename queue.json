@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 277,
+  "revision": 278,
   "nextTicket": 31,
   "nextFence": 30,
   "tasks": {
@@ -115,7 +115,7 @@
       "notice": {
         "key": "2:checks-failed",
         "reason": "checks-failed",
-        "status": "pending"
+        "status": "delivered"
       },
       "patchId": "8e48acab3e56d7c08d8c7706253a618c8e325ea2",
       "changedFiles": [
@@ -903,6 +903,10 @@
     },
     "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:2:return": {
       "digest": "2262c07a1fae4bee7d3393c992de6254feb8be4fb629f4357d789eb625cbf5d5",
+      "issue": 1169
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:metadata:eb560301-bef2-4074-af99-dd8adc00cd1d:task-notice:1169::": {
+      "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
       "issue": 1169
     }
   },
