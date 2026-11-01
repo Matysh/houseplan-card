@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 283,
+  "revision": 284,
   "nextTicket": 33,
   "nextFence": 31,
   "tasks": {
@@ -141,7 +141,7 @@
       "ownerDecision": null,
       "ticket": 30,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793567769313,
       "reviewEntry": 5,
       "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75",
@@ -168,11 +168,11 @@
         "status": "delivered"
       },
       "s6": {
-        "id": "20261101T205847148-f308b6db",
-        "reportPath": "/home/matysh/hp-1117-dreame-history-20261028/.git/process-next/runs/20261101T205847148-f308b6db/report.json",
-        "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
+        "id": "20261101T212026376-e272fcb5",
+        "reportPath": "/home/matysh/hp-1117-dreame-history-20261028/.git/process-next/runs/20261101T212026376-e272fcb5/report.json",
+        "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
         "status": "passed",
-        "finishedAt": "2026-11-01T20:59:46.618Z"
+        "finishedAt": "2026-11-01T21:21:27.855Z"
       }
     },
     "1176": {
@@ -410,9 +410,9 @@
     "fence": 30,
     "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
     "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793567985368,
-    "expiresAt": 1793568371962,
+    "expiresAt": 1793571688982,
     "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75"
   },
   "events": {
@@ -949,6 +949,10 @@
     },
     "finish:056da446-2e65-4c64-948d-1d7cfb2fe4c8": {
       "digest": "4b76588cac1ebd02b948b4f0a75c8dec7c84ddaae97731d7a02611da27a0602e",
+      "issue": 1175
+    },
+    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:3:s6-complete": {
+      "digest": "931b26bb43c53695d9b47b21ffe520836ab26eded04f6e848bdc6e8059bc4f04",
       "issue": 1175
     }
   },
