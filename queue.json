@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 503,
+  "revision": 504,
   "nextTicket": 51,
   "nextFence": 50,
   "tasks": {
@@ -544,7 +544,7 @@
       "ownerDecision": null,
       "ticket": 48,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793573491847,
       "reviewEntry": 1,
       "patchId": "b89f9db47b2a3ce17ed8624a353e765d5497c918",
@@ -559,7 +559,16 @@
         "process-next/lib/review.mjs",
         "process-next/test/review-publication.test.mjs",
         "process-next/test/review.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261101T230032098-a9ec197a",
+        "name": "Тесты для задачи #1200 (перед ревью)",
+        "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T230032098-a9ec197a/report.json",
+        "materialSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
+        "status": "passed",
+        "finishedAt": "2026-11-01T23:01:10.421Z",
+        "failures": []
+      }
     },
     "1201": {
       "issue": 1201,
@@ -663,9 +672,9 @@
     "fence": 49,
     "materialSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
     "expectedBase": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793573933708,
-    "expiresAt": 1793574371577,
+    "expiresAt": 1793577674088,
     "patchId": "b89f9db47b2a3ce17ed8624a353e765d5497c918"
   },
   "events": {
@@ -906,6 +915,29 @@
         "layer": "product",
         "materialSha": "c07fce25404713505681dc22276463d6b46f26c1",
         "delivered": true
+      }
+    },
+    "finish:477d6da4-829c-4cf6-b063-123f13e55e8b:finish:3:s6-complete": {
+      "digest": "cefc6c91bb71c3ddf1e04f184f3e4cc81c6c29a9125af14c27585bed6e5fc040",
+      "issue": 1200,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1200,
+        "at": 1793574074088,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
+        "phase": "review",
+        "evidence": {
+          "id": "20261101T230032098-a9ec197a",
+          "name": "Тесты для задачи #1200 (перед ревью)",
+          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261101T230032098-a9ec197a/report.json",
+          "materialSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
+          "status": "passed",
+          "finishedAt": "2026-11-01T23:01:10.421Z",
+          "failures": []
+        }
       }
     }
   },
