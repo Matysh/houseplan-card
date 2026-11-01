@@ -50,7 +50,10 @@ async function finalize(root, plan) {
         if (!/\.(?:mjs|cjs|js|ts)$/.test(file)) return [];
         const text = await readFile(resolve(root, file), 'utf8');
         const edges = [];
-        for (const match of text.matchAll(/['"]((?:src|demo|scripts|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
+        // This catalog declares possible inputs/outputs; those strings are not reads by its callers.
+        // Still follow its imports below so changes to planner dependencies invalidate reuse.
+        if (file !== 'process-next/lib/catalog.mjs')
+          for (const match of text.matchAll(/['"]((?:src|demo|scripts|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
         // Dynamic directory readers cannot honestly be narrowed to literal imports.
         if (/\breaddirSync\b|\bimport\s*\(\s*[^'"\s]/.test(text) && file.startsWith('test/')) edges.push('src/**');
         for (const match of text.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*|new\s+URL\s*\(\s*)['"](\.[^'"]+)['"]/g)) {

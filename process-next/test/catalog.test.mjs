@@ -42,6 +42,16 @@ test('infrastructure checks only changed syntax and selected mechanism, with no 
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
+test('infrastructure can check finish and its planner without consuming declared product outputs', async () => {
+  const plan = await planProfile({ root, layer: 'infra',
+    changedFiles: ['process-next/cli.mjs', 'process-next/remote.mjs', 'process-next/lib/catalog.mjs'],
+    areaTests: ['process-next/test/remote.test.mjs', 'process-next/test/catalog.test.mjs'] });
+  assert.deepEqual(plan.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
+  assert.ok(plan.steps.every(item => item.requires.length === 0));
+  assert.ok(plan.steps[1].inputs.includes('process-next/lib/catalog.mjs'));
+  // Actual artifact consumers must still declare preparation; only catalog declarations are metadata.
+  await assert.rejects(planProfile({ root, layer: 'infra', areaTests: ['test/bundle-assets.test.mjs'] }), /prepared product artifacts/);
+});
 test('beta uses approved files, one narrowed permission run and panel-first visual selection', async () => {
   const plan = await planProfile({ root, event: 'beta', version: '1.85.0-beta.1' });
   assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 75); assert.equal(BETA_E2E.length, 13);
