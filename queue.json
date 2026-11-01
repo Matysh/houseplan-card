@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 264,
+  "revision": 265,
   "nextTicket": 29,
   "nextFence": 28,
   "tasks": {
@@ -120,9 +120,9 @@
         "test/vacuum-live-tail.test.mjs"
       ],
       "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered"
+        "key": "4:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending"
       },
       "s6": {
         "id": "20261101T205847148-f308b6db",
@@ -130,7 +130,8 @@
         "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
         "status": "passed",
         "finishedAt": "2026-11-01T20:59:46.618Z"
-      }
+      },
+      "reason": "checks-failed"
     },
     "1176": {
       "issue": 1176,
@@ -366,18 +367,7 @@
   "waiting": [
     1153
   ],
-  "active": {
-    "issue": 1175,
-    "worker": "finish",
-    "token": "27:finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:1:admit",
-    "fence": 27,
-    "materialSha": "05915b336757df16c2af8f63bf535d60d53c8bf9",
-    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "testing",
-    "admittedAt": 1793567680338,
-    "expiresAt": 1793567994374,
-    "patchId": "cd272b667e9e55547a85a05a924393ccb36ed725"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -818,6 +808,10 @@
     },
     "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:2:synchronized": {
       "digest": "4992f949cc8abac186b2a85b7b229660cbb66b7df3088bddbb9f4bace1976fe2",
+      "issue": 1175
+    },
+    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:3:return": {
+      "digest": "1809a02cdd13c5864a46dca67e6bf44e115db3aa3457c974ea06a660955f31d0",
       "issue": 1175
     }
   },
