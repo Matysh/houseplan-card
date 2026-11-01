@@ -191,6 +191,12 @@ before = await state(); r = before.rect;
 await page.mouse.move(r.x + 3, r.y + 3); await page.mouse.down(); await page.mouse.move(r.x + 35, r.y + 35);
 await page.keyboard.press('Escape'); await page.mouse.move(r.x + 70, r.y + 70); await page.mouse.up(); await pause();
 after = await state(); check('AC6 Escape retires capture without write or history', !after.rect && before.history === after.history && before.saves === after.saves);
+// Restore the wall into the visible stage after the deliberate camera excursions.
+before = await state();
+await page.locator('[data-hp="zoom-fit"]').click(); await pause();
+after = await state();
+check('AC4 fit before transactions preserves config history and writes',
+  before.config === after.config && before.history === after.history && before.saves === after.saves);
 await clickWorld(450, 150); await input.fill('12.5'); before = await state();
 await input.press('Enter'); await page.evaluate(() => window.__hpTest.waitForWrites()); await pause();
 after = await state(); check('AC6 Enter applies one thickness transaction', !after.rect && after.saves === before.saves + 1
