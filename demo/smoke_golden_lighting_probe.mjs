@@ -33,9 +33,10 @@ async function inspect(page) {
       ctm: n.getScreenCTM ? (() => { const m = n.getScreenCTM(); return m && [m.a, m.b, m.c, m.d, m.e, m.f]; })() : null,
     } : null;
     const snapshot = s => s ? {
-      sourceSequence: s.sourceSequence, geometry: s.geometry, positions: [...s.positions],
-      devices: s.devices.map(d => ({ id: d.id, icon: d.icon, display: d.display, space: d.space, area: d.area })),
-      presentations: [...s.presentations],
+      sourceSequence: s.sourceSequence, geometry: s.geometry,
+      positions: s.positions ? [...s.positions] : 'unknown',
+      devices: s.devices?.map(d => ({ id: d.id, icon: d.icon, display: d.display, space: d.space, area: d.area })),
+      presentations: s.presentations ? [...s.presentations] : 'unknown',
     } : null;
     const devices = [...r.querySelectorAll('.dev[data-id]')].map(d => ({
       node: node(d), html: d.outerHTML,
@@ -55,19 +56,20 @@ async function inspect(page) {
       config: c._config, serverConfig: c._serverCfg, layout: c._layout,
       cfgRev: c._cfgRev, layoutRev: c._layoutRev, configEpoch: c._cfgEpoch,
       hassSequence: c._hassSequence, capturedSequence: c._capturedSeq,
-      stagedToken: c._stagedToken, continuityToken: c._continuity.token,
+      stagedToken: c._stagedToken, continuityToken: c._continuity?.token,
       visible: snapshot(c._visibleDeviceSnapshot), candidate: snapshot(c._candidateDeviceSnapshot),
-      rendered: snapshot(c._renderDeviceSnapshot), relocated: [...c._areaRelocationIds],
+      rendered: snapshot(c._renderDeviceSnapshot),
+      relocated: c._areaRelocationIds ? [...c._areaRelocationIds] : 'unknown',
       registries: { devices: c.hass?.devices, entities: c.hass?.entities, areas: c.hass?.areas },
       view: c._view, zoom: c._zoom, warmVp: c._warmVp, warmKey: c._warmKey,
       warmSlot: c._warmSlot ? { path: c._warmSlot.path, vp: c._warmSlot.vp,
         frameFingerprint: c._warmSlot.frameFingerprint, devices: c._warmSlot.devices } : null,
-      warmStats: customElements.get('houseplan-card')._warmBootStats(),
+      warmStats: customElements.get('houseplan-card')._warmBootStats?.(),
       pending: { booting: c._booting, fading: c._bootFading, soft: c._bootSoft,
         mode: c._modeTransitionBusy, camera: !!c._cameraTransition?.active,
-        continuity: c._continuity.state, overlay: c._continuity.overlayVisible,
-        writes: c._writesPending, dirty: c._dirtyPos.size, sent: c._sentPos.size,
-        config: c._saveConfigDebounced.pending(), layout: c._persistLayout.pending() },
+        continuity: c._continuity?.state, overlay: c._continuity?.overlayVisible,
+        writes: c._writesPending, dirty: c._dirtyPos?.size, sent: c._sentPos?.size,
+        config: c._saveConfigDebounced?.pending(), layout: c._persistLayout?.pending() },
       stage: node(stage), svg: node(stage.querySelector('svg.plan-svg')),
       wall: node(stage.querySelector('.wallbodies')),
       wallPaths: [...stage.querySelectorAll('.wallbodies path')].map(node),
@@ -99,8 +101,8 @@ for (const kind of ['isolated', 'exact-prefix']) {
     await page.waitForFunction(() => {
       const c = window.__goldenCard;
       return !c._booting && !c._bootFading && !c._bootSoft && !c._modeTransitionBusy
-        && !c._cameraTransition?.active && c._continuity.state === 'steady'
-        && !c._continuity.overlayVisible && document.fonts.status === 'loaded';
+        && !c._cameraTransition?.active && (!c._continuity || c._continuity.state === 'steady')
+        && !c._continuity?.overlayVisible && document.fonts.status === 'loaded';
     }, undefined, { timeout: 9000 });
     await page.evaluate(async () => {
       await window.__goldenCard.updateComplete;
@@ -136,7 +138,8 @@ for (const kind of ['isolated', 'exact-prefix']) {
       productBase: '7274a9139966cfdd1f459615110ba70544709dc7',
       capture: captureProvenance({ chromium: browser.version(),
         buildFingerprint: manifest.fingerprint, root }),
-      rows }, null, 2));
+      unknownFields: 'unknown means not exposed by the compiled runtime; no readiness claim',
+      rows }, (_key, value) => value === undefined ? 'unknown' : value, 2));
   }
 }
 console.log('Diagnostic evidence recorded; no release/S6 readiness verdict or golden acceptance.');
