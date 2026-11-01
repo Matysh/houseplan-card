@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 446,
+  "revision": 447,
   "nextTicket": 47,
   "nextFence": 46,
   "tasks": {
@@ -482,31 +482,23 @@
     },
     "1201": {
       "issue": 1201,
+      "branch": "codex/catalog-negative-metadata",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/catalog-negative-metadata",
-      "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 46,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793573298445,
-      "reviewEntry": 1,
-      "patchId": "4d2ced8c35eea1e4b67c1236beb17e16fa65ad67",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/test/catalog.test.mjs"
-      ],
-      "s6": {
-        "id": "20261101T224830529-e46c4b94",
-        "name": "Тесты для задачи #1201 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261101T224830529-e46c4b94/report.json",
-        "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-        "status": "passed",
-        "finishedAt": "2026-11-01T22:48:38.290Z",
-        "failures": []
+      "status": "S8-merged",
+      "mergedSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
+      "mergedAt": 1793573329849,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -573,18 +565,7 @@
   "waiting": [
     1197
   ],
-  "active": {
-    "issue": 1201,
-    "worker": "finish",
-    "token": "45:finish:1f8a83b7-860c-4058-aa32-5231f78c6590:finish:2:admit",
-    "fence": 45,
-    "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-    "expectedBase": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793573301089,
-    "expiresAt": 1793576919309,
-    "patchId": "4d2ced8c35eea1e4b67c1236beb17e16fa65ad67"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -626,29 +607,9 @@
       "digest": "9c185e111460efb787f68e60a02fe3b760383c05e59843ee931c2fd652e082cb",
       "issue": 1198
     },
-    "finish:150c3e14-d971-485f-823d-4c4357a1a5d5:finish:2:synchronized": {
-      "digest": "6965cd7360afae0e709a3fbe93452fd8c5b8d5d1e33c1857c2f705f486da5bae",
-      "issue": 1201
-    },
-    "github:41358947074:1:completions:message:ef04214295acb5de22bc31c402df8368d2fac9cc83025c187c03c696e5682bc3": {
-      "digest": "d3204d5210e0dfdc26b1652dd2dd332531530fb5af347659cb98671a4a5dd606",
-      "issue": 1201
-    },
     "github:41358947074:1:completions:notice:6ee9978cf9c4172055c7a0d96870563bdfdc586e43553c3117ff177498e7ea8d": {
       "digest": "71a88352e1c8e283574dc9c5e901b3e2bdf23e952426196c9d6d492c9e05a670",
       "issue": 1198
-    },
-    "github:41358947074:1:completions:message:6ee9978cf9c4172055c7a0d96870563bdfdc586e43553c3117ff177498e7ea8d": {
-      "digest": "8bd72c3a19ece9087784913607362c211d3c2cb6216b9ccddb3f9561143c0453",
-      "issue": 1201
-    },
-    "github:41358947074:1:completions:message:bfa024cd716513fbd9e1e05a153e3768eea6c5bd42428b8d701b57f9bd8865f5": {
-      "digest": "3dab401c85f32c4c4b359aeea35964850cca8e4edd6de7c3e93ec32edc325805",
-      "issue": 1201
-    },
-    "github:41358947074:1:completions:message:e9c63a6749c1eb8f295540d6e024220c37d672cead1cc48c491af2da0feb52e8": {
-      "digest": "ba29ac2179ef6cfd07d1ed9c01e96610a6df51fc1d49b16e7cd0d64ab35d1bfd",
-      "issue": 1201
     },
     "finish:1f8a83b7-860c-4058-aa32-5231f78c6590": {
       "digest": "9364ede073e5842fbacb4bc9f37109f25ef787cb036ab07d44f73e88698cfb05",
@@ -711,35 +672,6 @@
           "detail": "Браузер: canvas surface gestures: failed",
           "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
         },
-        "delivered": true
-      }
-    },
-    "finish:150c3e14-d971-485f-823d-4c4357a1a5d5": {
-      "digest": "781359b7a036677b5f38a49e51b89a2f6d66f728e7058dfd94b51720bf918f08",
-      "issue": 1201,
-      "message": {
-        "kind": "queued",
-        "issue": 1201,
-        "at": 1793573298445,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-        "delivered": true
-      }
-    },
-    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590:finish:2:admit": {
-      "digest": "9449acca8908e85b9e45cb0ef3176f3e2ce0ed5a794b3199e4ee92d222f4ea27",
-      "issue": 1201,
-      "message": {
-        "kind": "admitted",
-        "issue": 1201,
-        "at": 1793573301089,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-        "phase": "sync",
         "delivered": true
       }
     },
