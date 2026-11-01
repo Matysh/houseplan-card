@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 109,
-  "nextTicket": 14,
+  "revision": 110,
+  "nextTicket": 15,
   "nextFence": 14,
   "tasks": {
     "1176": {
@@ -34,14 +34,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "issue/1184-unified-header",
-      "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
+      "materialSha": "76c0fd89c47001a24967b5314aa54e9a42cb32f3",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 13,
-      "queued": false,
+      "ticket": 14,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793558078727,
-      "reviewEntry": 5,
+      "readyAt": 1793558583897,
+      "reviewEntry": 6,
       "patchId": "411c2721af565144a253a5fb55aad1459866c10f",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -97,14 +97,7 @@
         "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
         "status": "passed",
         "finishedAt": "2026-11-01T18:36:05.020Z"
-      },
-      "reviewRequest": "review:1184:5:411c2721af565144a253a5fb55aad1459866c10f:5cc253e20227415209b314bda63ff71f2a3a2655",
-      "reviewMaterial": {
-        "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
-        "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-        "patchId": "411c2721af565144a253a5fb55aad1459866c10f"
-      },
-      "reason": "review-findings"
+      }
     },
     "1186": {
       "issue": 1186,
@@ -179,7 +172,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1184
+  ],
   "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -364,6 +359,10 @@
     },
     "github:41337705298:1:completions:metadata:5a37c814-541f-4550-976e-dcd0fd340387:task-notice:1184::": {
       "digest": "ec5863d98021fb42290cd874328518bb48d390f89378cef3d98de462d5e00a80",
+      "issue": 1184
+    },
+    "finish:701a9841-7047-4d64-be09-6003ab85dd8a": {
+      "digest": "6638c54f5dacd42a6747756d8e543edf403d675995a9ab2d46996e2f262828e2",
       "issue": 1184
     }
   },
