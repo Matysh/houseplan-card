@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -118,6 +119,29 @@ export async function executeE2ECommand(command, { cwd, env, signal, onOutput = 
   });
 }
 
+/** Find a loopback port, then publish that explicit number for the whole lab.
+ * Docker's anonymous HostPort is reallocated by restart. Closing this temporary
+ * socket leaves a bind race; only a confirmed Docker bind collision is retried.
+ */
+export async function reserveLoopbackPort() {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      server.close(error => {
+        if (error) reject(error);
+        else if (!address || typeof address !== 'object') reject(Error('Missing loopback port reservation'));
+        else resolve(address.port);
+      });
+    });
+  });
+}
+
+function isPortBindCollision(result) {
+  return result.code !== 0 && /(?:\bbind\b[\s\S]*\baddress already in use\b|\bport is already allocated\b)/i.test(result.stderr ?? '');
+}
+
 function privateEnvironment(base, workspace, container, options) {
   const env = { ...base };
   for (const name of Object.keys(env)) if (/^(HA_|E2E_|HOUSEPLAN_|PLAYWRIGHT_JSON_|PLAYWRIGHT_HTML_|PW_TEST)/.test(name)) delete env[name];
@@ -136,7 +160,7 @@ function selectedConfig(selected) {
 }
 
 /** Actual execution is opt-in. No HA_URL input: this owns its generated seed, container and copied checkout. */
-export async function runE2E(options, { execute = executeE2ECommand, environment = process.env, signal, onProgress = () => {} } = {}) {
+export async function runE2E(options, { execute = executeE2ECommand, environment = process.env, signal, onProgress = () => {}, choosePort = reserveLoopbackPort } = {}) {
   const opts = validateOptions(options);
   mkdirSync(opts.workRoot, { recursive: true, mode: 0o700 });
   const workspace = mkdtempSync(path.join(opts.workRoot, `hp-e2e-${opts.suite}-`));
@@ -153,7 +177,28 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
     if (result.code !== 0 && !allowFailure) throw Error(`${path.basename(command[0])} ${command[1] ?? ''} failed (${result.code ?? result.signal ?? result.error ?? 'unknown'})`);
     return result;
   };
-  let containerStarted = false;
+  let containerStarted = false, endpoint = null;
+  const cleanupContainer = async (recordLogs = false) => {
+    // One cleanup attempt per owned start; a failed inspection/removal remains
+    // visible and retains the workspace rather than retrying an unsafe delete.
+    containerStarted = false;
+    const ownership = await call(['docker', 'inspect', '--format', '{{ index .Config.Labels "houseplan.process-next.owner" }}', container], {}, true, true);
+    if (ownership.code === 0 && ownership.stdout.trim() === owner) {
+      try {
+        if (recordLogs) {
+          const mapping = await call(['docker', 'port', container, '8123/tcp'], {}, true, true);
+          save(path.join(artifacts, 'endpoint.json'), { ...endpoint, finalMapping: mapping.code === 0 ? mapping.stdout.trim() : null, finalMappingCode: mapping.code });
+          const logs = await call(['docker', 'logs', container], {}, true, true);
+          writeFileSync(path.join(artifacts, 'docker.log'), (logs.stdout ?? '') + (logs.stderr ?? ''), { mode: 0o600 });
+        }
+      } finally {
+        const removed = await call(['docker', 'rm', '-f', container], {}, true, true);
+        if (removed.code !== 0) throw Error('Could not remove owned E2E container ' + container + '; workspace retained');
+      }
+    } else if (ownership.code === 0 || !/No such (?:object|container)/i.test(ownership.stderr ?? '')) {
+      throw Error('E2E container ownership could not be confirmed: ' + container + '; not removed');
+    }
+  };
   try {
     onProgress({ phase: 'discover', suite: opts.suite });
     const discoveryFile = path.join(artifacts, 'discovery.json');
@@ -193,14 +238,26 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
     if (opts.suite === 'upgrade' && opts.expectedVersion?.replace(/^v/, '') === installed.version) throw Error('Upgrade source and target versions are equal');
 
     // Never call upstream ha.mjs up: it removes an existing named container first.
-    containerStarted = true; // A failed docker run can still leave our created container behind.
-    await call(['docker', 'run', '-d', '--name', container, '--label', `houseplan.process-next.owner=${owner}`,
-      '-p', '127.0.0.1::8123', '-v', `${env.E2E_RUN_DIR}:/config`, '-e', 'TZ=Europe/Moscow',
-      `ghcr.io/home-assistant/home-assistant:${opts.haVersion}`]);
-    const port = (await call(['docker', 'port', container, '8123/tcp'])).stdout.trim();
-    if (!/^127\.0\.0\.1:\d+$/.test(port)) throw Error('Unexpected Docker loopback mapping');
-    env.HA_URL = `http://${port}`;
-    await call(['node', 'scripts/ha.mjs', 'wait', '--timeout=480', `--url=${env.HA_URL}`, `--dir=${env.E2E_RUN_DIR}`]);
+    let port;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      port = await choosePort();
+      if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('Invalid explicit loopback port');
+      containerStarted = true; // A failed run may still leave our created container.
+      const started = await call(['docker', 'run', '-d', '--name', container, '--label', 'houseplan.process-next.owner=' + owner,
+        '-p', '127.0.0.1:' + port + ':8123', '-v', env.E2E_RUN_DIR + ':/config', '-e', 'TZ=Europe/Moscow',
+        'ghcr.io/home-assistant/home-assistant:' + opts.haVersion], {}, true);
+      if (started.code === 0) break;
+      await cleanupContainer();
+      const detail = started.stderr?.trim() || started.error || String(started.code ?? started.signal);
+      if (!isPortBindCollision(started)) throw Error('Owned E2E Docker start failed: ' + detail);
+      if (attempt === 3) throw Error('Loopback port bind collision after 3 attempts: ' + detail);
+    }
+    const mapping = (await call(['docker', 'port', container, '8123/tcp'])).stdout.trim();
+    endpoint = { requestedPort: port, initialMapping: mapping };
+    save(path.join(artifacts, 'endpoint.json'), endpoint);
+    if (mapping !== '127.0.0.1:' + port) throw Error('Docker loopback mapping differs from requested fixed port');
+    env.HA_URL = 'http://' + mapping;
+    await call(['node', 'scripts/ha.mjs', 'wait', '--timeout=480', '--url=' + env.HA_URL, '--dir=' + env.E2E_RUN_DIR]);
     const reportFile = path.join(artifacts, 'results.json');
     onProgress({ phase: 'tests', suite: opts.suite, selected: selected.length });
     const execution = await call([...testArgs, '--reporter=list,json', `--output=${path.join(artifacts, 'test-results')}`], { PLAYWRIGHT_JSON_OUTPUT_FILE: reportFile }, true);
@@ -216,15 +273,7 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
     save(path.join(artifacts, 'summary.json'), result);
     return result;
   } finally {
-    if (containerStarted) {
-      const ownership = await call(['docker', 'inspect', '--format', '{{ index .Config.Labels "houseplan.process-next.owner" }}', container], {}, true, true);
-      if (ownership.code === 0 && ownership.stdout.trim() === owner) {
-        const logs = await call(['docker', 'logs', container], {}, true, true);
-        writeFileSync(path.join(artifacts, 'docker.log'), (logs.stdout ?? '') + (logs.stderr ?? ''), { mode: 0o600 });
-        const removed = await call(['docker', 'rm', '-f', container], {}, true, true);
-        if (removed.code !== 0) throw Error(`Could not remove owned E2E container ${container}; workspace retained`);
-      } else if (!/No such (?:object|container)/i.test(ownership.stderr ?? '')) throw Error(`E2E container ownership could not be confirmed: ${container}; not removed`);
-    }
+    if (containerStarted) await cleanupContainer(true);
     // Keep only our generated workspace as evidence. Never recursively delete caller paths or the source checkout.
   }
 }
