@@ -288,7 +288,7 @@ test('disabled preparation performs no completion writes, publication or webhook
   await assert.rejects(runDevBuildDelivery({ env: {}, config: {}, publish: () => assert.fail('no publication') }), /not activated/);
 });
 
-test('a failed preceding service message defers later presentation and bookkeeping for that issue only', async () => {
+test('failed preceding messages defer comments, while S8, to_release and milestone repair remain independent', async () => {
   const f = await fixture();
   const { state, version } = await f.queue.store.read();
   state.reviewPublications = {
@@ -299,6 +299,59 @@ test('a failed preceding service message defers later presentation and bookkeepi
   const published = [];
   await reconcileTaskCompletions({ queue: f.queue, api: f.api, git: f.git, eventId: 'deferred', activated: true,
     deferredIssues: [9], publishReview: async record => { published.push(record.issue); return { published: true }; } });
-  assert.deepEqual(published, [10]); assert.deepEqual(f.writes, { labels: 0, milestone: 0, comment: 0 });
+  assert.deepEqual(published, [10]); assert.deepEqual(f.writes, { labels: 1, milestone: 1, comment: 0 });
+  assert.ok(f.issue.labels.includes('S8-merged')); assert.ok(!f.issue.labels.includes('to_release'));
+  assert.equal(f.issue.milestone.number, 7);
   assert.ok(Object.values((await f.queue.store.read()).state.reviewPublications).some(record => record.issue === 9));
+  await reconcileTaskCompletions({ queue: f.queue, api: f.api, git: f.git, eventId: 'service-message-recovered-report-still-pending', activated: true,
+    publishReview: async () => ({ pending: true }) });
+  assert.equal(f.comments.size, 0, 'merge notice must not overtake the pending review even without deferredIssues');
+  await reconcileTaskCompletions({ queue: f.queue, api: f.api, git: f.git, eventId: 'report-delivered', activated: true,
+    publishReview: async record => { published.push(record.issue); assert.equal(f.comments.size, 0); return { published: true }; } });
+  assert.deepEqual(published, [10, 9]); assert.equal(f.comments.size, 1);
+  assert.deepEqual(f.writes, { labels: 1, milestone: 1, comment: 1 });
+});
+
+test('external publisher controls deferral so a superseded unavailable report cannot pin merge presentation', async () => {
+  const f = await fixture(), snapshot = await f.queue.store.read();
+  snapshot.state.reviewPublications = { old: { issue: 9, kind: 'code', requestId: 'review:9:superseded', status: 'pending' } };
+  await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+  const result = await f.complete('external-publisher-skipped-superseded');
+  assert.equal(result.completed.length, 1); assert.equal(f.comments.size, 1);
+  assert.equal(Object.values((await f.queue.store.read()).state.reviewPublications).length, 1);
+});
+
+test('event-owned return and spec attention notices are left to the existing service publisher', async () => {
+  const f = await fixture(), snapshot = await f.queue.store.read();
+  Object.assign(snapshot.state.tasks[9], { status: 'S6-in-progress', notice: {
+    key: 'return1', eventId: 'return-event1', reason: 'checks-failed', status: 'pending' } });
+  snapshot.state.specReviews[10] = { requestId: 'spec:10', status: 'attention', notice: {
+    key: 'spec:10', eventId: 'spec-attention1', status: 'pending' } };
+  await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+  await reconcileTaskCompletions({ queue: f.queue, api: {}, git: {}, activated: true, eventId: 'legacy-loop' });
+  const state = (await f.queue.store.read()).state;
+  assert.equal(state.tasks[9].notice.status, 'pending'); assert.equal(state.specReviews[10].notice.status, 'pending');
+});
+
+test('legacy notice reports a transition only when its label operation was confirmed', async () => {
+  const f = await fixture(), snapshot = await f.queue.store.read();
+  Object.assign(snapshot.state.tasks[9], { status: 'S6-in-progress', notice: {
+    key: 'failed-label-write', reason: 'checks-failed', status: 'pending', fromStatus: 'S7-code-review', transitionConfirmed: false } });
+  await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+  await f.complete('later-manual-s6');
+  const message = [...f.comments.values()][0];
+  assert.match(message, /Статус остаётся \*\*S6\*\*/); assert.doesNotMatch(message, /S7 → S6/);
+});
+
+test('partial attempt and final report of one request receive independent publication acknowledgements', async () => {
+  const f = await fixture(), snapshot = await f.queue.store.read();
+  snapshot.state.tasks[9].status = 'S6-in-progress';
+  const record = { issue: 9, kind: 'code', requestId: 'review:9:same-round', status: 'pending' };
+  snapshot.state.reviewPublications = { partial: { ...record, resultKey: 'attempt-1' }, final: { ...record } };
+  await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+  const published = [];
+  await reconcileTaskCompletions({ queue: f.queue, api: {}, git: {}, activated: true, eventId: 'same-pass',
+    publishReview: async value => { published.push(value.resultKey ?? 'final'); return { published: true }; } });
+  assert.deepEqual(published, ['attempt-1', 'final']);
+  assert.deepEqual((await f.queue.store.read()).state.reviewPublications, {});
 });

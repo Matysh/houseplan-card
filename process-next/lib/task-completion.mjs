@@ -39,11 +39,11 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
   const { state } = await queue.store.read();
   if (!activated) return { planned: true, completed: [], pending: [] };
   const deferred = new Set(deferredIssues);
-  const selected = number => !deferred.has(Number(number)) && (issue === undefined || Number(number) === issue);
+  const selected = number => issue === undefined || Number(number) === issue;
   const all = Object.values(state.tasks).filter(task => selected(task.issue));
   const specs = Object.entries(state.specReviews ?? {}).filter(([number]) => selected(number));
   const outcomes = { completed: [], pending: [], notices: [], reviews: [] };
-  const save = event => queue.dispatch({ id: `${eventId}:${event.type}:${event.issue}:${event.kind ?? ''}:${event.requestId ? keyHash(event.requestId) : ''}`, ...event });
+  const save = event => queue.dispatch({ id: `${eventId}:${event.type}:${event.issue}:${event.kind ?? ''}:${event.requestId ? keyHash(`${event.requestId}:${event.resultKey ?? ''}`) : ''}`, ...event });
   // Rotate bounded work using the existing ten-minute scheduler window. An old
   // failure cannot starve newer work, and visiting a row needs no persisted timestamp.
   const batch = rows => {
@@ -57,7 +57,7 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
   // Retried presentation reads the already-paid result. It does not move task/spec statuses.
   // Only the serialized coordinator supplies the publisher; ordinary finish is read-only here.
   const pendingPresentations = pendingReviewPublications(state);
-  const requested = publishReview ? pendingPresentations.filter(record => selected(record.issue)) : [];
+  const requested = publishReview ? pendingPresentations.filter(record => selected(record.issue) && !deferred.has(record.issue)) : [];
   const groups = batch([...new Set(requested.map(record => record.issue))]);
   const quota = Math.max(1, Math.floor(limit / (groups.length || 1)));
   const order = record => Date.parse(record.presentation?.occurredAt ?? record.occurredAt ?? '') || Number(record.runId) || 0;
@@ -65,6 +65,7 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
     .sort((a, b) => order(a) - order(b)).slice(0, quota));
   const deferredReports = new Set();
   const deliveredReviews = new Set();
+  const reviewKey = record => `${record.kind}:${record.issue}:${record.requestId}:${record.resultKey ?? ''}`;
   for (const record of presentations) {
     if (deferredReports.has(record.issue)) continue;
     try {
@@ -75,24 +76,24 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
       }
       if (!result?.published) throw Error('Review presentation is still pending');
       await save({ type: 'review-presentation', issue: record.issue, kind: record.kind,
-        requestId: record.requestId, status: 'delivered' });
-      deliveredReviews.add(record.requestId);
+        requestId: record.requestId, ...(record.resultKey ? { resultKey: record.resultKey } : {}), status: 'delivered' });
+      deliveredReviews.add(reviewKey(record));
       outcomes.reviews.push({ issue: record.issue, kind: record.kind, status: 'delivered' });
     } catch (error) {
       deferredReports.add(record.issue);
       await save({ type: 'review-presentation', issue: record.issue, kind: record.kind,
-        requestId: record.requestId, status: 'pending', reason: error.message });
+        requestId: record.requestId, ...(record.resultKey ? { resultKey: record.resultKey } : {}), status: 'pending', reason: error.message });
       outcomes.reviews.push({ issue: record.issue, kind: record.kind, status: 'pending', reason: error.message });
     }
   }
-  for (const task of batch(all.filter(task => task.notice?.status === 'pending'))) {
+  for (const task of batch(all.filter(task => task.notice?.status === 'pending' && !task.notice.eventId && !deferred.has(task.issue)))) {
     try {
       const requestId = task.notice.requestId ?? task.reviewRequest;
-      const matchingReview = pendingPresentations.find(record => record.issue === task.issue && record.kind === 'code'
+      const matchingReviews = pendingPresentations.filter(record => record.issue === task.issue && record.kind === 'code'
         && (!requestId || record.requestId === requestId));
       // The full verdict already explains the return. Do not publish a second generic outcome.
-      if (task.notice.reason === 'review-findings' && (requestId || matchingReview)) {
-        if (matchingReview && !deliveredReviews.has(matchingReview.requestId)) continue;
+      if (task.notice.reason === 'review-findings' && (requestId || matchingReviews.length)) {
+        if (matchingReviews.some(record => !deliveredReviews.has(reviewKey(record)))) continue;
         await save({ type: 'task-notice', issue: task.issue, key: task.notice.key, status: 'delivered' });
         outcomes.notices.push({ issue: task.issue, status: 'delivered', includedInReview: true }); continue;
       }
@@ -105,7 +106,7 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
         marker: `<!-- process-next-task-return:${task.issue}:${keyHash(task.notice.key)} -->`,
         body: `## ${late ? 'Сохранённое сообщение о возврате' : 'Завершение приостановлено'} — задача #${task.issue}, вход ${task.notice.entry ?? task.reviewEntry ?? 'не записан'}\n\n`
           + (task.notice.at ? `Время события: ${new Date(task.notice.at).toISOString()} (UTC).\n\n` : '')
-          + `${currentStatusText(current, late ? null : task.notice.fromStatus, 'S6-in-progress')} При этом возврате слот очереди был освобождён.\n\n${reasonText(task.notice.reason)}\n\n`
+          + `${currentStatusText(current, !late && task.notice.transitionConfirmed === true ? task.notice.fromStatus : null, 'S6-in-progress')} При этом возврате слот очереди был освобождён.\n\n${reasonText(task.notice.reason)}\n\n`
           + (detail ? `Подробности: ${code(detail)}.\n\n` : !known ? `Причина остановки: ${code(task.notice.reason)}.\n\n` : '')
           + (task.notice.reportUrl ? `[Результат запуска](${task.notice.reportUrl}).\n\n` : '')
           + (late ? 'Сообщение доставлено после изменения состояния задачи. Текущее состояние не изменяется; указанные действия относятся к прежнему входу в очередь.'
@@ -115,7 +116,7 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
       outcomes.notices.push({ issue: task.issue, status: 'delivered' });
     } catch (error) { outcomes.notices.push({ issue: task.issue, status: 'pending', reason: error.message }); }
   }
-  for (const [number, spec] of batch(specs.filter(([, value]) => value.notice?.status === 'pending'))) {
+  for (const [number, spec] of batch(specs.filter(([number, value]) => value.notice?.status === 'pending' && !value.notice.eventId && !deferred.has(Number(number))))) {
     try {
       await api.upsertComment(Number(number), { marker: `<!-- process-next-spec-attention:${number}:${keyHash(spec.notice.key)} -->`,
         body: `## Ревью ТЗ задачи #${number} остановлено: технический повтор исчерпан\n\n`
@@ -186,12 +187,17 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
         if (current.milestone?.number === facts.milestone) result.milestoneTitle = current.milestone.title ?? facts.milestone;
         result.milestone = true; delete result.errors.milestone;
       } catch (error) { result.errors.milestone = error.message; }
-      try {
+      const facts = { labels: result.labels, milestone: result.milestone, target: result.milestoneTarget?.milestone ?? null };
+      const commentDigest = keyHash(JSON.stringify(facts));
+      result.commentCurrent = !!result.comment && result.commentDigest === commentDigest;
+      // Publication order affects comments only. Labels/milestone above are
+      // repaired even when an earlier report or service message is unavailable.
+      const publicationDeferred = deferred.has(task.issue) || !!publishReview && pendingPresentations.some(record =>
+        record.issue === task.issue && !deliveredReviews.has(reviewKey(record)));
+      if (!publicationDeferred) try {
         const repoUrl = `https://github.com/${api.owner}/${api.repo}`;
         // A failed response keeps the exact pending payload. A later recovery gets
         // its own event marker instead of rewriting the original merge message.
-        const facts = { labels: result.labels, milestone: result.milestone, target: result.milestoneTarget?.milestone ?? null };
-        const commentDigest = keyHash(JSON.stringify(facts));
         if (!result.pendingComment && (!result.comment || result.commentDigest !== commentDigest)) {
           const confirmed = result.labels ? { ...current, labels: current.state === 'closed' ? current.labels : ['S8-merged'] } : current;
           const newlyConfirmedLabels = !result.comment || result.commentFacts?.labels === false;
