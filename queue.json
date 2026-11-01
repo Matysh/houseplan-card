@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 210,
+  "revision": 211,
   "nextTicket": 23,
   "nextFence": 22,
   "tasks": {
@@ -240,7 +240,18 @@
         "process-next/test/review.test.mjs",
         "process-next/test/service-messages.test.mjs",
         "process-next/test/task-completion.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793566421371,
+        "entry": 1,
+        "detail": "Поведение затронутого механизма: failed",
+        "eventId": "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:3:return:return:1190"
+      }
     }
   },
   "ownerDecisions": {},
@@ -290,18 +301,7 @@
   "waiting": [
     1175
   ],
-  "active": {
-    "issue": 1190,
-    "worker": "finish",
-    "token": "21:finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:1:admit",
-    "fence": 21,
-    "materialSha": "11ef6c1a980438925766e745d2ab2bf3024c2e86",
-    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "testing",
-    "admittedAt": 1793566172779,
-    "expiresAt": 1793566719216,
-    "patchId": "3d522d2fa4922adc96c0be94ccdb172a715a1651"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -435,6 +435,10 @@
       "digest": "0738d7f6d6c33315e2afeecab39fbb595791222bab83443a4dc6ab4889002992",
       "issue": 1190
     },
+    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:3:return": {
+      "digest": "8a5dc5f1c42988f6dabaebbebf7db906df0c9e4d940ba42fa4042bdac0aa3088",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -446,6 +450,26 @@
         "track": "ask",
         "layer": "infra",
         "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
+      }
+    },
+    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:3:return:return:1190": {
+      "digest": "8a5dc5f1c42988f6dabaebbebf7db906df0c9e4d940ba42fa4042bdac0aa3088",
+      "issue": 1190,
+      "message": {
+        "kind": "return",
+        "issue": 1190,
+        "at": 1793566421371,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793566421371,
+          "entry": 1,
+          "detail": "Поведение затронутого механизма: failed",
+          "eventId": "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:3:return:return:1190"
+        }
       }
     }
   },
