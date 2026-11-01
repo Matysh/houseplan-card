@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 379,
+  "revision": 380,
   "nextTicket": 40,
   "nextFence": 40,
   "tasks": {
@@ -331,15 +331,16 @@
         "test/bundle-sync.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793571581809,
-        "entry": 1,
-        "detail": "Открытие сохранённого плана в View: cancelled",
-        "eventId": "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return:return:1193"
-      }
+        "at": 1793571721871,
+        "entry": 2,
+        "detail": "Поведение изменённой области: failed",
+        "eventId": "finish:2377885e-722e-4968-b784-311794ab5cc3:finish:3:return:return:1193"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -403,18 +404,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1193,
-    "worker": "finish",
-    "token": "39:finish:2377885e-722e-4968-b784-311794ab5cc3:finish:1:admit",
-    "fence": 39,
-    "materialSha": "84dc95cf5d1c6c67c370f34b53b193459a22aaed",
-    "expectedBase": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
-    "phase": "testing",
-    "admittedAt": 1793571670036,
-    "expiresAt": 1793571975357,
-    "patchId": "c3534f7876ead7caa86db14a800590ad424c2052"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -458,6 +448,10 @@
     },
     "finish:2377885e-722e-4968-b784-311794ab5cc3:finish:2:synchronized": {
       "digest": "6cd69cc73be77da67774737cfdcdc8462f70535a9321f2768f115f3d7ce59186",
+      "issue": 1193
+    },
+    "finish:2377885e-722e-4968-b784-311794ab5cc3:finish:3:return": {
+      "digest": "46b0f5929899d15ea8d1fdcd387cac9a64c8b0169e115bd03e1d5537d6a5592d",
       "issue": 1193
     },
     "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b": {
@@ -535,6 +529,26 @@
         "layer": "product",
         "materialSha": "84dc95cf5d1c6c67c370f34b53b193459a22aaed",
         "phase": "sync"
+      }
+    },
+    "finish:2377885e-722e-4968-b784-311794ab5cc3:finish:3:return:return:1193": {
+      "digest": "46b0f5929899d15ea8d1fdcd387cac9a64c8b0169e115bd03e1d5537d6a5592d",
+      "issue": 1193,
+      "message": {
+        "kind": "return",
+        "issue": 1193,
+        "at": 1793571721871,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793571721871,
+          "entry": 2,
+          "detail": "Поведение изменённой области: failed",
+          "eventId": "finish:2377885e-722e-4968-b784-311794ab5cc3:finish:3:return:return:1193"
+        }
       }
     }
   },
