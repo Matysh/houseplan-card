@@ -1,4 +1,4 @@
-# Inert template: install separately when the background schedule is enabled.
+# Canonical workflow source; deployed as .github/workflows/process-next-background.yml.
 name: Фоновые мутации и диагностика покрытия
 run-name: Фоновые проверки тестов · ${{ github.run_number }}
 on:

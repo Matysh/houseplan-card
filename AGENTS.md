@@ -4,12 +4,11 @@ Read [docs/SCOPE.md](docs/SCOPE.md), then [PROCESS.md](PROCESS.md). The root
 PROCESS is the single description of task, review, testing and release rules.
 GitHub issue bodies and the owner's explicit decisions define the task.
 
-**This branch prepares #1105; the new process is not activated.** Editing these
-instructions does not enable workflows or authorize push, merge, publication,
-paid model calls or changes to the running beta. The remaining old workflows,
-hooks and npm wrappers are implementation scheduled for replacement, not
-instructions to follow. The separate cutover plan is
-[process-next/CUTOVER.md](process-next/CUTOVER.md).
+The process implementation is `process-next/`. Retired workflows, hooks and
+gates are archived under `legacy/process-v1/`; do not run or reinstall them.
+[Cutover notes](process-next/CUTOVER.md) record the switch and recovery path;
+[live setup evidence](process-next/evidence/cutover-status.md) records what was
+actually connected and verified. A release still needs the owner's release command.
 
 ## Repository map
 
@@ -22,7 +21,7 @@ House Plan is one HACS package:
 - `demo/`: synthetic browser harness. `demo/serve.mjs` starts it;
   `demo/golden/`, `demo/performance/`, `demo/guard/` and `demo/stand/`
   contain their fixtures and operating notes.
-- `process-next/`: the prepared commands, test selections, review prompt,
+- `process-next/`: commands, test selections, review prompt,
   queue and release mechanisms for #1105.
 
 View is the product for household members and guests. Editors are admin tools.
@@ -45,7 +44,7 @@ Role notes provide entry links, not another rulebook:
 [author](docs/process/AUTHOR.md), [reviewer](docs/process/REVIEWER.md).
 Environment details live in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md);
 test purposes and prerequisites in [docs/TESTING.md](docs/TESTING.md).
-Read [docs/STATUS.md](docs/STATUS.md) for the preparation status and entry links;
+Read [docs/STATUS.md](docs/STATUS.md) for operational status and entry links;
 live task and release state comes from GitHub.
 Old task-packet and entry-measurement generators are not required entry steps.
 
@@ -64,10 +63,11 @@ Old task-packet and entry-measurement generators are not required entry steps.
   prerequisites and unexecuted checks are not passing results.
 - Use synthetic data for screenshots and labs. Do not change the owner's HA
   instance or accept visual baselines without the relevant instruction.
-- Until cutover is explicitly authorized, continue preparation only. Do not
-  install old hooks as part of setup or use their gates to drive this branch.
-  The prepared remote commands default to a plan; keep activation disabled.
+- Finish an authorized task through the shared queue with `finish`; use
+  `process-next/config.json` and the documented credentials. Do not bypass an
+  occupied queue slot by pushing directly to dev. Remote commands without
+  `--execute` are previews, not evidence that a task has merged.
 
-Do not repair old tests that assert removed instruction wording. Their retirement
-belongs to cutover. Changes to the prepared implementation use its addressed
-behavioral tests; this does not add runs to pure documentation tasks.
+Do not restore tests that assert retired instruction wording. Changes to the
+process implementation use its addressed behavioral tests; this does not add
+runs to pure documentation tasks.

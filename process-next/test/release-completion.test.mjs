@@ -32,11 +32,19 @@ test('partial issue completion resumes after S8 removal without duplicate commen
   await completePublishedRelease({ ...args, candidate: f.candidate });
   assert.equal(reads.length, previousReads); assert.equal(closeAttempts, 2);
 });
-test('missing HACS configuration is visible and makes no issue writes', async () => {
+test('missing delivery verifier is visible and makes no issue writes', async () => {
   const f = fixture();
   const result = await completePublishedRelease({ candidate: f.candidate, onUpdate: f.onUpdate, api: {} });
   assert.equal(result.status, 'pending'); assert.equal(result.pending[0].step, 'hacs');
   assert.equal(f.candidate.completion, undefined);
+});
+
+test('public discovery completes bookkeeping without pretending an HA instance refreshed', async () => {
+  const f = fixture('beta', []);
+  const evidence = { discoveryAvailable: true, source: 'github-release-feed', tag: f.candidate.tag, artifactDigest: D };
+  const result = await completePublishedRelease({ candidate: f.candidate, api: {}, onUpdate: f.onUpdate, verifyDelivery: async () => evidence });
+  assert.equal(result.status, 'completed'); assert.equal(f.candidate.delivery.discoveryAvailable, true);
+  assert.equal(f.candidate.delivery.hacsAvailable, undefined);
 });
 test('a delayed S8 label remains pending and closes on retry without re-closing a completed issue reopened by its owner', async () => {
   const f = fixture('beta', [1, 2, 3]); f.candidate.delivery = { hacsAvailable: true };

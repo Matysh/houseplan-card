@@ -2351,7 +2351,7 @@ Inventory, budgets and witnesses: [SUPPORT-DIAGNOSTICS](SUPPORT-DIAGNOSTICS.md).
 The existing `scripts/mutation-gate.mjs` delegates declarations to
 `mutation-registry.mjs`, input selection to `mutation-selection.mjs`, evidence
 to `mutation-evidence.mjs`, and isolated worktree runs to `mutation-execution.mjs`.
-The prepared process schedules explicit portions separately from development
+The process schedules explicit portions separately from development
 and releases; [PROCESS.md](../PROCESS.md) owns that policy. A setup/compilation
 failure cannot establish that a test caught a mutation. Browser witnesses that
 import `test-build/` need those modules prepared before their assertion.

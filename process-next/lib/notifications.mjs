@@ -11,6 +11,14 @@ export async function announceStableRelease({ candidate, userChangelog, chat, to
   if (!['stable', 'hotfix'].includes(candidate?.kind) || candidate.status !== 'published'
     || !/^v\d+\.\d+\.\d+$/.test(candidate.tag ?? '')) throw Error('Announce a published stable release only');
   if (typeof persist !== 'function') throw Error('Persist the announcement receipt in release state');
+  const contentDigest = createHash('sha256').update(`${candidate.tag}\0${userChangelog ?? ''}`).digest('hex');
+  if (receipt?.status === 'sent' && !chat) {
+    // A local finisher may not possess the hosted Telegram secrets. Delivery
+    // was already confirmed; only matching immutable release text is reused.
+    if (receipt.tag !== candidate.tag || receipt.contentDigest && receipt.contentDigest !== contentDigest)
+      throw Error('Saved announcement belongs to different release text');
+    return { ...receipt, reused: true };
+  }
   const payload = telegramPayload({ userChangelog, tag: candidate.tag, chat });
   const digest = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   if (receipt && (receipt.tag !== candidate.tag || receipt.digest !== digest)) throw Error('Saved announcement belongs to different text or destination');
@@ -19,7 +27,7 @@ export async function announceStableRelease({ candidate, userChangelog, chat, to
     return { ...receipt, status: 'uncertain', reason: 'Telegram may already have accepted the message; inspect before explicitly retrying' };
   if (typeof token !== 'string' || !/^\d+:[A-Za-z0-9_-]+$/.test(token)) throw Error('Explicit Telegram bot token required');
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60_000) throw Error('Telegram timeout must be within 1–60000 ms');
-  const attempt = { tag: candidate.tag, digest, attempt: (receipt?.attempt ?? 0) + 1, status: 'sending', startedAt: now() };
+  const attempt = { tag: candidate.tag, digest, contentDigest, attempt: (receipt?.attempt ?? 0) + 1, status: 'sending', startedAt: now() };
   await persist(attempt);
   let response, result;
   try {

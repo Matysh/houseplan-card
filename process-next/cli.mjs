@@ -32,7 +32,7 @@ export function parseArguments(argv) {
   }
   return { options, positional };
 }
-export const HELP = `Houseplan: подготовленная новая обвязка (#1105), действующий процесс не переключён.
+export const HELP = `Houseplan: локальные наборы, очередь, ревью и выпуски (#1105).
 
 node process-next/cli.mjs plan|run --event task --issue 9999 --track ship --layer product
   --area-test test/example.test.mjs (можно несколько) --changed-file scripts/example.mjs

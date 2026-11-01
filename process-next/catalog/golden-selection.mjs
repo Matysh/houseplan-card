@@ -1,7 +1,7 @@
 import { BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN,
   PANEL_GOLDEN_SOURCES, selectExact } from './selections.mjs';
 
-/** Draft matrix only: the active demo matrix and reviewed PNGs are untouched. */
+/** Canonical matrix selection; reviewed PNGs are changed only by explicit acceptance. */
 export function prepareGoldenSelection(candidates) {
   const sources = selectExact(candidates, PANEL_GOLDEN_SOURCES.map(id => ({ id })), scene => scene.id);
   const lovelace = selectExact(candidates, BETA_LOVELACE_GOLDEN.map(id => ({ id })), scene => scene.id);
@@ -30,3 +30,17 @@ export function prepareGoldenSelection(candidates) {
  * Report and baseline identity remain the distinct panel ID, never this alias. */
 export const goldenHarnessScenario = scene => scene.sourceSceneId
   ? { ...scene, id: scene.sourceSceneId } : scene;
+
+/** A selected diagnostic/verification run uses the same scenes as the release sets. */
+export function goldenRunSelection(candidates, argv = []) {
+  const value = name => argv.find(arg => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
+  for (const arg of argv) if (!['--mode=', '--selection=', '--scenario='].some(prefix => arg.startsWith(prefix)))
+    throw Error(`Unknown golden argument: ${arg}`);
+  const mode = value('mode') ?? 'verify', selection = value('selection') ?? 'all', scenario = value('scenario');
+  if (!['capture', 'verify'].includes(mode)) throw Error(`Unknown golden mode: ${mode}`);
+  if (!['beta', 'rest', 'all'].includes(selection)) throw Error('Expected --selection=beta|rest|all');
+  const available = prepareGoldenSelection(candidates)[selection];
+  const scenarios = scenario ? available.filter(item => item.id === scenario) : available;
+  if (!scenarios.length) throw Error(`Unknown or empty golden selection: ${scenario ?? selection}`);
+  return { mode, selection, scenario, scenarios };
+}

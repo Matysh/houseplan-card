@@ -18,6 +18,10 @@ test('stable announcement uses authored RU text and a persisted sent receipt pre
   assert.deepEqual(f.writes.map(x => x.status), ['sending', 'sent']);
   const again = await announceStableRelease({ ...f, receipt: result });
   assert.equal(again.reused, true); assert.equal(f.calls, 1);
+  const local = await announceStableRelease({ ...f, receipt: result, chat: undefined, token: undefined });
+  assert.equal(local.reused, true); assert.equal(f.calls, 1);
+  await assert.rejects(announceStableRelease({ ...f, receipt: result, chat: undefined, token: undefined,
+    userChangelog: `${userChangelog}\nChanged text` }), /different release text/);
 });
 
 test('beta is silent and unpublished stable cannot contact transport', async () => {

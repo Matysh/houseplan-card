@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, unlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleaseGitAdapter, ReleasePublisher, readPublishedMeasurement, readRunnerReport, normalizeMetricsDecision } from '../lib/release.mjs';
+import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleaseDiscoveryVerifier, ReleaseGitAdapter, ReleasePublisher, readPublishedMeasurement, readRunnerReport, normalizeMetricsDecision } from '../lib/release.mjs';
 import { runPlan } from '../lib/runner.mjs';
 import { runGit } from '../lib/github.mjs';
 import { sha256 } from '../lib/github.mjs';
@@ -139,7 +139,7 @@ test('duplicate release events are idempotent but cannot reuse an ID for another
   h.event(event); const before = h.state; h.event(event); assert.deepEqual(h.state, before);
   assert.throws(() => h.event({ ...event, result: { status: 'passed' } }), /another payload/);
 });
-test('HACS and downloadable bytes are separately observed; GitHub availability alone is insufficient', async () => {
+test('optional instance verification observes HACS itself and the downloadable bytes', async () => {
   const bytes = Buffer.from('correct zip'), github = { owner: 'o', repo: 'r', getRelease: async () => ({ draft: false, tag_name: 'v1', assets: [{ id: 1, name: 'houseplan.zip' }] }),
     downloadAsset: async () => bytes };
   let rows = []; const verifier = new HacsDeliveryVerifier({ github, hacs: { repositories: async () => rows } });
@@ -148,6 +148,27 @@ test('HACS and downloadable bytes are separately observed; GitHub availability a
   rows = [{ full_name: 'o/r', available_version: 'v1', can_download: true, id: '42' }];
   assert.equal((await verifier.verify(request)).hacsAvailable, true);
   await assert.rejects(verifier.verify({ ...request, expectedDigest: '0'.repeat(64) }), /differs/);
+});
+
+test('public release discovery checks the beta feed or latest stable and exact ZIP without claiming HA observation', async () => {
+  const bytes = Buffer.from('published ZIP'), calls = [];
+  const release = { tag_name: 'v1-beta.1', draft: false, prerelease: true, assets: [{ id: 1, name: 'houseplan.zip' }] };
+  let current = release;
+  const github = { owner: 'o', repo: 'r', root: '/repos/o/r', getRelease: async () => release,
+    downloadAsset: async () => bytes, request: async (method, path) => { calls.push(path); return path.endsWith('/latest') ? current : [{ draft: true, prerelease: true, tag_name: 'draft' }, current]; } };
+  const verifier = new ReleaseDiscoveryVerifier({ github });
+  const request = { repository: 'o/r', tag: release.tag_name, kind: 'beta', assetName: 'houseplan.zip', expectedDigest: sha256(bytes) };
+  const evidence = await verifier.verify(request);
+  assert.equal(evidence.discoveryAvailable, true); assert.equal(evidence.source, 'github-release-feed'); assert.equal(evidence.hacsAvailable, undefined);
+  const h = harness(); create(h); passed(h); publish(h);
+  h.event({ type: 'delivery-verified', evidence: { ...evidence, artifactDigest: D } });
+  assert.equal(h.candidate.delivery.source, 'github-release-feed');
+  await assert.rejects(verifier.verify({ ...request, expectedDigest: '0'.repeat(64) }), /differs/);
+  current = { ...release, tag_name: 'v0-beta.1' };
+  await assert.rejects(verifier.verify(request), /not exposed/);
+  Object.assign(release, { tag_name: 'v1', prerelease: false }); current = release;
+  assert.equal((await verifier.verify({ ...request, tag: 'v1', kind: 'stable' })).discoveryAvailable, true);
+  assert.equal(calls.at(-1), '/repos/o/r/releases/latest');
 });
 test('actual HACS protocol authenticates and sends only the read-only repository list command', async () => {
   const sent = [];

@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-11-01T16:15:15.981Z",
+  "client": "2.1.316",
+  "authentication": "existing local Claude subscription; no API key",
+  "exitCode": 0,
+  "timedOut": false,
+  "resultSubtype": "success",
+  "models": [
+    "claude-opus-5-5"
+  ],
+  "tools": [
+    "mcp__review__list_files",
+    "mcp__review__submit_review"
+  ],
+  "submissionReceived": true,
+  "exactReport": true
+}

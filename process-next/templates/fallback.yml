@@ -1,5 +1,4 @@
-# Inert preparation template. This is deliberately outside .github/workflows.
-# Activate only after the whole-process review and deployment discussion.
+# Canonical workflow source; deployed as .github/workflows/process-next-fallback.yml.
 name: Резервный запуск тестового набора
 run-name: ${{ inputs.requestId != '' && format('{0} · {1}', inputs.title, inputs.requestId) || inputs.title }}
 on:

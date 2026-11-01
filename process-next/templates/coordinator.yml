@@ -1,4 +1,4 @@
-# Inert event delivery. Installation and config.enabled are cutover actions, not preparation.
+# Canonical workflow source; deployed as .github/workflows/process-next-coordinator.yml.
 name: Очередь завершения задач
 run-name: Очередь завершения задач · ${{ github.event_name }}
 on:
@@ -30,6 +30,7 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
+          token: ${{ secrets.HP_PROCESS_TOKEN }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version-file: .nvmrc
@@ -38,7 +39,7 @@ jobs:
         env:
           PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
           HP_PROCESS_NEXT_ACTIVATE: '1'
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}
         run: node process-next/templates/coordinator-job.mjs
   dev-build:
@@ -54,6 +55,7 @@ jobs:
         with:
           ref: ${{ needs.progress.outputs.dev_build_sha }}
           fetch-depth: 0
+          token: ${{ secrets.HP_PROCESS_TOKEN }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version-file: .nvmrc
@@ -65,7 +67,7 @@ jobs:
         env:
           PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
           HP_PROCESS_NEXT_ACTIVATE: '1'
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           DEV_BUILD_SHA: ${{ needs.progress.outputs.dev_build_sha }}
           DEV_BUILD_ISSUE: ${{ needs.progress.outputs.dev_build_issue }}
           HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}

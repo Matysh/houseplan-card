@@ -15,7 +15,7 @@ import { parseBrowserGuardInventory } from './mutation-browser-inventory.mjs';
 export const BROWSER_GUARD_LIMIT = 200;
 export const BROWSER_GUARD_INVENTORY = 'docs/testing-notes/mutation-browser-guards.md';
 
-export const isBrowserGuard = (guard) => guard.includes('demo/') || guard.includes('bundle:sync');
+export const isBrowserGuard = (guard) => guard.includes('demo/') || guard.includes('process-next/catalog/golden-runner.mjs') || guard.includes('bundle:sync');
 
 export function documentedBrowserGuards(markdown) {
   return parseBrowserGuardInventory(markdown, { validateCounts: false }).documented;

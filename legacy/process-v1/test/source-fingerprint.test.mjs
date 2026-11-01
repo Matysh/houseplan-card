@@ -213,17 +213,22 @@ const goldenFixture = () => {
   mkdirSync(resolve(directory, 'src'), { recursive: true });
   mkdirSync(resolve(directory, 'demo/fixtures'), { recursive: true });
   mkdirSync(resolve(directory, 'demo/golden'), { recursive: true });
+  mkdirSync(resolve(directory, 'process-next/catalog'), { recursive: true });
   writeFileSync(resolve(directory, 'src/example.ts'), 'export const value = 1;\n', 'utf8');
   writeFileSync(resolve(directory, 'demo/fixtures/plan.mjs'), 'export const fixture = 1;\n', 'utf8');
-  for (const name of ['matrix', 'harness', 'run', 'device-battery', 'accept', 'policy']) {
+  for (const name of ['matrix', 'harness', 'device-battery', 'policy']) {
     writeFileSync(resolve(directory, `demo/golden/${name}.mjs`),
       `export const ${name.replaceAll('-', '_')} = 1;\n`, 'utf8');
+  }
+  for (const name of ['golden-runner', 'golden-selection', 'selections', 'golden-accept']) {
+    writeFileSync(resolve(directory, `process-next/catalog/${name}.mjs`), `export const value = 1;\n`);
   }
   return directory;
 };
 
 const editGolden = (directory, name, value) => writeFileSync(
-  resolve(directory, `demo/golden/${name}.mjs`), `export const ${name.replaceAll('-', '_')} = ${value};\n`, 'utf8',
+  resolve(directory, ['accept', 'run'].includes(name) ? `process-next/catalog/golden-${name === 'run' ? 'runner' : name}.mjs` : `demo/golden/${name}.mjs`),
+  `export const ${name.replaceAll('-', '_')} = ${value};\n`, 'utf8',
 );
 
 test('правка инструмента приёмки не требует ни пересборки, ни пересъёмки (#344)', () => {
@@ -261,7 +266,7 @@ test('файлы, определяющие кадр, из корпуса не в
 });
 
 test('состав исключения объявлен списком, а не угадывается по имени (#344)', () => {
-  assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
+  assert.deepEqual(postCaptureInputs(), ['demo/golden/policy.mjs', 'process-next/catalog/golden-accept.mjs']);
 });
 
 test('в корпусе настоящего репозитория все canonical golden capture inputs (#344, #792, #881, #896, #866, #1026, #1038, #999)', () => {
@@ -274,7 +279,7 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/device-offline.mjs', 'demo/golden/external-screens.mjs', 'demo/golden/harness.mjs',
     'demo/golden/interior-window-light.mjs',
     'demo/golden/marker-alerts.mjs',
-    'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
+    'demo/golden/matrix.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',
     'demo/golden/static-wall-openings.mjs',
@@ -284,6 +289,8 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/view-device-menu.mjs',
     'demo/golden/zigbee-led.mjs',
   ]);
+  for (const name of ['golden-runner', 'golden-selection', 'selections'])
+    assert.ok(corpus.includes(`process-next/catalog/${name}.mjs`), 'canonical capture and its selection affect rendered scenes');
   assert.ok(corpus.includes('demo/helpers/vacuum-history.mjs'), 'history capture consumes the real UI helper');
   assert.ok(corpus.includes('test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json'), 'history geometry comes from this original-producer fixture');
   assert.ok(corpus.includes('demo/fixtures/sun-transparent.json'),'saved canonical solar geometry is a capture input');

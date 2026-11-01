@@ -6,7 +6,6 @@ import path from 'node:path';
 // Dateless 4.6+ IDs are pinned snapshots, not moving aliases. No model fallback.
 export const REVIEW_MODEL = 'claude-opus-5-5';
 export const MODEL_SOURCE = 'https://platform.claude.com/docs/en/models/opus-5-5/overview';
-export const REVIEW_API_VERSION = '2026-10-21';
 const MAX_OUTPUT = 2 * 1024 * 1024;
 
 export function reviewRequired({ track = 'show', ownerAssigned = false, kind = 'code' } = {}) {
@@ -205,7 +204,7 @@ export function executeReadTool(context, name, input = {}) {
   }
 }
 
-function validateReport(report) {
+export function validateReport(report) {
   if (!report || !['accept', 'changes_requested', 'incomplete'].includes(report.verdict)) throw new Error('Invalid review verdict');
   for (const key of ['understanding', 'boundaries']) if (typeof report[key] !== 'string' || !report[key].trim()) throw new Error(`Missing ${key}`);
   for (const key of ['blockers', 'improvements']) if (!Array.isArray(report[key]) || report[key].some(x => typeof x !== 'string' || !x.trim())) throw new Error(`Invalid ${key}`);
@@ -260,82 +259,16 @@ export function previewReview(context, { model = REVIEW_MODEL } = {}) {
   return { required: context.required, model, system, packet, tools: REVIEW_TOOLS, network: false, writes: false };
 }
 
-async function callProvider({ fetchImpl, apiKey, body, wait, onProgress }) {
-  // Same bounded retry policy as the official SDK: two transient retries, no fallback model.
-  // https://platform.claude.com/docs/en/api/errors (verified 2026-11-01).
-  for (let attempt = 0; ; attempt++) {
-    let response;
-    try {
-      response = await fetchImpl('https://api.anthropic.com/v1/messages', {
-        method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': REVIEW_API_VERSION },
-        body: JSON.stringify(body), signal: AbortSignal.timeout(10 * 60_000),
-      });
-    } catch (error) {
-      // The outcome of a disconnected paid request is unknown; expose that boundary.
-      if (attempt >= 2) throw new Error(`Claude API transport failed; no submitted verdict (${error.name ?? 'network error'})`);
-      const delayMs = 1000 * 2 ** attempt;
-      onProgress({ phase: 'transport-retry', attempt: attempt + 1, delayMs, outcome: 'unknown' });
-      await wait(delayMs); continue;
-    }
-    if (response.ok) return response.json();
-    if (attempt >= 2 || !(response.status === 429 || response.status >= 500 && response.status <= 599))
-      throw new Error(`Claude API HTTP ${response.status}; no fallback model or green result`);
-    const retryAfter = response.headers?.get?.('retry-after');
-    const seconds = Number(retryAfter);
-    const requestedDelay = retryAfter == null ? NaN : Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
-    const delayMs = Math.min(30_000, Math.max(0, Number.isFinite(requestedDelay) ? requestedDelay : 1000 * 2 ** attempt));
-    onProgress({ phase: 'transport-retry', attempt: attempt + 1, httpStatus: response.status, delayMs });
-    await response.body?.cancel?.();
-    await wait(delayMs);
-  }
-}
-
-export async function runReview({ context, reportDir, apiKey = process.env.ANTHROPIC_API_KEY, model = REVIEW_MODEL, fetchImpl = globalThis.fetch, maxTurns = 150, preview = false, onProgress = () => {}, wait = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
-  if (!reviewRequired(context)) return { status: 'not-required', reason: context.kind === 'spec' ? 'This track has no individual spec review' : 'Owner ship has no individual review' };
+export async function runReview({ context, reportDir, model = REVIEW_MODEL, maxTurns = 150, preview = false,
+  onProgress = () => {}, transport, env = process.env }) {
+  if (!reviewRequired(context)) return { status: 'not-required', reason: 'This track has no individual review' };
   const prepared = previewReview(context, { model });
   if (preview) return prepared;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is required. CLAUDE_CODE_OAUTH_TOKEN is not an API key. Preview needs neither.');
-  if (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 150) throw new Error('maxTurns must be 1..150');
-  const messages = [{ role: 'user', content: JSON.stringify(prepared.packet) }];
-  const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
-  let reminded = false;
-  for (let turn = 1; turn <= maxTurns; turn++) {
-    onProgress({ phase: 'review', turn, maxTurns }); // Counts only; maxTurns is a bound, not percent complete.
-    const result = await callProvider({ fetchImpl, apiKey, wait, onProgress, body: {
-      model, max_tokens: 16384, output_config: { effort: 'high' }, system: prepared.system,
-      // Automatic prefix caching follows the growing tool conversation, without discarding evidence.
-      // https://platform.claude.com/docs/en/build-with-claude/prompt-caching
-      cache_control: { type: 'ephemeral' }, tools: REVIEW_TOOLS, messages,
-    } });
-    if (result.model && result.model !== model) throw new Error('Provider returned an unexpected model');
-    for (const key of Object.keys(usage)) usage[key] += result.usage?.[key] ?? 0;
-    if (!Array.isArray(result.content)) throw new Error('Review incomplete (missing content); no submitted verdict');
-    const calls = result.content.filter(b => b.type === 'tool_use');
-    if (!calls.length && result.stop_reason === 'end_turn' && result.content.length && !reminded && turn < maxTurns) {
-      reminded = true;
-      messages.push({ role: 'assistant', content: result.content });
-      messages.push({ role: 'user', content: 'Анализ ещё не отправлен. Если нужны факты, продолжи чтение; когда анализ закончен, вызови submit_review отдельным вызовом. Дай вывод и разбор значимых путей с основаниями, последствиями и полезными альтернативами, соразмерно задаче. Не придумывай замечаний. Если завершить анализ нельзя, отправь incomplete с честными границами.' });
-      onProgress({ phase: 'submission-reminder', turn });
-      continue;
-    }
-    if (result.stop_reason !== 'tool_use') throw new Error(`Review incomplete (${result.stop_reason ?? 'missing stop reason'}); no submitted verdict`);
-    if (!calls.length) throw new Error('Review returned no tool calls');
-    // Reject unknown capabilities before processing any submission in the same response.
-    for (const call of calls) if (!REVIEW_TOOLS.some(t => t.name === call.name)) throw new Error(`Unavailable review tool: ${call.name}`);
-    const submissions = calls.filter(c => c.name === 'submit_review');
-    if (submissions.length) {
-      if (calls.length !== 1) throw new Error('Final review must be submitted on its own');
-      const report = validateReport(submissions[0].input);
-      const file = writeReviewReport({ context, report, reportDir, model });
-      return { status: report.verdict, file, report, model, base: context.base, head: context.head, turns: turn, usage };
-    }
-    // Preserve provider thinking/signatures verbatim for the same model/conversation.
-    messages.push({ role: 'assistant', content: result.content });
-    const results = calls.map(call => {
-      try { return { type: 'tool_result', tool_use_id: call.id, content: JSON.stringify(executeReadTool(context, call.name, call.input)) }; }
-      catch (error) { return { type: 'tool_result', tool_use_id: call.id, is_error: true, content: error.message }; }
-    });
-    messages.push({ role: 'user', content: results });
-  }
-  throw new Error('Review turn limit reached; no final verdict');
+  if (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 150) throw Error('maxTurns must be 1..150');
+  const invoke = transport ?? (await import('./claude-review.mjs')).runClaudeReview;
+  const result = await invoke({ context, prepared, model, maxTurns, onProgress, env });
+  const report = validateReport(result.report);
+  const file = writeReviewReport({ context, report, reportDir, model });
+  return { status: report.verdict, file, report, model, base: context.base, head: context.head,
+    turns: result.turns, usage: result.usage };
 }

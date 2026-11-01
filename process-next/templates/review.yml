@@ -1,4 +1,4 @@
-# Inert preparation template; no build/tests/dependency installation in S7.
+# Review runtime only; no product build/tests in S7.
 name: Содержательное ревью задачи
 run-name: ${{ inputs.kind == 'spec' && format('Ревью ТЗ задачи {0} · {1}', inputs.issue, inputs.requestId) || format('Код-ревью задачи {0} · {1}', inputs.issue, inputs.requestId) }}
 on:
@@ -42,12 +42,16 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version-file: process-runner/.nvmrc
+      - name: Подготовить Claude Code для ревью по подписке
+        # This pinned CLI uses postinstall to place its native executable.
+        # Global installation does not run the candidate repository's npm hooks.
+        run: npm install --global @anthropic-ai/claude-code@2.1.316 --no-audit --no-fund
       - name: Прочитать материал и выполнить содержательное ревью
         id: review
         env:
           PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
           GITHUB_TOKEN: ${{ github.token }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           HP_ISSUE: ${{ inputs.issue }}
           HP_BASE: ${{ inputs.base }}
           HP_HEAD: ${{ inputs.head }}

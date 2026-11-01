@@ -133,7 +133,7 @@ export async function returnPublishedHistory({ candidate, previous = {}, api, gi
     }
     onProgress({ phase: 'return-to-dev', status: 'running', issue, tag: candidate.tag, name: `Возврат ${candidate.tag} в dev: задача #${issue}` });
     const result = await finish({ config: { ...config, workspace: worktree }, worktree, task,
-      event: { id: `release-return-finish:${invocation}`, issue, branch }, signal, onProgress,
+      event: { id: `release-return-finish:${invocation}`, issue, branch, s6: config.release?.returnS6 ?? 'local' }, signal, onProgress,
       prepareEnvironment: options => prepareEnvironment({ worktree, signal, onProgress, ...options }) });
     if (result?.action !== 'merged') return { status: 'pending', ...progress(), reason: result?.reason ?? `Return task is ${result?.action ?? 'unfinished'}` };
     const verified = await git.verifyDevReturn(candidate.sha);

@@ -29,27 +29,6 @@ const definition = id => {
   return found[0];
 };
 
-test('#899 core growth definition exceeds the approved finite caps without changing them', () => {
-  const source = readFileSync(new URL('./core-file-budget.test.mjs', import.meta.url), 'utf8');
-  const capsBlock = source.match(/const CAPS = \{([\s\S]*?)\n\};/)[1];
-  const caps = [...capsBlock.matchAll(/'src\/houseplan-(?:card|editor-runtime)\.ts': (\d+)/g)]
-    .map(match => Number(match[1]));
-  assert.equal(caps.length, 2);
-  assert.ok(caps.every(cap => Number.isFinite(cap) && cap > 0));
-  const band = Number(source.match(/export const CORE_BAND = (\d+);/)[1]);
-  assert.equal(band, 50, 'the approved band is unchanged');
-  const mutant = definition('core-budget-ignores-growth');
-  assert.equal(mutant.guard, 'node --test test/core-file-budget.test.mjs');
-  assert.equal(mutant.patches.length, 1);
-  const [patch] = mutant.patches;
-  assert.equal(patch.file, 'src/houseplan-card.ts');
-  assert.ok(patch.replace.endsWith(patch.find));
-  const growth = patch.replace.slice(0, -patch.find.length);
-  assert.match(growth, /^\n+$/, 'only added lines, not a lowered budget');
-  assert.ok(growth.length > Math.max(...caps) + band,
-    `${growth.length} new lines exceed even cap+band from an empty core`);
-});
-
 test('#899 invalid nightly definitions retain runtime branches and pre-ES2022 indexing', () => {
   const alias = definition('signal-topology-entity-choice-follows-last-alias');
   assert.match(alias.patches[0].replace, /entities\[entities\.length - 1\]/);
@@ -651,124 +630,6 @@ test('#458 у каждого модуля горячего пути отрисо
   }
 });
 
-// #472. У отказа еженедельного прогона не было адресата: права workflow не
-// позволяли завести issue, шага на отказ не было, а одна concurrency-группа на
-// всё позволяла ручному запуску молча отменить расписание.
-import { readFileSync as readWorkflowFile } from 'node:fs';
-const mutationWorkflow = readWorkflowFile(
-  new URL('../.github/workflows/_mutation-gate.yml', import.meta.url), 'utf8',
-).replaceAll('(inputs.source_event_name || github.event_name)', 'github.event_name');
-// #623: триггеры и concurrency — у тонкого вызывающего файла, тело — в `_mutation-gate.yml`.
-const mutationCaller = readWorkflowFile(
-  new URL('../.github/workflows/mutation-gate.yml', import.meta.url), 'utf8',
-);
-const validateWorkflowText = readWorkflowFile(
-  new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8',
-);
-
-test('#513 AC1: полный мутационный прогон идёт каждую ночь, не раз в неделю и не перед релизом', () => {
-  assert.match(mutationCaller, /- cron: '43 0 \* \* \*'/, 'ежедневно 00:43 UTC (#658: минута не круглая)');
-  assert.ok(!/cron: '[^']*\* [0-6]'/.test(mutationCaller), 'недельного расписания (день недели) быть не должно');
-  assert.ok(!mutationWorkflow.includes('перед стабильным релизом'), 'полный прогон — не шаг релиза');
-});
-
-test('#472 AC1: у расписания и ручного запуска разные concurrency-группы', () => {
-  assert.match(mutationCaller, /concurrency:\n      group: \$\{\{ format\('mutation-gate-\{0\}', needs\.event\.outputs\.event_name\) \}\}/);
-  assert.match(mutationCaller, /source_event_name: \$\{\{ needs\.event\.outputs\.event_name \}\}/, 'concurrency and body use the same authenticated source event');
-});
-
-test('#472 AC2 / #549: каждый шард сохраняет лог и identity при любом исходе', () => {
-  assert.match(mutationWorkflow, /set -o pipefail\n\s+node scripts\/mutation-gate\.mjs --shard=[^\n]*\| tee artifacts\/mutation-shard-/);
-  const upload = mutationWorkflow.slice(mutationWorkflow.indexOf('- name: Сохранить лог и identity шарда'));
-  assert.match(upload.slice(0, 400), /if: always\(\)/);
-  assert.match(upload.slice(0, 500), /name: mutation-shard-\$\{\{ matrix\.shard \}\}-attempt-\$\{\{ github\.run_attempt \}\}/);
-  assert.match(mutationWorkflow, /--write-evidence=.*evidence\.json/);
-});
-
-// #795/#899: на шести, затем десяти шардах ночь дошла до часового потолка. Контракт
-// проверяет не только одинаковые делители, но и полный охват реальной раскладкой.
-test('#795/#899: двадцать ночных шардов согласованы с runner/evidence и покрывают реестр ровно один раз', () => {
-  const matrix = /shard: \[([0-9, ]+)\]/.exec(mutationWorkflow);
-  assert.ok(matrix, 'matrix.shard объявлена списком');
-  const shards = matrix[1].split(',').map((n) => Number(n.trim()));
-  assert.deepEqual(shards, Array.from({ length: 20 }, (_, index) => index + 1));
-  const n = shards.length;
-  assert.match(mutationWorkflow, new RegExp(`\\(шард \\$\\{\\{ matrix\\.shard \\}\\} из ${n}\\)`), 'имя job');
-  assert.match(mutationWorkflow, new RegExp(`--shard=\\$\\{\\{ matrix\\.shard \\}\\}/${n} `), 'делитель раннера');
-  // Только строки команд, не комментарии.
-  const shardsArgs = mutationWorkflow.split('\n').filter((line) => !/^\s*#/.test(line))
-    .flatMap((line) => line.match(/--shards=\d+/g) || []);
-  assert.equal(shardsArgs.length, 3, 'evidence шарда, агрегатор, отчёт');
-  assert.ok(shardsArgs.every((arg) => arg === `--shards=${n}`), shardsArgs.join(' '));
-  const scheduled = shards.flatMap((shard) => shardMutants(MUTANTS, shard, n).map((m) => m.id));
-  assert.deepEqual(scheduled.sort(), MUTANTS.map((m) => m.id).sort(), 'нет пропусков и повторов');
-  for (const shard of shards) {
-    assert.ok(shardMutants(MUTANTS, shard, n).length <= Math.ceil(MUTANTS.length / n));
-  }
-  assert.match(mutationWorkflow, /timeout-minutes: 60/, 'потолок остаётся стражем от зависшего Chromium');
-});
-
-test('#604: исход шага прогона едет в evidence шарда', () => {
-  assert.match(mutationWorkflow, /- name: Каждый тест ловит свою поломку\n\s+id: gate\n/);
-  assert.match(mutationWorkflow, /--write-evidence=[^\n]*\n(?:[^\n]*\n){5}\s+--outcome=\$\{\{ steps\.gate\.outcome \}\}/);
-});
-
-test('#472 AC5: job report — только по расписанию, только при не-успехе, с полными правами', () => {
-  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
-  // #620: принятое доказательство прошлого зелёного прогона отказом не считается.
-  assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && needs\.material\.outputs\.reuse != 'true' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)/);
-  const permissions = report.slice(report.indexOf('permissions:'), report.indexOf('steps:'));
-  for (const grant of ['contents: read', 'actions: read', 'issues: write']) {
-    assert.ok(permissions.includes(grant), `нет права ${grant} у job report`);
-  }
-  assert.match(report, /node scripts\/mutation-gate-report\.mjs/);
-});
-
-test('#549: moving ref фиксируется один раз, а каждый шард checkout делает по material SHA', () => {
-  const material = mutationWorkflow.slice(mutationWorkflow.indexOf('  material:'), mutationWorkflow.indexOf('  mutants:'));
-  const mutants = mutationWorkflow.slice(mutationWorkflow.indexOf('  mutants:'), mutationWorkflow.indexOf('  evidence:'));
-  assert.match(material, /sha: \$\{\{ steps\.identity\.outputs\.sha \}\}/);
-  assert.match(material, /tree: \$\{\{ steps\.identity\.outputs\.tree \}\}/);
-  assert.match(mutants, /needs: material/);
-  assert.match(mutants, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
-  assert.ok(!mutants.includes("inputs.ref || 'dev'"), 'шарды не должны независимо читать moving ref');
-});
-
-test('#549: агрегатор требует evidence одного material и report не перечитывает dev', () => {
-  const evidence = mutationWorkflow.slice(mutationWorkflow.indexOf('  evidence:'), mutationWorkflow.indexOf('  report:'));
-  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('\n  report:\n'));
-  assert.match(evidence, /--verify-only/);
-  assert.match(evidence, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
-  assert.match(evidence, /--sha=\$\{\{ needs\.material\.outputs\.sha \}\}/);
-  assert.match(evidence, /--tree=\$\{\{ needs\.material\.outputs\.tree \}\}/);
-  assert.match(evidence, /--workflow-sha=\$\{\{ job\.workflow_sha \}\}/);
-  assert.match(evidence, /--run-id=\$\{\{ github\.run_id \}\} --run-attempt=\$\{\{ github\.run_attempt \}\}/);
-  assert.match(report, /--require-evidence/);
-  assert.match(report, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
-  assert.match(report, /--workflow-sha=\$\{\{ job\.workflow_sha \}\}/);
-  assert.ok(!report.includes('git rev-parse HEAD'));
-  assert.ok(!report.includes('ref: dev'));
-  assert.ok(!report.includes('ref: ${{ github.sha }}'), 'main может не содержать dev-CLI отчётчика');
-});
-
-test('#472 AC6: повторный отказ дописывает открытое issue, а не создаёт второе', () => {
-  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
-  const search = report.indexOf('gh issue list');
-  const create = report.indexOf('gh issue create');
-  const comment = report.indexOf('gh issue comment');
-  assert.ok(search > 0 && comment > search && create > search, 'поиск открытого issue идёт до create/comment');
-});
-
-test('#994: отказ ночного гейта не пишет в Telegram — адресат только issue', () => {
-  assert.doesNotMatch(mutationWorkflow, /api\.telegram\.org|TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID|name: Telegram/);
-  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
-  assert.match(report, /gh issue create/, 'issue по-прежнему заводится');
-});
-
-test('#472 AC8 / #623: Validate сверяет тонкий mutation-gate.yml между main и dev наравне с process.yml', () => {
-  assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml process-resume\.yml [^\n]*; do/);
-});
-
 // #475. Свидетель гниёт двумя способами: изменился файл, который он патчит,
 // либо изменился его гард — и тот перестал ходить по мутированной ветке.
 // Прежний отбор по диффу видел только первый; четыре мутанта пережили свои
@@ -1112,7 +973,7 @@ import {
   baseRegistry, guardInputs, registryDelta, selectForDiff, wrapperInputs,
   createGuardInputResolver, MUTATION_REGISTRY_FILES,
 } from '../scripts/mutation-gate.mjs';
-import { trackedFiles } from '../scripts/check-inputs.mjs';
+import { trackedFiles } from '../scripts/mutation-inputs.mjs';
 
 test('#492 §6.1: обёртки объявляют GUARD_INPUTS, и объявление читается статически', () => {
   assert.deepEqual(wrapperInputs('scripts/backend-test-guard.mjs'), ['tests_backend/test_ha_import_export.py']);
@@ -1396,33 +1257,4 @@ test('#620: --plan-only печатает окружение плана', () => {
   const unit = plan('view-conflict-requires-editor-runtime');
   assert.match(unit.stdout, /^plan-browser=false$/m);
   assert.match(unit.stdout, /^plan-python=false$/m);
-});
-
-// #620. Ночь по расписанию не гоняет реестр на дереве, уже доказанном зелёным
-// полным прогоном. Решение — чистая функция (test/mutation-nightly-reuse.test.mjs);
-// здесь — что workflow пропускает ровно шарды и не глушит адресата отказа.
-test('#620: пропуск ночи — только по маркеру, маркер — только после зелёного агрегатора', () => {
-  const job = (name, next) => mutationWorkflow.slice(mutationWorkflow.indexOf(`\n  ${name}:\n`),
-    next ? mutationWorkflow.indexOf(`\n  ${next}:\n`) : undefined);
-  const material = job('material', 'mutants');
-  const mutants = job('mutants', 'evidence');
-  const evidence = job('evidence', 'green_marker');
-  const marker = job('green_marker', 'report');
-  const report = job('report');
-  assert.match(material, /reuse: \$\{\{ steps\.reuse\.outputs\.reuse \}\}/);
-  // Маркер читается только по расписанию и только для своего tree и workflow.
-  const restore = material.slice(material.indexOf('actions/cache/restore@'), material.indexOf('- name: Нужен ли прогон'));
-  assert.match(material.slice(material.lastIndexOf('- name:', material.indexOf('actions/cache/restore@'))),
-    /^- name: [^\n]*\n\s+if: github\.event_name == 'schedule'\n/);
-  assert.match(restore, /restore-keys: \|\n\s+mutation-green-v1-\$\{\{ steps\.identity\.outputs\.tree \}\}-\$\{\{ job\.workflow_sha \}\}-\n/);
-  // Сбой решения — полный прогон.
-  assert.match(material, /else\n\s+echo "::warning::[^\n]*"\n\s+echo "reuse=false" >> "\$GITHUB_OUTPUT"/);
-  assert.match(material, /--decide/);
-  assert.match(mutants, /\n    if: needs\.material\.outputs\.reuse != 'true'\n/);
-  assert.match(evidence, /\n    if: always\(\) && needs\.material\.outputs\.reuse != 'true'\n/);
-  assert.match(marker, /\n    if: needs\.material\.outputs\.reuse != 'true' && needs\.mutants\.result == 'success' && needs\.evidence\.result == 'success'\n/);
-  assert.match(marker, /--write-marker=artifacts\/mutation-green\/marker\.json/);
-  assert.match(marker, /key: mutation-green-v1-\$\{\{ needs\.material\.outputs\.tree \}\}-\$\{\{ job\.workflow_sha \}\}-\$\{\{ github\.run_id \}\}/);
-  // Отказ по-прежнему заводит issue; не заводит только принятое доказательство.
-  assert.match(report, /\n    if: always\(\) && github\.event_name == 'schedule' && needs\.material\.outputs\.reuse != 'true' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)\n/);
 });

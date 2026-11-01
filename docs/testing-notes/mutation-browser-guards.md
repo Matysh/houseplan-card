@@ -3,8 +3,9 @@
 Development and release policy lives only in [PROCESS.md](../../PROCESS.md).
 This inventory explains why particular test-sensitivity witnesses need a
 browser. It is retained as technical input to the existing registry tooling,
-not as an extra checklist for an ordinary task or reviewer. The #1105 process
-is prepared and has not been activated.
+not as an extra checklist for an ordinary task or reviewer. The background
+workflow is `process-next-background.yml`; activation evidence is recorded
+in [the cutover report](../../process-next/evidence/cutover-status.md).
 
 Mutations execute only in a separate background run with an explicit portion
 of the registry. They do not run on task, beta, stable, hotfix or S7 paths.
@@ -79,7 +80,7 @@ close its panel and refocus the trigger without retiring the settings form.
 
 The measurements below are GitHub-hosted Linux runs from 2026-09-27. They are
 historical observations of the old runner and do not describe the speed, schedule
-or required checks of the prepared process.
+or required checks of the current process.
 
 | Measurement | Before | After | Observed change |
 | --- | ---: | ---: | ---: |

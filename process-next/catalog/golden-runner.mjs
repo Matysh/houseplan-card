@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Side-by-side adaptation of demo/golden/run.mjs @ 96a97b8.
-// Preserve pixel and semantic assertions; only selection/report scope differs.
-// On activation consolidate with the original runner: do not maintain two copies.
-import { prepareGoldenSelection, goldenHarnessScenario } from './golden-selection.mjs';
+// One capture/verification implementation for tasks, releases and diagnostics.
+// Preserve pixel and semantic assertions for every selected scene.
+import { goldenRunSelection, goldenHarnessScenario } from './golden-selection.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -24,16 +23,12 @@ import {
 } from '../../demo/golden/policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const mode = 'verify';
-const selection = process.argv.find(arg => arg.startsWith('--selection='))?.slice(12);
-if (!['beta', 'rest'].includes(selection)) throw Error('Expected --selection=beta|rest');
+const { mode, selection, scenario, scenarios } = goldenRunSelection(GOLDEN_SCENARIOS, process.argv.slice(2));
 assertGoldenInvocation(mode);
-const scenarios = prepareGoldenSelection(GOLDEN_SCENARIOS)[selection];
-if (!scenarios.length) throw Error('Required golden selection is empty');
 const runStarted = Date.now();
 console.log(`PROCESS_NEXT_PROGRESS ${JSON.stringify({ phase: 'golden', completed: 0, total: scenarios.length, elapsedMs: 0 })}`);
 
-const artifactRoot = resolve(ROOT, 'artifacts/process-next', 'golden-' + selection);
+const artifactRoot = resolve(ROOT, 'artifacts/process-next', 'golden-' + (scenario ?? selection));
 const actualRoot = resolve(artifactRoot, 'actual');
 const diffRoot = resolve(artifactRoot, 'diff');
 const baselineRoot = resolve(ROOT, 'demo/golden/baselines');

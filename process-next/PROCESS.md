@@ -3,5 +3,5 @@
 Единственный документ правил — [корневой PROCESS.md](../PROCESS.md).
 
 Описание перенесено туда, чтобы обычный вход нового агента сразу вёл к согласованному процессу #1105.
-Эта ветка остаётся подготовкой: действующие workflows/hooks не переключены, текущая бета здесь не выпускается.
-План будущего подключения — [CUTOVER.md](CUTOVER.md); результаты обзорных ревью — [REVIEW-RESOLUTION.md](REVIEW-RESOLUTION.md).
+Сведения о переключении — [CUTOVER.md](CUTOVER.md), фактическое состояние подключения —
+[evidence/cutover-status.md](evidence/cutover-status.md); история обзорных ревью — [REVIEW-RESOLUTION.md](REVIEW-RESOLUTION.md).

@@ -8,11 +8,11 @@ The development process has one home: [PROCESS.md](PROCESS.md). It defines
 tracks, statuses, checks, independent review, merge and releases. Agents start
 with [AGENTS.md](AGENTS.md).
 
-**This branch prepares #1105; activation has not happened.** The documentation
-describes the agreed process, while old workflows/hooks still await the separate
-[cutover](process-next/CUTOVER.md). Do not run them as an additional acceptance
-route, enable the prepared workflows or publish from this branch without the
-owner's cutover instruction.
+The implementation is in `process-next/`. Retired automation is kept in
+`legacy/process-v1/` for reference, not as another acceptance route. The
+[cutover notes](process-next/CUTOVER.md) and
+[setup evidence](process-next/evidence/cutover-status.md) describe the switch.
+Publishing a release remains a separate owner instruction.
 
 ## Starting work
 
@@ -31,14 +31,14 @@ test, build, lint or link-check runs.
 Use the pinned Node/Python versions and a prepared Ubuntu WSL checkout for the
 local sets. Environment setup is described in
 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); test purposes and prerequisites in
-[docs/TESTING.md](docs/TESTING.md). During preparation, dependency installation
-uses `npm ci --ignore-scripts` so the old `prepare` hook installer is not
-reactivated. No installation or test run is required merely to edit docs.
+[docs/TESTING.md](docs/TESTING.md). Dependency installation no longer installs
+process hooks. No installation or test run is required merely to edit docs.
 
 Use `node process-next/cli.mjs plan --event task --issue 9999 --track show --layer product`
-to inspect the prepared product task profile, replacing 9999 with the actual issue number. Supply the changed-area selection
+to inspect the product task profile, replacing 9999 with the actual issue number. Supply the changed-area selection
 for the actual task. `plan` executes nothing; commands for running profiles
-and finishing tasks are in PROCESS. Remote execution remains disabled here.
+and finishing tasks are in PROCESS. `finish` uses `process-next/config.json`;
+credentials belong in the environment, never in the task request.
 
 A blobless clone (`git clone --filter=blob:none`) retains commit history and
 tags while fetching old file contents on demand. Use a normal full clone when
@@ -119,7 +119,7 @@ changes text or visuals.
 
 Task checks target the affected view when needed; beta/stable selections and
 reference acceptance are specified in PROCESS. Reference changes are reviewed
-and accepted explicitly by scene, using the prepared `golden-accept` command.
+and accepted explicitly by scene, using the `golden-accept` command.
 Unexplained differences remain failures; a successful screenshot capture does
 not by itself approve a new reference.
 

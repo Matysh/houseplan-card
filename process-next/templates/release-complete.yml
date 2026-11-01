@@ -1,0 +1,46 @@
+# Manual continuation of an already published candidate; never publishes a new version.
+name: Завершение опубликованного выпуска
+run-name: Завершение выпуска · ${{ inputs.candidate }}
+on:
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: ID опубликованного кандидата из process-release-state
+        required: true
+        type: string
+permissions:
+  contents: write
+  issues: write
+  actions: write
+concurrency:
+  group: process-next-release-complete-${{ inputs.candidate }}
+  cancel-in-progress: false
+jobs:
+  complete:
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: dev
+          fetch-depth: 0
+          token: ${{ secrets.HP_PROCESS_TOKEN }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .nvmrc
+      - name: Продолжить только незавершённые действия выпуска
+        env:
+          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+          HP_PROCESS_NEXT_ACTIVATE: '1'
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          HP_RELEASE_CANDIDATE: ${{ inputs.candidate }}
+          HA_URL: ${{ vars.HA_URL }}
+          HA_TOKEN: ${{ secrets.HA_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GIT_AUTHOR_NAME: Houseplan process
+          GIT_AUTHOR_EMAIL: process@localhost
+          GIT_COMMITTER_NAME: Houseplan process
+          GIT_COMMITTER_EMAIL: process@localhost
+        run: node process-next/templates/release-complete-job.mjs

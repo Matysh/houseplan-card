@@ -66,61 +66,6 @@ test('#455 провенанс среды снимается с процесса,
   assert.equal(typeof captureEnvironment().platform, 'string');
 });
 
-test('#455 гейт стоит во всех точках, где кадры появляются и принимаются', () => {
-  // Проверка вида «файл упоминает модуль» слабая, но здесь она про ПОДКЛЮЧЕНИЕ,
-  // а поведение каждой точки закреплено отдельно: golden-policy.test.mjs
-  // (съёмка golden), docs-accept.test.mjs (приёмка документации) и прогон CI
-  // (сами скрипты). Без этой проверки точку можно тихо отцепить.
-  const source = (relative) =>
-    readFileSync(fileURLToPath(new URL(`../${relative}`, import.meta.url)), 'utf8');
-  for (const file of [
-    'demo/golden/policy.mjs', 'demo/golden/accept.mjs',
-    'scripts/docs-accept.mjs', 'scripts/assert-capture-env.mjs',
-  ]) {
-    assert.match(source(file), /capture-environment\.mjs/, `${file} не подключает гейт среды`);
-  }
-  // Импорта мало: первая редакция этого теста проходила, когда отказ в
-  // accept.mjs заменили на `void foreign` — модуль остался подключён, а гейт
-  // перестал существовать. Поэтому проверяется форма ОСТАНОВКИ, а не наличие
-  // строки: поведение точек, которые можно запустить на Linux, закреплено в
-  // golden-policy.test.mjs и docs-accept.test.mjs, а эти две проверяются на
-  // Windows и в CI прогоном самих скриптов.
-  // Вызывается именно бросающая обёртка: она останавливает прогон по
-  // построению, поэтому «понизить отказ до печати» без правки этой строки
-  // нельзя. Первая редакция проверки смотрела лишь на импорт модуля — и
-  // молча проходила, когда отказ заменили на `void foreign`.
-  // #571 заменил бросающую обёртку на явную пару проверок: судить надо ДВЕ
-  // среды — съёмки (из отчёта) и приёмки (своя), а обёртка знала только свою.
-  // Форма остановки прежняя: `throw`, а не печать.
-  assert.match(source('demo/golden/accept.mjs'),
-    /for \(const \[platform, stageNote\] of \[[\s\S]*?\]\) \{[\s\S]*?if \(refusal\) throw new Error\(/,
-    'приёмка golden обязана отказывать по обеим средам, а не печатать');
-  assert.match(source('demo/golden/accept.mjs'), /reportCaptureProvenance\(report\)/,
-    'среда съёмки обязана читаться из отчёта, а не из process.platform приёмщика');
-  assert.match(source('scripts/docs-accept.mjs'),
-    /assertCaptureEnvironment\(\{ kind: 'docs', stage: 'accept' \}\)/,
-    'приёмка документации обязана проверять среду');
-  // Съёмка документации гейтится шагом раньше, в npm-скрипте: править
-  // demo/docs/capture.mjs дорого — его sha записан в индексе скриншотов, и
-  // любая правка требует пересъёмки всех картинок (проверено, гейт
-  // документации покраснел сразу). Отсюда требование к самому скрипту:
-  assert.doesNotMatch(source('demo/docs/capture.mjs'), /capture-environment\.mjs/,
-    'demo/docs/capture.mjs трогать нельзя: его sha в индексе скриншотов');
-  const packageJson = JSON.parse(source('package.json'));
-  assert.match(packageJson.scripts['docs:capture'] || '',
-    /assert-capture-env\.mjs docs/,
-    'у съёмки документации обязан быть npm-скрипт с проверкой среды');
-  // До #571 `run.mjs` не трогали принципиально: он в корпусе sourceFingerprint,
-  // и правка объявляет устаревшими бандл и индекс скриншотов. Ради ГЕЙТА эта
-  // цена не окупалась — он прекрасно живёт в policy.mjs. Ради ПРОВЕНАНСА
-  // окупилась: платформу кадров знает только тот, кто их снял, и записать её
-  // больше негде. Цена заплачена один раз, осознанно (#571).
-  assert.doesNotMatch(source('demo/golden/run.mjs'), /assertGoldenInvocation\([^)]*platform/,
-    'гейт среды остаётся в policy.mjs: в run.mjs только сбор провенанса');
-  assert.match(source('demo/golden/run.mjs'), /capture: captureProvenance\(\{ chromium, buildFingerprint \}\)/,
-    'отчёт съёмки обязан нести провенанс среды (#571)');
-});
-
 test('#455 бросающая обёртка бросает и возвращает разрешённую причину', () => {
   assert.throws(() => assertCaptureEnvironment({ platform: 'win32', allowance: null }),
     /съёмка отказана/);

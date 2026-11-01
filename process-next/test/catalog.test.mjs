@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planProfile, discoverReleaseTests, inventory, CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E } from '../lib/catalog.mjs';
 import { selectExact, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, GOLDEN_ADDITIONS } from '../catalog/selections.mjs';
-import { prepareGoldenSelection, goldenHarnessScenario } from '../catalog/golden-selection.mjs';
+import { prepareGoldenSelection, goldenHarnessScenario, goldenRunSelection } from '../catalog/golden-selection.mjs';
 import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -100,6 +100,16 @@ test('exact selectors reject renamed, duplicated and file/title cross-product jo
   assert.throws(() => selectExact(chosen, []), /nonempty/);
 });
 
+test('addressed golden verification uses the canonical panel identity without widening the run', () => {
+  const { beta, rest } = prepareGoldenSelection(GOLDEN_SCENARIOS);
+  const panel = beta.find(scene => scene.sourceSceneId);
+  const selected = goldenRunSelection(GOLDEN_SCENARIOS, [`--scenario=${panel.id}`, '--mode=verify']);
+  assert.deepEqual(selected.scenarios, [panel]);
+  assert.throws(() => goldenRunSelection(GOLDEN_SCENARIOS, [`--scenario=${panel.sourceSceneId}`]), /Unknown or empty/);
+  assert.throws(() => goldenRunSelection(GOLDEN_SCENARIOS, ['--selection=beta', `--scenario=${rest[0].id}`]), /Unknown or empty/);
+  assert.deepEqual(goldenRunSelection(GOLDEN_SCENARIOS, ['--selection=beta', '--mode=capture']).scenarios, beta);
+});
+
 test('stable retains beta identities for reuse and separates converter failure from the core', async () => {
   const beta = await planProfile({ root, event: 'beta' });
   const stable = await planProfile({ root, event: 'stable' });
@@ -112,12 +122,12 @@ test('stable retains beta identities for reuse and separates converter failure f
   assert.ok(!stable.steps.some(item => item.id.startsWith('mutation') || item.id === 'infra-behavior'));
 });
 
-test('migration inventory accounts for every existing Node test, without deleting originals or running tooling on releases', async () => {
-  const actual = (await readdir(resolve(root, 'test'))).filter(name => name.endsWith('.test.mjs')).map(name => `test/${name}`).sort();
-  assert.deepEqual(inventory.entries.filter(row => row.path.startsWith('test/')).map(row => row.path).sort(), actual);
+test('release discovery excludes the retired process and addressed infrastructure tests', () => {
   const rows = inventory.entries.filter(row => row.kind === 'infrastructure');
   assert.ok(rows.some(row => row.decision === 'retire'));
   assert.ok(rows.every(row => row.automaticReleaseRun === false));
+  const discovered = new Set(discoverReleaseTests(root).map(row => row.path));
+  assert.ok(rows.every(row => !discovered.has(row.path)));
   assert.equal(inventory.entries.find(row => row.path === 'test/plan-converter.test.mjs').kind, 'product');
   assert.equal(inventory.entries.find(row => row.path === 'test/converter-consumers.test.mjs').kind, 'converter');
 });

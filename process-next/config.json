@@ -1,0 +1,36 @@
+{
+  "enabled": true,
+  "owner": "Matysh",
+  "repo": "houseplan-card",
+  "ownerLogin": "Matysh",
+  "workspace": ".",
+  "github": {
+    "tokenEnv": "GH_TOKEN"
+  },
+  "git": {
+    "remote": "origin",
+    "dev": "dev"
+  },
+  "queue": {
+    "branch": "process-state",
+    "path": "queue.json"
+  },
+  "release": {
+    "branch": "process-release-state",
+    "path": "releases.json"
+  },
+  "hacs": {
+    "mode": "public",
+    "url": "",
+    "tokenEnv": "HA_TOKEN"
+  },
+  "telegram": {
+    "tokenEnv": "TELEGRAM_BOT_TOKEN",
+    "chatEnv": "TELEGRAM_CHAT_ID"
+  },
+  "review": {
+    "workflow": "process-next-review.yml",
+    "ref": "dev",
+    "commentAuthor": "github-actions[bot]"
+  }
+}

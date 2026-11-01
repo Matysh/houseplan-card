@@ -1,4 +1,5 @@
 import { membershipIssueNumbers } from './release-data.mjs';
+import { isDeliveryObserved } from './release.mjs';
 
 const done = record => ['completed', 'not-required'].includes(record?.status);
 const reason = error => String(error?.message ?? error).slice(0, 1200);
@@ -24,14 +25,14 @@ export async function completePublishedRelease({ candidate: input, api, git, ver
 
   if (!candidate.delivery) {
     onProgress({ phase: 'hacs', status: 'running', tag: candidate.tag });
-    if (!verifyDelivery) return { status: 'pending', pending: [{ step: 'hacs', reason: 'HACS observation is not configured' }], candidate };
+    if (!verifyDelivery) return { status: 'pending', pending: [{ step: 'hacs', reason: 'Release discovery verification is not configured' }], candidate };
     try {
       const observation = await verifyDelivery({ candidate, assetName: 'houseplan.zip', onProgress });
       const evidence = observation?.evidence ?? observation;
       if (evidence?.status === 'waiting' || evidence?.status === 'pending')
-        return { status: 'pending', pending: [{ step: 'hacs', reason: evidence.reason ?? 'HACS has not exposed this release yet' }], candidate };
-      if (evidence?.hacsAvailable !== true || evidence.tag !== candidate.tag || evidence.artifactDigest !== candidate.publication.artifactDigest)
-        throw Error('HACS observation does not identify the published ZIP');
+        return { status: 'pending', pending: [{ step: 'hacs', reason: evidence.reason ?? 'Release discovery has not exposed this release yet' }], candidate };
+      if (!isDeliveryObserved(evidence) || evidence.tag !== candidate.tag || evidence.artifactDigest !== candidate.publication.artifactDigest)
+        throw Error('Delivery observation does not identify the published ZIP');
       await onUpdate({ type: 'delivery-verified', candidate: candidate.id, evidence }); candidate.delivery = structuredClone(evidence);
     } catch (error) { return { status: 'pending', pending: [{ step: 'hacs', reason: reason(error) }], candidate }; }
   }

@@ -1,0 +1,27 @@
+✔ subscription client reaches the real stdio report tool without API billing or executable project tools (87.9521ms)
+✔ missing report, failed client and wrong model never produce an accepted result (169.4096ms)
+✔ MCP rejects arbitrary tools and invalid verdict; successful report can only be submitted once (0.5318ms)
+✔ spec/code review receive issue discussion, source attribution, previous round and S6 receipts (11.6445ms)
+✔ a comment publication failure preserves the paid verdict and retries without calling model (6.8156ms)
+✔ real spec/code job passes executor context from the issue and preserves its original snapshot on publication retry (1166.8445ms)
+✔ a new workflow run reuses a matching artifact, never trusts a comment as verdict (8.6618ms)
+✔ artifact with another request or changed patch does not replace the intended review (4.341ms)
+✔ discussion is paginated and disabled template never contacts GitHub (4.2301ms)
+✔ ship has no individual review workflow regardless of ownerAssigned metadata (0.7079ms)
+✔ incomplete review is regenerated on its allowed retry and the stale comment is replaced (7.4648ms)
+✔ review reads exact base/head and useful history without touching worktree (1381.2714ms)
+✔ no command execution, path traversal, arbitrary ref flags or symlink reads (971.422ms)
+✔ owner ship never invokes individual review or demands a spec/key (1090.1987ms)
+✔ offline preview requires no provider and exposes only analytical tools (885.5211ms)
+✔ executor context is freeform task data; fenced examples and following requirements do not become the briefing (0.6601ms)
+✔ different executor contexts change only task data, never policy, review scope, tools or S6 results (1113.5874ms)
+✔ report writes reject symlink roots and inconsistent green verdicts (717.6022ms)
+✔ author template check identifies missing/empty sections without pretending to review meaning (1.2809ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6250.4506

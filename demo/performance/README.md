@@ -5,10 +5,10 @@ When to measure and what can pause a release are defined in
 [PROCESS.md](../../PROCESS.md), not by a separate CI-only policy here.
 [TESTING.md](../../docs/TESTING.md) explains their place among the test families.
 
-The new process is still prepared in this branch. These instructions do not
-activate its workflows or authorize publication.
+Operational setup is recorded in the
+[cutover report](../../process-next/evidence/cutover-status.md).
 
-## Measurements in the prepared process
+## Measurements in the process
 
 Normal tasks do not automatically measure size or timing budgets. Before beta,
 the common profile records the selected size and interaction metrics, compares
@@ -37,7 +37,7 @@ machine conditions. Request fields and the execution route are described in
 The fixed `process-next/baselines/v1.83.1.json` is not automatically remeasured.
 
 The short blocking metric list, percentage thresholds and absolute tolerances
-live in the process canon and the prepared metrics implementation. Existing
+live in the process canon and the metrics implementation. Existing
 `budgets-*.json` files describe their individual diagnostic tools; they do
 not create additional gates for every task or release.
 

@@ -20,6 +20,6 @@ export async function runDevBuildDelivery({ env = process.env, config, publish =
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const config = JSON.parse(readFileSync('process-next/templates/remote-config.json', 'utf8'));
+  const config = JSON.parse(readFileSync('process-next/config.json', 'utf8'));
   runDevBuildDelivery({ config }).catch(() => { console.error('Dev-build delivery needs an addressed retry'); process.exitCode = 1; });
 }

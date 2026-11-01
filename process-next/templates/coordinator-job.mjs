@@ -4,7 +4,7 @@ import { GitHubClient, GitHubQueueStore } from '../lib/github.mjs';
 import { queueSummary } from '../lib/queue.mjs';
 import { devBuildTarget } from '../lib/coordinator.mjs';
 if (process.env.PROCESS_NEXT_ENABLED !== 'true') throw Error('New process is not activated');
-const config = JSON.parse(readFileSync('process-next/templates/remote-config.json', 'utf8'));
+const config = JSON.parse(readFileSync('process-next/config.json', 'utf8'));
 const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
 const delivery = `github:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT ?? 1}`;
 const call = (command, event) => executeRemoteCommand({ command, config, event, execute: true });

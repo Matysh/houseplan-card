@@ -29,10 +29,10 @@ of the shipped integration.
 
 - `update-dev-bundle.sh` — the dev stand's card bundle. The stand consumes the
   prepared `dev-build` artifact, whose `DEV-BUILD.json` names the source SHA
-  (`scripts/dev-build.mjs`). Under the prepared process, delivery follows a
+  (`scripts/dev-build.mjs`). Delivery follows a
   product merge and retries independently if the stand update fails; it does
   not repeat task tests or reopen S8. See [PROCESS.md](../../PROCESS.md).
-  The new route is not activated by this documentation change.
+  Actual setup is recorded in the [cutover report](../../process-next/evidence/cutover-status.md).
   Since #835 the branch carries the whole integration of that SHA; the stand
   takes only `frontend/` from it, the rest comes from its own checkout. The
   host deploy script must overlay it after `git pull`:

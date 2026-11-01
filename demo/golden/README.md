@@ -5,13 +5,13 @@ They catch seams and clipping, incorrect device states, lighting, editor chrome,
 dialogs, narrow layouts and theme changes that a DOM assertion may miss.
 
 The schedule and acceptance policy live in [PROCESS.md](../../PROCESS.md);
-[TESTING.md](../../docs/TESTING.md) describes the test families. This branch
-prepares the new process; it does not activate workflows or publish a release.
+[TESTING.md](../../docs/TESTING.md) describes the test families. The shared
+runner is `process-next/catalog/golden-runner.mjs`.
 
 ## What runs
 
 - On a task, use a small addressed selection when the change needs visual evidence.
-- Before beta, the prepared profile captures 75 scenes: 61 through the panel,
+- Before beta, the profile captures 75 scenes: 61 through the panel,
   13 Lovelace card scenes and one native Static scene.
 - Stable covers the remaining reviewed selection as well, reusing applicable
   successful beta results.
@@ -21,7 +21,7 @@ The exact selection is
 Main UI frames use the panel. The smaller Lovelace selection covers that
 embedding; it is not a substitute for the panel.
 
-The source scenarios and dimensions remain in `matrix.mjs`. The prepared
+The source scenarios and dimensions remain in `matrix.mjs`. The shared
 runner adapts those scenarios and reports only its selected set. It does not
 claim that a missing reference passed.
 
@@ -38,7 +38,7 @@ The release request and execution command are documented in
 [DEVELOPMENT.md](../../docs/DEVELOPMENT.md). The profile prepares the product
 build, demo assets and test build before the browser step.
 
-For an explicitly requested diagnostic of the prepared visual selection, with
+For an explicitly requested diagnostic of the visual selection, with
 those inputs already prepared:
 
 ```sh
@@ -47,6 +47,9 @@ node process-next/catalog/golden-runner.mjs --selection=beta
 
 `--selection=rest` addresses the remaining stable selection. It is not a
 second mandatory run after an applicable successful report.
+`--selection=all` addresses the complete set; `--scenario=ID` selects one
+scene. `--mode=capture` produces images without claiming a successful pixel
+comparison; `--mode=verify` is the normal comparison mode.
 
 Outputs are in `artifacts/process-next/golden-beta/` or `golden-rest/`:
 `actual/`, `diff/` and `golden-report.json`. Each scene reports its status,
@@ -72,9 +75,9 @@ scene identity and captured PNG hashes before writing; unrelated references
 stay unchanged. A differing selected image cannot be accepted without a
 decision merely because an entire report exists.
 
-This is the prepared acceptance route. Older capture/accept scripts remain in
-the tree until the separate code cutover; they are not an additional approval
-or validation stage. Consolidation to one runner is recorded in
+This is the only acceptance route. Older capture/accept scripts are archived
+under `legacy/process-v1/`; they are not an additional approval or validation
+stage. Consolidation to one runner is recorded in
 [CUTOVER.md](../../process-next/CUTOVER.md).
 
 ## Capture conditions and scene contracts

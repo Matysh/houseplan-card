@@ -4,6 +4,8 @@ import { membershipIssueNumbers } from './release-data.mjs';
 
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
 const copy = value => structuredClone(value);
+export const isDeliveryObserved = evidence => evidence?.hacsAvailable === true
+  || evidence?.discoveryAvailable === true && evidence.source === 'github-release-feed';
 export function initialReleaseState({ beta = null, stable = null } = {}) {
   return { schema: 1, revision: 0, active: null, candidates: {}, published: { beta, stable }, events: {} };
 }
@@ -155,8 +157,8 @@ export function reduceRelease(previous, event) {
     }
     case 'delivery-verified': {
       const item = candidate();
-      if (item.status !== 'published' || event.evidence?.hacsAvailable !== true
-        || event.evidence?.artifactDigest !== item.publication.artifactDigest || event.evidence?.tag !== item.tag) throw Error('Separate HACS and artifact observations required');
+      if (item.status !== 'published' || !isDeliveryObserved(event.evidence)
+        || event.evidence?.artifactDigest !== item.publication.artifactDigest || event.evidence?.tag !== item.tag) throw Error('Published release discovery and artifact observations required');
       item.delivery = copy(event.evidence); break;
     }
     case 'completion-step': {
@@ -316,7 +318,7 @@ export class ReleasePublisher {
     if (!this.activated) return { planned: true, candidate: candidate.id, sha: candidate.sha, tag, kind: candidate.kind,
       artifacts: artifacts.map(({ name, path, expectedDigest }) => ({ name, path, expectedDigest })),
       operations: ['create or reuse draft', 'upload missing identical prepared artifacts', 'publish exact refs (main fast-forward only)', 'publish draft', 'verify tag and downloads'],
-      delivery: 'HACS observation is a separate required observation; GitHub publication does not prove it' };
+      delivery: 'Verify the public release feed and downloaded ZIP; optional HACS instance observation is separate evidence' };
     if (!this.github.activated || !this.git.activated) throw Error('Both publishing adapters must be explicitly activated');
     await this.git.publishCandidateRefs({ materialSha: candidate.sha, tag, kind: candidate.kind, expectedMain, checkOnly: true });
     const prepared = [];
@@ -435,8 +437,8 @@ export class HacsDeliveryVerifier {
   }
   async wait({ timeoutMs = 10 * 60_000, intervalMs = 15_000, signal, onProgress = () => {}, ...request }) {
     if (!Number.isFinite(timeoutMs) || timeoutMs < 0 || !Number.isFinite(intervalMs) || intervalMs <= 0 || intervalMs > 60_000)
-      throw Error('Use a finite HACS wait and polling intervals no longer than one minute');
-    const started = this.clock(); let attempts = 0, reason = 'HACS observation pending';
+      throw Error('Use a finite delivery wait and polling intervals no longer than one minute');
+    const started = this.clock(); let attempts = 0, reason = 'Release discovery pending';
     while (!signal?.aborted) {
       attempts++;
       try { return { status: 'verified', attempts, ...await this.verify(request) }; }
@@ -447,5 +449,36 @@ export class HacsDeliveryVerifier {
       await this.sleep(Math.min(intervalMs, timeoutMs - elapsedMs));
     }
     return { status: 'waiting', interrupted: true, attempts, elapsedMs: this.clock() - started, reason };
+  }
+}
+
+/** The original delivery check: public GitHub discovery used by HACS, plus exact
+ * downloaded bytes. This does not claim an individual HA instance refreshed. */
+export class ReleaseDiscoveryVerifier extends HacsDeliveryVerifier {
+  async verify({ repository, tag, kind, assetName, expectedDigest }) {
+    if (!/^[a-f0-9]{64}$/.test(expectedDigest ?? '')) throw Error('Expected artifact SHA-256 required');
+    if (!['beta', 'stable', 'hotfix'].includes(kind)) throw Error('Release discovery requires beta/stable/hotfix kind');
+    if (repository.toLowerCase() !== `${this.github.owner}/${this.github.repo}`.toLowerCase()) throw Error('Release repository identities differ');
+    let discovered;
+    if (kind === 'beta') {
+      for (let page = 1; page <= 100; page++) {
+        const rows = await this.github.request('GET', `${this.github.root}/releases?per_page=100&page=${page}`);
+        discovered = rows.find(item => item.prerelease && !item.draft);
+        if (discovered || rows.length < 100) break;
+      }
+    } else {
+      try { discovered = await this.github.request('GET', `${this.github.root}/releases/latest`); }
+      catch (error) { if (error.status !== 404) throw error; }
+    }
+    if (!discovered || discovered.draft || discovered.tag_name !== tag || discovered.prerelease !== (kind === 'beta'))
+      throw new DeliveryPending(`Public release discovery has not exposed ${tag} as the current ${kind === 'beta' ? 'beta' : 'stable'} yet`);
+    const release = await this.github.getRelease(tag);
+    if (release.draft || release.tag_name !== tag) throw Error('Published release unavailable');
+    const assets = release.assets.filter(asset => asset.name === assetName);
+    if (assets.length !== 1) throw Error('Expected release artifact missing or ambiguous');
+    const bytes = await this.github.downloadAsset(assets[0].id), actual = sha256(bytes);
+    if (actual !== expectedDigest) throw Error('Downloaded release artifact differs');
+    return { discoveryAvailable: true, source: 'github-release-feed', tag, artifactDigest: actual,
+      assetName, bytes: bytes.length, observedAt: new Date().toISOString() };
   }
 }

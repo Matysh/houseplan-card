@@ -11,7 +11,7 @@ import { planProfile } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
 import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
 import { initialReleaseState, reduceRelease, ReleaseGitAdapter, ReleasePublisher,
-  HacsClient, HacsDeliveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
+  HacsClient, HacsDeliveryVerifier, ReleaseDiscoveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
 import { reconcileTaskCompletions, notifyDevWebhook } from './lib/task-completion.mjs';
 import { publishReviewReceipt } from './lib/review-publication.mjs';
 import { prepareReleaseData, preparePublicationArtifacts } from './lib/release-preparation.mjs';
@@ -458,11 +458,15 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   let state = (await releaseStore.read()).state, candidate = state.candidates[event.candidate];
   if (!candidate) throw Error('Unknown release candidate');
   const observeDelivery = async ({ candidate: item, assetName = 'houseplan.zip' }) => {
-    const tokenEnv = config.hacs?.tokenEnv;
-    if (!dependencies.verifier && (!tokenEnv || !/^[A-Z][A-Z0-9_]*$/.test(tokenEnv))) throw Error('Configure hacs.tokenEnv');
-    const verifier = dependencies.verifier ?? new HacsDeliveryVerifier({ github: api,
-      hacs: new HacsClient({ url: config.hacs?.url, token: env[tokenEnv] }) });
-    const request = { repository: `${config.owner}/${config.repo}`, tag: item.tag,
+    let verifier = dependencies.verifier;
+    if (!verifier && config.hacs?.mode === 'instance') {
+      const tokenEnv = config.hacs?.tokenEnv, url = config.hacs?.url || env.HA_URL;
+      if (!tokenEnv || !/^[A-Z][A-Z0-9_]*$/.test(tokenEnv) || !url || !env[tokenEnv])
+        throw Error('Explicit HACS instance observation requires its URL and token environment variable');
+      verifier = new HacsDeliveryVerifier({ github: api, hacs: new HacsClient({ url, token: env[tokenEnv] }) });
+    }
+    verifier ??= new ReleaseDiscoveryVerifier({ github: api });
+    const request = { repository: `${config.owner}/${config.repo}`, tag: item.tag, kind: item.kind,
       assetName, expectedDigest: item.publication.artifactDigest, signal, onProgress };
     return verifier.wait ? verifier.wait(request) : verifier.verify(request);
   };
@@ -553,7 +557,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     }
   }
   if (command === 'verify-delivery') {
-    if (candidate.status !== 'published') throw Error('Publish the candidate before observing HACS delivery');
+    if (candidate.status !== 'published') throw Error('Publish the candidate before observing release delivery');
     const evidence = await observeDelivery({ candidate, assetName: event.assetName });
     if (evidence.status === 'waiting') return evidence;
     return { evidence, state: await releaseDispatch(releaseStore, { id: event.id, type: 'delivery-verified', candidate: candidate.id, evidence }) };
