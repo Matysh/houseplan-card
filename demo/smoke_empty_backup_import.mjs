@@ -174,10 +174,10 @@ try {
   for (const entry of ['tab', 'menu']) {
     if (entry === 'menu') {
       await warm.page.setViewportSize({ width: 360, height: 760 });
-      await warm.page.locator('[data-hp="header-menu"]').evaluate(el => el.click());
+      
     }
     const button = warm.page.locator(entry === 'tab' ? '[data-hp="space-add"]'
-      : '[data-hp="header-menu-item"][data-id="space-add"]');
+      : '[data-hp="space-add"]');
     // Labelled negative probe: dispatch the real DOM handler under the modal
     // scrim, as in the review repro; this does NOT claim native background input.
     await button.evaluate(el => el.click());

@@ -434,9 +434,9 @@ const responsive = async (viewport) => {
     let button = card.renderRoot.querySelector('.support-button');
     let entryRect = null;
     if (innerWidth <= 480) {
-      card.renderRoot.querySelector('[data-hp="header-menu"]')?.click();
+      
       await card.updateComplete;
-      button = card.renderRoot.querySelector('[data-hp="header-menu-item"][data-id="support"]');
+      button = card.renderRoot.querySelector('[data-hp="support"]');
       entryRect = button?.getBoundingClientRect();
     }
     button?.click();

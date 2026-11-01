@@ -57,41 +57,17 @@ spaces occupy the first row, editors and rotations the next, and remaining
 actions wrap below (three rows in the approved390px fixture; more for tighter
 or longer content). Groups and editor close have44px targets; rotation/zoom
 are separate outlined groups with10px between them. Gestures retain zoom.
-Properties independently uses 1024 px of card width. Lovelace receives no HA menu
-and retains the existing fixed phone/header behavior described below.
-
-**Lovelace phone header (≤ 480 px window width, #616/#1070).** View keeps a single row of at
-most 56 px: a compact space selector (current floor, no inline gear or «+»),
-the rotation/zoom cluster, one gear and — for an
-admin — the editor X slot of #647. The card title is hidden. Everything else is
-an item of the gear's menu, in a fixed order: the three editors (current one
-marked), Configure space, Add space (not with a fixed space), General settings,
-Save as PDF, Help and feedback; in View also the summary-panel settings and
-show/hide pair (2.5D has no card toggle since #649: it is a General settings
-switch). An item does
-exactly what the button it replaces does and closes the menu; Escape closes it
-and returns focus to the gear; a tap outside only closes it and never reaches
-the plan. A user without write access sees just the summary-panel items. Wider
-windows retain their responsive wrapping; kiosk has no header.
-
-Below a 360 px browser viewport, Plan, Devices and Background may use two
-header rows. The five rotation/zoom targets remain together and at least 44 px;
-the floor and gear remain 44 px, and the existing editor close remains 24 px.
-View removes its empty mode slot at this width. At 360–480 px editors retain one
-row; at 481 px and wider the established desktop wrapping applies. Shared 1px
-stroke borders retain the full 44px target rectangles inside a native HA card.
-The existing mode controller owns header, toolbar and stage height together,
-including the reduced-motion terminal and quick navigation through the gear.
-
-**Lovelace compact space navigation (#997).** At a measured `hp-head` width ≤1024 px,
-the shared UI Kit select replaces the floor tabs in View and editors. It keeps
-the same available spaces/order and calls the existing space-navigation guard.
-The field retains the accepted space while a dirty edit blocks navigation.
-Above a 480 px window, the current-space gear and Add remain adjacent with the
-same writer/pinned rules; below it they stay in the existing gear menu. Wider
-headers retain tabs and their editor-only mouse reorder. The existing header
-observer measures the container; the select loads independently of editor code.
-Leaving its responsive presentation, mode or kiosk detaches the popup owner.
+Properties independently uses 1024 px of card width. #1184 applies this same
+header, ordered intrinsic measurement and 44px targets to Lovelace. Only the
+shell differs: HA menu belongs to the panel, while Lovelace retains its title
+(or default title), truncated with the full text in its tooltip. The title
+participates in measurement and can occupy its own final wrapping row.
+There is no separate viewport-based phone gear menu. Narrow View and editors
+retain direct actions over multiple rows; the ordinary card's remaining stage
+height accounts for those rows. Each embedded card measures its own container,
+including fonts and content changes, independently of the window and neighbours.
+Space tabs/dropdown retain accepted selection, dirty-navigation guards and
+editor reorder when tabs are visible. Kiosk hides either placement's header.
 
 A segmented control in the card header with three tabs; the active one is visually
 highlighted, and edit modes add a colored frame around the stage so the mode is
@@ -124,13 +100,9 @@ above room fills and below live Glow, walls, devices and labels —
   an editor never flashes a default scale or a mixed dark/white frame. A rapid
   second choice retargets from the visible intermediate frame. Reduced-motion
   preferences apply the same final state immediately. The header X sits in a
-  fixed 24 × 24 px slot inside the segmented control, immediately after the
-  active editor (#660); in View the same empty, assistive-technology-hidden
-  reserve sits at the end. The group width therefore stays fixed while buttons
-  to the right of the active editor yield the reserved place. The X keeps its
-  compact 13 px glyph and the whole slot is its hit target (≥ 24 × 24 px,
-  #195). On a phone the mode buttons remain in the gear menu, while this one
-  slot stays visible in the header so the editor still has a direct exit.
+  44 × 44 px outlined close slot immediately after the active editor; in
+  View there is no empty reserve. All editors remain directly reachable at
+  narrow widths, through the same wrapping layout as the panel (#1184).
 - An editor's primary toolbar contains only persistent tools. Close is pinned
   in its own end cap. Selection actions, active-tool parameters, operation
   hints and palettes appear in one translucent context tray over the top of the

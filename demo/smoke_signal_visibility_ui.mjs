@@ -34,8 +34,8 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     if (await settingsButton.isVisible()) {
       await settingsButton.click();
     } else {
-      await page.locator('houseplan-card [data-hp="header-menu"]').click();
-      await page.locator('houseplan-card [data-hp="header-menu-item"][data-id="settings"]').click();
+      
+      await page.locator('houseplan-card [data-hp="settings"]').click();
     }
     const general = page.locator('houseplan-card hp-dialog[data-kind="settings"]');
     const checkbox = general.locator('#gs-show-lqi');

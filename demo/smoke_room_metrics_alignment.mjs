@@ -54,7 +54,7 @@ try {
       camera: window.__card.shadowRoot.querySelector('.plan-svg').getAttribute('viewBox') }));
     const trigger = page.locator('[data-hp="pdf"]');
     if (await trigger.isVisible()) await trigger.click();
-    else { await page.locator('[data-hp="header-menu"]').click(); await page.locator('[data-hp="header-menu-item"][data-id="pdf"]').click(); }
+    else {  await page.locator('[data-hp="pdf"]').click(); }
     const dialog = page.locator('hp-pdf-dialog');
     await dialog.locator('[data-field="export-format"]').selectOption('svg');
     await dialog.locator('[data-field="svg-backdrop"]').uncheck();

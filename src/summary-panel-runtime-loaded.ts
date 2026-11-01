@@ -23,7 +23,6 @@ import { summaryIcon } from './summary-panel-icons';
 import { ControlSurfacePresentation } from './control-surface-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
-import type { HeaderMenuItem } from './header-menu';
 import { stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-panel-identity';
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
@@ -279,16 +278,6 @@ export class LoadedSummaryPanelRuntime {
         </section>`) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_space')}</div>`}
       </div>
     </aside>`;
-  }
-
-  /** #616: the same two actions as `renderControls`; the phone menu offers them only in View. */
-  public menuItems(): HeaderMenuItem[] {
-    const toggleTitle = this.toggleTitle();
-    return [
-      { id: 'summary-settings', glyph: summaryIcon('settings'), label: this.t('summary.settings'), run: () => void this.openDialog() },
-      { id: 'summary-toggle', glyph: summaryIcon('sidebar'), label: toggleTitle, pressed: this.effectiveShow,
-        run: () => this.saveLocal({ show: !this.effectiveShow }) },
-    ];
   }
 
   private toggleTitle(): string {

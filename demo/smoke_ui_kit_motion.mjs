@@ -48,8 +48,8 @@ try {
       const settings = page.locator('houseplan-card [data-hp="settings"]');
       if (await settings.isVisible()) await settings.click();
       else {
-        await page.locator('houseplan-card [data-hp="header-menu"]').click();
-        await page.locator('[data-hp="header-menu-item"][data-id="settings"]').click();
+        
+        await page.locator('[data-hp="settings"]').click();
       }
     };
     for (const reduced of [false, true]) {

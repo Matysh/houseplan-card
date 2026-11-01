@@ -2460,3 +2460,8 @@ layers remain authoritative), and no pointer/state polling is added.
 
 UI audit polish (#1145) keeps presentation in existing stylesheet owners. Shared hp-dialog row layout remains reusable, while footer padding/divider/alignment is scoped to the direct footer slot. Existing primary/ghost/action/hint classes replace unsupported aliases. Ordinary color controls use44px targets; compact/cover swatches keep their allocated size. No new observers, data fields, renderer branches or write authority are introduced.
 
+
+Shared header (#1184): both hosts use the same intrinsic phase measurement,
+outlined controls and natural-height boundary. panelHost selects only HA menu,
+routing and container ownership; Lovelace title participates in the common
+measurement. No legacy phone menu or parallel media-breakpoint layout remains.

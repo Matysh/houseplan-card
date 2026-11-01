@@ -20,7 +20,6 @@ interface HeaderSpaceNavigation {
   current: string;
   mode: string;
   compact: boolean;
-  panel?: boolean;
   labels: { spaces: string; configure: string; add: string };
   reorderable: boolean;
   drag: { id: string; moved: boolean; targetId: string | null; placement: 'before' | 'after' | null } | null;
@@ -45,9 +44,9 @@ export function chooseHeaderSpace(
 
 /** Shared UI Kit control without importing the editor form or style graph. */
 export function renderHeaderSpaceSelect(
-  spaces: readonly SpaceChoice[], current: string, label: string, pick: (id: string) => void, panel = false,
+  spaces: readonly SpaceChoice[], current: string, label: string, pick: (id: string) => void,
 ): TemplateResult {
-  return html`<hp-settings-select class="compact-space-select" variant=${panel ? 'header-panel' : 'header'} data-hp="space-select"
+  return html`<hp-settings-select class="compact-space-select" variant="header" data-hp="space-select"
       title=${spaces.find(space => space.id === current)?.title || ''}>
     <select data-hp="space-select-value" data-field="header-space" .value=${current} aria-label=${label}
       @change=${(event: Event) => chooseHeaderSpace(event.currentTarget as HTMLSelectElement, current, pick)}>
@@ -61,7 +60,7 @@ export function renderHeaderSpaceNavigation(nav: HeaderSpaceNavigation): Templat
   const { spaces, current, compact, labels, drag } = nav;
   return html`<nav class=${headerNavigationGroup(compact)} aria-label=${labels.spaces}
       @pointermove=${nav.pointerMove}>
-    ${compact ? keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick, nav.panel))
+    ${compact ? keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick))
       : spaces.map(space => html`<button data-hp="space-tab" data-space=${space.id} data-id=${space.id}
           class="${headerNavigationItem} ${current === space.id ? 'active' : ''}${drag?.moved && drag.id === space.id ? ' dragging' : ''}${
             drag?.moved && drag.targetId === space.id ? ` drop-${drag.placement}` : ''}"

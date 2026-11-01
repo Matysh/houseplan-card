@@ -1225,7 +1225,7 @@ public warmRoomDraft() {
 /** Natural header height belongs to the loaded editor's mode-layout boundary.
  * Route departure can measure View before Lit has replaced the editor DOM. */
 public _modeHeaderHeight(mode: HouseplanMode): number {
-    const panelHeight = this.host.panelHost ? this.host._panelHeaderNaturalHeight(mode) : null;
+    const panelHeight = this.host._panelHeaderNaturalHeight(mode);
     if (panelHeight !== null) return panelHeight;
     const root = this.host.renderRoot;
     const card = root.querySelector('ha-card[data-hp-mode]');

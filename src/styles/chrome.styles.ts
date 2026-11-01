@@ -12,9 +12,7 @@ const chromeCoreStyles = unsafeCSS(css`
       top: var(--header-height, 56px);
       z-index: 20;
     }
-    /* Keep the header and its menu above the sibling editor toolbar after
-       animation opacity stops creating a toolbar stacking context. The menu
-       remains anchored by its positioned .header-menu-wrap. */
+    /* Keep the shared head above the sibling editor toolbar. */
     .hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }
     .tabs { display:flex; flex-wrap:wrap; }
     .tabs.compact-spaces { min-width:0; max-width:350px; align-items:center; flex-wrap:nowrap; }
@@ -60,72 +58,12 @@ const chromeCoreStyles = unsafeCSS(css`
       margin-top: -4px;
     }
     .hdr.kioskhide { display: none; }
-    .header-menu-wrap { display: none; position: relative; flex: none; }
-    .head > .spacer { flex: 0 0 30px; }
-    .head > .header-actions { display: inline-flex; align-items: center; flex: 0 0 auto; flex-wrap: nowrap; gap: 10px; max-width: 100%; }
-    .head > .header-actions > * { flex-shrink: 0; }
-    @media (max-width: 620px) and (min-width: 481px) {
-      .head > .spacer { flex-basis: 28.5px; }
-    }
-    @media (max-width: 480px) {
-      .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
-      .compact-space-select { min-width: 44px; }
-      .head > .title, .head > .spacer, .head > .header-action,
-      .head > .summary-control, .header-actions > .header-action, .header-actions > .summary-control { display: none; }
-      .head > .header-actions { gap: 6px; }
-      .head > .modes {
-        flex: 0 0 24px;
-        width: 24px;
-        padding: 0;
-        gap: 0;
-        background: transparent;
-      }
-      .head > .modes .modetab { display: none; }
-      .head > .tabs {
-        flex: 1 1 auto;
-        min-width: 0;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overscroll-behavior-x: contain;
-        scrollbar-width: none;
-      }
-      .head > .tabs::-webkit-scrollbar { display: none; }
-      .head > .tabs .tab { flex: none; white-space: nowrap; max-width: 100%; }
-      .head > .tabs .tabtitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-      .head > .tabs .tabedit, .head > .tabs .tabadd { display: none; }
-      .head > .tabs.compact-spaces { overflow:visible; }
-      .head > .zoomctl, .head > .modes > .editor-close-slot { flex: none; }
-      .header-menu-wrap { display: inline-flex; }
-    }
-    @media (max-width: 360px) {
-      .hdr > .head { padding-inline: 2px; gap: 2px; }
-      .head > .header-actions { gap: 2px; }
-    }
-    @media (width < 360px) {
-      ha-card[data-hp-mode='view'] > .hdr > .head { padding-inline: 0; gap: 0; }
-      ha-card[data-hp-mode='view'] .head > .modes { display: none; }
-      /* Seven 44px targets, six common 1px strokes: 302px inside a native HA
-         card with 8px outer gutters at 320px. Only stroke borders coincide. */
-      ha-card[data-hp-mode='view'] .head > .header-actions { gap: 0; margin-inline-start: -1px; }
-      ha-card[data-hp-mode='view'] .header-actions > .header-menu-wrap { margin-inline-start: -1px; }
-      ha-card:not([data-hp-mode='view']) > .hdr > .head {
-        display: grid;
-        grid-template-columns: minmax(44px, 1fr) 24px;
-      }
-      ha-card:not([data-hp-mode='view']) .head > .header-actions { grid-column: 1 / -1; justify-self: end; }
-    }
-
     .decorbar hp-color-opacity { flex: 0 0 auto; }
     /* issue #220: a tab can be dragged to a new position in the editors */
     .tab[data-reorderable] { cursor: grab; }
     .tab.dragging { cursor: grabbing; opacity: 0.55; }
     .tab.drop-before { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
     .tab.drop-after { box-shadow: inset -2px 0 0 0 var(--primary-color, #03a9f4); }
-    /* #993: ≤ 1024 px of header — icon only; the label stays in aria-label and
-       the tooltip. The ≤ 480 px window rules above (#616) are unchanged. */
-    @container hp-head (max-width: 1024px) {
-      .modetab .ml { display: none; }
-    }
     .editbar {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;

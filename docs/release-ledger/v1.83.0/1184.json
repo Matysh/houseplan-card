@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1184,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Unifies the existing panel/Lovelace header behavior that differed in stable while preserving the host-specific HA menu, title and container sizing.",
+  "summary": {
+    "ru": "Панель и карточка используют одну адаптивную шапку с прямыми действиями.",
+    "en": "Panel and card share one adaptive header with direct actions."
+  }
+}

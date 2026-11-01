@@ -264,8 +264,8 @@ await page.addStyleTag({ content: '#host{width:100%!important;margin:0!important
 await settle();
 const mobilePair = await stored();
 const mobileServices = await page.evaluate(() => window.__serviceCalls.length);
-await card.locator('[data-hp="header-menu"]').tap(); await settle();
-const mobileEye = card.locator('[data-hp="header-menu-item"][data-id="hidden-devices"]');
+
+const mobileEye = card.locator('[data-hp="hidden-devices"]');
 check('touchMenuAgreesWithDesktopChoice', await mobileEye.getAttribute('aria-pressed'), 'true');
 await mobileEye.tap(); await settle();
 check('touchEyeImmediatelyRevokesMenuInput', await card.locator('#hp-header-menu').evaluateAll(nodes =>

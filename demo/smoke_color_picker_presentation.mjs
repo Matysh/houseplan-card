@@ -199,8 +199,8 @@ try {
       if (family === 'general') {
         let button = c.renderRoot.querySelector('[data-hp="settings"]');
         if (!button) {
-          c.renderRoot.querySelector('[data-hp="header-menu"]').click(); await hp.settled();
-          button = c.renderRoot.querySelector('[data-hp="header-menu-item"][data-id="settings"]');
+          
+          button = c.renderRoot.querySelector('[data-hp="settings"]');
         }
         button.click();
       }

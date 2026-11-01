@@ -46,8 +46,7 @@ export class HpSettingsSelect extends LitElement {
     @media(max-width:550px) { button { font-size:16px; } }
     :host([variant^='header']) button { height:44px; min-height:44px; padding:10px 14px; border-radius:7px; font-size:13px; }
     :host([variant^='header']) button span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    :host([variant='header-panel']) button { padding-inline:12px; gap:8px; background:transparent; border-radius:7px 0 0 7px; }
-    @media(max-width:480px) { :host([variant='header']) button { min-width:44px; padding-inline:4px; gap:0; } }
+    :host([variant='header']) button { padding-inline:12px; gap:8px; background:transparent; border-radius:7px 0 0 7px; }
   `.cssText + `
     button, [role=option] { ${settingsActionTransition} }
     button svg { transition:transform ${controlMotion.paint.duration}ms ${controlMotion.paint.easing}; }

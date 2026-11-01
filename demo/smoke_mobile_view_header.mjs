@@ -1,339 +1,102 @@
-// #616: компактная шапка на телефоне (≤ 480 px). В одной строке ≤ 56 px —
-// вкладки пространств, зум и одна шестерёнка; всё, что строка убрала, — пункты
-// её меню с теми же действиями, что у прежних кнопок. Тап вне меню поглощается,
-// Escape возвращает фокус на шестерёнку, активная вкладка видна в прокрутке.
-// На > 480 px шапка прежняя, в киоске меню нет. Клики — настоящие (Playwright
-// по координатам), приватные поля карточки только читаются.
-import { launch, check, finish } from './serve.mjs';
+// #1184: native shared-header controls, container adaptation, titles and roles.
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { launch, finish } from './serve.mjs';
 
-const { page, browser } = await launch({ width: 390, height: 844 }, 1);
-// Как в golden: карточка во всю ширину окна, а не фиксированные 780 px стенда.
-await page.addStyleTag({ content: '#host{width:min(100%,1120px)!important;margin:0 auto!important;padding:0!important}' });
-const out = {};
-const settle = () => page.evaluate(() => window.__hpTest.settled());
-const size = async (width) => { await page.setViewportSize({ width, height: 844 }); await settle(); };
-
-// Снимок шапки: что видно, одна ли строка, высота.
-const header = () => page.evaluate(() => {
-  const sr = window.__card.shadowRoot;
-  const head = sr.querySelector('.hdr > .head');
-  const shown = (el) => !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
-  const kids = [...head.children].filter((el) => shown(el) && el.getBoundingClientRect().width > 0);
-  const mids = kids.map((el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; });
-  const gear = sr.querySelector('[data-hp="header-menu"]');
-  const g = gear?.getBoundingClientRect();
-  const card = sr.querySelector('ha-card').getBoundingClientRect();
-  const actionTargets = ['rotate-left', 'rotate-right', 'zoom-out', 'zoom-fit', 'zoom-in', 'header-menu'].map(id => {
-    const el = head.querySelector(`[data-hp="${id}"]`), r = el?.getBoundingClientRect();
-    return {id, shown: shown(el), width: r?.width ?? 0, height: r?.height ?? 0,
-      inCard: !!r && r.left >= card.left - 0.5 && r.right <= card.right + 0.5};
-  });
-  return {
-    actionTargets,
-    targets44InCard: actionTargets.every(t => t.shown && t.width >= 43.999 && t.height >= 43.999 && t.inCard),
-    height: head.getBoundingClientRect().height,
-    oneRow: mids.length > 0 && Math.max(...mids) - Math.min(...mids) <= 6,
-    title: shown(head.querySelector(':scope > .title')),
-    tabs: shown(head.querySelector(':scope > .tabs')),
-    zoom: shown(head.querySelector(':scope > .header-actions > .zoomctl')),
-    modeSlotVisible: shown(head.querySelector(':scope > .modes')),
-    modeSlot: shown(head.querySelector(':scope > .modes'))
-      && Math.abs(head.querySelector(':scope > .modes').getBoundingClientRect().width - 24) <= 0.5,
-    cross: shown(head.querySelector('[data-hp="editor-close"]')),
-    gear: shown(gear),
-    gear44: !!g && g.width >= 44 && g.height >= 44,
-    hiddenInline: ['.modes .modetab', '.header-action', '.summary-control', '.tabedit', '.tabadd']
-      .filter((selector) => [...head.querySelectorAll(selector)].some(shown)),
-    tabEditInDom: !!head.querySelector('.tabedit, .tabadd'),
-    inlineVisible: ['.header-action', '.summary-control'].filter((selector) => [...head.querySelectorAll(selector)].some(shown)),
-  };
-});
-const menuState = () => page.evaluate(() => {
-  const sr = window.__card.shadowRoot;
-  const menu = sr.querySelector('#hp-header-menu');
-  const gear = sr.querySelector('[data-hp="header-menu"]');
-  const items = [...sr.querySelectorAll('[data-hp="header-menu-item"]')];
-  return {
-    open: !!menu && !menu.inert, expanded: gear?.getAttribute('aria-expanded'),
-    ids: items.map((el) => el.dataset.id),
-    pressed: Object.fromEntries(items.filter((el) => el.hasAttribute('aria-pressed')).map((el) => [el.dataset.id, el.getAttribute('aria-pressed')])),
-    current: items.filter((el) => el.getAttribute('aria-current') === 'true').map((el) => el.dataset.id),
-    // The same 0.001px rounding allowance as header targets: translating a
-    // 44px box can produce43.999996 in Chromium's viewport coordinates.
-    items44: items.every((el) => el.getBoundingClientRect().height >= 43.999),
-    geometry: { menu:menu?.getBoundingClientRect().toJSON(), heights:items.map(el => el.getBoundingClientRect().height) },
-    inViewport: !menu || (() => { const r = menu.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5; })(),
-  };
-});
-const clickAt = async (selector) => {
-  const box = await page.evaluate((s) => {
-    const el = window.__card.shadowRoot.querySelector(s);
-    if (!el) return null;
-    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    const r = el.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  }, selector);
-  if (!box) throw new Error(`нет ${selector}`);
-  await page.mouse.click(box.x, box.y);
+const { page, browser } = await launch({ width: 1800, height: 1000 }, 1, [], { hasTouch: true });
+const dir = 'artifacts/header-shared-1184'; mkdirSync(dir, { recursive: true });
+const card = () => page.locator('houseplan-card').first();
+const settle = async () => {
+  await page.evaluate(() => window.__hpTest.settled());
+  await page.waitForFunction(() => !window.__card._modeTransitionBusy && !window.__card._modeTransitionPreparing);
+};
+const size = async width => {
+  await page.evaluate(width => {
+    document.getElementById('host').style.cssText = `width:${width}px!important;max-width:none!important;padding:0!important;margin:0!important`;
+  }, width);
   await settle();
+  await page.waitForFunction(width => Math.abs(window.__card.renderRoot.querySelector('.head').getBoundingClientRect().width - width) < 1, width);
+  // Wait for the intrinsic layout, not only Lit's initial resize commit.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 };
-const openMenu = async () => { if (!(await menuState()).open) await clickAt('[data-hp="header-menu"]'); };
-const dialogKinds = () => page.evaluate(() => {
-  const kinds = [];
-  const walk = (root) => {
-    for (const d of root.querySelectorAll('hp-dialog[data-kind]')) kinds.push(d.getAttribute('data-kind'));
-    for (const el of root.querySelectorAll('*')) if (el.shadowRoot) walk(el.shadowRoot);
-  };
-  walk(window.__card.shadowRoot);
-  return kinds.sort();
+const read = () => card().evaluate(c => {
+  const root = c.shadowRoot, head = root.querySelector('.head'), bounds = head.getBoundingClientRect();
+  const visible = e => e.getBoundingClientRect().width > 0 && getComputedStyle(e).visibility !== 'hidden';
+  const buttons = [...head.querySelectorAll('button')].filter(visible);
+  return { width: bounds.width, height: bounds.height, scroll: head.scrollWidth,
+    phase: Number(root.querySelector('.hdr').dataset.panelFlow),
+    title: head.querySelector('.title')?.textContent.trim(), titleHint: head.querySelector('.title')?.title,
+    controls: buttons.map(e => ({ id:e.dataset.hp, mode:e.dataset.mode, width:e.getBoundingClientRect().width,
+      height:e.getBoundingClientRect().height, inside:e.getBoundingClientRect().left >= bounds.left - 1 && e.getBoundingClientRect().right <= bounds.right + 1 })),
+    legacy: !!root.querySelector('[data-hp="header-menu"],[data-hp="header-menu-item"],[data-hp="header-menu-scrim"]'),
+    haMenu: !!root.querySelector('[data-hp="panel-menu"]'),
+    stageHeight: root.querySelector('.stage').getBoundingClientRect().height,
+    metricTrees: root.querySelectorAll('.panel-header-metrics').length };
 });
-const closeDialogs = async () => {
-  for (let i = 0; i < 4 && (await dialogKinds()).length; i++) {
-    await page.evaluate(() => window.__hpTest.close());
+const records = [];
+try {
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  for (const width of [1800,1400,1100,900,700,480,390,320,390,900,1800]) {
+    await size(width); const row = await read(); records.push(row);
+    assert.ok(row.scroll <= row.width + 1, JSON.stringify(row));
+    assert.ok(row.controls.every(c => c.inside && c.width >= 43.99 && c.height >= 43.99), JSON.stringify(row));
+    assert.ok(!row.legacy && !row.haMenu && row.title.includes('House Plan'), JSON.stringify(row));
+    for (const id of ['mode-tab','settings','pdf','support','hidden-devices','space-add'])
+      assert.ok(row.controls.some(c => c.id === id), id + ' at ' + width);
+    assert.equal(row.metricTrees, 0); assert.ok(row.stageHeight > 100);
+    if ([1800,390,320].includes(width)) await card().locator('.hdr').screenshot({ path:`${dir}/card-${width}.png` });
   }
-};
-const mode = () => page.evaluate(() => window.__card.shadowRoot.querySelector('ha-card[data-hp-mode]')?.getAttribute('data-hp-mode'));
-
-// ---- администратор (стенд) --------------------------------------------------
-const ADMIN_VIEW = ['mode-plan', 'mode-devices', 'mode-decor', 'space-settings', 'space-add', 'settings', 'pdf', 'support', 'hidden-devices', 'summary-settings', 'summary-toggle'];
-for (const width of [390, 360, 320]) {
-  await size(width);
-  const h = await header();
-  out[`admin${width}_oneRow56`] = h.oneRow && h.height <= 56;
-  out[`admin${width}_targets44InCard`] = h.targets44InCard ? true : JSON.stringify(h.actionTargets);
-  // #1070: below 360px View drops only the empty mode slot to keep all
-  // required 44px actions in one row; editors retain their close slot.
-  const modeSlotMatches = width < 360 ? !h.modeSlotVisible : h.modeSlot;
-  const rowContent = !h.title && h.tabs && modeSlotMatches && h.zoom && h.gear && h.gear44;
-  out[`admin${width}_rowContent`] = rowContent ? true : JSON.stringify(h);
-  out[`admin${width}_inlineHidden`] = h.hiddenInline.length === 0 ? true : h.hiddenInline.join(',');
-  await openMenu();
-  const m = await menuState();
-  out[`admin${width}_menuItems`] = m.ids.join(',') === ADMIN_VIEW.join(',') ? true : m.ids.join(',');
-  out[`admin${width}_menuTargets`] = m.items44 && m.inViewport && m.expanded === 'true' ? true : JSON.stringify(m);
-  const eyeBefore = m.pressed['hidden-devices'];
-  await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
-  out[`admin${width}_eyeClosesMenu`] = !(await menuState()).open;
-  await openMenu();
-  out[`admin${width}_eyeFlips`] = (await menuState()).pressed['hidden-devices'] !== eyeBefore;
-  await clickAt('[data-hp="header-menu"]');
-  out[`admin${width}_gearToggles`] = !(await menuState()).open;
-}
-
-// Каждый пункт делает то же, что прежняя кнопка: сначала прежняя кнопка на
-// 1400 px (эталон эффекта), потом пункт меню на 390 px.
-const same = {};
-for (const [id, inline] of [['settings', '[data-hp="settings"]'], ['pdf', '[data-hp="pdf"]'], ['support', '[data-hp="support"]'],
-  ['space-settings', '[data-hp="space-settings"]'], ['space-add', '[data-hp="space-add"]'], ['summary-settings', '.summary-control > button:first-child']]) {
-  await size(1400);
-  await clickAt(inline);
-  await page.waitForTimeout(250);
-  const expected = await dialogKinds();
-  await closeDialogs();
+  assert.equal(records[0].phase, 0); assert.equal(records.at(-1).phase, 0);
+  assert.ok(records.slice(0,8).every((r,i,a) => !i || r.phase >= a[i-1].phase));
   await size(390);
-  await openMenu();
-  await clickAt(`[data-hp="header-menu-item"][data-id="${id}"]`);
-  await page.waitForTimeout(250);
-  const actual = await dialogKinds();
-  const closed = !(await menuState()).open;
-  // Открытое меню перехватывает Escape — диалог тогда не закрыть; это провал пункта, а не смока.
-  const closeError = await closeDialogs().then(() => '', (error) => String(error.message || error).slice(0, 80));
-  if ((await menuState()).open) await clickAt('[data-hp="header-menu"]');
-  if (closeError) await closeDialogs().catch(() => {});
-  same[id] = expected.length > 0 && expected.join() === actual.join() && closed && !closeError
-    ? true : `${expected}|${actual}|closed=${closed}|${closeError}`;
-}
-out.itemsSameEffect = Object.values(same).every((v) => v === true) ? true : JSON.stringify(same);
-
-// Сводная панель: переключатель меняет то же локальное состояние, что и кнопка.
-await openMenu();
-const before = (await menuState()).pressed['summary-toggle'];
-await clickAt('[data-hp="header-menu-item"][data-id="summary-toggle"]');
-await openMenu();
-const after = (await menuState()).pressed['summary-toggle'];
-await clickAt('[data-hp="header-menu-item"][data-id="summary-toggle"]');
-out.summaryToggleFlips = before !== after && ['true', 'false'].includes(after);
-
-// Редактор с телефона: вход из меню, строка одна, × виден и закрывает.
-await openMenu();
-await clickAt('[data-hp="header-menu-item"][data-id="mode-plan"]');
-await page.waitForTimeout(300);
-out.editorFromMenu = (await mode()) === 'plan';
-const inEditor = await header();
-out.editorOneRow56 = inEditor.oneRow && inEditor.height <= 56 && inEditor.modeSlot
-  && inEditor.cross && inEditor.hiddenInline.length === 0;
-await openMenu();
-const editorMenu = await menuState();
-out.editorMenuMarksCurrent = editorMenu.current.join() === 'mode-plan' && !editorMenu.ids.includes('summary-toggle');
-await clickAt('[data-hp="header-menu"]');
-await clickAt('[data-hp="editor-close"]');
-await page.waitForTimeout(300);
-out.crossClosesOnPhone = (await mode()) === 'view';
-
-// Escape закрывает меню и возвращает фокус на шестерёнку.
-await openMenu();
-await page.keyboard.press('Escape');
-await settle();
-out.escapeImmediatelyRetires = await page.evaluate(() => {
-  const sr = window.__card.shadowRoot, menu = sr.querySelector('#hp-header-menu');
-  return (!menu || menu.inert) && sr.activeElement === sr.querySelector('[data-hp="header-menu"]');
-});
-await page.locator('#hp-header-menu').waitFor({ state: 'detached' });
-out.escapeClosesAndFocuses = await page.evaluate(() => {
-  const sr = window.__card.shadowRoot;
-  return !sr.querySelector('#hp-header-menu') && sr.activeElement === sr.querySelector('[data-hp="header-menu"]');
-});
-
-// Тап вне меню поглощается: под пальцем маркер устройства, но до него тап не доходит.
-const target = await page.evaluate(() => {
-  const sr = window.__card.shadowRoot;
-  const top = sr.querySelector('.hdr').getBoundingClientRect().bottom + 40;
-  for (const el of sr.querySelectorAll('[data-hp="device"]')) {
-    const r = el.getBoundingClientRect();
-    const x = r.left + r.width / 2; const y = r.top + r.height / 2;
-    if (r.width > 0 && y > top && y < innerHeight - 20 && x > 20 && x < innerWidth - 20) {
-      const hit = sr.elementFromPoint(x, y);
-      if (hit && (hit === el || el.contains(hit))) return { x, y, id: el.getAttribute('data-id') };
-    }
+  for (const mode of ['plan','devices','decor']) {
+    await card().locator(`[data-hp="mode-tab"][data-mode="${mode}"]`).tap(); await settle();
+    assert.equal(await card().locator('ha-card').getAttribute('data-hp-mode'), mode);
+    const row = await read(); assert.ok(row.stageHeight > 50, JSON.stringify(row));
+    const close = card().locator('.head [data-hp="editor-close"]');
+    const rect = await close.boundingBox(); assert.ok(rect.width >= 44 && rect.height >= 44);
+    await close.tap(); await settle();
+    assert.equal(await card().locator('ha-card').getAttribute('data-hp-mode'), 'view');
   }
-  return null;
-});
-if (target) {
-  await openMenu();
-  const shield = await page.evaluate(({ x, y }) => window.__card.shadowRoot.elementFromPoint(x, y)?.getAttribute('data-hp'), target);
-  const states = () => page.evaluate(() => JSON.stringify(window.__card.hass.states));
-  const dialogsBefore = await dialogKinds();
-  const statesBefore = await states();
-  await page.mouse.click(target.x, target.y);
-  await settle();
-  await page.waitForTimeout(250);
-  out.outsideTapClosesMenu = !(await menuState()).open;
-  out.outsideTapSwallowed = shield === 'header-menu-scrim' && (await states()) === statesBefore
-    && (await dialogKinds()).join() === dialogsBefore.join();
-} else {
-  out.outsideTapClosesMenu = 'нет маркера под шапкой';
-  out.outsideTapSwallowed = 'нет маркера под шапкой';
-}
-
-// Много пространств с длинными названиями: строка одна, активная вкладка видна.
-await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
-  const base = cfg.spaces[0];
-  for (let i = 1; i <= 4; i++) {
-    cfg.spaces.push({ ...structuredClone(base), id: `smoke-long-${i}`, title: `Очень длинное пространство ${i}`, floor: undefined });
+  const eye = card().locator('[data-hp="hidden-devices"]');
+  const pressed = await eye.getAttribute('aria-pressed'); await eye.tap(); await settle();
+  assert.notEqual(await eye.getAttribute('aria-pressed'), pressed); await eye.tap(); await settle();
+  const title = 'A very long custom Houseplan card title that must remain readable';
+  await page.evaluate(title => window.__card.setConfig({ ...window.__card._config, title }), title); await settle();
+  let row = await read(); assert.equal(row.titleHint, title); assert.ok(row.scroll <= row.width + 1);
+  await card().locator('.hdr').screenshot({ path:`${dir}/long-title-390.png` });
+  for (const language of ['en','ru']) {
+    await page.evaluate(language => window.__card.setConfig({ ...window.__card._config,language }), language);
+    await settle(); row = await read(); assert.ok(row.scroll <= row.width + 1, JSON.stringify(row));
+    await card().locator('.hdr').screenshot({ path:`${dir}/long-title-390-${language}.png` });
   }
-  return cfg;
-}));
-await size(390);
-const lastId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.options[window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]').options.length-1]?.value
-  || [...window.__card.shadowRoot.querySelectorAll('[data-hp="space-tab"]')].at(-1)?.dataset.id);
-await page.evaluate((id) => window.__hpTest.switchSpace(id), lastId);
-await page.waitForTimeout(200);
-const tabVisible = () => page.evaluate(() => {
-  const sr = window.__card.shadowRoot;
-  const nav = sr.querySelector('.head .tabs').getBoundingClientRect();
-  const tab = (sr.querySelector('[data-hp="space-select"]') || sr.querySelector('.head .tab.active')).getBoundingClientRect();
-  return tab.left >= nav.left - 0.5 && tab.right <= nav.right + 0.5;
-});
-const many = await header();
-out.manySpacesOneRow = many.oneRow && many.height <= 56;
-out.activeTabRevealedOnSwitch = await tabVisible();
-const firstId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.options[0]?.value
-  || window.__card.shadowRoot.querySelector('[data-hp="space-tab"]').dataset.id);
-await page.evaluate((id) => window.__hpTest.switchSpace(id), firstId);
-await page.waitForTimeout(200);
-out.activeTabRevealedBack = await tabVisible();
-
-// > 480 px: прежняя шапка, кнопки меню не видно.
-for (const width of [481, 768, 1400]) {
-  await size(width);
-  const w = await header();
-  out[`admin${width}_unchanged`] = !w.gear && w.inlineVisible.length === 2 && w.title ? true : JSON.stringify(w);
-}
-
-// ---- не-админ ---------------------------------------------------------------
-await page.evaluate(async () => {
-  const base = window.__mkHass();
-  const hass = {
-    ...base, user: { id: 'household', name: 'Household', is_admin: false },
-    callWS: async (m) => {
-      const r = await base.callWS(m);
-      return m.type === 'houseplan/config/get' ? { ...r, can_write: false } : r;
-    },
-  };
-  const host = document.getElementById('host');
-  host.replaceChildren();
-  const card = document.createElement('houseplan-card');
-  card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan' });
-  host.append(card);
-  card.hass = hass;
-  window.__card = card;
-  const until = Date.now() + 8000;
-  while (Date.now() < until && !card.shadowRoot?.querySelector('[data-hp="space-tab"],[data-hp="space-select"]')) await new Promise((r) => setTimeout(r, 50));
-  await new Promise((r) => setTimeout(r, 600));
-});
-for (const width of [390, 360, 320]) {
-  await size(width);
-  const h = await header();
-  out[`household${width}_oneRow56`] = h.oneRow && h.height <= 56;
-  out[`household${width}_targets44InCard`] = h.targets44InCard ? true : JSON.stringify(h.actionTargets);
-  out[`household${width}_rowContent`] = !h.title && h.tabs && h.zoom && h.gear && !h.tabEditInDom;
-  await openMenu();
-  const m = await menuState();
-  out[`household${width}_menuItems`] = m.ids.join(',') === 'hidden-devices,summary-settings,summary-toggle' ? true : m.ids.join(',');
-  out[`household${width}_eyeOwnPreference`] = m.pressed['hidden-devices'] === 'false';
-  await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
-  await openMenu();
-  out[`household${width}_eyeWorksWithoutWritePermission`] = (await menuState()).pressed['hidden-devices'] === 'true';
-  await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
-  await openMenu();
-  await page.keyboard.press('Escape');
-  await settle();
-}
-// «После загрузки на последнем»: вкладка запомнена, новая карточка открывает
-// её же — и докручивает в видимую область без участия человека.
-await size(390);
-const lastHouseholdId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.options[window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]').options.length-1]?.value
-  || [...window.__card.shadowRoot.querySelectorAll('[data-hp="space-tab"]')].at(-1)?.dataset.id);
-await page.evaluate((id) => window.__hpTest.switchSpace(id), lastHouseholdId);
-await page.evaluate(async () => {
-  const old = window.__card;
-  const hass = old.hass;
-  const host = document.getElementById('host');
-  host.replaceChildren();
-  const card = document.createElement('houseplan-card');
-  card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan' });
-  host.append(card);
-  card.hass = hass;
-  window.__card = card;
-  const until = Date.now() + 8000;
-  while (Date.now() < until && !card.shadowRoot?.querySelector('.head .tab.active,[data-hp="space-select"]')) await new Promise((r) => setTimeout(r, 50));
-  await new Promise((r) => setTimeout(r, 800));
-});
-out.reloadOpensLastSpace = await page.evaluate((id) => (window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.value
-  || window.__card.shadowRoot.querySelector('.head .tab.active')?.dataset.id) === id, lastHouseholdId);
-out.activeTabRevealedOnLoad = await tabVisible();
-await size(1400);
-const wide = await header();
-out.household1400_noTabEditing = !wide.tabEditInDom && !wide.gear;
-
-// ---- киоск: шапки нет, меню не рендерится ------------------------------------
-await size(390);
-await page.evaluate(async () => {
-  const host = document.getElementById('host');
-  host.replaceChildren();
-  const card = document.createElement('houseplan-card');
-  card.setConfig({ type: 'custom:houseplan-card', kiosk: true });
-  host.append(card);
-  card.hass = window.__mkHass();
-  window.__card = card;
-  const until = Date.now() + 8000;
-  while (Date.now() < until && !card.shadowRoot?.querySelector('.hdr')) await new Promise((r) => setTimeout(r, 50));
-  await new Promise((r) => setTimeout(r, 400));
-});
-out.kioskNoMenu = await page.evaluate(() => {
-  const sr = window.__card.shadowRoot;
-  return getComputedStyle(sr.querySelector('.hdr')).display === 'none' && !sr.querySelector('[data-hp="header-menu"]');
-});
-
-for (const [name, value] of Object.entries(out)) check(name, value);
-await finish(browser, out);
+  await page.evaluate(() => {
+    const other = document.createElement('houseplan-card');
+    other.setConfig({type:'custom:houseplan-card',title:'Second card'}); other.hass=window.__card.hass;
+    other.style.cssText='position:fixed;left:0;top:650px;width:1800px';
+    document.body.append(other); window.__otherHeaderCard=other;
+  });
+  await page.waitForFunction(() => window.__otherHeaderCard.shadowRoot?.querySelector('.hdr')?.dataset.panelFlow === '0');
+  assert.equal((await read()).width,390,'a neighbour must not borrow or change this card width');
+  await page.evaluate(() => { window.__otherHeaderCard.remove(); delete window.__otherHeaderCard; });
+  // Remount a read-only card with the same real harness data and denied writer capability.
+  await page.evaluate(async () => {
+    const base = window.__mkHass(), call = base.callWS;
+    const c = document.createElement('houseplan-card');
+    c.setConfig({ type:'custom:houseplan-card', title:'Household' });
+    c.hass = { ...base, user:{id:'household',is_admin:false}, callWS:async message => {
+      const result = await call(message);
+      return message.type === 'houseplan/config/get' ? { ...result, can_write:false } : result;
+    }};
+    document.getElementById('host').replaceChildren(c); window.__card = c;
+  });
+  await page.waitForFunction(() => window.__card.shadowRoot?.querySelector('.stage') && !window.__card._booting);
+  await settle(); row = await read();
+  assert.ok(!row.controls.some(c => ['mode-tab','settings','pdf','support','space-add','space-settings'].includes(c.id)), JSON.stringify(row));
+  assert.ok(row.controls.some(c => c.id === 'hidden-devices'));
+  await card().locator('[data-hp="hidden-devices"]').tap(); await settle();
+  await page.evaluate(() => window.__card.setConfig({ type:'custom:houseplan-card',kiosk:true,cycle:0 })); await settle();
+  assert.equal(await card().locator('.hdr').evaluate(e => getComputedStyle(e).display), 'none');
+  assert.equal(await card().evaluate(c => !!c._roHdr), false);
+  writeFileSync(`${dir}/summary.json`, JSON.stringify(records,null,2));
+} finally { await finish(browser); }

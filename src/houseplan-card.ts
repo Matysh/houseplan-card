@@ -373,7 +373,7 @@ import {
   reorderSpaceIds,
 } from './space-order';
 import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
-import { HeaderMenu, headerMenuItems, renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
+import { renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
 import { LazyChromeTooltips } from './chrome-tooltip-lazy';
 import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
 import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
@@ -1005,7 +1005,7 @@ export class HouseplanCard extends LitElement {
   private _panelHeaderContentKey(head: HTMLElement, mode: HouseplanMode = this._mode): string {
     const typography = getComputedStyle(head);
     return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor,
-      langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey,
+      langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey, this._config?.title,
       typography.fontFamily, typography.fontSize, typography.fontWeight, typography.letterSpacing,
       this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
       Array.from(head.querySelector('.header-actions')?.children || [])
@@ -1024,7 +1024,7 @@ export class HouseplanCard extends LitElement {
   }
   /** The loaded mode owner may measure View before Lit replaces the editor DOM. */
   public _panelHeaderNaturalHeight(mode: HouseplanMode): number | null {
-    if (!this.panelHost || this._kiosk) return null;
+    if (this._kiosk) return null;
     const header = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     const head = header?.querySelector(':scope > .head') as HTMLElement | null;
     if (!header || !head) return null;
@@ -1032,7 +1032,7 @@ export class HouseplanCard extends LitElement {
     return width > 0 ? measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode).height : null;
   }
   private async _settlePanelHeader(): Promise<void> {
-    if (!this.panelHost || this._kiosk) return;
+    if (this._kiosk) return;
     for (let pass = 0; pass < 3; pass++) {
       const before = JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces]);
       this._onWinResize?.();
@@ -1068,7 +1068,7 @@ export class HouseplanCard extends LitElement {
         } else if (kind === 'mode-tab' && mode) {
           target = visible('[data-hp="mode-tab"][data-mode="' + mode + '"]');
         } else if (kind?.startsWith('zoom-')) target = visible('[data-hp="rotate-right"]');
-        (target || visible('[data-hp="header-menu"]') || visible('button'))?.focus();
+        (target || visible('button'))?.focus();
       });
     });
   }
@@ -2555,7 +2555,6 @@ export class HouseplanCard extends LitElement {
   private _renderProjection: 'flat' | 'iso' = 'flat';
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
-  private readonly _headerMenu = new HeaderMenu(this);
   private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
   private readonly _viewRuntimes = new ViewRuntimes(this as unknown as ViewRuntimeHost);
   /**
@@ -3151,7 +3150,7 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._tabSuppressClickTimer);
     this._tabSuppressClickTimer = undefined;
     this._tabSuppressClick = false;
-    clearTimeout(this._kioskDotsTimer); this._headerMenu.disconnect();
+    clearTimeout(this._kioskDotsTimer);
     // #813: a release that lands while detached never reaches the stage; a
     // pointer kept here would turn the next press after a reattach into a pinch.
     this._abandonViewInput();
@@ -4624,7 +4623,7 @@ export class HouseplanCard extends LitElement {
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
-    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit();
     this._editorRuntime?._commitLiveEditor();
     this._liveRt?.syncContacts();
     this._pruneDevicePressFeedback();
@@ -4646,7 +4645,7 @@ export class HouseplanCard extends LitElement {
       this._onWinResize = undefined;
       this._resizeTargets = { stage, header: hdr };
     }
-    if (this.panelHost && this._kiosk && this._roHdr) {
+    if (this._kiosk && this._roHdr) {
       this._roHdr.disconnect(); this._roHdr = undefined;
       this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
       if (this._onWinResize) window.removeEventListener('resize', this._onWinResize);
@@ -4672,15 +4671,15 @@ export class HouseplanCard extends LitElement {
     // put anything tall before the card and the "header budget" swallowed the
     // whole viewport, leaving a 0px stage (HP-1500-02). Content above the card
     // is the dashboard's business — it scrolls; it is not header.
-    if (hdr && stage && !this._roHdr && !(this.panelHost && this._kiosk)) {
+    if (hdr && stage && !this._roHdr && !this._kiosk) {
       let headerWidth = headerContentWidth(getComputedStyle(hdr));
       let frame = 0;
       const ownsHeader = () => this.isConnected && this._roHdr === observer && stage === this._stageEl;
       const measure = () => {
         if (!ownsHeader()) return;
         const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
-        let compact = headerWidth > 0 && headerWidth <= 1024;
-        if (this.panelHost && head && headerWidth > 0) {
+        let compact = this._compactSpaces;
+        if (head && headerWidth > 0) {
           const previous = this._panelHeaderChoice;
           const active = (this.renderRoot as ShadowRoot).activeElement;
           const available = panelHeaderWidth(head);
@@ -4689,7 +4688,6 @@ export class HouseplanCard extends LitElement {
           this._panelHeaderChoice = choice;
           applyPanelHeaderChoice(hdr, choice);
           compact = choice.phase >= 3;
-          if (previous.phone && !choice.phone) this._headerMenu.close(false);
           if (previous.phase !== choice.phase || previous.phone !== choice.phone || compact !== this._compactSpaces)
             this._retainPanelHeaderFocus(head, active, ownsHeader);
         }
@@ -4701,7 +4699,7 @@ export class HouseplanCard extends LitElement {
         if (compact !== this._compactSpaces) {
           this._compactSpaces = compact; this.requestUpdate();
           void this.updateComplete.then(() => {
-            if (ownsHeader()) { if (this.panelHost) schedule(); else measure(); }
+            if (ownsHeader()) schedule();
           });
           return;
         }
@@ -4730,7 +4728,7 @@ export class HouseplanCard extends LitElement {
       this._onWinResize = schedule; window.addEventListener('resize', schedule);
       const fonts = hdr.ownerDocument.fonts;
       const fontsChanged = () => { if (ownsHeader()) { this._panelHeaderMemo.invalidate(); schedule(); } };
-      if (this.panelHost && fonts) {
+      if (fonts) {
         fonts.addEventListener('loadingdone', fontsChanged);
         void fonts.ready.then(fontsChanged);
       }
@@ -4743,7 +4741,7 @@ export class HouseplanCard extends LitElement {
       };
       measure();
     }
-    if (this.panelHost && !this._kiosk && hdr) {
+    if (!this._kiosk && hdr) {
       const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
       if (head) {
         const content = this._panelHeaderContentKey(head);
@@ -11485,16 +11483,16 @@ export class HouseplanCard extends LitElement {
         @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
-          data-panel-flow=${this.panelHost ? this._panelHeaderChoice.phase : nothing}
-          ?data-panel-phone=${this.panelHost && this._panelHeaderChoice.phone}
-          data-panel-mode=${this.panelHost ? this._mode : nothing} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
-        <div class="head hpf-chrome-group" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:${this._headerMenu.open ? 'visible' : 'hidden'}` : nothing}>
-          ${this.panelHost ? this._renderPanelMenu() : html`<div class="title hpf-heading hpf-heading-inline">
+          data-panel-flow=${this._panelHeaderChoice.phase}
+          ?data-panel-phone=${this._panelHeaderChoice.phone}
+          data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
+        <div class="head hpf-chrome-group" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
+          ${this.panelHost ? this._renderPanelMenu() : html`<div class="title hpf-heading hpf-heading-inline" title=${this._config.title || this._t('card.title')}>
             <ha-icon icon="mdi:home-city"></ha-icon>
-            ${this._config.title || this._t('card.title')}
+            <span>${this._config.title || this._t('card.title')}</span>
           </div>`}
           ${renderHeaderSpaceNavigation({
-            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces, panel: this.panelHost,
+            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
             labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
             reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
             pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),
@@ -11506,17 +11504,15 @@ export class HouseplanCard extends LitElement {
           })}
           ${this._canEdit
             ? html`<div class="modes hpf-navigation hpf-nav-modes">
-                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
+                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).map(
                   ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
                     data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     aria-label=${this._t(`mode.${m}` as const)}
                     @click=${() => this._setMode(m)}>
-                    <ha-icon class=${this.panelHost ? 'panel-mode-compact' : nothing}
-                      icon=${this.panelHost && m === 'devices' ? 'mdi:chip' : this.panelHost && m === 'decor' ? 'mdi:palette' : ic}></ha-icon>
-                    ${this.panelHost ? html`<ha-icon class="panel-mode-full" icon="mdi:pencil" aria-hidden="true"></ha-icon>
-                      <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>` : nothing}
-                    <span class="ml">${this._t(('mode.' + m) as I18nKey)}</span>
+                    <ha-icon class="panel-mode-compact" icon=${ic}></ha-icon>
+                    <ha-icon class="panel-mode-full" icon="mdi:pencil" aria-hidden="true"></ha-icon>
+                    <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>
                   </button>${this._mode === m ? editorClose : nothing}`,
                 )}
                 ${this._mode === 'view' ? editorClose : nothing}
@@ -11537,12 +11533,6 @@ export class HouseplanCard extends LitElement {
           ${this._kiosk ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
           ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
           ${!this._kiosk ? this._summary?.renderControls() : nothing}
-          ${''/* #616: ≤ 480 px — one gear holds everything the phone row drops */}${this._kiosk ? nothing : this._headerMenu.render(headerMenuItems({
-            canEdit: this._norm && this._canEdit, kiosk: this._kiosk, mode: this._mode, hasFixedFloor: this._hasFixedFloor, showHidden: this._showHidden,
-            summary: this._summary?.menuItems() ?? [], t: (k) => this._t(k),
-            actions: { setMode: (m) => this._setMode(m), configureSpace: () => this._openSpaceDialog('edit', this._space), addSpace: () => this._openSpaceDialog('create'),
-              settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog, toggleHidden: () => this._setShowHidden(!this._showHidden) },
-          }), this._t('title.header_menu'))}
           </div>
         </div>
         ${this._canEdit && !this._kiosk

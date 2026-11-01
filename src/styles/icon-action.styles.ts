@@ -26,9 +26,9 @@ export const iconActionStyles = unsafeCSS(css`
   .hpf-icon-group > button.hpf-icon-action + button.hpf-icon-action { margin-inline-start:-1px; }
   .hpf-icon-group > button.hpf-icon-action:first-child { border-radius:var(--hpf-action-radius,7px) 0 0 var(--hpf-action-radius,7px); }
   .hpf-icon-group > button.hpf-icon-action:last-child { border-radius:0 var(--hpf-action-radius,7px) var(--hpf-action-radius,7px) 0; }
-  /* The primary-panel camera has two joined groups separated by 10px (#1132). */
-  :host([panel-host]) .hpf-camera-group > [data-hp='rotate-right'] { border-radius:0 var(--hpf-action-radius,7px) var(--hpf-action-radius,7px) 0; }
-  :host([panel-host]) .hpf-camera-group > button[data-hp='zoom-out'] { margin-inline-start:10px; border-radius:var(--hpf-action-radius,7px) 0 0 var(--hpf-action-radius,7px); }
+  /* The common header camera has two joined groups separated by 10px (#1132). */
+  .hpf-camera-group > [data-hp='rotate-right'] { border-radius:0 var(--hpf-action-radius,7px) var(--hpf-action-radius,7px) 0; }
+  .hpf-camera-group > button[data-hp='zoom-out'] { margin-inline-start:10px; border-radius:var(--hpf-action-radius,7px) 0 0 var(--hpf-action-radius,7px); }
   button.hpf-icon-action.hpf-icon-plain { border-color:transparent; border-radius:50%; }
   button.hpf-icon-action.hpf-icon-plain ha-icon { --mdc-icon-size:24px; }
   button.hpf-icon-action.hpf-icon-navigation { border-radius:50%; border-color:var(--primary-color); background:var(--card-background-color); color:var(--primary-color); opacity:.9; }

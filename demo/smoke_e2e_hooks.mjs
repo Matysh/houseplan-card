@@ -363,9 +363,8 @@ try {
   out.toastKeySurvivesModalRouting = await notice.count() === 1;
   await page.evaluate(async () => { await window.__hpTest.close(undefined, { via: 'cancel' }); });
   await page.setViewportSize({ width: 390, height: 884 });
-  await card.locator('[data-hp="header-menu"]').click();
-  out.phoneSummaryActions = await card.locator('[data-hp="header-menu-item"][data-id="summary-settings"]').count() === 1
-    && await card.locator('[data-hp="header-menu-item"][data-id="summary-toggle"]').count() === 1;
+  out.phoneSummaryActions = await card.locator('[data-hp="summary-settings"]').count() === 1
+    && await card.locator('[data-hp="summary-toggle"]').count() === 1;
   await page.keyboard.press('Escape');
   checkAll(out);
 } catch (error) {

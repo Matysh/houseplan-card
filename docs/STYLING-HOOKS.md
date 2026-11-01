@@ -587,3 +587,12 @@ the inbox and history smokes observe ids after real operations/refusals.
 The [dialog CSS migration record](development-notes/dialog-style-migration.md)
 lists all eleven shared-style consumers, retained subject rules and exact
 properties whose owner is now the common dialog kit (#1019).
+
+### Shared header replacement (#1184)
+
+The owner-approved common panel/Lovelace header removes the old phone gear
+without a hidden compatibility menu. `header-menu`, `header-menu-item` and
+`header-menu-scrim` are retired in the 1.84 cycle and recorded in retiredHooks.
+Use the existing direct `mode-tab[data-mode]`, `space-settings`, `space-add`,
+`settings`, `pdf`, `support`, `hidden-devices`, `summary-settings` and
+`summary-toggle` hooks. Their presence still follows permissions and kiosk.

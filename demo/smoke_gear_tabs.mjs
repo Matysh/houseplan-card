@@ -1,6 +1,6 @@
 import { launch, check, checkAll, finish } from './serve.mjs';
 // #997: wide tabs are an explicit >1024px card contract, not the default viewport.
-const { page, browser } = await launch({width:1440,height:900});
+const { page, browser } = await launch({width:1800,height:900});
 await page.evaluate(()=>{document.querySelector('#host').style.width='calc(100% - 16px)';});
 await page.waitForFunction(()=>window.__card.renderRoot.querySelector('.tabs:not(.compact-spaces) .tabedit'));
 const res = await page.evaluate(async () => {
@@ -116,10 +116,9 @@ const narrow = await page.evaluate(async () => {
   const head = sr.querySelector('.head');
   out.narrowNoHOverflow = head.scrollWidth <= head.clientWidth + 1
     ? true : `scrollW=${head.scrollWidth} > clientW=${head.clientWidth}`;
-  out.narrowInlineAddHidden = !sr.querySelector('.tab.tabadd')?.getClientRects().length;
-  sr.querySelector('[data-hp="header-menu"]')?.click();
+  out.narrowInlineAddVisible = !!sr.querySelector('.tab.tabadd')?.getClientRects().length;
   await c.updateComplete;
-  const btn = sr.querySelector('[data-hp="header-menu-item"][data-id="space-add"]');
+  const btn = sr.querySelector('[data-hp="space-add"]');
   out.narrowAddPresent = !!btn;
   btn?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   const cr = sr.querySelector('ha-card').getBoundingClientRect();
@@ -129,9 +128,8 @@ const narrow = await page.evaluate(async () => {
     : `btn ${Math.round(br.left)}..${Math.round(br.right)} vs card ${Math.round(cr.left)}..${Math.round(cr.right)}`;
   out.narrowAddHittable = !br ? 'нет пункта' : (() => {
     const hit = sr.elementFromPoint(br.left + br.width / 2, br.top + br.height / 2);
-    return hit && hit.closest && hit.closest('[data-hp="header-menu-item"]') === btn ? true : 'перекрыта';
+    return hit && hit.closest && hit.closest('[data-hp="space-add"]') === btn ? true : 'перекрыта';
   })();
-  sr.querySelector('[data-hp="header-menu"]')?.click();
   await c.updateComplete;
   return out;
 });

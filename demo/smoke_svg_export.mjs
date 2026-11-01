@@ -80,8 +80,8 @@ const open = async () => {
   const trigger = page.locator('[data-hp="pdf"]');
   if (await trigger.isVisible()) await trigger.click();
   else {
-    await page.locator('[data-hp="header-menu"]').click();
-    await page.locator('[data-hp="header-menu-item"][data-id="pdf"]').click();
+    
+    await page.locator('[data-hp="pdf"]').click();
   }
   await dialog.waitFor({ state: 'attached' });
 };
