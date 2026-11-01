@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 256,
+  "revision": 257,
   "nextTicket": 27,
   "nextFence": 26,
   "tasks": {
@@ -273,7 +273,7 @@
       "notice": {
         "key": "3:review-findings",
         "reason": "review-findings",
-        "status": "pending"
+        "status": "delivered"
       },
       "s6": {
         "id": "20261101T210626194-1403dfed",
@@ -758,6 +758,10 @@
     },
     "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:review-presentation:1190:code:d90acc915383cea7b6dd": {
       "digest": "7a7c271194112b62690d17b7371c9c27b396f2e4cba03226116bdc2cc0dd05b8",
+      "issue": 1190
+    },
+    "github:41350844890:1:completions:metadata:21b2b6cb-4194-438d-9755-76e5175fb306:task-notice:1190::": {
+      "digest": "15bbe2ad2de8a6c96256a6b704b697a4507973bceb7e4b0bd978bcb41827323f",
       "issue": 1190
     }
   },
