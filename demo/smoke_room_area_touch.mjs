@@ -55,13 +55,23 @@ for (const width of [390, 820]) {
     });
     const originalSpace = await page.evaluate(() => window.__card._space);
     // Existing View-menu closing must consume the physical outside press.
+    await page.evaluate(async () => {
+      const c = window.__card, r = c._stageEl.getBoundingClientRect();
+      const v = c._screenToVb(r.width - 60, r.height - 60), b = c._baseVb();
+      const rev = window.__pushServerLayout({ ...c._layout, d_temp: {
+        s: c._space, x: (v[0] - b[0]) / b[2], y: (v[1] - b[1]) / b[3] } });
+      while (c._layoutRev < rev) await new Promise(resolve => setTimeout(resolve, 20));
+      await window.__hpTest.settled();
+    });
     await page.locator('houseplan-card .dev[data-id="d_temp"] .device-core').click({ button: 'right' });
     const menu = page.locator('houseplan-card [data-hp="device-context-menu"]:not([inert])');
     await menu.waitFor({ state: 'visible' });
+    const menuBox = await menu.boundingBox();
+    if (point.x >= menuBox.x && point.x <= menuBox.x + menuBox.width && point.y >= menuBox.y && point.y <= menuBox.y + menuBox.height) throw new Error('Fixture outside point is inside menu');
     await page.touchscreen.tap(point.x, point.y);
     await menu.waitFor({ state: 'detached' });
     await page.waitForTimeout(450);
-    out[`${width}:outside-dismiss-does-not-use-stair`] = await page.evaluate(id => window.__card._space === id && window.__area1128.navigation.length === 0, originalSpace);
+    out[`${width}:outside-dismiss-does-not-use-stair`] = await page.evaluate(id => window.__card._space === id && !window.__card._markerDialog && window.__area1128.navigation.length === 0, originalSpace);
     await page.touchscreen.tap(point.x, point.y);
     await page.waitForTimeout(450);
     out[`${width}:next-native-tap-uses-stair`] = await page.evaluate(id => window.__card._space !== id && window.__area1128.navigation.length === 0, originalSpace);
