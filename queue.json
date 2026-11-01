@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 106,
+  "revision": 107,
   "nextTicket": 14,
   "nextFence": 14,
   "tasks": {
@@ -39,7 +39,7 @@
       "ownerDecision": null,
       "ticket": 13,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793558078727,
       "reviewEntry": 5,
       "patchId": "411c2721af565144a253a5fb55aad1459866c10f",
@@ -87,9 +87,9 @@
         "test/mutation-browser-offload.test.mjs"
       ],
       "notice": {
-        "key": "4:review-findings",
+        "key": "5:review-findings",
         "reason": "review-findings",
-        "status": "delivered"
+        "status": "pending"
       },
       "s6": {
         "id": "20261101T183450112-758f21c0",
@@ -103,7 +103,8 @@
         "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
         "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
         "patchId": "411c2721af565144a253a5fb55aad1459866c10f"
-      }
+      },
+      "reason": "review-findings"
     },
     "1186": {
       "issue": 1186,
@@ -190,19 +191,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1184,
-    "worker": "finish",
-    "token": "13:finish:f1c722bd-4ade-4309-89fd-7ec5faa128fc:finish:1:admit",
-    "fence": 13,
-    "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
-    "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-    "phase": "review",
-    "admittedAt": 1793558081967,
-    "expiresAt": 1793561766149,
-    "patchId": "411c2721af565144a253a5fb55aad1459866c10f",
-    "reviewRequest": "review:1184:5:411c2721af565144a253a5fb55aad1459866c10f:5cc253e20227415209b314bda63ff71f2a3a2655"
-  },
+  "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
       "digest": "9e3159668d076228e2dffa412d98abbc943bc0d55b3d68a91948c454633d083f",
@@ -374,6 +363,10 @@
     },
     "finish:f1c722bd-4ade-4309-89fd-7ec5faa128fc:finish:7:review-presentation": {
       "digest": "851e02bd18d27d27066782e71f56bca558ab7071ddb83f76aa53fd5ee2918da8",
+      "issue": 1184
+    },
+    "finish:f1c722bd-4ade-4309-89fd-7ec5faa128fc:finish:7:return": {
+      "digest": "7e13287922d6770e1dc3605992b1b92a08900fbf574e7f0f64a2c72b93982a05",
       "issue": 1184
     }
   },
