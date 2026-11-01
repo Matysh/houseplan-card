@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 392,
-  "nextTicket": 41,
+  "revision": 393,
+  "nextTicket": 42,
   "nextFence": 41,
   "tasks": {
     "1128": {
@@ -336,6 +336,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1194": {
+      "issue": 1194,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/1194-visible-wsl-policy",
+      "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 41,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793571895743,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -398,7 +412,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1194
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -416,6 +432,19 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
+    },
+    "finish:f99ff2ff-76c3-49f0-b579-a84adb1dff4b": {
+      "digest": "0baa12da14b55e08ce7f8fe9ce6e749f65128518151149477006bef60af007ff",
+      "issue": 1194,
+      "message": {
+        "kind": "queued",
+        "issue": 1194,
+        "at": 1793571895743,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "798db67b1ea9a5736ec2d573e37c1382ed95381e"
+      }
     }
   },
   "devWebhook": {
