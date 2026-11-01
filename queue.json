@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 268,
-  "nextTicket": 29,
+  "revision": 269,
+  "nextTicket": 30,
   "nextFence": 29,
   "tasks": {
     "1128": {
@@ -98,15 +98,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1169-wall-corner-seam",
-      "materialSha": "c53f2d2f098a3fee230ff0eeb5536253541d9117",
+      "materialSha": "b484f656475f648bdb0eba4d67ab875f74c927f4",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 26,
-      "queued": false,
+      "ticket": 29,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793567527099,
-      "reviewEntry": 1,
-      "reason": "rebase-conflict",
+      "readyAt": 1793567757654,
+      "reviewEntry": 2,
       "notice": {
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
@@ -389,7 +388,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1169
+  ],
   "active": {
     "issue": 1153,
     "worker": "finish",
@@ -859,6 +860,10 @@
     "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:3:synchronized": {
       "digest": "1d7c32ff5361da630bc94657bd0b1fcfe4c11781c9a99be74f8d8cbd691c8480",
       "issue": 1153
+    },
+    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
+      "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
+      "issue": 1169
     }
   },
   "devWebhook": {
