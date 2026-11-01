@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 527,
+  "revision": 528,
   "nextTicket": 52,
   "nextFence": 52,
   "tasks": {
@@ -606,14 +606,20 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/golden-safe-resize-owner",
-      "materialSha": "3ae3dc538ed34d900165e5b659fd54740885ec98",
+      "materialSha": "14d758f22031e74f45b60749d282523287612f23",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 51,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793574181515,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c635d26b32a515006b070ad7f17507f4ff2faedf",
+      "changedFiles": [
+        "demo/golden/harness.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -682,11 +688,12 @@
     "worker": "github-coordinator",
     "token": "51:github:41360373245:1:tick:0:admit",
     "fence": 51,
-    "materialSha": "3ae3dc538ed34d900165e5b659fd54740885ec98",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "14d758f22031e74f45b60749d282523287612f23",
+    "expectedBase": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
+    "phase": "testing",
     "admittedAt": 1793574366708,
-    "expiresAt": 1793574666708
+    "expiresAt": 1793574736902,
+    "patchId": "c635d26b32a515006b070ad7f17507f4ff2faedf"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -711,6 +718,10 @@
     },
     "github:41360373245:1:completions:message:1cfa3fe525d410288d4ddeab807be192f35adcb047e3398f754930c95358a124": {
       "digest": "16d3a5a1b3eb18f7dc89e1b6e69700ebae9695459a762ba5585eb112b254cef1",
+      "issue": 1203
+    },
+    "finish:fb7238d0-9d77-4205-b55c-7a33ee810a5f:finish:2:synchronized": {
+      "digest": "ef9e18bc063296784801509324d1d5a588d5093e5b580b9bd606da575b226a53",
       "issue": 1203
     },
     "finish:fb7238d0-9d77-4205-b55c-7a33ee810a5f": {
