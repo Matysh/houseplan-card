@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 529,
+  "revision": 530,
   "nextTicket": 52,
   "nextFence": 52,
   "tasks": {
@@ -620,7 +620,16 @@
         "demo/golden/harness.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261101T230720470-d84bf60e",
+        "name": "Тесты для задачи #1203 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261101T230720470-d84bf60e/report.json",
+        "materialSha": "14d758f22031e74f45b60749d282523287612f23",
+        "status": "passed",
+        "finishedAt": "2026-11-01T23:07:54.015Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -691,9 +700,9 @@
     "fence": 51,
     "materialSha": "14d758f22031e74f45b60749d282523287612f23",
     "expectedBase": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793574366708,
-    "expiresAt": 1793574736902,
+    "expiresAt": 1793578075209,
     "patchId": "c635d26b32a515006b070ad7f17507f4ff2faedf"
   },
   "events": {
@@ -764,6 +773,29 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5"
+      }
+    },
+    "finish:fb7238d0-9d77-4205-b55c-7a33ee810a5f:finish:3:s6-complete": {
+      "digest": "581f3c5c50cf4c5077d7e9c3a4c2e98ceb6ef1d24d8205944c0d3a02575be103",
+      "issue": 1203,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1203,
+        "at": 1793574475209,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "14d758f22031e74f45b60749d282523287612f23",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261101T230720470-d84bf60e",
+          "name": "Тесты для задачи #1203 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261101T230720470-d84bf60e/report.json",
+          "materialSha": "14d758f22031e74f45b60749d282523287612f23",
+          "status": "passed",
+          "finishedAt": "2026-11-01T23:07:54.015Z",
+          "failures": []
+        }
       }
     }
   },
