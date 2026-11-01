@@ -280,7 +280,8 @@ export class GitAdapter {
           try { await this.assertAncestor(materialSha, current); alreadyIncluded = true; } catch { /* need a forward promotion below */ }
           if (alreadyIncluded) return { publishedRefs: true, tag, materialSha, mainAlreadyContains: true };
         }
-        await this.assertAncestor(current, materialSha);
+        try { await this.assertAncestor(current, materialSha); }
+        catch { throw Error('Release candidate does not contain the published stable/hotfix history; return that tag to dev through the queue and select a new candidate'); }
         refs.push(`${materialSha}:refs/heads/main`); leases.push(`--force-with-lease=refs/heads/main:${current}`);
       }
     }

@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { planProfile, inventory, CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E } from '../lib/catalog.mjs';
+import { planProfile, discoverReleaseTests, inventory, CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E } from '../lib/catalog.mjs';
 import { selectExact, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, GOLDEN_ADDITIONS } from '../catalog/selections.mjs';
 import { prepareGoldenSelection, goldenHarnessScenario } from '../catalog/golden-selection.mjs';
 import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
@@ -55,6 +55,10 @@ test('beta uses approved files, one narrowed permission run and panel-first visu
   const golden = plan.steps.find(item => item.id === 'golden-beta');
   assert.ok(golden.inputs.includes('process-next/catalog/golden-selection.mjs'));
   assert.ok(golden.inputs.includes('process-next/catalog/selections.mjs'));
+  for (const check of plan.steps.filter(item => item.id.startsWith('smoke:') || item.id === 'golden-beta')) {
+    assert.ok(check.inputs.includes('process-next/catalog/prepare.mjs'), `${check.id} must notice preparation implementation changes`);
+    assert.ok(check.preparationCommands.some(item => item.id === 'product-build'));
+  }
   assert.ok(!plan.steps.some(item => item.id === 'backend-coverage-threshold' || item.id === 'converters-stable'));
   assert.ok(plan.steps.filter(item => item.id.startsWith('e2e-')).every(item => item.command === null && item.unavailable && !item.diagnostic));
   assert.ok(plan.steps.every(item => item.inputs.every(path => !/^dist(?:\/|$)|^artifacts(?:\/|$)|__pycache__/.test(path))), 'generated artifacts must not invalidate source identities');
@@ -116,4 +120,19 @@ test('migration inventory accounts for every existing Node test, without deletin
   assert.ok(rows.every(row => row.automaticReleaseRun === false));
   assert.equal(inventory.entries.find(row => row.path === 'test/plan-converter.test.mjs').kind, 'product');
   assert.equal(inventory.entries.find(row => row.path === 'test/converter-consumers.test.mjs').kind, 'converter');
+});
+
+test('new product/backend/browser tests are discovered without regenerating the migration snapshot', async t => {
+  const temp = await mkdtemp(resolve(tmpdir(), 'hp-discovery-'));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  for (const dir of ['test', 'tests_backend', 'demo']) await mkdir(resolve(temp, dir));
+  for (const file of ['test/future.test.mjs', 'tests_backend/test_future.py', 'demo/smoke_future.mjs', 'test/action-pins.test.mjs']) await writeFile(resolve(temp, file), '');
+  const rows = discoverReleaseTests(temp);
+  assert.deepEqual(rows.map(row => row.kind), ['product', 'backend', 'browser']);
+  assert.ok(!rows.some(row => row.path.includes('action-pins')));
+  const stable = await planProfile({ root, event: 'stable' });
+  const metric = stable.steps.find(step => step.id === 'release-measurements');
+  assert.ok(metric.command && metric.diagnostic && metric.alwaysRun);
+  const ship = await planProfile({ root, track: 'ship', issue: 1105 });
+  assert.match(ship.name, /перед слиянием/);
 });

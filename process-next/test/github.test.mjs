@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { GitHubClient, GitHubQueueStore, GitHubError, GitAdapter, runGit, sha256 } from '../lib/github.mjs';
 import { initialQueueState, reduceQueue, StateConflict } from '../lib/queue.mjs';
+import { ReleaseGitAdapter } from '../lib/release.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40);
 const response = (body, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body,
   arrayBuffer: async () => Buffer.from(body) });
@@ -59,6 +60,7 @@ async function fixture(t) {
   event({ type: 'admit' }); const token = state.active.token;
   event({ type: 'synchronized', issue: 1, token, expectedBase: base, materialSha: material });
   event({ type: 's6-complete', issue: 1, token, materialSha: material, outcome: 'passed' });
+  if (state.active.phase === 'review') event({ type: 'review-complete', issue: 1, token, materialSha: material, verdict: 'accepted' });
   await git(['checkout', '-b', 'process-state', base]); await writeFile(join(cwd, 'queue.json'), JSON.stringify(state));
   await git(['add', 'queue.json']); await git(['commit', '-m', 'queue']); const headSha = await git(['rev-parse', 'HEAD']);
   await git(['push', 'origin', 'dev', 'issue/1', 'process-state']);
@@ -127,4 +129,52 @@ test('release refs publish the exact tag and fast-forward main; an unrelated can
   await assert.rejects(f.adapter.publishCandidateRefs({ materialSha: unrelated, tag: 'v1.0.1', kind: 'stable', expectedMain: f.material }));
   assert.equal(await f.adapter.remoteHead('main'), f.material);
   assert.equal(await f.git(['ls-remote', '--tags', 'origin', 'refs/tags/v1.0.1']), '');
+});
+
+test('two stable releases and a hotfix retain main ancestry through queued tag-return merges', async t => {
+  const f = await fixture(t), adapter = new ReleaseGitAdapter({ cwd: f.cwd, activated: true, clock: () => 100 });
+  await f.adapter.merge(f.request); // first product task reaches dev
+  await f.git(['branch', 'main', f.base]); await f.git(['push', 'origin', 'main']);
+  let index = 0;
+  const commit = async (branch, base, file, content) => {
+    await f.git(['checkout', '-b', branch, base]); await writeFile(join(f.cwd, file), content);
+    await f.git(['add', file]); await f.git(['commit', '-m', branch]); return f.git(['rev-parse', 'HEAD']);
+  };
+  const queuedReturn = async (publishedSha, tag, issue) => {
+    const candidate = { status: 'published', sha: publishedSha, tag };
+    const prepared = await adapter.prepareDevReturn({ candidate, issue, worktree: join(f.cwd, '..', `port-${issue}`) });
+    assert.equal(prepared.task.syncMode, 'merge'); assert.equal(prepared.task.mergeSourceSha, publishedSha);
+    const headSha = await adapter.remoteHead('process-state');
+    await adapter.ensureCommit(headSha);
+    let state = JSON.parse(await f.git(['show', `${headSha}:queue.json`]));
+    const apply = event => { state = reduceQueue(state, { id: `return${++index}`, ...event }, { now: 100 }); };
+    apply({ type: 'enqueue', task: prepared.task }); apply({ type: 'admit' }); const token = state.active.token;
+    const expectedBase = await adapter.remoteHead('dev');
+    apply({ type: 'synchronized', issue, token, expectedBase, materialSha: prepared.task.materialSha });
+    apply({ type: 's6-complete', issue, token, materialSha: prepared.task.materialSha, outcome: 'passed', evidence: { fixture: true } });
+    apply({ type: 'review-complete', issue, token, materialSha: prepared.task.materialSha, verdict: 'accepted' });
+    const queueSha = await adapter.stateCommit({ parent: headSha, path: 'queue.json', state });
+    await f.git(['push', 'origin', `${queueSha}:refs/heads/process-state`]);
+    await adapter.merge({ expectedBase, materialSha: prepared.task.materialSha, branch: prepared.task.branch,
+      fence: { headSha: queueSha, state, token, issue, path: 'queue.json', branch: 'process-state' } });
+    const verified = await adapter.verifyDevReturn(publishedSha);
+    assert.equal((await adapter.prepareDevReturn({ candidate, issue })).alreadyIncluded, true);
+    return verified.devSha;
+  };
+  const stable1 = await commit('release/one', f.material, 'version.txt', '1');
+  await adapter.publishCandidateRefs({ materialSha: stable1, tag: 'v1', kind: 'stable', expectedMain: f.base });
+  const concurrent = await commit('feature/next', f.material, 'feature.txt', 'next');
+  await f.git(['push', 'origin', `${concurrent}:refs/heads/dev`]);
+  await assert.rejects(adapter.resolveSource({ kind: 'beta', published: { stable: { sha: stable1, tag: 'v1' } } }), /through the queue/);
+  const dev1 = await queuedReturn(stable1, 'v1', 2);
+  const stable2 = await commit('release/two', dev1, 'version.txt', '2');
+  await adapter.publishCandidateRefs({ materialSha: stable2, tag: 'v2', kind: 'stable', expectedMain: stable1 });
+  await queuedReturn(stable2, 'v2', 3);
+  const hotfix = await commit('release/hotfix', stable2, 'fix.txt', 'fixed');
+  await adapter.publishCandidateRefs({ materialSha: hotfix, tag: 'v2.0.1', kind: 'hotfix', expectedMain: stable2 });
+  const afterFix = await queuedReturn(hotfix, 'v2.0.1', 4);
+  const stable3 = await commit('release/three', afterFix, 'version.txt', '3');
+  await adapter.publishCandidateRefs({ materialSha: stable3, tag: 'v3', kind: 'stable', expectedMain: hotfix });
+  assert.equal(await adapter.remoteHead('main'), stable3);
+  assert.equal((await adapter.fixPortPlan({ from: stable2, to: hotfix })).commands[0][1], 'merge');
 });

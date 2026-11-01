@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { runPlan, validatePlan, executeStep } from '../lib/runner.mjs';
 import { inputIdentity, outputIdentity, within } from '../lib/storage.mjs';
@@ -17,6 +18,41 @@ test('runs a real child, persists its log/result and reuses successful unchanged
   const b = await runPlan(p, { root }); assert.equal(b.results[0].status, 'reused'); assert.equal(b.results[0].sourceRun, a.id);
   writeFileSync(join(root, 'source'), 'two');
   const c = await runPlan(p, { root }); assert.equal(c.results[0].status, 'passed');
+});
+
+test('beta to stable version-only promotion rebuilds artifacts but reuses behavior; dependency/code changes rerun it', async t => {
+  const root = fixture(t); mkdirSync(join(root, 'src'));
+  const version = value => {
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ version: value, dependencies: { example: '1.0.0' } }));
+    writeFileSync(join(root, 'package-lock.json'), JSON.stringify({ version: value, packages: { '': { version: value }, 'node_modules/example': { version: '1.0.0' } } }));
+    writeFileSync(join(root, 'src/houseplan-card.ts'), `const CARD_VERSION = '${value}';\nexport const behavior = 1;`);
+  };
+  version('1.84.0-beta.1');
+  const inputs = ['package.json', 'package-lock.json', 'src/**'];
+  const p = plan([step('build', { inputs, outputs: ['built'] }), step('behavior', { inputs, requires: ['build'], preparationOnlyRequires: ['build'], reuseReleaseVersion: true })]);
+  const execute = async s => { if (s.id === 'build') writeFileSync(join(root, 'built'), readFileSync(join(root, 'package.json'))); return pass(); };
+  await runPlan(p, { root, execute }); version('1.84.0');
+  const promoted = await runPlan(p, { root, execute });
+  assert.deepEqual(promoted.results.map(r => r.status), ['passed', 'reused']);
+  writeFileSync(join(root, 'src/houseplan-card.ts'), "const CARD_VERSION = '1.84.0';\nexport const behavior = 2;");
+  assert.equal((await runPlan(p, { root, execute })).results[1].status, 'passed');
+  const lock = JSON.parse(readFileSync(join(root, 'package-lock.json'))); lock.packages['node_modules/example'].version = '2.0.0';
+  writeFileSync(join(root, 'package-lock.json'), JSON.stringify(lock));
+  assert.equal((await runPlan(p, { root, execute })).results[1].status, 'passed');
+});
+
+test('release receipts distinguish committed material from dirty source, independently of test success', async t => {
+  const root = fixture(t), git = args => execFileSync('git', args, { cwd: root, stdio: 'pipe' });
+  git(['init']); git(['config','user.name','Fixture']); git(['config','user.email','fixture@example.invalid']);
+  git(['add','source']); git(['commit','-m','fixture']);
+  const p = { ...plan([step('behavior')]), event: 'beta' };
+  const clean = await runPlan(p, { root, execute: pass }); assert.equal(clean.materialClean, true); assert.match(clean.materialSha, /^[a-f0-9]{40}$/);
+  writeFileSync(join(root,'source'),'uncommitted');
+  const dirty = await runPlan(p, { root, execute: pass }); assert.equal(dirty.materialClean, false); assert.equal(dirty.status,'passed');
+  mkdirSync(join(root, 'src')); writeFileSync(join(root, 'src/deleted.mjs'), 'tracked'); git(['add','src']); git(['commit','-m','tracked source']);
+  rmSync(join(root, 'src/deleted.mjs'));
+  const removed = await runPlan(plan([step('glob', { inputs: ['src/**'] })]), { root, execute: pass });
+  assert.equal(removed.materialClean, false, 'deleted tracked source is still a material change');
 });
 test('command, explicit environment and generated outputs invalidate reuse', async t => {
   const root = fixture(t), calls = [];

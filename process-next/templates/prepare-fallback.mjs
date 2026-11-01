@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync, readdirSync, existsSync, copyFileSync } from 'node:fs';
 import { cpus, release } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,11 +34,11 @@ export function normalizeFallbackRequest(input, { workspace, candidate }) {
   const docsOnly = ['docs', 'documentation'].includes(request.layer) && !releaseEvent;
   if (docsOnly) throw Error('Pure documentation has no fallback execution, dependencies or validation run');
   const needsE2E = releaseEvent;
-  const needsMetrics = request.event === 'beta' || releaseEvent && request.metricsRequest !== undefined;
+  const needsMetrics = releaseEvent;
   if (needsE2E && !fullSha(request.e2eCommit)) throw Error('beta/stable require e2eCommit: full pinned SHA of Matysh/houseplan-e2e');
   if (request.measurementsCommit !== undefined && !fullSha(request.measurementsCommit)) throw Error('measurementsCommit must be a full SHA of Matysh/houseplan-card');
   if (releaseEvent) {
-    if (needsMetrics) relativeFile(request.metricsRequest, 'metricsRequest');
+    if (request.metricsRequest !== undefined) relativeFile(request.metricsRequest, 'metricsRequest');
     if (!/^\d+\.\d+\.\d+(?:b\d+)?$/.test(request.haVersion ?? '')) throw Error('Pin haVersion, for example 2026.10.4');
     if (!(/^v\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(request.upgradeFrom ?? '') || fullSha(request.upgradeFrom))) throw Error('Exact upgradeFrom tag/SHA required');
   }
@@ -66,6 +66,27 @@ function readSupplied(root, relative) {
 }
 const save = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 }); };
 
+/** Artifact extraction stays isolated; only known inert result files enter the checkout. */
+export function restoreFallbackResults(workspace) {
+  const prior = path.join(workspace, 'process-next', '.state', 'fallback-prior');
+  const files = [];
+  const cache = path.join(prior, 'process-next', '.state', 'cache');
+  if (existsSync(cache)) for (const entry of readdirSync(cache, { withFileTypes: true })) {
+    if (entry.isFile() && /^[a-f0-9]{64}\.json$/.test(entry.name)) {
+      const relative = `process-next/.state/cache/${entry.name}`, value = readSupplied(prior, relative);
+      if (value.status === 'passed' && value.fingerprint === entry.name.slice(0, -5)) { save(path.join(workspace, relative), value); files.push(relative); }
+    }
+  }
+  for (const relative of ['artifacts/process-next/backend-coverage.xml', 'artifacts/process-next/golden-beta/golden-report.json', 'artifacts/process-next/golden-rest/golden-report.json']) {
+    const source = path.join(prior, relative);
+    if (!existsSync(source)) continue;
+    const real = realpathSync(source);
+    if (!real.startsWith(realpathSync(prior) + path.sep)) throw Error('Restored result leaves its artifact');
+    mkdirSync(path.dirname(path.join(workspace, relative)), { recursive: true }); copyFileSync(real, path.join(workspace, relative)); files.push(relative);
+  }
+  return files;
+}
+
 export function materializeFallback({ input, workspace, candidate, measurementRoot = workspace, host }) {
   const prepared = normalizeFallbackRequest(input, { workspace, candidate });
   const request = prepared.request;
@@ -75,19 +96,19 @@ export function materializeFallback({ input, workspace, candidate, measurementRo
     request.expectedVersion = version;
   }
   if (prepared.needsMetrics) {
-    const supplied = readSupplied(measurementRoot, request.metricsRequest);
-    if (!object(supplied) || !supplied.latestStable) throw Error('metricsRequest must contain a latestStable file path');
-    const stable = readSupplied(measurementRoot, supplied.latestStable);
-    if (!stable?.source_sha || !stable.timing_protocol?.runtime || !stable.host?.cpu) throw Error('latestStable must be an actual recorded stable measurement');
-    if (stable.timing_protocol.runtime.platform !== 'linux' || /wsl|microsoft/i.test(stable.host.linux ?? '') || stable.host.wsl_distribution) {
-      throw Error('CI timing requires a comparable CI stable measurement; a WSL/Windows measurement is not a CI baseline');
+    const supplied = request.metricsRequest ? readSupplied(measurementRoot, request.metricsRequest) : {};
+    if (!object(supplied)) throw Error('metricsRequest must be an object');
+    let stable = null;
+    if (supplied.latestStable) {
+      try { stable = readSupplied(measurementRoot, supplied.latestStable); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      if (stable && !stable.source_sha) throw Error('latestStable must be an actual recorded measurement');
     }
     if (!host?.cpu || !host.linux || host.execution_environment !== 'github-actions') throw Error('Actual GitHub Actions host facts required');
     const directory = path.join(workspace, 'process-next', '.state', 'fallback-inputs');
     const latest = path.join(directory, 'latest-stable.json'), metrics = path.join(directory, 'metrics-request.json');
-    save(latest, stable);
+    if (stable) save(latest, stable);
     // Never take CPU/kernel/power claims from a WSL request to make CI look comparable.
-    save(metrics, { latestStable: path.relative(workspace, latest).split(path.sep).join('/'), host,
+    save(metrics, { ...(stable ? { latestStable: path.relative(workspace, latest).split(path.sep).join('/') } : {}), host,
       note: 'CI host; comparator decides comparability. Frozen v1.83.1 remains diagnostic only.' });
     request.metricsRequest = path.relative(workspace, metrics).split(path.sep).join('/');
   }
@@ -100,10 +121,11 @@ export function materializeFallback({ input, workspace, candidate, measurementRo
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const phase = process.argv[2];
-    if (!['plan', 'materialize'].includes(phase)) throw Error('Expected plan or materialize');
+    if (!['plan', 'materialize', 'restore'].includes(phase)) throw Error('Expected plan, materialize or restore');
     const workspace = process.env.GITHUB_WORKSPACE, candidate = process.env.HP_CANDIDATE;
     const input = JSON.parse(process.env.HP_REQUEST ?? 'null');
-    if (phase === 'plan') {
+    if (phase === 'restore') console.log(`Restored ${restoreFallbackResults(workspace).length} result files; applicability is decided by the runner.`);
+    else if (phase === 'plan') {
       const prepared = normalizeFallbackRequest(input, { workspace, candidate });
       const outputs = { needs_e2e: prepared.needsE2E, needs_browser: prepared.needsBrowser, needs_backend: prepared.needsBackend,
         needs_python: prepared.needsPython, e2e_commit: prepared.e2eCommit, measurements_commit: prepared.measurementsCommit };

@@ -1260,7 +1260,7 @@ const baselineScenarioIds = readdirSync(baselineRoot)
   .map((name) => name.slice(0, -'.png'.length)).filter(id => expectedScenarioIds.includes(id));
 const manifestValid = !!baselineManifest
   && !baselineManifest.invalid
-  && baselineManifest.chromium === chromium
+  && expectedScenarioIds.every(id => (baselineManifest.scenarioProvenance?.[id]?.chromium ?? baselineManifest.chromium) === chromium)
   && expectedScenarioIds.every((id) => typeof baselineManifest.scenarios?.[id] === 'string')
   && goldenScenarioSetsMatch(expectedScenarioIds, indexedScenarioIds, baselineScenarioIds);
 const report = {

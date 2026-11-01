@@ -46,6 +46,12 @@ function globExpression(pattern) {
   }
   return new RegExp(out + '$');
 }
+export function matchesInputs(name, inputs) {
+  return (inputs ?? []).some(raw => {
+    const pattern = raw.replaceAll('\\', '/');
+    return /[?*]/.test(pattern) ? globExpression(pattern).test(name) : name === pattern || name.startsWith(pattern.replace(/\/$/, '') + '/');
+  });
+}
 export function expandInputs(root, patterns) {
   const result = new Set();
   for (const raw of patterns ?? []) {
@@ -66,17 +72,38 @@ export function expandInputs(root, patterns) {
   }
   return [...result].sort();
 }
-export function inputIdentity(root, inputs) {
+// Only release labels are ignored for behavioral checks. Dependency versions,
+// source code and build/package outputs always retain their ordinary identity.
+function behavioralBytes(name, bytes) {
+  if (['package.json', 'package-lock.json', 'custom_components/houseplan/manifest.json'].includes(name)) {
+    const value = JSON.parse(bytes);
+    if (Object.hasOwn(value, 'version')) value.version = '<release-version>';
+    if (name === 'package-lock.json' && value.packages?.['']?.version) value.packages[''].version = '<release-version>';
+    return JSON.stringify(value);
+  }
+  if (['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts'].includes(name))
+    return bytes.toString().replace(/^(const CARD_VERSION = )(['"])[^'"\r\n]+\2;/m, "$1'<release-version>';");
+  if (name === 'custom_components/houseplan/const.py')
+    return bytes.toString().replace(/^(VERSION = )(['"])[^'"\r\n]+\2/m, '$1"<release-version>"');
+  return bytes;
+}
+export function inputIdentity(root, inputs, { behavior = false } = {}) {
   const files = expandInputs(root, inputs).map(name => {
     if (name.startsWith('@pattern:')) return [name, 'pattern'];
     const path = within(root, name);
-    return [name, existsSync(path) ? digest(readFileSync(path)) : 'missing'];
+    return [name, existsSync(path) ? digest(behavior ? behavioralBytes(name, readFileSync(path)) : readFileSync(path)) : 'missing'];
   });
   return { hash: digest(JSON.stringify(files)), files };
 }
 export function stepIdentity(root, step, environment = {}, dependencies = []) {
-  const inputs = inputIdentity(root, step.inputs);
-  return { ...inputs, hash: digest(JSON.stringify({ id: step.id, inputs: inputs.hash, command: step.command, cwd: step.cwd, env: step.env, expectedNonempty: step.expectedNonempty, environment, dependencies })) };
+  const inputs = inputIdentity(root, step.inputs, { behavior: step.reuseReleaseVersion === true && step.cwd !== 'e2e' });
+  const command = step.reuseReleaseVersion && step.cwd === 'e2e' ? step.command?.map((arg, index) => {
+    if (/^--(?:expected-version|target-ref)=/.test(arg)) return arg.split('=')[0] + '=<release-version>';
+    if (/^--(?:candidate-root|work-root|e2e-root)=/.test(arg)) return arg.split('=')[0] + '=<isolated-path>';
+    if (index === 1) return 'process-next/lib/e2e.mjs';
+    return arg;
+  }) : step.command;
+  return { ...inputs, hash: digest(JSON.stringify({ id: step.id, inputs: inputs.hash, command, cwd: step.cwd, env: step.env, expectedNonempty: step.expectedNonempty, preparations: step.preparationCommands, environment, dependencies })) };
 }
 export function outputIdentity(root, outputs = []) {
   if (!outputs.length) return { hash: null, complete: true };

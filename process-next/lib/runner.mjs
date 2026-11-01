@@ -1,12 +1,20 @@
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { createWriteStream, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { digest, inputIdentity, outputIdentity, ResultStore, stepIdentity, writeJson } from './storage.mjs';
+import { digest, inputIdentity, outputIdentity, matchesInputs, ResultStore, stepIdentity, writeJson } from './storage.mjs';
 
 const implementation = digest(readFileSync(new URL('./runner.mjs', import.meta.url)) + readFileSync(new URL('./storage.mjs', import.meta.url)));
 
 const successful = result => ['passed', 'reused', 'not-required'].includes(result?.status);
+function materialIdentity(root, inputs) {
+  try {
+    const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    const materialSha = git(['rev-parse', 'HEAD']).trim();
+    const changed = new Set((git(['diff', '--name-only', '-z', 'HEAD']) + git(['ls-files', '--others', '--exclude-standard', '-z'])).split('\0').filter(Boolean));
+    return { materialSha, materialClean: ![...changed].some(file => matchesInputs(file, inputs)) };
+  } catch { return { materialSha: null, materialClean: false }; }
+}
 export function validatePlan(plan) {
   if (!plan || !Array.isArray(plan.steps)) throw new Error('Plan requires steps');
   const ids = new Set();
@@ -99,6 +107,7 @@ export async function runPlan(plan, { root, e2eRoot, stateDir = join(root, 'proc
   const results = new Map(), running = new Map(), pending = new Map(plan.steps.map(s => [s.id, s]));
   const roots = { root, e2e: e2eRoot && resolve(e2eRoot) };
   const inputsFor = key => [...plan.steps.filter(s => (s.cwd ?? 'root') === key).flatMap(s => s.inputs ?? []), ...(key === 'root' ? plan.steps.flatMap(s => s.rootInputs ?? []) : [])];
+  Object.assign(report, plan.steps.length ? materialIdentity(root, inputsFor('root')) : { materialSha: null, materialClean: false });
   const sourceInputs = Object.fromEntries(Object.entries(roots).filter(([, dir]) => dir).map(([key, dir]) => [key, inputIdentity(dir, inputsFor(key)).hash]));
   function notify(step, state) {
     onProgress({ run: report.name, id, total: plan.steps.length, completed: results.size, percent: plan.steps.length ? Math.floor(results.size * 100 / plan.steps.length) : null,
@@ -112,14 +121,15 @@ export async function runPlan(plan, { root, e2eRoot, stateDir = join(root, 'proc
     const dependencies = (step.requires ?? []).filter(id => !(step.preparationOnlyRequires ?? []).includes(id)).map(id => {
       const r = results.get(id); return (step.dependencyOutputOnlyRequires ?? []).includes(id) ? [id, r.outputHash] : [id, r.fingerprint, r.outputHash];
     });
-    const stepEnvironment = { ...identityEnvironment, rootInputs: inputIdentity(root, step.rootInputs ?? []).hash };
+    const rootIdentity = () => inputIdentity(root, step.rootInputs ?? [], { behavior: step.reuseReleaseVersion === true }).hash;
+    const stepEnvironment = { ...identityEnvironment, rootInputs: rootIdentity() };
     const identity = stepIdentity(cwd, step, stepEnvironment, dependencies), output = outputIdentity(cwd, step.outputs);
-    const prior = reuse && store.find(identity.hash);
+    const prior = reuse && !step.alwaysRun && store.find(identity.hash);
     if (prior?.status === 'passed' && output.complete && (!step.outputs?.length || prior.cacheOutputHash === output.hash))
       return { ...common, status: 'reused', fingerprint: identity.hash, outputHash: prior.outputHash, cacheOutputHash: prior.cacheOutputHash, sourceRun: prior.runId, counts: prior.counts, durationMs: 0 };
     const logPath = join(directory, `${step.id.replace(/:/g, '_')}.log`);
     const value = await execute(step, { cwd, logPath, signal, environment, onOutput: (text, progress) => notify(step.id, { output: text.slice(-500), progress }) });
-    const after = stepIdentity(cwd, step, { ...identityEnvironment, rootInputs: inputIdentity(root, step.rootInputs ?? []).hash }, dependencies), generated = outputIdentity(cwd, step.outputs);
+    const after = stepIdentity(cwd, step, { ...identityEnvironment, rootInputs: rootIdentity() }, dependencies), generated = outputIdentity(cwd, step.outputs);
     if (after.hash !== identity.hash) { value.status = 'invalidated'; value.reason = 'Входы проверки изменились во время выполнения'; }
     if (value.status === 'passed' && !generated.complete) { value.status = 'failed'; value.reason = 'Не получен ожидаемый артефакт подготовки'; }
     return { ...common, ...value, fingerprint: identity.hash, inputFileCount: identity.files.length, cacheOutputHash: generated.hash,
@@ -145,6 +155,9 @@ export async function runPlan(plan, { root, e2eRoot, stateDir = join(root, 'proc
   }
   report.results = plan.steps.map(s => results.get(s.id));
   report.status = classifyRun(report.results);
+  const finalMaterial = plan.steps.length ? materialIdentity(root, inputsFor('root')) : { materialSha: null, materialClean: false };
+  if (report.materialSha !== finalMaterial.materialSha) { report.status = 'invalidated'; report.error = 'Коммит кандидата изменился во время набора'; }
+  report.materialClean &&= finalMaterial.materialClean;
   for (const [key, expected] of Object.entries(sourceInputs)) {
     const now = inputIdentity(roots[key], inputsFor(key)).hash;
     if (now !== expected) { report.status = 'invalidated'; report.error = 'Материал кандидата изменился во время набора'; }

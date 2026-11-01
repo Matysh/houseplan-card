@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { digest } from './storage.mjs';
-// Reuse the existing pure ZIP reader, not the old release coordinator.
-import { listZipEntries, readZipEntries } from '../../scripts/release-prerelease.mjs';
+import { listZipEntries, readZipEntries } from './zip.mjs';
 
 export const POLICY = Object.freeze({
   zip_bytes: { label: 'ZIP', fraction: .05, absolute: 32768, unit: 'B' },
@@ -41,27 +40,30 @@ export function measureZip(path) {
   return { ...measureFrontend(readZipEntries(path, names), readFileSync(path).length), artifactDigest: digest(readFileSync(path)), compression: { node: process.version, zlib: process.versions.zlib, level: 9 } };
 }
 export function collectMeasurement({ zip, performance, host, runnerHash, release, sourceSha }) {
-  if (!performance || performance.sourceSha !== sourceSha) throw Error('Performance report is from another candidate');
-  if (!host?.cpu || !host?.power_scheme || !runnerHash) throw Error('Record host and benchmark implementation for comparable timing');
+  if (!sourceSha) throw Error('Candidate measurement identity required');
+  if (performance && performance.sourceSha !== sourceSha) throw Error('Performance report is from another candidate');
   const sizes = measureZip(zip);
-  if (!sizes.buildFingerprint || sizes.buildFingerprint !== performance.buildFingerprint) throw Error('Performance did not measure the packaged frontend');
-  const timing_metrics = {};
+  if (!sizes.buildFingerprint || performance && sizes.buildFingerprint !== performance.buildFingerprint) throw Error('Performance did not measure the packaged frontend');
+  const timing_metrics = {}, diagnostics = [];
   for (const [key, policy] of Object.entries(POLICY)) if (policy.unit === 'ms') {
-    const samples = performance.rows?.map(row => row[key]);
-    if (!samples || samples.length < 5) throw Error(`Repeated timing series missing: ${key}`);
+    const samples = performance?.rows?.map(row => row[key]);
+    if (!validSamples(samples)) { diagnostics.push(`Нет достоверной серии замеров: ${policy.label}`); continue; }
     timing_metrics[key] = { median: median(samples), samples };
   }
+  if (!host?.cpu || !host?.power_scheme || !runnerHash) diagnostics.push('Условия замера записаны не полностью; сравнение времени недоступно');
   return { schema: 1, release, source_sha: sourceSha, recorded_at_utc: new Date().toISOString(), ...sizes, timing_metrics, host,
-    timing_protocol: { profile: performance.profile, fixture: performance.fixture, warmups: performance.warmups, samples: performance.samples, runtime: performance.runtime, runner_sha256: runnerHash } };
+    measurement_status: diagnostics.length ? 'incomplete' : 'complete', diagnostics,
+    timing_protocol: { profile: performance?.profile, fixture: performance?.fixture, warmups: performance?.warmups, samples: performance?.samples, runtime: performance?.runtime, runner_sha256: runnerHash } };
 }
+const validSamples = samples => Array.isArray(samples) && samples.length >= 5 && samples.every(value => Number.isFinite(value) && value >= 0);
 function comparable(left, right) {
   const cpu = value => value.replace(/\((?:R|TM)\)/gi, '').replace(/\s+/g, ' ').trim().toLowerCase();
   const kernel = value => String(value ?? '').match(/\d+\.\d+\.\d+[^\s]*/)?.[0] ?? String(value ?? '');
   const canonical = value => value && typeof value === 'object' ? Array.isArray(value) ? value.map(canonical)
     : Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
   const signature = record => {
-    const p = record.timing_protocol, h = record.host;
-    if (!p?.runner_sha256 || !p.runtime || !h?.cpu || !h.power_scheme) return null;
+    const p = record?.timing_protocol, h = record?.host;
+    if (!p?.runner_sha256 || !p.runtime || typeof h?.cpu !== 'string' || !h.cpu || typeof h.power_scheme !== 'string' || !h.power_scheme || h.power_scheme === 'unrecorded') return null;
     return JSON.stringify(canonical({ profile: p.profile, fixture: p.fixture, warmups: p.warmups, samples: p.samples, runtime: p.runtime,
       runner: p.runner_sha256, cpu: cpu(h.cpu), power: h.power_scheme.toLowerCase(), linux: kernel(h.linux) }));
   };
@@ -70,7 +72,7 @@ function comparable(left, right) {
 function measurement(record, key, policy) {
   if (policy.unit === 'B') return record?.size_metrics?.[key];
   const series = record?.timing_metrics?.[key]?.samples;
-  return Array.isArray(series) && series.length >= 5 ? median(series) : undefined;
+  return validSamples(series) ? median(series) : undefined;
 }
 function compareOne(candidate, reference, diagnostic) {
   return Object.entries(POLICY).map(([key, policy]) => {
@@ -90,15 +92,17 @@ function compareOne(candidate, reference, diagnostic) {
   });
 }
 export function compareMeasurements(candidate, latestStable, anchor = frozenBaseline()) {
-  if (!candidate?.source_sha || !latestStable?.source_sha) throw Error('Candidate and latest stable measurements required');
+  if (!candidate?.source_sha) throw Error('Candidate measurement identity required');
   const primary = compareOne(candidate, latestStable, false), diagnostic = compareOne(candidate, anchor, true);
   const needsMeasurement = primary.some(row => ['missing', 'incomparable', 'noisy'].includes(row.status));
-  return { schema: 1, sha: candidate.source_sha, reference: latestStable.release, anchor: anchor.release,
+  return { schema: 1, sha: candidate.source_sha, reference: latestStable?.release ?? 'нет замера последнего stable', anchor: anchor.release,
     requiresDecision: primary.some(row => row.blocks), needsMeasurement, primary, diagnostic,
-    ready: !needsMeasurement && !primary.some(row => row.blocks) };
+    ready: !primary.some(row => row.blocks) };
 }
 export function renderMetrics(report) {
   const table = (title, rows) => [title, '', '| Метрика | База | Кандидат | Изменение | Итог |', '|---|---:|---:|---:|---|',
     ...rows.map(r => `| ${r.label} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
-  return table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n';
+  const notes = report.evidenceStatus && report.evidenceStatus !== 'complete'
+    ? `Состояние замера: ${report.evidenceStatus}. Отсутствующие данные не означают успешную проверку.\n${(report.diagnostics ?? []).map(reason => `- ${reason}`).join('\n')}\n\n` : '';
+  return notes + table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n';
 }

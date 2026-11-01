@@ -1,18 +1,32 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, writeFile, mkdtemp, rm, mkdir } from 'node:fs/promises';
+import { resolve, join, dirname, relative } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { GitHubClient, GitHubQueueStore } from './lib/github.mjs';
-import { QueueController, StateConflict } from './lib/queue.mjs';
-import { handleGithubEvent, reconcileQueue, reconcileMergedLabel } from './lib/coordinator.mjs';
+import { QueueController, StateConflict, ownerShip, queueSummary } from './lib/queue.mjs';
+import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
+import { planProfile } from './lib/catalog.mjs';
+import { runPlan } from './lib/runner.mjs';
 import { initialReleaseState, reduceRelease, releaseClosePlan, ReleaseGitAdapter, ReleasePublisher,
-  HacsClient, HacsDeliveryVerifier } from './lib/release.mjs';
+  HacsClient, HacsDeliveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
 
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
 const component = encodeURIComponent;
+export async function readReleaseMetrics({ root, sha: materialSha, path }) {
+  let report;
+  try { report = JSON.parse(await readFile(resolve(root, path ?? 'artifacts/process-next/metrics.json'), 'utf8')); }
+  catch (error) { if (!path && error.code === 'ENOENT') return null; throw error; }
+  if (report.sha !== materialSha) {
+    if (path) throw Error('Metrics belong to another candidate');
+    return null;
+  }
+  return report;
+}
 const commands = new Set(['initialize-queue', 'initialize-release', 'owner-decision', 'label', 'ready', 'enqueue',
   'admit', 'heartbeat', 'synchronized', 's6-complete', 'return', 'expire', 'review-complete', 'reconcile', 'merge',
-  'reconcile-merged', 'release-event', 'publish-prepared', 'verify-delivery', 'close-included']);
+  'reconcile-merged', 'release-event', 'publish-prepared', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline']);
 
 export const help = `Houseplan process-next remote (disabled by default)
 node process-next/remote.mjs COMMAND --config config.json --event event.json [--plan | --execute]
@@ -49,14 +63,14 @@ verify-delivery: {id,candidate,assetName}; close-included: {id,candidate}.
  * a preflight report-marker check. This adapter avoids redispatching an observed run/result.
  */
 export class WorkflowReviewAdapter {
-  constructor({ api, workflow = 'process-next-review.yml', ref = 'dev', commentAuthor = 'github-actions[bot]', maxPages = 20 } = {}) {
-    if (!/^[\w.-]+\.ya?ml$/.test(workflow) || !ref || !commentAuthor) throw Error('Review workflow/ref/author required');
-    Object.assign(this, { api, workflow, ref, commentAuthor, maxPages });
+  constructor({ api, workflow = 'process-next-review.yml', ref = 'dev', commentAuthor = 'github-actions[bot]', maxPages = 20, readArtifact } = {}) {
+    if (!/^[\w.-]+\.ya?ml$/.test(workflow) || !ref) throw Error('Review workflow/ref required');
+    Object.assign(this, { api, workflow, ref, commentAuthor, maxPages, readArtifact });
   }
-  validate({ requestId, active, task }) {
+  validate({ requestId, active, task, kind = 'code' }) {
     if (!/^[A-Za-z0-9:-]+$/.test(requestId ?? '') || !Number.isSafeInteger(active?.issue)
-      || !sha(active.materialSha) || !sha(active.expectedBase)) throw Error('Pinned review request required');
-    if (task?.track === 'ship' && task.ownerAssigned) throw Error('Owner ship never requests individual code review');
+      || !sha(active.materialSha) || !sha(active.expectedBase) || !['code', 'spec'].includes(kind)) throw Error('Pinned review request required');
+    if (kind === 'code' && ownerShip(task)) throw Error('Owner ship never requests individual code review');
   }
   async list(path, key) {
     const rows = [];
@@ -64,51 +78,84 @@ export class WorkflowReviewAdapter {
       const response = await this.api.request('GET', `${path}${path.includes('?') ? '&' : '?'}per_page=100&page=${page}`);
       const batch = key ? response[key] : response;
       if (!Array.isArray(batch)) throw Error('Invalid review inventory');
-      rows.push(...batch);
-      if (batch.length < 100) return rows;
+      rows.push(...batch); if (batch.length < 100) return rows;
     }
     throw Error('Review inventory incomplete; do not dispatch another uncertain request');
   }
+  async runs() { return this.list(`${this.api.root}/actions/workflows/${component(this.workflow)}/runs?event=workflow_dispatch`, 'workflow_runs'); }
+  async artifactResult(run) {
+    if (!run.id) return null;
+    const artifacts = await this.list(`${this.api.root}/actions/runs/${run.id}/artifacts`, 'artifacts');
+    const matches = artifacts.filter(row => row.name === 'review-result' && !row.expired);
+    if (matches.length > 1) throw Error('Ambiguous review artifacts');
+    if (!matches.length) return null;
+    const artifact = matches[0];
+    let payload;
+    if (this.readArtifact) payload = await this.readArtifact(artifact, run);
+    else {
+      const directory = await mkdtemp(join(tmpdir(), 'hp-review-artifact-'));
+      try {
+        const archive = join(directory, 'result.zip');
+        await writeFile(archive, await this.api.request('GET', `${this.api.root}/actions/artifacts/${artifact.id}/zip`, undefined, { binary: true }));
+        const { readZipEntries } = await import('./lib/zip.mjs');
+        const entry = readZipEntries(archive, ['result.json']).get('result.json');
+        if (!entry) throw Error('Review artifact lacks result.json');
+        payload = JSON.parse(entry.toString('utf8'));
+      } finally { await rm(directory, { recursive: true, force: true }); }
+    }
+    return { ...payload, artifactId: artifact.id, runId: run.id, reportUrl: run.html_url };
+  }
+  checked(result, { requestId, active, kind = 'code' }) {
+    if (result.requestId !== requestId || result.issue !== active.issue || result.kind !== kind
+      || (result.materialSha !== active.materialSha && (!result.patchId || result.patchId !== active.patchId))
+      || !['accepted', 'changes_requested', 'incomplete', 'not-required'].includes(result.verdict)) throw Error('Review report belongs to different material or has invalid verdict');
+    return result;
+  }
   async readReviewResult(context) {
     this.validate(context);
-    const { requestId, active } = context, marker = `<!-- process-next-review:${requestId} -->`;
-    const comments = await this.list(`${this.api.root}/issues/${active.issue}/comments`);
-    const matched = comments.filter(row => row.user?.login === this.commentAuthor && row.body?.includes(marker));
-    const results = matched.map(row => {
-      const after = row.body.slice(row.body.indexOf(marker) + marker.length).trim();
-      const fenced = after.match(/^```(?:json)?\s*\n([\s\S]*?)\n```/);
-      const raw = fenced ? fenced[1] : after.split(/\r?\n/)[0];
-      let result;
-      try { result = JSON.parse(raw); } catch { throw Error('Review report marker has invalid JSON'); }
-      if (result.requestId !== requestId || result.materialSha !== active.materialSha
-        || !['accepted', 'changes_requested', 'incomplete'].includes(result.verdict)) throw Error('Review report belongs to different material or has invalid verdict');
-      return { requestId, materialSha: result.materialSha, verdict: result.verdict, reportUrl: row.html_url ?? result.reportUrl };
-    });
-    if (results.length) {
-      if (new Set(results.map(row => row.verdict)).size !== 1) throw Error('Conflicting reports for the same review request');
-      return results.at(-1);
-    }
-    const runs = await this.list(`${this.api.root}/actions/workflows/${component(this.workflow)}/runs?event=workflow_dispatch`, 'workflow_runs');
+    const { requestId, active } = context;
     const escaped = requestId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const matches = runs.filter(run => new RegExp(`(?:^|[^A-Za-z0-9:-])${escaped}(?:$|[^A-Za-z0-9:-])`).test(run.display_title ?? run.name ?? ''));
+    const matches = (await this.runs()).filter(run => new RegExp(`(?:^|[^A-Za-z0-9:-])${escaped}(?:$|[^A-Za-z0-9:-])`).test(run.display_title ?? run.name ?? ''))
+      .sort((a, b) => Number(b.id) - Number(a.id));
+    // A completed artifact is authoritative even when comment publication failed
+    // or a retry of the same workflow is currently running.
+    for (const run of matches) {
+      const result = await this.artifactResult(run);
+      if (result) {
+        const checked = this.checked(result, context);
+        if (checked.verdict !== 'incomplete') return checked;
+      }
+    }
     if (matches.some(run => run.status !== 'completed')) return { pending: true, requestId, materialSha: active.materialSha };
-    if (matches.length) return { requestId, materialSha: active.materialSha, verdict: 'incomplete', reportUrl: matches.at(-1).html_url };
+    if (matches.length) return { retryable: true, verdict: 'incomplete', requestId, materialSha: active.materialSha, runId: matches[0].id, reportUrl: matches[0].html_url };
     return { missing: true, requestId, materialSha: active.materialSha };
+  }
+  async readPreviousReviewResult({ issue, kind = 'code', excludeRequestId }) {
+    const runs = (await this.runs()).filter(run => run.status === 'completed').sort((a, b) => Number(b.id) - Number(a.id));
+    for (const run of runs) {
+      const result = await this.artifactResult(run);
+      if (result?.issue === issue && result.kind === kind && result.requestId !== excludeRequestId && result.report) return result;
+    }
+    return null;
   }
   async requestReview(context) {
     this.validate(context);
     const observed = await this.readReviewResult(context);
+    if (observed.retryable && observed.runId) {
+      await this.api.request('POST', `${this.api.root}/actions/runs/${observed.runId}/rerun-failed-jobs`);
+      return { requested: true, retry: true, requestId: context.requestId, runId: observed.runId };
+    }
     if (!observed.missing) return { requested: false, observed };
-    const { requestId, active, task } = context;
-    const inputs = { issue: String(active.issue), base: active.expectedBase, head: active.materialSha,
-      track: task.track, requestId, kind: 'code', ownerAssigned: String(task.ownerAssigned === true),
+    const { requestId, active, task, kind = 'code' } = context;
+    const original = task.reviewRequest === requestId ? task.reviewMaterial : null;
+    const inputs = { issue: String(active.issue), base: original?.expectedBase ?? active.expectedBase, head: original?.materialSha ?? active.materialSha,
+      track: task.track, requestId, kind, patchId: original?.patchId ?? active.patchId ?? '',
       receipts: JSON.stringify(task.s6 ? (Array.isArray(task.s6) ? task.s6 : [task.s6]) : []) };
-    if (Buffer.byteLength(JSON.stringify(inputs)) > 60_000) throw Error('S6 receipt is too large for a workflow input; supply a compact receipt');
+    if (Buffer.byteLength(JSON.stringify(inputs)) > 60_000) throw Error('S6 receipt is too large; supply a compact runner receipt');
     const result = await this.api.request('POST', `${this.api.root}/actions/workflows/${component(this.workflow)}/dispatches`, { ref: this.ref, inputs });
     return { requested: !result?.planned, ...(result?.planned ? { planned: true } : {}), requestId };
   }
 }
-
 async function releaseDispatch(store, event) {
   for (let retry = 0; retry < 8; retry++) {
     const { state, version } = await store.read(), next = reduceRelease(state, event);
@@ -126,10 +173,84 @@ function activation(config, execute, env) {
   return true;
 }
 
+/** Agent-facing route: one invocation owns queue wait, final sync, S6 and reconciliation. */
+export async function finishTask({ config, event, queue, api, git, review, dependencies = {}, signal, onProgress = () => {},
+  pollMs = 5000, maxWaitMs = 4 * 60 * 60_000 } = {}) {
+  const started = Date.now(), inspect = dependencies.inspectMaterial ?? inspectTaskMaterial;
+  const branch = event.branch ?? await git.git(['symbolic-ref', '--short', 'HEAD']);
+  if ([git.dev, 'main', queue.store.branch].includes(branch)) throw Error('Finish requires a separate task branch');
+  let current = (await queue.store.read()).state;
+  if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue && current.tasks[event.issue]?.status !== 'S8-merged') {
+    const materialSha = await git.remoteHead(branch), dev = await git.remoteHead(git.dev);
+    await git.ensureCommit(dev); await git.ensureCommit(materialSha);
+    const base = await git.git(['merge-base', dev, materialSha]);
+    const material = await inspect(git, base, materialSha);
+    await handleGithubEvent({ queue, api, activated: true, issue: await api.getIssue(event.issue),
+      event: { ...event, ...material, branch, kind: 'ready' } });
+  }
+  const synchronize = async ({ task }) => {
+    if (dependencies.synchronize) return dependencies.synchronize({ task });
+    if (await git.git(['status', '--porcelain', '--untracked-files=no'])) throw Error('Commit tracked task changes before finish');
+    if (await git.git(['symbolic-ref', '--short', 'HEAD']) !== task.branch) throw Error('Working checkout is not the admitted task branch');
+    const expectedBase = await git.remoteHead(git.dev), previousHead = await git.remoteHead(task.branch);
+    await git.ensureCommit(expectedBase); await git.ensureCommit(previousHead);
+    const localHead = await git.git(['rev-parse', 'HEAD']);
+    if (localHead !== previousHead) {
+      const beforeBase = await git.git(['merge-base', expectedBase, previousHead]);
+      const localBase = await git.git(['merge-base', expectedBase, localHead]);
+      if ((await inspect(git, beforeBase, previousHead)).patchId !== (await inspect(git, localBase, localHead)).patchId)
+        throw Error('Local branch changed after ready; do not overwrite the remote task');
+    }
+    try {
+      if (task.syncMode === 'merge') {
+        await git.assertAncestor(task.mergeSourceSha, localHead);
+        await git.git(['merge', '--no-edit', expectedBase]);
+      } else await git.git(['rebase', expectedBase]);
+    } catch (error) {
+      if (await git.git(['diff', '--name-only', '--diff-filter=U'])) return { conflict: true };
+      throw error;
+    }
+    const materialSha = await git.git(['rev-parse', 'HEAD']);
+    if (materialSha !== previousHead) try {
+      await git.git(['push', `--force-with-lease=refs/heads/${task.branch}:${previousHead}`, git.remote, `${materialSha}:refs/heads/${task.branch}`]);
+    } catch (error) { if (await git.remoteHead(task.branch) !== materialSha) throw error; }
+    return inspect(git, expectedBase, materialSha);
+  };
+  const runS6 = async ({ active, task }) => {
+    const plan = await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
+      track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
+    const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
+      reuse: true, signal, onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
+    return { outcome: report.status, evidence: { id: report.id, reportPath: report.reportPath, materialSha: active.materialSha,
+      status: report.status, finishedAt: report.finishedAt } };
+  };
+  const heartbeat = setInterval(() => {
+    queue.store.read().then(({ state }) => state.active?.issue === event.issue ? queue.dispatch({ id: `finish:${randomUUID()}`, type: 'heartbeat',
+      issue: event.issue, token: state.active.token }) : null).catch(() => {});
+  }, Math.min(60000, Math.max(1000, queue.leaseMs / 3))); heartbeat.unref();
+  let sequence = 0;
+  try {
+    while (!signal?.aborted && Date.now() - started < maxWaitMs) {
+      current = (await queue.store.read()).state;
+      onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs: Date.now() - started });
+      if (current.tasks[event.issue]?.status === 'S8-merged') return { action: 'merged', task: current.tasks[event.issue] };
+      if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue) return { action: 'returned', task: current.tasks[event.issue] };
+      const own = current.active?.issue === event.issue;
+      const result = await reconcileQueue({ queue, api, git, activated: true, eventId: `${event.id}:finish:${++sequence}`, worker: event.worker ?? 'finish',
+        ...(own ? { synchronize, runS6 } : {}), requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
+      onProgress({ kind: 'transition', action: result.action, reason: result.reason });
+      if (own && result.action === 'returned') return result;
+      if (['admitted', 'synchronized', 'review', 'ready-to-merge', 'merged', 'expired'].includes(result.action)) continue;
+      await (dependencies.sleep ?? (milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))))(pollMs, signal);
+    }
+    return { action: signal?.aborted ? 'interrupted' : 'waiting', summary: queueSummary((await queue.store.read()).state) };
+  } finally { clearInterval(heartbeat); }
+}
+
 /** The injected dependencies make the exact binding testable without GitHub, HACS or a checkout.
  * All default execution is offline planning; supplying a config file cannot activate it.
  */
-export async function executeRemoteCommand({ command, config = {}, event = {}, execute = false, env = process.env, dependencies = {} } = {}) {
+export async function executeRemoteCommand({ command, config = {}, event = {}, execute = false, env = process.env, dependencies = {}, signal, onProgress } = {}) {
   if (!commands.has(command)) throw Error('Unknown remote command; use --help');
   if (typeof event.id !== 'string' || !/^[A-Za-z0-9:-]+$/.test(event.id)) throw Error('Stable alphanumeric/colon/hyphen delivery id required');
   const enabled = activation(config, execute, env);
@@ -149,6 +270,8 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     branch: config.release?.branch ?? 'process-release-state', path: config.release?.path ?? 'releases.json', initial: initialReleaseState });
   const review = dependencies.review ?? new WorkflowReviewAdapter({ api, ...config.review });
   const owner = config.ownerLogin ?? config.owner;
+  if (command === 'status') { const state = (await queue.store.read()).state; return { summary: queueSummary(state), task: event.issue ? state.tasks[event.issue] ?? null : undefined }; }
+  if (command === 'finish') return finishTask({ config, event, queue, api, git, review, dependencies, signal, onProgress });
   if (command === 'initialize-queue' || command === 'initialize-release')
     return (command === 'initialize-queue' ? queue.store : releaseStore).initialize({ baseSha: event.baseSha, confirmed: event.confirmed });
   if (['owner-decision', 'label', 'ready', 'enqueue'].includes(command)) {
@@ -156,21 +279,37 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     if (['ready', 'enqueue'].includes(command) && await git.remoteHead(event.branch) !== event.materialSha)
       throw Error('Ready material differs from the current task branch');
     if (command === 'owner-decision' && !event.ownerDecision) throw Error('Explicit attributed owner decision required');
-    return handleGithubEvent({ event: { ...event, kind: ['ready', 'enqueue'].includes(command) ? 'ready' : 'label' },
+    const result = await handleGithubEvent({ event: { ...event, kind: ['ready', 'enqueue'].includes(command) ? 'ready' : 'label' },
       issue, queue, owner, ownerDecision: event.ownerDecision, activated: true });
+    if (result.action === 'spec-review-required') return reconcileSpecReview({ queue, api, git, issue, eventId: event.id, activated: true,
+      requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
+    return result;
   }
   if (['admit', 'heartbeat', 'synchronized', 's6-complete', 'return', 'expire'].includes(command)) {
     if (command === 'synchronized') {
       const state = (await queue.store.read()).state, task = state.tasks[event.issue];
       if (!task || await git.remoteHead(git.dev) !== event.expectedBase || await git.remoteHead(task.branch) !== event.materialSha)
         throw Error('Synchronization differs from current dev/task heads');
-      await git.ensureCommit(event.expectedBase); await git.ensureCommit(event.materialSha);
-      await git.assertAncestor(event.expectedBase, event.materialSha);
+      event = { ...event, ...await (dependencies.inspectMaterial ?? inspectTaskMaterial)(git, event.expectedBase, event.materialSha) };
     }
     if (command === 's6-complete' && event.outcome === 'passed' && !event.evidence) throw Error('Attach the actual S6 runner receipt');
     return { state: await queue.dispatch({ ...event, type: command }) };
   }
   if (command === 'reconcile-merged') return reconcileMergedLabel({ queue, api, issue: await api.getIssue(event.issue), activated: true });
+  if (command === 'dev-build-complete') {
+    const source = await git.remoteHead('dev-build'); await git.ensureCommit(source);
+    const marker = JSON.parse(await git.git(['show', `${source}:DEV-BUILD.json`]));
+    const snapshot = (await queue.store.read()).state, task = snapshot.tasks[event.issue];
+    if (task?.status !== 'S8-merged' || !sha(marker.source)) throw Error('Actual dev-build publication required');
+    await git.ensureCommit(marker.source);
+    await git.assertAncestor(task.mergedSha, marker.source);
+    let state = snapshot;
+    for (const covered of Object.values(snapshot.tasks).filter(item => item.status === 'S8-merged' && item.devBuild?.status === 'pending')) {
+      try { await git.assertAncestor(covered.mergedSha, marker.source); } catch { continue; }
+      state = await queue.dispatch({ id: `${event.id}:${covered.issue}`, type: 'dev-build', issue: covered.issue, materialSha: covered.mergedSha, status: 'published' });
+    }
+    return { state };
+  }
   if (['reconcile', 'merge', 'review-complete'].includes(command)) {
     const active = (await queue.store.read()).state.active;
     if (command === 'merge' && active?.phase !== 'ready-to-merge') throw Error('Only an accepted admission can merge');
@@ -190,9 +329,41 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     if (event.type === 'accept-metrics' && event.ownerDecision?.actor !== owner) throw Error('Owner metrics decision attribution required');
     return { state: await releaseDispatch(releaseStore, event) };
   }
+  if (command === 'measurement-baseline') {
+    const stable = (await releaseStore.read()).state.published.stable;
+    if (!stable) return { status: 'absent', diagnostic: true, reason: 'No published stable measurement source recorded' };
+    const path = resolve(config.workspace, event.path ?? `process-next/.state/baselines/${stable.tag}.json`);
+    const outputTree = resolve(config.workspace, 'artifacts/process-next');
+    if (!relative(outputTree, path).startsWith('..')) throw Error('Baseline must be stored outside the current measurement outputs');
+    let measurement;
+    try { measurement = await readPublishedMeasurement(api, { tag: stable.tag, sha: stable.sha }); }
+    catch (error) { return { status: 'absent', diagnostic: true, reason: error.message }; }
+    await mkdir(dirname(path), { recursive: true }); await writeFile(path, JSON.stringify(measurement, null, 2) + '\n');
+    return { status: 'downloaded', tag: stable.tag, sha: stable.sha, path };
+  }
   let state = (await releaseStore.read()).state, candidate = state.candidates[event.candidate];
   if (!candidate) throw Error('Unknown release candidate');
+  if (command === 'return-to-dev') {
+    const prepared = await git.prepareDevReturn({ candidate, issue: event.issue, branch: event.branch, worktree: event.worktree });
+    if (prepared.alreadyIncluded) {
+      const verified = await git.verifyDevReturn(candidate.sha);
+      return { ...prepared, state: await releaseDispatch(releaseStore, { id: event.id, type: 'port-completed', candidate: candidate.id, fixSha: candidate.sha, devSha: verified.devSha }) };
+    }
+    return { ...prepared, queue: await queue.dispatch({ id: event.id, type: 'enqueue', task: prepared.task }) };
+  }
   if (command === 'publish-prepared') {
+    if (event.reportPath) {
+      const report = await readRunnerReport(resolve(config.workspace ?? '.', event.reportPath));
+      state = await releaseDispatch(releaseStore, { id: `${event.id}:runner-report`, type: 'runner-report', candidate: candidate.id, report });
+      candidate = state.candidates[candidate.id];
+    }
+    if (['beta', 'stable'].includes(candidate.kind) && (event.reportPath || event.metricsPath)) {
+      const metrics = await readReleaseMetrics({ root: config.workspace ?? '.', sha: candidate.sha, path: event.metricsPath });
+      if (metrics) {
+        state = await releaseDispatch(releaseStore, { id: `${event.id}:metrics`, type: 'metrics', candidate: candidate.id, sha: candidate.sha, report: metrics });
+        candidate = state.candidates[candidate.id];
+      }
+    }
     if (candidate.status !== 'published' && candidate.status !== 'publishing') {
       state = await releaseDispatch(releaseStore, { id: `${event.id}:started:${state.revision}`, type: 'publication-started',
         candidate: candidate.id, sha: candidate.sha, tag: event.tag });
@@ -201,7 +372,8 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     if (event.tag && candidate.tag !== event.tag) throw Error('Publication retry cannot change the tag');
     const publisher = dependencies.publisher ?? new ReleasePublisher({ github: api, git, activated: true });
     try {
-      const result = await publisher.publish({ candidate, tag: candidate.tag, artifacts: event.artifacts, body: event.body, expectedMain: event.expectedMain });
+      const result = await publisher.publish({ candidate, tag: candidate.tag, artifacts: event.artifacts, body: event.body, expectedMain: event.expectedMain,
+        measurementPath: event.measurementPath ?? (candidate.kind === 'stable' ? resolve(config.workspace, 'artifacts/process-next/measurement.json') : undefined) });
       if (!result.published) throw Error('Publication has no actual evidence');
       if (candidate.status !== 'published') state = await releaseDispatch(releaseStore, {
         id: `${event.id}:published`, type: 'published', candidate: candidate.id, sha: candidate.sha, evidence: result.evidence });
@@ -220,8 +392,10 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     if (!dependencies.verifier && (!hacsTokenName || !/^[A-Z][A-Z0-9_]*$/.test(hacsTokenName))) throw Error('Configure hacs.tokenEnv');
     const verifier = dependencies.verifier ?? new HacsDeliveryVerifier({ github: api,
       hacs: new HacsClient({ url: config.hacs?.url, token: env[hacsTokenName] }) });
-    const evidence = await verifier.verify({ repository: `${config.owner}/${config.repo}`, tag: candidate.tag,
-      assetName: event.assetName, expectedDigest: candidate.publication.artifactDigest });
+    const observation = { repository: `${config.owner}/${config.repo}`, tag: candidate.tag,
+      assetName: event.assetName, expectedDigest: candidate.publication.artifactDigest, signal, onProgress };
+    const evidence = await (verifier.wait ? verifier.wait(observation) : verifier.verify(observation));
+    if (evidence.status === 'waiting') return evidence;
     return { evidence, state: await releaseDispatch(releaseStore, { id: event.id, type: 'delivery-verified', candidate: candidate.id, evidence }) };
   }
   const issues = await Promise.all(candidate.includedIssues.map(number => api.getIssue(number)));

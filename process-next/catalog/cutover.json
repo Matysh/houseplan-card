@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "mode": "plan-only",
+  "enabled": false,
+  "applySupported": false,
+  "authority": "Issue #1105; owner authorized preparation and corrections, not activation",
+  "observedCommit": "b6cd292fbf9e802cbad23e73ab7c7b70194c940e",
+  "observedAt": "2026-11-01",
+  "branchScope": ["dev", "repository default branch: resolve at activation"],
+  "workflowActions": [
+    {
+      "stage": "A",
+      "action": "replace",
+      "paths": [".github/workflows/process.yml", ".github/workflows/_process.yml", ".github/workflows/process-reconcile.yml", ".github/workflows/_process-reconcile.yml", ".github/workflows/process-resume.yml", ".github/workflows/_process-resume.yml"],
+      "replacement": [".github/workflows/process-next-coordinator.yml", ".github/workflows/process-next-review.yml"],
+      "reason": "One coordinator and S4/S7 review; no Validate continuation or second review pipeline"
+    },
+    {
+      "stage": "A",
+      "action": "remove",
+      "paths": [".github/workflows/validate.yml", ".github/workflows/validate-product.yml", ".github/workflows/validate-tooling.yml", ".github/workflows/validate-docs.yml"],
+      "replacement": [".github/workflows/process-next-fallback.yml"],
+      "reason": "Local selected profiles are authoritative; hosted runner is explicit fallback, not another push run",
+      "precondition": "New post-merge dev-build adapter preserves scripts/dev-build.mjs delivery and retry"
+    },
+    {
+      "stage": "A",
+      "action": "remove",
+      "paths": [".github/workflows/nightly.yml", ".github/workflows/_nightly.yml", ".github/workflows/process-metrics.yml", ".github/workflows/_process-metrics.yml", ".github/workflows/performance.yml"],
+      "reason": "No automatic full/nightly/after-push rounds; performance reporting belongs to beta and diagnostic stable measurement"
+    },
+    {
+      "stage": "A-background",
+      "action": "replace-after-background-adapter-ready",
+      "paths": [".github/workflows/mutation-gate.yml", ".github/workflows/_mutation-gate.yml"],
+      "replacement": ["process-next/cli.mjs run --event mutation --mutation-shard i/n"],
+      "reason": "Background only; schedule and deduplicated failure issue are independent of task/release acceptance",
+      "precondition": "Retire mutants targeting removed process files; retain product mutation workers and publish failures without blocking delivery"
+    },
+    {
+      "stage": "B",
+      "action": "replace",
+      "paths": [".github/workflows/release.yml", ".github/workflows/publish-prerelease.yml", ".github/workflows/release-review.yml", ".github/workflows/beta-derived.yml", ".github/workflows/_beta-derived.yml", ".github/workflows/ship-review.yml", ".github/workflows/_ship-review.yml"],
+      "replacement": ["process-next/cli.mjs", "process-next/remote.mjs", "process-next/lib/release.mjs"],
+      "reason": "One immutable release candidate, runner report, reviewed fixes, publication retry and queued merge-return"
+    },
+    {
+      "stage": "B-cleanup",
+      "action": "remove-after-last-caller",
+      "paths": [".github/workflows/_service-event.yml"],
+      "reason": "Old wrappers call this workflow by explicit @dev reference; remove callers in both execution/default branches first"
+    },
+    {
+      "stage": "retain",
+      "action": "keep-manual",
+      "paths": [".github/workflows/docs-screenshots.yml", ".github/workflows/announce.yml"],
+      "reason": "Independent manual documentation capture and owner-authorized announcement; neither is an acceptance gate or implicit task action"
+    }
+  ],
+  "installTemplates": [
+    {"source": "process-next/templates/coordinator.yml", "target": ".github/workflows/process-next-coordinator.yml", "stage": "A", "initialEnabled": false},
+    {"source": "process-next/templates/review.yml", "target": ".github/workflows/process-next-review.yml", "stage": "A", "initialEnabled": false},
+    {"source": "process-next/templates/fallback.yml", "target": ".github/workflows/process-next-fallback.yml", "stage": "A", "initialEnabled": false}
+  ],
+  "hooks": {
+    "stage": "A",
+    "removePaths": [".githooks/pre-push", ".githooks/commit-msg"],
+    "removePackageScript": "prepare",
+    "retireInstaller": "scripts/install-hooks.mjs",
+    "checkoutConfig": {"key": "core.hooksPath", "removeOnlyIfValue": ".githooks", "preserveUnrelatedUserHooks": true},
+    "reason": "pre-push executes process-gate and pre-push-gate; commit-msg executes old provenance policy; npm prepare otherwise reinstalls them"
+  },
+  "packageScripts": {
+    "removeAtA": ["prepare", "gate:small", "gate:tooling", "gate:product", "gate:plan", "smokes:select", "commit:amend"],
+    "replaceAtA": ["test", "test:product", "test:tooling"],
+    "replacementContract": "Explicit task profile and affected area through process-next/cli.mjs or finish; no wildcard launch of all legacy test/*.test.mjs",
+    "removeAtB": ["release:check", "release:prerelease", "release:prepare", "release:native"],
+    "reviewManuallyBeforeRetirement": ["release:notes", "bundle:release", "bundle:clean", "bundle:budget", "lint:unused", "inventory", "coverage:diagnostic"],
+    "keepHelpers": ["build", "watch", "typecheck", "bundle:sync", "toolchain:check", "invariants", "docs:capture", "docs:accept", "ui-lab:prepare", "ui-lab", "ui-lab:smoke", "furniture:generate", "furniture:check", "moon:generate", "moon:check", "pdf-font:generate", "pdf-font:check"],
+    "keepManualPrefixes": ["benchmark:", "audit:"],
+    "goldenAliases": ["golden:capture", "golden:verify", "golden:accept", "golden:wsl:capture"]
+  },
+  "goldenConsolidation": {
+    "stage": "B",
+    "canonicalRunner": "process-next/catalog/golden-runner.mjs",
+    "removeDuplicateImplementations": ["demo/golden/run.mjs", "demo/golden/accept.mjs"],
+    "retireWrappersAfterCallersMove": ["scripts/golden-accept.mjs", "scripts/golden-regression.mjs", "scripts/golden-wsl-artifact.mjs"],
+    "preserve": ["demo/golden/matrix.mjs", "demo/golden/harness.mjs", "demo/golden/policy.mjs", "demo/golden/baselines", "demo/golden/device-battery.mjs", "demo/golden/scene-repaint.mjs", "process-next/catalog/golden-selection.mjs"],
+    "precondition": "The canonical runner supports selected capture/verify/owner-reviewed acceptance; update npm aliases, test imports and docs before deleting duplicates; never bulk-accept baselines"
+  },
+  "retainedScriptRoots": [
+    {"purpose": "Build, bundle and source identities", "paths": ["scripts/fix-test-build.mjs", "scripts/source-fingerprint.mjs", "scripts/css-template-minifier.mjs", "scripts/bundle-manifest.mjs", "scripts/bundle-tree.mjs", "scripts/bundle-sync.mjs", "scripts/coverage-maps.mjs"]},
+    {"purpose": "Post-merge delivery to development stand/HA", "paths": ["scripts/dev-build.mjs", "scripts/ha-track-dev.sh", "demo/stand/update-dev-bundle.sh"]},
+    {"purpose": "Browser/capture environment and launch helpers", "paths": ["scripts/browser-attestation.mjs", "scripts/capture-environment.mjs", "scripts/toolchain-pins.mjs", "scripts/spawn-portable.mjs", "scripts/capture-determinism.mjs"]},
+    {"purpose": "Manual workspace setup and product asset generation", "paths": ["scripts/wsl-setup.sh", "scripts/windows-toolchain.ps1", "scripts/generate-furniture-assets.mjs", "scripts/generate-moon-assets.mjs", "scripts/generate-pdf-font.mjs"]},
+    {"purpose": "Product model checks and configured backend threshold", "paths": ["scripts/model-invariants.mjs", "scripts/backend-coverage-baseline.txt"]},
+    {"purpose": "Background mutation execution; reduce old-policy declarations before deleting their targets", "paths": ["scripts/mutation-gate.mjs", "scripts/mutation-registry.mjs", "scripts/mutation-execution.mjs", "scripts/mutation-selection.mjs", "scripts/mutation-registry-check.mjs"]},
+    {"purpose": "Explicit documentation capture and announcement", "paths": ["scripts/docs-accept.mjs", "scripts/telegram-release.mjs"]}
+  ],
+  "protectedOutOfScopeTrees": ["scripts/sh3d-convert", "scripts/support-relay", "demo", "src", "custom_components/houseplan"],
+  "scriptRetirementCandidates": [
+    {"stage": "A", "paths": ["scripts/process-gate.mjs", "scripts/pre-push-gate.mjs", "scripts/validate-commit-provenance.mjs", "scripts/install-hooks.mjs", "scripts/gate-small.mjs", "scripts/gate-reuse.mjs", "scripts/local-gate-proof.mjs", "scripts/local-registry-proof.mjs", "scripts/validate-gate.mjs", "scripts/merge-candidate.mjs", "scripts/rebase-on-dev.mjs", "scripts/process-resume.mjs", "scripts/process-reconcile.mjs", "scripts/workflow-continuation.mjs", "scripts/wait-verdict.mjs"]},
+    {"stage": "A", "paths": ["scripts/ci-profiles.mjs", "scripts/ci-registry-cli.mjs", "scripts/ci-registry-build.mjs", "scripts/ci-registry-verify.mjs", "scripts/ci-proof.mjs", "scripts/ci-profile-proof.mjs", "scripts/task-check-reuse-cli.mjs", "scripts/review-native-runner.mjs", "scripts/review-native-call-digest.mjs", "scripts/review-execution-policy.mjs", "scripts/review-result-gate.mjs", "scripts/review-rebase-certificate.mjs"]},
+    {"stage": "B", "paths": ["scripts/release-prerelease.mjs", "scripts/release-prepare.mjs", "scripts/release-gate.mjs", "scripts/candidate-native.mjs", "scripts/candidate-readiness.mjs", "scripts/release-contract.mjs", "scripts/release-review.mjs", "scripts/release-bookkeeping.mjs", "scripts/ship-review.mjs", "scripts/service-event.mjs", "scripts/service-workflows.mjs"]}
+  ],
+  "deletionRule": "Candidates are not an executable deletion list. Disable their old entry points at the selected stage; remove a source file only after retained runtime imports, dynamic commands, mixed product tests and mutation targets no longer depend on it. Preserve the transitive closure of retainedScriptRoots, active product tests and manual tools.",
+  "knownDependencyWork": [
+    {"path": "test/device-presentation-policy.test.mjs", "line": 11, "chain": ["scripts/mutation-gate.mjs", "scripts/mutation-registry.mjs"], "detail": "The product test also checks MUTANTS IDs at line 118. Separate this metadata assertion before pruning retired process mutants; preserve behavioral device-presentation cases."},
+    {"path": "scripts/mutation-registry.mjs", "line": 8244, "targets": ["scripts/process-gate.mjs", "scripts/gate-small.mjs", "scripts/release-prerelease.mjs", "scripts/review-execution-policy.mjs"], "detail": "These are patch target strings, not runtime imports of those gates. The conservative input closure follows them. Retire old-policy mutants together with their targets; retain product mutants."},
+    {"path": "process-next/lib/zip.mjs", "detail": "Already extracted ZIP utility: metrics must import it rather than scripts/release-prerelease.mjs; do not preserve the old release coordinator for ZIP decoding."},
+    {"path": ".github/workflows/validate-product.yml", "line": 1234, "detail": "Old dev-build job also conditionally invokes HP_HA_DEV_WEBHOOK after integrationTree changes. Preserve the delivery adapter and this optional authorized consumer separately; merge success must survive a delivery retry."}
+  ],
+  "retiredTests": {"source": "process-next/catalog/inventory.json", "predicate": "decision == retire", "action": "Remove with their retired mechanisms; retain behavioral parts of mixed files; inventory is migration evidence, not the permanent release allowlist"},
+  "activationOrder": [
+    "Explicit owner activation instruction; snapshot code, current runs, labels and exact dev/main refs; resolve actual default branch and local hook config.",
+    "Keep PROCESS_NEXT_ENABLED false and remote config.enabled false; install reviewed templates inertly on dev and event-delivery/default branch.",
+    "Drain old in-flight merge/review actions; disable old A entry workflows on both branches before enabling new coordinator. Do not cancel an unknown in-flight Git write.",
+    "Apply A hook/package/workflow replacements as one switch; initialize queue state explicitly; configure credentials and explicit owner-decision provenance.",
+    "Enable A only after queue wakeup/finish/status and post-merge dev-build retry are connected. Observe one real authorized task; no blanket full product run is added.",
+    "Connect background mutation schedule separately; never use its result as a task or release gate.",
+    "Before B, resolve reviewed golden differences, reduce mixed dependencies, seed published beta/stable state, configure release/HACS access and preserve applicable runner cache.",
+    "Disable old B publication/derived-review entry workflows before enabling new release commands. Apply one canonical golden runner and replace aliases; remove _service-event only after every old caller is gone.",
+    "Publish only on an explicit owner release command; retain immutable tag/source/digests and queue the published stable/hotfix tag back to dev. Any workflow-only commit on main must also enter dev before a later release candidate.",
+    "After each stage, remove only the now-unreachable old mechanism files and their retired tests; leave manual product utilities and unrelated user hooks intact."
+  ],
+  "rollback": [
+    "Disable new coordinator/fallback/review activation; stop accepting new queue entries and new publication commands.",
+    "Wait for or inspect any in-flight atomic push/publication; read actual refs, release assets and state. Never infer failure from a missing label/comment.",
+    "Revert only cutover code/config changes with a normal commit; restore old entry workflows and hook/package files from the recorded pre-switch revision. Do not reset dev/main or move/delete published tags.",
+    "Keep new queue/release state and runner reports for reconciliation. Already merged S8 tasks and published candidates stay completed; never replay them as unmerged work.",
+    "Reconcile unfinished tasks explicitly, then enable one coordinator family. Restore core.hooksPath only in checkouts where this cutover changed it; do not overwrite unrelated configuration."
+  ],
+  "verificationBoundary": "Manifest and documentation only. Read-only inventory of current files and dependency references; no workflow installation, API changes, hook edits, live publication or activation performed."
+}

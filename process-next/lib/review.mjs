@@ -116,8 +116,10 @@ export const REVIEW_TOOLS = [
   tool('git_blame', 'Read authorship/history of up to 200 lines at head.', { path: str, start: { type: 'integer' }, count: { type: 'integer' } }, ['path']),
   tool('submit_review', 'Submit the final review. Only the host writes it, in its designated report directory. This ends review; no product files can be written.', {
     verdict: { type: 'string', enum: ['accept', 'changes_requested', 'incomplete'] },
-    understanding: str, blockers: { type: 'array', items: str }, improvements: { type: 'array', items: str }, boundaries: str,
-  }, ['verdict', 'understanding', 'blockers', 'improvements', 'boundaries']),
+    summary: str, understanding: str,
+    analysis: { type: 'array', items: { type: 'object', properties: { topic: str, assessment: str, evidence: str }, required: ['topic', 'assessment', 'evidence'], additionalProperties: false } },
+    blockers: { type: 'array', items: str }, improvements: { type: 'array', items: str }, boundaries: str,
+  }, ['verdict', 'summary', 'understanding', 'analysis', 'blockers', 'improvements', 'boundaries']),
 ];
 
 function integer(value, fallback, max) {
@@ -175,6 +177,9 @@ function validateReport(report) {
   if (!report || !['accept', 'changes_requested', 'incomplete'].includes(report.verdict)) throw new Error('Invalid review verdict');
   for (const key of ['understanding', 'boundaries']) if (typeof report[key] !== 'string' || !report[key].trim()) throw new Error(`Missing ${key}`);
   for (const key of ['blockers', 'improvements']) if (!Array.isArray(report[key]) || report[key].some(x => typeof x !== 'string' || !x.trim())) throw new Error(`Invalid ${key}`);
+  // Older saved reports remain readable. New submissions request these fields, without a quota.
+  if (report.summary !== undefined && (typeof report.summary !== 'string' || !report.summary.trim())) throw new Error('Invalid summary');
+  if (report.analysis !== undefined && (!Array.isArray(report.analysis) || report.analysis.some(item => !item || ['topic', 'assessment', 'evidence'].some(key => typeof item[key] !== 'string' || !item[key].trim())))) throw new Error('Invalid analysis');
   if (report.verdict === 'accept' && report.blockers.length) throw new Error('An accepted review cannot contain blockers');
   if (report.verdict === 'changes_requested' && !report.blockers.length) throw new Error('Changes requested needs a concrete blocker');
   return report;
@@ -188,8 +193,15 @@ function assertDirectoryNoSymlink(directory) {
   }
 }
 
-export function writeReviewReport({ context, report, reportDir, model = REVIEW_MODEL }) {
+export function renderReviewReport({ context, report, model = REVIEW_MODEL }) {
   validateReport(report);
+  const items = values => values.length ? values.map(s => `- ${s}`).join('\n') : 'Нет.';
+  const analysis = report.analysis?.length ? `\n## Разбор решения\n\n${report.analysis.map(item => `### ${item.topic}\n\n${item.assessment}\n\nОснование: ${item.evidence}`).join('\n\n')}\n` : '';
+  return `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n\n## Границы анализа\n\n${report.boundaries}\n`;
+}
+
+export function writeReviewReport({ context, report, reportDir, model = REVIEW_MODEL }) {
+  const body = renderReviewReport({ context, report, model });
   if (typeof reportDir !== 'string' || !path.isAbsolute(reportDir)) throw new Error('Host must provide an absolute report directory');
   const directory = path.resolve(reportDir);
   assertDirectoryNoSymlink(directory);
@@ -197,8 +209,6 @@ export function writeReviewReport({ context, report, reportDir, model = REVIEW_M
   assertDirectoryNoSymlink(directory);
   // The model never controls a filename. Exclusive create cannot overwrite code or a symlink.
   const file = path.join(directory, `${context.kind}-${context.head.slice(0, 12)}-${Date.now()}.md`);
-  const items = values => values.length ? values.map(s => `- ${s}`).join('\n') : 'Нет.';
-  const body = `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n\n## Понимание решения\n\n${report.understanding}\n\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n\n## Границы анализа\n\n${report.boundaries}\n`;
   writeFileSync(file, body, { encoding: 'utf8', flag: 'wx' });
   return file;
 }
@@ -210,28 +220,65 @@ export function previewReview(context, { model = REVIEW_MODEL } = {}) {
   return { required: context.required, model, system, packet, tools: REVIEW_TOOLS, network: false, writes: false };
 }
 
-export async function runReview({ context, reportDir, apiKey = process.env.ANTHROPIC_API_KEY, model = REVIEW_MODEL, fetchImpl = globalThis.fetch, maxTurns = 150, preview = false, onProgress = () => {} }) {
+async function callProvider({ fetchImpl, apiKey, body, wait, onProgress }) {
+  // Same bounded retry policy as the official SDK: two transient retries, no fallback model.
+  // https://platform.claude.com/docs/en/api/errors (verified 2026-11-01).
+  for (let attempt = 0; ; attempt++) {
+    let response;
+    try {
+      response = await fetchImpl('https://api.anthropic.com/v1/messages', {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': REVIEW_API_VERSION },
+        body: JSON.stringify(body), signal: AbortSignal.timeout(10 * 60_000),
+      });
+    } catch (error) {
+      // The outcome of a disconnected paid request is unknown; expose that boundary.
+      if (attempt >= 2) throw new Error(`Claude API transport failed; no submitted verdict (${error.name ?? 'network error'})`);
+      const delayMs = 1000 * 2 ** attempt;
+      onProgress({ phase: 'transport-retry', attempt: attempt + 1, delayMs, outcome: 'unknown' });
+      await wait(delayMs); continue;
+    }
+    if (response.ok) return response.json();
+    if (attempt >= 2 || !(response.status === 429 || response.status >= 500 && response.status <= 599))
+      throw new Error(`Claude API HTTP ${response.status}; no fallback model or green result`);
+    const retryAfter = response.headers?.get?.('retry-after');
+    const seconds = Number(retryAfter);
+    const requestedDelay = retryAfter == null ? NaN : Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+    const delayMs = Math.min(30_000, Math.max(0, Number.isFinite(requestedDelay) ? requestedDelay : 1000 * 2 ** attempt));
+    onProgress({ phase: 'transport-retry', attempt: attempt + 1, httpStatus: response.status, delayMs });
+    await response.body?.cancel?.();
+    await wait(delayMs);
+  }
+}
+
+export async function runReview({ context, reportDir, apiKey = process.env.ANTHROPIC_API_KEY, model = REVIEW_MODEL, fetchImpl = globalThis.fetch, maxTurns = 150, preview = false, onProgress = () => {}, wait = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
   if (!reviewRequired(context)) return { status: 'not-required', reason: context.kind === 'spec' ? 'This track has no individual spec review' : 'Owner ship has no individual review' };
   const prepared = previewReview(context, { model });
   if (preview) return prepared;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is required. CLAUDE_CODE_OAUTH_TOKEN is not an API key. Preview needs neither.');
   if (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 150) throw new Error('maxTurns must be 1..150');
   const messages = [{ role: 'user', content: JSON.stringify(prepared.packet) }];
-  let usage = { input_tokens: 0, output_tokens: 0 };
+  const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  let reminded = false;
   for (let turn = 1; turn <= maxTurns; turn++) {
     onProgress({ phase: 'review', turn, maxTurns }); // Counts only; maxTurns is a bound, not percent complete.
-    const response = await fetchImpl('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': REVIEW_API_VERSION },
-      body: JSON.stringify({ model, max_tokens: 16384, output_config: { effort: 'high' }, system: prepared.system, tools: REVIEW_TOOLS, messages }),
-      signal: AbortSignal.timeout(10 * 60_000),
-    });
-    if (!response.ok) throw new Error(`Claude API HTTP ${response.status}; no fallback model or green result`);
-    const result = await response.json();
+    const result = await callProvider({ fetchImpl, apiKey, wait, onProgress, body: {
+      model, max_tokens: 16384, output_config: { effort: 'high' }, system: prepared.system,
+      // Automatic prefix caching follows the growing tool conversation, without discarding evidence.
+      // https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+      cache_control: { type: 'ephemeral' }, tools: REVIEW_TOOLS, messages,
+    } });
     if (result.model && result.model !== model) throw new Error('Provider returned an unexpected model');
-    if (!Array.isArray(result.content) || result.stop_reason !== 'tool_use') throw new Error(`Review incomplete (${result.stop_reason ?? 'missing stop reason'}); no submitted verdict`);
-    usage.input_tokens += result.usage?.input_tokens ?? 0;
-    usage.output_tokens += result.usage?.output_tokens ?? 0;
+    for (const key of Object.keys(usage)) usage[key] += result.usage?.[key] ?? 0;
+    if (!Array.isArray(result.content)) throw new Error('Review incomplete (missing content); no submitted verdict');
     const calls = result.content.filter(b => b.type === 'tool_use');
+    if (!calls.length && result.stop_reason === 'end_turn' && result.content.length && !reminded && turn < maxTurns) {
+      reminded = true;
+      messages.push({ role: 'assistant', content: result.content });
+      messages.push({ role: 'user', content: 'Анализ ещё не отправлен. Если нужны факты, продолжи чтение; когда анализ закончен, вызови submit_review отдельным вызовом. Дай вывод и разбор значимых путей с основаниями, последствиями и полезными альтернативами, соразмерно задаче. Не придумывай замечаний. Если завершить анализ нельзя, отправь incomplete с честными границами.' });
+      onProgress({ phase: 'submission-reminder', turn });
+      continue;
+    }
+    if (result.stop_reason !== 'tool_use') throw new Error(`Review incomplete (${result.stop_reason ?? 'missing stop reason'}); no submitted verdict`);
     if (!calls.length) throw new Error('Review returned no tool calls');
     // Reject unknown capabilities before processing any submission in the same response.
     for (const call of calls) if (!REVIEW_TOOLS.some(t => t.name === call.name)) throw new Error(`Unavailable review tool: ${call.name}`);
@@ -240,7 +287,7 @@ export async function runReview({ context, reportDir, apiKey = process.env.ANTHR
       if (calls.length !== 1) throw new Error('Final review must be submitted on its own');
       const report = validateReport(submissions[0].input);
       const file = writeReviewReport({ context, report, reportDir, model });
-      return { status: report.verdict, file, model, base: context.base, head: context.head, turns: turn, usage };
+      return { status: report.verdict, file, report, model, base: context.base, head: context.head, turns: turn, usage };
     }
     // Preserve provider thinking/signatures verbatim for the same model/conversation.
     messages.push({ role: 'assistant', content: result.content });

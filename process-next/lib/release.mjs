@@ -6,24 +6,34 @@ const copy = value => structuredClone(value);
 export function initialReleaseState({ beta = null, stable = null } = {}) {
   return { schema: 1, revision: 0, active: null, candidates: {}, published: { beta, stable }, events: {} };
 }
-function requirements(value) {
-  if (!Array.isArray(value) || !value.length || value.some(item => !item?.id || !item.inputsDigest)
-    || new Set(value.map(item => item.id)).size !== value.length) throw Error('Explicit unique test requirements are needed');
-  return copy(value);
+export async function readRunnerReport(path) {
+  const report = JSON.parse(await readFile(path, 'utf8'));
+  return { ...report, reportPath: path };
+}
+function runnerReceipt(report, candidate) {
+  if (!report?.id || report.schema !== 1 || report.materialSha !== candidate.sha || typeof report.materialClean !== 'boolean' || report.event !== candidate.kind
+    || !report.finishedAt || !report.reportPath || !Array.isArray(report.results) || report.status === 'running')
+    throw Error('A completed runner report for this exact candidate and release profile is required');
+  const required = report.results.filter(row => !row.diagnostic);
+  const failed = required.filter(row => !['passed', 'reused', 'not-required'].includes(row.status)).map(row => row.id);
+  // One report is the authority; no second per-case store or independently declared requirements.
+  return { id: report.id, sha: report.materialSha, event: report.event, status: report.status,
+    path: report.reportPath, digest: sha256(JSON.stringify(report)), finishedAt: report.finishedAt,
+    materialClean: report.materialClean, ...(report.materialClean ? {} : { reason: 'dirty-material' }),
+    ready: report.materialClean && report.status === 'passed' && required.length > 0 && failed.length === 0,
+    required: required.length, failed, reused: required.filter(row => row.status === 'reused').length };
 }
 export function releaseReadiness(candidate) {
-  const missing = candidate.requirements.filter(item => item.blocking !== false
-    && (candidate.results[item.id]?.status !== 'passed' || candidate.results[item.id]?.inputsDigest !== item.inputsDigest)).map(item => item.id);
-  const reasons = [...(candidate.running ? ['run-in-progress'] : []), ...(missing.length ? ['required-cases-incomplete'] : []),
+  const reasons = [...(candidate.running ? ['run-in-progress'] : []),
+    ...(candidate.runner?.materialClean === false ? ['dirty-material'] : []),
+    ...(!candidate.runner?.ready || candidate.runner.sha !== candidate.sha || candidate.runner.event !== candidate.kind ? ['runner-report-required'] : []),
     ...(candidate.reviewRequired && candidate.review?.sha !== candidate.sha ? ['fix-review-required'] : []),
-    ...(candidate.kind === 'beta' && (!candidate.metrics || candidate.metrics.sha !== candidate.sha || candidate.metrics.needsMeasurement === true) ? ['metrics-report-required'] : []),
+    ...(candidate.kind === 'beta' && (!candidate.metrics || candidate.metrics.sha !== candidate.sha) ? ['metrics-report-required'] : []),
     ...(candidate.kind === 'beta' && candidate.metrics?.requiresDecision && candidate.metricsAcceptedSha !== candidate.sha ? ['owner-metrics-decision'] : [])];
-  return { ready: !reasons.length, reasons, missing };
+  return { ready: !reasons.length, reasons, report: candidate.runner ?? null };
 }
 
-/** Results are carried only when their declared relevant-input identity still matches.
- * The runner supplies identities/results; this lifecycle never fabricates test outcomes.
- */
+/** Runner owns case selection, reuse and outcomes. Release state stores only its report reference. */
 export function reduceRelease(previous, event) {
   if (previous.schema !== 1 || typeof event?.id !== 'string' || !event.id) throw Error('Invalid release event');
   const signature = sha256(JSON.stringify(event));
@@ -48,41 +58,29 @@ export function reduceRelease(previous, event) {
       checkedRef(event.branch);
       const source = event.kind === 'stable' ? state.published.beta : event.kind === 'hotfix' ? state.published.stable : null;
       if (event.kind !== 'beta' && (!source || source.sha !== event.sourceSha)) throw Error('Stable starts at the published beta; hotfix starts at the published stable');
-      const needed = requirements(event.requirements), sourceResults = event.kind === 'stable' ? source.results ?? {} : {};
-      const results = Object.fromEntries(needed.filter(item => sourceResults[item.id]?.status === 'passed'
-        && sourceResults[item.id].inputsDigest === item.inputsDigest).map(item => [item.id, { ...copy(sourceResults[item.id]), reused: true }]));
       state.candidates[event.candidate] = { id: event.candidate, kind: event.kind, branch: event.branch,
-        sourceSha: event.sourceSha, sha: event.sourceSha, requirements: needed, results, running: null, status: 'prepared',
+        sourceSha: event.sourceSha, sha: event.sourceSha, runner: null, running: null, status: 'prepared',
         includedIssues: copy(event.includedIssues ?? []), reviewRequired: event.kind === 'hotfix', review: null,
         metrics: null, metricsAcceptedSha: null, portToDev: [], diagnostics: [] };
       state.active = event.candidate; break;
     }
     case 'run-started': {
       const item = candidate(); editable(item);
-      if (state.active !== item.id || event.sha !== item.sha || !event.runId || !Array.isArray(event.cases) || !event.cases.length
-        || new Set(event.cases).size !== event.cases.length || event.cases.some(id => !item.requirements.some(req => req.id === id))) throw Error('Invalid immutable candidate run');
-      item.running = { id: event.runId, sha: item.sha, cases: [...event.cases] }; item.status = 'testing'; break;
+      if (state.active !== item.id || event.sha !== item.sha) throw Error('Invalid immutable candidate run');
+      item.running = { id: event.runId ?? null, sha: item.sha }; item.status = 'testing'; break;
     }
-    case 'run-finished': {
+    case 'runner-report': {
       const item = candidate(), run = item.running;
-      if (!run || run.id !== event.runId || run.sha !== event.sha || event.sha !== item.sha || !Array.isArray(event.results)
-        || new Set(event.results.map(row => row.id)).size !== event.results.length) throw Error('Run result identity differs');
-      if (event.results.some(row => !run.cases.includes(row.id) || !['passed', 'failed', 'cancelled', 'not-started', 'environment-error'].includes(row.status))) throw Error('Invalid case result');
-      for (const id of run.cases) {
-        const req = item.requirements.find(row => row.id === id), result = event.results.find(row => row.id === id);
-        if (result && result.inputsDigest !== req.inputsDigest) throw Error('Test inputs differ');
-        item.results[id] = { ...(result ?? { id, inputsDigest: req.inputsDigest, status: 'not-started' }), sha: item.sha, runId: run.id, reused: false };
-      }
+      if (['publishing', 'published'].includes(item.status) || state.active !== item.id
+        || run && (run.sha !== item.sha || run.id && run.id !== event.report?.id)) throw Error('Run result identity differs');
+      item.runner = runnerReceipt(event.report, item);
       item.running = null; item.status = 'results'; break;
     }
     case 'fix': {
       const item = candidate(); editable(item);
       if (state.active !== item.id || !sha(event.sha) || event.sha === item.sha) throw Error('A fix needs a new immutable candidate');
-      const needed = requirements(event.requirements);
-      item.results = Object.fromEntries(needed.filter(req => item.results[req.id]?.status === 'passed'
-        && item.results[req.id].inputsDigest === req.inputsDigest).map(req => [req.id, { ...item.results[req.id], reused: true }]));
-      item.portToDev.push({ from: item.sha, to: event.sha, status: 'pending' });
-      item.sha = event.sha; item.requirements = needed; item.reviewRequired = event.productChanged !== false;
+      item.portToDev.push({ from: item.sha, to: event.sha, syncMode: 'merge', status: 'pending' });
+      item.sha = event.sha; item.runner = null; item.reviewRequired = event.productChanged !== false;
       item.review = null; item.metrics = null; item.metricsAcceptedSha = null; item.status = 'prepared'; break;
     }
     case 'review-accepted': {
@@ -97,7 +95,7 @@ export function reduceRelease(previous, event) {
     }
     case 'accept-metrics': {
       const item = candidate(); editable(item);
-      if (event.sha !== item.sha || !item.metrics || item.metrics.needsMeasurement === true || !event.ownerDecision) throw Error('An explicit owner decision requires measurements for this candidate');
+      if (event.sha !== item.sha || !item.metrics || !event.ownerDecision) throw Error('An explicit owner decision requires the report for this candidate');
       item.metricsAcceptedSha = item.sha; item.metricsDecision = copy(event.ownerDecision); break;
     }
     case 'diagnostic': {
@@ -121,10 +119,15 @@ export function reduceRelease(previous, event) {
       if (item.status !== 'publishing' || event.sha !== item.sha || event.evidence?.tag !== item.tag
         || event.evidence?.sha !== item.sha || !/^[a-f0-9]{64}$/.test(event.evidence?.artifactDigest ?? '')) throw Error('Actual publication evidence required');
       item.status = 'published'; item.publication = copy(event.evidence);
-      const record = { id: item.id, sha: item.sha, tag: item.tag, branch: item.branch, results: copy(item.results) };
+      const record = { id: item.id, sha: item.sha, tag: item.tag, branch: item.branch, runner: copy(item.runner) };
       if (item.kind === 'beta') {
         item.retiredBeta = state.published.beta?.branch ?? null; state.published.beta = record;
-      } else state.published.stable = record;
+      } else {
+        state.published.stable = record;
+        const port = item.portToDev.find(row => row.to === item.sha);
+        if (port) Object.assign(port, { tag: item.tag, syncMode: 'merge' });
+        else item.portToDev.push({ to: item.sha, tag: item.tag, syncMode: 'merge', status: 'pending' });
+      }
       state.active = null; break;
     }
     case 'delivery-verified': {
@@ -161,6 +164,11 @@ export class ReleaseGitAdapter extends GitAdapter {
     const sourceSha = kind === 'beta' ? await this.remoteHead(this.dev)
       : kind === 'stable' ? published?.beta?.sha : kind === 'hotfix' ? published?.stable?.sha : null;
     if (!sha(sourceSha)) throw Error('Release source is not available');
+    if (kind !== 'hotfix' && published?.stable?.sha) {
+      await this.ensureCommit(sourceSha); await this.ensureCommit(published.stable.sha);
+      try { await this.assertAncestor(published.stable.sha, sourceSha); }
+      catch { throw Error('Return the published stable/hotfix tag to dev through the queue before preparing the next beta/stable'); }
+    }
     return { kind, sourceSha, reference: kind === 'beta' ? this.dev : kind === 'stable' ? published.beta.tag : published.stable.tag };
   }
   async prepareCandidate({ sourceSha, branch, worktree }) {
@@ -173,9 +181,52 @@ export class ReleaseGitAdapter extends GitAdapter {
   }
   async fixPortPlan({ from, to }) {
     await this.assertAncestor(from, to);
-    const commits = (await this.git(['rev-list', '--reverse', `${from}..${to}`])).split('\n').filter(Boolean);
-    return { planned: true, destination: this.dev, commits, commands: commits.map(commit => ['git', 'cherry-pick', commit]),
-      note: 'Apply only these fixes through the task queue; never merge current dev into the release candidate' };
+    return { planned: true, destination: this.dev, syncMode: 'merge', mergeSourceSha: to,
+      commands: [['git', 'merge', '--no-ff', to]],
+      note: 'Merge this exact release history into dev through the task queue; never rebase it or merge fresh dev into the release candidate' };
+  }
+  async prepareDevReturn({ candidate, issue, branch = `issue/${issue}-release-return-${candidate?.sha?.slice(0, 12)}`, worktree }) {
+    if (candidate?.status !== 'published' || !sha(candidate.sha) || !candidate.tag || !Number.isSafeInteger(issue) || issue < 1)
+      throw Error('Published candidate and a queue issue are required');
+    checkedRef(branch); checkedRef(candidate.tag);
+    if (!branch.startsWith('issue/')) throw Error('Use a separate issue/ return branch');
+    const task = { issue, branch, layer: 'product', track: 'show', ownerAssigned: false,
+      syncMode: 'merge', mergeSourceSha: candidate.sha, releaseTag: candidate.tag };
+    if (!this.activated) return { planned: true, task, destination: this.dev, worktree,
+      operations: ['verify immutable published tag', 'merge tag into an isolated branch from dev', 'push task branch', 'enqueue normal S6/review/merge'] };
+    const tags = (await this.git(['ls-remote', '--tags', this.remote, `refs/tags/${candidate.tag}`, `refs/tags/${candidate.tag}^{}`])).split('\n').filter(Boolean);
+    const actualTag = (tags.find(row => row.endsWith('^{}')) ?? tags[0])?.split(/\s+/)[0];
+    if (actualTag !== candidate.sha) throw Error('Published tag differs from the return material');
+    const devSha = await this.remoteHead(this.dev);
+    await this.ensureCommit(devSha); await this.ensureCommit(candidate.sha);
+    let included = false;
+    try { await this.assertAncestor(candidate.sha, devSha); included = true; } catch { /* merge below */ }
+    if (included) return { alreadyIncluded: true, devSha, mergeSourceSha: candidate.sha };
+    const remoteTask = await this.remoteHead(branch);
+    if (remoteTask) {
+      await this.ensureCommit(remoteTask); await this.assertAncestor(candidate.sha, remoteTask);
+      return { prepared: true, reused: true, task: { ...task, materialSha: remoteTask } };
+    }
+    let head;
+    try { head = await this.git(['rev-parse', '--verify', `refs/heads/${branch}`]); }
+    catch { /* new worktree */ }
+    if (head) await this.assertAncestor(candidate.sha, head);
+    else {
+      if (!worktree) throw Error('An isolated worktree path is required to prepare the return branch');
+      await this.git(['worktree', 'add', '-b', branch, worktree, devSha]);
+      await this.git(['-C', worktree, 'merge', '--no-ff', '-m', `Return published ${candidate.tag} to dev\n\nIssue: #${issue}\nUser-Visible: no`, candidate.sha]);
+      head = await this.git(['-C', worktree, 'rev-parse', 'HEAD']);
+    }
+    await this.assertAncestor(devSha, head); await this.assertAncestor(candidate.sha, head);
+    // Creation only: an existing branch is never overwritten on a concurrent preparation.
+    try { await this.git(['push', `--force-with-lease=refs/heads/${branch}:`, this.remote, `${head}:refs/heads/${branch}`]); }
+    catch (error) { if (await this.remoteHead(branch) !== head) throw error; }
+    return { prepared: true, task: { ...task, materialSha: head } };
+  }
+  async verifyDevReturn(sourceSha) {
+    const devSha = await this.remoteHead(this.dev);
+    await this.ensureCommit(sourceSha); await this.ensureCommit(devSha); await this.assertAncestor(sourceSha, devSha);
+    return { sourceSha, devSha };
   }
 }
 
@@ -184,7 +235,7 @@ export class ReleasePublisher {
   constructor({ github, git, activated = false, readArtifact = readFile } = {}) {
     Object.assign(this, { github, git, activated, readArtifact });
   }
-  async publish({ candidate, tag = candidate?.tag, artifacts, body = '', expectedMain } = {}) {
+  async publish({ candidate, tag = candidate?.tag, artifacts, body = '', expectedMain, measurementPath } = {}) {
     const ready = releaseReadiness(candidate);
     if (!ready.ready) throw Error(`Candidate is not ready: ${ready.reasons.join(', ')}`);
     checkedRef(tag);
@@ -222,8 +273,34 @@ export class ReleasePublisher {
     const evidence = [];
     for (const artifact of prepared) evidence.push(await this.github.verifyPublication({ tag, expectedSha: candidate.sha,
       assetName: artifact.name, expectedDigest: artifact.expectedDigest }));
-    return { published: true, sha: candidate.sha, tag, evidence: evidence[0], artifacts: evidence, deliveryPending: true };
+    const warnings = []; let measurement = null;
+    if (candidate.kind === 'stable') {
+      try {
+        if (!measurementPath) throw Error('Diagnostic stable measurement is not available');
+        const bytes = await this.readArtifact(measurementPath), record = JSON.parse(bytes.toString('utf8'));
+        if (record.source_sha !== candidate.sha) throw Error('Diagnostic measurement belongs to another candidate');
+        const actualRelease = await this.github.getRelease(tag), name = 'measurement.json';
+        const matches = actualRelease.assets.filter(asset => asset.name === name);
+        if (matches.length > 1) throw Error('Diagnostic measurement asset is ambiguous');
+        const asset = matches[0] ?? await this.github.uploadReleaseAsset(actualRelease.id, { name, bytes, contentType: 'application/json' });
+        const expectedDigest = sha256(bytes), downloaded = await this.github.downloadAsset(asset.id);
+        if (sha256(downloaded) !== expectedDigest) throw Error('Diagnostic measurement asset differs');
+        measurement = { name, assetId: asset.id, digest: expectedDigest, sourceSha: candidate.sha };
+      } catch (error) { warnings.push(`Stable measurement: ${error.message}`); }
+    }
+    return { published: true, sha: candidate.sha, tag, evidence: evidence[0], artifacts: evidence, deliveryPending: true, measurement, warnings };
   }
+}
+
+/** A missing measurement is diagnostic; callers decide how to display its absence. */
+export async function readPublishedMeasurement(github, { tag, sha: sourceSha }) {
+  const release = await github.getRelease(tag);
+  if (release.draft || release.tag_name !== tag) throw Error('Stable release is not published');
+  const assets = release.assets.filter(asset => asset.name === 'measurement.json');
+  if (assets.length !== 1) throw Error('Stable measurement is missing or ambiguous');
+  const record = JSON.parse((await github.downloadAsset(assets[0].id)).toString('utf8'));
+  if (record.source_sha !== sourceSha) throw Error('Stable measurement belongs to another commit');
+  return record;
 }
 
 /** Actual HACS read API, not a GitHub release masquerading as HACS evidence.
@@ -260,14 +337,17 @@ export class HacsClient {
   }
 }
 
+export class DeliveryPending extends Error { constructor(message) { super(message); this.name = 'DeliveryPending'; } }
 export class HacsDeliveryVerifier {
-  constructor({ hacs, github }) { Object.assign(this, { hacs, github }); }
+  constructor({ hacs, github, clock = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
+    Object.assign(this, { hacs, github, clock, sleep });
+  }
   async verify({ repository, tag, assetName, expectedDigest }) {
     if (!/^[a-f0-9]{64}$/.test(expectedDigest ?? '')) throw Error('Expected artifact SHA-256 required');
     if (repository.toLowerCase() !== `${this.github.owner}/${this.github.repo}`.toLowerCase()) throw Error('HACS and GitHub repository identities differ');
     const rows = await this.hacs.repositories();
     const row = rows.find(item => item.full_name?.toLowerCase() === repository.toLowerCase());
-    if (!row || row.available_version !== tag || row.can_download !== true) throw Error('This release is not observed as downloadable in HACS');
+    if (!row || row.available_version !== tag || row.can_download !== true) throw new DeliveryPending('This release is not observed as downloadable in HACS yet');
     const release = await this.github.getRelease(tag);
     if (release.draft || release.tag_name !== tag) throw Error('Published release unavailable');
     const assets = release.assets.filter(asset => asset.name === assetName);
@@ -276,5 +356,20 @@ export class HacsDeliveryVerifier {
     if (actual !== expectedDigest) throw Error('Downloaded release artifact differs');
     return { hacsAvailable: true, tag, artifactDigest: actual, assetName, bytes: bytes.length,
       hacsRepositoryId: row.id, observedAt: new Date().toISOString() };
+  }
+  async wait({ timeoutMs = 10 * 60_000, intervalMs = 15_000, signal, onProgress = () => {}, ...request }) {
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 0 || !Number.isFinite(intervalMs) || intervalMs <= 0 || intervalMs > 60_000)
+      throw Error('Use a finite HACS wait and polling intervals no longer than one minute');
+    const started = this.clock(); let attempts = 0, reason = 'HACS observation pending';
+    while (!signal?.aborted) {
+      attempts++;
+      try { return { status: 'verified', attempts, ...await this.verify(request) }; }
+      catch (error) { if (!(error instanceof DeliveryPending)) throw error; reason = error.message; }
+      const elapsedMs = this.clock() - started;
+      onProgress({ status: 'waiting', attempts, elapsedMs, reason });
+      if (elapsedMs >= timeoutMs) return { status: 'waiting', attempts, elapsedMs, reason };
+      await this.sleep(Math.min(intervalMs, timeoutMs - elapsedMs));
+    }
+    return { status: 'waiting', interrupted: true, attempts, elapsedMs: this.clock() - started, reason };
   }
 }

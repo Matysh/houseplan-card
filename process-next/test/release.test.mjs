@@ -1,49 +1,66 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleasePublisher } from '../lib/release.mjs';
+import { mkdtemp, mkdir, writeFile, unlink, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { initialReleaseState, reduceRelease, releaseReadiness, releaseClosePlan, HacsClient, HacsDeliveryVerifier, ReleasePublisher, readPublishedMeasurement, readRunnerReport } from '../lib/release.mjs';
+import { runPlan } from '../lib/runner.mjs';
+import { runGit } from '../lib/github.mjs';
 import { sha256 } from '../lib/github.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40), D = 'd'.repeat(64);
-const requirements = [{ id: 'core', inputsDigest: 'core-v1' }, { id: 'area', inputsDigest: 'area-v1' }];
+function report(materialSha = A, event = 'beta', overrides = {}) {
+  return { schema: 1, id: 'run', event, materialSha, materialClean: true, finishedAt: '2026-11-01T00:00:00Z', reportPath: 'runs/run/report.json', status: 'passed',
+    results: [{ id: 'core', status: 'passed' }, { id: 'area', status: 'passed' }], ...overrides };
+}
 function harness(initial) {
   let state = initial ?? initialReleaseState(), count = 0;
   return { event(value) { state = reduceRelease(state, { id: `e${++count}`, candidate: 'beta1', ...value }); return state; },
     get state() { return state; }, get candidate() { return state.candidates.beta1; } };
 }
-function create(h, extra = {}) { h.event({ type: 'create', kind: 'beta', branch: 'release/beta1', sourceSha: A, requirements, includedIssues: [1, 2], ...extra }); }
+function create(h, extra = {}) { h.event({ type: 'create', kind: 'beta', branch: 'release/beta1', sourceSha: A, includedIssues: [1, 2], ...extra }); }
 function passed(h) {
-  h.event({ type: 'run-started', sha: h.candidate.sha, runId: 'run', cases: ['core', 'area'] });
-  h.event({ type: 'run-finished', sha: h.candidate.sha, runId: 'run', results: h.candidate.requirements.map(row => ({ ...row, status: 'passed' })) });
+  h.event({ type: 'run-started', sha: h.candidate.sha });
+  h.event({ type: 'runner-report', report: report(h.candidate.sha, h.candidate.kind) });
   h.event({ type: 'metrics', sha: h.candidate.sha, report: { requiresDecision: false } });
 }
 function publish(h) {
   h.event({ type: 'publication-started', sha: h.candidate.sha, tag: 'v1-beta.1' });
   h.event({ type: 'published', sha: h.candidate.sha, evidence: { sha: h.candidate.sha, tag: 'v1-beta.1', artifactDigest: D } });
 }
-test('candidate cannot change until its running set actually finishes; failures do not drop independent results', () => {
-  const h = harness(); create(h); h.event({ type: 'run-started', sha: A, runId: 'r', cases: ['core', 'area'] });
-  assert.throws(() => h.event({ type: 'fix', sha: B, requirements }), /immutable/);
+test('candidate cannot change while running; one completed report records failure without copying per-case state', () => {
+  const h = harness(); create(h); h.event({ type: 'run-started', sha: A });
+  assert.throws(() => h.event({ type: 'fix', sha: B }), /immutable/);
   assert.throws(() => h.event({ type: 'abandon' }), /immutable/);
-  h.event({ type: 'run-finished', sha: A, runId: 'r', results: [
-    { ...requirements[0], status: 'failed' }, { ...requirements[1], status: 'passed' }] });
-  assert.equal(h.candidate.results.area.status, 'passed'); assert.deepEqual(releaseReadiness(h.candidate).missing, ['core']);
+  h.event({ type: 'runner-report', report: report(A, 'beta', { status: 'failed', results: [{ id: 'core', status: 'failed' }, { id: 'area', status: 'passed' }] }) });
+  assert.equal(h.candidate.running, null); assert.deepEqual(h.candidate.runner.failed, ['core']);
+  assert.equal(h.candidate.results, undefined); assert.equal(h.candidate.requirements, undefined);
+  assert.ok(releaseReadiness(h.candidate).reasons.includes('runner-report-required'));
 });
-test('missing and cancelled cases are never PASS', () => {
-  const h = harness(); create(h); h.event({ type: 'run-started', sha: A, runId: 'r', cases: ['core', 'area'] });
-  h.event({ type: 'run-finished', sha: A, runId: 'r', results: [{ ...requirements[0], status: 'cancelled' }] });
-  assert.deepEqual(releaseReadiness(h.candidate).missing, ['core', 'area']); assert.equal(h.candidate.results.area.status, 'not-started');
+test('missing, cancelled, invalidated, wrong-profile and wrong-SHA reports never authorize publication', () => {
+  const h = harness(); create(h);
+  for (const bad of [report(B), report(A, 'task'), { ...report(), finishedAt: undefined }])
+    assert.throws(() => h.event({ type: 'runner-report', report: bad }), /completed runner report/);
+  for (const bad of [report(A, 'beta', { results: [] }), report(A, 'beta', { status: 'invalidated' }), report(A, 'beta', { materialClean: false }),
+    report(A, 'beta', { results: [{ id: 'area', status: 'cancelled' }] })]) {
+    h.event({ type: 'runner-report', report: bad }); assert.equal(releaseReadiness(h.candidate).ready, false);
+  }
 });
-test('fix preserves compatible successful cases and asks only for changed evidence and fix review', () => {
+test('fix asks for the new runner report and review; the runner owns case reuse', () => {
   const h = harness(); create(h); passed(h);
-  h.event({ type: 'fix', sha: B, requirements: [requirements[0], { id: 'area', inputsDigest: 'area-v2' }] });
-  assert.equal(h.candidate.results.core.reused, true); assert.equal(h.candidate.results.area, undefined);
+  h.event({ type: 'fix', sha: B }); assert.equal(h.candidate.runner, null);
   assert.equal(h.candidate.portToDev[0].to, B); assert.ok(releaseReadiness(h.candidate).reasons.includes('fix-review-required'));
+  h.event({ type: 'runner-report', report: report(B, 'beta', { results: [{ id: 'core', status: 'reused' }, { id: 'area', status: 'passed' }] }) });
+  assert.equal(h.candidate.runner.reused, 1); assert.equal(h.candidate.runner.ready, true);
 });
-test('stable starts at published beta and reuses compatible results, never latest dev', () => {
+test('stable uses published beta and accepts its runner cache reuse without a second case ledger', () => {
   const h = harness(); create(h); passed(h); publish(h);
-  assert.throws(() => h.event({ type: 'create', candidate: 'stable', kind: 'stable', sourceSha: C, branch: 'release/stable', requirements }), /published beta/);
-  h.event({ type: 'create', candidate: 'stable', kind: 'stable', sourceSha: A, branch: 'release/stable', requirements: [...requirements, { id: 'full', inputsDigest: 'full-v1' }] });
-  const stable = h.state.candidates.stable; assert.equal(stable.results.core.reused, true);
-  assert.deepEqual(releaseReadiness(stable).missing, ['full']);
+  assert.throws(() => h.event({ type: 'create', candidate: 'stable', kind: 'stable', sourceSha: C, branch: 'release/stable' }), /published beta/);
+  h.event({ type: 'create', candidate: 'stable', kind: 'stable', sourceSha: A, branch: 'release/stable' });
+  assert.equal(releaseReadiness(h.state.candidates.stable).ready, false); // beta report alone is not the stable remainder
+  h.event({ type: 'runner-report', candidate: 'stable', report: report(A, 'stable', { results: [
+    { id: 'core', status: 'reused' }, { id: 'area', status: 'reused' }, { id: 'remainder', status: 'passed' }, { id: 'converter', status: 'failed', diagnostic: true }] }) });
+  const stable = h.state.candidates.stable; assert.equal(stable.runner.reused, 2); assert.equal(releaseReadiness(stable).ready, true);
+  assert.equal(stable.results, undefined); assert.equal(h.state.published.beta.results, undefined);
 });
 test('previous published beta survives a failed candidate and is retired only after successful publication', () => {
   const h = harness(initialReleaseState({ beta: { sha: C, branch: 'release/old-beta', results: {} } })); create(h); passed(h);
@@ -52,9 +69,9 @@ test('previous published beta survives a failed candidate and is retired only af
   assert.equal(h.candidate.retiredBeta, 'release/old-beta'); assert.equal(h.state.published.beta.branch, 'release/beta1');
 });
 test('publication failure retries the same checked material without a new test run', () => {
-  const h = harness(); create(h); passed(h); const results = structuredClone(h.candidate.results);
+  const h = harness(); create(h); passed(h); const receipt = structuredClone(h.candidate.runner);
   h.event({ type: 'publication-started', sha: A, tag: 'v1-beta.1' }); h.event({ type: 'publication-failed', sha: A, reason: 'network' });
-  publish(h); assert.deepEqual(h.candidate.results, results);
+  publish(h); assert.deepEqual(h.candidate.runner, receipt);
 });
 test('beta metrics decision belongs to one candidate and accepted retry does not ask twice', () => {
   const h = harness(); create(h); passed(h); h.event({ type: 'metrics', sha: A, report: { requiresDecision: true } });
@@ -62,17 +79,18 @@ test('beta metrics decision belongs to one candidate and accepted retry does not
   h.event({ type: 'accept-metrics', sha: A, ownerDecision: { actor: 'owner', action: 'accept' } }); publish(h);
   assert.equal(h.candidate.status, 'published');
 });
-test('owner acceptance cannot turn missing or incomparable measurements into a result', () => {
+test('missing/noisy/incomparable measurements remain visible but do not block or prevent owner acknowledgement', () => {
   const h = harness(); create(h); passed(h); h.event({ type: 'metrics', sha: A, report: { requiresDecision: false, needsMeasurement: true } });
-  assert.equal(releaseReadiness(h.candidate).ready, false);
-  assert.throws(() => h.event({ type: 'accept-metrics', sha: A, ownerDecision: { actor: 'owner' } }), /requires measurements/);
+  assert.equal(releaseReadiness(h.candidate).ready, true);
+  h.event({ type: 'accept-metrics', sha: A, ownerDecision: { actor: 'owner' } });
+  assert.equal(h.candidate.metrics.needsMeasurement, true); publish(h);
 });
 test('hotfix uses last stable and cannot run in parallel with a preparing release', () => {
   const h = harness(initialReleaseState({ stable: { sha: C, tag: 'v0', branch: 'release/old' } })); create(h);
-  assert.throws(() => h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: C, branch: 'release/hotfix', requirements }), /put the fix/);
+  assert.throws(() => h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: C, branch: 'release/hotfix' }), /put the fix/);
   h.event({ type: 'abandon' });
-  assert.throws(() => h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: A, branch: 'release/hotfix', requirements }), /published stable/);
-  h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: C, branch: 'release/hotfix', requirements });
+  assert.throws(() => h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: A, branch: 'release/hotfix' }), /published stable/);
+  h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: C, branch: 'release/hotfix' });
   assert.equal(h.state.candidates.hotfix.reviewRequired, true);
 });
 test('converter failure remains diagnostic and does not block a ready candidate', () => {
@@ -135,7 +153,7 @@ test('publication retry after a lost upload response reuses the draft and bytes 
   const input = { candidate: h.candidate, tag: 'v1-beta.1', artifacts: [{ name: 'houseplan.zip', path: 'prepared.zip', expectedDigest: digest }] };
   await assert.rejects(publisher.publish(input), /lost response/);
   const result = await publisher.publish(input); assert.equal(result.published, true); assert.equal(result.deliveryPending, true);
-  assert.equal(drafts, 1); assert.equal(uploads, 1); assert.equal(refs, 1); assert.equal(h.candidate.results.core.runId, 'run');
+  assert.equal(drafts, 1); assert.equal(uploads, 1); assert.equal(refs, 1); assert.equal(h.candidate.runner.id, 'run');
 });
 test('changed prepared artifact is refused before creating or uploading a release', async () => {
   const h = harness(); create(h); passed(h); let creates = 0;
@@ -143,4 +161,80 @@ test('changed prepared artifact is refused before creating or uploading a releas
     github: { activated: true, findRelease: async () => { creates++; } }, readArtifact: async () => Buffer.from('wrong') });
   await assert.rejects(publisher.publish({ candidate: h.candidate, tag: 'v1-beta.1', artifacts: [{ name: 'houseplan.zip', path: 'x', expectedDigest: D }] }), /changed/);
   assert.equal(creates, 0);
+});
+
+test('HACS cache delay waits and retries only delivery observation, with a visible resumable timeout', async () => {
+  const bytes = Buffer.from('checked artifact'); let now = 0, observations = 0;
+  const github = { owner: 'o', repo: 'r', getRelease: async () => ({ tag_name: 'v1', draft: false, assets: [{ name: 'houseplan.zip', id: 1 }] }), downloadAsset: async () => bytes };
+  const hacs = { repositories: async () => ++observations < 3 ? [] : [{ full_name: 'o/r', available_version: 'v1', can_download: true }] };
+  const verifier = new HacsDeliveryVerifier({ github, hacs, clock: () => now, sleep: async ms => { now += ms; } });
+  const request = { repository: 'o/r', tag: 'v1', assetName: 'houseplan.zip', expectedDigest: sha256(bytes), timeoutMs: 100, intervalMs: 10 };
+  const progress = [], result = await verifier.wait({ ...request, onProgress: value => progress.push(value) });
+  assert.equal(result.status, 'verified'); assert.equal(result.attempts, 3); assert.equal(progress.length, 2);
+  hacs.repositories = async () => [];
+  const pending = await verifier.wait({ ...request, timeoutMs: 20 });
+  assert.equal(pending.status, 'waiting'); assert.equal(pending.hacsAvailable, undefined); assert.equal(pending.elapsedMs, 20);
+  hacs.repositories = async () => { throw Error('Authentication refused'); };
+  await assert.rejects(verifier.wait(request), /Authentication/);
+});
+
+test('stable/hotfix publication records an ancestry-preserving return instead of cherry-pick', () => {
+  const h = harness(initialReleaseState({ beta: { sha: A, tag: 'v1-beta.1' } }));
+  create(h, { kind: 'stable' }); passed(h); publish(h);
+  assert.deepEqual(h.candidate.portToDev, [{ to: A, tag: 'v1-beta.1', syncMode: 'merge', status: 'pending' }]);
+  h.event({ type: 'port-completed', fixSha: A, devSha: B }); assert.equal(h.candidate.portToDev[0].status, 'ported');
+});
+
+test('stable measurement is uploaded/read as a diagnostic asset; missing data never cancels publication', async () => {
+  const h = harness(initialReleaseState({ beta: { sha: A, tag: 'v1-beta.1' } })); create(h, { kind: 'stable' }); passed(h);
+  const zip = Buffer.from('zip'), measurement = Buffer.from(JSON.stringify({ source_sha: A, release: 'v1', timing_metrics: {} }));
+  const bytes = new Map([[1, zip]]), release = { id: 1, draft: false, tag_name: 'v1', assets: [{ id: 1, name: 'houseplan.zip' }] };
+  const github = { activated: true, findRelease: async () => release, getRelease: async () => release,
+    downloadAsset: async id => bytes.get(id), uploadReleaseAsset: async (_id, asset) => {
+      const row = { id: 2, name: asset.name }; release.assets.push(row); bytes.set(2, asset.bytes); return row;
+    }, verifyPublication: async ({ tag, expectedSha, expectedDigest }) => ({ tag, sha: expectedSha, artifactDigest: expectedDigest }) };
+  const publisher = new ReleasePublisher({ activated: true, github, git: { activated: true, publishCandidateRefs: async () => {} },
+    readArtifact: async path => path === 'zip' ? zip : path === 'measurement' ? measurement : Promise.reject(Error('No measurement')) });
+  const input = { candidate: h.candidate, tag: 'v1', artifacts: [{ name: 'houseplan.zip', path: 'zip', expectedDigest: sha256(zip) }] };
+  const missing = await publisher.publish(input); assert.equal(missing.published, true); assert.equal(missing.warnings.length, 1);
+  const result = await publisher.publish({ ...input, measurementPath: 'measurement' });
+  assert.equal(result.published, true); assert.equal(result.measurement.sourceSha, A); assert.equal(result.warnings.length, 0);
+  assert.equal((await readPublishedMeasurement(github, { tag: 'v1', sha: A })).source_sha, A);
+  await assert.rejects(readPublishedMeasurement(github, { tag: 'v1', sha: B }), /another commit/);
+});
+
+test('actual runner report authorizes its clean Git candidate; dirty and deleted sources are rejected by release state', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'hp-release-runner-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const git = async args => (await runGit(args, { cwd: root })).stdout.trim();
+  await git(['init', '-b', 'dev']); await git(['config', 'user.name', 'Fixture']); await git(['config', 'user.email', 'fixture@example.invalid']);
+  await git(['config', 'core.hooksPath', join(root, 'no-hooks')]);
+  await mkdir(join(root, 'src')); const source = join(root, 'src', 'model.mjs');
+  await writeFile(source, 'export const model = 1;\n'); await git(['add', 'src']); await git(['commit', '-m', 'candidate']);
+  const materialSha = await git(['rev-parse', 'HEAD']);
+  const plan = { event: 'beta', name: 'Small integration fixture', steps: [{ id: 'behavior', name: 'Behavior',
+    command: ['node', '-e', '/* executor injected */'], inputs: ['src/**'] }] };
+  const execute = async () => ({ status: 'passed', counts: { tests: 1, passed: 1 }, durationMs: 0 });
+  const h = harness(); create(h, { sourceSha: materialSha }); h.event({ type: 'run-started', sha: materialSha });
+  const clean = await runPlan(plan, { root, execute });
+  assert.equal(clean.materialSha, materialSha); assert.equal(clean.materialClean, true);
+  h.event({ type: 'runner-report', report: await readRunnerReport(clean.reportPath) });
+  h.event({ type: 'metrics', sha: materialSha, report: { requiresDecision: false } });
+  assert.equal(releaseReadiness(h.candidate).ready, true); assert.equal(h.candidate.runner.id, clean.id);
+  assert.equal(h.candidate.results, undefined);
+  await writeFile(source, 'export const model = 2;\n');
+  const dirty = await runPlan(plan, { root, execute });
+  assert.equal(dirty.status, 'passed'); assert.equal(dirty.materialSha, materialSha); assert.equal(dirty.materialClean, false);
+  await unlink(source);
+  const deleted = await runPlan(plan, { root, execute });
+  assert.equal(deleted.status, 'passed'); assert.equal(deleted.materialClean, false);
+  for (const invalid of [dirty, deleted]) {
+    const fresh = harness(); create(fresh, { sourceSha: materialSha }); fresh.event({ type: 'run-started', sha: materialSha });
+    fresh.event({ type: 'runner-report', report: invalid });
+    assert.equal(fresh.candidate.running, null); assert.equal(fresh.candidate.runner.materialClean, false);
+    assert.equal(fresh.candidate.runner.reason, 'dirty-material');
+    assert.equal(releaseReadiness(fresh.candidate).ready, false);
+    assert.throws(() => fresh.event({ type: 'publication-started', sha: materialSha, tag: 'v1' }), /dirty-material/);
+    fresh.event({ type: 'fix', sha: B }); assert.equal(fresh.candidate.sha, B, 'a finished dirty run must not keep the candidate locked');
+  }
 });

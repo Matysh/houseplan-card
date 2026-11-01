@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
+import { walk } from './storage.mjs';
 
 export { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E };
 const here = fileURLToPath(new URL('../catalog/', import.meta.url));
@@ -15,8 +16,20 @@ const buildInputs = [...productInputs, 'demo/fixtures/**/*.mjs', 'demo/golden/**
   'scripts/source-fingerprint.mjs', 'scripts/css-template-minifier.mjs', 'scripts/bundle-manifest.mjs', 'scripts/coverage-maps.mjs'];
 const browserInputs = [...buildInputs, 'demo/**/*.mjs', 'demo/fixtures/**/*.json', 'demo/srv/demo.html', 'demo/srv/assets/*.svg',
   'scripts/browser-attestation.mjs', 'scripts/toolchain-pins.mjs', 'scripts/capture-environment.mjs'];
-const pythonInputs = ['custom_components/houseplan/**/*.py', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];
-const retained = kind => inventory.entries.filter(row => row.kind === kind && row.decision === 'keep').map(row => row.path);
+const pythonInputs = ['custom_components/houseplan/**/*.py', 'custom_components/houseplan/manifest.json', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];
+export function discoverReleaseTests(root) {
+  const known = new Map(inventory.entries.map(row => [row.path, row]));
+  const candidates = [
+    ...walk(root, resolve(root, 'test')).filter(file => file.endsWith('.test.mjs')).map(path => ({ path, kind: 'product' })),
+    ...walk(root, resolve(root, 'tests_backend')).filter(file => /\/test_[^/]+\.py$/.test(file)).map(path => ({ path, kind: 'backend' })),
+    ...walk(root, resolve(root, 'demo')).filter(file => /^demo\/smoke[^/]*\.mjs$/.test(file)).map(path => ({ path, kind: 'browser' })),
+  ];
+  return candidates.flatMap(row => {
+    const old = known.get(row.path);
+    if (old && (old.decision !== 'keep' || old.automaticReleaseRun === false || !['product', 'backend', 'browser'].includes(old.kind))) return [];
+    return [{ ...row, kind: old?.kind ?? row.kind, group: old?.group ?? 'new-product', groupLabel: old?.groupLabel ?? 'Новые продуктовые проверки' }];
+  });
+}
 const step = (id, name, command, inputs, requires = [], extra = {}) => ({
   id, name, command, cwd: 'root', inputs: [...new Set(inputs)], requires, diagnostic: false, ...extra,
 });
@@ -77,6 +90,30 @@ async function finalize(root, plan) {
       if (!plan.steps.some(item => item.id === id)) throw Error(`Selected check ${check.id} reads prepared product artifacts (${id}); an infrastructure-only profile cannot silently build the product`);
       check.requires = [...new Set([...check.requires, id])];
     }
+    if (/^(?:product-node:|product-backend$|smoke:|golden-)/.test(check.id) && !(check.id.startsWith('product-node:') && artifactPreparations.size)) {
+      check.reuseReleaseVersion = true;
+      check.preparationOnlyRequires = [...new Set([...(check.preparationOnlyRequires ?? []), ...check.requires.filter(id => ['product-build', 'test-build', 'demo-assets'].includes(id))])];
+    }
+  }
+  // Behavioral consumers need the preparation implementation/configuration,
+  // but Node groups keep their own source closure instead of depending on all src.
+  const byId = new Map(plan.steps.map(item => [item.id, item]));
+  for (const check of plan.steps) {
+    const seen = new Set(), inputs = new Set(), commands = [];
+    function preparation(id) {
+      if (seen.has(id)) return;
+      seen.add(id); const producer = byId.get(id); if (!producer) return;
+      const env = { ...producer.env }; delete env.HP_PROCESS_SOURCE_SHA; // package provenance, not behavior
+      commands.push({ id, command: producer.command, env });
+      for (const file of producer.inputs) if (/^(?:process-next\/|scripts\/|package(?:-lock)?\.json$|tsconfig[^/]*\.json$|rollup\.config\.mjs$)/.test(file)) inputs.add(file);
+      for (const required of producer.requires) preparation(required);
+    }
+    for (const id of check.preparationOnlyRequires ?? []) preparation(id);
+    if (commands.length) {
+      check.preparationCommands = commands;
+      const key = check.cwd === 'e2e' ? 'rootInputs' : 'inputs';
+      check[key] = [...new Set([...(check[key] ?? []), ...inputs])].sort();
+    }
   }
   return plan;
 }
@@ -128,10 +165,10 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   const release = event === 'beta' || event === 'stable';
   const name = release ? `Тест-сет перед ${version || event}` : event === 'converters' ? 'Диагностика внешних конвертеров'
     : event === 'mutation' ? 'Фоновая проверка чувствительности тестов'
-    : `Тесты для задачи #${issue ?? '—'} (${phase === 'after-review' ? 'правки после ревью' : 'перед ревью'})`;
+    : `Тесты для задачи #${issue ?? '—'} (${phase === 'after-review' ? 'правки после ревью' : phase === 'before-merge' || track === 'ship' ? 'перед слиянием' : 'перед ревью'})`;
   const steps = [];
   const scope = { event, layer, track, issue: issue ?? null, version: version ?? null, phase: phase ?? 'before-review',
-    sourceCommit: inventory.sourceCommit, caseCount: null, countUnit: 'steps; runtime case counts reported separately' };
+    inventorySourceCommit: inventory.sourceCommit, caseCount: null, countUnit: 'steps; runtime case counts reported separately' };
   const result = { name, event, issue: issue ?? null, layer, steps, scope, limitations: [], prerequisites: [] };
   if (docs && !release) { scope.reason = 'Чистая документация: только ревью, проверки не требуются'; return result; }
   if (event === 'converters') { steps.push(converterStep()); return result; }
@@ -173,8 +210,9 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     for (const file of affected.filter(path => path.startsWith('demo/'))) steps.push(smokeStep({ file, args: [] }));
     return finalize(root, result);
   }
-  for (const group of [...new Set(inventory.entries.filter(row => row.kind === 'product').map(row => row.group))]) {
-    const rows = inventory.entries.filter(row => row.kind === 'product' && row.group === group);
+  const discovered = discoverReleaseTests(root), retained = kind => discovered.filter(row => row.kind === kind).map(row => row.path);
+  for (const group of [...new Set(discovered.filter(row => row.kind === 'product').map(row => row.group))]) {
+    const rows = discovered.filter(row => row.kind === 'product' && row.group === group);
     steps.push(nodeStep(`product-node:${group}`, `Поведение: ${rows[0].groupLabel}`, rows.map(row => row.path), ['test-build']));
   }
   steps.push(step('product-backend', 'Backend и сбор покрытия', helper('backend', ...retained('backend')), pythonInputs, [], { outputs: ['artifacts/process-next/backend-coverage.xml'] }));
@@ -182,19 +220,21 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   const packageSources = execFileSync('git', ['ls-files', '-z', '--', 'custom_components/houseplan', 'docs/data-hp-contract.json'],
     { cwd: root, encoding: 'utf8', windowsHide: true }).split('\0').filter(path => path && !path.startsWith('custom_components/houseplan/frontend/'));
   const sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim();
+  scope.sourceCommit = sourceSha;
   steps.push(step('release-package', 'Подготовка проверяемого ZIP и кандидата', helper('release-package'),
     [...packageSources, 'package.json'], ['product-build'],
     { env: { HP_PROCESS_SOURCE_SHA: sourceSha }, outputs: ['artifacts/process-next/package.json', 'artifacts/process-next/houseplan.zip', 'artifacts/process-next/candidate'],
       evidenceOutputs: ['artifacts/process-next/houseplan.zip', 'artifacts/process-next/candidate'] }));
+  let measurementInputs = [];
   if (metricsRequest) {
     await checkedPaths(root, [metricsRequest]);
     const request = JSON.parse(await readFile(resolve(root, metricsRequest), 'utf8'));
-    if (!safeRelative(request.latestStable)) throw Error('metricsRequest.latestStable must be a repository-relative measurement file');
-    steps.push(step('release-measurements', 'Размеры и время относительно последнего stable', helper('measure', metricsRequest),
-      [...browserInputs, metricsRequest, request.latestStable, 'process-next/baselines/v1.83.1.json'], ['release-package', 'demo-assets'],
-      { diagnostic: event === 'stable', outputs: ['artifacts/process-next/measurement.json', 'artifacts/process-next/metrics.json', 'artifacts/process-next/metrics.md'], timeoutMs: 3600000 }));
-  } else if (event === 'beta') steps.push(unavailable('release-measurements', 'Размеры и время относительно последнего stable',
-    'Supply --metrics-request with JSON {"latestStable":"path/to/measurement.json","host":{"power_scheme":"observed power scheme"}}; baseline and comparable host facts are required.'));
+    if (request.latestStable && !safeRelative(request.latestStable)) throw Error('metricsRequest.latestStable must be a repository-relative measurement file');
+    measurementInputs = [metricsRequest, ...(request.latestStable ? [request.latestStable] : [])];
+  }
+  steps.push(step('release-measurements', event === 'stable' ? 'Сохранение замера stable для следующей беты' : 'Размеры и время относительно последнего stable', helper('measure', ...metricsRequest ? [metricsRequest] : []),
+    [...browserInputs, ...measurementInputs, 'process-next/baselines/v1.83.1.json'], ['release-package', 'demo-assets'],
+    { diagnostic: true, alwaysRun: true, outputs: ['artifacts/process-next/measurement.json', 'artifacts/process-next/metrics.json', 'artifacts/process-next/metrics.md'], timeoutMs: 3600000 }));
   for (const smoke of BETA_SMOKES) steps.push(smokeStep(smoke));
   steps.push(step('golden-beta', `${BETA_GOLDEN.length} визуальных кадров: панель ${BETA_PANEL_GOLDEN.length}, Lovelace ${BETA_LOVELACE_GOLDEN.length}, Static ${BETA_STATIC_GOLDEN.length}`, helper('golden-runner', '--selection=beta'),
     [...browserInputs, ...BETA_GOLDEN.map(id => `demo/golden/baselines/${id}.png`), 'demo/golden/baselines/baselines-index.json'],
@@ -207,7 +247,17 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     const external = makeE2ESteps({ ...e2eOptions, selection });
     for (const item of external.steps) { item.requires.push('release-package'); item.dependencyOutputOnlyRequires = ['release-package']; }
     // The runner hashes these in the main checkout even though cwd is E2E.
-    for (const item of external.steps) item.rootInputs = ['process-next/lib/e2e.mjs', 'process-next/catalog/selections.mjs'];
+    for (const item of external.steps) {
+      item.rootInputs = ['process-next/lib/e2e.mjs', 'process-next/catalog/selections.mjs'];
+      if (item.command && !item.id.endsWith('-upgrade') && (!candidateRoot || resolve(candidateRoot) === resolve(root, 'artifacts/process-next/candidate'))) {
+        item.reuseReleaseVersion = true;
+        item.preparationOnlyRequires = ['release-package'];
+        item.rootInputs.push(...buildInputs, 'custom_components/houseplan/**', 'docs/data-hp-contract.json', 'scripts/bundle-sync.mjs');
+        // Packaged frontend is generated; source/build inputs above describe its behavior.
+        item.rootInputs = item.rootInputs.filter(path => path !== 'custom_components/houseplan/**');
+        item.rootInputs.push(...packageSources);
+      }
+    }
     steps.push(...external.steps); result.prerequisites.push(...external.prerequisites); result.limitations.push(...external.limitations);
   };
   addE2E('beta');

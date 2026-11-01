@@ -7,12 +7,14 @@ import { initialQueueState, reduceQueue, MemoryQueueStore, LocalQueueStore, Queu
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40);
 const task = (issue, track = 'show', layer = 'product') => ({ issue, track, layer, ownerAssigned: true, branch: `issue/${issue}`, materialSha: B });
+const decision = (issue, track = 'ship') => ({ type: 'owner-track', issue, track, decisionId: `owner-${issue}`, source: 'chat', sourceRef: `chat:test#${issue}`, decisionText: `Use ${track}` });
 function harness() {
   let state = initialQueueState(), counter = 0, now = 100;
   return { event(value) { state = reduceQueue(state, { id: `e${++counter}`, ...value }, { now, leaseMs: 100 }); return state; },
     get state() { return state; }, time(value) { now = value; } };
 }
 function prepared(h, selected = task(1)) {
+  if (selected.track === 'ship' && selected.ownerAssigned) h.event(decision(selected.issue));
   h.event({ type: 'enqueue', task: selected }); h.event({ type: 'admit' });
   const token = h.state.active.token;
   h.event({ type: 'synchronized', issue: selected.issue, token, expectedBase: A, materialSha: B });
@@ -21,6 +23,7 @@ function prepared(h, selected = task(1)) {
 
 test('ready ship first; show and ask share FIFO; no interruption of an admitted task', () => {
   const h = harness();
+  h.event(decision(3)); h.event(decision(4));
   h.event({ type: 'enqueue', task: task(1, 'ask') }); h.event({ type: 'enqueue', task: task(2, 'show') });
   h.event({ type: 'enqueue', task: task(3, 'ship') }); h.event({ type: 'admit' });
   assert.equal(h.state.active.issue, 3);
@@ -101,4 +104,29 @@ test('local state CAS persists across instances and rejects a stale writer', asy
   await one.compareAndSwap(before.version, next);
   await assert.rejects(two.compareAndSwap(before.version, before.state), StateConflict);
   assert.deepEqual((await two.read()).state, next);
+});
+test('idle ticks never write state and active delivery history remains bounded', async () => {
+  const store = new MemoryQueueStore(), queue = new QueueController(store); let writes = 0;
+  const save = store.compareAndSwap.bind(store); store.compareAndSwap = (...args) => { writes++; return save(...args); };
+  for (let index = 0; index < 1000; index++) await queue.dispatch({ id: `idle${index}`, type: 'admit' });
+  assert.equal(writes, 0); assert.equal((await store.read()).state.revision, 0);
+  const h = harness(), token = prepared(h);
+  for (let index = 0; index < 600; index++) { h.time(101 + index); h.event({ type: 'heartbeat', issue: 1, token }); }
+  assert.ok(Object.keys(h.state.events).length <= 256);
+});
+test('explicit source is required; enqueue ownerAssigned and a shared owner login confer no exemption', () => {
+  let state = reduceQueue(initialQueueState(), { id: 'agent', type: 'enqueue', task: task(1, 'ship') });
+  assert.equal(state.tasks[1].ownerAssigned, false);
+  assert.throws(() => reduceQueue(state, { id: 'actor', type: 'owner-track', issue: 1, actor: 'Matysh', source: 'label', track: 'ship' }), /Explicit owner decision/);
+});
+test('expired lease and clean rebase retain accepted patch review without a new request', () => {
+  const h = harness(), token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'review:same-patch' });
+  h.event({ type: 'review-complete', issue: 1, token, materialSha: B, verdict: 'accepted' });
+  h.time(201); h.event({ type: 'expire' }); h.event({ type: 'admit' });
+  const next = h.state.active.token, nextSha = 'c'.repeat(40);
+  h.event({ type: 'synchronized', issue: 1, token: next, expectedBase: A, materialSha: nextSha, patchId: B });
+  h.event({ type: 's6-complete', issue: 1, token: next, materialSha: nextSha, outcome: 'passed' });
+  assert.equal(h.state.active.phase, 'ready-to-merge'); assert.equal(h.state.active.reviewRequest, 'review:same-patch');
 });

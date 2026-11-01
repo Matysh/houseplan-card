@@ -87,14 +87,17 @@ test('API tool conversation preserves thinking and saves only the submitted repo
     assert.equal(url, 'https://api.anthropic.com/v1/messages');
     const body = JSON.parse(options.body);
     assert.equal(body.model, REVIEW_MODEL);
+    assert.deepEqual(body.cache_control, { type: 'ephemeral' });
     assert.equal(body.messages.some(m => JSON.stringify(m).includes('fixture-api-key')), false);
     requests.push(body);
     const content = requests.length === 1 ? [thinking, { type: 'tool_use', id: 'read', name: 'read_file', input: { path: 'code.mjs' } }] : [{ type: 'tool_use', id: 'submit', name: 'submit_review', input: { verdict: 'accept', understanding: 'Changed answer in the reviewed snapshot.', blockers: [], improvements: [], boundaries: 'Read source only; S6 result supplied separately.' } }];
-    return { ok: true, json: async () => ({ model: REVIEW_MODEL, stop_reason: 'tool_use', content, usage: { input_tokens: 10, output_tokens: 20 } }) };
+    return { ok: true, json: async () => ({ model: REVIEW_MODEL, stop_reason: 'tool_use', content, usage: { input_tokens: 10, output_tokens: 20, cache_read_input_tokens: 30 } }) };
   };
   const result = await runReview({ context, reportDir, apiKey: 'fixture-api-key', fetchImpl });
   assert.equal(result.status, 'accept');
   assert.equal(result.turns, 2);
+  assert.equal(result.usage.cache_read_input_tokens, 60);
+  assert.equal(result.report.verdict, 'accept');
   assert.deepEqual(requests[1].messages[1].content[0], thinking);
   assert.equal(path.dirname(result.file), reportDir);
   const report = readFileSync(result.file, 'utf8');
@@ -113,9 +116,61 @@ test('unknown tools, truncation and provider errors cannot become green reports'
     { ok: true, json: async () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', name: 'submit_review', input: {} }, { type: 'tool_use', name: 'Bash', input: { command: 'npm test' } }] }) },
   ];
   for (const response of results) {
-    await assert.rejects(runReview({ context, reportDir, apiKey: 'fixture', fetchImpl: async () => response }), /HTTP 429|incomplete|Unavailable review tool/);
+    await assert.rejects(runReview({ context, reportDir, apiKey: 'fixture', fetchImpl: async () => response, wait: async () => {} }), /HTTP 429|incomplete|Unavailable review tool/);
   }
   assert.equal(readdirSync(path.dirname(reportDir)).includes('reports'), false);
+});
+
+test('transient API errors retry the same request twice, honour bounded retry-after, never switch models', async t => {
+  const { context, reportDir } = fixture(t);
+  const requests = [], waits = [], progress = [];
+  const report = { verdict: 'accept', summary: 'Simple constant update is consistent.', understanding: 'Only the answer changes.',
+    analysis: [{ topic: 'Call sites', assessment: 'No conversion or branching depends on the old value.', evidence: 'code.mjs:1; checked caller supplied in context.' }],
+    blockers: [], improvements: [], boundaries: 'No runtime execution.' };
+  const result = await runReview({ context, reportDir, apiKey: 'fixture', wait: async ms => waits.push(ms), onProgress: value => progress.push(value),
+    fetchImpl: async (_url, options) => {
+      requests.push(JSON.parse(options.body));
+      if (requests.length < 3) return { ok: false, status: requests.length === 1 ? 429 : 529, headers: { get: () => requests.length === 1 ? '2' : '120' } };
+      return { ok: true, json: async () => ({ model: REVIEW_MODEL, stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'done', name: 'submit_review', input: report }] }) };
+    } });
+  assert.equal(result.status, 'accept');
+  assert.deepEqual(requests[1], requests[0]);
+  assert.deepEqual(requests[2], requests[0]);
+  assert.deepEqual(waits, [2000, 30000]);
+  assert.equal(progress.filter(value => value.phase === 'transport-retry').length, 2);
+  const markdown = readFileSync(result.file, 'utf8');
+  assert.match(markdown, /## Вывод/);
+  assert.match(markdown, /### Call sites/);
+  assert.match(markdown, /code.mjs:1/);
+});
+
+test('persistent transient failure is bounded and authentication errors are not retried', async t => {
+  const { context, reportDir } = fixture(t);
+  for (const [status, expectedCalls] of [[503, 3], [401, 1], [400, 1]]) {
+    let calls = 0;
+    await assert.rejects(runReview({ context, reportDir, apiKey: 'fixture', wait: async () => {}, fetchImpl: async () => { calls++; return { ok: false, status }; } }), new RegExp(`HTTP ${status}`));
+    assert.equal(calls, expectedCalls);
+  }
+});
+
+test('one content reminder preserves the reply and permits a substantive submission', async t => {
+  const { context, reportDir } = fixture(t);
+  const requests = [];
+  const report = { verdict: 'accept', understanding: 'Changed the constant.', blockers: [], improvements: [], boundaries: 'Read source.' };
+  await runReview({ context, reportDir, apiKey: 'fixture', fetchImpl: async (_url, options) => {
+    requests.push(JSON.parse(options.body));
+    return { ok: true, json: async () => requests.length === 1
+      ? { stop_reason: 'end_turn', content: [{ type: 'text', text: 'The implementation is consistent with the requirement.' }] }
+      : { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'done', name: 'submit_review', input: report }] } };
+  } });
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].messages[1].content[0].text, 'The implementation is consistent with the requirement.');
+  assert.match(requests[1].messages[2].content, /submit_review/);
+  let calls = 0;
+  await assert.rejects(runReview({ context, reportDir, apiKey: 'fixture', fetchImpl: async () => {
+    calls++; return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Still no tool submission.' }] }) };
+  } }), /Review incomplete/);
+  assert.equal(calls, 2);
 });
 
 test('report writes reject symlink roots and inconsistent green verdicts', t => {

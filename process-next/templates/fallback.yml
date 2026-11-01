@@ -14,11 +14,16 @@ on:
         required: true
         type: string
       request:
-        description: 'Общий JSON; beta/stable: e2eCommit, haVersion, upgradeFrom; beta: metricsRequest; stable metrics optional; measurementsCommit optional full SHA'
+        description: 'Общий JSON; beta/stable: e2eCommit, haVersion, upgradeFrom; metricsRequest и measurementsCommit необязательны'
         required: true
+        type: string
+      previous_run:
+        description: 'Необязательный ID предыдущего резервного прогона: зачесть подходящие успешные результаты'
+        required: false
         type: string
 permissions:
   contents: read
+  actions: read
 jobs:
   selected-set:
     if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' && (contains(fromJSON('["beta","stable"]'), fromJSON(inputs.request).event) || !contains(fromJSON('["docs","documentation"]'), fromJSON(inputs.request).layer)) }}
@@ -78,8 +83,31 @@ jobs:
           persist-credentials: false
       - name: Подготовить пути и фактические параметры CI
         run: node process-next/templates/prepare-fallback.mjs materialize
+      - name: Получить результаты предыдущего набора
+        if: inputs.previous_run != ''
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: process-next-reuse
+          run-id: ${{ inputs.previous_run }}
+          github-token: ${{ github.token }}
+          path: process-next/.state/fallback-prior
+      - name: Восстановить только отчёты и кеш результатов
+        if: inputs.previous_run != ''
+        run: node process-next/templates/prepare-fallback.mjs restore
       - name: Выполнить выбранный общий набор
         run: node process-next/cli.mjs run --request process-next/.state/fallback-request.json
+      - name: Сохранить применимые результаты для продолжения
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: process-next-reuse
+          path: |
+            process-next/.state/cache
+            artifacts/process-next/backend-coverage.xml
+            artifacts/process-next/golden-*/golden-report.json
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Сохранить результат и логи
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
