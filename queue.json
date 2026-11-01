@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 30,
+  "revision": 31,
   "nextTicket": 6,
   "nextFence": 6,
   "tasks": {
@@ -9,7 +9,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1176-room-candidates",
-      "materialSha": "87c08f2836251490443b5790f7430b9403dab8bd",
+      "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 5,
@@ -17,7 +17,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793554539455,
       "reviewEntry": 4,
-      "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
+      "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22",
       "changedFiles": [
         "demo/smoke_plan_drawing_repairs.mjs",
         "demo/smoke_room_contact_storage.mjs",
@@ -77,11 +77,12 @@
     "worker": "finish",
     "token": "5:finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:1:admit",
     "fence": 5,
-    "materialSha": "87c08f2836251490443b5790f7430b9403dab8bd",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
+    "expectedBase": "bfc2d7324795183834d54794b3c103d77f100e76",
+    "phase": "testing",
     "admittedAt": 1793554542465,
-    "expiresAt": 1793554842465
+    "expiresAt": 1793554851136,
+    "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22"
   },
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -178,6 +179,10 @@
     },
     "finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:1:admit": {
       "digest": "45cb05a0cf236737a61bd1e07ce00ebd699651a7ced6f69e3dad4246b3dcf864",
+      "issue": 1176
+    },
+    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:2:synchronized": {
+      "digest": "cee5c86f7cb10621d86183a636393fdabe59efa32dbf7590d1aac44116da4c93",
       "issue": 1176
     }
   }
