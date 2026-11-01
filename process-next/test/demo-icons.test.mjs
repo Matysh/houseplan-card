@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { mdiPalette, mdiChip, mdiFloorPlan } from '@mdi/js';
-import { generateDemoIcons } from '../../demo/gen_icons.mjs';
+import { generateDemoIcons, demoIconSourceFiles } from '../../demo/gen_icons.mjs';
 import { captureProvenance } from '../../scripts/capture-environment.mjs';
 import { requirePinnedBrowser, enforcePinnedBrowser } from '../../scripts/browser-attestation.mjs';
 
@@ -23,6 +23,7 @@ function fixture(t) {
     writeFileSync(resolve(temp, dir, 'stale.mjs'), 'const icon = "mdi:account";');
   const output = resolve(temp, 'demo', 'srv', 'assets', 'icons.js');
   writeFileSync(output, 'window.__ICONS={"mdi:account":"stale"};\n');
+  writeFileSync(resolve(temp, 'demo', 'srv', 'assets', 'houseplan-assets.json'), '{"icon":"mdi:account"}');
   return { temp, output };
 }
 const readMap = output => JSON.parse(readFileSync(output, 'utf8').slice('window.__ICONS='.length, -2));
@@ -31,6 +32,7 @@ test('#1193 generation replaces stale paths from source, excludes capture/privat
   const { temp, output } = fixture(t);
   assert.deepEqual(generateDemoIcons(temp), { icons: 2, references: 2 });
   assert.deepEqual(readMap(output), { 'mdi:chip': mdiChip, 'mdi:palette': mdiPalette });
+  assert.deepEqual(demoIconSourceFiles(temp), ['demo/page.html', 'src/card.ts']);
   writeFileSync(resolve(temp, 'src/next.json'), '{"icon":"mdi:floor-plan"}');
   generateDemoIcons(temp);
   assert.equal(readMap(output)['mdi:floor-plan'], mdiFloorPlan);

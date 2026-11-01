@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
 import { walk } from './storage.mjs';
+import { demoIconSourceFiles } from '../../demo/helpers/icon-sources.mjs';
 
 export { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E };
 const here = fileURLToPath(new URL('../catalog/', import.meta.url));
@@ -15,7 +16,6 @@ const buildInputs = [...productInputs, 'demo/fixtures/**/*.mjs', 'demo/golden/**
   'demo/helpers/vacuum-history.mjs', 'test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json', 'demo/docs/browser-args.mjs',
   'scripts/source-fingerprint.mjs', 'scripts/css-template-minifier.mjs', 'scripts/bundle-manifest.mjs', 'scripts/coverage-maps.mjs'];
 const browserInputs = [...buildInputs, 'demo/**/*.mjs', 'demo/fixtures/**/*.json', 'demo/srv/demo.html', 'demo/srv/assets/*.svg',
-  'demo/**/*.ts', 'demo/**/*.json', 'demo/**/*.html',
   'scripts/browser-attestation.mjs', 'scripts/toolchain-pins.mjs', 'scripts/capture-environment.mjs'];
 const pythonInputs = ['custom_components/houseplan/**/*.py', 'custom_components/houseplan/manifest.json', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];
 export function discoverReleaseTests(root) {
@@ -69,6 +69,10 @@ async function finalize(root, plan) {
     return cache.get(file);
   }
   for (const check of plan.steps.filter(item => item.cwd === 'root' && item.command)) {
+    // Use the generator's exact source closure. A broad demo/**/*.json would
+    // treat the generated bundle manifest as source and invalidate preparation.
+    if (check.id === 'demo-assets' || check.requires.includes('demo-assets'))
+      check.inputs.push(...demoIconSourceFiles(root));
     const seeds = [...check.inputs, ...check.command.slice(1)].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
     const visited = new Set(), found = new Set(), artifactPreparations = new Set(); let pending = seeds;
     while (pending.length) {
@@ -137,7 +141,7 @@ async function checkedPaths(root, paths, tests = false) {
 function preparations(steps, { build = false, tests = false, browser = false } = {}) {
   if (build) steps.push(step('product-build', 'Сборка и типы продукта', helper('prepare', 'build'), buildInputs, [], { outputs: ['dist'] }));
   if (tests) steps.push(step('test-build', 'Подготовка модулей для тестов', helper('prepare', 'tests'), [...productInputs, 'tsconfig.test.json', 'scripts/fix-test-build.mjs', 'scripts/coverage-maps.mjs'], [], { outputs: ['test-build'] }));
-  if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'demo/**/*.mjs', 'demo/**/*.ts', 'demo/**/*.json', 'demo/**/*.html', 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets', 'demo/srv/assets/icons.js'] }));
+  if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'demo/gen_icons.mjs', 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets', 'demo/srv/assets/icons.js'] }));
 }
 
 function nodeStep(id, name, files, requires = []) {

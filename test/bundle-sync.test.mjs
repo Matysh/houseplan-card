@@ -80,8 +80,10 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       );
     }
     mkdirSync(join(root, 'demo'), { recursive: true });
+    mkdirSync(join(root, 'demo/helpers'));
     mkdirSync(join(root, 'src'));
     writeFileSync(join(root, 'demo/gen_icons.mjs'), readFileSync(new URL('../demo/gen_icons.mjs', import.meta.url)));
+    writeFileSync(join(root, 'demo/helpers/icon-sources.mjs'), readFileSync(new URL('../demo/helpers/icon-sources.mjs', import.meta.url)));
     writeFileSync(join(root, 'src/card.ts'), 'const icon = "mdi:palette";');
     symlinkSync(new URL('../node_modules', import.meta.url), join(root, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const manifest = writeCurrentBundle(root);

@@ -28,8 +28,10 @@ test('product minimum builds once, protects data/rights and opens one saved View
   assert.ok(plan.steps.find(item => item.id === 'product-build').outputs.length);
   const demo = plan.steps.find(item => item.id === 'demo-assets');
   assert.ok(demo.outputs.includes('demo/srv/assets/icons.js'));
-  for (const input of ['demo/gen_icons.mjs', 'demo/**/*.mjs', 'demo/**/*.json', 'demo/**/*.html', 'demo/**/*.ts'])
+  for (const input of ['demo/gen_icons.mjs', 'src/houseplan-card.ts', 'demo/fixtures/sun-transparent.json', 'demo/srv/demo.html'])
     assert.ok(demo.inputs.includes(input), `icon fixture preparation must notice ${input}`);
+  assert.ok(!demo.inputs.includes('demo/srv/assets/houseplan-assets.json'));
+  assert.ok(!demo.inputs.includes('demo/**/*.json'));
 });
 
 test('infrastructure checks only changed syntax and selected mechanism, with no product preparation', async () => {
