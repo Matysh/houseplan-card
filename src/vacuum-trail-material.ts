@@ -4,6 +4,16 @@ import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
 import { liveLast, ownVacuumLiveTail, vacuumLiveGeometry, type VacuumLiveTail, type VacuumLivePending } from './vacuum-live-tail';
 import { freezeVacuumPath } from './vacuum-path-geometry';
 
+// Native paths can be large: one immutable trimmed material per accepted path,
+// independent of frequent live observations and their changing render quota.
+const trimmedLiveTargets = new WeakMap<VacPath, VacPath>();
+function trimLiveTarget(path: VacPath): VacPath {
+  const cached = trimmedLiveTargets.get(path);
+  if (cached) return cached;
+  const trimmed = freezeVacuumPath(path.map((p, i) => i === path.length - 1 ? p.slice(0, -1) : p));
+  trimmedLiveTargets.set(path, trimmed);
+  return trimmed;
+}
 export interface VacuumServerRun {
   points?: unknown;
   paths?: unknown;
@@ -90,9 +100,8 @@ export function currentVacuumTrailFrame(input: {
       && (liveLast(current.path)?.length ?? 0) >= 2;
     const tip = input.moving && !!end && !!target && end[0] === target.x && end[1] === target.y
       && ((liveLast(fresh.path)?.length ?? 0) >= 2 || nativeTip) && input.budget >= 2;
-    const trimEnd = (value: VacPath): VacPath => freezeVacuumPath(value.map((p, i) => i === value.length - 1 ? p.slice(0, -1) : p));
-    const path = tip ? trimEnd(fresh.path) : fresh.path;
-    const nativePath = tip && nativeTip ? trimEnd(current.path) : current.path;
+    const path = tip ? trimLiveTarget(fresh.path) : fresh.path;
+    const nativePath = tip && nativeTip ? trimLiveTarget(current.path) : current.path;
     const tail = vacuumTrailSvg(input.cache, path, input.matrix, input.cmPerUnit, Math.max(0, input.budget - (tip ? 1 : 0)));
     const count = tail.count + (tip && !tail.limited ? 1 : 0);
     const native = vacuumTrailSvg(input.cache, live.waiting ? [] : nativePath, input.matrix, input.cmPerUnit,

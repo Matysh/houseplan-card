@@ -103,3 +103,14 @@ test('#1175 an unrelated singleton or a withheld previous native path cannot inv
     assert.equal(f.current.allowTip,false);
   }
 });
+test('#1175 an unchanged complete native ACK reuses the heavy native projection',()=>{
+  const tail=live({paths:[[[20,10,4000]]]});
+  const server={...run(tail),paths:[[[0,0],[10,0],[10,10],[20,10]]]};
+  const cache=new VacuumPathGeometryCache();
+  const input={telemetry:{pos:{x:20,y:10}},server,local:[],serverFormat:2,moving:true,
+    matrix:[1,0,0,0,1,0],cache,cmPerUnit:1,budget:20000};
+  const first=currentVacuumTrailFrame(input),before=cache.computations;
+  const second=currentVacuumTrailFrame(input);
+  assert.equal(cache.computations-before,1,'only the bounded live window may reproject; native geometry is unchanged');
+  assert.equal(first.path,second.path,'the retained native anchor material remains immutable and reusable');
+});

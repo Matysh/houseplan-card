@@ -3,10 +3,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
 
 requirePinnedBrowser();
-const { page, browser } = await launchColdView({ width: 1200, height: 900 }, 1, [], { hasTouch: true });
+const { page, browser } = await launchColdView({ width: 1800, height: 900 }, 1, [], { hasTouch: true });
 const out = {}, evidence = [];
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 try {
+  // #1184 intentionally hides zoom controls in narrower header phases. Use a
+  // genuinely wide card for this public Fit test, never click a hidden control.
+  await page.locator('#host').evaluate(host => { host.style.width = '100%'; host.style.padding = '0'; });
   await page.evaluate(async () => {
     const c = window.__card;
     for (const suffix of ['robo', 'second', 'local']) {
