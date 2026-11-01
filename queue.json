@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 88,
+  "revision": 89,
   "nextTicket": 12,
   "nextFence": 12,
   "tasks": {
@@ -39,7 +39,7 @@
       "ownerDecision": null,
       "ticket": 11,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793557165713,
       "reviewEntry": 3,
       "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777",
@@ -84,9 +84,9 @@
         "test/mutation-browser-offload.test.mjs"
       ],
       "notice": {
-        "key": "2:Author found remaining obsolete golden/toolbar expectations; complete addressed update on S6 before review.",
-        "reason": "Author found remaining obsolete golden/toolbar expectations; complete addressed update on S6 before review.",
-        "status": "delivered"
+        "key": "3:Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results.",
+        "reason": "Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results.",
+        "status": "pending"
       },
       "s6": {
         "id": "20261101T181936576-2f5e59f5",
@@ -100,7 +100,8 @@
         "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
         "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
         "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777"
-      }
+      },
+      "reason": "Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results."
     },
     "1186": {
       "issue": 1186,
@@ -176,19 +177,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1184,
-    "worker": "finish",
-    "token": "11:finish:e9b74951-6c81-453d-9c59-ac897ba09e86:finish:1:admit",
-    "fence": 11,
-    "materialSha": "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
-    "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-    "phase": "review",
-    "admittedAt": 1793557168586,
-    "expiresAt": 1793560852268,
-    "patchId": "cf8cf95f40839122cfc62be17c6b37d0f28d6777",
-    "reviewRequest": "review:1184:3:cf8cf95f40839122cfc62be17c6b37d0f28d6777:5cc253e20227415209b314bda63ff71f2a3a2655"
-  },
+  "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
       "digest": "9e3159668d076228e2dffa412d98abbc943bc0d55b3d68a91948c454633d083f",
@@ -288,6 +277,10 @@
     },
     "finish:e9b74951-6c81-453d-9c59-ac897ba09e86:finish:4:review-requested": {
       "digest": "c3c46357c68355fad501c99500f963d362c37d68173d1ee55e81df6d623fe1a1",
+      "issue": 1184
+    },
+    "author-return-1184-1793557297106": {
+      "digest": "9679bdfbff289a31df93bd1ec652823d079f76b088fdd6574af77050e4bb30da",
       "issue": 1184
     }
   },
