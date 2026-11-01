@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 429,
+  "revision": 430,
   "nextTicket": 46,
   "nextFence": 45,
   "tasks": {
@@ -545,6 +545,10 @@
       "digest": "7293f823f8769b41c9f727bf60fcd981e4b861cfc1f5e8ca90ff4394f6fef545",
       "issue": 1198
     },
+    "github:41358697256:1:completions:message:d9f23c0e99ed84fbc7ebb07f78a31f4cadc8f9b86562ea365501503abfcc0165": {
+      "digest": "ae979acf6c17f2e9ad04b0c3bdcc62de75b3eb4a83a37f22f125f7f4cd105755",
+      "issue": 1198
+    },
     "finish:1f8a83b7-860c-4058-aa32-5231f78c6590": {
       "digest": "9364ede073e5842fbacb4bc9f37109f25ef787cb036ab07d44f73e88698cfb05",
       "issue": 1197,
@@ -571,29 +575,6 @@
         "layer": "product",
         "materialSha": "cde14713fbb1d1cc8cbddc7895d65a3aaaf2f132",
         "delivered": true
-      }
-    },
-    "finish:7ddf180b-e11f-4a04-ba5d-0ac869587c81:finish:4:s6-complete": {
-      "digest": "49e9dc56f7fb3f59eac10438b46bac1139df655159a1838bc2cbb7fb02466c83",
-      "issue": 1196,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1196,
-        "at": 1793573144619,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261101T224504024-25eac8c7",
-          "name": "Тесты для задачи #1196 (перед слиянием)",
-          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261101T224504024-25eac8c7/report.json",
-          "materialSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb",
-          "status": "passed",
-          "finishedAt": "2026-11-01T22:45:43.545Z",
-          "failures": []
-        }
       }
     },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:1:admit": {
