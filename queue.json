@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 269,
-  "nextTicket": 30,
+  "revision": 270,
+  "nextTicket": 31,
   "nextFence": 29,
   "tasks": {
     "1128": {
@@ -117,14 +117,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1175-vacuum-live-tail",
-      "materialSha": "05915b336757df16c2af8f63bf535d60d53c8bf9",
+      "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 27,
-      "queued": false,
+      "ticket": 30,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793567624193,
-      "reviewEntry": 4,
+      "readyAt": 1793567769313,
+      "reviewEntry": 5,
       "patchId": "cd272b667e9e55547a85a05a924393ccb36ed725",
       "changedFiles": [
         "demo/smoke_vacuum_camera.mjs",
@@ -154,8 +154,7 @@
         "materialSha": "64501c85af91f104189c21d5136bcc1106c6329d",
         "status": "passed",
         "finishedAt": "2026-11-01T20:59:46.618Z"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1176": {
       "issue": 1176,
@@ -389,7 +388,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1169
+    1169,
+    1175
   ],
   "active": {
     "issue": 1153,
@@ -864,6 +864,10 @@
     "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
       "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
       "issue": 1169
+    },
+    "finish:b3ca58cb-db68-4178-8711-f89a88197744": {
+      "digest": "0e895d4029aed12a2ba422a816f3695a22a521a3c8d40084e115dfca9b40b0cb",
+      "issue": 1175
     }
   },
   "devWebhook": {
