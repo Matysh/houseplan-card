@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 205,
+  "revision": 206,
   "nextTicket": 23,
   "nextFence": 22,
   "tasks": {
@@ -201,14 +201,46 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/issue-1190-comment-history",
-      "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913",
+      "materialSha": "11ef6c1a980438925766e745d2ab2bf3024c2e86",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 21,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793565879599,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3d522d2fa4922adc96c0be94ccdb172a715a1651",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/process/AUTHOR.md",
+        "docs/process/REVIEWER.md",
+        "docs/process/SERVICE-COMMENTS.md",
+        "process-next/lib/background.mjs",
+        "process-next/lib/coordinator.mjs",
+        "process-next/lib/github.mjs",
+        "process-next/lib/queue.mjs",
+        "process-next/lib/release-completion.mjs",
+        "process-next/lib/return-worker.mjs",
+        "process-next/lib/review-publication.mjs",
+        "process-next/lib/review.mjs",
+        "process-next/lib/service-messages.mjs",
+        "process-next/lib/task-completion.mjs",
+        "process-next/remote.mjs",
+        "process-next/templates/review-job.mjs",
+        "process-next/test/coordinator.test.mjs",
+        "process-next/test/github.test.mjs",
+        "process-next/test/queue.test.mjs",
+        "process-next/test/release-completion.test.mjs",
+        "process-next/test/remote.test.mjs",
+        "process-next/test/return-worker.test.mjs",
+        "process-next/test/review-job.test.mjs",
+        "process-next/test/review-publication.test.mjs",
+        "process-next/test/review.test.mjs",
+        "process-next/test/service-messages.test.mjs",
+        "process-next/test/task-completion.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -262,11 +294,12 @@
     "worker": "finish",
     "token": "21:finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:1:admit",
     "fence": 21,
-    "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "11ef6c1a980438925766e745d2ab2bf3024c2e86",
+    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+    "phase": "testing",
     "admittedAt": 1793566172779,
-    "expiresAt": 1793566542314
+    "expiresAt": 1793566579062,
+    "patchId": "3d522d2fa4922adc96c0be94ccdb172a715a1651"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -373,6 +406,18 @@
       "digest": "709e0095e072c829709e01a1b3fc7f1c1bad5aa46ebc86228202639488a9601c",
       "issue": 1190
     },
+    "dev-build:41348785066:1:webhook": {
+      "digest": "9fa34eafb6b400e1bdc8016b993b895820c38d137ed0b229bb517eaff4b17be4",
+      "issue": 1190
+    },
+    "dev-build:41348785066:1:webhook:1a160709-05e7-43be-9c21-aaf71ee863ac:delivered": {
+      "digest": "c823e3c945b585c79414c718b5d9387a48d26a485a283eae2fbee175fb565da4",
+      "issue": 1190
+    },
+    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:2:synchronized": {
+      "digest": "138aca043891613bc33e9f4d0b6779cb724b60817905db250937c095d02caee0",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -385,14 +430,6 @@
         "layer": "infra",
         "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
       }
-    },
-    "dev-build:41348785066:1:webhook": {
-      "digest": "9fa34eafb6b400e1bdc8016b993b895820c38d137ed0b229bb517eaff4b17be4",
-      "issue": 1190
-    },
-    "dev-build:41348785066:1:webhook:1a160709-05e7-43be-9c21-aaf71ee863ac:delivered": {
-      "digest": "c823e3c945b585c79414c718b5d9387a48d26a485a283eae2fbee175fb565da4",
-      "issue": 1190
     }
   },
   "devWebhook": {
