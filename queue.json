@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 231,
+  "revision": 232,
   "nextTicket": 26,
   "nextFence": 25,
   "tasks": {
@@ -258,7 +258,7 @@
       "notice": {
         "key": "2:executor-fix",
         "reason": "executor-fix",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793566694874,
         "entry": 2,
@@ -620,6 +620,10 @@
     "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b:finish:4:review-requested": {
       "digest": "31d6e2c997845a706e5365110faddbbedb610703bebf178f040be648e65880e3",
       "issue": 1175
+    },
+    "github:41349669592:1:completions:metadata:e1fbb7f6-70f4-4dd5-807c-f3d85cb0993d:task-notice:1190::": {
+      "digest": "5fb457e5455fff6142e2923d4dc2867e7d2a00590b935acb4e150f69fc660896",
+      "issue": 1190
     }
   },
   "devWebhook": {
