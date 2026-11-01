@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 281,
+  "revision": 282,
   "nextTicket": 33,
   "nextFence": 31,
   "tasks": {
@@ -144,7 +144,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793567769313,
       "reviewEntry": 5,
-      "patchId": "cd272b667e9e55547a85a05a924393ccb36ed725",
+      "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75",
       "changedFiles": [
         "demo/smoke_vacuum_camera.mjs",
         "demo/smoke_vacuum_tail_continuity.mjs",
@@ -409,10 +409,11 @@
     "token": "30:finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:1:admit",
     "fence": 30,
     "materialSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+    "phase": "testing",
     "admittedAt": 1793567985368,
-    "expiresAt": 1793568285368
+    "expiresAt": 1793568323315,
+    "patchId": "d70fca9ca6df73b41d205dc3276118c2773f5b75"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -941,6 +942,10 @@
           "failures": []
         }
       }
+    },
+    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:2:synchronized": {
+      "digest": "dce34fc1b661486021c41906591ec979158a8cca4dc1f1f03c3a8a274288fc91",
+      "issue": 1175
     }
   },
   "devWebhook": {
