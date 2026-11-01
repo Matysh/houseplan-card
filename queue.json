@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 96,
+  "revision": 97,
   "nextTicket": 13,
   "nextFence": 13,
   "tasks": {
@@ -39,7 +39,7 @@
       "ownerDecision": null,
       "ticket": 12,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793557410912,
       "reviewEntry": 4,
       "patchId": "9140107c3de540782190934dd2ba318fce805bd0",
@@ -84,9 +84,9 @@
         "test/mutation-browser-offload.test.mjs"
       ],
       "notice": {
-        "key": "3:Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results.",
-        "reason": "Complete retirement of obsolete header mutation declarations before code review; keep applicable S6 results.",
-        "status": "delivered"
+        "key": "4:review-findings",
+        "reason": "review-findings",
+        "status": "pending"
       },
       "s6": {
         "id": "20261101T182342389-334b7a70",
@@ -100,7 +100,8 @@
         "materialSha": "922ea77262c9b2cda39b6157928c02905a92b8da",
         "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
         "patchId": "9140107c3de540782190934dd2ba318fce805bd0"
-      }
+      },
+      "reason": "review-findings"
     },
     "1186": {
       "issue": 1186,
@@ -187,19 +188,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1184,
-    "worker": "finish",
-    "token": "12:finish:fbafa69d-9f25-4dc2-8dc6-a1e2ec84e96d:finish:1:admit",
-    "fence": 12,
-    "materialSha": "922ea77262c9b2cda39b6157928c02905a92b8da",
-    "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
-    "phase": "review",
-    "admittedAt": 1793557413926,
-    "expiresAt": 1793561067288,
-    "patchId": "9140107c3de540782190934dd2ba318fce805bd0",
-    "reviewRequest": "review:1184:4:9140107c3de540782190934dd2ba318fce805bd0:5cc253e20227415209b314bda63ff71f2a3a2655"
-  },
+  "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
       "digest": "9e3159668d076228e2dffa412d98abbc943bc0d55b3d68a91948c454633d083f",
@@ -331,6 +320,10 @@
     },
     "github:41336958333:1:tick:0:review-presentation": {
       "digest": "329d949962569390a820e853a602afd064c8f3203bd596e81055ee49e4e9869c",
+      "issue": 1184
+    },
+    "github:41336958333:1:tick:0:return": {
+      "digest": "8374c1b55d5254860bb2bea9107c4622fe0f3b98e1d90bf8d93e4c15a97abe7e",
       "issue": 1184
     }
   },
