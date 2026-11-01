@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 483,
+  "revision": 484,
   "nextTicket": 50,
   "nextFence": 49,
   "tasks": {
@@ -722,6 +722,10 @@
       "digest": "23dacb8ba85df3c779b6676e5494d25d4c4da8c47511a6fc9aef0155745d9657",
       "issue": 1198
     },
+    "github:41359544914:1:completions:message:a6214d5223db1394744d4cb136d366f2d6443b272dfbc09abd3520d22468f217": {
+      "digest": "6f5d796c020fafe75b5c7780d79fce00bf878e4732538c358a66e57d57777683",
+      "issue": 1199
+    },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
       "digest": "04b2c5c957b052786153bf1cbee5b0b82d4b45f47cc4833eae16a40910535af0",
       "issue": 1198,
@@ -846,7 +850,8 @@
           "entry": 2,
           "detail": "Браузер: canvas surface gestures: failed",
           "eventId": "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return:return:1198"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:477d6da4-829c-4cf6-b063-123f13e55e8b:finish:1:admit": {
