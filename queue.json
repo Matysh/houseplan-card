@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 61,
+  "revision": 62,
   "nextTicket": 9,
   "nextFence": 9,
   "tasks": {
@@ -87,7 +87,8 @@
         "PROCESS.md",
         "docs/process/REVIEWER.md",
         "process-next/prompts/review.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -109,9 +110,9 @@
     "fence": 8,
     "materialSha": "5cc253e20227415209b314bda63ff71f2a3a2655",
     "expectedBase": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793555711708,
-    "expiresAt": 1793556017354,
+    "expiresAt": 1793559320517,
     "patchId": "b038a181bfe22f8405b45bc68c6a527076cc4c40"
   },
   "events": {
@@ -129,6 +130,10 @@
     },
     "finish:4619d565-b715-4b9e-a73d-68d652f58403:finish:2:synchronized": {
       "digest": "35c0c8f0cc0e3d1d9bc799c7e574f28237878fb018d19ec54929729bf10e9948",
+      "issue": 1189
+    },
+    "finish:4619d565-b715-4b9e-a73d-68d652f58403:finish:3:s6-complete": {
+      "digest": "fb1b7f2e6825c9801ee947ba2a03ecdc1dcc630dca56d9cf8db595ae3d899462",
       "issue": 1189
     }
   },
