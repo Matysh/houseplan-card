@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 215,
+  "revision": 216,
   "nextTicket": 24,
   "nextFence": 23,
   "tasks": {
@@ -85,7 +85,9 @@
         "key": "1:checks-failed",
         "reason": "checks-failed",
         "status": "delivered"
-      }
+      },
+      "automationError": "checks-unavailable",
+      "automationSince": 1793566556877
     },
     "1176": {
       "issue": 1176,
@@ -507,6 +509,10 @@
         "layer": "infra",
         "materialSha": "89ce55dfa86e4d2021c2b0646eb46bfa434f2481"
       }
+    },
+    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:4:automation-pending": {
+      "digest": "e91723e9c36b525f9791f275d4a040880c305f6ad91c3af160c069dc7609c106",
+      "issue": 1175
     }
   },
   "devWebhook": {
