@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 522,
+  "revision": 523,
   "nextTicket": 52,
   "nextFence": 52,
   "tasks": {
@@ -692,6 +692,10 @@
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
     },
+    "github:41360373245:1:completions:message:20f2daff68bf702385a6e6a552728d3afee652aeec73f16601b99a1f6fab3a87": {
+      "digest": "0126a27191ce3c69162ecc1307feaf195944a3654a8396d1a36be376e65fd74f",
+      "issue": 1203
+    },
     "finish:fb7238d0-9d77-4205-b55c-7a33ee810a5f": {
       "digest": "0c86365d47349d607c944e222c3fa062a02ea00d8e62021d7dd1b04eabb5c7f0",
       "issue": 1203,
@@ -704,29 +708,6 @@
         "layer": "product",
         "materialSha": "3ae3dc538ed34d900165e5b659fd54740885ec98",
         "delivered": true
-      }
-    },
-    "finish:05a68573-6141-4c2b-a6e5-07488ec98d15:finish:2:s6-complete": {
-      "digest": "5454fcbc468c25b2a5e33bdab11824574910765a691996055e3b38a38898fdd5",
-      "issue": 1198,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1198,
-        "at": 1793574326291,
-        "entry": 3,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261101T230452840-7f920582",
-          "name": "Тесты для задачи #1198 (перед слиянием)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T230452840-7f920582/report.json",
-          "materialSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
-          "status": "passed",
-          "finishedAt": "2026-11-01T23:05:24.034Z",
-          "failures": []
-        }
       }
     },
     "github:41360373245:1:tick:0:admit": {
