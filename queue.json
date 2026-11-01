@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 168,
-  "nextTicket": 18,
+  "revision": 169,
+  "nextTicket": 19,
   "nextFence": 18,
   "tasks": {
     "1128": {
@@ -28,6 +28,20 @@
         "status": "published",
         "sourceSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e"
       }
+    },
+    "1156": {
+      "issue": 1156,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1156-copy-categories",
+      "materialSha": "333f98685ede7f07b0df5163532f739e338dca19",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 18,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793565758976,
+      "reviewEntry": 1
     },
     "1176": {
       "issue": 1176,
@@ -175,7 +189,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1156
+  ],
   "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -229,6 +245,10 @@
     "github:41348112991:1:completions:metadata:92455352-7121-422b-a4ff-12557034ba54:review-presentation:1190:spec:52863a2b954f8a0bcc99": {
       "digest": "69c08831371a00dcac05534cd6b961c99a3aa70180e6441c84331b499f020c97",
       "issue": 1190
+    },
+    "finish:9df3db92-e856-46af-b55b-de66d6b29db6": {
+      "digest": "586ca4683f51d7e7be311f746196419490f882f981ecacd3bfdec7225fc4cd83",
+      "issue": 1156
     }
   },
   "devWebhook": {
