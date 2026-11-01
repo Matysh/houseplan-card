@@ -8,5 +8,7 @@
   "git": { "remote": "origin", "dev": "dev" },
   "queue": { "branch": "process-state", "path": "queue.json" },
   "release": { "branch": "process-release-state", "path": "releases.json" },
+  "hacs": { "url": "", "tokenEnv": "HA_TOKEN" },
+  "telegram": { "tokenEnv": "TELEGRAM_BOT_TOKEN", "chatEnv": "TELEGRAM_CHAT_ID" },
   "review": { "workflow": "process-next-review.yml", "ref": "dev", "commentAuthor": "github-actions[bot]" }
 }

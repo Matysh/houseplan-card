@@ -150,6 +150,7 @@ export const REVIEW_TOOLS = [
     summary: str, understanding: str,
     analysis: { type: 'array', items: { type: 'object', properties: { topic: str, assessment: str, evidence: str }, required: ['topic', 'assessment', 'evidence'], additionalProperties: false } },
     blockers: { type: 'array', items: str }, improvements: { type: 'array', items: str }, boundaries: str,
+    outsideFindings: { type: 'array', items: { type: 'object', properties: { title: str, problem: str, evidence: str, suggestedFix: str, kind: { type: 'string', enum: ['bug', 'infra', 'tech-debt', 'docs'] } }, required: ['title', 'problem', 'evidence', 'suggestedFix'], additionalProperties: false } },
   }, ['verdict', 'summary', 'understanding', 'analysis', 'blockers', 'improvements', 'boundaries']),
 ];
 
@@ -211,6 +212,8 @@ function validateReport(report) {
   // Older saved reports remain readable. New submissions request these fields, without a quota.
   if (report.summary !== undefined && (typeof report.summary !== 'string' || !report.summary.trim())) throw new Error('Invalid summary');
   if (report.analysis !== undefined && (!Array.isArray(report.analysis) || report.analysis.some(item => !item || ['topic', 'assessment', 'evidence'].some(key => typeof item[key] !== 'string' || !item[key].trim())))) throw new Error('Invalid analysis');
+  if (report.outsideFindings !== undefined && (!Array.isArray(report.outsideFindings) || report.outsideFindings.some(item => !item || ['title', 'problem', 'evidence', 'suggestedFix'].some(key => typeof item[key] !== 'string' || !item[key].trim())))) throw new Error('Invalid outside findings');
+  if (report.outsideFindings?.some(item => item.kind !== undefined && !['bug', 'infra', 'tech-debt', 'docs'].includes(item.kind))) throw new Error('Invalid outside defect kind');
   if (report.verdict === 'accept' && report.blockers.length) throw new Error('An accepted review cannot contain blockers');
   if (report.verdict === 'changes_requested' && !report.blockers.length) throw new Error('Changes requested needs a concrete blocker');
   return report;
@@ -228,12 +231,13 @@ export function renderReviewReport({ context, report, model = REVIEW_MODEL }) {
   validateReport(report);
   const items = values => values.length ? values.map(s => `- ${s}`).join('\n') : 'Нет.';
   const analysis = report.analysis?.length ? `\n## Разбор решения\n\n${report.analysis.map(item => `### ${item.topic}\n\n${item.assessment}\n\nОснование: ${item.evidence}`).join('\n\n')}\n` : '';
+  const outside = report.outsideFindings?.length ? `\n## Отдельные дефекты вне задачи\n\n${report.outsideFindings.map(item => `### ${item.title}\n\n${item.problem}\n\nОснование: ${item.evidence}\n\nНаправление исправления: ${item.suggestedFix}`).join('\n\n')}\n` : '';
   const author = context.authorContext ?? extractAuthorContext(context.task);
   const fence = '`'.repeat(Math.max(3, ...[...author.text.matchAll(/`+/g)].map(match => match[0].length + 1)));
   const briefing = author.status === 'provided'
     ? `Источник: описание задачи #${author.source.issue ?? '—'}, раздел «${AUTHOR_CONTEXT_HEADING}». Это сведения исполнителя, не выводы ревьюера.\n\n${fence}text\n${author.text}\n${fence}`
     : 'Отдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.';
-  return `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n\n## Границы анализа\n\n${report.boundaries}\n\n## Переданный контекст исполнителя\n\n${briefing}\n`;
+  return `# Ревью: ${report.verdict}\n\nМодель: ${model}\nМатериал: ${context.base} → ${context.head}\nВид: ${context.kind}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n${outside}\n## Границы анализа\n\n${report.boundaries}\n\n## Переданный контекст исполнителя\n\n${briefing}\n`;
 }
 
 export function writeReviewReport({ context, report, reportDir, model = REVIEW_MODEL }) {

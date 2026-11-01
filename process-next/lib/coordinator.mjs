@@ -9,6 +9,10 @@ export function devBuildTarget(state, currentDevSha) {
   return pending.length ? { sha: currentDevSha, issue: pending[0].issue } : null;
 }
 const stopped = issue => issue.state === 'closed' || names(issue).includes('blocked');
+function pendingPresentation(result, { issue, kind, requestId, materialSha, expectedBase, patchId }) {
+  return result?.publicationPending ? { issue, kind, requestId, materialSha, expectedBase,
+    ...(patchId ? { patchId } : {}), ...(result.runId ? { runId: result.runId } : {}) } : null;
+}
 function installedTrack(issue) {
   const tracks = names(issue).filter(name => /^track:(ship|show|ask)$/.test(name)).map(name => name.slice(6));
   if (tracks.length > 1) throw Error('Resolve conflicting track labels; automation does not change an installed track');
@@ -101,6 +105,10 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
   }
   if (result.pending) return { action: 'spec-review-pending', requestId };
   if (!['accepted', 'changes_requested'].includes(result.verdict)) return { action: 'spec-review-pending', requestId };
+  const presentation = pendingPresentation(result, { issue: issue.number, kind: 'spec', requestId,
+    materialSha: base, expectedBase: base, patchId: contextDigest });
+  if (presentation) await queue.dispatch({ id: `${eventId}:spec-presentation`, type: 'review-presentation',
+    issue: issue.number, kind: 'spec', record: presentation });
   await queue.dispatch({ id: `${eventId}:spec-complete`, type: 'spec-complete', issue: issue.number, requestId, verdict: result.verdict, reportUrl: result.reportUrl });
   await api.moveStatus(issue.number, result.verdict === 'accepted' ? 'S5-ready' : 'S3-spec', issue.labels);
   return { action: 'spec-complete', verdict: result.verdict };
@@ -197,6 +205,9 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
       }
       if ((result.materialSha !== active.materialSha && result.patchId !== active.patchId) || result.requestId !== active.reviewRequest)
         throw Error('Review belongs to another request/material');
+      const presentation = pendingPresentation(result, { issue: active.issue, kind: 'code', requestId: active.reviewRequest,
+        materialSha: result.materialSha, expectedBase: result.base ?? active.expectedBase, patchId: result.patchId ?? active.patchId });
+      if (presentation) await dispatch('review-presentation', { kind: 'code', record: presentation });
       if (['changes_requested', 'changes-requested'].includes(result.verdict)) return returned('review-findings');
       if (result.verdict !== 'accepted') return pending('review-incomplete');
       return { action: 'ready-to-merge', state: await dispatch('review-complete', { materialSha: active.materialSha, verdict: 'accepted', review: result }) };
@@ -239,7 +250,8 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
 
 export async function reconcileMergedLabel({ queue, api, issue, activated = false }) {
   const task = (await queue.store.read()).state.tasks[issue.number];
-  if (task?.status !== 'S8-merged' || issueStatus(issue) === 'S8-merged') return { action: 'unchanged' };
+  if (task?.status !== 'S8-merged' || issue.state === 'closed'
+    || issueStatus(issue) === 'S8-merged' && !names(issue).includes('to_release')) return { action: 'unchanged' };
   if (!activated) return { planned: true, action: 'label-S8', issue: issue.number };
   await api.moveStatus(issue.number, 'S8-merged', issue.labels);
   return { action: 'label-S8', issue: issue.number };

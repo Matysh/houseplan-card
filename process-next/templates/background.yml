@@ -1,0 +1,61 @@
+# Inert template: install separately when the background schedule is enabled.
+name: Фоновые мутации и диагностика покрытия
+run-name: Фоновые проверки тестов · ${{ github.run_number }}
+on:
+  schedule:
+    - cron: '43 0 * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: process-next-background
+  cancel-in-progress: false
+jobs:
+  background:
+    if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        kind: [mutations, coverage]
+    name: ${{ matrix.kind == 'mutations' && 'Ночная часть мутаций' || 'Диагностика покрытия JS/TS' }}
+    env:
+      PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
+      HP_BACKGROUND_KIND: ${{ matrix.kind }}
+      HP_MUTATION_SHARDS: ${{ vars.PROCESS_NEXT_MUTATION_SHARDS || '5' }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: dev
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        if: matrix.kind == 'mutations'
+        with:
+          python-version-file: .python-version
+      - run: python3 -m pip install -r tests_backend/requirements.txt
+        if: matrix.kind == 'mutations'
+      - run: npx playwright install --with-deps chromium
+      - name: Выполнить отдельную фоновую работу
+        run: node process-next/templates/background-job.mjs
+      - name: Сообщить об отказе мутаций в issue
+        if: always()
+        run: node process-next/templates/background-job.mjs --report
+      - name: Сохранить полные и частичные диагностические результаты
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: background-${{ matrix.kind }}-${{ github.run_id }}
+          path: |
+            artifacts/process-next/background
+            artifacts/diagnostic-coverage
+          retention-days: 30
+          if-no-files-found: warn

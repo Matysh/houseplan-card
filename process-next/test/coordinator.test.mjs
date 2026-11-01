@@ -107,6 +107,31 @@ test('failed S8 label publication never re-merges or reruns tests and is separat
   await reconcileMergedLabel({ queue: h.queue, api: h.api, issue: h.issue, activated: true });
   assert.ok(h.issue.labels.includes('S8-merged')); assert.equal(h.tests, 1);
 });
+test('unpublished paid code report survives accepted merge and rejected return for metadata-only retry', async () => {
+  for (const verdict of ['accepted', 'changes_requested']) {
+    const h = harness('show'); await h.ready(); await h.step(); await h.step(); await h.step(); await h.step();
+    await reconcileQueue({ queue: h.queue, api: h.api, activated: true, eventId: `presentation-${verdict}`,
+      readReviewResult: async ({ requestId }) => ({ requestId, verdict, materialSha: B, publicationPending: true, runId: 23 }) });
+    if (verdict === 'accepted') await h.step();
+    const state = (await h.queue.store.read()).state, task = state.tasks[1], publication = Object.values(state.reviewPublications)[0];
+    assert.equal(task.status, verdict === 'accepted' ? 'S8-merged' : 'S6-in-progress');
+    assert.equal(publication.status, 'pending'); assert.equal(publication.runId, 23);
+    assert.equal(publication.materialSha, B); assert.equal(h.tests, 1);
+  }
+});
+test('accepted S4 with a failed comment preserves presentation receipt after advancing to S5', async () => {
+  const queue = new QueueController(new MemoryQueueStore()), issue = { number: 55, state: 'open', body: 'Spec', labels: ['S4-spec-review', 'track:ask'] };
+  let ready = false;
+  const options = { queue, api: { moveStatus: async (_number, status) => { issue.labels = [status, 'track:ask']; } },
+    git: { dev: 'dev', remoteHead: async () => A }, issue, activated: true, requestReview: async () => {},
+    readReviewResult: async () => ready ? { verdict: 'accepted', publicationPending: true, runId: 24 } : { missing: true } };
+  await reconcileSpecReview({ ...options, eventId: 'spec-request' }); ready = true;
+  await reconcileSpecReview({ ...options, eventId: 'spec-result' });
+  assert.ok(issue.labels.includes('S5-ready'));
+  const publication = Object.values((await queue.store.read()).state.reviewPublications)[0];
+  assert.equal(publication.kind, 'spec'); assert.equal(publication.status, 'pending');
+  assert.equal(publication.runId, 24); assert.equal(publication.materialSha, A);
+});
 test('task layer follows significant diff, not an agent docs declaration or test-directory name', () => {
   assert.equal(taskLayerFromDiff(['README.md', 'docs/guide.md']), 'docs');
   for (const file of ['src/logic.ts', 'package.json', 'package-lock.json', 'rollup.config.mjs', 'tsconfig.test.json']) assert.equal(taskLayerFromDiff([file]), 'product');

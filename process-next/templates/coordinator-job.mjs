@@ -28,6 +28,12 @@ for (let index = 0; index < 4; index++) {
   console.log(JSON.stringify(result));
   if (!['ready-to-merge', 'merged', 'expired'].includes(result.action)) break;
 }
+// Metadata retries do not reacquire a task slot or replay its tests/review/merge.
+try { console.log(JSON.stringify(await call('reconcile-completions', { id: `${delivery}:completions` }))); }
+catch { console.error('Task bookkeeping remains pending; retry on the next tick'); }
+// Delivery retry is independent of building/publishing a new dev artifact.
+try { console.log(JSON.stringify(await call('dev-webhook', { id: `${delivery}:dev-webhook` }))); }
+catch { console.error('HA wakeup remains pending; retry on the next tick'); }
 const { state } = await new GitHubQueueStore(api, config.queue).read();
 const summary = queueSummary(state);
 const text = [`Очередь: ${summary.active ? `#${summary.active.issue} — ${summary.active.phase}` : 'слот свободен'}`,

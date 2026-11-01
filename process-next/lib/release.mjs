@@ -1,5 +1,6 @@
 import { checkedRef, GitAdapter, sha256 } from './github.mjs';
 import { readFile } from 'node:fs/promises';
+import { membershipIssueNumbers } from './release-data.mjs';
 
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
 const copy = value => structuredClone(value);
@@ -67,7 +68,8 @@ export function reduceRelease(previous, event) {
       if (event.kind !== 'beta' && (!source || source.sha !== event.sourceSha)) throw Error('Stable starts at the published beta; hotfix starts at the published stable');
       state.candidates[event.candidate] = { id: event.candidate, kind: event.kind, branch: event.branch,
         sourceSha: event.sourceSha, sha: event.sourceSha, runner: null, running: null, status: 'prepared',
-        includedIssues: copy(event.includedIssues ?? []), reviewRequired: event.kind === 'hotfix', review: null,
+        membership: event.membership ? copy(event.membership) : null,
+        includedIssues: event.membership ? membershipIssueNumbers(event.membership, event.sourceSha) : [], reviewRequired: event.kind === 'hotfix', review: null,
         metrics: null, metricsAcceptedSha: null, portToDev: [], diagnostics: [] };
       state.active = event.candidate; break;
     }
@@ -88,7 +90,21 @@ export function reduceRelease(previous, event) {
       if (state.active !== item.id || !sha(event.sha) || event.sha === item.sha) throw Error('A fix needs a new immutable candidate');
       item.portToDev.push({ from: item.sha, to: event.sha, syncMode: 'merge', status: 'pending' });
       item.sha = event.sha; item.runner = null; item.reviewRequired = event.productChanged !== false;
+      item.membership = event.membership ? copy(event.membership) : null;
+      item.includedIssues = event.membership ? membershipIssueNumbers(event.membership, event.sha) : [];
+      delete item.releaseData;
       item.review = null; item.metrics = null; item.metricsAcceptedSha = null; item.status = 'prepared'; break;
+    }
+    case 'release-prepared': {
+      const item = candidate(), data = event.data;
+      const included = membershipIssueNumbers(data?.membership, item.sha);
+      if (event.sha !== item.sha || typeof data.body !== 'string' || !data.body.trim()) throw Error('Prepared release data must describe this candidate and contain authored notes');
+      if (item.status === 'published' || item.status === 'publishing') {
+        if (JSON.stringify(item.releaseData) !== JSON.stringify(data)) throw Error('Published release data is immutable');
+        break;
+      }
+      if (item.running) throw Error('Do not change release data while its candidate is running');
+      item.releaseData = copy(data); item.membership = copy(data.membership); item.includedIssues = included; break;
     }
     case 'review-accepted': {
       const item = candidate(); editable(item);
@@ -128,7 +144,7 @@ export function reduceRelease(previous, event) {
       item.status = 'published'; item.publication = copy(event.evidence);
       const record = { id: item.id, sha: item.sha, tag: item.tag, branch: item.branch, runner: copy(item.runner) };
       if (item.kind === 'beta') {
-        item.retiredBeta = state.published.beta?.branch ?? null; state.published.beta = record;
+        item.retiredBeta = state.published.beta ? copy(state.published.beta) : null; state.published.beta = record;
       } else {
         state.published.stable = record;
         const port = item.portToDev.find(row => row.to === item.sha);
@@ -142,6 +158,26 @@ export function reduceRelease(previous, event) {
       if (item.status !== 'published' || event.evidence?.hacsAvailable !== true
         || event.evidence?.artifactDigest !== item.publication.artifactDigest || event.evidence?.tag !== item.tag) throw Error('Separate HACS and artifact observations required');
       item.delivery = copy(event.evidence); break;
+    }
+    case 'completion-step': {
+      const item = candidate();
+      if (item.status !== 'published' || !['issues', 'return-to-dev', 'retire-beta'].includes(event.name)
+        || !event.result || !['running', 'completed', 'pending', 'not-required'].includes(event.result.status))
+        throw Error('Completion records an actual published release side effect');
+      if (event.name === 'return-to-dev' && event.result.status === 'completed') {
+        if (!sha(event.result.devSha)) throw Error('Completed release return requires the actual dev commit');
+        for (const port of item.portToDev ?? []) {
+          if (port.status === 'ported') continue;
+          if (port.to === item.sha) Object.assign(port, { status: 'ported', devSha: event.result.devSha });
+          else Object.assign(port, { status: 'superseded', supersededBy: item.sha });
+        }
+      }
+      item.completion ??= {}; item.completion[event.name] = copy(event.result); break;
+    }
+    case 'announcement': {
+      const item = candidate();
+      if (item.status !== 'published' || !event.receipt) throw Error('Announcement belongs to a published release');
+      item.announcement = copy(event.receipt); break;
     }
     case 'port-completed': {
       const item = candidate(), port = item.portToDev.find(row => row.to === event.fixSha);
@@ -160,7 +196,7 @@ export function reduceRelease(previous, event) {
 /** A plan only: status must come from current issue state, never from inclusion alone. */
 export function releaseClosePlan(candidate, issues) {
   if (candidate.status !== 'published' || !candidate.delivery) return [];
-  const included = new Set(candidate.includedIssues);
+  const included = new Set(membershipIssueNumbers(candidate.membership, candidate.sha));
   return issues.filter(issue => included.has(issue.number) && issue.state !== 'closed'
     && issue.labels.some(label => (typeof label === 'string' ? label : label.name) === 'S8-merged'))
     .map(issue => ({ issue: issue.number, change: { state: 'closed', state_reason: 'completed' } }));
@@ -248,7 +284,7 @@ export class ReleaseGitAdapter extends GitAdapter {
     else {
       if (!worktree) throw Error('An isolated worktree path is required to prepare the return branch');
       await this.git(['worktree', 'add', '-b', branch, worktree, devSha]);
-      await this.git(['-C', worktree, 'merge', '--no-ff', '-m', `Return published ${candidate.tag} to dev\n\nIssue: #${issue}\nUser-Visible: no`, candidate.sha]);
+      await this.git(['-C', worktree, 'merge', '--no-ff', '-m', `Return published ${candidate.tag} to dev\n\nIssue: #${issue}\nRelease: ${candidate.tag}\nUser-Visible: no`, candidate.sha]);
       head = await this.git(['-C', worktree, 'rev-parse', 'HEAD']);
     }
     await this.assertAncestor(devSha, head); await this.assertAncestor(candidate.sha, head);
@@ -273,7 +309,7 @@ export class ReleasePublisher {
     const ready = releaseReadiness(candidate);
     if (!ready.ready) throw Error(`Candidate is not ready: ${ready.reasons.join(', ')}`);
     checkedRef(tag);
-    if (!sha(candidate.sha) || !Array.isArray(artifacts) || !artifacts.length
+    if (!sha(candidate.sha) || !Array.isArray(artifacts) || !artifacts.some(item => item.name === 'houseplan.zip')
       || new Set(artifacts.map(item => item.name)).size !== artifacts.length
       || artifacts.some(item => !/^[\w.-]+$/.test(item.name ?? '') || !/^[a-f0-9]{64}$/.test(item.expectedDigest ?? '') || !item.path))
       throw Error('Prepared named artifacts with expected digests are required');
@@ -292,6 +328,10 @@ export class ReleasePublisher {
     let release = await this.github.findRelease(tag);
     if (!release) release = await this.github.createDraftRelease({ tag, sourceSha: candidate.sha, prerelease: candidate.kind === 'beta', body });
     if (!release?.id || release.tag_name !== tag) throw Error('Release identity differs');
+    // A previously created draft may still contain an older author's text. A lost
+    // response is safe to retry: the next read observes the already-updated body.
+    if (release.draft && (release.body ?? '') !== body)
+      release = await this.github.updateRelease(release.id, { body });
     for (const artifact of prepared) {
       const matches = (release.assets ?? []).filter(item => item.name === artifact.name);
       if (matches.length > 1) throw Error('Ambiguous release artifact');
@@ -305,9 +345,11 @@ export class ReleasePublisher {
     await this.git.publishCandidateRefs({ materialSha: candidate.sha, tag, kind: candidate.kind, expectedMain });
     if (release.draft) release = await this.github.updateRelease(release.id, { draft: false, prerelease: candidate.kind === 'beta' });
     const evidence = [];
-    for (const artifact of prepared) evidence.push(await this.github.verifyPublication({ tag, expectedSha: candidate.sha,
-      assetName: artifact.name, expectedDigest: artifact.expectedDigest }));
+    for (const artifact of prepared) evidence.push({ ...await this.github.verifyPublication({ tag, expectedSha: candidate.sha,
+      assetName: artifact.name, expectedDigest: artifact.expectedDigest }), assetName: artifact.name });
     const warnings = []; let measurement = null;
+    if (body && typeof release.body === 'string' && release.body !== body)
+      warnings.push('Published release notes differ from the prepared text; the public text was preserved');
     if (candidate.kind === 'stable') {
       try {
         if (!measurementPath) throw Error('Diagnostic stable measurement is not available');
@@ -322,7 +364,7 @@ export class ReleasePublisher {
         measurement = { name, assetId: asset.id, digest: expectedDigest, sourceSha: candidate.sha };
       } catch (error) { warnings.push(`Stable measurement: ${error.message}`); }
     }
-    return { published: true, sha: candidate.sha, tag, evidence: evidence[0], artifacts: evidence, deliveryPending: true, measurement, warnings };
+    return { published: true, sha: candidate.sha, tag, evidence: evidence.find(item => item.assetName === 'houseplan.zip'), artifacts: evidence, deliveryPending: true, measurement, warnings };
   }
 }
 

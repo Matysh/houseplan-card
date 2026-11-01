@@ -6,6 +6,8 @@ import { buildReviewContext, runReview } from '../lib/review.mjs';
 import { GitHubClient } from '../lib/github.mjs';
 import { readJson, writeJson } from '../lib/storage.mjs';
 import { WorkflowReviewAdapter } from '../remote.mjs';
+import { publishReviewReceipt } from '../lib/review-publication.mjs';
+export { publishReviewReceipt } from '../lib/review-publication.mjs';
 
 function requestFrom(env) {
   if (env.PROCESS_NEXT_ENABLED !== 'true') throw Error('New process is not activated');
@@ -78,18 +80,8 @@ export async function prepareReviewJob({ env = process.env, api, reviewAdapter, 
 /** Optional presentation only. A failed/retried comment never reruns the model. */
 export async function publishReviewComment({ env = process.env, api, reportDir = resolve('process-next/.state/reviews') } = {}) {
   const request = requestFrom(env), receipt = compatible(readJson(join(reportDir, 'result.json')), request);
-  const marker = `<!-- process-next-review:${request.requestId} -->`;
-  const comments = await issueComments(api, request.issue);
-  const identity = { requestId: receipt.requestId, materialSha: receipt.materialSha, base: receipt.base, kind: receipt.kind, verdict: receipt.verdict, model: receipt.model };
   const reportUrl = receipt.reportUrl ?? (env.GITHUB_RUN_ID ? `${env.GITHUB_SERVER_URL ?? 'https://github.com'}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}` : null);
-  const suffix = reportUrl ? `\n\nПолный отчёт: ${reportUrl} (артефакт review-result).` : '';
-  const report = receipt.markdown.length > 55_000 ? `${receipt.markdown.slice(0, 55_000)}\n\n[Отчёт в комментарии сокращён; полный текст сохранён в артефакте.]` : receipt.markdown;
-  const body = `${marker}\n\n\`\`\`json\n${JSON.stringify(identity)}\n\`\`\`\n\n${report}${suffix}`;
-  const existing = comments.find(comment => comment.author === 'github-actions[bot]' && comment.body.startsWith(marker));
-  if (existing?.body === body) return { published: true, reused: true };
-  if (existing) await api.request('PATCH', `${api.root}/issues/comments/${existing.id}`, { body });
-  else await api.comment(request.issue, body);
-  return { published: true };
+  return publishReviewReceipt({ api, receipt, reportUrl });
 }
 
 async function main() {

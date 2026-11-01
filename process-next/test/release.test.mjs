@@ -18,7 +18,8 @@ function harness(initial) {
   return { event(value) { state = reduceRelease(state, { id: `e${++count}`, candidate: 'beta1', ...value }); return state; },
     get state() { return state; }, get candidate() { return state.candidates.beta1; } };
 }
-function create(h, extra = {}) { h.event({ type: 'create', kind: 'beta', branch: 'release/beta1', sourceSha: A, includedIssues: [1, 2], ...extra }); }
+function create(h, extra = {}) { const sourceSha = extra.sourceSha ?? A; h.event({ type: 'create', kind: 'beta', branch: 'release/beta1', sourceSha,
+  membership: { schema: 1, candidate: sourceSha, base: null, issues: [1, 2].map(number => ({ number, commits: [sourceSha] })) }, ...extra }); }
 function passed(h) {
   h.event({ type: 'run-started', sha: h.candidate.sha });
   h.event({ type: 'runner-report', report: report(h.candidate.sha, h.candidate.kind) });
@@ -67,12 +68,26 @@ test('previous published beta survives a failed candidate and is retired only af
   const h = harness(initialReleaseState({ beta: { sha: C, branch: 'release/old-beta', results: {} } })); create(h); passed(h);
   h.event({ type: 'publication-started', sha: A, tag: 'v1-beta.1' }); h.event({ type: 'publication-failed', sha: A });
   assert.equal(h.state.published.beta.branch, 'release/old-beta'); publish(h);
-  assert.equal(h.candidate.retiredBeta, 'release/old-beta'); assert.equal(h.state.published.beta.branch, 'release/beta1');
+  assert.equal(h.candidate.retiredBeta.branch, 'release/old-beta'); assert.equal(h.candidate.retiredBeta.sha, C); assert.equal(h.state.published.beta.branch, 'release/beta1');
 });
 test('publication failure retries the same checked material without a new test run', () => {
   const h = harness(); create(h); passed(h); const receipt = structuredClone(h.candidate.runner);
   h.event({ type: 'publication-started', sha: A, tag: 'v1-beta.1' }); h.event({ type: 'publication-failed', sha: A, reason: 'network' });
   publish(h); assert.deepEqual(h.candidate.runner, receipt);
+});
+test('completed return records the final published fix and retires superseded intermediate return work', () => {
+  const h = harness(); create(h);
+  h.event({ type: 'fix', sha: B, productChanged: false });
+  h.event({ type: 'fix', sha: C, productChanged: false });
+  passed(h); publish(h);
+  h.event({ type: 'completion-step', name: 'return-to-dev', result: { status: 'pending', reason: 'queued' } });
+  assert.ok(h.candidate.portToDev.every(row => row.status === 'pending'));
+  assert.throws(() => h.event({ type: 'completion-step', name: 'return-to-dev', result: { status: 'completed' } }), /actual dev commit/);
+  h.event({ type: 'completion-step', name: 'return-to-dev', result: { status: 'completed', devSha: A } });
+  assert.deepEqual(h.candidate.portToDev, [
+    { from: A, to: B, syncMode: 'merge', status: 'superseded', supersededBy: C },
+    { from: B, to: C, syncMode: 'merge', status: 'ported', devSha: A },
+  ]);
 });
 test('beta metrics decision belongs to one candidate and accepted retry does not ask twice', () => {
   const h = harness(); create(h); passed(h); h.event({ type: 'metrics', sha: A, report: { requiresDecision: true } });
@@ -175,6 +190,30 @@ test('changed prepared artifact is refused before creating or uploading a releas
     github: { activated: true, findRelease: async () => { creates++; } }, readArtifact: async () => Buffer.from('wrong') });
   await assert.rejects(publisher.publish({ candidate: h.candidate, tag: 'v1-beta.1', artifacts: [{ name: 'houseplan.zip', path: 'x', expectedDigest: D }] }), /changed/);
   assert.equal(creates, 0);
+});
+
+test('draft notes are repaired once after a lost response, published notes stay unchanged, and ZIP evidence ignores asset order', async () => {
+  const h = harness(); create(h); passed(h);
+  const files = new Map([['js', Buffer.from('public JS')], ['zip', Buffer.from('checked ZIP')]]);
+  const release = { id: 1, tag_name: 'v1-beta.1', draft: true, body: 'stale draft', assets: [] }, bytes = new Map(), updates = [];
+  let lost = true;
+  const github = { activated: true, findRelease: async () => structuredClone(release),
+    updateRelease: async (_id, change) => { updates.push(change); Object.assign(release, change);
+      if (change.body && lost) { lost = false; throw Error('lost draft response'); } return structuredClone(release); },
+    uploadReleaseAsset: async (_id, artifact) => { const id = release.assets.length + 10; release.assets.push({ id, name: artifact.name }); bytes.set(id, artifact.bytes); },
+    downloadAsset: async id => bytes.get(id),
+    verifyPublication: async ({ tag, expectedSha, expectedDigest }) => ({ tag, sha: expectedSha, artifactDigest: expectedDigest }) };
+  const publisher = new ReleasePublisher({ github, git: { activated: true, publishCandidateRefs: async () => {} }, activated: true, readArtifact: async path => files.get(path) });
+  const input = { candidate: h.candidate, tag: release.tag_name, body: 'Author RU / Author EN', artifacts: [
+    { name: 'houseplan-card.js', path: 'js', expectedDigest: sha256(files.get('js')) },
+    { name: 'houseplan.zip', path: 'zip', expectedDigest: sha256(files.get('zip')) },
+  ] };
+  await assert.rejects(publisher.publish(input), /lost draft response/);
+  const result = await publisher.publish(input);
+  assert.equal(result.evidence.assetName, 'houseplan.zip'); assert.equal(result.evidence.artifactDigest, sha256(files.get('zip')));
+  assert.equal(release.body, input.body); assert.equal(updates.filter(change => change.body).length, 1);
+  const before = updates.length, retry = await publisher.publish({ ...input, body: 'different late text' });
+  assert.equal(updates.length, before); assert.equal(release.body, input.body); assert.match(retry.warnings[0], /public text was preserved/);
 });
 
 test('HACS cache delay waits and retries only delivery observation, with a visible resumable timeout', async () => {

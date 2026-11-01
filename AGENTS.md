@@ -68,6 +68,6 @@ Old task-packet and entry-measurement generators are not required entry steps.
   install old hooks as part of setup or use their gates to drive this branch.
   The prepared remote commands default to a plan; keep activation disabled.
 
-For this documentation transition, do not run tests or repair old tests that
-assert the removed wording. Their retirement belongs to the implementation
-cutover described in CUTOVER.
+Do not repair old tests that assert removed instruction wording. Their retirement
+belongs to cutover. Changes to the prepared implementation use its addressed
+behavioral tests; this does not add runs to pure documentation tasks.

@@ -39,6 +39,7 @@ jobs:
           PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
           HP_PROCESS_NEXT_ACTIVATE: '1'
           GH_TOKEN: ${{ github.token }}
+          HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}
         run: node process-next/templates/coordinator-job.mjs
   dev-build:
     needs: progress
@@ -67,4 +68,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEV_BUILD_SHA: ${{ needs.progress.outputs.dev_build_sha }}
           DEV_BUILD_ISSUE: ${{ needs.progress.outputs.dev_build_issue }}
+          HP_HA_DEV_WEBHOOK: ${{ secrets.HP_HA_DEV_WEBHOOK }}
         run: node process-next/templates/coordinator-dev-build.mjs

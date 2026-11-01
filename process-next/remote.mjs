@@ -10,8 +10,14 @@ import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecR
 import { planProfile } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
 import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
-import { initialReleaseState, reduceRelease, releaseClosePlan, ReleaseGitAdapter, ReleasePublisher,
+import { initialReleaseState, reduceRelease, ReleaseGitAdapter, ReleasePublisher,
   HacsClient, HacsDeliveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
+import { reconcileTaskCompletions, notifyDevWebhook } from './lib/task-completion.mjs';
+import { publishReviewReceipt } from './lib/review-publication.mjs';
+import { prepareReleaseData, preparePublicationArtifacts } from './lib/release-preparation.mjs';
+import { completePublishedRelease } from './lib/release-completion.mjs';
+import { announceStableRelease } from './lib/notifications.mjs';
+import { returnPublishedHistory } from './lib/return-worker.mjs';
 
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
 const component = encodeURIComponent;
@@ -35,7 +41,7 @@ export async function readReleaseMetrics({ root, sha: materialSha, path }) {
 }
 const commands = new Set(['initialize-queue', 'initialize-release', 'owner-decision', 'label', 'ready', 'enqueue',
   'admit', 'heartbeat', 'synchronized', 's6-complete', 'return', 'expire', 'review-complete', 'reconcile', 'merge',
-  'reconcile-merged', 'release-event', 'publish-prepared', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline']);
+  'reconcile-merged', 'reconcile-completions', 'dev-webhook', 'release-event', 'publish-prepared', 'complete-release', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline']);
 
 export const help = `Houseplan process-next remote (disabled by default)
 node process-next/remote.mjs COMMAND --config config.json --event event.json [--plan | --execute]
@@ -43,7 +49,8 @@ node process-next/remote.mjs COMMAND --config config.json --event event.json [--
 Queue: initialize-queue, owner-decision, label, ready (alias enqueue), admit,
        heartbeat, synchronized, s6-complete, return, expire, reconcile,
        review-complete, merge, reconcile-merged
-Release: initialize-release, release-event, publish-prepared, verify-delivery, close-included
+Release: initialize-release, release-event, publish-prepared, complete-release, verify-delivery, close-included
+Bookkeeping: reconcile-completions, dev-webhook (no tests or model calls)
 
 Default --plan is OFFLINE: no API, Git, environment probes or remote writes.
 Execution requires ALL: --execute, config.enabled=true, HP_PROCESS_NEXT_ACTIVATE=1.
@@ -63,7 +70,8 @@ review-complete reads the matching trusted workflow report; it never trusts a su
 reconcile performs ONE step (admit / await local S6 / request or read review / merge).
 initialize-* requires event.confirmed=true and baseSha. release-event takes a reducer event;
 published/delivery-verified are accepted only through actual publication/observation commands.
-publish-prepared: {id,candidate,tag,expectedMain,artifacts:[{name,path,expectedDigest}],body?}.
+publish-prepared: {id,candidate,tag,reportPath?,packagePath?,expectedMain?}; uses authored candidate notes and completes delivery.
+complete-release: {id,candidate}; resumes bookkeeping without publishing or testing again.
 verify-delivery: {id,candidate,assetName}; close-included: {id,candidate}.
 `;
 
@@ -158,7 +166,15 @@ export class WorkflowReviewAdapter {
       const result = await this.artifactResult(run);
       if (result) {
         const checked = this.checked(result, context);
-        if (checked.verdict !== 'incomplete') return checked;
+        if (checked.verdict !== 'incomplete') {
+          try {
+            await publishReviewReceipt({ api: this.api, receipt: checked, reportUrl: run.html_url });
+            return { ...checked, runId: run.id, publicationPending: false };
+          } catch (error) {
+            // Presentation is retried separately; the trusted paid result is still accepted.
+            return { ...checked, runId: run.id, publicationPending: true, publicationError: error.message };
+          }
+        }
       }
     }
     if (matches.some(run => run.status !== 'completed')) return { pending: true, requestId, materialSha: active.materialSha };
@@ -212,6 +228,18 @@ function activation(config, execute, env) {
   if (config.enabled !== true || env.HP_PROCESS_NEXT_ACTIVATE !== '1')
     throw Error('Remote execution is disabled: require config.enabled=true and HP_PROCESS_NEXT_ACTIVATE=1');
   return true;
+}
+
+async function finishBookkeeping({ queue, api, git, review, eventId, issue }) {
+  try { return await reconcileTaskCompletions({ queue, api, git, activated: true, issue,
+    eventId: `${eventId}:metadata:${randomUUID()}`,
+    publishReview: async record => {
+      const result = await review.readReviewResult({ kind: record.kind, requestId: record.requestId,
+        active: { issue: record.issue, materialSha: record.materialSha, expectedBase: record.expectedBase, patchId: record.patchId },
+        task: { track: 'show', reviewRetry: { requestId: record.requestId, runId: record.runId } } });
+      return { published: result?.publicationPending === false };
+    } }); }
+  catch (error) { return { pending: [{ issue, reason: error.message }], warning: 'Metadata remains pending; a completed merge is not repeated' }; }
 }
 
 /** Agent-facing route: one invocation owns queue wait, final sync, S6 and reconciliation. */
@@ -268,6 +296,7 @@ export async function finishTask({ config, event, queue, api, git, review, depen
         onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
       return { ...result, evidence: result.receipt };
     }
+    if (dependencies.prepareEnvironment) await dependencies.prepareEnvironment();
     const plan = await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
       track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
     const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
@@ -286,7 +315,10 @@ export async function finishTask({ config, event, queue, api, git, review, depen
       current = (await queue.store.read()).state;
       ownedAdmission = current.active?.issue === event.issue ? current.active : null;
       onProgress({ kind: 'queue', issue: event.issue, ...queueSummary(current), elapsedMs: clock() - started });
-      if (current.tasks[event.issue]?.status === 'S8-merged') return { action: 'merged', task: current.tasks[event.issue] };
+      if (current.tasks[event.issue]?.status === 'S8-merged') {
+        const bookkeeping = await finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue });
+        return { action: 'merged', task: current.tasks[event.issue], bookkeeping };
+      }
       if (!current.tasks[event.issue]?.queued && current.active?.issue !== event.issue) return { action: 'returned', task: current.tasks[event.issue] };
       const own = current.active?.issue === event.issue;
       // Waiting agents observe only; they never reconcile somebody else's task.
@@ -297,7 +329,8 @@ export async function finishTask({ config, event, queue, api, git, review, depen
       const result = await reconcileQueue({ queue, api, git, activated: true, eventId: `${event.id}:finish:${++sequence}`, worker: event.worker ?? 'finish',
         ...(own ? { synchronize, runS6 } : {}), requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
       onProgress({ kind: 'transition', action: result.action, reason: result.reason });
-      if (own && result.action === 'returned') return result;
+      if (own && result.action === 'returned') return { ...result,
+        bookkeeping: await finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue }) };
       if (['admitted', 'synchronized', 'review', 'ready-to-merge', 'merged', 'expired'].includes(result.action)) continue;
       await (dependencies.sleep ?? (milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))))(pollMs, signal);
     }
@@ -330,6 +363,9 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   const owner = config.ownerLogin ?? config.owner;
   if (command === 'status') { const state = (await queue.store.read()).state; return { summary: queueSummary(state), task: event.issue ? state.tasks[event.issue] ?? null : undefined }; }
   if (command === 'finish') return finishTask({ config, event, queue, api, git, review, dependencies, signal, onProgress });
+  if (command === 'reconcile-completions') return finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue });
+  if (command === 'dev-webhook') return notifyDevWebhook({ queue, activated: true, url: env.HP_HA_DEV_WEBHOOK,
+    eventId: `${event.id}:${randomUUID()}`, fetchImpl: dependencies.fetchImpl });
   if (command === 'initialize-queue' || command === 'initialize-release')
     return (command === 'initialize-queue' ? queue.store : releaseStore).initialize({ baseSha: event.baseSha, confirmed: event.confirmed });
   if (['owner-decision', 'label', 'ready', 'enqueue'].includes(command)) {
@@ -365,6 +401,9 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     await git.ensureCommit(marker.source);
     await git.assertAncestor(task.mergedSha, marker.source);
     let state = snapshot;
+    if ((env.HP_HA_DEV_WEBHOOK || event.webhookPending) && snapshot.devWebhook?.integrationTree !== marker.integrationTree)
+      state = await queue.dispatch({ id: `${event.id}:webhook`, type: 'dev-webhook',
+        sourceSha: marker.source, integrationTree: marker.integrationTree, status: 'pending' });
     for (const covered of Object.values(snapshot.tasks).filter(item => item.status === 'S8-merged' && item.devBuild?.status === 'pending')) {
       try { await git.assertAncestor(covered.mergedSha, marker.source); } catch { continue; }
       state = await queue.dispatch({ id: `${event.id}:${covered.issue}`, type: 'dev-build', issue: covered.issue, materialSha: covered.mergedSha, status: 'published' });
@@ -380,12 +419,26 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
       requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
   }
   if (command === 'release-event') {
-    if (['published', 'delivery-verified', 'publication-started', 'publication-failed'].includes(event.type))
+    if (['published', 'delivery-verified', 'publication-started', 'publication-failed', 'release-prepared', 'completion-step', 'announcement'].includes(event.type))
       throw Error('Use the publication/observation command for actual delivery evidence');
     if (event.type === 'create') {
       const { state } = await releaseStore.read(), source = await git.resolveSource({ kind: event.kind, published: state.published });
       if (source.sourceSha !== event.sourceSha) throw Error('Candidate source differs from the selected release source');
+      const data = await (dependencies.prepareReleaseData ?? prepareReleaseData)({ git, candidateSha: source.sourceSha,
+        baseSha: state.published.stable?.sha ?? null, kind: event.kind, tag: event.tag, texts: false,
+        previousMembership: event.kind !== 'hotfix' ? state.candidates[state.published.beta?.id]?.membership : undefined,
+        tasks: Object.values((await queue.store.read()).state.tasks) });
+      event = { ...event, ...data };
       // Worktree creation is explicit, separate from state delivery retries.
+    }
+    if (event.type === 'fix') {
+      const { state } = await releaseStore.read(), candidate = state.candidates[event.candidate];
+      if (!candidate) throw Error('Unknown release candidate');
+      const data = await (dependencies.prepareReleaseData ?? prepareReleaseData)({ git, candidateSha: event.sha,
+        baseSha: candidate.membership?.base ?? state.published.stable?.sha ?? null, kind: candidate.kind, texts: false,
+        previousMembership: candidate.membership,
+        tasks: Object.values((await queue.store.read()).state.tasks) });
+      event = { ...event, ...data };
     }
     return { state: await releaseDispatch(releaseStore, event) };
   }
@@ -403,6 +456,41 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   }
   let state = (await releaseStore.read()).state, candidate = state.candidates[event.candidate];
   if (!candidate) throw Error('Unknown release candidate');
+  const observeDelivery = async ({ candidate: item, assetName = 'houseplan.zip' }) => {
+    const tokenEnv = config.hacs?.tokenEnv;
+    if (!dependencies.verifier && (!tokenEnv || !/^[A-Z][A-Z0-9_]*$/.test(tokenEnv))) throw Error('Configure hacs.tokenEnv');
+    const verifier = dependencies.verifier ?? new HacsDeliveryVerifier({ github: api,
+      hacs: new HacsClient({ url: config.hacs?.url, token: env[tokenEnv] }) });
+    const request = { repository: `${config.owner}/${config.repo}`, tag: item.tag,
+      assetName, expectedDigest: item.publication.artifactDigest, signal, onProgress };
+    return verifier.wait ? verifier.wait(request) : verifier.verify(request);
+  };
+  const complete = async item => {
+    const update = async change => {
+      state = await releaseDispatch(releaseStore, { ...change, id: `${event.id}:completion:${randomUUID()}` });
+      return state.candidates[item.id];
+    };
+    const completion = await completePublishedRelease({ candidate: item, api, git, verifyDelivery: observeDelivery,
+      onUpdate: update, onProgress,
+      returnToDev: dependencies.returnToDev ?? (async ({ candidate: released, previous }) => returnPublishedHistory({
+        candidate: released, previous, api, git, queue, config: { ...config, returnIssue: event.returnIssue ?? config.returnIssue },
+        onUpdate: update, onProgress, signal,
+        finish: async ({ config: localConfig, event: returnEvent, prepareEnvironment }) => {
+          const localGit = new ReleaseGitAdapter({ cwd: localConfig.workspace, remote: git.remote, dev: git.dev, activated: true });
+          return finishTask({ config: localConfig, event: returnEvent, queue, api, git: localGit, review, signal, onProgress,
+            dependencies: { prepareEnvironment } });
+        } })),
+      announce: dependencies.announce ?? (({ candidate: released, persist }) => {
+        const tokenEnv = config.telegram?.tokenEnv ?? 'TELEGRAM_BOT_TOKEN', chatEnv = config.telegram?.chatEnv ?? 'TELEGRAM_CHAT_ID';
+        if (![tokenEnv, chatEnv].every(name => /^[A-Z][A-Z0-9_]*$/.test(name))) throw Error('Use Telegram credential environment-variable names');
+        return announceStableRelease({ candidate: released, userChangelog: released.releaseData?.userChangelog?.ru,
+          token: env[tokenEnv], chat: env[chatEnv], persist, retryAmbiguous: event.retryAmbiguousAnnouncement === true,
+          fetchImpl: dependencies.fetchImpl });
+      }) });
+    return { published: true, completion, state: (await releaseStore.read()).state };
+  };
+  if (command === 'complete-release' || command === 'close-included'
+    || command === 'publish-prepared' && candidate.status === 'published') return complete(candidate);
   if (command === 'return-to-dev') {
     const prepared = await git.prepareDevReturn({ candidate, issue: event.issue, branch: event.branch, worktree: event.worktree });
     if (prepared.alreadyIncluded) {
@@ -416,32 +504,45 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     return { ...prepared, queue: await queue.dispatch({ id: event.id, type: 'enqueue', task: prepared.task }) };
   }
   if (command === 'publish-prepared') {
-    if (event.reportPath) {
+    const resumingPublication = ['publishing', 'publication-retry'].includes(candidate.status);
+    if (!resumingPublication && event.reportPath) {
       const report = await readRunnerReport(resolve(config.workspace ?? '.', event.reportPath));
       state = await releaseDispatch(releaseStore, { id: `${event.id}:runner-report`, type: 'runner-report', candidate: candidate.id, report });
       candidate = state.candidates[candidate.id];
     }
-    if (['beta', 'stable'].includes(candidate.kind) && (event.reportPath || event.metricsPath)) {
+    if (!resumingPublication && ['beta', 'stable'].includes(candidate.kind) && (event.reportPath || event.metricsPath)) {
       const metrics = await readReleaseMetrics({ root: config.workspace ?? '.', sha: candidate.sha, path: event.metricsPath });
       if (metrics) {
         state = await releaseDispatch(releaseStore, { id: `${event.id}:metrics`, type: 'metrics', candidate: candidate.id, sha: candidate.sha, report: metrics });
         candidate = state.candidates[candidate.id];
       }
     }
+    const tag = candidate.tag ?? event.tag;
+    const data = candidate.releaseData ?? await (dependencies.prepareReleaseData ?? prepareReleaseData)({ git, candidateSha: candidate.sha,
+      baseSha: candidate.membership?.base ?? state.published.stable?.sha ?? null, kind: candidate.kind, tag,
+      previousMembership: candidate.membership,
+      tasks: Object.values((await queue.store.read()).state.tasks) });
+    state = await releaseDispatch(releaseStore, { id: `${event.id}:prepared:${randomUUID()}`, type: 'release-prepared',
+      candidate: candidate.id, sha: candidate.sha, data });
+    candidate = state.candidates[candidate.id];
+    const artifacts = event.artifacts ?? preparePublicationArtifacts({ root: config.workspace,
+      packageResult: JSON.parse(await readFile(resolve(config.workspace, event.packagePath ?? 'artifacts/process-next/package.json'), 'utf8')),
+      candidate: { ...candidate, tag } });
+    const expectedMain = event.expectedMain ?? (candidate.kind === 'beta' ? undefined : await git.remoteHead('main'));
     if (candidate.status !== 'published' && candidate.status !== 'publishing') {
       state = await releaseDispatch(releaseStore, { id: `${event.id}:started:${state.revision}`, type: 'publication-started',
-        candidate: candidate.id, sha: candidate.sha, tag: event.tag });
+        candidate: candidate.id, sha: candidate.sha, tag });
       candidate = state.candidates[candidate.id];
     }
     if (event.tag && candidate.tag !== event.tag) throw Error('Publication retry cannot change the tag');
     const publisher = dependencies.publisher ?? new ReleasePublisher({ github: api, git, activated: true });
     try {
-      const result = await publisher.publish({ candidate, tag: candidate.tag, artifacts: event.artifacts, body: event.body, expectedMain: event.expectedMain,
+      const result = await publisher.publish({ candidate, tag: candidate.tag, artifacts, body: candidate.releaseData.body, expectedMain,
         measurementPath: event.measurementPath ?? (candidate.kind === 'stable' ? resolve(config.workspace, 'artifacts/process-next/measurement.json') : undefined) });
       if (!result.published) throw Error('Publication has no actual evidence');
       if (candidate.status !== 'published') state = await releaseDispatch(releaseStore, {
         id: `${event.id}:published`, type: 'published', candidate: candidate.id, sha: candidate.sha, evidence: result.evidence });
-      return { ...result, state };
+      return { ...result, ...await complete(state.candidates[candidate.id]) };
     } catch (error) {
       // If the final state write lost its response, preserve observed publication rather than reverting it.
       const latestState = (await releaseStore.read()).state, latest = latestState.candidates[candidate.id];
@@ -452,20 +553,11 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   }
   if (command === 'verify-delivery') {
     if (candidate.status !== 'published') throw Error('Publish the candidate before observing HACS delivery');
-    const hacsTokenName = config.hacs?.tokenEnv;
-    if (!dependencies.verifier && (!hacsTokenName || !/^[A-Z][A-Z0-9_]*$/.test(hacsTokenName))) throw Error('Configure hacs.tokenEnv');
-    const verifier = dependencies.verifier ?? new HacsDeliveryVerifier({ github: api,
-      hacs: new HacsClient({ url: config.hacs?.url, token: env[hacsTokenName] }) });
-    const observation = { repository: `${config.owner}/${config.repo}`, tag: candidate.tag,
-      assetName: event.assetName, expectedDigest: candidate.publication.artifactDigest, signal, onProgress };
-    const evidence = await (verifier.wait ? verifier.wait(observation) : verifier.verify(observation));
+    const evidence = await observeDelivery({ candidate, assetName: event.assetName });
     if (evidence.status === 'waiting') return evidence;
     return { evidence, state: await releaseDispatch(releaseStore, { id: event.id, type: 'delivery-verified', candidate: candidate.id, evidence }) };
   }
-  const issues = await Promise.all(candidate.includedIssues.map(number => api.getIssue(number)));
-  const updates = releaseClosePlan(candidate, issues), completed = [];
-  for (const update of updates) { await api.updateIssue(update.issue, update.change); completed.push(update.issue); }
-  return { closed: completed };
+  throw Error('Unsupported release operation');
 }
 
 export async function main(args = process.argv.slice(2)) {

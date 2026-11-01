@@ -62,20 +62,45 @@ export class GitHubClient {
     if (!Number.isSafeInteger(issue) || issue < 1) throw Error('Invalid issue');
     return this.request('GET', `${this.root}/issues/${issue}`);
   }
+  createIssue({ title, body, labels = [], milestone }) {
+    return this.request('POST', `${this.root}/issues`, { title, body, labels, ...(milestone ? { milestone } : {}) });
+  }
+  async listIssueComments(issue) {
+    if (!Number.isSafeInteger(issue) || issue < 1) throw Error('Invalid issue');
+    const comments = [];
+    for (let page = 1; page <= 100; page++) {
+      const rows = await this.request('GET', `${this.root}/issues/${issue}/comments?per_page=100&page=${page}`);
+      comments.push(...rows);
+      if (rows.length < 100) return comments;
+    }
+    throw Error('Issue comment inventory incomplete');
+  }
+  async removeLabel(issue, label) {
+    if (!Number.isSafeInteger(issue) || issue < 1 || typeof label !== 'string' || !label) throw Error('Invalid issue label');
+    try { return await this.request('DELETE', `${this.root}/issues/${issue}/labels/${component(label)}`); }
+    catch (error) { if (error.status !== 404) throw error; return { alreadyAbsent: true }; }
+  }
   async moveStatus(issue, to, currentLabels = []) {
     if (!/^S[1-8]-[\w-]+$/.test(to)) throw Error('Invalid status label');
     const added = await this.request('POST', `${this.root}/issues/${issue}/labels`, { labels: [to] });
     const removed = [];
     for (const value of currentLabels) {
       const name = typeof value === 'string' ? value : value.name;
-      if (/^S[1-8]-/.test(name) && name !== to)
-        removed.push(await this.request('DELETE', `${this.root}/issues/${issue}/labels/${component(name)}`));
+      if (/^S[1-8]-/.test(name) && name !== to || to === 'S8-merged' && name === 'to_release')
+        removed.push(await this.removeLabel(issue, name));
     }
     return { added, removed };
   }
   comment(issue, body) {
     if (!Number.isSafeInteger(issue) || issue < 1) throw Error('Invalid issue');
     return this.request('POST', `${this.root}/issues/${issue}/comments`, { body });
+  }
+  async upsertComment(issue, { marker, body }) {
+    if (typeof marker !== 'string' || !marker.startsWith('<!-- process-next-') || !marker.endsWith(' -->')) throw Error('Expected process comment marker');
+    const text = body.startsWith(marker) ? body : `${marker}\n${body}`;
+    const existing = (await this.listIssueComments(issue)).find(comment => comment.body?.startsWith(marker));
+    if (existing?.body === text) return { ...existing, reused: true };
+    return existing ? this.request('PATCH', `${this.root}/issues/comments/${existing.id}`, { body: text }) : this.comment(issue, text);
   }
   getRelease(tag) { return this.request('GET', `${this.root}/releases/tags/${component(tag)}`); }
   async findRelease(tag) {
@@ -289,6 +314,12 @@ export class GitAdapter {
       }
     }
     if (checkOnly) return { checked: true, materialSha, tag, expectedMain };
+    if (!existingTag) {
+      // Preserve the public annotated-tag format without creating/moving a local tag ref.
+      const object = `object ${materialSha}\ntype commit\ntag ${tag}\ntagger Houseplan release <process@localhost> ${Math.floor(this.clock() / 1000)} +0000\n\nRelease ${tag}\n`;
+      const tagObject = await this.git(['mktag'], { input: object });
+      refs[0] = `${tagObject}:refs/tags/${tag}`;
+    }
     if (refs.length) await this.git(['push', '--atomic', ...leases, this.remote, ...refs]);
     return { publishedRefs: true, tag, materialSha };
   }

@@ -26,7 +26,16 @@ export class StateConflict extends Error { constructor(message = 'State changed;
 export class LeaseLost extends Error { constructor() { super('Queue admission expired or belongs to another worker'); this.name = 'LeaseLost'; } }
 
 export function initialQueueState() {
-  return { schema: 1, revision: 0, nextTicket: 1, nextFence: 1, tasks: {}, ownerDecisions: {}, specReviews: {}, waiting: [], active: null, events: {} };
+  return { schema: 1, revision: 0, nextTicket: 1, nextFence: 1, tasks: {}, ownerDecisions: {}, specReviews: {}, reviewPublications: {}, waiting: [], active: null, events: {} };
+}
+
+const presentationKey = record => `${record.kind}:${record.issue}:${record.requestId}`;
+/** Read both current state and the earlier single-report shape without losing a paid round. */
+export function pendingReviewPublications(state) {
+  const records = [...Object.values(state.tasks ?? {}).map(task => task.reviewPublication),
+    ...Object.values(state.specReviews ?? {}).map(spec => spec.reviewPublication),
+    ...Object.values(state.reviewPublications ?? {})].filter(record => record?.status === 'pending');
+  return [...new Map(records.map(record => [presentationKey(record), record])).values()];
 }
 
 /** Pure transitions. event.id is a delivery ID, not an authorization credential. */
@@ -39,10 +48,15 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
     return copy(previous);
   }
   const state = copy(previous);
+  state.reviewPublications = Object.fromEntries(pendingReviewPublications(state).map(record => [presentationKey(record), record]));
+  for (const record of [...Object.values(state.tasks), ...Object.values(state.specReviews ?? {})]) delete record.reviewPublication;
   const duration = phase => ['sync', 'testing'].includes(phase) ? Math.min(leaseMs, 5 * 60_000) : leaseMs;
   const clearAutomation = task => { delete task.automationError; delete task.automationSince; delete task.automationDetail; };
   const returnTask = (task, reason) => {
     task.status = 'S6-in-progress'; task.reason = reason; task.queued = false;
+    if (!['owner-stopped', 'status-changed'].includes(reason)) task.notice = {
+      key: `${task.reviewEntry ?? 0}:${reason}`, reason, status: 'pending',
+    };
     state.waiting = state.waiting.filter(issue => issue !== task.issue); delete task.continuation;
     state.active = null;
   };
@@ -201,13 +215,59 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
     case 'spec-complete': {
       const current = state.specReviews?.[event.issue];
       if (!current || current.requestId !== event.requestId) throw Error('Specification review identity differs');
-      Object.assign(current, { status: event.verdict, reportUrl: event.reportUrl ?? null, updatedAt: now }); break;
+      Object.assign(current, { status: event.verdict, reportUrl: event.reportUrl ?? null, updatedAt: now });
+      if (event.verdict === 'attention') current.notice = { key: event.requestId, status: 'pending' };
+      else delete current.notice;
+      break;
     }
     case 'spec-retry': {
       const current = state.specReviews?.[event.issue];
       if (!current || current.requestId !== event.requestId) throw Error('Specification review identity differs');
       if (current.retry) break;
       current.retry = { eventId: event.id, at: now, runId: event.runId ?? null, runAttempt: event.runAttempt ?? null }; break;
+    }
+    case 'review-presentation': {
+      const record = event.kind === 'spec' ? state.specReviews?.[event.issue] : state.tasks[event.issue];
+      if (event.record) {
+        if (!record) throw Error('Unknown review presentation');
+        if (!event.record.requestId || event.record.issue !== event.issue || event.record.kind !== event.kind)
+          throw Error('Review presentation identity required');
+        state.reviewPublications[presentationKey(event.record)] = { ...copy(event.record), status: 'pending' };
+      } else {
+        const key = presentationKey(event), pending = state.reviewPublications[key];
+        if (event.status === 'delivered') delete state.reviewPublications[key];
+        else if (pending && event.status === 'pending') {
+          if (event.reason) pending.reason = String(event.reason).slice(0, 500);
+          else delete pending.reason;
+        }
+      }
+      break;
+    }
+    case 'task-completion': {
+      const task = state.tasks[event.issue];
+      if (task?.status !== 'S8-merged' || task.mergedSha !== event.materialSha) throw Error('Completion follows an actual merge');
+      const result = event.result;
+      if (!result || !['pending', 'complete'].includes(result.status)) throw Error('Completion result required');
+      task.completion = copy(result); break;
+    }
+    case 'task-notice': {
+      const task = state.tasks[event.issue];
+      if (task?.notice?.key === event.key) task.notice.status = event.status;
+      break;
+    }
+    case 'spec-notice': {
+      const spec = state.specReviews?.[event.issue];
+      if (spec?.notice?.key === event.key) spec.notice.status = event.status;
+      break;
+    }
+    case 'dev-webhook': {
+      if (!sha(event.sourceSha) || !['pending', 'delivered', 'not-required'].includes(event.status)) throw Error('Invalid dev webhook result');
+      if (event.status === 'pending') {
+        if (state.devWebhook?.sourceSha !== event.sourceSha) state.devWebhook = { sourceSha: event.sourceSha, status: 'pending',
+          ...(event.integrationTree ? { integrationTree: event.integrationTree } : {}) };
+      }
+      else if (state.devWebhook?.sourceSha === event.sourceSha) state.devWebhook = { ...state.devWebhook, status: event.status };
+      break;
     }
     case 'dev-build': {
       const task = state.tasks[event.issue];
@@ -223,7 +283,10 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (active.phase !== 'ready-to-merge' || event.actualDevSha !== active.materialSha) throw Error('Actual merge is required for S8');
       const old = state.tasks[active.issue];
       state.tasks[active.issue] = { issue: old.issue, branch: old.branch, track: old.track, layer: old.layer,
-        status: 'S8-merged', mergedSha: event.actualDevSha, mergedAt: now, devBuild: { status: old.layer === 'product' ? 'pending' : 'not-required' } };
+        status: 'S8-merged', mergedSha: event.actualDevSha, mergedAt: now,
+        completion: { status: 'pending', labels: false, milestone: false, comment: false },
+        ...(old.releaseTag ? { releaseTag: old.releaseTag } : {}),
+        devBuild: { status: old.layer === 'product' ? 'pending' : 'not-required' } };
       state.active = null; break;
     }
     case 'expire': break;
@@ -235,10 +298,13 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
   const events = Object.entries(state.events).filter(([, record]) => typeof record !== 'string' && record.issue != null
     && state.tasks[record.issue]?.status !== 'S8-merged').slice(-256);
   state.events = Object.fromEntries(events);
-  const completed = Object.values(state.tasks).filter(task => task.status === 'S8-merged' && task.devBuild?.status !== 'pending')
+  const pendingPresentations = Object.values(state.reviewPublications);
+  const completed = Object.values(state.tasks).filter(task => task.status === 'S8-merged' && task.devBuild?.status !== 'pending'
+    && task.completion?.status !== 'pending' && !pendingPresentations.some(record => record.kind === 'code' && record.issue === task.issue) && task.notice?.status !== 'pending')
     .sort((a, b) => b.mergedAt - a.mergedAt);
   for (const task of completed.slice(64)) { delete state.tasks[task.issue]; delete state.ownerDecisions[task.issue]; }
-  const specDone = Object.entries(state.specReviews ?? {}).filter(([, item]) => ['accepted', 'changes_requested'].includes(item.status)).sort((a, b) => b[1].updatedAt - a[1].updatedAt);
+  const specDone = Object.entries(state.specReviews ?? {}).filter(([issue, item]) => ['accepted', 'changes_requested'].includes(item.status)
+    && !pendingPresentations.some(record => record.kind === 'spec' && record.issue === Number(issue))).sort((a, b) => b[1].updatedAt - a[1].updatedAt);
   for (const [issue] of specDone.slice(64)) delete state.specReviews[issue];
   state.revision++;
   return state;

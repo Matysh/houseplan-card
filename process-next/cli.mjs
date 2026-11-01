@@ -14,6 +14,7 @@ import { executeRemoteCommand, readReleaseMetrics } from './remote.mjs';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { acceptGolden } from './catalog/golden-accept.mjs';
+import { prepareReleaseVersions, prepareReleaseNotes } from './lib/release-preparation.mjs';
 
 export function parseArguments(argv) {
   const options = {}, positional = [];
@@ -46,11 +47,15 @@ node process-next/cli.mjs spec-check --file specification.md
 node process-next/cli.mjs review preview|run --base SHA --head SHA --issue 9999 --task-file task.md
 node process-next/cli.mjs queue ACTION --payload event.json
 node process-next/cli.mjs release ACTION --payload event.json
+node process-next/cli.mjs release prepare --request release.json [--execute]
+node process-next/cli.mjs release publish|complete --config remote.json --request publication.json [--execute]
 node process-next/cli.mjs metrics --candidate candidate.json --latest-stable stable.json --out report.json
 
 Общее: --root каталог --state-dir каталог --jobs 2 --json --no-reuse --keep-open.
 План ничего не запускает. run выполняет только выбранный набор. Чистая документация: --layer docs.
-queue/release изменяют только локальное draft-состояние, не GitHub. Сеть ревью — только review run.
+queue/release ACTION --payload изменяют локальное draft-состояние. release prepare готовит версии/авторские notes только в release-ветке.
+release publish публикует готовый кандидат и завершает учёт; complete повторяет только незавершённые действия после публикации.
+publish/complete без --execute — офлайн-план; действуют те же переключатели активации, что у finish.
 request.json содержит поля planProfile (event/issue/track/layer/areaTests/changedFiles/version/e2eRoot).
 Для HA: e2eRoot, candidateRoot, expectedVersion, upgradeFrom, haVersion, workRoot, port.
 Токены никогда не передаются аргументами или через request.json. \n`;
@@ -72,6 +77,31 @@ export async function main(argv = process.argv.slice(2)) {
   if (o.help || command === 'help') { process.stdout.write(HELP); return 0; }
   const root = resolve(o.root ?? dirname(fileURLToPath(new URL('../package.json', import.meta.url))));
   const stateDir = resolve(o['state-dir'] ?? defaultStateDir(root));
+  if (command === 'release' && ['prepare', 'publish', 'complete'].includes(action)) {
+    const request = readJson(resolve(requireValue(o.request, '--request')));
+    if (action === 'prepare') {
+      const version = requireValue(request.version, 'request.version'), tag = request.tag ?? `v${version}`;
+      const kind = request.kind ?? (version.includes('-') ? 'beta' : 'stable');
+      if (tag !== `v${version}`) throw Error('Version and release tag differ');
+      const versions = prepareReleaseVersions({ root, version });
+      const notes = await prepareReleaseNotes({ root, kind, tag });
+      if (o.execute) {
+        const branch = execFileSync('git', ['symbolic-ref', '--short', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim();
+        if (!branch.startsWith('release/')) throw Error('Prepare versions in an isolated release/ branch');
+        prepareReleaseVersions({ root, version, write: true });
+        await prepareReleaseNotes({ root, kind, tag, write: true });
+      }
+      print({ prepared: !!o.execute, version, tag, kind, files: versions.files, body: notes.body,
+        next: 'Review authored changes, commit the candidate, run the selected release set; publish uses that completed report.' });
+      return 0;
+    }
+    const config = readJson(resolve(requireValue(o.config, '--config')));
+    config.workspace = resolve(config.workspace ?? root);
+    const result = await executeRemoteCommand({ command: action === 'publish' ? 'publish-prepared' : 'complete-release',
+      config, event: { ...request, id: request.id ?? `release:${randomUUID()}` }, execute: !!o.execute,
+      onProgress: event => print(event) });
+    print(result); return result.completion?.status === 'pending' ? 1 : 0;
+  }
   if (command === 'finish' || command === 'status' && o.config) {
     const config = readJson(resolve(requireValue(o.config, '--config')));
     config.workspace = resolve(config.workspace ?? root);

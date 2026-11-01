@@ -1,0 +1,1522 @@
+TAP version 13
+# Subtest: daily rotation visits each explicit shard once and wraps without another state store
+ok 1 - daily rotation visits each explicit shard once and wraps without another state store
+  ---
+  duration_ms: 3.146247
+  type: 'test'
+  ...
+# Subtest: background notices mutation failure even when the common runner treats its step as diagnostic
+ok 2 - background notices mutation failure even when the common runner treats its step as diagnostic
+  ---
+  duration_ms: 3.12022
+  type: 'test'
+  ...
+# Subtest: scheduled mutation failure creates one issue; retry deduplicates and manual/coverage do not notify
+ok 3 - scheduled mutation failure creates one issue; retry deduplicates and manual/coverage do not notify
+  ---
+  duration_ms: 1.444034
+  type: 'test'
+  ...
+# Subtest: inert background job refuses execution before accessing API or running code
+ok 4 - inert background job refuses execution before accessing API or running code
+  ---
+  duration_ms: 0.475584
+  type: 'test'
+  ...
+# Subtest: pure docs creates no preparation, test or unavailable gate, including after-review
+ok 5 - pure docs creates no preparation, test or unavailable gate, including after-review
+  ---
+  duration_ms: 2.820005
+  type: 'test'
+  ...
+# Subtest: product minimum builds once, protects data/rights and opens one saved View
+ok 6 - product minimum builds once, protects data/rights and opens one saved View
+  ---
+  duration_ms: 1103.034246
+  type: 'test'
+  ...
+# Subtest: infrastructure checks only changed syntax and selected mechanism, with no product preparation
+ok 7 - infrastructure checks only changed syntax and selected mechanism, with no product preparation
+  ---
+  duration_ms: 6.982554
+  type: 'test'
+  ...
+# Subtest: beta uses approved files, one narrowed permission run and panel-first visual selection
+ok 8 - beta uses approved files, one narrowed permission run and panel-first visual selection
+  ---
+  duration_ms: 10400.667799
+  type: 'test'
+  ...
+# Subtest: panel variants keep fixture contracts, own baseline IDs, and replace the old host in stable
+ok 9 - panel variants keep fixture contracts, own baseline IDs, and replace the old host in stable
+  ---
+  duration_ms: 4.75118
+  type: 'test'
+  ...
+# Subtest: exact selectors reject renamed, duplicated and file/title cross-product journeys
+ok 10 - exact selectors reject renamed, duplicated and file/title cross-product journeys
+  ---
+  duration_ms: 0.410401
+  type: 'test'
+  ...
+# Subtest: stable retains beta identities for reuse and separates converter failure from the core
+ok 11 - stable retains beta identities for reuse and separates converter failure from the core
+  ---
+  duration_ms: 21234.960263
+  type: 'test'
+  ...
+# Subtest: migration inventory accounts for every existing Node test, without deleting originals or running tooling on releases
+ok 12 - migration inventory accounts for every existing Node test, without deleting originals or running tooling on releases
+  ---
+  duration_ms: 3.77282
+  type: 'test'
+  ...
+# Subtest: new product/backend/browser tests are discovered without regenerating the migration snapshot
+ok 13 - new product/backend/browser tests are discovered without regenerating the migration snapshot
+  ---
+  duration_ms: 12139.168432
+  type: 'test'
+  ...
+# Subtest: a pending product delivery follows current dev after later docs merges; docs alone do not build
+ok 14 - a pending product delivery follows current dev after later docs merges; docs alone do not build
+  ---
+  duration_ms: 3.439584
+  type: 'test'
+  ...
+# Subtest: complete owner ship path runs S6 once and merges without requesting individual review
+ok 15 - complete owner ship path runs S6 once and merges without requesting individual review
+  ---
+  duration_ms: 8.600861
+  type: 'test'
+  ...
+# Subtest: complete show path keeps admission through review waiting and never runs tests in S7
+ok 16 - complete show path keeps admission through review waiting and never runs tests in S7
+  ---
+  duration_ms: 3.112652
+  type: 'test'
+  ...
+# Subtest: review findings release the slot and return to S6, retaining completed S6 evidence
+ok 17 - review findings release the slot and return to S6, retaining completed S6 evidence
+  ---
+  duration_ms: 2.066411
+  type: 'test'
+  ...
+# Subtest: documentation ship invokes neither test runner nor reviewer
+ok 18 - documentation ship invokes neither test runner nor reviewer
+  ---
+  duration_ms: 1.703253
+  type: 'test'
+  ...
+# Subtest: documentation show skips tests but waits for independent text review
+ok 19 - documentation show skips tests but waits for independent text review
+  ---
+  duration_ms: 2.078942
+  type: 'test'
+  ...
+# Subtest: installed track wins over older chat provenance and conflicting labels require clarification
+ok 20 - installed track wins over older chat provenance and conflicting labels require clarification
+  ---
+  duration_ms: 3.847896
+  type: 'test'
+  ...
+# Subtest: confirmed pending review avoids a write per poll and renews only near lease expiry
+ok 21 - confirmed pending review avoids a write per poll and renews only near lease expiry
+  ---
+  duration_ms: 3.271029
+  type: 'test'
+  ...
+# Subtest: missing review dispatch is ensured with the same idempotency key and no test rerun
+ok 22 - missing review dispatch is ensured with the same idempotency key and no test rerun
+  ---
+  duration_ms: 4.686731
+  type: 'test'
+  ...
+# Subtest: a label wakeup does not mark an unfinished S6 task ready, and dry-run never activates the queue
+ok 23 - a label wakeup does not mark an unfinished S6 task ready, and dry-run never activates the queue
+  ---
+  duration_ms: 1.503745
+  type: 'test'
+  ...
+# Subtest: owner blocked snapshot frees the active slot without resetting the owner label
+ok 24 - owner blocked snapshot frees the active slot without resetting the owner label
+  ---
+  duration_ms: 1.925674
+  type: 'test'
+  ...
+# Subtest: failed S8 label publication never re-merges or reruns tests and is separately reconciled
+ok 25 - failed S8 label publication never re-merges or reruns tests and is separately reconciled
+  ---
+  duration_ms: 4.386315
+  type: 'test'
+  ...
+# Subtest: unpublished paid code report survives accepted merge and rejected return for metadata-only retry
+ok 26 - unpublished paid code report survives accepted merge and rejected return for metadata-only retry
+  ---
+  duration_ms: 5.440937
+  type: 'test'
+  ...
+# Subtest: accepted S4 with a failed comment preserves presentation receipt after advancing to S5
+ok 27 - accepted S4 with a failed comment preserves presentation receipt after advancing to S5
+  ---
+  duration_ms: 1.581966
+  type: 'test'
+  ...
+# Subtest: task layer follows significant diff, not an agent docs declaration or test-directory name
+ok 28 - task layer follows significant diff, not an agent docs declaration or test-directory name
+  ---
+  duration_ms: 0.747429
+  type: 'test'
+  ...
+# Subtest: GitHub transport and incomplete review preserve the slot, completed S6 and request identity
+ok 29 - GitHub transport and incomplete review preserve the slot, completed S6 and request identity
+  ---
+  duration_ms: 3.942151
+  type: 'test'
+  ...
+# Subtest: S4 review uses specification route, carries a stable round and repairs a lost S5 label without another review
+ok 30 - S4 review uses specification route, carries a stable round and repairs a lost S5 label without another review
+  ---
+  duration_ms: 1.720957
+  type: 'test'
+  ...
+# Subtest: one incomplete review retry preserves S6 evidence, then returns the task and admits the next ready ship
+ok 31 - one incomplete review retry preserves S6 evidence, then returns the task and admits the next ready ship
+  ---
+  duration_ms: 5.885569
+  type: 'test'
+  ...
+# Subtest: a retry that never appears reaches attention without dispatching another paid request
+ok 32 - a retry that never appears reaches attention without dispatching another paid request
+  ---
+  duration_ms: 2.80943
+  type: 'test'
+  ...
+# Subtest: explicit reentry after exhausted review starts a fresh bounded request for the unchanged code
+ok 33 - explicit reentry after exhausted review starts a fresh bounded request for the unchanged code
+  ---
+  duration_ms: 13.378555
+  type: 'test'
+  ...
+# Subtest: a persistent merge failure cannot reserve the queue forever even when a worker keeps heartbeating
+ok 34 - a persistent merge failure cannot reserve the queue forever even when a worker keeps heartbeating
+  ---
+  duration_ms: 26.812328
+  type: 'test'
+  ...
+# Subtest: terminal unavailable S6 fallback returns to the executor and frees the slot
+ok 35 - terminal unavailable S6 fallback returns to the executor and frees the slot
+  ---
+  duration_ms: 2.353347
+  type: 'test'
+  ...
+# Subtest: S4 ignores unrelated comments, allows one retry per body and then visibly waits for intervention
+ok 36 - S4 ignores unrelated comments, allows one retry per body and then visibly waits for intervention
+  ---
+  duration_ms: 4.294108
+  type: 'test'
+  ...
+# Subtest: S4 ship and show labels bypass model review without requiring a separate owner record
+ok 37 - S4 ship and show labels bypass model review without requiring a separate owner record
+  ---
+  duration_ms: 0.394853
+  type: 'test'
+  ...
+# Subtest: S4 passes the saved retry run only for the same specification, allowing a later successful manual retry
+ok 38 - S4 passes the saved retry run only for the same specification, allowing a later successful manual retry
+  ---
+  duration_ms: 1.20553
+  type: 'test'
+  ...
+# Subtest: S4 without a track remains an ask review even with old show provenance
+ok 39 - S4 without a track remains an ask review even with old show provenance
+  ---
+  duration_ms: 1.204693
+  type: 'test'
+  ...
+# Subtest: a live label event reprioritizes the waiting queue without changing GitHub labels
+ok 40 - a live label event reprioritizes the waiting queue without changing GitHub labels
+  ---
+  duration_ms: 1.333628
+  type: 'test'
+  ...
+# Subtest: reconciliation observes ship assigned after S6 and merges without a new review
+ok 41 - reconciliation observes ship assigned after S6 and merges without a new review
+  ---
+  duration_ms: 0.982356
+  type: 'test'
+  ...
+# Subtest: reconciliation observes show assigned to a ready ship and requests review before merge
+ok 42 - reconciliation observes show assigned to a ready ship and requests review before merge
+  ---
+  duration_ms: 0.912434
+  type: 'test'
+  ...
+# Subtest: 13 accepted cases are selected by file/title; unrelated cross matches never enter
+ok 43 - 13 accepted cases are selected by file/title; unrelated cross matches never enter
+  ---
+  duration_ms: 4.618073
+  type: 'test'
+  ...
+# Subtest: Playwright list retains nested title/project identity and rejects discovery errors
+ok 44 - Playwright list retains nested title/project identity and rejects discovery errors
+  ---
+  duration_ms: 0.627341
+  type: 'test'
+  ...
+# Subtest: plan has exact prerequisites and no broad-suite fallback
+ok 45 - plan has exact prerequisites and no broad-suite fallback
+  ---
+  duration_ms: 2.885137
+  type: 'test'
+  ...
+# Subtest: execution owns only its copied seed/container; foreign HA and auth settings are discarded
+ok 46 - execution owns only its copied seed/container; foreign HA and auth settings are discarded
+  ---
+  duration_ms: 18.782606
+  type: 'test'
+  ...
+# Subtest: extra selected case fails before installing or starting HA
+ok 47 - extra selected case fails before installing or starting HA
+  ---
+  duration_ms: 4.585244
+  type: 'test'
+  ...
+# Subtest: nonzero process and skipped required journeys cannot be passed; owned container is removed
+ok 48 - nonzero process and skipped required journeys cannot be passed; owned container is removed
+  ---
+  duration_ms: 13.89359
+  type: 'test'
+  ...
+# Subtest: empty stable remainder is explicit not-required and never starts a lab
+ok 49 - empty stable remainder is explicit not-required and never starts a lab
+  ---
+  duration_ms: 4.768131
+  type: 'test'
+  ...
+# Subtest: cleanup refuses a container whose ownership label does not match this run
+ok 50 - cleanup refuses a container whose ownership label does not match this run
+  ---
+  duration_ms: 5.272925
+  type: 'test'
+  ...
+# Subtest: real Playwright discovery executes exactly selected names with setup dependencies, without browser/HA
+ok 51 - real Playwright discovery executes exactly selected names with setup dependencies, without browser/HA
+  ---
+  duration_ms: 7484.872009
+  type: 'test'
+  ...
+# Subtest: hosted request pins admitted identity and uses stable profile identity without local roots
+ok 52 - hosted request pins admitted identity and uses stable profile identity without local roots
+  ---
+  duration_ms: 4.601609
+  type: 'test'
+  ...
+# Subtest: docs never dispatch a fallback or read GitHub
+ok 53 - docs never dispatch a fallback or read GitHub
+  ---
+  duration_ms: 0.875667
+  type: 'test'
+  ...
+# Subtest: one hosted S6 dispatch waits at minute intervals, returns real report, and resumes without another dispatch
+ok 54 - one hosted S6 dispatch waits at minute intervals, returns real report, and resumes without another dispatch
+  ---
+  duration_ms: 10.505517
+  type: 'test'
+  ...
+# Subtest: a failed runner report is a failed check, never another automatic test run
+ok 55 - a failed runner report is a failed check, never another automatic test run
+  ---
+  duration_ms: 1.602958
+  type: 'test'
+  ...
+# Subtest: missing result after workflow failure gets one durable retry, then releases the wait
+ok 56 - missing result after workflow failure gets one durable retry, then releases the wait
+  ---
+  duration_ms: 1.315733
+  type: 'test'
+  ...
+# Subtest: the one rerun has two minutes to become visible without failing on the stale first attempt
+ok 57 - the one rerun has two minutes to become visible without failing on the stale first attempt
+  ---
+  duration_ms: 2.844501
+  type: 'test'
+  ...
+# Subtest: missing Actions permissions are actionable without repeated writes
+ok 58 - missing Actions permissions are actionable without repeated writes
+  ---
+  duration_ms: 0.697521
+  type: 'test'
+  ...
+# Subtest: lost dispatch response is recovered by observation rather than a duplicate workflow
+ok 59 - lost dispatch response is recovered by observation rather than a duplicate workflow
+  ---
+  duration_ms: 1.047814
+  type: 'test'
+  ...
+# Subtest: foreign, dirty, incomplete and empty report cannot authorize the queue
+ok 60 - foreign, dirty, incomplete and empty report cannot authorize the queue
+  ---
+  duration_ms: 3.855753
+  type: 'test'
+  ...
+# Subtest: wait is bounded; cancelled workflow does not restart; interrupted client can resume the existing run
+ok 61 - wait is bounded; cancelled workflow does not restart; interrupted client can resume the existing run
+  ---
+  duration_ms: 2.029068
+  type: 'test'
+  ...
+# Subtest: actual ZIP report is read without extracting artifact files into the checkout
+ok 62 - actual ZIP report is read without extracting artifact files into the checkout
+  ---
+  duration_ms: 80.574246
+  type: 'test'
+  ...
+# Subtest: fallback pins checkouts, treats labels as data and replaces local machine paths
+ok 63 - fallback pins checkouts, treats labels as data and replaces local machine paths
+  ---
+  duration_ms: 2.945818
+  type: 'test'
+  ...
+# Subtest: docs have no execution; infrastructure preparation stays relevant
+ok 64 - docs have no execution; infrastructure preparation stays relevant
+  ---
+  duration_ms: 0.675146
+  type: 'test'
+  ...
+# Subtest: fallback restores only successful result JSON and named reports, never artifact programs
+ok 65 - fallback restores only successful result JSON and named reports, never artifact programs
+  ---
+  duration_ms: 6.126577
+  type: 'test'
+  ...
+# Subtest: supplied measurement files stay in their checkout; WSL timing cannot impersonate CI
+ok 66 - supplied measurement files stay in their checkout; WSL timing cannot impersonate CI
+  ---
+  duration_ms: 4.086213
+  type: 'test'
+  ...
+# Subtest: S8 removes the personal to_release label without assigning it or touching unrelated labels
+ok 67 - S8 removes the personal to_release label without assigning it or touching unrelated labels
+  ---
+  duration_ms: 5.528139
+  type: 'test'
+  ...
+# Subtest: GitHub writes default to a plan without network; activation requires an explicit token
+ok 68 - GitHub writes default to a plan without network; activation requires an explicit token
+  ---
+  duration_ms: 2.830059
+  type: 'test'
+  ...
+# Subtest: GitHub API and upload transports time out; request cancellation reaches fetch
+ok 69 - GitHub API and upload transports time out; request cancellation reaches fetch
+  ---
+  duration_ms: 32.810291
+  type: 'test'
+  ...
+# Subtest: GitHub Contents CAS passes exact blob identity and maps a conflict to retry
+ok 70 - GitHub Contents CAS passes exact blob identity and maps a conflict to retry
+  ---
+  duration_ms: 0.73205
+  type: 'test'
+  ...
+# Subtest: missing state branch is not silently initialized and a read uses the observed immutable commit
+ok 71 - missing state branch is not silently initialized and a read uses the observed immutable commit
+  ---
+  duration_ms: 0.580523
+  type: 'test'
+  ...
+# Subtest: publication evidence checks the actual tag commit and downloaded bytes
+ok 72 - publication evidence checks the actual tag commit and downloaded bytes
+  ---
+  duration_ms: 2.230452
+  type: 'test'
+  ...
+# Subtest: real Git atomically merges and records S8; failed comment cannot undo successful merge
+ok 73 - real Git atomically merges and records S8; failed comment cannot undo successful merge
+  ---
+  duration_ms: 260.669658
+  type: 'test'
+  ...
+# Subtest: non-fast-forward material is refused before any remote mutation
+ok 74 - non-fast-forward material is refused before any remote mutation
+  ---
+  duration_ms: 149.0475
+  type: 'test'
+  ...
+# Subtest: racing dev advance makes the whole atomic merge fail without publishing S8 or deleting the task
+ok 75 - racing dev advance makes the whole atomic merge fail without publishing S8 or deleting the task
+  ---
+  duration_ms: 271.011193
+  type: 'test'
+  ...
+# Subtest: new queue fence defeats a stale worker even when dev has not moved
+ok 76 - new queue fence defeats a stale worker even when dev has not moved
+  ---
+  duration_ms: 243.968869
+  type: 'test'
+  ...
+# Subtest: task branch advanced after merge material is not deleted
+ok 77 - task branch advanced after merge material is not deleted
+  ---
+  duration_ms: 128.941063
+  type: 'test'
+  ...
+# Subtest: release refs publish the exact tag and fast-forward main; an unrelated candidate cannot rewrite main
+ok 78 - release refs publish the exact tag and fast-forward main; an unrelated candidate cannot rewrite main
+  ---
+  duration_ms: 181.504015
+  type: 'test'
+  ...
+# Subtest: two stable releases and a hotfix retain main ancestry through queued tag-return merges
+ok 79 - two stable releases and a hotfix retain main ancestry through queued tag-return merges
+  ---
+  duration_ms: 777.011567
+  type: 'test'
+  ...
+# Subtest: default plan changes nothing, execute accepts selected PNGs and only their provenance
+ok 80 - default plan changes nothing, execute accepts selected PNGs and only their provenance
+  ---
+  duration_ms: 23.432738
+  type: 'test'
+  ...
+# Subtest: human review reference and explicit real selection are required for writes
+ok 81 - human review reference and explicit real selection are required for writes
+  ---
+  duration_ms: 6.733498
+  type: 'test'
+  ...
+# Subtest: one damaged or errored selected capture prevents all replacements
+ok 82 - one damaged or errored selected capture prevents all replacements
+  ---
+  duration_ms: 37.759399
+  type: 'test'
+  ...
+# Subtest: an unselected error does not force unrelated acceptance or a new capture
+ok 83 - an unselected error does not force unrelated acceptance or a new capture
+  ---
+  duration_ms: 7.356348
+  type: 'test'
+  ...
+# Subtest: captured candidate SHA must match HEAD when present; absence is explicit
+ok 84 - captured candidate SHA must match HEAD when present; absence is explicit
+  ---
+  duration_ms: 58.895145
+  type: 'test'
+  ...
+# Subtest: CLI arguments preserve default dry-run and require an explicit execute flag
+ok 85 - CLI arguments preserve default dry-run and require an explicit execute flag
+  ---
+  duration_ms: 0.714463
+  type: 'test'
+  ...
+# Subtest: frozen anchor stays byte-identical and is diagnostic only
+ok 86 - frozen anchor stays byte-identical and is diagnostic only
+  ---
+  duration_ms: 11.471784
+  type: 'test'
+  ...
+# Subtest: a size stops publication only beyond both the relative and absolute tolerances
+ok 87 - a size stops publication only beyond both the relative and absolute tolerances
+  ---
+  duration_ms: 9.98855
+  type: 'test'
+  ...
+# Subtest: equal conditions and repeated timing regression require an owner decision
+ok 88 - equal conditions and repeated timing regression require an owner decision
+  ---
+  duration_ms: 5.868708
+  type: 'test'
+  ...
+# Subtest: one timing outlier cannot stop publication and inconsistent halves ask for measurement
+ok 89 - one timing outlier cannot stop publication and inconsistent halves ask for measurement
+  ---
+  duration_ms: 7.336506
+  type: 'test'
+  ...
+# Subtest: different host, incomplete timing and missing size are never reported as a valid green comparison
+ok 90 - different host, incomplete timing and missing size are never reported as a valid green comparison
+  ---
+  duration_ms: 9.494342
+  type: 'test'
+  ...
+# Subtest: size measurement counts actual delivered files once and only initial closure for View
+ok 91 - size measurement counts actual delivered files once and only initial closure for View
+  ---
+  duration_ms: 3.230194
+  type: 'test'
+  ...
+# Subtest: failed benchmark produces a diagnostic report with actual sizes and no stale timing
+ok 92 - failed benchmark produces a diagnostic report with actual sizes and no stale timing
+  ---
+  duration_ms: 18.183885
+  type: 'test'
+  ...
+# Subtest: a missing or nonfinite timing series does not discard other measured values
+ok 93 - a missing or nonfinite timing series does not discard other measured values
+  ---
+  duration_ms: 15.089632
+  type: 'test'
+  ...
+# Subtest: foreign SHA or build fingerprint stays invalid evidence and never becomes a reference snapshot
+ok 94 - foreign SHA or build fingerprint stays invalid evidence and never becomes a reference snapshot
+  ---
+  duration_ms: 29.608715
+  type: 'test'
+  ...
+# Subtest: complete collection still records all seven actual metrics
+ok 95 - complete collection still records all seven actual metrics
+  ---
+  duration_ms: 12.315036
+  type: 'test'
+  ...
+# Subtest: stable announcement uses authored RU text and a persisted sent receipt prevents duplicate send
+ok 96 - stable announcement uses authored RU text and a persisted sent receipt prevents duplicate send
+  ---
+  duration_ms: 5.452834
+  type: 'test'
+  ...
+# Subtest: beta is silent and unpublished stable cannot contact transport
+ok 97 - beta is silent and unpublished stable cannot contact transport
+  ---
+  duration_ms: 0.846627
+  type: 'test'
+  ...
+# Subtest: known rejection can retry only the announcement; ambiguous send cannot blindly repeat
+ok 98 - known rejection can retry only the announcement; ambiguous send cannot blindly repeat
+  ---
+  duration_ms: 2.119762
+  type: 'test'
+  ...
+# Subtest: lost state acknowledgement after send leaves a durable sending receipt, not another POST
+ok 99 - lost state acknowledgement after send leaves a durable sending receipt, not another POST
+  ---
+  duration_ms: 1.348825
+  type: 'test'
+  ...
+# Subtest: package uses prepared bytes, includes delivered licenses and keeps the source tree untouched
+ok 100 - package uses prepared bytes, includes delivered licenses and keeps the source tree untouched
+  ---
+  duration_ms: 269.144558
+  type: 'test'
+  ...
+# Subtest: uncommitted release bytes and mismatched assets cannot be packaged as the committed candidate
+ok 101 - uncommitted release bytes and mismatched assets cannot be packaged as the committed candidate
+  ---
+  duration_ms: 39.911463
+  type: 'test'
+  ...
+# Subtest: ready ship first; show and ask share FIFO; no interruption of an admitted task
+ok 102 - ready ship first; show and ask share FIFO; no interruption of an admitted task
+  ---
+  duration_ms: 7.131824
+  type: 'test'
+  ...
+# Subtest: duplicate deliveries are idempotent, conflicting reuse of delivery ID refuses
+ok 103 - duplicate deliveries are idempotent, conflicting reuse of delivery ID refuses
+  ---
+  duration_ms: 1.116956
+  type: 'test'
+  ...
+# Subtest: show keeps exclusive admission while waiting for S7; no merge before accepted review
+ok 104 - show keeps exclusive admission while waiting for S7; no merge before accepted review
+  ---
+  duration_ms: 1.375188
+  type: 'test'
+  ...
+# Subtest: owner ship skips individual review, but cannot skip S6
+ok 105 - owner ship skips individual review, but cannot skip S6
+  ---
+  duration_ms: 1.006499
+  type: 'test'
+  ...
+# Subtest: docs use not-required without pretending tests passed
+ok 106 - docs use not-required without pretending tests passed
+  ---
+  duration_ms: 0.715726
+  type: 'test'
+  ...
+# Subtest: installed ship needs no separate provenance proof to skip individual review
+ok 107 - installed ship needs no separate provenance proof to skip individual review
+  ---
+  duration_ms: 0.641043
+  type: 'test'
+  ...
+# Subtest: return frees the slot and retains useful evidence; reentry has a new fence and FIFO ticket
+ok 108 - return frees the slot and retains useful evidence; reentry has a new fence and FIFO ticket
+  ---
+  duration_ms: 0.541794
+  type: 'test'
+  ...
+# Subtest: unchanged accepted review survives an automation return and same-material reentry
+ok 109 - unchanged accepted review survives an automation return and same-material reentry
+  ---
+  duration_ms: 0.452358
+  type: 'test'
+  ...
+# Subtest: expired worker cannot heartbeat or submit old results; next task can acquire the slot
+ok 110 - expired worker cannot heartbeat or submit old results; next task can acquire the slot
+  ---
+  duration_ms: 1.021398
+  type: 'test'
+  ...
+# Subtest: results for another material do not advance S6
+ok 111 - results for another material do not advance S6
+  ---
+  duration_ms: 0.512917
+  type: 'test'
+  ...
+# Subtest: CAS retries concurrent enqueues and never loses either event
+ok 112 - CAS retries concurrent enqueues and never loses either event
+  ---
+  duration_ms: 0.967086
+  type: 'test'
+  ...
+# Subtest: local state CAS persists across instances and rejects a stale writer
+ok 113 - local state CAS persists across instances and rejects a stale writer
+  ---
+  duration_ms: 20.878937
+  type: 'test'
+  ...
+# Subtest: idle ticks never write state and active delivery history remains bounded
+ok 114 - idle ticks never write state and active delivery history remains bounded
+  ---
+  duration_ms: 401.834385
+  type: 'test'
+  ...
+# Subtest: optional decision provenance is validated but never overrides the installed task track
+ok 115 - optional decision provenance is validated but never overrides the installed task track
+  ---
+  duration_ms: 0.850176
+  type: 'test'
+  ...
+# Subtest: expired lease and clean rebase retain accepted patch review without a new request
+ok 116 - expired lease and clean rebase retain accepted patch review without a new request
+  ---
+  duration_ms: 1.649569
+  type: 'test'
+  ...
+# Subtest: pending review and its retry allowance survive automatic continuation and clean rebase
+ok 117 - pending review and its retry allowance survive automatic continuation and clean rebase
+  ---
+  duration_ms: 0.803332
+  type: 'test'
+  ...
+# Subtest: departed sync and testing executors leave the queue until they explicitly submit ready again
+ok 118 - departed sync and testing executors leave the queue until they explicitly submit ready again
+  ---
+  duration_ms: 1.451171
+  type: 'test'
+  ...
+# Subtest: remote review resumes after lease expiry without asking a departed executor to synchronize again
+ok 119 - remote review resumes after lease expiry without asking a departed executor to synchronize again
+  ---
+  duration_ms: 0.85729
+  type: 'test'
+  ...
+# Subtest: verified published-release review is reused only for the exact synchronized patch, without an empty S7
+ok 120 - verified published-release review is reused only for the exact synchronized patch, without an empty S7
+  ---
+  duration_ms: 0.522696
+  type: 'test'
+  ...
+# Subtest: an observed track updates waiting priority and never skips unfinished S6
+ok 121 - an observed track updates waiting priority and never skips unfinished S6
+  ---
+  duration_ms: 0.319018
+  type: 'test'
+  ...
+# Subtest: live track changes preserve S6 and the existing review, including an accepted verdict
+ok 122 - live track changes preserve S6 and the existing review, including an accepted verdict
+  ---
+  duration_ms: 0.655454
+  type: 'test'
+  ...
+# Subtest: a track change also updates a remote continuation waiting for renewed admission
+ok 123 - a track change also updates a remote continuation waiting for renewed admission
+  ---
+  duration_ms: 0.561661
+  type: 'test'
+  ...
+# Subtest: partial issue completion resumes after S8 removal without duplicate comment, tests or publication
+ok 124 - partial issue completion resumes after S8 removal without duplicate comment, tests or publication
+  ---
+  duration_ms: 7.858685
+  type: 'test'
+  ...
+# Subtest: missing HACS configuration is visible and makes no issue writes
+ok 125 - missing HACS configuration is visible and makes no issue writes
+  ---
+  duration_ms: 0.25879
+  type: 'test'
+  ...
+# Subtest: a delayed S8 label remains pending and closes on retry without re-closing a completed issue reopened by its owner
+ok 126 - a delayed S8 label remains pending and closes on retry without re-closing a completed issue reopened by its owner
+  ---
+  duration_ms: 1.529678
+  type: 'test'
+  ...
+# Subtest: only an unchanged obsolete beta ref is removed; later retry does not repeat finished bookkeeping
+ok 127 - only an unchanged obsolete beta ref is removed; later retry does not repeat finished bookkeeping
+  ---
+  duration_ms: 0.919718
+  type: 'test'
+  ...
+# Subtest: stable return and announcement have independent resumable outcomes and never republish
+ok 128 - stable return and announcement have independent resumable outcomes and never republish
+  ---
+  duration_ms: 0.718148
+  type: 'test'
+  ...
+# Subtest: membership reads all merged parents and excludes spec-only, release repeats, previous and later/unreachable tasks
+ok 129 - membership reads all merged parents and excludes spec-only, release repeats, previous and later/unreachable tasks
+  ---
+  duration_ms: 215.086967
+  type: 'test'
+  ...
+# Subtest: missing milestone metadata is repairable later in its original cycle, without moving the task to the new cycle
+ok 130 - missing milestone metadata is repairable later in its original cycle, without moving the task to the new cycle
+  ---
+  duration_ms: 87.788507
+  type: 'test'
+  ...
+# Subtest: version preparation plans first and updates all version sources together without publication
+ok 131 - version preparation plans first and updates all version sources together without publication
+  ---
+  duration_ms: 24.67782
+  type: 'test'
+  ...
+# Subtest: stable notes copy only the author-written current sections and candidate reads ignore later checkout edits
+ok 132 - stable notes copy only the author-written current sections and candidate reads ignore later checkout edits
+  ---
+  duration_ms: 67.581668
+  type: 'test'
+  ...
+# Subtest: beta preparation refuses notes left over from a different release
+ok 133 - beta preparation refuses notes left over from a different release
+  ---
+  duration_ms: 18.788141
+  type: 'test'
+  ...
+# Subtest: public assets preserve tested ZIP/JS and publish exact membership and checksums without rebuilding
+ok 134 - public assets preserve tested ZIP/JS and publish exact membership and checksums without rebuilding
+  ---
+  duration_ms: 21.361317
+  type: 'test'
+  ...
+# Subtest: candidate cannot change while running; one completed report records failure without copying per-case state
+ok 135 - candidate cannot change while running; one completed report records failure without copying per-case state
+  ---
+  duration_ms: 3.828416
+  type: 'test'
+  ...
+# Subtest: missing, cancelled, invalidated, wrong-profile and wrong-SHA reports never authorize publication
+ok 136 - missing, cancelled, invalidated, wrong-profile and wrong-SHA reports never authorize publication
+  ---
+  duration_ms: 1.06299
+  type: 'test'
+  ...
+# Subtest: fix asks for the new runner report and review; the runner owns case reuse
+ok 137 - fix asks for the new runner report and review; the runner owns case reuse
+  ---
+  duration_ms: 0.782521
+  type: 'test'
+  ...
+# Subtest: stable uses published beta and accepts its runner cache reuse without a second case ledger
+ok 138 - stable uses published beta and accepts its runner cache reuse without a second case ledger
+  ---
+  duration_ms: 1.328686
+  type: 'test'
+  ...
+# Subtest: previous published beta survives a failed candidate and is retired only after successful publication
+ok 139 - previous published beta survives a failed candidate and is retired only after successful publication
+  ---
+  duration_ms: 0.884953
+  type: 'test'
+  ...
+# Subtest: publication failure retries the same checked material without a new test run
+ok 140 - publication failure retries the same checked material without a new test run
+  ---
+  duration_ms: 1.367125
+  type: 'test'
+  ...
+# Subtest: completed return records the final published fix and retires superseded intermediate return work
+ok 141 - completed return records the final published fix and retires superseded intermediate return work
+  ---
+  duration_ms: 1.791021
+  type: 'test'
+  ...
+# Subtest: beta metrics decision belongs to one candidate and accepted retry does not ask twice
+ok 142 - beta metrics decision belongs to one candidate and accepted retry does not ask twice
+  ---
+  duration_ms: 1.418893
+  type: 'test'
+  ...
+# Subtest: missing/noisy/incomparable measurements remain visible but do not block or prevent owner acknowledgement
+ok 143 - missing/noisy/incomparable measurements remain visible but do not block or prevent owner acknowledgement
+  ---
+  duration_ms: 0.958343
+  type: 'test'
+  ...
+# Subtest: metrics approval requires an explicit decision source, never a shared actor login
+ok 144 - metrics approval requires an explicit decision source, never a shared actor login
+  ---
+  duration_ms: 1.530476
+  type: 'test'
+  ...
+# Subtest: hotfix uses last stable and cannot run in parallel with a preparing release
+ok 145 - hotfix uses last stable and cannot run in parallel with a preparing release
+  ---
+  duration_ms: 0.538446
+  type: 'test'
+  ...
+# Subtest: converter failure remains diagnostic and does not block a ready candidate
+ok 146 - converter failure remains diagnostic and does not block a ready candidate
+  ---
+  duration_ms: 0.299201
+  type: 'test'
+  ...
+# Subtest: closure requires published delivery, membership and actual S8; unrelated/unfinished issues remain open
+ok 147 - closure requires published delivery, membership and actual S8; unrelated/unfinished issues remain open
+  ---
+  duration_ms: 0.613711
+  type: 'test'
+  ...
+# Subtest: duplicate release events are idempotent but cannot reuse an ID for another payload
+ok 148 - duplicate release events are idempotent but cannot reuse an ID for another payload
+  ---
+  duration_ms: 0.283919
+  type: 'test'
+  ...
+# Subtest: HACS and downloadable bytes are separately observed; GitHub availability alone is insufficient
+ok 149 - HACS and downloadable bytes are separately observed; GitHub availability alone is insufficient
+  ---
+  duration_ms: 1.199917
+  type: 'test'
+  ...
+# Subtest: actual HACS protocol authenticates and sends only the read-only repository list command
+ok 150 - actual HACS protocol authenticates and sends only the read-only repository list command
+  ---
+  duration_ms: 0.771799
+  type: 'test'
+  ...
+# Subtest: release publisher is offline by default even with activated underlying adapters
+ok 151 - release publisher is offline by default even with activated underlying adapters
+  ---
+  duration_ms: 0.929414
+  type: 'test'
+  ...
+# Subtest: publication retry after a lost upload response reuses the draft and bytes without invoking tests
+ok 152 - publication retry after a lost upload response reuses the draft and bytes without invoking tests
+  ---
+  duration_ms: 0.949455
+  type: 'test'
+  ...
+# Subtest: changed prepared artifact is refused before creating or uploading a release
+ok 153 - changed prepared artifact is refused before creating or uploading a release
+  ---
+  duration_ms: 0.555502
+  type: 'test'
+  ...
+# Subtest: draft notes are repaired once after a lost response, published notes stay unchanged, and ZIP evidence ignores asset order
+ok 154 - draft notes are repaired once after a lost response, published notes stay unchanged, and ZIP evidence ignores asset order
+  ---
+  duration_ms: 1.27576
+  type: 'test'
+  ...
+# Subtest: HACS cache delay waits and retries only delivery observation, with a visible resumable timeout
+ok 155 - HACS cache delay waits and retries only delivery observation, with a visible resumable timeout
+  ---
+  duration_ms: 1.109557
+  type: 'test'
+  ...
+# Subtest: stable/hotfix publication records an ancestry-preserving return instead of cherry-pick
+ok 156 - stable/hotfix publication records an ancestry-preserving return instead of cherry-pick
+  ---
+  duration_ms: 0.679808
+  type: 'test'
+  ...
+# Subtest: stable measurement is uploaded/read as a diagnostic asset; missing data never cancels publication
+ok 157 - stable measurement is uploaded/read as a diagnostic asset; missing data never cancels publication
+  ---
+  duration_ms: 2.064435
+  type: 'test'
+  ...
+# Subtest: actual runner report authorizes its clean Git candidate; dirty and deleted sources are rejected by release state
+ok 158 - actual runner report authorizes its clean Git candidate; dirty and deleted sources are rejected by release state
+  ---
+  duration_ms: 154.539511
+  type: 'test'
+  ...
+# Subtest: a clean return merge reuses published review; extra code or a local-only tag does not
+ok 159 - a clean return merge reuses published review; extra code or a local-only tag does not
+  ---
+  duration_ms: 291.956518
+  type: 'test'
+  ...
+# Subtest: manual release-return conflict resolution still requires its own review
+ok 160 - manual release-return conflict resolution still requires its own review
+  ---
+  duration_ms: 213.630288
+  type: 'test'
+  ...
+# Subtest: unavailable merge-tree declines reuse while remote and required Git failures remain visible
+ok 161 - unavailable merge-tree declines reuse while remote and required Git failures remain visible
+  ---
+  duration_ms: 1.488732
+  type: 'test'
+  ...
+# Subtest: default remote planning is offline even with enabled config and credentials
+ok 162 - default remote planning is offline even with enabled config and credentials
+  ---
+  duration_ms: 3.082796
+  type: 'test'
+  ...
+# Subtest: execution needs both explicit activations and credentials come only from env
+ok 163 - execution needs both explicit activations and credentials come only from env
+  ---
+  duration_ms: 1.676937
+  type: 'test'
+  ...
+# Subtest: durable exact-material artifact survives failed comment publication and prevents another model run
+ok 164 - durable exact-material artifact survives failed comment publication and prevents another model run
+  ---
+  duration_ms: 3.930047
+  type: 'test'
+  ...
+# Subtest: pending workflow prevents redispatch, missing workflow gets pinned inputs and S6 receipt
+ok 165 - pending workflow prevents redispatch, missing workflow gets pinned inputs and S6 receipt
+  ---
+  duration_ms: 1.505952
+  type: 'test'
+  ...
+# Subtest: completed workflow without report is incomplete; owner ship cannot dispatch
+ok 166 - completed workflow without report is incomplete; owner ship cannot dispatch
+  ---
+  duration_ms: 0.521844
+  type: 'test'
+  ...
+# Subtest: remote show flow binds local S6 to workflow review and atomic merge without a test runner
+ok 167 - remote show flow binds local S6 to workflow review and atomic merge without a test runner
+  ---
+  duration_ms: 6.779167
+  type: 'test'
+  ...
+# Subtest: installed ship label needs no provenance and does not use individual review
+ok 168 - installed ship label needs no provenance and does not use individual review
+  ---
+  duration_ms: 2.777193
+  type: 'test'
+  ...
+# Subtest: queue metadata race retries the same merge without returning to S6 or rerunning review
+ok 169 - queue metadata race retries the same merge without returning to S6 or rerunning review
+  ---
+  duration_ms: 3.333908
+  type: 'test'
+  ...
+# Subtest: repeated queue metadata races leave accepted material ready, not failed
+ok 170 - repeated queue metadata races leave accepted material ready, not failed
+  ---
+  duration_ms: 5.868031
+  type: 'test'
+  ...
+# Subtest: publication retry reuses checked candidate and actual evidence, including repeated transient failures
+ok 171 - publication retry reuses checked candidate and actual evidence, including repeated transient failures
+  ---
+  duration_ms: 9.182003
+  type: 'test'
+  ...
+# Subtest: release raw events cannot manufacture publication or HACS evidence
+ok 172 - release raw events cannot manufacture publication or HACS evidence
+  ---
+  duration_ms: 0.788662
+  type: 'test'
+  ...
+# Subtest: one finish invocation waits, synchronizes, runs S6 once and survives a lost review dispatch response
+ok 173 - one finish invocation waits, synchronizes, runs S6 once and survives a lost review dispatch response
+  ---
+  duration_ms: 7.52566
+  type: 'test'
+  ...
+# Subtest: completed review transport failure reruns the same workflow instead of another paid request identity
+ok 174 - completed review transport failure reruns the same workflow instead of another paid request identity
+  ---
+  duration_ms: 0.594517
+  type: 'test'
+  ...
+# Subtest: a retry needs an explicit durable grant and cannot exceed GitHub attempt two
+ok 175 - a retry needs an explicit durable grant and cannot exceed GitHub attempt two
+  ---
+  duration_ms: 0.575957
+  type: 'test'
+  ...
+# Subtest: previous review lookup downloads only artifacts belonging to this issue and kind
+ok 176 - previous review lookup downloads only artifacts belonging to this issue and kind
+  ---
+  duration_ms: 0.628561
+  type: 'test'
+  ...
+# Subtest: track initialization adds only a missing label and never changes an installed track
+ok 177 - track initialization adds only a missing label and never changes an installed track
+  ---
+  duration_ms: 0.371118
+  type: 'test'
+  ...
+# Subtest: coordinator label events never assign a missing track; S4 still requests spec review
+ok 178 - coordinator label events never assign a missing track; S4 still requests spec review
+  ---
+  duration_ms: 1.300167
+  type: 'test'
+  ...
+# Subtest: executor ready may initialize the missing ship label explicitly
+ok 179 - executor ready may initialize the missing ship label explicitly
+  ---
+  duration_ms: 0.775506
+  type: 'test'
+  ...
+# Subtest: release return binds computed Git proof, never a caller-supplied review exemption
+ok 180 - release return binds computed Git proof, never a caller-supplied review exemption
+  ---
+  duration_ms: 5.676971
+  type: 'test'
+  ...
+# Subtest: finish uses hosted S6 on the admitted SHA and frees the slot on terminal transport failure
+ok 181 - finish uses hosted S6 on the admitted SHA and frees the slot on terminal transport failure
+  ---
+  duration_ms: 9.145416
+  type: 'test'
+  ...
+# Subtest: waiting finish observes once per minute without reconciling another admitted task
+ok 182 - waiting finish observes once per minute without reconciling another admitted task
+  ---
+  duration_ms: 3.622239
+  type: 'test'
+  ...
+# Subtest: publication reads the completed runner JSON and exact-SHA metrics without manual per-step events
+ok 183 - publication reads the completed runner JSON and exact-SHA metrics without manual per-step events
+  ---
+  duration_ms: 31.586832
+  type: 'test'
+  ...
+# Subtest: observed current dev-build covers every older pending product ancestor
+ok 184 - observed current dev-build covers every older pending product ancestor
+  ---
+  duration_ms: 3.47769
+  type: 'test'
+  ...
+# Subtest: finish removes personal label and records milestone; a metadata retry never repeats merge or checks
+ok 185 - finish removes personal label and records milestone; a metadata retry never repeats merge or checks
+  ---
+  duration_ms: 5.590954
+  type: 'test'
+  ...
+# Subtest: published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing
+ok 186 - published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing
+  ---
+  duration_ms: 6.369374
+  type: 'test'
+  ...
+# Subtest: interrupted publication resumes persisted inputs even after report files disappeared
+ok 187 - interrupted publication resumes persisted inputs even after report files disappeared
+  ---
+  duration_ms: 0.879825
+  type: 'test'
+  ...
+# Subtest: candidate creation uses computed history membership, not a caller-provided issue list
+ok 188 - candidate creation uses computed history membership, not a caller-provided issue list
+  ---
+  duration_ms: 0.486815
+  type: 'test'
+  ...
+# Subtest: dev wakeup survives a lost publication response even when resumed publisher says unchanged
+ok 189 - dev wakeup survives a lost publication response even when resumed publisher says unchanged
+  ---
+  duration_ms: 2.449784
+  type: 'test'
+  ...
+# Subtest: published history reaches dev through queued S6 and closes its service issue; retry does no work
+ok 190 - published history reaches dev through queued S6 and closes its service issue; retry does no work
+  ---
+  duration_ms: 30.800853
+  type: 'test'
+  ...
+# Subtest: lost issue-create response is found by marker instead of creating another service issue
+ok 191 - lost issue-create response is found by marker instead of creating another service issue
+  ---
+  duration_ms: 7.787527
+  type: 'test'
+  ...
+# Subtest: a remote return branch resumes in a new local worktree without resetting existing refs
+ok 192 - a remote return branch resumes in a new local worktree without resetting existing refs
+  ---
+  duration_ms: 7.105302
+  type: 'test'
+  ...
+# Subtest: installed track is preserved and owner-blocked service work is not resumed
+ok 193 - installed track is preserved and owner-blocked service work is not resumed
+  ---
+  duration_ms: 8.183794
+  type: 'test'
+  ...
+# Subtest: a returned review finding waits for executor correction rather than another automatic paid round
+ok 194 - a returned review finding waits for executor correction rather than another automatic paid round
+  ---
+  duration_ms: 1.92763
+  type: 'test'
+  ...
+# Subtest: Git transport failure during early ancestry read never creates another task
+ok 195 - Git transport failure during early ancestry read never creates another task
+  ---
+  duration_ms: 1.806698
+  type: 'test'
+  ...
+# Subtest: already-included history reconciles an orphan service issue by marker without a new queue entry
+ok 196 - already-included history reconciles an orphan service issue by marker without a new queue entry
+  ---
+  duration_ms: 2.157618
+  type: 'test'
+  ...
+# Subtest: S6 dependency preparation skips matching inputs and disables lifecycle hooks on install
+ok 197 - S6 dependency preparation skips matching inputs and disables lifecycle hooks on install
+  ---
+  duration_ms: 15.830401
+  type: 'test'
+  ...
+# Subtest: 2050 expired runs do not affect current or previous review lookup
+ok 198 - 2050 expired runs do not affect current or previous review lookup
+  ---
+  duration_ms: 10.960724
+  type: 'test'
+  ...
+# Subtest: exactly 100 runs finish pagination on total_count without an empty extra page
+ok 199 - exactly 100 runs finish pagination on total_count without an empty extra page
+  ---
+  duration_ms: 0.968622
+  type: 'test'
+  ...
+# Subtest: more than 1000 recent runs are read in complete time slices, including an older matching review
+ok 200 - more than 1000 recent runs are read in complete time slices, including an older matching review
+  ---
+  duration_ms: 13.47934
+  type: 'test'
+  ...
+# Subtest: an old known retry is inspected directly and never redispatched as a missing recent request
+ok 201 - an old known retry is inspected directly and never redispatched as a missing recent request
+  ---
+  duration_ms: 1.034871
+  type: 'test'
+  ...
+# Subtest: spec/code review receive issue discussion, source attribution, previous round and S6 receipts
+ok 202 - spec/code review receive issue discussion, source attribution, previous round and S6 receipts
+  ---
+  duration_ms: 6.750582
+  type: 'test'
+  ...
+# Subtest: a comment publication failure preserves the paid verdict and retries without calling model
+ok 203 - a comment publication failure preserves the paid verdict and retries without calling model
+  ---
+  duration_ms: 2.373283
+  type: 'test'
+  ...
+# Subtest: real spec/code job passes executor context from the issue and preserves its original snapshot on publication retry
+ok 204 - real spec/code job passes executor context from the issue and preserves its original snapshot on publication retry
+  ---
+  duration_ms: 83.633002
+  type: 'test'
+  ...
+# Subtest: a new workflow run reuses a matching artifact, never trusts a comment as verdict
+ok 205 - a new workflow run reuses a matching artifact, never trusts a comment as verdict
+  ---
+  duration_ms: 2.249383
+  type: 'test'
+  ...
+# Subtest: artifact with another request or changed patch does not replace the intended review
+ok 206 - artifact with another request or changed patch does not replace the intended review
+  ---
+  duration_ms: 1.400786
+  type: 'test'
+  ...
+# Subtest: discussion is paginated and disabled template never contacts GitHub
+ok 207 - discussion is paginated and disabled template never contacts GitHub
+  ---
+  duration_ms: 1.876733
+  type: 'test'
+  ...
+# Subtest: ship has no individual review workflow regardless of ownerAssigned metadata
+ok 208 - ship has no individual review workflow regardless of ownerAssigned metadata
+  ---
+  duration_ms: 0.535564
+  type: 'test'
+  ...
+# Subtest: incomplete review is regenerated on its allowed retry and the stale comment is replaced
+ok 209 - incomplete review is regenerated on its allowed retry and the stale comment is replaced
+  ---
+  duration_ms: 1.71891
+  type: 'test'
+  ...
+# Subtest: long report is fully archived in issue comments and publication retry creates no duplicates
+ok 210 - long report is fully archived in issue comments and publication retry creates no duplicates
+  ---
+  duration_ms: 3.34933
+  type: 'test'
+  ...
+# Subtest: outside defects create separate source-marked issues, improvements do not, and retry repairs publication only
+ok 211 - outside defects create separate source-marked issues, improvements do not, and retry repairs publication only
+  ---
+  duration_ms: 2.294891
+  type: 'test'
+  ...
+# Subtest: local owner-token replay recognizes its own report comments without a second copy
+ok 212 - local owner-token replay recognizes its own report comments without a second copy
+  ---
+  duration_ms: 0.320437
+  type: 'test'
+  ...
+# Subtest: review reads exact base/head and useful history without touching worktree
+ok 213 - review reads exact base/head and useful history without touching worktree
+  ---
+  duration_ms: 136.560581
+  type: 'test'
+  ...
+# Subtest: no command execution, path traversal, arbitrary ref flags or symlink reads
+ok 214 - no command execution, path traversal, arbitrary ref flags or symlink reads
+  ---
+  duration_ms: 86.740059
+  type: 'test'
+  ...
+# Subtest: owner ship never invokes individual review or demands a spec/key
+ok 215 - owner ship never invokes individual review or demands a spec/key
+  ---
+  duration_ms: 66.549186
+  type: 'test'
+  ...
+# Subtest: offline preview requires no provider and exposes only analytical tools
+ok 216 - offline preview requires no provider and exposes only analytical tools
+  ---
+  duration_ms: 67.377436
+  type: 'test'
+  ...
+# Subtest: executor context is freeform task data; fenced examples and following requirements do not become the briefing
+ok 217 - executor context is freeform task data; fenced examples and following requirements do not become the briefing
+  ---
+  duration_ms: 0.676301
+  type: 'test'
+  ...
+# Subtest: different executor contexts change only task data, never policy, review scope, tools or S6 results
+ok 218 - different executor contexts change only task data, never policy, review scope, tools or S6 results
+  ---
+  duration_ms: 96.186987
+  type: 'test'
+  ...
+# Subtest: API tool conversation preserves thinking and saves only the submitted report
+ok 219 - API tool conversation preserves thinking and saves only the submitted report
+  ---
+  duration_ms: 66.490221
+  type: 'test'
+  ...
+# Subtest: unknown tools, truncation and provider errors cannot become green reports
+ok 220 - unknown tools, truncation and provider errors cannot become green reports
+  ---
+  duration_ms: 90.920775
+  type: 'test'
+  ...
+# Subtest: transient API errors retry the same request twice, honour bounded retry-after, never switch models
+ok 221 - transient API errors retry the same request twice, honour bounded retry-after, never switch models
+  ---
+  duration_ms: 76.767595
+  type: 'test'
+  ...
+# Subtest: persistent transient failure is bounded and authentication errors are not retried
+ok 222 - persistent transient failure is bounded and authentication errors are not retried
+  ---
+  duration_ms: 89.997919
+  type: 'test'
+  ...
+# Subtest: one content reminder preserves the reply and permits a substantive submission
+ok 223 - one content reminder preserves the reply and permits a substantive submission
+  ---
+  duration_ms: 66.186383
+  type: 'test'
+  ...
+# Subtest: report writes reject symlink roots and inconsistent green verdicts
+ok 224 - report writes reject symlink roots and inconsistent green verdicts
+  ---
+  duration_ms: 50.140885
+  type: 'test'
+  ...
+# Subtest: author template check identifies missing/empty sections without pretending to review meaning
+ok 225 - author template check identifies missing/empty sections without pretending to review meaning
+  ---
+  duration_ms: 2.801871
+  type: 'test'
+  ...
+# Subtest: runs a real child, persists its log/result and reuses successful unchanged inputs
+ok 226 - runs a real child, persists its log/result and reuses successful unchanged inputs
+  ---
+  duration_ms: 135.244863
+  type: 'test'
+  ...
+# Subtest: beta to stable version-only promotion rebuilds artifacts but reuses behavior; dependency/code changes rerun it
+ok 227 - beta to stable version-only promotion rebuilds artifacts but reuses behavior; dependency/code changes rerun it
+  ---
+  duration_ms: 70.120545
+  type: 'test'
+  ...
+# Subtest: beta and stable worktrees share successful reports by default without sharing build artifacts or rewriting the beta
+ok 228 - beta and stable worktrees share successful reports by default without sharing build artifacts or rewriting the beta
+  ---
+  duration_ms: 140.421186
+  type: 'test'
+  ...
+# Subtest: damaged cached report bytes rerun only that check; restoration cannot escape a symlinked output parent
+ok 229 - damaged cached report bytes rerun only that check; restoration cannot escape a symlinked output parent
+  ---
+  duration_ms: 25.738376
+  type: 'test'
+  ...
+# Subtest: release receipts distinguish committed material from dirty source, independently of test success
+ok 230 - release receipts distinguish committed material from dirty source, independently of test success
+  ---
+  duration_ms: 98.993087
+  type: 'test'
+  ...
+# Subtest: command, explicit environment and generated outputs invalidate reuse
+ok 231 - command, explicit environment and generated outputs invalidate reuse
+  ---
+  duration_ms: 48.778601
+  type: 'test'
+  ...
+# Subtest: preparation dependency identity is part of downstream evidence
+ok 232 - preparation dependency identity is part of downstream evidence
+  ---
+  duration_ms: 25.360759
+  type: 'test'
+  ...
+# Subtest: failure continues independent work, blocks only descendants and never caches a failure
+ok 233 - failure continues independent work, blocks only descendants and never caches a failure
+  ---
+  duration_ms: 27.888916
+  type: 'test'
+  ...
+# Subtest: source edits during a set invalidate receipts even when child returned zero
+ok 234 - source edits during a set invalidate receipts even when child returned zero
+  ---
+  duration_ms: 22.708264
+  type: 'test'
+  ...
+# Subtest: docs have no spawn and missing diagnostic converter cannot hide a required failure
+ok 235 - docs have no spawn and missing diagnostic converter cannot hide a required failure
+  ---
+  duration_ms: 28.97094
+  type: 'test'
+  ...
+# Subtest: timeout kills the actual process and cancellation never becomes passed
+ok 236 - timeout kills the actual process and cancellation never becomes passed
+  ---
+  duration_ms: 95.175855
+  type: 'test'
+  ...
+# Subtest: exit zero with failed TAP or an empty required selection is a failure
+ok 237 - exit zero with failed TAP or an empty required selection is a failure
+  ---
+  duration_ms: 73.172414
+  type: 'test'
+  ...
+# Subtest: glob inputs notice new files; each output pattern must exist; paths stay within root
+ok 238 - glob inputs notice new files; each output pattern must exist; paths stay within root
+  ---
+  duration_ms: 2.032533
+  type: 'test'
+  ...
+# Subtest: invalid command, unknown dependency, cycle and duplicate fail before executing
+ok 239 - invalid command, unknown dependency, cycle and duplicate fail before executing
+  ---
+  duration_ms: 0.290928
+  type: 'test'
+  ...
+# Subtest: ordered independent suites continue after failure; empty remainder is explicit N/A
+ok 240 - ordered independent suites continue after failure; empty remainder is explicit N/A
+  ---
+  duration_ms: 44.301029
+  type: 'test'
+  ...
+# Subtest: metadata-only packaging update does not repeat tests of identical delivered bytes
+ok 241 - metadata-only packaging update does not repeat tests of identical delivered bytes
+  ---
+  duration_ms: 21.95727
+  type: 'test'
+  ...
+# Subtest: silent zero-exit Node invocation is not a completed required test selection
+ok 242 - silent zero-exit Node invocation is not a completed required test selection
+  ---
+  duration_ms: 25.177187
+  type: 'test'
+  ...
+# Subtest: post-merge retry repairs S8 and to_release without a second merge, test or review
+ok 243 - post-merge retry repairs S8 and to_release without a second merge, test or review
+  ---
+  duration_ms: 5.488403
+  type: 'test'
+  ...
+# Subtest: missing classification is visible and nonblocking; another milestone is never stolen
+ok 244 - missing classification is visible and nonblocking; another milestone is never stolen
+  ---
+  duration_ms: 4.93906
+  type: 'test'
+  ...
+# Subtest: a lost comment response retries its marker, and a released closed issue never regains S8
+ok 245 - a lost comment response retries its marker, and a released closed issue never regains S8
+  ---
+  duration_ms: 2.972859
+  type: 'test'
+  ...
+# Subtest: a queued published-tag return completes without classification or changing its milestone
+ok 246 - a queued published-tag return completes without classification or changing its milestone
+  ---
+  duration_ms: 2.548904
+  type: 'test'
+  ...
+# Subtest: failure notices and paid review presentation retry independently without changing statuses
+ok 247 - failure notices and paid review presentation retry independently without changing statuses
+  ---
+  duration_ms: 2.478042
+  type: 'test'
+  ...
+# Subtest: new spec and code rounds retain every undelivered paid report until its own publication succeeds
+ok 248 - new spec and code rounds retain every undelivered paid report until its own publication succeeds
+  ---
+  duration_ms: 3.084825
+  type: 'test'
+  ...
+# Subtest: HA wakeup retries only HTTP and does not expose its URL or response
+ok 249 - HA wakeup retries only HTTP and does not expose its URL or response
+  ---
+  duration_ms: 1.660031
+  type: 'test'
+  ...
+# Subtest: old HA response cannot acknowledge a newer pending source
+ok 250 - old HA response cannot acknowledge a newer pending source
+  ---
+  duration_ms: 1.103716
+  type: 'test'
+  ...
+# Subtest: dev-build binding persists changed wakeup before sending and does not repeat the build for HTTP retry
+ok 251 - dev-build binding persists changed wakeup before sending and does not repeat the build for HTTP retry
+  ---
+  duration_ms: 0.750455
+  type: 'test'
+  ...
+# Subtest: disabled preparation performs no completion writes, publication or webhook calls
+ok 252 - disabled preparation performs no completion writes, publication or webhook calls
+  ---
+  duration_ms: 3.414798
+  type: 'test'
+  ...
+1..252
+# tests 252
+# suites 0
+# pass 252
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45207.794682

@@ -10,6 +10,25 @@ const A = 'a'.repeat(40), B = 'b'.repeat(40);
 const response = (body, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body,
   arrayBuffer: async () => Buffer.from(body) });
 
+test('S8 removes the personal to_release label without assigning it or touching unrelated labels', async () => {
+  const labels = new Set(['S7-code-review', 'track:show', 'to_release', 'kind:feature']), writes = [];
+  const client = new GitHubClient({ owner: 'o', repo: 'r', token: 'fixture', activated: true,
+    fetchImpl: async (url, options) => {
+      const body = options.body && JSON.parse(options.body); writes.push({ method: options.method, url, body });
+      if (options.method === 'POST') { body.labels.forEach(label => labels.add(label)); return response([...labels]); }
+      const label = decodeURIComponent(url.split('/').at(-1));
+      return response({}, labels.delete(label) ? 204 : 404);
+    } });
+  const staleLabels = [...labels];
+  await client.moveStatus(1, 'S8-merged', staleLabels);
+  await client.moveStatus(1, 'S8-merged', staleLabels); // metadata retry after an ambiguous response
+  assert.deepEqual([...labels].sort(), ['S8-merged', 'kind:feature', 'track:show']);
+  assert.ok(writes.filter(row => row.method === 'POST').every(row => !row.body.labels.includes('to_release')));
+  writes.length = 0;
+  await client.moveStatus(2, 'S6-in-progress', ['to_release', 'S5-ready']);
+  assert.ok(!writes.some(row => row.method === 'DELETE' && row.url.endsWith('/to_release')));
+});
+
 test('GitHub writes default to a plan without network; activation requires an explicit token', async () => {
   let calls = 0;
   const fetchImpl = async () => { calls++; return response({}); };
@@ -139,7 +158,10 @@ test('release refs publish the exact tag and fast-forward main; an unrelated can
   const f = await fixture(t); await f.git(['branch', 'main', f.base]); await f.git(['push', 'origin', 'main']);
   await f.adapter.publishCandidateRefs({ materialSha: f.material, tag: 'v1.0.0', kind: 'stable', expectedMain: f.base });
   assert.equal(await f.adapter.remoteHead('main'), f.material);
-  const tag = await f.git(['ls-remote', '--tags', 'origin', 'refs/tags/v1.0.0']); assert.ok(tag.startsWith(f.material));
+  const tag = await f.git(['ls-remote', '--tags', 'origin', 'refs/tags/v1.0.0', 'refs/tags/v1.0.0^{}']);
+  assert.ok(tag.split('\n').some(row => row === `${f.material}\trefs/tags/v1.0.0^{}`));
+  const tagObject = tag.split('\n').find(row => row.endsWith('refs/tags/v1.0.0')).split('\t')[0];
+  assert.equal(await f.git(['cat-file', '-t', tagObject]), 'tag');
   const retried = await f.adapter.publishCandidateRefs({ materialSha: f.material, tag: 'v1.0.0', kind: 'stable', expectedMain: f.base });
   assert.equal(retried.mainAlreadyContains, true); // same command after a lost publication response never moves main backwards
   const tree = await f.git(['rev-parse', `${f.base}^{tree}`]), unrelated = await f.git(['commit-tree', tree, '-m', 'unrelated']);

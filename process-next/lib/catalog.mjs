@@ -223,8 +223,8 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   scope.sourceCommit = sourceSha;
   steps.push(step('release-package', 'Подготовка проверяемого ZIP и кандидата', helper('release-package'),
     [...packageSources, 'package.json'], ['product-build'],
-    { env: { HP_PROCESS_SOURCE_SHA: sourceSha }, outputs: ['artifacts/process-next/package.json', 'artifacts/process-next/houseplan.zip', 'artifacts/process-next/candidate'],
-      evidenceOutputs: ['artifacts/process-next/houseplan.zip', 'artifacts/process-next/candidate'] }));
+    { env: { HP_PROCESS_SOURCE_SHA: sourceSha }, outputs: ['artifacts/process-next/package.json', 'artifacts/process-next/houseplan.zip', 'artifacts/process-next/houseplan-card.js', 'artifacts/process-next/candidate'],
+      evidenceOutputs: ['artifacts/process-next/houseplan.zip', 'artifacts/process-next/houseplan-card.js', 'artifacts/process-next/candidate'] }));
   let measurementInputs = [];
   if (metricsRequest) {
     await checkedPaths(root, [metricsRequest]);
