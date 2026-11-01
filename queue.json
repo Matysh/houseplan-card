@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 371,
+  "revision": 372,
   "nextTicket": 39,
   "nextFence": 39,
   "tasks": {
@@ -330,7 +330,18 @@
         "test/bundle-sync.test.mjs"
       ],
       "automationError": "checks-unavailable",
-      "automationSince": 1793571478689
+      "automationSince": 1793571478689,
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793571581809,
+        "entry": 1,
+        "detail": "Открытие сохранённого плана в View: cancelled",
+        "eventId": "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return:return:1193"
+      }
     }
   },
   "ownerDecisions": {},
@@ -394,18 +405,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1193,
-    "worker": "finish",
-    "token": "38:finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:1:admit",
-    "fence": 38,
-    "materialSha": "33a9d416aa63f2589c6b8b9aac1c984f749a5eef",
-    "expectedBase": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
-    "phase": "testing",
-    "admittedAt": 1793571432619,
-    "expiresAt": 1793571851817,
-    "patchId": "e550b79ac6f41d617f69f25a9787296790319d2f"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -439,6 +439,10 @@
       "digest": "76cd32e8a5b13d3e312bad754e76594b5f018ad163384d2e19b97adb3f4ef145",
       "issue": 1193
     },
+    "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return": {
+      "digest": "1594449a48eaea96081f2ed6b0974f33ef44fd08274ea1271a72df19ba381042",
+      "issue": 1193
+    },
     "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b": {
       "digest": "b453c8cc48946b631091a6cc9284dbbb109c7d8bcb8bae5b057bdcff9107d8e5",
       "issue": 1193,
@@ -464,6 +468,26 @@
         "layer": "product",
         "materialSha": "33a9d416aa63f2589c6b8b9aac1c984f749a5eef",
         "phase": "sync"
+      }
+    },
+    "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return:return:1193": {
+      "digest": "1594449a48eaea96081f2ed6b0974f33ef44fd08274ea1271a72df19ba381042",
+      "issue": 1193,
+      "message": {
+        "kind": "return",
+        "issue": 1193,
+        "at": 1793571581809,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793571581809,
+          "entry": 1,
+          "detail": "Открытие сохранённого плана в View: cancelled",
+          "eventId": "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b:finish:4:return:return:1193"
+        }
       }
     }
   },
