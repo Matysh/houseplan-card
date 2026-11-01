@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 196,
+  "revision": 197,
   "nextTicket": 23,
   "nextFence": 21,
   "tasks": {
@@ -183,7 +183,10 @@
         "runStatus": "completed",
         "publicationPending": true,
         "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793566148432,
+      "automationDetail": "Independent accepted review required"
     },
     "1175": {
       "issue": 1175,
@@ -595,6 +598,10 @@
     },
     "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:5:review-complete": {
       "digest": "fc5159d4ba1e98eb631277abaa2f53c10a4b8177145739189a8ddd0f6ad41e7c",
+      "issue": 1156
+    },
+    "github:41348743877:1:tick:0:automation-pending": {
+      "digest": "da875a5d8519fa7f0c796a0233f684df136035207d1a1c44ed99c70345af2097",
       "issue": 1156
     }
   },
