@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 292,
+  "revision": 293,
   "nextTicket": 34,
-  "nextFence": 31,
+  "nextFence": 32,
   "tasks": {
     "1128": {
       "issue": 1128,
@@ -38,7 +38,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 31,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793567981684,
       "reviewEntry": 2,
@@ -402,11 +402,20 @@
     }
   },
   "waiting": [
-    1153,
     1190,
     1169
   ],
-  "active": null,
+  "active": {
+    "issue": 1153,
+    "worker": "github-coordinator",
+    "token": "31:github:41351804140:1:tick:2:admit",
+    "fence": 31,
+    "materialSha": "be92b6912509f5846af71db131f0c87a13452ead",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793568287288,
+    "expiresAt": 1793568587288
+  },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -826,6 +835,10 @@
     "github:41351804140:1:spec:1172:spec-complete": {
       "digest": "04f92573a886fe23db32ebfb1dbe87215bd82c7dc9ca31f647a6e112308c401d",
       "issue": 1172
+    },
+    "github:41351804140:1:tick:2:admit": {
+      "digest": "c270ed499fd52aa2c5c0e193eeab8f4d9c4076692a05fd4b4a9733dfc780e499",
+      "issue": 1153
     }
   },
   "devWebhook": {
