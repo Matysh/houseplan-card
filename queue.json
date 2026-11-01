@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 22,
-  "nextTicket": 4,
+  "revision": 23,
+  "nextTicket": 5,
   "nextFence": 4,
   "tasks": {
     "1176": {
@@ -56,12 +56,28 @@
       "automationSince": 1793553358957,
       "automationDetail": "GitHub GET failed (415)",
       "reason": "review-findings"
+    },
+    "1186": {
+      "issue": 1186,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/1186-artifact-media",
+      "materialSha": "bcf7d9a595efa5de7db1524cd81e1b84dafc6ec4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 4,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793553891927,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1186
+  ],
   "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -151,6 +167,10 @@
     "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:task-notice:1176::": {
       "digest": "f05d2e232a8f5b80986557867519b5aea5a91e796ba20716a08ba3635061511f",
       "issue": 1176
+    },
+    "finish:cb02156f-502d-4b41-b1af-3f4462fc128c": {
+      "digest": "34c49ecee0787e85e1b7af468a473b50fdaff3ecd7de6f391770fd74d9e4e503",
+      "issue": 1186
     }
   }
 }
