@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The process reads Actions review/fallback ZIPs with the REST media type expected by GitHub; release asset downloads retain their binary media type. Existing review results resume without another model call. [#1186](https://github.com/Matysh/houseplan-card/issues/1186)
+
 ## v1.84.0-beta.1 — 2026-11-01
 
 - Mixed color and opacity labels fit fully in compact group Properties; ordinary values and 36px field height are preserved. [#1183](https://github.com/Matysh/houseplan-card/issues/1183)

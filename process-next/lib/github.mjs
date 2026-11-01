@@ -28,7 +28,7 @@ export class GitHubClient {
     Object.assign(this, { owner, repo, token, activated, fetchImpl, requestTimeoutMs, apiBase: apiBase.replace(/\/$/, ''), uploadBase: uploadBase.replace(/\/$/, '') });
   }
   get root() { return `/repos/${component(this.owner)}/${component(this.repo)}`; }
-  async request(method, path, body, { binary = false, signal } = {}) {
+  async request(method, path, body, { binary = false, signal, accept = 'application/vnd.github+json' } = {}) {
     if (!path.startsWith(this.root + '/') || path.includes('://')) throw Error('Request outside configured repository');
     if (!['GET', 'HEAD'].includes(method)) {
       if (!this.activated) return { planned: true, method, path, body };
@@ -36,7 +36,9 @@ export class GitHubClient {
     }
     const timeout = AbortSignal.timeout(this.requestTimeoutMs);
     const response = await this.fetchImpl(this.apiBase + path, { method, signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-      headers: { Accept: binary ? 'application/octet-stream' : 'application/vnd.github+json',
+      // Response decoding is independent of the REST media type. Actions archive
+      // redirects require JSON Accept even though their resulting body is a ZIP.
+      headers: { Accept: accept,
         'X-GitHub-Api-Version': '2022-11-28', ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
         ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -146,7 +148,7 @@ export class GitHubClient {
   }
   downloadAsset(id) {
     if (!Number.isSafeInteger(id) || id < 1) throw Error('Invalid asset ID');
-    return this.request('GET', `${this.root}/releases/assets/${id}`, undefined, { binary: true });
+    return this.request('GET', `${this.root}/releases/assets/${id}`, undefined, { binary: true, accept: 'application/octet-stream' });
   }
 }
 

@@ -237,3 +237,20 @@ test('two stable releases and a hotfix retain main ancestry through queued tag-r
   assert.equal(await adapter.remoteHead('main'), stable3);
   assert.equal((await adapter.fixPortPlan({ from: stable2, to: hotfix })).commands[0][1], 'merge');
 });
+
+
+test('#1186 Actions archives use REST JSON media while release assets retain octet-stream', async () => {
+  const bytes = Buffer.from('PK native archive fixture'), seen = [];
+  const client = new GitHubClient({ owner: 'o', repo: 'r', token: 'fixture', activated: true,
+    fetchImpl: async (url, { headers }) => {
+      seen.push({ url, accept: headers.Accept });
+      if (url.endsWith('/actions/artifacts/42/zip'))
+        return headers.Accept === 'application/vnd.github+json' ? response(bytes) : response({}, 415);
+      if (url.endsWith('/releases/assets/7'))
+        return headers.Accept === 'application/octet-stream' ? response(bytes) : response({}, 415);
+      throw Error('Unexpected fixture endpoint');
+    } });
+  assert.deepEqual(await client.request('GET', `${client.root}/actions/artifacts/42/zip`, undefined, { binary: true }), bytes);
+  assert.deepEqual(await client.downloadAsset(7), bytes);
+  assert.deepEqual(seen.map(row => row.accept), ['application/vnd.github+json', 'application/octet-stream']);
+});
