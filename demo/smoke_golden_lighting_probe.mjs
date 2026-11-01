@@ -85,8 +85,18 @@ for (const kind of ['isolated', 'exact-prefix']) {
     { locale: 'en-US', timezoneId: 'UTC', colorScheme: 'dark', reducedMotion: 'reduce',
       recordHar: { path: har, content: 'embed', mode: 'full' } });
   try {
+    const prefixCaptures = [];
     if (kind === 'exact-prefix') for (const id of prefix) {
-      await prepareGoldenScenario(page, goldenHarnessScenario(all.find(scene => scene.id === id)));
+      const predecessor = all.find(scene => scene.id === id);
+      const runtimePredecessor = goldenHarnessScenario(predecessor);
+      await prepareGoldenScenario(page, runtimePredecessor);
+      const prefixClip = await goldenClip(page, predecessor.capture);
+      // Match full-runner lifecycle too: disabled animations may deliver callbacks.
+      const png = await captureGoldenFrame(page, runtimePredecessor, {
+        ...(prefixClip ? { clip: prefixClip } : {}),
+        animations: 'disabled', caret: 'hide', scale: 'css',
+      });
+      prefixCaptures.push({ id, sha256: hash(png), at: new Date().toISOString() });
       await resetGoldenStability(page);
     }
     const runtime = await prepareGoldenScenario(page, scenario);
@@ -116,7 +126,7 @@ for (const kind of ['isolated', 'exact-prefix']) {
     const repainted = await captureGoldenFrame(page, { ...scenario, id: 'geometry-plan-editor-dark' }, options);
     writeFileSync(resolve(out, `${kind}-repainted.png`), repainted);
     const afterRepaint = await inspect(page);
-    rows.push({ kind, prefix: kind === 'exact-prefix' ? prefix : [], runtime,
+    rows.push({ kind, prefix: kind === 'exact-prefix' ? prefix : [], prefixCaptures, runtime,
       beforeOrdinary, initial, beforeRepaint, afterRepaint,
       screenshotSha256: { ordinary: hash(ordinary), settled: hash(settled), repainted: hash(repainted) },
       repaintStageDomUnchanged: beforeRepaint.html === afterRepaint.html,
