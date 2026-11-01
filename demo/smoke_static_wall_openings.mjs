@@ -1,6 +1,8 @@
 // #1171: real read-only card, shared symbol geometry, masonry and lifecycle.
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { makeStaticWallOpeningsFixture } from './fixtures/static-wall-openings.mjs';
+import { prepareGoldenScenario, resetGoldenStability } from './golden/harness.mjs';
+import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
 requirePinnedBrowser('static-wall-openings-1171');
 const {page,browser}=await launch({width:1100,height:900},1,[],{hasTouch:true});
 const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,beforeOnly})=>{
@@ -156,6 +158,19 @@ if(process.env.HP_STATIC_OPENINGS_CAPTURE){
   await page.locator('houseplan-card').screenshot({path:`${prefix}-full.png`});
   await page.evaluate(()=>{document.querySelector('houseplan-card').style.display='none';});
   await page.locator('houseplan-space-card').screenshot({path:`${prefix}-static.png`});
+}
+if(!process.argv.includes('--before')){
+  const desktop=GOLDEN_SCENARIOS.find(scene=>scene.id==='decor-over-glow-base-dark');
+  const phone=GOLDEN_SCENARIOS.find(scene=>scene.id==='static-wall-openings-house-phone-light');
+  const read=()=>page.evaluate(()=>({hostStyle:document.getElementById('host').getAttribute('style'),
+    width:window.__goldenCard.renderRoot.querySelector('.stage')?.getBoundingClientRect().width}));
+  await prepareGoldenScenario(page,desktop);const before=await read();
+  await prepareGoldenScenario(page,phone);
+  const hostAfterPhone=await page.evaluate(()=>document.getElementById('host').getAttribute('style'));
+  await prepareGoldenScenario(page,desktop);const after=await read();
+  out.goldenStaticDoesNotChangeSharedHost=hostAfterPhone===before.hostStyle&&after.hostStyle===before.hostStyle;
+  out.goldenDesktopAfterPhoneKeepsWidth=before.width>900&&Math.abs(after.width-before.width)<.5;
+  await resetGoldenStability(page);
 }
 checkAll(out);
 await finish(browser,out);

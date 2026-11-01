@@ -6,8 +6,11 @@ export async function prepareStaticWallOpenings(page, scenario) {
     const el = document.createElement('houseplan-space-card');
     el.setConfig({type:'custom:houseplan-space-card',space:'f1',title:'',show_button:false,fit});
     el.hass = full.hass;
-    host.style.setProperty('width',`${width}px`,'important');
-    host.style.setProperty('padding','0','important');host.style.height='auto';host.replaceChildren(el);
+    // The shared host belongs to the next scenario too. Keep Static's exact
+    // width inside its own fixture, so phone captures cannot shrink desktop.
+    const fixture = document.createElement('div');
+    fixture.style.width = `${width}px`;
+    fixture.append(el);host.replaceChildren(fixture);
     const deadline = performance.now()+7000;
     while(!el.shadowRoot?.querySelector('[data-id="wall-door"] .op-leaf')) {
       if(performance.now()>deadline)throw Error('Static wall-door leaf missing');
