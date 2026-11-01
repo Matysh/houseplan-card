@@ -1,9 +1,23 @@
 {
   "schema": 1,
-  "revision": 131,
-  "nextTicket": 16,
+  "revision": 132,
+  "nextTicket": 17,
   "nextFence": 16,
   "tasks": {
+    "1128": {
+      "issue": 1128,
+      "track": "show",
+      "layer": "product",
+      "branch": "issue/1128-touch-room-link",
+      "materialSha": "4d1b09d2f2930f9b13a4c0e0629b7841ae3edbff",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 16,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793563250686,
+      "reviewEntry": 1
+    },
     "1176": {
       "issue": 1176,
       "branch": "codex/1176-room-candidates",
@@ -127,9 +141,16 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1128
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:b4b044eb-82fc-4f6d-9e3f-a20e9b3c3150": {
+      "digest": "17e7ce13ab827e64fd4b58084a2bbf6fe5c85825db43915bdb1ca032fe9e1e4f",
+      "issue": 1128
+    }
+  },
   "devWebhook": {
     "sourceSha": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
     "status": "delivered",
