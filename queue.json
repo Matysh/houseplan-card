@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 306,
+  "revision": 307,
   "nextTicket": 35,
   "nextFence": 32,
   "tasks": {
@@ -31,165 +31,20 @@
     },
     "1153": {
       "issue": 1153,
+      "branch": "codex/1153-save-cost",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1153-save-cost",
-      "materialSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 31,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793567981684,
-      "reviewEntry": 2,
-      "patchId": "916751d6e0666557907b0c3a3546e8c62fb07e82",
-      "changedFiles": [
-        "demo/benchmark_selective_invalidation.mjs",
-        "demo/smoke_selective_invalidation.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/analysis/save-long-tasks-2026-11-02/README.md",
-        "docs/analysis/save-long-tasks-2026-11-02/analyze.mjs",
-        "docs/analysis/save-long-tasks-2026-11-02/baseline-measurement.json",
-        "docs/analysis/save-long-tasks-2026-11-02/bounded-costs.json",
-        "docs/analysis/save-long-tasks-2026-11-02/candidate-measurement.json",
-        "docs/analysis/save-long-tasks-2026-11-02/comparison.json",
-        "docs/analysis/save-long-tasks-2026-11-02/measure.mjs",
-        "docs/analysis/save-long-tasks-2026-11-02/method-costs.json",
-        "docs/analysis/save-long-tasks-2026-11-02/method-samples.json.gz",
-        "docs/analysis/save-long-tasks-2026-11-02/probe.mjs",
-        "docs/analysis/save-long-tasks-2026-11-02/profile-samples.json.gz",
-        "docs/analysis/save-long-tasks-2026-11-02/profile.cpuprofile.gz",
-        "docs/analysis/save-long-tasks-2026-11-02/profile.mjs",
-        "docs/analysis/save-long-tasks-2026-11-02/provenance.json",
-        "docs/analysis/save-long-tasks-2026-11-02/trace.json.gz",
-        "docs/release-ledger/v1.83.0/1153.json",
-        "src/config-adoption.ts",
-        "test/config-adoption.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered"
+      "status": "S8-merged",
+      "mergedSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
+      "mergedAt": 1793568510057,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261101T212505444-e2f854cc",
-        "reportPath": "/home/matysh/hp-s8-plan-decor-20261026/.git/process-next/runs/20261101T212505444-e2f854cc/report.json",
-        "materialSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-        "status": "passed",
-        "finishedAt": "2026-11-01T21:26:02.641Z"
-      },
-      "reviewRequest": "review:1153:2:916751d6e0666557907b0c3a3546e8c62fb07e82:24ae8ff93c46d3370879530d083b5aadfa6d5189",
-      "reviewMaterial": {
-        "materialSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-        "expectedBase": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-        "patchId": "916751d6e0666557907b0c3a3546e8c62fb07e82"
-      },
-      "review": {
-        "version": 1,
-        "issue": 1153,
-        "requestId": "review:1153:2:916751d6e0666557907b0c3a3546e8c62fb07e82:24ae8ff93c46d3370879530d083b5aadfa6d5189",
-        "kind": "code",
-        "base": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-        "materialSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-        "patchId": "916751d6e0666557907b0c3a3546e8c62fb07e82",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1153,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1153",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Реализация и граница\nAsk сохранён. S4r1 требовал maxLongTask/обоснование117; исправлено в ТЗ, S4r2 accepted41350279837. Исполнение узкое: acceptConfigWrite вычисляет fingerprint заново при каждом ответе и передаёт этот свежий локальный результат в приватный rememberAccepted. Между ними только установка числовой revision, нет await/callback. Deep config/layout clones, старые вычисления остальных helper callers, stage fingerprint, канонизация, contact sync, CAS/rollback/history не менялись. Новый behavior unit специально мутирует тот же object между stage/accept и между двумя accept, проверяет snapshot.config_fingerprint===contentFingerprint(snapshot.config), старый snapshot и следующий unsent draft. Существующие тесты не удалялись. Benchmark изменён только в комментарии:117/200 остаются прежними.\n\n### Измерения, результаты и пределы\nПакет docs/analysis/save-long-tasks-2026-11-02 содержит переносимые producers/analyzer, raw profile/trace/samples gzip, bounded top-N CPU attribution и method/clone costs, исходные/итоговые unprofiled45Save записи, сравнение и SHA256 provenance. Historical2026-10-30 пакет и красные CIартефакты не переписаны.\n\nImmutable before de1043f3a → product candidate5f53abd26033c87718b355291c26616c511edc4e, один продуктовый changed input src/config-adoption.ts; fixture/helpers/toolchain одинаковы, теже Node/browser/CPU/kernel. Direct5×100evolving production acceptConfigWrite calls: median1.75292558→1.36448844ms (-22.16%), per-series ranges before1.729–1.893/after1.196–1.407ms не пересекаются. Это адресный subpath, не обещаниеwholeSave22%.\n\nWholeSave45native per source: client first/warm medians(ms) name89.5/69.7→85.3/69.9,paint73.4/68.7→68.1/67.1,bg63.9/57.8→64.5/56.6. Gate maxLongTask first/warm name100/85→104/77,paint76/79→69/80,bg63/61→64/60. Overallmax100→104ms; этот outlier не спрятан. ВесьSaveэффектмал/смешан, универсальныйприрост/причинастарогоCIнеутверждаются. Существующий117непереопределён, limitedWSLsubsetнеPASSfullCI. Каждый nativeSavesinglewrite/persisted и исходные physics/contact/model invariants сохранены; окна не двигались. Материал измерений привязан к5f53, finalfinish отдельно синхронизирует итоговую ветку и даёт актуальнуюS6квитанцию; при non-relevant upstreamrebase эти числа не выдаются за замер всего новогоbundle.\n\n### Проверки\nДля исследовательского candidate выполнены обычные build/types, test module preparation и свежие unprofiled native серии. Это не утверждение complete taskS6. Сейчас через finish запланированы productminimum+test/config-adoption.test.mjs+demo/smoke_selective_invalidation.mjs (Save/refusal/copy/history/consumers)+demo/smoke_selective_invalidation_authority.mjs. Полный старыйValidate/846matrix/newglobalgate не добавляются. TaskS6PASS пока не заявлен; actualreceipt поставляет finish. Дополнительные benchmarkфайлы не добавлены в automaticbetaнабор.\n\nE2E verdict не надо: UI/API/схемы/права/Saveflow неизменны. Оценка передана координатору пачки для публикации в companion, существующие реальные Save/CAS/history/reload остаются в beta. WSL syntheticданные не означают liveHA/GPU acceptance.\n### ПервыйS6 и исправление существующего native fixture\n20261101T211553434-9a8791db:7/8 PASS. Build/types,151critical,38adoption, startup и nativeauthority прошли. Старый correctnesssmoke ожидал всегдавидимуюf2settingsgear при1200px послеудлиненияtitle; intrinsicheader #1184 сталcompactиgearнеотрисовал. СамinactiveSaveнебылвызван. Исправлено толькоотдельноеcorrectnessокружение: записатьheaderdiagnostic, штатноувеличитьviewport1920/host1800, дождатьсянастоящейwidegear, снятьcountersпослеresize. ВсеassertionsinactiveSave/delayedACK/history/physicsсохранены; timinghelper/45samplefixturesнеизменены. ИсходныйFAIL/JSONсохранены. НовыйS6покаожидается.\n\n### Граница после финальной актуализации\nFinish автоматически синхронизировал ветку после #1175; текущий материал7f401ed4f334bbdb9dbe3c531b2897e05bf72c40. По Git src/config-adoption.ts имеет тотжеblob0d75c0381c411783fe672d4cea0c3e610c56b6eb, что измеренный5f53; timing fixtures/helpers/toolchainнеизменны. Upstreamизменениязатрагиваютvacuum trail/render capture/diagnosticsиhostruntime. WholeSavecomparison остаётся строгоde104→5f53, не объявляется повторным замером всего7f401bundle. ActualфинальныйS6на7f401исполняетсяотдельно и проверяет текущиеSave/authority/history. ПеремерятьнеизменённыйacceptedsubpathтолькорадиSHA не требуется; новоеобщее22%обещание не даётся."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять. Продуктовое изменение узкое и соответствует принятому ТЗ: `acceptConfigWrite` по-прежнему считает fingerprint для каждого подтверждения заново и передаёт это значение в приватный `rememberAccepted`. Сам `rememberAccepted` второй раз тот же candidate больше не хеширует. Между вычислением hash и записью в accepted-cache нет await и внешних callback: выполняется только `finiteRevision`, это чистая функция. Поэтому устаревшего значения быть не может. Глубокие копии, ветки `adoptResponses` и `acceptPairWrite`, stage hash, CAS, rollback и история не тронуты. Новый unit-тест проверяет главное: тот же изменяемый объект мутируют до первого и перед вторым подтверждением, и каждый раз сверяется `config_fingerprint === contentFingerprint(snapshot.config)`, изоляция старого снимка и то, что неотправленный черновик не попадает в снимок. Квитанция S6 `20261101T212505444-e2f854cc` на `7f401ed` прошла. Пакет измерений честный. Ускорение есть только на подпути accepted-write: −22% в микробенчмарке, серии до и после не пересекаются. На весь Save эффект смешанный, общий максимум long task вырос с 100 до 104 мс, и это не скрыто. Предел 117 мс не менялся, обновлён только комментарий. Блокеров нет.",
-          "understanding": "Проблема. Сохранение настроек на большом плане давало в CI paint long task 102–117 мс. Профилирование отделило затраты на синхронизацию контактов, на hashing и на клонирование. В пути подтверждения записи нашлась доказанно лишняя работа: `acceptConfigWrite` хешировал candidate (`contentFingerprint`), а затем синхронный `rememberAccepted` хешировал тот же объект ещё раз, хотя между вызовами нет await и внешних callback.\n\nДо. Код `src/config-adoption.ts` на base: `this.configFingerprint = contentFingerprint(candidate)` → `configRev` → `rememberAccepted(...)`, внутри `config_fingerprint: contentFingerprint(config)`.\n\nПосле. Строки 210-216 и 331-341: локальный `fingerprint` записывается в `configFingerprint` и передаётся четвёртым необязательным аргументом `freshConfigFingerprint`. Если аргумент не передан (ветки `adoptResponses` и `acceptPairWrite`), используется прежний `?? contentFingerprint(config)`. `structuredClone` для config и layout, вычисление `layout_fingerprint`, формат `CachedStructuralSnapshot` и `snapshot()` без изменений.\n\nЧто я разобрал:\n- класс `MutableConfigAdoption` целиком в нужных местах: setConfig/onBodyReplaced, adoptResponses, adoptMergedLayout, stage/accept, acceptLayoutPosition, rollbackOptimistic, restoreCached, resetContext;\n- новый тест в `test/config-adoption.test.mjs`;\n- изменение correctness-smoke `demo/smoke_selective_invalidation.mjs` целиком;\n- комментарий в `demo/benchmark_selective_invalidation.mjs`;\n- `measure.mjs`, `comparison.json`, README пакета, ledger, ARCHITECTURE и CHANGELOG.\n\nОсновной путь Save (`_writeConfig` → `_sendConfigCandidate` → `acceptConfigWrite(canonicalCandidate, …)`) разобран на S4. По словам автора, он с тех пор не менялся, и blob `src/config-adoption.ts` совпадает с измеренным `5f53`.",
-          "analysis": [
-            {
-              "topic": "Корректность переиспользования fingerprint",
-              "assessment": "Решение безопасно. Hash всегда вычисляется в начале `acceptConfigWrite` над тем же объектом, который затем клонируется. Между вычислением и `structuredClone(config)` выполняются только присваивание поля и `finiteRevision(response?.rev, …)` — без await, геттеров объекта config и callback. Порядок «клон, потом hash» сменился на «hash, потом клон», но оба вычисления идут над одним и тем же неизменившимся оригиналом, так что результат тот же, что и раньше. Если `structuredClone` бросит исключение, состояние будет таким же, как до изменения: `configFingerprint` и `configRev` уже выставлены. Значение из stage не используется, повторное подтверждение того же изменяемого объекта считает hash заново.",
-              "evidence": "`src/config-adoption.ts:210-216` и `:333-341`; `finiteRevision` вызывается только для ревизии ответа."
-            },
-            {
-              "topic": "Граница: остальные вызовы rememberAccepted",
-              "assessment": "Сохранена верно. В `adoptResponses` между hash (стр. 143) и `rememberAccepted` (стр. 165) вызываются внешние `onConfigReplace` и `setConfig`→`onBodyReplaced`, в `acceptPairWrite` — тоже `onBodyReplaced`. Им fingerprint не передаётся, расчёт прежний. Комментарий над helper объясняет неочевидную причину («only reuse a fresh hash from this synchronous acceptance»), а не пересказывает код. Такой комментарий полезен.",
-              "evidence": "`src/config-adoption.ts:136-168`, `:219-232`, `:331-332`."
-            },
-            {
-              "topic": "Адресный unit-тест",
-              "assessment": "Тест покрывает именно те риски, которые ТЗ назвало опасными. Объект мутируют после stage, и проверяется, что подтверждённый fingerprint отличается от stage и совпадает с hash клона. Затем объект мутируют снова: прежний снимок остаётся изолированным, второе подтверждение даёт новый согласованный fingerprint и rev. `stageLocalConfig` нового черновика снимок не меняет. Layout authority и CAS/rollback этот тест отдельно не проверяет. Но этот код не менялся, а существующие тесты adoption (38 PASS по контексту автора) и authority-smoke входят в S6.",
-              "evidence": "`test/config-adoption.test.mjs`, тест `#1153 acceptance hashes the current mutable candidate…`."
-            },
-            {
-              "topic": "Изменение correctness-smoke",
-              "assessment": "Правка вынужденная и не ослабляет проверку. После #1184 заголовок при 1200px становился compact, и gear неактивного этажа не отрисовывался. Сценарий теперь расширяет реальный viewport до 1920/1800, ждёт видимый gear, и только после этого снимает `before=counters()`. Поэтому изменение раскладки не попадает в проверку `unchangedPhysics`. Все assertions на held ACK, single write и physics сохранены. Побочный эффект: viewport остаётся 1920 до конца прогона, и consumer/alert/live witnesses теперь идут в более широкой раскладке, чем прежние 1440. Это не дефект, но покрытие узкой раскладки в этих шагах тихо поменялось (см. improvements).",
-              "evidence": "`demo/smoke_selective_invalidation.mjs:68-75`; последующие шаги `:151-208` без возврата viewport; на `:173` host всё равно растягивается на 100%."
-            },
-            {
-              "topic": "Измерения и честность выводов",
-              "assessment": "Пакет соответствует AC1/AC3. Микробенчмарк вызывает реальный `acceptConfigWrite` из `test-build` на одном изменяемом объекте с меняющимся title, поэтому проверяет именно путь со свежим hash. Результат: 1.753→1.364 мс на вызов, серии не пересекаются. В whole-Save сравнении приведены медианы и `maxLongTask` по first/warm, рост общего максимума 100→104 мс не скрыт. Вывод не выдаётся за причину сбоев CI и не объявлен PASS матрицы. Для first n=3, поэтому first-максимумы — по сути шум. Отчёт это признаёт. Измерения сделаны на `5f53`, а не на `7f401`; автор честно указывает эту границу, продуктовый blob идентичен.",
-              "evidence": "`docs/analysis/save-long-tasks-2026-11-02/measure.mjs:11-16`, `comparison.json`, `README.md` (раздел Before / after)."
-            },
-            {
-              "topic": "Порог benchmark и сопутствующие документы",
-              "assessment": "Числа `b?200:117` не изменились, обновлён только устаревший комментарий «for beta.5» — как требует ТЗ. ARCHITECTURE, оба CHANGELOG и ledger (stable-fix) согласованы с поведением и не обещают ускорения всего Save.",
-              "evidence": "`demo/benchmark_selective_invalidation.mjs:39-43`; `docs/ARCHITECTURE.md` (раздел #1153); `docs/release-ledger/v1.83.0/1153.json`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Вернуть в smoke viewport/host к прежним размерам после inactive-floor witness, например после `results.inactivePaint=true` (`demo/smoke_selective_invalidation.mjs:87`). Тогда последующие copy/history/consumer/alert/live witnesses идут в той же раскладке 1440, что и до #1153, и правка действительно остаётся локальной для одного шага. `pick` уже умеет переключаться через select в compact-режиме. Цена — две строки и ожидание resize. Делать не обязательно: S6 с текущим вариантом прошёл."
-          ],
-          "boundaries": "Сборку, тесты, smoke и бенчмарки я не запускал. Использована квитанция S6 `20261101T212505444-e2f854cc` (status passed, material `7f401ed`). Её состав (product minimum, `config-adoption.test.mjs`, оба selective-invalidation smoke) взят из контекста автора, отдельный журнал прогона я не читал. Все числа измерений — данные исполнителя из `comparison.json` и README. Сырые gzip trace/profile и provenance hashes я не распаковывал и не сверял. Совпадение blob `src/config-adoption.ts` между `5f53` и `7f401` принято со слов автора. По исходникам изучены `src/config-adoption.ts` (стр. 90-347), новый тест, smoke целиком, `measure.mjs`, изменения benchmark и документации. Путь Save в `houseplan-card.ts` и `houseplan-editor-runtime.ts` в этом раунде заново не читал: он разобран на S4, и diff его не затрагивает."
-        },
-        "usage": {
-          "input_tokens": 16,
-          "cache_creation_input_tokens": 111105,
-          "cache_read_input_tokens": 658694,
-          "output_tokens": 6805,
-          "output_tokens_details": {
-            "thinking_tokens": 1329
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 111105,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 930,
-              "cache_read_input_tokens": 103111,
-              "cache_creation_input_tokens": 12164,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 12164
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Ревью: accept\n\nМодель: claude-opus-5-5\nМатериал: 24ae8ff93c46d3370879530d083b5aadfa6d5189 → 7f401ed4f334bbdb9dbe3c531b2897e05bf72c40\nВид: code\n\n## Вывод\n\nРаботу можно принять. Продуктовое изменение узкое и соответствует принятому ТЗ: `acceptConfigWrite` по-прежнему считает fingerprint для каждого подтверждения заново и передаёт это значение в приватный `rememberAccepted`. Сам `rememberAccepted` второй раз тот же candidate больше не хеширует. Между вычислением hash и записью в accepted-cache нет await и внешних callback: выполняется только `finiteRevision`, это чистая функция. Поэтому устаревшего значения быть не может. Глубокие копии, ветки `adoptResponses` и `acceptPairWrite`, stage hash, CAS, rollback и история не тронуты. Новый unit-тест проверяет главное: тот же изменяемый объект мутируют до первого и перед вторым подтверждением, и каждый раз сверяется `config_fingerprint === contentFingerprint(snapshot.config)`, изоляция старого снимка и то, что неотправленный черновик не попадает в снимок. Квитанция S6 `20261101T212505444-e2f854cc` на `7f401ed` прошла. Пакет измерений честный. Ускорение есть только на подпути accepted-write: −22% в микробенчмарке, серии до и после не пересекаются. На весь Save эффект смешанный, общий максимум long task вырос с 100 до 104 мс, и это не скрыто. Предел 117 мс не менялся, обновлён только комментарий. Блокеров нет.\n\n## Понимание решения\n\nПроблема. Сохранение настроек на большом плане давало в CI paint long task 102–117 мс. Профилирование отделило затраты на синхронизацию контактов, на hashing и на клонирование. В пути подтверждения записи нашлась доказанно лишняя работа: `acceptConfigWrite` хешировал candidate (`contentFingerprint`), а затем синхронный `rememberAccepted` хешировал тот же объект ещё раз, хотя между вызовами нет await и внешних callback.\n\nДо. Код `src/config-adoption.ts` на base: `this.configFingerprint = contentFingerprint(candidate)` → `configRev` → `rememberAccepted(...)`, внутри `config_fingerprint: contentFingerprint(config)`.\n\nПосле. Строки 210-216 и 331-341: локальный `fingerprint` записывается в `configFingerprint` и передаётся четвёртым необязательным аргументом `freshConfigFingerprint`. Если аргумент не передан (ветки `adoptResponses` и `acceptPairWrite`), используется прежний `?? contentFingerprint(config)`. `structuredClone` для config и layout, вычисление `layout_fingerprint`, формат `CachedStructuralSnapshot` и `snapshot()` без изменений.\n\nЧто я разобрал:\n- класс `MutableConfigAdoption` целиком в нужных местах: setConfig/onBodyReplaced, adoptResponses, adoptMergedLayout, stage/accept, acceptLayoutPosition, rollbackOptimistic, restoreCached, resetContext;\n- новый тест в `test/config-adoption.test.mjs`;\n- изменение correctness-smoke `demo/smoke_selective_invalidation.mjs` целиком;\n- комментарий в `demo/benchmark_selective_invalidation.mjs`;\n- `measure.mjs`, `comparison.json`, README пакета, ledger, ARCHITECTURE и CHANGELOG.\n\nОсновной путь Save (`_writeConfig` → `_sendConfigCandidate` → `acceptConfigWrite(canonicalCandidate, …)`) разобран на S4. По словам автора, он с тех пор не менялся, и blob `src/config-adoption.ts` совпадает с измеренным `5f53`.\n\n## Разбор решения\n\n### Корректность переиспользования fingerprint\n\nРешение безопасно. Hash всегда вычисляется в начале `acceptConfigWrite` над тем же объектом, который затем клонируется. Между вычислением и `structuredClone(config)` выполняются только присваивание поля и `finiteRevision(response?.rev, …)` — без await, геттеров объекта config и callback. Порядок «клон, потом hash» сменился на «hash, потом клон», но оба вычисления идут над одним и тем же неизменившимся оригиналом, так что результат тот же, что и раньше. Если `structuredClone` бросит исключение, состояние будет таким же, как до изменения: `configFingerprint` и `configRev` уже выставлены. Значение из stage не используется, повторное подтверждение того же изменяемого объекта считает hash заново.\n\nОснование: `src/config-adoption.ts:210-216` и `:333-341`; `finiteRevision` вызывается только для ревизии ответа.\n\n### Граница: остальные вызовы rememberAccepted\n\nСохранена верно. В `adoptResponses` между hash (стр. 143) и `rememberAccepted` (стр. 165) вызываются внешние `onConfigReplace` и `setConfig`→`onBodyReplaced`, в `acceptPairWrite` — тоже `onBodyReplaced`. Им fingerprint не передаётся, расчёт прежний. Комментарий над helper объясняет неочевидную причину («only reuse a fresh hash from this synchronous acceptance»), а не пересказывает код. Такой комментарий полезен.\n\nОснование: `src/config-adoption.ts:136-168`, `:219-232`, `:331-332`.\n\n### Адресный unit-тест\n\nТест покрывает именно те риски, которые ТЗ назвало опасными. Объект мутируют после stage, и проверяется, что подтверждённый fingerprint отличается от stage и совпадает с hash клона. Затем объект мутируют снова: прежний снимок остаётся изолированным, второе подтверждение даёт новый согласованный fingerprint и rev. `stageLocalConfig` нового черновика снимок не меняет. Layout authority и CAS/rollback этот тест отдельно не проверяет. Но этот код не менялся, а существующие тесты adoption (38 PASS по контексту автора) и authority-smoke входят в S6.\n\nОснование: `test/config-adoption.test.mjs`, тест `#1153 acceptance hashes the current mutable candidate…`.\n\n### Изменение correctness-smoke\n\nПравка вынужденная и не ослабляет проверку. После #1184 заголовок при 1200px становился compact, и gear неактивного этажа не отрисовывался. Сценарий теперь расширяет реальный viewport до 1920/1800, ждёт видимый gear, и только после этого снимает `before=counters()`. Поэтому изменение раскладки не попадает в проверку `unchangedPhysics`. Все assertions на held ACK, single write и physics сохранены. Побочный эффект: viewport остаётся 1920 до конца прогона, и consumer/alert/live witnesses теперь идут в более широкой раскладке, чем прежние 1440. Это не дефект, но покрытие узкой раскладки в этих шагах тихо поменялось (см. improvements).\n\nОснование: `demo/smoke_selective_invalidation.mjs:68-75`; последующие шаги `:151-208` без возврата viewport; на `:173` host всё равно растягивается на 100%.\n\n### Измерения и честность выводов\n\nПакет соответствует AC1/AC3. Микробенчмарк вызывает реальный `acceptConfigWrite` из `test-build` на одном изменяемом объекте с меняющимся title, поэтому проверяет именно путь со свежим hash. Результат: 1.753→1.364 мс на вызов, серии не пересекаются. В whole-Save сравнении приведены медианы и `maxLongTask` по first/warm, рост общего максимума 100→104 мс не скрыт. Вывод не выдаётся за причину сбоев CI и не объявлен PASS матрицы. Для first n=3, поэтому first-максимумы — по сути шум. Отчёт это признаёт. Измерения сделаны на `5f53`, а не на `7f401`; автор честно указывает эту границу, продуктовый blob идентичен.\n\nОснование: `docs/analysis/save-long-tasks-2026-11-02/measure.mjs:11-16`, `comparison.json`, `README.md` (раздел Before / after).\n\n### Порог benchmark и сопутствующие документы\n\nЧисла `b?200:117` не изменились, обновлён только устаревший комментарий «for beta.5» — как требует ТЗ. ARCHITECTURE, оба CHANGELOG и ledger (stable-fix) согласованы с поведением и не обещают ускорения всего Save.\n\nОснование: `demo/benchmark_selective_invalidation.mjs:39-43`; `docs/ARCHITECTURE.md` (раздел #1153); `docs/release-ledger/v1.83.0/1153.json`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Вернуть в smoke viewport/host к прежним размерам после inactive-floor witness, например после `results.inactivePaint=true` (`demo/smoke_selective_invalidation.mjs:87`). Тогда последующие copy/history/consumer/alert/live witnesses идут в той же раскладке 1440, что и до #1153, и правка действительно остаётся локальной для одного шага. `pick` уже умеет переключаться через select в compact-режиме. Цена — две строки и ожидание resize. Делать не обязательно: S6 с текущим вариантом прошёл.\n\n## Границы анализа\n\nСборку, тесты, smoke и бенчмарки я не запускал. Использована квитанция S6 `20261101T212505444-e2f854cc` (status passed, material `7f401ed`). Её состав (product minimum, `config-adoption.test.mjs`, оба selective-invalidation smoke) взят из контекста автора, отдельный журнал прогона я не читал. Все числа измерений — данные исполнителя из `comparison.json` и README. Сырые gzip trace/profile и provenance hashes я не распаковывал и не сверял. Совпадение blob `src/config-adoption.ts` между `5f53` и `7f401` принято со слов автора. По исходникам изучены `src/config-adoption.ts` (стр. 90-347), новый тест, smoke целиком, `measure.mjs`, изменения benchmark и документации. Путь Save в `houseplan-card.ts` и `houseplan-editor-runtime.ts` в этом раунде заново не читал: он разобран на S4, и diff его не затрагивает.\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1153, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Реализация и граница\nAsk сохранён. S4r1 требовал maxLongTask/обоснование117; исправлено в ТЗ, S4r2 accepted41350279837. Исполнение узкое: acceptConfigWrite вычисляет fingerprint заново при каждом ответе и передаёт этот свежий локальный результат в приватный rememberAccepted. Между ними только установка числовой revision, нет await/callback. Deep config/layout clones, старые вычисления остальных helper callers, stage fingerprint, канонизация, contact sync, CAS/rollback/history не менялись. Новый behavior unit специально мутирует тот же object между stage/accept и между двумя accept, проверяет snapshot.config_fingerprint===contentFingerprint(snapshot.config), старый snapshot и следующий unsent draft. Существующие тесты не удалялись. Benchmark изменён только в комментарии:117/200 остаются прежними.\n\n### Измерения, результаты и пределы\nПакет docs/analysis/save-long-tasks-2026-11-02 содержит переносимые producers/analyzer, raw profile/trace/samples gzip, bounded top-N CPU attribution и method/clone costs, исходные/итоговые unprofiled45Save записи, сравнение и SHA256 provenance. Historical2026-10-30 пакет и красные CIартефакты не переписаны.\n\nImmutable before de1043f3a → product candidate5f53abd26033c87718b355291c26616c511edc4e, один продуктовый changed input src/config-adoption.ts; fixture/helpers/toolchain одинаковы, теже Node/browser/CPU/kernel. Direct5×100evolving production acceptConfigWrite calls: median1.75292558→1.36448844ms (-22.16%), per-series ranges before1.729–1.893/after1.196–1.407ms не пересекаются. Это адресный subpath, не обещаниеwholeSave22%.\n\nWholeSave45native per source: client first/warm medians(ms) name89.5/69.7→85.3/69.9,paint73.4/68.7→68.1/67.1,bg63.9/57.8→64.5/56.6. Gate maxLongTask first/warm name100/85→104/77,paint76/79→69/80,bg63/61→64/60. Overallmax100→104ms; этот outlier не спрятан. ВесьSaveэффектмал/смешан, универсальныйприрост/причинастарогоCIнеутверждаются. Существующий117непереопределён, limitedWSLsubsetнеPASSfullCI. Каждый nativeSavesinglewrite/persisted и исходные physics/contact/model invariants сохранены; окна не двигались. Материал измерений привязан к5f53, finalfinish отдельно синхронизирует итоговую ветку и даёт актуальнуюS6квитанцию; при non-relevant upstreamrebase эти числа не выдаются за замер всего новогоbundle.\n\n### Проверки\nДля исследовательского candidate выполнены обычные build/types, test module preparation и свежие unprofiled native серии. Это не утверждение complete taskS6. Сейчас через finish запланированы productminimum+test/config-adoption.test.mjs+demo/smoke_selective_invalidation.mjs (Save/refusal/copy/history/consumers)+demo/smoke_selective_invalidation_authority.mjs. Полный старыйValidate/846matrix/newglobalgate не добавляются. TaskS6PASS пока не заявлен; actualreceipt поставляет finish. Дополнительные benchmarkфайлы не добавлены в automaticbetaнабор.\n\nE2E verdict не надо: UI/API/схемы/права/Saveflow неизменны. Оценка передана координатору пачки для публикации в companion, существующие реальные Save/CAS/history/reload остаются в beta. WSL syntheticданные не означают liveHA/GPU acceptance.\n### ПервыйS6 и исправление существующего native fixture\n20261101T211553434-9a8791db:7/8 PASS. Build/types,151critical,38adoption, startup и nativeauthority прошли. Старый correctnesssmoke ожидал всегдавидимуюf2settingsgear при1200px послеудлиненияtitle; intrinsicheader #1184 сталcompactиgearнеотрисовал. СамinactiveSaveнебылвызван. Исправлено толькоотдельноеcorrectnessокружение: записатьheaderdiagnostic, штатноувеличитьviewport1920/host1800, дождатьсянастоящейwidegear, снятьcountersпослеresize. ВсеassertionsinactiveSave/delayedACK/history/physicsсохранены; timinghelper/45samplefixturesнеизменены. ИсходныйFAIL/JSONсохранены. НовыйS6покаожидается.\n\n### Граница после финальной актуализации\nFinish автоматически синхронизировал ветку после #1175; текущий материал7f401ed4f334bbdb9dbe3c531b2897e05bf72c40. По Git src/config-adoption.ts имеет тотжеblob0d75c0381c411783fe672d4cea0c3e610c56b6eb, что измеренный5f53; timing fixtures/helpers/toolchainнеизменны. Upstreamизменениязатрагиваютvacuum trail/render capture/diagnosticsиhostruntime. WholeSavecomparison остаётся строгоde104→5f53, не объявляется повторным замером всего7f401bundle. ActualфинальныйS6на7f401исполняетсяотдельно и проверяет текущиеSave/authority/history. ПеремерятьнеизменённыйacceptedsubpathтолькорадиSHA не требуется; новоеобщее22%обещание не даётся.\n```\n",
-        "createdAt": "2026-11-01T21:28:02.157Z",
-        "artifactId": 13101870270,
-        "runId": 41351994327,
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41351994327",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "24ae8ff93c46d3370879530d083b5aadfa6d5189"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1156": {
@@ -536,19 +391,7 @@
     1169,
     1191
   ],
-  "active": {
-    "issue": 1153,
-    "worker": "github-coordinator",
-    "token": "31:github:41351804140:1:tick:2:admit",
-    "fence": 31,
-    "materialSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
-    "expectedBase": "24ae8ff93c46d3370879530d083b5aadfa6d5189",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793568287288,
-    "expiresAt": 1793572104601,
-    "patchId": "916751d6e0666557907b0c3a3546e8c62fb07e82",
-    "reviewRequest": "review:1153:2:916751d6e0666557907b0c3a3546e8c62fb07e82:24ae8ff93c46d3370879530d083b5aadfa6d5189"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -674,10 +517,6 @@
       "digest": "65e793ec55356694f61b9194bdd2586696ca9b88f8d413c8ae218cb272dab729",
       "issue": 1190
     },
-    "1153-spec-initial:spec-request": {
-      "digest": "e302f2a801ced702529db31e58cddb85967af363152827a1aaf309a581c4c1b4",
-      "issue": 1153
-    },
     "github:41349669592:1:completions:metadata:e1fbb7f6-70f4-4dd5-807c-f3d85cb0993d:task-notice:1190::": {
       "digest": "5fb457e5455fff6142e2923d4dc2867e7d2a00590b935acb4e150f69fc660896",
       "issue": 1190
@@ -694,18 +533,6 @@
       "digest": "4f3b3f521bf9c2fb15fa035f7d0ab9aa394a4ccf549a9368759d4abb489c4f0f",
       "issue": 1169
     },
-    "github:41350009968:1:spec:1153:spec-presentation": {
-      "digest": "2d6aa8c42d7f565dae0d64525f29998f08ceb9bbfc8888732bf7d4b6dd37c943",
-      "issue": 1153
-    },
-    "github:41350009968:1:spec:1153:spec-complete": {
-      "digest": "236c25699ed26ddf1bbac147e6512ee153aaba073eccd86fb41322a4e89def3f",
-      "issue": 1153
-    },
-    "github:41350009968:1:completions:metadata:6d75f50e-683f-45ac-9172-5bc48a685b41:review-presentation:1153:spec:05619276b9b20b8157d7": {
-      "digest": "20d1ccfa414ce715e706f54116ced08f875d967601c702e5c9fda3c6072753fe",
-      "issue": 1153
-    },
     "github:41350148265:1:tick:0:admit": {
       "digest": "1241c2a57582c9106a3ba69b9c921095ae4b95196894681a113d535acd1b50e1",
       "issue": 1190
@@ -714,10 +541,6 @@
       "digest": "db9c12ac4d9edea07146a6e5e9c9cc6138dc4b4059d46da94abe26b55802105a",
       "issue": 1190
     },
-    "1153-spec-second:spec-request": {
-      "digest": "b4fdbb1eafc2960ce58ef94a9fc957252c6a1bce6059e9d3c2119aa0ed474fce",
-      "issue": 1153
-    },
     "finish:78989db7-9a70-4f1d-a6ad-a4c557ba3e63:finish:2:s6-label": {
       "digest": "340bc89494c323d13fc6403a830edd331c2a4426d23bc3baac507a7726cc5e8e",
       "issue": 1190
@@ -725,18 +548,6 @@
     "finish:78989db7-9a70-4f1d-a6ad-a4c557ba3e63:finish:3:review-requested": {
       "digest": "15221ccbe686cd1f9100f04d82dc2546a98860f643d310804db90ab6191db737",
       "issue": 1190
-    },
-    "github:41350438850:1:spec:1153:spec-presentation": {
-      "digest": "c848b7ea83a40d853eb3371fef4f1d0d682d10b493d6adcb7bdc5167f45af97c",
-      "issue": 1153
-    },
-    "github:41350438850:1:spec:1153:spec-complete": {
-      "digest": "010f4524e137f882a0c9a81892fbd0014e4a294b1b710a82fc1f7a025707aaeb",
-      "issue": 1153
-    },
-    "github:41350438850:1:completions:metadata:0bae17b5-21fe-475c-8bbd-24357d55d10b:review-presentation:1153:spec:29a7e774c8fff74a1594": {
-      "digest": "44f0e2e5b0a34b523a507ac0ae59b19b9057cbd170966cd3c4c9effe936cc568",
-      "issue": 1153
     },
     "finish:17b52b52-6951-4f92-b89c-e841571982d8": {
       "digest": "f9adb575dba93a6aa0e2047920cbae5dd3c74b1974d4d1e84c04b4af55c9ce58",
@@ -774,33 +585,9 @@
       "digest": "8185510b59371c8deddab3115ac6c723cc22f786a4a3fe20aee87bce218c6b67",
       "issue": 1169
     },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4": {
-      "digest": "1d3265011d2ca991cce16938fa1c1f1cca0625969dc159138516dcd93495f3e9",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit": {
-      "digest": "73848af86479438f063803bfc6066eefdb7d9b26b712f12f21150afa45287c41",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:3:synchronized": {
-      "digest": "1d7c32ff5361da630bc94657bd0b1fcfe4c11781c9a99be74f8d8cbd691c8480",
-      "issue": 1153
-    },
     "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
       "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
       "issue": 1169
-    },
-    "finish:98926a4b-c821-4660-9609-40327d4977ca": {
-      "digest": "8012286ced62f8d2c4ec69686b95fc3d0c0b3b689e896b07f6a2be44e978223c",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:4:return": {
-      "digest": "84dd35cbf176facdb5192f3d00bd36e2a9b13856c4cb85bc4312622ad79fc078",
-      "issue": 1153
-    },
-    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:metadata:bd6a4b52-6faf-4b80-a30c-3207354e7ecc:task-notice:1153::": {
-      "digest": "0eb0c98fa7d4c6fa409be21267669cf534c5ec32203b9aaac6c9c92f0b9ab49a",
-      "issue": 1153
     },
     "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit": {
       "digest": "fbb2e6ae728a8c23fae5f53f430e54866510408c0a1684c04cb08c19cda53506",
@@ -821,10 +608,6 @@
     "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:metadata:eb560301-bef2-4074-af99-dd8adc00cd1d:task-notice:1169::": {
       "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
       "issue": 1169
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d": {
-      "digest": "bfe22b761fa5ee4e1fb5bad4e4dae27927ee4d37f4aae09af09a0287015f9c58",
-      "issue": 1153
     },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
@@ -969,49 +752,13 @@
       "digest": "04f92573a886fe23db32ebfb1dbe87215bd82c7dc9ca31f647a6e112308c401d",
       "issue": 1172
     },
-    "github:41351804140:1:tick:2:admit": {
-      "digest": "c270ed499fd52aa2c5c0e193eeab8f4d9c4076692a05fd4b4a9733dfc780e499",
-      "issue": 1153
-    },
     "github:41351804140:1:completions:metadata:930e01cf-bdb5-43c2-8159-bb1d0aa7f8c3:review-presentation:1172:spec:010c910de4808179ec87": {
       "digest": "2f1d73569e9b4783efe3f77ef3385c78971c77d0e58275bc45f8f445194f3fda",
       "issue": 1172
     },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:2:synchronized": {
-      "digest": "4d1651f866f2355db6b321fd16baf650420abd56939984997589a65b3c560fff",
-      "issue": 1153
-    },
-    "finish:3d909a91-a317-4c29-a35a-27134863826d": {
-      "digest": "6a5c5f650da95292e17657a0a7b6386b0f3ede1167530d8455b36615db9700aa",
-      "issue": 1153
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:3:s6-complete": {
-      "digest": "e52eab8a2b003b38c8188395ef3eb05f998979877ecd06767f7f051dfcb94054",
-      "issue": 1153
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:4:review-requested": {
-      "digest": "f07dcba5fd9dec3488b4f8a60b4079a3ff56a8342b107d152b9070712ddba100",
-      "issue": 1153
-    },
-    "dev-build:41351804140:1:webhook": {
-      "digest": "9b9c59eebf0aa8eeb72f0c8fbcc6dc003d32eed9a6d8e73a850b8013ab706b90",
-      "issue": 1153
-    },
-    "dev-build:41351804140:1:webhook:7b98328b-43e2-45e5-a028-acd95ea012db:delivered": {
-      "digest": "454ef46fb110e5218f6e36906fb7f5fbfe74839f25b475738f4c80d21e18cafe",
-      "issue": 1153
-    },
     "finish:527e5b69-1453-4c23-b160-ba6e480d0556": {
       "digest": "4490abe5fe1e1e0db0daa99c794a36c6e1d944df670361f4472dc5daaee90c17",
       "issue": 1191
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:6:review-presentation": {
-      "digest": "8f9bef796d08d57115a35961efdde99986621455c84d5bb321ecd05d03511b9a",
-      "issue": 1153
-    },
-    "finish:31d9aa75-6ec0-48c5-a293-8d57bcaa514d:finish:6:review-complete": {
-      "digest": "e9476aaaa9082112a9983044bf75eed585a9637b3752697b832addbe31795e06",
-      "issue": 1153
     }
   },
   "devWebhook": {
