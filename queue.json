@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 324,
+  "revision": 325,
   "nextTicket": 35,
   "nextFence": 34,
   "tasks": {
@@ -256,7 +256,7 @@
       "ownerDecision": null,
       "ticket": 32,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793567990894,
       "reviewEntry": 4,
       "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
@@ -292,9 +292,15 @@
         "process-next/test/task-completion.test.mjs"
       ],
       "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered"
+        "key": "4:executor-fix",
+        "reason": "executor-fix",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793569005915,
+        "entry": 4,
+        "requestId": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573",
+        "detail": "Исправление исторической публикации готового отчёта при ручном blocked или снятии S-метки.",
+        "eventId": "1190-stopped-history-repair-20261101:return:1190"
       },
       "s6": {
         "id": "20261101T213054873-47638673",
@@ -311,7 +317,8 @@
         "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
         "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
         "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4"
-      }
+      },
+      "reason": "executor-fix"
     },
     "1191": {
       "issue": 1191,
@@ -411,19 +418,7 @@
   "waiting": [
     1169
   ],
-  "active": {
-    "issue": 1190,
-    "worker": "github-coordinator",
-    "token": "33:github:41352259279:1:tick:0:admit",
-    "fence": 33,
-    "materialSha": "59e56f7048a20e962693467e3af8b256c8561521",
-    "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-    "phase": "review",
-    "admittedAt": 1793568594545,
-    "expiresAt": 1793572341877,
-    "patchId": "41ed9d8d87052cdc94e8c3151448e10af0dc13c4",
-    "reviewRequest": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -693,6 +688,10 @@
       "digest": "b5f0933fd3648328f642f4bdbf8652202d8278f2c96bbf1f56dd8c654caf8cc5",
       "issue": 1190
     },
+    "1190-stopped-history-repair-20261101": {
+      "digest": "2e23c439ab394c18ca4c1d845348f580ed3e1fc2d5ad7ed0fccb898c708163a4",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -844,6 +843,27 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "1190-stopped-history-repair-20261101:return:1190": {
+      "digest": "2e23c439ab394c18ca4c1d845348f580ed3e1fc2d5ad7ed0fccb898c708163a4",
+      "issue": 1190,
+      "message": {
+        "kind": "return",
+        "issue": 1190,
+        "at": 1793569005915,
+        "entry": 4,
+        "notice": {
+          "key": "4:executor-fix",
+          "reason": "executor-fix",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1793569005915,
+          "entry": 4,
+          "requestId": "review:1190:4:41ed9d8d87052cdc94e8c3151448e10af0dc13c4:2878fbb9e58205cfab88b6f315090dd98ada0573",
+          "detail": "Исправление исторической публикации готового отчёта при ручном blocked или снятии S-метки.",
+          "eventId": "1190-stopped-history-repair-20261101:return:1190"
+        }
       }
     }
   },
