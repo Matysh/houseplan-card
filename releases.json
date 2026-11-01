@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1,
+  "revision": 2,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -8,14 +8,14 @@
       "kind": "beta",
       "branch": "release/v1.84.0-beta.2",
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
-      "sha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
+      "sha": "04fa2a54791def247ce19975a8f4f23218c02fe1",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.84.0-beta.2",
-        "candidate": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
+        "tag": null,
+        "candidate": "04fa2a54791def247ce19975a8f4f23218c02fe1",
         "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
         "issues": [
           {
@@ -269,6 +269,13 @@
             "commits": [
               "2878fbb9e58205cfab88b6f315090dd98ada0573"
             ]
+          },
+          {
+            "number": 1192,
+            "commits": [
+              "04fa2a54791def247ce19975a8f4f23218c02fe1",
+              "512c726710aeec1be0ede848aceeab7619472a01"
+            ]
           }
         ]
       },
@@ -301,13 +308,21 @@
         1187,
         1189,
         1190,
-        1191
+        1191,
+        1192
       ],
       "reviewRequired": false,
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
+          "to": "04fa2a54791def247ce19975a8f4f23218c02fe1",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -328,6 +343,7 @@
     }
   },
   "events": {
-    "beta1842-create-20261102": "3a97b1d49e119ae4416633e7dd074f5af50917281686ac4aeb70af0018992aca"
+    "beta1842-create-20261102": "3a97b1d49e119ae4416633e7dd074f5af50917281686ac4aeb70af0018992aca",
+    "beta1842-prepared-b-20261102": "990ad234e7eea717aaffbbb2b3c8f21c5349d33ee63173d2ba231f79a371b5f6"
   }
 }
