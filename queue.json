@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 518,
+  "revision": 519,
   "nextTicket": 52,
   "nextFence": 51,
   "tasks": {
@@ -477,7 +477,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/canvas-surface-camera-fixture",
-      "materialSha": "c07fce25404713505681dc22276463d6b46f26c1",
+      "materialSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 50,
@@ -485,7 +485,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793573973938,
       "reviewEntry": 3,
-      "patchId": "6055ba56c42818e082b91b77506ebacc7ab85d89",
+      "patchId": "14e2090cd10e375d0ae4836d3f86051000abfaf6",
       "changedFiles": [
         "demo/smoke_canvas_surface_gestures.mjs",
         "docs/CHANGELOG.md",
@@ -680,11 +680,12 @@
     "worker": "github-coordinator",
     "token": "50:github:41360144725:1:tick:2:admit",
     "fence": 50,
-    "materialSha": "c07fce25404713505681dc22276463d6b46f26c1",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
+    "expectedBase": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
+    "phase": "testing",
     "admittedAt": 1793574243281,
-    "expiresAt": 1793574543281
+    "expiresAt": 1793574589033,
+    "patchId": "14e2090cd10e375d0ae4836d3f86051000abfaf6"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -769,6 +770,10 @@
     },
     "github:41360144725:1:completions:message:10e925273f21d46c4c1875872f4b88c1e72fd25c1fc765a3c0ab73633b7ccaea": {
       "digest": "cfe02cbec0d89265c6da9677dbbfbf37d81ebf35a1a70aa743f5cffd09de1638",
+      "issue": 1198
+    },
+    "finish:05a68573-6141-4c2b-a6e5-07488ec98d15:finish:1:synchronized": {
+      "digest": "4afe353a93eb4c34401e8467f31c14287c83c2f620c0fec5f7cd80188070492b",
       "issue": 1198
     },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
