@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 293,
+  "revision": 294,
   "nextTicket": 34,
   "nextFence": 32,
   "tasks": {
@@ -380,16 +380,6 @@
     }
   },
   "reviewPublications": {
-    "spec:1172:spec:1172:cd0b1d6517d9552c41214e599c4b629ae00e9d1b8a76f9127fce3232e48a5ca8": {
-      "issue": 1172,
-      "kind": "spec",
-      "requestId": "spec:1172:cd0b1d6517d9552c41214e599c4b629ae00e9d1b8a76f9127fce3232e48a5ca8",
-      "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "patchId": "cd0b1d6517d9552c41214e599c4b629ae00e9d1b8a76f9127fce3232e48a5ca8",
-      "runId": 41351608479,
-      "status": "pending"
-    },
     "code:1175:review:1175:5:d70fca9ca6df73b41d205dc3276118c2773f5b75:de1043f3a3b45c3aa30016a7181cf227ff352713": {
       "issue": 1175,
       "kind": "code",
@@ -839,6 +829,10 @@
     "github:41351804140:1:tick:2:admit": {
       "digest": "c270ed499fd52aa2c5c0e193eeab8f4d9c4076692a05fd4b4a9733dfc780e499",
       "issue": 1153
+    },
+    "github:41351804140:1:completions:metadata:930e01cf-bdb5-43c2-8159-bb1d0aa7f8c3:review-presentation:1172:spec:010c910de4808179ec87": {
+      "digest": "2f1d73569e9b4783efe3f77ef3385c78971c77d0e58275bc45f8f445194f3fda",
+      "issue": 1172
     }
   },
   "devWebhook": {
