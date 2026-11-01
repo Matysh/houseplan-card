@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 272,
+  "revision": 273,
   "nextTicket": 31,
   "nextFence": 29,
   "tasks": {
@@ -71,7 +71,7 @@
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
-        "status": "pending"
+        "status": "delivered"
       }
     },
     "1156": {
@@ -870,6 +870,10 @@
     },
     "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:4:return": {
       "digest": "84dd35cbf176facdb5192f3d00bd36e2a9b13856c4cb85bc4312622ad79fc078",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:metadata:bd6a4b52-6faf-4b80-a30c-3207354e7ecc:task-notice:1153::": {
+      "digest": "0eb0c98fa7d4c6fa409be21267669cf534c5ec32203b9aaac6c9c92f0b9ab49a",
       "issue": 1153
     }
   },
