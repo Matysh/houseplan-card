@@ -1,13 +1,35 @@
 {
   "schema": 1,
-  "revision": 0,
-  "nextTicket": 1,
+  "revision": 1,
+  "nextTicket": 2,
   "nextFence": 1,
-  "tasks": {},
+  "tasks": {
+    "1176": {
+      "issue": 1176,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1176-room-candidates",
+      "materialSha": "6dfbe7f1e47a8fc78e60d08ce4c20ce01a1066b5",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 1,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793552175409,
+      "reviewEntry": 1
+    }
+  },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1176
+  ],
   "active": null,
-  "events": {}
+  "events": {
+    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
+      "digest": "3f1d7ee030df92004fb10bdc8126518084bd5e0d0ae5d2b1e6b23dd3adbdf112",
+      "issue": 1176
+    }
+  }
 }
