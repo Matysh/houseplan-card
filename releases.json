@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 73,
+  "revision": 74,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -656,25 +656,29 @@
           "from": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
           "to": "04fa2a54791def247ce19975a8f4f23218c02fe1",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b"
         },
         {
           "from": "04fa2a54791def247ce19975a8f4f23218c02fe1",
           "to": "7274a9139966cfdd1f459615110ba70544709dc7",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b"
         },
         {
           "from": "7274a9139966cfdd1f459615110ba70544709dc7",
           "to": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b"
         },
         {
           "from": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
           "to": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "a3712cf204bb8954ea8b17bd51f67c0081830808"
         }
       ],
       "diagnostics": [],
@@ -1186,7 +1190,8 @@
           "sha": "6bb1b3243205f90af1b7dd6d6c315216021c7e1b"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
           "issue": 1205,
           "branch": "issue/1205-release-return-783d427d2a57",
           "worktree": "/home/matysh/hp-beta4-release-20261029/artifacts/process-next/return-worktrees/783d427d2a57"
@@ -1296,6 +1301,7 @@
     "beta1842-publish-e-20261102:completion:6bfb4421-c434-43e5-96b2-b36131e366d1": "03efc6931024e1ef946e5a6ea0a38fcee27075fdc167e7992286b08221260d50",
     "beta1842-publish-e-20261102:completion:42b10ca8-a20f-4963-b322-6a0fb1b4fd95": "54ec6132ad0ead8fb43dabef4c66ed597f11e850f5e931c8fe549e1c950c8209",
     "beta1842-publish-e-20261102:completion:30f1e2ff-bedb-49cb-9389-2bdf115e5fd9": "ecd121211faf168bce04bb7fd4b5d019df86a0303d7fc3860c34c9d65797f821",
-    "beta1842-publish-e-20261102:completion:993411f9-3e7d-499a-bf92-d2379df71e8f": "d80dec048e0b434030e3cf0298ecbb8b7307e9895a7c46c92f5ac4a51ff26c1f"
+    "beta1842-publish-e-20261102:completion:993411f9-3e7d-499a-bf92-d2379df71e8f": "d80dec048e0b434030e3cf0298ecbb8b7307e9895a7c46c92f5ac4a51ff26c1f",
+    "beta1842-publish-e-20261102:completion:b844c504-5b62-407b-a0ae-02cf73783af2": "400c168a0cc97106e9560a57b69ae42740f6484de6073b9791cd79db3d3cd90a"
   }
 }
