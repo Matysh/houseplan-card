@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 633,
+  "revision": 634,
   "nextTicket": 58,
   "nextFence": 58,
   "tasks": {
@@ -1210,29 +1210,6 @@
         "toStatus": "S6-in-progress",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "finish:3a8a6221-5e43-4922-9ac5-870eefab34ca:finish:3:s6-complete": {
-      "digest": "320651a857280026b982a79fc60f57cd9920e204b037a629ecd4b6a61feafbf2",
-      "issue": 1208,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1208,
-        "at": 1793614317346,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261102T101156075-68fe1107",
-          "name": "Тесты для задачи #1208 (перед слиянием)",
-          "reportPath": "/home/matysh/hp-1109-beta-derived-sigpipe-20261028/.git/process-next/runs/20261102T101156075-68fe1107/report.json",
-          "materialSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
-          "status": "passed",
-          "finishedAt": "2026-11-02T10:11:56.561Z",
-          "failures": []
-        }
       }
     }
   },
