@@ -103,7 +103,7 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     expect(reply.preview.kind).toBe('space');
     await expect(dialog).toContainText(download.suggestedFilename());
     await expect(dialog).toContainText(source.title);
-    report.preview = { kind: reply.preview.kind, missingAreas: reply.preview.missing_areas, bindings: reply.preview.bindings,
+    report.preview = { kind: reply.preview.kind, spaceTitle: reply.preview.space_title, missingAreas: reply.preview.missing_areas, bindings: reply.preview.bindings,
       openingRepairs: reply.preview.opening_repairs, referenceReport: reply.preview.reference_report };
     const confirmation = field(dialog, 'backup-confirm-missing');
     if (await confirmation.count() && await confirmation.isVisible()) await confirmation.check();
@@ -119,7 +119,8 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
       openings: space.openings?.length ?? 0, decor: space.decor?.length ?? 0 };
     persist();
     await testInfo.attach('accepted-space.json', { body: Buffer.from(JSON.stringify({ space, markers }, null, 2)), contentType: 'application/json' });
-    expect(space.title).toBe(source.title);
+    expect(reply.preview.space_title).toBeTruthy();
+    expect(space.title).toBe(reply.preview.space_title);
     expect(roomNames(space)).toEqual(roomNames(source));
     expect(values(space.openings, 'type')).toEqual(values(source.openings, 'type'));
     expect(values(space.decor, 'kind')).toEqual(values(source.decor, 'kind'));
@@ -132,7 +133,27 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     expect(persisted.markers.filter(item => item.space === space.id)).toEqual(markers);
     for (const room of space.rooms ?? []) await expect(host.locator(hp('room', { id: room.id })).first()).toBeAttached();
     for (const opening of space.openings ?? []) await expect(host.locator(hp('opening', { id: opening.id })).first()).toBeVisible();
-    for (const marker of markers) await expect(host.locator(hp('device', { id: marker.id })).first()).toBeVisible();
+    for (const marker of markers) {
+      const strip = space.led_strips?.find(item => item.marker === marker.id && item.active !== false);
+      if (!strip) {
+        await expect(host.locator(hp('device', { id: marker.id })).first()).toBeVisible();
+        continue;
+      }
+      // SVG path bounds exclude the stroke: a painted vertical line has width 0.
+      // Check its actual ink rather than the transparent interaction proxy.
+      const ink = host.locator(`[data-led-strip="${strip.id}"] .led-core`);
+      await expect.poll(() => ink.evaluate(path => {
+        const style = getComputedStyle(path);
+        if (!path.isConnected || !path.getScreenCTM() || !(path.getTotalLength() > 0)
+            || style.stroke === 'none' || style.stroke === 'transparent'
+            || !(parseFloat(style.strokeWidth) > 0) || !(Number(style.strokeOpacity) > 0)) return false;
+        for (let node = path; node; node = node.parentElement) {
+          const s = getComputedStyle(node);
+          if (s.display === 'none' || s.visibility !== 'visible' || !(Number(s.opacity) > 0)) return false;
+        }
+        return true;
+      })).toBe(true);
+    }
     await evidence(testInfo, page, `converter-${fixture.id}-reopened`);
     report.phase = 'complete'; report.status = 'passed';
   } catch (error) {
