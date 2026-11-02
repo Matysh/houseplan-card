@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 950,
-  "nextTicket": 74,
+  "revision": 951,
+  "nextTicket": 75,
   "nextFence": 74,
   "tasks": {
     "1128": {
@@ -121,14 +121,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1158-zigbee-hover-status",
-      "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+      "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 73,
-      "queued": false,
+      "ticket": 74,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793632670334,
-      "reviewEntry": 1,
+      "readyAt": 1793633045982,
+      "reviewEntry": 2,
       "patchId": "45fd19dacc56692a7158facf55437228be49e324",
       "changedFiles": [
         "demo/smoke_zigbee_topology_hover.mjs",
@@ -149,13 +149,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1158:1:45fd19dacc56692a7158facf55437228be49e324:b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-      "reviewMaterial": {
-        "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
-        "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-        "patchId": "45fd19dacc56692a7158facf55437228be49e324"
-      },
-      "reason": "review-findings",
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -1316,7 +1309,9 @@
       "runId": 41470380977
     }
   },
-  "waiting": [],
+  "waiting": [
+    1158
+  ],
   "active": null,
   "events": {
     "finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:2:synchronized": {
@@ -1413,6 +1408,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:0fbdecca-1bdc-4efa-86f7-a2eb05e2c8fc": {
+      "digest": "9b561c3fa16f0c34bc832422fd09681b78729551c8c02bafa0f212564ca2b930",
+      "issue": 1158,
+      "message": {
+        "kind": "queued",
+        "issue": 1158,
+        "at": 1793633045982,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
+        "evidence": {
+          "id": "20261102T151806527-9c8d5429",
+          "name": "Тесты для задачи #1158 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T151806527-9c8d5429/report.json",
+          "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+          "status": "passed",
+          "finishedAt": "2026-11-02T15:18:45.195Z",
+          "failures": []
+        }
       }
     }
   },
