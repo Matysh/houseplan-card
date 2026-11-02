@@ -2,6 +2,7 @@
   "issue": 1127,
   "date": "2026-11-02",
   "decisions": [
+    "Owner clarification: a kiosk profile restricted to one space hides the switcher even when the installation has multiple spaces",
     "Only kiosk and 2+ spaces; none in View/editors/fixed space",
     "Click/touch reveals, 5 seconds inactivity hides with UI Kit motion",
     "Vertical at left centre, numbered UI Kit controls",

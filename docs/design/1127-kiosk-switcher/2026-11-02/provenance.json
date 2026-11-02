@@ -13,10 +13,10 @@
   "files": {
     ".gitattributes": "e59334efba889dddb371d824744bdeaf39111513f13c129059b9cef9b5b7ba12",
     "approval.json": "454b76132e831ef1850166a4a8ab32fbdbf6b13d422fed4d695c070ade1fa097",
-    "CONTRACT.md": "1f9548f6ba33dfa715af0a3020ce8cba22a8873bc6ced62e015207eb0a5467dc",
+    "CONTRACT.md": "73a7e0fe7ccc15459c18b363d155efba96e8092ac1739415d1d52b082ccd68d3",
     "fixture.json": "4a8f46b181a237a45965f7f7b2456eeaf848d568c51a0fcf915b5d3e78f44f63",
-    "IMPLEMENTATION.md": "06d55d685c2530ab0267be3a47c6c3aa4a15e2a48f914356b1685c27b6f20bd2",
-    "journal.json": "75bc0d33714a59ca2b7c5e36d42d7a4c5080f9f990e7879964674836e4264031",
+    "IMPLEMENTATION.md": "6c7153cdd568dbd4cec6647b039cdc366a5e04541cdc90217671cf915241e548",
+    "journal.json": "d14a9582e57d77c8279e727861200bfeaa934b48bebfc9cec036b6857bad716e",
     "overrides/ha-dialog.css": "d905b24888a94b7bc9276c795bc934ae0788d444b53186c89cfd7a20b5241abb",
     "overrides/houseplan-card.css": "35738de67cb368cf2b1e222f3b52385b102f63bf27ae63f53d95233a8326bebc",
     "overrides/hp-dialog.css": "d17b97a1be56eb2281a355df5a5b951ff8b77803420e633b023d77d46b9e8091",
