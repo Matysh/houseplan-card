@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 886,
+  "revision": 887,
   "nextTicket": 71,
   "nextFence": 71,
   "tasks": {
@@ -1024,7 +1024,7 @@
       "notice": {
         "key": "1:author-adjustment",
         "reason": "author-adjustment",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1793630960192,
         "entry": 1,
@@ -1287,6 +1287,10 @@
     },
     "dev-build:41467300307:1:webhook:347c2353-623b-41b9-8966-e62163aff216:delivered": {
       "digest": "d3f16bea7a5e7267677a6a1b17d0a26557d0b5ee4dbc377224eb398cb611b536",
+      "issue": 1210
+    },
+    "github:41467549507:1:completions:notice:24f857cd8e08cbf93118bf302e2569adaf836a33e3d0a06d5bb65e30c6b19485": {
+      "digest": "2c9b955ba8591ee549ab8cd1018a4d4f2d6eb6192a96f6c17714e87113f4ac82",
       "issue": 1210
     },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4": {
