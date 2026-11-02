@@ -60,7 +60,10 @@ test('shared move, split/dependency propagation, exact host remap, and no-op',()
 test('intersection support survives edge splits and follows both support lines',()=>{
   const graph={version:1,nodes:[node('a',0,0),node('b',1,1),node('c',0,1),node('d',1,0)],
     edges:[edge('u','a','b','partition'),edge('v','c','d','partition')],rooms:[],dependencies:[]};
-  const result=G.applyGraphOperation(graph,{kind:'insert-intersection',refs:[{kind:'partition',id:'u'},{kind:'partition',id:'v'}],node:'i',newEdgeIds:['u2','v2']});
+  assert.equal(G.validateGraph(graph).ok,false,'unsplit proper crossing is not current canonical data');
+  const source={...graph,edges:[graph.edges[0]]};
+  const result=G.applyGraphOperation(source,{kind:'batch',operations:[{kind:'create-edge',edge:graph.edges[1]},
+    {kind:'insert-intersection',refs:[{kind:'partition',id:'u'},{kind:'partition',id:'v'}],node:'i',newEdgeIds:['u2','v2']}]});
   assert.deepEqual(result.graph.nodes.find(n=>n.id==='i').p,['l','120','120']);
   assert.deepEqual(result.graph.dependencies[0].refs,[{from:'a',to:'b'},{from:'c',to:'d'}]);
   const moved=G.applyGraphOperation(result.graph,{kind:'move-node',node:'b',target:['l','240','480']});
@@ -96,14 +99,6 @@ test('replace room cycle retains metadata and resize-detach keeps the neighbouri
 
 test('legacy open spans/open_to, key thickness, partial zero run and opening exception',()=>{
   const base=structuredClone(corpus.migrations.find(r=>r.id==='shared-room-only').space);
-  const key='1.000000,0.500000@1.5706';
-  // Obtain the historical compatibility key from the shared numerical carrier.
-  const initial=G.migrateGraphSpace(base);
-  const shared=initial.graph.edges.find(e=>initial.graph.rooms.every(r=>r.edges.some(x=>G.edgeKey(x)===G.edgeKey(e))));
-  const projected=initial.space.wall_segments.find(e=>e.id===shared.id);
-  const legacyKey=initial.space.walls.find(e=>e.a[0]===1&&e.b[0]===1)?.key;
-  // cm=0 means no walls projection; compute via the existing helper used by the core.
-  void key;void projected;void legacyKey;
   base.walls=[{a:[1,0],b:[1,1],key:'1.000000,0.500000@1.5711',cm:15}];
   base.open_spans=[{a:[1,0.25],b:[1,0.75]}];
   const result=G.migrateGraphSpace(base);
@@ -134,4 +129,69 @@ test('legacy room wall IDs are lineage when catalogue is absent; props and host 
   const hosted=G.migrateGraphSpace(corpus.migrations.find(r=>r.id==='hosted-negative').space);
   assert.deepEqual(hosted.space.openings[0].host.tq,['1','4']);
   assert.equal(hosted.space.openings[0].host.t,0.25);
+});
+
+test('prepared DAG move matches full validation and keeps the source immutable',()=>{
+  const split=G.applyGraphOperation(simple(),{kind:'insert-on-edge',edge:{kind:'wall',id:'w'},t:['1','3'],node:'c',newEdgeId:'child'}).graph;
+  const prepared=G.prepareGraph(split);
+  const op={kind:'move-node',node:'b',target:['l','720','0']};
+  const expected=G.applyGraphOperation(split,op),actual=G.applyGraphOperation(prepared.graph,op);
+  assert.deepEqual(actual.graph,expected.graph);
+  assert.equal(G.validateGraph(actual.graph).ok,true);
+  assert.deepEqual(split.nodes.find(n=>n.id==='c').p,['l','80','0']);
+  assert.ok(Object.isFrozen(prepared.graph.nodes[0]));
+});
+test('bounded legacy source movement never chains proximity into extra displacement',()=>{
+  const r=1/1200000;
+  const space={id:'chain',rooms:[],partitions:[0,.75*r,1.5*r].map((x,i)=>({id:'p'+i,a:[x,0],b:[i+1,1],cm:10}))};
+  const result=G.migrateGraphSpace(space);
+  for(const part of space.partitions) {
+    const a=Q.readSourcePoint(part.a),b=Q.readSourcePoint(part.b),flip=Q.pointCmp(a,b)>0;
+    for(const side of [0,1]){
+      const ref=JSON.stringify(['partition',part.id,side]),id=result.mapping.nodes[ref][0];
+      const raw=side===(flip?1:0)?a:b;
+      assert.ok(Q.withinRadius(raw,Q.decodePoint(result.graph.nodes.find(n=>n.id===id).p),Q.microRadius(5)));
+    }
+  }
+});
+test('convert-edge remaps exact opening hosts and preserves opaque source properties',()=>{
+  const graph={version:1,nodes:[node('a',0,0),node('b',1,0)],
+    edges:[{...edge('wall','a','b'),cm:0,props:{wall:'keep'}},{...edge('part','b','a','partition'),props:{partition:'keep'}}],rooms:[],dependencies:[]};
+  const result=G.applyGraphOperation(graph,{kind:'convert-edge',edge:{kind:'partition',id:'part'},target:{kind:'wall',id:'wall'},cm:15},
+    {hosts:[{id:'o',host:{kind:'partition',id:'part',t:0.25,tq:['1','4']}}]});
+  assert.equal(result.graph.edges.length,1);
+  assert.equal(result.graph.edges[0].cm,15);
+  assert.deepEqual(result.graph.edges[0].props,{partition:'keep',wall:'keep'});
+  assert.deepEqual(result.mapping.hosts.o,{kind:'wall',id:'wall',tq:['3','4'],t:0.75});
+});
+test('current authoritative cm ignores stale legacy open spans; source version is explicit',()=>{
+  const initial=G.migrateGraphSpace(corpus.migrations.find(r=>r.id==='shared-room-only').space);
+  const source=structuredClone(initial.space);
+  source.wall_segments.forEach(e=>e.cm=15);
+  source.open_spans=[{a:[1,0],b:[1,1]}];source.rooms[0].open_to=['b'];
+  const current=G.migrateGraphSpace({...source,plan_graph:undefined},{sourceModelVersion:10});
+  assert.ok(current.graph.edges.every(e=>e.cm===15));
+  assert.throws(()=>G.migrateGraphSpace({...source,plan_graph:undefined},{sourceModelVersion:11}),/source-version/);
+});
+test('projection t is derived from canonical tq and stale scalar echo is refused',()=>{
+  const space=G.migrateGraphSpace(corpus.migrations.find(r=>r.id==='hosted-negative').space).space;
+  const modified=structuredClone(space);modified.openings[0].host.t=0.75;
+  assert.equal(G.validateGraph(space.plan_graph,{hosts:modified.openings}).ok,false);
+  assert.throws(()=>G.verifyGraphProjection(modified,space.plan_graph),/projection/);
+});
+
+test('collapse of a support node requires explicit dependent retirement; keeps its evaluated value',()=>{
+  const graph={version:1,nodes:[node('a',0,0),node('b',1,0),node('c',2,0),node('d',1.5,0),node('e',2,1)],
+    edges:[edge('u','a','b','partition'),edge('v','b','c','partition'),edge('w','d','e','partition')],rooms:[],
+    dependencies:[{node:'d',kind:'on-edge',refs:[{from:'b',to:'c'}],parameters:[['1','2']]}]};
+  const command={kind:'collapse-node',node:'b',retained:{kind:'partition',id:'u'},removed:{kind:'partition',id:'v'}};
+  assert.throws(()=>G.applyGraphOperation(graph,command),/dependency-support/);
+  const result=G.applyGraphOperation(graph,{...command,retireDependencies:['d']});
+  assert.equal(result.graph.dependencies.length,0);
+  assert.deepEqual(result.graph.nodes.find(n=>n.id==='d'),graph.nodes.find(n=>n.id==='d'));
+});
+test('opaque property conflict does not create two canonical shared wall edges',()=>{
+  const source={id:'conflict',rooms:[],wall_segments:[
+    {id:'a',a:[0,0],b:[1,0],cm:10,custom:'one'},{id:'b',a:[0,0],b:[1,0],cm:10,custom:'two'}]};
+  assert.throws(()=>G.migrateGraphSpace(source),/props-conflict/);
 });
