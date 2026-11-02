@@ -44,7 +44,7 @@ export const summaryPanelCss = `
   .summary-weather-now > span { color:var(--secondary-text-color); font-size:var(--fs-m,12px); }
   .summary-weather-meta { display:grid; gap:5px; font-size:var(--fs-m,12px); }
   .summary-weather-forecast { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:0; padding-top:12px; }
-  .summary-weather-forecast > div { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:var(--fs-m,12px); }
+  .summary-weather-forecast > span { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:var(--fs-m,12px); }
   .summary-weather-forecast ha-icon { --mdc-icon-size:24px; color:var(--secondary-text-color); }
   .summary-weather-forecast small { color:var(--secondary-text-color); }
   .summary-weather-settings { padding-top:14px; margin-top:14px; }

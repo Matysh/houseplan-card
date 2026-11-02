@@ -83,7 +83,7 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-reading-pair:last-child { border-bottom:0; }
   .hpf-reading-pair-compact { margin:0; padding:0; }
   .hpf-reading-pair.hpf-reading-pair-compact > strong { font-weight:500; }
-  .hpf-reading-action { display:block; width:100%; box-sizing:border-box; border:0; padding:8px 11px 10px; border-radius:0 0 var(--rad-m,11px) var(--rad-m,11px); background:transparent; color:inherit; font:inherit; text-align:start; cursor:pointer; transition:background var(--hpf-paint-duration) var(--hpf-paint-easing); }
+  .hpf-reading-action { display:block; width:100%; min-height:44px; box-sizing:border-box; border:0; padding:8px 11px 10px; border-radius:0 0 var(--rad-m,11px) var(--rad-m,11px); background:transparent; color:inherit; font:inherit; text-align:start; cursor:pointer; transition:background var(--hpf-paint-duration) var(--hpf-paint-easing); }
   .hpf-reading-action:hover { background:color-mix(in srgb,var(--primary-color) 7%,transparent); }
   .hpf-reading-action:focus-visible { outline:2px solid var(--primary-color); outline-offset:-2px; }
   .hpf-reading-pair > strong { font-weight:700; }

@@ -62,11 +62,33 @@ try {
       { datetime: day(2), temperature: 9, templow: 5, condition: 'cloudy' },
     ] }); await f.settle();
   });
-  check('daily forecast shows three ordered days', await page.locator('hp-summary-weather .summary-weather-forecast > div').count() === 3);
+  check('daily forecast shows three ordered days', await page.locator('hp-summary-weather .summary-weather-forecast > span').count() === 3);
+  check('weather values remain in the accessible button name', await page.getByRole('button', { name: /\+8°.*Облачно.*Влажность/ }).count() === 1);
+  check('document hide releases subscription and return restores a fresh forecast without toggling panel', await page.evaluate(async () => {
+    const f = window.__weather1174, before = f.subscriptions.length, previous = f.subscriptions.at(-1);
+    let visibility = 'hidden';
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility });
+    document.dispatchEvent(new Event('visibilitychange')); await f.settle();
+    const hidden = previous.released && f.subscriptions.length === before;
+    visibility = 'visible'; document.dispatchEvent(new Event('visibilitychange')); await f.settle();
+    const next = f.subscriptions.at(-1);
+    next.callback({ type: 'daily', forecast: [
+      { datetime: new Date().toISOString(), temperature: 10, templow: 4, condition: 'partlycloudy' },
+    ] }); await f.settle();
+    const restored = hidden && f.subscriptions.length === before + 1 && f.widget().textContent.includes('+10°');
+    // Restore the full three-day fixture for visual evidence.
+    const now = new Date(); now.setUTCHours(12, 0, 0, 0);
+    next.callback({ type: 'daily', forecast: [10, 7, 9].map((temperature, i) => {
+      const date = new Date(now); date.setUTCDate(date.getUTCDate() + i);
+      return { datetime: date.toISOString(), temperature, templow: [4, 3, 5][i], condition: ['partlycloudy', 'rainy', 'cloudy'][i] };
+    }) }); await f.settle();
+    delete document.visibilityState;
+    return restored;
+  }));
   check('approved composition: square upper hover corners, matching separator rhythm and 3 columns', await page.evaluate(() => {
     const widget = window.__weather1174.widget(), action = getComputedStyle(widget.querySelector('button'));
-    const wind = widget.querySelectorAll('.summary-weather-meta > div')[1].getBoundingClientRect();
-    const humidity = widget.querySelectorAll('.summary-weather-meta > div')[2].getBoundingClientRect();
+    const wind = widget.querySelectorAll('.summary-weather-meta > span')[1].getBoundingClientRect();
+    const humidity = widget.querySelectorAll('.summary-weather-meta > span')[2].getBoundingClientRect();
     const forecast = widget.querySelector('.summary-weather-forecast').getBoundingClientRect();
     return action.borderTopLeftRadius === '0px' && action.borderTopRightRadius === '0px'
       && parseFloat(action.borderBottomLeftRadius) > 0 && Math.abs(forecast.top - humidity.bottom) < 1
@@ -81,7 +103,7 @@ try {
     const render = card.render; let renders = 0;
     card.render = function (...args) { renders++; return render.apply(this, args); };
     await f.set({ 'weather.lab_home': { ...f.weather, attributes: { ...f.weather.attributes, temperature: 9 } } });
-    f.subscriptions[0].callback({ type: 'daily', forecast: [] }); await f.settle();
+    f.subscriptions.at(-1).callback({ type: 'daily', forecast: [] }); await f.settle();
     card.render = render;
     return renders === 0 && f.widget().textContent.includes('+9°');
   }));

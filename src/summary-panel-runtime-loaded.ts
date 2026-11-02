@@ -198,8 +198,6 @@ export class LoadedSummaryPanelRuntime {
 
   public visibility(kind: 'hidden' | 'visible' | 'pageshow'): void {
     if (kind === 'hidden') {
-      const weather = this.host.renderRoot.querySelector<HpSummaryWeather>('hp-summary-weather');
-      if (weather) weather.active = false;
       if (this.clockTimer) clearTimeout(this.clockTimer);
       this.clockTimer = 0;
       this.syncPresentation(true);
@@ -348,7 +346,7 @@ export class LoadedSummaryPanelRuntime {
         </section>`) : config.weather?.enabled ? nothing : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_space')}</div>`}
         ${config.weather?.enabled ? html`<hp-summary-weather .hass=${this.host.hass} .config=${config.weather}
           .language=${langOf(this.host.hass, this.host._config?.language)}
-          .active=${this.presentation.interactive && this.host.ownerDocument.visibilityState !== 'hidden'}></hp-summary-weather>` : nothing}
+          .active=${this.presentation.interactive}></hp-summary-weather>` : nothing}
       </div>
     </aside>`;
   }
