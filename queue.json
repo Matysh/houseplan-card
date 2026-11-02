@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1081,
+  "revision": 1082,
   "nextTicket": 81,
   "nextFence": 81,
   "tasks": {
@@ -1577,6 +1577,10 @@
       "digest": "f2d1749e876ede3f74d6dca28d0d79402a332b0ea10362f5043f61d2909e7b60",
       "issue": 1174
     },
+    "github:41493575626:1:completions:message:41e0049ad4fabe23df8c39b340fce7b196a2990484cfa5a95a03a64314ec336b": {
+      "digest": "faf5b6829f7f94f4d14de2a77ce4eec2ead8bab76e50deb46857153c6bfcdfc3",
+      "issue": 1130
+    },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
       "digest": "e6a7d118227ce5255ace49438ebc48943cfd66cba68bdb0280a86c762b3984b3",
       "issue": 1174,
@@ -1637,7 +1641,8 @@
           "entry": 1,
           "detail": "Backend изменённой области: failed; Браузер: summary weather: failed",
           "eventId": "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:1:admit": {
