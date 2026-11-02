@@ -1,0 +1,9 @@
+{
+  "issue": 1157,
+  "date": "2026-11-02",
+  "status": "owner-approved visual prototype",
+  "ownerMessage": "Да, утверждаем в таком виде, меняй текст и отправляй зафиксированный вид в задачу",
+  "scope": "Permanent UI Kit hint beneath Zigbee switch, common Z2M/ZHA wording",
+  "productAcceptance": false,
+  "privateDataPublished": false
+}

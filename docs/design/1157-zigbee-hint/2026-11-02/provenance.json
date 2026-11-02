@@ -1,0 +1,32 @@
+{
+  "issue": 1157,
+  "baseTag": "v1.84.0-beta.2",
+  "baseCommit": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
+  "releaseAsset": "https://github.com/Matysh/houseplan-card/releases/download/v1.84.0-beta.2/houseplan.zip",
+  "releaseSha256": "c4b235255a957e40f42c7e93c56b06548411d3d24eaae413ec10e47557a4accb",
+  "productFingerprint": "233216a19647e5445b3de8c196fd92b52357fc93332e45bb5cf2f7d44764e66f",
+  "haFrontend": "20260930.4",
+  "haFrontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+  "dataset": "Public synthetic fixture from docs/design/1132-beta4-ui/2026-10-30/fixture.json",
+  "checks": "Portable replay launched on 8893; final permanent hint captured on synthetic fixture. No product tests, build or CI.",
+  "screenshots": "Synthetic illustrative screenshot of the approved permanent hint beneath the Zigbee switch; not product acceptance.",
+  "files": {
+    ".gitattributes": "e59334efba889dddb371d824744bdeaf39111513f13c129059b9cef9b5b7ba12",
+    "approval.json": "1909799bdd85bfa931f7fb3b4201d777268b0b2083a3dd673e486ba26d7bc713",
+    "CONTRACT.md": "d559a05b97d238ae44c03c8cd666859392ff1683e6f2fd19ec3569d81d4a39e9",
+    "fixture.json": "b1eb1f5986781c75a6b8879db578a7872f94eece6e25411f44bae241e2b08717",
+    "IMPLEMENTATION.md": "8eccfa906c635f0bcd74965905d5f1ee330e4e26bffdb9065ab6a93572e8781c",
+    "journal.json": "eccd33645d637879e79664a0fee14c030864e65e045287c5460cbbe3cde3f0b5",
+    "overrides/ha-dialog.css": "d905b24888a94b7bc9276c795bc934ae0788d444b53186c89cfd7a20b5241abb",
+    "overrides/houseplan-card.css": "e645bd6ac4138294b6bb54a7d7c376617e5da1c46879c6eb2ef51f2ba497de3d",
+    "overrides/hp-dialog.css": "d17b97a1be56eb2281a355df5a5b951ff8b77803420e633b023d77d46b9e8091",
+    "README.md": "dc237207a9ee60506627faa25fb402fa17432afbfc0c73dcb7b1ed93c60cd98d",
+    "replay.mjs": "675d4817588e098babe56e3726c00645e1958c8b6e5b2563e518314d0d2e6687",
+    "runtime/app.mjs": "ddb36f4cee36fea857f3264f65f5e7e45a6b97e9895f5682a026bba43d23d8e8",
+    "runtime/index.html": "05f732836c28744fcd89137d2812d39c0ce780cd5a3e99b651bd03a67979c421",
+    "runtime/lab.css": "bd5147cd65a0facad254d0c793a3d1c5abff6105acfc0efa3ab377428c9b0615",
+    "runtime/theme-local.css": "58be3643a045dee9d534f1aedef7111702a14341e123cdb44ad8ce714c0cc51d",
+    "screenshots/zigbee-hint.jpg": "3e8a13e03d86f2a0da71ad5e346fa4fa0e06b5993539e9b887321f574abf9c5f"
+  },
+  "priorVisualPackageCommit": "d2a412a464e0ea09f42761d9cd03abbd20067b49"
+}
