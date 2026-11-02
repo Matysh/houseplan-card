@@ -736,29 +736,42 @@ export const graphSplitId=(kind:EdgeKind,id:string,index:number,lo:ExactRational
   return plain.length<=64?plain:'s:'+base32(sha256(JSON.stringify([kind,id,index,lo,hi]))).slice(0,52);
 };
 interface Box { lo: ExactPoint; hi: ExactPoint }
-interface Tree<T> extends Box { left?: Tree<T>; right?: Tree<T>; items?: T[] }
+interface Tree<T> extends Box { left?: Tree<T>; right?: Tree<T>; items?: T[]; itemBoxes?: Box[] }
 const boxPoints = (a: ExactPoint, b: ExactPoint): Box => ({
   lo: [min(a[0], b[0]), min(a[1], b[1])], hi: [max(a[0], b[0]), max(a[1], b[1])],
 });
 function makeTree<T>(items: T[], box: (item: T) => Box, depth = 0): Tree<T> | null {
   if (!items.length) return null;
-  const boxes = items.map(box), lo: ExactPoint = [boxes[0].lo[0], boxes[0].lo[1]], hi: ExactPoint = [boxes[0].hi[0], boxes[0].hi[1]];
-  let x0 = lo[0], y0 = lo[1], x1 = hi[0], y1 = hi[1];
-  for (const b of boxes) { x0 = min(x0, b.lo[0]); y0 = min(y0, b.lo[1]); x1 = max(x1, b.hi[0]); y1 = max(y1, b.hi[1]); }
-  const result: Tree<T> = { lo: [x0, y0], hi: [x1, y1] };
-  if (items.length <= 8) result.items = items;
-  else {
-    const axis = depth % 2;
-    items.sort((a, b) => cmp(add(box(a).lo[axis], box(a).hi[axis]), add(box(b).lo[axis], box(b).hi[axis])));
-    const mid = Math.floor(items.length / 2);
-    result.left = makeTree(items.slice(0, mid), box, depth + 1)!;
-    result.right = makeTree(items.slice(mid), box, depth + 1)!;
-  }
-  return result;
+  // Exact bounds and split-order keys depend only on immutable input points.
+  // Compute them once; sorting must not redo rational gcd reductions for each
+  // comparator call at every tree depth.
+  const entries=items.map(item=>{
+    const bounds=box(item);
+    return{item,bounds,center:[add(bounds.lo[0],bounds.hi[0]),add(bounds.lo[1],bounds.hi[1])]as ExactPoint};
+  });
+  const build=(rows:typeof entries,level:number):Tree<T>=>{
+    let [x0,y0]=rows[0].bounds.lo,[x1,y1]=rows[0].bounds.hi;
+    for(const row of rows){const b=row.bounds;x0=min(x0,b.lo[0]);y0=min(y0,b.lo[1]);x1=max(x1,b.hi[0]);y1=max(y1,b.hi[1]);}
+    const result:Tree<T>={lo:[x0,y0],hi:[x1,y1]};
+    if(rows.length<=8){result.items=rows.map(row=>row.item);result.itemBoxes=rows.map(row=>row.bounds);}
+    else{
+      const axis=level%2;rows.sort((a,b)=>cmp(a.center[axis],b.center[axis]));
+      const mid=Math.floor(rows.length/2);
+      result.left=build(rows.slice(0,mid),level+1);
+      result.right=build(rows.slice(mid),level+1);
+    }
+    return result;
+  };
+  return build(entries,depth);
 }
+const boxesOverlap=(a:Box,b:Box):boolean=>cmp(a.hi[0],b.lo[0])>=0&&cmp(a.lo[0],b.hi[0])<=0
+  &&cmp(a.hi[1],b.lo[1])>=0&&cmp(a.lo[1],b.hi[1])<=0;
 function queryTree<T>(tree: Tree<T> | null | undefined, query: Box, out: T[]): T[] {
-  if (!tree || [0, 1].some(i => cmp(tree.hi[i], query.lo[i]) < 0 || cmp(tree.lo[i], query.hi[i]) > 0)) return out;
-  if (tree.items) out.push(...tree.items);
+  if(!tree||!boxesOverlap(tree,query))return out;
+  // A leaf's union box is conservative for its children. Keep only each
+  // child's exact AABB hits, preserving the stable leaf order. Contact callers
+  // already expand their query by R; no near-contact is discarded here.
+  if(tree.items){for(let i=0;i<tree.items.length;i++)if(boxesOverlap(tree.itemBoxes![i],query))out.push(tree.items[i]);}
   else { queryTree(tree.left, query, out); queryTree(tree.right, query, out); }
   return out;
 }

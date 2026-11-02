@@ -225,3 +225,22 @@ test('connected legacy contacts use frozen chosen supports without arithmetic fe
     assert.equal(G.applyGraphOperation(result.graph,{kind:'normalize-current'}).changed,false);
   }
 });
+
+
+test('exact tree leaf bounds preserve crossings and R-expanded contacts under source permutations',()=>{
+  const input={id:'tree-leaves',rooms:[],partitions:[
+    ...Array.from({length:20},(_,i)=>({id:'line-'+String(i).padStart(2,'0'),a:[i/8,0],b:[i/8,1],cm:10})),
+    {id:'cross',a:[-.125,.5],b:[2.5,.5],cm:10},
+    {id:'near-T',a:[1/8+2e-7,.75],b:[.175,1.5],cm:10}]};
+  const first=G.migrateGraphSpace(input,{sourceModelVersion:10});
+  const reversed=structuredClone(input);reversed.partitions.reverse();
+  for(const edge of reversed.partitions)[edge.a,edge.b]=[edge.b,edge.a];
+  const again=G.migrateGraphSpace(reversed,{sourceModelVersion:10});
+  assert.deepEqual(again.graph,first.graph);
+  assert.equal(first.graph.edges.length,63);
+  const line=first.graph.edges.find(e=>e.id==='line-01'),near=first.graph.edges.find(e=>e.id==='near-T');
+  const linePieces=first.graph.edges.filter(e=>e.id==='line-01'||e.id.startsWith('line-01~'));
+  const touching=linePieces.some(e=>[e.from,e.to].some(n=>n===near.from||n===near.to));
+  assert.ok(line&&touching,'the near T endpoint is still joined through the expanded exact query');
+  assert.equal(G.validateGraph(first.graph).ok,true);
+});
