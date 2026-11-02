@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 857,
+  "revision": 858,
   "nextTicket": 70,
   "nextFence": 69,
   "tasks": {
@@ -971,7 +971,7 @@
       "ownerDecision": null,
       "ticket": 68,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793630731712,
       "reviewEntry": 1,
       "patchId": "aa94e3f8ef0c9844428bd6e9a0390d4909f610ac",
@@ -1002,6 +1002,18 @@
         "materialSha": "582dfcdddefa6ba138eac44be0b0b20d8ebe6c0c",
         "expectedBase": "16dc19dbd1e6258815c4227d1a6233dadd769236",
         "patchId": "aa94e3f8ef0c9844428bd6e9a0390d4909f610ac"
+      },
+      "reason": "author-adjustment",
+      "notice": {
+        "key": "1:author-adjustment",
+        "reason": "author-adjustment",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793630960192,
+        "entry": 1,
+        "requestId": "review:1210:1:aa94e3f8ef0c9844428bd6e9a0390d4909f610ac:16dc19dbd1e6258815c4227d1a6233dadd769236",
+        "detail": "Visual preview found number fields inheriting textarea minimum height; fix before publication.",
+        "eventId": "1210-author-correct-numeric-field-height-20261102:return:1210"
       }
     },
     "1211": {
@@ -1169,19 +1181,7 @@
   "waiting": [
     1165
   ],
-  "active": {
-    "issue": 1210,
-    "worker": "finish",
-    "token": "68:finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:1:admit",
-    "fence": 68,
-    "materialSha": "582dfcdddefa6ba138eac44be0b0b20d8ebe6c0c",
-    "expectedBase": "16dc19dbd1e6258815c4227d1a6233dadd769236",
-    "phase": "review",
-    "admittedAt": 1793630735542,
-    "expiresAt": 1793634438027,
-    "patchId": "aa94e3f8ef0c9844428bd6e9a0390d4909f610ac",
-    "reviewRequest": "review:1210:1:aa94e3f8ef0c9844428bd6e9a0390d4909f610ac:16dc19dbd1e6258815c4227d1a6233dadd769236"
-  },
+  "active": null,
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
       "digest": "18a6a1fd53b82729d2781adc60969ae581495be8b728932c814213c6f9387ba5",
@@ -1259,6 +1259,10 @@
       "digest": "29b974e43c1865a8d50febeccc81118112bc7e2969b43cb7aefedafbe27aff35",
       "issue": 1210
     },
+    "1210-author-correct-numeric-field-height-20261102": {
+      "digest": "7d0dea85d8255c682f7f64886a0fc741e9d0ab101bdd207d500835a1eb9a454c",
+      "issue": 1210
+    },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4": {
       "digest": "0b6eb6ad23af7d1abb95bc5a356b759f646edc42820cd925adb8cb55af370c90",
       "issue": 1210,
@@ -1327,6 +1331,27 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "1210-author-correct-numeric-field-height-20261102:return:1210": {
+      "digest": "7d0dea85d8255c682f7f64886a0fc741e9d0ab101bdd207d500835a1eb9a454c",
+      "issue": 1210,
+      "message": {
+        "kind": "return",
+        "issue": 1210,
+        "at": 1793630960192,
+        "entry": 1,
+        "notice": {
+          "key": "1:author-adjustment",
+          "reason": "author-adjustment",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1793630960192,
+          "entry": 1,
+          "requestId": "review:1210:1:aa94e3f8ef0c9844428bd6e9a0390d4909f610ac:16dc19dbd1e6258815c4227d1a6233dadd769236",
+          "detail": "Visual preview found number fields inheriting textarea minimum height; fix before publication.",
+          "eventId": "1210-author-correct-numeric-field-height-20261102:return:1210"
+        }
       }
     }
   },
