@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 712,
+  "revision": 713,
   "nextTicket": 62,
   "nextFence": 62,
   "tasks": {
@@ -892,7 +892,7 @@
       "notice": {
         "key": "2:material-updated-after-interrupted-local-s6",
         "reason": "material-updated-after-interrupted-local-s6",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1793624718026,
         "entry": 2,
@@ -1187,6 +1187,10 @@
     },
     "finish:129b9811-d982-4c5c-8c10-39cefd1bb9bb:finish:4:review-requested": {
       "digest": "a38c540589130542fa0d91d8e695345c018242f2859ca80c45c49e003403e865",
+      "issue": 1207
+    },
+    "github:41450012049:1:completions:notice:24165b4850172219819aad048c0a4cbd197fa979d2fc23fa9d6a5d5726584103": {
+      "digest": "a0c891064a3101ce722a4b0d8685ca1f63f2ad3db49608993cc9726b6986c2e8",
       "issue": 1207
     },
     "finish:eb71ba1e-123c-44e7-a0c1-a8a26968b0e5": {
