@@ -35,20 +35,38 @@ export async function ensureShipReview({ candidate, store, dispatch, queue, git,
   let knownRun = current?.result?.runId ? { id: current.result.runId } : null, dispatched = false, dispatchFailure = null;
   const escaped = packet.requestId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const titleMatches = run => new RegExp(`(?:^|[^A-Za-z0-9:-])${escaped}(?:$|[^A-Za-z0-9:-])`).test(run.display_title ?? run.name ?? '');
+  const matching = runs => runs.filter(titleMatches).sort((a, b) => Number(b.id) - Number(a.id));
+  const readResult = async runs => {
+    let incomplete = null;
+    for (const run of runs) {
+      if (run.status !== 'completed') continue;
+      const result = await review.artifactResult(run);
+      if (!result) continue;
+      if (Object.entries(identity).some(([key, value]) => result[key] !== value)
+        || result.verdict === 'incomplete' && result.workflowRunAttempt && result.workflowRunAttempt !== (run.run_attempt ?? 1))
+        throw Error('Batch review report belongs to different material or workflow attempt');
+      if (result.verdict !== 'incomplete') return result;
+      incomplete ??= result;
+    }
+    return incomplete;
+  };
   while (!signal?.aborted && clock() - started < maxWaitMs) {
     const runs = knownRun ? [await api.request('GET', `${api.root}/actions/runs/${knownRun.id}`)] : await review.runs();
     if (knownRun && !titleMatches(runs[0])) throw Error('Saved batch workflow run belongs to another request');
-    const matches = runs.filter(titleMatches).sort((a, b) => Number(b.id) - Number(a.id));
-    const run = matches[0];
+    let matches = matching(runs), result = await readResult(matches);
+    // A duplicate job can reuse another run's artifact and upload nothing itself.
+    // Before calling a finished known run incomplete, inspect its siblings once.
+    if (knownRun && matches[0]?.status === 'completed' && (!result || result.verdict === 'incomplete')) {
+      matches = matching([...new Map([...runs, ...await review.runs()].map(item => [item.id, item])).values()]);
+      result = await readResult(matches) ?? result;
+    }
+    if (result && result.verdict !== 'incomplete') return save(result);
+    const run = matches.find(item => item.status !== 'completed') ?? matches[0];
     if (run) {
       knownRun = run;
       onProgress({ kind: 'review', name: `Пакетное код-ревью ship перед ${packet.version}`, status: run.status,
         issues: packet.pending, elapsedMs: clock() - started, reportUrl: run.html_url });
       if (run.status === 'completed') {
-        const result = await review.artifactResult(run);
-        if (result && (Object.entries(identity).some(([key, value]) => result[key] !== value)
-          || result.verdict === 'incomplete' && result.workflowRunAttempt && result.workflowRunAttempt !== (run.run_attempt ?? 1)))
-          throw Error('Batch review report belongs to different material or workflow attempt');
         return save(result ?? { ...identity, verdict: 'incomplete', runId: run.id,
           runAttempt: run.run_attempt ?? 1, reportUrl: run.html_url,
           markdown: 'Workflow завершился без отчёта модели. Это технический сбой, а не принятие изменений.' });

@@ -19,6 +19,19 @@ export class GitHubError extends Error {
   constructor(status, message) { super(message); this.name = 'GitHubError'; this.status = status; }
 }
 
+/** Contents omits inline bytes above 1 MiB. Read that exact immutable blob,
+ * rather than rereading the possibly advanced branch or following a download URL.
+ */
+export async function readRepositoryFile(client, path, ref) {
+  const file = await client.getContents(path, ref);
+  if (!sha(file?.sha)) throw Error('Invalid GitHub file identity');
+  const content = file.encoding === 'none'
+    ? await client.request('GET', `${client.root}/git/blobs/${file.sha}`) : file;
+  if (content?.sha !== file.sha || content.encoding !== 'base64' || typeof content.content !== 'string')
+    throw Error('Invalid GitHub file content');
+  return { sha: file.sha, text: Buffer.from(content.content, 'base64').toString('utf8') };
+}
+
 /** No ambient token. Writes return a plan unless activation and credentials are explicit. */
 export class GitHubClient {
   constructor({ owner, repo, token = null, activated = false, fetchImpl = globalThis.fetch,
@@ -51,7 +64,10 @@ export class GitHubClient {
     if (!sha(commit)) throw Error('Invalid ref commit');
     return this.request('POST', `${this.root}/git/refs`, { ref: `refs/heads/${checkedRef(branch)}`, sha: commit });
   }
-  getContents(path, ref) { return this.request('GET', `${this.root}/contents/${path.split('/').map(component).join('/')}?ref=${component(ref)}`); }
+  getContents(path, ref) {
+    return this.request('GET', `${this.root}/contents/${path.split('/').map(component).join('/')}?ref=${component(ref)}`,
+      undefined, { accept: 'application/vnd.github.object+json' });
+  }
   putContents(path, { branch, content, previousSha, message }) {
     return this.request('PUT', `${this.root}/contents/${path.split('/').map(component).join('/')}`,
       { branch: checkedRef(branch), content: Buffer.from(content).toString('base64'), message, ...(previousSha ? { sha: previousSha } : {}) });
@@ -173,9 +189,8 @@ export class GitHubQueueStore {
     let head;
     try { head = (await this.client.getRef(this.branch)).object.sha; }
     catch (error) { if (error.status === 404) throw Error(`State branch ${this.branch} is not initialized; explicit activation/initialization required`); throw error; }
-    const file = await this.client.getContents(this.path, head);
-    if (file.encoding !== 'base64' || !sha(file.sha)) throw Error('Invalid GitHub state content');
-    return { state: JSON.parse(Buffer.from(file.content, 'base64').toString('utf8')),
+    const file = await readRepositoryFile(this.client, this.path, head);
+    return { state: JSON.parse(file.text),
       version: { blobSha: file.sha, headSha: head }, headSha: head };
   }
   async compareAndSwap(version, state) {

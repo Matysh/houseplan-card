@@ -600,7 +600,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     || command === 'publish-prepared' && candidate.status === 'published') return complete(candidate);
   const shipReview = async () => {
     if (candidate.kind !== 'beta') throw Error('Batch ship review belongs to the beta candidate');
-    state = await ensureShipReview({ candidate, store: releaseStore, dispatch: change => releaseDispatch(releaseStore, change),
+    state = await ensureShipReview({ candidate: { ...candidate, tag: candidate.tag ?? event.tag }, store: releaseStore, dispatch: change => releaseDispatch(releaseStore, change),
       queue, git, api, review, config, dependencies, signal, onProgress });
     candidate = state.candidates[candidate.id];
   };
@@ -642,7 +642,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     state = await releaseDispatch(releaseStore, { id: `${event.id}:prepared:${randomUUID()}`, type: 'release-prepared',
       candidate: candidate.id, sha: candidate.sha, data });
     candidate = state.candidates[candidate.id];
-    if (candidate.kind === 'beta') await shipReview();
+    if (candidate.kind === 'beta' && !resumingPublication) await shipReview();
     const reviewArtifacts = (dependencies.prepareShipReviewArtifacts ?? prepareShipReviewArtifacts)({ root: config.workspace, candidate, records: state.shipReviews });
     const artifacts = [...(event.artifacts ?? preparePublicationArtifacts({ root: config.workspace,
       packageResult: JSON.parse(await readFile(resolve(config.workspace, event.packagePath ?? 'artifacts/process-next/package.json'), 'utf8')),

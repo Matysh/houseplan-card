@@ -59,6 +59,35 @@ test('beta publication requires a completed ship inventory and matching accepted
     assert.deepEqual(releaseReadiness({ ...h.candidate, shipReview }).reasons, ['ship-review-required']);
 });
 
+test('already-started legacy publication resumes without a new ship review but keeps the original readiness checks', () => {
+  const h = harness(); create(h); passed(h, { ship: false });
+  const prepared = { ...h.candidate, status: 'prepared' };
+  assert.deepEqual(releaseReadiness(prepared).reasons, ['ship-review-required']);
+  for (const status of ['publishing', 'publication-retry', 'published']) {
+    const persisted = { ...prepared, status };
+    assert.equal(releaseReadiness(persisted).ready, true);
+    assert.deepEqual(releaseReadiness({ ...persisted, runner: null }).reasons, ['runner-report-required']);
+    assert.deepEqual(releaseReadiness({ ...persisted, metrics: null }).reasons, ['metrics-report-required']);
+    assert.deepEqual(releaseReadiness({ ...persisted, reviewRequired: true }).reasons, ['fix-review-required']);
+  }
+});
+
+test('ship review can run alongside tests without changing the immutable candidate or its run', () => {
+  const h = harness(); create(h);
+  h.event({ type: 'run-started', sha: A, runId: 'beta-tests' });
+  const running = structuredClone(h.candidate.running), packet = shipPacket();
+  h.event({ type: 'ship-review-prepared', packet });
+  h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet) });
+  assert.equal(h.candidate.sha, A); assert.deepEqual(h.candidate.running, running);
+  assert.equal(h.candidate.status, 'testing'); assert.equal(h.candidate.shipReview.status, 'accepted');
+  assert.throws(() => h.event({ type: 'fix', sha: B }), /immutable/);
+  assert.ok(releaseReadiness(h.candidate).reasons.includes('run-in-progress'));
+  h.event({ type: 'runner-report', report: report(A, 'beta', { id: 'beta-tests' }) });
+  h.event({ type: 'metrics', sha: A, report: { requiresDecision: false } });
+  h.event({ type: 'publication-started', sha: A, tag: 'v1-beta.1' });
+  assert.throws(() => h.event({ type: 'ship-review-prepared', packet }), /immutable during or after publication/);
+});
+
 test('ship review freezes its input, refuses mismatched identities and retains full result on prepare retry', () => {
   const initial = initialReleaseState(); delete initial.shipReviews;
   const h = harness(initial); create(h); const packet = shipPacket();

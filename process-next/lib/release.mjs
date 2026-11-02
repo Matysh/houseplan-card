@@ -34,11 +34,14 @@ function runnerReceipt(report, candidate) {
     required: required.length, failed, reused: required.filter(row => row.status === 'reused').length };
 }
 export function releaseReadiness(candidate) {
+  // Resume an already-started publication without adding the ship review introduced later.
+  // A fix returns to prepared and must meet the current beta requirements again.
   const reasons = [...(candidate.running ? ['run-in-progress'] : []),
     ...(candidate.runner?.materialClean === false ? ['dirty-material'] : []),
     ...(!candidate.runner?.ready || candidate.runner.sha !== candidate.sha || candidate.runner.event !== candidate.kind ? ['runner-report-required'] : []),
     ...(candidate.reviewRequired && candidate.review?.sha !== candidate.sha ? ['fix-review-required'] : []),
-    ...(candidate.kind === 'beta' && (candidate.shipReview?.sha !== candidate.sha
+    ...(candidate.kind === 'beta' && !['publishing', 'publication-retry', 'published'].includes(candidate.status)
+      && (candidate.shipReview?.sha !== candidate.sha
       || candidate.shipReview?.inventoryComplete !== true
       || !['accepted', 'not-required'].includes(candidate.shipReview?.status)) ? ['ship-review-required'] : []),
     ...(candidate.kind === 'beta' && (!candidate.metrics || candidate.metrics.sha !== candidate.sha) ? ['metrics-report-required'] : []),
@@ -107,7 +110,8 @@ export function reduceRelease(previous, event) {
     case 'ship-review-prepared': {
       const packet = event.packet, item = state.candidates[packet?.candidateId];
       if (!item || item.kind !== 'beta' || state.active !== item.id) throw Error('Ship review belongs to an active beta candidate');
-      editable(item);
+      // Freezing review metadata does not change the material being tested.
+      if (['publishing', 'published'].includes(item.status)) throw Error('Candidate review is immutable during or after publication');
       if (packet.schema !== 1 || packet.head !== item.sha || packet.base !== null && !sha(packet.base)
         || typeof packet.requestId !== 'string' || !packet.requestId
         || typeof packet.selectionDigest !== 'string' || !packet.selectionDigest

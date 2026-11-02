@@ -62,6 +62,7 @@ test('service-event metadata survives JSON storage without undefined fields chan
   h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B });
   h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed' });
   h.event({ type: 'merged', issue: 1, token, materialSha: B, actualDevSha: B });
+  assert.equal(h.state.tasks[1].expectedBase, A, 'the complete fast-forward implementation range survives S8');
   h.event({ type: 'dev-build', issue: 1, materialSha: B, status: 'published', notify: true });
   assert.deepEqual(h.state, JSON.parse(JSON.stringify(h.state)));
 });

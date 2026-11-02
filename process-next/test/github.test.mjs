@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { GitHubClient, GitHubQueueStore, GitHubError, GitAdapter, runGit, sha256 } from '../lib/github.mjs';
+import { GitHubClient, GitHubQueueStore, GitHubError, GitAdapter, runGit, sha256, readRepositoryFile } from '../lib/github.mjs';
 import { initialQueueState, reduceQueue, StateConflict } from '../lib/queue.mjs';
 import { ReleaseGitAdapter } from '../lib/release.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40);
@@ -87,6 +87,45 @@ test('missing state branch is not silently initialized and a read uses the obser
   const store = new GitHubQueueStore({ getRef: async () => ({ object: { sha: A } }), getContents: async (path, ref) => {
     observed = ref; return { sha: B, encoding: 'base64', content: Buffer.from(JSON.stringify(initialQueueState())).toString('base64') }; } });
   const value = await store.read(); assert.equal(observed, A); assert.equal(value.version.blobSha, B);
+});
+
+test('repository file reads inline base64 once or falls back to the exact large-file blob', async () => {
+  for (const encoding of ['base64', 'none']) {
+    const text = JSON.stringify({ message: 'Сохранённое ревью', report: encoding === 'none' ? 'x'.repeat(1024 * 1024 + 1) : 'small' });
+    const calls = [], client = new GitHubClient({ owner: 'o', repo: 'r', fetchImpl: async (url, options) => {
+      calls.push(url); assert.equal(options.method, 'GET');
+      if (url.includes('/contents/')) {
+        assert.equal(options.headers.Accept, 'application/vnd.github.object+json');
+        assert.ok(url.endsWith(`/contents/releases.json?ref=${A}`));
+        return response({ sha: B, encoding, content: encoding === 'none' ? '' : Buffer.from(text).toString('base64') });
+      }
+      assert.equal(options.headers.Accept, 'application/vnd.github+json');
+      assert.ok(url.endsWith(`/git/blobs/${B}`));
+      return response({ sha: B, encoding: 'base64', content: Buffer.from(text).toString('base64').replace(/.{80}/g, '$&\n') });
+    } });
+    assert.deepEqual(await readRepositoryFile(client, 'releases.json', A), { sha: B, text });
+    assert.equal(calls.length, encoding === 'none' ? 2 : 1);
+  }
+});
+
+test('large state store reads preserve the original commit and blob for the next CAS', async () => {
+  const state = { ...initialQueueState(), report: 'x'.repeat(1024 * 1024 + 1) }, reads = [];
+  const store = new GitHubQueueStore({ root: '/repos/o/r',
+    getRef: async () => ({ object: { sha: A } }),
+    getContents: async (path, ref) => { reads.push({ path, ref }); return { sha: B, encoding: 'none', content: '' }; },
+    request: async (method, path) => {
+      reads.push({ method, path });
+      return { sha: B, encoding: 'base64', content: Buffer.from(JSON.stringify(state)).toString('base64') };
+    } }, { branch: 'process-release-state', path: 'releases.json' });
+  const value = await store.read();
+  assert.deepEqual(value.state, state); assert.deepEqual(value.version, { headSha: A, blobSha: B });
+  assert.deepEqual(reads, [{ path: 'releases.json', ref: A }, { method: 'GET', path: `/repos/o/r/git/blobs/${B}` }]);
+});
+
+test('large-file fallback refuses a response for a different blob', async () => {
+  await assert.rejects(readRepositoryFile({ root: '/repos/o/r',
+    getContents: async () => ({ sha: B, encoding: 'none', content: '' }),
+    request: async () => ({ sha: A, encoding: 'base64', content: 'e30=' }) }, 'state.json', A), /Invalid GitHub file content/);
 });
 
 test('state initialization publishes only its JSON, without inheriting source workflows', async () => {

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -130,4 +131,44 @@ test('an unrelated old issue packet cannot supply a historical track for differe
   f.labels.set(1, []);
   const packet = await buildShipReviewPacket({ candidate: await f.candidate('beta-2'), git: f.git, api: f.api, reviews: [accepted(old)] });
   assert.deepEqual(packet.tasks, []); assert.deepEqual(packet.unclassified, [1]);
+});
+
+test('an exact queue base includes every fast-forward commit and excludes earlier unrelated unlabelled work', async t => {
+  const f = fixture(t), before = f.commit('earlier.txt', 'unrelated work before the admission');
+  const first = f.commit('one.txt', 'implementation without a trailer');
+  const tip = f.commit('two.txt', 'correction without a trailer');
+  const tasks = [{ ...merged(1, tip), expectedBase: before }];
+  const candidate = await f.candidate('beta-1', tasks);
+  assert.deepEqual(candidate.membership.issues[0].commits, [tip]);
+  const packet = await buildShipReviewPacket({ candidate, git: f.git, api: f.api, tasks });
+  assert.deepEqual(packet.tasks[0].commits, [first, tip].sort());
+  assert.ok(!packet.tasks[0].commits.includes(before));
+  await assert.rejects(buildShipReviewPacket({ candidate, git: f.git, api: f.api,
+    tasks: [{ ...tasks[0], expectedBase: 'dev' }] }), /exact implementation base/);
+});
+
+test('legacy queue tips recover preceding unattributed implementation without absorbing another task', async t => {
+  const f = fixture(t), other = f.commit('show.txt', 'another reviewed task (#2)');
+  const first = f.commit('one.txt', 'implementation without any issue marker');
+  const tip = f.commit('two.txt', 'last correction without any issue marker');
+  const tasks = [merged(1, tip), merged(2, other, 'show')], candidate = await f.candidate('beta-1', tasks);
+  f.labels.set(2, ['track:show']);
+  const packet = await buildShipReviewPacket({ candidate, git: f.git, api: f.api, tasks });
+  assert.deepEqual(packet.tasks.map(task => task.issue), [1]);
+  assert.deepEqual(packet.tasks[0].commits, [first, tip].sort());
+  const partial = { ...packet, tasks: [{ ...packet.tasks[0], commits: [tip],
+    fingerprint: createHash('sha256').update(JSON.stringify([tip])).digest('hex') }] };
+  const retry = await buildShipReviewPacket({ candidate, git: f.git, api: f.api, tasks, reviews: [accepted(partial)] });
+  assert.deepEqual(retry.pending, [1]);
+});
+
+test('legacy subject-only multi-commit tasks remain visible after queue pruning', async t => {
+  const f = fixture(t); f.commit('show.txt', 'previous task (#2)');
+  const first = f.commit('one.txt', 'fix: first implementation (#1157)');
+  const tip = f.commit('two.txt', 'test: complete implementation checks (#1157)');
+  const candidate = await f.candidate(); assert.deepEqual(candidate.membership.issues, []);
+  f.labels.set(2, ['track:show']);
+  const packet = await buildShipReviewPacket({ candidate, git: f.git, api: f.api });
+  assert.deepEqual(packet.tasks.map(task => task.issue), [1157]);
+  assert.deepEqual(packet.tasks[0].commits, [first, tip].sort());
 });

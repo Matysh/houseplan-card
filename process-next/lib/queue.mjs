@@ -366,7 +366,7 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (active.phase !== 'ready-to-merge' || event.actualDevSha !== active.materialSha) throw Error('Actual merge is required for S8');
       const old = state.tasks[active.issue];
       state.tasks[active.issue] = { issue: old.issue, branch: old.branch, track: old.track, layer: old.layer,
-        status: 'S8-merged', mergedSha: event.actualDevSha, mergedAt: now,
+        status: 'S8-merged', expectedBase: active.expectedBase, mergedSha: event.actualDevSha, mergedAt: now,
         ...(event.fromStatus ? { mergedFromStatus: event.fromStatus } : {}), branchDeleted: event.branchDeleted === true,
         removedToRelease: event.removedToRelease === true, ...(old.reviewRequest ? { reviewRequest: old.reviewRequest } : {}),
         completion: { status: 'pending', labels: false, milestone: false, comment: false },

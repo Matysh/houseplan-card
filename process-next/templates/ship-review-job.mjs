@@ -3,7 +3,7 @@ import { appendFileSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildShipReviewContext, runReview } from '../lib/review.mjs';
-import { GitHubClient, checkedRef } from '../lib/github.mjs';
+import { GitHubClient, checkedRef, readRepositoryFile } from '../lib/github.mjs';
 import { readJson, writeJson } from '../lib/storage.mjs';
 import { WorkflowReviewAdapter } from '../remote.mjs';
 
@@ -65,9 +65,8 @@ export async function prepareShipReviewJob({ env = process.env, api, reviewAdapt
   buildContext = buildShipReviewContext, runReviewImpl = runReview,
   reportDir = resolve('process-next/.state/reviews'), onProgress = value => console.log(JSON.stringify(value)) } = {}) {
   const request = requestFrom(env), resultFile = join(reportDir, 'result.json');
-  const file = await api.getContents(request.statePath, request.stateBranch);
-  if (file?.encoding !== 'base64' || typeof file.content !== 'string') throw Error('Release state content is unavailable');
-  const state = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
+  const file = await readRepositoryFile(api, request.statePath, request.stateBranch);
+  const state = JSON.parse(file.text);
   const entry = state.shipReviews?.[request.requestId], packet = entry?.packet;
   if (packet?.schema !== 1 || packet.requestId !== request.requestId || packet.candidateId !== request.candidateId
     || packet.base !== request.base || packet.head !== request.materialSha || packet.version !== request.releaseVersion

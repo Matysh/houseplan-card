@@ -20,7 +20,7 @@ function fixture(t) {
   const reads = [], progress = [];
   const api = { getContents: async (path, branch) => {
     reads.push({ path, branch });
-    return { encoding: 'base64', content: Buffer.from(JSON.stringify(state)).toString('base64') };
+    return { sha: 'f'.repeat(40), encoding: 'base64', content: Buffer.from(JSON.stringify(state)).toString('base64') };
   } };
   const reviewAdapter = { runs: async () => [], artifactResult: async () => { throw Error('Unexpected artifact lookup'); } };
   let calls = 0, context;
@@ -48,6 +48,25 @@ test('batch job reads the frozen release packet, produces a durable result and n
   assert.match(result.markdown, /Подробный русский отчёт/);
   assert.deepEqual(JSON.parse(readFileSync(join(f.reportDir, 'result.json'), 'utf8')), result);
   assert.equal(f.progress[0].name, 'Пакетное код-ревью ship перед 1.99.0 beta 1');
+});
+
+test('batch job loads a release state larger than 1 MiB through its immutable blob', async t => {
+  const f = fixture(t), blobSha = 'f'.repeat(40), reads = [];
+  f.state.history = 'Старый отчёт '.repeat(100_000);
+  const text = JSON.stringify(f.state);
+  assert.ok(Buffer.byteLength(text) > 1024 * 1024);
+  f.api.root = '/repos/o/r';
+  f.api.getContents = async (path, ref) => {
+    reads.push({ path, ref }); return { sha: blobSha, encoding: 'none', content: '' };
+  };
+  f.api.request = async (method, path) => {
+    reads.push({ method, path });
+    return { sha: blobSha, encoding: 'base64', content: Buffer.from(text).toString('base64') };
+  };
+  const result = await prepareShipReviewJob(f);
+  assert.equal(result.verdict, 'accepted'); assert.equal(f.calls, 1); assert.deepEqual(f.context.batch, f.packet);
+  assert.deepEqual(reads, [{ path: 'releases.json', ref: 'process-release-state' },
+    { method: 'GET', path: `/repos/o/r/git/blobs/${blobSha}` }]);
 });
 
 test('saved final results are reused locally and from release state without another model call', async t => {

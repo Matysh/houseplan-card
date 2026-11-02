@@ -68,3 +68,21 @@ test('a result for another candidate or obsolete workflow attempt cannot authori
     assert.equal(h.state().candidates.beta.shipReview.status, 'pending'); assert.equal(h.dispatches(), 0);
   }
 });
+
+test('a duplicate run without its own artifact reuses the earlier final report, also after an incomplete was saved', async () => {
+  for (const savedIncomplete of [false, true]) {
+    const h = harness();
+    if (savedIncomplete) {
+      await h.options.dispatch({ id: 'prepared', type: 'ship-review-prepared', candidate: 'beta', packet: h.packet });
+      await h.options.dispatch({ id: 'incomplete', type: 'ship-review-result', candidate: 'beta', requestId: h.packet.requestId,
+        result: h.receipt({ verdict: 'incomplete', runId: 11 }) });
+    }
+    const older = { id: 10, display_title: h.packet.requestId, status: 'completed' }, newer = { ...older, id: 11 };
+    h.setRun(newer, null);
+    h.options.review.runs = async () => [newer, older];
+    h.options.review.artifactResult = async run => run.id === 10 ? h.receipt({ runId: 10 }) : null;
+    await h.invoke(); await h.invoke();
+    assert.equal(h.dispatches(), 0); assert.equal(h.state().candidates.beta.shipReview.status, 'accepted');
+    assert.equal(h.state().shipReviews[h.packet.requestId].result.runId, 10);
+  }
+});

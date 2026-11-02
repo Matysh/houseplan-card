@@ -687,11 +687,13 @@ test('interrupted publication resumes persisted inputs even after report files d
   let initial = readyRelease();
   initial = reduceRelease(initial, { id: 'data', type: 'release-prepared', candidate: 'beta1', sha: B, data: authoredRelease() });
   initial = reduceRelease(initial, { id: 'start', type: 'publication-started', candidate: 'beta1', sha: B, tag: 'v1-beta.1' });
+  delete initial.candidates.beta1.shipReview; // Publication already started before batch review was restored.
   const store = new MemoryQueueStore(initial); let calls = 0;
   const result = await executeRemoteCommand({ command: 'publish-prepared', config: { ...config, workspace: '/missing' }, env, execute: true,
     event: { id: 'resume-after-restart', candidate: 'beta1', reportPath: 'deleted.json', metricsPath: 'deleted-metrics.json', artifacts: [] },
     dependencies: { api: {}, git: {}, releaseStore: store, queue: new QueueController(new MemoryQueueStore()),
       prepareShipReviewArtifacts: () => [],
+      buildShipReviewPacket: async () => { throw Error('Do not start retroactive batch review'); },
       prepareReleaseData: async () => { throw Error('Previously prepared release data must be reused'); },
       publisher: { publish: async ({ candidate }) => { calls++; assert.equal(candidate.runner.id, 'r');
         return { published: true, evidence: { sha: B, tag: 'v1-beta.1', artifactDigest: D } }; } } } });
