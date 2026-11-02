@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 742,
+  "revision": 743,
   "nextTicket": 63,
   "nextFence": 63,
   "tasks": {
@@ -792,22 +792,24 @@
       "reviewRequest": "review:1207:3:0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da:efa1b130fc69da8277de8bb013b08ea65b581010",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Release classification does not describe this issue and cycle"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": true,
-        "classificationAt": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "a297fdedf383f8af3187",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
-          "target": null
-        }
+          "milestone": true,
+          "target": 11
+        },
+        "milestoneTarget": {
+          "milestone": 11,
+          "cycleMilestone": 11
+        },
+        "milestoneTitle": "1.84.0"
       },
       "devBuild": {
         "status": "published",
