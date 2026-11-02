@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 736,
+  "revision": 737,
   "nextTicket": 63,
   "nextFence": 63,
   "tasks": {
@@ -847,29 +847,23 @@
     },
     "1209": {
       "issue": 1209,
+      "branch": "codex/issue-1209-release-ledger",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/issue-1209-release-ledger",
-      "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 62,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793625086670,
-      "reviewEntry": 1,
-      "patchId": "fbf749709a28a786dfb29c84c531f418b3de03a9",
-      "changedFiles": [
-        "docs/release-ledger/v1.83.0/1207.json"
-      ],
-      "s6": {
-        "id": "20261102T131138819-e1e8d88f",
-        "name": "Тесты для задачи #1209 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T131138819-e1e8d88f/report.json",
-        "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
-        "status": "passed",
-        "finishedAt": "2026-11-02T13:11:38.925Z",
-        "failures": []
+      "status": "S8-merged",
+      "mergedSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+      "mergedAt": 1793625104112,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -944,23 +938,8 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1209,
-    "worker": "finish",
-    "token": "62:finish:d461cd8b-92b9-40c5-8a5f-722af9a278d5:finish:1:admit",
-    "fence": 62,
-    "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
-    "expectedBase": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793625090357,
-    "expiresAt": 1793628699506,
-    "patchId": "fbf749709a28a786dfb29c84c531f418b3de03a9"
-  },
+  "active": null,
   "events": {
-    "finish:d461cd8b-92b9-40c5-8a5f-722af9a278d5:finish:2:synchronized": {
-      "digest": "12b81c0c6d97253aa8d8626d1ee75f272a843296950a584bacb60dbe8dc60868",
-      "issue": 1209
-    },
     "finish:d461cd8b-92b9-40c5-8a5f-722af9a278d5": {
       "digest": "98ceedb431ce8644e5286a66c9715eae5036cb8e95aa8be994db6c4a525928dd",
       "issue": 1209,
