@@ -1033,6 +1033,10 @@
       "opaque": "<function _finite>",
       "required": true
     },
+    "config.spaces[].openings[].host<partition>.tq": {
+      "opaque": "<function _exact_host_parameter>",
+      "required": false
+    },
     "config.spaces[].openings[].host<wall>.id": {
       "maxLength": 64,
       "minLength": 1,
@@ -1048,6 +1052,10 @@
       "min": 0,
       "opaque": "<function _finite>",
       "required": true
+    },
+    "config.spaces[].openings[].host<wall>.tq": {
+      "opaque": "<function _exact_host_parameter>",
+      "required": false
     },
     "config.spaces[].openings[].id": {
       "required": true,

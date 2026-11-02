@@ -5,7 +5,7 @@
   "created_at": "1970-01-01T00:00:00Z",
   "card_version": "plan-convert 0.2",
   "integration_version": "plan-convert 0.2",
-  "model_version": 10,
+  "model_version": 11,
   "payload": {
     "config": {
       "spaces": [
@@ -22,18 +22,6 @@
           "rooms": [],
           "partitions": [
             {
-              "id": "sh3d-2-partition-e-n-0",
-              "a": [
-                0.08333333333333333,
-                0.08333333333333333
-              ],
-              "b": [
-                0.9166666666666666,
-                0.08333333333333333
-              ],
-              "cm": 10
-            },
-            {
               "id": "sh3d-2-partition-e-e-0",
               "a": [
                 0.9166666666666666,
@@ -44,9 +32,69 @@
                 0.9166666666666666
               ],
               "cm": 10
+            },
+            {
+              "id": "sh3d-2-partition-e-n-0",
+              "a": [
+                0.08333333333333333,
+                0.08333333333333333
+              ],
+              "b": [
+                0.9166666666666666,
+                0.08333333333333333
+              ],
+              "cm": 10
             }
           ],
-          "wall_segments": []
+          "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-e-0%22%2C0%5D",
+                "p": [
+                  "l",
+                  "220",
+                  "20"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-e-0%22%2C1%5D",
+                "p": [
+                  "l",
+                  "220",
+                  "220"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-n-0%22%2C0%5D",
+                "p": [
+                  "l",
+                  "20",
+                  "20"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "sh3d-2-partition-e-e-0",
+                "from": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-e-0%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-e-0%22%2C1%5D",
+                "kind": "partition",
+                "cm": 10
+              },
+              {
+                "id": "sh3d-2-partition-e-n-0",
+                "from": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-n-0%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22sh3d-2-partition-e-e-0%22%2C0%5D",
+                "kind": "partition",
+                "cm": 10
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          }
         }
       ],
       "markers": []

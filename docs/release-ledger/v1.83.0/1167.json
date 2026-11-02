@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1167,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Complete ADR282 stages2–3: model11 exact node/edge graph, automatic original-source-bounded legacy normalization, explicit graph writers and independent backend authority. A paired immutable source backup precedes the first structural migration. Current save/import/history/copy preserve exact identity; old projection-only writers are refused. The model transition requires House Plan1.84.0 and is not a compatible downgrade to1.83.",
+  "summary": {
+    "ru": "Единый точный граф стен и узлов: автоматическое исправление микропогрешностей старых планов, устойчивые связи при редактировании, Optimize и Undo/Redo, резервная исходная пара перед переносом.",
+    "en": "One exact wall and node graph: automatically normalize microscopic legacy errors, retain stable edit/Optimize/Undo identities, and preserve the original config/layout pair before migration."
+  }
+}

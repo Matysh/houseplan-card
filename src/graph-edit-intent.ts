@@ -326,8 +326,27 @@ function planarizeSegmentTargets(graph:PlanGraph,allocation:Allocation,plan:Plan
   }
   const pointIds=new Map([...plan.nodePoints].map(([id,p])=>[JSON.stringify(Q.encodePoint(p)),id]));
   const edges=[...plan.newEdges.values()].sort((a,b)=>codepoint(edgeKey(a),edgeKey(b)));
-  for(let i=0;i<edges.length;i++)for(let j=i+1;j<edges.length;j++){
-    const a=edges[i],b=edges[j];if(!selected.has(edgeKey(a))&&!selected.has(edgeKey(b)))continue;
+  // Enumerate selected x all, once per unordered pair, in the original
+  // lexical (i,j) order. Unrelated pairs are never visited. Rounded exact
+  // endpoints give a conservative AABB: monotone nearest rounding cannot
+  // separate two exact intervals that overlap.
+  const selectedIndices=edges.flatMap((edge,i)=>selected.has(edgeKey(edge))?[i]:[]);
+  const boxes=edges.map(edge=>{
+    const a=plan.nodePoints.get(edge.from),b=plan.nodePoints.get(edge.to);
+    if(!a||!b)failure('unbound-endpoint');
+    const pa=Q.pointToNumbers(a),pb=Q.pointToNumbers(b);
+    return[Math.min(pa[0],pb[0]),Math.min(pa[1],pb[1]),Math.max(pa[0],pb[0]),Math.max(pa[1],pb[1])];
+  });
+  const pairs=function*():Generator<readonly[number,number]>{
+    for(let i=0;i<edges.length;i++){
+      if(selected.has(edgeKey(edges[i])))for(let j=i+1;j<edges.length;j++)yield[i,j];
+      else for(const j of selectedIndices)if(j>i)yield[i,j];
+    }
+  };
+  for(const[i,j]of pairs()){
+    const ba=boxes[i],bb=boxes[j];
+    if(ba[2]<bb[0]||bb[2]<ba[0]||ba[3]<bb[1]||bb[3]<ba[1])continue;
+    const a=edges[i],b=edges[j];
     const pa=plan.nodePoints.get(a.from),pb=plan.nodePoints.get(a.to),pc=plan.nodePoints.get(b.from),pd=plan.nodePoints.get(b.to);
     if(!pa||!pb||!pc||!pd)failure('unbound-endpoint');
     const hit=Q.intersection(pa,pb,pc,pd);if(!hit||Q.cmp(hit.t,Q.ZERO)<0||Q.cmp(hit.t,Q.ONE)>0||Q.cmp(hit.u,Q.ZERO)<0||Q.cmp(hit.u,Q.ONE)>0)continue;

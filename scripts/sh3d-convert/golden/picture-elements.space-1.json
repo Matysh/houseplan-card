@@ -5,7 +5,7 @@
   "created_at": "1970-01-01T00:00:00Z",
   "card_version": "plan-convert 0.2",
   "integration_version": "plan-convert 0.2",
-  "model_version": 10,
+  "model_version": 11,
   "payload": {
     "config": {
       "spaces": [
@@ -20,6 +20,7 @@
             0.456666667
           ],
           "rooms": [],
+          "walls": [],
           "partitions": [],
           "decor": [
             {
@@ -52,7 +53,14 @@
           "plan_y": 0.104166667,
           "plan_scale_x": 0.666666667,
           "plan_scale_y": 0.666666667,
-          "wall_segments": []
+          "wall_segments": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [],
+            "edges": [],
+            "rooms": [],
+            "dependencies": []
+          }
         }
       ],
       "markers": [

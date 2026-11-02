@@ -37,6 +37,75 @@
     },
     "layout": {},
     "candidate": {
+      "model_version": 11,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.25,
+                0.25
+              ],
+              "b": [
+                0.75,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [],
+          "wall_segments": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "60"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "60"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "p",
+                "from": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
+          "walls": []
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "candidateLayout": {},
+    "legacyCandidate": {
       "model_version": 10,
       "spaces": [
         {
@@ -71,7 +140,157 @@
       "markers": [],
       "settings": {}
     },
-    "candidateLayout": {}
+    "currentSource": {
+      "model_version": 11,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.2499,
+                0.25
+              ],
+              "b": [
+                0.7501,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [],
+          "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "p": [
+                  "q",
+                  "2499",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "p": [
+                  "q",
+                  "7501",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "p",
+                "from": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          }
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "graph_change": {
+      "version": 1,
+      "spaces": [
+        {
+          "space_id": "floor",
+          "base": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "p": [
+                  "q",
+                  "2499",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "p": [
+                  "q",
+                  "7501",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "p",
+                "from": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
+          "patch": {
+            "nodes": {
+              "set": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "60"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "60"
+                  ]
+                }
+              ],
+              "remove": []
+            },
+            "edges": {
+              "set": [],
+              "remove": []
+            },
+            "rooms": {
+              "set": [],
+              "remove": []
+            },
+            "dependencies": {
+              "set": [],
+              "remove": []
+            }
+          }
+        }
+      ]
+    }
   },
   {
     "name": "hosted-opening",
@@ -125,6 +344,93 @@
     },
     "layout": {},
     "candidate": {
+      "model_version": 11,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.25,
+                0.25
+              ],
+              "b": [
+                0.75,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "type": "door",
+              "x": 0.5,
+              "y": 0.25,
+              "angle": 0,
+              "length": 0.1,
+              "host": {
+                "kind": "partition",
+                "id": "p",
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
+              }
+            }
+          ],
+          "wall_segments": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "60"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "60"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "p",
+                "from": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
+          "walls": []
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "candidateLayout": {},
+    "legacyCandidate": {
       "model_version": 10,
       "spaces": [
         {
@@ -173,6 +479,174 @@
       "markers": [],
       "settings": {}
     },
-    "candidateLayout": {}
+    "currentSource": {
+      "model_version": 11,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.2499,
+                0.25
+              ],
+              "b": [
+                0.7501,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "type": "door",
+              "x": 0.5,
+              "y": 0.25,
+              "angle": 0,
+              "length": 0.1,
+              "host": {
+                "kind": "partition",
+                "id": "p",
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
+              }
+            }
+          ],
+          "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "p": [
+                  "q",
+                  "2499",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "p": [
+                  "q",
+                  "7501",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "p",
+                "from": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          }
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "graph_change": {
+      "version": 1,
+      "spaces": [
+        {
+          "space_id": "floor",
+          "base": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "p": [
+                  "q",
+                  "2499",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "p": [
+                  "q",
+                  "7501",
+                  "10000",
+                  "1",
+                  "4"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "p",
+                "from": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
+          "patch": {
+            "nodes": {
+              "set": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22p%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "60"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22p%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "60"
+                  ]
+                }
+              ],
+              "remove": []
+            },
+            "edges": {
+              "set": [],
+              "remove": []
+            },
+            "rooms": {
+              "set": [],
+              "remove": []
+            },
+            "dependencies": {
+              "set": [],
+              "remove": []
+            }
+          }
+        }
+      ]
+    }
   }
 ]

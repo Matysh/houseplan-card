@@ -109,6 +109,11 @@ export interface OptimizeDependencies {
 }
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+/** JSON object insertion order is not persisted content; array order still is. */
+const contentJson = (value: unknown): string | undefined => JSON.stringify(value, (_key, item) =>
+  item && typeof item === 'object' && !Array.isArray(item)
+    ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
+
 const own = (o: any, key: string): boolean => Object.prototype.hasOwnProperty.call(o, key);
 const clamp = (value: number, min: number, max: number): number => (
   Math.min(max, Math.max(min, value))
@@ -448,8 +453,8 @@ function optimizePlanDraft(
   // config/layout clone merely to remove sub-pixel storage tails (#291).
   canonicalizeConfigGeometryInPlace(config);
   canonicalizeLayoutGeometryInPlace(references.layout);
-  const original = JSON.stringify(configIn || {});
-  const originalLayout = JSON.stringify(layoutIn || {});
+  const original = contentJson(configIn || {});
+  const originalLayout = contentJson(layoutIn || {});
   const modelFrom = Number.isInteger(Number(config.model_version))
     ? Number(config.model_version)
     : 0;
@@ -686,14 +691,14 @@ function optimizePlanDraft(
   // only alongside a real config/layout transformation; otherwise an already
   // canonical plan would forever offer an Optimize action that changes no
   // user data. Never downgrade a model written by a newer client.
-  const meaningfulChanged = JSON.stringify(persistedConfig) !== original
-    || JSON.stringify(persistedLayout) !== originalLayout;
+  const meaningfulChanged = contentJson(persistedConfig) !== original
+    || contentJson(persistedLayout) !== originalLayout;
   if (modelFrom < PLAN_MODEL_VERSION && meaningfulChanged) {
     persistedConfig.model_version = PLAN_MODEL_VERSION;
   }
 
-  const changed = JSON.stringify(persistedConfig) !== original
-    || JSON.stringify(persistedLayout) !== originalLayout;
+  const changed = contentJson(persistedConfig) !== original
+    || contentJson(persistedLayout) !== originalLayout;
   const modelTo = Number.isInteger(Number(persistedConfig.model_version))
     ? Number(persistedConfig.model_version)
     : modelFrom;
@@ -798,8 +803,8 @@ export function optimizePlans(
     for (const key of Object.keys(stats) as (keyof typeof stats)[]) stats[key] += next[key];
     return next.space;
   });
-  const changed = JSON.stringify(result.config) !== JSON.stringify(configIn || {})
-    || JSON.stringify(result.layout) !== JSON.stringify(layoutIn || {});
+  const changed = contentJson(result.config) !== contentJson(configIn || {})
+    || contentJson(result.layout) !== contentJson(layoutIn || {});
   const report = result.report;
   report.modelFrom = modelFrom; report.modelTo = PLAN_MODEL_VERSION;
   report.migrated += migration.total;

@@ -4,6 +4,7 @@ import {buildWallFaceGraph,findWallFaceAtPoint} from '../test-build/wall-face-gr
 import {commitWallSegmentModel,wallModelOffGridValueCount} from '../test-build/wall-segment-model.js';
 import {inheritedY,roomSource,graphSources} from './helpers/room-contact-grid.mjs';
 import fs from 'node:fs';
+import {commitGraphEdit} from '../test-build/graph-edit-intent.js';
 import {optimizePlans} from '../test-build/plan-optimizer.js';
 
 for(const x of [0.375,0.625])test(`#1061 existing face ${x} keeps the inherited scalar through materialization`,()=>{
@@ -14,6 +15,8 @@ for(const x of [0.375,0.625])test(`#1061 existing face ${x} keeps the inherited 
   assert.ok(face);
   const after=structuredClone(before);
   after.spaces[0].rooms.push({id:'new',name:'New',area:null,poly:face.ring.map(p=>p.map(n=>n/1000))});
+  after.spaces[0]=commitGraphEdit(space,after.spaces[0],{kind:'faces',rooms:['new'],
+    sourceEdges:space.plan_graph.edges.map(({kind,id})=>({kind,id}))});
   const committed=commitWallSegmentModel(after).config;
   assert.equal(wallModelOffGridValueCount(committed.spaces[0]),1,'no rounded new off-grid debt');
   assert.ok(committed.spaces[0].rooms.find(r=>r.id==='new').poly.some(p=>p[1]===inheritedY));
@@ -29,7 +32,10 @@ test('#1061 exact persisted rings ignore source order/direction and keep inherit
   let current=structuredClone(config);
   for(const [i,x]of [0.375,0.625].entries()){
     const face=findWallFaceAtPoint(original,[x*1000,150]);
+    const beforeSpace=structuredClone(current.spaces[0]);
     current.spaces[0].rooms.push({id:`new${i}`,name:'New',area:null,poly:face.ring.map(p=>p.map(n=>n/1000))});
+    current.spaces[0]=commitGraphEdit(beforeSpace,current.spaces[0],{kind:'faces',rooms:[`new${i}`],
+      sourceEdges:beforeSpace.plan_graph.edges.map(({kind,id})=>({kind,id}))});
     current=commitWallSegmentModel(current).config;
     assert.equal(wallModelOffGridValueCount(current.spaces[0]),1);
     assert.deepEqual(current.spaces[0].rooms.find(r=>r.id==='old'),config.spaces[0].rooms[0]);
@@ -71,9 +77,7 @@ test('#1061 HA Align fixtures are exact current optimizer outputs and a second O
   const skipped=optimizePlans(source,{});
   assert.deepEqual(skipped.config.spaces[0].partitions,source.spaces[0].partitions,
     'pre-existing hostedFit decides whether Align may move this carrier');
-  const canonicalBlocked=structuredClone(cases[1].candidate);
-  canonicalBlocked.spaces[0].partitions=structuredClone(source.spaces[0].partitions);
-  canonicalBlocked.spaces[0].openings[0].length=0.5001;
+  const canonicalBlocked=commitWallSegmentModel(source).config;
   assert.equal(optimizePlans(canonicalBlocked,{}).changed,false,
     'an already canonical source with a blocked carrier is a genuine Optimize no-op');
   source.spaces[0].openings[0].length=0.50000000834;

@@ -5,7 +5,7 @@
   "created_at": "1970-01-01T00:00:00Z",
   "card_version": "plan-convert 0.2",
   "integration_version": "plan-convert 0.2",
-  "model_version": 10,
+  "model_version": 11,
   "payload": {
     "config": {
       "spaces": [
@@ -65,11 +65,11 @@
             {
               "id": "sh3d-1-partition-a-s-0",
               "a": [
-                0.20833333333333334,
+                0.08333333333333333,
                 0.8125
               ],
               "b": [
-                0.08333333333333333,
+                0.20833333333333334,
                 0.8125
               ],
               "cm": 20
@@ -78,31 +78,29 @@
               "id": "sh3d-1-partition-a-w-0",
               "a": [
                 0.08333333333333333,
-                0.8125
+                0.1875
               ],
               "b": [
                 0.08333333333333333,
-                0.1875
+                0.8125
               ],
               "cm": 20
             }
           ],
           "walls": [
             {
-              "key": "0.562500,0.187500@0.0000",
+              "a": [
+                0.20833333333333334,
+                0.1875
+              ],
+              "b": [
+                0.9166666666666666,
+                0.1875
+              ],
               "cm": 100,
-              "a": [
-                0.20833333333333334,
-                0.1875
-              ],
-              "b": [
-                0.9166666666666666,
-                0.1875
-              ]
+              "key": "0.562500,0.187500@0.0000"
             },
             {
-              "key": "0.562500,0.812500@0.0000",
-              "cm": 20,
               "a": [
                 0.20833333333333334,
                 0.8125
@@ -110,11 +108,11 @@
               "b": [
                 0.9166666666666666,
                 0.8125
-              ]
+              ],
+              "cm": 20,
+              "key": "0.562500,0.812500@0.0000"
             },
             {
-              "key": "0.916667,0.500000@1.5706",
-              "cm": 20,
               "a": [
                 0.9166666666666666,
                 0.1875
@@ -122,22 +120,12 @@
               "b": [
                 0.9166666666666666,
                 0.8125
-              ]
+              ],
+              "cm": 20,
+              "key": "0.916667,0.500000@1.5706"
             }
           ],
           "wall_segments": [
-            {
-              "id": "wall-thgr7or4pabcjk5xqx3e",
-              "a": [
-                0.20833333333333334,
-                0.1875
-              ],
-              "b": [
-                0.20833333333333334,
-                0.8125
-              ],
-              "cm": 0
-            },
             {
               "id": "wall-4xthkk7jk64l25qnkj4n",
               "a": [
@@ -173,8 +161,160 @@
                 0.8125
               ],
               "cm": 20
+            },
+            {
+              "id": "wall-thgr7or4pabcjk5xqx3e",
+              "a": [
+                0.20833333333333334,
+                0.1875
+              ],
+              "b": [
+                0.20833333333333334,
+                0.8125
+              ],
+              "cm": 0
             }
           ],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C0%5D",
+                "p": [
+                  "l",
+                  "20",
+                  "45"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C1%5D",
+                "p": [
+                  "q",
+                  "10416666666666667",
+                  "50000000000000000",
+                  "3",
+                  "16"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C0%5D",
+                "p": [
+                  "l",
+                  "20",
+                  "195"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C1%5D",
+                "p": [
+                  "q",
+                  "10416666666666667",
+                  "50000000000000000",
+                  "13",
+                  "16"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22ok-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224583333333333333%5C%22%2C%5C%225000000000000000%5C%22%2C%5C%2213%5C%22%2C%5C%2216%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "4583333333333333",
+                  "5000000000000000",
+                  "13",
+                  "16"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22ok-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224583333333333333%5C%22%2C%5C%225000000000000000%5C%22%2C%5C%223%5C%22%2C%5C%2216%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "4583333333333333",
+                  "5000000000000000",
+                  "3",
+                  "16"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "sh3d-1-partition-a-n-0",
+                "from": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C1%5D",
+                "kind": "partition",
+                "cm": 100
+              },
+              {
+                "id": "sh3d-1-partition-a-s-0",
+                "from": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "sh3d-1-partition-a-w-0",
+                "from": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "wall-4xthkk7jk64l25qnkj4n",
+                "from": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C1%5D",
+                "to": "n:%5B%22room%22%2C%22ok-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224583333333333333%5C%22%2C%5C%225000000000000000%5C%22%2C%5C%223%5C%22%2C%5C%2216%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 100
+              },
+              {
+                "id": "wall-licf2uy2kv6tkmvvy67m",
+                "from": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C1%5D",
+                "to": "n:%5B%22room%22%2C%22ok-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224583333333333333%5C%22%2C%5C%225000000000000000%5C%22%2C%5C%2213%5C%22%2C%5C%2216%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 20
+              },
+              {
+                "id": "wall-o6yq2ycgbshj3ibuck3w",
+                "from": "n:%5B%22room%22%2C%22ok-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224583333333333333%5C%22%2C%5C%225000000000000000%5C%22%2C%5C%223%5C%22%2C%5C%2216%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22ok-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224583333333333333%5C%22%2C%5C%225000000000000000%5C%22%2C%5C%2213%5C%22%2C%5C%2216%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 20
+              },
+              {
+                "id": "wall-thgr7or4pabcjk5xqx3e",
+                "from": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-n-0%22%2C1%5D",
+                "to": "n:%5B%22partition%22%2C%22sh3d-1-partition-a-s-0%22%2C1%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "ok-room",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "wall-4xthkk7jk64l25qnkj4n",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-o6yq2ycgbshj3ibuck3w",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-licf2uy2kv6tkmvvy67m",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-thgr7or4pabcjk5xqx3e",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": []
+          },
           "openings": [
             {
               "id": "wide-door",
@@ -186,7 +326,11 @@
               "host": {
                 "kind": "wall",
                 "id": "wall-licf2uy2kv6tkmvvy67m",
-                "t": 0.5
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
               }
             }
           ]

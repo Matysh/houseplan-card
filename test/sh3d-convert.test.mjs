@@ -37,7 +37,7 @@ test('#446 квартира из двух комнат: контуры по гр
   const { documents, report } = await convert('flat-two-rooms.sh3d');
   assert.equal(documents.length, 1);
   const space = documents[0].payload.config.spaces[0];
-  assert.deepEqual(space.rooms.map((room) => room.name), ['Кухня', 'Спальня']);
+  assert.deepEqual(space.rooms.map((room) => room.name).sort(), ['Кухня', 'Спальня']);
   assert.equal(space.wall_segments.length, 7, 'четыре внешних, одна общая, две половины стены — 7 рёбер');
   const shared = space.rooms[0].poly.filter((point) =>
     space.rooms[1].poly.some((other) => other[0] === point[0] && other[1] === point[1]));

@@ -162,3 +162,22 @@ test('new segment crossing known sources emits exact splits instead of rebuildin
   assert.ok(result.operations.some(op=>op.kind==='insert-on-edge'));
   assert.equal(G.validateGraph(result.graph).ok,true);
 });
+
+
+test('selected intersection scope preserves deterministic exact splits with unrelated edges and input permutations',()=>{
+  const raw={id:'pair-scope',rooms:[],partitions:[
+    {id:'middle',a:[0,.5],b:[1,.5],cm:10},
+    ...Array.from({length:40},(_,i)=>({id:'far-'+i,a:[2+i/240,2],b:[2+i/240,3],cm:10}))]};
+  const before=migrate(raw),draft=copy(before);
+  draft.partitions.push({id:'first',a:[.25,0],b:[.25,1],cm:10},{id:'last',a:[.75,0],b:[.75,1],cm:10});
+  const run=(source,target,ids)=>commitGraphEditResult(source,target,{kind:'partitions',ids});
+  const result=run(before,draft,['first','last']);
+  const reversed=copy(before);reversed.plan_graph.edges.reverse();reversed.plan_graph.nodes.reverse();
+  const again=run(reversed,draft,['last','first']);
+  assert.deepEqual(result.graph,again.graph);
+  assert.equal(result.graph.edges.length,before.plan_graph.edges.length+6);
+  const far=graph=>graph.edges.filter(e=>e.id.startsWith('far-'));
+  assert.deepEqual(far(result.graph),far(before.plan_graph));
+  assert.equal(G.validateGraph(result.graph).ok,true);
+  for(const x of ['60','180'])assert.ok(result.graph.nodes.some(n=>n.p[0]==='l'&&n.p[1]===x&&n.p[2]==='120'));
+});

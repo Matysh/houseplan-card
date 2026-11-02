@@ -5,7 +5,7 @@
   "created_at": "1970-01-01T00:00:00Z",
   "card_version": "plan-convert 0.2",
   "integration_version": "plan-convert 0.2",
-  "model_version": 10,
+  "model_version": 11,
   "payload": {
     "config": {
       "spaces": [
@@ -24,6 +24,13 @@
               "id": "easy-1-room-room",
               "name": "Room",
               "area": "living",
+              "settings": {
+                "fill_mode": "custom",
+                "custom_fill": {
+                  "c": "#abcdef",
+                  "a": 0.12
+                }
+              },
               "poly": [
                 [
                   0.16666666666666666,
@@ -35,32 +42,23 @@
                 ],
                 [
                   0.6666666666666666,
-                  0.5833333333333334
+                  0.583333333
                 ],
                 [
-                  0.16666666666666666,
+                  0.166666667,
                   0.5833333333333334
                 ]
               ],
-              "settings": {
-                "fill_mode": "custom",
-                "custom_fill": {
-                  "c": "#abcdef",
-                  "a": 0.12
-                }
-              },
               "wall_ids": [
-                "wall-552eygiu4pvxg4bcgizc",
-                "wall-65gqc6agzfpghjq4hu52",
-                "wall-rbhz654pb7vvoibjwhao",
-                "wall-ybl5bug3k26ybkksqiqd"
+                "wall-yzchijlaidjggodumbdv",
+                "wall-w6j5cpqirhubmn2aqgqz",
+                "wall-cgtizccuuemb3s2rn5gd",
+                "wall-mtgirbkltgsd3simmvx5"
               ]
             }
           ],
           "walls": [
             {
-              "key": "0.416667,0.250000@0.0000",
-              "cm": 8,
               "a": [
                 0.16666666666666666,
                 0.25
@@ -68,7 +66,9 @@
               "b": [
                 0.6666666666666666,
                 0.25
-              ]
+              ],
+              "cm": 8,
+              "key": "0.416667,0.250000@0.0000"
             }
           ],
           "partitions": [],
@@ -134,19 +134,43 @@
           "plan_scale_y": 0.666666667,
           "wall_segments": [
             {
-              "id": "wall-ybl5bug3k26ybkksqiqd",
+              "id": "wall-cgtizccuuemb3s2rn5gd",
+              "a": [
+                0.166666667,
+                0.5833333333333334
+              ],
+              "b": [
+                0.6666666666666666,
+                0.583333333
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-mtgirbkltgsd3simmvx5",
               "a": [
                 0.16666666666666666,
                 0.25
               ],
               "b": [
-                0.16666666666666666,
+                0.166666667,
                 0.5833333333333334
               ],
               "cm": 0
             },
             {
-              "id": "wall-552eygiu4pvxg4bcgizc",
+              "id": "wall-w6j5cpqirhubmn2aqgqz",
+              "a": [
+                0.6666666666666666,
+                0.25
+              ],
+              "b": [
+                0.6666666666666666,
+                0.583333333
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-yzchijlaidjggodumbdv",
               "a": [
                 0.16666666666666666,
                 0.25
@@ -156,45 +180,124 @@
                 0.25
               ],
               "cm": 8
-            },
-            {
-              "id": "wall-rbhz654pb7vvoibjwhao",
-              "a": [
-                0.16666666666666666,
-                0.5833333333333334
-              ],
-              "b": [
-                0.6666666666666666,
-                0.5833333333333334
-              ],
-              "cm": 0
-            },
-            {
-              "id": "wall-65gqc6agzfpghjq4hu52",
-              "a": [
-                0.6666666666666666,
-                0.25
-              ],
-              "b": [
-                0.6666666666666666,
-                0.5833333333333334
-              ],
-              "cm": 0
             }
           ],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22166666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%221%5C%22%2C%5C%224%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "40",
+                  "60"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22166666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%22583333333%5C%22%2C%5C%221000000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "166666667",
+                  "1000000000",
+                  "7",
+                  "12"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22666666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%221%5C%22%2C%5C%224%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "160",
+                  "60"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22666666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%22583333333%5C%22%2C%5C%221000000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "2",
+                  "3",
+                  "583333333",
+                  "1000000000"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "wall-cgtizccuuemb3s2rn5gd",
+                "from": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22166666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%22583333333%5C%22%2C%5C%221000000000%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22666666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%22583333333%5C%22%2C%5C%221000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-mtgirbkltgsd3simmvx5",
+                "from": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22166666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%221%5C%22%2C%5C%224%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22166666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%22583333333%5C%22%2C%5C%221000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-w6j5cpqirhubmn2aqgqz",
+                "from": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22666666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%221%5C%22%2C%5C%224%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22666666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%22583333333%5C%22%2C%5C%221000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-yzchijlaidjggodumbdv",
+                "from": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22166666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%221%5C%22%2C%5C%224%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22easy-1-room-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%22666666667%5C%22%2C%5C%221000000000%5C%22%2C%5C%221%5C%22%2C%5C%224%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 8
+              }
+            ],
+            "rooms": [
+              {
+                "room": "easy-1-room-room",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "wall-yzchijlaidjggodumbdv",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-w6j5cpqirhubmn2aqgqz",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-cgtizccuuemb3s2rn5gd",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-mtgirbkltgsd3simmvx5",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": []
+          },
           "openings": [
             {
               "id": "easy-1-opening-door",
               "type": "door",
-              "x": 0.3333333333333333,
+              "x": 0.333333333,
               "y": 0.25,
               "length": 0.075,
               "angle": 0,
               "contact": "binary_sensor.door",
               "host": {
                 "kind": "wall",
-                "id": "wall-552eygiu4pvxg4bcgizc",
-                "t": 0.333333333
+                "id": "wall-yzchijlaidjggodumbdv",
+                "t": 0.3333333326666667,
+                "tq": [
+                  "3333333326666667",
+                  "10000000000000000"
+                ]
               }
             }
           ]

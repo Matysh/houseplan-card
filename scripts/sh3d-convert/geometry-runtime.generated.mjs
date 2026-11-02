@@ -4024,7 +4024,7 @@ function projectGraphSpace(base, graph) {
         const { x: _x, y: _y, w: _w, h: _h, poly: _p, wall_ids: _ids, open_to: _open, ...rest } = meta;
         return { ...rest, poly, wall_ids: cycle.edges.map(r => r.id) };
     });
-    const projected = (e) => ({ ...(e.props || {}), id: e.id,
+    const projected = (e) => ({ ...clone$1(e.props || {}), id: e.id,
         a: pointToNumbers(index.points.get(e.from)), b: pointToNumbers(index.points.get(e.to)), cm: e.cm });
     space.wall_segments = graph.edges.filter(e => e.kind === 'wall').map(projected);
     space.partitions = graph.edges.filter(e => e.kind === 'partition').map(projected);
@@ -4300,6 +4300,14 @@ function applyGraphOperation(before, operation, context = {}) {
             case 'create-edge':
                 addEdge(op.edge);
                 return;
+            case 'retarget-edge': {
+                const edge = findEdge(op.edge);
+                findNode(op.from);
+                findNode(op.to);
+                edge.from = op.from;
+                edge.to = op.to;
+                return;
+            }
             case 'set-dependency':
                 findNode(op.dependency.node);
                 setDependency(op.dependency);
@@ -4529,9 +4537,10 @@ function applyGraphOperation(before, operation, context = {}) {
     };
     apply(operation);
     evaluateDependencies(graph);
-    graph = canonicalGraph(graph);
+    graph = freezeGraph(canonicalGraph(graph));
     const remainingHosts = hostRecords.filter(h => mapping.hosts[h.id] !== null).map(h => h.host);
-    assertGraph(graph, { ...context, projection: undefined, hosts: remainingHosts, roomIds: undefined });
+    const validatedIndex = assertGraph(graph, { ...context, projection: undefined, hosts: remainingHosts, roomIds: undefined });
+    preparedGraphs.set(graph, validatedIndex);
     const nextNodeIds = new Set(graph.nodes.map(n => n.id)), nextEdgeKeys = new Set(graph.edges.map(edgeKey)), nextRoomIds = new Set(graph.rooms.map(r => r.room));
     const changedNode = [...graph.nodes.filter(n => JSON.stringify(n) !== JSON.stringify(originalIndex.nodes.get(n.id))).map(n => n.id),
         ...before.nodes.filter(n => !nextNodeIds.has(n.id)).map(n => n.id)];
@@ -4787,10 +4796,30 @@ function migrateGraphSpace(space, options = {}) {
     if (source.sources.length > limits.edges || (space.rooms || []).length > limits.rooms)
         fail('resource');
     const run = (optional) => {
-        const graph = { nodes: [], edges: [], rooms: [], dependencies: [] };
+        const graph = { version: 1, nodes: [], edges: [], rooms: [], dependencies: [] };
         const nodes = new Map(), origins = new Map(), pointNode = new Map();
         const sourcePointNode = new Map(), endpointNode = new Map(), buckets = new Map();
         const cutMap = new Map(), mapping = emptyMapping();
+        const installDependency = (dep) => {
+            graph.dependencies = graph.dependencies.filter(d => d.node !== dep.node);
+            graph.dependencies.push(dep);
+            // Reciprocal legacy contacts are incidence, not a cyclic affine program.
+            // A deterministic existing source node becomes a free anchor; no point moves.
+            while (true) {
+                try {
+                    dependencyOrder(graph);
+                    break;
+                }
+                catch (error) {
+                    if (!(error instanceof PlanGraphError) || error.code !== 'dependency-cycle')
+                        throw error;
+                    const count = graph.dependencies.length;
+                    graph.dependencies = graph.dependencies.filter(d => d.node !== error.subject);
+                    if (graph.dependencies.length === count)
+                        throw error;
+                }
+            }
+        };
         let bends = 0;
         const bucket = (p) => [floor(div(p[0], radius)), floor(div(p[1], radius))];
         const place = (id, p, owners) => {
@@ -4855,6 +4884,13 @@ function migrateGraphSpace(space, options = {}) {
             cutMap.set(edgeKey(s), [
                 { t: ZERO, node: endpointNode.get(edgeKey(s) + ':0') }, { t: ONE, node: endpointNode.get(edgeKey(s) + ':1') }
             ]);
+        // Contact candidates use the chosen source endpoints, not other contacts'
+        // newly projected values. Feedback is neither an affine dependency DAG nor
+        // an authorised source movement and grows otherwise-small denominators.
+        const frozenHostEndpoints = new Map(source.sources.map(s => {
+            const ends = cutMap.get(edgeKey(s));
+            return [edgeKey(s), [decodePoint(nodes.get(ends[0].node).p), decodePoint(nodes.get(ends[1].node).p)]];
+        }));
         const tree = makeTree([...source.sources], s => boxPoints(s.a, s.b));
         const addCut = (s, t, id) => {
             if (!between(t))
@@ -4935,7 +4971,7 @@ function migrateGraphSpace(space, options = {}) {
                     continue;
                 if (!optional && !storedWallContact(pointToNumbers(p0), pointToNumbers(host.a), pointToNumbers(host.b), 1, true))
                     continue;
-                const ends = cutMap.get(edgeKey(host)), a = decodePoint(nodes.get(ends[0].node).p), b = decodePoint(nodes.get(ends[1].node).p);
+                const ends = cutMap.get(edgeKey(host)), [a, b] = frozenHostEndpoints.get(edgeKey(host));
                 const t = projectParameter(p0, a, b);
                 if (!between(t))
                     continue;
@@ -4985,7 +5021,7 @@ function migrateGraphSpace(space, options = {}) {
                     graph.dependencies = graph.dependencies.filter(d => d.node !== node);
                     const from = ends[0].node, to = ends[1].node;
                     if (node !== from && node !== to)
-                        graph.dependencies.push({ node, kind: 'on-edge', refs: [{ from, to }], parameters: [encodeRational(t)] });
+                        installDependency({ node, kind: 'on-edge', refs: [{ from, to }], parameters: [encodeRational(t)] });
                 }
                 break;
             }
@@ -5013,7 +5049,7 @@ function migrateGraphSpace(space, options = {}) {
                 addCut(other, hit.u, id);
                 if (current && pointEq(p, current.p) && ![a[0].node, a[1].node, b[0].node, b[1].node].includes(id)) {
                     graph.dependencies = graph.dependencies.filter(d => d.node !== id);
-                    graph.dependencies.push({ node: id, kind: 'intersection', refs: [{ from: a[0].node, to: a[1].node }, { from: b[0].node, to: b[1].node }],
+                    installDependency({ node: id, kind: 'intersection', refs: [{ from: a[0].node, to: a[1].node }, { from: b[0].node, to: b[1].node }],
                         parameters: [encodeRational(current.t), encodeRational(current.u)] });
                 }
                 else if (!current || !pointEq(p, current.p))
@@ -5118,13 +5154,51 @@ function migrateGraphSpace(space, options = {}) {
         const validated = assertGraph(result, { limits, roomIds: (space.rooms || []).map((r) => r.id) });
         preparedGraphs.set(result, validated);
         const base = clone$1(space);
+        const occupied = [];
+        const positive = (s, t) => (mapping.edges[edgeKey(s)] || []).some(r => cmp(t, decodeRational(r.sourceInterval[0])) >= 0 && cmp(t, decodeRational(r.sourceInterval[1])) <= 0
+            && graph.edges.find(e => edgeKey(e) === edgeKey(r.ref)).cm > 0);
+        const eligible = (s, opening) => {
+            if (s.kind !== 'wall')
+                return null;
+            const p = readSourcePoint([opening.x, opening.y]), t = projectParameter(p, s.a, s.b);
+            const length = Math.sqrt(toNumber(squaredDistance(s.a, s.b))), along = toNumber(t) * length, half = Number(opening.length) / 2;
+            if (!between(t) || !withinRadius(p, pointAt(s.a, s.b, t), radius)
+                || !wallAngleMatches(pointToNumbers(s.a), pointToNumbers(s.b), Number(opening.angle))
+                || !Number.isFinite(half) || half < 0 || along - half < -1e-9 || along + half > length + 1e-9)
+                return null;
+            return t;
+        };
         for (const opening of base.openings || []) {
-            if (!opening.host || !sourceByKey.has(edgeKey(opening.host))) {
+            const s = opening.host && sourceByKey.get(edgeKey(opening.host));
+            if (!s)
+                continue;
+            let t = s.kind === 'wall' ? eligible(s, opening) : hostParameter(opening.host);
+            if (!t)
+                continue;
+            if (s.kind === 'partition' && s.reversed)
+                t = sub(ONE, t);
+            if (between(t) && positive(s, t))
+                occupied.push({ id: opening.id, source: edgeKey(s), p: pointAt(s.a, s.b, t), length: parseDecimal(Number(opening.length) || 0) });
+        }
+        const free = (s, t, opening) => {
+            const p = pointAt(s.a, s.b, t);
+            return occupied.every(old => {
+                if (old.id === opening.id || old.source !== edgeKey(s))
+                    return true;
+                const half = sub(div(add(old.length, parseDecimal(Number(opening.length) || 0)), exact(2n)), parseDecimal('1e-9'));
+                return cmp(half, ZERO) <= 0 || cmp(squaredDistance(p, old.p), mul(half, half)) >= 0;
+            });
+        };
+        for (const opening of base.openings || []) {
+            opening.host; const currentSource = opening.host && sourceByKey.get(edgeKey(opening.host));
+            const staying = currentSource?.kind === 'wall' ? eligible(currentSource, opening) : null;
+            if (staying)
+                opening.host = canonicalHost(opening.host, currentSource.reversed ? sub(ONE, staying) : staying);
+            if (!opening.host || !currentSource || currentSource.kind === 'wall' && !staying) {
                 const p = readSourcePoint([opening.x, opening.y]);
-                const eligible = source.sources.filter(s => s.kind === 'wall' && wallAngleMatches(pointToNumbers(s.a), pointToNumbers(s.b), Number(opening.angle)))
-                    .map(s => ({ s, t: projectParameter(p, s.a, s.b) })).filter(({ s, t }) => between(t) && withinRadius(p, pointAt(s.a, s.b, t), radius))
+                const choices = source.sources.map(s => ({ s, t: eligible(s, opening) })).filter((v) => v.t !== null)
                     .sort((a, b) => cmp(squaredDistance(p, pointAt(a.s.a, a.s.b, a.t)), squaredDistance(p, pointAt(b.s.a, b.s.b, b.t))) || b.s.cm - a.s.cm || order(a.s.id, b.s.id));
-                const selected = eligible.find(({ s, t }) => (mapping.edges[edgeKey(s)] || []).some(r => cmp(t, decodeRational(r.sourceInterval[0])) >= 0 && cmp(t, decodeRational(r.sourceInterval[1])) <= 0 && graph.edges.find(e => edgeKey(e) === edgeKey(r.ref)).cm > 0));
+                const selected = choices.find(({ s, t }) => positive(s, t) && free(s, t, opening));
                 if (selected)
                     opening.host = { kind: 'wall', id: selected.s.id, tq: encodeRational(selected.s.reversed ? sub(ONE, selected.t) : selected.t), t: toNumber(selected.s.reversed ? sub(ONE, selected.t) : selected.t) };
                 else
@@ -5144,6 +5218,8 @@ function migrateGraphSpace(space, options = {}) {
             let next = div(sub(t, decodeRational(range.sourceInterval[0])), sub(decodeRational(range.sourceInterval[1]), decodeRational(range.sourceInterval[0])));
             if (range.reverse)
                 next = sub(ONE, next);
+            if (!occupied.some(o => o.id === opening.id))
+                occupied.push({ id: opening.id, source: edgeKey(sourceEdge), p: pointAt(sourceEdge.a, sourceEdge.b, t), length: parseDecimal(Number(opening.length) || 0) });
             opening.host = canonicalHost({ ...opening.host, ...range.ref }, next);
             mapping.hosts[opening.id] = clone$1(opening.host);
         }
@@ -5380,6 +5456,7 @@ const migrateLegacyRoomDraftsToPartitionsInPlace = (space) => migrateRoomDraftsT
 function commitWallSegmentModel(input, options = {}) {
     const before = JSON.stringify(input);
     const config = clone(input);
+    const graphMappings = new Map();
     let migratedSegments = 0;
     let migratedDrafts = 0;
     let migratedDraftSegments = 0;
@@ -5404,6 +5481,7 @@ function commitWallSegmentModel(input, options = {}) {
                     cellCm: Number(space.cell_cm) || 5, sourceModelVersion: version,
                 });
                 graph = migrated.graph;
+                graphMappings.set(String(space.id), migrated.mapping);
                 migratedSegments += graph.edges.filter(e => e.kind === 'wall' && !previousIds.has(e.id)).length;
                 config.spaces[i] = migrated.space;
             }
@@ -5444,6 +5522,7 @@ function commitWallSegmentModel(input, options = {}) {
     return {
         config, changed: before !== JSON.stringify(config), migratedSegments,
         migratedDrafts, migratedDraftSegments,
+        ...(graphMappings.size ? { graphMappings } : {}),
     };
 }
 

@@ -11,6 +11,7 @@ import { fieldLifecycle } from './config-compatibility-catalog.mjs';
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
     id: 'spaces[].plan_graph', selector: { path: ['spaces', '*', 'plan_graph'] },
+    schema: 'allow-extra', // SPACE_SCHEMA retains it; the model11 exact validator owns its closed shape.
     enforcedBy: 'plan-graph.ts + plan_graph.py; model11 transition and projection verification',
     storage: 'House Plan server config', type: 'v1 exact nodes/edges/oriented room cycles/dependency DAG',
     default: 'required in model11, including an empty graph', level: 'space',

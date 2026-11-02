@@ -110,6 +110,57 @@ const history = async key => { await page.keyboard.press(key); await idle(); };
 const sortedIds = space => ({ nodes: space.plan_graph.nodes.map(n => n.id).sort(),
   edges: space.plan_graph.edges.map(e => `${e.kind}:${e.id}`).sort() });
 
+const drawFromKnownCarrier = async currentModel => {
+  const raw = { ...floor('known-carrier'), partitions: [
+    { id: 'source', a: [.2, .6], b: [.8, .6], cm: 15, extension: { keep: 'carrier' } },
+  ] };
+  const sourceGraph = { version: 1,
+    nodes: [node('source-left', 48, 144), node('source-right', 192, 144)],
+    edges: [{ kind: 'partition', id: 'source', from: 'source-left', to: 'source-right', cm: 15,
+      props: { extension: { keep: 'carrier' } } }], rooms: [], dependencies: [] };
+  const config = { model_version: currentModel ? 11 : 10,
+    spaces: [currentModel ? projectGraphSpace(raw, sourceGraph).space : raw], markers: [], settings };
+  const label = currentModel ? 'current' : 'legacy';
+  await boot(config, 'draw');
+  const field = page.locator('houseplan-card .drawwall input');
+  await field.fill('15'); await field.press('Tab');
+  // Current first targets a known endpoint; legacy first targets the interior
+  // (which requires a pending split before the first accepted candidate).
+  const firstX = currentModel ? 200 : 500;
+  await draw(firstX, 600); await draw(firstX, 400); await idle();
+  const firstGraph = (await state()).space.plan_graph;
+  const at = (g, x, y) => g.nodes.filter(n => JSON.stringify(n.p) === JSON.stringify(['l', String(x), String(y)]));
+  const incident = (g, id) => g.edges.filter(e => e.from === id || e.to === id);
+  const firstAnchor = at(firstGraph, currentModel ? 48 : 120, 144);
+  assert.equal(firstAnchor.length, 1, `${label} first start is one shared graph node`);
+  check(`graph.draw.${label}.first_known_anchor_incidence`, incident(firstGraph, firstAnchor[0].id).length, currentModel ? 2 : 3);
+  if (currentModel) check('graph.draw.current.first_endpoint_keeps_id', firstAnchor[0].id, 'source-left');
+  const originalEnds = [at(firstGraph, 48, 144)[0], at(firstGraph, 192, 144)[0]];
+  assert.ok(originalEnds.every(Boolean));
+
+  await history('Control+z'); await history('Control+z');
+  check(`graph.draw.${label}.undo_to_empty_path`, (await state()).path.length, 0);
+  // Re-enter the original carrier's interior after the active path is empty:
+  // a stale pending split/baseline must not orphan the new branch or duplicate T.
+  await draw(500, 600); await draw(650, 400); await idle();
+  const next = (await state()).space, g = next.plan_graph;
+  assert.equal(validateGraph(g).ok, true); verifyGraphProjection(next, g);
+  const anchor = at(g, 120, 144);
+  assert.equal(anchor.length, 1, `${label} restarted T has one node`);
+  check(`graph.draw.${label}.restart_interior_T_degree`, incident(g, anchor[0].id).length, 3);
+  check(`graph.draw.${label}.restart_has_two_carrier_children_and_one_branch`, [g.nodes.length, g.edges.length], [4, 3]);
+  check(`graph.draw.${label}.restart_keeps_source_endpoint_ids`, originalEnds.every(n =>
+    g.nodes.some(nextNode => nextNode.id === n.id && JSON.stringify(nextNode.p) === JSON.stringify(n.p))));
+  check(`graph.draw.${label}.undo_drops_previous_branch_tip`, at(g, currentModel ? 48 : 120, 96).length, 0);
+  check(`graph.draw.${label}.restart_target_is_connected`, at(g, 156, 96).length === 1 &&
+    incident(g, anchor[0].id).some(e => e.from === at(g, 156, 96)[0].id || e.to === at(g, 156, 96)[0].id));
+  check(`graph.draw.${label}.source_properties_survive_split`, g.edges.filter(e =>
+    e.props?.extension?.keep === 'carrier').length, 2);
+  await page.keyboard.press('Escape'); await idle();
+  assertCurrent(server);
+};
+
+
 try {
   await boot(legacy, 'draw');
   const thickness = page.locator('houseplan-card .drawwall input');
@@ -178,7 +229,9 @@ try {
     resizedSpace.plan_graph.nodes.find(n => n.id === id).p), [['l', '108', '24'], ['l', '108', '96']]);
   check('graph.resize.unrelated_nodes_unchanged', resizedSpace.plan_graph.nodes.filter(n => !['b', 'c'].includes(n.id)),
     graph.nodes.filter(n => !['b', 'c'].includes(n.id)));
-  check('graph.resize.edges_and_cycles_unchanged', [resizedSpace.plan_graph.edges, resizedSpace.plan_graph.rooms], [graph.edges, graph.rooms]);
+  // Content equality includes every field and array position, not object insertion order.
+  assert.deepEqual([resizedSpace.plan_graph.edges, resizedSpace.plan_graph.rooms], [graph.edges, graph.rooms]);
+  check('graph.resize.edges_and_cycles_unchanged', true);
   check('graph.resize.untouched_neighbor_exact', resizedSpace.rooms.find(r => r.id === 'untouched'), before.spaces[0].rooms.find(r => r.id === 'untouched'));
   check('graph.resize.untouched_floor_exact', resized.spaces[1], before.spaces[1]);
   check('graph.resize.unknown_metadata_exact', [resized.extension, resizedSpace.extension], [before.extension, before.spaces[0].extension]);
@@ -188,6 +241,8 @@ try {
   await history('Control+Shift+z');
   check('graph.resize.redo_exact_config', server, resized);
   check('graph.resize.redo_accepted_graph_is_displayed', (await state()).space.plan_graph, resizedSpace.plan_graph);
+  await drawFromKnownCarrier(false);
+  await drawFromKnownCarrier(true);
   console.log(JSON.stringify({ scope: 'native-browser synthetic wire boundary (not real HA)', writes: writes.length,
     draw: { nodes: closedSpace.plan_graph.nodes.length, edges: closedSpace.plan_graph.edges.length },
     resize: { ids: sortedIds(resizedSpace), revision } }));

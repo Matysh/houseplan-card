@@ -262,3 +262,33 @@ test('legacy nonstructural migrations and reference-repair reports remain meanin
   assert.deepEqual(result.layout, layout);
   noOp(result);
 });
+
+
+test('current on-grid Optimize ignores object key order and still reports real movement', () => {
+  // Settle all real maintenance first, then vary only JSON object insertion order
+  // (including graph records and unknown nested metadata). Arrays retain order.
+  const seed = legacy(base({ rooms: [room('r', square)],
+    extension: { nested: { alpha: 1, beta: ['first', 'second'] } } }));
+  const baseline = optimizePlans(seed, {}).config;
+  const reverseKeys = value => Array.isArray(value) ? value.map(reverseKeys)
+    : value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([k, v]) => [k, reverseKeys(v)]))
+      : value;
+  const input = reverseKeys(baseline), original = clone(input);
+  const result = optimizePlans(input, {});
+  assert.deepEqual(result.config, input, 'the candidate has exactly the same JSON values');
+  assert.equal(result.changed, false, 'property insertion order is not a persisted edit');
+  assert.deepEqual(input, original, 'Optimize does not reorder the input');
+  for (const field of ['moved', 'migrated', 'canonicalized', 'partitionsMerged', 'wallsMerged', 'maxShift'])
+    assert.equal(result.report[field], 0, field);
+  noOp(result);
+
+  // The comparison must not hide actual ordered-array/value maintenance.
+  const offGrid = clone(input);
+  const n = offGrid.spaces[0].plan_graph.nodes[0];
+  n.p = p(.001, .001);
+  offGrid.spaces[0] = projectGraphSpace(offGrid.spaces[0], offGrid.spaces[0].plan_graph).space;
+  const moved = optimizePlans(offGrid, {});
+  assert.equal(moved.changed, true, 'a real numerical movement still reports changed');
+  assert.notDeepEqual(moved.config, offGrid);
+});

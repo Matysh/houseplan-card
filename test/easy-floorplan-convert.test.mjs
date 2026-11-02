@@ -29,7 +29,7 @@ test('#937 full Easy conversion carries bindings, area, values, decor, backgroun
       texts: [{ id: 'label', x: 100, y: 100, entity: 'sensor.power', attribute: 'current', text: 'Power' }],
     }],
   }), fixed);
-  assert.equal(document.model_version, 10); assert.equal(document.transfer, undefined);
+  assert.equal(document.model_version, 11); assert.equal(document.transfer, undefined);
   const { config, layout } = document.payload, space = config.spaces[0];
   assert.equal(config.markers.length, 2); assert.equal(Object.keys(layout).length, 2);
   assert.equal(config.markers[0].binding, 'entity:light.living'); assert.equal(config.markers[0].area, 'living');

@@ -86,17 +86,19 @@ export function modernDocument(space, options = {}) {
   if (options.planOnly && (options.markers?.length || Object.keys(options.layout || {}).length || space.plan_url))
     throw new OutputError('invalid_plan_only');
   const raw = clone(space);
-  const openings = raw.openings || [];
-  delete raw.openings;
+  const isCurrent = !!raw.plan_graph;
+  const openings = isCurrent ? [] : raw.openings || [];
+  if (!isCurrent) delete raw.openings;
   targetLimits(raw, options.markers || [], options.layout || {});
-  let config = commitWallSegmentModel({ spaces: [raw], markers: clone(options.markers || []) }).config;
+  let config = commitWallSegmentModel({ ...(isCurrent ? { model_version: CURRENT_MODEL_VERSION } : {}),
+    spaces: [raw], markers: clone(options.markers || []) }).config;
   const current = config.spaces[0];
   const notes = [];
   const carriers = [
     ...(current.wall_segments || []).map((item) => [item, 'wall']),
     ...(current.partitions || []).map((item) => [item, 'partition']),
   ];
-  current.openings = [];
+  if (!isCurrent) current.openings = [];
   for (const opening of openings) {
     if (!(opening.length >= 0.001 && opening.length <= LIMITS.CANVAS_LIMIT)) {
       notes.push({ code: 'opening_size_unsupported', id: opening.id }); continue;
@@ -114,7 +116,7 @@ export function modernDocument(space, options = {}) {
       x: host.x, y: host.y, angle: canonical(host.angle),
       host: { kind: host.kind, id: host.id, t: host.t } });
   }
-  if (!current.openings.length) delete current.openings;
+  if (!current.openings?.length) delete current.openings;
   config = commitWallSegmentModel(config).config;
   delete config.model_version;
   const layout = clone(options.layout || {});

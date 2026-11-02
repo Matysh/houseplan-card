@@ -3,7 +3,8 @@
 User-facing site: <https://houseplan.tech/convert/>. Canonical scope and acceptance:
 [#937](https://github.com/Matysh/houseplan-card/issues/937), issue-body spec.
 This directory is a separately deployed tool, not a card entry/chunk. It emits
-export-v2 **space** documents for House Plan **1.81.0 or newer**. Do not imply
+export-v2 **space** documents with model11 exact plan graphs for House Plan
+**1.84.0 or newer**. Do not imply
 support for an older backend just because it can read export-v2 envelopes.
 
 ## Boundaries
