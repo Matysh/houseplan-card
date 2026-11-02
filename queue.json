@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 735,
+  "revision": 736,
   "nextTicket": 63,
   "nextFence": 63,
   "tasks": {
@@ -861,7 +861,16 @@
       "patchId": "fbf749709a28a786dfb29c84c531f418b3de03a9",
       "changedFiles": [
         "docs/release-ledger/v1.83.0/1207.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261102T131138819-e1e8d88f",
+        "name": "Тесты для задачи #1209 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T131138819-e1e8d88f/report.json",
+        "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+        "status": "passed",
+        "finishedAt": "2026-11-02T13:11:38.925Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -942,9 +951,9 @@
     "fence": 62,
     "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
     "expectedBase": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793625090357,
-    "expiresAt": 1793625395572,
+    "expiresAt": 1793628699506,
     "patchId": "fbf749709a28a786dfb29c84c531f418b3de03a9"
   },
   "events": {
@@ -977,6 +986,29 @@
         "layer": "infra",
         "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
         "phase": "sync"
+      }
+    },
+    "finish:d461cd8b-92b9-40c5-8a5f-722af9a278d5:finish:3:s6-complete": {
+      "digest": "ca0f4673195a5e6d24f4e9e656135798701dc5ae382f7bc6cf97afdc27a63094",
+      "issue": 1209,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1209,
+        "at": 1793625099506,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261102T131138819-e1e8d88f",
+          "name": "Тесты для задачи #1209 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T131138819-e1e8d88f/report.json",
+          "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+          "status": "passed",
+          "finishedAt": "2026-11-02T13:11:38.925Z",
+          "failures": []
+        }
       }
     }
   },
