@@ -1,5 +1,7 @@
 import { cutSegments, distToSegment, roomEdges } from './logic';
 import type { SpaceModel } from './types';
+import type { PlanGraph, GraphEdgeRef } from './plan-graph';
+import { decodePoint, pointToNumbers } from './plan-exact';
 
 export type PlanSnapSourceKind = 'room' | 'partition';
 
@@ -9,9 +11,11 @@ export interface PlanSnapSegment {
   key: string;
   sourceKind: PlanSnapSourceKind;
   sourceId: string;
+  graphEdge?: GraphEdgeRef;
 }
 
 export interface PlanSnapEndpoint {
+  node?: string;
   point: [number, number];
   key: string;
 }
@@ -32,6 +36,7 @@ export interface HiddenWallDiagnosticGeometry {
 }
 
 export interface PlanSnapExtraEndpoint {
+  node?: string;
   point: readonly number[];
   key: string;
 }
@@ -45,6 +50,7 @@ export interface PlanSnapPartitionCut {
 export type PlanSnapCandidate =
   | {
       kind: 'endpoint';
+      node?: string;
       point: [number, number];
       key: string;
       distance: number;
@@ -58,7 +64,7 @@ export type PlanSnapCandidate =
     };
 
 export interface BuildPlanSnapGeometryOptions {
-  space: Pick<SpaceModel, 'rooms' | 'partitions'>;
+  space: Pick<SpaceModel, 'rooms' | 'partitions'> & { plan_graph?: PlanGraph };
   roomCuts?: readonly number[][];
   partitionCuts?: readonly PlanSnapPartitionCut[];
   epsilon?: number;
@@ -89,6 +95,8 @@ interface SourceSegment {
   kind: PlanSnapSourceKind;
   id: string;
   cuts: readonly number[][];
+  graphEdge?: GraphEdgeRef;
+  nodes?: [string,string];
 }
 
 const DEFAULT_EPSILON = 0.001;
@@ -119,6 +127,7 @@ function canonicalPair(
 }
 
 function sourceKey(source: SourceSegment): string {
+  if(source.graphEdge)return 'graph|'+sourceRank(source.kind)+'|'+source.graphEdge.kind+':'+source.graphEdge.id;
   const [a, b] = canonicalPair(source.a, source.b);
   return `${source.kind}|${source.id}|${pointKey(a)}|${pointKey(b)}`;
 }
@@ -157,34 +166,52 @@ function positiveCollinearOverlap(
     - Math.max(0, Math.min(firstAlong, secondAlong)) > epsilon;
 }
 
+function currentSources(space:Pick<SpaceModel,'rooms'|'partitions'>&{plan_graph?:PlanGraph},
+  roomCuts:readonly number[][],partitionCuts:ReadonlyMap<string,number[][]>):SourceSegment[]|null{
+  const graph=space.plan_graph;if(!graph||graph.version!==1)return null;
+  const nodes=new Map(graph.nodes.map(node=>[node.id,node]));
+  return graph.edges.map(edge=>{
+    const from=nodes.get(edge.from),to=nodes.get(edge.to);
+    if(!from||!to)throw new Error('plan snap graph edge has no node');
+    const a=pointToNumbers(decodePoint(from.p)),b=pointToNumbers(decodePoint(to.p));
+    return{a:[a[0]*1000,a[1]*1000]as[number,number],b:[b[0]*1000,b[1]*1000]as[number,number],
+      kind:edge.kind==='wall'?'room' as const:'partition' as const,id:edge.id,
+      cuts:edge.cm>0?(edge.kind==='wall'?roomCuts:partitionCuts.get(edge.id)||[]):[],
+      graphEdge:{kind:edge.kind,id:edge.id},nodes:[edge.from,edge.to]as[string,string]};
+  });
+}
+
 /**
  * Preserve the identity of an independent source which is visually hidden by
  * another wall. Unlike buildPlanSnapGeometry this projection deliberately does
  * not deduplicate a room-owned axis over a partition-owned one.
  */
 export function buildHiddenWallDiagnosticGeometry(options: {
-  space: Pick<SpaceModel, 'rooms' | 'partitions'>;
+  space: Pick<SpaceModel, 'rooms' | 'partitions'> & { plan_graph?: PlanGraph };
   epsilon?: number;
 }): HiddenWallDiagnosticGeometry {
   const epsilon = options.epsilon ?? DEFAULT_EPSILON;
-  const sources: SourceSegment[] = [];
-  for (const [index, segment] of roomEdges(options.space.rooms).entries()) {
-    if (segment.length < 4) continue;
-    sources.push({
-      a: [segment[0], segment[1]], b: [segment[2], segment[3]],
-      kind: 'room', id: `room-edge-${index}`, cuts: [],
-    });
-  }
-  for (const partition of options.space.partitions || []) {
-    if (!finitePoint(partition.a) || !finitePoint(partition.b)
-        || pointsEqual(partition.a, partition.b, epsilon)) continue;
-    sources.push({
-      a: [partition.a[0], partition.a[1]],
-      b: [partition.b[0], partition.b[1]],
-      kind: 'partition', id: partition.id, cuts: [],
-    });
-  }
+  const current=currentSources(options.space,[],new Map());
+  const sources: SourceSegment[] = current||[];
+  if(!current){
+    for (const [index, segment] of roomEdges(options.space.rooms).entries()) {
+      if (segment.length < 4) continue;
+      sources.push({
+        a: [segment[0], segment[1]], b: [segment[2], segment[3]],
+        kind: 'room', id: `room-edge-${index}`, cuts: [],
+      });
+    }
+    for (const partition of options.space.partitions || []) {
+      if (!finitePoint(partition.a) || !finitePoint(partition.b)
+          || pointsEqual(partition.a, partition.b, epsilon)) continue;
+      sources.push({
+        a: [partition.a[0], partition.a[1]],
+        b: [partition.b[0], partition.b[1]],
+        kind: 'partition', id: partition.id, cuts: [],
+      });
+    }
 
+  }
   const hidden = sources.filter((source) => source.kind !== 'room'
     && sources.some((other) => other !== source
       && positiveCollinearOverlap(source, other, epsilon)));
@@ -193,6 +220,7 @@ export function buildHiddenWallDiagnosticGeometry(options: {
     return {
       a, b, key: `hidden|${segmentKey(source, a, b)}`,
       sourceKind: source.kind, sourceId: source.id,
+      ...(source.graphEdge?{graphEdge:{...source.graphEdge}}:{}),
     };
   }).sort((a, b) => a.key.localeCompare(b.key));
   const endpoints = hidden.flatMap((source): HiddenWallDiagnosticEndpoint[] => (
@@ -201,6 +229,7 @@ export function buildHiddenWallDiagnosticGeometry(options: {
       key: `hidden|${sourceKey(source)}|endpoint-${index}`,
       sourceKind: 'partition',
       sourceId: source.id,
+      ...(source.nodes?{node:source.nodes[index]}:{}),
     }))
   )).sort((a, b) => a.key.localeCompare(b.key));
   return { segments, endpoints };
@@ -223,30 +252,33 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
     cuts.push([cut.a[0], cut.a[1], cut.b[0], cut.b[1]]);
     partitionCuts.set(cut.hostId, cuts);
   }
-  const sources: SourceSegment[] = [];
+  const current=currentSources(options.space,roomCuts,partitionCuts);
+  const sources: SourceSegment[] = current||[];
 
-  for (const [index, segment] of roomEdges(options.space.rooms).entries()) {
-    if (segment.length < 4) continue;
-    sources.push({
-      a: [segment[0], segment[1]],
-      b: [segment[2], segment[3]],
-      kind: 'room',
-      id: `room-edge-${index}`,
-      cuts: roomCuts,
-    });
+  if(!current){
+    for (const [index, segment] of roomEdges(options.space.rooms).entries()) {
+      if (segment.length < 4) continue;
+      sources.push({
+        a: [segment[0], segment[1]],
+        b: [segment[2], segment[3]],
+        kind: 'room',
+        id: `room-edge-${index}`,
+        cuts: roomCuts,
+      });
+    }
+
+    for (const partition of options.space.partitions || []) {
+      if (!finitePoint(partition.a) || !finitePoint(partition.b)) continue;
+      sources.push({
+        a: [partition.a[0], partition.a[1]],
+        b: [partition.b[0], partition.b[1]],
+        kind: 'partition',
+        id: partition.id,
+        cuts: partitionCuts.get(partition.id) || [],
+      });
+    }
+
   }
-
-  for (const partition of options.space.partitions || []) {
-    if (!finitePoint(partition.a) || !finitePoint(partition.b)) continue;
-    sources.push({
-      a: [partition.a[0], partition.a[1]],
-      b: [partition.b[0], partition.b[1]],
-      kind: 'partition',
-      id: partition.id,
-      cuts: partitionCuts.get(partition.id) || [],
-    });
-  }
-
   const segmentsByAxis = new Map<string, PlanSnapSegment>();
   const endpointKeys = new Map<string, PlanSnapEndpoint>();
 
@@ -259,12 +291,13 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
       if (solid.length < 4) continue;
       const [a, b] = canonicalPair([solid[0], solid[1]], [solid[2], solid[3]]);
       if (pointsEqual(a, b, epsilon)) continue;
-      const axisKey = `${pointKey(a)}|${pointKey(b)}`;
+      const axisKey = `${pointKey(a)}|${pointKey(b)}`+(source.graphEdge?'|'+source.graphEdge.kind+':'+source.graphEdge.id:'');
       const candidate: PlanSnapSegment = {
         a, b,
         key: segmentKey(source, a, b),
         sourceKind: source.kind,
         sourceId: source.id,
+        ...(source.graphEdge?{graphEdge:{...source.graphEdge}}:{}),
       };
       const existing = segmentsByAxis.get(axisKey);
       if (!existing
@@ -275,10 +308,10 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
       }
     }
 
-    for (const point of [source.a, source.b] as const) {
+    for (const [endpointIndex,point] of ([source.a, source.b] as const).entries()) {
       if (!solids.some((solid) => touches(point, solid, epsilon))) continue;
-      const key = pointKey(point);
-      if (!endpointKeys.has(key)) endpointKeys.set(key, { point: [point[0], point[1]], key });
+      const node=source.nodes?.[endpointIndex],key=node?'graph-node:'+node:pointKey(point);
+      if(!endpointKeys.has(key))endpointKeys.set(key,{point:[point[0],point[1]],key,...(node?{node}:{})});
     }
   }
 
@@ -349,18 +382,22 @@ function endpointCandidates(
     ...(options.extraEndpoints || [])
       .filter((entry) => finitePoint(entry.point))
       .map((entry): PlanSnapEndpoint => ({
-        point: [entry.point[0], entry.point[1]], key: entry.key,
+        point: [entry.point[0], entry.point[1]], key: entry.key,...(entry.node?{node:entry.node}:{}),
       })),
   ];
+  const graphAtPoint=new Map<string,Set<string>>();
+  for(const endpoint of endpoints)if(endpoint.node){const key=pointKey(endpoint.point),ids=graphAtPoint.get(key)||new Set<string>();ids.add(endpoint.node);graphAtPoint.set(key,ids);}
   const deduped = new Map<string, PlanSnapEndpoint>();
   for (const endpoint of endpoints) {
     if (isExcluded(endpoint.point, excluded, epsilon)) continue;
-    const identity = pointKey(endpoint.point);
+    const coordinate=pointKey(endpoint.point);
+    if(!endpoint.node&&graphAtPoint.has(coordinate))continue;
+    const identity=endpoint.node?'node:'+endpoint.node:coordinate;
     const previous = deduped.get(identity);
     if (!previous || endpoint.key.localeCompare(previous.key) < 0) deduped.set(identity, endpoint);
   }
   return [...deduped.values()].map((endpoint): PlanSnapCandidate => ({
-    kind: 'endpoint', point: [...endpoint.point], key: endpoint.key,
+    kind: 'endpoint', point: [...endpoint.point], key: endpoint.key,...(endpoint.node?{node:endpoint.node}:{}),
     distance: Math.hypot(pointer[0] - endpoint.point[0], pointer[1] - endpoint.point[1]),
   })).filter((candidate) => candidate.distance <= options.tolerance)
     .sort((left, right) => left.distance - right.distance || left.key.localeCompare(right.key));
@@ -386,7 +423,7 @@ function endpointResolution(
     if (conflictKeys.size > 1) return {
       kind: 'ambiguous', candidate: null,
       conflicts: candidates.filter((candidate) => conflictKeys.has(candidate.key))
-        .map((candidate) => ({ point: [...candidate.point], key: candidate.key })),
+        .map((candidate) => ({ point: [...candidate.point], key: candidate.key,...(candidate.kind==='endpoint'&&candidate.node?{node:candidate.node}:{}) })),
     };
   }
   return { kind: 'resolved', candidate: candidates[0], conflicts: [] };
