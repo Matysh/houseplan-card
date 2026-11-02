@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 940,
+  "revision": 941,
   "nextTicket": 74,
   "nextFence": 74,
   "tasks": {
@@ -126,7 +126,7 @@
       "ownerDecision": null,
       "ticket": 73,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793632670334,
       "reviewEntry": 1,
       "patchId": "45fd19dacc56692a7158facf55437228be49e324",
@@ -138,7 +138,16 @@
         "docs/USER-GUIDE.ru.md",
         "docs/release-ledger/v1.83.0/1158.json",
         "src/hp-zigbee-topology-overlay.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261102T151806527-9c8d5429",
+        "name": "Тесты для задачи #1158 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T151806527-9c8d5429/report.json",
+        "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+        "status": "passed",
+        "finishedAt": "2026-11-02T15:18:45.195Z",
+        "failures": []
+      }
     },
     "1165": {
       "issue": 1165,
@@ -1278,9 +1287,9 @@
     "fence": 73,
     "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
     "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793632674117,
-    "expiresAt": 1793632982713,
+    "expiresAt": 1793636326333,
     "patchId": "45fd19dacc56692a7158facf55437228be49e324"
   },
   "events": {
@@ -1313,6 +1322,29 @@
         "layer": "product",
         "materialSha": "05993896746e5aae6a44b2b053823d6153bf2ceb",
         "phase": "sync"
+      }
+    },
+    "finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:3:s6-complete": {
+      "digest": "72abb2646217e7e91f123c4e544e608c79134c280ad480880d8eb627c469e55d",
+      "issue": 1158,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1158,
+        "at": 1793632726333,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+        "phase": "review",
+        "evidence": {
+          "id": "20261102T151806527-9c8d5429",
+          "name": "Тесты для задачи #1158 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T151806527-9c8d5429/report.json",
+          "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+          "status": "passed",
+          "finishedAt": "2026-11-02T15:18:45.195Z",
+          "failures": []
+        }
       }
     }
   },
