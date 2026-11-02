@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 578,
+  "revision": 579,
   "nextTicket": 55,
   "nextFence": 55,
   "tasks": {
@@ -774,29 +774,6 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
-    },
-    "release-return-finish:61be5318-e46c-44ee-a2e7-044c9e133c53:finish:3:s6-complete": {
-      "digest": "5300092b05b59c03e7c20460de2252a1a33f285008a02c26a22672b8431c3d59",
-      "issue": 1205,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1205,
-        "at": 1793600560091,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261102T062204236-3ac80bde",
-          "name": "Тесты для задачи #1205 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T062204236-3ac80bde/report.json",
-          "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
-          "status": "passed",
-          "finishedAt": "2026-11-02T06:22:39.010Z",
-          "failures": []
-        }
-      }
     }
   },
   "devWebhook": {
