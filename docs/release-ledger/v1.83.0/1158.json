@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1158,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Removes duplicate Zigbee hover captions already present in the stable line. Only the displayed status text changes; routing evidence, rendered links, scanning and settings diagnostics remain unchanged.",
+  "summary": {
+    "ru": "У Zigbee-устройства без видимой связи показана одна подпись о неизвестном маршруте.",
+    "en": "Show one unknown-route caption for a Zigbee device without a visible connection."
+  }
+}

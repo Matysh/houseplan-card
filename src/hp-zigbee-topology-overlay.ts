@@ -635,7 +635,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       providerStates.some((state) => state?.phase === 'error') ? topologyT(lang, 'error_provider') : '',
       providerStates.some((state) => state?.phase === 'loading') ? topologyT(lang, 'status_loading') : '',
       hover.outgoing !== 'not-zigbee' && stale ? topologyT(lang, 'route_stale') : '',
-      hover.showIncomplete ? topologyT(lang, 'route_partial') : '',
+      // #1158: without a displayed connection, route_unknown is sufficient.
+      hover.showIncomplete && lines.length > 0 ? topologyT(lang, 'route_partial') : '',
     ].filter(Boolean).join(' · ');
     this._setDesiredEndpointIds(!originRemote && (lines.length || bubbles.length || hover.remoteCount)
       ? [

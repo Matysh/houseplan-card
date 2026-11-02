@@ -332,9 +332,30 @@ const result = await page.evaluate(async () => {
   out.unknownRouteHasNoInventedLine = !overlay.shadowRoot.querySelector('line,polygon')
     && /no route data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
     && !noRoute.hasAttribute('data-hp-zigbee-topology-endpoint');
-  out.unknownRouteRetainsIncomplete = /incomplete data/i.test(
+  out.unknownRouteOmitsDuplicateIncomplete = !/incomplete data/i.test(
     overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
   );
+  const failedUnknown = { ...runtimeBeforeInvalidation, states: {
+    ...runtimeBeforeInvalidation.states, zha: { ...runtimeBeforeInvalidation.states.zha,
+      phase: 'error', error: 'provider', stale: true },
+  } };
+  overlay._acceptRuntime(failedUnknown); await overlay.updateComplete;
+  const unknownStatus = overlay.shadowRoot.querySelector('.route-status')?.textContent || '';
+  out.noRouteKeepsErrorAndStale = /no route data/i.test(unknownStatus)
+    && /stale data/i.test(unknownStatus) && !/incomplete data/i.test(unknownStatus)
+    && /topology data could not be loaded/i.test(unknownStatus);
+  const incomingOnly = { ...runtimeBeforeInvalidation, topologies: runtimeBeforeInvalidation.topologies.map(topology => {
+    const routerKey = topology.nodes.find(node => node.deviceId === 'd_light1')?.key;
+    return { ...topology, uplinkEvidence: topology.uplinkEvidence.filter(evidence => evidence.from !== routerKey) };
+  }) };
+  overlay._acceptRuntime(incomingOnly);
+  root().querySelector('.dev[data-id="d_light1"]').dispatchEvent(mouse('pointerover'));
+  await wait(() => overlay.shadowRoot.querySelector('.route-status')?.getAttribute('data-outgoing') === 'unknown'
+    && overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"][data-direction="toward-origin"]'), 'incoming-only route');
+  out.visibleIncomingRetainsIncomplete = /no route data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
+    && /incomplete data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
+    && !overlay.shadowRoot.querySelector('[data-direction="toward-neighbor"]');
+  overlay._acceptRuntime(runtimeBeforeInvalidation); await overlay.updateComplete;
   unknownNeighbor.dispatchEvent(mouse('pointerover'));
   await wait(() => overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]'), 'coordinator incoming route');
   out.coordinatorHasOnlyIncoming = !/no route data/i.test(
