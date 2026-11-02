@@ -284,7 +284,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     steps.push(step('backend-coverage-threshold', 'Порог backend coverage перед stable', ['python3', 'process-next/catalog/coverage-threshold.py'], ['scripts/backend-coverage-baseline.txt', 'process-next/catalog/coverage-threshold.py'], ['product-backend']));
     addE2E('remainder');
     const converters = makeConverterStep({ ...e2eOptions, targetRef: sourceSha, requires: ['release-package'] });
-    converters.after = [steps.filter(item => item.id.startsWith('e2e-')).at(-1).id];
+    converters.after = ['release-measurements', steps.filter(item => item.id.startsWith('e2e-')).at(-1).id];
     steps.push(converters);
   }
   scope.nodeFiles = retained('product').length; scope.backendFiles = retained('backend').length;

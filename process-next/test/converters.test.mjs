@@ -6,7 +6,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { converterReport, converterMarkdown, makeConverterStep, publishConverterFailures } from '../lib/converters.mjs';
 import { planProfile } from '../lib/catalog.mjs';
-import { classifyRun } from '../lib/runner.mjs';
+import { classifyRun, validatePlan } from '../lib/runner.mjs';
 import { CONVERTER_CASES } from '../converters/cases.mjs';
 import { prepareConverterSuite } from '../converters/prepare.mjs';
 import { normalizeFallbackRequest } from '../templates/prepare-fallback.mjs';
@@ -45,6 +45,9 @@ test('public artifact/format failures reuse one bug; environment gaps never manu
   assert.equal((await publishConverterFailures(api, report))[0].reused, false);
   assert.equal((await publishConverterFailures(api, report))[0].reused, true);
   assert.equal(issues.length, 1); assert.equal(comments.length, 1);
+  report.formats[0].published.sha256 = 'b'.repeat(64);
+  assert.equal((await publishConverterFailures(api, report))[0].reused, true, 'a newer page does not duplicate an open failure of the same format/phase');
+  assert.equal(issues.length, 1);
   assert.equal((await publishConverterFailures(null, report))[0].status, 'pending');
   assert.deepEqual(await publishConverterFailures(api, { formats: [{ ...row('easy'), status: 'unavailable' }] }), []);
 });
@@ -57,9 +60,14 @@ test('converter adapter is diagnostic, requires pinned lab inputs, and never enl
   }
   const standalone = await planProfile({ root, event: 'converters' });
   assert.equal(standalone.steps.length, 1); assert.equal(standalone.steps[0].command, null);
+  const stable = await planProfile({ root, event: 'stable' });
+  validatePlan(stable);
+  const diagnostic = stable.steps.find(step => step.id === 'converters-stable');
+  assert.ok(diagnostic.after.includes('release-measurements'));
   const e2eRoot = lab(t); put(e2eRoot, 'tests/test.mjs', { fixture: 1 });
   const options = { e2eRoot, workRoot: '/private/labs', haVersion: '2026.10.4', targetRef: 'b'.repeat(40) };
   const step = makeConverterStep(options);
+  validatePlan({ steps: [step] });
   assert.ok(step.command.includes('--execute')); assert.equal(step.diagnostic, true);
   put(e2eRoot, 'tests/test.mjs', { fixture: 2 });
   assert.notDeepEqual(makeConverterStep(options).command, step.command, 'companion edits invalidate the saved diagnostic');

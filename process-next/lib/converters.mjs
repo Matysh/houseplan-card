@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { runE2E } from './e2e.mjs';
@@ -54,7 +54,7 @@ export function converterMarkdown(report) {
     + `Houseplan: ${safe(report.targetRef)}; версия ${safe(report.expectedVersion)}; HA ${safe(report.haVersion)}.\n\n`
     + '| Формат | Результат | Этап |\n|---|---|---|\n'
     + report.formats.map(row => `| ${row.format} | ${words[row.status] ?? 'неизвестно'} | ${row.phase} |`).join('\n')
-    + '\n\n' + report.formats.map(row => `**${row.format}**: страница ${safe(row.published?.url ?? 'не получена')}; SHA256 ${safe(row.published?.sha256 ?? 'нет данных')}; конвертер ${safe(row.download?.converterVersion ?? 'нет данных')}.`
+    + '\n\n' + report.formats.map(row => `**${row.format}**: страница ${safe(row.published?.url ?? 'не получена')}; HTML SHA256 ${safe(row.published?.sha256 ?? 'нет данных')}; конвертер ${safe(row.download?.converterVersion ?? 'нет данных')}; JSON SHA256 ${safe(row.download?.sha256 ?? 'нет данных')}.`
       + (row.error ? `\n\n\`${safe(row.error)}\`` : '')).join('\n\n') + '\n';
 }
 
@@ -79,11 +79,12 @@ export async function publishConverterFailures(api, report, runUrl = null) {
       + `Этап: ${row.phase}. ${row.phase === 'houseplan-import' ? 'Отказ пути импорта; причина в конвертере или принимающем продукте ещё не установлена.' : 'Опубликованная страница не завершила преобразование/скачивание с ожидаемым результатом.'}\n\n`
       + converterMarkdown({ ...report, formats: [row] }) + (runUrl ? `\n[Прогон и артефакты](${runUrl})\n` : '')
       + '\nИсточник набора: #1179. Выпуск основного Houseplan не блокируется.\n';
-    const previous = issues.find(issue => issue.body?.startsWith(marker));
+    const title = `[converter E2E] ${row.format}: ${row.phase}`;
+    const previous = issues.find(issue => issue.body?.startsWith(marker)) ?? issues.find(issue => issue.title === title);
     let issue;
     if (previous) { await api.upsertComment(previous.number, { marker, body }); issue = previous; }
     else issue = await api.request('POST', `${api.root}/issues`, {
-      title: `[converter E2E] ${row.format}: ${row.phase}`, body, labels: ['bug', 'tests'] });
+      title, body, labels: ['bug', 'tests', 'S1-new'] });
     if (!Number.isSafeInteger(issue?.number)) throw Error('Converter bug publication unconfirmed');
     published.push({ format: row.format, status: 'published', issue: issue.number, url: issue.html_url ?? null, reused: !!previous });
   }
@@ -103,8 +104,10 @@ export async function runConverters(options, { run = runE2E, api, runUrl, signal
   catch (failure) { report.issues = [{ status: 'pending', reason: failure.message }]; }
   const output = outputDir ?? path.resolve('artifacts/process-next/converters');
   save(path.join(output, 'report.json'), report);
-  writeFileSync(path.join(output, 'report.md'), converterMarkdown(report)
-    + '\nБаги: ' + report.issues.map(issue => issue.url ?? issue.reason ?? `#${issue.issue}`).join('; ') + '\n');
+  const markdown = converterMarkdown(report) + '\nБаги: '
+    + (report.issues.map(issue => issue.url ?? issue.reason ?? `#${issue.issue}`).join('; ') || 'нет') + '\n';
+  writeFileSync(path.join(output, 'report.md'), markdown);
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
   return report;
 }
 

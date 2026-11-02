@@ -19,6 +19,11 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
   const report = { format: fixture.id, status: 'unavailable', phase: 'published-page',
     startedAt: new Date().toISOString(), candidate: process.env.HOUSEPLAN_REF,
     expectedVersion: process.env.HOUSEPLAN_EXPECTED_VERSION, fixture: fixture.file };
+  const directory = process.env.HP_CONVERTER_REPORT_DIR;
+  if (!directory) throw Error('Private converter report directory is required');
+  mkdirSync(directory, { recursive: true });
+  const persist = () => writeFileSync(path.join(directory, `${fixture.id}.json`), JSON.stringify(report, null, 2));
+  persist();
   let external;
   try {
     // Never give the public converter the HA browser's authentication/storage.
@@ -32,20 +37,26 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
           .catch(error => resources.push({ url: response.url(), unavailable: error.message })));
       }
     });
-    const response = await converter.goto(CONVERTER_URL, { waitUntil: 'domcontentloaded' });
+    const response = await converter.goto(CONVERTER_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
     if (!response?.ok()) throw Error(`Published converter HTTP ${response?.status() ?? 'no response'}`);
     const html = await response.body();
     report.published = { requestedUrl: CONVERTER_URL, url: response.url(), sha256: hash(html),
       etag: response.headers().etag ?? null, lastModified: response.headers()['last-modified'] ?? null, resources };
     await testInfo.attach('published-converter.html', { body: html, contentType: 'text/html' });
     report.phase = 'conversion'; report.status = 'failed';
-    await converter.locator('[data-lang="en"]').click();
-    await converter.locator('#format').selectOption(fixture.id);
+    persist();
+    // The published site has visible format buttons and a hidden backing select.
+    // Do not drive the different UI of the repository's offline HTML artifact.
+    const offered = await converter.locator('button[data-format]').evaluateAll(buttons => buttons.map(button => button.dataset.format));
+    if (!offered.includes(fixture.id)) throw Error(`Published converter does not offer ${fixture.id}; offered formats: ${offered.join(', ')}`);
+    await converter.locator(`button[data-format="${fixture.id}"]`).click();
     if (fixture.width) {
       await converter.locator('#picture-width').fill(String(fixture.width));
       await converter.locator('#picture-height').fill(String(fixture.height));
     }
-    await converter.locator('#file').setInputFiles(fileURLToPath(new URL(`../fixtures/process-next-converters/${fixture.file}`, import.meta.url)));
+    const chooser = converter.waitForEvent('filechooser');
+    await converter.locator('#pick').click();
+    await (await chooser).setFiles(fileURLToPath(new URL(`../fixtures/process-next-converters/${fixture.file}`, import.meta.url)));
     await expect(converter.locator('#result')).toBeVisible();
     await expect(converter.locator('.level button')).toHaveCount(1);
     const downloaded = converter.waitForEvent('download');
@@ -56,6 +67,7 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     const bytes = readFileSync(downloadedPath), document = JSON.parse(bytes);
     report.download = { name: download.suggestedFilename(), sha256: hash(bytes), bytes: bytes.length,
       converterVersion: document.card_version, modelVersion: document.model_version };
+    persist();
     await testInfo.attach(download.suggestedFilename(), { body: bytes, contentType: 'application/json' });
     expect(document.kind).toBe('space');
     expect(document.payload.config.spaces).toHaveLength(1);
@@ -78,9 +90,10 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     }
     await Promise.allSettled(pending); report.published.resources = resources.sort((a, b) => a.url.localeCompare(b.url));
     await converter.screenshot({ path: testInfo.outputPath('published-result.png'), fullPage: true });
+    report.phase = 'environment'; report.status = 'unavailable'; persist();
     await external.close(); external = null;
 
-    report.phase = 'houseplan-import';
+    report.phase = 'houseplan-import'; report.status = 'failed'; persist();
     const before = (await planConfig()).config;
     const { host, settings } = await openMaintenance(page);
     const previewed = previewReply(page);
@@ -123,12 +136,12 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     report.error = error.message;
     throw error;
   } finally {
-    await external?.close();
     report.finishedAt = new Date().toISOString();
-    const directory = process.env.HP_CONVERTER_REPORT_DIR;
-    if (!directory) throw Error('Private converter report directory is required');
-    mkdirSync(directory, { recursive: true });
-    writeFileSync(path.join(directory, `${fixture.id}.json`), JSON.stringify(report, null, 2));
+    persist();
+    // A runner timeout may already have disposed this context. Preserve the
+    // original phase/error before cleanup, instead of losing the whole report.
+    try { await external?.close(); } catch (error) { report.cleanupError = error.message; }
+    persist();
     await testInfo.attach('converter-result', { body: Buffer.from(JSON.stringify(report, null, 2)), contentType: 'application/json' });
   }
 });
