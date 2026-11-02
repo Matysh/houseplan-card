@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10,
+  "revision": 11,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -8,29 +8,14 @@
       "kind": "beta",
       "branch": "release/v1.84.0-beta.2",
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
-      "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
-      "runner": {
-        "id": "20261101T231354149-cad0373c",
-        "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
-        "event": "beta",
-        "status": "failed",
-        "path": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261101T231354149-cad0373c/report.json",
-        "digest": "919341151f248d7434ea9a61d3eaa717ae72685f9e3ae233cb1c16bc98e0f407",
-        "finishedAt": "2026-11-01T23:23:17.582Z",
-        "materialClean": true,
-        "ready": false,
-        "required": 33,
-        "failed": [
-          "golden-beta"
-        ],
-        "reused": 1
-      },
+      "sha": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
+      "runner": null,
       "running": null,
-      "status": "results",
+      "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "7274a9139966cfdd1f459615110ba70544709dc7",
+        "candidate": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
         "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
         "issues": [
           {
@@ -290,7 +275,8 @@
             "commits": [
               "04fa2a54791def247ce19975a8f4f23218c02fe1",
               "512c726710aeec1be0ede848aceeab7619472a01",
-              "7274a9139966cfdd1f459615110ba70544709dc7"
+              "7274a9139966cfdd1f459615110ba70544709dc7",
+              "e567536e8ce22017eb8a156f4b5cbd3d760ea678"
             ]
           },
           {
@@ -356,6 +342,13 @@
             "commits": [
               "14d758f22031e74f45b60749d282523287612f23"
             ]
+          },
+          {
+            "number": 1204,
+            "commits": [
+              "48a9358c9cf92ae387621b5637fb55440efd61fa",
+              "70dc3a9ef35f89d78633c1063a36ff984259c901"
+            ]
           }
         ]
       },
@@ -399,312 +392,12 @@
         1199,
         1200,
         1201,
-        1203
+        1203,
+        1204
       ],
-      "reviewRequired": true,
-      "review": {
-        "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
-        "report": {
-          "kind": "accepted-task-reviews-reused",
-          "candidateSha": "7274a9139966cfdd1f459615110ba70544709dc7",
-          "productBase": "04fa2a54791def247ce19975a8f4f23218c02fe1",
-          "productDelta": [
-            "src/i18n/de.json",
-            "src/i18n/fr.json"
-          ],
-          "sourceFiles": [
-            {
-              "path": "src/i18n/de.json",
-              "gitBlob": "aae21c1310f8a0b7c608f09b6299096e3d5e3090",
-              "sha256": "9d0f26230a5fa7e21d7ee7518f008aa2b686f16630a1e45ff91d88204bebd4e1"
-            },
-            {
-              "path": "src/i18n/fr.json",
-              "gitBlob": "b70648877376e47b7f9d8ee301ca06e04a9936f1",
-              "sha256": "b11a4d5c3bfe5a3366b1a0651b98c9dcce842deb156557e8ea01d454e88ecb10"
-            },
-            {
-              "path": "src/i18n/de.ts",
-              "gitBlob": "d91e52870c8e5bf279a7926b2a78377481d5e5f6"
-            },
-            {
-              "path": "src/i18n/fr.ts",
-              "gitBlob": "7b475c7983d755c73e79513c69812f481fac006e"
-            },
-            {
-              "path": "src/i18n/registry.ts",
-              "gitBlob": "1452fb3f02297aba4c6feb8f98a671a79ce6d1fa"
-            },
-            {
-              "path": "process-next/lib/e2e.mjs",
-              "gitBlob": "7192a0c97ecefdb3e51c70169b25498595005c3e",
-              "sha256": "5dd99670a00a6d7a4554046b6cfbf17824fc9f1bae0aec3c8710c2f336e61444",
-              "bytes": 21401
-            }
-          ],
-          "taskReviews": [
-            {
-              "runId": 41359126580,
-              "url": "https://github.com/Matysh/houseplan-card/actions/runs/41359126580",
-              "verdict": "accepted",
-              "blockers": 0,
-              "base": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-              "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
-            },
-            {
-              "run": 41359617629,
-              "url": "https://github.com/Matysh/houseplan-card/actions/runs/41359617629",
-              "requestId": "review:1199:1:a4048749979905d38c37ee06eea3bb09ff564066:485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-              "kind": "code",
-              "verdict": "accepted",
-              "materialSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-              "base": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-              "patchId": "a4048749979905d38c37ee06eea3bb09ff564066",
-              "blockers": []
-            }
-          ],
-          "explanation": "Actual substantive reviews ran on the recorded task material SHAs, not on this merge SHA. All product changes from B are the two unchanged reviewed locale JSON blobs. The owned HA adapter also matches its accepted reviewed blob. Other merged changes are completed synthetic/test/process fixes and release metadata; no additional product edits or conflicts were made."
-        }
-      },
-      "metrics": {
-        "schema": 1,
-        "sha": "7274a9139966cfdd1f459615110ba70544709dc7",
-        "reference": "нет замера последнего stable",
-        "anchor": "v1.83.1",
-        "requiresDecision": false,
-        "needsMeasurement": true,
-        "primary": [
-          {
-            "key": "zip_bytes",
-            "label": "ZIP",
-            "fraction": 0.05,
-            "absolute": 32768,
-            "unit": "B",
-            "before": null,
-            "after": 1921978,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": true,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "frontend_all_files_gzip_bytes",
-            "label": "Весь frontend, gzip",
-            "fraction": 0.05,
-            "absolute": 16384,
-            "unit": "B",
-            "before": null,
-            "after": 1151473,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": true,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "initial_view_gzip_bytes",
-            "label": "Начальная загрузка View, gzip",
-            "fraction": 0.05,
-            "absolute": 8192,
-            "unit": "B",
-            "before": null,
-            "after": 383905,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": true,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "firstStableRenderMs",
-            "label": "Первый устойчивый кадр",
-            "fraction": 0.1,
-            "absolute": 50,
-            "unit": "ms",
-            "before": null,
-            "after": 1258.3,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "spaceSwitchMs",
-            "label": "Смена этажа",
-            "fraction": 0.1,
-            "absolute": 75,
-            "unit": "ms",
-            "before": null,
-            "after": 571.8,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "panZoomMs",
-            "label": "Один шаг масштаба",
-            "fraction": 0.1,
-            "absolute": 5,
-            "unit": "ms",
-            "before": null,
-            "after": 28.1,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          },
-          {
-            "key": "stateUpdateMs",
-            "label": "Обновление состояния",
-            "fraction": 0.1,
-            "absolute": 15,
-            "unit": "ms",
-            "before": null,
-            "after": 21.3,
-            "delta": null,
-            "percent": null,
-            "threshold": null,
-            "comparable": false,
-            "diagnostic": false,
-            "status": "missing",
-            "blocks": false
-          }
-        ],
-        "diagnostic": [
-          {
-            "key": "zip_bytes",
-            "label": "ZIP",
-            "fraction": 0.05,
-            "absolute": 32768,
-            "unit": "B",
-            "before": 1933790,
-            "after": 1921978,
-            "delta": -11812,
-            "percent": -0.6108212370526273,
-            "threshold": 96689.5,
-            "comparable": true,
-            "diagnostic": true,
-            "status": "within-tolerance",
-            "blocks": false
-          },
-          {
-            "key": "frontend_all_files_gzip_bytes",
-            "label": "Весь frontend, gzip",
-            "fraction": 0.05,
-            "absolute": 16384,
-            "unit": "B",
-            "before": 1153604,
-            "after": 1151473,
-            "delta": -2131,
-            "percent": -0.1847254343778281,
-            "threshold": 57680.200000000004,
-            "comparable": true,
-            "diagnostic": true,
-            "status": "within-tolerance",
-            "blocks": false
-          },
-          {
-            "key": "initial_view_gzip_bytes",
-            "label": "Начальная загрузка View, gzip",
-            "fraction": 0.05,
-            "absolute": 8192,
-            "unit": "B",
-            "before": 366204,
-            "after": 383905,
-            "delta": 17701,
-            "percent": 4.833644635230637,
-            "threshold": 18310.2,
-            "comparable": true,
-            "diagnostic": true,
-            "status": "within-tolerance",
-            "blocks": false
-          },
-          {
-            "key": "firstStableRenderMs",
-            "label": "Первый устойчивый кадр",
-            "fraction": 0.1,
-            "absolute": 50,
-            "unit": "ms",
-            "before": 968.3,
-            "after": 1258.3,
-            "delta": 290,
-            "percent": 29.949395848394094,
-            "threshold": 96.83,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          },
-          {
-            "key": "spaceSwitchMs",
-            "label": "Смена этажа",
-            "fraction": 0.1,
-            "absolute": 75,
-            "unit": "ms",
-            "before": 389.4,
-            "after": 571.8,
-            "delta": 182.39999999999998,
-            "percent": 46.84129429892142,
-            "threshold": 75,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          },
-          {
-            "key": "panZoomMs",
-            "label": "Один шаг масштаба",
-            "fraction": 0.1,
-            "absolute": 5,
-            "unit": "ms",
-            "before": 22.8,
-            "after": 28.1,
-            "delta": 5.300000000000001,
-            "percent": 23.245614035087723,
-            "threshold": 5,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          },
-          {
-            "key": "stateUpdateMs",
-            "label": "Обновление состояния",
-            "fraction": 0.1,
-            "absolute": 15,
-            "unit": "ms",
-            "before": 25.8,
-            "after": 21.3,
-            "delta": -4.5,
-            "percent": -17.441860465116278,
-            "threshold": 15,
-            "comparable": false,
-            "diagnostic": true,
-            "status": "incomparable",
-            "blocks": false
-          }
-        ],
-        "ready": true,
-        "evidenceStatus": "complete",
-        "diagnostics": []
-      },
+      "reviewRequired": false,
+      "review": null,
+      "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
         {
@@ -716,6 +409,12 @@
         {
           "from": "04fa2a54791def247ce19975a8f4f23218c02fe1",
           "to": "7274a9139966cfdd1f459615110ba70544709dc7",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "7274a9139966cfdd1f459615110ba70544709dc7",
+          "to": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -749,6 +448,7 @@
     "beta1842-reviewed-fixes-c-20261102": "ce0a57c9a80eea0636b1c48302c83f2232688f7308143d52468688fd5498147e",
     "beta1842-run-c-20261102": "d510d26d36cf0c7c296a3dc2bf14cfda72a18ed50c5e571a6ec6f9333af0a0e1",
     "beta1842-runner-20261101T231354149-cad0373c": "14d1fdbd335d81a9d1fa18d47cff31df6e9b680675c480d7d99d8df1bace9cc7",
-    "beta1842-c-metrics-20261102": "124399d46091ddd941e2b13178c9d089d924f8bcfc8591710d29991cd9ed11f5"
+    "beta1842-c-metrics-20261102": "124399d46091ddd941e2b13178c9d089d924f8bcfc8591710d29991cd9ed11f5",
+    "beta1842-fixes-d-20261102": "806467d43796232f4969d6de8093ee676160a6860a21e1f9515de90541a55da6"
   }
 }
