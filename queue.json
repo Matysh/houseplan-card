@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 632,
+  "revision": 633,
   "nextTicket": 58,
   "nextFence": 58,
   "tasks": {
@@ -1210,20 +1210,6 @@
         "toStatus": "S6-in-progress",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "finish:3a8a6221-5e43-4922-9ac5-870eefab34ca:finish:1:admit": {
-      "digest": "62d5251a24439fb1dbe3fbf86447ad9244dc671a478f44aaf96a4bc47da284ee",
-      "issue": 1208,
-      "message": {
-        "kind": "admitted",
-        "issue": 1208,
-        "at": 1793614306571,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
-        "phase": "sync"
       }
     },
     "finish:3a8a6221-5e43-4922-9ac5-870eefab34ca:finish:3:s6-complete": {
