@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1107,
+  "revision": 1108,
   "nextTicket": 83,
   "nextFence": 83,
   "tasks": {
@@ -118,7 +118,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793641881581,
       "reviewEntry": 2,
-      "patchId": "bc0a0ad8445b4d4664f8e9d46e75b8da7fc652bc",
+      "patchId": "0fab874a5f395e140568b1b17b63854daf035965",
       "changedFiles": [
         "custom_components/houseplan/support_package.py",
         "custom_components/houseplan/support_wire_schema.py",
@@ -153,6 +153,7 @@
         "src/signal-visibility.ts",
         "src/space-card.ts",
         "src/types.ts",
+        "test/render-snapshot-incremental.test.mjs",
         "test/signal-visibility.test.mjs",
         "test/space-card-signal.test.mjs",
         "tests_backend/test_ha_signal_visibility_low.py",
@@ -1536,10 +1537,11 @@
     "token": "82:github:41495062732:1:tick:0:admit",
     "fence": 82,
     "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
+    "phase": "testing",
     "admittedAt": 1793641915402,
-    "expiresAt": 1793642215402
+    "expiresAt": 1793642249335,
+    "patchId": "0fab874a5f395e140568b1b17b63854daf035965"
   },
   "events": {
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:2:synchronized": {
@@ -1665,6 +1667,10 @@
     "github:41495062732:1:completions:metadata:c107bbe7-a597-441c-bbae-d8e1613dc380:task-notice:1174::": {
       "digest": "3ad47a443a33925993dc146063c285ef7dc100ad426d55e5b05d4f9999f11559",
       "issue": 1174
+    },
+    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:1:synchronized": {
+      "digest": "41b621c1e92b36925116c9023965c3f5de48cc6eb8235d374b7ab9cdb8fa6cde",
+      "issue": 1130
     },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
       "digest": "e6a7d118227ce5255ace49438ebc48943cfd66cba68bdb0280a86c762b3984b3",
