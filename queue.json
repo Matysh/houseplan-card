@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1159,
+  "revision": 1160,
   "nextTicket": 84,
   "nextFence": 84,
   "tasks": {
@@ -1454,13 +1454,12 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41432045581"
     },
     "1216": {
-      "requestId": "spec:1216:6e325e3b31cacaa61d6a8e3d19f1db46c3c29fd1523faeb2bb076b2c49edd92a",
-      "contextDigest": "6e325e3b31cacaa61d6a8e3d19f1db46c3c29fd1523faeb2bb076b2c49edd92a",
+      "requestId": "spec:1216:fda2aafebc4659323679647adb9fa4b14dca6055bb6dd321cda42d328845f8e8",
+      "contextDigest": "fda2aafebc4659323679647adb9fa4b14dca6055bb6dd321cda42d328845f8e8",
       "base": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1793646017268,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41504837856"
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1793646677547
     }
   },
   "reviewPublications": {
@@ -1475,6 +1474,19 @@
       "presentation": {
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
+      }
+    },
+    "spec:1216:spec:1216:fda2aafebc4659323679647adb9fa4b14dca6055bb6dd321cda42d328845f8e8": {
+      "issue": 1216,
+      "kind": "spec",
+      "requestId": "spec:1216:fda2aafebc4659323679647adb9fa4b14dca6055bb6dd321cda42d328845f8e8",
+      "materialSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+      "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+      "patchId": "fda2aafebc4659323679647adb9fa4b14dca6055bb6dd321cda42d328845f8e8",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-02T19:11:17.547Z"
       }
     }
   },
@@ -1499,6 +1511,10 @@
     },
     "github:41505755348:1:completions:report:f8ffdc93a5a219ee18d6b3ac0dd65ef9ef7658815cc0766851f34b1adc647bb4": {
       "digest": "7873df0fa566ff4b75582c2354192ab27869c0a399e8515621f4622e47df8151",
+      "issue": 1216
+    },
+    "github:41507402811:1:label:spec-request": {
+      "digest": "b4681ef6b7012de08fef4190a298cb71c2c5748ec77f4b1b11b4fcce370c1a7e",
       "issue": 1216
     }
   },
