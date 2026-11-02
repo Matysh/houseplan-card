@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 882,
+  "revision": 883,
   "nextTicket": 71,
   "nextFence": 71,
   "tasks": {
@@ -1019,7 +1019,7 @@
         "finishedAt": "2026-11-02T15:01:38.022Z",
         "failures": []
       },
-      "reviewRound": 1,
+      "reviewRound": 2,
       "notice": {
         "key": "1:author-adjustment",
         "reason": "author-adjustment",
@@ -1030,6 +1030,12 @@
         "requestId": "review:1210:1:aa94e3f8ef0c9844428bd6e9a0390d4909f610ac:16dc19dbd1e6258815c4227d1a6233dadd769236",
         "detail": "Visual preview found number fields inheriting textarea minimum height; fix before publication.",
         "eventId": "1210-author-correct-numeric-field-height-20261102:return:1210"
+      },
+      "reviewRequest": "review:1210:2:5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885:ef8e4fb6507d5047ad3473d103833ba778ab8659",
+      "reviewMaterial": {
+        "materialSha": "5ff9a6566e22872695a4f575653ef7ab7d4f6c42",
+        "expectedBase": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
+        "patchId": "5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885"
       }
     },
     "1211": {
@@ -1192,6 +1198,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1210:review:1210:2:5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885:ef8e4fb6507d5047ad3473d103833ba778ab8659": {
+      "issue": 1210,
+      "kind": "code",
+      "requestId": "review:1210:2:5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885:ef8e4fb6507d5047ad3473d103833ba778ab8659",
+      "materialSha": "5ff9a6566e22872695a4f575653ef7ab7d4f6c42",
+      "expectedBase": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
+      "patchId": "5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-02T15:01:48.118Z"
+      }
     }
   },
   "waiting": [],
@@ -1205,7 +1224,8 @@
     "phase": "review",
     "admittedAt": 1793631643559,
     "expiresAt": 1793635298629,
-    "patchId": "5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885"
+    "patchId": "5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885",
+    "reviewRequest": "review:1210:2:5f4bdbcb2f3c0a779fb01a4f86c69aa55b5be885:ef8e4fb6507d5047ad3473d103833ba778ab8659"
   },
   "events": {
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:2:synchronized": {
@@ -1254,6 +1274,10 @@
     },
     "finish:d63e5253-e3ff-4f7f-a890-9e44759adfe2:finish:3:s6-label": {
       "digest": "8cc7c27feaaf06ab59b607051d9adae1ee4e1e31f7918a0033572dafba5d527b",
+      "issue": 1210
+    },
+    "finish:d63e5253-e3ff-4f7f-a890-9e44759adfe2:finish:4:review-requested": {
+      "digest": "681e63311dcfbecb3043be9ada32c80c5ab63f8e7efc83680513e4bc5992057c",
       "issue": 1210
     },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4": {
