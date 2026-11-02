@@ -35,8 +35,10 @@ import {
 } from './wall-segment-model';
 import { legacyZeroContourLines } from './zero-walls';
 
+import { migrateGraphSpace, projectGraphSpace, PlanGraphError } from './plan-graph';
+import { optimizeGraphTargets, graphOptimizeRoomProfile, graphOptimizeTopologyPoints } from './graph-optimize';
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 10;
+export const PLAN_MODEL_VERSION = 11;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -144,16 +146,18 @@ export function collapseIsolatedWallThicknessIslands(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
+  topologyPoints: number[][] = [],
+  openingPoints?: number[][],
 ): WallEntry[] {
   if (!walls?.length) return [];
   const scale = coordScale > 0 ? coordScale : 1;
   const eps = Math.max(pitch * scale * 0.02, 1e-9);
-  const roomNodes: number[][] = [];
+  const roomNodes: number[][] = topologyPoints.map(point => point.slice());
   for (const room of rooms || []) {
     for (const point of roomPoly(room) || []) roomNodes.push([point[0], point[1]]);
   }
-  const openingNodes: number[][] = [];
-  for (const cut of openCuts || []) {
+  const openingNodes: number[][] = openingPoints ? openingPoints.map(point => point.slice()) : [];
+  for (const cut of openingPoints ? [] : openCuts || []) {
     if (Array.isArray(cut) && cut.length >= 4 && cut.slice(0, 4).every(Number.isFinite)) {
       openingNodes.push([cut[0], cut[1]], [cut[2], cut[3]]);
     }
@@ -422,11 +426,12 @@ const migrateLosslessly = (config: any): {
  * Produce the exact config/layout pair that the confirmation dialog previews.
  * Calling it again on its own output is a no-op.
  */
-export function optimizePlans(
+function optimizePlanDraft(
   configIn: any,
   layoutIn: Record<string, any>,
   context: SpaceReferenceRepairContext = {},
   dependencies: OptimizeDependencies = {},
+  graphDraft = false,
 ): OptimizeResult {
   const reconcilePartitions = dependencies.reconcileCoincidentPartitions
     ?? reconcileCoincidentPartitions;
@@ -491,7 +496,10 @@ export function optimizePlans(
   const finalAligned = wallsStraightened
     ? alignAllToGrid(straightenedSpaces, aligned.layout, exactContacts)
     : { ...aligned, spaces: straightenedSpaces };
-  config.spaces = finalAligned.spaces;
+  config.spaces = graphDraft
+    ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true).space)
+    : finalAligned.spaces;
+
   const alignReport: AlignReport = wallsStraightened ? {
     ...aligned.report,
     moved: aligned.report.moved + finalAligned.report.moved,
@@ -582,9 +590,16 @@ export function optimizePlans(
       before.walls, oldEdges, nextEdges, GRID_STEP_N, NORM_W,
     );
     walls = collapseIsolatedWallThicknessIslands(
-      nextModel.rooms, walls, cuts, GRID_STEP_N,
+      graphDraft ? graphOptimizeRoomProfile(space, nextModel.rooms) : nextModel.rooms, walls, cuts, GRID_STEP_N,
       Number(space.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM,
-      GRID_PITCH, NORM_W,
+      GRID_PITCH, NORM_W, graphDraft ? graphOptimizeTopologyPoints(space, NORM_W) : [],
+      graphDraft ? (space.openings || []).flatMap((opening: any) => {
+        const angle = Number(opening.angle) * Math.PI / 180;
+        const half = Number(opening.length) * NORM_W / 2;
+        const x = Number(opening.x) * NORM_W, y = Number(opening.y) * NORM_W;
+        return [[x + Math.cos(angle) * half, y + Math.sin(angle) * half],
+          [x - Math.cos(angle) * half, y - Math.sin(angle) * half]];
+      }) : undefined,
     );
     walls = normalizeWallIntervals(
       nextModel.rooms, walls, cuts, GRID_STEP_N,
@@ -651,7 +666,7 @@ export function optimizePlans(
   // Stage 1 of ADR 282 is itself a lossless maintenance pass.  Run it after
   // every geometry repair so its catalogue describes the final candidate, not
   // the pre-Optimize shape. Future model versions remain opaque/fail-soft.
-  if (modelFrom <= PLAN_MODEL_VERSION) {
+  if (!graphDraft && modelFrom <= PLAN_MODEL_VERSION) {
     const wallCommit = commitWallSegmentModelInPlace(config);
     wallSegmentsMigrated += wallCommit.migratedSegments;
     roomDraftsMigrated += wallCommit.migratedDrafts;
@@ -738,4 +753,73 @@ export function optimizePlans(
     },
     changed,
   };
+}
+
+/**
+ * Whole-plan Optimize owns an explicit structural intent, unlike a metadata
+ * save. Legacy decoding runs once on raw coordinates, before any old grid pass;
+ * current graph identity always comes from beforeGraph.
+ */
+export function optimizePlans(
+  configIn: any,
+  layoutIn: Record<string, any>,
+  context: SpaceReferenceRepairContext = {},
+  dependencies: OptimizeDependencies = {},
+): OptimizeResult {
+  const modelFrom = Number.isInteger(Number(configIn?.model_version))
+    ? Number(configIn.model_version) : 0;
+  if (modelFrom > PLAN_MODEL_VERSION) throw new PlanGraphError('model-version');
+  const references = repairSpaceReferences(configIn, layoutIn, {
+    ...context, invalidCleanupSupported: modelFrom <= PLAN_MODEL_VERSION,
+  });
+  const config = references.config;
+  const migration = migrateLosslessly(config);
+  let migratedSegments = 0, migratedDrafts = 0, migratedDraftSegments = 0;
+  config.spaces = (config.spaces || []).map((space: any) => {
+    if (modelFrom === PLAN_MODEL_VERSION) {
+      if (!space.plan_graph) throw new PlanGraphError('graph-missing', String(space.id || ''));
+      return projectGraphSpace(space, space.plan_graph).space;
+    }
+    if (space.plan_graph) throw new PlanGraphError('model-version', String(space.id || ''));
+    const drafts = migrateLegacyRoomDraftsToPartitionsInPlace(space);
+    migratedDrafts += drafts.drafts; migratedDraftSegments += drafts.segments;
+    const result = migrateGraphSpace(space, { sourceModelVersion: modelFrom });
+    migratedSegments += result.graph.edges.filter(edge => edge.kind === 'wall').length;
+    return result.space;
+  });
+  config.model_version = PLAN_MODEL_VERSION;
+  const baseline = clone(config.spaces);
+  // The old geometry passes remain the numerical proposal and nonstructural
+  // maintenance engine. Their projection draft never becomes graph authority.
+  const result = optimizePlanDraft(config, references.layout, context, dependencies, true);
+  const stats = { partitionsMerged: 0, partitionsReconciled: 0, wallsMerged: 0, openingsRehosted: 0 };
+  result.config.spaces = result.config.spaces.map((draft: any, index: number) => {
+    const next = optimizeGraphTargets(baseline[index], draft);
+    for (const key of Object.keys(stats) as (keyof typeof stats)[]) stats[key] += next[key];
+    return next.space;
+  });
+  const changed = JSON.stringify(result.config) !== JSON.stringify(configIn || {})
+    || JSON.stringify(result.layout) !== JSON.stringify(layoutIn || {});
+  const report = result.report;
+  report.modelFrom = modelFrom; report.modelTo = PLAN_MODEL_VERSION;
+  report.migrated += migration.total;
+  report.glowSpacesMigrated += migration.glowSpaces;
+  report.glowRoomsMigrated += migration.glowRooms;
+  report.wallSegmentsMigrated += migratedSegments;
+  report.roomDraftsMigrated += migratedDrafts;
+  report.roomDraftSegmentsMigrated += migratedDraftSegments;
+  report.partitionsMerged = stats.partitionsMerged;
+  report.partitionsReconciled = stats.partitionsReconciled;
+  report.openingsRehosted = stats.openingsRehosted;
+  report.wallsMerged = Math.max(report.wallsMerged, stats.wallsMerged);
+  Object.assign(report, references.report);
+  if (!changed) {
+    const observed = new Set(['modelFrom', 'modelTo', 'total', 'currentPositions', 'archivedPositions', 'wallsStraightenSkipped']);
+    for (const key of Object.keys(report)) {
+      if (observed.has(key)) continue;
+      const value = (report as any)[key];
+      (report as any)[key] = Array.isArray(value) ? [] : typeof value === 'string' ? '' : 0;
+    }
+  }
+  return { ...result, changed, report };
 }
