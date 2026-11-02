@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 939,
+  "revision": 940,
   "nextTicket": 74,
   "nextFence": 74,
   "tasks": {
@@ -121,14 +121,24 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1158-zigbee-hover-status",
-      "materialSha": "05993896746e5aae6a44b2b053823d6153bf2ceb",
+      "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 73,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793632670334,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "45fd19dacc56692a7158facf55437228be49e324",
+      "changedFiles": [
+        "demo/smoke_zigbee_topology_hover.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.83.0/1158.json",
+        "src/hp-zigbee-topology-overlay.ts"
+      ]
     },
     "1165": {
       "issue": 1165,
@@ -1266,13 +1276,18 @@
     "worker": "finish",
     "token": "73:finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:1:admit",
     "fence": 73,
-    "materialSha": "05993896746e5aae6a44b2b053823d6153bf2ceb",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+    "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
+    "phase": "testing",
     "admittedAt": 1793632674117,
-    "expiresAt": 1793632974117
+    "expiresAt": 1793632982713,
+    "patchId": "45fd19dacc56692a7158facf55437228be49e324"
   },
   "events": {
+    "finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:2:synchronized": {
+      "digest": "b0d5cb9c040f3fd5f5dc3df65a97e7c38598dc45c113a4cb313e54476f84e1a3",
+      "issue": 1158
+    },
     "finish:540a1f4b-524d-4856-918e-285ff186ffa7": {
       "digest": "0303acca170586ac7823a02b4b0192b1b37c8e0355e2fb4e53707f122b4559fd",
       "issue": 1158,
