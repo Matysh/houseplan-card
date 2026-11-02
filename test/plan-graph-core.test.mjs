@@ -215,3 +215,13 @@ test('legacy opening migration retains the existing occupancy contract (#1033)',
     assert.deepEqual(observed,row.expect,row.name);
   }
 });
+
+test('connected legacy contacts use frozen chosen supports without arithmetic feedback (#834)',()=>{
+  const fixture=JSON.parse(readFileSync(new URL('./fixtures/834-node-connected.json',import.meta.url),'utf8'));
+  for(const space of fixture.spaces){
+    const original=structuredClone(space),result=G.migrateGraphSpace(space,{sourceModelVersion:fixture.model_version});
+    assert.equal(G.validateGraph(result.graph).ok,true);
+    assert.deepEqual(space,original);
+    assert.equal(G.applyGraphOperation(result.graph,{kind:'normalize-current'}).changed,false);
+  }
+});
