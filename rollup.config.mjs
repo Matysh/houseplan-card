@@ -35,6 +35,10 @@ export default {
       // #1166: Optimize now shares the structural sweep with the editor.
       // Keep that leaf outside the immutable-URL editor facade's named ABI.
       if (path.endsWith('/src/wall-face-graph.ts')) return 'wall-face-graph';
+      // Exact structural commands are shared with nested Select and Optimize.
+      // Keep their exports outside the immutable-URL editor runtime facade.
+      if (path.endsWith('/src/plan-graph.ts')) return 'plan-graph';
+      if (path.endsWith('/src/graph-optimize.ts')) return 'graph-optimize';
       // #848: these leaves are also used by the nested summary editor. Keep
       // them out of its View root, whose named exports are consumed by the
       // immutable-URL retry as well as Rollup's literal dynamic import.

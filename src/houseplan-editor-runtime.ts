@@ -5617,7 +5617,7 @@ public _confirmRoomDelete = (keepWalls: boolean): void => {
     this.host._roomDeleteDialog = null;
     this._commitPhysicalGeometry(this.host._t(
       keepWalls ? 'history.delete_room_keep_walls' : 'history.delete_room_with_walls',
-    ), before, [], true, { kind: 'delete-room', room: room.id, keepWalls });
+    ), before, [], true, { kind: 'delete-room', room: dialog.roomId, keepWalls });
     this.host._regSignature = '';
     this.host._maybeRebuildDevices();
     this.host.requestUpdate();
@@ -5814,7 +5814,9 @@ public _wallThickApply(allRoom: boolean): void {
       });
     if (this._commitPhysicalGeometry(this.host._t('history.wall_thickness'), before, [], true,
       { kind: 'thickness', edges: wallTargets.map(segment => ({ kind: 'wall', id: segment.id })),
-        ...(allRoom ? { rooms: [d.roomId] } : {}), cm: cmRaw }))
+        ...(allRoom && d.roomId ? { rooms: [d.roomId] } : {}),
+        ...(!wallTargets.length && !allRoom && d.roomId ? { selection: {room:d.roomId,
+          a:d.a.map(n=>n/NORM_W),b:d.b.map(n=>n/NORM_W)} } : {}), cm: cmRaw }))
       this.host._showToast(this.host._t(cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set'), cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set');
     this.host.requestUpdate();
   }

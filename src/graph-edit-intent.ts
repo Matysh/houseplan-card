@@ -14,7 +14,8 @@ export type GraphEditIntent =
       endpointRefs?: Record<string, readonly [TargetPointRef?, TargetPointRef?]> }
   | { kind: 'segments'; edges: readonly GraphEdgeRef[]; endpointRefs?: Record<string, readonly [TargetPointRef?, TargetPointRef?]> }
   | { kind: 'resize'; rooms: readonly string[]; shared?: boolean }
-  | { kind: 'thickness'; edges?: readonly GraphEdgeRef[]; rooms?: readonly string[]; cm: number }
+  | { kind: 'thickness'; edges?: readonly GraphEdgeRef[]; rooms?: readonly string[]; cm: number;
+      selection?: { room: string; a: readonly number[]; b: readonly number[] } }
   | { kind: 'faces'; rooms: readonly string[]; removeRooms?: readonly string[];
       consumedPartitionIds?: readonly string[]; sourceEdges?: readonly GraphEdgeRef[] }
   | { kind: 'delete-room'; room: string; keepWalls: boolean }
@@ -603,6 +604,20 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
     case'thickness':{
       const selected=new Map((intent.edges||[]).map(e=>[edgeKey(e),e]));
       for(const room of graph.rooms)if(intent.rooms?.includes(room.room))for(const e of room.edges)selected.set(edgeKey(e),e);
+      if(intent.selection){
+        const selection=intent.selection,cycle=graph.rooms.find(room=>room.room===selection.room);
+        if(!cycle)failure('thickness-room',selection.room);
+        const a=Q.readSourcePoint(selection.a),b=Q.readSourcePoint(selection.b),radius=Q.microRadius(Number(before.cell_cm)||5);
+        const covered=(point:Q.ExactPoint):boolean=>{
+          const t=Q.projectParameter(point,a,b),bounded=Q.cmp(t,Q.ZERO)<0?Q.ZERO:Q.cmp(t,Q.ONE)>0?Q.ONE:t;
+          return Q.withinRadius(point,Q.pointAt(a,b,bounded),radius);
+        };
+        for(const reference of cycle.edges){
+          const edge=index.edges.get(edgeKey(reference))!;
+          if(covered(index.points.get(edge.from)!)&&covered(index.points.get(edge.to)!))selected.set(edgeKey(edge),ref(edge));
+        }
+      }
+      if(!selected.size)failure('thickness-target');
       plan.operations.push({kind:'set-thickness',edges:[...selected.values()],cm:intent.cm});break;
     }
     case'faces':facePlan(before,draft,intent.rooms,intent.removeRooms||[],intent.consumedPartitionIds||[],intent.sourceEdges,

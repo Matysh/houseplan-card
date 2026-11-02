@@ -19,6 +19,8 @@ function setup(t) {
     basis: space => ({ epoch, space, floor: 'exact-floor' }),
     validate: (next, source) => { validations.push([next, source]); return true; },
     write: async (history, basis, guard) => { writes.push([history, basis]); current = guard; await gate;
+      assert.ok(history.intent.node_id, 'current menu sends authoritative stable node identity');
+      assert.ok(history.beforeSpace.plan_graph.nodes.some(n => n.id === history.intent.node_id));
       const next = applyNodeDelete(history.beforeSpace, history.intent); assert.equal(next.ok, true);
       return { ...config, spaces: [next.space] }; },
     record: (...args) => records.push(args), document: { defaultView: view }, stage: () => stage,

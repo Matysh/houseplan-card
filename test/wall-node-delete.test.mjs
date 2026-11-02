@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { structuralWallNodes } from '../test-build/wall-node-move.js';
 import { applyNodeDelete } from '../test-build/wall-node-delete.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { buildNodePreview } from '../test-build/wall-node-preview.js';
@@ -39,7 +40,7 @@ test('#1045 room corner, collinear breakpoint and two coincident owners use all 
       { id: 's', poly: [[2, 0], [1, 0], [0, 0], [0, -1], [2, -1]], area_id: 'other' }],
   ]) {
     const cfg = commitWallSegmentModel({ spaces: [{ id: 'f', rooms, cell_cm: 5 }], markers: [{ id: 'kept' }], settings: {} }).config;
-    const source = cfg.spaces[0], frozen = structuredClone(cfg), result = applyNodeDelete(source, { point: [1, 0] });
+    const source = cfg.spaces[0], frozen = structuredClone(cfg), result = applyNodeDelete(source, { point: [1, 0], node_id: structuralWallNodes(source).find(n => n.point[0] === 1 && n.point[1] === 0).nodeId });
     assert.equal(result.ok, true);
     assert.deepEqual(cfg, frozen);
     const next = commitWallSegmentModel({ ...cfg, spaces: [result.space] }).config;
@@ -80,4 +81,12 @@ test('#1045 structural neighbours, ownership, finite coordinates and full attrib
     assert.equal(applyNodeDelete(source, { point }).ok, false, 'collapsed/self-touching candidate is never adopted');
     assert.deepEqual(source, before);
   }
+});
+
+test('current deletion refuses a missing node ID even when the coordinate hint names a valid node', () => {
+  const source = commitWallSegmentModel({ model_version: 10, spaces: [{ id: 'f', rooms: [], partitions: [
+    { id: 'a', a: [0, 0], b: [1, 0], cm: 15 }, { id: 'b', a: [1, 0], b: [2, 0], cm: 15 },
+  ] }], markers: [], settings: {} }).config.spaces[0];
+  assert.deepEqual(applyNodeDelete(source, { point: [1, 0], node_id: 'missing-current-node' }),
+    { ok: false, reason: 'degree' });
 });

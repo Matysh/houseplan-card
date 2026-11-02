@@ -3,11 +3,24 @@ import assert from 'node:assert/strict';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { applyGraphOperation, applyGraphPatch, projectGraphSpace } from '../test-build/plan-graph.js';
 import { legacyGraphWriteChange } from '../test-build/graph-write-change.js';
+import { commitGraphEdit } from '../test-build/graph-edit-intent.js';
 
 const legacy = () => ({model_version:10,settings:{},markers:[],spaces:[{
   id:'floor',title:'Floor',view_box:[0,0,1,1],rooms:[],
   partitions:[{id:'part',a:[.00000000000001,0],b:[.5,0],cm:12}],
 }]});
+
+test('first wall thickness selection binds the named legacy side after bounded normalization without a catalogue',()=>{
+  const raw={id:'floor',rooms:[{id:'room',poly:[[0,0],[.5000002,0],[.5000002,1],[0,1]]}]};
+  const baseline=commitWallSegmentModel({spaces:[raw]}).config.spaces[0];
+  const changed=commitGraphEdit(baseline,baseline,{kind:'thickness',cm:20,
+    selection:{room:'room',a:[.5000002,0],b:[.5000002,1]}},raw);
+  const thick=changed.wall_segments.filter(edge=>edge.cm===20);
+  assert.equal(thick.length,1);
+  assert.deepEqual(thick[0].a,[.5,0]); assert.deepEqual(thick[0].b,[.5,1]);
+  assert.equal(changed.plan_graph.edges.length,baseline.plan_graph.edges.length);
+  assert.ok(baseline.plan_graph.edges.every(edge=>edge.cm===0));
+});
 
 test('first write patch is rooted in the accepted pre-gesture normalized graph',()=>{
   const source=legacy(),sourceText=JSON.stringify(source);

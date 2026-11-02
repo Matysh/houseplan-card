@@ -23,7 +23,7 @@ export function graphViewSpace<T extends Record<string, any>>(space: T): T {
         return points.get(ref.reverse ? edge.to : edge.from)!.slice();
       }), wall_ids: room.edges.map(ref => ref.id),
     }]));
-    const segment = (edge: PlanGraph['edges'][number]) => ({ ...edge.props, id: edge.id,
+    const segment = (edge: PlanGraph['edges'][number]) => ({ ...JSON.parse(JSON.stringify(edge.props || {})), id: edge.id,
       a: points.get(edge.from)!.slice(), b: points.get(edge.to)!.slice(), cm: edge.cm });
     view = { rooms, wall_segments: graph.edges.filter(edge => edge.kind === 'wall').map(segment),
       partitions: graph.edges.filter(edge => edge.kind === 'partition').map(segment) };

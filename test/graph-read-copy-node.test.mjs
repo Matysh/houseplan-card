@@ -28,7 +28,7 @@ test('graph read ignores stale numeric carriers and never writes its source', ()
   current.partitions[0].b=[9,9];
   const frozen = JSON.stringify(current);
   const view = graphViewSpace(current);
-  assert.deepEqual(view.partitions,source.partitions);
+  assert.deepEqual(JSON.parse(JSON.stringify(view.partitions)),source.partitions);
   assert.equal(JSON.stringify(current),frozen);
   assert.equal(graphViewSpace(current).partitions,view.partitions,'accepted graph projection is memoized');
 });

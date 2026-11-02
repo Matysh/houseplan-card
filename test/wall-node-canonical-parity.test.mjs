@@ -10,7 +10,15 @@ import { geometryArea } from '../test-build/physical-geometry.js';
 import { junctionLimitViolations } from '../test-build/junction-limits.js';
 import { GRID_STEP_N, GRID_PITCH, NORM_W } from '../test-build/space-geometry.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes, structuralNodeWalls } from '../test-build/wall-node-move.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { canonicalizeConfigGeometryInPlace } from '../test-build/coordinate-canonicalization.js';
+
+const snapshot = value => {
+  if (Array.isArray(value)) return value.map(snapshot);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Reflect.ownKeys(value).filter(key =>
+    Object.prototype.propertyIsEnumerable.call(value, key)).map(key => [key, snapshot(value[key])]));
+};
 
 const area = geometry => geometryArea(geometry || []);
 const sameMaterial = (actual, expected, label) => {
@@ -18,7 +26,8 @@ const sameMaterial = (actual, expected, label) => {
   assert.ok(changed <= Math.max(1, area(expected)) * 1e-9, `${label}: symmetric difference ${changed}`);
 };
 
-const connected = JSON.parse(readFileSync(new URL('./fixtures/834-node-connected.json', import.meta.url)));
+const connected = commitWallSegmentModel(JSON.parse(readFileSync(
+  new URL('./fixtures/834-node-connected.json', import.meta.url)))).config;
 const argumentsFor = preview => [preview.model.rooms, preview.input.walls, preview.input.openCuts,
   preview.input.roomOpenings, GRID_STEP_N, preview.input.cellCm, GRID_PITCH, NORM_W, preview.input.physicalBodies];
 
@@ -32,16 +41,17 @@ test('834 invocation-local exterior inputs retain canonical mapped and plain-bou
 });
 
 test('834 Select operations keep 100 connected positions and strict proof identical to ordinary View', () => {
-  const space = connected.spaces[0], frozen = structuredClone(space);
+  const space = connected.spaces[0], frozen = snapshot(space);
   const nodes = structuralWallNodes(space), point = [-401 / 240, 928 / 240];
   const node = nodes.find(n => n.point.every((v, i) => Math.abs(v - point[i]) < 1e-8));
+  assert.ok(node.nodeId, 'canonical parity exercises graph-owned current identity');
   const plan = prepareNodeMove(space, node, nodes, {});
   const booleans = new WallBooleanBaseline();
   withWallBooleanBaseline(booleans, true, () => buildNodePreview(space));
   for (let offset = 1; offset <= 100; offset++) {
     const result = applyNodeMove(plan, [point[0], point[1] + offset / 240], null);
-    assert.ok(result.ok); canonicalizeConfigGeometryInPlace({ spaces: [result.space] });
-    const before = structuredClone(result.space);
+    assert.ok(result.ok); canonicalizeConfigGeometryInPlace({ model_version: 11, spaces: [result.space] });
+    const before = snapshot(result.space);
     const actual = withWallBooleanBaseline(booleans, false, () => buildNodePreview(result.space));
     const expected = { ...actual, geometry: wallBodiesGeometry(...argumentsFor(actual)), renderRoomContours: new Map() };
     assert.equal(actual.geometry.status, expected.geometry.status, `${offset}: strict status`);

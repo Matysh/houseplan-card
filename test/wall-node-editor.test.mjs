@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { nothing } from 'lit';
 import { WallNodeEditor } from '../test-build/wall-node-editor.js';
 import { commitWallSegmentModel, WallSegmentModelError } from '../test-build/wall-segment-model.js';
+import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 
-function setup() {
-  const cfg = { model_version: 10, spaces: [{ id: 'f', rooms: [], wall_segments: [],
+function setup({ legacy = false } = {}) {
+  const raw = { model_version: 10, spaces: [{ id: 'f', rooms: [], wall_segments: [],
     partitions: [{ id: 'w', a: [0, 0], b: [1, 0], cm: 0 }] }], markers: [], settings: {} };
+  const cfg = legacy ? raw : commitWallSegmentModel(raw).config;
   const context = { enabled: true, api: true, space: 'f', revision: 1 };
   const capture = new Set(), lifecycle = [];
   const stage = { style: {}, setPointerCapture: p => { lifecycle.push('capture'); capture.add(p); },
@@ -36,8 +38,12 @@ function setup() {
     write: async h => {
       writes.push(h); await writeGate; if (fail) throw fail;
       if (retireOnWrite) { context.revision++; editor.paint(); }
-      const nodes = structuralWallNodes(h.beforeSpace), node = nodes.find(n => n.point.every((v, i) => v === h.intent.point[i]));
+      const nodes = structuralWallNodes(h.beforeSpace);
+      assert.ok(h.intent.node_id && h.intent.target_p, 'current editor sends exact identity-owned intent');
+      const node = nodes.find(n => n.nodeId === h.intent.node_id);
       const r = applyNodeMove(prepareNodeMove(h.beforeSpace, node, nodes), h.intent.target, h.intent.axis);
+      assert.equal(r.ok, true);
+      assert.deepEqual(r.space.plan_graph.nodes.find(n => n.id === h.intent.node_id).p, h.intent.target_p);
       return { ...cfg, spaces: [r.space] };
     }, record: (...args) => recorded.push(args), history: async () => {} };
   const editor = new WallNodeEditor(port);
@@ -52,14 +58,29 @@ function setup() {
     finishWrite: () => writeResolve(),
     finishPaint: () => paintResolve(), refuse: (code = 'refused') => { fail = Object.assign(new Error(code), { code }); }, retireAtWrite: () => { retireOnWrite = true; } };
 }
+// structuredClone intentionally drops Symbol annotations; retain them when
+// proving that graph-derived source/carrier metadata was never mutated.
+const snapshot = value => {
+  if (Array.isArray(value)) return value.map(snapshot);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Reflect.ownKeys(value)
+    .filter(key => Object.prototype.propertyIsEnumerable.call(value, key))
+    .map(key => [key, snapshot(value[key])]));
+};
+
+const replacePartitions = (s, partitions) => {
+  s.cfg.spaces[0] = commitWallSegmentModel({ model_version: 10,
+    spaces: [{ id: 'f', rooms: [], partitions }], markers: [], settings: {} }).config.spaces[0];
+  s.cfg.model_version = 11;
+};
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => { let resolve; return { promise: new Promise(r => { resolve = r; }), resolve: v => resolve(v) }; };
 
 test('#928: Select omits unsafe legacy handles without repairing data or weakening writes', () => {
-  const s = setup();
+  const s = setup({ legacy: true });
   const bad = { id: 'duplicate-contour', a: [0, 0], b: [0, 1], cm: 15 };
-  s.cfg.spaces[0].wall_segments = [bad, structuredClone(bad)];
-  const before = structuredClone(s.cfg);
+  s.cfg.spaces[0].wall_segments = [bad, snapshot(bad)];
+  const before = snapshot(s.cfg);
   for (let i = 0; i < 3; i++) assert.equal(s.editor.render(), nothing);
   assert.equal(s.editor.guardEvent(s.ev('pointerdown')), false);
   assert.equal(s.editor.dragging, false);
@@ -67,7 +88,7 @@ test('#928: Select omits unsafe legacy handles without repairing data or weakeni
   assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
   assert.deepEqual(s.cfg, before);
   assert.throws(() => commitWallSegmentModel(s.cfg),
-    error => error instanceof WallSegmentModelError && error.reason === 'duplicate-id');
+    error => error instanceof WallSegmentModelError && error.reason === 'invalid-room' && /duplicate-id/.test(error.message));
   s.cfg.spaces[0].wall_segments = [];
   assert.notEqual(s.editor.render(), nothing, 'a new valid snapshot restores handles');
   assert.equal(s.editor.guardEvent(s.ev('pointerdown')), true);
@@ -105,13 +126,14 @@ test('rejected node presses and failed capture do not acquire the viewport', () 
     else if (rejection === 'secondary') event = s.ev('pointerdown', 0, 0, { button: 2 });
     else if (rejection === 'nonprimary') event = s.ev('pointerdown', 0, 0, { isPrimary: false });
     else if (rejection === 'api') s.context.api = false;
-    else if (rejection === 'ambiguous') s.cfg.spaces[0].partitions.push(
-      { id: 'near', a: [0, .0005], b: [1, .0005], cm: 0 });
-    else if (rejection === 'unsupported') s.cfg.spaces[0].partitions = [
+    else if (rejection === 'ambiguous') replacePartitions(s, [
+      { id: 'w', a: [0, 0], b: [1, 0], cm: 0 },
+      { id: 'near', a: [0, .0005], b: [1, .0005], cm: 0 }]);
+    else if (rejection === 'unsupported') replacePartitions(s, [
       { id: 'h', a: [-1, 0], b: [1, 0], cm: 0 },
       { id: 'v', a: [0, -1], b: [0, 1], cm: 0 },
       { id: 'd', a: [-1, -1], b: [1, 1], cm: 0 },
-    ];
+    ]);
     else s.stage.setPointerCapture = () => { s.lifecycle.push('capture'); throw new Error('capture refused'); };
     s.editor.guardEvent(event);
     assert.equal(s.editor.dragging, false, rejection);
@@ -148,7 +170,7 @@ test('sub-epsilon free-axis changes cannot retarget a previously proved candidat
   s.editor.guardEvent(s.ev('pointermove', 1, .3000000009)); s.flushFrame();
   assert.notEqual(s.editor.preview.sp, original);
   assert.equal(s.validations.length, 2, 'the new free-axis coordinate receives its own proof');
-  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [1, .3], 'ordinary canonical geometry policy still applies');
+  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [1, .3000000009], 'current exact authored target is not rounded back to an old storage quantum');
   s.editor.guardEvent(s.ev('pointerup')); await settle();
   assert.deepEqual(s.writes[0].intent.target, [1, .3000000009]);
   s.editor.dispose();
@@ -183,18 +205,21 @@ test('a guide-only change paints without computing a candidate and a repeated re
 
 test('X keeps the first unambiguous carrier even when later native events precede the frame', () => {
   const s = setup(); s.holdFrames();
-  s.cfg.spaces[0].partitions = [
+  replacePartitions(s, [
     { id: 'h', a: [-1, 0], b: [1, 0], cm: 0 },
     { id: 'v', a: [0, -1], b: [0, 1], cm: 0 },
-  ];
+  ]);
   s.editor.guardEvent(s.ev('pointerdown'));
   s.editor.guardEvent(s.ev('pointermove', .25, .001));
   s.editor.guardEvent(s.ev('pointermove', .1, .3));
   s.flushFrame();
   assert.equal(s.editor.invalid, null);
   const walls = s.editor.preview.sp.partitions;
-  assert.deepEqual(walls.find(w => w.id === 'h'), s.cfg.spaces[0].partitions[0]);
-  assert.ok(walls.filter(w => w.id !== 'h').every(w => w.a[1] === 0 || w.b[1] === 0));
+  assert.deepEqual(walls.find(w => w.id === 'h').a, [-1, 0]);
+  assert.deepEqual(walls.find(w => w.id === 'h~1').b, [1, 0]);
+  assert.ok(walls.filter(w => w.id === 'h' || w.id === 'h~1').every(w => w.a[1] === 0 && w.b[1] === 0),
+    'both stable carrier children keep the frozen horizontal axis');
+  assert.deepEqual(walls.map(w => w.id), s.cfg.spaces[0].partitions.map(w => w.id), 'no preview identity reconstruction');
   assert.ok(walls.some(w => w.a[0] === .1 || w.b[0] === .1)); s.editor.dispose();
 });
 
@@ -294,7 +319,10 @@ test('retired node tail blocks only compatible stage clicks, not keyboard or too
 test('external revision while final paint awaits wins, without restoring frozen config', async () => {
   const s = setup(); s.holdPaint(); s.editor.guardEvent(s.ev('pointerdown'));
   s.editor.guardEvent(s.ev('pointermove', 0.25, 0.3)); s.editor.guardEvent(s.ev('pointerup'));
-  s.cfg.spaces[0].partitions[0].a = [0.5, 0.5]; s.context.revision++;
+  const nodes = structuralWallNodes(s.cfg.spaces[0]), n = nodes.find(n => n.point[0] === 0 && n.point[1] === 0);
+  const foreign = applyNodeMove(prepareNodeMove(s.cfg.spaces[0], n, nodes), [.5, .5], null);
+  assert.equal(foreign.ok, true);
+  s.cfg.spaces[0] = foreign.space; s.context.revision++;
   s.finishPaint(); await settle();
   assert.equal(s.writes.length, 0); assert.deepEqual(s.cfg.spaces[0].partitions[0].a, [0.5, 0.5]);
   s.editor.dispose();
@@ -339,7 +367,7 @@ test('disabled capability and touch fail closed; unchanged click writes nothing'
   assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0); s.editor.dispose();
 });
 test('refused server write leaves no optimistic geometry for the next writer', async () => {
-  const s = setup(); s.refuse(); const baseline = structuredClone(s.cfg);
+  const s = setup(); s.refuse(); const baseline = snapshot(s.cfg);
   s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', 0.25, 0.3));
   s.editor.guardEvent(s.ev('pointerup')); await settle();
   assert.equal(s.writes.length, 1); assert.equal(s.recorded.length, 0); assert.deepEqual(s.cfg, baseline);
@@ -351,7 +379,7 @@ test('#891 AC4 actual node editor release distinguishes conflict, proof and temp
     ['timeout', 'node_move_write_unavailable'], ['node_move_backend_unavailable', 'node_move_write_unavailable'],
     ['node_move_unknown', 'node_move_write_unavailable'], ['wall_model_client_outdated', 'node_move_update_required'],
   ]) {
-    const s = setup(); s.refuse(code); const baseline = structuredClone(s.cfg);
+    const s = setup(); s.refuse(code); const baseline = snapshot(s.cfg);
     s.editor.guardEvent(s.ev('pointerdown')); s.editor.guardEvent(s.ev('pointermove', .25, .3));
     s.editor.guardEvent(s.ev('pointerup')); await settle();
     assert.deepEqual(s.toasts, [expected], code);

@@ -136,7 +136,8 @@ export class KeyboardNudge {
     if (!r._commitPhysicalGeometry(name, before, [], false,
       owner.identity.kind === 'partition' ? { kind: 'partitions', ids: [owner.identity.id] }
         : owner.identity.kind === 'opening' ? { kind: 'openings', ids: [owner.identity.id] }
-          : { kind: 'metadata' })) { this.retireOwner(owner); return; }
+          : owner.identity.kind === 'contour' ? { kind:'segments',edges:[{kind:'wall',id:owner.identity.id}] }
+            : { kind: 'metadata' })) { this.retireOwner(owner); return; }
     const attempt = r._stageOptimisticConfig(previous, r._prepareConfigCandidate(h._serverCfg!));
     const restoreDeferred = supersedeDeferredWrite(h._saveConfigDebounced);
     try {

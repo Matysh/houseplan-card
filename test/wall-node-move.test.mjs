@@ -2,10 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyNodeMove, pickWallNode, prepareNodeMove, resolveNodeMoveSnap,
   structuralWallNodes, structuralNodeWalls } from '../test-build/wall-node-move.js';
-import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { commitWallSegmentModel, decodeLegacyWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 import { buildNodePreview } from '../test-build/wall-node-preview.js';
 import { readFileSync } from 'node:fs';
 import { increasedViolations, junctionLimitViolations } from '../test-build/junction-limits.js';
+
+// structuredClone intentionally drops Symbol annotations; retain them when
+// proving that graph-derived source/carrier metadata was never mutated.
+const snapshot = value => {
+  if (Array.isArray(value)) return value.map(snapshot);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Reflect.ownKeys(value)
+    .filter(key => Object.prototype.propertyIsEnumerable.call(value, key))
+    .map(key => [key, snapshot(value[key])]));
+};
 
 const wall = (id, a, b, cm = 0) => ({ id, a, b, cm });
 const floor = partitions => ({ id: 'f', rooms: [], wall_segments: [], partitions });
@@ -14,29 +25,50 @@ const plan = (s, p, splitIds = {}) => {
   assert.ok(n, `node ${p}`); return prepareNodeMove(s, n, nodes, splitIds);
 };
 
-test('#845 short edges and legacy migration keep safe moves and exact identities', () => {
+test('#845 frozen v10 physical goldens and current graph identities retain safe movement', () => {
   const cases = JSON.parse(readFileSync(new URL('./fixtures/845-wall-identity-parity.json', import.meta.url))).cases;
   for (const c of cases.filter(c => c.intent)) {
-    const base = c.mode === 'pure' ? c.input : commitWallSegmentModel(c.input).config;
-    const source = base.spaces[0], frozen = structuredClone(source);
-    const moved = applyNodeMove(plan(source, c.intent.point, c.intent.split_ids), c.intent.target, c.intent.axis);
-    assert.equal(moved.ok, c.expected.ok, c.name);
+    // Historical physical fixture is already materialized by the frozen v10
+    // decoder. Do not reinterpret its literal after document as model11.
+    const legacy = c.mode === 'pure' ? c.input : c.expected.config;
+    const legacySource = legacy.spaces[0], original = snapshot(legacySource);
+    const physical = applyNodeMove(plan(legacySource, c.intent.point, c.intent.split_ids), c.intent.target, c.intent.axis);
+    assert.equal(physical.ok, c.expected.ok, c.name + ': frozen physical contract');
+    assert.deepEqual(legacySource, original);
+    if (!physical.ok) { assert.equal(physical.reason, c.expected.reason); continue; }
+    const legacyAfter = decodeLegacyWallSegmentModel({ ...legacy, spaces: [physical.space] }).config;
+    assert.deepEqual(legacyAfter, c.expected.after, c.name + ': exact frozen v10 golden');
+
+    const base = commitWallSegmentModel(c.input).config, source = base.spaces[0], frozen = snapshot(source);
+    const prepared = plan(source, c.intent.point, {}), requested = c.intent.axis;
+    const passing = prepared.node.axes.filter(axis => axis.passing);
+    const matches = passing.filter(axis => axis.walls.some(w => {
+      const ref = w.kind + ':' + w.id;
+      return ref === requested || ref.startsWith(requested + '~');
+    }));
+    const axis = requested ? (matches.length === 1 ? matches[0].key : passing.length === 1 ? passing[0].key : requested) : null;
+    const moved = applyNodeMove(prepared, c.intent.target, axis);
+    assert.equal(moved.ok, true, c.name + ': current graph writer');
     assert.deepEqual(source, frozen, c.name + ': never mutate the baseline');
-    if (!moved.ok) { assert.equal(moved.reason, c.expected.reason, c.name); continue; }
+    assert.ok(prepared.node.nodeId, c.name + ': graph-owned node identity');
+    const movedNode = moved.space.plan_graph.nodes.find(n => n.id === prepared.node.nodeId);
+    assert.deepEqual(pointToNumbers(decodePoint(movedNode.p)), c.intent.target, c.name + ': actual target');
     const after = commitWallSegmentModel({ ...base, spaces: [moved.space] }).config;
-    assert.deepEqual(after, c.expected.after, c.name);
+    assert.deepEqual(after.spaces[0].plan_graph.edges.map(e => [e.kind, e.id]),
+      source.plan_graph.edges.map(e => [e.kind, e.id]), c.name + ': current edge IDs persist');
     assert.equal(buildNodePreview(moved.space).safe, true, c.name + ': production physical geometry');
     assert.deepEqual(increasedViolations(junctionLimitViolations(after, 'f'),
       junctionLimitViolations(base, 'f')), [], c.name + ': no introduced junction violations');
   }
 });
+
 test('828 preserves finite fixed contacts with collinear neighbours and proven X children', () => {
   const cases = JSON.parse(readFileSync(new URL('./fixtures/803-wall-node-parity.json', import.meta.url)))
     .filter(c => c.name.startsWith('828-'));
   for (const c of cases) for (const reversed of [false, true]) for (const zero of [false, true]) {
     const walls = c.walls.map(w => ({ ...w, cm: zero ? 0 : w.cm }));
     const source = floor(reversed ? walls.reverse().map(w => ({ ...w, a: w.b, b: w.a })) : walls);
-    const frozen = structuredClone(source);
+    const frozen = snapshot(source);
     const result = applyNodeMove(plan(source, c.point, { 'partition:v': 'new-v' }), c.target, c.axis);
     assert.equal(result.ok, c.ok, `${c.name} reversed=${reversed} zero=${zero}`);
     assert.deepEqual(source, frozen);
@@ -54,11 +86,13 @@ test('828 preserves finite fixed contacts with collinear neighbours and proven X
     { id: 'one', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] },
     { id: 'foreign', poly: [[1, 1], [2, 1], [2, 2], [1, 2]] },
   ] }], markers: [], settings: {} }).config;
-  for (const w of cfg.spaces[0].wall_segments) w.cm = 25;
-  const source = commitWallSegmentModel(cfg).config.spaces[0];
+  const graph = cfg.spaces[0].plan_graph;
+  const source = commitWallSegmentModel(cfg, { graphOperations: new Map([['f', {
+    kind: 'set-thickness', edges: graph.edges.filter(e => e.kind === 'wall').map(e => ({ kind: e.kind, id: e.id })), cm: 25,
+  }]]) }).config.spaces[0];
   const result = applyNodeMove(plan(source, [0, 1]), [-.25, .75], null);
   assert.equal(result.ok, true); assert.equal(buildNodePreview(result.space).safe, true);
-  assert.deepEqual(result.space.rooms[1], source.rooms[1], 'foreign room retains polygon and IDs');
+  assert.deepEqual(result.space.rooms.find(r => r.id === 'foreign'), source.rooms.find(r => r.id === 'foreign'), 'foreign room retains polygon and IDs');
 });
 test('classification uses unique physical rays and the complete r2 matrix', () => {
   const rays = count => Array.from({ length: count }, (_, i) =>
@@ -95,7 +129,7 @@ test('noisy atomized T/X use one consistent angular classifier, independent of o
   for (const x of [false, true]) for (const reversed of [false, true]) {
     const walls = [...h, ...(x ? v : [v[1]])];
     const source = floor(reversed ? walls.reverse().map(w => ({ ...w, a: w.b, b: w.a })) : walls);
-    const frozen = structuredClone(source), p = plan(source, [0, 0]);
+    const frozen = snapshot(source), p = plan(source, [0, 0]);
     assert.deepEqual([p.node.axes.length, p.node.passing, p.node.branches, p.node.valence, p.node.supported],
       x ? [2, 2, 0, 4, true] : [2, 1, 1, 3, true]);
     const moved = applyNodeMove(p, [0.00319322125, 0.00123853275], 'partition:h-a');
@@ -154,12 +188,12 @@ test('an exact original-axis and H/V intersection outranks longitudinal quantisa
 test('carrier ignores foreign nodes beyond its finite interval; foreign connectivity cannot exchange edges', () => {
   const s = floor([wall('h', [-1, 0], [1, 0]), wall('b', [0, 0], [0, 1]),
     wall('foreign', [2, 0], [2, 1])]);
-  const frozen = structuredClone(s), result = applyNodeMove(plan(s, [0, 0]), [.25, 0], 'partition:h');
+  const frozen = snapshot(s), result = applyNodeMove(plan(s, [0, 0]), [.25, 0], 'partition:h');
   assert.equal(result.ok, true); assert.deepEqual(result.space.partitions[2], s.partitions[2]);
   assert.deepEqual(s, frozen);
   const exchange = floor([wall('a', [0, 0], [1, 0]), wall('b', [0, 0], [0, 1]),
     wall('foreign', [.5, 0], [.5, -.25])]);
-  const unchanged = structuredClone(exchange);
+  const unchanged = snapshot(exchange);
   // The old physical foreign point stays [.5,0], but would switch a -> b.
   assert.deepEqual(applyNodeMove(plan(exchange, [0, 0]), [1, -1], null), { ok: false, reason: 'invalid' });
   assert.deepEqual(exchange, unchanged);
@@ -170,7 +204,7 @@ test('ordinary five/six-ray nodes move every endpoint, preserving mixed thicknes
   const thickness = [0, 15, 25, 100, 25, 15];
   for (const count of [5, 6]) {
     const source = floor(ends.slice(0, count).map((b, i) => wall(`ray-${i}`, [0, 0], b, thickness[i])));
-    const frozen = structuredClone(source), p = plan(source, [0, 0]), target = [-0.1, -0.1];
+    const frozen = snapshot(source), p = plan(source, [0, 0]), target = [-0.1, -0.1];
     const moved = applyNodeMove(p, target, null); assert.equal(moved.ok, true);
     assert.deepEqual(moved.space.partitions, source.partitions.map(w => ({ ...w, a: target })));
     assert.deepEqual(source, frozen);
