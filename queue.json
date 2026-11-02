@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 732,
-  "nextTicket": 62,
+  "revision": 733,
+  "nextTicket": 63,
   "nextFence": 62,
   "tasks": {
     "1128": {
@@ -844,6 +844,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1209": {
+      "issue": 1209,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/issue-1209-release-ledger",
+      "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 62,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793625086670,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -916,9 +930,25 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1209
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:d461cd8b-92b9-40c5-8a5f-722af9a278d5": {
+      "digest": "98ceedb431ce8644e5286a66c9715eae5036cb8e95aa8be994db6c4a525928dd",
+      "issue": 1209,
+      "message": {
+        "kind": "queued",
+        "issue": 1209,
+        "at": 1793625086670,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
     "status": "delivered",
