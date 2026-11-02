@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 909,
+  "revision": 910,
   "nextTicket": 72,
   "nextFence": 72,
   "tasks": {
@@ -1087,34 +1087,23 @@
     },
     "1213": {
       "issue": 1213,
+      "branch": "codex/issue-1213-profile-carousel-hold",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/issue-1213-profile-carousel-hold",
-      "materialSha": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 71,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793631898612,
-      "reviewEntry": 1,
-      "patchId": "31b0ea11353df92d8ba2fb9ab65dc817f9169d5d",
-      "changedFiles": [
-        "demo/smoke_screen_camera_1165.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1213.json",
-        "src/version-recovery-card.ts",
-        "test/version-recovery-card.test.mjs"
-      ],
-      "s6": {
-        "id": "20261102T150614748-5477c7bf",
-        "name": "Тесты для задачи #1213 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T150614748-5477c7bf/report.json",
-        "materialSha": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
-        "status": "passed",
-        "finishedAt": "2026-11-02T15:06:51.260Z",
-        "failures": []
+      "status": "S8-merged",
+      "mergedSha": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
+      "mergedAt": 1793632018145,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -1212,60 +1201,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1213,
-    "worker": "github-coordinator",
-    "token": "71:github:41468066323:1:tick:0:admit",
-    "fence": 71,
-    "materialSha": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
-    "expectedBase": "5ff9a6566e22872695a4f575653ef7ab7d4f6c42",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793631928821,
-    "expiresAt": 1793635612553,
-    "patchId": "31b0ea11353df92d8ba2fb9ab65dc817f9169d5d"
-  },
+  "active": null,
   "events": {
-    "github:41468066323:1:completions:message:586527e828191b7460715908eb4f88797380876cd73505344b7da856895c20b5": {
-      "digest": "cb994a7beec5f6fbc9230802067023cb9054c609c445af7abdb158e1232e6f22",
-      "issue": 1213
-    },
-    "github:41468066323:1:completions:message:1001f2e7822a14e3e27a951c3c57b46a643e3958bf0d6ba6c069de0fa4a2a9c9": {
-      "digest": "7a7da03fc390cbb9b2fe9d34617bda7ba2a601fbee5f516ebadb6343e0753683",
-      "issue": 1213
-    },
-    "finish:30df43d8-d565-4c61-afe7-2744e6e1ce50:finish:1:synchronized": {
-      "digest": "9617504ef7fb3a3d936dceb4081d8f09310d95718fd77a1d868d64d8d59d9623",
-      "issue": 1213
-    },
-    "finish:30df43d8-d565-4c61-afe7-2744e6e1ce50": {
-      "digest": "ce477641de9e9b6f9507bb7613376ab751b89a2d5da72c9eaf7d29e428ea2f52",
-      "issue": 1213,
-      "message": {
-        "kind": "queued",
-        "issue": 1213,
-        "at": 1793631898612,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "edd8eed698dd5c15eef207ed05e4d3fbf111e6f6",
-        "delivered": true
-      }
-    },
-    "github:41468066323:1:tick:0:admit": {
-      "digest": "aa0f92d9b7c94f316d2f1a92805cdacca937fbc0e987c384294d248c4a156f26",
-      "issue": 1213,
-      "message": {
-        "kind": "admitted",
-        "issue": 1213,
-        "at": 1793631928821,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "edd8eed698dd5c15eef207ed05e4d3fbf111e6f6",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:30df43d8-d565-4c61-afe7-2744e6e1ce50:finish:2:s6-complete": {
       "digest": "5eda4ca05e2258deb591baf919601c9fc4f5dcc2e7707ef29ee3a338a20b19f8",
       "issue": 1213,
