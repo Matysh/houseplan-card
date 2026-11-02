@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 929,
+  "revision": 930,
   "nextTicket": 73,
   "nextFence": 73,
   "tasks": {
@@ -1238,31 +1238,7 @@
   },
   "waiting": [],
   "active": null,
-  "events": {
-    "finish:57c30518-9ceb-466e-b0c8-5c80e0f8a57a:finish:3:s6-complete": {
-      "digest": "b107c5e353fd9b758669e70d21cafa5bd0061850a976735f9f6299ac980a9972",
-      "issue": 1214,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1214,
-        "at": 1793632529846,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261102T151524695-e131ab15",
-          "name": "Тесты для задачи #1214 (перед слиянием)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261102T151524695-e131ab15/report.json",
-          "materialSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-          "status": "passed",
-          "finishedAt": "2026-11-02T15:15:28.730Z",
-          "failures": []
-        }
-      }
-    }
-  },
+  "events": {},
   "devWebhook": {
     "sourceSha": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
     "status": "delivered",
