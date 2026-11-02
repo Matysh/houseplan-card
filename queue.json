@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 625,
+  "revision": 626,
   "nextTicket": 57,
   "nextFence": 57,
   "tasks": {
@@ -1187,7 +1187,8 @@
         },
         "fromStatus": "S7-code-review",
         "toStatus": "S6-in-progress",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
