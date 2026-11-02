@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 815,
+  "revision": 816,
   "nextTicket": 67,
   "nextFence": 67,
   "tasks": {
@@ -990,6 +990,108 @@
         "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
         "expectedBase": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
         "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1211,
+        "requestId": "review:1211:1:ad262ee83a8e2d2268d821adac050806a9eb2162:c356cd6c04a2b64bf151f1337f1de218abceb21b",
+        "kind": "code",
+        "base": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
+        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
+        "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1211,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1211",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление адресное и подходит для задачи. Easy-конвертер теперь явно записывает `settings.show_borders: true`, если в этаже есть векторная геометрия или проёмы: комнаты, стены, перегородки или openings. Импорт сохраняет этот флаг в обоих режимах переноса. `normalize_space_display` после этого не записывает `hide_openings: true`, а `spaceDisplayOf` показывает и границы, и символы дверей поверх фоновой картинки. У плана, где есть только картинка, флага нет, и поведение по умолчанию прежнее. Общий renderer и существующие пользовательские настройки не затронуты. Блокеров нет.",
+          "understanding": "До изменения: Easy-конвертер записывал в space `plan_url` фоновой картинки, а `settings.show_borders` не задавал. В Houseplan `show_borders` по умолчанию равно `!plan_url` (`src/logic.ts:1390`), и `hideOpenings` выводится из этого же значения (`src/logic.ts:1413`, решение #945). Бэкенд `normalize_space_display` (`custom_components/houseplan/validation.py:2850-2861`) при отсутствии флага и наличии картинки записывал `hide_openings: true`. Поэтому дверь и её wall-host сохранялись в config, но на плане не рисовались. Это ровно то, что показал WS trace в #1211.\n\nПосле изменения: `scripts/sh3d-convert/easy.mjs:60-66` добавляет `show_borders: true`, если есть хотя бы одно из `rooms`, `projected.walls`, `projected.partitions`, `openings`. Разобранные пути:\n- Импорт. Поле `show_borders` есть в `_SPACE_DISPLAY_FIELDS` (`import_export.py:154-161`), поэтому сохраняется и при plan-only проекции (`_project_plan_only_space`, строки 320-326), и при полном переносе.\n- Нормализация. При `borders=True` и отсутствии `hide_openings` в settings ничего не записывается.\n- Отображение. `spaceDisplayOf` даёт `showBorders=true` и `hideOpenings=false`.\n- Уже импортированные планы. Если пользователь включит границы в настройках, условие `\"hide_openings\" in settings` на строке 2859 перезапишет флаг в `false`, так что совет в README работает.\n\nПересобраны опубликованная страница `dist/index.html` и golden-файлы. Добавлены unit-проверка через настоящий `spaceDisplayOf` (варианты с картинкой, без картинки и только с картинкой), проверка HA backend (apply и повторный export) и browser-smoke. Smoke сверяет байты скачанного со страницы файла с `convertEasy`, затем монтирует настоящую панель в режиме View и проверяет видимость `[data-hp=opening]` при первом показе и после reload.",
+          "analysis": [
+            {
+              "topic": "Место исправления и границы ответственности",
+              "assessment": "Правка сделана на правильном уровне. Дефект сидит в выходных настройках конвертера, а умолчание Houseplan «картинка = без разметки» (#945) осознанное и касается всех пространств с картинкой. Если бы правили renderer или умолчание, поменялось бы отображение у существующих пользователей. Комментарий в коде объясняет неочевидное: фон Easy — подложка, а не замена геометрии. Такой комментарий стоит сохранить.",
+              "evidence": "`scripts/sh3d-convert/easy.mjs:60-66`; `src/logic.ts:1390,1413`; `custom_components/houseplan/validation.py:2856-2861`."
+            },
+            {
+              "topic": "Условие включения флага",
+              "assessment": "Флаг выставляется только при наличии геометрии или проёмов, поэтому этаж с одной картинкой сохраняет обычное поведение, как требует issue. Если картинки нет, явное `true` совпадает с умолчанием `noPlan`, и видимое поведение не меняется. Цена — лишний ключ в golden-файлах, что приемлемо. В условие входят и комнаты без стен: Easy-areas тоже являются переносимой векторной разметкой, так что их показ поверх картинки логичен и согласуется с формулировкой issue «переносимая векторная геометрия».",
+              "evidence": "Golden-файлы `easy-content.space-1.json` и `easy-public-demo.space-2.json` получили `\"show_borders\": true`. Unit-тест `test/converter-consumers.test.mjs` для `imageOnly` проверяет `showBorders=false` и `hideOpenings=true`."
+            },
+            {
+              "topic": "Сквозной путь через импорт",
+              "assessment": "Импорт не теряет флаг ни в полном, ни в plan-only режиме. Нормализация на бэкенде при `show_borders=true` не создаёт `hide_openings`. Новая проверка в `tests_backend/test_ha_easy_floorplan_convert.py` касается и материализованного config, и повторного export, поэтому закрывает именно то звено, где в #1211 появлялось `hide_openings: true`.",
+              "evidence": "`import_export.py:154-161,320-326`; `tests_backend/test_ha_easy_floorplan_convert.py` — добавленные assert `copied[\"settings\"][\"show_borders\"] is True` и `.get(\"hide_openings\") is not True`."
+            },
+            {
+              "topic": "Проверка опубликованных байтов и настоящего consumer",
+              "assessment": "`demo/smoke_easy_converter_openings.mjs` проходит путь, близкий к пользовательскому: страница из `dist/index.html` без сети, вставка fixture, скачивание, `deepEqual` с `convertEasy`, монтирование настоящей `houseplan-panel` в режиме View, проверка видимости символа двери, сохранения host и отсутствия orphan, затем reload. `deepEqual` заодно гарантирует, что пересобранная страница совпадает с исходником. Транспорт в smoke синтетический, это честно указано в комментарии файла. Персистентность проверяет отдельный backend-тест.",
+              "evidence": "`demo/smoke_easy_converter_openings.mjs:13-61`."
+            },
+            {
+              "topic": "Документация и миграция ранее импортированных планов",
+              "assessment": "README точно описывает ручное восстановление: геометрия и host сохранены, достаточно включить границы. Это подтверждается кодом нормализации (строка 2859 перезаписывает `hide_openings` по `show_borders`). Автоматическая миграция старых импортов не предусмотрена — так решил владелец в issue.",
+              "evidence": "`scripts/sh3d-convert/README.md:89-95`; `validation.py:2859-2860`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Новый `demo/smoke_easy_converter_openings.mjs` нигде не зарегистрирован: в каталоге smoke-проверок (`process-next/catalog/inventory.json`) и в README конвертера его нет, тогда как соседний `smoke_plan_converter.mjs` указан и там, и там. Если этот smoke должен запускаться при будущих правках конвертера, стоит добавить его в README рядом с `node demo/smoke_plan_converter.mjs` (строка 111) или в соответствующий реестр. Тогда запуск не будет зависеть от памяти исполнителя. Цена — одна строка."
+          ],
+          "boundaries": "Сборку, тесты и smoke я не запускал (S7). Использована квитанция S6 `20261102T142625709-9e14969f` («Тесты для задачи #1211 (перед ревью)», status passed, материал `a006eb43…`). Её состав по снимку не виден, поэтому я не могу подтвердить, что в неё входили именно новый browser-smoke и backend-тест. По исходникам изучено: `scripts/sh3d-convert/easy.mjs` (функция `convertEasy` целиком), `spaceDisplayOf` в `src/logic.ts`, `normalize_space_display` в `validation.py`, проекция plan-only и whitelist полей в `import_export.py`, diff тестов и golden-файлов. Минифицированный `dist/index.html` целиком не читал: его соответствие исходнику держится на `deepEqual` в smoke и на пересборке. Внешнюю публикацию houseplan.tech и настоящий HA-прогон #1179 проверить невозможно."
+        },
+        "usage": {
+          "input_tokens": 34,
+          "cache_creation_input_tokens": 101140,
+          "cache_read_input_tokens": 1262433,
+          "output_tokens": 7766,
+          "output_tokens_details": {
+            "thinking_tokens": 1744
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 101140,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 855,
+              "cache_read_input_tokens": 95039,
+              "cache_creation_input_tokens": 10271,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 10271
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление адресное и подходит для задачи. Easy-конвертер теперь явно записывает `settings.show_borders: true`, если в этаже есть векторная геометрия или проёмы: комнаты, стены, перегородки или openings. Импорт сохраняет этот флаг в обоих режимах переноса. `normalize_space_display` после этого не записывает `hide_openings: true`, а `spaceDisplayOf` показывает и границы, и символы дверей поверх фоновой картинки. У плана, где есть только картинка, флага нет, и поведение по умолчанию прежнее. Общий renderer и существующие пользовательские настройки не затронуты. Блокеров нет.\n\n## Понимание решения\n\nДо изменения: Easy-конвертер записывал в space `plan_url` фоновой картинки, а `settings.show_borders` не задавал. В Houseplan `show_borders` по умолчанию равно `!plan_url` (`src/logic.ts:1390`), и `hideOpenings` выводится из этого же значения (`src/logic.ts:1413`, решение #945). Бэкенд `normalize_space_display` (`custom_components/houseplan/validation.py:2850-2861`) при отсутствии флага и наличии картинки записывал `hide_openings: true`. Поэтому дверь и её wall-host сохранялись в config, но на плане не рисовались. Это ровно то, что показал WS trace в #1211.\n\nПосле изменения: `scripts/sh3d-convert/easy.mjs:60-66` добавляет `show_borders: true`, если есть хотя бы одно из `rooms`, `projected.walls`, `projected.partitions`, `openings`. Разобранные пути:\n- Импорт. Поле `show_borders` есть в `_SPACE_DISPLAY_FIELDS` (`import_export.py:154-161`), поэтому сохраняется и при plan-only проекции (`_project_plan_only_space`, строки 320-326), и при полном переносе.\n- Нормализация. При `borders=True` и отсутствии `hide_openings` в settings ничего не записывается.\n- Отображение. `spaceDisplayOf` даёт `showBorders=true` и `hideOpenings=false`.\n- Уже импортированные планы. Если пользователь включит границы в настройках, условие `\"hide_openings\" in settings` на строке 2859 перезапишет флаг в `false`, так что совет в README работает.\n\nПересобраны опубликованная страница `dist/index.html` и golden-файлы. Добавлены unit-проверка через настоящий `spaceDisplayOf` (варианты с картинкой, без картинки и только с картинкой), проверка HA backend (apply и повторный export) и browser-smoke. Smoke сверяет байты скачанного со страницы файла с `convertEasy`, затем монтирует настоящую панель в режиме View и проверяет видимость `[data-hp=opening]` при первом показе и после reload.\n\n## Разбор решения\n\n### Место исправления и границы ответственности\n\nПравка сделана на правильном уровне. Дефект сидит в выходных настройках конвертера, а умолчание Houseplan «картинка = без разметки» (#945) осознанное и касается всех пространств с картинкой. Если бы правили renderer или умолчание, поменялось бы отображение у существующих пользователей. Комментарий в коде объясняет неочевидное: фон Easy — подложка, а не замена геометрии. Такой комментарий стоит сохранить.\n\nОснование: `scripts/sh3d-convert/easy.mjs:60-66`; `src/logic.ts:1390,1413`; `custom_components/houseplan/validation.py:2856-2861`.\n\n### Условие включения флага\n\nФлаг выставляется только при наличии геометрии или проёмов, поэтому этаж с одной картинкой сохраняет обычное поведение, как требует issue. Если картинки нет, явное `true` совпадает с умолчанием `noPlan`, и видимое поведение не меняется. Цена — лишний ключ в golden-файлах, что приемлемо. В условие входят и комнаты без стен: Easy-areas тоже являются переносимой векторной разметкой, так что их показ поверх картинки логичен и согласуется с формулировкой issue «переносимая векторная геометрия».\n\nОснование: Golden-файлы `easy-content.space-1.json` и `easy-public-demo.space-2.json` получили `\"show_borders\": true`. Unit-тест `test/converter-consumers.test.mjs` для `imageOnly` проверяет `showBorders=false` и `hideOpenings=true`.\n\n### Сквозной путь через импорт\n\nИмпорт не теряет флаг ни в полном, ни в plan-only режиме. Нормализация на бэкенде при `show_borders=true` не создаёт `hide_openings`. Новая проверка в `tests_backend/test_ha_easy_floorplan_convert.py` касается и материализованного config, и повторного export, поэтому закрывает именно то звено, где в #1211 появлялось `hide_openings: true`.\n\nОснование: `import_export.py:154-161,320-326`; `tests_backend/test_ha_easy_floorplan_convert.py` — добавленные assert `copied[\"settings\"][\"show_borders\"] is True` и `.get(\"hide_openings\") is not True`.\n\n### Проверка опубликованных байтов и настоящего consumer\n\n`demo/smoke_easy_converter_openings.mjs` проходит путь, близкий к пользовательскому: страница из `dist/index.html` без сети, вставка fixture, скачивание, `deepEqual` с `convertEasy`, монтирование настоящей `houseplan-panel` в режиме View, проверка видимости символа двери, сохранения host и отсутствия orphan, затем reload. `deepEqual` заодно гарантирует, что пересобранная страница совпадает с исходником. Транспорт в smoke синтетический, это честно указано в комментарии файла. Персистентность проверяет отдельный backend-тест.\n\nОснование: `demo/smoke_easy_converter_openings.mjs:13-61`.\n\n### Документация и миграция ранее импортированных планов\n\nREADME точно описывает ручное восстановление: геометрия и host сохранены, достаточно включить границы. Это подтверждается кодом нормализации (строка 2859 перезаписывает `hide_openings` по `show_borders`). Автоматическая миграция старых импортов не предусмотрена — так решил владелец в issue.\n\nОснование: `scripts/sh3d-convert/README.md:89-95`; `validation.py:2859-2860`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Новый `demo/smoke_easy_converter_openings.mjs` нигде не зарегистрирован: в каталоге smoke-проверок (`process-next/catalog/inventory.json`) и в README конвертера его нет, тогда как соседний `smoke_plan_converter.mjs` указан и там, и там. Если этот smoke должен запускаться при будущих правках конвертера, стоит добавить его в README рядом с `node demo/smoke_plan_converter.mjs` (строка 111) или в соответствующий реестр. Тогда запуск не будет зависеть от памяти исполнителя. Цена — одна строка.\n\n## Границы анализа\n\nСборку, тесты и smoke я не запускал (S7). Использована квитанция S6 `20261102T142625709-9e14969f` («Тесты для задачи #1211 (перед ревью)», status passed, материал `a006eb43…`). Её состав по снимку не виден, поэтому я не могу подтвердить, что в неё входили именно новый browser-smoke и backend-тест. По исходникам изучено: `scripts/sh3d-convert/easy.mjs` (функция `convertEasy` целиком), `spaceDisplayOf` в `src/logic.ts`, `normalize_space_display` в `validation.py`, проекция plan-only и whitelist полей в `import_export.py`, diff тестов и golden-файлов. Минифицированный `dist/index.html` целиком не читал: его соответствие исходнику держится на `deepEqual` в smoke и на пересборке. Внешнюю публикацию houseplan.tech и настоящий HA-прогон #1179 проверить невозможно.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c356cd6c04a2b64bf151f1337f1de218abceb21b → a006eb434f26caa0c061dba200c3f1cfd14e2a95\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-02T14:29:21.361Z",
+        "artifactId": 13150471240,
+        "runId": 41462009034,
+        "runAttempt": 1,
+        "completedAt": "2026-11-02T14:29:26Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41462009034",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "c356cd6c04a2b64bf151f1337f1de218abceb21b"
       }
     }
   },
@@ -1095,9 +1197,9 @@
     "fence": 66,
     "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
     "expectedBase": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793629576317,
-    "expiresAt": 1793633193723,
+    "expiresAt": 1793633406992,
     "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162",
     "reviewRequest": "review:1211:1:ad262ee83a8e2d2268d821adac050806a9eb2162:c356cd6c04a2b64bf151f1337f1de218abceb21b"
   },
@@ -1168,6 +1270,10 @@
     },
     "github:41462439988:1:tick:0:review-presentation": {
       "digest": "67546f9607efd87e31b71eec550eab83d2e9daa36065d8d48a8ecbc4ef845501",
+      "issue": 1211
+    },
+    "github:41462439988:1:tick:0:review-complete": {
+      "digest": "a9b6ca89f599d05337414ab679f71979bc7a811e5831f281af78f96d25a1a273",
       "issue": 1211
     },
     "finish:41ecc90c-d976-4f12-8e06-a473b432446c": {
