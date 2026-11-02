@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 718,
+  "revision": 719,
   "nextTicket": 62,
   "nextFence": 62,
   "tasks": {
@@ -904,6 +904,93 @@
         "materialSha": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
         "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
         "patchId": "0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1207,
+        "requestId": "review:1207:3:0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da:efa1b130fc69da8277de8bb013b08ea65b581010",
+        "kind": "code",
+        "base": "efa1b130fc69da8277de8bb013b08ea65b581010",
+        "materialSha": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
+        "patchId": "0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1207,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1207",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Актуализация после accepted S7 раунда 2 (workflow41449220384): продуктовый код принят на 5470c0e64. Единственная последующая разница e0b0889c9 — одна строка в smoke_mode_transition.mjs: waitForFunction(!card._reducedMotion) перед hiddenProjectionRecovery. Она явно исключает vacuous pass при ещё включённом reduced motion. Продукт, ТЗ и остальные проверки не изменены. Предыдущий локальный finish был прерван, но admission оставался на 5470; merge отказался «Remote refs changed before merge». Собственный admission штатно возвращён, метка S6 восстановлена и новый finish синхронизирует e0b0889c9. Прежний accepted review и успешный S6 сохранены, обхода очереди нет.\n\n\nПовторный S7 после [раунда 1](https://github.com/Matysh/houseplan-card/actions/runs/41446938792). Единственный блокер: при нулевой stage мог оставаться projection crossing. Исправлено: crossing создаётся только при наличии fromVisual; неактуальная подготовка очищается общим cancel; settle/cancel сбрасывают opacity. Новый smoke действительно скрывает карточку (clientWidth=0, visual=null), переключает plan/view, показывает и подтверждает новое серверное имя в реальном DOM. Прогон прошёл в обоих направлениях; добавлен и прошёл iso при повороте 90°.\n\nЗаодно снята прямая запись Properties.inert=false (состоянием владеет Lit binding), устранено дублирование красок outlined/yard через общие CSS токены, убран синхронный refresh тоста из кадров — работает существующий ResizeObserver. Эти правки не расширяют ТЗ. Остальные предложения первого ревью — неблокирующие; рефакторинг побочного эффекта frame и гипотеза промежуточного числового ввода не выдаются за выполненные. Визуал активных/свободных snap-preview следует единообразному размеру UI-005.\n\nПредыдущий S6: 13/13, 151 критичных и 38 адресных unit, 93 секунды. Повторный finish выполнит применимую финальную выборку на исправленном SHA. Performance/HA evidence первого раунда сохраняется с явной границей применимости в docs/evidence/1207/README.md; новых цифр FPS не заявляется. Предыдущий отчёт и история не редактируются.\n\n\nРеализация UI-001–UI-019 готова к финальному S6 в общей очереди и S7. S4 раунд 2 принят (workflow41432045581); полное ТЗ и уточнения камеры сохранены выше без изменения. Закреплённый пакет5529ab77 сохранён; прототип запущен с официальным ZIP beta.2 и проверками SHA256/source, кандидат отдельно — без прототипных overrides в продукте.\n\n<details>\n<summary>Решение, фактические проверки и ограничения</summary>\n\nОбщие владельцы: unitInput для ограниченных полей и суффикса, shared selection-list для hp-settings-select/sourcePicker, navigation/tooltips/motion tokens, ToastPresentation с приоритетом и scoped hints, wallNodeRadius для статических/активных/свободных preview узлов, общий opening-symbol для дуги двери. Название карточки скрыто, сохранённое поле продолжает работать для PDF; grid shell использует тему HA.\n\nКамера сохраняет физический PPU и логический центр при смене режима и росте frame. Удерживаемый RenderDeviceSnapshot связан именно со своим layout, поэтому первый render после роста не запаздывает. Положительный сохранённый zoom вне старых границ восстанавливается; последующие команды непрерывны, Fit явный. Выход сохраняет текущий рабочий zoom текущего этажа, редакторские жесты отдельно не пишут View preference. Прежний _viewModeSnap отменён этим принятым контрактом.\n\nModeTransitionController строит конечные сцены/компоновку перед движением; RAF пишет presentation/live viewport, fixed raster предотвращает покадровое изменение размеров объектов. Properties и header используют общую timeline220ms; iso удерживает настоящую старую Lit-сцену до атомарной смены проекции в середине fade. Нет DOM-клонов или новых prototype/private hooks в продукте. Реальная room-fill regression выявила вторую CSS-анимацию после timeline: конечная заливка коммитится без повторного затемнения, обычная анимация смены состояния остаётся.\n\nОсобое внимание: rebase/cancel/rapid retarget, нулевая геометрия, reduced motion, snapshot layout/frame lifetime, ISO commit и согласование canonical camera с fixed raster. Тексты/иконки должны сохранять экранный масштаб; отдельная прежняя компенсация ширины View для подписей комнат снята.\n\nФактические материалы: docs/evidence/1207/README.md, сырые motion-base.json/motion-final.json, парные снимки прототипа/кандидата в одинаковом fixture/языке/темах/viewport и настоящий HA Sections. Sections: grid500px, четыре комнаты, title отсутствует, shell/header top80 совпадает, bottom712 совпадает, тема24→4px, page errors[]. Лаборатория изолирована, конфигурация/план через API, токены не публикуются.\n\nАдресные browser проверки прошли для полей/узлов/hover/тостов, четырёх поворотов роста frame, rapid motion без full render на кадрах, iso wide/narrow/reduced, fallback/redaction, непрерывного reload zoom24 и Fit, сохранения камер по этажам, sourcePicker15строк со scroll, shared select, modal-toast и responsive header. Финальные обязательные данные/права/startup и выбранная область запускаются finish; их фактический отчёт будет приложен процессом.\n\nНа больших планах среднее полных render flat14.4→3.2, iso9.5→3.9; header2измерения на переход. Это не обещание ускорения всех переходов: первый видимый сдвиг flat55.9→89.9ms, iso77.1→79.6ms; максимальный gap132.9/179.4ms. Стабильные60FPS не подтверждены; iso раньше был атомарным без новогоfade. Сырые серии сохранены, новый hard gate не вводится.\n\nСтарый smoke_plan_snap_overlay.mjs диагностически падает на null.compareDocumentPosition также на неизменённой базеefa1; он не правился, актуальные preview проверяет новый адресный smoke. Старые lint:unused/hostRefs/bundle-budget не являются S6 текущего PROCESS. Полные golden/релизный HA E2E не запускались: E2E impact «надо» записан в https://github.com/Matysh/houseplan-e2e/issues/6 до следующей беты. Выпуск этой задачей не запрошен.\n\n</details>"
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Работу можно принимать. Продуктовый код между принятым во втором раунде материалом 5470c0e и текущим head e0b0889 не менялся. `git_log` по `src` показывает последний коммит 5470c0e, следующих изменений продукта нет. Коммит e0b0889 добавляет одну строку в `demo/smoke_mode_transition.mjs`: перед проверкой `hiddenProjectionRecovery` стоит `await page.waitForFunction(()=>!window.__card._reducedMotion)`. Правка делает адресную проверку строже. Раньше, если карточка ещё не получила событие смены `prefers-reduced-motion` после выключения эмуляции, сценарий мог пройти по атомарной ветке, ничего не доказав. Теперь он гарантированно идёт с включённой анимацией. Новых рисков правка не создаёт. Вывод второго раунда сохраняется: блокер о «залипшем» projection crossing при нулевой stage устранён в самом механизме, новых блокеров нет. Квитанция S6 на e0b0889 — passed.",
+          "understanding": "Это повторная подача после принятого второго раунда (workflow 41449220384, материал 5470c0e). Слияние не прошло по процессной причине («Remote refs changed before merge»): после допуска появился тестовый коммит e0b0889. Содержание задачи (UI-001–UI-019, физическая камера, переходы режимов, общие механизмы UI Kit) разобрано в раундах 1 и 2, и прежний анализ я не повторяю.\n\nЧто проверено в этом раунде:\n1. `git_log` по каталогу `src`: последний коммит — 5470c0e. Продуктовый код в e0b0889 не менялся.\n2. `git_log` по `demo/smoke_mode_transition.mjs`: e0b0889 меняет этот файл.\n3. Сравнение файла в 5470c0e (строки 99–101) и в head: добавлена только строка `await page.waitForFunction(()=>!window.__card._reducedMotion);` после `page.emulateMedia({reducedMotion:'no-preference'})`.\n4. Флаг `_reducedMotion` на самом деле обновляется: в `src/houseplan-card.ts:1307-1310` есть поле и обработчик `change` у media query, в `:3107` — инициализация при подключении. Значит, ожидание опирается на реальное состояние продукта, а не на тестовую подмену. Если событие не придёт, тест упадёт по таймауту, а не пройдёт впустую.",
+          "analysis": [
+            {
+              "topic": "Разница e0b0889 относительно принятого 5470c0e",
+              "assessment": "Изменение касается только теста и делает его строже. Перед ним идёт цикл `isoReduced`, где включена эмуляция reduced motion. После `emulateMedia('no-preference')` обработчик `change` может сработать не сразу. Если бы `hiddenProjectionRecovery` начался при `_reducedMotion === true`, crossing не возник бы и при старом коде, и проверка не воспроизвела бы исходный дефект. Ожидание снимает эту неоднозначность. Поведение продукта не меняется.",
+              "evidence": "`demo/smoke_mode_transition.mjs`: в 5470c0e строки 99–101 без ожидания, в head добавлена строка после `emulateMedia`; `src/houseplan-card.ts:1307-1310, 3107` (источник `_reducedMotion`)."
+            },
+            {
+              "topic": "Неизменность продукта после принятого ревью",
+              "assessment": "Вывод второго раунда остаётся в силе. Crossing создаётся только при измеренном `fromVisual`, ранние выходы подготовки проходят через общий `_cancelModeTransition(false)`, settle и cancel сбрасывают opacity. Пересматривать продуктовую часть нет оснований.",
+              "evidence": "`git_log` по `src`: верхний коммит 5470c0e64efb0ed34973013575b86c4e3b27567c; отчёт второго раунда (run 41449220384)."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Необязательные предложения второго раунда остаются в силе, исполнитель их сознательно отложил. Первое: вынести rebase камеры и `_saveZoom()` из мемоизирующего `_frameOf` в явный шаг. Второе: проверить в Chromium и Firefox ввод «12.» → «5» в `unitInput.maxCharacters`. Третье: в `isoRotated` сравнивать на кадрах fade не только масштаб (ppu), но и центр камеры."
+          ],
+          "boundaries": "Ревью сделано только по исходникам. Сборку, тесты и smoke я не запускал. Использована квитанция S6 `20261102T130608882-657011ed` на e0b0889 со статусом passed и пустым списком failures. Состав набора в квитанции не раскрыт, поэтому прохождение `hiddenProjectionRecovery` с новым ожиданием известно только из описания исполнителя. Инструмент не показывает diff между двумя коммитами, поэтому неизменность продукта установлена по истории коммитов для каталога `src`, а изменение теста — сравнением фрагментов файла в двух версиях. Остальная реализация в этом раунде заново не читалась: я опирался на разбор раундов 1 и 2. Доказательства по производительности и HA Sections не обновлялись."
+        },
+        "usage": {
+          "input_tokens": 12,
+          "cache_creation_input_tokens": 127941,
+          "cache_read_input_tokens": 620081,
+          "output_tokens": 3164,
+          "output_tokens_details": {
+            "thinking_tokens": 278
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 127941,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 486,
+              "cache_read_input_tokens": 127201,
+              "cache_creation_input_tokens": 4910,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 4910
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать. Продуктовый код между принятым во втором раунде материалом 5470c0e и текущим head e0b0889 не менялся. `git_log` по `src` показывает последний коммит 5470c0e, следующих изменений продукта нет. Коммит e0b0889 добавляет одну строку в `demo/smoke_mode_transition.mjs`: перед проверкой `hiddenProjectionRecovery` стоит `await page.waitForFunction(()=>!window.__card._reducedMotion)`. Правка делает адресную проверку строже. Раньше, если карточка ещё не получила событие смены `prefers-reduced-motion` после выключения эмуляции, сценарий мог пройти по атомарной ветке, ничего не доказав. Теперь он гарантированно идёт с включённой анимацией. Новых рисков правка не создаёт. Вывод второго раунда сохраняется: блокер о «залипшем» projection crossing при нулевой stage устранён в самом механизме, новых блокеров нет. Квитанция S6 на e0b0889 — passed.\n\n## Понимание решения\n\nЭто повторная подача после принятого второго раунда (workflow 41449220384, материал 5470c0e). Слияние не прошло по процессной причине («Remote refs changed before merge»): после допуска появился тестовый коммит e0b0889. Содержание задачи (UI-001–UI-019, физическая камера, переходы режимов, общие механизмы UI Kit) разобрано в раундах 1 и 2, и прежний анализ я не повторяю.\n\nЧто проверено в этом раунде:\n1. `git_log` по каталогу `src`: последний коммит — 5470c0e. Продуктовый код в e0b0889 не менялся.\n2. `git_log` по `demo/smoke_mode_transition.mjs`: e0b0889 меняет этот файл.\n3. Сравнение файла в 5470c0e (строки 99–101) и в head: добавлена только строка `await page.waitForFunction(()=>!window.__card._reducedMotion);` после `page.emulateMedia({reducedMotion:'no-preference'})`.\n4. Флаг `_reducedMotion` на самом деле обновляется: в `src/houseplan-card.ts:1307-1310` есть поле и обработчик `change` у media query, в `:3107` — инициализация при подключении. Значит, ожидание опирается на реальное состояние продукта, а не на тестовую подмену. Если событие не придёт, тест упадёт по таймауту, а не пройдёт впустую.\n\n## Разбор решения\n\n### Разница e0b0889 относительно принятого 5470c0e\n\nИзменение касается только теста и делает его строже. Перед ним идёт цикл `isoReduced`, где включена эмуляция reduced motion. После `emulateMedia('no-preference')` обработчик `change` может сработать не сразу. Если бы `hiddenProjectionRecovery` начался при `_reducedMotion === true`, crossing не возник бы и при старом коде, и проверка не воспроизвела бы исходный дефект. Ожидание снимает эту неоднозначность. Поведение продукта не меняется.\n\nОснование: `demo/smoke_mode_transition.mjs`: в 5470c0e строки 99–101 без ожидания, в head добавлена строка после `emulateMedia`; `src/houseplan-card.ts:1307-1310, 3107` (источник `_reducedMotion`).\n\n### Неизменность продукта после принятого ревью\n\nВывод второго раунда остаётся в силе. Crossing создаётся только при измеренном `fromVisual`, ранние выходы подготовки проходят через общий `_cancelModeTransition(false)`, settle и cancel сбрасывают opacity. Пересматривать продуктовую часть нет оснований.\n\nОснование: `git_log` по `src`: верхний коммит 5470c0e64efb0ed34973013575b86c4e3b27567c; отчёт второго раунда (run 41449220384).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательные предложения второго раунда остаются в силе, исполнитель их сознательно отложил. Первое: вынести rebase камеры и `_saveZoom()` из мемоизирующего `_frameOf` в явный шаг. Второе: проверить в Chromium и Firefox ввод «12.» → «5» в `unitInput.maxCharacters`. Третье: в `isoRotated` сравнивать на кадрах fade не только масштаб (ppu), но и центр камеры.\n\n## Границы анализа\n\nРевью сделано только по исходникам. Сборку, тесты и smoke я не запускал. Использована квитанция S6 `20261102T130608882-657011ed` на e0b0889 со статусом passed и пустым списком failures. Состав набора в квитанции не раскрыт, поэтому прохождение `hiddenProjectionRecovery` с новым ожиданием известно только из описания исполнителя. Инструмент не показывает diff между двумя коммитами, поэтому неизменность продукта установлена по истории коммитов для каталога `src`, а изменение теста — сравнением фрагментов файла в двух версиях. Остальная реализация в этом раунде заново не читалась: я опирался на разбор раундов 1 и 2. Доказательства по производительности и HA Sections не обновлялись.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: efa1b130fc69da8277de8bb013b08ea65b581010 → e0b0889c95420f8c05fc3f95762f0e03f390885b\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1207, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nАктуализация после accepted S7 раунда 2 (workflow41449220384): продуктовый код принят на 5470c0e64. Единственная последующая разница e0b0889c9 — одна строка в smoke_mode_transition.mjs: waitForFunction(!card._reducedMotion) перед hiddenProjectionRecovery. Она явно исключает vacuous pass при ещё включённом reduced motion. Продукт, ТЗ и остальные проверки не изменены. Предыдущий локальный finish был прерван, но admission оставался на 5470; merge отказался «Remote refs changed before merge». Собственный admission штатно возвращён, метка S6 восстановлена и новый finish синхронизирует e0b0889c9. Прежний accepted review и успешный S6 сохранены, обхода очереди нет.\n\n\nПовторный S7 после [раунда 1](https://github.com/Matysh/houseplan-card/actions/runs/41446938792). Единственный блокер: при нулевой stage мог оставаться projection crossing. Исправлено: crossing создаётся только при наличии fromVisual; неактуальная подготовка очищается общим cancel; settle/cancel сбрасывают opacity. Новый smoke действительно скрывает карточку (clientWidth=0, visual=null), переключает plan/view, показывает и подтверждает новое серверное имя в реальном DOM. Прогон прошёл в обоих направлениях; добавлен и прошёл iso при повороте 90°.\n\nЗаодно снята прямая запись Properties.inert=false (состоянием владеет Lit binding), устранено дублирование красок outlined/yard через общие CSS токены, убран синхронный refresh тоста из кадров — работает существующий ResizeObserver. Эти правки не расширяют ТЗ. Остальные предложения первого ревью — неблокирующие; рефакторинг побочного эффекта frame и гипотеза промежуточного числового ввода не выдаются за выполненные. Визуал активных/свободных snap-preview следует единообразному размеру UI-005.\n\nПредыдущий S6: 13/13, 151 критичных и 38 адресных unit, 93 секунды. Повторный finish выполнит применимую финальную выборку на исправленном SHA. Performance/HA evidence первого раунда сохраняется с явной границей применимости в docs/evidence/1207/README.md; новых цифр FPS не заявляется. Предыдущий отчёт и история не редактируются.\n\n\nРеализация UI-001–UI-019 готова к финальному S6 в общей очереди и S7. S4 раунд 2 принят (workflow41432045581); полное ТЗ и уточнения камеры сохранены выше без изменения. Закреплённый пакет5529ab77 сохранён; прототип запущен с официальным ZIP beta.2 и проверками SHA256/source, кандидат отдельно — без прототипных overrides в продукте.\n\n<details>\n<summary>Решение, фактические проверки и ограничения</summary>\n\nОбщие владельцы: unitInput для ограниченных полей и суффикса, shared selection-list для hp-settings-select/sourcePicker, navigation/tooltips/motion tokens, ToastPresentation с приоритетом и scoped hints, wallNodeRadius для статических/активных/свободных preview узлов, общий opening-symbol для дуги двери. Название карточки скрыто, сохранённое поле продолжает работать для PDF; grid shell использует тему HA.\n\nКамера сохраняет физический PPU и логический центр при смене режима и росте frame. Удерживаемый RenderDeviceSnapshot связан именно со своим layout, поэтому первый render после роста не запаздывает. Положительный сохранённый zoom вне старых границ восстанавливается; последующие команды непрерывны, Fit явный. Выход сохраняет текущий рабочий zoom текущего этажа, редакторские жесты отдельно не пишут View preference. Прежний _viewModeSnap отменён этим принятым контрактом.\n\nModeTransitionController строит конечные сцены/компоновку перед движением; RAF пишет presentation/live viewport, fixed raster предотвращает покадровое изменение размеров объектов. Properties и header используют общую timeline220ms; iso удерживает настоящую старую Lit-сцену до атомарной смены проекции в середине fade. Нет DOM-клонов или новых prototype/private hooks в продукте. Реальная room-fill regression выявила вторую CSS-анимацию после timeline: конечная заливка коммитится без повторного затемнения, обычная анимация смены состояния остаётся.\n\nОсобое внимание: rebase/cancel/rapid retarget, нулевая геометрия, reduced motion, snapshot layout/frame lifetime, ISO commit и согласование canonical camera с fixed raster. Тексты/иконки должны сохранять экранный масштаб; отдельная прежняя компенсация ширины View для подписей комнат снята.\n\nФактические материалы: docs/evidence/1207/README.md, сырые motion-base.json/motion-final.json, парные снимки прототипа/кандидата в одинаковом fixture/языке/темах/viewport и настоящий HA Sections. Sections: grid500px, четыре комнаты, title отсутствует, shell/header top80 совпадает, bottom712 совпадает, тема24→4px, page errors[]. Лаборатория изолирована, конфигурация/план через API, токены не публикуются.\n\nАдресные browser проверки прошли для полей/узлов/hover/тостов, четырёх поворотов роста frame, rapid motion без full render на кадрах, iso wide/narrow/reduced, fallback/redaction, непрерывного reload zoom24 и Fit, сохранения камер по этажам, sourcePicker15строк со scroll, shared select, modal-toast и responsive header. Финальные обязательные данные/права/startup и выбранная область запускаются finish; их фактический отчёт будет приложен процессом.\n\nНа больших планах среднее полных render flat14.4→3.2, iso9.5→3.9; header2измерения на переход. Это не обещание ускорения всех переходов: первый видимый сдвиг flat55.9→89.9ms, iso77.1→79.6ms; максимальный gap132.9/179.4ms. Стабильные60FPS не подтверждены; iso раньше был атомарным без новогоfade. Сырые серии сохранены, новый hard gate не вводится.\n\nСтарый smoke_plan_snap_overlay.mjs диагностически падает на null.compareDocumentPosition также на неизменённой базеefa1; он не правился, актуальные preview проверяет новый адресный smoke. Старые lint:unused/hostRefs/bundle-budget не являются S6 текущего PROCESS. Полные golden/релизный HA E2E не запускались: E2E impact «надо» записан в https://github.com/Matysh/houseplan-e2e/issues/6 до следующей беты. Выпуск этой задачей не запрошен.\n\n</details>\n```\n\n</details>\n",
+        "createdAt": "2026-11-02T13:07:45.996Z",
+        "artifactId": 13143578929,
+        "runId": 41450110224,
+        "runAttempt": 1,
+        "completedAt": "2026-11-02T13:07:51Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41450110224",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010"
       }
     },
     "1208": {
@@ -1031,9 +1118,9 @@
     "fence": 61,
     "materialSha": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
     "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793624758474,
-    "expiresAt": 1793628373588,
+    "expiresAt": 1793628500067,
     "patchId": "0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da",
     "reviewRequest": "review:1207:3:0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da:efa1b130fc69da8277de8bb013b08ea65b581010"
   },
@@ -1212,6 +1299,10 @@
     },
     "github:41450314845:1:tick:0:review-presentation": {
       "digest": "81928ba190677d6e1df5b749afb05e245e9a048de78f394c0bf7b5598439184d",
+      "issue": 1207
+    },
+    "github:41450314845:1:tick:0:review-complete": {
+      "digest": "9b9bc37dad96965533ba2126578b3a215b99cb9d9860de86c2f6d78052d20d1b",
       "issue": 1207
     },
     "finish:eb71ba1e-123c-44e7-a0c1-a8a26968b0e5": {
