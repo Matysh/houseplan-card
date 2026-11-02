@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 21,
+  "revision": 22,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -1086,6 +1086,17 @@
         "tag": "v1.84.0-beta.1",
         "branch": "release/v1.84.0-beta.1",
         "runner": null
+      },
+      "delivery": {
+        "status": "verified",
+        "attempts": 1,
+        "discoveryAvailable": true,
+        "source": "github-release-feed",
+        "tag": "v1.84.0-beta.2",
+        "artifactDigest": "c4b235255a957e40f42c7e93c56b06548411d3d24eaae413ec10e47557a4accb",
+        "assetName": "houseplan.zip",
+        "bytes": 1921932,
+        "observedAt": "2026-11-02T06:18:12.249Z"
       }
     }
   },
@@ -1139,6 +1150,7 @@
     "beta1842-publish-e-20261102:metrics": "59bd4fdadf2b0d83f974ba49e4594c359631f0e537af8065d5f11d009c50c568",
     "beta1842-publish-e-20261102:prepared:772285dc-43ea-4f1e-8992-d391e0c8ba6f": "f7bb529c4bd16bed00572bc31e420296449b9a580d491b90ecd24558bf86a4ff",
     "beta1842-publish-e-20261102:started:19": "c2354f6a5503d2412c570c16c19d2b06d887689b4b1559436255a2aff05b6379",
-    "beta1842-publish-e-20261102:published": "b5c167e21e8c62b779cb39d97728df89b9736c7737c65fde6b3bb3485ba0003c"
+    "beta1842-publish-e-20261102:published": "b5c167e21e8c62b779cb39d97728df89b9736c7737c65fde6b3bb3485ba0003c",
+    "beta1842-publish-e-20261102:completion:e61b7d30-afd1-48d8-96a4-24aefdda1ecc": "15ff490263c104a6ca8c99a55013ef1f46eb7d73d70a8527edd6c0b6ad1fb6ea"
   }
 }
