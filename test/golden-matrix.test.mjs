@@ -11,6 +11,7 @@ import {
 } from '../demo/golden/matrix.mjs';
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
+import { prepareGoldenSelection } from '../process-next/catalog/golden-selection.mjs';
 
 test('#997 compact navigation has a real phone field and desktop popup scene', () => {
   const scenes = GOLDEN_SCENARIOS.filter(scene => scene.headerSpaces);
@@ -513,12 +514,22 @@ test('stepped exterior PDF golden pins the complete reconstructable dimension ch
   assert.equal(space.wall_segments.every((wall) => wall.cm === 15), true);
 });
 
+test('#1204 lighting capture explicitly owns native Fit without changing other camera intents', () => {
+  const source = GOLDEN_SCENARIOS.filter(scene => scene.nativeFitBeforeCapture);
+  const selected = prepareGoldenSelection(GOLDEN_SCENARIOS).all
+    .filter(scene => scene.nativeFitBeforeCapture);
+  assert.deepEqual(source.map(scene => scene.id), ['lighting-glow-sun-dark']);
+  assert.deepEqual(selected.map(scene => scene.id), ['panel-lighting-glow-sun-dark']);
+  assert.ok([...source, ...selected].every(scene =>
+    scene.mode === 'view' && scene.space === 'golden-lighting'));
+});
+
 test('sun-ray golden requires browser-painted light from a state-only sun entity', () => {
   const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'lighting-sun-window-state-only-dark');
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 109);
+  assert.equal(GOLDEN_MATRIX_VERSION, 110);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -1024,7 +1035,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 109);
+  assert.equal(GOLDEN_MATRIX_VERSION, 110);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',

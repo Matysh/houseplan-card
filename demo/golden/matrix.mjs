@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 109;
+export const GOLDEN_MATRIX_VERSION = 110;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1021,6 +1021,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, hideOpenings: true, showBorders: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-glow-sun-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    // #1204: judge lighting after native Fit, not incidental first auto-framing.
+    nativeFitBeforeCapture: true,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'device-value-badge-positions-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     glowEnabled: false, sunRays: false,
