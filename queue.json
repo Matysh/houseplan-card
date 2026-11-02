@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 630,
+  "revision": 631,
   "nextTicket": 58,
   "nextFence": 58,
   "tasks": {
@@ -963,32 +963,23 @@
     },
     "1208": {
       "issue": 1208,
+      "branch": "codex/review-diff-buffer",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/review-diff-buffer",
-      "materialSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 57,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793614303233,
-      "reviewEntry": 1,
-      "patchId": "fa0a2634a493e153dba2bd6a50a27d97334cb8e5",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/lib/review.mjs",
-        "process-next/test/review.test.mjs"
-      ],
-      "s6": {
-        "id": "20261102T101156075-68fe1107",
-        "name": "Тесты для задачи #1208 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1109-beta-derived-sigpipe-20261028/.git/process-next/runs/20261102T101156075-68fe1107/report.json",
-        "materialSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
-        "status": "passed",
-        "finishedAt": "2026-11-02T10:11:56.561Z",
-        "failures": []
+      "status": "S8-merged",
+      "mergedSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
+      "mergedAt": 1793614322523,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -1054,18 +1045,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1208,
-    "worker": "finish",
-    "token": "57:finish:3a8a6221-5e43-4922-9ac5-870eefab34ca:finish:1:admit",
-    "fence": 57,
-    "materialSha": "723d016df0bfe6affb2577ef2928aed4371c9d56",
-    "expectedBase": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793614306571,
-    "expiresAt": 1793617917346,
-    "patchId": "fa0a2634a493e153dba2bd6a50a27d97334cb8e5"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -1150,10 +1130,6 @@
     "github:41425814770:1:completions:notice:2d2de2f9e1b6e1abcd4054dd265e535f53a79d18b31103017b612f4b8e5c26cc": {
       "digest": "47807155cf8e3b51a37ccddb05e779cb41fc678a849fa10b8b34178980efe5f2",
       "issue": 1167
-    },
-    "finish:3a8a6221-5e43-4922-9ac5-870eefab34ca:finish:2:synchronized": {
-      "digest": "cdca0ba4a2ce8a48dfa68e4627ff4ad43964020b83019e9c8102e94e773aabf3",
-      "issue": 1208
     },
     "finish:331432e1-67ec-4338-ad70-75b51d429f4d": {
       "digest": "a9bd4543d7d005a5fad914dc2971e511ada4db1c6cfa3dcdb266b296bbbbd908",
