@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 892,
-  "nextTicket": 71,
+  "revision": 893,
+  "nextTicket": 72,
   "nextFence": 71,
   "tasks": {
     "1128": {
@@ -1106,6 +1106,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1213": {
+      "issue": 1213,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1213-profile-carousel-hold",
+      "materialSha": "edd8eed698dd5c15eef207ed05e4d3fbf111e6f6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 71,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793631898612,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1214,7 +1228,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1213
+  ],
   "active": {
     "issue": 1210,
     "worker": "github-coordinator",
@@ -1463,6 +1479,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:30df43d8-d565-4c61-afe7-2744e6e1ce50": {
+      "digest": "ce477641de9e9b6f9507bb7613376ab751b89a2d5da72c9eaf7d29e428ea2f52",
+      "issue": 1213,
+      "message": {
+        "kind": "queued",
+        "issue": 1213,
+        "at": 1793631898612,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "edd8eed698dd5c15eef207ed05e4d3fbf111e6f6"
       }
     }
   },
