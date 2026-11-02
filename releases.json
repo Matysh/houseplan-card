@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12,
+  "revision": 13,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -9,12 +9,24 @@
       "branch": "release/v1.84.0-beta.2",
       "sourceSha": "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920",
       "sha": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
-      "runner": null,
-      "running": {
-        "id": null,
-        "sha": "e567536e8ce22017eb8a156f4b5cbd3d760ea678"
+      "runner": {
+        "id": "20261102T002849455-c105a5dd",
+        "sha": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
+        "event": "beta",
+        "status": "failed",
+        "path": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/output/release-batch-20261101/ci-d/artifact/process-next/.state/runs/20261102T002849455-c105a5dd/report.json",
+        "digest": "3cd27aab320bd454ff32e93bf3918ed15b2d4e8b112e4686fa8ec06a6ffcbcf9",
+        "finishedAt": "2026-11-02T00:37:54.618Z",
+        "materialClean": true,
+        "ready": false,
+        "required": 33,
+        "failed": [
+          "golden-beta"
+        ],
+        "reused": 9
       },
-      "status": "testing",
+      "running": null,
+      "status": "results",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -453,6 +465,7 @@
     "beta1842-runner-20261101T231354149-cad0373c": "14d1fdbd335d81a9d1fa18d47cff31df6e9b680675c480d7d99d8df1bace9cc7",
     "beta1842-c-metrics-20261102": "124399d46091ddd941e2b13178c9d089d924f8bcfc8591710d29991cd9ed11f5",
     "beta1842-fixes-d-20261102": "806467d43796232f4969d6de8093ee676160a6860a21e1f9515de90541a55da6",
-    "beta1842-run-d-20261102": "79d0c7b831001e39be555321e934db40164f7a70b7ea86d9a41db69feef37687"
+    "beta1842-run-d-20261102": "79d0c7b831001e39be555321e934db40164f7a70b7ea86d9a41db69feef37687",
+    "beta1842-d-runner-20261102T002849455-c105a5dd": "c51abb8e484a7ec071438c70f98c84ed946d56817696874c3523938162d548ef"
   }
 }
