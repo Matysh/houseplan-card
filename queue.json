@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1046,
+  "revision": 1047,
   "nextTicket": 79,
   "nextFence": 79,
   "tasks": {
@@ -51,7 +51,7 @@
       "ownerDecision": null,
       "ticket": 78,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793639124501,
       "reviewEntry": 1,
       "patchId": "c1f6eca923f68b8cb37ebf0272e2b04cbcdb06e3",
@@ -98,7 +98,16 @@
         "src/styles/ui-motion.styles.ts",
         "test/fixed-floor-contract.test.mjs",
         "test/kiosk-space-navigation.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261102T170538167-d810e95e",
+        "name": "Тесты для задачи #1127 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T170538167-d810e95e/report.json",
+        "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
+        "status": "passed",
+        "finishedAt": "2026-11-02T17:06:19.543Z",
+        "failures": []
+      }
     },
     "1128": {
       "issue": 1128,
@@ -1419,9 +1428,9 @@
     "fence": 78,
     "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
     "expectedBase": "a37a0460582fc2ed38d4de92f1608082521ea94d",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793639128321,
-    "expiresAt": 1793639434685,
+    "expiresAt": 1793642780764,
     "patchId": "c1f6eca923f68b8cb37ebf0272e2b04cbcdb06e3"
   },
   "events": {
@@ -1464,6 +1473,29 @@
         "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:ac8a721c-a29f-49ae-ab7a-7b52c9397ad9:finish:3:s6-complete": {
+      "digest": "fd5574d3a9015d3c54d83d852e954705b6416cb6539b405fc9c493fa693a0d06",
+      "issue": 1127,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1127,
+        "at": 1793639180764,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
+        "phase": "review",
+        "evidence": {
+          "id": "20261102T170538167-d810e95e",
+          "name": "Тесты для задачи #1127 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T170538167-d810e95e/report.json",
+          "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
+          "status": "passed",
+          "finishedAt": "2026-11-02T17:06:19.543Z",
+          "failures": []
+        }
       }
     }
   },
