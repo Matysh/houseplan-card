@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 760,
+  "revision": 761,
   "nextTicket": 64,
   "nextFence": 64,
   "tasks": {
@@ -223,7 +223,26 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793627950102,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "f35df3bd6b558480650c5932150d9bb1f09bc287",
+      "changedFiles": [
+        ".github/workflows/process-next-fallback.yml",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/catalog/README.md",
+        "process-next/converters/README.md",
+        "process-next/converters/cases.mjs",
+        "process-next/converters/journeys.spec.mjs",
+        "process-next/converters/prepare.mjs",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/converters.mjs",
+        "process-next/lib/e2e.mjs",
+        "process-next/templates/fallback.yml",
+        "process-next/templates/prepare-fallback.mjs",
+        "process-next/test/catalog.test.mjs",
+        "process-next/test/converters.test.mjs",
+        "process-next/test/e2e.test.mjs"
+      ]
     },
     "1184": {
       "issue": 1184,
@@ -979,10 +998,11 @@
     "token": "63:finish:c20ab301-69bd-467b-8201-eb98ef8b0bd9:finish:1:admit",
     "fence": 63,
     "materialSha": "70c2c6cfcd8ee755f143890d09e8e60e9d591412",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+    "phase": "testing",
     "admittedAt": 1793627954041,
-    "expiresAt": 1793628254041
+    "expiresAt": 1793628259683,
+    "patchId": "f35df3bd6b558480650c5932150d9bb1f09bc287"
   },
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
@@ -1024,6 +1044,10 @@
     "github:41455519490:1:completions:report:21d6437d0732933f7cc9ee7de8ca0672a33535297a8f5052e8764fb255885081": {
       "digest": "5dcbbd1e4427d41ea3ba0ceed29ffec03da845e056f37a71986e66f67701e5bd",
       "issue": 1165
+    },
+    "finish:c20ab301-69bd-467b-8201-eb98ef8b0bd9:finish:2:synchronized": {
+      "digest": "3df0664485ab1867aed8dd3f80f311404160687f8898bef5b5d560ae10d6394e",
+      "issue": 1179
     },
     "finish:c20ab301-69bd-467b-8201-eb98ef8b0bd9": {
       "digest": "3254815f6d3c842d776fc6fec2e38650d2b01524df88b665df6a4af6336d41ba",
