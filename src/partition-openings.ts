@@ -1,5 +1,6 @@
 /** Pure host resolution shared by editor, renderers and backend-facing projections. */
 import { wallCmToUnits, type WallInterval } from './wall-thickness';
+import { graphOpeningRun, graphOpeningRunCenter, copyGraphOpeningRun } from './graph-opening-run';
 import type {
   OpeningCfg, PartitionCfg, PartitionOpeningHost,
 } from './types';
@@ -61,21 +62,28 @@ export function resolvePartitionOpening(
   const length = Number(opening.length) * lengthScale;
   if (!(axisLength > 1e-9) || !(length > 0) || !Number.isFinite(length))
     return { resolved: null, reason: 'invalid-length' };
-  const along = host.t * axisLength;
-  if (along - length / 2 < jambMargin - 1e-9
-      || along + length / 2 > axisLength - jambMargin + 1e-9)
-    return { resolved: null, reason: 'does-not-fit' };
   const ux = dx / axisLength, uy = dy / axisLength;
+  const metadata = graphOpeningRun(partition);
+  const run = metadata?.kind === 'partition' ? metadata : undefined;
+  const center = run ? graphOpeningRunCenter(run, host)
+    : [partition.a[0] + dx * host.t, partition.a[1] + dy * host.t] as [number, number];
+  if (!center) return { resolved: null, reason: 'invalid-position' };
+  const along = run
+    ? (center[0] - run.a[0]) * ux + (center[1] - run.a[1]) * uy : host.t * axisLength;
+  const physicalLength = run ? Math.hypot(run.b[0] - run.a[0], run.b[1] - run.a[1]) : axisLength;
+  if (along - length / 2 < jambMargin - 1e-9
+      || along + length / 2 > physicalLength - jambMargin + 1e-9)
+    return { resolved: null, reason: 'does-not-fit' };
   let angle = Math.atan2(dy, dx) * 180 / Math.PI;
   if (angle >= 90) angle -= 180;
   else if (angle < -90) angle += 180;
   return {
     reason: null,
-    resolved: {
+    resolved: copyGraphOpeningRun<ResolvedPartitionOpening>(partition, {
       opening,
       host,
       partition,
-      center: [partition.a[0] + dx * host.t, partition.a[1] + dy * host.t],
+      center,
       angle,
       length,
       depth: wallCmToUnits(partition.cm, cellCm, gridPitch),
@@ -85,7 +93,7 @@ export function resolvePartitionOpening(
         b: [partition.b[0], partition.b[1]],
         ux, uy, length: axisLength,
       },
-    },
+    }),
   };
 }
 
@@ -142,12 +150,12 @@ export function partitionOpeningCut(resolved: ResolvedPartitionOpening): {
 } {
   const { center, length, axis, host } = resolved;
   const half = length / 2;
-  return {
+  return copyGraphOpeningRun(resolved, {
     hostId: host.id,
     a: [center[0] - axis.ux * half, center[1] - axis.uy * half],
     b: [center[0] + axis.ux * half, center[1] + axis.uy * half],
     depth: resolved.depth,
-  };
+  });
 }
 
 export function partitionOpeningFace(
@@ -231,6 +239,15 @@ export function hostedOpeningIntervalsOverlap(
   const half = candidate.length / (2 * candidate.axis.length);
   const lo = candidate.t - half, hi = candidate.t + half;
   return others.some((other) => {
+    if (other.opening.id === candidate.opening.id) return false;
+    const run = graphOpeningRun(candidate), otherRun = graphOpeningRun(other);
+    if (run && otherRun) {
+      if (run.key !== otherRun.key) return false;
+      const offset = (other.center[0] - candidate.center[0]) * candidate.axis.ux
+        + (other.center[1] - candidate.center[1]) * candidate.axis.uy;
+      return Math.max(-candidate.length / 2, offset - other.length / 2)
+        < Math.min(candidate.length / 2, offset + other.length / 2) - epsilon;
+    }
     if (other.host.id !== candidate.host.id || other.opening.id === candidate.opening.id) return false;
     const otherHalf = other.length / (2 * other.axis.length);
     return Math.max(lo, other.t - otherHalf) < Math.min(hi, other.t + otherHalf) - epsilon;
