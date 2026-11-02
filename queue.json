@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1068,
+  "revision": 1069,
   "nextTicket": 80,
   "nextFence": 80,
   "tasks": {
@@ -361,7 +361,29 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793641142772,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3a38acbb055e6b8983d690559340e8768a85c025",
+      "changedFiles": [
+        "custom_components/houseplan/validation.py",
+        "demo/smoke_summary_weather.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.83.0/1174.json",
+        "src/hp-summary-weather.ts",
+        "src/styles/reading-kit.styles.ts",
+        "src/summary-panel-editor.ts",
+        "src/summary-panel-runtime-loaded.ts",
+        "src/summary-panel-style.ts",
+        "src/summary-panel.ts",
+        "src/summary-weather-i18n.ts",
+        "src/summary-weather.ts",
+        "src/types.ts",
+        "test/summary-weather.test.mjs",
+        "tests_backend/test_ha_summary_weather.py",
+        "tests_backend/test_summary_panel.py"
+      ]
     },
     "1175": {
       "issue": 1175,
@@ -1412,12 +1434,17 @@
     "token": "79:finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:1:admit",
     "fence": 79,
     "materialSha": "f90f1a700ae0187aceb9b5b46c48ffe4387a7393",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
+    "phase": "testing",
     "admittedAt": 1793641146312,
-    "expiresAt": 1793641446312
+    "expiresAt": 1793641452390,
+    "patchId": "3a38acbb055e6b8983d690559340e8768a85c025"
   },
   "events": {
+    "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:2:synchronized": {
+      "digest": "7aa718c0fb333ac26c440e62ab51397afcb7b4f5bf95bd6db3b6b5049f5c9451",
+      "issue": 1174
+    },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
       "digest": "e6a7d118227ce5255ace49438ebc48943cfd66cba68bdb0280a86c762b3984b3",
       "issue": 1174,
