@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 670,
+  "revision": 671,
   "nextTicket": 59,
   "nextFence": 59,
   "tasks": {
@@ -870,16 +870,29 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41347941567"
     },
     "1207": {
-      "requestId": "spec:1207:5190ae1b495c2fc8ad0d3209b4632ee532c0b3174f66f471ac0ff3ca8e844c52",
-      "contextDigest": "5190ae1b495c2fc8ad0d3209b4632ee532c0b3174f66f471ac0ff3ca8e844c52",
+      "requestId": "spec:1207:433f8517abcb230b200708cc09b9b5d22ee333a2b8882cb48fed6b61d7faa4e3",
+      "contextDigest": "433f8517abcb230b200708cc09b9b5d22ee333a2b8882cb48fed6b61d7faa4e3",
       "base": "efa1b130fc69da8277de8bb013b08ea65b581010",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1793616260176,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41430283526"
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1793616645233
     }
   },
-  "reviewPublications": {},
+  "reviewPublications": {
+    "spec:1207:spec:1207:433f8517abcb230b200708cc09b9b5d22ee333a2b8882cb48fed6b61d7faa4e3": {
+      "issue": 1207,
+      "kind": "spec",
+      "requestId": "spec:1207:433f8517abcb230b200708cc09b9b5d22ee333a2b8882cb48fed6b61d7faa4e3",
+      "materialSha": "efa1b130fc69da8277de8bb013b08ea65b581010",
+      "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
+      "patchId": "433f8517abcb230b200708cc09b9b5d22ee333a2b8882cb48fed6b61d7faa4e3",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-02T10:50:45.233Z"
+      }
+    }
+  },
   "waiting": [],
   "active": null,
   "events": {
@@ -901,6 +914,10 @@
     },
     "github:41431118699:1:completions:report:448ecbfb274a59c562de1e13a28db8ce79ce934a0542f29fb8a5a5ec914468e6": {
       "digest": "24b08e890177370ac79889baa33612e25cb56caecac74652d965f6917101bb2b",
+      "issue": 1207
+    },
+    "1207-spec-round2-submit-20261102:spec-request": {
+      "digest": "ba29762bb77bc0e4405d2174ee8289348f5c96fa88539e3315673798954c0a83",
       "issue": 1207
     }
   },
