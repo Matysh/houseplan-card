@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 937,
-  "nextTicket": 73,
+  "revision": 938,
+  "nextTicket": 74,
   "nextFence": 73,
   "tasks": {
     "1128": {
@@ -115,6 +115,20 @@
         "status": "published",
         "sourceSha": "c356cd6c04a2b64bf151f1337f1de218abceb21b"
       }
+    },
+    "1158": {
+      "issue": 1158,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1158-zigbee-hover-status",
+      "materialSha": "05993896746e5aae6a44b2b053823d6153bf2ceb",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 73,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793632670334,
+      "reviewEntry": 1
     },
     "1165": {
       "issue": 1165,
@@ -1246,9 +1260,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1158
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:540a1f4b-524d-4856-918e-285ff186ffa7": {
+      "digest": "0303acca170586ac7823a02b4b0192b1b37c8e0355e2fb4e53707f122b4559fd",
+      "issue": 1158,
+      "message": {
+        "kind": "queued",
+        "issue": 1158,
+        "at": 1793632670334,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "05993896746e5aae6a44b2b053823d6153bf2ceb"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
     "status": "delivered",
