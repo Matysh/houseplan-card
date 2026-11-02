@@ -1,0 +1,14 @@
+{
+  "issue": 1126,
+  "date": "2026-11-02",
+  "decisions": [
+    "2 seconds, two soft pulses",
+    "All return stairs, no camera movement or offscreen indicator",
+    "Normal interaction; reduced motion uses static highlight",
+    "Shared hp-accent / HA primary-color"
+  ],
+  "superseded": [
+    "Orange accent-color token"
+  ],
+  "approval": "отлично, фиксируй вид в задаче"
+}

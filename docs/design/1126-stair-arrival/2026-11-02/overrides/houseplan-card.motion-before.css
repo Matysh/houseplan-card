@@ -1,0 +1,122 @@
+/* UI-003: non-editable unit inside the numeric field outline.
+   Keep native inputs and their Lit bindings intact. */
+.editor-secondary .drawwall:has(> input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])) {
+  display: inline-grid;
+  grid-template-columns: auto 6.5em auto;
+  align-items: center;
+  column-gap: var(--sp-3);
+}
+.editor-secondary .drawwall > input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"]) {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  padding-inline-end: 2.3em;
+  appearance: textfield;
+}
+.editor-secondary .drawwall > input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])::-webkit-inner-spin-button,
+.editor-secondary .drawwall > input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.editor-secondary .drawwall:has(> input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])) > .opl {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  margin-inline-end: 10px;
+  font-size: 11px;
+  color: var(--hp-muted);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+.editor-secondary .drawwall:has(> input[data-field="wall-thickness"]) > .rangehint {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* UI-005: green wall preview uses the existing node radius and outline. */
+.stage.tool-draw [data-hp="plan-snap-active-marker"],
+.stage.tool-draw .active-vertex {
+  r: var(--lab-wall-node-radius);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* UI-006: an editor close button between adjacent segments is not an outer edge. */
+.hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']):has(+ .hpf-nav-item),
+.hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']):has(+ .hpf-nav-item) > .closex {
+  border-radius: 0;
+}
+
+/* UI-007: editor close uses the same interaction paint as navigation buttons. */
+.hpf-nav-modes > .editor-close-slot > .closex {
+  border: 1px solid transparent;
+  border-radius: inherit;
+  transition: background var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    color var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    border-color var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    box-shadow var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease);
+}
+:host([data-pointer-hover]) .hpf-nav-modes > .editor-close-slot:has(> .closex:not(:disabled):hover) {
+  z-index: 2;
+}
+:host([data-pointer-hover]) .hpf-nav-modes > .editor-close-slot > .closex:not(:disabled):hover {
+  background: var(--hpf-tint, color-mix(in srgb, var(--primary-color, #03a9f4) 10%, transparent));
+  color: var(--hpf-accent, var(--primary-color, #03a9f4));
+  border-color: var(--hpf-accent, var(--primary-color, #03a9f4));
+  box-shadow: 0 0 0 1px var(--hpf-tint-line, var(--primary-color, #03a9f4));
+  filter: brightness(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hpf-nav-modes > .editor-close-slot > .closex { transition: none !important; }
+}
+
+
+/* UI-009: common UI Kit toast surface, all messages without ID exceptions. */
+[data-hp="toast-portal"] > .toast[data-hp="toast"] {
+  left: var(--lab-plan-toast-center, 50%);
+  max-width: var(--lab-plan-toast-max-width, 90vw);
+}
+
+/* UI-011: one animation clock for scene, properties and header layout. */
+ha-card[data-lab-editor-motion] { overflow: clip; }
+ha-card[data-lab-editor-motion] > .stage,
+ha-card[data-lab-editor-motion] .editorchrome {
+  width: var(--lab-editor-width) !important;
+  box-sizing: border-box;
+}
+ha-card[data-lab-editor-motion] > .hdr:not(.lab-header-snapshot) > .head {
+  width: var(--lab-header-width) !important;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+ha-card[data-lab-header-measuring] > .hdr:not(.lab-header-snapshot) > .head { visibility: hidden; }
+ha-card > .lab-header-snapshot {
+  position: absolute !important;
+  inset: 0 auto auto 0;
+  z-index: 25;
+  pointer-events: none;
+  margin: 0;
+}
+.lab-header-snapshot > .head { overflow: visible !important; }
+/* UI-012: scene appearance shares the mode controller's single progress. */
+ha-card > .stage:not(.lab-scene-snapshot) > .zoomwrap {
+  opacity: var(--lab-scene-in, 1);
+}
+ha-card > .stage.lab-scene-snapshot {
+  position: absolute !important;
+  left: 0;
+  margin: 0 !important;
+  z-index: 19;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+.lab-scene-snapshot, .lab-scene-snapshot * { pointer-events: none !important; }
+.hp-properties {
+  transform: translateX(var(--lab-properties-shift, 0px));
+}
+.hp-properties[data-lab-outgoing] { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hp-properties { transform: none; }
+}
