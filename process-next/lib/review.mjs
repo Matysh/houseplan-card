@@ -6,7 +6,9 @@ import path from 'node:path';
 // Dateless 4.6+ IDs are pinned snapshots, not moving aliases. No model fallback.
 export const REVIEW_MODEL = 'claude-opus-5-5';
 export const MODEL_SOURCE = 'https://platform.claude.com/docs/en/models/opus-5-5/overview';
+// Raw Git buffering is separate from the bounded text exposed to the reviewer.
 const MAX_OUTPUT = 2 * 1024 * 1024;
+const MAX_DIFF_OUTPUT = 32 * 1024 * 1024;
 
 export function reviewRequired({ track = 'show', ownerAssigned = false, kind = 'code' } = {}) {
   if (!['ship', 'show', 'ask'].includes(track)) throw new Error('Unknown track');
@@ -50,13 +52,13 @@ export function checkSpecFormat(text, { ownerShip = false } = {}) {
 function git(repoRoot, args, { acceptNoMatch = false } = {}) {
   try {
     return execFileSync('git', ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.pager=cat', ...args], {
-      cwd: repoRoot, encoding: 'utf8', maxBuffer: MAX_OUTPUT, timeout: 30_000,
+      cwd: repoRoot, encoding: 'utf8', maxBuffer: args[0] === 'diff' ? MAX_DIFF_OUTPUT : MAX_OUTPUT, timeout: 30_000,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0', GIT_NO_LAZY_FETCH: '1', GIT_NO_REPLACE_OBJECTS: '1' },
       stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
     });
   } catch (error) {
     if (acceptNoMatch && error.status === 1) return '';
-    throw new Error(`Read-only git ${args[0]} failed: ${String(error.stderr ?? error.message).slice(0, 1000)}`);
+    throw new Error(`Read-only git ${args[0]} failed: ${String(String(error.stderr ?? '').trim() || error.message || error.code).slice(0, 1000)}`);
   }
 }
 

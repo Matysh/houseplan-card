@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Read large review diffs with a separate 32 MiB internal Git buffer while preserving bounded reviewer output and path permissions; expose empty-stderr transport failures such as ENOBUFS. [#1208](https://github.com/Matysh/houseplan-card/issues/1208)
+
 - Grid-scale invariance smoke uses native Ctrl+wheel when the adaptive header hides zoom controls; keeps its opening-edge hit and raster assertions unchanged. [#1206](https://github.com/Matysh/houseplan-card/issues/1206)
 
 ## v1.84.0-beta.2 — 2026-11-02

@@ -53,6 +53,33 @@ test('review reads exact base/head and useful history without touching worktree'
   assert.equal(readFileSync(path.join(repoRoot, 'code.mjs'), 'utf8'), 'uncommitted\n');
 });
 
+test('large real Git diffs keep bounded review output and named-file access', t => {
+  const { repoRoot, context: before, git } = fixture(t);
+  const line = 'generated payload ' + 'x'.repeat(1000) + '\n';
+  for (let i = 0; i < 3; i++) writeFileSync(path.join(repoRoot, `generated-${i}.txt`), line.repeat(1024));
+  git('add', 'generated-0.txt', 'generated-1.txt', 'generated-2.txt');
+  git('commit', '-qm', 'large generated diff');
+  const context = buildReviewContext({ repoRoot, base: before.base, head: git('rev-parse', 'HEAD'), task: { issue: 1208 } });
+  for (const diff of [context.diff, executeReadTool(context, 'git_diff', {})]) {
+    assert.ok(diff.totalCharacters > 2 * 1024 * 1024);
+    assert.equal(diff.truncated, true);
+    assert.equal(diff.text.length, 100_000);
+  }
+  const file = executeReadTool(context, 'read_file', { path: 'generated-2.txt', start: 1024, count: 1 });
+  assert.equal(file.text, '1024: ' + line.trimEnd());
+  assert.equal(file.truncated, false);
+  assert.throws(() => executeReadTool(context, 'read_file', { path: 'generated-2.txt', count: 501 }), /1..500/);
+  assert.equal(readFileSync(path.join(repoRoot, 'code.mjs'), 'utf8'), 'uncommitted\n');
+});
+
+test('non-diff Git reads keep their buffer ceiling and report empty-stderr failures', t => {
+  const { repoRoot, context, git } = fixture(t);
+  writeFileSync(path.join(repoRoot, 'oversize.txt'), 'x'.repeat(3 * 1024 * 1024));
+  git('add', 'oversize.txt'); git('commit', '-qm', 'oversize named blob');
+  assert.throws(() => executeReadTool({ ...context, head: git('rev-parse', 'HEAD') }, 'read_file', { path: 'oversize.txt' }),
+    error => /Read-only git show failed:.*ENOBUFS/.test(error.message) && error.message.length <= 1100);
+});
+
 test('no command execution, path traversal, arbitrary ref flags or symlink reads', t => {
   const { context, git } = fixture(t);
   for (const name of ['Bash', 'exec', 'test', 'Validate', 'write_file', 'Edit']) {
