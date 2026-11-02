@@ -35,7 +35,7 @@ export function prepareConverterSite(template, artifact, commit) {
 <style>
 .converter-formats{grid-template-columns:repeat(3,minmax(0,1fr))}
 .converter-picture{margin-bottom:16px}.converter-size-row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
-.converter-size-row label{min-width:0;flex:1 1 100px}.converter-size-row .converter-input{width:100%;box-sizing:border-box}
+.converter-size-row label{min-width:0;flex:1 1 100px}.converter-size-row .converter-input{width:100%;box-sizing:border-box;min-height:44px;height:44px;flex:none;resize:none;padding:8px 12px;margin:6px 0;font:inherit}
 @media(max-width:639px){.converter-formats{grid-template-columns:1fr}}
 </style><!-- converter-source ${commit}; module-sha256 ${digest(module)} -->`);
   return { page, module, asset, receipt: { source: commit, previousSha256: digest(template),
