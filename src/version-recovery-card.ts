@@ -188,6 +188,8 @@ export interface VersionRecoveryCardPort {
   readonly _devicePositionBusy: boolean;
   readonly _modeTransitionBusy: boolean;
   readonly _cameraTransition: { readonly active: boolean };
+  readonly _screenReferencePending?: boolean;
+  readonly _screenFitRequest?: unknown;
   readonly _slide: string;
   readonly _warmModeRequest: number;
   readonly _writesPending: number;
@@ -264,7 +266,7 @@ export function cardInteractionIdleSnapshot(host: VersionRecoveryCardPort): {
     && !host._editorRuntime?.physicalGesture?.active && !host._opDrag && !host._decorDraft
     && !host._decorMove && !host._dtDrag && !host._editorRuntime?.backdropGesture?.active && !host._furnTouchPending
     && !host._compassDrag && !host._viewportGestureDirty && !host._devicePositionBusy
-    && !host._modeTransitionBusy && !host._cameraTransition.active && !host._slide
+    && !host._modeTransitionBusy && !host._cameraTransition.active && !host._screenReferencePending && !host._screenFitRequest && !host._slide
     && host._warmModeRequest === 0;
   const surfacesIdle = !host._editorSecondaryDialogBlocked && !host._partitionDeleteDialog
     && !host._roomDeleteDialog && !host._backdropGuard && !host._vacFit

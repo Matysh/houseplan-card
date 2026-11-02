@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Prepare the current branded RU/EN converter for picture-elements, explicit image dimensions and local image measurement, retaining the site shell and canonical conversion code. [#1210](https://github.com/Matysh/houseplan-card/issues/1210)
+- Hold carousel and version-reload progression while a profile reference reset or explicit Fit awaits layout, so an expired interaction pause restores the current floor before the next carousel advance. [#1213](https://github.com/Matysh/houseplan-card/issues/1213)
 
 - Easy Floorplan conversion explicitly keeps imported walls and doors visible when the floor also has a background image. [#1211](https://github.com/Matysh/houseplan-card/issues/1211)
 

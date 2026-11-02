@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1213,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Correct the deferred profile-reference reset introduced by #1165 on the current 1.84 line. Existing carousel/reload guards now wait for its layout commit; published 1.83 behavior is unaffected.",
+  "summary": {
+    "ru": "Карусель дожидается возврата опорной камеры профиля перед следующим переходом.",
+    "en": "Wait for the profile reference reset before the next carousel advance."
+  }
+}

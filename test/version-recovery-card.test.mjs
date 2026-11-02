@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { adoptCardConfigCapabilities, cardVersionReloadSafetySnapshot } from '../test-build/version-recovery-card.js';
+import { adoptCardConfigCapabilities, cardVersionReloadSafetySnapshot, cardInteractionIdleSnapshot } from '../test-build/version-recovery-card.js';
 import { PhysicalBodyGestureRuntime } from '../test-build/physical-body-gesture.js';
 import { BackdropFrameGestureRuntime } from '../test-build/backdrop-frame-gesture.js';
 
@@ -118,6 +118,16 @@ test('#1165 reload uses the profile reference and effective carousel interval', 
   assert.equal(cardVersionReloadSafetySnapshot(host).baseZoom, true);
   host._pointers = pending(1);
   assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, false);
+});
+
+test('#1213 deferred profile reference and explicit Fit hold carousel/reload until applied', () => {
+  for (const pending of [{ _screenReferencePending: true }, { _screenFitRequest: 'double-tap' }]) {
+    const host = safeHost(pending);
+    assert.deepEqual(cardInteractionIdleSnapshot(host), { gesturesIdle: false, surfacesIdle: true });
+    assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, false);
+    host._screenReferencePending = false; host._screenFitRequest = null;
+    assert.deepEqual(cardInteractionIdleSnapshot(host), { gesturesIdle: true, surfacesIdle: true });
+  }
 });
 
 test('#861 version reload safety sees both actual gesture owners until their state-only reset', () => {

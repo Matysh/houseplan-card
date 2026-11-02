@@ -78,6 +78,20 @@ const out = await page.evaluate(async () => {
   out.stateTickPreservesManualView=stable()===manual;
   c._restoreScreenReference(); await until(()=>c._screenAtReference,'restore after manual pan');
   out.profileNeverWritesOrdinaryZoom=storedZoom()===zoomBefore;
+  // #1213: the first expired-pause tick must finish the current reference;
+  // pending layout work is not an invitation to advance in the same task.
+  await until(()=>!c._slide,'arrival motion settled');
+  const carousel=structuredClone(c._serverCfg);carousel.settings.external_screens.screens[0].cycle=10;
+  const cycleRev=window.__pushServerConfig(carousel);await until(()=>c._cfgRev===cycleRev&&c._effectiveCycle===10,'active profile carousel');
+  c._view={...c._view,x:c._view.x+100};c.requestUpdate();await c.updateComplete;
+  c._cyclePausedUntil=Date.now()-1;
+  const pausedSpace=c._space;c._kioskCarousel.tick();
+  out.expiredPauseHoldsCurrentSpace=c._space===pausedSpace&&c._screenReferencePending;
+  await until(()=>c._screenAtReference&&c._continuity.state==='steady','pause restores reference');
+  c._kioskCarousel.tick();
+  out.nextTickAdvancesAfterReference=c._space!==pausedSpace;
+  await until(()=>c._screenAtReference&&!c._slide,'next carousel arrival');
+  c._kioskCarousel.dispose();
   return out;
 });
 await page.setViewportSize({width:390,height:844});
