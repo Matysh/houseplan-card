@@ -1,0 +1,18 @@
+{
+  "issue": 1127,
+  "date": "2026-11-02",
+  "decisions": [
+    "Owner clarification: a kiosk profile restricted to one space hides the switcher even when the installation has multiple spaces",
+    "Only kiosk and 2+ spaces; none in View/editors/fixed space",
+    "Click/touch reveals, 5 seconds inactivity hides with UI Kit motion",
+    "Vertical at left centre, numbered UI Kit controls",
+    "Overlay does not affect fit, room fit, camera or stage size",
+    "Flush left, square left container corners, rounded right corners"
+  ],
+  "superseded": [
+    "Reserving 76px left gutter",
+    "Camera fits account for switcher",
+    "12px left offset and rounded left container corners"
+  ],
+  "approval": "отлично, фиксируй вид и принятые решения в задаче"
+}

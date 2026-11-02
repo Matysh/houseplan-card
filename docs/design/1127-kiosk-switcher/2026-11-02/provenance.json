@@ -1,0 +1,32 @@
+{
+  "issue": 1127,
+  "baseTag": "v1.84.0-beta.2",
+  "baseCommit": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
+  "releaseAsset": "https://github.com/Matysh/houseplan-card/releases/download/v1.84.0-beta.2/houseplan.zip",
+  "releaseSha256": "c4b235255a957e40f42c7e93c56b06548411d3d24eaae413ec10e47557a4accb",
+  "productFingerprint": "233216a19647e5445b3de8c196fd92b52357fc93332e45bb5cf2f7d44764e66f",
+  "haFrontend": "20260930.4",
+  "haFrontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+  "dataset": "Public synthetic fixture with authored stair links; no private backup",
+  "checks": "Portable replay on 18927; final synthetic kiosk screenshot. No product tests, build or CI.",
+  "screenshots": "Flush-left overlay on synthetic plan; illustrative evidence, not product acceptance",
+  "files": {
+    ".gitattributes": "e59334efba889dddb371d824744bdeaf39111513f13c129059b9cef9b5b7ba12",
+    "approval.json": "454b76132e831ef1850166a4a8ab32fbdbf6b13d422fed4d695c070ade1fa097",
+    "CONTRACT.md": "73a7e0fe7ccc15459c18b363d155efba96e8092ac1739415d1d52b082ccd68d3",
+    "fixture.json": "4a8f46b181a237a45965f7f7b2456eeaf848d568c51a0fcf915b5d3e78f44f63",
+    "IMPLEMENTATION.md": "6c7153cdd568dbd4cec6647b039cdc366a5e04541cdc90217671cf915241e548",
+    "journal.json": "d14a9582e57d77c8279e727861200bfeaa934b48bebfc9cec036b6857bad716e",
+    "overrides/ha-dialog.css": "d905b24888a94b7bc9276c795bc934ae0788d444b53186c89cfd7a20b5241abb",
+    "overrides/houseplan-card.css": "35738de67cb368cf2b1e222f3b52385b102f63bf27ae63f53d95233a8326bebc",
+    "overrides/hp-dialog.css": "d17b97a1be56eb2281a355df5a5b951ff8b77803420e633b023d77d46b9e8091",
+    "README.md": "d26aee5eb851049e05f48635bb6740d6f9fcb805b6b18fa10cf9fb34bbf1c4a4",
+    "replay.mjs": "675d4817588e098babe56e3726c00645e1958c8b6e5b2563e518314d0d2e6687",
+    "runtime/app.mjs": "4e5295541597a1aa8dcb02a8fa96016df57f2e3a03d3280f69a387608aec5991",
+    "runtime/index.html": "05f732836c28744fcd89137d2812d39c0ce780cd5a3e99b651bd03a67979c421",
+    "runtime/lab.css": "bd5147cd65a0facad254d0c793a3d1c5abff6105acfc0efa3ab377428c9b0615",
+    "runtime/theme-local.css": "58be3643a045dee9d534f1aedef7111702a14341e123cdb44ad8ce714c0cc51d",
+    "screenshots/kiosk-switcher.jpg": "4e7804f09e50ced7d73320919c6faa85c0865a4c9aa031809a15b67b0923ca5b"
+  },
+  "priorVisualPackageCommit": "e0f2b7d1daa83acf72c8244c2336db0e1c7b511d"
+}
