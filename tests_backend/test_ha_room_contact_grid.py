@@ -81,6 +81,7 @@ async def test_issue_1061_align_real_writer_and_reload(
     await client.send_json_auto_id({
         "type": "houseplan/plan/optimize", "config": case["candidate"],
         "layout": case["candidateLayout"], "expected_config_rev": 7, "expected_layout_rev": 4,
+        **({"graph_change": case["graph_change"]} if "graph_change" in case else {}),
     })
     response = await client.receive_json()
     assert response["success"], response
@@ -107,8 +108,10 @@ async def test_issue_1061_align_real_writer_and_reload(
     undone = await restored_client.receive_json()
     assert undone["success"], undone
     restored_config = await reloaded.config_store.async_load()
-    assert restored_config["config"]["spaces"][0]["partitions"] == case["source"]["spaces"][0]["partitions"]
-    assert restored_config["config"]["spaces"][0]["openings"] == case["source"]["spaces"][0]["openings"]
+    baseline = case.get("currentSource", case["source"])
+    assert restored_config["config"]["spaces"][0]["partitions"] == baseline["spaces"][0]["partitions"]
+    assert restored_config["config"]["spaces"][0]["openings"] == baseline["spaces"][0]["openings"]
+    assert restored_config["config"]["spaces"][0]["plan_graph"] == baseline["spaces"][0]["plan_graph"]
     assert restored_config["rev"] == 9
     assert (await reloaded.store.async_load())["rev"] == 6
 
@@ -118,6 +121,9 @@ async def test_issue_1061_bad_optimize_is_atomic(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, mutation: str,
 ) -> None:
     case = copy.deepcopy(CASES[1])
+    # Preserve the original invalid legacy first-write witnesses. Positive
+    # current graph transport is independently pinned by the producer above.
+    case["candidate"] = copy.deepcopy(case.get("legacyCandidate", case["candidate"]))
     if mutation == "old-host-fit":
         case["source"]["spaces"][0]["openings"][0]["length"] = 0.5001
         case["candidate"]["spaces"][0]["openings"] = []
@@ -154,11 +160,11 @@ async def test_issue_1061_bad_optimize_is_atomic(
     refused = await client.receive_json()
     assert not refused["success"], refused
     expected = "conflict" if mutation.startswith("stale-") else (
-        "invalid_partition_opening_jamb_margin" if mutation == "jamb" else (
-            "invalid_format" if mutation == "foreign-host" else "invalid_partition_opening_host"
-        )
+        "invalid_partition_opening_jamb_margin" if mutation == "jamb" else "invalid_partition_opening_host"
     )
     assert refused["error"]["code"] == expected, refused
+    if mutation == "foreign-host":
+        assert "host changed" in refused["error"]["message"]
     assert (await runtime.config_store.async_load(), await runtime.store.async_load()) == before
 
 
@@ -169,7 +175,7 @@ async def test_issue_1061_ordinary_drop_policy_without_carrier_trim_is_unchanged
     _, runtime = await _setup(hass)
     await runtime.config_store.async_save({"config": case["source"], "rev": 7})
     await runtime.store.async_save({"layout": {}, "rev": 4})
-    candidate = copy.deepcopy(case["candidate"])
+    candidate = copy.deepcopy(case.get("legacyCandidate", case["candidate"]))
     candidate["spaces"][0]["partitions"] = copy.deepcopy(case["source"]["spaces"][0]["partitions"])
     candidate["spaces"][0]["openings"] = []
     client = await hass_ws_client(hass)
