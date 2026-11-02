@@ -7,7 +7,7 @@ const copy = value => structuredClone(value);
 export const isDeliveryObserved = evidence => evidence?.hacsAvailable === true
   || evidence?.discoveryAvailable === true && evidence.source === 'github-release-feed';
 export function initialReleaseState({ beta = null, stable = null } = {}) {
-  return { schema: 1, revision: 0, active: null, candidates: {}, published: { beta, stable }, events: {} };
+  return { schema: 1, revision: 0, active: null, candidates: {}, shipReviews: {}, published: { beta, stable }, events: {} };
 }
 export async function readRunnerReport(path) {
   const report = JSON.parse(await readFile(path, 'utf8'));
@@ -38,6 +38,9 @@ export function releaseReadiness(candidate) {
     ...(candidate.runner?.materialClean === false ? ['dirty-material'] : []),
     ...(!candidate.runner?.ready || candidate.runner.sha !== candidate.sha || candidate.runner.event !== candidate.kind ? ['runner-report-required'] : []),
     ...(candidate.reviewRequired && candidate.review?.sha !== candidate.sha ? ['fix-review-required'] : []),
+    ...(candidate.kind === 'beta' && (candidate.shipReview?.sha !== candidate.sha
+      || candidate.shipReview?.inventoryComplete !== true
+      || !['accepted', 'not-required'].includes(candidate.shipReview?.status)) ? ['ship-review-required'] : []),
     ...(candidate.kind === 'beta' && (!candidate.metrics || candidate.metrics.sha !== candidate.sha) ? ['metrics-report-required'] : []),
     ...(candidate.kind === 'beta' && candidate.metrics?.requiresDecision && candidate.metricsAcceptedSha !== candidate.sha ? ['owner-metrics-decision'] : [])];
   return { ready: !reasons.length, reasons, report: candidate.runner ?? null };
@@ -52,6 +55,7 @@ export function reduceRelease(previous, event) {
     return copy(previous);
   }
   const state = copy(previous);
+  state.shipReviews ??= {};
   const candidate = () => {
     const item = state.candidates[event.candidate];
     if (!item) throw Error('Unknown candidate');
@@ -68,11 +72,13 @@ export function reduceRelease(previous, event) {
       checkedRef(event.branch);
       const source = event.kind === 'stable' ? state.published.beta : event.kind === 'hotfix' ? state.published.stable : null;
       if (event.kind !== 'beta' && (!source || source.sha !== event.sourceSha)) throw Error('Stable starts at the published beta; hotfix starts at the published stable');
+      const sourceReview = source?.shipReview ?? state.candidates[source?.id]?.shipReview;
       state.candidates[event.candidate] = { id: event.candidate, kind: event.kind, branch: event.branch,
         sourceSha: event.sourceSha, sha: event.sourceSha, runner: null, running: null, status: 'prepared',
         membership: event.membership ? copy(event.membership) : null,
         includedIssues: event.membership ? membershipIssueNumbers(event.membership, event.sourceSha) : [], reviewRequired: event.kind === 'hotfix', review: null,
-        metrics: null, metricsAcceptedSha: null, portToDev: [], diagnostics: [] };
+        metrics: null, metricsAcceptedSha: null, portToDev: [], diagnostics: [],
+        ...(event.kind === 'stable' && sourceReview ? { shipReview: copy(sourceReview) } : {}) };
       state.active = event.candidate; break;
     }
     case 'run-started': {
@@ -95,7 +101,41 @@ export function reduceRelease(previous, event) {
       item.membership = event.membership ? copy(event.membership) : null;
       item.includedIssues = event.membership ? membershipIssueNumbers(event.membership, event.sha) : [];
       delete item.releaseData;
+      if (item.kind === 'beta') delete item.shipReview;
       item.review = null; item.metrics = null; item.metricsAcceptedSha = null; item.status = 'prepared'; break;
+    }
+    case 'ship-review-prepared': {
+      const packet = event.packet, item = state.candidates[packet?.candidateId];
+      if (!item || item.kind !== 'beta' || state.active !== item.id) throw Error('Ship review belongs to an active beta candidate');
+      editable(item);
+      if (packet.schema !== 1 || packet.head !== item.sha || packet.base !== null && !sha(packet.base)
+        || typeof packet.requestId !== 'string' || !packet.requestId
+        || typeof packet.selectionDigest !== 'string' || !packet.selectionDigest
+        || !Array.isArray(packet.tasks) || !Array.isArray(packet.pending) || !Array.isArray(packet.reused))
+        throw Error('Ship review packet must identify the current candidate and complete task selection');
+      const saved = state.shipReviews[packet.requestId];
+      if (saved && ['candidateId', 'base', 'head', 'selectionDigest', 'version'].some(key => saved.packet[key] !== packet[key]))
+        throw Error('Ship review request ID reused for another selection');
+      // The first packet freezes issue text and selection for retries of this review.
+      state.shipReviews[packet.requestId] ??= { packet: copy(packet), result: null };
+      item.shipReview = { sha: packet.head, requestId: packet.requestId, selectionDigest: packet.selectionDigest,
+        status: saved?.result?.verdict ?? 'pending', inventoryComplete: true };
+      break;
+    }
+    case 'ship-review-result': {
+      const item = candidate(), record = state.shipReviews[event.requestId], result = event.result;
+      const packet = record?.packet;
+      if (!packet || packet.candidateId !== item.id || item.kind !== 'beta'
+        || result?.kind !== 'ship-batch' || result.requestId !== event.requestId
+        || result.candidateId !== packet.candidateId || result.materialSha !== packet.head
+        || result.base !== packet.base || result.selectionDigest !== packet.selectionDigest
+        || !(packet.pending.length ? ['accepted', 'incomplete', 'changes_requested'] : ['not-required']).includes(result.verdict))
+        throw Error('Ship review result must identify its frozen packet and valid verdict');
+      record.result = copy(result);
+      // A late result remains reusable, but must not authorize a newer candidate.
+      if (item.sha === packet.head && item.shipReview?.requestId === event.requestId
+        && item.shipReview.selectionDigest === packet.selectionDigest) item.shipReview.status = result.verdict;
+      break;
     }
     case 'release-prepared': {
       const item = candidate(), data = event.data;
@@ -144,7 +184,8 @@ export function reduceRelease(previous, event) {
       if (item.status !== 'publishing' || event.sha !== item.sha || event.evidence?.tag !== item.tag
         || event.evidence?.sha !== item.sha || !/^[a-f0-9]{64}$/.test(event.evidence?.artifactDigest ?? '')) throw Error('Actual publication evidence required');
       item.status = 'published'; item.publication = copy(event.evidence);
-      const record = { id: item.id, sha: item.sha, tag: item.tag, branch: item.branch, runner: copy(item.runner) };
+      const record = { id: item.id, sha: item.sha, tag: item.tag, branch: item.branch, runner: copy(item.runner),
+        ...(item.shipReview ? { shipReview: copy(item.shipReview) } : {}) };
       if (item.kind === 'beta') {
         item.retiredBeta = state.published.beta ? copy(state.published.beta) : null; state.published.beta = record;
       } else {

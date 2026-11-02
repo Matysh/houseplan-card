@@ -1,17 +1,18 @@
 # Review runtime only; no product build/tests in S7.
-name: Содержательное ревью задачи
-run-name: ${{ inputs.kind == 'spec' && format('Ревью ТЗ задачи {0} · {1}', inputs.issue, inputs.requestId) || format('Код-ревью задачи {0} · {1}', inputs.issue, inputs.requestId) }}
+name: Содержательное ревью
+run-name: ${{ inputs.kind == 'ship-batch' && format('Пакетное код-ревью ship перед {0} · {1}', fromJSON(inputs.batch).version, inputs.requestId) || inputs.kind == 'spec' && format('Ревью ТЗ задачи {0} · {1}', inputs.issue, inputs.requestId) || format('Код-ревью задачи {0} · {1}', inputs.issue, inputs.requestId) }}
 on:
   workflow_dispatch:
     inputs:
-      issue: { type: string, required: true }
-      base: { type: string, required: true }
+      issue: { type: string, default: '' }
+      base: { type: string, default: '' }
       head: { type: string, required: true }
       requestId: { type: string, required: true }
       patchId: { type: string, default: '' }
       track: { type: choice, options: [ship, show, ask], default: show }
-      kind: { type: choice, options: [code, spec], default: code }
+      kind: { type: choice, options: [code, spec, ship-batch], default: code }
       receipts: { type: string, default: '[]' }
+      batch: { type: string, default: '{}' }
 permissions:
   contents: read
   actions: read
@@ -60,8 +61,14 @@ jobs:
           HP_TRACK: ${{ inputs.track }}
           HP_KIND: ${{ inputs.kind }}
           HP_RECEIPTS: ${{ inputs.receipts }}
+          HP_BATCH: ${{ inputs.batch }}
           HP_CANDIDATE_ROOT: ../candidate
-        run: node process-next/templates/review-job.mjs
+        run: |
+          if [ "$HP_KIND" = "ship-batch" ]; then
+            node process-next/templates/ship-review-job.mjs
+          else
+            node process-next/templates/review-job.mjs
+          fi
       - name: Сохранить результат для публикации координатором
         id: artifact
         if: ${{ always() && steps.review.outputs.artifact_reused != 'true' }}

@@ -19,6 +19,8 @@ import { prepareReleaseData, preparePublicationArtifacts } from './lib/release-p
 import { completePublishedRelease } from './lib/release-completion.mjs';
 import { announceStableRelease } from './lib/notifications.mjs';
 import { returnPublishedHistory } from './lib/return-worker.mjs';
+import { ensureShipReview } from './lib/ship-review-host.mjs';
+import { prepareShipReviewArtifacts } from './lib/ship-review-artifacts.mjs';
 
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
 const component = encodeURIComponent;
@@ -42,7 +44,7 @@ export async function readReleaseMetrics({ root, sha: materialSha, path }) {
 }
 const commands = new Set(['initialize-queue', 'initialize-release', 'owner-decision', 'label', 'ready', 'enqueue',
   'admit', 'heartbeat', 'synchronized', 's6-complete', 'return', 'expire', 'review-complete', 'reconcile', 'merge',
-  'reconcile-merged', 'reconcile-completions', 'dev-webhook', 'release-event', 'publish-prepared', 'complete-release', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline']);
+  'reconcile-merged', 'reconcile-completions', 'dev-webhook', 'release-event', 'review-release', 'publish-prepared', 'complete-release', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline']);
 
 export const help = `Houseplan process-next remote (disabled by default)
 node process-next/remote.mjs COMMAND --config config.json --event event.json [--plan | --execute]
@@ -50,7 +52,7 @@ node process-next/remote.mjs COMMAND --config config.json --event event.json [--
 Queue: initialize-queue, owner-decision, label, ready (alias enqueue), admit,
        heartbeat, synchronized, s6-complete, return, expire, reconcile,
        review-complete, merge, reconcile-merged
-Release: initialize-release, release-event, publish-prepared, complete-release, verify-delivery, close-included
+Release: initialize-release, release-event, review-release, publish-prepared, complete-release, verify-delivery, close-included
 Bookkeeping: reconcile-completions, dev-webhook (no tests or model calls)
 
 Default --plan is OFFLINE: no API, Git, environment probes or remote writes.
@@ -72,6 +74,7 @@ reconcile performs ONE step (admit / await local S6 / request or read review / m
 initialize-* requires event.confirmed=true and baseSha. release-event takes a reducer event;
 published/delivery-verified are accepted only through actual publication/observation commands.
 publish-prepared: {id,candidate,tag,reportPath?,packagePath?,expectedMain?}; uses authored candidate notes and completes delivery.
+review-release: {id,candidate}; reviews pending ship changes of a beta without tests or publication.
 complete-release: {id,candidate}; resumes bookkeeping without publishing or testing again.
 verify-delivery: {id,candidate,assetName}; close-included: {id,candidate}.
 `;
@@ -519,7 +522,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
       requestReview: context => review.requestReview(context), readReviewResult: context => review.readReviewResult(context) });
   }
   if (command === 'release-event') {
-    if (['published', 'delivery-verified', 'publication-started', 'publication-failed', 'release-prepared', 'completion-step', 'announcement'].includes(event.type))
+    if (['published', 'delivery-verified', 'publication-started', 'publication-failed', 'release-prepared', 'completion-step', 'announcement', 'ship-review-prepared', 'ship-review-result'].includes(event.type))
       throw Error('Use the publication/observation command for actual delivery evidence');
     if (event.type === 'create') {
       const { state } = await releaseStore.read(), source = await git.resolveSource({ kind: event.kind, published: state.published });
@@ -595,6 +598,16 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   };
   if (command === 'complete-release' || command === 'close-included'
     || command === 'publish-prepared' && candidate.status === 'published') return complete(candidate);
+  const shipReview = async () => {
+    if (candidate.kind !== 'beta') throw Error('Batch ship review belongs to the beta candidate');
+    state = await ensureShipReview({ candidate, store: releaseStore, dispatch: change => releaseDispatch(releaseStore, change),
+      queue, git, api, review, config, dependencies, signal, onProgress });
+    candidate = state.candidates[candidate.id];
+  };
+  if (command === 'review-release') {
+    await shipReview();
+    return { reviewed: true, candidate: candidate.id, result: state.shipReviews[candidate.shipReview.requestId].result };
+  }
   if (command === 'return-to-dev') {
     const prepared = await git.prepareDevReturn({ candidate, issue: event.issue, branch: event.branch, worktree: event.worktree });
     if (prepared.alreadyIncluded) {
@@ -629,9 +642,11 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
     state = await releaseDispatch(releaseStore, { id: `${event.id}:prepared:${randomUUID()}`, type: 'release-prepared',
       candidate: candidate.id, sha: candidate.sha, data });
     candidate = state.candidates[candidate.id];
-    const artifacts = event.artifacts ?? preparePublicationArtifacts({ root: config.workspace,
+    if (candidate.kind === 'beta') await shipReview();
+    const reviewArtifacts = (dependencies.prepareShipReviewArtifacts ?? prepareShipReviewArtifacts)({ root: config.workspace, candidate, records: state.shipReviews });
+    const artifacts = [...(event.artifacts ?? preparePublicationArtifacts({ root: config.workspace,
       packageResult: JSON.parse(await readFile(resolve(config.workspace, event.packagePath ?? 'artifacts/process-next/package.json'), 'utf8')),
-      candidate: { ...candidate, tag } });
+      candidate: { ...candidate, tag } })).filter(item => !reviewArtifacts.some(reviewArtifact => reviewArtifact.name === item.name)), ...reviewArtifacts];
     const expectedMain = event.expectedMain ?? (candidate.kind === 'beta' ? undefined : await git.remoteHead('main'));
     if (candidate.status !== 'published' && candidate.status !== 'publishing') {
       state = await releaseDispatch(releaseStore, { id: `${event.id}:started:${state.revision}`, type: 'publication-started',

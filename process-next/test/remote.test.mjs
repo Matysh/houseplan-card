@@ -172,8 +172,14 @@ function readyRelease() {
     { type: 'runner-report', candidate: 'beta1', report: { schema: 1, id: 'r', event: 'beta', materialSha: B, materialClean: true, status: 'passed', finishedAt: '2026-11-01T00:00:00Z', reportPath: '/report.json', results: [{ id: 'test', status: 'passed' }] } },
     { type: 'metrics', candidate: 'beta1', sha: B, report: { requiresDecision: false, needsMeasurement: false } }
   ]) state = reduceRelease(state, { id: event.type, ...event });
+  state = reduceRelease(state, { id: 'ship-selection', type: 'ship-review-prepared', candidate: 'beta1', packet: emptyShipPacket() });
+  state = reduceRelease(state, { id: 'ship-result', type: 'ship-review-result', candidate: 'beta1', requestId: 'ship-review:empty',
+    result: { kind: 'ship-batch', candidateId: 'beta1', requestId: 'ship-review:empty', materialSha: B, base: A,
+      selectionDigest: 'empty', verdict: 'not-required', markdown: 'Ship-задач нет.' } });
   return state;
 }
+const emptyShipPacket = () => ({ schema: 1, candidateId: 'beta1', head: B, base: A, version: 'v1-beta.1',
+  requestId: 'ship-review:empty', selectionDigest: 'empty', tasks: [], pending: [], reused: [] });
 const authoredRelease = () => ({ membership: { schema: 1, candidate: B, base: A, tag: 'v1-beta.1', issues: [] },
   includedIssues: [], body: 'Author-written release notes', technical: { ru: 'RU', en: 'EN' }, userChangelog: null });
 
@@ -181,6 +187,7 @@ test('publication retry reuses checked candidate and actual evidence, including 
   const store = new MemoryQueueStore(readyRelease()); let publishes = 0;
   const dependencies = { api: { root: '/repos/owner/repo' }, git: {}, releaseStore: store,
     queue: new QueueController(new MemoryQueueStore()), prepareReleaseData: async () => authoredRelease(),
+    prepareShipReviewArtifacts: () => [],
     publisher: { publish: async ({ candidate }) => {
       assert.equal(candidate.runner.status, 'passed');
       if (++publishes < 3) throw Error(`Transient ${publishes}`);
@@ -193,9 +200,10 @@ test('publication retry reuses checked candidate and actual evidence, including 
   assert.equal(publishes, 3); assert.equal((await store.read()).state.candidates.beta1.runner.id, 'r');
 });
 
-test('release raw events cannot manufacture publication or HACS evidence', async () => {
+test('release raw events cannot manufacture publication, HACS or batch review evidence', async () => {
+  for (const type of ['published', 'ship-review-prepared', 'ship-review-result'])
   await assert.rejects(executeRemoteCommand({ command: 'release-event', config, env, execute: true,
-    event: { id: 'fake', type: 'published' }, dependencies: { api: { root: '/repos/owner/repo' }, git: {} } }), /actual delivery evidence/);
+    event: { id: 'fake', type }, dependencies: { api: { root: '/repos/owner/repo' }, git: {} } }), /actual delivery evidence/);
 });
 test('one finish invocation waits, synchronizes, runs S6 once and survives a lost review dispatch response', async () => {
   const h = queueHarness(); let checks = 0, requests = 0;
@@ -369,8 +377,11 @@ test('publication reads the completed runner JSON and exact-SHA metrics without 
   const store = new MemoryQueueStore(initial);
   const dependencies = { api: { root: '/repos/owner/repo' }, git: {}, releaseStore: store,
     queue: new QueueController(new MemoryQueueStore()), prepareReleaseData: async () => authoredRelease(),
-    publisher: { publish: async ({ candidate }) => {
+    buildShipReviewPacket: async ({ candidate }) => { assert.equal(candidate.membership.candidate, B); return emptyShipPacket(); },
+    publisher: { publish: async ({ candidate, artifacts }) => {
       assert.equal(candidate.runner.id, 'actual-file'); assert.equal(candidate.metrics.sha, B);
+      assert.equal(candidate.shipReview.status, 'not-required');
+      assert.deepEqual(artifacts.map(row => row.name), ['SHIP-REVIEW.json', 'SHIP-REVIEW.md']);
       return { published: true, evidence: { sha: B, tag: 'v1-beta.1', artifactDigest: D } };
     } } };
   const result = await executeRemoteCommand({ command: 'publish-prepared', config: { ...config, workspace: root }, env, execute: true, dependencies,
@@ -642,6 +653,7 @@ test('superseded empty requests do not block later history and expire with an ex
 
 test('published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing', async () => {
   const initial = readyRelease(), item = initial.candidates.beta1;
+  delete item.shipReview; // This published-source fixture predates batch review.
   item.kind = 'stable'; item.runner.event = 'stable';
   const issue = { number: 1, state: 'open', labels: ['S8-merged', 'track:show', 'personal'] };
   const { api, comments } = issueTransport(issue, { failClose: true });
@@ -679,6 +691,7 @@ test('interrupted publication resumes persisted inputs even after report files d
   const result = await executeRemoteCommand({ command: 'publish-prepared', config: { ...config, workspace: '/missing' }, env, execute: true,
     event: { id: 'resume-after-restart', candidate: 'beta1', reportPath: 'deleted.json', metricsPath: 'deleted-metrics.json', artifacts: [] },
     dependencies: { api: {}, git: {}, releaseStore: store, queue: new QueueController(new MemoryQueueStore()),
+      prepareShipReviewArtifacts: () => [],
       prepareReleaseData: async () => { throw Error('Previously prepared release data must be reused'); },
       publisher: { publish: async ({ candidate }) => { calls++; assert.equal(candidate.runner.id, 'r');
         return { published: true, evidence: { sha: B, tag: 'v1-beta.1', artifactDigest: D } }; } } } });

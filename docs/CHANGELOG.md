@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Stair navigation in View and kiosk highlights every return stair with two theme-accent pulses over two seconds, without extra camera movement; reduced motion uses static feedback. [#1126](https://github.com/Matysh/houseplan-card/issues/1126)
+- Restore one batch Opus review of unreviewed ship changes before beta publication, reusing unchanged accepted changes and preserving full Russian reports with the release. Ship tasks still merge straight to S8; review retries do not rerun tests. [#1215](https://github.com/Matysh/houseplan-card/issues/1215)
 
 - Show only “No route data” beside a Zigbee device without a displayed connection; retain incomplete-data diagnostics for visible incoming links and in settings. [#1158](https://github.com/Matysh/houseplan-card/issues/1158)
 

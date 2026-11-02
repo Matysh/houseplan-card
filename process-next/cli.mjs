@@ -48,14 +48,15 @@ node process-next/cli.mjs review preview|run --base SHA --head SHA --issue 9999 
 node process-next/cli.mjs queue ACTION --payload event.json
 node process-next/cli.mjs release ACTION --payload event.json
 node process-next/cli.mjs release prepare --request release.json [--execute]
-node process-next/cli.mjs release publish|complete --config remote.json --request publication.json [--execute]
+node process-next/cli.mjs release review|publish|complete --config remote.json --request publication.json [--execute]
 node process-next/cli.mjs metrics --candidate candidate.json --latest-stable stable.json --out report.json
 
 Общее: --root каталог --state-dir каталог --jobs 2 --json --no-reuse --keep-open.
 План ничего не запускает. run выполняет только выбранный набор. Чистая документация: --layer docs.
 queue/release ACTION --payload изменяют локальное draft-состояние. release prepare готовит версии/авторские notes только в release-ветке.
-release publish публикует готовый кандидат и завершает учёт; complete повторяет только незавершённые действия после публикации.
-publish/complete без --execute — офлайн-план; действуют те же переключатели активации, что у finish.
+release publish проверяет пакет ship перед бетой, публикует готовый кандидат и завершает учёт; complete повторяет только незавершённые действия после публикации.
+release review позволяет получить пакетное ревью беты раньше, без тестов и публикации.
+review/publish/complete без --execute — офлайн-план; действуют те же переключатели активации, что у finish.
 request.json содержит поля planProfile (event/issue/track/layer/areaTests/changedFiles/version/e2eRoot).
 Для HA: e2eRoot, candidateRoot, expectedVersion, upgradeFrom, haVersion, workRoot, port.
 Токены никогда не передаются аргументами или через request.json. \n`;
@@ -77,7 +78,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (o.help || command === 'help') { process.stdout.write(HELP); return 0; }
   const root = resolve(o.root ?? dirname(fileURLToPath(new URL('../package.json', import.meta.url))));
   const stateDir = resolve(o['state-dir'] ?? defaultStateDir(root));
-  if (command === 'release' && ['prepare', 'publish', 'complete'].includes(action)) {
+  if (command === 'release' && ['prepare', 'review', 'publish', 'complete'].includes(action)) {
     const request = readJson(resolve(requireValue(o.request, '--request')));
     if (action === 'prepare') {
       const version = requireValue(request.version, 'request.version'), tag = request.tag ?? `v${version}`;
@@ -97,7 +98,7 @@ export async function main(argv = process.argv.slice(2)) {
     }
     const config = readJson(resolve(requireValue(o.config, '--config')));
     config.workspace = resolve(config.workspace ?? root);
-    const result = await executeRemoteCommand({ command: action === 'publish' ? 'publish-prepared' : 'complete-release',
+    const result = await executeRemoteCommand({ command: ({ review: 'review-release', publish: 'publish-prepared', complete: 'complete-release' })[action],
       config, event: { ...request, id: request.id ?? `release:${randomUUID()}` }, execute: !!o.execute,
       onProgress: event => print(event) });
     print(result); return result.completion?.status === 'pending' ? 1 : 0;

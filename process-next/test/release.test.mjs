@@ -20,15 +20,102 @@ function harness(initial) {
 }
 function create(h, extra = {}) { const sourceSha = extra.sourceSha ?? A; h.event({ type: 'create', kind: 'beta', branch: 'release/beta1', sourceSha,
   membership: { schema: 1, candidate: sourceSha, base: null, issues: [1, 2].map(number => ({ number, commits: [sourceSha] })) }, ...extra }); }
-function passed(h) {
+function shipPacket(extra = {}) {
+  return { schema: 1, candidateId: 'beta1', base: null, head: A, version: 'v1-beta.1', selectionDigest: D,
+    requestId: `ship-review:${A}`, tasks: [{ issue: 1, title: 'Простая правка', url: 'https://example.invalid/1',
+      body: 'ТЗ', commits: [A], fingerprint: D, track: 'ship' }], pending: [1], reused: [], ...extra };
+}
+function shipResult(packet, verdict = 'accepted', extra = {}) {
+  return { kind: 'ship-batch', candidateId: packet.candidateId, requestId: packet.requestId, materialSha: packet.head,
+    base: packet.base, selectionDigest: packet.selectionDigest, verdict, markdown: 'Полный русский отчёт.', ...extra };
+}
+function noShipTasks(h) {
+  const packet = shipPacket({ head: h.candidate.sha, tasks: [], pending: [], requestId: `empty:${h.candidate.sha}` });
+  h.event({ type: 'ship-review-prepared', packet });
+  h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet, 'not-required') });
+}
+function passed(h, { ship = true } = {}) {
   h.event({ type: 'run-started', sha: h.candidate.sha });
   h.event({ type: 'runner-report', report: report(h.candidate.sha, h.candidate.kind) });
   h.event({ type: 'metrics', sha: h.candidate.sha, report: { requiresDecision: false } });
+  if (ship && h.candidate.kind === 'beta') noShipTasks(h);
 }
 function publish(h) {
   h.event({ type: 'publication-started', sha: h.candidate.sha, tag: 'v1-beta.1' });
   h.event({ type: 'published', sha: h.candidate.sha, evidence: { sha: h.candidate.sha, tag: 'v1-beta.1', artifactDigest: D } });
 }
+
+test('beta publication requires a completed ship inventory and matching accepted report', () => {
+  const h = harness(); create(h); passed(h, { ship: false });
+  assert.deepEqual(releaseReadiness(h.candidate).reasons, ['ship-review-required']);
+  const packet = shipPacket(); h.event({ type: 'ship-review-prepared', packet });
+  for (const verdict of ['incomplete', 'changes_requested']) {
+    h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet, verdict) });
+    assert.throws(() => h.event({ type: 'publication-started', sha: A, tag: 'v1-beta.1' }), /ship-review-required/);
+  }
+  h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet) });
+  assert.equal(releaseReadiness(h.candidate).ready, true);
+  for (const shipReview of [{ ...h.candidate.shipReview, sha: B }, { ...h.candidate.shipReview, inventoryComplete: false }])
+    assert.deepEqual(releaseReadiness({ ...h.candidate, shipReview }).reasons, ['ship-review-required']);
+});
+
+test('ship review freezes its input, refuses mismatched identities and retains full result on prepare retry', () => {
+  const initial = initialReleaseState(); delete initial.shipReviews;
+  const h = harness(initial); create(h); const packet = shipPacket();
+  assert.throws(() => h.event({ type: 'ship-review-prepared', packet: { ...packet, head: B } }), /current candidate/);
+  h.event({ type: 'ship-review-prepared', packet });
+  for (const extra of [{ kind: 'code' }, { candidateId: 'other' }, { requestId: 'other' }, { materialSha: B },
+    { base: B }, { selectionDigest: 'other' }, { verdict: 'passed' }, { verdict: 'not-required' }])
+    assert.throws(() => h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet, 'accepted', extra) }), /frozen packet/);
+  const result = shipResult(packet, 'accepted', { report: { improvements: ['Пояснить алгоритм.'] } });
+  h.event({ type: 'ship-review-result', requestId: packet.requestId, result });
+  h.event({ type: 'ship-review-prepared', packet: { ...packet, tasks: [{ ...packet.tasks[0], body: 'Поздняя редакция' }] } });
+  assert.equal(h.state.shipReviews[packet.requestId].packet.tasks[0].body, 'ТЗ');
+  assert.deepEqual(h.state.shipReviews[packet.requestId].result, result);
+  assert.equal(h.candidate.shipReview.status, 'accepted');
+  assert.throws(() => h.event({ type: 'ship-review-prepared', packet: { ...packet, base: C } }), /another selection/);
+});
+
+test('an empty pending selection records not-required instead of a fabricated model acceptance', () => {
+  const h = harness(); create(h); passed(h, { ship: false });
+  const packet = shipPacket({ tasks: [], pending: [] });
+  h.event({ type: 'ship-review-prepared', packet });
+  assert.equal(releaseReadiness(h.candidate).ready, false);
+  assert.throws(() => h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet) }), /valid verdict/);
+  h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet, 'not-required') });
+  assert.equal(releaseReadiness(h.candidate).ready, true);
+});
+
+test('beta fixes clear only the current review; late results and unchanged accepted task sets remain reusable', () => {
+  const h = harness(); create(h); const packet = shipPacket(); h.event({ type: 'ship-review-prepared', packet });
+  h.event({ type: 'fix', sha: B, productChanged: false });
+  h.event({ type: 'ship-review-result', requestId: packet.requestId, result: shipResult(packet) });
+  assert.equal(h.candidate.shipReview, undefined);
+  assert.equal(h.state.shipReviews[packet.requestId].result.verdict, 'accepted');
+  const next = shipPacket({ head: B, requestId: 'ship-review:next', pending: [],
+    reused: [{ issue: 1, fingerprint: D, requestId: packet.requestId, reportUrl: null }] });
+  h.event({ type: 'ship-review-prepared', packet: next });
+  h.event({ type: 'ship-review-result', requestId: next.requestId, result: shipResult(next, 'not-required') });
+  assert.equal(Object.keys(h.state.shipReviews).length, 2);
+  assert.deepEqual(h.state.shipReviews[next.requestId].packet.reused, next.reused);
+  assert.equal(h.candidate.shipReview.sha, B);
+});
+
+test('stable inherits the beta review reference, keeps it after a fix and requires no new batch', () => {
+  const h = harness(initialReleaseState({ stable: { sha: A, tag: 'v1' } }));
+  create(h); passed(h); publish(h); const reference = h.candidate.shipReview;
+  h.event({ type: 'create', candidate: 'stable', kind: 'stable', sourceSha: A, branch: 'release/stable' });
+  h.event({ type: 'fix', candidate: 'stable', sha: B, productChanged: false });
+  h.event({ type: 'runner-report', candidate: 'stable', report: report(B, 'stable') });
+  const stable = h.state.candidates.stable;
+  assert.deepEqual(stable.shipReview, reference); assert.equal(releaseReadiness(stable).ready, true);
+  assert.throws(() => h.event({ type: 'ship-review-prepared', packet: shipPacket({ candidateId: 'stable', head: B }) }), /active beta/);
+  h.event({ type: 'abandon', candidate: 'stable' });
+  h.event({ type: 'create', candidate: 'hotfix', kind: 'hotfix', sourceSha: A, branch: 'release/hotfix' });
+  h.event({ type: 'fix', candidate: 'hotfix', sha: B });
+  h.event({ type: 'runner-report', candidate: 'hotfix', report: report(B, 'hotfix') });
+  assert.deepEqual(releaseReadiness(h.state.candidates.hotfix).reasons, ['fix-review-required']);
+});
 test('candidate cannot change while running; one completed report records failure without copying per-case state', () => {
   const h = harness(); create(h); h.event({ type: 'run-started', sha: A });
   assert.throws(() => h.event({ type: 'fix', sha: B }), /immutable/);
@@ -294,6 +381,7 @@ test('actual runner report authorizes its clean Git candidate; dirty and deleted
   assert.equal(clean.materialSha, materialSha); assert.equal(clean.materialClean, true);
   h.event({ type: 'runner-report', report: await readRunnerReport(clean.reportPath) });
   h.event({ type: 'metrics', sha: materialSha, report: { requiresDecision: false } });
+  noShipTasks(h);
   assert.equal(releaseReadiness(h.candidate).ready, true); assert.equal(h.candidate.runner.id, clean.id);
   assert.equal(h.candidate.results, undefined);
   await writeFile(source, 'export const model = 2;\n');

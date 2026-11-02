@@ -12,7 +12,8 @@ const MAX_DIFF_OUTPUT = 32 * 1024 * 1024;
 
 export function reviewRequired({ track = 'show', ownerAssigned = false, kind = 'code' } = {}) {
   if (!['ship', 'show', 'ask'].includes(track)) throw new Error('Unknown track');
-  if (!['code', 'spec'].includes(kind)) throw new Error('Unknown review kind');
+  if (!['code', 'spec', 'ship-batch'].includes(kind)) throw new Error('Unknown review kind');
+  if (kind === 'ship-batch') return true;
   if (track === 'ship') return false;
   return kind === 'spec' ? track === 'ask' : true;
 }
@@ -52,7 +53,7 @@ export function checkSpecFormat(text, { ownerShip = false } = {}) {
 function git(repoRoot, args, { acceptNoMatch = false } = {}) {
   try {
     return execFileSync('git', ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.pager=cat', ...args], {
-      cwd: repoRoot, encoding: 'utf8', maxBuffer: args[0] === 'diff' ? MAX_DIFF_OUTPUT : MAX_OUTPUT, timeout: 30_000,
+      cwd: repoRoot, encoding: 'utf8', maxBuffer: ['diff', 'diff-tree'].includes(args[0]) ? MAX_DIFF_OUTPUT : MAX_OUTPUT, timeout: 30_000,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0', GIT_NO_LAZY_FETCH: '1', GIT_NO_REPLACE_OBJECTS: '1' },
       stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
     });
@@ -81,6 +82,7 @@ function bounded(text, limit = 100_000) {
 }
 
 function revision(context, value = 'head') {
+  if (value === 'base' && context.base === null) throw new Error('The first release has no base snapshot');
   if (value === 'head' || value === 'base') return context[value];
   if (!/^[a-f0-9]{40,64}$/.test(value)) throw new Error('Use base, head or a full commit SHA');
   return resolveCommit(context.repoRoot, value);
@@ -124,6 +126,7 @@ export function extractAuthorContext(task) {
 }
 
 export function buildReviewContext({ repoRoot, base, head = 'HEAD', task, track = 'show', ownerAssigned = false, kind = 'code', receipts = [], previousReview = null }) {
+  if (kind === 'ship-batch') throw new Error('Use the frozen ship batch packet to build this review');
   const root = realpathSync(repoRoot);
   const baseSha = resolveCommit(root, base);
   const headSha = resolveCommit(root, head);
@@ -137,6 +140,63 @@ export function buildReviewContext({ repoRoot, base, head = 'HEAD', task, track 
   return context;
 }
 
+function selectedDiff(context, file) {
+  const selectedPath = file ? repoPath(file) : null;
+  return context.batch.changes.map(change => {
+    if (selectedPath && !change.changedFiles.includes(selectedPath)) return '';
+    const options = ['--no-ext-diff', '--no-textconv', '--no-renames', '--unified=5'];
+    const args = change.parent ? ['diff', ...options, change.parent, change.commit, '--']
+      : ['diff-tree', '--root', '--no-commit-id', '-r', '-p', ...options, change.commit, '--'];
+    if (selectedPath) args.push(selectedPath);
+    return `Задачи: ${change.issues.map(issue => `#${issue}`).join(', ')}\nКоммит: ${change.commit}\nРодитель: ${change.parent ?? 'нет (корневой коммит)'}\n${git(context.repoRoot, args)}`;
+  }).filter(Boolean).join('\n\n');
+}
+
+/** Frozen requirements and exact implementation commits, rather than the entire
+ * release diff: show/ask work is available as surrounding context at head only.
+ */
+export function buildShipReviewContext({ repoRoot, packet }) {
+  const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
+  if (packet?.schema !== 1 || !sha(packet.head) || packet.base !== null && !sha(packet.base)
+    || !Array.isArray(packet.tasks) || !Array.isArray(packet.pending) || !packet.pending.length)
+    throw new Error('Ship review needs a frozen nonempty batch with exact base/head');
+  const issues = new Set();
+  for (const task of packet.tasks) {
+    if (!Number.isSafeInteger(task.issue) || task.issue < 1 || issues.has(task.issue) || task.track !== 'ship'
+      || typeof task.body !== 'string' || !Array.isArray(task.commits) || !task.commits.length || !task.commits.every(sha))
+      throw new Error('Invalid frozen ship task');
+    issues.add(task.issue);
+  }
+  if (new Set(packet.pending).size !== packet.pending.length || packet.pending.some(issue => !issues.has(issue)))
+    throw new Error('Pending ship tasks must be a unique subset of the packet');
+  const root = realpathSync(repoRoot), base = packet.base === null ? null : resolveCommit(root, packet.base), head = resolveCommit(root, packet.head);
+  if (base) git(root, ['merge-base', '--is-ancestor', base, head]);
+  const range = git(root, ['rev-list', '--reverse', '--topo-order', base ? `${base}..${head}` : head]).trim().split(/\s+/).filter(Boolean);
+  const reachable = new Set(range), selected = new Map();
+  for (const task of packet.tasks) {
+    if (task.commits.some(commit => !reachable.has(commit))) throw new Error(`Ship task #${task.issue} has a commit outside the candidate range`);
+    if (!packet.pending.includes(task.issue)) continue;
+    for (const commit of new Set(task.commits)) selected.set(commit, [...(selected.get(commit) ?? []), task.issue]);
+  }
+  const changes = range.filter(commit => selected.has(commit)).map(commit => {
+    const [, parent] = git(root, ['rev-list', '--parents', '-n', '1', commit]).trim().split(/\s+/);
+    if (parent !== undefined && !sha(parent)) throw new Error('Ship implementation commit has an invalid parent');
+    const args = parent ? ['diff', '--no-ext-diff', '--no-textconv', '--name-only', '-z', parent, commit, '--']
+      : ['diff-tree', '--root', '--no-commit-id', '-r', '--name-only', '-z', commit, '--'];
+    const changedFiles = git(root, args).split('\0').filter(Boolean);
+    return { commit, parent: parent ?? null, issues: selected.get(commit), changedFiles };
+  });
+  const context = { version: 1, repoRoot: root, base, head, kind: 'ship-batch', track: 'ship', ownerAssigned: false, required: true,
+    batch: { ...packet, tasks: packet.tasks.map(task => ({ ...task, authorContext: extractAuthorContext(task) })), changes },
+    changedFiles: [...new Set(changes.flatMap(change => change.changedFiles))], receipts: [], previousReview: null };
+  context.diff = bounded(selectedDiff(context));
+  context.material = { requirements: 'batch.tasks: frozen issue bodies and executor context',
+    scope: 'Only batch.pending tasks and their exact implementation commits; reused tasks are context, not a fresh review',
+    base, head, sources: 'Candidate sources via read_file; original commit/parent snapshots via git_show',
+    history: 'git_diff returns only the selected implementation diffs; git_log / git_blame remain available' };
+  return context;
+}
+
 const str = { type: 'string' };
 function tool(name, description, properties, required = []) {
   return { name, description, input_schema: { type: 'object', properties, required, additionalProperties: false } };
@@ -145,7 +205,7 @@ export const REVIEW_TOOLS = [
   tool('read_file', 'Read numbered lines of a regular tracked file at head/base/full commit SHA. Follow repository links with another call; never follows filesystem symlinks.', { path: str, ref: str, start: { type: 'integer' }, count: { type: 'integer' } }, ['path']),
   tool('list_files', 'List tracked files, optionally below a literal directory. Offset paginates the result.', { prefix: str, offset: { type: 'integer' } }),
   tool('search', 'Literal text search in the head snapshot. Use this for definitions and callers. No command or regular expression execution.', { text: str, path: str }, ['text']),
-  tool('git_diff', 'Read base-to-head diff, optionally for one file.', { path: str }),
+  tool('git_diff', 'Read the review diff, optionally for one file. In a ship batch this returns only pending tasks\' exact parent-to-commit diffs, not the whole release diff.', { path: str }),
   tool('git_show', 'Read a historical regular file by full commit SHA.', { commit: str, path: str }, ['commit', 'path']),
   tool('git_log', 'Read up to 20 commits from head, optionally for one path.', { path: str }),
   tool('git_blame', 'Read authorship/history of up to 200 lines at head.', { path: str, start: { type: 'integer' }, count: { type: 'integer' } }, ['path']),
@@ -189,6 +249,7 @@ export function executeReadTool(context, name, input = {}) {
       return bounded(git(root, args, { acceptNoMatch: true }));
     }
     case 'git_diff': {
+      if (context.kind === 'ship-batch') return bounded(selectedDiff(context, input.path));
       const args = ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--unified=5', context.base, context.head, '--'];
       if (input.path) args.push(repoPath(input.path));
       return bounded(git(root, args));
@@ -238,10 +299,12 @@ export function renderReviewReport({ context, report, model = REVIEW_MODEL }) {
   const outside = report.outsideFindings?.length ? `\n## Отдельные дефекты вне задачи\n\n${report.outsideFindings.map(item => `### ${item.title}\n\n${item.problem}\n\nОснование: ${item.evidence}\n\nНаправление исправления: ${item.suggestedFix}`).join('\n\n')}\n` : '';
   const author = context.authorContext ?? extractAuthorContext(context.task);
   const fence = '`'.repeat(Math.max(3, ...[...author.text.matchAll(/`+/g)].map(match => match[0].length + 1)));
-  const briefing = author.status === 'provided'
+  const briefing = context.kind === 'ship-batch'
+    ? `Замороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: ${context.batch.pending.map(issue => `#${issue}`).join(', ')}.\n\nКоммиты: ${context.batch.changes.map(change => change.commit).join(', ')}.\n\nРанее принятое ревью сохранено для задач: ${(context.batch.reused ?? []).map(task => `#${task.issue}`).join(', ') || 'нет'}.`
+    : author.status === 'provided'
     ? `Источник: описание задачи #${author.source.issue ?? '—'}, раздел «${AUTHOR_CONTEXT_HEADING}». Это сведения исполнителя, не выводы ревьюера.\n\n${fence}text\n${author.text}\n${fence}`
     : 'Отдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.';
-  const title = context.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью';
+  const title = context.kind === 'ship-batch' ? `Пакетное код-ревью ship перед ${context.batch.version}` : context.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью';
   const verdict = { accept: 'принято', changes_requested: 'нужны исправления', incomplete: 'анализ не завершён' }[report.verdict];
   return `# ${title} — ${verdict}\n${report.summary ? `\n## Вывод\n\n${report.summary}\n` : ''}\n## Понимание решения\n\n${report.understanding}\n${analysis}\n## Блокеры\n\n${items(report.blockers)}\n\n## Возможные улучшения\n\n${items(report.improvements)}\n${outside}\n## Границы анализа\n\n${report.boundaries}\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: ${model}\n\nМатериал: ${context.base} → ${context.head}\n\n## Переданный контекст исполнителя\n\n${briefing}\n\n</details>\n`;
 }
@@ -261,7 +324,8 @@ export function writeReviewReport({ context, report, reportDir, model = REVIEW_M
 
 export function previewReview(context, { model = REVIEW_MODEL } = {}) {
   if (model !== REVIEW_MODEL) throw new Error(`Explicit model migration required; pinned model is ${REVIEW_MODEL}`);
-  const system = readFileSync(new URL('../prompts/review.md', import.meta.url), 'utf8');
+  const system = readFileSync(new URL('../prompts/review.md', import.meta.url), 'utf8')
+    + (context.kind === 'ship-batch' ? '\n\n' + readFileSync(new URL('../prompts/ship-review.md', import.meta.url), 'utf8') : '');
   const { repoRoot, ...packet } = context;
   return { required: context.required, model, system, packet, tools: REVIEW_TOOLS, network: false, writes: false };
 }
