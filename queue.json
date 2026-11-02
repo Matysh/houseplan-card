@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 559,
+  "revision": 560,
   "nextTicket": 54,
   "nextFence": 54,
   "tasks": {
@@ -683,6 +683,103 @@
         "materialSha": "70dc3a9ef35f89d78633c1063a36ff984259c901",
         "expectedBase": "14d758f22031e74f45b60749d282523287612f23",
         "patchId": "807eb196e1909fba2a2a3c547dbea7f555ee47c8"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1204,
+        "requestId": "review:1204:2:807eb196e1909fba2a2a3c547dbea7f555ee47c8:14d758f22031e74f45b60749d282523287612f23",
+        "kind": "code",
+        "base": "14d758f22031e74f45b60749d282523287612f23",
+        "materialSha": "70dc3a9ef35f89d78633c1063a36ff984259c901",
+        "patchId": "807eb196e1909fba2a2a3c547dbea7f555ee47c8",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1204,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1204",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокеров нет, изменение можно принять. Сцена `lighting-glow-sun-dark` и её panel-вариант теперь снимаются после явного нативного Fit. Перед Fit harness ждёт, пока данные, boot/continuity и запись полностью успокоятся. Это ровно тот capture-контракт, который принял владелец: «освещение после нативной Fit». Код продукта, пороги, таймауты и эталоны не меняются. Fit вызывается через существующий `_fitAll`, камера вручную не присваивается. Охранные проверки до и после Fit сравнивают config, layout, ревизии, факты снимка и цепочку записи; при любом изменении снимок падает, а не проходит молча. Пользователя изменение не затрагивает. Для процесса важно другое: первопричина редкого CI-варианта по-прежнему не найдена (так и заявлено), а в каноническом CI новый контракт ещё не прогонялся. Окончательно стабильность WSL↔CI покажет только канонический прогон; приёмка кадра остаётся за владельцем в #1192.",
+          "understanding": "Проблема: финальный кадр `panel-lighting-glow-sun-dark` однажды разошёлся между WSL и каноническим CI примерно на 20% пикселей. Разошлись кадрирование камеры и позиции маркеров, само освещение совпало. Диагностика не нашла причину и не воспроизвела выброс. Поэтому владелец принял другой контракт: эта сцена проверяет освещение после нативной Fit на заведомо готовых данных, а не случайное первое авто-кадрирование.\n\nДо: сцена снималась сразу после общего `settleCamera`, с той камерой, которую выставило открытие View (`_restoreZoom`).\n\nПосле: в матрицу добавлен флаг `nativeFitBeforeCapture: true`, только для `lighting-glow-sun-dark`; `GOLDEN_MATRIX_VERSION` поднят 109→110. `prepareGoldenSelection` переносит флаг в panel-вариант через `{...source}`, а `goldenHarnessScenario` возвращает harness исходный id. В `prepareGoldenScenario` (harness.mjs:2815–2858) по этому флагу:\n1. `until(dataReady)` ждёт строгой готовности: явные false/0 для boot, fading, soft, mode и camera; continuity=steady без overlay; пустые dirty/sent и отсутствие debounce у config и layout; `sourceSequence === _hassSequence`, `geometry === _cfgEpoch`.\n2. Снимаются слепки native (config/serverCfg/layout/ревизии), facts (sourceSequence/geometry/positions/presentations) и ссылка `_writeChain`.\n3. Вызывается `_fitAll()`, затем `settleCamera` и повторный `dataReady`.\n4. Слепки сравниваются; при расхождении — исключение.\n5. В runtime-результат пишется readonly `nativeFitCapture`: камера, viewBox, границы stage, стен и маркеров.\n\nРазобранные пути:\n- `_fitAll` (src/houseplan-card.ts:6896): `_clearRoomFocus` → `_showFar=true`, `_frame=null` → `_resetZoom` (7303), то есть `fitView(_baseVb, _stageAspect)` при zoom 1 через `_startCameraTransition` на `CAMERA_FIT_MS`=220.\n- `settleCamera` (harness:1151) с таймаутом 1500 мс.\n- `_renderDeviceSnapshot` (5198).\n- Логика `prepareGoldenSelection` / `goldenHarnessScenario`.\n- Существующие использования `_saveConfigDebounced.pending()` / `_persistLayout.pending()` в harness:1053 и в smoke-тестах.",
+          "analysis": [
+            {
+              "topic": "Соответствие решению владельца и границам задачи",
+              "assessment": "Реализация буквально следует принятому контракту. Изменены только harness, matrix и тест, плюс записи в RU/EN changelog. Продукт, пороги, таймауты, кэши и эталоны не тронуты. Остальные cold-view сцены не меняются: новый тест проверяет, что флаг стоит ровно у одной исходной и одной выбранной сцены. Диагностический smoke в конечное дерево не попал. Changelog честно пишет, что исходный CI-снимок остаётся задокументированным, а не объяснённым.",
+              "evidence": "diff: только 5 файлов; matrix.mjs:1023–1026; test/golden-matrix.test.mjs:516–524; golden-selection.mjs:18 (`{ ...source, id, panelHost: true, sourceSceneId }` переносит флаг)."
+            },
+            {
+              "topic": "Корректность нативного Fit и ожиданий",
+              "assessment": "`_fitAll` — тот же путь, что у кнопки zoom-fit (houseplan-card.ts:11529). Камера ставится через `_startCameraTransition` на 220 мс, поэтому существующий `settleCamera` (лимит 1500 мс) детерминированно дожидается конца анимации, и RAF-кадр не снимается. Повторный `dataReady` после Fit страхует от запоздавших данных. Предикат требует явных `=== false` / `=== 0`, так что отсутствующее или переименованное поле не сойдёт за готовность: в худшем случае будет тайм-аут и явное падение, а не тихий неправильный кадр. Это правка второго раунда S6, её стоит сохранить.",
+              "evidence": "harness.mjs:2816–2826, 2838–2840; src/houseplan-card.ts:6896–6902, 7303–7314, 421."
+            },
+            {
+              "topic": "Охранные проверки неизменности содержимого",
+              "assessment": "Сравнение слепков config/serverCfg/layout/ревизий и фактов снимка, а также идентичности `_writeChain` надёжно ловит побочные записи и подмену данных или позиций при Fit. Этого достаточно для заявленного «native content/write-chain неизменны». Слабое место: охрана не видит чисто презентационные изменения, которые вносит сам Fit. `_fitAll` ставит `_showFar=true`; это включает дальние объекты в кадр и скрывает far-hint (`_outliers` возвращает 0). Сейчас это семантика нативного Fit, а не дефект. Но если в фикстуру `golden-lighting` когда-нибудь попадут выбросы, кадрирование и UI-chrome сцены тихо сменятся, и в `nativeFitCapture` это никак не отразится.",
+              "evidence": "src/houseplan-card.ts:6634 (`rect = this._showFar ? all : core`), 6795, 6908; harness.mjs:2828–2844."
+            },
+            {
+              "topic": "Версия матрицы и диагностические данные",
+              "assessment": "Повышение версии до 110 соответствует правилу в комментарии матрицы («Bump when framing or scenarios change»). Обе ассерции версии в тестах обновлены; других мест, где закреплено 109, поиск не нашёл. Объект `nativeFitCapture` попадает в runtime только этой сцены и пригодится, если расхождение повторится: по нему можно сразу сравнить камеру и границы маркеров между WSL и CI.",
+              "evidence": "matrix.mjs:4–6; test/golden-matrix.test.mjs:532, 1038; harness.mjs:2849–2857, 2880."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Добавить в `nativeFitCapture` значения `showFar` и `outliers` из `_frameOf()` (либо в охране требовать `outliers === 0` для этой сцены). Выгода: если фикстура `golden-lighting` получит дальние объекты, смена кадрирования и пропажа far-hint из-за `_showFar=true` будут явными, а не тихими. Цена — одна строка в harness."
+          ],
+          "boundaries": "Сам я ничего не запускал: ни сборку, ни тесты, ни golden-прогоны. Код изучен по исходникам head: harness.mjs (готовность, `settleCamera`, новый блок), houseplan-card.ts (`_fitAll`, `_resetZoom`, `_frameOf`, `_renderDeviceSnapshot`), golden-selection.mjs и тесты матрицы.\n\nИспользованы результаты S6 `20261102T001933955-46956aab` (passed на `70dc3a9e`). Заявления исполнителя из комментариев issue — 60/60 матричных проверок и три холодных прогона с одинаковым SHA PNG `05728895...` — взяты как его отчёт; сырых артефактов я не видел.\n\nНе проверено: прогон именно этого кода в каноническом CI. Диагностический CI41364403847 вызывал Fit снаружи, а не через изменённый `prepareGoldenScenario`. Поэтому окончательно стабильность WSL↔CI подтвердит только штатный канонический прогон. Также не проверял, есть ли выбросы в фикстуре `golden-lighting` (это влияет только на презентационный эффект `_showFar`). Приёмка кадра — решение владельца в #1192."
+        },
+        "usage": {
+          "input_tokens": 32,
+          "cache_creation_input_tokens": 50943,
+          "cache_read_input_tokens": 438134,
+          "output_tokens": 8490,
+          "output_tokens_details": {
+            "thinking_tokens": 2572
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 50943,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 785,
+              "cache_read_input_tokens": 41160,
+              "cache_creation_input_tokens": 9783,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 9783
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров нет, изменение можно принять. Сцена `lighting-glow-sun-dark` и её panel-вариант теперь снимаются после явного нативного Fit. Перед Fit harness ждёт, пока данные, boot/continuity и запись полностью успокоятся. Это ровно тот capture-контракт, который принял владелец: «освещение после нативной Fit». Код продукта, пороги, таймауты и эталоны не меняются. Fit вызывается через существующий `_fitAll`, камера вручную не присваивается. Охранные проверки до и после Fit сравнивают config, layout, ревизии, факты снимка и цепочку записи; при любом изменении снимок падает, а не проходит молча. Пользователя изменение не затрагивает. Для процесса важно другое: первопричина редкого CI-варианта по-прежнему не найдена (так и заявлено), а в каноническом CI новый контракт ещё не прогонялся. Окончательно стабильность WSL↔CI покажет только канонический прогон; приёмка кадра остаётся за владельцем в #1192.\n\n## Понимание решения\n\nПроблема: финальный кадр `panel-lighting-glow-sun-dark` однажды разошёлся между WSL и каноническим CI примерно на 20% пикселей. Разошлись кадрирование камеры и позиции маркеров, само освещение совпало. Диагностика не нашла причину и не воспроизвела выброс. Поэтому владелец принял другой контракт: эта сцена проверяет освещение после нативной Fit на заведомо готовых данных, а не случайное первое авто-кадрирование.\n\nДо: сцена снималась сразу после общего `settleCamera`, с той камерой, которую выставило открытие View (`_restoreZoom`).\n\nПосле: в матрицу добавлен флаг `nativeFitBeforeCapture: true`, только для `lighting-glow-sun-dark`; `GOLDEN_MATRIX_VERSION` поднят 109→110. `prepareGoldenSelection` переносит флаг в panel-вариант через `{...source}`, а `goldenHarnessScenario` возвращает harness исходный id. В `prepareGoldenScenario` (harness.mjs:2815–2858) по этому флагу:\n1. `until(dataReady)` ждёт строгой готовности: явные false/0 для boot, fading, soft, mode и camera; continuity=steady без overlay; пустые dirty/sent и отсутствие debounce у config и layout; `sourceSequence === _hassSequence`, `geometry === _cfgEpoch`.\n2. Снимаются слепки native (config/serverCfg/layout/ревизии), facts (sourceSequence/geometry/positions/presentations) и ссылка `_writeChain`.\n3. Вызывается `_fitAll()`, затем `settleCamera` и повторный `dataReady`.\n4. Слепки сравниваются; при расхождении — исключение.\n5. В runtime-результат пишется readonly `nativeFitCapture`: камера, viewBox, границы stage, стен и маркеров.\n\nРазобранные пути:\n- `_fitAll` (src/houseplan-card.ts:6896): `_clearRoomFocus` → `_showFar=true`, `_frame=null` → `_resetZoom` (7303), то есть `fitView(_baseVb, _stageAspect)` при zoom 1 через `_startCameraTransition` на `CAMERA_FIT_MS`=220.\n- `settleCamera` (harness:1151) с таймаутом 1500 мс.\n- `_renderDeviceSnapshot` (5198).\n- Логика `prepareGoldenSelection` / `goldenHarnessScenario`.\n- Существующие использования `_saveConfigDebounced.pending()` / `_persistLayout.pending()` в harness:1053 и в smoke-тестах.\n\n## Разбор решения\n\n### Соответствие решению владельца и границам задачи\n\nРеализация буквально следует принятому контракту. Изменены только harness, matrix и тест, плюс записи в RU/EN changelog. Продукт, пороги, таймауты, кэши и эталоны не тронуты. Остальные cold-view сцены не меняются: новый тест проверяет, что флаг стоит ровно у одной исходной и одной выбранной сцены. Диагностический smoke в конечное дерево не попал. Changelog честно пишет, что исходный CI-снимок остаётся задокументированным, а не объяснённым.\n\nОснование: diff: только 5 файлов; matrix.mjs:1023–1026; test/golden-matrix.test.mjs:516–524; golden-selection.mjs:18 (`{ ...source, id, panelHost: true, sourceSceneId }` переносит флаг).\n\n### Корректность нативного Fit и ожиданий\n\n`_fitAll` — тот же путь, что у кнопки zoom-fit (houseplan-card.ts:11529). Камера ставится через `_startCameraTransition` на 220 мс, поэтому существующий `settleCamera` (лимит 1500 мс) детерминированно дожидается конца анимации, и RAF-кадр не снимается. Повторный `dataReady` после Fit страхует от запоздавших данных. Предикат требует явных `=== false` / `=== 0`, так что отсутствующее или переименованное поле не сойдёт за готовность: в худшем случае будет тайм-аут и явное падение, а не тихий неправильный кадр. Это правка второго раунда S6, её стоит сохранить.\n\nОснование: harness.mjs:2816–2826, 2838–2840; src/houseplan-card.ts:6896–6902, 7303–7314, 421.\n\n### Охранные проверки неизменности содержимого\n\nСравнение слепков config/serverCfg/layout/ревизий и фактов снимка, а также идентичности `_writeChain` надёжно ловит побочные записи и подмену данных или позиций при Fit. Этого достаточно для заявленного «native content/write-chain неизменны». Слабое место: охрана не видит чисто презентационные изменения, которые вносит сам Fit. `_fitAll` ставит `_showFar=true`; это включает дальние объекты в кадр и скрывает far-hint (`_outliers` возвращает 0). Сейчас это семантика нативного Fit, а не дефект. Но если в фикстуру `golden-lighting` когда-нибудь попадут выбросы, кадрирование и UI-chrome сцены тихо сменятся, и в `nativeFitCapture` это никак не отразится.\n\nОснование: src/houseplan-card.ts:6634 (`rect = this._showFar ? all : core`), 6795, 6908; harness.mjs:2828–2844.\n\n### Версия матрицы и диагностические данные\n\nПовышение версии до 110 соответствует правилу в комментарии матрицы («Bump when framing or scenarios change»). Обе ассерции версии в тестах обновлены; других мест, где закреплено 109, поиск не нашёл. Объект `nativeFitCapture` попадает в runtime только этой сцены и пригодится, если расхождение повторится: по нему можно сразу сравнить камеру и границы маркеров между WSL и CI.\n\nОснование: matrix.mjs:4–6; test/golden-matrix.test.mjs:532, 1038; harness.mjs:2849–2857, 2880.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить в `nativeFitCapture` значения `showFar` и `outliers` из `_frameOf()` (либо в охране требовать `outliers === 0` для этой сцены). Выгода: если фикстура `golden-lighting` получит дальние объекты, смена кадрирования и пропажа far-hint из-за `_showFar=true` будут явными, а не тихими. Цена — одна строка в harness.\n\n## Границы анализа\n\nСам я ничего не запускал: ни сборку, ни тесты, ни golden-прогоны. Код изучен по исходникам head: harness.mjs (готовность, `settleCamera`, новый блок), houseplan-card.ts (`_fitAll`, `_resetZoom`, `_frameOf`, `_renderDeviceSnapshot`), golden-selection.mjs и тесты матрицы.\n\nИспользованы результаты S6 `20261102T001933955-46956aab` (passed на `70dc3a9e`). Заявления исполнителя из комментариев issue — 60/60 матричных проверок и три холодных прогона с одинаковым SHA PNG `05728895...` — взяты как его отчёт; сырых артефактов я не видел.\n\nНе проверено: прогон именно этого кода в каноническом CI. Диагностический CI41364403847 вызывал Fit снаружи, а не через изменённый `prepareGoldenScenario`. Поэтому окончательно стабильность WSL↔CI подтвердит только штатный канонический прогон. Также не проверял, есть ли выбросы в фикстуре `golden-lighting` (это влияет только на презентационный эффект `_showFar`). Приёмка кадра — решение владельца в #1192.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 14d758f22031e74f45b60749d282523287612f23 → 70dc3a9ef35f89d78633c1063a36ff984259c901\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-02T00:22:28.003Z",
+        "artifactId": 13107412699,
+        "runId": 41366609963,
+        "runAttempt": 1,
+        "completedAt": "2026-11-02T00:20:26Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41366609963",
+        "runStatus": "in_progress",
+        "publicationPending": true,
+        "expectedBase": "14d758f22031e74f45b60749d282523287612f23"
       }
     }
   },
@@ -769,9 +866,9 @@
     "fence": 53,
     "materialSha": "70dc3a9ef35f89d78633c1063a36ff984259c901",
     "expectedBase": "14d758f22031e74f45b60749d282523287612f23",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793578765289,
-    "expiresAt": 1793582408888,
+    "expiresAt": 1793582554752,
     "patchId": "807eb196e1909fba2a2a3c547dbea7f555ee47c8",
     "reviewRequest": "review:1204:2:807eb196e1909fba2a2a3c547dbea7f555ee47c8:14d758f22031e74f45b60749d282523287612f23"
   },
@@ -842,6 +939,10 @@
     },
     "finish:96dabe24-27cc-40f9-aa36-a4aa39598a30:finish:6:review-presentation": {
       "digest": "2d617d6d5771c61b238e6b92186ff1ca40b6ad325afbb205196bb412b7e5fe50",
+      "issue": 1204
+    },
+    "finish:96dabe24-27cc-40f9-aa36-a4aa39598a30:finish:6:review-complete": {
+      "digest": "f9700bba811e3f42f74f8d42eb4f33354422979528911a778542d1f8341d6c42",
       "issue": 1204
     },
     "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab": {
