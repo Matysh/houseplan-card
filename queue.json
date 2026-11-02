@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 926,
+  "revision": 927,
   "nextTicket": 73,
   "nextFence": 73,
   "tasks": {
@@ -1123,30 +1123,23 @@
     },
     "1214": {
       "issue": 1214,
+      "branch": "codex/1210-converter-witnesses",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/1210-converter-witnesses",
-      "materialSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 72,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793632511281,
-      "reviewEntry": 1,
-      "patchId": "6b93f549c7f09d25441d6e29f8166ac4b832e9e3",
-      "changedFiles": [
-        "process-next/converters/README.md",
-        "process-next/converters/journeys.spec.mjs"
-      ],
-      "s6": {
-        "id": "20261102T151524695-e131ab15",
-        "name": "Тесты для задачи #1214 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261102T151524695-e131ab15/report.json",
-        "materialSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-        "status": "passed",
-        "finishedAt": "2026-11-02T15:15:28.730Z",
-        "failures": []
+      "status": "S8-merged",
+      "mergedSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
+      "mergedAt": 1793632535503,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -1244,23 +1237,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1214,
-    "worker": "finish",
-    "token": "72:finish:57c30518-9ceb-466e-b0c8-5c80e0f8a57a:finish:1:admit",
-    "fence": 72,
-    "materialSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-    "expectedBase": "ecdb21e5e0c51381ef034541b3075a58aff7de30",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793632515040,
-    "expiresAt": 1793636129846,
-    "patchId": "6b93f549c7f09d25441d6e29f8166ac4b832e9e3"
-  },
+  "active": null,
   "events": {
-    "finish:57c30518-9ceb-466e-b0c8-5c80e0f8a57a:finish:2:synchronized": {
-      "digest": "1523a7ba090f57b1e0a999e9d53ff9aef7bcee07c37175b76f9f9d25ca7f67b2",
-      "issue": 1214
-    },
     "finish:57c30518-9ceb-466e-b0c8-5c80e0f8a57a": {
       "digest": "85d708fdc8f64a5abb1a32d7cb66861bfd22641c2b2f57881bac51166c7aaee2",
       "issue": 1214,
