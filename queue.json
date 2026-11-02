@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 753,
+  "revision": 754,
   "nextTicket": 63,
   "nextFence": 63,
   "tasks": {
@@ -898,13 +898,12 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41347763192"
     },
     "1165": {
-      "requestId": "spec:1165:74ddf48a2919b986b5da019098c911449e1b3be4fd8fc849f7d8a21974389bbd",
-      "contextDigest": "74ddf48a2919b986b5da019098c911449e1b3be4fd8fc849f7d8a21974389bbd",
+      "requestId": "spec:1165:2a599ff6a0f09fd252fc0d3c5949394f97b6599fd737336a493754167b924d02",
+      "contextDigest": "2a599ff6a0f09fd252fc0d3c5949394f97b6599fd737336a493754167b924d02",
       "base": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1793626413912,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41453022908"
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1793626838676
     },
     "1167": {
       "requestId": "spec:1167:80a51a6275f4732e3c3236a04c232a7de60a05038585e74760466734feb48b80",
@@ -957,7 +956,21 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41432045581"
     }
   },
-  "reviewPublications": {},
+  "reviewPublications": {
+    "spec:1165:spec:1165:2a599ff6a0f09fd252fc0d3c5949394f97b6599fd737336a493754167b924d02": {
+      "issue": 1165,
+      "kind": "spec",
+      "requestId": "spec:1165:2a599ff6a0f09fd252fc0d3c5949394f97b6599fd737336a493754167b924d02",
+      "materialSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+      "expectedBase": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+      "patchId": "2a599ff6a0f09fd252fc0d3c5949394f97b6599fd737336a493754167b924d02",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-02T13:40:38.676Z"
+      }
+    }
+  },
   "waiting": [],
   "active": null,
   "events": {
@@ -979,6 +992,10 @@
     },
     "github:41453915268:1:completions:report:29f5ddf31a9e1ca47f57d1b5436179c06136ef03e37aef0283cca5e3a76f9e6b": {
       "digest": "57afe3216fd1f1d3f2626acb8f9e162179452e77558eb36ad8cd080a436aeaa4",
+      "issue": 1165
+    },
+    "1165-spec:266818d4-2e96-417a-8509-01cc2ccdae56:spec-request": {
+      "digest": "31ffa4601046923b7ab7cb90033e5fabca1859fad76f2bf287bf43c637c4bf28",
       "issue": 1165
     }
   },
