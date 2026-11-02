@@ -1,180 +1,30 @@
 {
   "schema": 1,
-  "revision": 992,
+  "revision": 993,
   "nextTicket": 76,
   "nextFence": 76,
   "tasks": {
     "1126": {
       "issue": 1126,
+      "branch": "codex/issue-1126-stair-arrival",
       "track": "show",
       "layer": "product",
-      "branch": "codex/issue-1126-stair-arrival",
-      "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 75,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793635160703,
-      "reviewEntry": 1,
-      "patchId": "4e6e2cdf81324212545a0dab9457786c66a42b02",
-      "changedFiles": [
-        "demo/smoke_stair_arrival.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/STAIRS.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/design/1126-stair-arrival/2026-11-02/.gitattributes",
-        "docs/design/1126-stair-arrival/2026-11-02/CONTRACT.md",
-        "docs/design/1126-stair-arrival/2026-11-02/IMPLEMENTATION.md",
-        "docs/design/1126-stair-arrival/2026-11-02/README.md",
-        "docs/design/1126-stair-arrival/2026-11-02/approval.json",
-        "docs/design/1126-stair-arrival/2026-11-02/fixture.json",
-        "docs/design/1126-stair-arrival/2026-11-02/journal.json",
-        "docs/design/1126-stair-arrival/2026-11-02/overrides/ha-dialog.css",
-        "docs/design/1126-stair-arrival/2026-11-02/overrides/houseplan-card.css",
-        "docs/design/1126-stair-arrival/2026-11-02/overrides/houseplan-card.motion-before.css",
-        "docs/design/1126-stair-arrival/2026-11-02/overrides/hp-dialog.css",
-        "docs/design/1126-stair-arrival/2026-11-02/provenance.json",
-        "docs/design/1126-stair-arrival/2026-11-02/replay.mjs",
-        "docs/design/1126-stair-arrival/2026-11-02/runtime/app.mjs",
-        "docs/design/1126-stair-arrival/2026-11-02/runtime/index.html",
-        "docs/design/1126-stair-arrival/2026-11-02/runtime/lab.css",
-        "docs/design/1126-stair-arrival/2026-11-02/runtime/theme-local.css",
-        "docs/design/1126-stair-arrival/2026-11-02/screenshots/arrival-pulse.jpg",
-        "docs/release-ledger/v1.83.0/1126.json",
-        "src/houseplan-card.ts",
-        "src/stairs-view.ts",
-        "src/styles/ui-motion.styles.ts",
-        "src/ui-motion.ts",
-        "test/stairs-view-arrival.test.mjs"
-      ],
-      "s6": {
-        "id": "20261102T155934143-cd86a73f",
-        "name": "Тесты для задачи #1126 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T155934143-cd86a73f/report.json",
-        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "status": "passed",
-        "finishedAt": "2026-11-02T16:00:18.246Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "mergedSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
+      "mergedAt": 1793635517124,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": true,
       "reviewRequest": "review:1126:1:4e6e2cdf81324212545a0dab9457786c66a42b02:fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
-      "reviewMaterial": {
-        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "expectedBase": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
-        "patchId": "4e6e2cdf81324212545a0dab9457786c66a42b02"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1126,
-        "requestId": "review:1126:1:4e6e2cdf81324212545a0dab9457786c66a42b02:fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
-        "kind": "code",
-        "base": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
-        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "patchId": "4e6e2cdf81324212545a0dab9457786c66a42b02",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1126,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1126",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\nРеализован согласованный ТЗ выше: успешный переход по лестнице выделяет все обратные лестницы на 2 секунды, не меняя камеру дополнительно.\n\n### Решение\nStairViewRuntime владеет только временной парой исходный/целевой этаж, идентичностью запуска и таймером. Подсветка выводится декларативно Lit по существующей cached outline; keyed пересоздаёт её при новом прибытии. Общие ui-motion токены/стили задают акцент, два импульса и reduced motion. Карточка очищает состояние при фактической смене этажа/режима и disconnect; updated запускает время после commit слоя. Лабораторные monkeypatch и DOM injection не перенесены. Навигационные guards перепроверяются также на активации устаревшего DOM.\n\n### Проверки и риски\nАвторская подготовка: build/types PASS; 4 адресных Node-теста PASS; browser smoke — 20 утверждений PASS (Flat/light, 2.5D/dark, kiosk, keyboard, reduced motion, pan, cleanup, отсутствие изменения записей лестниц). Полные обязательные S6 будут выполнены в очереди. Критичны lifecycle и guards, сохранение жестов, общий CSS без влияния на другие motion consumers.\nСравнение с pinned beta.2 replay на одной fixture/HA-теме: все points, accent, 3px, fill .22, vector-effect, easing, 1s×2 совпали; PNG обоих вариантов просмотрены. Материалы утверждённого прототипа сохранены неизменно. Выборочная проверка не заменяет полного релизного набора.\nРеальный HA E2E дорабатывается перед бетой, решение «надо» записано: https://github.com/Matysh/houseplan-e2e/issues/11. Бета в этой задаче не выпускается.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Реализацию можно принимать. После успешного перехода по лестнице в Просмотре или киоске все лестницы целевого этажа, ведущие на исходный, получают временный контур. Он сделан на общем акценте `--hp-accent`, длится 2 × 1 с ease-in-out, а при reduced motion показывается статично. Камера дополнительно не двигается, данные не пишутся. Состояние прибытия хранится локально в `StairViewRuntime` и очищается на всех границах: смена этажа (через единственную точку записи `_space`), смена режима, отключение компонента, новый переход. Время жизни отсчитывается только после того, как Lit отрисовал подсветку. Блокеров не нашёл. Есть несколько необязательных замечаний по устойчивости тестов и пограничным случаям анимации.",
-          "understanding": "Задача: после перехода по лестнице на новом этаже ничего не показывает, где оказался пользователь. Владелец выбрал не наводить камеру, а подсветить лестницы, ведущие обратно, двумя пульсами акцентного цвета.\n\nДо: `navigate` в `stairs-view.ts` вызывал `_tabClick(target)`, и на этом всё заканчивалось.\n\nПосле:\n1) `navigate` перед переходом повторно проверяет режим, этаж, текущую запись лестницы и `stairTargetState`. Это закрывает активацию из устаревшего DOM, фиксированный этаж и удалённую цель. Затем вызывается `_tabClick`. Если `_space` синхронно стал целевым (`_tabClick → _pickSpace → _slideTo → _commitSpace`), вызывается `arrive(from, target)`.\n2) `arrive` сначала сбрасывает прежнее состояние. Если обратных лестниц нет, новое не создаётся и перерисовка не запрашивается. Иначе создаётся `{from, space, token, rendered, timer}`.\n3) `renderLayer` добавляет внутрь `<g>` каждой обратной лестницы `polygon.hpf-arrival-highlight` по кешированному `markup.outline`, обёрнутый в `keyed(token)`, и отмечает `rendered`.\n4) `updated()` карточки вызывает `StairViewRuntime.updated()`. Тот сбрасывает состояние при несовпадении режима или этажа, а после первой отрисовки ставит таймер на `controlMotion.arrival.duration` (2000 мс). Проверка идентичности защищает от устаревшего таймера.\n5) Карточка вызывает `clearArrival()` в `_commitSpace` (единственное место `this._space =`), `_setMode`, `_adoptMode` и `disconnectedCallback`.\n6) Стиль и ключевые кадры `hp-ui-arrival` живут в общем `controlMotionStyles`, токены длительности, числа повторов и кривой — в `controlMotion.arrival`. Reduced motion: `animation:none; opacity:1`, плюс общее правило `.hpf-motion`.\n\nРазобранные пути: клик и клавиатура; карусель, свайп и вкладки (через `_slideTo → _commitSpace` подсветку не запускают, а прежнюю гасят); вход в редактор; отключение компонента; повторный обратный переход в пределах двух секунд; 2.5D (слой рисуется внутри `.iso-floor-scene` той же plan-svg); поворот плана (подсветка в той же группе, что и лестница).",
-          "analysis": [
-            {
-              "topic": "Жизненный цикл и очистка состояния",
-              "assessment": "Устроено надёжно. Очистка привязана к реальным точкам изменения, а не к каждому вызывающему пути, плюс есть страховочная проверка в `updated()`. `this._space` присваивается только в `_commitSpace`, `_mode` — в `_adoptMode` и сбросе при выгрузке (строка 4615). Любой путь смены этажа, включая карусель, свайп, возврат киоска по простою и маршрут, гасит подсветку, а остальное ловит сверка в `updated()`. Таймер стартует после отрисовки и сравнивает объект `arrival` по ссылке, поэтому устаревший таймер не завершит новое прибытие. `keyed(token)` гарантирует новый DOM-элемент и перезапуск CSS-анимации при повторном прибытии, даже если Lit переиспользует `<g>` по индексу.",
-              "evidence": "src/stairs-view.ts:48-73, 104-172; src/houseplan-card.ts:1693, 1836, 1855, 3249, 4806, 8401. Тест `departure, editor entry, disconnect and repeated arrivals…` проверяет, что устаревший `old.fn()` не гасит новую подсветку."
-            },
-            {
-              "topic": "Защита навигации",
-              "assessment": "Прежние условия (`active`, `_suppressClick` карточки, локальный `suppressClick` долгого или отменённого касания) сохранены. Добавлена повторная проверка в момент события: режим, этаж отрисовки, текущая запись лестницы по id, `stairTargetState` по свежей модели и фиксированному этажу. Это закрывает реальный риск: обработчик из устаревшего DOM мог увести на удалённый или ставший недопустимым этаж. Подсветка запускается, только если `_space` фактически стал целевым. Отложенный или запрещённый `_tabClick` (подавление после перетаскивания вкладки, `beforeIntent`, `_canCommitSpace`) её не запускает, что соответствует пункту ТЗ «только после успешного перехода».",
-              "evidence": "src/stairs-view.ts:128-142; src/houseplan-card.ts:2007-2015, 2071-2082, 1860-1871. Тест `invalid, fixed, stale and gesture-suppressed activations remain inert`."
-            },
-            {
-              "topic": "Визуал и общий уровень UI Kit",
-              "assessment": "Соответствует прототипу и контракту. Параметры совпадают с `overrides/houseplan-card.css` прототипа: 3px, `non-scaling-stroke`, `fill-opacity .22`, ключевые кадры 0/30–55/100%, 1 с × 2, `ease-in-out`, `both`. Отличия только в именах и в том, что значения вынесены в общие токены. Цвет берётся из `--hp-accent`, а он в `base.styles.ts:17` связан с `--primary-color`. Константы и `--accent-color` не используются. `pointer-events:none` не мешает клику, панораме и щипку. Подсветка рисуется поверх исходного рисунка с прозрачной заливкой, так что сам рисунок остаётся видимым. Лабораторные monkeypatch и DOM-вставки не перенесены, вывод декларативный через Lit.",
-              "evidence": "src/styles/ui-motion.styles.ts:26-43, 51-52; src/ui-motion.ts: `arrival: { duration: 2000, iterations: 2, easing: 'ease-in-out' }`; docs/design/.../overrides/houseplan-card.css (блок #1126)."
-            },
-            {
-              "topic": "2.5D, поворот и камера",
-              "assessment": "Подсветка живёт внутри `<g>` лестницы в той же `plan-svg`/`.iso-floor-scene` и поэтому следует проекции и `turnMatrix`. Отдельной геометрии не появилось. Камеру код прибытия не трогает: используется штатный `_restoreZoom` из `_slideTo`.",
-              "evidence": "src/houseplan-card.ts:11799-11803, 11979-11980; демо-проверка `iso-dark` проверяет `closest('.iso-floor-scene')`, а `ExpiresAndNoExtraCamera` сравнивает `_zoom`/`_view`."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Node-тесты покрывают нужную матрицу: все и только обратные лестницы, отсутствие таймера до отрисовки, отсутствие индикации без обратной лестницы, guards, очистку и повторное прибытие. Тестируемость обеспечивает внедряемый `ArrivalClock`. Слабое место — тесты разбирают внутреннюю структуру `TemplateResult` (`strings`/`values` по индексам), и при безобидной перестановке разметки они сломаются. Демо-проверка (smoke) проверяет вычисленные стили, кадры двух импульсов через Web Animations, reduced motion, сохранение панорамы, очистку при входе в редактор, обычной смене этажа и отключении, а также отсутствие записи лестниц.",
-              "evidence": "test/stairs-view-arrival.test.mjs; demo/smoke_stair_arrival.mjs; результат S6 `20261102T155934143-cd86a73f` — passed, failures пусты."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Node-тесты находят подсветку и обработчики через `template.strings`/`values` по индексам. Надёжнее проверять через отрисовку в DOM (как в smoke) или через небольшой чистый помощник, например `arrivalStairIds()`, который вычисляет набор подсвечиваемых id. Выгода: тесты не сломаются при перестановке атрибутов. Цена: небольшая доработка тестов.",
-            "Флаг `arrival.rendered = true` выставляется прямо в `renderLayer`, то есть рендер имеет побочный эффект. Сейчас это безопасно, но в комментарии стоит явно зафиксировать договорённость, что время жизни отсчитывается от первой отрисовки, которая содержала подсветку. Иначе будущий рефакторинг может, например, вызвать `renderLayer` вне цикла Lit и запустить таймер раньше времени.",
-            "Если в течение двух секунд пересоздаётся сцена (переключение Flat/2.5D), keyed-элемент создаётся заново и CSS-анимация начинается сначала, а таймер продолжает идти. Импульс обрежется на середине. Это пограничный случай, ТЗ его не регламентирует. Если он важен, можно задать `animation-delay` с отрицательным смещением от момента старта или сбрасывать подсветку при смене проекции.",
-            "`controlMotionStyles` добавляется и в `hp-dialog`, и в корни диалогов HA (`ha-dialog-motion.ts`), поэтому правило `.hpf-arrival-highlight` попадает и туда. Вреда нет, но если общий пакет будет расти, стоит разделить базовые токены движения и стили конкретных потребителей."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам и истории на pinned head 89224e3. Изучены diff `src/stairs-view.ts`, `src/houseplan-card.ts`, `src/ui-motion.ts`, `src/styles/ui-motion.styles.ts` и связанные места карточки: `_commitSpace`, `_slideTo`, `_pickSpace`, `_tabClick`, `_setMode`, `_adoptMode`, `disconnectedCallback`, `updated`, шаблон stage/iso-scene. Также изучены стили лестниц в `plan.styles.ts`, определение `--hp-accent`, тесты, smoke-скрипт и стили прототипа #1126. Сборку, тесты и браузер я не запускал. Использован результат S6 «Тесты для задачи #1126 (перед ревью)» (`20261102T155934143-cd86a73f`, passed, без failures); его состав виден мне только по названию. Авторские сведения о browser smoke (20 утверждений) и сравнении с replay beta.2 — утверждения исполнителя, сам я их не наблюдал. Реальный HA E2E, touch на физическом устройстве и визуальное сравнение на одинаковой теме не проверены; по словам автора, они вынесены в houseplan-e2e#11. Материалы прототипа в `docs/design/...` содержат и не относящиеся к задаче лабораторные override-стили (UI-0xx); их я рассматривал как архив согласования, а не как код продукта."
-        },
-        "usage": {
-          "input_tokens": 42,
-          "cache_creation_input_tokens": 142670,
-          "cache_read_input_tokens": 2149301,
-          "output_tokens": 13963,
-          "output_tokens_details": {
-            "thinking_tokens": 5744
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 142670,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 949,
-              "cache_read_input_tokens": 130332,
-              "cache_creation_input_tokens": 16508,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16508
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРеализацию можно принимать. После успешного перехода по лестнице в Просмотре или киоске все лестницы целевого этажа, ведущие на исходный, получают временный контур. Он сделан на общем акценте `--hp-accent`, длится 2 × 1 с ease-in-out, а при reduced motion показывается статично. Камера дополнительно не двигается, данные не пишутся. Состояние прибытия хранится локально в `StairViewRuntime` и очищается на всех границах: смена этажа (через единственную точку записи `_space`), смена режима, отключение компонента, новый переход. Время жизни отсчитывается только после того, как Lit отрисовал подсветку. Блокеров не нашёл. Есть несколько необязательных замечаний по устойчивости тестов и пограничным случаям анимации.\n\n## Понимание решения\n\nЗадача: после перехода по лестнице на новом этаже ничего не показывает, где оказался пользователь. Владелец выбрал не наводить камеру, а подсветить лестницы, ведущие обратно, двумя пульсами акцентного цвета.\n\nДо: `navigate` в `stairs-view.ts` вызывал `_tabClick(target)`, и на этом всё заканчивалось.\n\nПосле:\n1) `navigate` перед переходом повторно проверяет режим, этаж, текущую запись лестницы и `stairTargetState`. Это закрывает активацию из устаревшего DOM, фиксированный этаж и удалённую цель. Затем вызывается `_tabClick`. Если `_space` синхронно стал целевым (`_tabClick → _pickSpace → _slideTo → _commitSpace`), вызывается `arrive(from, target)`.\n2) `arrive` сначала сбрасывает прежнее состояние. Если обратных лестниц нет, новое не создаётся и перерисовка не запрашивается. Иначе создаётся `{from, space, token, rendered, timer}`.\n3) `renderLayer` добавляет внутрь `<g>` каждой обратной лестницы `polygon.hpf-arrival-highlight` по кешированному `markup.outline`, обёрнутый в `keyed(token)`, и отмечает `rendered`.\n4) `updated()` карточки вызывает `StairViewRuntime.updated()`. Тот сбрасывает состояние при несовпадении режима или этажа, а после первой отрисовки ставит таймер на `controlMotion.arrival.duration` (2000 мс). Проверка идентичности защищает от устаревшего таймера.\n5) Карточка вызывает `clearArrival()` в `_commitSpace` (единственное место `this._space =`), `_setMode`, `_adoptMode` и `disconnectedCallback`.\n6) Стиль и ключевые кадры `hp-ui-arrival` живут в общем `controlMotionStyles`, токены длительности, числа повторов и кривой — в `controlMotion.arrival`. Reduced motion: `animation:none; opacity:1`, плюс общее правило `.hpf-motion`.\n\nРазобранные пути: клик и клавиатура; карусель, свайп и вкладки (через `_slideTo → _commitSpace` подсветку не запускают, а прежнюю гасят); вход в редактор; отключение компонента; повторный обратный переход в пределах двух секунд; 2.5D (слой рисуется внутри `.iso-floor-scene` той же plan-svg); поворот плана (подсветка в той же группе, что и лестница).\n\n## Разбор решения\n\n### Жизненный цикл и очистка состояния\n\nУстроено надёжно. Очистка привязана к реальным точкам изменения, а не к каждому вызывающему пути, плюс есть страховочная проверка в `updated()`. `this._space` присваивается только в `_commitSpace`, `_mode` — в `_adoptMode` и сбросе при выгрузке (строка 4615). Любой путь смены этажа, включая карусель, свайп, возврат киоска по простою и маршрут, гасит подсветку, а остальное ловит сверка в `updated()`. Таймер стартует после отрисовки и сравнивает объект `arrival` по ссылке, поэтому устаревший таймер не завершит новое прибытие. `keyed(token)` гарантирует новый DOM-элемент и перезапуск CSS-анимации при повторном прибытии, даже если Lit переиспользует `<g>` по индексу.\n\nОснование: src/stairs-view.ts:48-73, 104-172; src/houseplan-card.ts:1693, 1836, 1855, 3249, 4806, 8401. Тест `departure, editor entry, disconnect and repeated arrivals…` проверяет, что устаревший `old.fn()` не гасит новую подсветку.\n\n### Защита навигации\n\nПрежние условия (`active`, `_suppressClick` карточки, локальный `suppressClick` долгого или отменённого касания) сохранены. Добавлена повторная проверка в момент события: режим, этаж отрисовки, текущая запись лестницы по id, `stairTargetState` по свежей модели и фиксированному этажу. Это закрывает реальный риск: обработчик из устаревшего DOM мог увести на удалённый или ставший недопустимым этаж. Подсветка запускается, только если `_space` фактически стал целевым. Отложенный или запрещённый `_tabClick` (подавление после перетаскивания вкладки, `beforeIntent`, `_canCommitSpace`) её не запускает, что соответствует пункту ТЗ «только после успешного перехода».\n\nОснование: src/stairs-view.ts:128-142; src/houseplan-card.ts:2007-2015, 2071-2082, 1860-1871. Тест `invalid, fixed, stale and gesture-suppressed activations remain inert`.\n\n### Визуал и общий уровень UI Kit\n\nСоответствует прототипу и контракту. Параметры совпадают с `overrides/houseplan-card.css` прототипа: 3px, `non-scaling-stroke`, `fill-opacity .22`, ключевые кадры 0/30–55/100%, 1 с × 2, `ease-in-out`, `both`. Отличия только в именах и в том, что значения вынесены в общие токены. Цвет берётся из `--hp-accent`, а он в `base.styles.ts:17` связан с `--primary-color`. Константы и `--accent-color` не используются. `pointer-events:none` не мешает клику, панораме и щипку. Подсветка рисуется поверх исходного рисунка с прозрачной заливкой, так что сам рисунок остаётся видимым. Лабораторные monkeypatch и DOM-вставки не перенесены, вывод декларативный через Lit.\n\nОснование: src/styles/ui-motion.styles.ts:26-43, 51-52; src/ui-motion.ts: `arrival: { duration: 2000, iterations: 2, easing: 'ease-in-out' }`; docs/design/.../overrides/houseplan-card.css (блок #1126).\n\n### 2.5D, поворот и камера\n\nПодсветка живёт внутри `<g>` лестницы в той же `plan-svg`/`.iso-floor-scene` и поэтому следует проекции и `turnMatrix`. Отдельной геометрии не появилось. Камеру код прибытия не трогает: используется штатный `_restoreZoom` из `_slideTo`.\n\nОснование: src/houseplan-card.ts:11799-11803, 11979-11980; демо-проверка `iso-dark` проверяет `closest('.iso-floor-scene')`, а `ExpiresAndNoExtraCamera` сравнивает `_zoom`/`_view`.\n\n### Тесты\n\nNode-тесты покрывают нужную матрицу: все и только обратные лестницы, отсутствие таймера до отрисовки, отсутствие индикации без обратной лестницы, guards, очистку и повторное прибытие. Тестируемость обеспечивает внедряемый `ArrivalClock`. Слабое место — тесты разбирают внутреннюю структуру `TemplateResult` (`strings`/`values` по индексам), и при безобидной перестановке разметки они сломаются. Демо-проверка (smoke) проверяет вычисленные стили, кадры двух импульсов через Web Animations, reduced motion, сохранение панорамы, очистку при входе в редактор, обычной смене этажа и отключении, а также отсутствие записи лестниц.\n\nОснование: test/stairs-view-arrival.test.mjs; demo/smoke_stair_arrival.mjs; результат S6 `20261102T155934143-cd86a73f` — passed, failures пусты.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Node-тесты находят подсветку и обработчики через `template.strings`/`values` по индексам. Надёжнее проверять через отрисовку в DOM (как в smoke) или через небольшой чистый помощник, например `arrivalStairIds()`, который вычисляет набор подсвечиваемых id. Выгода: тесты не сломаются при перестановке атрибутов. Цена: небольшая доработка тестов.\n- Флаг `arrival.rendered = true` выставляется прямо в `renderLayer`, то есть рендер имеет побочный эффект. Сейчас это безопасно, но в комментарии стоит явно зафиксировать договорённость, что время жизни отсчитывается от первой отрисовки, которая содержала подсветку. Иначе будущий рефакторинг может, например, вызвать `renderLayer` вне цикла Lit и запустить таймер раньше времени.\n- Если в течение двух секунд пересоздаётся сцена (переключение Flat/2.5D), keyed-элемент создаётся заново и CSS-анимация начинается сначала, а таймер продолжает идти. Импульс обрежется на середине. Это пограничный случай, ТЗ его не регламентирует. Если он важен, можно задать `animation-delay` с отрицательным смещением от момента старта или сбрасывать подсветку при смене проекции.\n- `controlMotionStyles` добавляется и в `hp-dialog`, и в корни диалогов HA (`ha-dialog-motion.ts`), поэтому правило `.hpf-arrival-highlight` попадает и туда. Вреда нет, но если общий пакет будет расти, стоит разделить базовые токены движения и стили конкретных потребителей.\n\n## Границы анализа\n\nРевью выполнено только по исходникам и истории на pinned head 89224e3. Изучены diff `src/stairs-view.ts`, `src/houseplan-card.ts`, `src/ui-motion.ts`, `src/styles/ui-motion.styles.ts` и связанные места карточки: `_commitSpace`, `_slideTo`, `_pickSpace`, `_tabClick`, `_setMode`, `_adoptMode`, `disconnectedCallback`, `updated`, шаблон stage/iso-scene. Также изучены стили лестниц в `plan.styles.ts`, определение `--hp-accent`, тесты, smoke-скрипт и стили прототипа #1126. Сборку, тесты и браузер я не запускал. Использован результат S6 «Тесты для задачи #1126 (перед ревью)» (`20261102T155934143-cd86a73f`, passed, без failures); его состав виден мне только по названию. Авторские сведения о browser smoke (20 утверждений) и сравнении с replay beta.2 — утверждения исполнителя, сам я их не наблюдал. Реальный HA E2E, touch на физическом устройстве и визуальное сравнение на одинаковой теме не проверены; по словам автора, они вынесены в houseplan-e2e#11. Материалы прототипа в `docs/design/...` содержат и не относящиеся к задаче лабораторные override-стили (UI-0xx); их я рассматривал как архив согласования, а не как код продукта.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fa15643e0f27f0192b36d684d4ac8c49fdd81a4c → 89224e3bf7257f8a19735b4de50c80eeb3a126fe\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1126, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\nРеализован согласованный ТЗ выше: успешный переход по лестнице выделяет все обратные лестницы на 2 секунды, не меняя камеру дополнительно.\n\n### Решение\nStairViewRuntime владеет только временной парой исходный/целевой этаж, идентичностью запуска и таймером. Подсветка выводится декларативно Lit по существующей cached outline; keyed пересоздаёт её при новом прибытии. Общие ui-motion токены/стили задают акцент, два импульса и reduced motion. Карточка очищает состояние при фактической смене этажа/режима и disconnect; updated запускает время после commit слоя. Лабораторные monkeypatch и DOM injection не перенесены. Навигационные guards перепроверяются также на активации устаревшего DOM.\n\n### Проверки и риски\nАвторская подготовка: build/types PASS; 4 адресных Node-теста PASS; browser smoke — 20 утверждений PASS (Flat/light, 2.5D/dark, kiosk, keyboard, reduced motion, pan, cleanup, отсутствие изменения записей лестниц). Полные обязательные S6 будут выполнены в очереди. Критичны lifecycle и guards, сохранение жестов, общий CSS без влияния на другие motion consumers.\nСравнение с pinned beta.2 replay на одной fixture/HA-теме: все points, accent, 3px, fill .22, vector-effect, easing, 1s×2 совпали; PNG обоих вариантов просмотрены. Материалы утверждённого прототипа сохранены неизменно. Выборочная проверка не заменяет полного релизного набора.\nРеальный HA E2E дорабатывается перед бетой, решение «надо» записано: https://github.com/Matysh/houseplan-e2e/issues/11. Бета в этой задаче не выпускается.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-02T16:04:13.132Z",
-        "artifactId": 13157788908,
-        "runId": 41477199464,
-        "runAttempt": 1,
-        "completedAt": "2026-11-02T16:04:26Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41477199464",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793635503013,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1128": {
       "issue": 1128,
@@ -1456,121 +1306,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1126,
-    "worker": "finish",
-    "token": "75:finish:97dac295-30dc-406e-afc0-9874832c0583:finish:1:admit",
-    "fence": 75,
-    "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-    "expectedBase": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793635164178,
-    "expiresAt": 1793639099198,
-    "patchId": "4e6e2cdf81324212545a0dab9457786c66a42b02",
-    "reviewRequest": "review:1126:1:4e6e2cdf81324212545a0dab9457786c66a42b02:fa15643e0f27f0192b36d684d4ac8c49fdd81a4c"
-  },
-  "events": {
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:2:synchronized": {
-      "digest": "d2e6ae510b35a960395259491e2fbd92b81139d2396005e05fe85dbbdc12217a",
-      "issue": 1126
-    },
-    "github:41476991549:1:completions:message:8d13b846a43df57e302c50e10c7e3d2caaeb42011a5e6224892e86470f06e9c7": {
-      "digest": "8e08c789a67d3f33b96edff35f9fce44395af1a0400bc2c1ac8555d4f96ae79d",
-      "issue": 1126
-    },
-    "github:41476991549:1:completions:message:d79e2add1693e6288413bcb4a47acffc09e1ac53e2738c3d11ad2ef65d6d4c9a": {
-      "digest": "29a595f4b8280ea2ed21dde580f93397cd96524df602783226e851722d2bb9f7",
-      "issue": 1126
-    },
-    "finish:31d2d051-910d-4cd3-ac01-b06fd6aec0d8": {
-      "digest": "773d095bd61e997db0c21edf434b305071a7b1043f4f52e380c54bdcc1e2115f",
-      "issue": 1126
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:3:s6-label": {
-      "digest": "5a0e2ab5cfd9d6092b8e2af1fcf956826081779f07fdf4c8846bae84d5852b72",
-      "issue": 1126
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:4:review-requested": {
-      "digest": "d60277066fc31fe91a7e3198e22f3658d50a63d3bd7ee10f7c57dc3d4e8a8e95",
-      "issue": 1126
-    },
-    "github:41477172268:1:completions:message:158dc302d0ff2cd4f269aa16e288edff9ed6475a521968ff103eae89131eca8c": {
-      "digest": "e0ca05c9fd233274bd5aefd4887f793df5463b2a19a370b0b66b4b5f2c5427f2",
-      "issue": 1126
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:8:review-presentation": {
-      "digest": "f0d8263698d83a3b7310891c9eb20e23a559f85bff1010d644248b9b180d896c",
-      "issue": 1126
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:8:review-complete": {
-      "digest": "9d8c72c110bab50c7dbb97548b22dedbaa2924a14dd4404451e2a4259d7414da",
-      "issue": 1126
-    },
-    "github:41477862742:1:tick:0:automation-pending": {
-      "digest": "6a31d93e709ed959c3560206ad7c576d938654b4d0c0f45872c37a670c27721d",
-      "issue": 1126
-    },
-    "github:41477862742:1:completions:report:e7fe3ff78cea7af3a43d5f9d8bf7fab46a87e6cfcbad006db924e140620b063d": {
-      "digest": "9f4096773d977a205626a1a40b9e50338012566e14175c42e2f89e17993d86c8",
-      "issue": 1126
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583": {
-      "digest": "2eadc7d125097d16a852cefef6bdb7d97e1b27062f4a376698b15e6339e6caaf",
-      "issue": 1126,
-      "message": {
-        "kind": "queued",
-        "issue": 1126,
-        "at": 1793635160703,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "delivered": true
-      }
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:1:admit": {
-      "digest": "1c650b17ce9e1101a2af9ff1ee10378790c18cef55cf5d73b4919631822cd03e",
-      "issue": 1126,
-      "message": {
-        "kind": "admitted",
-        "issue": 1126,
-        "at": 1793635164178,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:3:s6-complete": {
-      "digest": "484255543d3e3f72720784d336aa35d61ad294bcbe0a34d3393dc8527de0e6e7",
-      "issue": 1126,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1126,
-        "at": 1793635219565,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "phase": "review",
-        "evidence": {
-          "id": "20261102T155934143-cd86a73f",
-          "name": "Тесты для задачи #1126 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T155934143-cd86a73f/report.json",
-          "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-          "status": "passed",
-          "finishedAt": "2026-11-02T16:00:18.246Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
     "status": "delivered",
