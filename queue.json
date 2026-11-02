@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1117,
+  "revision": 1118,
   "nextTicket": 84,
   "nextFence": 83,
   "tasks": {
@@ -107,181 +107,25 @@
     },
     "1130": {
       "issue": 1130,
+      "branch": "codex/issue-1130-low-signal",
       "track": "show",
       "layer": "product",
-      "branch": "codex/issue-1130-low-signal",
-      "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 82,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793641881581,
-      "reviewEntry": 2,
-      "patchId": "0fab874a5f395e140568b1b17b63854daf035965",
-      "changedFiles": [
-        "custom_components/houseplan/support_package.py",
-        "custom_components/houseplan/support_wire_schema.py",
-        "custom_components/houseplan/validation.py",
-        "demo/smoke_signal_low_only.mjs",
-        "demo/smoke_signal_visibility_lifecycle.mjs",
-        "demo/smoke_signal_visibility_ui.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/DEVICE-PRESENTATION.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.83.0/1130.json",
-        "scripts/mutation-registry.mjs",
-        "src/device-presentation.ts",
-        "src/editors/general-settings-dialog.ts",
-        "src/editors/space-form.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n/settings/de.json",
-        "src/i18n/settings/en.json",
-        "src/i18n/settings/fr.json",
-        "src/i18n/settings/ru.json",
-        "src/iso-scene-render.ts",
-        "src/live-hover.ts",
-        "src/logic.ts",
-        "src/render-device-snapshot.ts",
-        "src/render-snapshot-capture.ts",
-        "src/render-snapshot-reuse.ts",
-        "src/signal-visibility.ts",
-        "src/space-card.ts",
-        "src/types.ts",
-        "test/render-snapshot-incremental.test.mjs",
-        "test/signal-visibility.test.mjs",
-        "test/space-card-signal.test.mjs",
-        "tests_backend/test_ha_signal_visibility_low.py",
-        "tests_backend/test_settings_signal_visibility.py",
-        "tests_backend/test_support_wire_schema.py"
-      ],
-      "s6": {
-        "id": "20261102T175233197-1a0ef708",
-        "name": "Тесты для задачи #1130 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T175233197-1a0ef708/report.json",
-        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-        "status": "passed",
-        "finishedAt": "2026-11-02T17:53:34.723Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793641511574,
-        "entry": 1,
-        "requestId": "review:1130:1:bc0a0ad8445b4d4664f8e9d46e75b8da7fc652bc:4f895343407cd730222fa3b47c188703332f16ce",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
+      "mergedSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
+      "mergedAt": 1793642170712,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1130:2:0fab874a5f395e140568b1b17b63854daf035965:4f895343407cd730222fa3b47c188703332f16ce",
-      "reviewMaterial": {
-        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-        "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
-        "patchId": "0fab874a5f395e140568b1b17b63854daf035965"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1130,
-        "requestId": "review:1130:2:0fab874a5f395e140568b1b17b63854daf035965:4f895343407cd730222fa3b47c188703332f16ce",
-        "kind": "code",
-        "base": "4f895343407cd730222fa3b47c188703332f16ce",
-        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-        "patchId": "0fab874a5f395e140568b1b17b63854daf035965",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1130,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1130",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Результат и решение\nРежим «Только низкий» фильтрует только системные числа LQI ≤50 по последнему решению владельца. Контракт и исходная постановка сохранены выше. Общая настройка boolean|low, пространство inherit/on/low/off; legacy true наследует. Local hide и прежние приоритеты YAML/пространства сохранены. Цвет/явные LQI values/badges/tooltip/room metrics не меняются. Backend/schema/support пропускают новый literal без смены модели. Используются общие UI Kit select и четыре локали.\n\n### Исправления после раунда 1\nПредыдущее ревью: https://github.com/Matysh/houseplan-card/issues/1130#issuecomment-6584110173\n1. Условная low-проекция не входила в deviceKeys, поэтому могла вернуть старое лицо после low → on → изменение HA строки → low. Единый lowSignalProjectionNeeded теперь используется capture/static/reuse, флаг включён в ключ каждого устройства по образцу батареи. Изменение спроса переводит устройство в changedDevices; capture не переиспользует прежнюю проекцию. Обычные планы остаются с двумя проекциями; только low добавляет третью. Lend и retire учитывают её.\n2. Подсказка переопределений ошибочно сопоставляла low с Off. Теперь on/low/off используют space.lqi_on/low/off из settings-локали.\nДобавлен дифференциальный тест обоих scope (global/space) с переключением режима, изменением switch state и сравнением всего snapshot с полной пересборкой; отдельно проверяется смена visual.status. Browser проверяет фактический текст override hint.\n\n### Проверки и риски\nРаунд 1: формальный S6 10/10 PASS; авторская backend-выборка 42 PASS, включая настоящий HA WebSocket config/storage/CAS; локализованные UI и lifecycle проверки PASS. После исправлений: build/types PASS; новый дифференциальный тест global+space PASS; low-only browser 22/22 PASS, включая actual save, границы, static, ISO, marker preview, приоритеты и override hint. Формальный S6 второго входа выполняется очередью с применимым reuse, не изображается уже завершённым.\nДля свежего взгляда важны key demand/invalidation, immutable reuse, namespace подписи и сохранение совместимости. Full release/HA browser E2E не запускались; потребность перед бетой записана https://github.com/Matysh/houseplan-e2e/issues/13.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Оба блокера первого раунда устранены. Новых существенных проблем во втором раунде я не нашёл.\n\n1. **Устаревшая проекция `'low'` в кэше.** Флаг потребности в low (`lowSignalProjectionNeeded`) теперь входит в ключ каждого устройства в `deviceKeys`. Любая смена этой потребности, в обе стороны, переводит устройство в `changedDevices`. Метод `present()` такие устройства не берёт из кэша и пересобирает. Поэтому сценарий «Только низкий → Показывать всегда → изменилось состояние → снова Только низкий» больше не может вернуть старое лицо маркера. Устаревшая запись `id:low` в `built` в режиме «всегда» остаётся, но до неё нельзя добраться: при возврате в low ключ устройства обязательно меняется.\n2. **Подсказка о переопределениях пространств.** Режимы on/low/off теперь подписываются строками `space.lqi_on`, `space.lqi_low` и `space.lqi_off`.\n\nМодель настройки, совместимость сохранённых значений, порог ≤50, приоритеты и backend остались такими же, какими были положительно оценены в первом раунде. Работу можно принимать.",
-          "understanding": "**Что решает задача.** Настройка «Показывать Zigbee-сигнал» превращается из переключателя «вкл/выкл» в выбор из трёх вариантов: «Показывать всегда», «Только низкий» (LQI ≤ 50) и «Не показывать». Пространство может переопределить режим: «Как в общих» и те же три варианта. Прежние сохранённые `true`/`false` читаются с тем же видимым результатом.\n\n**Как устроено.**\n- `signal-visibility.ts` содержит тип `SignalVisibility = boolean | 'low'` и фильтр `systemSignalVisible`. Фильтр затрагивает только `lqiText`, то есть системное число под маркером.\n- `presentationSnapshotKey` различает `low` и `1`.\n- Обычные планы по-прежнему строят две проекции. Третья проекция `'low'` строится только для пространств, где `lowSignalProjectionNeeded`: глобально `low` или режим пространства `low`.\n\n**Что изменилось во втором раунде.**\n- Условие вынесено в общую функцию `lowSignalProjectionNeeded`. Её используют захват снапшота (`render-snapshot-capture.ts:198`), ключ устройства в слоте повторного использования (`render-snapshot-reuse.ts:148-155`) и гейт статической карточки (`space-card.ts:551`).\n- Подсказка о переопределениях в общем диалоге сопоставляет три режима с правильными строками.\n- Добавлен дифференциальный тест для двух областей (global и space). Он проверяет переключение режима туда и обратно с изменением состояния выключателя между переключениями и сравнивает результат с полной пересборкой.\n\n**Что я проследил заново.**\n- `RenderSnapshotReuseSlot` целиком: `begin`, `present`, `end`, `lend`.\n  - `changedDevices` вычисляется из нового ключа.\n  - Условие в `present()` (`:230`) исключает такие устройства из повторного использования, а `fresh` сбрасывает `deps` при первой проекции.\n  - `lend` не одалживает клоны изменённых устройств.\n  - Через `pair(..., undefined)` в `lend` стухшая `id:low` не может попасть в memo, если в предыдущем снапшоте её не было.\n- Цикл захвата: снапшот получает только проекции, запрошенные в текущем захвате.\n- Откат к построению на лету в `_devicePresentation` (`houseplan-card.ts:6255-6266`) и в `space-render.ts:612-614`.\n- Сохранение общей настройки: `writeGlobalSignalVisibility` и черновик `globalSignalVisibleOf`. Dirty-сравнение через `stableKey` работает и со строковым `'low'`.",
-          "analysis": [
-            {
-              "topic": "Инвалидация условной low-проекции (блокер 1 раунда 1)",
-              "assessment": "Исправление выбрано правильно, по образцу режима заряда. Потребность в low включена в ключ устройства, поэтому одна и та же точка решает и включение, и выключение спроса.\n\nКак это работает:\n- При low→on устройство попадает в `changedDevices` и пересобирает false/true.\n- При последующем изменении строк HA его `deps` пересоздаются.\n- При on→low ключ снова меняется. `present(id,'low')` не проходит проверку `!this.changedDevices.has(id)` и строит презентацию заново.\n\nОставшаяся в `built` старая `id:low` в режиме «всегда» безопасна. В снапшот попадают только проекции, запрошенные в текущем захвате, а при возвращении спроса ключ обязательно меняется.\n\nВариант с ключом устройства лучше альтернативы «удалять `id:low` при `fresh.add`»: он одинаково покрывает и смену настроек без изменения строк HA.",
-              "evidence": "`src/render-snapshot-reuse.ts:148-156` (lowSignal в deviceKeys), `:230` (условие повторного использования с `changedDevices`), `:233-237` (сброс deps при первой проекции), `:298-303` (lend пропускает changedDevices), `:257` (retire удаляет low). `src/render-snapshot-capture.ts:198-211`. Тест `test/render-snapshot-incremental.test.mjs` «#1130 conditional low projection…» сравнивает `visual.status`, low-проекцию и весь снапшот с полной пересборкой для global и space."
-            },
-            {
-              "topic": "Единый источник условия low",
-              "assessment": "Улучшение из первого раунда принято. `lowSignalProjectionNeeded` живёт в `signal-visibility.ts` и используется тремя потребителями: захватом, ключом reuse и статической карточкой. Риск расхождения между тем, что строится, и тем, что инвалидируется, существенно снижен.\n\nНебольшая асимметрия источника пространств есть. Reuse берёт `host._serverCfg?.spaces ?? host._model`, а capture берёт `host._serverCfg?.spaces`. Это унаследовано от режима заряда, а расхождение может дать только лишнюю инвалидацию, но не устаревшее лицо. Комментарий над `deps` обновлён, неочевидное правило записано рядом с ключом.",
-              "evidence": "`src/signal-visibility.ts` (`lowSignalProjectionNeeded`), `src/render-snapshot-reuse.ts:122,151`, `src/space-card.ts:551-554,618`, `docs/ARCHITECTURE.md` (абзац #1130)."
-            },
-            {
-              "topic": "Подсказка переопределений в общем диалоге (блокер 2 раунда 1)",
-              "assessment": "Исправлено. Подпись строится через `st('space.lqi_low' | 'space.lqi_on' | 'space.lqi_off')` из settings-локали, то есть тех же строк, что и в select. Ключи `space.lqi_low` добавлены во все четыре локали. Устаревшая подпись `space.sun_on/off` убрана. По словам автора, браузерная проверка сверяет фактический текст «— Low only».",
-              "evidence": "`src/editors/general-settings-dialog.ts:90-96`; `src/i18n/settings/{ru,en,de,fr}.json` (`space.lqi_low`); `demo/smoke_signal_low_only.mjs` (`overrideHintNamesLow`)."
-            },
-            {
-              "topic": "Остальная часть решения (без изменений с раунда 1)",
-              "assessment": "Кодек и совместимость прежние. Глобальное значение: `boolean|'low'`, где `true` удаляет ключ. Пространство `low` пишет зеркало `show_lqi:true`, а legacy `true` по-прежнему означает наследование.\n\nПорог ≤50 включительно, неизвестное значение не превращается в 0. Локальное `hide_signal` побеждает всегда. Явный режим пространства сильнее YAML `show_signal:false`.\n\nBackend-валидация, support-проекция и закрытая wire-схема согласованы. Откат к построению на лету при отсутствии ключа `low` закрывает окно до следующего захвата и черновик диалога пространства. Удачно, что новой persisted-модели нет и версия модели не повышена.",
-              "evidence": "`src/signal-visibility.ts`, `src/device-presentation.ts:843-958`, `custom_components/houseplan/validation.py:1722,2952`, `support_package.py:174,234`, `support_wire_schema.py:290,347`, `src/houseplan-card.ts:6255-6266`, `src/space-render.ts:608-614`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Необязательно. В режиме «всегда» в `built` хранится уже недостижимая `id:low`, пока устройство не уйдёт с плана или слот не сбросится. Это небольшая память, а не дефект. Если важна прозрачность, можно удалять `presentationSnapshotKey(id,'low')` в `end()` для устройств, которым в этом захвате low не нужна. Цена: ещё одно место, знающее про третью проекцию; польза: инвариант «built ⊆ текущий спрос»."
-          ],
-          "boundaries": "Сборку, тесты и браузерные проверки я не запускал. Корректность инвалидации установлена чтением `RenderSnapshotReuseSlot.begin/present/end/lend` и цикла захвата.\n\nИспользован результат S6 «Тесты для задачи #1130 (перед ревью)» на `4655da54`: passed. Состав этого набора, а также авторские результаты (дифференциальный тест global+space и браузерная проверка 22/22) я знаю только из описания исполнителя и кода тестов, их выводы не видел.\n\nРеальный HA browser E2E (houseplan-e2e#13) в задаче не выполнялся. Поведение старого клиента после даунгрейда оценено по CONFIG-COMPATIBILITY и коду кодека."
-        },
-        "usage": {
-          "input_tokens": 18,
-          "cache_creation_input_tokens": 94115,
-          "cache_read_input_tokens": 660871,
-          "output_tokens": 7208,
-          "output_tokens_details": {
-            "thinking_tokens": 2043
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 94115,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 693,
-              "cache_read_input_tokens": 87129,
-              "cache_creation_input_tokens": 11190,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11190
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОба блокера первого раунда устранены. Новых существенных проблем во втором раунде я не нашёл.\n\n1. **Устаревшая проекция `'low'` в кэше.** Флаг потребности в low (`lowSignalProjectionNeeded`) теперь входит в ключ каждого устройства в `deviceKeys`. Любая смена этой потребности, в обе стороны, переводит устройство в `changedDevices`. Метод `present()` такие устройства не берёт из кэша и пересобирает. Поэтому сценарий «Только низкий → Показывать всегда → изменилось состояние → снова Только низкий» больше не может вернуть старое лицо маркера. Устаревшая запись `id:low` в `built` в режиме «всегда» остаётся, но до неё нельзя добраться: при возврате в low ключ устройства обязательно меняется.\n2. **Подсказка о переопределениях пространств.** Режимы on/low/off теперь подписываются строками `space.lqi_on`, `space.lqi_low` и `space.lqi_off`.\n\nМодель настройки, совместимость сохранённых значений, порог ≤50, приоритеты и backend остались такими же, какими были положительно оценены в первом раунде. Работу можно принимать.\n\n## Понимание решения\n\n**Что решает задача.** Настройка «Показывать Zigbee-сигнал» превращается из переключателя «вкл/выкл» в выбор из трёх вариантов: «Показывать всегда», «Только низкий» (LQI ≤ 50) и «Не показывать». Пространство может переопределить режим: «Как в общих» и те же три варианта. Прежние сохранённые `true`/`false` читаются с тем же видимым результатом.\n\n**Как устроено.**\n- `signal-visibility.ts` содержит тип `SignalVisibility = boolean | 'low'` и фильтр `systemSignalVisible`. Фильтр затрагивает только `lqiText`, то есть системное число под маркером.\n- `presentationSnapshotKey` различает `low` и `1`.\n- Обычные планы по-прежнему строят две проекции. Третья проекция `'low'` строится только для пространств, где `lowSignalProjectionNeeded`: глобально `low` или режим пространства `low`.\n\n**Что изменилось во втором раунде.**\n- Условие вынесено в общую функцию `lowSignalProjectionNeeded`. Её используют захват снапшота (`render-snapshot-capture.ts:198`), ключ устройства в слоте повторного использования (`render-snapshot-reuse.ts:148-155`) и гейт статической карточки (`space-card.ts:551`).\n- Подсказка о переопределениях в общем диалоге сопоставляет три режима с правильными строками.\n- Добавлен дифференциальный тест для двух областей (global и space). Он проверяет переключение режима туда и обратно с изменением состояния выключателя между переключениями и сравнивает результат с полной пересборкой.\n\n**Что я проследил заново.**\n- `RenderSnapshotReuseSlot` целиком: `begin`, `present`, `end`, `lend`.\n  - `changedDevices` вычисляется из нового ключа.\n  - Условие в `present()` (`:230`) исключает такие устройства из повторного использования, а `fresh` сбрасывает `deps` при первой проекции.\n  - `lend` не одалживает клоны изменённых устройств.\n  - Через `pair(..., undefined)` в `lend` стухшая `id:low` не может попасть в memo, если в предыдущем снапшоте её не было.\n- Цикл захвата: снапшот получает только проекции, запрошенные в текущем захвате.\n- Откат к построению на лету в `_devicePresentation` (`houseplan-card.ts:6255-6266`) и в `space-render.ts:612-614`.\n- Сохранение общей настройки: `writeGlobalSignalVisibility` и черновик `globalSignalVisibleOf`. Dirty-сравнение через `stableKey` работает и со строковым `'low'`.\n\n## Разбор решения\n\n### Инвалидация условной low-проекции (блокер 1 раунда 1)\n\nИсправление выбрано правильно, по образцу режима заряда. Потребность в low включена в ключ устройства, поэтому одна и та же точка решает и включение, и выключение спроса.\n\nКак это работает:\n- При low→on устройство попадает в `changedDevices` и пересобирает false/true.\n- При последующем изменении строк HA его `deps` пересоздаются.\n- При on→low ключ снова меняется. `present(id,'low')` не проходит проверку `!this.changedDevices.has(id)` и строит презентацию заново.\n\nОставшаяся в `built` старая `id:low` в режиме «всегда» безопасна. В снапшот попадают только проекции, запрошенные в текущем захвате, а при возвращении спроса ключ обязательно меняется.\n\nВариант с ключом устройства лучше альтернативы «удалять `id:low` при `fresh.add`»: он одинаково покрывает и смену настроек без изменения строк HA.\n\nОснование: `src/render-snapshot-reuse.ts:148-156` (lowSignal в deviceKeys), `:230` (условие повторного использования с `changedDevices`), `:233-237` (сброс deps при первой проекции), `:298-303` (lend пропускает changedDevices), `:257` (retire удаляет low). `src/render-snapshot-capture.ts:198-211`. Тест `test/render-snapshot-incremental.test.mjs` «#1130 conditional low projection…» сравнивает `visual.status`, low-проекцию и весь снапшот с полной пересборкой для global и space.\n\n### Единый источник условия low\n\nУлучшение из первого раунда принято. `lowSignalProjectionNeeded` живёт в `signal-visibility.ts` и используется тремя потребителями: захватом, ключом reuse и статической карточкой. Риск расхождения между тем, что строится, и тем, что инвалидируется, существенно снижен.\n\nНебольшая асимметрия источника пространств есть. Reuse берёт `host._serverCfg?.spaces ?? host._model`, а capture берёт `host._serverCfg?.spaces`. Это унаследовано от режима заряда, а расхождение может дать только лишнюю инвалидацию, но не устаревшее лицо. Комментарий над `deps` обновлён, неочевидное правило записано рядом с ключом.\n\nОснование: `src/signal-visibility.ts` (`lowSignalProjectionNeeded`), `src/render-snapshot-reuse.ts:122,151`, `src/space-card.ts:551-554,618`, `docs/ARCHITECTURE.md` (абзац #1130).\n\n### Подсказка переопределений в общем диалоге (блокер 2 раунда 1)\n\nИсправлено. Подпись строится через `st('space.lqi_low' | 'space.lqi_on' | 'space.lqi_off')` из settings-локали, то есть тех же строк, что и в select. Ключи `space.lqi_low` добавлены во все четыре локали. Устаревшая подпись `space.sun_on/off` убрана. По словам автора, браузерная проверка сверяет фактический текст «— Low only».\n\nОснование: `src/editors/general-settings-dialog.ts:90-96`; `src/i18n/settings/{ru,en,de,fr}.json` (`space.lqi_low`); `demo/smoke_signal_low_only.mjs` (`overrideHintNamesLow`).\n\n### Остальная часть решения (без изменений с раунда 1)\n\nКодек и совместимость прежние. Глобальное значение: `boolean|'low'`, где `true` удаляет ключ. Пространство `low` пишет зеркало `show_lqi:true`, а legacy `true` по-прежнему означает наследование.\n\nПорог ≤50 включительно, неизвестное значение не превращается в 0. Локальное `hide_signal` побеждает всегда. Явный режим пространства сильнее YAML `show_signal:false`.\n\nBackend-валидация, support-проекция и закрытая wire-схема согласованы. Откат к построению на лету при отсутствии ключа `low` закрывает окно до следующего захвата и черновик диалога пространства. Удачно, что новой persisted-модели нет и версия модели не повышена.\n\nОснование: `src/signal-visibility.ts`, `src/device-presentation.ts:843-958`, `custom_components/houseplan/validation.py:1722,2952`, `support_package.py:174,234`, `support_wire_schema.py:290,347`, `src/houseplan-card.ts:6255-6266`, `src/space-render.ts:608-614`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно. В режиме «всегда» в `built` хранится уже недостижимая `id:low`, пока устройство не уйдёт с плана или слот не сбросится. Это небольшая память, а не дефект. Если важна прозрачность, можно удалять `presentationSnapshotKey(id,'low')` в `end()` для устройств, которым в этом захвате low не нужна. Цена: ещё одно место, знающее про третью проекцию; польза: инвариант «built ⊆ текущий спрос».\n\n## Границы анализа\n\nСборку, тесты и браузерные проверки я не запускал. Корректность инвалидации установлена чтением `RenderSnapshotReuseSlot.begin/present/end/lend` и цикла захвата.\n\nИспользован результат S6 «Тесты для задачи #1130 (перед ревью)» на `4655da54`: passed. Состав этого набора, а также авторские результаты (дифференциальный тест global+space и браузерная проверка 22/22) я знаю только из описания исполнителя и кода тестов, их выводы не видел.\n\nРеальный HA browser E2E (houseplan-e2e#13) в задаче не выполнялся. Поведение старого клиента после даунгрейда оценено по CONFIG-COMPATIBILITY и коду кодека.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 4f895343407cd730222fa3b47c188703332f16ce → 4655da54e3b149ee358fc4dd1e6e07aee0097fd5\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1130, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Результат и решение\nРежим «Только низкий» фильтрует только системные числа LQI ≤50 по последнему решению владельца. Контракт и исходная постановка сохранены выше. Общая настройка boolean|low, пространство inherit/on/low/off; legacy true наследует. Local hide и прежние приоритеты YAML/пространства сохранены. Цвет/явные LQI values/badges/tooltip/room metrics не меняются. Backend/schema/support пропускают новый literal без смены модели. Используются общие UI Kit select и четыре локали.\n\n### Исправления после раунда 1\nПредыдущее ревью: https://github.com/Matysh/houseplan-card/issues/1130#issuecomment-6584110173\n1. Условная low-проекция не входила в deviceKeys, поэтому могла вернуть старое лицо после low → on → изменение HA строки → low. Единый lowSignalProjectionNeeded теперь используется capture/static/reuse, флаг включён в ключ каждого устройства по образцу батареи. Изменение спроса переводит устройство в changedDevices; capture не переиспользует прежнюю проекцию. Обычные планы остаются с двумя проекциями; только low добавляет третью. Lend и retire учитывают её.\n2. Подсказка переопределений ошибочно сопоставляла low с Off. Теперь on/low/off используют space.lqi_on/low/off из settings-локали.\nДобавлен дифференциальный тест обоих scope (global/space) с переключением режима, изменением switch state и сравнением всего snapshot с полной пересборкой; отдельно проверяется смена visual.status. Browser проверяет фактический текст override hint.\n\n### Проверки и риски\nРаунд 1: формальный S6 10/10 PASS; авторская backend-выборка 42 PASS, включая настоящий HA WebSocket config/storage/CAS; локализованные UI и lifecycle проверки PASS. После исправлений: build/types PASS; новый дифференциальный тест global+space PASS; low-only browser 22/22 PASS, включая actual save, границы, static, ISO, marker preview, приоритеты и override hint. Формальный S6 второго входа выполняется очередью с применимым reuse, не изображается уже завершённым.\nДля свежего взгляда важны key demand/invalidation, immutable reuse, namespace подписи и сохранение совместимости. Full release/HA browser E2E не запускались; потребность перед бетой записана https://github.com/Matysh/houseplan-e2e/issues/13.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-02T17:55:48.941Z",
-        "artifactId": 13166012850,
-        "runId": 41495434226,
-        "runAttempt": 1,
-        "completedAt": "2026-11-02T17:53:54Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41495434226",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1153": {
@@ -1643,19 +1487,7 @@
   "waiting": [
     1174
   ],
-  "active": {
-    "issue": 1130,
-    "worker": "github-coordinator",
-    "token": "82:github:41495062732:1:tick:0:admit",
-    "fence": 82,
-    "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-    "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793641915402,
-    "expiresAt": 1793645765503,
-    "patchId": "0fab874a5f395e140568b1b17b63854daf035965",
-    "reviewRequest": "review:1130:2:0fab874a5f395e140568b1b17b63854daf035965:4f895343407cd730222fa3b47c188703332f16ce"
-  },
+  "active": null,
   "events": {
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:2:synchronized": {
       "digest": "7aa718c0fb333ac26c440e62ab51397afcb7b4f5bf95bd6db3b6b5049f5c9451",
@@ -1677,65 +1509,13 @@
       "digest": "bcf56936b7d3146071b10906b6bf2321b9af3ba2ada4197ff8917e6ec0c4a898",
       "issue": 1174
     },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:2:synchronized": {
-      "digest": "6e496777fa3e58bacad413faff3b099d48ba1d33cbdc308775e38db154e11455",
-      "issue": 1130
-    },
-    "finish:2e7aa830-d918-43e9-9cd5-c4c9e57a8bc6": {
-      "digest": "f92ea3dc604388562ff083182521ccbd9ddce50a79a3b65e442bac0b485dfa76",
-      "issue": 1130
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:3:s6-label": {
-      "digest": "6a32174e62a7619b5420f5088a43b8709d768691aca2ade9ccec50da18250fd4",
-      "issue": 1130
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:4:review-requested": {
-      "digest": "dc04a81a55aed5259e7bf3f2c7d64e1b26c404563cb61b7420663474311b62bb",
-      "issue": 1130
-    },
     "github:41493575626:1:completions:notice:41e0049ad4fabe23df8c39b340fce7b196a2990484cfa5a95a03a64314ec336b": {
       "digest": "f2d1749e876ede3f74d6dca28d0d79402a332b0ea10362f5043f61d2909e7b60",
       "issue": 1174
     },
-    "github:41493575626:1:completions:message:41e0049ad4fabe23df8c39b340fce7b196a2990484cfa5a95a03a64314ec336b": {
-      "digest": "faf5b6829f7f94f4d14de2a77ce4eec2ead8bab76e50deb46857153c6bfcdfc3",
-      "issue": 1130
-    },
-    "github:41493575626:1:completions:message:efd964720cd94b7097cda975c278887ab1e733d6912d4c4073960a3eba07d721": {
-      "digest": "f5c3376c1d7fb500ff43c295636083a00729e9f09128992ea7f20993b419feb9",
-      "issue": 1130
-    },
-    "github:41493575626:1:completions:message:9445ea4402c76e637cf864a76153059287121e85e4d6311ced9dbe6d1e4d74ad": {
-      "digest": "e11770da581b6f4a05ac738cc2c3c3f3836270cda5223c1a3e02a8b702506339",
-      "issue": 1130
-    },
-    "github:41493576801:1:completions:message:5be5c58b943d3e9d6b8517d719575f7a5a4dc3c2fa1e9d76ea1fa49a192ffcb6": {
-      "digest": "20881702061b590a5e03c8cef92d36ab960474813fe41b25981b28896c4b646b",
-      "issue": 1130
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:7:review-presentation": {
-      "digest": "48b2ffd9447ab9dd691e33f46685594c74f9661c87528c5e6bbea15c4b2da17a",
-      "issue": 1130
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:7:return": {
-      "digest": "a67d0c59425c56cc5fd52034c149935e2c8b7c6b3e2d5acc967835293d082514",
-      "issue": 1130
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:7:return-label": {
-      "digest": "f4c328b1bab2f86a193b52acade276df295f3f3306773ba165e22a66fca44cb0",
-      "issue": 1130
-    },
-    "github:41494097196:1:completions:report:918b4c59c4cc13322b79e90357e10762c73d2826d9dc69df2af442645bfc7dab": {
-      "digest": "a7f9cb34ef28b056ed9e3157ad93d1de97e056647521c8ca9248040984181abb",
-      "issue": 1130
-    },
     "github:41494097196:1:completions:message:5e0d177622041e4a3815d8fa4c45ed58659e5ec265183672de768b1a23342d96": {
       "digest": "752d35e6b6b62e9d28d4026b47530d3973c09d6fb9c4d241e2c7e1f7a2742d42",
       "issue": 1174
-    },
-    "github:41494097196:1:completions:metadata:15ea35dd-7192-4b08-8726-5d03ac2fbf27:task-notice:1130::": {
-      "digest": "7d0cdbc0d8c6285c4ece1b40b5fcb3b388704bc6fe677bf05b33ba2e82a93564",
-      "issue": 1130
     },
     "finish:14e1d2b0-96cc-46bb-8304-be130dc08e37:finish:1:synchronized": {
       "digest": "fda35da67a218405ef742c6396bacbd43d45f363451f2fc6788969adca2c9c57",
@@ -1769,49 +1549,9 @@
       "digest": "2f20ae0a154faafb196fe43e0f33d3faab30b8fbb501009e6e825d7e382f9545",
       "issue": 1174
     },
-    "github:41495062732:1:completions:message:cb0a2453fbcbfc1f3053e7baac1c5735d4335f507d65c5b081b8f09d1419520c": {
-      "digest": "556d98d8e96bbd1aa605903e0c0f9af386411b4fe24cf5d06fdd03ebb3e49e0e",
-      "issue": 1130
-    },
-    "github:41495062732:1:completions:message:8e8f593f3eaa628564952b9fe3c8df749ff32006975ce598ef99adaa01a9d385": {
-      "digest": "5968670fee23d219286c492c00a8cf2d20f1f34dcced3d64f7b77c3079c774c9",
-      "issue": 1130
-    },
     "github:41495062732:1:completions:metadata:c107bbe7-a597-441c-bbae-d8e1613dc380:task-notice:1174::": {
       "digest": "3ad47a443a33925993dc146063c285ef7dc100ad426d55e5b05d4f9999f11559",
       "issue": 1174
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:1:synchronized": {
-      "digest": "41b621c1e92b36925116c9023965c3f5de48cc6eb8235d374b7ab9cdb8fa6cde",
-      "issue": 1130
-    },
-    "finish:c04597b6-fc01-4436-8fd0-34948edb55d6": {
-      "digest": "fd567bc28857653a372b356b923fbb83f24d00baa2987d1033a78eb9786c7b1a",
-      "issue": 1130
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:2:s6-label": {
-      "digest": "ae51338076d48893011ae1ce5790ffb97f6e596b05baa023aaa1ab001526048f",
-      "issue": 1130
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:3:review-requested": {
-      "digest": "87d6c867ea08f5a276f618a42e2961d6ba836283392e14d3d3894b5c91e7cf54",
-      "issue": 1130
-    },
-    "github:41495414032:1:completions:message:b659503cc13960f64463584859f4bdfd10665b51a055c08b4070b761750d7260": {
-      "digest": "10b8aa0161c72466df349b639cff2ef9a9c2b6237eb1bfea386863664523f421",
-      "issue": 1130
-    },
-    "github:41495416213:1:completions:message:1feba314cb7fe2e1370d0e90d70ef2de12a8af8ea8f2f8fab22fbdff178e0952": {
-      "digest": "0e763642b43d39cb7ccd5e78436d8c0508978fcd870bba73c95e79d8e8fe869b",
-      "issue": 1130
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:5:review-presentation": {
-      "digest": "c4a0fdb4fc4da0948482566f2941da95df458b076ea62e3071ce7299a31ab19e",
-      "issue": 1130
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:5:review-complete": {
-      "digest": "f0ac49fee0d237092d81daefa1d7526f372029d473dcfd35f8549b7a44e2b0fb",
-      "issue": 1130
     },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
       "digest": "e6a7d118227ce5255ace49438ebc48943cfd66cba68bdb0280a86c762b3984b3",
@@ -1842,20 +1582,6 @@
         "delivered": true
       }
     },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44": {
-      "digest": "40c00b0bee4010ddacace8848ad3be6a80cb44de806cf4afe35313b2b4c3e1ef",
-      "issue": 1130,
-      "message": {
-        "kind": "queued",
-        "issue": 1130,
-        "at": 1793641159054,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-        "delivered": true
-      }
-    },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174": {
       "digest": "bcf56936b7d3146071b10906b6bf2321b9af3ba2ada4197ff8917e6ec0c4a898",
       "issue": 1174,
@@ -1874,48 +1600,6 @@
           "detail": "Backend изменённой области: failed; Браузер: summary weather: failed",
           "eventId": "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174"
         },
-        "delivered": true
-      }
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:1:admit": {
-      "digest": "866c34424efdb93b88bf085f459562c9a501d16aeb700fc4e580c795721e1a3c",
-      "issue": 1130,
-      "message": {
-        "kind": "admitted",
-        "issue": 1130,
-        "at": 1793641224384,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:317473b8-c216-4408-8028-b769ef0d4b44:finish:3:s6-complete": {
-      "digest": "2511f446583528a2fe0fa784c898990fb4cf123674710d1d6e78007e18d59dbb",
-      "issue": 1130,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1130,
-        "at": 1793641299496,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-        "phase": "review",
-        "evidence": {
-          "id": "20261102T174035029-330cf80c",
-          "name": "Тесты для задачи #1130 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T174035029-330cf80c/report.json",
-          "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-          "status": "passed",
-          "finishedAt": "2026-11-02T17:41:38.254Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
@@ -1967,80 +1651,6 @@
           "materialSha": "313be81a6a32f1a29f14beb87e08dabaf1aa7028",
           "status": "passed",
           "finishedAt": "2026-11-02T17:46:50.879Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0": {
-      "digest": "8fa834e0b0073977ab814d0f5a1f080a45ebc7ed36ff4f39d1cb8e4f43421e7c",
-      "issue": 1130,
-      "message": {
-        "kind": "queued",
-        "issue": 1130,
-        "at": 1793641881581,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-        "evidence": {
-          "id": "20261102T174035029-330cf80c",
-          "name": "Тесты для задачи #1130 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T174035029-330cf80c/report.json",
-          "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-          "status": "passed",
-          "finishedAt": "2026-11-02T17:41:38.254Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "github:41495062732:1:tick:0:admit": {
-      "digest": "1f51a5a7d244d3f55a50b7b698648a7955de8dbd14d30016be4b13425e3018a6",
-      "issue": 1130,
-      "message": {
-        "kind": "admitted",
-        "issue": 1130,
-        "at": 1793641915402,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261102T174035029-330cf80c",
-          "name": "Тесты для задачи #1130 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T174035029-330cf80c/report.json",
-          "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-          "status": "passed",
-          "finishedAt": "2026-11-02T17:41:38.254Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0:finish:2:s6-complete": {
-      "digest": "b635b40d1edc24372c5d02a332756b81c69d9cb0b618721b805ef4df0862da89",
-      "issue": 1130,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1130,
-        "at": 1793642016254,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-        "phase": "review",
-        "evidence": {
-          "id": "20261102T175233197-1a0ef708",
-          "name": "Тесты для задачи #1130 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T175233197-1a0ef708/report.json",
-          "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-          "status": "passed",
-          "finishedAt": "2026-11-02T17:53:34.723Z",
           "failures": []
         },
         "fromStatus": "S6-in-progress",
