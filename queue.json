@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 541,
-  "nextTicket": 52,
+  "revision": 542,
+  "nextTicket": 53,
   "nextFence": 52,
   "tasks": {
     "1128": {
@@ -636,6 +636,20 @@
         "status": "published",
         "sourceSha": "14d758f22031e74f45b60749d282523287612f23"
       }
+    },
+    "1204": {
+      "issue": 1204,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/golden-lighting-snapshot",
+      "materialSha": "48a9358c9cf92ae387621b5637fb55440efd61fa",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 52,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793578454829,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -698,7 +712,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1204
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -716,6 +732,19 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
+    },
+    "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab": {
+      "digest": "ad740dea1ac6bb3f007e5ba6f9a615873153e4fe47dad5e63e25bd60cbb31481",
+      "issue": 1204,
+      "message": {
+        "kind": "queued",
+        "issue": 1204,
+        "at": 1793578454829,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "48a9358c9cf92ae387621b5637fb55440efd61fa"
+      }
     }
   },
   "devWebhook": {
