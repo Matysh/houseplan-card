@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1007,
+  "revision": 1008,
   "nextTicket": 77,
   "nextFence": 77,
   "tasks": {
@@ -1231,14 +1231,40 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/restore-ship-batch-review",
-      "materialSha": "eb7d50e580475a6566799f51bed2e35ca3c6071f",
+      "materialSha": "ae4629f759db9dc99186cbfc6a282190b3c49639",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 76,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793636329800,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "5307f65d33b8db7c0648d4160bcc66ecf830b08b",
+      "changedFiles": [
+        ".github/workflows/process-next-review.yml",
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DEVELOPMENT.md",
+        "docs/process/REVIEWER.md",
+        "process-next/AUTOMATION-PARITY.md",
+        "process-next/cli.mjs",
+        "process-next/lib/release.mjs",
+        "process-next/lib/review.mjs",
+        "process-next/lib/ship-review-artifacts.mjs",
+        "process-next/lib/ship-review-host.mjs",
+        "process-next/lib/ship-review.mjs",
+        "process-next/prompts/ship-review.md",
+        "process-next/remote.mjs",
+        "process-next/templates/ship-review-job.mjs",
+        "process-next/test/release.test.mjs",
+        "process-next/test/remote.test.mjs",
+        "process-next/test/review.test.mjs",
+        "process-next/test/ship-review-artifacts.test.mjs",
+        "process-next/test/ship-review-host.test.mjs",
+        "process-next/test/ship-review-job.test.mjs",
+        "process-next/test/ship-review.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -1340,15 +1366,20 @@
     "worker": "finish",
     "token": "76:finish:4a8fc371-5574-4836-96be-3add87d37a1f:finish:1:admit",
     "fence": 76,
-    "materialSha": "eb7d50e580475a6566799f51bed2e35ca3c6071f",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ae4629f759db9dc99186cbfc6a282190b3c49639",
+    "expectedBase": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
+    "phase": "testing",
     "admittedAt": 1793636335072,
-    "expiresAt": 1793636692726
+    "expiresAt": 1793636729091,
+    "patchId": "5307f65d33b8db7c0648d4160bcc66ecf830b08b"
   },
   "events": {
     "finish:fe501fb0-3ffd-4bff-8d6a-ccfb3c9ba29e": {
       "digest": "a3a44e4c5aa8bae6dcef2f73701ddf2f849a7fbd12ed7569a2d893dab2dba955",
+      "issue": 1215
+    },
+    "finish:4a8fc371-5574-4836-96be-3add87d37a1f:finish:2:synchronized": {
+      "digest": "b081d9657a6d6a1be27f542b2380dcc8b59b5d501176be567395a6ce3f2c8e9d",
       "issue": 1215
     },
     "finish:4a8fc371-5574-4836-96be-3add87d37a1f": {
