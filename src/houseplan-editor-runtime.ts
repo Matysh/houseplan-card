@@ -1324,7 +1324,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     this.host._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
     this.host._modeTransitionTargetZoom = targetZoom;
     const targetProjection = mode === 'view' && this.host._isoEnabled ? 'iso' : 'flat';
-    this.host._modeProjectionCrossing = animate && !this.host._reducedMotion && previousProjection !== targetProjection;
+    this.host._modeProjectionCrossing = !!fromVisual && animate && !this.host._reducedMotion && previousProjection !== targetProjection;
     this.host._modeProjectionSource = this.host._modeProjectionCrossing ? previousProjection : null;
     const request = ++this.host._modeTransitionRequest;
     if (!animate) {

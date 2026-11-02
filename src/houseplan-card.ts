@@ -1556,7 +1556,6 @@ export class HouseplanCard extends LitElement {
       properties.style.opacity = String(visual.editorWeight);
     }
     scheduleHouseplanViewport(this, true);
-    this._toastPresentation.refresh();
   }
 
   private _clearModePresentation(): void {
@@ -1565,7 +1564,6 @@ export class HouseplanCard extends LitElement {
       ['.hp-backdrop', ['opacity']], ['.hp-properties', ['transform', 'opacity']], ['.zoomwrap', ['width', 'height', 'opacity']],
     ] as const) for (const element of this.renderRoot.querySelectorAll<HTMLElement>(selector)) {
       for (const name of names) element.style.removeProperty(name);
-      if (selector === '.hp-properties') element.inert = false;
     }
   }
 
@@ -1604,7 +1602,7 @@ export class HouseplanCard extends LitElement {
   private _settleModeTransition(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
     const settledRequest = this._modeTransitionRequest;
-    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._isoProjectionSnapshot = null;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
     this._clearModePresentation();
     const targetCamera = this._physicalCamera(state.to.viewport, state.to.stageWidth, state.to.stageHeight);
     this._view = targetCamera.viewBox;
@@ -1661,7 +1659,7 @@ export class HouseplanCard extends LitElement {
     this._modeTransitionRequest++;
     this._modeTransitionPreparing = false;
     this._modeTransitionForceAtomic = false;
-    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._isoProjectionSnapshot = null;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
     this._modeTransition.cancel(commitTarget);
     this._modeSceneSize = null;
     this._headerMotion.cancel();
@@ -1737,9 +1735,7 @@ export class HouseplanCard extends LitElement {
         // recovery mode adoption in the measurement window must never strand
         // the scene in its inert/busy state.
         if (request === this._modeTransitionRequest) {
-          this._modeTransitionPreparing = false;
-          this._modeTransitionVisual = null;
-          this._modeTransitionForceAtomic = false;
+          this._cancelModeTransition(false);
           this.requestUpdate();
         }
         return;
@@ -1747,8 +1743,7 @@ export class HouseplanCard extends LitElement {
       await this._settlePanelHeader();
       if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
         if (request === this._modeTransitionRequest) {
-          this._modeTransitionPreparing = false; this._modeTransitionVisual = null;
-          this._modeTransitionForceAtomic = false; this.requestUpdate();
+          this._cancelModeTransition(false); this.requestUpdate();
         }
         return;
       }
@@ -11786,7 +11781,7 @@ export class HouseplanCard extends LitElement {
                 style = st.join(';');
               } else if (this._modeTransitionBusy) {
                 style = space.bg ? '--room-fill:transparent;--room-fill-op:0;--room-stroke:transparent;--room-stroke-op:0'
-                  : '--room-fill:rgb(75,140,90);--room-fill-op:.14;--room-stroke:#4b8c5a;--room-stroke-op:1';
+                  : '--room-fill:var(--hp-room-yard-color);--room-fill-op:var(--hp-room-yard-fill-alpha);--room-stroke:var(--hp-room-yard-color);--room-stroke-op:1';
               }
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {

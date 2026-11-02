@@ -4,6 +4,7 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
+page.on('console',message=>{if(message.text().startsWith('Hidden projection'))console.log(message.text());});
 const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
@@ -67,10 +68,14 @@ const result = await page.evaluate(async () => {
 
 // The projection crossing retains one real scene and switches it while faded;
 // narrow and reduced-motion paths must leave neither a veil nor an inert stage.
-for (const [name, width, reduced] of [['isoWide', 1440, false], ['isoNarrow', 380, false], ['isoReduced', 820, true]]) {
+for (const [name, width, reduced] of [['isoWide', 1440, false], ['isoNarrow', 380, false], ['isoRotated', 1440, false], ['isoReduced', 820, true]]) {
   await page.setViewportSize({width, height:760});
   await page.emulateMedia({reducedMotion: reduced ? 'reduce' : 'no-preference'});
   await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); await window.__hpTest.settled(); });
+  if(name==='isoRotated'){
+    await page.locator('houseplan-card [data-hp=rotate-right]').click();
+    await page.waitForTimeout(300);
+  }
   result[name] = await page.evaluate(async () => {
     const c=window.__card, root=c.renderRoot, frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
     const ready=async()=>{const start=performance.now();while(c._modeTransitionBusy){if(performance.now()-start>3000)throw Error('Mode did not settle');await frame();}await c.updateComplete;await frame();};
@@ -90,6 +95,29 @@ for (const [name, width, reduced] of [['isoWide', 1440, false], ['isoNarrow', 38
       &&stage.classList.contains('projection-iso')&&!stage.inert&&!scene.style.width&&!scene.style.opacity;
   });
 }
+
+await page.emulateMedia({reducedMotion:'no-preference'});
+await page.setViewportSize({width:1440,height:760});
+await page.evaluate(()=>window.__hpTest.settled());
+result.hiddenProjectionRecovery=await page.evaluate(async()=>{
+ const c=window.__card,frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+ const ready=async()=>{for(let n=0;n<120;n++){await frame();if(!c._modeTransitionBusy&&c._continuity.state==='steady')break;}await c.updateComplete;};
+ for(const mode of ['plan','view']){
+  await ready();c.style.display='none';
+  // This is a genuinely unmeasurable stage, not a mocked visual snapshot.
+  if(c._stageEl.clientWidth||c._currentModeVisual()!==null){console.log('Hidden projection not hidden',mode);return false;}
+  c._setMode(mode);await c.updateComplete;await frame();
+  c.style.removeProperty('display');dispatchEvent(new Event('resize'));await ready();
+  if(c._modeProjectionSource!==null||c._modeProjectionCrossing||c._modeTransitionBusy){console.log('Hidden projection flags',mode);return false;}
+  const title=`Recovered ${mode}`;
+  await window.__hpTest.setServerConfig(cfg=>{const space=cfg.spaces.find(space=>space.id===c._space);
+    space.rooms[0].name=title;space.settings={...space.settings,show_names:true};});
+  await ready();
+  const label=c.renderRoot.querySelector('[data-hp=room-label]')?.textContent||'';
+  if(!label.includes(title)||c.renderRoot.querySelector('.zoomwrap').style.opacity){console.log('Hidden projection stale',JSON.stringify({mode,label,opacity:c.renderRoot.querySelector('.zoomwrap').style.opacity}));return false;}
+ }
+ return true;
+});
 
 checkAll(result);
 await finish(browser, result);

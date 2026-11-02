@@ -2,6 +2,13 @@
 import { css } from 'lit';
 
 export const planStyles = css`
+    :host {
+      --hp-room-outline-color: rgb(62,166,255);
+      --hp-room-outline-fill-alpha: .06;
+      --hp-room-outline-stroke-alpha: .55;
+      --hp-room-yard-color: rgb(75,140,90);
+      --hp-room-yard-fill-alpha: .14;
+    }
     .fixedfloor-error p {
       max-width: 42rem;
       margin: 0;
@@ -59,11 +66,11 @@ export const planStyles = css`
       transition:none;
       fill:color-mix(in srgb,
         color-mix(in srgb,var(--room-fill,transparent) calc(var(--room-fill-op,0) * 100%),transparent) calc((1 - var(--hp-mode-plan-weight)) * 100%),
-        color-mix(in srgb,rgb(62,166,255) 6%,transparent) calc(var(--hp-mode-plan-weight) * 100%));
+        color-mix(in srgb,var(--hp-room-outline-color) calc(var(--hp-room-outline-fill-alpha) * 100%),transparent) calc(var(--hp-mode-plan-weight) * 100%));
       fill-opacity:1;
       stroke:color-mix(in srgb,
         color-mix(in srgb,var(--room-stroke,transparent) calc(var(--room-stroke-op,0) * 100%),transparent) calc((1 - var(--hp-mode-plan-weight)) * 100%),
-        color-mix(in srgb,rgb(62,166,255) 55%,transparent) calc(var(--hp-mode-plan-weight) * 100%));
+        color-mix(in srgb,var(--hp-room-outline-color) calc(var(--hp-room-outline-stroke-alpha) * 100%),transparent) calc(var(--hp-mode-plan-weight) * 100%));
       stroke-opacity:1;
     }
     .stage.mode-transition .devlayer .dev {
@@ -367,9 +374,9 @@ export const planStyles = css`
       stroke-opacity: 1;
     }
     .room.yard {
-      fill: rgb(75, 140, 90);
-      fill-opacity: 0.14;
-      stroke: #4b8c5a;
+      fill: var(--hp-room-yard-color);
+      fill-opacity: var(--hp-room-yard-fill-alpha);
+      stroke: var(--hp-room-yard-color);
       stroke-opacity: 1;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
@@ -1260,10 +1267,10 @@ export const planStyles = css`
     }
     /* #746: opaque colour plus *-opacity, like every .room state (see .room.overlay) */
     .room.outlined {
-      stroke: rgb(62, 166, 255);
-      stroke-opacity: 0.55;
-      fill: rgb(62, 166, 255);
-      fill-opacity: 0.06;
+      stroke: var(--hp-room-outline-color);
+      stroke-opacity: var(--hp-room-outline-stroke-alpha);
+      fill: var(--hp-room-outline-color);
+      fill-opacity: var(--hp-room-outline-fill-alpha);
     }
     /* AFTER .outlined: same specificity — source order decides (gotcha x4) */
     .room.picked {
