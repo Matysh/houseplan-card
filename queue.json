@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 704,
+  "revision": 705,
   "nextTicket": 61,
   "nextFence": 61,
   "tasks": {
@@ -1016,7 +1016,7 @@
       },
       "automationError": "automation-error",
       "automationSince": 1793624606128,
-      "automationDetail": "Independent accepted review required"
+      "automationDetail": "Remote refs changed before merge"
     },
     "1208": {
       "issue": 1208,
@@ -1265,6 +1265,10 @@
     },
     "github:41449597439:1:completions:report:155e79bce26710b02a668b7ef10d42dfe8ba549e1d6be09689fa83f3a9b5ee42": {
       "digest": "134df91cd91268a8f8bdf8e22d09343ec91461d497447b55971a963bdaf492c1",
+      "issue": 1207
+    },
+    "finish:e895caa7-ac89-4178-b1d4-2279a8bb4be6:finish:6:automation-pending": {
+      "digest": "e3ddde1fa897cccba0666805ddf0feecf29952760109d2313a64ddddfe827a4e",
       "issue": 1207
     },
     "finish:eb71ba1e-123c-44e7-a0c1-a8a26968b0e5": {
