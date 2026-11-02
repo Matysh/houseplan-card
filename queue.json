@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1069,
-  "nextTicket": 80,
+  "revision": 1070,
+  "nextTicket": 81,
   "nextFence": 80,
   "tasks": {
     "1126": {
@@ -104,6 +104,20 @@
         "status": "published",
         "sourceSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e"
       }
+    },
+    "1130": {
+      "issue": 1130,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1130-low-signal",
+      "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 80,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793641159054,
+      "reviewEntry": 1
     },
     "1153": {
       "issue": 1153,
@@ -1427,7 +1441,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1130
+  ],
   "active": {
     "issue": 1174,
     "worker": "finish",
@@ -1470,6 +1486,19 @@
         "layer": "product",
         "materialSha": "f90f1a700ae0187aceb9b5b46c48ffe4387a7393",
         "phase": "sync"
+      }
+    },
+    "finish:317473b8-c216-4408-8028-b769ef0d4b44": {
+      "digest": "40c00b0bee4010ddacace8848ad3be6a80cb44de806cf4afe35313b2b4c3e1ef",
+      "issue": 1130,
+      "message": {
+        "kind": "queued",
+        "issue": 1130,
+        "at": 1793641159054,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9"
       }
     }
   },
