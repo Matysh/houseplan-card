@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 784,
+  "revision": 785,
   "nextTicket": 65,
   "nextFence": 65,
   "tasks": {
@@ -103,7 +103,18 @@
         "src/i18n/topology/en.json",
         "src/i18n/topology/fr.json",
         "src/i18n/topology/ru.json"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793629017627,
+        "entry": 1,
+        "detail": "Браузер: zigbee map explanation: failed",
+        "eventId": "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return:return:1157"
+      }
     },
     "1167": {
       "issue": 1167,
@@ -1017,18 +1028,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1157,
-    "worker": "finish",
-    "token": "64:finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:1:admit",
-    "fence": 64,
-    "materialSha": "6e4571fab9f027172075debfc95604f0f0ce3317",
-    "expectedBase": "70c2c6cfcd8ee755f143890d09e8e60e9d591412",
-    "phase": "testing",
-    "admittedAt": 1793628941256,
-    "expiresAt": 1793629300548,
-    "patchId": "3eee776f0fd14f652a121c446f3b3bbd96250bab"
-  },
+  "active": null,
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
       "digest": "18a6a1fd53b82729d2781adc60969ae581495be8b728932c814213c6f9387ba5",
@@ -1086,6 +1086,10 @@
       "digest": "609fe816da2bb8c541f78876d05c989533e1e3a40c424eb87fdaa783a482f49e",
       "issue": 1157
     },
+    "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return": {
+      "digest": "0a8a7d6af3a92e1aaf75b161d378296dfe21b9238189ae582f37a014b7e1b21b",
+      "issue": 1157
+    },
     "finish:82c435cf-c3a9-414e-a57d-1f0985925686": {
       "digest": "1f918555a38929c622c0f59692aac8c1a1c155a31b33eb9c5df23c38a3face00",
       "issue": 1157,
@@ -1113,6 +1117,26 @@
         "materialSha": "6e4571fab9f027172075debfc95604f0f0ce3317",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return:return:1157": {
+      "digest": "0a8a7d6af3a92e1aaf75b161d378296dfe21b9238189ae582f37a014b7e1b21b",
+      "issue": 1157,
+      "message": {
+        "kind": "return",
+        "issue": 1157,
+        "at": 1793629017627,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793629017627,
+          "entry": 1,
+          "detail": "Браузер: zigbee map explanation: failed",
+          "eventId": "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return:return:1157"
+        }
       }
     }
   },
