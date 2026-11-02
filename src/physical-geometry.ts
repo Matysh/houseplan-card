@@ -1,6 +1,7 @@
 /** Geometry shared by independent walls and columns. */
 import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
+import { graphOpeningRun } from './graph-opening-run';
 import { hasPaintableRingArea } from './polygon-paint';
 import {
   linearWallBody, linearWallJoinPatches, pairButtEndTrimWedges, wallCmToUnits,
@@ -231,9 +232,13 @@ export function physicalBodyParts(
   const partitionSegments: LinearWallSegment[] = [];
   const cutsByPartition = new Map<string, PartitionOpeningCut[]>();
   for (const cut of partitionCuts) {
-    const list = cutsByPartition.get(cut.hostId) || [];
-    list.push(cut);
-    cutsByPartition.set(cut.hostId, list);
+    const run = graphOpeningRun(cut);
+    const ids = run?.kind === 'partition' ? run.members : [cut.hostId];
+    for (const id of ids) {
+      const list = cutsByPartition.get(id) || [];
+      list.push(cut);
+      cutsByPartition.set(id, list);
+    }
   }
   const partitions: number[][][] = [];
   const presentedPartitions: number[][][] = [];
