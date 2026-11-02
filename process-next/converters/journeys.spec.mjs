@@ -103,7 +103,8 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     expect(reply.preview.kind).toBe('space');
     await expect(dialog).toContainText(download.suggestedFilename());
     await expect(dialog).toContainText(source.title);
-    report.preview = { kind: reply.preview.kind, missingAreas: reply.preview.missing_areas, bindings: reply.preview.bindings };
+    report.preview = { kind: reply.preview.kind, missingAreas: reply.preview.missing_areas, bindings: reply.preview.bindings,
+      openingRepairs: reply.preview.opening_repairs, referenceReport: reply.preview.reference_report };
     const confirmation = field(dialog, 'backup-confirm-missing');
     if (await confirmation.count() && await confirmation.isVisible()) await confirmation.check();
     await expect(dialog.locator(HP.dialogConfirm).first()).toBeEnabled();
@@ -114,6 +115,10 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     expect(added).toHaveLength(1);
     const space = added[0];
     const markers = imported.markers.filter(marker => marker.space === space.id);
+    report.imported = { space: space.id, rooms: space.rooms?.length ?? 0, markers: markers.length,
+      openings: space.openings?.length ?? 0, decor: space.decor?.length ?? 0 };
+    persist();
+    await testInfo.attach('accepted-space.json', { body: Buffer.from(JSON.stringify({ space, markers }, null, 2)), contentType: 'application/json' });
     expect(space.title).toBe(source.title);
     expect(roomNames(space)).toEqual(roomNames(source));
     expect(values(space.openings, 'type')).toEqual(values(source.openings, 'type'));
@@ -129,8 +134,6 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     for (const opening of space.openings ?? []) await expect(host.locator(hp('opening', { id: opening.id })).first()).toBeVisible();
     for (const marker of markers) await expect(host.locator(hp('device', { id: marker.id })).first()).toBeVisible();
     await evidence(testInfo, page, `converter-${fixture.id}-reopened`);
-    report.imported = { space: space.id, rooms: space.rooms?.length ?? 0, markers: markers.length,
-      openings: space.openings?.length ?? 0, decor: space.decor?.length ?? 0 };
     report.phase = 'complete'; report.status = 'passed';
   } catch (error) {
     report.error = error.message;

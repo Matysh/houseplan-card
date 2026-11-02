@@ -18,6 +18,7 @@ function lab(t) {
 }
 const put = (root, file, value) => { const target = path.join(root, file); mkdirSync(path.dirname(target), { recursive: true }); writeFileSync(target, JSON.stringify(value)); };
 const row = (format, status = 'passed') => ({ format, status, phase: status === 'passed' ? 'complete' : 'conversion',
+  finishedAt: '2026-11-02T00:00:00Z',
   published: { url: 'https://houseplan.tech/convert/', sha256: 'a'.repeat(64) }, error: status === 'failed' ? 'conversion error' : undefined });
 
 test('three format results distinguish missing setup, converter failure and successful real journeys', t => {
@@ -32,6 +33,10 @@ test('three format results distinguish missing setup, converter failure and succ
   for (const entry of CONVERTER_CASES) put(workspace, `artifacts/converters/${entry.id}.json`, row(entry.id));
   assert.equal(converterReport({ workspace, status: 'passed' }).status, 'passed');
   assert.equal(converterReport({ workspace, status: 'passed' }, { error: 'Owned container cleanup failed' }).status, 'unavailable');
+  put(workspace, 'artifacts/converters/picture.json', { ...row('picture', 'failed'), finishedAt: undefined });
+  assert.equal(converterReport({ workspace, status: 'failed' }).formats[2].status, 'unavailable', 'interrupted progress is not an established converter defect');
+  writeFileSync(path.join(workspace, 'artifacts/converters/picture.json'), '{');
+  assert.match(converterReport({ workspace, status: 'failed' }).formats[2].error, /Incomplete journey report/);
 });
 
 test('public artifact/format failures reuse one bug; environment gaps never manufacture a converter bug', async () => {

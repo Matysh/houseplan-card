@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 import { runE2E } from './e2e.mjs';
 import { GitHubClient } from './github.mjs';
 import { CONVERTER_CASES } from '../converters/cases.mjs';
@@ -36,7 +37,13 @@ export function makeConverterStep({ e2eRoot, workRoot, haVersion, candidateRoot,
 export function converterReport(result, { error, workspace = result?.workspace, targetRef, expectedVersion, haVersion } = {}) {
   const formats = CONVERTER_CASES.map(row => {
     const file = workspace && path.join(workspace, 'artifacts/converters', `${row.id}.json`);
-    if (file && existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'));
+    if (file && existsSync(file)) {
+      try {
+        const recorded = JSON.parse(readFileSync(file, 'utf8'));
+        if (recorded.format !== row.id || !['passed', 'failed', 'unavailable'].includes(recorded.status)) throw Error('Invalid journey result');
+        return recorded.finishedAt ? recorded : { ...recorded, status: 'unavailable', error: 'Journey interrupted before its final result' };
+      } catch (failure) { return { format: row.id, status: 'unavailable', phase: 'environment', error: 'Incomplete journey report: ' + failure.message }; }
+    }
     return { format: row.id, status: 'unavailable', phase: 'environment', error: error ?? 'Journey produced no complete result' };
   });
   const passed = formats.filter(row => row.status === 'passed').length;
@@ -47,7 +54,7 @@ export function converterReport(result, { error, workspace = result?.workspace, 
     counts: { tests: 3, passed, failed, skipped: 3 - passed - failed } };
 }
 
-const safe = value => String(value ?? '').replaceAll('`', 'ˋ').slice(0, 1800);
+const safe = value => stripVTControlCharacters(String(value ?? '')).replaceAll('`', 'ˋ').slice(0, 1800);
 export function converterMarkdown(report) {
   const words = { passed: 'успешно', failed: 'отказ', unavailable: 'не выполнено' };
   return '# Конвертеры → импорт в HA\n\nДиагностика не блокирует выпуск Houseplan.\n\n'
