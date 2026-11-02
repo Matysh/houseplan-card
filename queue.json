@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1022,
+  "revision": 1023,
   "nextTicket": 78,
   "nextFence": 78,
   "tasks": {
@@ -1239,7 +1239,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793637610051,
       "reviewEntry": 2,
-      "patchId": "5307f65d33b8db7c0648d4160bcc66ecf830b08b",
+      "patchId": "24d054d32ef828191ab1076a3eca229db31a43ed",
       "changedFiles": [
         ".github/workflows/process-next-review.yml",
         "PROCESS.md",
@@ -1249,6 +1249,8 @@
         "docs/process/REVIEWER.md",
         "process-next/AUTOMATION-PARITY.md",
         "process-next/cli.mjs",
+        "process-next/lib/github.mjs",
+        "process-next/lib/queue.mjs",
         "process-next/lib/release.mjs",
         "process-next/lib/review.mjs",
         "process-next/lib/ship-review-artifacts.mjs",
@@ -1257,6 +1259,8 @@
         "process-next/prompts/ship-review.md",
         "process-next/remote.mjs",
         "process-next/templates/ship-review-job.mjs",
+        "process-next/test/github.test.mjs",
+        "process-next/test/queue.test.mjs",
         "process-next/test/release.test.mjs",
         "process-next/test/remote.test.mjs",
         "process-next/test/review.test.mjs",
@@ -1387,10 +1391,11 @@
     "token": "77:finish:0016ea67-7720-4d53-b067-0690b000b58c:finish:1:admit",
     "fence": 77,
     "materialSha": "a37a0460582fc2ed38d4de92f1608082521ea94d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
+    "phase": "testing",
     "admittedAt": 1793637613962,
-    "expiresAt": 1793637913962
+    "expiresAt": 1793637948677,
+    "patchId": "24d054d32ef828191ab1076a3eca229db31a43ed"
   },
   "events": {
     "finish:fe501fb0-3ffd-4bff-8d6a-ccfb3c9ba29e": {
@@ -1443,6 +1448,10 @@
     },
     "github:41481675777:1:completions:metadata:b38813ef-8d3c-421d-a260-09134e0c747c:task-notice:1215::": {
       "digest": "699589fd5202f196fbfcdf981ee81e2c4ac34c04630103973902f3944b1fbb74",
+      "issue": 1215
+    },
+    "finish:0016ea67-7720-4d53-b067-0690b000b58c:finish:2:synchronized": {
+      "digest": "5b261ddf1b42a1996e47ff5521921194f35d035bee5ae5ce2a97c52e1b0160ba",
       "issue": 1215
     },
     "finish:4a8fc371-5574-4836-96be-3add87d37a1f": {
