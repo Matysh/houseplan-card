@@ -911,6 +911,13 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
     const zeroIntervals=new Map<string,Array<[Exact,Exact]>>(), openingIntervals=new Map<string,Array<[Exact,Exact]>>();
     for(const s of source.sources) cutMap.set(edgeKey(s),[
       {t:ZERO,node:endpointNode.get(edgeKey(s)+':0')!},{t:ONE,node:endpointNode.get(edgeKey(s)+':1')!}]);
+    // Contact candidates use the chosen source endpoints, not other contacts'
+    // newly projected values. Feedback is neither an affine dependency DAG nor
+    // an authorised source movement and grows otherwise-small denominators.
+    const frozenHostEndpoints=new Map(source.sources.map(s=>{
+      const ends=cutMap.get(edgeKey(s))!;
+      return[edgeKey(s),[decodePoint(nodes.get(ends[0].node)!.p),decodePoint(nodes.get(ends[1].node)!.p)] as const] as const;
+    }));
     const tree=makeTree([...source.sources],s=>boxPoints(s.a,s.b));
     const addCut=(s:SourceEdge,t:Exact,id:string):void=>{
       if(!between(t)) return;
@@ -967,7 +974,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         // P4/face-reader envelope. Its shift is still checked against R.
         if(!withinRadius(p0,rawContact,radius)) continue;
         if(!optional&&!storedWallContact(pointToNumbers(p0),pointToNumbers(host.a),pointToNumbers(host.b),1,true))continue;
-        const ends=cutMap.get(edgeKey(host))!,a=decodePoint(nodes.get(ends[0].node)!.p),b=decodePoint(nodes.get(ends[1].node)!.p);
+        const ends=cutMap.get(edgeKey(host))!,[a,b]=frozenHostEndpoints.get(edgeKey(host))!;
         const t=projectParameter(p0,a,b);if(!between(t)) continue;
         let p=pointAt(a,b,t),group=origins.get(node)!;
         if(!group.every(o=>withinRadius(o.p,p,radius))) {
