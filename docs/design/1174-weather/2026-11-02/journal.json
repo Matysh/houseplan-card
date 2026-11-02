@@ -1,0 +1,12 @@
+{
+  "issue": 1174,
+  "date": "2026-11-02",
+  "decisions": [
+    "Weather at bottom of summary panel, checkbox and conditional source dropdown",
+    "Current weather, optional feels-like/wind/humidity, three-day forecast",
+    "Wind direction in label: Ветер юго-западный; speed on right",
+    "Humidity bottom spacing equals wind row; remove extra 12px gap",
+    "Hover top corners square; bottom corners rounded"
+  ],
+  "approval": "отлично, фиксируй в задаче"
+}

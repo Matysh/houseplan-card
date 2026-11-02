@@ -1,0 +1,24 @@
+/* Shared dialog headings: static UI text, not editable/selectable content. */
+:host .title,
+:host .title-text,
+:host .subtitle,
+:host .badge {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* One shared separator for both HA and fallback dialog shells.
+   Match the header's thickness and theme token; omit it without a footer. */
+:host .footer {
+  border-top: var(--hp-dialog-footer-separator, 0);
+}
+
+/* Use available body height, not a guessed subtraction of dialog chrome. */
+:host([settings-layout]) ha-dialog {
+  --hp-settings-body-display: flex;
+}
+:host([settings-layout]) .content {
+  display: flex;
+  flex-direction: column;
+}
