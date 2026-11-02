@@ -21,6 +21,7 @@ try {
       const c = window.__card;
       c.hass = { ...c.hass, language };
       await c._ensureEditorRuntime();
+      await c._editorRuntime.languageRuntime.ensure(language);
       await c.updateComplete;
     }, lang);
     await settings.evaluate((element, language) => { element.language = language; }, lang);
