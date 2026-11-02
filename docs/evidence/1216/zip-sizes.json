@@ -1,0 +1,13 @@
+{
+  "method": "Same deterministic ZIP layout/compression as package.mjs, backend plus verified prepared frontend manifest; size-only in memory, no release",
+  "baseline": {
+    "bytes": 2007069,
+    "sha256": "a4ccf28ee2003bb280150b3b0aea27616c21ef686716a8bfb495bd1a5eee0f2b",
+    "files": 184
+  },
+  "candidate": {
+    "bytes": 2018728,
+    "sha256": "bf209861f578077a940aa4a09deeacdcef405a35d0bd7613186790609eda95b0",
+    "files": 185
+  }
+}

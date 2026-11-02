@@ -1,0 +1,842 @@
+{
+  "sourceBaseline": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+  "description": "All generated frontend JS modules; gzip members individually, no release or limits changed. Structural delta for the same 60-room/200-device first write.",
+  "frontendBefore": {
+    "entries": [
+      {
+        "path": "backdrop-pick-B7nEPmIl.js",
+        "bytes": 43033,
+        "gzip": 14062
+      },
+      {
+        "path": "backup-archive-client-D32es-0C.js",
+        "bytes": 7359,
+        "gzip": 2804
+      },
+      {
+        "path": "canvas-constants-CAGO39JL.js",
+        "bytes": 196,
+        "gzip": 182
+      },
+      {
+        "path": "card-editor-validation-CqfFqOaI.js",
+        "bytes": 538,
+        "gzip": 406
+      },
+      {
+        "path": "chrome-tooltip-CLXPRW07.js",
+        "bytes": 3252,
+        "gzip": 1312
+      },
+      {
+        "path": "codepoint-order-CdottVtJ.js",
+        "bytes": 318,
+        "gzip": 263
+      },
+      {
+        "path": "context-menu-2M-VfB8p.js",
+        "bytes": 5476,
+        "gzip": 1997
+      },
+      {
+        "path": "coordinate-canonicalization-CYHj8RuV.js",
+        "bytes": 5456,
+        "gzip": 1968
+      },
+      {
+        "path": "de-2avKtYHw.js",
+        "bytes": 95822,
+        "gzip": 28788
+      },
+      {
+        "path": "device-contact-basis-DVyPFGIL.js",
+        "bytes": 1329,
+        "gzip": 738
+      },
+      {
+        "path": "device-contact-floor-D_Tx9axG.js",
+        "bytes": 1529,
+        "gzip": 945
+      },
+      {
+        "path": "device-contact-geometry-CTohQWAI.js",
+        "bytes": 9192,
+        "gzip": 3663
+      },
+      {
+        "path": "device-contact-scene-CTjpdgNO.js",
+        "bytes": 2940,
+        "gzip": 1230
+      },
+      {
+        "path": "device-contact-write-B_xPhD1i.js",
+        "bytes": 4830,
+        "gzip": 2088
+      },
+      {
+        "path": "device-inbox-D5OBVxhe.js",
+        "bytes": 8958,
+        "gzip": 3765
+      },
+      {
+        "path": "editor-Ct0jv7fE.js",
+        "bytes": 4249,
+        "gzip": 1744
+      },
+      {
+        "path": "editor-shared-DKFnonEX.js",
+        "bytes": 31187,
+        "gzip": 12233
+      },
+      {
+        "path": "en-CwDGzWaf.js",
+        "bytes": 13082,
+        "gzip": 4417
+      },
+      {
+        "path": "floating-surface-CXGv2wb1.js",
+        "bytes": 1104,
+        "gzip": 578
+      },
+      {
+        "path": "fr-CUCNjzg-.js",
+        "bytes": 98089,
+        "gzip": 28304
+      },
+      {
+        "path": "furniture-plan-art.generated-DUKwzI71.js",
+        "bytes": 52035,
+        "gzip": 16941
+      },
+      {
+        "path": "graph-optimize-BOZ_SQF2.js",
+        "bytes": 7114,
+        "gzip": 2978
+      },
+      {
+        "path": "graph-write-change-BF3oSt4Y.js",
+        "bytes": 1565,
+        "gzip": 860
+      },
+      {
+        "path": "houseplan-card-DJJVVzYd.js",
+        "bytes": 966894,
+        "gzip": 273735
+      },
+      {
+        "path": "houseplan-editor-runtime-BxRZLdgg.js",
+        "bytes": 973711,
+        "gzip": 277576
+      },
+      {
+        "path": "houseplan-onboarding-runtime-BIAS7xxq.js",
+        "bytes": 10150,
+        "gzip": 3529
+      },
+      {
+        "path": "hp-color-opacity-hmWs8LpI.js",
+        "bytes": 30400,
+        "gzip": 8082
+      },
+      {
+        "path": "hp-plan-converter-info-zrvJg0RA.js",
+        "bytes": 3150,
+        "gzip": 1499
+      },
+      {
+        "path": "hp-settings-select-BQAtLX3h.js",
+        "bytes": 12035,
+        "gzip": 4366
+      },
+      {
+        "path": "hp-zigbee-topology-overlay-y1_-RuEj.js",
+        "bytes": 23725,
+        "gzip": 7733
+      },
+      {
+        "path": "iso-scene-render-KIbDlHsm.js",
+        "bytes": 38035,
+        "gzip": 12854
+      },
+      {
+        "path": "led-de-BOGtsr7K.js",
+        "bytes": 1907,
+        "gzip": 920
+      },
+      {
+        "path": "led-fr-CVttIQ3m.js",
+        "bytes": 1886,
+        "gzip": 905
+      },
+      {
+        "path": "led-ru-DXHaZGDV.js",
+        "bytes": 2525,
+        "gzip": 1106
+      },
+      {
+        "path": "led-strip-editor-C_46eT8z.js",
+        "bytes": 23313,
+        "gzip": 7924
+      },
+      {
+        "path": "led-strip-field-DAc2IScU.js",
+        "bytes": 8285,
+        "gzip": 3488
+      },
+      {
+        "path": "led-strip-geometry-Crbxm1-B.js",
+        "bytes": 7055,
+        "gzip": 2912
+      },
+      {
+        "path": "led-strip-runtime-DFEnS1SK.js",
+        "bytes": 13266,
+        "gzip": 5245
+      },
+      {
+        "path": "lit-element-m0oswtuL.js",
+        "bytes": 15247,
+        "gzip": 5904
+      },
+      {
+        "path": "live-interaction-runtime-D4LLtQGn.js",
+        "bytes": 34954,
+        "gzip": 12006
+      },
+      {
+        "path": "live-tip-placement-BlUyYCvE.js",
+        "bytes": 1191,
+        "gzip": 681
+      },
+      {
+        "path": "marker-alert-presentation-D8oO5qly.js",
+        "bytes": 8071,
+        "gzip": 3222
+      },
+      {
+        "path": "marker-alert-view-runtime-DkbAjNsh.js",
+        "bytes": 3645,
+        "gzip": 1577
+      },
+      {
+        "path": "marker-deletion-D4H4KaL6.js",
+        "bytes": 8075,
+        "gzip": 2929
+      },
+      {
+        "path": "moon-runtime-BQQKSoxg.js",
+        "bytes": 30391,
+        "gzip": 11763
+      },
+      {
+        "path": "namespace-language--PsvXj9T.js",
+        "bytes": 670,
+        "gzip": 406
+      },
+      {
+        "path": "open-spans-5mfMtGXD.js",
+        "bytes": 144388,
+        "gzip": 48832
+      },
+      {
+        "path": "optimize-plans-dialog-BhswJQWb.js",
+        "bytes": 20962,
+        "gzip": 5479
+      },
+      {
+        "path": "pdf-export-BMXtVEb9.js",
+        "bytes": 247310,
+        "gzip": 113863
+      },
+      {
+        "path": "plan-converter-B_u6MXBe.js",
+        "bytes": 384,
+        "gzip": 320
+      },
+      {
+        "path": "plan-graph-ByO7K4M-.js",
+        "bytes": 35747,
+        "gzip": 13358
+      },
+      {
+        "path": "plan-optimizer-DCSNV8mp.js",
+        "bytes": 27856,
+        "gzip": 10455
+      },
+      {
+        "path": "ref-DIc_LhGG.js",
+        "bytes": 3595,
+        "gzip": 1675
+      },
+      {
+        "path": "settings-DTvBvyot.js",
+        "bytes": 31259,
+        "gzip": 10129
+      },
+      {
+        "path": "settings-de-Bj-0LaCv.js",
+        "bytes": 34055,
+        "gzip": 11091
+      },
+      {
+        "path": "settings-fr-Bw9uBqHZ.js",
+        "bytes": 35319,
+        "gzip": 10986
+      },
+      {
+        "path": "settings-ru-BTANtIcb.js",
+        "bytes": 48712,
+        "gzip": 12686
+      },
+      {
+        "path": "settings-select-control-D8i2yHNI.js",
+        "bytes": 592,
+        "gzip": 417
+      },
+      {
+        "path": "space-editor-CuuHv_XN.js",
+        "bytes": 3264,
+        "gzip": 1419
+      },
+      {
+        "path": "stored-wall-contact-D57JwULs.js",
+        "bytes": 1248,
+        "gzip": 681
+      },
+      {
+        "path": "summary-panel-editor-QbeIR37u.js",
+        "bytes": 17907,
+        "gzip": 4249
+      },
+      {
+        "path": "summary-panel-metrics-RtyKQ1LK.js",
+        "bytes": 3278,
+        "gzip": 1594
+      },
+      {
+        "path": "summary-panel-runtime-entry-CD12LDX_.js",
+        "bytes": 64526,
+        "gzip": 19412
+      },
+      {
+        "path": "summary-shared-C7qKAFG3.js",
+        "bytes": 3146,
+        "gzip": 1546
+      },
+      {
+        "path": "support-de-Bl-uPxsF.js",
+        "bytes": 7695,
+        "gzip": 2868
+      },
+      {
+        "path": "support-diagnostics-jkwHeDTp.js",
+        "bytes": 9327,
+        "gzip": 4029
+      },
+      {
+        "path": "support-fr-C5icjdoD.js",
+        "bytes": 7938,
+        "gzip": 2925
+      },
+      {
+        "path": "support-ru-C4M-BIYb.js",
+        "bytes": 10627,
+        "gzip": 3466
+      },
+      {
+        "path": "tools-de-_73L1L4W.js",
+        "bytes": 14713,
+        "gzip": 5043
+      },
+      {
+        "path": "tools-fr-BZAFdYK7.js",
+        "bytes": 14807,
+        "gzip": 4980
+      },
+      {
+        "path": "tools-ru-CZAla5ar.js",
+        "bytes": 20427,
+        "gzip": 5948
+      },
+      {
+        "path": "topology-de-CIYNzovc.js",
+        "bytes": 9119,
+        "gzip": 3497
+      },
+      {
+        "path": "topology-fr-BDj1SvQz.js",
+        "bytes": 9220,
+        "gzip": 3453
+      },
+      {
+        "path": "topology-ru-Bxba9FeA.js",
+        "bytes": 12750,
+        "gzip": 4084
+      },
+      {
+        "path": "view-device-menu-eaPq6xGY.js",
+        "bytes": 4142,
+        "gzip": 1712
+      },
+      {
+        "path": "view-frame-CRMzKsmm.js",
+        "bytes": 237228,
+        "gzip": 65484
+      },
+      {
+        "path": "wall-face-graph-DbANv00O.js",
+        "bytes": 9295,
+        "gzip": 3595
+      },
+      {
+        "path": "wall-node-card-adapter-BmHLCg-9.js",
+        "bytes": 68477,
+        "gzip": 22755
+      },
+      {
+        "path": "zigbee-topology-CRDso17O.js",
+        "bytes": 21802,
+        "gzip": 7824
+      },
+      {
+        "path": "zigbee-topology-runtime-Cv_7y_KO.js",
+        "bytes": 8354,
+        "gzip": 3081
+      },
+      {
+        "path": "houseplan-card.js",
+        "bytes": 2667,
+        "gzip": 1378
+      },
+      {
+        "path": "houseplan-panel.js",
+        "bytes": 8001,
+        "gzip": 3263
+      }
+    ],
+    "bytes": 3817371,
+    "gzip": 1200205
+  },
+  "frontendAfter": {
+    "entries": [
+      {
+        "path": "houseplan-card.js",
+        "bytes": 2667,
+        "gzip": 1379
+      },
+      {
+        "path": "houseplan-panel.js",
+        "bytes": 8001,
+        "gzip": 3265
+      },
+      {
+        "path": "houseplan-assets/backdrop-pick-BDm-uFRx.js",
+        "bytes": 43028,
+        "gzip": 14063
+      },
+      {
+        "path": "houseplan-assets/backup-archive-client-DSDBND-Y.js",
+        "bytes": 7359,
+        "gzip": 2803
+      },
+      {
+        "path": "houseplan-assets/canvas-constants-BN3S8Fbw.js",
+        "bytes": 196,
+        "gzip": 182
+      },
+      {
+        "path": "houseplan-assets/card-editor-validation-DAYBp3Ox.js",
+        "bytes": 543,
+        "gzip": 408
+      },
+      {
+        "path": "houseplan-assets/chrome-tooltip-C-M8sigm.js",
+        "bytes": 3252,
+        "gzip": 1312
+      },
+      {
+        "path": "houseplan-assets/context-menu-BiDDWEHR.js",
+        "bytes": 5476,
+        "gzip": 1997
+      },
+      {
+        "path": "houseplan-assets/coordinate-canonicalization-DfRk-dks.js",
+        "bytes": 5456,
+        "gzip": 1969
+      },
+      {
+        "path": "houseplan-assets/de-e5FNySFU.js",
+        "bytes": 95945,
+        "gzip": 28824
+      },
+      {
+        "path": "houseplan-assets/device-contact-basis-CBjOKWMZ.js",
+        "bytes": 1334,
+        "gzip": 742
+      },
+      {
+        "path": "houseplan-assets/device-contact-floor-dyCwSzOB.js",
+        "bytes": 1529,
+        "gzip": 945
+      },
+      {
+        "path": "houseplan-assets/device-contact-geometry-DY3AJy8B.js",
+        "bytes": 9192,
+        "gzip": 3661
+      },
+      {
+        "path": "houseplan-assets/device-contact-scene-Dr0FviIr.js",
+        "bytes": 2940,
+        "gzip": 1230
+      },
+      {
+        "path": "houseplan-assets/device-contact-write-Bkq5M6Er.js",
+        "bytes": 4830,
+        "gzip": 2091
+      },
+      {
+        "path": "houseplan-assets/device-inbox-xC4mNgbp.js",
+        "bytes": 8958,
+        "gzip": 3766
+      },
+      {
+        "path": "houseplan-assets/editor-DMzGz58l.js",
+        "bytes": 4249,
+        "gzip": 1746
+      },
+      {
+        "path": "houseplan-assets/editor-shared-DeTt7CLM.js",
+        "bytes": 31144,
+        "gzip": 12221
+      },
+      {
+        "path": "houseplan-assets/en-2SxU0Fdw.js",
+        "bytes": 13082,
+        "gzip": 4416
+      },
+      {
+        "path": "houseplan-assets/floating-surface-t4TGBaBj.js",
+        "bytes": 1104,
+        "gzip": 579
+      },
+      {
+        "path": "houseplan-assets/fr-CI9AORfe.js",
+        "bytes": 98224,
+        "gzip": 28343
+      },
+      {
+        "path": "houseplan-assets/furniture-plan-art.generated-CFyjKi8z.js",
+        "bytes": 52035,
+        "gzip": 16944
+      },
+      {
+        "path": "houseplan-assets/graph-optimize-1X1ZB1GE.js",
+        "bytes": 7120,
+        "gzip": 2980
+      },
+      {
+        "path": "houseplan-assets/graph-write-change-NfjKfzxB.js",
+        "bytes": 2404,
+        "gzip": 1154
+      },
+      {
+        "path": "houseplan-assets/houseplan-card-BRZ2GFpQ.js",
+        "bytes": 967515,
+        "gzip": 273926
+      },
+      {
+        "path": "houseplan-assets/houseplan-editor-runtime-O4sZkOtB.js",
+        "bytes": 975078,
+        "gzip": 278029
+      },
+      {
+        "path": "houseplan-assets/houseplan-onboarding-runtime-CO52ijq_.js",
+        "bytes": 10150,
+        "gzip": 3527
+      },
+      {
+        "path": "houseplan-assets/hp-color-opacity-DSNJnljn.js",
+        "bytes": 30400,
+        "gzip": 8083
+      },
+      {
+        "path": "houseplan-assets/hp-plan-converter-info-BuZSNaKO.js",
+        "bytes": 3150,
+        "gzip": 1502
+      },
+      {
+        "path": "houseplan-assets/hp-settings-select-DSatNKep.js",
+        "bytes": 12035,
+        "gzip": 4368
+      },
+      {
+        "path": "houseplan-assets/hp-zigbee-topology-overlay-DuoMvFrG.js",
+        "bytes": 23725,
+        "gzip": 7736
+      },
+      {
+        "path": "houseplan-assets/iso-scene-render-CDVS9GjB.js",
+        "bytes": 38034,
+        "gzip": 12853
+      },
+      {
+        "path": "houseplan-assets/led-de-DUXA1N4c.js",
+        "bytes": 1907,
+        "gzip": 920
+      },
+      {
+        "path": "houseplan-assets/led-fr-BdWES7m_.js",
+        "bytes": 1886,
+        "gzip": 905
+      },
+      {
+        "path": "houseplan-assets/led-ru-BVv_xse0.js",
+        "bytes": 2525,
+        "gzip": 1107
+      },
+      {
+        "path": "houseplan-assets/led-strip-editor-Cc33j4aq.js",
+        "bytes": 23308,
+        "gzip": 7924
+      },
+      {
+        "path": "houseplan-assets/led-strip-field-Bzl8rUYm.js",
+        "bytes": 8290,
+        "gzip": 3492
+      },
+      {
+        "path": "houseplan-assets/led-strip-geometry-CoR9GKms.js",
+        "bytes": 7055,
+        "gzip": 2912
+      },
+      {
+        "path": "houseplan-assets/led-strip-runtime-DLH6e4Xx.js",
+        "bytes": 13266,
+        "gzip": 5241
+      },
+      {
+        "path": "houseplan-assets/lit-element-Ca2eekIP.js",
+        "bytes": 15247,
+        "gzip": 5906
+      },
+      {
+        "path": "houseplan-assets/live-interaction-runtime-wjAEp1-M.js",
+        "bytes": 34945,
+        "gzip": 12002
+      },
+      {
+        "path": "houseplan-assets/live-tip-placement-BhmL-qYw.js",
+        "bytes": 1191,
+        "gzip": 682
+      },
+      {
+        "path": "houseplan-assets/marker-alert-presentation-BVxMihCT.js",
+        "bytes": 8071,
+        "gzip": 3223
+      },
+      {
+        "path": "houseplan-assets/marker-alert-view-runtime-SaT_tteu.js",
+        "bytes": 3645,
+        "gzip": 1581
+      },
+      {
+        "path": "houseplan-assets/marker-deletion-D0m7ySCp.js",
+        "bytes": 8066,
+        "gzip": 2927
+      },
+      {
+        "path": "houseplan-assets/moon-runtime-10IeUSSK.js",
+        "bytes": 30391,
+        "gzip": 11767
+      },
+      {
+        "path": "houseplan-assets/namespace-language-DFSBPD2j.js",
+        "bytes": 670,
+        "gzip": 407
+      },
+      {
+        "path": "houseplan-assets/open-spans-C_y40ZDF.js",
+        "bytes": 166837,
+        "gzip": 57097
+      },
+      {
+        "path": "houseplan-assets/optimize-plans-dialog-BPBiuZDX.js",
+        "bytes": 20962,
+        "gzip": 5480
+      },
+      {
+        "path": "houseplan-assets/pdf-export-IMRuQC7y.js",
+        "bytes": 247309,
+        "gzip": 113864
+      },
+      {
+        "path": "houseplan-assets/plan-converter-Ey-l0Olk.js",
+        "bytes": 384,
+        "gzip": 321
+      },
+      {
+        "path": "houseplan-assets/plan-graph-NyAa9hOb.js",
+        "bytes": 36278,
+        "gzip": 12790
+      },
+      {
+        "path": "houseplan-assets/plan-optimizer-CJJTB1mP.js",
+        "bytes": 27847,
+        "gzip": 10453
+      },
+      {
+        "path": "houseplan-assets/ref-nKVkGLaS.js",
+        "bytes": 3595,
+        "gzip": 1676
+      },
+      {
+        "path": "houseplan-assets/settings-D4jSRQRN.js",
+        "bytes": 31259,
+        "gzip": 10126
+      },
+      {
+        "path": "houseplan-assets/settings-de-BMtLzHPa.js",
+        "bytes": 34055,
+        "gzip": 11093
+      },
+      {
+        "path": "houseplan-assets/settings-fr-D37huZZu.js",
+        "bytes": 35319,
+        "gzip": 10986
+      },
+      {
+        "path": "houseplan-assets/settings-ru-DxtDoVan.js",
+        "bytes": 48712,
+        "gzip": 12688
+      },
+      {
+        "path": "houseplan-assets/settings-select-control-BFa1JrTO.js",
+        "bytes": 592,
+        "gzip": 416
+      },
+      {
+        "path": "houseplan-assets/sha256-Dtm9Mr18.js",
+        "bytes": 1865,
+        "gzip": 1104
+      },
+      {
+        "path": "houseplan-assets/space-editor-Bv-2DNhf.js",
+        "bytes": 3264,
+        "gzip": 1422
+      },
+      {
+        "path": "houseplan-assets/stored-wall-contact-D7hvXJ9M.js",
+        "bytes": 1248,
+        "gzip": 681
+      },
+      {
+        "path": "houseplan-assets/summary-panel-editor-Dd-pe3H9.js",
+        "bytes": 17907,
+        "gzip": 4246
+      },
+      {
+        "path": "houseplan-assets/summary-panel-metrics--lFS6M13.js",
+        "bytes": 3278,
+        "gzip": 1599
+      },
+      {
+        "path": "houseplan-assets/summary-panel-runtime-entry-DNrS0hRC.js",
+        "bytes": 64526,
+        "gzip": 19408
+      },
+      {
+        "path": "houseplan-assets/summary-shared-C95xDJWK.js",
+        "bytes": 3146,
+        "gzip": 1548
+      },
+      {
+        "path": "houseplan-assets/support-de-B0KcrkK-.js",
+        "bytes": 7695,
+        "gzip": 2867
+      },
+      {
+        "path": "houseplan-assets/support-diagnostics-CHV8_w5D.js",
+        "bytes": 9327,
+        "gzip": 4029
+      },
+      {
+        "path": "houseplan-assets/support-fr-Dz6nMjgR.js",
+        "bytes": 7938,
+        "gzip": 2925
+      },
+      {
+        "path": "houseplan-assets/support-ru-D4U8ZEt4.js",
+        "bytes": 10627,
+        "gzip": 3466
+      },
+      {
+        "path": "houseplan-assets/tools-de-CH3RVDrA.js",
+        "bytes": 14713,
+        "gzip": 5041
+      },
+      {
+        "path": "houseplan-assets/tools-fr-tbqyJxXT.js",
+        "bytes": 14807,
+        "gzip": 4980
+      },
+      {
+        "path": "houseplan-assets/tools-ru-D7E2qs-K.js",
+        "bytes": 20427,
+        "gzip": 5948
+      },
+      {
+        "path": "houseplan-assets/topology-de-MX-OLp7T.js",
+        "bytes": 9119,
+        "gzip": 3496
+      },
+      {
+        "path": "houseplan-assets/topology-fr-C3IL2w5x.js",
+        "bytes": 9220,
+        "gzip": 3453
+      },
+      {
+        "path": "houseplan-assets/topology-ru-CzwBcUBF.js",
+        "bytes": 12750,
+        "gzip": 4084
+      },
+      {
+        "path": "houseplan-assets/view-device-menu-CKcv5lwP.js",
+        "bytes": 4142,
+        "gzip": 1712
+      },
+      {
+        "path": "houseplan-assets/view-frame-CMO3HjdR.js",
+        "bytes": 233669,
+        "gzip": 63990
+      },
+      {
+        "path": "houseplan-assets/wall-face-graph-_qfbGnig.js",
+        "bytes": 9295,
+        "gzip": 3591
+      },
+      {
+        "path": "houseplan-assets/wall-node-card-adapter-D3on75S2.js",
+        "bytes": 68753,
+        "gzip": 22858
+      },
+      {
+        "path": "houseplan-assets/zigbee-topology-DulQ5cao.js",
+        "bytes": 21807,
+        "gzip": 7828
+      },
+      {
+        "path": "houseplan-assets/zigbee-topology-runtime-B95iYr2z.js",
+        "bytes": 8354,
+        "gzip": 3082
+      }
+    ],
+    "bytes": 3841644,
+    "gzip": 1208388
+  },
+  "graphChange": {
+    "v1": 74909,
+    "v2": 1052,
+    "v1HasFullBase": true,
+    "v2HasFullBase": false
+  }
+}

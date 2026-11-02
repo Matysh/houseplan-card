@@ -1,0 +1,4962 @@
+{
+  "schema": 1,
+  "issue": 1216,
+  "complete": true,
+  "runnerSHA256": "0dcd714d030d86a6378c07f7cf682f28ecfa2d72d194bf46a9621677e2e4ac61",
+  "rootFingerprint": "7fcaaebbbf9bdaa4948f106ed337438725cac2737a0ed4b7b85630fb9d76841e",
+  "node": "v22.23.2",
+  "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+  "browser": "151.0.7922.34",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "series": 3,
+  "warmups": 5,
+  "samples": 20,
+  "fixture": "makeSelectiveInvalidationFixture(true) -> model11",
+  "fixtureSHA256": "c1df380106a03e7b435479b7f15429de58197545c023844f6e8ef5aa104de5cf",
+  "transport": "deterministic synthetic authority using production exact node reducer; no HA/network latency claim",
+  "coldReadiness": "static warm-boot placement cache reset; load/data complete, actual masonry, boot/fade/settle/soft ended, continuity steady and interactive",
+  "heapSampling": "maximum usedJSHeapSize sampled on every animation frame from cold card creation through accepted node frame; retained heap after CDP forced GC once per series; allocations born and collected within one synchronous task are not observable",
+  "rows": [
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 93.91193399999975
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 89.8702360000002
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 8.14829200000031
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 49.83969999999999
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "optimize",
+      "ms": 111.1845470000003
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "optimize-noop",
+      "ms": 87.3003749999998
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "whole-physical-preflight",
+      "ms": 9.318287999999939
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "cold-core",
+      "ms": 50.886953000000176
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "optimize",
+      "ms": 97.75863000000027
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "optimize-noop",
+      "ms": 84.46139600000015
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "whole-physical-preflight",
+      "ms": 9.065542000000278
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-core",
+      "ms": 53.261081000000104
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "optimize",
+      "ms": 99.04044599999997
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "optimize-noop",
+      "ms": 85.61924499999986
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "whole-physical-preflight",
+      "ms": 9.116279000000304
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "cold-core",
+      "ms": 50.6402750000002
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "optimize",
+      "ms": 96.01438700000017
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "optimize-noop",
+      "ms": 86.15036200000031
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "whole-physical-preflight",
+      "ms": 9.556540999999925
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "cold-core",
+      "ms": 53.13274700000011
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "optimize",
+      "ms": 96.89602800000011
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "optimize-noop",
+      "ms": 99.90474800000038
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "whole-physical-preflight",
+      "ms": 8.858072999999877
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-core",
+      "ms": 52.84504599999991
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "optimize",
+      "ms": 101.7074260000004
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "optimize-noop",
+      "ms": 84.41520100000025
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "whole-physical-preflight",
+      "ms": 8.603583000000071
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-core",
+      "ms": 47.33306900000025
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "optimize",
+      "ms": 94.68221799999992
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "optimize-noop",
+      "ms": 86.43192700000009
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "whole-physical-preflight",
+      "ms": 8.479673999999704
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-core",
+      "ms": 49.15828899999997
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "optimize",
+      "ms": 92.12457399999948
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "optimize-noop",
+      "ms": 86.09355199999936
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "whole-physical-preflight",
+      "ms": 9.015654000000723
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "cold-core",
+      "ms": 48.3639720000001
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "optimize",
+      "ms": 94.29626600000029
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "optimize-noop",
+      "ms": 86.11859700000059
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "whole-physical-preflight",
+      "ms": 7.951851999999235
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "cold-core",
+      "ms": 53.682826000000205
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "optimize",
+      "ms": 95.64597499999945
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "optimize-noop",
+      "ms": 87.06807200000003
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "whole-physical-preflight",
+      "ms": 8.384218999999575
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "cold-core",
+      "ms": 54.07090200000039
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "optimize",
+      "ms": 95.0639629999996
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "optimize-noop",
+      "ms": 83.8117830000001
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "whole-physical-preflight",
+      "ms": 8.666228000000046
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "cold-core",
+      "ms": 50.91598200000044
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "optimize",
+      "ms": 96.48669400000017
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "optimize-noop",
+      "ms": 83.5455009999996
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "whole-physical-preflight",
+      "ms": 8.746374000000287
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "cold-core",
+      "ms": 48.98345299999983
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "optimize",
+      "ms": 91.89474599999994
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "optimize-noop",
+      "ms": 81.20753200000036
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "whole-physical-preflight",
+      "ms": 8.47597499999938
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "cold-core",
+      "ms": 50.301196000000346
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "optimize",
+      "ms": 92.23962099999972
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "optimize-noop",
+      "ms": 85.28938599999947
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "whole-physical-preflight",
+      "ms": 8.897576999999728
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-core",
+      "ms": 48.84483099999943
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "optimize",
+      "ms": 94.67077400000016
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "optimize-noop",
+      "ms": 92.04395999999997
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "whole-physical-preflight",
+      "ms": 11.16871699999956
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-core",
+      "ms": 59.58646099999987
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "optimize",
+      "ms": 103.31774499999938
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "optimize-noop",
+      "ms": 86.83290099999977
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "whole-physical-preflight",
+      "ms": 7.630537000000004
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-core",
+      "ms": 50.67430999999942
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "optimize",
+      "ms": 95.71368299999995
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "optimize-noop",
+      "ms": 85.66763900000024
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "whole-physical-preflight",
+      "ms": 9.272412999999688
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-core",
+      "ms": 55.51810299999943
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "optimize",
+      "ms": 101.83327000000008
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "optimize-noop",
+      "ms": 88.64905499999986
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "whole-physical-preflight",
+      "ms": 8.687415000000328
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-core",
+      "ms": 48.7749759999997
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "optimize",
+      "ms": 100.07627500000035
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "optimize-noop",
+      "ms": 86.28454299999976
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "whole-physical-preflight",
+      "ms": 8.762128999999732
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "cold-core",
+      "ms": 50.7851040000005
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 97.32737799999995
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 88.74946500000078
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 7.675729000000501
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 54.64703499999996
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "optimize",
+      "ms": 96.63944200000151
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "optimize-noop",
+      "ms": 90.11924999999974
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "whole-physical-preflight",
+      "ms": 8.923972000000504
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "cold-core",
+      "ms": 50.42920700000104
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "optimize",
+      "ms": 98.13569699999971
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "optimize-noop",
+      "ms": 87.08863500000007
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "whole-physical-preflight",
+      "ms": 9.274734000000535
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-core",
+      "ms": 53.03120300000046
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "optimize",
+      "ms": 98.16177199999947
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "optimize-noop",
+      "ms": 89.62723399999959
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "whole-physical-preflight",
+      "ms": 10.006554999999935
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "cold-core",
+      "ms": 51.511171000000104
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "optimize",
+      "ms": 98.7986609999989
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "optimize-noop",
+      "ms": 92.3541210000003
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "whole-physical-preflight",
+      "ms": 9.23848199999884
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "cold-core",
+      "ms": 54.46004200000061
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "optimize",
+      "ms": 122.74502699999903
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "optimize-noop",
+      "ms": 88.82648599999993
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "whole-physical-preflight",
+      "ms": 10.257685999999012
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "cold-core",
+      "ms": 51.41674500000045
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "optimize",
+      "ms": 97.51395199999934
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "optimize-noop",
+      "ms": 95.18235500000083
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "whole-physical-preflight",
+      "ms": 10.63795299999947
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "cold-core",
+      "ms": 60.972985000000335
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "optimize",
+      "ms": 101.99531300000126
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "optimize-noop",
+      "ms": 93.385753999999
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "whole-physical-preflight",
+      "ms": 9.320418999999674
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "cold-core",
+      "ms": 53.859140999999
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "optimize",
+      "ms": 101.01134499999898
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "optimize-noop",
+      "ms": 92.96504100000129
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "whole-physical-preflight",
+      "ms": 9.727081999999427
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "cold-core",
+      "ms": 58.24824200000148
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "optimize",
+      "ms": 111.23431299999902
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "optimize-noop",
+      "ms": 95.85100299999976
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "whole-physical-preflight",
+      "ms": 9.362449000000197
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "cold-core",
+      "ms": 51.84167600000001
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "optimize",
+      "ms": 96.89984900000127
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "optimize-noop",
+      "ms": 89.56543199999942
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "whole-physical-preflight",
+      "ms": 8.66560600000048
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "cold-core",
+      "ms": 49.48488499999985
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "optimize",
+      "ms": 95.06079900000077
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "optimize-noop",
+      "ms": 90.52351699999963
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "whole-physical-preflight",
+      "ms": 8.934550999998464
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "cold-core",
+      "ms": 50.25171799999953
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "optimize",
+      "ms": 97.6215830000001
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "optimize-noop",
+      "ms": 86.80039700000088
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "whole-physical-preflight",
+      "ms": 8.923923000000286
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-core",
+      "ms": 53.203905000000304
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "optimize",
+      "ms": 119.68246700000054
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "optimize-noop",
+      "ms": 79.26196700000037
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "whole-physical-preflight",
+      "ms": 8.127862999999707
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-core",
+      "ms": 48.94597099999919
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "optimize",
+      "ms": 91.48894599999949
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "optimize-noop",
+      "ms": 84.90682399999969
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "whole-physical-preflight",
+      "ms": 8.801734000000579
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-core",
+      "ms": 49.36767400000099
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "optimize",
+      "ms": 91.09767800000009
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "optimize-noop",
+      "ms": 85.03537200000028
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "whole-physical-preflight",
+      "ms": 8.417675999999119
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-core",
+      "ms": 49.14844400000038
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "optimize",
+      "ms": 92.10640199999943
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "optimize-noop",
+      "ms": 88.15530300000137
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "whole-physical-preflight",
+      "ms": 8.383622000001196
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-core",
+      "ms": 49.50452200000109
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "optimize",
+      "ms": 93.4884200000015
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "optimize-noop",
+      "ms": 87.80406000000039
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "whole-physical-preflight",
+      "ms": 9.356458999998722
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-core",
+      "ms": 48.53622800000085
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "optimize",
+      "ms": 91.89141199999904
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "optimize-noop",
+      "ms": 82.63090900000134
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "whole-physical-preflight",
+      "ms": 8.661872000000585
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "cold-core",
+      "ms": 56.056109999999535
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "optimize",
+      "ms": 94.86840499999926
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "optimize-noop",
+      "ms": 84.26516100000117
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "whole-physical-preflight",
+      "ms": 8.746885999998995
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "cold-core",
+      "ms": 48.632321999999476
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 98.84081700000024
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 85.8887109999996
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 8.766832000001159
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 49.99401899999975
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "optimize",
+      "ms": 93.91695300000174
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "optimize-noop",
+      "ms": 87.94163799999842
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "whole-physical-preflight",
+      "ms": 9.707644000000073
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "cold-core",
+      "ms": 47.57418500000131
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "optimize",
+      "ms": 94.29823099999885
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "optimize-noop",
+      "ms": 84.37558399999944
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "whole-physical-preflight",
+      "ms": 9.019053999998505
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "cold-core",
+      "ms": 53.93239600000015
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "optimize",
+      "ms": 94.67432399999961
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "optimize-noop",
+      "ms": 80.8222910000004
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "whole-physical-preflight",
+      "ms": 8.525072000000364
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-core",
+      "ms": 51.97260800000004
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "optimize",
+      "ms": 92.93838099999994
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "optimize-noop",
+      "ms": 83.53682300000037
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "whole-physical-preflight",
+      "ms": 8.643856000000596
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-core",
+      "ms": 48.92799500000001
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "optimize",
+      "ms": 93.18987900000138
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "optimize-noop",
+      "ms": 85.2756100000006
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "whole-physical-preflight",
+      "ms": 9.151362000000518
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-core",
+      "ms": 48.895032999998875
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "optimize",
+      "ms": 91.32692099999986
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "optimize-noop",
+      "ms": 84.46960399999989
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "whole-physical-preflight",
+      "ms": 8.882235999999466
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-core",
+      "ms": 49.48494899999969
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "optimize",
+      "ms": 100.93751900000098
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "optimize-noop",
+      "ms": 95.37823300000127
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "whole-physical-preflight",
+      "ms": 9.757895000000644
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-core",
+      "ms": 56.52890500000103
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "optimize",
+      "ms": 93.32520400000067
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "optimize-noop",
+      "ms": 82.60599999999977
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "whole-physical-preflight",
+      "ms": 8.689072999997734
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-core",
+      "ms": 48.75654099999883
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "optimize",
+      "ms": 91.55415399999765
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "optimize-noop",
+      "ms": 85.22962600000028
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "whole-physical-preflight",
+      "ms": 8.322055000000546
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-core",
+      "ms": 49.79447699999946
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "optimize",
+      "ms": 91.27665599999818
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "optimize-noop",
+      "ms": 83.3507729999983
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "whole-physical-preflight",
+      "ms": 9.395336999998108
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-core",
+      "ms": 50.167208999999275
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "optimize",
+      "ms": 93.88137600000118
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "optimize-noop",
+      "ms": 83.77191099999982
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "whole-physical-preflight",
+      "ms": 9.074474000000919
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-core",
+      "ms": 55.37212499999805
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "optimize",
+      "ms": 93.7107419999993
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "optimize-noop",
+      "ms": 83.61364400000093
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "whole-physical-preflight",
+      "ms": 8.504186000001937
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "cold-core",
+      "ms": 48.75457800000004
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "optimize",
+      "ms": 91.23884999999791
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "optimize-noop",
+      "ms": 88.23236099999849
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "whole-physical-preflight",
+      "ms": 9.093301000000793
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "cold-core",
+      "ms": 49.311736999999994
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "optimize",
+      "ms": 97.06089499999871
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "optimize-noop",
+      "ms": 83.80445699999837
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "whole-physical-preflight",
+      "ms": 9.001146999999037
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "cold-core",
+      "ms": 49.40492799999993
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "optimize",
+      "ms": 93.15425699999832
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "optimize-noop",
+      "ms": 84.60708199999863
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "whole-physical-preflight",
+      "ms": 9.17546399999992
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-core",
+      "ms": 53.15422600000238
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "optimize",
+      "ms": 93.47741799999858
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "optimize-noop",
+      "ms": 86.5760229999978
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "whole-physical-preflight",
+      "ms": 8.808069000002433
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-core",
+      "ms": 50.74012800000128
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "optimize",
+      "ms": 92.95568500000081
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "optimize-noop",
+      "ms": 87.66890499999863
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "whole-physical-preflight",
+      "ms": 8.968615000001591
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "cold-core",
+      "ms": 48.529804999998305
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "optimize",
+      "ms": 93.15280900000289
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "optimize-noop",
+      "ms": 86.73721799999839
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "whole-physical-preflight",
+      "ms": 9.286180999999488
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "cold-core",
+      "ms": 50.4648930000003
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "optimize",
+      "ms": 106.28156300000046
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "optimize-noop",
+      "ms": 89.51507299999867
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "whole-physical-preflight",
+      "ms": 10.236100000001898
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "cold-core",
+      "ms": 52.29812099999981
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 252.10000000009313
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 777
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "cold-open",
+      "ms": 2346.600000000093
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "cold-floor-switch",
+      "ms": 254
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 767.6000000000931
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2346.1999999997206
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 251.70000000018626
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 738.0999999996275
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 253.59999999962747
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.60000000009313
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 764.7000000001863
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2346.399999999907
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 252.90000000037253
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000018626
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 752.6999999997206
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2363.100000000093
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 252.5
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 744.7000000001863
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2363.0999999996275
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 251.10000000009313
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.1999999997206
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 767.7999999998137
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2346.7000000001863
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 251.90000000037253
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 741.8000000002794
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2378.600000000093
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 252.10000000009313
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 786
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2346.600000000093
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 252.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 720
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2346.600000000093
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 251.5
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 721.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2279.7999999998137
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 253.10000000009313
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 725.1000000000931
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 253.1999999997206
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.60000000009313
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 804.5
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2346.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 252.10000000009313
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.60000000009313
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 755.1000000000931
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2346.399999999907
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 233.40000000037253
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 762.2000000001863
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2363.2000000001863
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 233.1999999997206
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 734.1000000000931
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2363.600000000093
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 252
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 763.9000000003725
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2346.600000000093
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 233.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 728.6000000000931
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 233.20000000018626
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 778.2000000001863
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "cold-open",
+      "ms": 2313
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "cold-floor-switch",
+      "ms": 251.70000000018626
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000018626
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 770.7000000001863
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "retained-heap",
+      "bytes": 105900980
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2346.1999999997206
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 266.5
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 738.3999999999069
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "cold-open",
+      "ms": 2362.7999999998137
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "cold-floor-switch",
+      "ms": 252.20000000018626
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 755.2000000001863
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2379.899999999907
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 252
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 758
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2279.7000000001863
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 283.1999999997206
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 760.1000000000931
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2346.399999999907
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 252.6999999997206
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 724.7999999998137
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2346.3000000002794
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 253.60000000009313
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 787.8999999999069
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2513
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 252.60000000009313
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000037253
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 763.3999999999069
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2363.0999999996275
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 252.20000000018626
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 776.2999999998137
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2313.100000000093
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 251
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 846.7000000001863
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2362.899999999907
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 251.70000000018626
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 735.6999999997206
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2313.5
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 251.5
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 730.1000000000931
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2363.100000000093
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 252
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.1999999997206
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 795.1999999997206
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2346.600000000093
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 251.79999999981374
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 780.2000000001863
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2346.2999999998137
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 254.60000000009313
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 752.8999999999069
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2346.100000000093
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 252.29999999981374
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 759.1000000000931
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2280.100000000093
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 270.70000000018626
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 182.70000000018626
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 927.5
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2296.2000000001863
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 252
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.60000000009313
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 793.7000000001863
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2346.899999999907
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 251.29999999981374
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 733.3999999999069
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2346.2999999998137
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 251.8000000002794
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 728.7999999998137
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "cold-open",
+      "ms": 2362.8000000002794
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "cold-floor-switch",
+      "ms": 252.10000000009313
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 782
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "retained-heap",
+      "bytes": 193458224
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2346.3000000002794
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 251.89999999990687
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 758.1000000000931
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "cold-open",
+      "ms": 2363.5
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "cold-floor-switch",
+      "ms": 251.5
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 986.8000000002794
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2363.5
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 251.89999999990687
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.60000000009313
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 725.4000000003725
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2363.5
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 251.6999999997206
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 742.3999999999069
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2363.4000000003725
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 252
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 784.6000000000931
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2363
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 252.10000000009313
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.1999999997206
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 745.8000000002794
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 251.89999999990687
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.1999999997206
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 783.1000000000931
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2379.7999999998137
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 252.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 751.5
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2380
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 251.40000000037253
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 761.3999999999069
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 251.89999999990687
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000018626
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 789.3000000002794
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2464.399999999907
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 253.10000000009313
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 761.5
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2346.600000000093
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 252
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 764.2000000001863
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2346.0999999996275
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 252.8000000002794
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 791.1999999997206
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2346.5999999996275
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 252.20000000018626
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 826.8999999999069
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2279.600000000093
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 251.79999999981374
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 741.7999999998137
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2363.1999999997206
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 253.3000000002794
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 765.7000000001863
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2363.2000000001863
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 252.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 777.8999999999069
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2329.9000000003725
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 251.79999999981374
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 779.1999999997206
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2363.399999999907
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 251.89999999990687
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.3000000002794
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 755.0999999996275
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "cold-open",
+      "ms": 2380.2000000001863
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "cold-floor-switch",
+      "ms": 251.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 1077
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "heap",
+      "bytes": 19300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "retained-heap",
+      "bytes": 283043520
+    }
+  ]
+}

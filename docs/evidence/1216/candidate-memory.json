@@ -1,0 +1,291 @@
+{
+  "schema": 1,
+  "issue": 1216,
+  "complete": true,
+  "runnerSHA256": "0dcd714d030d86a6378c07f7cf682f28ecfa2d72d194bf46a9621677e2e4ac61",
+  "rootFingerprint": "7fcaaebbbf9bdaa4948f106ed337438725cac2737a0ed4b7b85630fb9d76841e",
+  "node": "v22.23.2",
+  "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+  "browser": "151.0.7922.34",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "series": 3,
+  "warmups": 5,
+  "samples": 1,
+  "fixture": "makeSelectiveInvalidationFixture(true) -> model11",
+  "fixtureSHA256": "c1df380106a03e7b435479b7f15429de58197545c023844f6e8ef5aa104de5cf",
+  "transport": "deterministic synthetic authority using production exact node reducer; no HA/network latency claim",
+  "coldReadiness": "static warm-boot placement cache reset; load/data complete, actual masonry, boot/fade/settle/soft ended, continuity steady and interactive",
+  "heapSampling": "maximum usedJSHeapSize sampled on every animation frame from cold card creation through accepted node frame; retained heap after CDP forced GC once per series; allocations born and collected within one synchronous task are not observable",
+  "rows": [
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 109.6672739999999
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 103.60677799999985
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 12.44244499999968
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 54.53389500000003
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 105.88440700000001
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 91.1208789999996
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 9.43275199999971
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 58.9437310000003
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 94.30042999999932
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 85.10739999999987
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 9.017421999999897
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 53.42869400000018
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2346.4000000000015
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 251.59999999999854
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999999563
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 739.0999999999985
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 107010302,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "retained-heap",
+      "bytes": 37983896
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2346.2999999999956
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 266.3000000000029
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000000146
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 736.2999999999956
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 126799517,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "retained-heap",
+      "bytes": 59997264
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2310.899999999994
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 252.1999999999971
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 741
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 146316247,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "retained-heap",
+      "bytes": 80866212
+    }
+  ],
+  "preciseMemoryFlag": true,
+  "driver": "docs/evidence/1216/memory.mjs",
+  "scope": "Heap only: three series, five warmups, one sampled whole journey per series, same fixtures and frame sampler. Timing evidence uses the separate 3x20 reports."
+}

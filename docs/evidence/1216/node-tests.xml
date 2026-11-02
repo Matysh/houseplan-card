@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="floor metadata stays cheap, physical reads are lazy and paint keeps scaled geometry" time="0.005802" classname="test"/>
+	<testcase name="#1098 presentation edits reuse physical model while raw stairs and backdrop stay fresh" time="0.003166" classname="test"/>
+	<testcase name="arrangement nodes crossings, coincident spans, touch and legitimate holes" time="0.039409" classname="test"/>
+	<testcase name="exact predicates retain a real dyadic gap and irrational diagonal intersections" time="0.002282" classname="test"/>
+	<testcase name="predicate-only signs agree with independently reduced rational determinants" time="0.005446" classname="test"/>
+	<testcase name="shared and distinct equal-coordinate IDs join identically; no graph mutation" time="0.017073" classname="test"/>
+	<testcase name="virtual unsplit T equals explicit render spans and preserves source IDs" time="0.007796" classname="test"/>
+	<testcase name="rectangular room keeps inset, outer paper and hole independently of source order" time="0.052890" classname="test"/>
+	<testcase name="host-owned opening does not cut crossing foreign material; recut uses same domains" time="0.008199" classname="test"/>
+	<testcase name="an independent ray at a room corner cannot enlarge the floor slab" time="0.013918" classname="test"/>
+	<testcase name="courtyard paper has exactly one intended hole and the analytic rectangle-difference area" time="0.169174" classname="test"/>
+	<testcase name="collapsed inset, finite thick support and diagonal scale/translation/reversal invariants" time="0.692566" classname="test"/>
+	<testcase name="invalid independent component cannot blank healthy masonry or become a successful physical result" time="0.000783" classname="test"/>
+	<testcase name="256 independently witnessed contact seeds: parity, required incidence, R and metamorphisms" time="2.303432" classname="test"/>
+	<testcase name="diagnostic codec is UTF8 codepoint ordered and excludes opaque props" time="0.003834" classname="test"/>
+	<testcase name="room contacts retain closed cycles after derived same-carrier cuts coalesce" time="0.094247" classname="test"/>
+	<testcase name="nested/overlapping room read order is canonical ID order for layers and hit ownership" time="0.012272" classname="test"/>
+	<testcase name="real commit boundary accepts explicit thickness and independent-column metadata with shared normalized geometry" time="0.068808" classname="test"/>
+	<testcase name="current graph carriers survive metadata canonicalization without nine-decimal rounding" time="0.002478" classname="test"/>
+	<testcase name="legacy metadata saves preserve raw structure before the first migration" time="0.000984" classname="test"/>
+	<testcase name="authoritative migration ACK supplies the accepted body and revision" time="0.009617" classname="test"/>
+	<testcase name="authoritative ACK never overwrites a newer optimistic edit" time="0.000890" classname="test"/>
+	<testcase name="paired migration ACK adopts its actual config and layout together" time="0.000864" classname="test"/>
+	<testcase name="metadata intent preserves exact graph and opaque room/space properties" time="0.058563" classname="test"/>
+	<testcase name="metadata refuses implicit graph geometry instead of silently dropping it" time="0.016058" classname="test"/>
+	<testcase name="metadata explicitly transfers edge props and allows independent columns/decor" time="0.009837" classname="test"/>
+	<testcase name="thickness names edges and changes only their cm" time="0.005697" classname="test"/>
+	<testcase name="fixed-topology Resize retains original IDs and exact UI lattice targets" time="0.006338" classname="test"/>
+	<testcase name="selected ownership detaches shared corners and keeps the neighbour exact" time="0.010043" classname="test"/>
+	<testcase name="both selected room owners keep shared edge IDs when they target the same line" time="0.009365" classname="test"/>
+	<testcase name="Resize expands real-corner draft through exact stored atom ownership and dependencies" time="0.010906" classname="test"/>
+	<testcase name="partition endpoint edit detaches only its own edge from a shared junction" time="0.004771" classname="test"/>
+	<testcase name="explicit opening edit cannot leave stale q overriding the new scalar t" time="0.002365" classname="test"/>
+	<testcase name="new independent face is an explicit graph construction, not current migration" time="0.003261" classname="test"/>
+	<testcase name="named partition arrangement promotes the selected face and remaps its hosted opening" time="0.011144" classname="test"/>
+	<testcase name="delete room keeps physical walls as partitions when explicitly requested" time="0.006054" classname="test"/>
+	<testcase name="Merge rooms removes the shared divider using the named existing boundary" time="0.019628" classname="test"/>
+	<testcase name="first legacy partition edit uses the explicit migration map including reversal and split children" time="0.002341" classname="test"/>
+	<testcase name="named derived face vertex uses the exact intersection rather than its nine-decimal carrier" time="0.006893" classname="test"/>
+	<testcase name="Resize rehosts affected opening using solver xy and preserves exact q for an unchanged world centre" time="0.008022" classname="test"/>
+	<testcase name="named segments supports an unowned contour wall namespace independently of partitions" time="0.002557" classname="test"/>
+	<testcase name="legacy whole partition move preserves all mapped children as a connected selected cohort" time="0.002657" classname="test"/>
+	<testcase name="new segment crossing known sources emits exact splits instead of rebuilding the current graph" time="0.002590" classname="test"/>
+	<testcase name="selected intersection scope preserves deterministic exact splits with unrelated edges and input permutations" time="0.040445" classname="test"/>
+	<testcase name="first wall thickness selection binds the named legacy side after bounded normalization without a catalogue" time="0.042541" classname="test"/>
+	<testcase name="first write patch is rooted in the accepted pre-gesture normalized graph" time="0.006124" classname="test"/>
+	<testcase name="first write patch includes all queued explicit graph commands, not only the last gesture" time="0.008184" classname="test"/>
+	<testcase name="older backend without graph_change_api 2 retains the v1 diagnostic-base transport" time="0.002976" classname="test"/>
+	<testcase name="grid-authored targets use exact indices while legacy decimals stay untouched for radius accounting" time="0.021009" classname="test"/>
+	<testcase name="graph read ignores stale numeric carriers and never writes its source" time="0.003468" classname="test"/>
+	<testcase name="in-place editor adoption replaces graph identity so accepted read caches cannot retain old geometry" time="0.006833" classname="test"/>
+	<testcase name="copied graph remaps every reference while keeping exact values and opaque edge props" time="0.006730" classname="test"/>
+	<testcase name="node handles use graph identity for intentionally coincident detached endpoints" time="0.002297" classname="test"/>
+	<testcase name="a current node move updates stable graph identity and exact opening host" time="0.003961" classname="test"/>
+	<testcase name="every Stage 4 shadow plane uses the same scale-aware fixed-light vector" time="0.005775" classname="test"/>
+	<testcase name="device footprint contains value capsule, bottom badge and displaced LQI row" time="0.001138" classname="test"/>
+	<testcase name="room footprint contains a long name and the complete four-metric row" time="0.000347" classname="test"/>
+	<testcase name="room footprint treats wide ASCII glyphs conservatively" time="0.000206" classname="test"/>
+	<testcase name="overlay bounds use final screen footprint and canonical owner filtering" time="0.005543" classname="test"/>
+	<testcase name="#713 K8: overlay fit is the structure plus visible tiles, no #651 nudge reserve" time="0.000693" classname="test"/>
+	<testcase name="#725 AC3/#741: the overlay fit bounds depend only on scene.frame and the tiles, never on the stage" time="0.006506" classname="test"/>
+	<testcase name="one painter queue paints a nearer wall after an unrelated rear opening" time="0.002517" classname="test"/>
+	<testcase name="shared painter queue puts elevated window glass over its rear sill only in window slots" time="0.020312" classname="test"/>
+	<testcase name="shared painter queue keeps rotating door prism faces in physical camera order" time="0.002550" classname="test"/>
+	<testcase name="production overlay rooms preserve direct island holes once per room snapshot" time="0.002650" classname="test"/>
+	<testcase name="opening-lock placement inherits the selected physical host side" time="0.001610" classname="test"/>
+	<testcase name="opening-lock scene keeps physical host ownership when spatial fallback points elsewhere" time="0.003816" classname="test"/>
+	<testcase name="opening lock without a canonical host owner never guesses from point containment" time="0.000946" classname="test"/>
+	<testcase name="Stage 4 reuses pure overlay placements, and fit and the live frame share one snapshot" time="0.001931" classname="test"/>
+	<testcase name="render scene keeps coincident devices coincident, leaves labels alone and caches permutations" time="0.003402" classname="test"/>
+	<testcase name="#711 состояние устройства не двигает значки: раскладка не пересчитывается, границы видят бейдж" time="0.002243" classname="test"/>
+	<testcase name="orphan hosted openings never become phantom Stage 4 volumes" time="0.000550" classname="test"/>
+	<testcase name="presentation-only room changes reuse the structural scene but geometry changes rebuild it" time="0.016747" classname="test"/>
+	<testcase name="structural scene cache refreshes a hot hit before evicting the least-recently-used entry" time="0.019147" classname="test"/>
+	<testcase name="throwing decoration capability probes keep Iso structural geometry on the solid path" time="0.000438" classname="test"/>
+	<testcase name="removed contact shadows are never read while ambient shadow capability remains enabled" time="0.001180" classname="test"/>
+	<testcase name="gate flips move structural host face with the reviewed inverse convention" time="0.000728" classname="test"/>
+	<testcase name="gate flips move unhosted structural face with the reviewed inverse convention" time="0.051271" classname="test"/>
+	<testcase name="partition host identity, placement, depth and selected face invalidate opening volumes" time="0.001966" classname="test"/>
+	<testcase name="opening geometry policy is both fingerprinted and consumed by the structural build" time="0.001985" classname="test"/>
+	<testcase name="#473 W2 after #724: walls never move a tile, the cache follows the structural wall geometry" time="0.001119" classname="test"/>
+	<testcase name="#724 AC2: the overlay scene survives zoom, resize and HA state, and is rebuilt when a wall changes" time="0.026708" classname="test"/>
+	<testcase name="#724 AC2: a room edit that changes the owner is a new structure — no owner of a plan that is gone" time="0.004364" classname="test"/>
+	<testcase name="#713 AC3: every tile gets one straight-up shift from its Flat anchor" time="0.001347" classname="test"/>
+	<testcase name="#713 K5: room names stay on the Flat floor point while devices share the wall-top rise" time="0.000726" classname="test"/>
+	<testcase name="ordinary Glow and LED share one revision within a synchronous render only" time="0.001874" classname="test"/>
+	<testcase name="in-place plan and opening changes are fingerprinted again next render" time="0.000234" classname="test"/>
+	<testcase name="owners and different space objects never share a memo, even with the same id" time="0.000234" classname="test"/>
+	<testcase name="throwing renders and failed builds cannot retain or poison the next read" time="0.000962" classname="test"/>
+	<testcase name="nested synchronous passes restore the outer memo without leaking the inner one" time="0.000273" classname="test"/>
+	<testcase name="#1070: complete PDF page follows all four presentation angles and still fits its sheet" time="0.039668" classname="test"/>
+	<testcase name="PDF scene includes architecture and respects names/dimensions switches" time="0.007162" classname="test"/>
+	<testcase name="#1035 PDF emits decor in stored order after bringing an object forward" time="0.014880" classname="test"/>
+	<testcase name="#663 PDF renders both stair symbols and uses stair-adjusted clean area" time="0.037115" classname="test"/>
+	<testcase name="#683/#688 PDF keeps stair styling monochrome and one physical line weight" time="0.002038" classname="test"/>
+	<testcase name="shared wall architecture is emitted once and devices never enter the PDF scene" time="0.070056" classname="test"/>
+	<testcase name="dimensions switch removes the external chain from physical walls" time="0.062180" classname="test"/>
+	<testcase name="stepped exterior keeps the complete reconstructable dimension chain" time="0.059651" classname="test"/>
+	<testcase name="backdrop is below physical architecture and disappears with its option" time="0.038493" classname="test"/>
+	<testcase name="physical bodies use exact grey, page-anchored 45 degree hatch and leave zero walls unfilled" time="0.023155" classname="test"/>
+	<testcase name="wall fill and even-odd hatch clipping preserve a clean opening tunnel" time="0.037201" classname="test"/>
+	<testcase name="dimension dedupe is local: opposite sides collapse but equal dimensions in both rooms survive" time="0.027693" classname="test"/>
+	<testcase name="whole dimension lane keeps grouped labels centered with 1 mm clearance and no tangent jitter" time="0.010016" classname="test"/>
+	<testcase name="vertical internal dimension uses the rendered font box and preserves 1 mm wall clearance" time="0.002559" classname="test"/>
+	<testcase name="blocked rectangular dimension is omitted instead of using an unsafe text fallback" time="0.001654" classname="test"/>
+	<testcase name="scene dimensions include a near-axis edge but omit true diagonals" time="0.001327" classname="test"/>
+	<testcase name="thick near-axis outer face retains its projected external dimension" time="0.022895" classname="test"/>
+	<testcase name="opposite dedupe keeps the thick near-axis side with a safe external lane" time="0.009666" classname="test"/>
+	<testcase name="actual annotated scene bbox selects portrait/landscape, fits and centers at standard scale" time="0.017708" classname="test"/>
+	<testcase name="#530: a label that cannot fit is dropped, and the page is still produced" time="0.003518" classname="test"/>
+	<testcase name="oversized architecture brackets a larger printable scale and still returns a fitted page" time="0.001889" classname="test"/>
+	<testcase name="#530: architecture too large for any denominator still fails closed" time="0.003759" classname="test"/>
+	<testcase name="rotated raster bounds do not reject the tighter fitting page orientation" time="0.000772" classname="test"/>
+	<testcase name="PDF scene integrates the vector compass and never restores the architectural legend" time="0.040793" classname="test"/>
+	<testcase name="#530: dense non-rectangular rooms print what fits, with no callout column" time="0.001485" classname="test"/>
+	<testcase name="#530: a square house fills the sheet at the next standard scale, upright" time="0.144937" classname="test"/>
+	<testcase name="decor toggle uses the canonical designer furniture vector path" time="0.005885" classname="test"/>
+	<testcase name="current 20-room large-house space builds from the visible geometry cache under 200 ms" time="0.731451" classname="test"/>
+	<testcase name="#861 begin captures the event target, selects and owns a cloned transient base" time="0.004831" classname="test"/>
+	<testcase name="#861 missing model or missing requested body cannot create a gesture" time="0.000437" classname="test"/>
+	<testcase name="#861 raw moves coalesce, stay render-only and flush before a foreign terminal check" time="0.001045" classname="test"/>
+	<testcase name="#861 the 5 CSS-pixel move threshold is inclusive and sticky, independent of plan scale" time="0.000806" classname="test"/>
+	<testcase name="#861 rigid partition release materialises hosted door/window coordinates only once" time="0.004976" classname="test"/>
+	<testcase name="#861 physical delta clamps the whole partition and column to the existing canvas extent" time="0.001110" classname="test"/>
+	<testcase name="#861 duplicate column translation refuses without a write and a distinct placement commits" time="0.001253" classname="test"/>
+	<testcase name="#861 rotation captures the target, uses the 5-degree step or Shift precision, and commits once" time="0.001004" classname="test"/>
+	<testcase name="#861 rotation movement uses the raw 0.5-degree threshold rather than snapped output" time="0.000720" classname="test"/>
+	<testcase name="#861 rotation canonicalises angles and foreign pointerup only flushes the legitimate queued move" time="0.000605" classname="test"/>
+	<testcase name="#861 rotation ignores circles/missing space and refuses a duplicate square placement" time="0.000452" classname="test"/>
+	<testcase name="#861 foreign raw moves never change another pointer owner" time="0.000503" classname="test"/>
+	<testcase name="#861 missing stored/model after a move clears transient state without committing" time="0.000747" classname="test"/>
+	<testcase name="#861 double tap includes 360 ms, excludes later/different targets, and clears the pair" time="0.000683" classname="test"/>
+	<testcase name="#861 overlap cycling has strict lower/inclusive upper time and inclusive distance boundaries" time="0.000932" classname="test"/>
+	<testcase name="#861 candidate signature changes reset cycling; target fallback still selects a thin body" time="0.000289" classname="test"/>
+	<testcase name="#861 cancel removes both gesture queues, publishes once and leaves unrelated card work intact" time="0.003700" classname="test"/>
+	<testcase name="#861 state-only resetMove preserves rotation, while reset clears both without queue/publication effects" time="0.000553" classname="test"/>
+	<testcase name="#861 resets/cancel retain last-tap and overlap-cycle timing rather than inventing lifecycle resets" time="0.003552" classname="test"/>
+	<testcase name="#861 pointer queue uses the supplied card identity and the established physical keys" time="0.000472" classname="test"/>
+	<testcase name="IEEE754 correctly rounded third" time="0.002211" classname="test"/>
+	<testcase name="IEEE754 correctly rounded tie-even-low" time="0.000315" classname="test"/>
+	<testcase name="IEEE754 correctly rounded tie-even-high" time="0.000148" classname="test"/>
+	<testcase name="IEEE754 correctly rounded half-subnormal" time="0.000227" classname="test"/>
+	<testcase name="IEEE754 correctly rounded three-half-subnormal" time="0.000277" classname="test"/>
+	<testcase name="IEEE754 correctly rounded negative-half-subnormal" time="0.000145" classname="test"/>
+	<testcase name="IEEE754 correctly rounded huge-ratio" time="0.000310" classname="test"/>
+	<testcase name="IEEE754 correctly rounded max-finite" time="0.000176" classname="test"/>
+	<testcase name="exact parsing/arithmetic/lattice canonical shape and explicit resource bounds" time="0.002949" classname="test"/>
+	<testcase name="migration corpus room-only" time="0.084002" classname="test"/>
+	<testcase name="migration corpus shared-room-only" time="0.048579" classname="test"/>
+	<testcase name="migration corpus near-T" time="0.017925" classname="test"/>
+	<testcase name="migration corpus crossing" time="0.017583" classname="test"/>
+	<testcase name="migration corpus kind-identity" time="0.010916" classname="test"/>
+	<testcase name="migration corpus hosted-negative" time="0.006360" classname="test"/>
+	<testcase name="migration corpus legacy-partial-zero" time="0.073225" classname="test"/>
+	<testcase name="migration corpus legacy-zero-door" time="0.077050" classname="test"/>
+	<testcase name="migration corpus legacy-open-to" time="0.037447" classname="test"/>
+	<testcase name="migration corpus old-lineage" time="0.022188" classname="test"/>
+	<testcase name="migration corpus unicode-source-order" time="0.005870" classname="test"/>
+	<testcase name="migration corpus long-edge-split" time="0.013138" classname="test"/>
+	<testcase name="migration corpus outside-radius" time="0.007127" classname="test"/>
+	<testcase name="migration corpus conflicting-opaque-props" time="0.005078" classname="test"/>
+	<testcase name="shared move, split/dependency propagation, exact host remap, and no-op" time="0.002118" classname="test"/>
+	<testcase name="intersection support survives edge splits and follows both support lines" time="0.001844" classname="test"/>
+	<testcase name="invalid graph/patch/operation is atomic and stale projections are refused" time="0.002208" classname="test"/>
+	<testcase name="replace room cycle retains metadata and resize-detach keeps the neighbouring owner" time="0.004750" classname="test"/>
+	<testcase name="legacy open spans/open_to, key thickness, partial zero run and opening exception" time="0.020503" classname="test"/>
+	<testcase name="legacy room wall IDs are lineage when catalogue is absent; props and host exact projection survive" time="0.004331" classname="test"/>
+	<testcase name="prepared DAG move matches full validation and keeps the source immutable" time="0.002173" classname="test"/>
+	<testcase name="bounded legacy source movement never chains proximity into extra displacement" time="0.006298" classname="test"/>
+	<testcase name="convert-edge remaps exact opening hosts and preserves opaque source properties" time="0.000504" classname="test"/>
+	<testcase name="current authoritative cm ignores stale legacy open spans; source version is explicit" time="0.011131" classname="test"/>
+	<testcase name="projection t is derived from canonical tq and stale scalar echo is refused" time="0.001553" classname="test"/>
+	<testcase name="collapse of a support node requires explicit dependent retirement; keeps its evaluated value" time="0.001468" classname="test"/>
+	<testcase name="opaque property conflict does not create two canonical shared wall edges" time="0.001040" classname="test"/>
+	<testcase name="supported minimized legacy plan has finite contact anchors instead of cyclic dependencies" time="0.182382" classname="test"/>
+	<testcase name="legacy opening migration retains the existing occupancy contract (#1033)" time="0.019842" classname="test"/>
+	<testcase name="connected legacy contacts use frozen chosen supports without arithmetic feedback (#834)" time="0.109584" classname="test"/>
+	<testcase name="exact tree leaf bounds preserve crossings and R-expanded contacts under source permutations" time="0.027509" classname="test"/>
+	<testcase name="legacy is decoded from untouched raw coordinates once, then Optimize uses stable graph IDs" time="0.087589" classname="test"/>
+	<testcase name="current graph is authoritative even when the compatibility room draft is stale" time="0.028314" classname="test"/>
+	<testcase name="current11 without graph is invalid, never reconstructed as a legacy draft" time="0.001023" classname="test"/>
+	<testcase name="whole-grid Optimize keeps exact affine T incidence and dependent hosts after support moves" time="0.039055" classname="test"/>
+	<testcase name="partition compaction uses explicit seam collapse and remaps exact hosted t" time="0.012626" classname="test"/>
+	<testcase name="intentionally detached current endpoints do not join by coordinate coincidence" time="0.008405" classname="test"/>
+	<testcase name="continuous stairs/furniture/image transforms, backdrop, room metadata and detached layout survive" time="0.012767" classname="test"/>
+	<testcase name="exact coincident and fully hidden partial partitions convert through explicit known IDs" time="0.070743" classname="test"/>
+	<testcase name="coincident nested thickness keeps the maximum physical envelope" time="0.058958" classname="test"/>
+	<testcase name="isolated thickness micro-interval compacts without snapping away its topology" time="0.023618" classname="test"/>
+	<testcase name="thickness island beside a real room T-node preserves that shared node and room ownership" time="0.053649" classname="test"/>
+	<testcase name="near-axis repair remains an explicit whole-plan movement with the existing report" time="0.014626" classname="test"/>
+	<testcase name="legacy nonstructural migrations and reference-repair reports remain meaningful" time="0.003385" classname="test"/>
+	<testcase name="current on-grid Optimize ignores object key order and still reports real movement" time="0.029261" classname="test"/>
+	<testcase name="#1216 graph-change version comes only from explicit backend capability" time="0.001964" classname="test"/>
+	<testcase name="#1045 node deletion is a literal transport capability, never a saved config grant" time="0.000481" classname="test"/>
+	<testcase name="card adapter baseline is safe only after the full rendered card settles" time="0.001466" classname="test"/>
+	<testcase name="#1165 reload uses the profile reference and effective carousel interval" time="0.006332" classname="test"/>
+	<testcase name="#1213 deferred profile reference and explicit Fit hold carousel/reload until applied" time="0.000484" classname="test"/>
+	<testcase name="#861 version reload safety sees both actual gesture owners until their state-only reset" time="0.001296" classname="test"/>
+	<testcase name="card adapter maps editor state into the kiosk reload guard" time="0.000239" classname="test"/>
+	<testcase name="#1103 runtime kiosk uses the same version-reload guards without a saved kiosk option" time="0.000478" classname="test"/>
+	<testcase name="card adapter maps blocking surfaces into the kiosk reload guard" time="0.002053" classname="test"/>
+	<testcase name="card adapter maps config writes into the kiosk reload guard" time="0.000482" classname="test"/>
+	<testcase name="card adapter maps interaction pause into the kiosk reload guard" time="0.000217" classname="test"/>
+	<testcase name="#894 enlarged non-carousel recovery changes only the zoom predicate" time="0.000277" classname="test"/>
+	<testcase name="#1113 external-screen editing is a literal config/get capability, never a saved namespace grant" time="0.000213" classname="test"/>
+	<testcase name="#1113 profile stream capability accepts only the exact protocol version" time="0.000200" classname="test"/>
+	<testcase name="local production preview keeps complete far-end junctions and excludes remote geometry" time="0.079107" classname="test"/>
+	<testcase name="zero-only preview uses the production style and preserves zero wall identity" time="0.004007" classname="test"/>
+	<testcase name="current chain finish commits explicit two/three-edge collapse and exact host remap" time="0.044154" classname="test"/>
+	<testcase name="chain finish limits compaction to seeds and leaves off-grid rooms/unrelated historical seams unchanged" time="0.045398" classname="test"/>
+	<testcase name="current scoped coincidence updates the graph and exact opening host as one candidate" time="0.036538" classname="test"/>
+	<testcase name="missing or absent chain seeds cannot normalize unrelated current graph structure" time="0.003400" classname="test"/>
+	<testcase name="coincident but intentionally detached chain endpoints retain their independent IDs" time="0.006000" classname="test"/>
+	<testcase name="missing/unknown style is dashed and every current cm:0 source shares the policy" time="0.001966" classname="test"/>
+	<testcase name="solid style keeps identical geometry and turns every zero axis into a barrier" time="0.000919" classname="test"/>
+	<testcase name="legacy open spans project read-only into the same contour answer" time="0.001468" classname="test"/>
+	<testcase name="opening host guard is exact and ignores another carrier" time="0.000244" classname="test"/>
+	<!-- tests 217 -->
+	<!-- suites 0 -->
+	<!-- pass 217 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 3115.255535 -->
+</testsuites>
