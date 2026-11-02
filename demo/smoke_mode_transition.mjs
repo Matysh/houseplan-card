@@ -97,6 +97,7 @@ for (const [name, width, reduced] of [['isoWide', 1440, false], ['isoNarrow', 38
 }
 
 await page.emulateMedia({reducedMotion:'no-preference'});
+await page.waitForFunction(()=>!window.__card._reducedMotion);
 await page.setViewportSize({width:1440,height:760});
 await page.evaluate(()=>window.__hpTest.settled());
 result.hiddenProjectionRecovery=await page.evaluate(async()=>{
