@@ -1,5 +1,6 @@
 import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
 import { sendHouseplanWrite } from './large-write-transport';
+import { annotateSpaceGraphOpeningRuns } from './graph-opening-run';
 import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
@@ -206,7 +207,7 @@ import {
   type GeometryOpeningProjection, type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
 import {
-  canonicalizeConfigGeometry, canonicalizeLayoutGeometry, canonicalizePosition,
+  canonicalizeConfigWrite, canonicalizeLayoutGeometry, canonicalizePosition,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import type { CalibrationProposal, VacuumFit } from './vacuum-calibration-write';
@@ -5942,9 +5943,10 @@ export class HouseplanCard extends LitElement {
           pending = pos;
           this._sentPos.set(deviceId, pending);
           registered = true;
-          response = await this.hass.callWS({
+          const writeHass = this.hass;
+          response = await sendHouseplanWrite(writeHass, {
             type: 'houseplan/layout/update', device_id: deviceId, pos,
-          });
+          }, { isCurrent: () => isCurrent() && this.hass === writeHass });
         }
         if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
         this._adoption.acceptLayoutPosition(deviceId, pending, (response as { rev?: unknown } | null)?.rev);
@@ -8093,8 +8095,9 @@ export class HouseplanCard extends LitElement {
     // the preview overlay; _writeConfig deliberately reads _serverCfg instead,
     // so a queued write can never pick the preview up.
     const pv = this._resize?.preview;
-    if (pv && pv.space === this._space) return pv.sp;
-    return this._serverCfg?.spaces.find((s: any) => s.id === this._space);
+    const space = pv && pv.space === this._space ? pv.sp
+      : this._serverCfg?.spaces.find((s: any) => s.id === this._space);
+    return space ? annotateSpaceGraphOpeningRuns(space) : space;
   }
 
   /** The config AS RENDERED: _serverCfg with the live resize preview substituted in. */
@@ -8375,7 +8378,7 @@ export class HouseplanCard extends LitElement {
       throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
     const isCurrent = this._configWriteGuard();
     if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
-    const canonicalCandidate = canonicalizeConfigGeometry(candidate);
+    const canonicalCandidate = canonicalizeConfigWrite(candidate);
     const expectedRev = this._cfgRev;
     const accepted = this._adoption.snapshot(null)?.config;
     const graph_change = Number(canonicalCandidate.model_version) === 11 && Number(accepted?.model_version || 0) < 11
@@ -8418,7 +8421,7 @@ export class HouseplanCard extends LitElement {
     this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
       if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       if (!this._serverCfg) return;
-      const candidate = canonicalizeConfigGeometry(this._serverCfg);
+      const candidate = canonicalizeConfigWrite(this._serverCfg);
       if (attempt && contentFingerprint(this._serverCfg) === attempt.attemptedFingerprint)
         Object.assign(attempt, { revision: this._cfgRev, attempted: candidate, attemptedFingerprint: contentFingerprint(candidate) });
       this._adoption.stageConfigCandidate(candidate);

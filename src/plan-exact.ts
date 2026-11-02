@@ -103,6 +103,17 @@ export function readSourcePoint(p: readonly number[]): ExactPoint {
   if (!Array.isArray(p) || p.length !== 2) throw new PlanExactError('format', 'point');
   return checkedPoint([parseDecimal(p[0]), parseDecimal(p[1])]);
 }
+/** Explicit editor targets already snapped to the public grid carry its exact
+ * index. Raw legacy decoding must continue to use readSourcePoint instead. */
+export function readAuthoredPoint(p: readonly number[]): ExactPoint {
+  if (!Array.isArray(p) || p.length !== 2) throw new PlanExactError('format', 'point');
+  const coordinate = (value: number): Exact => {
+    const index = Math.round(value * 240);
+    return Number.isSafeInteger(index) && value === index / 240
+      ? exact(BigInt(index), 240n) : parseDecimal(value);
+  };
+  return checkedPoint([coordinate(p[0]), coordinate(p[1])]);
+}
 export function checkedPoint(p: ExactPoint): ExactPoint {
   const limit = exact(5000n);
   if (p.some(q => cmp(q, limit) > 0 || cmp(q, neg(limit)) < 0)) throw new PlanExactError('range');

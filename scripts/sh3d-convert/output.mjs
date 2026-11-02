@@ -2,9 +2,9 @@
 import { commitWallSegmentModel, WALL_SEGMENT_MODEL_VERSION, CONVERTER_LIMITS as LIMITS } from './geometry-runtime.generated.mjs';
 
 export const CURRENT_MODEL_VERSION = WALL_SEGMENT_MODEL_VERSION;
-export const MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
-export const MAX_CONFIG_BYTES = 2 * 1024 * 1024;
-export const MIN_CURRENT_HOUSEPLAN = '1.81.0';
+export const MAX_OUTPUT_BYTES = 32 * 1024 * 1024;
+export const MAX_CONFIG_BYTES = 16 * 1024 * 1024;
+export const MIN_CURRENT_HOUSEPLAN = '1.84.0';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const canonical = (value) => Math.round(value * 1e9) / 1e9 || 0;
 

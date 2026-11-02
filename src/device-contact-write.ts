@@ -6,11 +6,12 @@ import type {DeviceContactRenderer} from './device-contact-render';
 import type {ConfigAdoption} from './config-adoption';
 import type {LayoutWriteReload} from './layout-write-reload';
 import type {ServerConfig} from './types';
+import {sendHouseplanWrite} from './large-write-transport';
 interface ContactWriter {
   _layout:DeviceLayout;_layoutRev:number;_cfgRev:number;_space:string;
   _deviceContacts?:DeviceContactRenderer;_adoption:ConfigAdoption;_layoutIO:LayoutWriteReload;
   _serverStorage:boolean;_loadOk:boolean;
-  hass:{callWS(message:Record<string,unknown>):Promise<unknown>};
+  hass:{callWS<T>(message:Record<string,unknown>):Promise<T>};
   _sentPos:Map<string,DeviceLayout[string]|null>;
   _cacheSnapshot():void;_persistLocalLayout():void;requestUpdate():void;
 }
@@ -110,8 +111,10 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     }
     let response:Record<string,unknown>|null;
     try {
-      response=record(await host.hass.callWS({type:'houseplan/layout/set',layout,expected_rev:snapshot.rev,
-        expected_config_rev:configRevision}));
+      const writeHass=host.hass;
+      response=record(await sendHouseplanWrite(writeHass,{type:'houseplan/layout/set',layout,expected_rev:snapshot.rev,
+        expected_config_rev:configRevision},{isCurrent:()=>host.hass===writeHass&&current(),
+          canDispatch:()=>host._cfgRev===configRevision&&(!guard||guard.current(snapshot.rev as number))}));
     } catch(error) {
       // A transport failure is not proof that the server rejected the write.
       // Reconcile only our named placements; never replay the full snapshot.

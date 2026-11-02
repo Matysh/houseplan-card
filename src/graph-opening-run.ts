@@ -24,6 +24,19 @@ export interface GraphOpeningRun {
   };
   readonly coordScale: number;
 }
+const annotatedSpaces = new WeakMap<object, { graph: PlanGraph; walls: unknown; partitions: unknown }>();
+/** Selected-floor raw readers share the same derived continuity as scaled
+ * models. Symbols stay outside persistence and the graph is never mutated. */
+export function annotateSpaceGraphOpeningRuns<T extends Record<string, any>>(space: T): T {
+  const graph = space.plan_graph as PlanGraph | undefined;
+  if (!graph) return space;
+  const known = annotatedSpaces.get(space);
+  if (known?.graph === graph && known.walls === space.wall_segments && known.partitions === space.partitions) return space;
+  annotateGraphOpeningRuns(graph,space.wall_segments || [],'wall');
+  annotateGraphOpeningRuns(graph,space.partitions || [],'partition');
+  annotatedSpaces.set(space,{graph,walls:space.wall_segments,partitions:space.partitions});
+  return space;
+}
 interface RunMetadata {
   run: GraphOpeningRun;
   /** Only a carrier must still match the projection that was annotated. */

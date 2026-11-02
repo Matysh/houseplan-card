@@ -18,7 +18,7 @@ mkdirSync('artifacts/828-node', { recursive: true });
 try {
   await page.exposeFunction('reliabilityWire', message => {
     if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision,
-      can_write: true, wall_node_move_api: 1 };
+      can_write: true, wall_node_move_api: 1, plan_graph_api: 1 };
     if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
     if (message.type === 'houseplan/wall/node_move') { writes++; throw new Error('unexpected write'); }
     return null;

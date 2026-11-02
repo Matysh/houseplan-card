@@ -43,6 +43,18 @@ function deferred() {
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const isCode = code => failure => failure?.code === code;
 
+test('closing a gesture during upload forbids dispatch while leaving its accepted response authority separate', async () => {
+  const { hass, calls } = fake();
+  let dispatch = true;
+  const upload = hass.fetchWithAuth;
+  hass.fetchWithAuth = async (...args) => { const result = await upload.apply(hass,args); dispatch = false; return result; };
+  await assert.rejects(sendHouseplanWrite(hass,large({}),{
+    isCurrent:()=>true,canDispatch:()=>dispatch,
+  }),isCode('context-changed'));
+  assert.equal(calls.upload.length,1);
+  assert.equal(calls.ws.length,0);
+});
+
 test('small write keeps same WS command/result and drops only its transport id', async () => {
   const { hass, calls, result } = fake();
   const message = { id: 999, type: TYPE, config: { name: 'Дом' }, expected_rev: 11 };

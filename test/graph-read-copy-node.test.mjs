@@ -4,12 +4,23 @@ import { migrateGraphSpace, projectGraphSpace } from '../test-build/plan-graph.j
 import { graphViewSpace } from '../test-build/plan-graph-view.js';
 import { structuralWallNodes, prepareNodeMove, applyNodeMove } from '../test-build/wall-node-move.js';
 import { createSpaceCopyCandidate } from '../test-build/space-copy.js';
-import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
+import { adoptWallSegmentModelCandidateInPlace } from '../test-build/wall-segment-model.js';
+import { decodePoint, pointToNumbers, encodePoint, readSourcePoint, readAuthoredPoint } from '../test-build/plan-exact.js';
 
 const legacy = () => ({ id:'floor',title:'Floor',view_box:[0,0,1,1],cell_cm:5,rooms:[],
   partitions:[{id:'part',a:[0,0],b:[1/3,0],cm:12,custom:{retained:true}}],
   openings:[{id:'door',type:'door',x:1/9,y:0,angle:0,length:.05,
     host:{kind:'partition',id:'part',t:1/3}}] });
+
+test('grid-authored targets use exact indices while legacy decimals stay untouched for radius accounting',()=>{
+  assert.deepEqual(encodePoint(readAuthoredPoint([1/3,-1/240])),['l','80','-1']);
+  assert.equal(encodePoint(readSourcePoint([1/3,-1/240]))[0],'q');
+  const space=migrateGraphSpace({...legacy(),openings:[],partitions:[{id:'part',a:[0,0],b:[.5,0],cm:12}]},{sourceModelVersion:10}).space;
+  const nodes=structuralWallNodes(space),node=nodes.find(node=>node.point[0]===.5);
+  const moved=applyNodeMove(prepareNodeMove(space,node,nodes),[1/3,0],null);
+  assert.equal(moved.ok,true);
+  assert.deepEqual(moved.space.plan_graph.nodes.find(n=>n.id===node.nodeId).p,['l','80','0']);
+});
 
 test('graph read ignores stale numeric carriers and never writes its source', () => {
   const current = migrateGraphSpace(legacy(),{sourceModelVersion:10}).space;
@@ -20,6 +31,18 @@ test('graph read ignores stale numeric carriers and never writes its source', ()
   assert.deepEqual(view.partitions,source.partitions);
   assert.equal(JSON.stringify(current),frozen);
   assert.equal(graphViewSpace(current).partitions,view.partitions,'accepted graph projection is memoized');
+});
+
+test('in-place editor adoption replaces graph identity so accepted read caches cannot retain old geometry',()=>{
+  const current=migrateGraphSpace({...legacy(),openings:[]},{sourceModelVersion:10}).space;
+  const oldGraph=current.plan_graph,oldView=graphViewSpace(current);
+  const nodes=structuralWallNodes(current),node=nodes.find(node=>node.point[0]>0);
+  const moved=applyNodeMove(prepareNodeMove(current,node,nodes),[.5,0],null);
+  assert.equal(moved.ok,true);
+  adoptWallSegmentModelCandidateInPlace(current,moved.space);
+  assert.notEqual(current.plan_graph,oldGraph);
+  assert.notEqual(graphViewSpace(current).partitions,oldView.partitions);
+  assert.deepEqual(graphViewSpace(current).partitions[0].b,[.5,0]);
 });
 
 test('copied graph remaps every reference while keeping exact values and opaque edge props', () => {

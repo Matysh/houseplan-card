@@ -87,7 +87,8 @@ export async function writeWallNode(
       type: history.kind === 'delete' ? 'houseplan/wall/node_delete' : 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
       expected_rev: revision, intent: history.intent, direction: history.direction,
       ...(history.direction === 'undo' ? { before_space: history.beforeSpace } : {}),
-    }, { isCurrent: () => host.hass === writeHass && (!guard || guard.accept()) });
+    }, { isCurrent: () => host.hass === writeHass && (!guard || guard.accept()),
+      canDispatch: () => nodeBasisHolds(host, basis) && (!guard || guard.send()) });
     if (guard && !guard.accept()) throw new Error('stale-node-snapshot');
     if (!response.config || !Number.isSafeInteger(response.rev)) throw new Error('invalid-node-response');
     // A newer adoption always wins. Our own echo is safe but an unrelated local

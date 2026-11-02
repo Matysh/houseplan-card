@@ -11,6 +11,7 @@ import { gridVisualScale } from './grid-scale';
 import { stairList, stairOutline } from './stairs';
 import { CANVAS_LIMIT, GRID_N, GRID_PITCH, NORM_W } from './canvas-constants';
 import { graphViewSpace } from './plan-graph-view';
+import { annotateGraphOpeningRuns } from './graph-opening-run';
 
 export { CANVAS_LIMIT, GRID_N, GRID_PITCH, GRID_STEP_N, NORM_W } from './canvas-constants';
 
@@ -132,8 +133,9 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       wall_ids: Array.isArray(r.wall_ids) ? [...r.wall_ids] : undefined,
     }; };
     const vb = safeViewBox(s.view_box);
-    return {
+    const model = {
       id: s.id,
+      ...(s.plan_graph ? { plan_graph: s.plan_graph } : {}),
       title: s.title,
       // Missing remains the historical 5 cm for stored-config compatibility.
       cellCm: Number.isFinite(Number(s.cell_cm)) && Number(s.cell_cm) > 0
@@ -168,6 +170,11 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       // validation and geometry live in the lazy LED chunk.
       led_strips: s.led_strips,
     } as SpaceModel;
+    if (s.plan_graph) {
+      annotateGraphOpeningRuns(s.plan_graph,model.wall_segments,'wall',NORM_W);
+      annotateGraphOpeningRuns(s.plan_graph,model.partitions,'partition',NORM_W);
+    }
+    return model;
   });
 }
 

@@ -1,13 +1,13 @@
 /** #803: local structural edit in normalized coordinates, never a config writer.
  * The frozen structural graph deliberately ignores opening cuts and room-owner
  * multiplicity. Only the at-most-six incident rays change on pointermove. */
-import { GRID_STEP_N } from './canvas-constants';
+import { GRID_STEP_N, GRID_N } from './canvas-constants';
 import { compareCodePoints as compare } from './codepoint-order';
 import { alignWallEnd } from './wall-end-align';
 import { wallKey } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry, WallEntry } from './types';
 import { applyGraphOperation, projectGraphSpace, prepareGraph, type PlanGraph, type GraphOperation } from './plan-graph';
-import { decodePoint, encodePoint, readSourcePoint, pointToNumbers, parseDecimal, encodeRational,
+import { decodePoint, encodePoint, readAuthoredPoint, pointToNumbers, parseDecimal, encodeRational,
   projectParameter, pointAt, cmp, ZERO, ONE, decodeRational } from './plan-exact';
 import type { GraphPoint } from './plan-exact';
 
@@ -247,12 +247,20 @@ function goalNodeSnap(
       && Math.abs(axis.direction[g.guide === 'horizontal' ? 1 : 0]) > EPS);
     if (exact) return { point: exact.p, axis: carrier?.key || null, guide: 'axis' };
     const origin = sameNodePoint(axis.walls[0].a, n.point) ? axis.walls[0].b : axis.walls[0].a;
-    const t = Math.round(dot(sub(raw, origin), axis.direction) / GRID_STEP_N) * GRID_STEP_N;
+    const steps = Math.round(dot(sub(raw, origin), axis.direction) / GRID_STEP_N);
+    for (const component of [0,1] as const) if (axis.direction[1-component] === 0
+        && Math.abs(axis.direction[component]) === 1
+        && origin[component] === Math.round(origin[component]*GRID_N)/GRID_N) {
+      const target = point(origin);
+      target[component] = (Math.round(origin[component]*GRID_N) + steps*axis.direction[component])/GRID_N;
+      return { point:target, axis:carrier?.key || null, guide:'axis' };
+    }
+    const t = steps * GRID_STEP_N;
     return { point: [origin[0] + t * axis.direction[0], origin[1] + t * axis.direction[1]],
       axis: carrier?.key || null, guide: 'axis' };
   }
-  return { point: [Math.round(raw[0] / GRID_STEP_N) * GRID_STEP_N,
-    Math.round(raw[1] / GRID_STEP_N) * GRID_STEP_N], axis: null, guide: null };
+  return { point: [Math.round(raw[0] * GRID_N) / GRID_N,
+    Math.round(raw[1] * GRID_N) / GRID_N], axis: null, guide: null };
 }
 
 /** Build a complete candidate from the frozen source, or refuse the entire edit. */
@@ -446,7 +454,7 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
         const byId = new Map(source.plan_graph.nodes.map(v => [v.id, v]));
         for (const support of dependency.refs) {
           const a = decodePoint(byId.get(support.from)!.p), b = decodePoint(byId.get(support.to)!.p);
-          const targetPoint = readSourcePoint(target), t = projectParameter(targetPoint, a, b);
+          const targetPoint = readAuthoredPoint(target), t = projectParameter(targetPoint, a, b);
           const supportDirection = sub(pointToNumbers(b), pointToNumbers(a));
           if (cmp(t, ZERO) < 0 || cmp(t, ONE) > 0
               || !parallel(unit(supportDirection), carrier.direction)) continue;
@@ -456,12 +464,12 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
         }
       }
       if (!keepDependency) operations.push({ kind: 'move-node', node: n.nodeId,
-        target: encodePoint(readSourcePoint(target)), detachDependency: true });
+        target: encodePoint(readAuthoredPoint(target)), detachDependency: true });
       for (const opening of out.openings || []) if (opening.host && affected.includes(`${opening.host.kind}:${opening.host.id}`)) {
         const edge = source.plan_graph.edges.find(edge => edge.kind === opening.host!.kind && edge.id === opening.host!.id)!;
         const passing = carrier?.walls.some(w => w.kind === edge.kind && w.id === edge.id);
         const byId = new Map(source.plan_graph.nodes.map(v => [v.id, v]));
-        const endpoint = (id: string) => id === n.nodeId ? readSourcePoint(target) : decodePoint(byId.get(id)!.p);
+        const endpoint = (id: string) => id === n.nodeId ? readAuthoredPoint(target) : decodePoint(byId.get(id)!.p);
         const old = source.openings!.find(item => item.id === opening.id)!;
         const oldT = old.host!.tq ? decodeRational(old.host!.tq) : parseDecimal(old.host!.t);
         const center = pointAt(decodePoint(byId.get(edge.from)!.p), decodePoint(byId.get(edge.to)!.p), oldT);

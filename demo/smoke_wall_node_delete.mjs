@@ -49,7 +49,7 @@ await page.addStyleTag({ content: '#host{width:100%;padding:0;margin:0}' });
 await page.exposeFunction('nodeDeleteWire', async message => {
   requests.push(clone(message));
   if (message.type === 'houseplan/config/get') return { config: projected(message), rev: revision,
-    can_write: writable, wall_node_move_api: 1, ...(capability == null ? {} : { wall_node_delete_api: capability }) };
+    can_write: writable, wall_node_move_api: 1, plan_graph_api: 1, ...(capability == null ? {} : { wall_node_delete_api: capability }) };
   if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
   if (!['houseplan/config/set', 'houseplan/wall/node_delete', 'houseplan/wall/node_move'].includes(message.type)) return null;
   const gate = held.get(message.type);

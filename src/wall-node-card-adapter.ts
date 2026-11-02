@@ -59,7 +59,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   // capture and handles additionally require Plan/Select.
   const writer = () => host._canEdit && !host._kiosk && host.isConnected;
   const deleteEnabled = () => host._mode === 'plan' && writer()
-    && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
+    && host._haPlanGraphApi !== null && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
   const api = () => host._haWallNodeMoveApi === 1 && host._haPlanGraphApi !== null;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),

@@ -11,6 +11,7 @@ import {
   pointAt, projectParameter, intersection, orientation, microRadius, pointToNumbers, toNumber,
 } from './plan-exact.js';
 export type { ExactRational, GraphPoint } from './plan-exact.js';
+import { annotateGraphOpeningRuns } from './graph-opening-run';
 export type EdgeKind = 'wall' | 'partition';
 export interface EdgeRef { kind: EdgeKind; id: string }
 export type GraphEdgeRef = EdgeRef;
@@ -214,6 +215,8 @@ export function projectGraphSpace<T extends Record<string, any>>(base: T, graph:
     a: pointToNumbers(index.points.get(e.from)!), b: pointToNumbers(index.points.get(e.to)!), cm: e.cm });
   space.wall_segments = graph.edges.filter(e => e.kind === 'wall').map(projected);
   space.partitions = graph.edges.filter(e => e.kind === 'partition').map(projected);
+  annotateGraphOpeningRuns(graph,space.wall_segments,'wall');
+  annotateGraphOpeningRuns(graph,space.partitions,'partition');
   // Compatibility key is a cache key only; structural identity always uses (kind,id).
   space.walls = space.wall_segments.filter((e: any) => e.cm > 0).map((e: any) => ({
     a: e.a.slice(), b: e.b.slice(), cm: e.cm,

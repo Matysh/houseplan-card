@@ -1,6 +1,7 @@
 /** A read projection of an accepted graph. No migration, snapping or ID allocation. */
 import { decodePoint, pointToNumbers } from './plan-exact';
 import type { PlanGraph } from './plan-graph';
+import { annotateGraphOpeningRuns } from './graph-opening-run';
 
 interface GraphView {
   rooms: Map<string, { poly: number[][]; wall_ids: string[] }>;
@@ -26,6 +27,8 @@ export function graphViewSpace<T extends Record<string, any>>(space: T): T {
       a: points.get(edge.from)!.slice(), b: points.get(edge.to)!.slice(), cm: edge.cm });
     view = { rooms, wall_segments: graph.edges.filter(edge => edge.kind === 'wall').map(segment),
       partitions: graph.edges.filter(edge => edge.kind === 'partition').map(segment) };
+    annotateGraphOpeningRuns(graph,view.wall_segments,'wall');
+    annotateGraphOpeningRuns(graph,view.partitions,'partition');
     cache.set(graph, view);
   }
   const metadata = new Map((space.rooms || []).map((room: any) => [room.id, room]));

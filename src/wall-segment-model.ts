@@ -20,7 +20,7 @@ import {
 import type { OpeningCfg, PartitionCfg, WallOpeningHost, WallSegmentEntry } from './types';
 import {
   migrateGraphSpace, projectGraphSpace, applyGraphOperation, validateGraph,
-  type PlanGraph, type GraphOperation,
+  type PlanGraph, type GraphOperation, type GraphMapping,
 } from './plan-graph';
 
 export const WALL_SEGMENT_MODEL_VERSION = 11;
@@ -49,6 +49,8 @@ export interface WallSegmentCommitResult<T = any> {
   migratedDrafts: number;
   /** Legacy draft edges converted one-for-one to ordinary partitions. */
   migratedDraftSegments: number;
+  /** Session-only source correspondence for replaying the first gesture. */
+  graphMappings?: ReadonlyMap<string, GraphMapping>;
 }
 
 export interface WallSegmentCommitOptions {
@@ -907,12 +909,47 @@ const migrateSpace = (
   };
 };
 
+/**
+ * Frozen v0-v10 compatibility decoder for historical fixtures/import adapters.
+ * This is not a current writer: model11 must keep its graph and explicit intent.
+ */
+export function decodeLegacyWallSegmentModel<T>(
+  input: T, options: WallSegmentCommitOptions = {},
+): WallSegmentCommitResult<T> {
+  const before = JSON.stringify(input);
+  const config: any = clone(input);
+  if (Number(config?.model_version || 0) > 10
+      || (config?.spaces || []).some((space: any) => space.plan_graph)) {
+    throw new WallSegmentModelError('invalid-room', 'legacy-decoder-requires-v10');
+  }
+  canonicalizeConfigGeometryInPlace(config);
+  let migratedSegments = 0;
+  let migratedDrafts = 0;
+  let migratedDraftSegments = 0;
+  const initialMigration = Number(config?.model_version || 0) < 10;
+  for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
+    const hints = options.lineageSpaceId === String(space?.id || '')
+      ? options.lineageHints : undefined;
+    const migrated = migrateSpace(space, initialMigration, hints);
+    migratedSegments += migrated.wallSegments;
+    migratedDrafts += migrated.drafts;
+    migratedDraftSegments += migrated.draftSegments;
+  }
+  config.model_version = 10;
+  canonicalizeConfigGeometryInPlace(config);
+  return {
+    config, changed: before !== JSON.stringify(config), migratedSegments,
+    migratedDrafts, migratedDraftSegments,
+  };
+}
+
 /** Pure, atomic structural candidate. Read paths must never call this helper. */
 export function commitWallSegmentModel<T>(
   input: T, options: WallSegmentCommitOptions = {},
 ): WallSegmentCommitResult<T> {
   const before = JSON.stringify(input);
   const config: any = clone(input);
+  const graphMappings = new Map<string, GraphMapping>();
   let migratedSegments = 0;
   let migratedDrafts = 0;
   let migratedDraftSegments = 0;
@@ -934,6 +971,7 @@ export function commitWallSegmentModel<T>(
           cellCm: Number(space.cell_cm) || 5, sourceModelVersion: version,
         });
         graph = migrated.graph;
+        graphMappings.set(String(space.id), migrated.mapping);
         migratedSegments += graph.edges.filter(e => e.kind === 'wall' && !previousIds.has(e.id)).length;
         config.spaces[i] = migrated.space;
       } else {
@@ -965,6 +1003,7 @@ export function commitWallSegmentModel<T>(
   return {
     config, changed: before !== JSON.stringify(config), migratedSegments,
     migratedDrafts, migratedDraftSegments,
+    ...(graphMappings.size ? { graphMappings } : {}),
   };
 }
 
@@ -1003,7 +1042,8 @@ export function adoptWallSegmentModelCandidateInPlace<T>(target: T, candidate: T
     if (isRecord(current) && isRecord(next)) {
       const entries = Object.entries(next).map(([key, value]) => [
         key,
-        key in current ? adopt(current[key], value) : clone(value),
+        // Graph reducers/cache bindings require immutable graph object identity.
+        key === 'plan_graph' ? clone(value) : key in current ? adopt(current[key], value) : clone(value),
       ] as const);
       // Reinsert in candidate order as well as adopting candidate values.
       // JSON byte idempotence is part of Optimize and history snapshots; an

@@ -7,6 +7,7 @@ import type { NamedCommand } from './command-stack';
 import type { ServerConfig } from './types';
 import { toolsT, type ToolsI18nKey } from './i18n/tools';
 import { langOf } from './i18n';
+import { sendHouseplanWrite, type HouseplanWriteMessage } from './large-write-transport';
 
 export interface DeviceStructureReply {
   config: ServerConfig; layout: DeviceLayout; config_rev: number; layout_rev: number; history_token?: string;
@@ -89,11 +90,11 @@ export class DeviceStructureHistory {
     const unpin = this.host._devicePositionHistory.pinBaseline();
     let reply: DeviceStructureReply;
     try {
-      try { reply = await this.host.hass.callWS(request); }
+      try { reply = await this.send(request); }
       catch (error) {
         const code = (error as { code?: string }).code;
         if (code) { this.unresolved = null; throw error; }
-        reply = await this.host.hass.callWS(request);
+        reply = await this.send(request);
       }
       this.unresolved = null;
       await accepted(reply);
@@ -109,7 +110,7 @@ export class DeviceStructureHistory {
     if (!this.unresolved) return;
     const { request, resolve } = this.unresolved;
     let reply: DeviceStructureReply;
-    try { reply = await this.host.hass.callWS(request); }
+    try { reply = await this.send(request); }
     catch (error) {
       if ((error as { code?: string }).code) this.unresolved = null;
       throw error;
@@ -117,6 +118,13 @@ export class DeviceStructureHistory {
     this.unresolved = null;
     await resolve(reply, true);
     this.prune();
+  }
+  private send(request: Record<string, unknown>): Promise<DeviceStructureReply> {
+    const host = this.host, hass = host.hass, claim = host._configWriteContext.claim();
+    return sendHouseplanWrite(hass, request as HouseplanWriteMessage, {
+      isCurrent: () => host.isConnected && host.hass === hass && host._configWriteContext.current(claim,host.hass),
+      canDispatch: () => host._canEdit && !host._kiosk && host._mode === 'devices',
+    });
   }
   private async recover(): Promise<void> {
     if (!this.needsResolution || !this.context || !this.current(this.context)) return;

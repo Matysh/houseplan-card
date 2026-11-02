@@ -1,6 +1,7 @@
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
 import { commitGraphEdit, type GraphEditIntent } from './graph-edit-intent';
 import { projectGraphSpace, validateGraph, type PlanGraph } from './plan-graph';
+import { sendHouseplanWrite } from './large-write-transport';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -248,8 +249,7 @@ import {
 import {
   WALL_SEGMENT_MODEL_VERSION,
   commitWallSegmentModel,
-  fixedTopologyWallLineageHints,
-  resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
+  resolveRoomOpeningHost, WallSegmentModelError,
 } from './wall-segment-model';
 import { zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
 import { KeyboardNudge } from './editors/keyboard-nudge';
@@ -266,7 +266,7 @@ import {
   type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
 import {
-  canonicalizeConfigGeometry, canonicalizePosition,
+  canonicalizeConfigWrite, canonicalizePosition,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite, type OptimisticAttempt } from './serialized-write-queue';
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
@@ -1775,7 +1775,7 @@ public _samePt(a: readonly number[], b: readonly number[]): boolean {
  * `_writeConfig` refuses the write instead (src/geometry-cleanup.ts).
  */
 public _dropLegacySegments(config = this.host._serverCfg): void {
-    if (config && !findGeometryRemoval(config)) normalizeLegacyGeometryInPlace(config);
+    if (config && !findGeometryRemoval(config)) normalizeLegacyGeometryInPlace(config, true);
   }
 
 public _rollbackRejectedPhysicalWrites(
@@ -1815,7 +1815,7 @@ public async _reloadRejectedPhysicalWrite(): Promise<void> {
     await this.host._reloadConfigOnly(true);
   }
 
-public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigGeometry(config); }
+public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigWrite(config); }
 
 public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean): Promise<void> {
     this.host._writesPending++;
@@ -2190,7 +2190,7 @@ public _junctionLimitsIntroduced(
 public _commitPhysicalGeometry(
     name: string,
     before: SpaceGeometryState | null,
-    additionalAuthoredPoints: readonly (readonly number[])[] = [],
+    _additionalAuthoredPoints: readonly (readonly number[])[] = [],
     recordHistory = true,
     intent: StructuralEditIntent = { kind: 'metadata' },
   ): boolean {
@@ -2214,7 +2214,8 @@ public _commitPhysicalGeometry(
       if (!this._restoreGeometryStateInConfig(baselineSource, before))
         throw new WallSegmentModelError('invalid-room', before.spaceId);
       const legacy = Number(baselineSource.model_version || 0) < WALL_SEGMENT_MODEL_VERSION;
-      const baseline = legacy ? commitWallSegmentModel(baselineSource).config : baselineSource;
+      const migration = legacy ? commitWallSegmentModel(baselineSource) : null;
+      const baseline = migration?.config || baselineSource;
       const baseSpace = baseline.spaces.find(space => space.id === before.spaceId)!;
       if (legacy) {
         historyBefore = this._geometrySnapshotFromConfig(baseline, before.spaceId) || before;
@@ -2227,7 +2228,8 @@ public _commitPhysicalGeometry(
             || !validateGraph(liveSpace.plan_graph).ok) throw new Error('stale-graph-preview');
         editedSpace = projectGraphSpace(liveSpace, liveSpace.plan_graph!).space;
       } else editedSpace = commitGraphEdit(baseSpace, liveSpace, intent,
-        legacy ? baselineSource.spaces.find(space => space.id === before.spaceId) : undefined);
+        legacy ? { ...baselineSource.spaces.find(space => space.id === before.spaceId),
+          graphMapping: migration?.graphMappings?.get(before.spaceId) } : undefined);
       committedCandidate = { ...baseline, ...liveCandidate, model_version: WALL_SEGMENT_MODEL_VERSION,
         spaces: baseline.spaces.map(space => space.id === before.spaceId ? editedSpace : space) };
       candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,
@@ -2237,29 +2239,6 @@ public _commitPhysicalGeometry(
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
       this._showWallModelMigrationBlocked(error);
-      return false;
-    }
-    let safe = false;
-    try {
-      const afterSpace = committedCandidate.spaces.find((space) => space.id === before.spaceId);
-      // A completed point of the active, grid-snapped chain is authored input.
-      // Include the session carrier in the growth baseline so later conversion
-      // from partitions to room masonry does not count it as newly derived.
-      const authoredPoints = this.host._path.length >= 2
-        ? this.host._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W])
-        : [];
-      authoredPoints.push(...additionalAuthoredPoints.map((point) => [point[0], point[1]]));
-      // A rational intersection remains valid outside the old decimal lattice.
-      safe = !!afterSpace?.plan_graph && validateGraph(afterSpace.plan_graph).ok
-        && (candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,
-          (config, id, capture) => this.host._checkSpacePhysicalGeometry(config, id, capture), candidateProof)).result.ok;
-    } catch {
-      safe = false;
-    }
-    if (!safe) {
-      this._clearGeometryGesture();
-      this._restoreGeometryStateLocal(before);
-      this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
       return false;
     }
     // #329: the owner's junction limits refuse the WRITE. An existing plan's
@@ -8275,9 +8254,10 @@ public async _saveMarker(): Promise<void> {
       if (newPos) {
         const pos = canonicalizePosition(newPos);
         this.host._layout = { ...this.host._layout, [id]: pos };
-        this.host._noteLayoutRev(await this.host.hass.callWS({
+        const writeHass = this.host.hass, current = this.host._configWriteGuard();
+        this.host._noteLayoutRev(await sendHouseplanWrite(writeHass, {
           type: 'houseplan/layout/update', device_id: id, pos,
-        }));
+        }, {isCurrent:()=>this.host.hass===writeHass&&current()}));
       }
       const obsoleteIds = new Set(replacedRemovedIds);
       if (oldId && oldId !== id) obsoleteIds.add(oldId);

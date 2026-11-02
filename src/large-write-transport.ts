@@ -13,6 +13,9 @@ export interface HouseplanWriteHass {
 export interface HouseplanWriteOptions {
   /** Must fence the live host/operation generation, including A -> B -> A changes. */
   isCurrent(): boolean;
+  /** A submitted response may remain adoptable after its editor closes;
+   * staging never authorizes dispatch from a retired gesture. */
+  canDispatch?(): boolean;
   signal?: AbortSignal;
 }
 export type HouseplanWriteMessage = Record<string, unknown> & { type: string };
@@ -86,6 +89,11 @@ export async function sendHouseplanWrite<T = unknown>(
   const bytes = new TextEncoder().encode(body).byteLength;
   if (bytes > STRUCTURAL_UPLOAD_LIMIT_BYTES) throw error('too_large');
   assertCurrent();
+  const assertDispatch = () => {
+    assertCurrent();
+    if (options.canDispatch && !options.canDispatch()) throw error('context-changed');
+  };
+  assertDispatch();
   if (bytes <= WS_DIRECT_LIMIT_BYTES) return current(callWS<T>(snapshot));
 
   let reply: unknown;
@@ -121,6 +129,6 @@ export async function sendHouseplanWrite<T = unknown>(
   };
   for (const key of CONTROL_KEYS) if (own(snapshot, key)) compact[key] = snapshot[key];
   if (new TextEncoder().encode(JSON.stringify(compact)).byteLength > WS_DIRECT_LIMIT_BYTES) throw error('too_large');
-  assertCurrent();
+  assertDispatch();
   return current(callWS<T>(compact));
 }

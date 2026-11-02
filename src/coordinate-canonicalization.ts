@@ -316,6 +316,35 @@ export function canonicalizeConfigGeometry<T>(config: T): T {
   return canonicalizeConfigGeometryInPlace(result);
 }
 
+/** An ordinary legacy metadata save must not look like an authored structural
+ * gesture merely because the historical scalar canonicalizer snapped it. */
+export function canonicalizeConfigWrite<T>(config: T): T {
+  const result = canonicalizeConfigGeometry(config);
+  const source = record(config), target = record(result);
+  if (!source || !target || Number(source.model_version || 0) >= 11) return result;
+  const copy = (from: JsonRecord, to: JsonRecord, fields: readonly string[]) => {
+    for (const field of fields) {
+      if (Object.prototype.hasOwnProperty.call(from,field)) to[field] = cloneJson(from[field]);
+      else delete to[field];
+    }
+  };
+  const sources = new Map(records(source.spaces).map(space => [space.id,space]));
+  for (const space of records(target.spaces)) {
+    const raw = sources.get(space.id); if (!raw) continue;
+    copy(raw,space,['wall_segments','walls','partitions','room_drafts','open_spans']);
+    for (const [collection,fields] of [
+      ['rooms',['poly','wall_ids','x','y','w','h','open_to']],
+      ['openings',['x','y','angle','length','host']],
+    ] as const) {
+      const rows = new Map(records(raw[collection]).map(row => [row.id,row]));
+      for (const row of records(space[collection])) {
+        const previous = rows.get(row.id); if (previous) copy(previous,row,fields);
+      }
+    }
+  }
+  return result;
+}
+
 export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
   const result = config;
   const root = record(result);

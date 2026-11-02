@@ -1,4 +1,5 @@
 import { waitForPriorConfigWrite } from './prior-config-write';
+import { sendHouseplanWrite } from './large-write-transport';
 /** Devices-only command/menu, deliberately outside the initial View graph (#935). */
 import { nothing, type TemplateResult } from 'lit';
 import { EditorContextMenu, menuPoint } from './editor-context-menu';
@@ -177,7 +178,8 @@ export class DeviceCopyEditor {
         }
       };
       const response: CopyResponse = this.history?.available
-        ? await this.history.request(request, accept) : await h.hass.callWS(request);
+        ? await this.history.request(request, accept) : await sendHouseplanWrite(h.hass,request,
+          {isCurrent:authority,canDispatch:()=>this.unchanged(m)});
       phase('server');
       if (!authority()) return;
       if (this.history?.available && !response.config.markers.some(item => item.id === id && !item.removed)) fail('device.copy_changed');

@@ -14,7 +14,7 @@ import { nodeDragRefusalKey } from './wall-node-refusal';
 import { VISUAL_MITRE_LIMIT } from './wall-thickness';
 import type { NodeDeleteIntent } from './wall-node-delete';
 import { WallNodeDeleteMenu, type NodeDeleteMenuPort } from './wall-node-delete-menu';
-import { encodePoint, readSourcePoint, decodePoint, pointToNumbers } from './plan-exact';
+import { encodePoint, readAuthoredPoint, decodePoint, pointToNumbers } from './plan-exact';
 
 /** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
 export interface NodeMoveHistory { kind?: 'move'; beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
@@ -288,7 +288,7 @@ export class WallNodeEditor {
     const history: NodeMoveHistory = { beforeSpace: s.plan.source,
       intent: { point: [...s.plan.node.point], target: exactTarget ? pointToNumbers(decodePoint(exactTarget)) : [...s.target],
         axis: s.axis, split_ids: s.plan.splitIds,
-        ...(s.plan.node.nodeId ? { node_id: s.plan.node.nodeId, target_p: exactTarget || encodePoint(readSourcePoint(s.target)) } : {}),
+        ...(s.plan.node.nodeId ? { node_id: s.plan.node.nodeId, target_p: exactTarget || encodePoint(readAuthoredPoint(s.target)) } : {}),
       }, direction: 'apply' };
     this.busy = true;
     try {

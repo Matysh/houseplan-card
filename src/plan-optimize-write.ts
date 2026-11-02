@@ -61,7 +61,9 @@ export async function commitPlanOptimization(
     ...(graph_change ? {graph_change} : {}),
   }, { isCurrent: () => host.hass === writeHass
     && (!guard || guard.source.authorityCurrent?.() !== false
-      && guard.current().connection === guard.source.connection) });
+      && guard.current().connection === guard.source.connection),
+    canDispatch: () => !guard || guard.canWrite() && sameOptimizeSource(guard.source, guard.current()),
+  });
   if (guard && (guard.source.authorityCurrent?.() === false
       || guard.current().connection !== guard.source.connection)) {
     throw new OptimizePreviewChangedError();

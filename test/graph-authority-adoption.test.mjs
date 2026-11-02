@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createConfigAdoption } from '../test-build/config-adoption.js';
-import { canonicalizeConfigGeometry } from '../test-build/coordinate-canonicalization.js';
+import { canonicalizeConfigGeometry, canonicalizeConfigWrite } from '../test-build/coordinate-canonicalization.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 
 const config = (x, title = 'Floor') => ({
@@ -32,6 +32,17 @@ test('current graph carriers survive metadata canonicalization without nine-deci
   assert.deepEqual(result.spaces[0].openings, original.spaces[0].openings);
   assert.deepEqual(result.spaces[0].plan_graph, original.spaces[0].plan_graph);
   assert.notEqual(result, original);
+});
+
+test('legacy metadata saves preserve raw structure before the first migration',()=>{
+  const original=config(.0013888888888889);
+  original.model_version=10; delete original.spaces[0].plan_graph;
+  original.spaces[0].plan_x=.1234567890123;
+  const result=canonicalizeConfigWrite(original);
+  for(const field of ['rooms','wall_segments','partitions','openings'])
+    assert.deepEqual(result.spaces[0][field],original.spaces[0][field]);
+  assert.equal(result.spaces[0].plan_x,.123456789);
+  assert.equal(result.model_version,10);
 });
 
 test('authoritative migration ACK supplies the accepted body and revision', () => {

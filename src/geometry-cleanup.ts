@@ -75,6 +75,10 @@ export function findGeometryRemoval(config: ServerConfig | null | undefined): Ge
   let columnCount = 0;
   let openingCount = 0;
   (records(config?.spaces) || []).forEach((space, spaceIndex) => {
+    // Current graph validity is judged atomically by its writer/backend.
+    // A legacy numeric length filter cannot authorize deleting exact micro-edges
+    // or leave their graph/room/host references dangling.
+    if (Number(config?.model_version || 0) >= 11 && space.plan_graph) return;
     const ids = new Set<unknown>();
     const claim = (id: unknown, valid: boolean): boolean => {
       if (!valid || typeof id !== 'string' || id.length < 1 || id.length > 64 || ids.has(id)) return false;
@@ -154,11 +158,12 @@ function canonicalColumn(column: AnyRecord): AnyRecord {
  * when `findGeometryRemoval(config)` is null: then the historical filters keep
  * every record and this is exactly the historical result.
  */
-export function normalizeLegacyGeometryInPlace(config: ServerConfig): void {
+export function normalizeLegacyGeometryInPlace(config: ServerConfig, preserveStructure = false): void {
   for (const sp of config?.spaces || []) {
     const space = sp as AnyRecord;
     delete space.segments;
-    if (Array.isArray(space.partitions)) {
+    const currentGraph = Number(config.model_version || 0) >= 11 && !!space.plan_graph;
+    if (!preserveStructure && !currentGraph && Array.isArray(space.partitions)) {
       space.partitions = space.partitions.map((partition: AnyRecord) => ({
         ...partition,
         cm: Number.isFinite(Number(partition.cm)) ? Math.max(0, Math.min(100, Number(partition.cm))) : 15,
@@ -169,7 +174,7 @@ export function normalizeLegacyGeometryInPlace(config: ServerConfig): void {
       space.wall_columns = space.wall_columns.map(canonicalColumn);
       if (!space.wall_columns.length) delete space.wall_columns;
     }
-    if (Array.isArray(sp.walls)) {
+    if (!preserveStructure && !currentGraph && Array.isArray(sp.walls)) {
       // Thickness records keyed to an edge that no longer exists are not plan
       // objects; dropping them stays the canonical write cleanup (AUD-159B6-01).
       const model = selectSpaceModelById(spaceModels({ spaces: [sp] } as ServerConfig), sp.id);

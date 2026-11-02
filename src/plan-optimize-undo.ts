@@ -2,6 +2,7 @@ import type { GatedAdoptionInput, GatedAdoptionResult, LayoutResponse } from './
 import type { I18nKey } from './i18n';
 import type { PlanOptimizeWriteHost } from './plan-optimize-write';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
+import { sendHouseplanWrite } from './large-write-transport';
 
 export interface UndoHass {
   callWS<T>(message: Record<string, unknown>): Promise<T>;
@@ -49,11 +50,11 @@ export class PlanOptimizationUndo {
     host._optimizeUndoBusy = true;
     host.requestUpdate();
     try {
-      await hass.callWS({
+      await sendHouseplanWrite(hass, {
         type: 'houseplan/plan/optimize_undo',
         expected_config_rev: host._cfgRev,
         expected_layout_rev: host._layoutRev,
-      });
+      }, { isCurrent });
       if (!isCurrent()) return;
       const [cfgResp, layResp] = await Promise.all([
         host._getAuthoritativeConfig(hass, isCurrent),
