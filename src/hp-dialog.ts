@@ -1,4 +1,4 @@
-import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { LitElement, css, html, nothing, unsafeCSS, type PropertyValues } from 'lit';
 import { live } from 'lit/directives/live.js';
 import {setToastOwner, toastRootOf, type ToastOwner} from './toast-presentation';
 import {toastStyles} from './styles/toast.styles';
@@ -8,6 +8,7 @@ import { controlMotion, controlSurfaceFrames } from './ui-motion';
 import { controlMotionStyles } from './styles/ui-motion.styles';
 import { noticeStyles } from './styles/notice.styles';
 import { haDialogMotion } from './ha-dialog-motion';
+import { staticReadingCss } from './styles/reading-kit.styles';
 
 type FocusSession = {
   dialogs: Set<HpDialog>;
@@ -64,11 +65,13 @@ export class HpDialog extends LitElement {
 
   iconBadge = '';
 
-  static styles = [noticeStyles, toastStyles, controlMotionStyles, css`
+  static styles = [noticeStyles, toastStyles, controlMotionStyles,
+    unsafeCSS(staticReadingCss('.title-text, .subtitle, .badge')), css`
     .context-icon { position:relative; display:inline-flex; flex:none; }
     .context-icon ha-icon:last-child { position:absolute; inset:auto -4px -4px auto; --mdc-icon-size:20px; border-radius:4px; background:var(--card-background-color,var(--hp-bg,#202126)); }
     :host {
       display: contents;
+      --hp-dialog-separator: 1px solid var(--hp-line, var(--divider-color, rgb(255 255 255 / .12)));
       color: var(--primary-text-color, #e6e7eb);
       font: inherit;
     }
@@ -166,6 +169,7 @@ export class HpDialog extends LitElement {
       min-width: 0;
       box-sizing: border-box;
     }
+    .footer.has-footer { border-block-start:var(--hp-dialog-separator); }
 
     ::slotted([slot='footer']) {
       width: 100%;
@@ -255,7 +259,8 @@ export class HpDialog extends LitElement {
     :host([settings-layout]) .footer { padding:0; }
     :host([settings-layout]) .header .close { order:-1; }
     :host([settings-layout]) .title-text { font-size:18px; }
-    :host([settings-layout]) .content { background:var(--card-background-color,var(--hp-bg,#202126)); }
+    :host([settings-layout]) .content { display:flex; flex-direction:column; background:var(--card-background-color,var(--hp-bg,#202126)); }
+    :host([settings-layout]) ::slotted(.hpf-settings-form) { flex:1 0 auto; }
     :host(.ui-dialog[settings-layout]) .header,
     :host([data-kind=pdf][settings-layout]) .header { padding:12px 16px; }
     :host([compact]) { --hp-dialog-wide-width:560px; }
@@ -295,7 +300,7 @@ export class HpDialog extends LitElement {
       gap: var(--sp-4, 12px);
       padding: var(--sp-4, 12px) var(--sp-5, 16px);
       box-sizing: border-box;
-      border-bottom: 1px solid var(--hp-line, rgb(255 255 255 / 0.12));
+      border-bottom: var(--hp-dialog-separator);
     }
 
     .header .title {
@@ -363,6 +368,13 @@ export class HpDialog extends LitElement {
   dismissOnScrim = false;
   flexContent = false;
   hass: any = null;
+  private _hasFooter = false;
+  private readonly _footerChanged = (): void => {
+    const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot[name="footer"]');
+    const present = !!slot?.assignedNodes({flatten:true}).some(node => node.nodeType === Node.ELEMENT_NODE
+      || node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim());
+    if (present !== this._hasFooter) { this._hasFooter = present; this.requestUpdate(); }
+  };
 
   private _opener: HTMLElement | null = null;
   private _focusRoot: Node | null = null;
@@ -469,6 +481,7 @@ export class HpDialog extends LitElement {
 
   protected firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
+    this._footerChanged();
     this._ensureNativeModal();
     this._syncToastOwner();
     queueMicrotask(() => this._focusInitial());
@@ -797,8 +810,7 @@ export class HpDialog extends LitElement {
     const heading = (slot?: string) => html`<header class="header" slot=${slot || nothing}>${title}${closeButton()}</header>`;
     // HA's public header slot lets both shells share the approved geometry and
     // close affordance. Modal lifecycle and the body scroller remain HA-owned.
-    const haHeading = this.hasAttribute('settings-layout')
-      ? heading('header') : html`<span class="header-title-slot" slot="headerTitle">${title}</span>`;
+    const haHeading = heading('header');
 
     if (this._usesHaDialog()) {
       if (this.describedBy) {
@@ -806,7 +818,7 @@ export class HpDialog extends LitElement {
           .hass=${this.hass}
           .open=${live(!this._closing)}
           width=${this.wide ? 'medium' : 'small'}
-          ?flexcontent=${this.flexContent}
+          ?flexcontent=${this.flexContent || this.hasAttribute('settings-layout')}
           .preventScrimClose=${!this.dismissOnScrim}
           .ariaLabelledBy=${this._titleId}
           .ariaDescribedBy=${this.describedBy}
@@ -816,14 +828,14 @@ export class HpDialog extends LitElement {
         >
           ${haHeading}
           <slot></slot>
-          <span class="footer toast-portal" slot="footer"><slot name="footer"></slot></span>
+          <span class="footer toast-portal ${this._hasFooter?'has-footer':''}" slot="footer"><slot name="footer" @slotchange=${this._footerChanged}></slot></span>
         </ha-dialog><div class="overlay-portal"></div>`;
       }
       return html`<ha-dialog ${haDialogMotion()}
         .hass=${this.hass}
         .open=${live(!this._closing)}
         width=${this.wide ? 'medium' : 'small'}
-        ?flexcontent=${this.flexContent}
+        ?flexcontent=${this.flexContent || this.hasAttribute('settings-layout')}
         .preventScrimClose=${!this.dismissOnScrim}
         .ariaLabelledBy=${this._titleId}
         @opened=${this._focusInitial}
@@ -832,7 +844,7 @@ export class HpDialog extends LitElement {
       >
         ${haHeading}
         <slot></slot>
-        <span class="footer toast-portal" slot="footer"><slot name="footer"></slot></span>
+        <span class="footer toast-portal ${this._hasFooter?'has-footer':''}" slot="footer"><slot name="footer" @slotchange=${this._footerChanged}></slot></span>
       </ha-dialog><div class="overlay-portal"></div>`;
     }
 
@@ -847,7 +859,7 @@ export class HpDialog extends LitElement {
       <section class="surface hpf-motion" tabindex="-1">
         ${heading()}
         <div class="content"><slot></slot></div>
-        <div class="footer toast-portal"><slot name="footer"></slot></div>
+        <div class="footer toast-portal ${this._hasFooter?'has-footer':''}"><slot name="footer" @slotchange=${this._footerChanged}></slot></div>
       </section>
       <div class="overlay-portal"></div>
     </dialog>`;

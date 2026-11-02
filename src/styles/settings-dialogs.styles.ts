@@ -13,9 +13,10 @@ hp-dialog[settings-layout]{--hp-dialog-wide-width:610px;--hp-dialog-icon-size:40
 hp-dialog.danger-confirm-dialog[settings-layout]{--hp-dialog-icon-size:28px;}
 hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-body{gap:12px;}
 hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-object{font-size:14px;line-height:1.45;}
-hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-settings-height:780px;--hp-settings-chrome-height:176px;}
-.hpf-settings-layout{display:grid;grid-template-columns:155px minmax(0,1fr);min-width:0;align-items:start;}
-.hpf-settings-nav{position:sticky;top:0;display:grid;gap:4px;padding:13px 8px;min-width:0;}
+hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-settings-height:780px;}
+.hpf-form.hpf-settings-form{display:flex;flex-direction:column;}
+.hpf-settings-layout{display:grid;grid-template-columns:155px minmax(0,1fr);min-width:0;align-items:stretch;flex:1 0 auto;}
+.hpf-settings-nav{position:sticky;top:0;display:grid;align-content:start;gap:4px;padding:13px 8px;min-width:0;}
 .hpf-settings-nav hr{width:100%;border:0;margin:14px 0;}
 .hpf-settings-content{min-width:0;align-self:stretch;border-inline-start:1px solid var(--hpf-line);padding:20px;}
 .hpf-settings-pane[hidden]{display:none!important;}
@@ -112,9 +113,6 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-pane .radarcoordinates > label{flex:1;min-width:72px;}
 .hpf-settings-pane .radarcoordinates input{width:100%;box-sizing:border-box;}
 .hpf-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
-@media(min-width:551px){
-.hpf-settings-layout:not(.hpf-settings-single){min-height:calc(min(var(--hp-dialog-settings-height,756px),100dvh - 48px) - var(--hp-settings-chrome-height,152px));}
-}
 @media(max-width:550px){
 .hpf-settings-layout{grid-template-columns:minmax(0,1fr);}
 .hpf-settings-nav{display:none;}

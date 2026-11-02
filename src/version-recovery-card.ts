@@ -198,6 +198,8 @@ export interface VersionRecoveryCardPort {
   readonly _sentPos: PendingCollection;
   readonly _cyclePausedUntil: number;
   readonly _zoom: number;
+  readonly _screenAtReference?: boolean;
+  readonly _effectiveCycle?: number;
   readonly _editorSecondaryDialogBlocked: boolean;
   readonly _partitionDeleteDialog: unknown;
   readonly _roomDeleteDialog: unknown;
@@ -246,8 +248,8 @@ export function cardVersionReloadSafetySnapshot(
       && host._sentPos.size === 0 && !host._devicePositionBusy,
     gesturesIdle,
     interactionPauseElapsed: Date.now() >= host._cyclePausedUntil,
-    baseZoom: host._zoom <= 1.001 || host._kiosk
-      && nonCarouselKiosk(host._config?.cycle, host._hasFixedFloor, host._model.length),
+    baseZoom: (host._screenAtReference ?? host._zoom <= 1.001) || host._kiosk
+      && nonCarouselKiosk(host._effectiveCycle ?? host._config?.cycle, host._hasFixedFloor, host._model.length),
   };
 }
 

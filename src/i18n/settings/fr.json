@@ -464,5 +464,6 @@
   "screens.font_help": "Modifie la taille des noms de pièces et des valeurs affichées dessous sur le plan, par exemple la température et l’humidité. Ne modifie pas le texte du panneau récapitulatif, des menus ou des boîtes de dialogue.",
   "screens.no_spaces": "Ajoutez d’abord un espace. Ses réglages individuels seront alors disponibles ici.",
   "screens.space_errors": "Vérifiez le zoom : {names}.",
-  "screens.use_available": "Utiliser l’espace disponible"
+  "screens.use_available": "Utiliser l’espace disponible",
+  "screens.individual_named": "Réglages : {name}"
 }

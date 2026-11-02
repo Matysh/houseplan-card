@@ -464,5 +464,6 @@
   "screens.font_help": "Changes the size of room names and the readings below them on the plan, such as temperature and humidity. Does not change text in the summary panel, menus, or dialogs.",
   "screens.no_spaces": "Add a space first. Its individual settings will become available here.",
   "screens.space_errors": "Check zoom: {names}.",
-  "screens.use_available": "Use the available space"
+  "screens.use_available": "Use the available space",
+  "screens.individual_named": "Settings: {name}"
 }

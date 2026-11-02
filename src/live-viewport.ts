@@ -10,6 +10,7 @@ interface LiveViewportFrame {
   floor: LiveViewBox;
   grid?: LiveViewBox;
   zoom: number;
+  badge?: { percent: number; hidden: boolean };
 }
 
 interface LiveViewportState {
@@ -40,6 +41,7 @@ interface LiveViewportHost {
   _floorView: (view: LiveViewBox) => LiveViewBox;
   _planVisibleRect?: (view: LiveViewBox) => LiveViewBox;
   _zoom: number;
+  readonly _zoomBadge?: { percent: number; hidden: boolean };
   renderRoot: ParentNode;
 }
 
@@ -274,10 +276,10 @@ export function paintLiveViewport(
   }
   const badge = root.querySelector<HTMLElement>('[data-hp-live-zoom]');
   if (badge) {
-    const hidden = current.zoom <= 1;
+    const hidden = current.badge?.hidden ?? current.zoom <= 1;
     if (badge.hidden !== hidden) badge.hidden = hidden;
     const value = badge.querySelector<HTMLElement>('[data-hp-live-zoom-value]');
-    const text = `${Math.round(current.zoom * 100)}%`;
+    const text = `${current.badge?.percent ?? Math.round(current.zoom * 100)}%`;
     if (value && value.textContent !== text) value.textContent = text;
   }
   return next;
@@ -285,7 +287,7 @@ export function paintLiveViewport(
 
 const frameOf = (host: LiveViewportHost): LiveViewportFrame => {
   const view = host._viewOr(host._baseVb());
-  return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom,
+  return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom, badge: host._zoomBadge,
     ...(host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };
 

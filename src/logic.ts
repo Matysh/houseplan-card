@@ -2098,9 +2098,10 @@ export function spaceSwipeTargetForOwner(
   zoom: number,
   spaceIds: string[],
   current: string,
+  atReference?: boolean,
 ): string | null {
   if (owner !== 'swipe') return null;
-  return swipeTarget(dx, dy, zoom, spaceIds, current);
+  return swipeTarget(dx, dy, zoom, spaceIds, current, 60, atReference);
 }
 
 /**
@@ -2109,9 +2110,9 @@ export function spaceSwipeTargetForOwner(
  * needs a mostly-horizontal move of at least minPx. Wraps around.
  */
 export function swipeTarget(
-  dx: number, dy: number, zoom: number, spaceIds: string[], current: string, minPx = 60,
+  dx: number, dy: number, zoom: number, spaceIds: string[], current: string, minPx = 60, atReference?: boolean,
 ): string | null {
-  if (zoom > 1.001 || spaceIds.length < 2) return null;
+  if (!(atReference ?? zoom <= 1.001) || spaceIds.length < 2) return null;
   if (Math.abs(dx) < minPx || Math.abs(dx) < Math.abs(dy) * 1.5) return null;
   const i = spaceIds.indexOf(current);
   if (i < 0) return null;

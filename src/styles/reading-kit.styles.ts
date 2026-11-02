@@ -2,6 +2,11 @@ import { css, unsafeCSS } from 'lit';
 import { settingsActionsCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
 
+/** Static reading copy never advertises an action or competes with selection. */
+export function staticReadingCss(selector: string): string {
+  return `${selector} { cursor:default; user-select:none; -webkit-user-select:none; }`;
+}
+
 /** Finite compact reading scale, shared by editor panels, trays and dense lists. */
 export function readingTextCss(selector: string, variant: 'title' | 'heading' | 'caption' | 'label' | 'note' | 'tiny' | 'feature' | 'form-label' | 'body-note' | 'category' | 'action-heading' = 'caption', tone: 'primary' | 'secondary' | 'error' = 'secondary'): string {
   const scale = {
@@ -114,5 +119,5 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-boot { color:var(--primary-color); background:var(--card-background-color,#16212e); opacity:1; transition:opacity var(--hpf-leave-duration) var(--hpf-leave-easing); }
   .hpf-boot.off { opacity:0; }
   .hpf-boot > svg { width:56px; height:56px; fill:currentColor; opacity:.85; animation:hp-ui-pulse var(--hpf-pulse-duration) var(--hpf-pulse-easing) infinite; }
-`.cssText + settingsActionsCss(':is(.hpf-empty-state, .hpf-floating-badge, .hpf-reading-entry) button.btn')
+`.cssText + staticReadingCss('.hpf-heading') + settingsActionsCss(':is(.hpf-empty-state, .hpf-floating-badge, .hpf-reading-entry) button.btn')
   + controlReducedMotionCss('.hpf-loading-value > i, .hpf-reading-pair > strong, .hpf-loading-pill, .hpf-loading-pill > ha-icon, .hpf-boot > svg, .hpf-empty-state-overlay, .hpf-spinner'));

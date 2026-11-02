@@ -464,5 +464,6 @@
   "screens.font_help": "Ändert die Größe der Raumnamen und der Messwerte darunter im Plan, etwa Temperatur und Luftfeuchtigkeit. Ändert nicht die Schrift der Übersicht, Menüs oder Dialoge.",
   "screens.no_spaces": "Zuerst einen Bereich hinzufügen. Seine individuellen Einstellungen erscheinen dann hier.",
   "screens.space_errors": "Maßstab prüfen: {names}.",
-  "screens.use_available": "Verfügbaren Bereich verwenden"
+  "screens.use_available": "Verfügbaren Bereich verwenden",
+  "screens.individual_named": "Einstellungen: {name}"
 }

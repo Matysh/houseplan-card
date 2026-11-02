@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1165,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Per-space external-screen presentation, a physical reference camera and shared UI Kit layout changes introduce a new user-facing capability. The v1 decoder stays read-only until an explicit outer Save; ordinary old writers cannot downgrade v2.",
+  "summary": {
+    "ru": "Отдельный вид каждого пространства внешнего экрана: масштаб, поворот и учёт сводки, общий конструктор и UI Kit.",
+    "en": "Per-space external-screen views with scale, rotation and summary-aware centering, using the shared constructor and UI Kit."
+  }
+}

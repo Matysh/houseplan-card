@@ -10,6 +10,7 @@ import {
   TILE_INK_DARK, TILE_INK_LIGHT, colorTileInk, isLightHex,
 } from '../test-build/editors/color-tile-ink.js';
 import { selectionListCss } from '../test-build/styles/selection-list.styles.js';
+import { staticReadingCss } from '../test-build/styles/reading-kit.styles.js';
 
 /**
  * #594. Набор контролов поднят из редактора боковой панели, и главный вопрос к
@@ -53,6 +54,11 @@ function acceptedDialogCss(text) {
   // #1147 adds named read-only/structured variants and shared motion; keep the
   // independent UI-029 snapshot and allow precisely this declared delta.
   const changes = [
+    // #1165 K01/K02 static form text and disabled checkbox captions.
+    ['  .hpf-labelrow > label { cursor: pointer; }',
+      `  ${staticReadingCss('.hpf-labelrow > label, .hpf-head h3, .hpf-sub h4, .hpf-section-heading, .hpf-hint, .hpf-note')}\n  .hpf-section-heading { margin:0 0 var(--sp-6,24px); font-size:var(--fs-l,14px); font-weight:600; }`],
+    ['  .hpf-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(--hpf-accent); cursor: pointer; }',
+      '  .hpf-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(--hpf-accent); cursor: pointer; }\n  .hpf-check:has(input:disabled), .hpf-check:has(input:disabled) * { cursor:not-allowed; }'],
     // #1207 UI-015/016 replaces only source-list selection/hover/focus paint.
     [`  .hpf-cand.sel { background: transparent; color: var(--hpf-accent); }\n  .hpf-cand:is(:hover, :focus-visible) { background: var(--hpf-tint); }\n  .hpf-cand:focus-visible { outline: 2px solid var(--hpf-accent); outline-offset: -2px; }`,
       `  ${selectionListCss('.hpf-cand', '.sel', undefined, {accent:'var(--hpf-accent)',tint:'var(--hpf-tint)'})}\n  .hpf-panel .hpf-cand { position:relative; padding-inline-end:36px; }\n  .hpf-cand > .hpf-choice-check { position:absolute; inset-inline-end:12px; top:50%; translate:0 -50%; pointer-events:none; }`],

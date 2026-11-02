@@ -33,6 +33,12 @@ test('#894 malformed, expired, future and unavailable memo fail closed', () => {
   assert.equal(saveKioskViewport(blocked, 'own', camera), false);
   assert.equal(takeKioskViewport(blocked, 'own'), null);
 });
+
+test('#1165 profile 1000 percent can retain its camera through version reload', () => {
+  const s=storage(), profile={...camera,zoom:10};
+  assert.equal(saveKioskViewport(s,'profile',profile,1000),true);
+  assert.deepEqual(takeKioskViewport(s,'profile',1001),profile);
+});
 test('#894 real DOM placement path separates siblings and route/config/account contexts', () => {
   const doc = { children: [], nodeType: 9 };
   const parent = { children: [], nodeType: 1, parentNode: doc, localName: 'div' }; doc.children.push(parent);

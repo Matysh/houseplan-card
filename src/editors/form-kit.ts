@@ -101,6 +101,11 @@ export function subsection({ title, help }: { title: string; help?: TemplateResu
   return html`<div class="hpf-sub"><h4>${title}</h4>${help ?? nothing}</div>`;
 }
 
+/** Heading for a flat group separated by the shared formSections rule. */
+export function sectionHeading(title: string): TemplateResult {
+  return html`<h3 class="hpf-section-heading">${title}</h3>`;
+}
+
 export interface FieldOptions {
   label: string;
   /** `id` контрола — подпись становится `<label for>`. */

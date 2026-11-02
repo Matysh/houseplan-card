@@ -3,6 +3,7 @@ import { formKitErrorCss, formKitTextareaCss } from './form-input.styles';
 import { settingsTextLinkCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
 import { selectionListCss } from './selection-list.styles';
+import { staticReadingCss } from './reading-kit.styles';
 import { formKitValue, formKitRecipeCss, type FormKitRecipe } from './form-kit-parameters';
 /**
  * Общий набор контролов формы (#594, шаг 1 эпика #591).
@@ -276,6 +277,7 @@ export function checkLabelsCss(options: FormKitCssOptions, selector?: string, wr
   const label = selector ? `:is(${selector})` : `.${p}-check`;
   return `  ${label} { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(${tokens.muted}); cursor: pointer; white-space: ${wrapping === 'wrap' ? 'normal' : 'nowrap'}; }
   ${label} > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }${wrapping === 'wrap' ? `\n  ${label} > input { flex:none; }` : ''}
+  ${label}:has(input:disabled), ${label}:has(input:disabled) * { cursor:not-allowed; }
 `;
 }
 
@@ -319,7 +321,8 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-field { display: grid; gap: 7px; min-width: 0; }
   .${p}-field > .${p}-label,
   .${p}-labelrow { display: flex; align-items: center; gap: 4px; min-height: ${formKitValue(options, 'label-min-height', '32px')}; font-size: ${formKitValue(options, 'label-font-size', '.875rem')}; font-weight: ${formKitValue(options, 'label-font-weight', '600')}; color: ${formKitValue(options, 'label-color', `var(${tokens.muted})`)}; }
-  .${p}-labelrow > label { cursor: pointer; }
+  ${staticReadingCss(`.${p}-labelrow > label, .${p}-head h3, .${p}-sub h4, .${p}-section-heading, .${p}-hint, .${p}-note`)}
+  .${p}-section-heading { margin:0 0 var(--sp-6,24px); font-size:var(--fs-l,14px); font-weight:600; }
   .${p}-hint { margin: 0; font-size: ${formKitValue(options, 'hint-font-size', '.875rem')}; line-height: ${formKitValue(options, 'hint-line-height', '1.5')}; color: var(${tokens.muted}); }
 ${formKitErrorCss(`.${p}-error`, tokens.danger)}
   .${p}-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

@@ -5,12 +5,12 @@ import { readFileSync } from 'node:fs';
 
 const read = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 
-test('#508 AC1: both ha-dialog renders forward flexcontent from the flex-content attribute', () => {
+test('#508/#1165 both HA shells forward explicit flex-content and shared settings layout', () => {
   const source = read('hp-dialog.ts');
   assert.match(source, /flexContent: \{ type: Boolean, reflect: true, attribute: 'flex-content' \}/);
   const renders = source.match(/<ha-dialog[\s\S]*?>/g) || [];
   assert.equal(renders.length, 2, 'two ha-dialog renders (with and without described-by)');
-  for (const render of renders) assert.match(render, /\?flexcontent=\$\{this\.flexContent\}/, render);
+  for (const render of renders) assert.match(render, /\?flexcontent=\$\{this\.flexContent \|\| this\.hasAttribute\('settings-layout'\)\}/, render);
 });
 
 test('#508 AC1: the summary settings dialog declares flex-content', () => {

@@ -1,5 +1,11 @@
 # Config compatibility inventory (#1015)
 
+#1165 adds the `external-screen-views` branch: v1 flat profiles are projected
+read-only into v2 per-space views and migrated only by explicit outer Save.
+The first stable publication is pending on the 1.84 line, so no sunset date
+or reader removal is assigned. Proofs: external-screen views, backend validation
+and real HA websocket tests; [contract](CONFIG-COMPATIBILITY.md#per-space-presentation-v2-1165).
+
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
 Current snapshot: **635 individually classified matching lines**, sha256:`7ec9f7bfb923c572f2dd4baa1e41ad93b7049b20b7c394d0a62d90a775a451b5`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.

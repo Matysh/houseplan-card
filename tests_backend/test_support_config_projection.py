@@ -313,3 +313,23 @@ def test_external_screens_projection_keeps_only_typed_fields_and_pseudonymizes_s
     source["settings"]["external_screens"] = {"version": 9, "private": "secret"}
     future, _ = project(source)
     assert future["settings"]["external_screens"] == {"status": "unsupported_version"}
+
+
+def test_v2_screen_views_use_the_same_private_safe_space_identity_and_wire_contract():
+    from custom_components.houseplan.support_wire_schema import CONFIG, validate
+    view = {"rotation": 270, "zoom": 2, "summary": "show", "center_summary": True,
+            "icon_scale": None, "font_scale": 1.5, "private": "secret"}
+    source = {"spaces": [{"id": "private-floor"}], "markers": [], "settings": {
+        "external_screens": {"version": 2, "next_id": 2, "screens": [{"id": 1,
+            "space": "private-floor", "cycle": 0, "idle": 30, "default_view": view,
+            "space_views": {"private-floor": view}}]}}}
+    original = copy.deepcopy(source)
+    projected, _ = project(source)
+    projected["model_version"] = 10
+    validate(projected, CONFIG)
+    row = projected["settings"]["external_screens"]["screens"][0]
+    assert row["space"] == projected["spaces"][0]["id"]
+    assert list(row["space_views"]) == [row["space"]]
+    assert row["default_view"]["zoom"] == 2 and row["space_views"][row["space"]]["center_summary"]
+    assert "private-floor" not in json.dumps(projected) and "secret" not in json.dumps(projected)
+    assert source == original

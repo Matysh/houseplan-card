@@ -28,6 +28,7 @@ import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
 import { cleanFloorFingerprint, floorRecordKeyMemo } from './floor-geometry-key';
+import type { FrameRect } from './view-frame';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -118,6 +119,16 @@ export class LoadedSummaryPanelRuntime {
   private lifecycleIdentity = '';
   private connected = false;
   private readonly presentation = new ControlSurfacePresentation(() => this.host.requestUpdate());
+  private panelObserver: ResizeObserver | null = null;
+  private observedPanel: HTMLElement | null = null;
+  private latestPanelBox: FrameRect | null = null;
+  private profileGeometryKey = '';
+  private profileGeometryValue: { key: string; panel: { side: 'right' | 'bottom'; rect: FrameRect } | null } | null = null;
+  private fontEpoch = 0;
+  private readonly profileFontsChanged = (): void => {
+    if (!this.connected) return;
+    this.fontEpoch++; this.measured = null; this.measureLayout(); this.host.requestUpdate();
+  };
 
   public constructor(host: unknown) {
     this.host = host as SummaryPanelHost;
@@ -157,6 +168,7 @@ export class LoadedSummaryPanelRuntime {
   public connect(): void {
     this.ensureStyle();
     this.connected = true;
+    this.host.ownerDocument.fonts?.addEventListener?.('loadingdone', this.profileFontsChanged);
     this.syncLifecycle();
     this.loadLocal();
     this.measured = null;
@@ -165,6 +177,7 @@ export class LoadedSummaryPanelRuntime {
 
   public disconnect(): void {
     this.connected = false;
+    this.host.ownerDocument.fonts?.removeEventListener?.('loadingdone', this.profileFontsChanged);
     this.resetLifecycle();
   }
 
@@ -202,6 +215,56 @@ export class LoadedSummaryPanelRuntime {
     this.measureIfInputsChanged();
     this.syncClock();
     this.presentation.updated(this.host.renderRoot.querySelector<HTMLElement>('.summary-overlay'));
+    this.observePanelBox();
+  }
+
+  /** A value resize refreshes the next epoch's measurement, never its camera.
+   * Enter/leave opacity and translate are deliberately absent from this box. */
+  private observePanelBox(): void {
+    const panel = this.host._externalScreen?.profile === undefined ? null
+      : this.host.renderRoot.querySelector<HTMLElement>('.summary-overlay');
+    if (panel === this.observedPanel) return;
+    this.panelObserver?.disconnect(); this.panelObserver = null;
+    this.observedPanel = panel; this.latestPanelBox = null;
+    if (!panel) return;
+    this.measurePanelBox();
+    this.panelObserver = new ResizeObserver(() => { this.measurePanelBox(); });
+    this.panelObserver.observe(panel, { box: 'border-box' });
+  }
+
+  private measurePanelBox(): void {
+    const panel = this.observedPanel, stage = this.host._stageEl;
+    if (!panel || !stage) { this.latestPanelBox = null; return; }
+    const origin = (element: HTMLElement): [number, number] => {
+      let x = 0, y = 0, cursor: HTMLElement | null = element;
+      while (cursor) { x += cursor.offsetLeft; y += cursor.offsetTop; cursor = cursor.offsetParent as HTMLElement | null; }
+      return [x, y];
+    };
+    const p = origin(panel), s = origin(stage);
+    this.latestPanelBox = { x: p[0] - s[0], y: p[1] - s[1], w: panel.offsetWidth, h: panel.offsetHeight };
+  }
+
+  public screenGeometry(force = false): { key: string; panel: { side: 'right' | 'bottom'; rect: FrameRect } | null } | null {
+    const layout = this.layout(), config = this.config().config;
+    const visible = this.presentation.interactive;
+    const desired = !!config && this.effectiveShow && effectiveSummaryVisible({ view: this.host._mode === 'view',
+      localShow: true, showOnMobile: config.show_on_mobile, narrow: this.host.narrow, fits: layout.fits });
+    if (desired !== visible) return null;
+    const panel = this.observedPanel;
+    if (visible && (!panel?.classList.contains(layout.side)
+      || panel.style.getPropertyValue('--summary-height-cap') !== `${Math.floor(layout.heightCap)}px`
+      || panel.style.getPropertyValue('--summary-width-cap') !== `${Math.floor(layout.availableWidth)}px`)) return null;
+    const key = JSON.stringify([this.host._space, config, visible, layout.side, this.stage,
+      this.host._externalScreen, this.host.hass?.selectedTheme, this.host.hass?.themes,
+      this.host.narrow, this.fontEpoch]);
+    if (!force && key === this.profileGeometryKey) return this.profileGeometryValue;
+    if (visible) {
+      this.measurePanelBox();
+      if (!this.latestPanelBox?.w || !this.latestPanelBox.h) return null;
+    }
+    this.profileGeometryKey = key;
+    return this.profileGeometryValue = { key, panel: visible && this.latestPanelBox
+      ? { side: layout.side, rect: { ...this.latestPanelBox } } : null };
   }
 
   /** Reset an identity-changing draft before the host renders the new context. */
@@ -393,6 +456,8 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private resetLifecycle(): void {
+    this.panelObserver?.disconnect(); this.panelObserver = null; this.observedPanel = null;
+    this.latestPanelBox = null; this.profileGeometryKey = ''; this.profileGeometryValue = null;
     this.presentation.reset();
     this.lifecycleGeneration++;
     // Retired callbacks keep their generation, but must not hold the next
@@ -944,7 +1009,9 @@ export class LoadedSummaryPanelRuntime {
   /** #725: a late web font changes the probe height without resizing the stage. */
   private measureAfterFonts(): void {
     const generation = this.lifecycleGeneration;
-    void this.host.ownerDocument.fonts?.ready.then(() => { if (this.current(generation)) this.measureLayout(); });
+    void this.host.ownerDocument.fonts?.ready.then(() => {
+      if (this.current(generation)) { this.fontEpoch++; this.measureLayout(); this.host.requestUpdate(); }
+    });
   }
 
   /**

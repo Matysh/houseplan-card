@@ -107,6 +107,19 @@ test('card adapter baseline is safe only after the full rendered card settles', 
   });
 });
 
+test('#1165 reload uses the profile reference and effective carousel interval', () => {
+  const host = safeHost({ _zoom: 2, _config: { kiosk: true, cycle: 0 }, _effectiveCycle: 10, _screenAtReference: true });
+  assert.equal(cardVersionReloadSafetySnapshot(host).baseZoom, true);
+  host._screenAtReference = false;
+  assert.equal(cardVersionReloadSafetySnapshot(host).baseZoom, false);
+  host._zoom = .5;
+  assert.equal(cardVersionReloadSafetySnapshot(host).baseZoom, false);
+  host._effectiveCycle = 0;
+  assert.equal(cardVersionReloadSafetySnapshot(host).baseZoom, true);
+  host._pointers = pending(1);
+  assert.equal(cardVersionReloadSafetySnapshot(host).gesturesIdle, false);
+});
+
 test('#861 version reload safety sees both actual gesture owners until their state-only reset', () => {
   const plan = { plan_url: '/plan.svg', plan_aspect: 1 }, partition = { id: 'p', a: [0, 0], b: [100, 0], cm: 10 };
   const common = { queueTarget: {}, point: () => [0, 0], snap: p => p, snapshot: () => null,
@@ -200,7 +213,8 @@ test('#894 enlarged non-carousel recovery changes only the zoom predicate', () =
 test('#1113 external-screen editing is a literal config/get capability, never a saved namespace grant',()=>{
   const host={_syncVersionRecovery(){}};
   adoptCardConfigCapabilities(host,{external_screens_api:1});assert.equal(host._haExternalScreensApi,1);
-  for(const value of [undefined,0,2,true,'1',null]){
+  adoptCardConfigCapabilities(host,{external_screens_api:2});assert.equal(host._haExternalScreensApi,2);
+  for(const value of [undefined,0,3,true,'1',null]){
     adoptCardConfigCapabilities(host,{external_screens_api:value,config:{settings:{external_screens:{version:1,next_id:1,screens:[]}}}});
     assert.equal(host._haExternalScreensApi,null);
   }

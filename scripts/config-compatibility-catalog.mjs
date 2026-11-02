@@ -19,6 +19,7 @@ const unknown = (reason) => ({ kind: 'unproven', reason });
 const stable = (commit, release) => ({ kind: 'stable', commit, release });
 const source = (path, symbol) => ({ path, symbol });
 const contractProofs = {
+  'external-screen-views': ['test/external-screen-views.test.mjs', 'tests_backend/test_external_screens.py', 'tests_backend/test_ha_external_screens_websocket.py'],
   'wall-model-chain': ['tests_backend/test_wall_segment_model.py', 'test/wall-segment-model.test.mjs'],
   'zero-wall-boundaries': ['tests_backend/test_wall_segment_model.py', 'test/wall-segment-model.test.mjs'],
   'room-appearance': ['tests_backend/test_ha_import_export.py', 'test/room-appearance.test.mjs'],
@@ -52,6 +53,12 @@ const record = (id, fields, oldForm, newForm, anchors, since, migration, reason,
 });
 
 export const COMPATIBILITY_BRANCHES = Object.freeze([
+  record('external-screen-views', ['settings.external_screens.version=1'],
+    'v1 flat presentation per profile', 'v2 default_view plus space_views by stable space ID',
+    [source('src/external-screens.ts', 'externalScreensForEdit'), source('custom_components/houseplan/validation.py', 'EXTERNAL_SCREENS_SCHEMA')],
+    unknown('Introduced by #1165 on the unreleased 1.84 line; first published stable is not known yet.'),
+    'Read projection only; nested OK and outer Save explicitly commit v2. Unknown fields/IDs survive; known retired hidden/controls fields are removed.',
+    'Keep v1 decoding and explicit import until the published stable lifetime can be counted. Ordinary v1 writers cannot downgrade v2.'),
   record('display-ripple', ['markers[].display=ripple'], 'display:ripple', 'display:icon_ripple',
     [source('src/logic.ts', 'normalizeDeviceDisplay'), source('src/geometry-cleanup.ts', 'normalizeLegacyGeometryInPlace'),
       source('custom_components/houseplan/config_migrations.py', '_scalars_v1')],

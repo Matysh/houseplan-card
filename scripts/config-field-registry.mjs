@@ -10,6 +10,25 @@ import { fieldLifecycle } from './config-compatibility-catalog.mjs';
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'settings.external_screens', selector: { path: ['settings', 'external_screens'] },
+    enforcedBy: 'external-screens.ts + validation.py EXTERNAL_SCREENS_SCHEMA',
+    storage: 'House Plan server config', type: 'v2 per-space views | v1 read projection | bounded future object',
+    default: 'absent (= no profiles)', level: 'global shared presentation',
+    ui: 'General settings → External screens', runtime: 'profile globals plus default_view/space_views by stable space ID',
+    introduced: '#1113; per-space v2 #1165', status: 'current',
+    migration: 'v1 is read-only until nested OK then outer Save; no write on opening or cancellation',
+    compatibility: 'ordinary omission preserves namespace; v1 downgrade rejected after v2; future versions read-only; event API remains 1',
+  },
+  {
+    id: 'settings.external_screens.version=1', selector: { path: ['settings', 'external_screens', 'version'], equals: 1 },
+    enforcedBy: 'externalScreensForEdit + validation.py EXTERNAL_SCREENS_V1_SCHEMA',
+    storage: 'House Plan server config', type: 'literal 1', default: 'absent', level: 'external screen namespace',
+    ui: 'effective detached v2 draft', runtime: 'flat presentation inherited through default_view; retired hidden/controls overrides inert',
+    introduced: '#1113', status: 'deprecated-read',
+    migration: 'explicit outer Save publishes detached v2; stable profile IDs and unknown fields retained',
+    compatibility: 'retain old backend/export reader; explicit authoritative import can still replace the namespace',
+  },
+  {
     id: 'spaces[].plan_graph', selector: { path: ['spaces', '*', 'plan_graph'] },
     schema: 'allow-extra', // SPACE_SCHEMA retains it; the model11 exact validator owns its closed shape.
     enforcedBy: 'plan-graph.ts + plan_graph.py; model11 transition and projection verification',

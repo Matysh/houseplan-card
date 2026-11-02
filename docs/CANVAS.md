@@ -1,5 +1,24 @@
 # Infinite canvas — the spec (source of truth)
 
+## External screen reference camera (#1165)
+
+Profiles fit the existing content bounds, including far objects, at 100% and
+multiply that physical pixels-per-unit scale by the saved per-space zoom.
+Optional summary centering fits into the unoccluded stage rectangle and shifts
+the full-stage camera to its centre. Quarter turns and isometric presentation
+use the existing canonical/projected frames. Fit/Home/double-tap request 100%;
+idle return and floor arrival restore the stored profile scale. Manual camera
+changes remain temporary and never write the ordinary View zoom preference.
+
+Reference equality allows 0.01% scale error and one CSS pixel of centre error,
+with no active gesture/transition. Swipe and version reload use this reference,
+not the numeric internal zoom; reload also uses the effective profile/URL cycle.
+The badge reports actual scale relative to this free-area 100% fit. Structural
+layout/profile/theme/font changes create a new reference epoch. Summary state
+values, clock ticks and skeleton replacement only refresh its latest measured
+border-box for the next epoch: they never move the camera. A manually moved
+camera survives structural changes until an explicit reset, idle return or arrival.
+
 Opening dragging (#1097) keeps the original wall snap, grid quantisation and ruler rules, but only its transient preview follows the pointer. The saved floor and geometry pools remain warm through the gesture; the local host cut follows the symbol through both live and ordinary host paint. Pointerup applies one candidate through the existing physical validation/history writer. Escape and pointercancel discard it and consume the old click tail; a movement of at most three CSS pixels retains ordinary tap behaviour. Missing local-host proof falls back to a canonical uncached drawing pass.
 
 ## Consumer-scoped floor reuse (#1093)

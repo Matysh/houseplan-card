@@ -1820,6 +1820,30 @@ one-deep Undo are unchanged; no automatic Optimize or migration runs on read.
 
 ## External screens namespace (#1113)
 
+### Per-space presentation, v2 (#1165)
+
+The current bounded namespace is `{version:2,next_id,screens}`. Profile globals
+are `id`, `space`, `cycle`, `idle`; `default_view` supplies inherited values and
+`space_views[stableSpaceId]` supplies explicitly edited views. Each view has
+`rotation`, `zoom` (0.1–10 in 0.01 steps), `summary`, `center_summary`,
+`icon_scale`, `font_scale`. The namespace remains limited to 20 profiles and
+128 KiB UTF-8 JSON. Stable IDs survive floor reordering and profile deletion;
+unmodified dangling references survive, newly introduced unknown references fail.
+
+The v1 reader projects flat presentation into `default_view` without mutation
+or storage writes. Nested OK prepares a detached v2 draft; outer Save commits
+it. Cancellation leaves v1 untouched. Unknown fields survive; known legacy
+flat fields and the retired `hidden_devices`/`controls` are removed on conversion.
+These retired overrides, including `hphidden`/`hpcontrols`, are inert on reads.
+Known v1/v2 input is validated strictly; versions above 2 remain opaque,
+bounded, preserved and read-only. Ordinary v1 writes cannot downgrade v2;
+omitting the namespace preserves it. Explicit authoritative import retains its
+existing replacement semantics. The runtime editing capability is now
+`external_screens_api:2`; the authenticated event capability and patch envelope
+remain version 1. Support v2 views use the same pseudonymous space identity as
+the projected plan and omit unknown fields. The historical v1 description below
+documents the retained decoder; no stable retirement deadline exists yet.
+
 `settings.external_screens` is optional. Absence means no profiles and opening settings creates no write. Version1 is `{version:1,next_id,screens:[...]}` with at most20 profiles. Each profile has a positive safe-integer `id`, stable space ID or `null`, rotation0/90/180/270, integer cycle/idle0–3600s, summary/hidden_devices `local|show|hide`, icon_scale/font_scale `null` or0.5–3 in0.05 steps, and boolean controls. Names and credentials are not stored.
 
 IDs are durable links: they are unique, below next_id, never reused, and ordinary writes cannot decrease next_id or introduce a previously retired number. New/changed profiles require an existing referenced space; unchanged dangling profiles survive and warn in the form. Old ordinary writers that omit the namespace preserve the accepted one before normalization. Version>1 remains opaque and bounded to128KiB, survives losslessly, and is inert in this frontend. The form refuses editing that future namespace. Full import/restore carries its source namespace as-is and does not inherit the old installation counter. Store/model versions stay unchanged.

@@ -8,7 +8,7 @@ import { emptyExternalScreens, externalScreensForEdit, defaultExternalScreen, up
 import { dialogSession } from './dialog-baseline';
 import { dialogPresence } from '../dialog-presence';
 import { externalScreenPath } from '../route-kiosk';
-import { field, formCard, unitInput } from './form-kit';
+import { field, formCard, formSections, sectionHeading, unitInput } from './form-kit';
 
 interface ScreenDraft {
   row: ExternalScreen; space: string | null; zooms: Record<string, string>;
@@ -156,7 +156,7 @@ export class ExternalScreensEditor implements ReactiveController {
           ariaLabel:this.t('zoom'),disabled:!exists,invalid:!!space&&errors.includes(space),onInput:raw=>{if(space)this.zoom(raw,d.instance,space);}})}
           <button type="button" class="btn ghost" data-hp="field-action" data-field="external-screen-reset" ?disabled=${!exists} @click=${()=>updateView({zoom:1})}>${this.t('reset')}</button></div>`})}
       ${select('summary', this.t('summary'), view.summary, [...local], value => updateView({summary:value as ExternalScreenView['summary']}), !exists)}
-      ${field({label:this.t('centering'),htmlFor:'screen-center-summary',control:html`<label class="hpf-check hp-screen-center">
+      ${field({label:this.t('centering'),htmlFor:'screen-center-summary',control:html`<label class="hpf-check hpf-check-wrap hp-screen-center">
         <input id="screen-center-summary" data-hp="field" data-field="external-screen-center-summary" type="checkbox"
           .checked=${view.center_summary} ?disabled=${!exists||view.summary==='hide'}
           @change=${(event:Event)=>updateView({center_summary:(event.target as HTMLInputElement).checked})}>
@@ -168,16 +168,16 @@ export class ExternalScreensEditor implements ReactiveController {
       .title=${this.rows()?.screens.some(item => item.id === row.id) ? this.t('screen', { n: row.id }) : this.t('new')}
       .subtitle=${this.t(single?'single_subtitle':'subtitle')} icon="mdi:monitor" @hp-close=${(e: Event) => { e.stopPropagation(); this.cancel(d.instance); }}>
       <div class="body hpf-form hpf-settings-form hp-screen-constructor">
-        ${single ? html`${individual()}<div class="hp-screen-single-return">${idle()}</div>` : html`
-          ${formCard({title:this.t('general'),body:html`<div class="hpf-grid hp-screen-general">
+        ${single ? html`${individual()}<div class="hp-screen-single-return">${idle()}</div>` : formSections([
+          html`${sectionHeading(this.t('general'))}<div class="hpf-grid hp-screen-general">
             ${select('space',this.t('space'),row.space??'',[['',this.t('all')],...spaces.map(item=>[item.id,item.title||item.id] as [string,string])],value=>this.change({space:value||null},d.instance))}
             ${select('cycle',this.t('cycle'),String(row.cycle),times([0,10,30,60,120,300,600]),value=>this.change({cycle:Number(value)},d.instance),row.space!==null||spaces.length<2,row.space!==null?this.t('cycle_hint'):'')}
-            ${idle()}</div>`})}
-          ${formCard({title:this.t('individual'),body:html`
-            ${spaces.length ? select('edited-space',this.t('edited_space'),space??'',spaces.map(item=>[item.id,`${item.title||item.id}${errors.includes(item.id)?' ⚠':''}`] as [string,string]),value=>{
+            ${idle()}</div>`,
+          html`${sectionHeading(this.t(row.space===null?'individual':'individual_named',{name:spaces.find(item=>item.id===space)?.title||this.t('missing')}))}
+            ${spaces.length && row.space===null ? select('edited-space',this.t('edited_space'),space??'',spaces.map(item=>[item.id,`${item.title||item.id}${errors.includes(item.id)?' ⚠':''}`] as [string,string]),value=>{
               if(this.draft?.instance===d.instance&&this.current(this.draft)){this.draft={...this.draft,space:value};this.host.requestUpdate();}},row.space!==null) : nothing}
             ${space&&exists?html`<p class="hpf-hint hp-screen-space-hint">${this.t('space_hint',{name:spaces.find(item=>item.id===space)?.title||space})}</p>`:nothing}
-            ${individual()}`})}`}
+            ${individual()}`])}
         ${!exists ? html`<p class="hpf-hint" role="status">${this.t(spaces.length?'missing_warning':'no_spaces')}</p>
           ${single ? html`<button class="btn ghost" type="button" data-hp="field-action" data-field="external-screen-use-available" @click=${()=>this.change({space:spaces[0].id},d.instance)}>${this.t('use_available')}</button>`:nothing}`:nothing}
         <p class="hpf-note hpf-callout hpf-hint hp-screen-note">${this.t('note')}</p></div>

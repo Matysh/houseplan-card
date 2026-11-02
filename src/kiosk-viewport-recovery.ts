@@ -36,7 +36,7 @@ function valid(value: unknown): value is KioskViewport {
   if (!value || typeof value !== 'object') return false;
   const v = value as Partial<KioskViewport>;
   return typeof v.space === 'string' && v.space.length > 0 && typeof v.zoom === 'number'
-    && Number.isFinite(v.zoom) && v.zoom > 0 && v.zoom <= 8 && !!v.view
+    && Number.isFinite(v.zoom) && v.zoom > 0 && !!v.view
     && [v.view.x, v.view.y, v.view.w, v.view.h].every(Number.isFinite)
     && v.view.w > 0 && v.view.h > 0;
 }

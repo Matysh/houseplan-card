@@ -460,6 +460,7 @@ const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
 import { ExternalScreenResolver, externalScreenEventCandidate, type ResolvedScreen } from './external-screens';
+import { screenCameraTarget, screenFreeArea, onScreenReference, screenZoomBadge, type ScreenCameraTarget } from './screen-camera';
 
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const POINTER_HOVER_TARGET_SELECTOR = 'hp-dialog, hp-help, hp-color-opacity, hp-device-preview, hp-settings-select, hp-zigbee-topology-settings';
@@ -975,7 +976,7 @@ export class HouseplanCard extends LitElement {
       this._hashApplied = false; this._navApplied = false; this._warmVpArmed = false;
       const previousSpace = this._space;
       this._adoptInitialSpace(this._model, this._loadOk);
-      if (previousSpace !== this._space) this._restoreZoom();
+      if (previousSpace !== this._space || this._hasScreenProfile && (next.profile !== before.profile || !before.enabled)) this._restoreZoom();
       this.requestUpdate('routeKiosk', before);
       this.dispatchEvent(new CustomEvent('hp-route-kiosk-applied'));
     };
@@ -1382,6 +1383,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _normalizeCameraState(state: CameraState): CameraState {
+    if (this._screenCameraTransition) return state;
     const fit = this._cameraTransitionFit || fitView(this._baseVb(), this._stageAspect());
     const zoom = this._boundedZoom(state.zoom);
     return { zoom, viewBox: this._clampView({ ...state.viewBox }, fit) };
@@ -1403,6 +1405,7 @@ export class HouseplanCard extends LitElement {
     this._zoom = target.zoom;
     this._view = { ...target.viewBox };
     this._cameraTransitionFit = null;
+    this._screenCameraTransition = false;
     if (state.reason !== 'room') this._saveZoom();
     this.requestUpdate();
   }
@@ -1424,6 +1427,7 @@ export class HouseplanCard extends LitElement {
     this._cameraTransition.cancel(commitTarget);
     if (!keepPresented) this._zoomScaleActivity.reset();
     this._cameraTransitionFit = null;
+    this._screenCameraTransition = false;
     if (presentedZoom !== undefined && reason !== 'room') this._saveZoom();
   }
 
@@ -1863,6 +1867,7 @@ export class HouseplanCard extends LitElement {
     this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     this._commitSpace(id);
+    this._navApplied = true;
     this._path = [];
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
@@ -2651,6 +2656,78 @@ export class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
   private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
+  private _screenReference: ScreenCameraTarget | null = null;
+  private _screenReferenceKey = '';
+  private _screenReferencePending = false;
+  private _screenFitRequest: 'fit' | 'home' | 'double-tap' | null = null;
+  private _screenCameraTransition = false;
+  private _screenRecoveredCamera = false;
+  private get _hasScreenProfile(): boolean { return this._kiosk && this._externalScreen.profile !== undefined; }
+  private get _screenAtReference(): boolean | undefined {
+    if (!this._hasScreenProfile) return undefined;
+    return !!this._view && !!this._screenReference && !this._screenReferencePending
+      && onScreenReference({ zoom: this._zoom, viewBox: this._view }, this._screenReference,
+        this._cameraTransition.active || this._pointers.size > 0 || !!this._pinchStart || !!this._panStart);
+  }
+  private get _zoomBadge(): { percent: number; hidden: boolean } {
+    return this._hasScreenProfile && this._screenReference
+      ? screenZoomBadge(this._cameraState(), this._screenReference)
+      : { percent: Math.round(this._zoom * 100), hidden: this._zoom <= 1 };
+  }
+  private get _effectiveCycle(): number {
+    return this._kiosk && !this._hasFixedFloor && this._model.length > 1
+      ? Math.max(0, this._externalScreen.cycle ?? (Number(this._config?.cycle) || 0)) : 0;
+  }
+
+  /** One reference owner. State values never enter the geometry key. */
+  private _syncScreenCamera(): void {
+    if (!this._hasScreenProfile) {
+      this._screenReference = null; this._screenReferenceKey = ''; this._screenReferencePending = false;
+      this._screenFitRequest = null; this._screenRecoveredCamera = false; return;
+    }
+    const stage = this._stageEl;
+    if (!stage?.clientWidth || !stage.clientHeight || this._modeTransitionBusy) return;
+    if (!this._summary && !this._viewRuntimes.summary.unavailable) return;
+    const explicit = this._screenFitRequest;
+    const geometry = this._summary?.screenGeometry(this._screenReferencePending || !!explicit)
+      ?? (this._viewRuntimes.summary.unavailable ? { key: 'unavailable', panel: null } : null);
+    if (!geometry) return;
+    const size: [number, number] = [stage.clientWidth, stage.clientHeight];
+    const vb = this._baseVb(), display = this._displayBase(vb), screen = this._externalScreen;
+    const key = JSON.stringify([screen, this._space, this._rotation, vb, display, size, geometry.key]);
+    if (!explicit && !this._screenReferencePending && key === this._screenReferenceKey) return;
+    const previous = this._screenReference, current = this._cameraState();
+    const follow = !this._screenRecoveredCamera && (this._screenReferencePending || !previous || onScreenReference(current, previous,
+      this._cameraTransition.active || this._pointers.size > 0));
+    const free = screenFreeArea(...size, screen.center_summary ? geometry.panel : null);
+    const reference = screenCameraTarget(vb, display, this._rotation, size, free, screen.zoom ?? 1);
+    if (!reference) return;
+    this._screenReference = reference; this._screenReferenceKey = key;
+    this._screenRecoveredCamera = false;
+    this._screenReferencePending = false; this._screenFitRequest = null;
+    this._lastValidStageSize = size;
+    if (follow || explicit) {
+      const target = explicit ? screenCameraTarget(vb, display, this._rotation, size, free, 1)! : reference;
+      this._cancelCameraTransition(false);
+      this._screenCameraTransition = true;
+      if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', explicit ? CAMERA_FIT_MS : 0)) this._screenCameraTransition = false;
+    } else if (previous) {
+      const view = current.viewBox;
+      const camera = physicalPlanCamera({ centerX: view.x + view.w / 2, centerY: view.y + view.h / 2,
+        pixelsPerUnit: previous.pixelsPerUnit * previous.camera.viewBox.w / view.w }, vb, display, this._rotation, ...size);
+      this._cancelCameraTransition(false); this._zoom = camera.zoom; this._view = camera.viewBox;
+    }
+    this.requestUpdate();
+  }
+
+  private _restoreScreenReference(): void {
+    this._clearRoomFocus(true); this._cancelCameraTransition(false);
+    this._showFar = true; this._frame = null; this._screenReferencePending = true;
+    this._screenRecoveredCamera = false;
+    this._screenFitRequest = null;
+    this._beginContinuityCandidate('screen-reference', true);
+    this.requestUpdate();
+  }
   private readonly _viewRuntimes = new ViewRuntimes(this as unknown as ViewRuntimeHost);
   /**
    * Previous entity states + the short event/terminal-transition window for
@@ -2813,14 +2890,13 @@ export class HouseplanCard extends LitElement {
   private _cyclePausedUntil = 0;
   private readonly _kioskCarousel = new KioskCarousel({
     state: () => ({ connected: this.isConnected,
-      intervalMs: this._kiosk && !this._hasFixedFloor && this._model.length > 1
-        ? Math.max(0, this._externalScreen.cycle ?? (Number(this._config?.cycle) || 0)) * 1000 : 0,
+      intervalMs: this._effectiveCycle * 1000,
       idleMs: this._kiosk ? (this._externalScreen.idle ?? 0) * 1000 : 0,
       pausedUntil: this._cyclePausedUntil,
       ...cardInteractionIdleSnapshot(this as unknown as VersionRecoveryCardPort),
     }),
     pause: (until) => { this._cyclePausedUntil = until; },
-    fitAll: () => this._fitAll(),
+    fitAll: () => this._hasScreenProfile ? this._restoreScreenReference() : this._fitAll(),
     advance: () => this._cycleTick(),
   });
   private _kioskInteraction = (event: Event): void => {
@@ -4283,6 +4359,7 @@ export class HouseplanCard extends LitElement {
 
   /** Called from updated(): one token owns at most one paint barrier. */
   private _settleContinuityFrame(externalUpdate: boolean): void {
+    if (this._hasScreenProfile && (this._screenReferencePending || !this._screenReference)) return;
     if (this._booting) return;
     // A complete steady frame has no candidate to settle. Reading its size
     // after Lit writes would force layout only to return below anyway.
@@ -4369,6 +4446,7 @@ export class HouseplanCard extends LitElement {
         || !nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) return false;
     this._zoom = memo.zoom; this._view = { ...memo.view };
     this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
+    this._screenRecoveredCamera = this._hasScreenProfile;
     return true;
   }
   /** One patchable seam shared by trusted manual and guarded automatic reload. */
@@ -4852,7 +4930,8 @@ export class HouseplanCard extends LitElement {
         }
       }
     }
-    if (stage && !this._view) this._refitView();
+    this._syncScreenCamera();
+    if (!this._hasScreenProfile && stage && !this._view) this._refitView();
     this._editorSecondary?.afterRender();
     this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
     // onboarding: on an empty server config, open the space dialog right away
@@ -7277,6 +7356,7 @@ export class HouseplanCard extends LitElement {
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
     if (this._modeTransitionBusy || this._warmModeRequest) return;
+    if (this._hasScreenProfile) { this._summary?.resized(); this.requestUpdate(); return; }
     const stage = this._stageEl;
     // ResizeObserver may deliver a zero/transitional box while a browser tab
     // is frozen or while Lovelace replaces the card. Mutating `_view` from
@@ -7419,6 +7499,7 @@ export class HouseplanCard extends LitElement {
   private _resetZoom(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
     this._clearRoomFocus();
     this._prepareCameraCommand();
+    if (this._hasScreenProfile) { this._screenFitRequest = reason; this.requestUpdate(); return; }
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     this._startCameraTransition(
@@ -7433,7 +7514,7 @@ export class HouseplanCard extends LitElement {
   private _saveZoom(): void {
     // Intermediate editor gestures are session-only. Exiting commits the
     // current floor's working camera as the new View preference (#1207).
-    if (this._mode !== 'view') return;
+    if (this._mode !== 'view' || this._hasScreenProfile) return;
     this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
     try {
       localStorage.setItem(LS_ZOOM, JSON.stringify(this._zoomBySpace));
@@ -7455,6 +7536,7 @@ export class HouseplanCard extends LitElement {
 
   /** Restore the saved space zoom and center the plan. */
   private _restoreZoom(carousel = false): void {
+    if (this._hasScreenProfile) { this._restoreScreenReference(); return; }
     this._clearRoomFocus(true);
     this._cancelCameraTransition(false);
     if (carousel) { this._showFar = true; this._frame = null; }
@@ -7568,7 +7650,7 @@ export class HouseplanCard extends LitElement {
    * competes with panning.
    */
   private get _swipeZone(): boolean {
-    return !this._hasFixedFloor && this._kiosk && this._zoom <= 1.001 && this._model.length > 1;
+    return !this._hasFixedFloor && this._kiosk && (this._screenAtReference ?? this._zoom <= 1.001) && this._model.length > 1;
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
@@ -7729,6 +7811,7 @@ export class HouseplanCard extends LitElement {
         // floor change merely because its final vector looks horizontal.
         const target = spaceSwipeTargetForOwner(
           this._panLock, dx, dy, this._zoom, this._model.map((m) => m.id), this._space,
+          this._hasScreenProfile ? this._panLock === 'swipe' : undefined,
         );
         if (target) {
           // the plan follows the finger: swiping left brings the next one in
@@ -12000,15 +12083,15 @@ export class HouseplanCard extends LitElement {
           </div>
           ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
           ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
-          <div class="zoombadge hpf-floating-badge hpf-floating-badge-scale" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
+          <div class="zoombadge hpf-floating-badge hpf-floating-badge-scale" data-hp-live-zoom ?hidden=${this._zoomBadge.hidden}><span data-hp-live-zoom-value .textContent=${`${this._zoomBadge.percent}%`}></span></div>
           ${this._renderFarHint()}
           ${this._renderHomeArrow(this._baseVb(projection, isoScene))}
           ${this._renderEditorRuntimeLoading()}
           ${this._renderRecoveryOverlay()}
           ${this._summary?.renderMeasure()}
           ${this._summary?.renderPanel()}
-          ${this._booting || this._bootFading || isoFirstFramePending
-            ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending ? '' : 'off'}" aria-hidden="true">
+          ${this._booting || this._bootFading || isoFirstFramePending || this._hasScreenProfile && !this._screenReference
+            ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending || this._hasScreenProfile && !this._screenReference ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
               </div>`
             : nothing}

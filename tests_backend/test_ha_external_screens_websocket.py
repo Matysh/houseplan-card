@@ -91,6 +91,33 @@ async def test_profile_stream_initial_projection_does_not_claim_a_full_revision(
     assert (await viewer.receive_json())["event"] == {"rev": next_rev}
 
 
+async def test_v2_migration_storage_event_and_old_writer_fence_on_real_ha(hass, hass_ws_client):
+    admin, viewer, _, full = await setup(hass, hass_ws_client)
+    legacy = profiles(full["config"])
+    rev = await write(admin, legacy, full["rev"])
+    await subscribe(viewer, rev)
+    migrated = copy.deepcopy(legacy)
+    namespace = migrated["settings"]["external_screens"]
+    namespace["version"] = 2
+    namespace["screens"] = [{"id": 1, "space": None, "cycle": 0, "idle": 30,
+        "default_view": {"rotation": 90, "zoom": 2, "summary": "show",
+            "center_summary": True, "icon_scale": None, "font_scale": None}, "space_views": {}}]
+    saved_rev = await write(admin, migrated, rev)
+    assert (await viewer.receive_json())["event"] == {"rev": saved_rev,
+        "external_screens_update": {"version": 1, "base_rev": rev, "value": namespace}}
+    await admin.send_json_auto_id({"type": "houseplan/config/get"})
+    saved = (await admin.receive_json())["result"]
+    assert saved["config"]["settings"]["external_screens"] == namespace
+    await admin.send_json_auto_id({"type": "houseplan/config/set", "config": legacy, "expected_rev": saved_rev})
+    assert (await admin.receive_json())["success"] is False
+    unrelated = copy.deepcopy(migrated)
+    del unrelated["settings"]["external_screens"]
+    unrelated["settings"]["show_lqi"] = not unrelated["settings"].get("show_lqi", False)
+    await write(admin, unrelated, saved_rev)
+    await admin.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await admin.receive_json())["result"]["config"]["settings"]["external_screens"] == namespace
+
+
 async def test_profile_stream_does_not_grant_generic_or_arbitrary_ha_events(hass, hass_ws_client):
     admin, viewer, _, full = await setup(hass, hass_ws_client)
     for event in [EVENT, "private_foreign_event"]:
