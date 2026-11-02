@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 706,
-  "nextTicket": 61,
+  "revision": 707,
+  "nextTicket": 62,
   "nextFence": 61,
   "tasks": {
     "1128": {
@@ -783,14 +783,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/issue-1207-approved-ui",
-      "materialSha": "5470c0e64efb0ed34973013575b86c4e3b27567c",
+      "materialSha": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 60,
-      "queued": false,
+      "ticket": 61,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793624263836,
-      "reviewEntry": 2,
+      "readyAt": 1793624754620,
+      "reviewEntry": 3,
       "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee",
       "changedFiles": [
         "demo/smoke_approved_ui_1207.mjs",
@@ -1013,11 +1013,7 @@
         "runStatus": "completed",
         "publicationPending": true,
         "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793624606128,
-      "automationDetail": "Remote refs changed before merge",
-      "reason": "material-updated-after-interrupted-local-s6"
+      }
     },
     "1208": {
       "issue": 1208,
@@ -1121,7 +1117,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1207
+  ],
   "active": null,
   "events": {
     "1207-spec-round1-submit-20261102:spec-request": {
@@ -1411,6 +1409,28 @@
           "entry": 2,
           "requestId": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010",
           "eventId": "1207-refresh-material:f5732115-ee53-4c60-8d29-3631f07f294e:return:1207"
+        }
+      }
+    },
+    "finish:129b9811-d982-4c5c-8c10-39cefd1bb9bb": {
+      "digest": "052510daa6011dde64a947140df5492a947502db846d3986578ee1748f3db340",
+      "issue": 1207,
+      "message": {
+        "kind": "queued",
+        "issue": 1207,
+        "at": 1793624754620,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
+        "evidence": {
+          "id": "20261102T125835741-5291342e",
+          "name": "Тесты для задачи #1207 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T125835741-5291342e/report.json",
+          "materialSha": "5470c0e64efb0ed34973013575b86c4e3b27567c",
+          "status": "passed",
+          "finishedAt": "2026-11-02T12:59:47.454Z",
+          "failures": []
         }
       }
     }
