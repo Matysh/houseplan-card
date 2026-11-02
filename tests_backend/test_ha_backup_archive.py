@@ -26,6 +26,7 @@ from custom_components.houseplan.backup_archive import build_archive, read_archi
 from custom_components.houseplan.backup_files import stage_folder
 from custom_components.houseplan.backup_service import get_backup_service
 from custom_components.houseplan.const import DOMAIN, OPTIMIZE_PENDING
+from custom_components.houseplan.graph_write import normalize_graph_config
 from custom_components.houseplan.import_export import ImportFailure, create_export
 from custom_components.houseplan.store import async_save_config_state
 from tests_backend import test_ha_zigbee_topology as zigbee_tests
@@ -318,7 +319,7 @@ async def test_portable_cross_root_apply_and_one_undo_restore_cache_and_files(ha
         "expected_layout_rev": result.result["layout_rev"],
     })
     assert undo.error is None, undo.error
-    assert (await rt.config_store.async_load())["config"]["spaces"] == before["spaces"]
+    assert (await rt.config_store.async_load())["config"]["spaces"] == normalize_graph_config(before)["spaces"]
     assert rt.zigbee_coordinator._saved == old_topics
     assert len(list((root / "houseplan/plans").glob("*.png"))) == 2  # Undo does not infer deletion.
 
@@ -627,7 +628,7 @@ async def test_incomplete_export_http_requires_exact_prepared_consent(hass, hass
     document, _ = sample(Path(hass.config.path("")))
     Path(hass.config.path("houseplan/plans/a.copy.png")).unlink()
     async with runtime.write_lock:
-        await async_save_config_state(runtime, document["payload"]["config"], 1)
+        await async_save_config_state(runtime, {**document["payload"]["config"], "model_version": document["model_version"]}, 1)
     service = get_backup_service(hass, runtime)
     prepared = await service.export(user.id, "review", None)
     assert prepared["complete"] is False and "incomplete" in prepared["filename"]
@@ -741,7 +742,7 @@ async def test_export_is_read_only_and_help_does_not_gain_archive_or_mesh(hass, 
     service = get_backup_service(hass, runtime)
     await service.release(service.candidate_session(runtime.import_previews[response["token"]], "backup-owner"))
     document, _ = sample(Path(hass.config.path("")))
-    config = document["payload"]["config"]
+    config = {**document["payload"]["config"], "model_version": document["model_version"]}
     config["settings"].update({"zigbee_topology": {"enabled": True}, "future_936": {"keep": [1, 2]}})
     async with runtime.write_lock:
         await async_save_config_state(runtime, config, 2)
@@ -1079,6 +1080,13 @@ async def test_issue1033_zip_with_a_door_off_its_wall_imports_after_confirmation
     document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
         {"layout": {}}, kind="full", space_id=None, card_version="review",
         config_root=tmp_path / "source")
+    # Historical projection repair; current11 rejects stale projections.
+    document["model_version"] = 10
+    for space in document["payload"]["config"]["spaces"]:
+        space.pop("plan_graph")
+        for opening in space.get("openings", []):
+            if opening.get("host"):
+                opening["host"].pop("tq", None)
     door = next(o for o in document["payload"]["config"]["spaces"][0]["openings"] if o["id"] == "d1")
     door["y"] = 0.3
     rt, response, before = await _upload(hass, tmp_path, document)
@@ -1101,7 +1109,7 @@ async def test_issue1033_zip_with_a_door_off_its_wall_imports_after_confirmation
         "expected_layout_rev": result.result["layout_rev"],
     })
     assert undo.error is None, undo.error
-    assert (await rt.config_store.async_load())["config"]["spaces"] == before["spaces"]
+    assert (await rt.config_store.async_load())["config"]["spaces"] == normalize_graph_config(before)["spaces"]
 
 def test_issue1000_zip_preserves_rule_order_types_and_optional_field(tmp_path: Path):
     source, target = tmp_path / "source", tmp_path / "target"

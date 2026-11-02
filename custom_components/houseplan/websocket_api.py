@@ -1041,6 +1041,7 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         "preserved_unresolved_refs": details.get("preserved_unresolved_refs", 0),
         "reference_report": details.get("reference_report", {}),
         "can_undo": kind == "full",
+        "config": pending["config"], "layout": pending["layout"],
     })
 
 
@@ -2894,6 +2895,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         "layout_rev": new_layout_rev,
         "removed_layout": removed_layout,
         "removed_markers": removed_markers,
+        "config": pending["config"], "layout": pending["layout"],
     })
 
 
