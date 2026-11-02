@@ -2248,6 +2248,8 @@ updates age without requiring another HA event. The resolver's transient
 `showIncomplete` distinguishes an unknown per-device uplink from global snapshot
 `partial`: known uplinks and every matched coordinator suppress only that caption,
 even if cross-provider reconciliation makes a coordinator's route unknown (#816).
+The overlay also suppresses the incomplete caption when no local connection
+survives position filtering, leaving only the unknown-route caption (#1158).
 Persistence and privacy:
 [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md).
 

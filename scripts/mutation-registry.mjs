@@ -13499,8 +13499,8 @@ const MUTANT_DEFINITIONS = [
       + 'while preserving live provider statuses and arrows; a pure resolver cannot prove the UI wiring',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: "hover.showIncomplete ? topologyT(lang, 'route_partial') : ''",
-      replace: "hover.outgoing !== 'not-zigbee' && hover.partial ? topologyT(lang, 'route_partial') : ''",
+      find: "hover.showIncomplete && lines.length > 0 ? topologyT(lang, 'route_partial') : ''",
+      replace: "hover.outgoing !== 'not-zigbee' && hover.partial && lines.length > 0 ? topologyT(lang, 'route_partial') : ''",
     }],
   },
   {
