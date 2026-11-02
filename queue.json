@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 962,
+  "revision": 963,
   "nextTicket": 75,
   "nextFence": 75,
   "tasks": {
@@ -166,6 +166,101 @@
         "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
         "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
         "patchId": "7ea850062ab804138479086802927eb9bc6fdea6"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1158,
+        "requestId": "review:1158:2:7ea850062ab804138479086802927eb9bc6fdea6:b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
+        "kind": "code",
+        "base": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
+        "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
+        "patchId": "7ea850062ab804138479086802927eb9bc6fdea6",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1158,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1158",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Локальная полировка составления route-status после фильтрации реально отображаемых линий; resolver, arrows, provider statuses и общий статус неполноты не меняются. S6 раунда 1: 8/8 PASS, 53 адресных Node-теста и оба browser smoke.\n\nПосле [ревью раунда 1](https://github.com/Matysh/houseplan-card/actions/runs/41470380977) исправлен единственный блокер: якорь и замена `zigbee-hover-incomplete-uses-global-partial` синхронизированы с новым условием, сохраняя `lines.length > 0` и прежний browser guard #816. `node scripts/mutation-gate.mjs --id=zigbee-hover-incomplete-uses-global-partial --check`: PASS, якорь ровно один; выполнение мутаций не заявляется (execution=0, штатный nightly отдельно). Уточнён абзац ARCHITECTURE об overlay-фильтре. Продуктовый код после первого S6 не менялся; finish повторно проверит применимость квитанций и выполнит нужные элементы. Новый mutant необязательного предложения не добавляется. [E2E impact: не требуется](https://github.com/Matysh/houseplan-e2e/issues/10): только frontend-композиция текста, без HA transport/storage/ACL изменений."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Работу можно принять. Единственный блокер раунда 1 закрыт: в мутации #816 `zigbee-hover-incomplete-uses-global-partial` поля `find` и `replace` теперь совпадают с новой строкой `src/hp-zigbee-topology-overlay.ts:639`. По поиску в `scripts/mutation-registry.mjs` якорь находится ровно один раз. Продуктовая логика с раунда 1 не менялась, и она соответствует уточнению владельца: если у устройства нет отображаемой связи, рядом с ним остаётся только «Нет данных о маршруте». error, loading, stale, флаг резолвера и общий статус неполноты в настройках не затронуты. Абзац в ARCHITECTURE дополнен. Новых блокеров нет.",
+          "understanding": "Проблема: при наведении на Zigbee-устройство с неизвестным исходящим маршрутом в неполном снимке строка `.route-status` показывала одновременно «No route data» и «Incomplete data». Если у устройства нет ни одной линии, обе подписи говорят об одном и том же.\n\nПосле изменения `route_partial` добавляется при условии `hover.showIncomplete && lines.length > 0`. `lines` — это `hover.lines`, отфильтрованный по фактическим позициям маркеров (стр. 603-612), то есть связи, которые реально нарисованы на текущем пространстве. Резолвер, стрелки, пузыри, endpoint-атрибуты, статусы провайдеров и хранение не менялись.\n\nВ этом раунде сверил исправление якоря мутации с исходником. Также проверил, что мутант по-прежнему убиваем текущим смоуком: заменённое выражение отличается от оригинала, только когда линии есть, снимок `partial`, а `showIncomplete=false`. Такой сценарий — координатор с входящей линией, и его проверяет `coordinatorNeverShowsIncomplete` (`demo/smoke_zigbee_topology_hover.mjs:366`). Заново пересмотрел сценарии смоука: без связей, без связей с error/stale, только входящая связь, координатор.",
+          "analysis": [
+            {
+              "topic": "Закрытие блокера раунда 1: якорь мутации #816",
+              "assessment": "Устранено. Новый `find` дословно совпадает со строкой 639. `replace` сохраняет смысл свидетеля #816: подпись строится от глобального `hover.partial` вместо поканального `showIncomplete`, а новое `lines.length > 0` в нём оставлено. Поэтому мутант проверяет именно контракт #816 и не смешивается с логикой #1158. Других мутаций с якорем на `route_partial` в реестре нет. Мутант по-прежнему убиваем: у координатора есть входящая линия и `partial`-снимок, поэтому мутированный код показал бы «Incomplete data», и `coordinatorNeverShowsIncomplete` упал бы.",
+              "evidence": "scripts/mutation-registry.mjs:13502-13503; src/hp-zigbee-topology-overlay.ts:639; поиск `route_partial` по реестру — только эти две строки; demo/smoke_zigbee_topology_hover.mjs:359-368. Исполнитель привёл результат `mutation-gate --check --id=...`: PASS, execution=0. Это его сообщение, а не мой запуск."
+            },
+            {
+              "topic": "Правильность условия подавления",
+              "assessment": "Условие стоит после фильтрации по позициям, поэтому «отображаемая связь» понимается буквально, как просил владелец. Пузыри родителя возникают только при известном исходящем маршруте, а тогда `showIncomplete` и так ложен, так что `bubbles` учитывать не нужно. Если у устройства при неизвестном uplink есть только входящие связи с другого пространства, «Incomplete data» скрывается. Это согласуется с формулировкой «нет отображаемой связи». Комментарий `#1158` объясняет причину, а не пересказывает строку.",
+              "evidence": "src/hp-zigbee-topology-overlay.ts:603-640"
+            },
+            {
+              "topic": "Тесты сценариев",
+              "assessment": "Смоук адресно покрывает критерии 1 и 2. Без связей нет дубля, и error со stale при этом остаются. При видимой входящей связи сохраняются обе подписи и нет исходящей стрелки. После сценариев runtime восстанавливается до проверок координатора. Отдельного мутанта на удаление `&& lines.length > 0` нет. Это необязательно: инвертированная проверка `unknownRouteOmitsDuplicateIncomplete` и так упала бы на прежнем поведении.",
+              "evidence": "demo/smoke_zigbee_topology_hover.mjs:329-358"
+            },
+            {
+              "topic": "Документация",
+              "assessment": "В ARCHITECTURE добавлена фраза о фильтре оверлея. Тем самым принято и улучшение из раунда 1. USER-GUIDE RU/EN, CHANGELOG и ledger описывают поведение согласованно.",
+              "evidence": "docs/ARCHITECTURE.md:2251-2252; docs/USER-GUIDE.md:604-609; docs/USER-GUIDE.ru.md:658-664"
+            }
+          ],
+          "blockers": [],
+          "improvements": [],
+          "boundaries": "Тесты, смоук и проверку реестра мутаций я не запускал. Использована квитанция S6 «Тесты для задачи #1158 (перед ревью)»: статус passed, материал fa15643 совпадает с head. Её состав мне неизвестен. Сообщение исполнителя о PASS статической проверки якоря принято как его утверждение. Совпадение якоря я подтвердил отдельно, чтением реестра и исходника. Мутационный прогон, то есть фактическое убийство мутанта смоуком, не выполнялся ни мной, ни, по словам исполнителя, на S6. Вывод о том, что мутант убиваем, сделан по чтению смоука и предполагает, что базовый снимок смоука частичный. На это указывает прежняя проверка `unknownRouteRetainsIncomplete`."
+        },
+        "usage": {
+          "input_tokens": 8,
+          "cache_creation_input_tokens": 37737,
+          "cache_read_input_tokens": 98069,
+          "output_tokens": 4089,
+          "output_tokens_details": {
+            "thinking_tokens": 746
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 37737,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 771,
+              "cache_read_input_tokens": 34651,
+              "cache_creation_input_tokens": 7256,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 7256
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять. Единственный блокер раунда 1 закрыт: в мутации #816 `zigbee-hover-incomplete-uses-global-partial` поля `find` и `replace` теперь совпадают с новой строкой `src/hp-zigbee-topology-overlay.ts:639`. По поиску в `scripts/mutation-registry.mjs` якорь находится ровно один раз. Продуктовая логика с раунда 1 не менялась, и она соответствует уточнению владельца: если у устройства нет отображаемой связи, рядом с ним остаётся только «Нет данных о маршруте». error, loading, stale, флаг резолвера и общий статус неполноты в настройках не затронуты. Абзац в ARCHITECTURE дополнен. Новых блокеров нет.\n\n## Понимание решения\n\nПроблема: при наведении на Zigbee-устройство с неизвестным исходящим маршрутом в неполном снимке строка `.route-status` показывала одновременно «No route data» и «Incomplete data». Если у устройства нет ни одной линии, обе подписи говорят об одном и том же.\n\nПосле изменения `route_partial` добавляется при условии `hover.showIncomplete && lines.length > 0`. `lines` — это `hover.lines`, отфильтрованный по фактическим позициям маркеров (стр. 603-612), то есть связи, которые реально нарисованы на текущем пространстве. Резолвер, стрелки, пузыри, endpoint-атрибуты, статусы провайдеров и хранение не менялись.\n\nВ этом раунде сверил исправление якоря мутации с исходником. Также проверил, что мутант по-прежнему убиваем текущим смоуком: заменённое выражение отличается от оригинала, только когда линии есть, снимок `partial`, а `showIncomplete=false`. Такой сценарий — координатор с входящей линией, и его проверяет `coordinatorNeverShowsIncomplete` (`demo/smoke_zigbee_topology_hover.mjs:366`). Заново пересмотрел сценарии смоука: без связей, без связей с error/stale, только входящая связь, координатор.\n\n## Разбор решения\n\n### Закрытие блокера раунда 1: якорь мутации #816\n\nУстранено. Новый `find` дословно совпадает со строкой 639. `replace` сохраняет смысл свидетеля #816: подпись строится от глобального `hover.partial` вместо поканального `showIncomplete`, а новое `lines.length > 0` в нём оставлено. Поэтому мутант проверяет именно контракт #816 и не смешивается с логикой #1158. Других мутаций с якорем на `route_partial` в реестре нет. Мутант по-прежнему убиваем: у координатора есть входящая линия и `partial`-снимок, поэтому мутированный код показал бы «Incomplete data», и `coordinatorNeverShowsIncomplete` упал бы.\n\nОснование: scripts/mutation-registry.mjs:13502-13503; src/hp-zigbee-topology-overlay.ts:639; поиск `route_partial` по реестру — только эти две строки; demo/smoke_zigbee_topology_hover.mjs:359-368. Исполнитель привёл результат `mutation-gate --check --id=...`: PASS, execution=0. Это его сообщение, а не мой запуск.\n\n### Правильность условия подавления\n\nУсловие стоит после фильтрации по позициям, поэтому «отображаемая связь» понимается буквально, как просил владелец. Пузыри родителя возникают только при известном исходящем маршруте, а тогда `showIncomplete` и так ложен, так что `bubbles` учитывать не нужно. Если у устройства при неизвестном uplink есть только входящие связи с другого пространства, «Incomplete data» скрывается. Это согласуется с формулировкой «нет отображаемой связи». Комментарий `#1158` объясняет причину, а не пересказывает строку.\n\nОснование: src/hp-zigbee-topology-overlay.ts:603-640\n\n### Тесты сценариев\n\nСмоук адресно покрывает критерии 1 и 2. Без связей нет дубля, и error со stale при этом остаются. При видимой входящей связи сохраняются обе подписи и нет исходящей стрелки. После сценариев runtime восстанавливается до проверок координатора. Отдельного мутанта на удаление `&& lines.length > 0` нет. Это необязательно: инвертированная проверка `unknownRouteOmitsDuplicateIncomplete` и так упала бы на прежнем поведении.\n\nОснование: demo/smoke_zigbee_topology_hover.mjs:329-358\n\n### Документация\n\nВ ARCHITECTURE добавлена фраза о фильтре оверлея. Тем самым принято и улучшение из раунда 1. USER-GUIDE RU/EN, CHANGELOG и ledger описывают поведение согласованно.\n\nОснование: docs/ARCHITECTURE.md:2251-2252; docs/USER-GUIDE.md:604-609; docs/USER-GUIDE.ru.md:658-664\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\nНет.\n\n## Границы анализа\n\nТесты, смоук и проверку реестра мутаций я не запускал. Использована квитанция S6 «Тесты для задачи #1158 (перед ревью)»: статус passed, материал fa15643 совпадает с head. Её состав мне неизвестен. Сообщение исполнителя о PASS статической проверки якоря принято как его утверждение. Совпадение якоря я подтвердил отдельно, чтением реестра и исходника. Мутационный прогон, то есть фактическое убийство мутанта смоуком, не выполнялся ни мной, ни, по словам исполнителя, на S6. Вывод о том, что мутант убиваем, сделан по чтению смоука и предполагает, что базовый снимок смоука частичный. На это указывает прежняя проверка `unknownRouteRetainsIncomplete`.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a → fa15643e0f27f0192b36d684d4ac8c49fdd81a4c\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1158, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nЛокальная полировка составления route-status после фильтрации реально отображаемых линий; resolver, arrows, provider statuses и общий статус неполноты не меняются. S6 раунда 1: 8/8 PASS, 53 адресных Node-теста и оба browser smoke.\n\nПосле [ревью раунда 1](https://github.com/Matysh/houseplan-card/actions/runs/41470380977) исправлен единственный блокер: якорь и замена `zigbee-hover-incomplete-uses-global-partial` синхронизированы с новым условием, сохраняя `lines.length > 0` и прежний browser guard #816. `node scripts/mutation-gate.mjs --id=zigbee-hover-incomplete-uses-global-partial --check`: PASS, якорь ровно один; выполнение мутаций не заявляется (execution=0, штатный nightly отдельно). Уточнён абзац ARCHITECTURE об overlay-фильтре. Продуктовый код после первого S6 не менялся; finish повторно проверит применимость квитанций и выполнит нужные элементы. Новый mutant необязательного предложения не добавляется. [E2E impact: не требуется](https://github.com/Matysh/houseplan-e2e/issues/10): только frontend-композиция текста, без HA transport/storage/ACL изменений.\n```\n\n</details>\n",
+        "createdAt": "2026-11-02T15:26:05.904Z",
+        "artifactId": 13154863755,
+        "runId": 41471294465,
+        "runAttempt": 1,
+        "completedAt": "2026-11-02T15:26:11Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41471294465",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a"
       }
     },
     "1165": {
@@ -1320,9 +1415,9 @@
     "fence": 74,
     "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
     "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793633052333,
-    "expiresAt": 1793636663926,
+    "expiresAt": 1793636811005,
     "patchId": "7ea850062ab804138479086802927eb9bc6fdea6",
     "reviewRequest": "review:1158:2:7ea850062ab804138479086802927eb9bc6fdea6:b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a"
   },
@@ -1401,6 +1496,10 @@
     },
     "finish:0fbdecca-1bdc-4efa-86f7-a2eb05e2c8fc:finish:6:review-presentation": {
       "digest": "3faf7e1beca09068cdb70dbf6d0f3f2e33820ebc0cb682306467ee0317703e79",
+      "issue": 1158
+    },
+    "finish:0fbdecca-1bdc-4efa-86f7-a2eb05e2c8fc:finish:6:review-complete": {
+      "digest": "3866b94bd99514a5eb1acdda47685a0eddbfe63ee3247df6f2c747148c61bc7a",
       "issue": 1158
     },
     "finish:540a1f4b-524d-4856-918e-285ff186ffa7": {
