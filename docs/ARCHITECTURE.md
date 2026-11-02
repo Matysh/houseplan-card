@@ -50,6 +50,15 @@ Physical keys project known paint/text fields out while retaining unknown and st
 
 Panel kiosk routing (#1103) stays in the thin host: path/query adapters set the runtime routeKiosk intent. The card resolves one-based positions against its own authoritative ordered model, with pending before authority and absent for an invalid URL position. Existing Lovelace floor remains strict. Internal panel paths share one read owner; mode/space transitions still retire presentation context and dirty drafts use the existing decision boundary. The stable panel entry retains its side-effect-only card import; its URL parser has no runtime imports from the card graph.
 
+`kiosk-space-navigation.ts` (#1127) owns the transient space switcher: field
+activity, pointer ownership, five-second idle timeout and declarative navigation.
+The card applies kiosk/View/multi-space eligibility, including fixed floors and
+single-space screen profiles, releases pointers through window terminals and
+clears state on blur/disconnect or lost eligibility. Shared UI Kit navigation
+variants and opacity-only fade own paint. The overlay lives within the stage,
+outside the transformed plan; no fit, safe-area or viewport calculation uses it.
+Only interaction reveals it; carousel/HA updates merely refresh the active button.
+
 Config decoder v1 (#1015) sits inside the common Store fence, after pending-pair
 recovery and before config/layout reads, CAS writers and setup consumers. Source
 import runs the same copy-only decoder before schema/host proof. Square-frame

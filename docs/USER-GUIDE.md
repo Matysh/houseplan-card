@@ -2638,6 +2638,15 @@ from scratch. See [VACUUM.md](VACUUM.md) for the source and calibration contract
 
 ## 17. Kiosk
 
+With two or more available spaces, tap or click the field to reveal a compact
+vertical space switcher on the left. Buttons follow the existing order, numbered
+1…N, with names in tooltips and the current space in the theme accent. Buttons
+also work while zoomed. The group fades after five idle seconds; another action
+renews it, while hover and automatic cycling never reveal it. Reduced motion
+removes transitions. The switcher overlays the plan without affecting the camera
+or Fit all and scrolls when height is limited. It is absent in ordinary View,
+editors, single-space or fixed-floor cards, and single-space screen profiles.
+
 The main page needs no separate dashboard. Open `/houseplan/kiosk` for all
 spaces or `/houseplan/kiosk/2` to pin the second space in the visible space
 list. Equivalent links are `/houseplan?hpkiosk=1` and

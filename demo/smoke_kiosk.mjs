@@ -50,7 +50,8 @@ const res = await page.evaluate(async () => {
   fire('pointerup', 2, rightEdgeX - 120, centerY + 3);
   await c.updateComplete;
   out.edgeSwipeSwitches = c._space !== s0;
-  out.dotsShown = !!sr().querySelector('.kioskdots');
+  out.spaceNavigationShown = !!sr().querySelector('[data-hp="kiosk-spaces"].is-visible')
+    && !sr().querySelector('.kioskdots');
   // 4) при зуме свайп не переключает
   c._zoom = 2; const s1 = c._space;
   const leftEdgeX = rect.left + 20;

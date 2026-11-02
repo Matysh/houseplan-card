@@ -106,6 +106,7 @@ import {
   presentationRouteOwner, type RouteKiosk,
 } from './route-kiosk';
 import { KioskCarousel } from './kiosk-carousel';
+import { KioskSpaceNavigation, renderKioskSpaceNavigation } from './kiosk-space-navigation';
 import { PlanHassProjection } from './plan-hass-projection';
 import { acceptTapConfirmation, currentMarkerActionDevice, currentMarkerSettingsDevice, markerSettingsTargetKey, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
 import { ViewHoldGesture } from './view-hold';
@@ -1294,10 +1295,17 @@ export class HouseplanCard extends LitElement {
     return !!this._config?.kiosk || this.panelHost && this._routeKiosk.enabled;
   }
 
-  private _showKioskDots(): void {
-    this._kioskDots = true;
-    clearTimeout(this._kioskDotsTimer);
-    this._kioskDotsTimer = window.setTimeout(() => (this._kioskDots = false), 2500);
+  private get _kioskNavigationEnabled(): boolean {
+    return this._kiosk && this._mode === 'view' && !this._hasFixedFloor
+      && !this._externalScreen.space && this._model.length > 1;
+  }
+
+  private _renderKioskNavigation(): TemplateResult | typeof nothing {
+    if (!this._kioskNavigationEnabled) return nothing;
+    return renderKioskSpaceNavigation({ spaces: this._model, current: this._space,
+      visible: this._kioskNavigation.visible, label: this._t('kiosk.spaces'),
+      select: id => { this._tabClick(id); this._kioskNavigation.interact({ type: 'click' }); },
+    });
   }
 
   /** Kiosk auto-carousel: advance to the next space every `cycle` seconds. */
@@ -2085,7 +2093,7 @@ export class HouseplanCard extends LitElement {
     if (!this._kioskCarousel.canAdvance()) return;
     const ids = this._model.map((m) => m.id);
     const i = ids.indexOf(this._space);
-    if (this._slideTo(ids[(i + 1) % ids.length], 'left', true)) this._showKioskDots();
+    this._slideTo(ids[(i + 1) % ids.length], 'left', true);
   }
 
   private _syncCycleTimer(): void {
@@ -2859,8 +2867,7 @@ export class HouseplanCard extends LitElement {
   private _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[] } | null = null;
   /** Proposed high-residual auto-calibration. Config remains untouched until Apply. */
   private _vacCalConfirm: CalibrationProposal | null = null;
-  private _kioskDots = false;
-  private _kioskDotsTimer?: number;
+  private readonly _kioskNavigation = new KioskSpaceNavigation(() => this.requestUpdate());
   /** #813 F11: the empty-stage hold; firing ends the stage gesture, then opens the dialog. */
   private readonly _kioskHold = new KioskHoldGesture((pointerId) => {
     this._touchClickGuard.interruptForModal(pointerId);
@@ -2870,6 +2877,7 @@ export class HouseplanCard extends LitElement {
   });
   /** #813: a window that loses focus mid-press may never deliver its release. */
   private readonly _onWindowBlur = (): void => {
+    this._kioskNavigation.reset();
     ++this._viewDeviceMenuRequest;
     if (this._furnTouchPending) this._editorRuntime?._clearFurniturePreview();
     if (this._mode === 'view') {
@@ -2882,6 +2890,7 @@ export class HouseplanCard extends LitElement {
     if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();
   };
   private readonly _onViewPointerTerminal = (event: PointerEvent): void => {
+    this._kioskNavigation.release(event.pointerId);
     this._viewHold.cancel(event.pointerId);
     // A mouse may release outside the marker, stage or this card. Inside-card
     // terminals keep their existing capture route and must be consumed once.
@@ -2902,8 +2911,13 @@ export class HouseplanCard extends LitElement {
     advance: () => this._cycleTick(),
   });
   private _kioskInteraction = (event: Event): void => {
+    // Hover is frequent and must not fingerprint the config or reveal controls.
+    if (event.type === 'pointermove' && !this._kioskNavigation.ownsPointer((event as PointerEvent).pointerId)) return;
     if (this._kiosk && event.composedPath().some((node) => node instanceof Element
-      && node.matches('.stage, hp-dialog, hp-confirm'))) this._kioskCarousel.interact();
+      && node.matches('.stage, hp-dialog, hp-confirm')) && event.type !== 'pointermove') this._kioskCarousel.interact();
+    this._kioskNavigation.sync(this._kioskNavigationEnabled);
+    if (event.composedPath().some(node => node instanceof Element && node.matches('.stage')))
+      this._kioskNavigation.interact(event as PointerEvent);
   };
   private _swipeStart: SpaceSwipePointerStart | null = null;
 
@@ -3103,7 +3117,6 @@ export class HouseplanCard extends LitElement {
     _vacFit: { state: true },
     _vacAllCamerasFor: { state: true },
     _vacCalConfirm: { state: true },
-    _kioskDots: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
     _roomDialog: { state: true },
@@ -3160,7 +3173,7 @@ export class HouseplanCard extends LitElement {
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed'))); // #474
     super.connectedCallback();
     this._toastPresentation.connect(this.renderRoot as ShadowRoot);
-    for (const type of ['pointerdown', 'wheel', 'keydown']) this.addEventListener(
+    for (const type of ['pointerdown', 'pointermove', 'click', 'wheel', 'keydown']) this.addEventListener(
       type, this._kioskInteraction, { capture: true, passive: true },
     );
     this._viewRuntimes.connect();
@@ -3247,6 +3260,7 @@ export class HouseplanCard extends LitElement {
 
   public disconnectedCallback(): void {
     this._stairsView.disconnect();
+    this._kioskNavigation.reset(false);
     this._rotationMotion.cancel();
     this._planHassProjection?.invalidate(); this._planHassMemo = null;
     this._deviceRosterState.clear();
@@ -3258,7 +3272,7 @@ export class HouseplanCard extends LitElement {
       if (runtime.livePending) { runtime.gap = true; runtime.livePending.gap = true; }
     }
     this._kioskCarousel.dispose();
-    for (const type of ['pointerdown', 'wheel', 'keydown']) this.removeEventListener(
+    for (const type of ['pointerdown', 'pointermove', 'click', 'wheel', 'keydown']) this.removeEventListener(
       type, this._kioskInteraction, true,
     );
     this._warmMarker.cancel();
@@ -3325,7 +3339,6 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._tabSuppressClickTimer);
     this._tabSuppressClickTimer = undefined;
     this._tabSuppressClick = false;
-    clearTimeout(this._kioskDotsTimer);
     // #813: a release that lands while detached never reaches the stage; a
     // pointer kept here would turn the next press after a reattach into a pinch.
     this._abandonViewInput();
@@ -7824,7 +7837,6 @@ export class HouseplanCard extends LitElement {
             this._saveNav();
             this._suppressClick = true;
             setTimeout(() => (this._suppressClick = false), 0);
-            this._showKioskDots();
           }
         }
       }
@@ -11475,6 +11487,7 @@ export class HouseplanCard extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
+    this._kioskNavigation.sync(this._kioskNavigationEnabled);
     return this._lightBarrierPass.run(() => this._renderLightPass());
   }
 
@@ -12095,6 +12108,7 @@ export class HouseplanCard extends LitElement {
           ${this._renderRecoveryOverlay()}
           ${this._summary?.renderMeasure()}
           ${this._summary?.renderPanel()}
+          ${this._renderKioskNavigation()}
           ${this._booting || this._bootFading || isoFirstFramePending || this._hasScreenProfile && !this._screenReference
             ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending || this._hasScreenProfile && !this._screenReference ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
@@ -12160,11 +12174,6 @@ export class HouseplanCard extends LitElement {
         ${dialogPresence(this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing)}
         ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
         <div class="tip" data-hp-live-tip hidden></div>
-        ${this._kiosk && !this._hasFixedFloor && this._kioskDots && this._model.length > 1
-          ? html`<div class="kioskdots">
-              ${this._model.map((m) => html`<span class="kdot hpf-dot ${m.id === this._space ? 'on' : ''}"></span>`)}
-            </div>`
-          : nothing}
         ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
         ${dialogPresence(this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
         ${this._vacFit ? html`<div class="vaccalbar" data-hp="vacuum-calibration" aria-busy=${String(!!this._vacFit.busy)}>

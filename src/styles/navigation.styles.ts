@@ -22,6 +22,16 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-navigation { padding:0; gap:10px; background:transparent; }
   .hpf-navigation > .hpf-nav-item { height:44px; padding:0 12px; border-color:var(--divider-color); background:transparent; color:var(--primary-text-color); }
   .hpf-navigation > .hpf-nav-item.active { border-color:var(--primary-color); z-index:1; }
+  .hpf-navigation.hpf-nav-floating {
+    gap:var(--sp-2); padding:var(--sp-2); background:var(--hp-bg);
+    border:1px solid var(--hp-line); border-radius:var(--rad-l); box-shadow:var(--shadow-2);
+  }
+  .hpf-navigation.hpf-nav-vertical { display:flex; flex-direction:column; overflow-y:auto; touch-action:pan-y; overscroll-behavior:contain; }
+  .hpf-nav-vertical > .hpf-nav-item { flex:0 0 44px; }
+  .hpf-navigation.hpf-nav-flush-left { border-top-left-radius:0; border-bottom-left-radius:0; }
+  .hpf-nav-floating > .hpf-nav-item.active {
+    color:var(--hp-accent); background:var(--hpf-tint, color-mix(in srgb, var(--hp-accent) 12%, transparent));
+  }
   .hpf-navigation > .hpf-nav-item:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
   .hpf-nav-item > .tabtitle { line-height:42px; }
   .hpf-nav-item:has(> .tabedit) { padding:0; gap:0; }

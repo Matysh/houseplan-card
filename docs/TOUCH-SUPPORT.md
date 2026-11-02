@@ -1,5 +1,12 @@
 # Touch support policy
 
+Kiosk's space switcher (#1127) is a pointer-transparent hidden overlay until a
+field tap/click reveals it. Its 44×44 buttons work at any zoom, stop underlying
+plan gestures, and scroll within the field when needed. Pointer ownership keeps
+it visible through pan/pinch; five idle seconds hide it and remove it from focus
+and hit testing. Fixed floors and single-space profiles have no switcher.
+It never reserves camera space or changes fitting.
+
 External-screen profiles (#1113) configure main-panel kiosk from a desktop General settings dialog. Kiosk pan/pinch, double-tap Fit all, edge swipe and3-second size hold remain supported. Explicit profile/link scales lock only their local sliders. Idle fit without auto-advance waits while a finger or modal owns the interaction and runs once per idle period. This adds no editor touch-parity obligation.
 
 The main panel also enters the same kiosk explicitly through /houseplan/kiosk[/N] or root hpkiosk=1/hpspace=N (#1103). The main-panel kiosk now hides the whole card header, including its HA menu (#1120); Back or the ordinary /houseplan URL exits. One-based position pins one space; absent/invalid positions retain all-space swipe behavior. This does not change the input support policy.

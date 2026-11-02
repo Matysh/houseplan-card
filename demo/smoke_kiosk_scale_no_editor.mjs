@@ -111,7 +111,7 @@ const emptyStagePoint = (page) => page.evaluate((selector) => {
   const stage = root.querySelector('.stage');
   const box = stage.getBoundingClientRect();
   const owned = '.dev, .roomlabel, .oplock';
-  const busy = `${owned}, [data-hp="room"], .summary-overlay, .kioskdots`;
+  const busy = `${owned}, [data-hp="room"], .summary-overlay, [data-hp="kiosk-spaces"]`;
   let fallback = null;
   for (let row = 4; row <= 16; row += 1) {
     for (let col = 4; col <= 16; col += 1) {

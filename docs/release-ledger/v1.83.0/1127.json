@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1127,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "New transient kiosk space navigation replaces passive dots, using shared UI Kit navigation and motion without changing camera geometry or persisted data.",
+  "summary": {
+    "ru": "В киоске добавлен компактный переключатель пространств с показом по касанию и скрытием по простою.",
+    "en": "Add a compact kiosk space switcher revealed by field interaction and hidden on idle."
+  }
+}

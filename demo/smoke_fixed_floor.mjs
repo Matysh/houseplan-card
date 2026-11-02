@@ -49,7 +49,7 @@ const res = await page.evaluate(async () => {
   fixedIndex._cycleTick();
   await fixedIndex.updateComplete;
   out.fixedKioskCycleDisabled = fixedIndex._space === indexStart && fixedIndex._cycleTimer == null;
-  out.fixedKioskDotsHidden = !root(fixedIndex).querySelector('.kioskdots');
+  out.fixedKioskNavigationAbsent = !root(fixedIndex).querySelector('[data-hp="kiosk-spaces"], .kioskdots');
   const stage = root(fixedIndex).querySelector('.stage');
   stage.dispatchEvent(new PointerEvent('pointerdown', {
     bubbles: true, composed: true, pointerId: 41, clientX: 600, clientY: 300,

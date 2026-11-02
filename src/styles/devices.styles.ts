@@ -57,16 +57,6 @@ export const devicesStyles = css`
       pointer-events: none;
       z-index: 3;
     }
-    .kioskdots {
-      position: absolute;
-      left: 50%;
-      bottom: var(--sp-5);
-      transform: translateX(-50%);
-      display: flex;
-      gap: var(--sp-4);
-      z-index: 5;
-      pointer-events: none;
-    }
     .dev.valonly {
       /* Saved coordinates remain the centre of a Text shell. The shell may
          expand, while the invisible anchor stays one core diameter wide. */

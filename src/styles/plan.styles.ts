@@ -39,6 +39,10 @@ export const planStyles = css`
       touch-action: none; /* custom pinch/pan gestures */
       background: var(--ha-card-background, var(--card-background-color, #111));
     }
+    .hp-kiosk-spaces {
+      position:absolute; left:0; top:50%; transform:translateY(-50%);
+      z-index:30; max-height:calc(100% - 32px);
+    }
     .zoomwrap {
       position: absolute;
       inset: 0;

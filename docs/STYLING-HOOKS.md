@@ -298,6 +298,12 @@ can therefore still match hidden `space-tab` and zoom elements. Actions which
 the renderer already omits, such as `space-add`, remain absent; test code must
 not confuse a DOM match with visibility or permission.
 
+`[data-hp="kiosk-spaces"]` is the transient kiosk space navigation within the
+stage, outside its transformed plan. Buttons expose `data-space`, localized
+names and `aria-current`. Hidden navigation is inert and pointer-transparent;
+ineligible fixed/single-space profiles omit it. It replaces passive kiosk dots
+and never affects the camera or stage dimensions (#1127).
+
 **One rule, both modes.** Editors add classes to the same elements rather than
 re-rendering different ones, so a rule written against the View mode also
 applies while the user is editing. If that is not wanted, scope it: the stage

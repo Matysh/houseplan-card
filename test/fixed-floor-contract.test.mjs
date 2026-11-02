@@ -28,6 +28,6 @@ test('fixed View and kiosk remove every floor-changing affordance', () => {
   assert.match(card, /renderHeaderSpaceNavigation\(\{\s*spaces: navigationSpaces,/);
   assert.match(card, /configure: this\._norm && this\._canEdit/);
   assert.match(card, /this\._canEdit && !this\._kiosk && !this\._hasFixedFloor/);
-  assert.match(card, /!this\._hasFixedFloor && this\._kiosk && this\._zoom <= 1\.001/);
-  assert.match(card, /this\._kiosk && !this\._hasFixedFloor && this\._kioskDots/);
+  assert.ok(/return !this\._hasFixedFloor && this\._kiosk && \(this\._screenAtReference \?\? this\._zoom <= 1\.001\)/.test(card), 'fixed floors cannot swipe, including screen-profile cameras');
+  assert.ok(/private get _kioskNavigationEnabled\(\): boolean \{\s*return this\._kiosk && this\._mode === 'view' && !this\._hasFixedFloor/.test(card), 'fixed floors have no kiosk space navigation');
 });

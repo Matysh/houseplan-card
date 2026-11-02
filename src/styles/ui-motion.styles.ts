@@ -41,6 +41,15 @@ export const controlMotionStyles = unsafeCSS(css`
   @media (prefers-reduced-motion: reduce) {
     .hpf-arrival-highlight { animation: none; opacity: 1; }
   }
+  /* Reversible, opacity-only presentation for pointer-transparent hidden UI. */
+  .hpf-fade {
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity var(--hpf-leave-duration) var(--hpf-leave-easing), visibility 0s linear var(--hpf-leave-duration);
+  }
+  .hpf-fade.is-visible {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transition: opacity var(--hpf-appear-duration) var(--hpf-appear-easing), visibility 0s;
+  }
 `.cssText + `:host {
   --hpf-paint-duration:${controlMotion.paint.duration}ms; --hpf-paint-easing:${controlMotion.paint.easing};
   --hpf-appear-duration:${controlMotion.appear.duration}ms; --hpf-appear-easing:${controlMotion.appear.easing};
@@ -51,4 +60,4 @@ export const controlMotionStyles = unsafeCSS(css`
   --hpf-arrival-cycle-duration:${controlMotion.arrival.duration / controlMotion.arrival.iterations}ms;
   --hpf-arrival-iterations:${controlMotion.arrival.iterations}; --hpf-arrival-easing:${controlMotion.arrival.easing};
 }`
-  + controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after'));
+  + controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after, .hpf-fade'));
