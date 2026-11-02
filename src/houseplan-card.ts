@@ -1690,6 +1690,7 @@ export class HouseplanCard extends LitElement {
    * transition alive. User navigation continues to go through `_setMode()`. */
   private _adoptMode(mode: HouseplanMode): void {
     if (mode !== this._mode) {
+      this._stairsView.clearArrival();
       this._clearRoomFocus(true);
       this._resetDeviceHitState();
     }
@@ -1832,6 +1833,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._stairsView.clearArrival();
       this._modeEditorInk.clear();
       this._modeProjectionScene = null;
       ++this._viewDeviceMenuRequest;
@@ -3244,6 +3246,7 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._stairsView.disconnect();
     this._rotationMotion.cancel();
     this._planHassProjection?.invalidate(); this._planHassMemo = null;
     this._deviceRosterState.clear();
@@ -4800,6 +4803,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    this._stairsView.updated();
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
@@ -8394,6 +8398,7 @@ export class HouseplanCard extends LitElement {
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
     if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
+      this._stairsView.clearArrival();
       ++this._viewDeviceMenuRequest;
       this._clearRoomFocus(true);
       this._cancelDangerConfirm();

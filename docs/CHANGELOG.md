@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Stair navigation in View and kiosk highlights every return stair with two theme-accent pulses over two seconds, without extra camera movement; reduced motion uses static feedback. [#1126](https://github.com/Matysh/houseplan-card/issues/1126)
+
 - Show only “No route data” beside a Zigbee device without a displayed connection; retain incomplete-data diagnostics for visible incoming links and in settings. [#1158](https://github.com/Matysh/houseplan-card/issues/1158)
 
 - Prepare the current branded RU/EN converter for picture-elements, explicit image dimensions and local image measurement, retaining the site shell and canonical conversion code. [#1210](https://github.com/Matysh/houseplan-card/issues/1210)

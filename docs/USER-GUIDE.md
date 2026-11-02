@@ -1140,7 +1140,11 @@ sectors divide the full run evenly at the closest possible step to 30 cm.
 In View, hovering a stair with a valid target shows "Go to floor …", and a
 clean activation switches to that target and restores its saved view; gesture
 tails, broken links and fixed-floor cards do nothing. The target floor is
-never changed automatically. In 2.5D the symbol is flat on the floor. See
+never changed automatically. After stair navigation in View or kiosk, every
+stair leading back pulses twice in the theme accent over two seconds; reduced
+motion shows a static highlight. There is no extra camera movement, and pan
+and pinch remain available. Missing or off-screen return stairs produce no
+extra indicator. In 2.5D the symbol is flat on the floor. See
 [Stairs](STAIRS.md).
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)

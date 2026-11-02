@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1126,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "New transient stair-arrival feedback in View and kiosk, using shared UI Kit motion and existing navigation without persisted model changes.",
+  "summary": {
+    "ru": "После перехода по лестнице все обратные лестницы подсвечиваются на две секунды.",
+    "en": "Highlight every return stair for two seconds after stair navigation."
+  }
+}

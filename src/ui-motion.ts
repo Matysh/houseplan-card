@@ -7,6 +7,7 @@ export const controlMotion = {
   mode: { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' },
   spin: { duration: 1000, easing: 'linear' },
   pulse: { duration: 1200, easing: 'ease-in-out' },
+  arrival: { duration: 2000, iterations: 2, easing: 'ease-in-out' },
 } as const;
 
 export function controlMotionReduced(view: Pick<Window, 'matchMedia'> | null = globalThis.window ?? null): boolean {

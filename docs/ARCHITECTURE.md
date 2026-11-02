@@ -899,7 +899,7 @@ navigation, notice and reading-kit owners. Surface modules retain placement and
 content, not local control paint. Header live markup and the inert intrinsic
 measurement tree share navigation classes. The optional kiosk-size form imports
 pure Kit primitives; opening it does not request the full editor chunk.
-`ui-motion.ts` and its stylesheet own control timings, four keyframes and reduced
+`ui-motion.ts` and its stylesheet own control timings, shared keyframes and reduced
 motion. `ControlSurfacePresentation` handles finite reversible paint only; each
 surface retains its input, identity, announcements and command guards. The scoped
 `haDialogMotion` directive adapts known genuine HA internals after Lit readiness,
@@ -1701,7 +1701,10 @@ Undo/Redo/recreation without granting import or Optimize a new rehost path.
 ### Stairs (#663)
 
 Separate Plan entity, not decor (`STAIRS.md`). Eager `StairViewRuntime`:
-symbols, tooltip, guarded navigation; lazy `StairEditorRuntime`: drawing,
+  symbols, tooltip, guarded navigation and transient arrival feedback (#1126);
+  shared UI Kit motion owns the reciprocal-stair accent contour. The card clears
+  this feedback on floor/mode/disconnection and acknowledges its rendered layer
+  before starting the two-second timer. Lazy `StairEditorRuntime`: drawing,
 transforms, magnets, properties (a plan never loads the editor graph). The root
 card keeps lifecycle, shared history/persistence and stage pointer terminals;
 pure model, tread/trapezoid geometry and style resolution stay in `stairs.ts`.

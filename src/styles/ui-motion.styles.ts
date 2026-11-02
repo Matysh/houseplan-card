@@ -23,6 +23,24 @@ export const controlMotionStyles = unsafeCSS(css`
     0%, 100% { opacity: var(--hpf-loading-low, .3); }
     50% { opacity: var(--hpf-loading-high, .9); }
   }
+  @keyframes hp-ui-arrival {
+    0%, 100% { opacity: 0; }
+    30%, 55% { opacity: 1; }
+  }
+  /* Shared transient contour feedback; geometry belongs to its SVG consumer. */
+  .hpf-arrival-highlight {
+    fill: var(--hp-accent, var(--primary-color));
+    fill-opacity: .22;
+    stroke: var(--hp-accent, var(--primary-color));
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+    animation: hp-ui-arrival var(--hpf-arrival-cycle-duration) var(--hpf-arrival-easing) var(--hpf-arrival-iterations) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hpf-arrival-highlight { animation: none; opacity: 1; }
+  }
 `.cssText + `:host {
   --hpf-paint-duration:${controlMotion.paint.duration}ms; --hpf-paint-easing:${controlMotion.paint.easing};
   --hpf-appear-duration:${controlMotion.appear.duration}ms; --hpf-appear-easing:${controlMotion.appear.easing};
@@ -30,5 +48,7 @@ export const controlMotionStyles = unsafeCSS(css`
   --hpf-disclosure-duration:${controlMotion.disclosure.duration}ms; --hpf-disclosure-easing:${controlMotion.disclosure.easing};
   --hpf-spin-duration:${controlMotion.spin.duration}ms; --hpf-spin-easing:${controlMotion.spin.easing};
   --hpf-pulse-duration:${controlMotion.pulse.duration}ms; --hpf-pulse-easing:${controlMotion.pulse.easing};
+  --hpf-arrival-cycle-duration:${controlMotion.arrival.duration / controlMotion.arrival.iterations}ms;
+  --hpf-arrival-iterations:${controlMotion.arrival.iterations}; --hpf-arrival-easing:${controlMotion.arrival.easing};
 }`
   + controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after'));

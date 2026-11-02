@@ -75,7 +75,18 @@ camera. A focused stair link draws no focus indicator — neither the browser's
 ring nor an outline of its own (owner's decision, #686); it stays in the Tab
 order, and Enter or Space still follow it. Pan, pinch, long press, swipe and pointer cancellation do not navigate.
 In a card configured with `floor`, stairs are visible but inert. The target
-floor receives no automatic stair, highlight or camera centring.
+floor receives no automatic stair or camera centring.
+
+After a successful stair activation in View or kiosk, all stairs on the target
+floor that link back to the source floor pulse together for two seconds (two
+one-second ease-in-out cycles). The shared UI Kit accent (`--hp-accent`, linked
+to HA `--primary-color`) paints the cached outline with a non-scaling 3 px stroke
+and 22% fill; reduced motion shows the same contour statically for two seconds.
+Missing or off-screen reciprocal stairs cause no additional camera movement or
+edge indicator. Ordinary tab, swipe and carousel navigation does not start this
+feedback. Pointer-transparent feedback preserves navigation, pan and pinch;
+another floor, editor entry or disconnection clears its state and timer.
+This is transient View state, never persisted geometry or stair styling.
 
 ## Geometry and drawing
 
@@ -165,7 +176,10 @@ a blocked or absent-target deletion does not clean up any links.
   its `d` and the outline points are built once per cached geometry object
   (`cachedStairMarkup`), not on every render.
 - `src/stairs-view.ts` is the eager read-only boundary for symbols, guarded
-  navigation and touch/pointer gesture suppression.
+  navigation, arrival feedback lifecycle and touch/pointer gesture suppression.
+  The card clears arrival on space/mode/lifecycle boundaries and starts its
+  lifetime after Lit commits the destination layer. Shared `ui-motion` tokens
+  and styles own its appearance, including reduced motion.
 - `src/stairs-editor-model.ts` keeps the eager-safe helpers the View runtime
   shares (defaults, kind conversion, target state, stair-to-stair magnet);
   `src/stairs-box.ts` owns the editor-only oriented-box transforms —

@@ -1,4 +1,6 @@
 import { nothing, svg, type TemplateResult } from 'lit';
+import { keyed } from 'lit/directives/keyed.js';
+import { controlMotion } from './ui-motion';
 import {
   cachedStairMarkup, cachedStairRenderGeometry, stairList, stairStyleVars, type Stair,
 } from './stairs';
@@ -20,16 +22,55 @@ export interface StairViewHostPort {
   /** The card's pointer tooltip: shown only for a hover-capable pointer. */
   _showTip(event: PointerEvent, title: string, meta: string): void;
   _clearPointerHover(): void;
+  requestUpdate(): unknown;
 }
 
 type ViewPress = { pid: number; startedAt: number };
+interface ArrivalClock {
+  setTimeout(callback: () => void, delay: number): ReturnType<typeof setTimeout>;
+  clearTimeout(timer: ReturnType<typeof setTimeout>): void;
+}
+const arrivalClock: ArrivalClock = {
+  setTimeout: (callback, delay) => setTimeout(callback, delay),
+  clearTimeout: timer => clearTimeout(timer),
+};
 
 /** Eager, read-only stair surface. All editing stays in the lazy editor graph. */
 export class StairViewRuntime {
   private press: ViewPress | null = null;
   private suppressClick = false;
+  private arrival: { from: string; space: string; token: number; rendered: boolean;
+    timer: ReturnType<typeof setTimeout> | null } | null = null;
+  private arrivalToken = 0;
 
-  public constructor(private readonly owner: StairViewHostPort) {}
+  public constructor(private readonly owner: StairViewHostPort, private readonly clock: ArrivalClock = arrivalClock) {}
+
+  public clearArrival(): void {
+    const arrival = this.arrival;
+    if (!arrival) return;
+    this.arrival = null;
+    if (arrival.timer !== null) this.clock.clearTimeout(arrival.timer);
+    this.owner.requestUpdate();
+  }
+
+  public disconnect(): void { this.clearGesture(); this.clearArrival(); }
+
+  /** Start the lifetime after Lit has committed the incoming stair layer. */
+  public updated(): void {
+    const arrival = this.arrival;
+    if (!arrival) return;
+    if (this.owner._mode !== 'view' || this.owner._space !== arrival.space) { this.clearArrival(); return; }
+    if (arrival.rendered && arrival.timer === null) arrival.timer = this.clock.setTimeout(() => {
+      if (this.arrival === arrival) this.clearArrival();
+    }, controlMotion.arrival.duration);
+  }
+
+  private arrive(from: string, space: string): void {
+    this.clearArrival();
+    if (!this.stairs.some(stair => stair.target_space_id === from)) return;
+    this.arrival = { from, space, token: ++this.arrivalToken, rendered: false, timer: null };
+    this.owner.requestUpdate();
+  }
 
   private get stairs(): Stair[] {
     return stairList((this.owner._curSpaceCfg as { stairs?: unknown } | null)?.stairs);
@@ -66,6 +107,8 @@ export class StairViewRuntime {
     const model = this.owner._model;
     const spaceIds = new Set(model.map((item) => item.id));
     const interactive = this.owner._mode === 'view';
+    const renderedSpace = this.owner._space;
+    const arrival = interactive && this.arrival?.space === renderedSpace ? this.arrival : null;
     const items = this.stairs.map((stair) => {
       const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
       const markup = cachedStairMarkup(geometry);
@@ -87,8 +130,18 @@ export class StairViewRuntime {
         if (event.type === 'keydown') this.suppressClick = false;
         if (!active || this.owner._suppressClick || this.suppressClick
             || !stair.target_space_id) return;
-        this.owner._tabClick(stair.target_space_id);
+        // Recheck current ownership; a retained old DOM callback is not a link
+        // on a different floor or under a newly fixed/deleted target.
+        if (this.owner._mode !== 'view' || this.owner._space !== renderedSpace) return;
+        const current = this.stairs.find(item => item.id === stair.id);
+        if (!current || stairTargetState(current, renderedSpace,
+          new Set(this.owner._model.map(item => item.id)), this.owner._hasFixedFloor) !== 'active') return;
+        const target = current.target_space_id!;
+        this.owner._tabClick(target);
+        if (this.owner._mode === 'view' && this.owner._space === target && target !== renderedSpace) this.arrive(renderedSpace, target);
       };
+      const highlight = arrival && stair.target_space_id === arrival.from;
+      if (highlight) arrival.rendered = true;
       return svg`<g class="hp-stair hp-stair-view ${active ? 'navigable' : ''} ${interactive ? 'input-enabled' : ''}"
         data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
         data-target-state=${targetState}
@@ -114,6 +167,8 @@ export class StairViewRuntime {
           x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
         ${markup.treads ? svg`<path class="hp-stair-tread" d=${markup.treads}></path>` : nothing}
         <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
+        ${highlight ? keyed(arrival.token, svg`<polygon class="hpf-arrival-highlight hpf-motion"
+          data-hp="stair-arrival" points=${markup.outline} aria-hidden="true"></polygon>`) : nothing}
       </g>`;
     });
     return svg`<g class="hp-stairs-layer">${items}</g>` as unknown as TemplateResult;
