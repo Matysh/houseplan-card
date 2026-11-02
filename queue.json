@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 705,
+  "revision": 706,
   "nextTicket": 61,
   "nextFence": 61,
   "tasks": {
@@ -788,7 +788,7 @@
       "ownerDecision": null,
       "ticket": 60,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793624263836,
       "reviewEntry": 2,
       "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee",
@@ -890,14 +890,14 @@
       },
       "reviewRound": 2,
       "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
+        "key": "2:material-updated-after-interrupted-local-s6",
+        "reason": "material-updated-after-interrupted-local-s6",
+        "status": "pending",
         "fromStatus": "S7-code-review",
-        "at": 1793623945067,
-        "entry": 1,
-        "requestId": "review:1207:1:d27fee94e56f89d6761e86eec9df67c12089f93c:efa1b130fc69da8277de8bb013b08ea65b581010",
-        "transitionConfirmed": true
+        "at": 1793624718026,
+        "entry": 2,
+        "requestId": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010",
+        "eventId": "1207-refresh-material:f5732115-ee53-4c60-8d29-3631f07f294e:return:1207"
       },
       "reviewRequest": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010",
       "reviewMaterial": {
@@ -1016,7 +1016,8 @@
       },
       "automationError": "automation-error",
       "automationSince": 1793624606128,
-      "automationDetail": "Remote refs changed before merge"
+      "automationDetail": "Remote refs changed before merge",
+      "reason": "material-updated-after-interrupted-local-s6"
     },
     "1208": {
       "issue": 1208,
@@ -1121,19 +1122,7 @@
   },
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1207,
-    "worker": "finish",
-    "token": "60:finish:0bfab811-439d-4472-955e-15c0671f2002:finish:1:admit",
-    "fence": 60,
-    "materialSha": "5470c0e64efb0ed34973013575b86c4e3b27567c",
-    "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793624267308,
-    "expiresAt": 1793628202263,
-    "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee",
-    "reviewRequest": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010"
-  },
+  "active": null,
   "events": {
     "1207-spec-round1-submit-20261102:spec-request": {
       "digest": "04c3b7eee5963ffee2c0eae52ed99e40b3a1bab10c071c90d87ae10dfec7b3c9",
@@ -1271,6 +1260,10 @@
       "digest": "e3ddde1fa897cccba0666805ddf0feecf29952760109d2313a64ddddfe827a4e",
       "issue": 1207
     },
+    "1207-refresh-material:f5732115-ee53-4c60-8d29-3631f07f294e": {
+      "digest": "ff6e3d3cbbeac5648da6c32a6c3cbe9ed4adf31cf3f5ec611426d3541aa1744d",
+      "issue": 1207
+    },
     "finish:eb71ba1e-123c-44e7-a0c1-a8a26968b0e5": {
       "digest": "b5cf567b586fb8a0b0d4848984ba2347bd77e7da6bad16e8a72800348d41fb90",
       "issue": 1207,
@@ -1399,6 +1392,26 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "1207-refresh-material:f5732115-ee53-4c60-8d29-3631f07f294e:return:1207": {
+      "digest": "ff6e3d3cbbeac5648da6c32a6c3cbe9ed4adf31cf3f5ec611426d3541aa1744d",
+      "issue": 1207,
+      "message": {
+        "kind": "return",
+        "issue": 1207,
+        "at": 1793624718026,
+        "entry": 2,
+        "notice": {
+          "key": "2:material-updated-after-interrupted-local-s6",
+          "reason": "material-updated-after-interrupted-local-s6",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1793624718026,
+          "entry": 2,
+          "requestId": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010",
+          "eventId": "1207-refresh-material:f5732115-ee53-4c60-8d29-3631f07f294e:return:1207"
+        }
       }
     }
   },
