@@ -431,7 +431,6 @@ const out = await page.evaluate(async () => {
   const healthySource = card._isoSource;
   let invalidAttempts = 0;
   card._view = { x: 123456, y: 234567, w: 3456, h: 4567 };
-  card._viewModeSnap = { mode: 'view', viewBox: { ...card._view }, zoom: 1 };
   card._isoSource = () => {
     invalidAttempts++;
     throw new Error('invalid source sentinel sensor.private_identifier https://secret.invalid');
@@ -444,7 +443,7 @@ const out = await page.evaluate(async () => {
   const flatView = (root().querySelector('[data-hp-live-viewbox="floor"]')
     ?.getAttribute('viewBox') || '').split(/\s+/).map(Number);
   result.invalidSourceFallbackLatchedAndRefit = invalidAttempts === 1
-    && card._isoFallback.has(firstInvalidKey) && card._viewModeSnap === null
+    && card._isoFallback.has(firstInvalidKey)
     && flatView.length === 4 && flatView.every((value) => Number.isFinite(value) && Math.abs(value) < 10000);
   const fallbackFlatCamera = { x: 80, y: 90, w: 700, h: 620 };
   card._view = { ...fallbackFlatCamera };
@@ -502,13 +501,11 @@ const out = await page.evaluate(async () => {
     },
   });
   card._view = { x: 123456, y: 234567, w: 3456, h: 4567 };
-  card._viewModeSnap = { mode: 'view', viewBox: { ...card._view }, zoom: 1 };
   card.requestUpdate();
   await card.updateComplete;
   card.hass = { ...card.hass, states: { ...card.hass.states } };
   await card.updateComplete;
   result.fallbackLatched = attempts === 1
-    && card._viewModeSnap === null
     && !root().querySelector('.stage.projection-iso')
     && !root().querySelector('[data-hp="iso-walls"]')
     && card._serverCfg.settings?.volumetric_view === true;
@@ -564,7 +561,6 @@ const out = await page.evaluate(async () => {
   fallbackWarnings.length = 0;
   card._stepZoom(1);
   const lateTransitionStarted = card._cameraTransition.active;
-  card._viewModeSnap = { mode: 'view', viewBox: { ...card._view }, zoom: card._zoom };
   card._isoSceneRuntime = {
     ...runtime,
     buildIsoOverlayRenderScene: () => {
@@ -577,7 +573,7 @@ const out = await page.evaluate(async () => {
   card.hass = { ...card.hass, states: { ...card.hass.states } };
   await card.updateComplete;
   result.lateFailureIsRedactedAndLatched = lateTransitionStarted && !card._cameraTransition.active
-    && card._viewModeSnap === null && lateAttempts === 1 && fallbackWarnings.length === 1
+    && lateAttempts === 1 && fallbackWarnings.length === 1
     && /"kind":"structural"/.test(fallbackWarnings[0])
     && /"fingerprint":"[a-z0-9]+"/.test(fallbackWarnings[0])
     && /"terminal":true/.test(fallbackWarnings[0])

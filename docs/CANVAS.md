@@ -120,12 +120,32 @@ operational Store is the one explicit exception (#291).
 
 Entering or leaving an editor does not clear `_view` and wait for a later fit.
 The current view is expressed as a world-space centre plus screen
-pixels-per-unit. `ModeTransitionController` interpolates that representation
-together with the measured stage width/height, and derives a correctly
-aspect-matched viewBox on every frame. The editor may use its own working zoom,
-but View restores the saved same-space centre and zoom on exit; editor zoom is
-never written to View persistence. A zero-sized or reduced-motion path commits
-the exact target atomically without exposing a default-fit frame.
+pixels-per-unit. Both remain unchanged when entering/leaving editors, including
+opening Properties. The relative zoom is re-read against the new fit. During
+motion the real raster viewport keeps one fixed size and the stage clips it;
+SVG and HTML layers share that camera and container-unit basis. The controller
+paints geometry/styles without rebuilding the scene on each animation frame.
+Header overflow is decided before motion; the real controls move by translation.
+Projection changes fade out, commit one projection, then fade in on the same
+220 ms timeline. Reduced motion commits the final state atomically.
+
+Editor gestures do not update saved View intent while the editor is open.
+Exiting saves the CURRENT floor's working zoom as its new View preference;
+there is no restoration of the camera from editor entry (#1207 supersedes
+HP-1543). Changing floors keeps the existing per-floor restore policy. The next
+mode switch preserves the newly selected floor's camera. Reload restores the
+saved scalar with the existing centering policy; it does not persist a new
+camera-centre preference.
+
+Frame growth/shrink rebases relative zoom while retaining physical screen scale
+and centre at every quarter turn. Frames still grow/recompute normally, including
+the editor union and View's recomputed core. Snapshot-held device positions use
+the identity of the layout actually painted, not a newer layout awaiting capture.
+Automatic rebasing and first application of a saved camera may exceed ordinary
+1/3–8 fit limits. Effective command bounds minimally include the shown camera.
+Subsequent explicit pan/zoom steps contract those bounds towards the standard
+range without snapping; Fit all explicitly returns to the standard centred fit.
+Expanded bounds are local to the current camera/floor context, not configuration.
 
 ## §3 Validation limits
 

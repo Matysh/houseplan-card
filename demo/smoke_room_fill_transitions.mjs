@@ -42,7 +42,17 @@ await page.evaluate(() => {
     await sleep(ms);
   };
   const room = () => c.renderRoot.querySelector('[data-hp="room"][data-id="r1"]');
-  const channels = (color) => /rgba?\(([^)]+)\)/.exec(color)?.[1].split(/[\s,/]+/).filter(Boolean) || null;
+  const channels = (color) => {
+    const rgba = /rgba?\(([^)]+)\)/.exec(color)?.[1].split(/[\s,/]+/).filter(Boolean);
+    if (rgba) return rgba;
+    // The shared mode timeline uses premultiplied color-mix(), whose computed
+    // value is color(srgb ...). Normalize through the browser's color engine.
+    if (color === 'none') return null;
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.fillStyle = color; ctx.fillRect(0, 0, 1, 1);
+    const data = ctx.getImageData(0, 0, 1, 1).data;
+    return [...data.slice(0, 3), data[3] / 255];
+  };
   const alphaOf = (color) => {
     const parts = channels(color);
     if (!parts) return 0; // `none`
@@ -89,6 +99,24 @@ await page.evaluate(() => {
     settle,
     paint: () => paint(room()),
     async rest() { await settle(); return paint(room()); },
+    async measureMode(act) {
+      await settle();
+      const node = room(), start = paint(node), samples = [start];
+      await act();
+      const started = performance.now();
+      do { await frame(); samples.push(paint(room())); }
+      while (c._modeTransitionBusy && performance.now() - started < 3000);
+      await settle(); const end = paint(room()); samples.push(end);
+      const peak = key => Math.max(...samples.map(sample => sample[key][1]));
+      return {sameNode: room() === node, from: start.cls, to: end.cls,
+        properties: ['shared-mode-timeline'], frozen: true,
+        spansBothEnds: samples.some(sample => sample.fill[1] > Math.min(start.fill[1], end.fill[1]) + .005
+          && sample.fill[1] < Math.max(start.fill[1], end.fill[1]) - .005),
+        fill: [start.fill[1], peak('fill'), end.fill[1]],
+        stroke: [start.stroke[1], peak('stroke'), end.stroke[1]],
+        fillOvershoot: round(peak('fill') - Math.max(start.fill[1], end.fill[1])),
+        strokeOvershoot: round(peak('stroke') - Math.max(start.stroke[1], end.stroke[1]))};
+    },
     /** Run `act`, then seek the room's frozen transitions through their whole 0.12 s. */
     async measure(act) {
       await settle();
@@ -174,9 +202,9 @@ await run(async () => {
   });
 });
 rest.styled = await run(() => window.__fillWitness.rest());
-measured.enterPlanEditor = await run(() => window.__fillWitness.measure(() => window.__hpTest.setMode('plan')));
+measured.enterPlanEditor = await run(() => window.__fillWitness.measureMode(() => window.__card._setMode('plan')));
 rest.outlined = await run(() => window.__fillWitness.rest());
-measured.leavePlanEditor = await run(() => window.__fillWitness.measure(() => window.__hpTest.setMode('view')));
+measured.leavePlanEditor = await run(() => window.__fillWitness.measureMode(() => window.__card._setMode('view')));
 
 // Control: a real colour change of the same room still animates its fill —
 // catches a false fix `transition: none`.
@@ -223,8 +251,9 @@ for (const [name, result] of Object.entries(measured)) {
   const [from, to] = STATES[name];
   check(`${name}: fixture`, from.test(result.from) && to.test(result.to) || [result.from, result.to]);
   check(`${name}: the same room node changes state`, result.sameNode);
-  check(`${name}: a fill transition runs and is frozen at its first frame`,
-    result.properties.includes('fill') && result.frozen && result.spansBothEnds || result);
+  check(`${name}: fill interpolates between its actual endpoints`,
+    (result.properties.includes('shared-mode-timeline') || result.properties.includes('fill') && result.frozen)
+      && result.spansBothEnds || result);
   check(`${name}: fill is no darker in transit than at either end`,
     result.fillOvershoot <= TOLERANCE || result.fill);
   check(`${name}: stroke is no darker in transit than at either end`,

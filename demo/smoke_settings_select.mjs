@@ -9,6 +9,17 @@ try {
  const trigger=navigation.locator('button');
  await trigger.click();
  out.openListbox=await navigation.locator('[role="listbox"]').isVisible();
+ const options=navigation.locator('[role="option"]');
+ const hover=options.locator('visible=true').nth(1);
+ const before=await hover.boundingBox();await hover.hover();await page.waitForTimeout(180);
+ out.hoverHasOwnInsetOutline=await hover.evaluate(el=>getComputedStyle(el).boxShadow.includes('inset')
+   &&getComputedStyle(el).backgroundColor==='rgba(0, 0, 0, 0)');
+ const after=await hover.boundingBox();
+ out.hoverKeepsRowBounds=before.width===after.width&&before.height===after.height;
+ out.selectedKeepsOwnFill=await options.filter({has:page.locator('.check')}).count()>0
+   ||await options.evaluateAll(rows=>rows.some(el=>el.getAttribute('aria-selected')==='true'
+     &&getComputedStyle(el).backgroundColor!=='rgba(0, 0, 0, 0)'));
+ await page.mouse.move(0,0);
  out.openAnimation=await navigation.locator('[role="listbox"]').evaluate(async el=>{
   await new Promise(requestAnimationFrame);
   const animation=el.getAnimations().find(a=>a.effect?.getTiming().duration===180);

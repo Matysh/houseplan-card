@@ -1,0 +1,3876 @@
+{
+  "label": "final",
+  "root": "/home/matysh/hp-beta4-release-20261029",
+  "fingerprint": "322a41fff8746deae2a6935fd734b9f2deac0a7e143d8f948e9114ddc27a96bc",
+  "source": "current working source",
+  "rows": [
+    {
+      "profile": "large-house-v1",
+      "counts": {
+        "floors": 3,
+        "rooms": 60,
+        "devices": 200,
+        "openings": 100,
+        "partitions": 60,
+        "columns": 40,
+        "decor": 500,
+        "stairs": 250
+      },
+      "rooms": 20,
+      "records": [
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "plan",
+          "firstMotionMs": 123.90000000037253,
+          "totalMs": 566.2999999998137,
+          "fullRenders": 5,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.5,
+              "duration": 124
+            },
+            {
+              "start": 182.5,
+              "duration": 113
+            },
+            {
+              "start": 339.70000000018626,
+              "duration": 60
+            },
+            {
+              "start": 400.20000000018626,
+              "duration": 127
+            }
+          ],
+          "before": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7418265622718438,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 0,
+            "headerMeasures": 0
+          },
+          "series": [
+            {
+              "ms": 123.90000000037253,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 1,
+              "headerMeasures": 0,
+              "busy": true
+            },
+            {
+              "ms": 164.90000000037253,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 2,
+              "headerMeasures": 1,
+              "busy": true
+            },
+            {
+              "ms": 296.90000000037253,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 3,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 339.90000000037253,
+              "width": 1241.5,
+              "height": 829.328125,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.106938",
+              "projection": "flat",
+              "renders": 3,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 400.29999999981374,
+              "width": 926.25,
+              "height": 782.90625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.982613",
+              "projection": "flat",
+              "renders": 3,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 528.7000000001863,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 5,
+              "headerMeasures": 2,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 5,
+            "headerMeasures": 2
+          }
+        },
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "devices",
+          "firstMotionMs": 62.19999999925494,
+          "totalMs": 482.09999999962747,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -1.800000000745058,
+              "duration": 63
+            },
+            {
+              "start": 342.79999999981374,
+              "duration": 107
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 5,
+            "headerMeasures": 2
+          },
+          "series": [
+            {
+              "ms": 62.19999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 81.69999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 111.69999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.397347",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 148.19999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.574452",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 178.09999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.881104",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 204.29999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.920667",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 232.8999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.965835",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 264.8999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.98771",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 295.29999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.997496",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 343.19999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999471",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 450,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 7,
+            "headerMeasures": 4
+          }
+        },
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "decor",
+          "firstMotionMs": 60.10000000055879,
+          "totalMs": 432.90000000037253,
+          "fullRenders": 3,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.19999999925494194,
+              "duration": 59
+            },
+            {
+              "start": 316,
+              "duration": 86
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 7,
+            "headerMeasures": 4
+          },
+          "series": [
+            {
+              "ms": 60.10000000055879,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 83.80000000074506,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 114.20000000018626,
+              "width": 920,
+              "height": 781.3125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.459477",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 150.40000000037253,
+              "width": 920,
+              "height": 780.265625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.631601",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 172.6000000005588,
+              "width": 920,
+              "height": 778.625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.896726",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 200,
+              "width": 920,
+              "height": 778.421875,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.931009",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 222.30000000074506,
+              "width": 920,
+              "height": 778.171875,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.970871",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 249.5,
+              "width": 920,
+              "height": 778.09375,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.982338",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 283.20000000018626,
+              "width": 920,
+              "height": 778.015625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.995309",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 316.5,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999793",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 402.90000000037253,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 10,
+              "headerMeasures": 6,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 10,
+            "headerMeasures": 6
+          }
+        },
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "view",
+          "firstMotionMs": 165.1000000005588,
+          "totalMs": 482.80000000074506,
+          "fullRenders": 4,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.2999999998137355,
+              "duration": 58
+            },
+            {
+              "start": 335.40000000037253,
+              "duration": 105
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 10,
+            "headerMeasures": 6
+          },
+          "series": [
+            {
+              "ms": 58.80000000074506,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 11,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 90.6000000005588,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 7,
+              "busy": true
+            },
+            {
+              "ms": 120.5,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 165.1000000005588,
+              "width": 955.015625,
+              "height": 783.53125,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(233, 234, 235)",
+              "toolbar": "0.902733",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 205.30000000074506,
+              "width": 1132.6875,
+              "height": 811.671875,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(121, 126, 133)",
+              "toolbar": "0.40917",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 244.80000000074506,
+              "width": 1237.734375,
+              "height": 828.296875,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(55, 63, 72)",
+              "toolbar": "0.117388",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 285.80000000074506,
+              "width": 1261.84375,
+              "height": 832.125,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(39, 48, 58)",
+              "toolbar": "0.0504054",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 335.70000000018626,
+              "width": 1276.765625,
+              "height": 834.484375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(30, 39, 50)",
+              "toolbar": "0.00898421",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 441.1000000005588,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 14,
+              "headerMeasures": 8,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7418265622718438,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 14,
+            "headerMeasures": 8
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "plan",
+          "firstMotionMs": 75.20000000018626,
+          "totalMs": 519.4000000003725,
+          "fullRenders": 4,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.20000000018626451,
+              "duration": 74
+            },
+            {
+              "start": 116.59999999962747,
+              "duration": 57
+            },
+            {
+              "start": 173.90000000037253,
+              "duration": 63
+            },
+            {
+              "start": 237,
+              "duration": 56
+            },
+            {
+              "start": 294,
+              "duration": 57
+            },
+            {
+              "start": 351.79999999981374,
+              "duration": 132
+            }
+          ],
+          "before": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7418265622718438,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 14,
+            "headerMeasures": 8
+          },
+          "series": [
+            {
+              "ms": 75.20000000018626,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 15,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 104.40000000037253,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 16,
+              "headerMeasures": 9,
+              "busy": true
+            },
+            {
+              "ms": 116.79999999981374,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 16,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 174.40000000037253,
+              "width": 1253.421875,
+              "height": 831.078125,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.0738252",
+              "projection": "flat",
+              "renders": 16,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 237.29999999981374,
+              "width": 1019.3125,
+              "height": 796.609375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.724095",
+              "projection": "flat",
+              "renders": 16,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 294.20000000018626,
+              "width": 938.84375,
+              "height": 784.765625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.947656",
+              "projection": "flat",
+              "renders": 16,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 352,
+              "width": 923.421875,
+              "height": 782.5,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.990475",
+              "projection": "flat",
+              "renders": 16,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 484.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 18,
+              "headerMeasures": 10,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 18,
+            "headerMeasures": 10
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "devices",
+          "firstMotionMs": 59.799999999813735,
+          "totalMs": 397.09999999962747,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.5,
+              "duration": 60
+            },
+            {
+              "start": 302.90000000037253,
+              "duration": 71
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 18,
+            "headerMeasures": 10
+          },
+          "series": [
+            {
+              "ms": 59.799999999813735,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 80.79999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 107.59999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.437532",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 142.70000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.61321",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 170,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.836992",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 197.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.927714",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 230.59999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.969283",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 251.20000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.989412",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 280.59999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.994832",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 303,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999698",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 375.79999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 20,
+              "headerMeasures": 12,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 20,
+            "headerMeasures": 12
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "decor",
+          "firstMotionMs": 49.40000000037253,
+          "totalMs": 383.1000000005588,
+          "fullRenders": 3,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": 283.20000000018626,
+              "duration": 80
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 20,
+            "headerMeasures": 12
+          },
+          "series": [
+            {
+              "ms": 49.40000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 66.79999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 100.20000000018626,
+              "width": 920,
+              "height": 781.625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.408801",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 123.5,
+              "width": 920,
+              "height": 779.640625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.731145",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 150.90000000037253,
+              "width": 920,
+              "height": 779.0625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.825317",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 183.40000000037253,
+              "width": 920,
+              "height": 778.46875,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.922622",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 204.90000000037253,
+              "width": 920,
+              "height": 778.203125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.966959",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 233.40000000037253,
+              "width": 920,
+              "height": 778.125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.979499",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 257.90000000037253,
+              "width": 920,
+              "height": 778.03125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.994044",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 283.6000000005588,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.997681",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 363.90000000037253,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 23,
+              "headerMeasures": 14,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 23,
+            "headerMeasures": 14
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "view",
+          "firstMotionMs": 185.30000000074506,
+          "totalMs": 500.1000000005588,
+          "fullRenders": 4,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.2999999998137355,
+              "duration": 55
+            },
+            {
+              "start": 366.80000000074506,
+              "duration": 102
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 23,
+            "headerMeasures": 14
+          },
+          "series": [
+            {
+              "ms": 55.60000000055879,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 83.30000000074506,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 15,
+              "busy": true
+            },
+            {
+              "ms": 112.70000000018626,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 140.80000000074506,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 185.30000000074506,
+              "width": 1092.6875,
+              "height": 805.34375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(146, 150, 156)",
+              "toolbar": "0.520284",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 237.6000000005588,
+              "width": 1227.015625,
+              "height": 826.609375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(61, 69, 78)",
+              "toolbar": "0.147156",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 283.5,
+              "width": 1265.265625,
+              "height": 832.65625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(37, 46, 56)",
+              "toolbar": "0.0408878",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 325.70000000018626,
+              "width": 1277.78125,
+              "height": 834.640625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(29, 38, 49)",
+              "toolbar": "0.00614801",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 367.30000000074506,
+              "width": 1279.9375,
+              "height": 834.984375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(28, 37, 48)",
+              "toolbar": "0.000139722",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 469.6000000005588,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 27,
+              "headerMeasures": 16,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7418265622718438,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 27,
+            "headerMeasures": 16
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "plan",
+          "firstMotionMs": 78.5,
+          "totalMs": 510.09999999962747,
+          "fullRenders": 4,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.20000000018626451,
+              "duration": 78
+            },
+            {
+              "start": 149.8999999994412,
+              "duration": 51
+            },
+            {
+              "start": 201.8999999994412,
+              "duration": 56
+            },
+            {
+              "start": 258.3999999994412,
+              "duration": 59
+            },
+            {
+              "start": 317.59999999962747,
+              "duration": 56
+            },
+            {
+              "start": 373.70000000018626,
+              "duration": 97
+            }
+          ],
+          "before": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7418265622718438,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 27,
+            "headerMeasures": 16
+          },
+          "series": [
+            {
+              "ms": 78.5,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 28,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 109,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 17,
+              "busy": true
+            },
+            {
+              "ms": 124.29999999981374,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 150.20000000018626,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 202.09999999962747,
+              "width": 1104.453125,
+              "height": 809.15625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.487615",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 258.70000000018626,
+              "width": 972.03125,
+              "height": 789.65625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.855428",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 317.79999999981374,
+              "width": 934.4375,
+              "height": 784.125,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.959875",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 373.8999999994412,
+              "width": 920.640625,
+              "height": 782.09375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.998195",
+              "projection": "flat",
+              "renders": 29,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 471.8999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 31,
+              "headerMeasures": 18,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 31,
+            "headerMeasures": 18
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "devices",
+          "firstMotionMs": 66.20000000018626,
+          "totalMs": 408.20000000018626,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.40000000037252903,
+              "duration": 66
+            },
+            {
+              "start": 311.09999999962747,
+              "duration": 73
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 31,
+            "headerMeasures": 18
+          },
+          "series": [
+            {
+              "ms": 66.20000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 91.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 113.79999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.423888",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 134.20000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.600511",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 164.5,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.740593",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 192.5,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.888276",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 223.09999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.950668",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 246.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.980363",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 277.40000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.988859",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 311.29999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.997893",
+              "projection": "flat",
+              "renders": 32,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 385.09999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 33,
+              "headerMeasures": 20,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 33,
+            "headerMeasures": 20
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "decor",
+          "firstMotionMs": 48.40000000037253,
+          "totalMs": 381.1000000005588,
+          "fullRenders": 3,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": 281.29999999981374,
+              "duration": 73
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 33,
+            "headerMeasures": 20
+          },
+          "series": [
+            {
+              "ms": 48.40000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 66.5,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 89.79999999981374,
+              "width": 920,
+              "height": 781.65625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.404361",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 115.90000000037253,
+              "width": 920,
+              "height": 780.5625,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.582362",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 148.1000000005588,
+              "width": 920,
+              "height": 779.078125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.823662",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 169.90000000037253,
+              "width": 920,
+              "height": 778.46875,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.921973",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 197.90000000037253,
+              "width": 920,
+              "height": 778.3125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.948242",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 231.40000000037253,
+              "width": 920,
+              "height": 778.125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.97928",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 253.79999999981374,
+              "width": 920,
+              "height": 778.03125,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.993986",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 281.79999999981374,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.997608",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 355.20000000018626,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 36,
+              "headerMeasures": 22,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 36,
+            "headerMeasures": 22
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "view",
+          "firstMotionMs": 156.6000000005588,
+          "totalMs": 466.5,
+          "fullRenders": 4,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.2999999998137355,
+              "duration": 68
+            },
+            {
+              "start": 358.80000000074506,
+              "duration": 89
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7418265987805981,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 36,
+            "headerMeasures": 22
+          },
+          "series": [
+            {
+              "ms": 68.30000000074506,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 92.70000000018626,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265987805981,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 23,
+              "busy": true
+            },
+            {
+              "ms": 117.20000000018626,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 156.6000000005588,
+              "width": 958.484375,
+              "height": 784.09375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(231, 232, 233)",
+              "toolbar": "0.893062",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 196.80000000074506,
+              "width": 1135.1875,
+              "height": 812.0625,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(119, 125, 131)",
+              "toolbar": "0.402224",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 235.70000000018626,
+              "width": 1217.53125,
+              "height": 825.109375,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(67, 75, 84)",
+              "toolbar": "0.173495",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 277.6000000005588,
+              "width": 1262.15625,
+              "height": 832.171875,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(39, 48, 58)",
+              "toolbar": "0.0495557",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 317,
+              "width": 1273.734375,
+              "height": 834,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(32, 41, 52)",
+              "toolbar": "0.017387",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 359.1000000005588,
+              "width": 1279.765625,
+              "height": 834.953125,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(28, 37, 48)",
+              "toolbar": "0.000615955",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 448.6000000005588,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7418265622718438,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 40,
+              "headerMeasures": 24,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7418265622718438,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 40,
+            "headerMeasures": 24
+          }
+        }
+      ]
+    },
+    {
+      "profile": "large-house-isometric-v1",
+      "counts": {
+        "floors": 3,
+        "rooms": 60,
+        "devices": 200,
+        "openings": 100,
+        "partitions": 60,
+        "columns": 40,
+        "decor": 500,
+        "stairs": 250
+      },
+      "rooms": 20,
+      "records": [
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "plan",
+          "firstMotionMs": 95.29999999981374,
+          "totalMs": 716,
+          "fullRenders": 6,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.6000000005587935,
+              "duration": 95
+            },
+            {
+              "start": 179.69999999925494,
+              "duration": 73
+            },
+            {
+              "start": 253.19999999925494,
+              "duration": 190
+            },
+            {
+              "start": 449.3999999994412,
+              "duration": 157
+            },
+            {
+              "start": 607.6999999992549,
+              "duration": 102
+            }
+          ],
+          "before": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7212266057684179,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "iso",
+            "renders": 0,
+            "headerMeasures": 0
+          },
+          "series": [
+            {
+              "ms": 95.29999999981374,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 1,
+              "headerMeasures": 0,
+              "busy": true
+            },
+            {
+              "ms": 123.69999999925494,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 2,
+              "headerMeasures": 1,
+              "busy": true
+            },
+            {
+              "ms": 145.09999999962747,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 2,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 180.69999999925494,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 2,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 253.8999999994412,
+              "width": 1106,
+              "height": 809.375,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.483315",
+              "projection": "iso",
+              "renders": 2,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 450.69999999925494,
+              "width": 942.953125,
+              "height": 785.375,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.9362",
+              "projection": "flat",
+              "renders": 3,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 710.3999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 6,
+              "headerMeasures": 2,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 6,
+            "headerMeasures": 2
+          }
+        },
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "devices",
+          "firstMotionMs": 71.69999999925494,
+          "totalMs": 449.69999999925494,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -1.5,
+              "duration": 72
+            },
+            {
+              "start": 317.19999999925494,
+              "duration": 108
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 6,
+            "headerMeasures": 2
+          },
+          "series": [
+            {
+              "ms": 71.69999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 2,
+              "busy": true
+            },
+            {
+              "ms": 98.79999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 125.3999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.467884",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 165.19999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.638921",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 191.69999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.898722",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 223.29999999981374,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.932224",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 252.69999999925494,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.97152",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 284.3999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.990401",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 317.3999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.998468",
+              "projection": "flat",
+              "renders": 7,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 425.8999999994412,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 8,
+              "headerMeasures": 4,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 8,
+            "headerMeasures": 4
+          }
+        },
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "decor",
+          "firstMotionMs": 50.09999999962747,
+          "totalMs": 381.8999999994412,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.2999999998137355,
+              "duration": 50
+            },
+            {
+              "start": 298.59999999962747,
+              "duration": 57
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 8,
+            "headerMeasures": 4
+          },
+          "series": [
+            {
+              "ms": 50.09999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 4,
+              "busy": true
+            },
+            {
+              "ms": 69.59999999962747,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 92.79999999981374,
+              "width": 920,
+              "height": 781.578125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.417627",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 115.5,
+              "width": 920,
+              "height": 780.484375,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.594337",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 148.79999999981374,
+              "width": 920,
+              "height": 779.046875,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.828929",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 168.5,
+              "width": 920,
+              "height": 778.453125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.924126",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 198.8999999994412,
+              "width": 920,
+              "height": 778.296875,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.949808",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 221.59999999962747,
+              "width": 920,
+              "height": 778.109375,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.980041",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 248.79999999981374,
+              "width": 920,
+              "height": 778.0625,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.988537",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 269.20000000018626,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.997823",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 299,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999584",
+              "projection": "flat",
+              "renders": 9,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 356.09999999962747,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 10,
+              "headerMeasures": 6,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 10,
+            "headerMeasures": 6
+          }
+        },
+        {
+          "cycle": 0,
+          "warmup": true,
+          "mode": "view",
+          "firstMotionMs": 157.79999999981374,
+          "totalMs": 567.2000000001863,
+          "fullRenders": 6,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": 197.70000000018626,
+              "duration": 121
+            },
+            {
+              "start": 319.3999999994412,
+              "duration": 187
+            },
+            {
+              "start": 506.59999999962747,
+              "duration": 59
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 10,
+            "headerMeasures": 6
+          },
+          "series": [
+            {
+              "ms": 47.700000000186265,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 12,
+              "headerMeasures": 6,
+              "busy": true
+            },
+            {
+              "ms": 67.5,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 13,
+              "headerMeasures": 7,
+              "busy": true
+            },
+            {
+              "ms": 90.5,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 13,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 116.79999999981374,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 13,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 157.79999999981374,
+              "width": 1105.421875,
+              "height": 807.359375,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(138, 143, 148)",
+              "toolbar": "0.484901",
+              "projection": "flat",
+              "renders": 13,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 197.8999999994412,
+              "width": 1205.65625,
+              "height": 823.21875,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(75, 82, 91)",
+              "toolbar": "0.206502",
+              "projection": "flat",
+              "renders": 13,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 320.20000000018626,
+              "width": 1247.09375,
+              "height": 829.78125,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(49, 57, 67)",
+              "toolbar": "0.0913764",
+              "projection": "iso",
+              "renders": 14,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 507.20000000018626,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "iso",
+              "renders": 16,
+              "headerMeasures": 8,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7212266057684179,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "iso",
+            "renders": 16,
+            "headerMeasures": 8
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "plan",
+          "firstMotionMs": 81.5,
+          "totalMs": 636,
+          "fullRenders": 5,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.2999999998137355,
+              "duration": 81
+            },
+            {
+              "start": 149.29999999981374,
+              "duration": 77
+            },
+            {
+              "start": 226.5,
+              "duration": 79
+            },
+            {
+              "start": 306.20000000018626,
+              "duration": 139
+            },
+            {
+              "start": 452.90000000037253,
+              "duration": 150
+            }
+          ],
+          "before": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7212266057684179,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "iso",
+            "renders": 16,
+            "headerMeasures": 8
+          },
+          "series": [
+            {
+              "ms": 81.5,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 17,
+              "headerMeasures": 8,
+              "busy": true
+            },
+            {
+              "ms": 116.59999999962747,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 18,
+              "headerMeasures": 9,
+              "busy": true
+            },
+            {
+              "ms": 150,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 18,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 227.59999999962747,
+              "width": 1150.71875,
+              "height": 815.953125,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.359094",
+              "projection": "iso",
+              "renders": 18,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 307.09999999962747,
+              "width": 963.09375,
+              "height": 788.34375,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.880292",
+              "projection": "iso",
+              "renders": 18,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 459,
+              "width": 923.328125,
+              "height": 782.484375,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.990747",
+              "projection": "flat",
+              "renders": 19,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 603.5999999996275,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 21,
+              "headerMeasures": 10,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 21,
+            "headerMeasures": 10
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "devices",
+          "firstMotionMs": 53.200000000186265,
+          "totalMs": 396.6000000005588,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.09999999962747097,
+              "duration": 52
+            },
+            {
+              "start": 300.40000000037253,
+              "duration": 66
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 21,
+            "headerMeasures": 10
+          },
+          "series": [
+            {
+              "ms": 53.200000000186265,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 10,
+              "busy": true
+            },
+            {
+              "ms": 74.5,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 99.20000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 118.6000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.664154",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 148.6000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.783685",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 171.20000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.90531",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 197.1000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.936972",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 230,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.973671",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 250.70000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.991482",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 279.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.996099",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 300.40000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999916",
+              "projection": "flat",
+              "renders": 22,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 366.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 23,
+              "headerMeasures": 12,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 23,
+            "headerMeasures": 12
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "decor",
+          "firstMotionMs": 44.90000000037253,
+          "totalMs": 383.1000000005588,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": 299.70000000018626,
+              "duration": 63
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 23,
+            "headerMeasures": 12
+          },
+          "series": [
+            {
+              "ms": 44.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 12,
+              "busy": true
+            },
+            {
+              "ms": 66.6000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 90.29999999981374,
+              "width": 920,
+              "height": 781.359375,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.454035",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 116.6000000005588,
+              "width": 920,
+              "height": 780.28125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.627665",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 139.90000000037253,
+              "width": 920,
+              "height": 778.953125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.842983",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 166.6000000005588,
+              "width": 920,
+              "height": 778.640625,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.89572",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 193.70000000018626,
+              "width": 920,
+              "height": 778.28125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.954029",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 219.70000000018626,
+              "width": 920,
+              "height": 778.171875,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.970478",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 250,
+              "width": 920,
+              "height": 778.046875,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.989951",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 271.5,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.998318",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 300,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999771",
+              "projection": "flat",
+              "renders": 24,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 363.79999999981374,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 25,
+              "headerMeasures": 14,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 25,
+            "headerMeasures": 14
+          }
+        },
+        {
+          "cycle": 1,
+          "warmup": false,
+          "mode": "view",
+          "firstMotionMs": 136.29999999981374,
+          "totalMs": 516.5999999996275,
+          "fullRenders": 6,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": 191.29999999981374,
+              "duration": 143
+            },
+            {
+              "start": 335.29999999981374,
+              "duration": 158
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 25,
+            "headerMeasures": 14
+          },
+          "series": [
+            {
+              "ms": 46,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 27,
+              "headerMeasures": 14,
+              "busy": true
+            },
+            {
+              "ms": 66.79999999981374,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 28,
+              "headerMeasures": 15,
+              "busy": true
+            },
+            {
+              "ms": 88.90000000037253,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 28,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 136.29999999981374,
+              "width": 922.390625,
+              "height": 778.375,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(253, 254, 254)",
+              "toolbar": "0.993347",
+              "projection": "flat",
+              "renders": 28,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 192.29999999981374,
+              "width": 1169.609375,
+              "height": 817.515625,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(98, 104, 111)",
+              "toolbar": "0.306633",
+              "projection": "flat",
+              "renders": 28,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 335.90000000037253,
+              "width": 1247.71875,
+              "height": 829.875,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(48, 57, 67)",
+              "toolbar": "0.0896468",
+              "projection": "iso",
+              "renders": 29,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 494.59999999962747,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "iso",
+              "renders": 31,
+              "headerMeasures": 16,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7212266057684179,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "iso",
+            "renders": 31,
+            "headerMeasures": 16
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "plan",
+          "firstMotionMs": 69.90000000037253,
+          "totalMs": 584.6000000005588,
+          "fullRenders": 5,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.39999999944120646,
+              "duration": 69
+            },
+            {
+              "start": 117.5,
+              "duration": 81
+            },
+            {
+              "start": 199.20000000018626,
+              "duration": 91
+            },
+            {
+              "start": 301.20000000018626,
+              "duration": 156
+            },
+            {
+              "start": 470.5,
+              "duration": 92
+            }
+          ],
+          "before": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7212266057684179,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "iso",
+            "renders": 31,
+            "headerMeasures": 16
+          },
+          "series": [
+            {
+              "ms": 69.90000000037253,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 32,
+              "headerMeasures": 16,
+              "busy": true
+            },
+            {
+              "ms": 100.5,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 33,
+              "headerMeasures": 17,
+              "busy": true
+            },
+            {
+              "ms": 118.1000000005588,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0",
+              "projection": "iso",
+              "renders": 33,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 200.29999999981374,
+              "width": 1243.921875,
+              "height": 829.6875,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.100174",
+              "projection": "iso",
+              "renders": 33,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 308.79999999981374,
+              "width": 983.03125,
+              "height": 791.265625,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.824885",
+              "projection": "iso",
+              "renders": 33,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 470.79999999981374,
+              "width": 921.21875,
+              "height": 782.171875,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.996597",
+              "projection": "flat",
+              "renders": 34,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 562.9000000003725,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 36,
+              "headerMeasures": 18,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 36,
+            "headerMeasures": 18
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "devices",
+          "firstMotionMs": 51.60000000055879,
+          "totalMs": 398.40000000037253,
+          "fullRenders": 2,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.2999999998137355,
+              "duration": 51
+            },
+            {
+              "start": 300,
+              "duration": 69
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 36,
+            "headerMeasures": 18
+          },
+          "series": [
+            {
+              "ms": 51.60000000055879,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 18,
+              "busy": true
+            },
+            {
+              "ms": 71.30000000074506,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 102.30000000074506,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.379292",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 131.6000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.710414",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 154.40000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.875918",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 181.70000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.917574",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 201.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.964258",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 231.6000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.977715",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 251.20000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.993262",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 281.6000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.997226",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 300.1000000005588,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 37,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 370.30000000074506,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 38,
+              "headerMeasures": 20,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 38,
+            "headerMeasures": 20
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "decor",
+          "firstMotionMs": 45.90000000037253,
+          "totalMs": 383,
+          "fullRenders": 3,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": 289.30000000074506,
+              "duration": 73
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 782,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 38,
+            "headerMeasures": 20
+          },
+          "series": [
+            {
+              "ms": 45.90000000037253,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 20,
+              "busy": true
+            },
+            {
+              "ms": 66.70000000018626,
+              "width": 920,
+              "height": 782,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.35",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 91.70000000018626,
+              "width": 920,
+              "height": 781.453125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.438764",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 116.5,
+              "width": 920,
+              "height": 780.359375,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.614216",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 139.5,
+              "width": 920,
+              "height": 778.984375,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.837628",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 166.70000000018626,
+              "width": 920,
+              "height": 778.65625,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.89216",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 188,
+              "width": 920,
+              "height": 778.28125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.952364",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 216.6000000005588,
+              "width": 920,
+              "height": 778.1875,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.969417",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 239.6000000005588,
+              "width": 920,
+              "height": 778.0625,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.989412",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 266.70000000018626,
+              "width": 920,
+              "height": 778.03125,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.994832",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 289.5,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "0.999698",
+              "projection": "flat",
+              "renders": 39,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 363.40000000037253,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 41,
+              "headerMeasures": 22,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 41,
+            "headerMeasures": 22
+          }
+        },
+        {
+          "cycle": 2,
+          "warmup": false,
+          "mode": "view",
+          "firstMotionMs": 153.70000000018626,
+          "totalMs": 568.7999999998137,
+          "fullRenders": 6,
+          "headerMeasures": 2,
+          "longTasks": [
+            {
+              "start": -0.20000000018626451,
+              "duration": 57
+            },
+            {
+              "start": 238.79999999981374,
+              "duration": 128
+            },
+            {
+              "start": 367.59999999962747,
+              "duration": 179
+            }
+          ],
+          "before": {
+            "width": 920,
+            "height": 778,
+            "ppu": 0.7212266165525635,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "flat",
+            "renders": 41,
+            "headerMeasures": 22
+          },
+          "series": [
+            {
+              "ms": 57.39999999944121,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 43,
+              "headerMeasures": 22,
+              "busy": true
+            },
+            {
+              "ms": 83.3999999994412,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266165525635,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 44,
+              "headerMeasures": 23,
+              "busy": true
+            },
+            {
+              "ms": 106.70000000018626,
+              "width": 920,
+              "height": 778,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "flat",
+              "renders": 44,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 153.70000000018626,
+              "width": 929.34375,
+              "height": 779.46875,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(249, 249, 250)",
+              "toolbar": "0.974038",
+              "projection": "flat",
+              "renders": 44,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 197.3999999994412,
+              "width": 1172.90625,
+              "height": 818.03125,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(96, 102, 110)",
+              "toolbar": "0.297449",
+              "projection": "flat",
+              "renders": 44,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 239,
+              "width": 1232.84375,
+              "height": 827.53125,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(58, 66, 75)",
+              "toolbar": "0.130962",
+              "projection": "flat",
+              "renders": 44,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 368.3999999994412,
+              "width": 1267.203125,
+              "height": 832.96875,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(36, 45, 55)",
+              "toolbar": "0.0355219",
+              "projection": "iso",
+              "renders": 45,
+              "headerMeasures": 24,
+              "busy": true
+            },
+            {
+              "ms": 547.7999999998137,
+              "width": 1280,
+              "height": 835,
+              "ppu": 0.7212266057684179,
+              "background": "rgb(255, 255, 255)",
+              "toolbar": "1",
+              "projection": "iso",
+              "renders": 47,
+              "headerMeasures": 24,
+              "busy": false
+            }
+          ],
+          "after": {
+            "width": 1280,
+            "height": 835,
+            "ppu": 0.7212266057684179,
+            "background": "rgb(255, 255, 255)",
+            "toolbar": "1",
+            "projection": "iso",
+            "renders": 47,
+            "headerMeasures": 24
+          }
+        }
+      ]
+    }
+  ]
+}

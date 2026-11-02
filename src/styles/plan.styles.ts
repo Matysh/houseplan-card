@@ -36,6 +36,8 @@ export const planStyles = css`
       position: absolute;
       inset: 0;
       z-index: 1;
+      /* Scene cqw belongs to the raster viewport, not its moving outer clip. */
+      container-type: inline-size;
     }
     .stage.mode-transition,
     .stage.mode-transition .zoomwrap {
@@ -50,6 +52,23 @@ export const planStyles = css`
     .stage.mode-transition .hp-moon-sky { opacity: var(--hp-mode-view-weight) !important; }
     .stage.mode-transition .hp-editor-only-layer { opacity: var(--hp-mode-editor-weight) !important; }
     .stage.mode-transition .hp-plan-only-layer { opacity: var(--hp-mode-plan-weight) !important; pointer-events:none; }
+    /* Endpoint alpha is premultiplied before colour mixing (#746). Native
+       room transitions must not compete with the common mode progress. */
+    .stage.mode-paint-settling .room { transition:none; }
+    .stage.mode-transition .room {
+      transition:none;
+      fill:color-mix(in srgb,
+        color-mix(in srgb,var(--room-fill,transparent) calc(var(--room-fill-op,0) * 100%),transparent) calc((1 - var(--hp-mode-plan-weight)) * 100%),
+        color-mix(in srgb,rgb(62,166,255) 6%,transparent) calc(var(--hp-mode-plan-weight) * 100%));
+      fill-opacity:1;
+      stroke:color-mix(in srgb,
+        color-mix(in srgb,var(--room-stroke,transparent) calc(var(--room-stroke-op,0) * 100%),transparent) calc((1 - var(--hp-mode-plan-weight)) * 100%),
+        color-mix(in srgb,rgb(62,166,255) 55%,transparent) calc(var(--hp-mode-plan-weight) * 100%));
+      stroke-opacity:1;
+    }
+    .stage.mode-transition .devlayer .dev {
+      filter:opacity(calc(1 - .65 * var(--hp-mode-plan-weight) / var(--hp-mode-architecture-opacity)));
+    }
     .stage.mode-transition .glow-pools-frame,
     .stage.mode-transition .led-fields { display: block; opacity: var(--hp-mode-view-weight); }
     .stage.mode-transition .hp-view-only-layer,
@@ -1303,8 +1322,6 @@ export const planStyles = css`
     .active-vertex {
       fill: #ffc14d;
       stroke: #171006;
-      stroke-width: 2;
-      vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
     .wall-repair-preview {
@@ -1373,15 +1390,16 @@ export const planStyles = css`
     .hidden-wall-node {
       fill: var(--ha-card-background, var(--card-background-color, #fff));
       stroke: color-mix(in srgb, var(--hp-accent) 88%, #07131c 12%);
+    }
+    .plan-snap-node,
+    .hidden-wall-node,
+    .active-vertex {
       stroke-width: 1;
       vector-effect: non-scaling-stroke;
     }
     .plan-snap-node.active {
       fill: #ffc14d;
       stroke: #171006;
-    }
-    .plan-snap-node.active:not(.dynamic) {
-      stroke-width: 2;
     }
     .plan-snap-node.active.dynamic {
       fill: #4bd28f;

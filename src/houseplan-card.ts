@@ -1329,6 +1329,9 @@ export class HouseplanCard extends LitElement {
   private _modeProjectionSource: 'flat' | 'iso' | null = null;
   private _modeProjectionCrossing = false;
   private _modeProjectionOpacity = 1;
+  /** Retain the actual live Lit children until the projection commit. This
+   * never duplicates DOM or builds an outgoing scene in the incoming mode. */
+  private _modeProjectionScene: TemplateResult | null = null;
   private readonly _modeEditorInk = new Map<string, TemplateResult>();
   private _editorInk(key: string, active: boolean, render: () => TemplateResult): TemplateResult | typeof nothing {
     if (active) { const ink = render(); this._modeEditorInk.set(key, ink); return ink; }
@@ -1343,13 +1346,6 @@ export class HouseplanCard extends LitElement {
   private _modeTransitionForceAtomic = false;
   private _modeTransitionRequest = 0;
   private _modeTransitionTargetZoom = 1;
-  private _modeTransitionTargetCenterX: number | undefined;
-  private _modeTransitionTargetCenterY: number | undefined;
-  /** Last intended editor camera retained while an exit-to-View can still be
-   * retargeted back to an editor. It is session-only, like `_viewModeSnap`. */
-  private _modeTransitionEditorCamera: {
-    zoom: number; centerX?: number; centerY?: number;
-  } | null = null;
   private readonly _modeTransition = new ModeTransitionController({
     frame: (state) => this._applyModeTransitionFrame(state),
     settled: (state) => this._settleModeTransition(state),
@@ -1519,19 +1515,6 @@ export class HouseplanCard extends LitElement {
     };
   }
 
-  private _viewForModeTarget(
-    zoom: number, centerX: number | undefined, centerY: number | undefined,
-    stageWidth: number, stageHeight: number,
-  ): ModeViewBox {
-    const vb = this._baseVb();
-    const fit = fitView(vb, stageWidth / stageHeight);
-    const z = this._boundedZoom(zoom);
-    const w = fit.w / z, h = fit.h / z;
-    const cx = centerX ?? fit.x + fit.w / 2;
-    const cy = centerY ?? fit.y + fit.h / 2;
-    return this._clampView({ x: cx - w / 2, y: cy - h / 2, w, h }, fit);
-  }
-
   private _targetStageColor(mode: HouseplanMode): string {
     if (mode !== 'view') return 'rgb(255, 255, 255)';
     return this._cssColor(this._stageBg(this._spaceDisplayForRender()),
@@ -1633,8 +1616,6 @@ export class HouseplanCard extends LitElement {
     this._lastValidStageSize = [state.to.stageWidth, state.to.stageHeight];
     if (this._mode === 'view') {
       this._saveZoom();
-      this._viewModeSnap = null;
-      this._modeTransitionEditorCamera = null;
     }
     this.requestUpdate();
     void this.updateComplete.then(() => {
@@ -1644,6 +1625,15 @@ export class HouseplanCard extends LitElement {
       // font load or outer resize may land while ResizeObserver is suppressed
       // by the transition; reconcile it before the next visible interaction.
       const stage = this._stageEl;
+      // Commit the resting paint without starting a second CSS fill/alpha
+      // transition after the shared timeline (#746). Flush its final style
+      // once; ordinary room state/appearance changes keep their own motion.
+      if (stage) {
+        stage.classList.add('mode-paint-settling');
+        const room = stage.querySelector('.room');
+        if (room) void getComputedStyle(room).fill;
+        stage.classList.remove('mode-paint-settling');
+      }
       if (stage && stage.clientWidth > 0 && stage.clientHeight > 0
           && (Math.abs(stage.clientWidth - state.to.stageWidth) > 0.5
             || Math.abs(stage.clientHeight - state.to.stageHeight) > 0.5)) {
@@ -1676,7 +1666,15 @@ export class HouseplanCard extends LitElement {
     this._modeSceneSize = null;
     this._headerMotion.cancel();
     this._clearModePresentation();
-    if (!commitTarget && retained) { this._view = retained.viewBox; this._zoom = retained.zoom; }
+    if (!commitTarget && retained && presented) {
+      this._view = retained.viewBox; this._zoom = retained.zoom;
+      // A rapid retarget can render the same Lit style string again. Keep
+      // these real dimensions until that render: clearing them under the
+      // transition's inset:auto rule would expose a zero-width scene frame.
+      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
+      if (scene) { scene.style.width = `${presented.stageWidth}px`; scene.style.height = `${presented.stageHeight}px`; }
+      if (this._stageEl) this._stageEl.style.width = `${presented.stageWidth}px`;
+    }
     if (commitTarget && !hadControllerState && presented && this._mode === 'view')
       this._commitViewModeAtomic(presented, this._zoom);
     // A preparing transition has no controller state to settle. Its measured
@@ -1703,8 +1701,6 @@ export class HouseplanCard extends LitElement {
   private _commitViewModeAtomic(
     from: ModeVisualState | null,
     targetZoom: number,
-    targetCenterX?: number,
-    targetCenterY?: number,
   ): void {
     this._modeTransitionPreparing = false;
     this._modeTransitionVisual = null;
@@ -1725,8 +1721,6 @@ export class HouseplanCard extends LitElement {
     } else {
       this._view = null;
     }
-    this._viewModeSnap = null;
-    this._modeTransitionEditorCamera = null;
     this._saveZoom();
     this.requestUpdate();
   }
@@ -1735,9 +1729,6 @@ export class HouseplanCard extends LitElement {
     request: number,
     from: ModeVisualState,
     targetMode: HouseplanMode,
-    targetZoom: number,
-    targetCenterX?: number,
-    targetCenterY?: number,
   ): void {
     void this.updateComplete.then(async () => {
       if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
@@ -1796,7 +1787,7 @@ export class HouseplanCard extends LitElement {
       this._modeTransitionPreparing = false;
       const forceAtomic = this._modeTransitionForceAtomic;
       this._modeTransitionForceAtomic = false;
-      commitHouseplanViewport(this);
+      if (!this._modeProjectionSource) commitHouseplanViewport(this);
       this._modeSceneSize = [Math.max(from.stageWidth, targetStageWidth), Math.max(from.stageHeight, targetStageHeight)];
       const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
       if (scene) {
@@ -1843,6 +1834,7 @@ export class HouseplanCard extends LitElement {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
       this._modeEditorInk.clear();
+      this._modeProjectionScene = null;
       ++this._viewDeviceMenuRequest;
       if (!authority) { this._read.invalidate(); this._loading = false;
         if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
@@ -2325,12 +2317,6 @@ export class HouseplanCard extends LitElement {
   private _zoom = 1;
   private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
   private _zoomBySpace: Record<string, number> = {};
-  /**
-   * View-mode viewport remembered on entering an editor. Editor zoom is a
-   * working tool (zoom in to grab a vertex), not the user's intention for
-   * viewing — leaving any editor brings the view-mode viewport back.
-   */
-  private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number } | null = null;
   /** Session-only View intent. It is deliberately absent from warm/LS/config state. */
   private _roomFocus: { spaceId: string; roomId: string } | null = null;
   /** Pointer owner captured from the actually painted event path. */
@@ -2705,6 +2691,9 @@ export class HouseplanCard extends LitElement {
   private _hassSequence = 0;
   private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  /** Memo keys must follow the layout actually painted by a held snapshot,
+   * rather than the newer adopted layout whose capture is still pending. */
+  private readonly _snapshotLayouts = new WeakMap<RenderDeviceSnapshot, DeviceLayout>();
   private _stagedToken = -1;
   private _capturedSeq = -1;
   private _capturedSnapshotDemand = '';
@@ -3002,7 +2991,6 @@ export class HouseplanCard extends LitElement {
     _space: { state: true },
     _devices: { state: true },
     _selId: { state: true },
-    _toast: { state: true },
     _mode: { state: true },
     _tool: { state: true },
     _wallDialog: { state: true },
@@ -3290,6 +3278,7 @@ export class HouseplanCard extends LitElement {
     this._clearModePresentation(); this._modeSceneSize = null;
     this._modeProjectionSource = null; this._modeProjectionCrossing = false;
     this._modeEditorInk.clear();
+    this._modeProjectionScene = null;
     this._headerMotion.cancel();
     this._cameraTransition.dispose();
     this._zoomScaleActivity.dispose();
@@ -3960,7 +3949,6 @@ export class HouseplanCard extends LitElement {
     // #713: one floor plane, and the window size is in the memo key, so the
     // saved camera is valid in either projection; only zoom is re-read.
     this._view = vp.view ? { ...vp.view } : null;
-    this._viewModeSnap = sameProjection && vp.snap ? { ...vp.snap } : null;
     if (!sameProjection) {
       if (this._view) this._rezoom();
       else if (vp.logicalCenter) this._applyView(vp.zoom, vp.logicalCenter.x, vp.logicalCenter.y);
@@ -4021,7 +4009,7 @@ export class HouseplanCard extends LitElement {
       logicalCenter: this._logicalViewCenter(),
       zoom: this._zoom,
       view: this._view ? { ...this._view } : null,
-      snap: this._viewModeSnap ? { ...this._viewModeSnap } : null,
+      snap: null,
       tool: this._tool,
       decorTool: this._decorTool,
       showHidden: this._showHidden,
@@ -4742,7 +4730,7 @@ export class HouseplanCard extends LitElement {
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
-    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this);
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
     this._editorRuntime?._commitLiveEditor();
     this._liveRt?.syncContacts();
     this._pruneDevicePressFeedback();
@@ -5301,6 +5289,7 @@ export class HouseplanCard extends LitElement {
     this._capturedSnapshotDemand = demand;
     this._capturedSnapshotDevices = this._displayDevices;
     this._capturedSnapshotLayout = this._layout;
+    this._snapshotLayouts.set(snapshot, this._layout);
     this._capturedSnapshotActivity = activity;
     this._capturedSnapshotConfigEpoch = this._cfgEpoch;
     this._capturedSnapshotVirtual = virtualFingerprint;
@@ -6735,6 +6724,8 @@ export class HouseplanCard extends LitElement {
     // content changes, so this catches a marker drag and a server push alike —
     // an epoch would have to be bumped at every one of those call sites.
     const f = this._frame;
+    const snapshot = this._renderDeviceSnapshot;
+    const layout = snapshot ? this._snapshotLayouts.get(snapshot) ?? this._layout : this._layout;
     // `grow` is part of the KEY, not just of the computation (DEV-2C947-02):
     // the union an editor accumulated is an editor's frame, and leaving for
     // View has to recompute rather than inherit it — otherwise a room moved
@@ -6747,7 +6738,7 @@ export class HouseplanCard extends LitElement {
     // worth, mid-gesture: the picture then runs away from the finger and no
     // drag lands where it was aimed. The frame catches up on release.
     if (f && f.id === m.id && this._editorRuntime?.backdropGesture.active) return f;
-    if (f && f.id === m.id && f.model === m && f.layout === this._layout
+    if (f && f.id === m.id && f.model === m && f.layout === layout
         && f.devs === this._displayDevices && f.far === this._showFar && f.grow === grow) return f;
     const cf = contentFrame(this._contentItems(m));
     let all = cf.all || spaceFrame(m);
@@ -6761,7 +6752,7 @@ export class HouseplanCard extends LitElement {
       all = unionRect(f.all, all);
     }
     this._frame = {
-      id: m.id, model: m, layout: this._layout, devs: this._displayDevices,
+      id: m.id, model: m, layout, devs: this._displayDevices,
       far: this._showFar, grow, rect, all, outliers: cf.outliers,
     };
     if (f?.id === m.id && this._view && this._lastValidStageSize && !this._modeTransitionBusy
@@ -6775,6 +6766,7 @@ export class HouseplanCard extends LitElement {
         centerY: this._view.y + this._view.h / 2, pixelsPerUnit: width / previous.w },
       [rect.x, rect.y, rect.w, rect.h], turnRect(rect, this._rotation), this._rotation, width, height);
       this._view = camera.viewBox; this._zoom = camera.zoom;
+      if (this._loadOk) this._saveZoom();
     }
     return this._frame;
   }
@@ -6842,7 +6834,7 @@ export class HouseplanCard extends LitElement {
   private _effectiveProjection(): 'flat' | 'iso' {
     if (this._isoProjectionSnapshot) return this._isoProjectionSnapshot;
     const finish = (value: 'flat' | 'iso') => this._isoProjectionSnapshot = value;
-    const fallback = () => { if (this._renderProjection === 'iso') { this._cancelCameraTransition(false); this._view = null; this._viewModeSnap = null; } return finish('flat'); };
+    const fallback = () => { if (this._renderProjection === 'iso') { this._cancelCameraTransition(false); this._view = null;  } return finish('flat'); };
     this._renderIsoScene = null;
     if ((this._modeProjectionSource ?? this._desiredProjection) !== 'iso' || !this._model.length || !this._isoSceneRuntime)
       return finish('flat');
@@ -7118,25 +7110,6 @@ export class HouseplanCard extends LitElement {
   }
   private _planVisibleRect(view: FrameRect): FrameRect { return turnRect(view, inversePlanRotation(this._rotation)); }
 
-  /**
-   * Room labels must keep their View screen geometry while the Plan toolbar
-   * borrows height from the stage. Devices continue to scale with the active
-   * editor viewport; only the label core uses the hypothetical View viewport
-   * at the same zoom and total card height (#200).
-   */
-  private _roomLabelReferenceViewWidth(view: { w: number }): number {
-    if (!this._markup) return view.w;
-    const snap = this._viewModeSnap; if (snap?.space === this._space && snap.w) return snap.w * snap.zoom / this._zoom
-      * (this._rotation ? view.w / this._cameraView(this._baseVb()).w : 1);
-    const stage = this._stageEl;
-    const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
-    if (!stage?.clientWidth || !stage.clientHeight) return view.w;
-    const totalHeight = stage.clientHeight + (chrome?.offsetHeight || 0);
-    return this._viewForModeTarget(
-      this._zoom, undefined, undefined, stage.clientWidth, totalHeight,
-    ).w;
-  }
-
   /** Screen (sx,sy relative to the scene, px) → vb coordinates per the current view. */
   private _screenToVb(sx: number, sy: number): number[] {
     const s = this._stageEl;
@@ -7153,8 +7126,10 @@ export class HouseplanCard extends LitElement {
   /** Automatic rebasing may carry a camera outside the ordinary fit bounds.
    * Each explicit step can move back continuously; no command snaps it home. */
   private _boundedZoom(zoom: number): number {
-    return Math.min(Math.max(HouseplanCard.ZOOM_MAX, this._zoom),
-      Math.max(Math.min(HouseplanCard.ZOOM_MIN, this._zoom), zoom));
+    const current = Number.isFinite(this._zoom) && this._zoom > 0 ? this._zoom : 1;
+    const requested = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+    return Math.min(Math.max(HouseplanCard.ZOOM_MAX, current),
+      Math.max(Math.min(HouseplanCard.ZOOM_MIN, current), requested));
   }
 
   /**
@@ -7488,7 +7463,8 @@ export class HouseplanCard extends LitElement {
     this._clearRoomFocus(true);
     this._cancelCameraTransition(false);
     if (carousel) { this._showFar = true; this._frame = null; }
-    const z = carousel ? 1 : this._zoomBySpace[this._space] || 1;
+    const saved = Number(this._zoomBySpace[this._space]);
+    const z = carousel || !Number.isFinite(saved) || saved <= 0 ? 1 : saved;
     this._zoom = z;
     if (carousel) this._saveZoom();
     const stage = this._stageEl;
@@ -11575,7 +11551,7 @@ export class HouseplanCard extends LitElement {
         ? isoScene?.key || this._isoInvalidKey() : `${space.id}|no-borders`, error);
       this._cancelCameraTransition(false); projection = 'flat'; iso = false; isoScene = null; isoFrame = null;
       this._renderProjection = 'flat'; this._renderIsoScene = null;
-      this._isoProjectionSnapshot = 'flat'; this._view = null; this._viewModeSnap = null;
+      this._isoProjectionSnapshot = 'flat'; this._view = null; 
       view = this._viewOr(this._baseVb('flat', null));
     }
     const isoLayers = isoFrame?.layers ?? null;
@@ -11731,6 +11707,7 @@ export class HouseplanCard extends LitElement {
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
+          ${this._modeProjectionSource && this._modeProjectionScene ? this._modeProjectionScene : this._modeProjectionScene = html`
           ${iso && isoLayers?.structural ? svg`<svg class="iso-underlay-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
@@ -11794,7 +11771,7 @@ export class HouseplanCard extends LitElement {
                 cls += ' picked';
               let style = '';
               const effFill = roomFillModeOf(disp.fill, r);
-              if (!this._markup && (disp.showBorders || effFill !== 'none')) {
+              if ((!this._markup || this._modeTransitionBusy) && (disp.showBorders || effFill !== 'none')) {
                 cls += ' styled';
                 const st: string[] = [];
                 // keep the stroke colour even when borders are hidden, so hover can reveal it
@@ -11807,6 +11784,9 @@ export class HouseplanCard extends LitElement {
                   st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity}`);
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
+              } else if (this._modeTransitionBusy) {
+                style = space.bg ? '--room-fill:transparent;--room-fill-op:0;--room-stroke:transparent;--room-stroke-op:0'
+                  : '--room-fill:rgb(75,140,90);--room-fill-op:.14;--room-stroke:#4b8c5a;--room-stroke-op:1';
               }
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {
@@ -11995,7 +11975,7 @@ export class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The compatibility
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
-          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
+          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
             ${renderRadarLive(
               [...this._radarLive.frames.values()].filter((frame) => {
                 const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
@@ -12021,6 +12001,7 @@ export class HouseplanCard extends LitElement {
             ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk, ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() })}
           </div>
           <div data-hp-live-editor-html></div>
+          `}
           </div>
           ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
           ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}

@@ -1,0 +1,42 @@
+[
+  {
+    "label": "base",
+    "profile": "large-house-v1",
+    "first": 55.9,
+    "total": 416.7,
+    "renders": 14.4,
+    "headers": 2.0,
+    "maxGap": 94.1,
+    "longTasks": 28.0
+  },
+  {
+    "label": "base",
+    "profile": "large-house-isometric-v1",
+    "first": 77.1,
+    "total": 308.4,
+    "renders": 9.5,
+    "headers": 2.0,
+    "maxGap": 117.5,
+    "longTasks": 10.0
+  },
+  {
+    "label": "final",
+    "profile": "large-house-v1",
+    "first": 89.9,
+    "total": 445.7,
+    "renders": 3.2,
+    "headers": 2.0,
+    "maxGap": 132.9,
+    "longTasks": 22.0
+  },
+  {
+    "label": "final",
+    "profile": "large-house-isometric-v1",
+    "first": 79.6,
+    "total": 483.4,
+    "renders": 3.9,
+    "headers": 2.0,
+    "maxGap": 179.4,
+    "longTasks": 21.0
+  }
+]

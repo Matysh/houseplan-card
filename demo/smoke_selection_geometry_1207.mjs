@@ -1,0 +1,20 @@
+import {launch,checkAll,finish} from './serve.mjs';
+const {page,browser}=await launch({width:1100,height:850});
+await page.evaluate(async()=>{await window.__hpTest.setMode('devices');await window.__hpTest.openMarkerDialog('d_light1');});
+const dialog=page.locator('houseplan-card hp-dialog[data-kind=marker]');
+await dialog.locator('#marker-binding').click();
+await dialog.locator('#marker-show-entities').check();
+const list=dialog.locator('.hpf-list').filter({visible:true}),rows=list.locator('[role=option]');
+await rows.first().waitFor({state:'visible'});
+const geometry=()=>list.evaluate(list=>{
+ const rows=[...list.querySelectorAll('[role=option]')];
+ const boxes=rows.map(row=>{const b=row.getBoundingClientRect();return {b,label:row.querySelector('span').getBoundingClientRect(),sub:row.querySelector('small').getBoundingClientRect(),shrink:getComputedStyle(row).flexShrink};});
+ return {count:rows.length,twoLines:boxes.some(({sub})=>sub.height>0),contentsInside:boxes.every(({b,label,sub})=>label.top>=b.top&&label.bottom<=b.bottom&&sub.top>=b.top&&sub.bottom<=b.bottom),noOverlap:boxes.every((item,i)=>!i||item.b.top>=boxes[i-1].b.bottom-.5),noShrink:boxes.every(item=>item.shrink==='0'),scrollable:list.scrollHeight>list.clientHeight};
+});
+const before=await geometry();
+const target=list.locator('[role=option]:not([aria-selected=true])').last();await target.scrollIntoViewIfNeeded();
+const box=await target.boundingBox();await target.hover();await page.waitForTimeout(180);
+const hover=await target.evaluate(el=>({outline:getComputedStyle(el).boxShadow,background:getComputedStyle(el).backgroundColor,selected:el.getAttribute('aria-selected')}));
+const after=await geometry(),end=await target.boundingBox();
+const out={populated:before.count>1,twoLines:before.twoLines,contentsInside:before.contentsInside&&after.contentsInside,noOverlap:before.noOverlap&&after.noOverlap,noShrink:before.noShrink,hoverInset:hover.outline.includes('inset'),hoverSeparate:hover.selected==='true'||hover.background==='rgba(0, 0, 0, 0)',stableSize:box.width===end.width&&box.height===end.height};
+console.log(JSON.stringify({before,after,hover}));checkAll(out);await finish(browser,out);

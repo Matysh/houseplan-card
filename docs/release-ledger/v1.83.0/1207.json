@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1207,
+  "baseStable": "v1.83.0",
+  "category": "minor",
+  "rationale": "Approved shared UI iteration changes editor camera handoff and interaction presentation, with new room-creation hints and consistent UI Kit control states. Configuration/layout schemas and device commands remain compatible; no destructive migration is introduced.",
+  "summary": {
+    "ru": "Единый UI Kit, плавные переключения редакторов без изменения масштаба и карточка Sections с оформлением темы.",
+    "en": "Consistent shared controls, smooth editor switches preserving camera scale, and theme-aware Sections cards."
+  }
+}

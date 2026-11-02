@@ -32,7 +32,7 @@ Split, Resize and Delete; Background's Shapes contains Line, Rectangle and
 Ellipse before Text. Undo/Redo are named icon buttons immediately before Close
 in all three editor bars. Editor/header hints use the common delayed hp-help
 surface in the top layer; visible tool captions do not repeat as tooltips.
-Wide Properties begins at the card title's lower edge, with static expanded
+Wide Properties begins at the shared header's lower edge, with static expanded
 headings and intrinsic section transitions (240ms, disabled for reduced motion).
 
 Devices editor (#866) has a session-local Snapping toggle (default ON) and
@@ -59,9 +59,11 @@ or longer content). Groups and editor close have44px targets; rotation/zoom
 are separate outlined groups with10px between them. Gestures retain zoom.
 Properties independently uses 1024 px of card width. #1184 applies this same
 header, ordered intrinsic measurement and 44px targets to Lovelace. Only the
-shell differs: HA menu belongs to the panel, while Lovelace retains its title
-(or default title), truncated with the full text in its tooltip. The title
-participates in measurement and can occupy its own final wrapping row.
+shell differs: HA menu belongs to the panel, while Lovelace starts directly with
+space navigation (#1207). Saved custom title remains available for PDF only and
+does not participate in header measurement. Sections uses the theme's card
+radius, including the stage's lower corners, and a header in normal flow without
+the outer HA header's sticky offset. The full-screen panel keeps square corners.
 There is no separate viewport-based phone gear menu. Narrow View and editors
 retain direct actions over multiple rows; the ordinary card's remaining stage
 height accounts for those rows. Each embedded card measures its own container,
@@ -103,6 +105,10 @@ above room fills and below live Glow, walls, devices and labels —
   44 × 44 px outlined close slot immediately after the active editor; in
   View there is no empty reserve. All editors remain directly reachable at
   narrow widths, through the same wrapping layout as the panel (#1184).
+  The current physical scale and camera centre survive all mode switches.
+  Exiting saves the editor's current working zoom for that floor, rather than
+  restoring the old View camera. Frame changes rebase relative zoom, not object
+  screen size; see CANVAS for expanded bounds and per-floor/reload policy.
 - An editor's primary toolbar contains only persistent tools. Close is pinned
   in its own end cap. Selection actions, active-tool parameters, operation
   hints and palettes appear in one translucent context tray over the top of the

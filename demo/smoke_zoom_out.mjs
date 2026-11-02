@@ -4,6 +4,7 @@
 // - zoom < 1 centres the content instead of pinning it to a corner;
 // - the content frame (default zoom) includes devices standing outside rooms.
 import { launch, checkAll, finish } from './serve.mjs';
+import { installHpTestOnPage } from './helpers/hp-test.mjs';
 const { page, browser } = await launch();
 const out = {};
 
@@ -51,171 +52,48 @@ out.floorIsThird = Math.abs(await page.evaluate(() => { window.__card._resetZoom
   c._applyView(0.01); return c._zoom; }) - 1 / 3) < 1e-9; // clamped at the floor
 await page.evaluate(() => window.__card._resetZoom());
 
-// -- editor zoom is a working tool, not the viewing intent ----------------
-// view 1.6 → devices editor 2.5 → back to view: the pre-editor viewport
-// (zoom AND center) comes back; the editor keeps its own zoom while open.
-out.editorZoomNotSaved = await page.evaluate(async () => {
-  const c = window.__card;
-  const settleMode = async () => {
-    const started = performance.now();
-    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
-    while (c._modeTransitionBusy && performance.now() - started < 1500);
-    await c.updateComplete;
+// #1207 replaces HP-1543: mode changes preserve physical scale and centre.
+// Intermediate editor gestures remain local until the exit commits View intent.
+out.editorCamera = await page.evaluate(async () => {
+  const c = window.__card, ui = window.__hpTest;
+  const setMode=async mode=>{await ui.setMode(mode);const start=performance.now();
+    while(c._modeTransitionBusy){if(performance.now()-start>2000)throw Error('Mode did not settle');await new Promise(resolve=>requestAnimationFrame(resolve));}
+    await ui.settled();};
+  const read = () => {
+    const stage=c.renderRoot.querySelector('.stage'),svg=c.renderRoot.querySelector('.plan-svg');
+    const v=c._view;
+    return {ppu:svg.getBoundingClientRect().width/svg.viewBox.baseVal.width,
+      center:[v.x+v.w/2,v.y+v.h/2],zoom:c._zoom,space:c._space,
+      saved:JSON.parse(localStorage.getItem('houseplan_card_zoom_v1')||'{}')};
   };
-  const center = () => { const v = c._view; return [v.x + v.w / 2, v.y + v.h / 2]; };
-  c._setMode('view');
-  c._resetZoom();
-  c._zoomAt(10, 10, 1.6); c._saveZoom(); // off-center on purpose
-  const want = { zoom: c._zoom, c: center() };
-  c._setMode('devices'); await settleMode();
-  c._zoomAt(10, 10, 2.5); c._saveZoom(); // off-center too: the center must not leak either
-  const editorZoomFree = Math.abs(c._zoom - 2.5) < 0.01; // zooming inside stays
-  c._setMode('view'); await settleMode();
-  const got = { zoom: c._zoom, c: center() };
-  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
-  return {
-    editorZoomFree,
-    zoomRestored: Math.abs(got.zoom - want.zoom) < 0.01,
-    centerRestored: Math.hypot(got.c[0] - want.c[0], got.c[1] - want.c[1]) < 0.02,
-    lsRestored: Math.abs((ls[c._space] || 1) - want.zoom) < 0.01,
-  };
+  const same = (a,b) => Math.abs(a.ppu-b.ppu)<1e-5 && Math.hypot(a.center[0]-b.center[0],a.center[1]-b.center[1])<1e-5;
+  await setMode('view');
+  c._zoomAt(10,10,1.6);c._saveZoom();c.requestUpdate();await c.updateComplete;
+  const view=read();await setMode('devices');const entry=read();
+  c._zoomAt(10,10,2.5);c._saveZoom();c.requestUpdate();await c.updateComplete;
+  const working=read();await setMode('view');const exit=read();
+  const entryKeepsCamera=same(view,entry),exitKeepsCamera=same(working,exit);
+  const editorNotYetPersisted=Math.abs(working.saved[working.space]-view.saved[view.space])<1e-9;
+  const exitPersistsWorking=Math.abs(exit.saved[exit.space]-exit.zoom)<1e-9;
+  // A floor changed inside the editor owns its own current camera on exit.
+  const firstFloorZoom=exit.saved[exit.space];
+  await setMode('devices');await ui.switchSpace('garden');
+  c._zoomAt(10,10,5);c._saveZoom();c.requestUpdate();await c.updateComplete;
+  const garden=read();await setMode('view');const gardenExit=read();
+  const floorExitKeepsCamera=same(garden,gardenExit),floorExitSavesCurrent=Math.abs(gardenExit.saved.garden-gardenExit.zoom)<1e-9;
+  const otherFloorUnchanged=Math.abs(gardenExit.saved[view.space]-firstFloorZoom)<1e-9;
+  // Navigation in the same tick as an exit must finish the old floor's intent
+  // before restoring the newly selected floor; no late callback may save there.
+  await setMode('devices');c._zoomAt(10,10,5);c.requestUpdate();await c.updateComplete;
+  const pending=read();c._setMode('view');c._slideTo(view.space,'right');
+  await ui.settled();await ui.switchSpace('garden');const restored=read();
+  const immediateFloorExitPersists=Math.abs(restored.ppu-pending.ppu)<1e-5;
+  await ui.switchSpace(view.space);
+  return {entryKeepsCamera,exitKeepsCamera,editorNotYetPersisted,exitPersistsWorking,
+    floorExitKeepsCamera,floorExitSavesCurrent,otherFloorUnchanged,immediateFloorExitPersists};
 });
-out.editorZoomFree = out.editorZoomNotSaved.editorZoomFree;
-out.viewZoomRestored = out.editorZoomNotSaved.zoomRestored;
-out.viewCenterRestored = out.editorZoomNotSaved.centerRestored;
-out.viewZoomBackInLs = out.editorZoomNotSaved.lsRestored;
-delete out.editorZoomNotSaved;
-
-// -- editor entered and left without touching zoom: no jump ---------------
-out.untouchedEditorNoJump = await page.evaluate(async () => {
-  const c = window.__card;
-  const settleMode = async () => {
-    const started = performance.now();
-    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
-    while (c._modeTransitionBusy && performance.now() - started < 1500);
-    await c.updateComplete;
-  };
-  c._setMode('view');
-  await settleMode();
-  c._resetZoom();
-  c._zoomAt(30, 30, 1.6); c._saveZoom();
-  const before = { ...c._view };
-  c._setMode('plan'); await settleMode();
-  c._setMode('view'); await settleMode();
-  const v = c._view;
-  const beforeCenter = [before.x + before.w / 2, before.y + before.h / 2];
-  const afterCenter = [v.x + v.w / 2, v.y + v.h / 2];
-  return Math.abs(c._zoom - 1.6) < 0.01
-    && Math.hypot(afterCenter[0] - beforeCenter[0], afterCenter[1] - beforeCenter[1]) < 0.01
-    && Math.abs(v.w - before.w) < 0.005
-    && Math.abs(v.h - before.h) < 0.005;
-});
-
-// -- the view zoom still survives a space switch, per space ---------------
-out.viewZoomSurvivesSpaceSwitch = await page.evaluate(async () => {
-  const c = window.__card;
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  c._setMode('view');
-  c._resetZoom(); c._applyView(1.7); c._saveZoom();
-  c._slideTo('garden', 'left'); await wait(350);
-  const gardenGotOwnZoom = Math.abs(c._zoom - (JSON.parse(
-    localStorage.getItem('houseplan_card_zoom_v1') || '{}').garden || 1)) < 0.01;
-  c._slideTo('f1', 'right'); await wait(350);
-  return gardenGotOwnZoom && Math.abs(c._zoom - 1.7) < 0.01;
-});
-await page.evaluate(() => window.__card._resetZoom());
-
-// -- owner's dacha regression: editor 500% must never reach the per-space
-// view store. View zoom set on BOTH floors, editor cranked to 5.0, back to
-// view — and the floor tab is clicked in the SAME tick (on the tablet the
-// exit re-render janks, so the click runs before the restore rAF and the
-// old fix-up save was skipped). Two switches later the stale 5.0 came back.
-out.editorZoomNeverInSpaceStore = await page.evaluate(async () => {
-  const c = window.__card;
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const settleMode = async () => {
-    const started = performance.now();
-    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
-    while (c._modeTransitionBusy && performance.now() - started < 1500);
-    await c.updateComplete;
-  };
-  c._setMode('view');
-  c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // floor 1 view zoom
-  c._slideTo('garden', 'left'); await wait(350);
-  c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // floor 2 view zoom
-  c._setMode('devices'); await settleMode();
-  c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — a working tool
-  const lsInEditor = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
-  c._setMode('view');
-  c._slideTo('f1', 'right'); await wait(350);                 // same tick as the exit — beats the rAF
-  const firstSwitch = Math.abs(c._zoom - 1.6) < 0.01;
-  c._slideTo('garden', 'left'); await wait(350);
-  const secondSwitch = Math.abs(c._zoom - 1.4) < 0.01;        // used to come back as 5.0
-  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
-  c._slideTo('f1', 'right'); await wait(350); c._resetZoom(); // leave the stage as the next tests expect
-  return {
-    editorNotPersisted: Math.abs((lsInEditor.garden || 1) - 1.4) < 0.01,
-    firstSwitch,
-    secondSwitch,
-    lsClean: Math.abs((ls.garden || 1) - 1.4) < 0.01 && Math.abs((ls.f1 || 1) - 1.6) < 0.01,
-  };
-});
-out.editorZoomStaysOutOfLs = out.editorZoomNeverInSpaceStore.editorNotPersisted;
-out.ownerFirstSwitchOk = out.editorZoomNeverInSpaceStore.firstSwitch;
-out.ownerSecondSwitchOk = out.editorZoomNeverInSpaceStore.secondSwitch;
-out.ownerLsClean = out.editorZoomNeverInSpaceStore.lsClean;
-delete out.editorZoomNeverInSpaceStore;
-
-// -- HP-1543-01: смена этажа ВНУТРИ редактора не тащит editor zoom в view --
-// view-зум сохранён на обоих этажах → редактор на f1 → переключение ВКЛАДКОЙ
-// на garden → editor zoom 5.0 → выход в view (остаёмся на garden): вид обязан
-// вернуться к сохранённому view-зуму garden (1.4) с штатным центром
-// _restoreZoom(), а не остаться на редакторских 500% (снапшот-guard по space
-// отбрасывал восстановление, а текущий _zoom так и оставался редакторским).
-out.crossFloorEditorExit = await page.evaluate(async () => {
-  const c = window.__card;
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const settleMode = async () => {
-    const started = performance.now();
-    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
-    while (c._modeTransitionBusy && performance.now() - started < 1500);
-    await c.updateComplete;
-  };
-  const sr = c.shadowRoot || c.renderRoot;
-  c._setMode('view');
-  c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // f1 view zoom
-  c._slideTo('garden', 'left'); await wait(350);
-  c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // garden view zoom
-  c._slideTo('f1', 'right'); await wait(350);
-  c._setMode('devices'); await settleMode();
-  // #997: compact navigation has no indexed floor tabs; use the public navigation contract.
-  await window.__hpTest.switchSpace('garden');
-  await c.updateComplete; await settleMode();
-  c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — рабочий инструмент
-  c._setMode('view'); await settleMode();
-  const stillGarden = c._space === 'garden';
-  const gotZoom = c._zoom;
-  const v = c._view; const vb = c._baseVb();
-  const centred = !!v && Math.abs(v.x + v.w / 2 - (vb[0] + vb[2] / 2)) < 1
-    && Math.abs(v.y + v.h / 2 - (vb[1] + vb[3] / 2)) < 1;
-  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
-  const store = { ...c._zoomBySpace };
-  c._slideTo('f1', 'right'); await wait(350); c._resetZoom(); // вернуть сцену следующим тестам
-  return {
-    stillGarden,
-    viewZoomRestoredCrossFloor: Math.abs(gotZoom - 1.4) < 0.01,          // было 5.0 (HP-1543-01)
-    centerRestoredCrossFloor: centred,                                   // центр как у _restoreZoom()
-    storeIntactCrossFloor: Math.abs((store.garden || 1) - 1.4) < 0.01,   // _zoomBySpace не тронут
-    lsIntactCrossFloor: Math.abs((ls.garden || 1) - 1.4) < 0.01
-      && Math.abs((ls.f1 || 1) - 1.6) < 0.01,                            // LS_ZOOM не тронут
-  };
-});
-out.crossFloorStillGarden = out.crossFloorEditorExit.stillGarden;
-out.crossFloorViewZoomRestored = out.crossFloorEditorExit.viewZoomRestoredCrossFloor;
-out.crossFloorCenterRestored = out.crossFloorEditorExit.centerRestoredCrossFloor;
-out.crossFloorStoreIntact = out.crossFloorEditorExit.storeIntactCrossFloor;
-out.crossFloorLsIntact = out.crossFloorEditorExit.lsIntactCrossFloor;
-delete out.crossFloorEditorExit;
+for(const [name,value] of Object.entries(out.editorCamera))out[name]=value;
+delete out.editorCamera;
 
 // -- devices outside rooms stretch the default frame ---------------------
 out.devicesStretchFrame = await page.evaluate(async () => {
@@ -248,5 +126,28 @@ out.stageSurvivesContentAbove = await page.evaluate(async () => {
   // the old code billed the 900px spacer as "header" and left a 0px stage
   return h > 300;
 });
+
+// A physically preserved camera may legitimately leave the old relative zoom
+// interval. Reload and the next native command must not snap it back to 8.
+await page.evaluate(()=>localStorage.setItem('houseplan_card_zoom_v1',JSON.stringify({f1:24})));
+await page.reload();
+await page.waitForFunction(()=>window.__card?._loadOk&&!window.__card._booting);
+await page.setViewportSize({width:1600,height:1000});
+await page.evaluate(()=>document.querySelector('#host').style.cssText='width:100%;padding:0;margin:0');
+await page.evaluate(()=>window.__card._ensureEditorRuntime());
+await installHpTestOnPage(page);
+await page.evaluate(()=>window.__hpTest.settled());
+out.reloadKeepsExpandedZoom=await page.evaluate(()=>Math.abs(window.__card._zoom-24)<1e-5);
+await page.waitForFunction(()=>window.__card._continuity.state==='steady'&&!window.__card._bootSoft);
+await page.locator('houseplan-card [data-hp=zoom-out]').click();
+await page.waitForFunction(()=>window.__card._zoom<23.9);
+await page.waitForFunction(()=>!window.__card._cameraTransition.active);
+const stepped=await page.evaluate(()=>window.__card._zoom);
+out.nextZoomIsContinuous=Math.abs(stepped-24/1.4)<1e-5;
+await page.locator('houseplan-card [data-hp=zoom-fit]').click();
+await page.waitForFunction(()=>window.__card._zoom<1.01);
+await page.waitForFunction(()=>!window.__card._cameraTransition.active);
+out.explicitFitRestoresStandardZoom=await page.evaluate(()=>Math.abs(window.__card._zoom-1)<1e-5);
+console.log('Expanded zoom observations',JSON.stringify({stepped,fit:await page.evaluate(()=>window.__card._zoom)}));
 
 await finish(browser, checkAll(out));

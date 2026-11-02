@@ -575,7 +575,7 @@ export interface HouseplanEditorHostPort {
   _cmToUnits: (cm: number) => number;
   _colorPickerLabels: ColorPickerLabels;
   _commitSpace: (id: string, authority?: boolean) => boolean;
-  _commitViewModeAtomic: (from: ModeVisualState | null, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
+  _commitViewModeAtomic: (from: ModeVisualState | null, targetZoom: number) => void;
   _confirmDanger: (request: HpConfirmRequest) => Promise<boolean>;
   _cancelDangerConfirm: () => void;
   _config: CardConfig | undefined;
@@ -704,12 +704,9 @@ export interface HouseplanEditorHostPort {
   _modeTransitionBusy: boolean;
   _modeProjectionSource: 'flat' | 'iso' | null;
   _modeProjectionCrossing: boolean;
-  _modeTransitionEditorCamera: { zoom: number; centerX?: number; centerY?: number; } | null;
   _modeTransitionForceAtomic: boolean;
   _modeTransitionPreparing: boolean;
   _modeTransitionRequest: number;
-  _modeTransitionTargetCenterX: number | undefined;
-  _modeTransitionTargetCenterY: number | undefined;
   _modeTransitionTargetZoom: number;
   _modeTransitionVisual: ModeVisualState | null;
   _model: SpaceModel[];
@@ -767,7 +764,7 @@ export interface HouseplanEditorHostPort {
   _persistDevicePlacement(deviceId: string, placement: DevicePlacement | null, related?:DevicePositionState['related'], guard?:import('./device-contact-write').PlacementCommandGuard): Promise<void>;
   _devicePlacementForCanvas(d:DevItem,x:number,y:number,exact?:boolean):DevicePlacement;
   _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void;
-  _prepareModeTransition: (request: number, from: ModeVisualState, targetMode: HouseplanMode, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
+  _prepareModeTransition: (request: number, from: ModeVisualState, targetMode: HouseplanMode) => void;
   _reducedMotion: boolean;
   _rawPhysicalBodiesR: () => number[][][];
   _regSignature: string;
@@ -865,7 +862,6 @@ export interface HouseplanEditorHostPort {
   _vacTrailDiagnostics: (device: DevItem) => import('./vacuum-trail-diagnostics').VacuumTrailDiagnostic;
   _view: { x: number; y: number; w: number; h: number; } | null;
   _viewportGestureDirty: boolean;
-  _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number; } | null;
   _viewOr: (vb: number[]) => { x: number; y: number; w: number; h: number; };
   _framePercent: (point: readonly number[], view: { x: number; y: number; w: number; h: number }) => [number, number];
   _planScreenDelta: (dx: number, dy: number) => [number, number];
@@ -1284,10 +1280,8 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       if (!animate && mode === 'view' && this.host._modeTransitionBusy) {
         const from = this.host._currentModeVisual(mode);
         const targetZoom = this.host._modeTransitionTargetZoom;
-        const targetCenterX = this.host._modeTransitionTargetCenterX;
-        const targetCenterY = this.host._modeTransitionTargetCenterY;
         this.host._cancelModeTransition(false);
-        this.host._commitViewModeAtomic(from, targetZoom, targetCenterX, targetCenterY);
+        this.host._commitViewModeAtomic(from, targetZoom);
       }
       return;
     }
@@ -1320,8 +1314,6 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     // Mode changes preserve the painted physical camera, including a rapid
     // retarget. The new frame/available stage only changes its relative zoom.
     const targetZoom = this.host._zoom;
-    const targetCenterX = fromVisual?.viewport.centerX;
-    const targetCenterY = fromVisual?.viewport.centerY;
     this.host._mode = mode;
     if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
     if (previousMode === 'devices' && mode !== 'devices') {
@@ -1330,11 +1322,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       this.host._deviceInboxMemo = null;
     }
     this.host._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
-    this.host._viewModeSnap = null;
-    this.host._modeTransitionEditorCamera = null;
     this.host._modeTransitionTargetZoom = targetZoom;
-    this.host._modeTransitionTargetCenterX = targetCenterX;
-    this.host._modeTransitionTargetCenterY = targetCenterY;
     const targetProjection = mode === 'view' && this.host._isoEnabled ? 'iso' : 'flat';
     this.host._modeProjectionCrossing = animate && !this.host._reducedMotion && previousProjection !== targetProjection;
     this.host._modeProjectionSource = this.host._modeProjectionCrossing ? previousProjection : null;
@@ -1343,13 +1331,13 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       // The only non-animated caller is route departure; keep the guard local
       // so a future editor caller cannot accidentally use View geometry.
       if (mode === 'view') {
-        this.host._commitViewModeAtomic(fromVisual, targetZoom, targetCenterX, targetCenterY);
+        this.host._commitViewModeAtomic(fromVisual, targetZoom);
       }
     } else if (fromVisual) {
       this.host._modeTransitionPreparing = true;
       this.host._modeTransitionVisual = fromVisual;
       this.host._prepareModeTransition(
-        request, fromVisual, mode, targetZoom, targetCenterX, targetCenterY,
+        request, fromVisual, mode,
       );
     } else {
       // A zero-sized stage cannot animate. Keep the functional fallback
@@ -1360,11 +1348,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       this.host._view = null;
       requestAnimationFrame(() => {
         if (!this.host.isConnected || request !== this.host._modeTransitionRequest || this.host._mode !== mode) return;
-        this.host._applyView(targetZoom, targetCenterX, targetCenterY);
-        if (mode === 'view') {
-          this.host._viewModeSnap = null;
-          this.host._modeTransitionEditorCamera = null;
-        }
+        this.host._applyView(targetZoom);
         this.host.requestUpdate();
       });
     }
@@ -10943,8 +10927,7 @@ public _renderPlanSnapOverlay(): TemplateResult {
     const active = this.host._activePlanSnapCandidate;
     const conflictKeys = new Set(this.host._activePlanSnapConflicts.map((item) => item.key));
     const staticRadius = wallNodeRadius(this.host._cellCm, this.host._gridPitch);
-    const activeRadius = active?.kind === 'line' ? staticRadius
-      : wallCmToUnits(10, this.host._cellCm, this.host._gridPitch);
+    const activeRadius = staticRadius;
     return svg`<g class="plan-snap-overlay" data-hp="plan-snap-overlay"
       data-segment-count=${geometry.segments.length}
       data-endpoint-count=${geometry.endpoints.length}
@@ -10987,9 +10970,7 @@ public _syncPlanSnapActiveMarker(candidate: PlanSnapCandidate | null): void {
     marker.setAttribute('data-key', candidate.key);
     marker.setAttribute('cx', String(candidate.point[0]));
     marker.setAttribute('cy', String(candidate.point[1]));
-    marker.setAttribute('r', String(candidate.kind === 'line'
-      ? wallNodeRadius(this.host._cellCm, this.host._gridPitch)
-      : wallCmToUnits(10, this.host._cellCm, this.host._gridPitch)));
+    marker.setAttribute('r', String(wallNodeRadius(this.host._cellCm, this.host._gridPitch)));
   }
 
 public _syncPlanSnapConflictMarkers(conflicts: readonly PlanSnapEndpoint[]): void {
@@ -11144,7 +11125,7 @@ public _renderActiveChainInk(): TemplateResult {
             x2="${this.host._cursorPt[0]}" y2="${this.host._cursorPt[1]}" aria-hidden="true"></line>
             ${!this.host._activePlanSnapCandidate && !this.host._activePlanSnapConflicts.length
               ? svg`<circle class="active-vertex" cx="${this.host._cursorPt[0]}" cy="${this.host._cursorPt[1]}"
-                  r="${gridVisualUnits(g * 0.22, this.host._cellCm)}" aria-hidden="true"></circle>` : nothing}`
+                  r="${wallNodeRadius(this.host._cellCm, this.host._gridPitch)}" aria-hidden="true"></circle>` : nothing}`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
         cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this.host._cellCm)}"></circle>`)}
