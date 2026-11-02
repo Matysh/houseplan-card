@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 622,
+  "revision": 623,
   "nextTicket": 57,
   "nextFence": 57,
   "tasks": {
@@ -295,7 +295,8 @@
         "at": 1793613951718,
         "entry": 1,
         "requestId": "review:1167:1:be70c1ab06c3c8b66516c1eefb62f18624126d69:56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-        "eventId": "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:6:return:return:1167"
+        "eventId": "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:6:return:return:1167",
+        "transitionConfirmed": true
       }
     },
     "1169": {
@@ -1032,7 +1033,12 @@
       "status": "pending",
       "presentation": {
         "round": 1,
-        "occurredAt": "2026-11-02T10:03:35.806Z"
+        "occurredAt": "2026-11-02T10:03:35.806Z",
+        "transition": {
+          "from": "S7-code-review",
+          "to": "S6-in-progress",
+          "confirmed": true
+        }
       },
       "exhausted": true
     }
@@ -1112,6 +1118,10 @@
       "digest": "5f13e8b29a6e319f32cb7bce400a355267cf6cde65e58936a6a4ca9752bcf413",
       "issue": 1167
     },
+    "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:6:return-label": {
+      "digest": "aa8fca0ec065fc63cd81523b4b8c16bd62af1ff509e48dbb7a286eb0f47538aa",
+      "issue": 1167
+    },
     "finish:331432e1-67ec-4338-ad70-75b51d429f4d": {
       "digest": "a9bd4543d7d005a5fad914dc2971e511ada4db1c6cfa3dcdb266b296bbbbd908",
       "issue": 1167,
@@ -1184,8 +1194,12 @@
           "at": 1793613951718,
           "entry": 1,
           "requestId": "review:1167:1:be70c1ab06c3c8b66516c1eefb62f18624126d69:56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-          "eventId": "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:6:return:return:1167"
-        }
+          "eventId": "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:6:return:return:1167",
+          "transitionConfirmed": true
+        },
+        "fromStatus": "S7-code-review",
+        "toStatus": "S6-in-progress",
+        "transitionConfirmed": true
       }
     }
   },
