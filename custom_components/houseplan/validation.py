@@ -875,6 +875,31 @@ def _safe_optimize_partition_rehost(
     return True
 
 
+def _same_unchanged_graph_host_run(current, previous, host, old_host) -> bool:
+    """An atomic anchor may change inside one already-owned physical carrier.
+
+    Prove continuity on both authorities. A candidate that newly connects a
+    foreign edge (even at equal coordinates) cannot manufacture this permission.
+    """
+    if current is None or previous is None:
+        return False
+    current_run = _graph_host_interval(current, host)
+    previous_run = _graph_host_interval(previous, old_host)
+    if current_run is None or previous_run is None or current_run[0] != previous_run[0]:
+        return False
+    from .plan_graph import edge_key
+    if edge_key(host) not in previous_run[0] or edge_key(old_host) not in current_run[0]:
+        return False
+    for key in current_run[0]:
+        edge, old_edge = current.index.edges.get(key), previous.index.edges.get(key)
+        if edge != old_edge:
+            return False
+        if any(current.index.points[edge[side]] != previous.index.points[edge[side]]
+               for side in ("from", "to")):
+            return False
+    return True
+
+
 def validate_partition_opening_hosts(
     config: dict, previous: dict | None = None, *, allow_optimize_rehost: bool = False,
     allow_room_wall_promotion: bool = False,
@@ -956,7 +981,12 @@ def validate_partition_opening_hosts(
                         )
                     ))
                 )
-                proved = same_partition or same_wall or (
+                same_graph_run = (
+                    residual_rehost and old_space is not None
+                    and space.get("cell_cm", 5) == old_space.get("cell_cm", 5)
+                    and _same_unchanged_graph_host_run(continuity, old_continuity, host, old_host)
+                )
+                proved = same_partition or same_graph_run or same_wall or (
                     allow_optimize_rehost and old_space is not None
                     and (_safe_optimize_residual_rehost(
                         space, old_space, opening, old
