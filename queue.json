@@ -1,9 +1,23 @@
 {
   "schema": 1,
-  "revision": 978,
-  "nextTicket": 75,
+  "revision": 979,
+  "nextTicket": 76,
   "nextFence": 75,
   "tasks": {
+    "1126": {
+      "issue": 1126,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1126-stair-arrival",
+      "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 75,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793635160703,
+      "reviewEntry": 1
+    },
     "1128": {
       "issue": 1128,
       "branch": "issue/1128-touch-room-link",
@@ -1283,9 +1297,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1126
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:97dac295-30dc-406e-afc0-9874832c0583": {
+      "digest": "2eadc7d125097d16a852cefef6bdb7d97e1b27062f4a376698b15e6339e6caaf",
+      "issue": 1126,
+      "message": {
+        "kind": "queued",
+        "issue": 1126,
+        "at": 1793635160703,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
     "status": "delivered",
