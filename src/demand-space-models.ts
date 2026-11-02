@@ -2,6 +2,7 @@ import { NORM_W, planRect, spaceModels } from './space-geometry';
 import { stairList } from './stairs';
 import { physicalFloorFingerprint } from './floor-geometry-key';
 import type { RoomCfg, ServerConfig, SpaceModel } from './types';
+import { registerWallGraph } from './wall-graph-source';
 
 /** Navigation/registry joins read cheap metadata. Scaled polygons and bodies
  * belong to the floor consumer that actually asks for them, not the cfg epoch. */
@@ -31,7 +32,11 @@ export class DemandSpaceModels {
         roomIndex ??= new Map(full().rooms.map(room => [room.id,room]));
         return roomIndex.get(id) || { id, name: '', area: null };
       };
-      const rooms = (raw.rooms || []).map((room): RoomCfg => ({
+      const metadata = new Map((raw.rooms || []).map(room => [room.id,room]));
+      const roomRecords = raw.plan_graph
+        ? raw.plan_graph.rooms.map(owner => metadata.get(owner.room) || {id:owner.room})
+        : raw.rooms || [];
+      const rooms = roomRecords.map((room): RoomCfg => ({
         id: room.id, name: room.name, area: room.area ?? null,
         open_to: room.open_to || undefined, settings: room.settings || undefined,
         get x() { return fullRoom(room.id).x; }, get y() { return fullRoom(room.id).y; },
@@ -39,6 +44,7 @@ export class DemandSpaceModels {
         get poly() { return fullRoom(room.id).poly; },
         get wall_ids() { return fullRoom(room.id).wall_ids; },
       }));
+      if(raw.plan_graph)registerWallGraph(rooms,undefined,raw.plan_graph,NORM_W);
       return {
         id: raw.id, title: raw.title, rooms, led_strips: raw.led_strips,
         ...(raw.plan_graph ? { plan_graph: raw.plan_graph } : {}),

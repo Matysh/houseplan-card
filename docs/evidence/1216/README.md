@@ -5,7 +5,7 @@ Baseline: `aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c`. Все данные син
 
 ## Граница алгоритма и потребители
 
-`plan-graph-view` и `space-geometry` регистрируют исходный граф и масштаб
+`plan-graph-view`, `space-geometry` и ленивый `DemandSpaceModels` регистрируют исходный граф и масштаб
 эфемерной проекции. `wall-thickness` выбирает direct builder до legacy кода.
 Старый offset/boolean renderer остаётся только для чтения моделей до 11.
 `render-exact` намеренно не наследует предел 4096 бит хранимого графа.
