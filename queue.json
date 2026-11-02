@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 547,
+  "revision": 548,
   "nextTicket": 54,
   "nextFence": 54,
   "tasks": {
@@ -650,12 +650,13 @@
       "status": "S6-in-progress",
       "readyAt": 1793578761969,
       "reviewEntry": 2,
-      "patchId": "1400594f3b645b3384c21769ab1aedcd20e67fd4",
+      "patchId": "807eb196e1909fba2a2a3c547dbea7f555ee47c8",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/golden/matrix.mjs",
         "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
+        "docs/CHANGELOG.ru.md",
+        "test/golden-matrix.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -736,10 +737,11 @@
     "token": "53:finish:96dabe24-27cc-40f9-aa36-a4aa39598a30:finish:1:admit",
     "fence": 53,
     "materialSha": "70dc3a9ef35f89d78633c1063a36ff984259c901",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "14d758f22031e74f45b60749d282523287612f23",
+    "phase": "testing",
     "admittedAt": 1793578765289,
-    "expiresAt": 1793579065289
+    "expiresAt": 1793579070739,
+    "patchId": "807eb196e1909fba2a2a3c547dbea7f555ee47c8"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -764,6 +766,10 @@
     },
     "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab:finish:3:return": {
       "digest": "93d45dc67697738709d035583e9a79dd4cea3bb869b2c649e67a1ec0a2270aa9",
+      "issue": 1204
+    },
+    "finish:96dabe24-27cc-40f9-aa36-a4aa39598a30:finish:2:synchronized": {
+      "digest": "98508457784484c9c13520bcfcaeaaf71945f73813695b45d0aa05c217e081c8",
       "issue": 1204
     },
     "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab": {
