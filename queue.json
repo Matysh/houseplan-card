@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 838,
+  "revision": 839,
   "nextTicket": 68,
   "nextFence": 68,
   "tasks": {
@@ -961,21 +961,22 @@
       "reviewRequest": "review:1211:1:ad262ee83a8e2d2268d821adac050806a9eb2162:c356cd6c04a2b64bf151f1337f1de218abceb21b",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Release classification does not describe this issue and cycle"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": true,
-        "classificationAt": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "d1c65df9ac3a3cbebb03",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": null
+        },
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 11
         }
       },
       "devBuild": {
