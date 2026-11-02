@@ -8,6 +8,8 @@
 
 ## Не выпущено
 
+- При конвертации Easy Floorplan фон больше не скрывает перенесённые стены и двери. [#1211](https://github.com/Matysh/houseplan-card/issues/1211)
+
 - Под переключателем связей Zigbee добавлено пояснение о различиях соседских карт Zigbee2MQTT/ZHA и подтверждённых маршрутов Houseplan. [#1157](https://github.com/Matysh/houseplan-card/issues/1157)
 
 - Перед stable добавлена отдельная диагностика трёх опубликованных конвертеров: скачанный файл импортируется через UI изолированного HA; версии и отказы сохраняются без блокировки Houseplan. [#1179](https://github.com/Matysh/houseplan-card/issues/1179)

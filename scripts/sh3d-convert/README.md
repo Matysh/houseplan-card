@@ -87,6 +87,12 @@ The compiled-consumer unit reads the resulting space with the actual HP
 lighting/compass/backdrop helpers, so an ignored forward-compatible field is
 not mistaken for a working setting.
 
+Easy vector walls and openings explicitly enable the shared borders display
+setting, including when an image is used as their underlay (#1211). Image-only
+spaces keep Houseplan's usual display defaults. For an older conversion already
+imported with hidden walls/doors, enable borders in that space's settings; the
+geometry and host data were retained and do not need to be drawn again.
+
 This converter is an independent external product. Its task-specific checks
 run when working on the converter; they do not become gates for unrelated
 Houseplan tasks. Stable includes converter diagnostics, whose failure is

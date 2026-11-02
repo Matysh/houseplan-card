@@ -58,6 +58,10 @@ export function convertEasy(text, options = {}) {
         ...(floor.texts || []).map(source => textDecor(source, context)).filter(Boolean)];
       const openings = (floor.openings || []).map(source => openingConfig(source, context)).filter(Boolean);
       const settings = { glow_enabled: true,
+        // An Easy background is an underlay, not a replacement for its geometry.
+        // HP otherwise defaults image-backed spaces to hidden walls/openings.
+        ...(rooms.length || projected.walls.length || projected.partitions.length || openings.length
+          ? { show_borders: true } : {}),
         north_deg: ((Math.round(numberAt(config.north, 'north', 0)) % 360) + 360) % 360,
         sun_rays: booleanAt(config.sunlight, 'sunlight') };
       if (config.sunlight !== undefined) {

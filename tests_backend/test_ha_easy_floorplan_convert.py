@@ -81,10 +81,15 @@ async def test_issue_937_ha_applies_exports_and_deduplicates_without_changing_ex
     assert len(first["markers"]) == len(expected["markers"])
     assert all(marker["id"] not in {m["id"] for m in expected["markers"]} for marker in first["markers"])
     copied = first["spaces"][-1]
+    if filename.startswith("easy-"):
+        assert copied["settings"]["show_borders"] is True
+        assert copied["settings"].get("hide_openings") is not True
     CONFIG_SCHEMA(first)
     exported, _ = create_export(runtime, {"config": first, "rev": 2}, await runtime.store.async_load(),
         kind="space", space_id=copied["id"], card_version="test-937", config_root=root)
     parsed = parse_document(json.dumps(exported).encode())
+    if filename.startswith("easy-"):
+        assert parsed["payload"]["config"]["spaces"][0]["settings"]["show_borders"] is True
     assert len(parsed["payload"]["config"]["markers"]) == len(expected["markers"])
     assert copied.get("decor", []) == parsed["payload"]["config"]["spaces"][0].get("decor", [])
     if copied.get("led_strips"):

@@ -1,10 +1,28 @@
 /** The target must consume the data, not merely tolerate unknown JSON keys. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { convertEasy } from '../scripts/sh3d-convert/easy.mjs';
 import { spaceDisplayOf } from '../test-build/logic.js';
 import { northDegOf, sunRaysOn } from '../test-build/sun.js';
 import { planRect } from '../test-build/space-geometry.js';
+
+test('#1211 Easy geometry stays visible over an imported background', () => {
+  const source = JSON.parse(readFileSync(new URL('../scripts/sh3d-convert/fixtures/easy-content.json', import.meta.url)));
+  for (const image of ['/local/plan.png', undefined]) {
+    source.floors[0].image = image;
+    const space = convertEasy(JSON.stringify(source)).documents[0].payload.config.spaces[0];
+    assert.equal(space.openings[0].type, 'door');
+    assert.equal(space.openings[0].host.kind, 'wall');
+    assert.equal(spaceDisplayOf(space).showBorders, true);
+    assert.equal(spaceDisplayOf(space).hideOpenings, false);
+    assert.equal(space.plan_url, image);
+  }
+  const imageOnly = convertEasy(JSON.stringify({ type: 'custom:easy-floorplan-card',
+    floors: [{ image: '/local/plan.png' }] })).documents[0].payload.config.spaces[0];
+  assert.equal(spaceDisplayOf(imageOnly).showBorders, false);
+  assert.equal(spaceDisplayOf(imageOnly).hideOpenings, true);
+});
 
 test('#937 actual HP consumers read imported light/compass settings and backdrop placement', () => {
   const source = { type: 'custom:easy-floorplan-card', width: 600, height: 400, north: 90, sunlight: true,

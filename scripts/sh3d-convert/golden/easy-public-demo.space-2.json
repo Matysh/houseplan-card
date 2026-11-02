@@ -122,6 +122,7 @@
           ],
           "settings": {
             "glow_enabled": true,
+            "show_borders": true,
             "north_deg": 0,
             "sun_rays": true
           },

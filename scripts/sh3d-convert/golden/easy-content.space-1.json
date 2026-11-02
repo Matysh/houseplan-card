@@ -106,6 +106,7 @@
           ],
           "settings": {
             "glow_enabled": true,
+            "show_borders": true,
             "north_deg": 45,
             "sun_rays": true
           },

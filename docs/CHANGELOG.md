@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Easy Floorplan conversion explicitly keeps imported walls and doors visible when the floor also has a background image. [#1211](https://github.com/Matysh/houseplan-card/issues/1211)
+
 - Explain why Zigbee2MQTT/ZHA neighbor maps can differ from confirmed routes shown by Houseplan, directly below the Zigbee links toggle. [#1157](https://github.com/Matysh/houseplan-card/issues/1157)
 
 - Add a diagnostic stable-only journey for the three published plan converters: download the converted file and import it through a disposable Home Assistant UI, retaining artifact identities and separate failures without blocking Houseplan. [#1179](https://github.com/Matysh/houseplan-card/issues/1179)
