@@ -53,3 +53,22 @@ def test_existing_opening_occupancy_contract():
             edge = index.edges[edge_key(host)] if host else None
             observed[opening["id"]] = dict(a=to_numbers(index.points[edge["from"]]), b=to_numbers(index.points[edge["to"]]), t=host["t"]) if host else None
         assert observed == case["expect"], case["name"]
+
+
+def test_connected_834_contacts_do_not_feed_previous_projection_rounds():
+    """Ordinary connected decimal/lattice input must fit the unchanged exact budget."""
+    from custom_components.houseplan.plan_graph import validate_graph, verify_projection
+    from custom_components.houseplan.plan_graph_exact import MAX_BITS, decode_point
+    source = json.loads((Path(__file__).parents[1] / "test/fixtures/834-node-connected.json").read_text())
+    before = json.dumps(source, sort_keys=True)
+    space = source["spaces"][0]
+    result = migrate_graph_space(space, {"source_model_version": source["model_version"]})
+    validate_graph(result["graph"])
+    verify_projection(result["space"])
+    assert {room["room"] for room in result["graph"]["rooms"]} == {room["id"] for room in space["rooms"]}
+    assert result["migrationReport"]["maxDisplacementCm"] <= .001000000001
+    for node in result["graph"]["nodes"]:
+        point = decode_point(node["p"])
+        assert max(abs(q.numerator).bit_length() for q in (point.x, point.y)) <= MAX_BITS
+        assert max(q.denominator.bit_length() for q in (point.x, point.y)) <= MAX_BITS
+    assert json.dumps(source, sort_keys=True) == before
