@@ -1,0 +1,9 @@
+{
+  "issue": 1165,
+  "approvedAt": "2026-11-02",
+  "ownerMessage": "Теперь фиксируй всё в задачу.",
+  "scope": "P01–P10, K01–K04; complete profile prototype and shared UI Kit followups",
+  "kind": "visual approval, not product acceptance",
+  "productTestsRun": false,
+  "privateDataPublished": false
+}
