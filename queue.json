@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 980,
+  "revision": 981,
   "nextTicket": 76,
   "nextFence": 76,
   "tasks": {
@@ -16,7 +16,41 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793635160703,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "4e6e2cdf81324212545a0dab9457786c66a42b02",
+      "changedFiles": [
+        "demo/smoke_stair_arrival.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/STAIRS.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/design/1126-stair-arrival/2026-11-02/.gitattributes",
+        "docs/design/1126-stair-arrival/2026-11-02/CONTRACT.md",
+        "docs/design/1126-stair-arrival/2026-11-02/IMPLEMENTATION.md",
+        "docs/design/1126-stair-arrival/2026-11-02/README.md",
+        "docs/design/1126-stair-arrival/2026-11-02/approval.json",
+        "docs/design/1126-stair-arrival/2026-11-02/fixture.json",
+        "docs/design/1126-stair-arrival/2026-11-02/journal.json",
+        "docs/design/1126-stair-arrival/2026-11-02/overrides/ha-dialog.css",
+        "docs/design/1126-stair-arrival/2026-11-02/overrides/houseplan-card.css",
+        "docs/design/1126-stair-arrival/2026-11-02/overrides/houseplan-card.motion-before.css",
+        "docs/design/1126-stair-arrival/2026-11-02/overrides/hp-dialog.css",
+        "docs/design/1126-stair-arrival/2026-11-02/provenance.json",
+        "docs/design/1126-stair-arrival/2026-11-02/replay.mjs",
+        "docs/design/1126-stair-arrival/2026-11-02/runtime/app.mjs",
+        "docs/design/1126-stair-arrival/2026-11-02/runtime/index.html",
+        "docs/design/1126-stair-arrival/2026-11-02/runtime/lab.css",
+        "docs/design/1126-stair-arrival/2026-11-02/runtime/theme-local.css",
+        "docs/design/1126-stair-arrival/2026-11-02/screenshots/arrival-pulse.jpg",
+        "docs/release-ledger/v1.83.0/1126.json",
+        "src/houseplan-card.ts",
+        "src/stairs-view.ts",
+        "src/styles/ui-motion.styles.ts",
+        "src/ui-motion.ts",
+        "test/stairs-view-arrival.test.mjs"
+      ]
     },
     "1128": {
       "issue": 1128,
@@ -1304,12 +1338,17 @@
     "token": "75:finish:97dac295-30dc-406e-afc0-9874832c0583:finish:1:admit",
     "fence": 75,
     "materialSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
+    "phase": "testing",
     "admittedAt": 1793635164178,
-    "expiresAt": 1793635464178
+    "expiresAt": 1793635470243,
+    "patchId": "4e6e2cdf81324212545a0dab9457786c66a42b02"
   },
   "events": {
+    "finish:97dac295-30dc-406e-afc0-9874832c0583:finish:2:synchronized": {
+      "digest": "d2e6ae510b35a960395259491e2fbd92b81139d2396005e05fe85dbbdc12217a",
+      "issue": 1126
+    },
     "finish:97dac295-30dc-406e-afc0-9874832c0583": {
       "digest": "2eadc7d125097d16a852cefef6bdb7d97e1b27062f4a376698b15e6339e6caaf",
       "issue": 1126,
