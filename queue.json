@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 641,
-  "nextTicket": 58,
+  "revision": 642,
+  "nextTicket": 59,
   "nextFence": 58,
   "tasks": {
     "1128": {
@@ -87,11 +87,11 @@
       "materialSha": "4cebb82afff75842c0a882f9c1cb035568400fe7",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 56,
-      "queued": false,
+      "ticket": 58,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793613739653,
-      "reviewEntry": 1,
+      "readyAt": 1793614412026,
+      "reviewEntry": 2,
       "patchId": "be70c1ab06c3c8b66516c1eefb62f18624126d69",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
@@ -273,20 +273,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1167:1:be70c1ab06c3c8b66516c1eefb62f18624126d69:56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-      "reviewMaterial": {
-        "materialSha": "4cebb82afff75842c0a882f9c1cb035568400fe7",
-        "expectedBase": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-        "patchId": "be70c1ab06c3c8b66516c1eefb62f18624126d69"
-      },
-      "reviewRetry": {
-        "requestId": "review:1167:1:be70c1ab06c3c8b66516c1eefb62f18624126d69:56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-        "eventId": "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:5:review-retry",
-        "at": 1793613884372,
-        "runId": 41425681674,
-        "runAttempt": 1
-      },
-      "reason": "review-retry-exhausted",
       "notice": {
         "key": "1:review-retry-exhausted",
         "reason": "review-retry-exhausted",
@@ -1054,7 +1040,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1167
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -1220,6 +1208,28 @@
         "toStatus": "S6-in-progress",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:81697601-05e6-45f7-b124-f711af92f247": {
+      "digest": "2701c32c18bc06e8bb8f6e5c6d44a41baf34ce3b3cf4eeb00ff96be8abfeb5be",
+      "issue": 1167,
+      "message": {
+        "kind": "queued",
+        "issue": 1167,
+        "at": 1793614412026,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "4cebb82afff75842c0a882f9c1cb035568400fe7",
+        "evidence": {
+          "id": "20261102T100232584-c4eae66c",
+          "name": "Тесты для задачи #1167 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T100232584-c4eae66c/report.json",
+          "materialSha": "4cebb82afff75842c0a882f9c1cb035568400fe7",
+          "status": "passed",
+          "finishedAt": "2026-11-02T10:03:25.305Z",
+          "failures": []
+        }
       }
     }
   },
