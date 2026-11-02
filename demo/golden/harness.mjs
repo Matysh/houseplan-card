@@ -2816,10 +2816,10 @@ export async function prepareGoldenScenario(page, scenario) {
       const dataReady = () => {
         const snapshot = card._renderDeviceSnapshot;
         return card._loadOk && !!card._norm && !!card._serverCfg && !!card._layout
-          && !card._booting && !card._bootFading && !card._bootSoft
+          && card._booting === false && card._bootFading === false && card._bootSoft === false
           && card._continuity.state === 'steady' && !card._continuity.overlayVisible
           && !card._modeTransitionBusy && !card._cameraTransition?.active
-          && !card._writesPending && !card._dirtyPos.size && !card._sentPos.size
+          && card._writesPending === 0 && card._dirtyPos.size === 0 && card._sentPos.size === 0
           && !card._saveConfigDebounced.pending() && !card._persistLayout.pending()
           && snapshot?.sourceSequence === card._hassSequence && snapshot.geometry === card._cfgEpoch;
       };
