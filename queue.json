@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 756,
+  "revision": 757,
   "nextTicket": 63,
   "nextFence": 63,
   "tasks": {
@@ -968,7 +968,12 @@
       "status": "pending",
       "presentation": {
         "round": 2,
-        "occurredAt": "2026-11-02T13:40:38.676Z"
+        "occurredAt": "2026-11-02T13:40:38.676Z",
+        "transition": {
+          "from": "S4-spec-review",
+          "to": "S5-ready",
+          "confirmed": true
+        }
       },
       "runId": 41455049137
     }
@@ -1006,6 +1011,10 @@
     },
     "github:41455519490:1:spec:1165:spec-complete": {
       "digest": "e808ff0712c30409698145d4790b6cda03e2b9901ebbe11be72c336c22d81020",
+      "issue": 1165
+    },
+    "github:41455519490:1:spec:1165:spec-label": {
+      "digest": "dcf6e914b16fc8ddac03bdce2f6ae3a393bc1fa0809ddb6c9e8dd5b55940277b",
       "issue": 1165
     }
   },
