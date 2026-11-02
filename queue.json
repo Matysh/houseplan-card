@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1140,
+  "revision": 1141,
   "nextTicket": 84,
   "nextFence": 84,
   "tasks": {
@@ -455,6 +455,109 @@
         "at": 1793642266956,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1174,
+        "requestId": "review:1174:3:31d57973e192013afed2658bf71a373b670cc118:4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
+        "kind": "code",
+        "base": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
+        "materialSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+        "patchId": "31d57973e192013afed2658bf71a373b670cc118",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1174,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1174",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Исправление после первого код-ревью: видимость документа теперь принадлежит только `hp-summary-weather`; родитель передаёт лишь видимость панели, без императивной записи `active`. В `smoke_summary_weather` добавлен цикл document hidden → visible с проверкой отписки, новой подписки и возвращения прогноза без переключения панели.\n\nТакже учтены рекомендации ревью: значения погоды остаются доступным именем кнопки (без заменяющего aria-label), внутри кнопки используются phrasing-элементы; учитываются HA locale.time_zone=local и number_format=system. Пояснено, почему удалённый источник не открывает more-info. HA форматирование погодных единиц проверено по официальному frontend `data/weather.ts` и `compute_attribute_display.ts`, включая templow.\n\nВизуальный контракт: пакет `5621a6d8`, сравнение при 1280×720, те же погодные данные и цвета; совпали геометрия блока, направление ветра, ритм разделителей и три колонки; hover с прямыми верхними углами проверен в браузере. Полный браузерный HA E2E отдельно отмечен как нужный перед релизом: houseplan-e2e#14; реальные серверные WebSocket-проверки config/set и plan/optimize входят в S6."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокер прошлого раунда устранён. Раньше прогноз пропадал после того, как вкладка скрывалась или гас экран. Теперь видимостью документа управляет только `hp-summary-weather`, а родитель передаёт через `.active` лишь интерактивность панели. Записи `weather.active = false` в `LoadedSummaryPanelRuntime.visibility('hidden')` больше нет. Поэтому значения Lit не расходятся, и подписка после возврата восстанавливается без ручного переключения панели. Цикл hidden → visible проверен в smoke: старая подписка освобождается, создаётся новая, свежий прогноз отрисовывается. Набор S6 на `aecc1014` прошёл (PASS).\n\nРекомендации прошлого ревью учтены:\n- кнопка больше не переопределяет имя через `aria-label`, внутри неё теперь только `span`;\n- учитываются `locale.time_zone=local` и `number_format=system`;\n- добавлен комментарий, почему у удалённого источника нет действия.\n\nНовых существенных рисков я не нашёл. Работу можно принимать. Полный браузерный HA E2E с реальной подпиской и окном more-info по-прежнему нужен перед релизом (houseplan-e2e#14).",
+          "understanding": "Задача — погодный блок внизу сводной панели, включается одной галочкой. Источник — `weather.*`:\n- единственный источник выбирается автоматически;\n- при нескольких источниках рядом с галочкой появляется список;\n- удалённый или недоступный источник не подменяется другим;\n- прогноз приходит через `weather/subscribe_forecast` и только пока виджет виден;\n- обновления погоды не перерисовывают план.\n\nУстройство решения с прошлого раунда не изменилось. Конфиг хранится в `summary_panel.weather {enabled, entity_id?}` и проверяется одинаково во фронтенде (`runnableSummaryPanel`/`validateSummaryDraft`) и в бэкенде (`SUMMARY_PANEL_SCHEMA`/`validate_summary_panel_references`). Отрисовкой занимается отдельный light-DOM элемент `hp-summary-weather`. Свежий `hass` он получает через `observeHassComposition()`, не будя карточку. Подпиской управляет класс `WeatherForecastSubscription` с поколениями.\n\nЧто изменилось в этом раунде:\n1. В `visibility()` рантайма (summary-panel-runtime-loaded.ts:199-211) остались только часы, `syncPresentation(true)` и `requestUpdate`, императивной записи в виджет нет.\n2. Шаблон передаёт `.active=${this.presentation.interactive}` (строка 349). Состояние документа учитывает только сам элемент: в `sync()` через `ownerDocument.visibilityState` и через собственный слушатель `visibilitychange`.\n\nПовторно разобранный путь. При скрытии документа слушатель элемента вызывает `sync()`, видимость становится false, `stop()` освобождает подписку и очищает прогноз, затем `requestUpdate` самого элемента. Его собственный цикл обновления от `shouldUpdate` карточки не зависит. При возврате `sync()` снова подписывается, а `active` остаётся true, потому что его никто не перезаписывал. Закрытие панели по-прежнему идёт через `interactive=false` → `stop()`, размонтирование — через `disconnectedCallback`.",
+          "analysis": [
+            {
+              "topic": "Исправление жизненного цикла при скрытии документа",
+              "assessment": "Исправлено правильным способом: у видимости теперь два независимых входа без общего изменяемого значения. Интерактивность панели передаётся декларативно от родителя, видимость документа элемент читает сам. Раньше был второй владелец того же свойства, и это ломало фиксацию значения в Lit; теперь его нет. Обход через `live()` или подобное не понадобился, решение стало проще.",
+              "evidence": "src/summary-panel-runtime-loaded.ts:199-211 — в `visibility()` нет записи в виджет; строка 349 — `.active=${this.presentation.interactive}`; src/hp-summary-weather.ts:17-23 — слушатель `visibilitychange` и `sync()` с проверкой `visibilityState`. demo/smoke_summary_weather.mjs, шаг «document hide releases subscription and return restores a fresh forecast without toggling panel»: проверяются `previous.released`, рост числа подписок на одну и `+10°` из новой подписки. S6 PASS на aecc1014."
+            },
+            {
+              "topic": "Реактивные свойства элемента",
+              "assessment": "Я проверил, не перекрывают ли поля класса `active = false` и `language?: string` реактивные аксессоры Lit. В проекте `useDefineForClassFields: false`, поэтому поля присваиваются через [[Set]] и проходят через аксессоры. Реактивность сохраняется.",
+              "evidence": "tsconfig.json:16; src/hp-summary-weather.ts:10-14."
+            },
+            {
+              "topic": "Отделение погоды от плана и подписка",
+              "assessment": "С прошлого раунда не изменилось, решение стоит сохранить. Погодная сущность попадает в `entityIds()` только при открытом диалоге, `hass` доставляется прямо в элемент, в ключе `screenGeometry` нет состояний. Механизм поколений отбрасывает устаревшие события и освобождает подписки, ответ на которые пришёл поздно. Повтора после отказа нет, пока не изменится состояние.",
+              "evidence": "summary-panel-runtime-loaded.ts:145-148, 259-261, 276-285; src/summary-weather.ts:60-97; test/summary-weather.test.mjs; smoke «current weather and forecast updates do not rerender the parent plan»."
+            },
+            {
+              "topic": "Учтённые рекомендации",
+              "assessment": "Подпись «Подробнее о погоде» перенесена в `title`, поэтому доступное имя кнопки складывается из её содержимого (в smoke есть проверка через `getByRole('button', { name: /\\+8°.*Облачно.*Влажность/ })`). Внутри кнопки только `span`. При `locale.time_zone === 'local'` часовой пояс не задаётся, используется браузерный. `number_format: 'system'` отображается в `navigator.language`. Комментарий объясняет, почему удалённый источник рисуется без more-info. Всё сделано адресно, лишней сложности не добавлено.",
+              "evidence": "src/hp-summary-weather.ts:26-35, 55-58, 75-77."
+            },
+            {
+              "topic": "Источник, редактор и бэкенд",
+              "assessment": "Здесь ничего не менялось, и всё соответствует ТЗ: сохранённый `entity_id` не подменяется, единственный источник автоматически записывается при включении галочки, удалённый показывается отдельной опцией, при выключении галочки выбор сохраняется. Новая нечитаемая ссылка — ошибка, неизменная — предупреждение, одинаково во фронтенде и в бэкенде.",
+              "evidence": "src/summary-weather.ts:13-19; src/summary-panel-editor.ts:101-127; src/summary-panel.ts:178-181; validation.py:2852-2858; tests_backend/test_ha_summary_weather.py."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Шаблон измерения панели `renderMeasure` и оценка `fits` не учитывают погодный блок. Если в панели только погода, её высота определяется содержимым и ограничивается `--summary-height-cap` с прокруткой. Это работает, но решение о том, помещается ли панель, принимается по эталонной строке значения, а не по реальной погоде. Если на узких экранах появятся жалобы, стоит добавить погоду в измеряемый эталон. Сейчас это не требуется."
+          ],
+          "boundaries": "Сборку, тесты и браузер я не запускал. Использован результат S6 «Тесты для задачи #1174 (перед ревью)» — PASS на `aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c` (8/8 групп, включая новый smoke-сценарий hidden → visible), а также комментарий исполнителя о сравнении с визуальным пакетом `5621a6d8`; снимки я сам не сравнивал.\n\nПо исходникам заново изучены:\n- `summary-panel-runtime-loaded.ts` (visibility, renderPanel, observeHassComposition, screenGeometry);\n- `hp-summary-weather.ts` целиком;\n- `summary-weather.ts`;\n- правки редактора и валидации;\n- smoke-сценарий;\n- настройка `useDefineForClassFields` в tsconfig.\n\nРеальная подписка в полном браузерном HA, окно more-info и точный вид единиц от `formatEntityAttributeValue` (включая templow) здесь не проверялись. Это вынесено в houseplan-e2e#14, а поведение HA frontend исполнитель описывает со ссылкой на официальные исходники, которые я не читал.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 8,
+          "cache_creation_input_tokens": 76261,
+          "cache_read_input_tokens": 202706,
+          "output_tokens": 6223,
+          "output_tokens_details": {
+            "thinking_tokens": 1827
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 76261,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 785,
+              "cache_read_input_tokens": 69059,
+              "cache_creation_input_tokens": 11406,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 11406
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер прошлого раунда устранён. Раньше прогноз пропадал после того, как вкладка скрывалась или гас экран. Теперь видимостью документа управляет только `hp-summary-weather`, а родитель передаёт через `.active` лишь интерактивность панели. Записи `weather.active = false` в `LoadedSummaryPanelRuntime.visibility('hidden')` больше нет. Поэтому значения Lit не расходятся, и подписка после возврата восстанавливается без ручного переключения панели. Цикл hidden → visible проверен в smoke: старая подписка освобождается, создаётся новая, свежий прогноз отрисовывается. Набор S6 на `aecc1014` прошёл (PASS).\n\nРекомендации прошлого ревью учтены:\n- кнопка больше не переопределяет имя через `aria-label`, внутри неё теперь только `span`;\n- учитываются `locale.time_zone=local` и `number_format=system`;\n- добавлен комментарий, почему у удалённого источника нет действия.\n\nНовых существенных рисков я не нашёл. Работу можно принимать. Полный браузерный HA E2E с реальной подпиской и окном more-info по-прежнему нужен перед релизом (houseplan-e2e#14).\n\n## Понимание решения\n\nЗадача — погодный блок внизу сводной панели, включается одной галочкой. Источник — `weather.*`:\n- единственный источник выбирается автоматически;\n- при нескольких источниках рядом с галочкой появляется список;\n- удалённый или недоступный источник не подменяется другим;\n- прогноз приходит через `weather/subscribe_forecast` и только пока виджет виден;\n- обновления погоды не перерисовывают план.\n\nУстройство решения с прошлого раунда не изменилось. Конфиг хранится в `summary_panel.weather {enabled, entity_id?}` и проверяется одинаково во фронтенде (`runnableSummaryPanel`/`validateSummaryDraft`) и в бэкенде (`SUMMARY_PANEL_SCHEMA`/`validate_summary_panel_references`). Отрисовкой занимается отдельный light-DOM элемент `hp-summary-weather`. Свежий `hass` он получает через `observeHassComposition()`, не будя карточку. Подпиской управляет класс `WeatherForecastSubscription` с поколениями.\n\nЧто изменилось в этом раунде:\n1. В `visibility()` рантайма (summary-panel-runtime-loaded.ts:199-211) остались только часы, `syncPresentation(true)` и `requestUpdate`, императивной записи в виджет нет.\n2. Шаблон передаёт `.active=${this.presentation.interactive}` (строка 349). Состояние документа учитывает только сам элемент: в `sync()` через `ownerDocument.visibilityState` и через собственный слушатель `visibilitychange`.\n\nПовторно разобранный путь. При скрытии документа слушатель элемента вызывает `sync()`, видимость становится false, `stop()` освобождает подписку и очищает прогноз, затем `requestUpdate` самого элемента. Его собственный цикл обновления от `shouldUpdate` карточки не зависит. При возврате `sync()` снова подписывается, а `active` остаётся true, потому что его никто не перезаписывал. Закрытие панели по-прежнему идёт через `interactive=false` → `stop()`, размонтирование — через `disconnectedCallback`.\n\n## Разбор решения\n\n### Исправление жизненного цикла при скрытии документа\n\nИсправлено правильным способом: у видимости теперь два независимых входа без общего изменяемого значения. Интерактивность панели передаётся декларативно от родителя, видимость документа элемент читает сам. Раньше был второй владелец того же свойства, и это ломало фиксацию значения в Lit; теперь его нет. Обход через `live()` или подобное не понадобился, решение стало проще.\n\nОснование: src/summary-panel-runtime-loaded.ts:199-211 — в `visibility()` нет записи в виджет; строка 349 — `.active=${this.presentation.interactive}`; src/hp-summary-weather.ts:17-23 — слушатель `visibilitychange` и `sync()` с проверкой `visibilityState`. demo/smoke_summary_weather.mjs, шаг «document hide releases subscription and return restores a fresh forecast without toggling panel»: проверяются `previous.released`, рост числа подписок на одну и `+10°` из новой подписки. S6 PASS на aecc1014.\n\n### Реактивные свойства элемента\n\nЯ проверил, не перекрывают ли поля класса `active = false` и `language?: string` реактивные аксессоры Lit. В проекте `useDefineForClassFields: false`, поэтому поля присваиваются через [[Set]] и проходят через аксессоры. Реактивность сохраняется.\n\nОснование: tsconfig.json:16; src/hp-summary-weather.ts:10-14.\n\n### Отделение погоды от плана и подписка\n\nС прошлого раунда не изменилось, решение стоит сохранить. Погодная сущность попадает в `entityIds()` только при открытом диалоге, `hass` доставляется прямо в элемент, в ключе `screenGeometry` нет состояний. Механизм поколений отбрасывает устаревшие события и освобождает подписки, ответ на которые пришёл поздно. Повтора после отказа нет, пока не изменится состояние.\n\nОснование: summary-panel-runtime-loaded.ts:145-148, 259-261, 276-285; src/summary-weather.ts:60-97; test/summary-weather.test.mjs; smoke «current weather and forecast updates do not rerender the parent plan».\n\n### Учтённые рекомендации\n\nПодпись «Подробнее о погоде» перенесена в `title`, поэтому доступное имя кнопки складывается из её содержимого (в smoke есть проверка через `getByRole('button', { name: /\\+8°.*Облачно.*Влажность/ })`). Внутри кнопки только `span`. При `locale.time_zone === 'local'` часовой пояс не задаётся, используется браузерный. `number_format: 'system'` отображается в `navigator.language`. Комментарий объясняет, почему удалённый источник рисуется без more-info. Всё сделано адресно, лишней сложности не добавлено.\n\nОснование: src/hp-summary-weather.ts:26-35, 55-58, 75-77.\n\n### Источник, редактор и бэкенд\n\nЗдесь ничего не менялось, и всё соответствует ТЗ: сохранённый `entity_id` не подменяется, единственный источник автоматически записывается при включении галочки, удалённый показывается отдельной опцией, при выключении галочки выбор сохраняется. Новая нечитаемая ссылка — ошибка, неизменная — предупреждение, одинаково во фронтенде и в бэкенде.\n\nОснование: src/summary-weather.ts:13-19; src/summary-panel-editor.ts:101-127; src/summary-panel.ts:178-181; validation.py:2852-2858; tests_backend/test_ha_summary_weather.py.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Шаблон измерения панели `renderMeasure` и оценка `fits` не учитывают погодный блок. Если в панели только погода, её высота определяется содержимым и ограничивается `--summary-height-cap` с прокруткой. Это работает, но решение о том, помещается ли панель, принимается по эталонной строке значения, а не по реальной погоде. Если на узких экранах появятся жалобы, стоит добавить погоду в измеряемый эталон. Сейчас это не требуется.\n\n## Границы анализа\n\nСборку, тесты и браузер я не запускал. Использован результат S6 «Тесты для задачи #1174 (перед ревью)» — PASS на `aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c` (8/8 групп, включая новый smoke-сценарий hidden → visible), а также комментарий исполнителя о сравнении с визуальным пакетом `5621a6d8`; снимки я сам не сравнивал.\n\nПо исходникам заново изучены:\n- `summary-panel-runtime-loaded.ts` (visibility, renderPanel, observeHassComposition, screenGeometry);\n- `hp-summary-weather.ts` целиком;\n- `summary-weather.ts`;\n- правки редактора и валидации;\n- smoke-сценарий;\n- настройка `useDefineForClassFields` в tsconfig.\n\nРеальная подписка в полном браузерном HA, окно more-info и точный вид единиц от `formatEntityAttributeValue` (включая templow) здесь не проверялись. Это вынесено в houseplan-e2e#14, а поведение HA frontend исполнитель описывает со ссылкой на официальные исходники, которые я не читал.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 4655da54e3b149ee358fc4dd1e6e07aee0097fd5 → aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1174, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nИсправление после первого код-ревью: видимость документа теперь принадлежит только `hp-summary-weather`; родитель передаёт лишь видимость панели, без императивной записи `active`. В `smoke_summary_weather` добавлен цикл document hidden → visible с проверкой отписки, новой подписки и возвращения прогноза без переключения панели.\n\nТакже учтены рекомендации ревью: значения погоды остаются доступным именем кнопки (без заменяющего aria-label), внутри кнопки используются phrasing-элементы; учитываются HA locale.time_zone=local и number_format=system. Пояснено, почему удалённый источник не открывает more-info. HA форматирование погодных единиц проверено по официальному frontend `data/weather.ts` и `compute_attribute_display.ts`, включая templow.\n\nВизуальный контракт: пакет `5621a6d8`, сравнение при 1280×720, те же погодные данные и цвета; совпали геометрия блока, направление ветра, ритм разделителей и три колонки; hover с прямыми верхними углами проверен в браузере. Полный браузерный HA E2E отдельно отмечен как нужный перед релизом: houseplan-e2e#14; реальные серверные WebSocket-проверки config/set и plan/optimize входят в S6.\n```\n\n</details>\n",
+        "createdAt": "2026-11-02T17:59:46.903Z",
+        "artifactId": 13166233327,
+        "runId": 41496039875,
+        "runAttempt": 1,
+        "completedAt": "2026-11-02T17:57:52Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41496039875",
+        "runStatus": "in_progress",
+        "publicationPending": true,
+        "expectedBase": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5"
       }
     },
     "1175": {
@@ -1521,9 +1624,9 @@
     "fence": 83,
     "materialSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
     "expectedBase": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793642191014,
-    "expiresAt": 1793645852667,
+    "expiresAt": 1793646003029,
     "patchId": "31d57973e192013afed2658bf71a373b670cc118",
     "reviewRequest": "review:1174:3:31d57973e192013afed2658bf71a373b670cc118:4655da54e3b149ee358fc4dd1e6e07aee0097fd5"
   },
@@ -1634,6 +1737,10 @@
     },
     "finish:91f7e2ca-bbde-4b49-8277-b76f358b2dc5:finish:6:review-presentation": {
       "digest": "6931824bf74fe77032bf99f5e16c7445d61000943b92462243bb29a45baf27e4",
+      "issue": 1174
+    },
+    "finish:91f7e2ca-bbde-4b49-8277-b76f358b2dc5:finish:6:review-complete": {
+      "digest": "dd62510a44a45c60a066f5094d9974890839f4b1566f5a3beeae2c2e43a37a9b",
       "issue": 1174
     },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
