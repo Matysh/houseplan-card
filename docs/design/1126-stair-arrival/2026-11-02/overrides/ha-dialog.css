@@ -1,0 +1,5 @@
+/* Settings shells opt in through hp-dialog; other HA dialogs stay unchanged. */
+:host .body {
+  display: var(--hp-settings-body-display, block);
+  flex-direction: column;
+}

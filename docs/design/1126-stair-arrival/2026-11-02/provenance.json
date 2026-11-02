@@ -1,0 +1,33 @@
+{
+  "issue": 1126,
+  "baseTag": "v1.84.0-beta.2",
+  "baseCommit": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
+  "releaseAsset": "https://github.com/Matysh/houseplan-card/releases/download/v1.84.0-beta.2/houseplan.zip",
+  "releaseSha256": "c4b235255a957e40f42c7e93c56b06548411d3d24eaae413ec10e47557a4accb",
+  "productFingerprint": "233216a19647e5445b3de8c196fd92b52357fc93332e45bb5cf2f7d44764e66f",
+  "haFrontend": "20260930.4",
+  "haFrontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+  "dataset": "Public synthetic fixture with authored stair links; no private backup",
+  "checks": "Portable replay on 18926; synthetic arrival screenshot. No product tests, build or CI.",
+  "screenshots": "Illustrative pulse frame on synthetic geometry; not product acceptance",
+  "files": {
+    ".gitattributes": "e59334efba889dddb371d824744bdeaf39111513f13c129059b9cef9b5b7ba12",
+    "approval.json": "3cca60c984d2d91909f4e832e48769e3d60d38d8899cf2b661b2b72cb13766a4",
+    "CONTRACT.md": "831015774a5667e22bf65ded5006ca8c9347033ca6ac65eab506ec8b3d311152",
+    "fixture.json": "4a8f46b181a237a45965f7f7b2456eeaf848d568c51a0fcf915b5d3e78f44f63",
+    "IMPLEMENTATION.md": "44bff48ef81cb990e748f1d4deac353a0677d014ac1ebd7d134d075f5cc97e8e",
+    "journal.json": "5ee95418428187caf05efebd2d23525bb621b73b9b7be14ee8b50557b1df85f7",
+    "overrides/ha-dialog.css": "d905b24888a94b7bc9276c795bc934ae0788d444b53186c89cfd7a20b5241abb",
+    "overrides/houseplan-card.css": "f6b3bbfe524ca0fef399c26c18615e516e0270e140cc586f3fb9e5b102a9bdc5",
+    "overrides/houseplan-card.motion-before.css": "dc21ebacc2556a5df12fc6fd0df30b0c8d029679db194b1ee90b9544294b47f1",
+    "overrides/hp-dialog.css": "d17b97a1be56eb2281a355df5a5b951ff8b77803420e633b023d77d46b9e8091",
+    "README.md": "1b64e78f898f301fd75271e8d897b5bde0353e8836e50c92e6cc406eab0a678b",
+    "replay.mjs": "675d4817588e098babe56e3726c00645e1958c8b6e5b2563e518314d0d2e6687",
+    "runtime/app.mjs": "4fec9a0d86d06fe38ae438f16696746a99adb238bec0a8b5b8ce592c2cc6cee9",
+    "runtime/index.html": "05f732836c28744fcd89137d2812d39c0ce780cd5a3e99b651bd03a67979c421",
+    "runtime/lab.css": "bd5147cd65a0facad254d0c793a3d1c5abff6105acfc0efa3ab377428c9b0615",
+    "runtime/theme-local.css": "58be3643a045dee9d534f1aedef7111702a14341e123cdb44ad8ce714c0cc51d",
+    "screenshots/arrival-pulse.jpg": "3c39060a3ee5d819844e7bd5882843c3f9ff2c13cd015979a986e5781a303cc1"
+  },
+  "priorVisualPackageCommit": "2ff84414439dd053b546e5937d858094b5f63165"
+}
