@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 723,
+  "revision": 724,
   "nextTicket": 62,
   "nextFence": 62,
   "tasks": {
@@ -791,10 +791,23 @@
       "removedToRelease": true,
       "reviewRequest": "review:1207:3:0bb6fbf9ed5e9f0b37bac4d901bdec8ce71aa9da:efa1b130fc69da8277de8bb013b08ea65b581010",
       "completion": {
-        "status": "pending",
-        "labels": false,
+        "labels": true,
         "milestone": false,
-        "comment": false
+        "comment": true,
+        "status": "pending",
+        "errors": {
+          "milestone": "Release bookkeeping is not available: Release classification does not describe this issue and cycle"
+        },
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": true,
+        "classificationAt": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
+        "commentCurrent": true,
+        "commentDigest": "461782c36f016e0e633c",
+        "commentFacts": {
+          "labels": true,
+          "milestone": false,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "pending"
