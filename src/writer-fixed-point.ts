@@ -6,6 +6,7 @@
  * config, history or pending-write fingerprint sees any of it.
  */
 import { reconcileCoincidentPartitions } from './coincident-partitions';
+import { reconcileGraphDraft } from './graph-optimize';
 import type {
   OpeningCfg, PartitionCfg, RoomCfg, SpaceModel, WallColumnCfg,
 } from './types';
@@ -127,6 +128,19 @@ export function finalizeWallChainSpace(
     else delete space.partitions;
     if (reconciled.openings.length) space.openings = reconciled.openings;
     else delete space.openings;
+  }
+
+  if (rawSpace.plan_graph) {
+    const result = reconcileGraphDraft(rawSpace, space, seeds);
+    return {
+      space: result.space,
+      report: {
+        partitionsMerged: result.partitionsMerged,
+        partitionsReconciled: result.partitionsReconciled,
+        openingsRehosted: result.openingsRehosted,
+        changed: JSON.stringify(result.space) !== before,
+      },
+    };
   }
 
   return {
