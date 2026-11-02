@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 643,
+  "revision": 644,
   "nextTicket": 59,
   "nextFence": 59,
   "tasks": {
@@ -84,7 +84,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/issue-1167-plan-graph",
-      "materialSha": "4cebb82afff75842c0a882f9c1cb035568400fe7",
+      "materialSha": "efa1b130fc69da8277de8bb013b08ea65b581010",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 58,
@@ -92,7 +92,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793614412026,
       "reviewEntry": 2,
-      "patchId": "be70c1ab06c3c8b66516c1eefb62f18624126d69",
+      "patchId": "58dd4b5a7374b17c92d236bdb2e0b8026399f8c8",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
         "custom_components/houseplan/backup_transaction.py",
@@ -1046,11 +1046,12 @@
     "worker": "finish",
     "token": "58:finish:81697601-05e6-45f7-b124-f711af92f247:finish:1:admit",
     "fence": 58,
-    "materialSha": "4cebb82afff75842c0a882f9c1cb035568400fe7",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "efa1b130fc69da8277de8bb013b08ea65b581010",
+    "expectedBase": "723d016df0bfe6affb2577ef2928aed4371c9d56",
+    "phase": "testing",
     "admittedAt": 1793614415695,
-    "expiresAt": 1793614715695
+    "expiresAt": 1793614726541,
+    "patchId": "58dd4b5a7374b17c92d236bdb2e0b8026399f8c8"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -1135,6 +1136,10 @@
     },
     "github:41425814770:1:completions:notice:2d2de2f9e1b6e1abcd4054dd265e535f53a79d18b31103017b612f4b8e5c26cc": {
       "digest": "47807155cf8e3b51a37ccddb05e779cb41fc678a849fa10b8b34178980efe5f2",
+      "issue": 1167
+    },
+    "finish:81697601-05e6-45f7-b124-f711af92f247:finish:2:synchronized": {
+      "digest": "b2aa8fad1e303039de44358fe6de744ecc2e65bcd8234de355382fbbacc9a671",
       "issue": 1167
     },
     "finish:331432e1-67ec-4338-ad70-75b51d429f4d": {
