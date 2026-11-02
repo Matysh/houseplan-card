@@ -484,6 +484,18 @@ def _project_space(
         for item in space.get("partitions") or []
         if isinstance(item, dict)
     ]
+    if isinstance(space.get("plan_graph"), dict):
+        graph = space["plan_graph"]
+        def node_ref(value):
+            return ids.get("node", str(space.get("id")) + "\0" + str(value))
+
+        out["plan_graph"] = {
+            "version": graph.get("version"),
+            "nodes": [{"id": node_ref(row.get("id")), "p": row.get("p")} for row in graph.get("nodes", [])],
+            "edges": [{"id": ids.get(row.get("kind"), row.get("id")), "kind": row.get("kind"), "from": node_ref(row.get("from")), "to": node_ref(row.get("to")), "cm": row.get("cm")} for row in graph.get("edges", [])],
+            "rooms": [{"room": ids.get("room", row.get("room")), "edges": [{"id": ids.get(ref.get("kind"), ref.get("id")), "kind": ref.get("kind"), "reverse": ref.get("reverse")} for ref in row.get("edges", [])]} for row in graph.get("rooms", [])],
+            "dependencies": [{"node": node_ref(row.get("node")), "kind": row.get("kind"), "refs": [{"from": node_ref(ref.get("from")), "to": node_ref(ref.get("to"))} for ref in row.get("refs", [])], "parameters": row.get("parameters")} for row in graph.get("dependencies", [])],
+        }
     out["wall_columns"] = [
         {
             "id": ids.get("column", item.get("id")),
@@ -522,6 +534,7 @@ def _project_space(
                 "kind": kind,
                 "id": ids.get(kind, host.get("id")),
                 "t": host.get("t"),
+                **({"tq": host["tq"]} if "tq" in host else {}),
             }
         out["openings"].append(projected)
     out["decor"] = [

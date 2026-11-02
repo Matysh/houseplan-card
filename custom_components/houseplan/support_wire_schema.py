@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from fractions import Fraction
 from dataclasses import dataclass
 from typing import Any
 
@@ -65,7 +66,7 @@ COUNT = "count"
 BOOL = bool
 RAW_REF = re.compile(r"[\s\S]{0,1024}\Z")
 REF = re.compile(
-    r"(?:space|room|area|wall|partition|column|opening|decor|stair|marker|device|entity|attribute|route|map|segment|installation|summary-block|summary-value|radar-slot|led|asset|integration|run|job)-[a-z0-9]{1,16}-[1-9][0-9]*\Z"
+    r"(?:space|room|area|wall|partition|node|column|opening|decor|stair|marker|device|entity|attribute|route|map|segment|installation|summary-block|summary-value|radar-slot|led|asset|integration|run|job)-[a-z0-9]{1,16}-[1-9][0-9]*\Z"
 )
 REF_OR_NULL = nullable(REF)
 COLOR = re.compile(
@@ -381,6 +382,17 @@ DECOR = Object(
         **fields("entity attr asset_id", REF_OR_NULL),
     }
 )
+GRAPH_RATIONAL = "graph_rational"
+GRAPH_POINT = "graph_point"
+GRAPH_EDGE_REF = Object({"kind": enum("wall", "partition"), "id": REF}, frozenset({"kind", "id"}))
+PLAN_GRAPH = Object({
+    "version": enum(1),
+    "nodes": Array(Object({"id": REF, "p": GRAPH_POINT}, frozenset({"id", "p"})), 404000),
+    "edges": Array(Object({"id": REF, "from": REF, "to": REF, "kind": enum("wall", "partition"), "cm": NUMBER}, frozenset({"id", "from", "to", "kind", "cm"})), 202000),
+    "rooms": Array(Object({"room": REF, "edges": Array(Object({"kind": enum("wall", "partition"), "id": REF, "reverse": BOOL}, frozenset({"kind", "id", "reverse"})), 500, 3)}, frozenset({"room", "edges"})), 400),
+    "dependencies": Array(Object({"node": REF, "kind": enum("on-edge", "intersection"), "refs": Array(Object({"from": REF, "to": REF}, frozenset({"from", "to"})), 2, 1), "parameters": Array(GRAPH_RATIONAL, 2, 1)}, frozenset({"node", "kind", "refs", "parameters"})), 404000),
+}, frozenset({"version", "nodes", "edges", "rooms", "dependencies"}))
+
 SPACE = Object(
     {
         "id": REF_OR_NULL,
@@ -393,6 +405,7 @@ SPACE = Object(
         "view_box": Array(NUMBER, 4, 4),
         "zero_wall_style": enum("dashed", "solid"),
         "settings": SPACE_SETTINGS,
+        "plan_graph": PLAN_GRAPH,
         "rooms": Array(ROOM),
         "wall_segments": Array(
             Object(
@@ -448,6 +461,7 @@ SPACE = Object(
                             "kind": enum("wall", "partition"),
                             "id": REF_OR_NULL,
                             "t": NUMBER,
+                            "tq": GRAPH_RATIONAL,
                         }
                     ),
                 }
@@ -1109,6 +1123,36 @@ def validate(
                 max_depth=max_depth,
                 _remaining=remaining,
             )
+    elif rule in (GRAPH_RATIONAL, GRAPH_POINT):
+        def integer(text):
+            if not isinstance(text, str) or len(text) > 1235 or not re.fullmatch(r"0|-?[1-9][0-9]*", text):
+                raise WireRejected("support_rejected")
+            result = int(text)
+            if result.bit_length() > 4096:
+                raise WireRejected("support_rejected")
+            return result
+
+        def rational(pair):
+            if not isinstance(pair, list) or len(pair) != 2:
+                raise WireRejected("support_rejected")
+            n, d = map(integer, pair)
+            if d <= 0 or math.gcd(n, d) != 1:
+                raise WireRejected("support_rejected")
+            return Fraction(n, d)
+
+        if rule == GRAPH_RATIONAL:
+            rational(value)
+        elif not isinstance(value, list) or not value:
+            raise WireRejected("support_rejected")
+        elif len(value) == 3 and value[0] == "l":
+            if any(abs(Fraction(integer(n), 240)) > 5000 for n in value[1:]):
+                raise WireRejected("support_rejected")
+        elif len(value) == 5 and value[0] == "q":
+            x, y = rational(value[1:3]), rational(value[3:5])
+            if abs(x) > 5000 or abs(y) > 5000 or (x*240).denominator == (y*240).denominator == 1:
+                raise WireRejected("support_rejected")
+        else:
+            raise WireRejected("support_rejected")
     elif isinstance(rule, re.Pattern):
         if not isinstance(value, str) or len(value) > 1024 or not rule.fullmatch(value):
             raise WireRejected("support_rejected")

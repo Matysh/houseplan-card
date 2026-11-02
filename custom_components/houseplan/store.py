@@ -244,6 +244,7 @@ async def async_save_config_state(
     previous: dict[str, Any] | None = None,
     canonical: bool = False,
     graph_pair: bool = False,
+    authorize=None,
 ) -> dict[str, Any]:
     """Persist configuration and reconcile dependent operational state.
 
@@ -265,24 +266,29 @@ async def async_save_config_state(
         except (TypeError, ValueError):
             previous_rev = 0
 
-    if not graph_pair and getattr(runtime, "hass", None) is not None:
+    needs_graph_pair = (bool((previous.get("config") or {}).get("spaces"))
+                        and config.get("model_version") == 11
+                        and int((previous.get("config") or {}).get("model_version", 0) or 0) < 11)
+    if not graph_pair and (not canonical or needs_graph_pair) and getattr(runtime, "hass", None) is not None:
         from .graph_write import prepare_graph_candidate, normalize_graph_config
         from .websocket_api import _commit_pair, _layout_metadata
 
-        if config.get("model_version") == 11:
+        if canonical:
+            prepared = config
+        elif config.get("model_version") == 11:
             prepared = await runtime.hass.async_add_executor_job(normalize_graph_config, config)
         else:
             prepared = await runtime.hass.async_add_executor_job(prepare_graph_candidate, config, previous.get("config"))
-        if prepared.get("model_version") == 11 and int((previous.get("config") or {}).get("model_version", 0) or 0) < 11:
+        if needs_graph_pair:
             layout_data = await runtime.store.async_load() or {}
             metadata = _layout_metadata(layout_data)
             target = {"kind": "graph_migration", "config": prepared, "layout": layout_data.get("layout", {}), "config_rev": rev, "layout_rev": int(layout_data.get("rev", 0)), "final_metadata": metadata}
             rollback = {"kind": "graph_migration_rollback", "config": previous.get("config", {}), "layout": layout_data.get("layout", {}), "config_rev": previous_rev, "layout_rev": int(layout_data.get("rev", 0)), "final_metadata": copy.deepcopy(metadata)}
-            await _commit_pair(runtime, target, rollback)
+            await _commit_pair(runtime, target, rollback, authorize=authorize)
             return await runtime.config_store.async_load()
         config = prepared
 
-    if canonical:
+    if canonical or graph_pair:
         # The ordinary write path hands over the output of CONFIG_SCHEMA, which
         # ran `canonicalize_config_geometry` itself (#1096); the coordinate
         # write-barrier guard pins that `canonical=True` has that one caller.
@@ -296,6 +302,8 @@ async def async_save_config_state(
     runtime.schema_clean_rev = None
 
     async def save_config() -> None:
+        if authorize is not None:
+            authorize()
         await runtime.config_store.async_save(payload)
 
     zigbee = getattr(runtime, "zigbee_coordinator", None)
@@ -418,7 +426,8 @@ async def _async_converge_pair_documents(
     if layout_data is None:
         layout_data = await runtime.store.async_load() or {}
 
-    target_config = canonicalize_config_geometry(pending["config"])
+    target_config = (copy.deepcopy(pending["config"]) if str(pending.get("kind", "")).endswith("_rollback")
+                     else canonicalize_config_geometry(pending["config"]))
     target_layout = canonicalize_layout_geometry(pending["layout"])
     config_rev = int(config_data.get("rev", 0))
     layout_rev = int(layout_data.get("rev", 0))

@@ -364,6 +364,21 @@ def _check_write(hass: HomeAssistant, connection) -> bool:
     return may_write(hass, getattr(connection, "user", None))
 
 
+def _write_authority(hass, connection, *, admin=False):
+    """Recheck the same live owner after graph/source preparation awaits."""
+    user = getattr(connection, "user", None)
+    user_id = getattr(user, "id", None)
+
+    def authorize():
+        if (getattr(connection, "user", None) is not user
+                or getattr(user, "id", None) != user_id
+                or not _check_write(hass, connection)
+                or admin and not getattr(user, "is_admin", False)):
+            raise ImportFailure("unauthorized", "Editing permission was lost")
+
+    return authorize
+
+
 def _connection_user_id(connection) -> str:
     return str(getattr(getattr(connection, "user", None), "id", ""))
 
@@ -462,6 +477,7 @@ async def _commit_pair(
     rt: HouseplanData,
     pending: dict[str, Any],
     rollback: dict[str, Any],
+    *, authorize=None,
 ) -> None:
     """Commit, retry once, or restore the before-pair before returning.
 
@@ -473,7 +489,15 @@ async def _commit_pair(
     """
     from .graph_write import prepare_graph_pair
     if getattr(rt, "hass", None) is not None:
-        await prepare_graph_pair(rt, pending, rollback)
+        from .plan_graph_exact import GraphError
+        try:
+            await prepare_graph_pair(rt, pending, rollback)
+        except GraphError as error:
+            raise ImportFailure(error.code, error.reason) from error
+        except OSError as error:
+            raise ImportFailure("migration_source_unavailable", "Migration source could not be saved") from error
+    if authorize is not None:
+        authorize()
     # #1096: a pair writer replaces the stored document outside the ordinary
     # validation path; `ws_config_set` re-stamps after its own pair commit.
     rt.schema_clean_rev = None
@@ -602,9 +626,12 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
                        "config_rev": cr + 1, "layout_rev": lr + 1, "final_metadata": final_metadata}
             rollback = {"kind": "marker_copy_rollback", "config": previous, "layout": layout,
                         "config_rev": cr, "layout_rev": lr, "final_metadata": original_metadata}
-            await commit_history_pair(rt, session, pending, rollback)
+            await commit_history_pair(rt, session, pending, rollback, authorize=_write_authority(hass, connection))
             result = {"config": target, "layout": positions, "config_rev": cr + 1, "layout_rev": lr + 1}
             copy_accept(rt, session, msg, command, result)
+    except ImportFailure as err:
+        _send_import_error(connection, msg["id"], err)
+        return
     except HistoryError as err:
         connection.send_error(msg["id"], err.code, "Device history is no longer applicable")
         return
@@ -637,6 +664,7 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
         vol.Optional("archive", default=False): bool,
         vol.Optional("migration_source", default=False): bool,
         vol.Optional("migration_source_kind", default="config"): vol.In(["config", "graph"]),
+        vol.Optional("plan_graph_migration_source", default=False): bool,
     }
 )
 @websocket_api.async_response
@@ -648,7 +676,7 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
-    if msg.get("migration_source"):
+    if msg.get("migration_source") or msg.get("plan_graph_migration_source"):
         from .backup_http import archive_admin
         from .config_migrations import CONFIG_MIGRATION_BACKUP
         from .import_export import create_migration_source_export
@@ -662,7 +690,7 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         try:
             async with rt.write_lock:
                 saved = await rt.store.async_load() or {}
-                if msg.get("migration_source_kind") == "graph":
+                if msg.get("plan_graph_migration_source") or msg.get("migration_source_kind") == "graph":
                     from .plan_graph_source import BACKUP_KEY, load_source
                     original = await load_source(hass, saved.get(BACKUP_KEY))
                     snapshot = {"version": 1,
@@ -969,7 +997,7 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 "layout_rev": layout_rev,
                 "final_metadata": original_metadata,
             }
-            await _commit_pair(rt, pending, rollback)
+            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
             # Both halves are durable: the token is spent no matter what
             # happened to the preview registry meanwhile. Re-validating it
             # here (TTL lapsed during the write, eviction by a newer preview
@@ -2162,7 +2190,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             def _normalize(candidate):
                 nonlocal touched
                 from .graph_write import prepare_graph_candidate, preserve_legacy_structure
-                candidate = prepare_graph_candidate(candidate, stored_config, msg.get("graph_change"))
+                candidate = prepare_graph_candidate(candidate, stored_config, msg.get("graph_change"), schema_will_validate=True)
                 # Judged after the preservation steps of
                 # `prepare_ordinary_summary_candidate`: an older client that
                 # omitted a preserved field is compared on equal terms.
@@ -2257,7 +2285,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             if contact_layout is None:
                 await async_save_config_state(
                     rt, msg["config"], new_rev, previous_rev=int(current_rev),
-                    previous=data, canonical=True,
+                    previous=data, canonical=True, authorize=_write_authority(hass, connection),
                 )
             else:
                 if not _check_write(hass, connection):
@@ -2274,7 +2302,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                     "kind": "device_contact_rollback", "config": data.get("config") or DEFAULT_CONFIG,
                     "layout": layout_data.get("layout") or {}, "config_rev": current_rev,
                     "layout_rev": layout_rev, "final_metadata": original_metadata,
-                })
+                }, authorize=_write_authority(hass, connection))
+        except ImportFailure as err:
+            _send_import_error(connection, msg["id"], err)
+            return
         except ZigbeeScanError as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
@@ -2385,7 +2416,7 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
 
         try:
             candidate, counts = await hass.async_add_executor_job(_validate_node_cpu)
-        except (NodeMoveError, JunctionLimitError, WallModelClientOutdatedError,
+        except (NodeMoveError, GraphError, JunctionLimitError, WallModelClientOutdatedError,
                 OpeningPassageError, PartitionOpeningHostError,
                 PartitionOpeningJambMarginError) as err:
             connection.send_error(msg["id"], err.code, str(err))
@@ -2405,7 +2436,12 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
             connection.send_error(msg["id"], "too_large", "Result exceeds the configuration limit")
             return
         new_rev = rev + 1
-        await async_save_config_state(rt, candidate, new_rev, previous_rev=rev)
+        try:
+            await async_save_config_state(rt, candidate, new_rev, previous_rev=rev,
+                                          authorize=_write_authority(hass, connection))
+        except ImportFailure as err:
+            _send_import_error(connection, msg["id"], err)
+            return
         rt.junction_baseline = (new_rev, counts)
         try:
             await _discard_optimizer_snapshot(rt)
@@ -2466,7 +2502,7 @@ async def ws_wall_node_delete(hass: HomeAssistant, connection, msg: dict[str, An
 
         try:
             candidate, counts = await hass.async_add_executor_job(_validate_delete_cpu)
-        except (NodeDeleteError, JunctionLimitError, WallModelClientOutdatedError,
+        except (NodeDeleteError, GraphError, JunctionLimitError, WallModelClientOutdatedError,
                 OpeningPassageError, PartitionOpeningHostError,
                 PartitionOpeningJambMarginError) as err:
             connection.send_error(msg["id"], err.code, str(err))
@@ -2486,7 +2522,12 @@ async def ws_wall_node_delete(hass: HomeAssistant, connection, msg: dict[str, An
             connection.send_error(msg["id"], "too_large", "Result exceeds the configuration limit")
             return
         new_rev = rev + 1
-        await async_save_config_state(rt, candidate, new_rev, previous_rev=rev)
+        try:
+            await async_save_config_state(rt, candidate, new_rev, previous_rev=rev,
+                                          authorize=_write_authority(hass, connection))
+        except ImportFailure as err:
+            _send_import_error(connection, msg["id"], err)
+            return
         rt.junction_baseline = (new_rev, counts)
         try:
             await _discard_optimizer_snapshot(rt)
@@ -2817,7 +2858,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                     f"Space is still used by {len(dependencies)} active marker(s)",
                 )
                 return
-            await _commit_pair(rt, pending, rollback)
+            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
             if removed_markers:
                 # Under the lock, like config/set: a later write must not
                 # resurrect a marker between this commit and its clean-up.
@@ -2860,6 +2901,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     {
         vol.Required("type"): "houseplan/plan/optimize",
         vol.Required("config"): dict,
+        vol.Optional("graph_change"): dict,
         vol.Required("layout"): LAYOUT_SCHEMA,
         vol.Required("expected_config_rev"): int,
         vol.Required("expected_layout_rev"): int,
@@ -2915,25 +2957,11 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
 
         def _validate_optimize_cpu():
             def _normalize(candidate):
+                from .graph_write import prepare_graph_candidate
+                validate_opening_passages(candidate, config_data.get("config"))
+                candidate = prepare_graph_candidate(candidate, config_data.get("config"), msg.get("graph_change"), force=True)
                 validate_wall_model_transition(candidate, config_data.get("config"))
-                try:
-                    submitted_model = int(candidate.get("model_version", 0) or 0)
-                except (TypeError, ValueError):
-                    submitted_model = WALL_SEGMENT_MODEL_VERSION
-                # Optimize is an explicit structural writer and therefore the
-                # server-side v7 -> v8 barrier as well. Current v8 candidates are
-                # validated verbatim: the backend must never invent lineage for a
-                # graph already authored by a current client.
-                candidate_config = CONFIG_SCHEMA(candidate)
-                # Keep the established public validation contract ahead of the
-                # structural migration barrier. A malformed passage can also make
-                # wall-host materialisation impossible, but callers must still get
-                # the actionable `invalid_passage_fields` code rather than the
-                # generic wall-model blocker.
-                validate_opening_passages(candidate_config, config_data.get("config"))
-                if submitted_model < WALL_SEGMENT_MODEL_VERSION:
-                    candidate_config, _ = commit_wall_segment_model(candidate_config)
-                return CONFIG_SCHEMA(candidate_config)
+                return CONFIG_SCHEMA(candidate)
 
             checked = prepare_ordinary_summary_candidate(
                 msg["config"], config_data.get("config"), readable_entity_ids, _normalize,
@@ -2986,7 +3014,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
-        except RadarValidationError as err:
+        except (RadarValidationError, GraphError) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
         except vol.Invalid as err:
@@ -3010,7 +3038,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         new_layout_rev = layout_rev + 1
         backup = {
             "kind": "optimize",
-            "config": canonicalize_config_geometry(
+            "config": copy.deepcopy(
                 config_data.get("config") or DEFAULT_CONFIG
             ),
             "layout": canonicalize_layout_geometry(
@@ -3050,7 +3078,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             "final_metadata": original_metadata,
         }
         try:
-            await _commit_pair(rt, pending, rollback)
+            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
         except PairCommitFailure as err:
             message = (
                 "Plan optimization failed; the previous plan is pending recovery"
@@ -3073,6 +3101,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         "config_rev": new_config_rev,
         "layout_rev": new_layout_rev,
         "can_undo": True,
+        "config": pending["config"], "layout": pending["layout"],
     })
 
 
@@ -3118,7 +3147,7 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
             await undo_archive_locked(hass, connection, msg, rt, config_data, layout_data)
             return
         restored_kind = str(backup.get("kind") or "optimize")
-        restored_config = canonicalize_config_geometry(
+        restored_config = copy.deepcopy(
             backup.get("config") or DEFAULT_CONFIG
         )
         restored_layout = canonicalize_layout_geometry(
@@ -3156,7 +3185,7 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
             "final_metadata": original_metadata,
         }
         try:
-            await _commit_pair(rt, pending, rollback)
+            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
         except PairCommitFailure as err:
             message = (
                 "Plan undo failed; the previous plan is pending recovery"
@@ -3181,6 +3210,7 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
         "config_rev": new_config_rev,
         "layout_rev": new_layout_rev,
         "can_undo": False,
+        "config": pending["config"], "layout": pending["layout"],
     })
 
 

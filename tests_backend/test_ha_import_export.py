@@ -55,7 +55,7 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.vacuum_routes import effective_routes
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
-from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+from custom_components.houseplan.wall_segment_model import commit_wall_segment_model, decode_legacy_wall_segment_model
 
 
 def test_issue_51_missing_decor_asset_stays_as_repairable_geometry(tmp_path: Path) -> None:
@@ -579,10 +579,13 @@ def _downgrade_document_to_v7(document: dict) -> dict:
     """Turn a current export into the exact accepted pre-v8 carrier."""
     document["model_version"] = 7
     for space in document["payload"]["config"].get("spaces") or []:
+        space.pop("plan_graph", None)
         space.pop("wall_segments", None)
         for room in space.get("rooms") or []:
             room.pop("wall_ids", None)
         for opening in space.get("openings") or []:
+            if opening.get("host"):
+                opening["host"].pop("tq", None)
             if (opening.get("host") or {}).get("kind") == "wall":
                 opening.pop("host", None)
         for draft in space.get("room_drafts") or []:
@@ -620,7 +623,9 @@ def test_issue_265_python_lineage_matches_shared_fixture() -> None:
 
 def test_import_document_canonicalizes_external_coordinates(tmp_path: Path) -> None:
     document = _document(tmp_path)
+    document["model_version"] = 10
     space = document["payload"]["config"]["spaces"][0]
+    space.pop("plan_graph")
     room = space["rooms"][0]
     room["poly"][0][0] = 0.1234567896
     # A v8 external document is one structural transaction: compatibility
@@ -1145,7 +1150,9 @@ def test_full_preview_preserves_legacy_near_end_partition_opening(
     tmp_path: Path, current_kind: str,
 ) -> None:
     document = _document(tmp_path, "full")
+    document["model_version"] = 10
     space = document["payload"]["config"]["spaces"][0]
+    space.pop("plan_graph")
     space["partitions"] = [{
         "id": "wall", "a": [0, 0], "b": [1, 0], "cm": 100,
     }]
@@ -1235,6 +1242,11 @@ def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> N
 
 def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
     config = _config()
+    # Author this fixture in the historical representation, then explicitly
+    # migrate the complete geometry below. Never mutate a current projection.
+    config["model_version"] = 10
+    for source_space in config["spaces"]:
+        source_space.pop("plan_graph")
     space = config["spaces"][0]
     space.update({
         "cell_cm": 5,
@@ -1317,7 +1329,7 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         },
         "rl_other": {"x": 0.1, "y": 0.1, "s": "other"},
     }
-    return config, layout
+    return commit_wall_segment_model(config)[0], layout
 
 
 def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path: Path) -> None:
@@ -1358,7 +1370,8 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     }
     opening = exported["openings"][0]
     assert opening["flip_h"] is True
-    assert opening["host"] == {"kind": "partition", "id": "partition", "t": 0.5}
+    assert opening["host"] == {"kind": "partition", "id": "partition", "t": 1.0, "tq": ["1", "1"]}
+    assert [opening["x"], opening["y"]] == [0.5, 0.5]
     assert not {"contact", "lock", "invert", "future_opening"} & set(opening)
     by_id = {item["id"]: item for item in exported["decor"]}
     assert by_id["modern"]["text"] == "Temp — / — °C"
@@ -1572,6 +1585,7 @@ def test_v7_export_and_import_always_materialize_the_current_model(
     legacy = _config()
     legacy["model_version"] = 7
     for space in legacy["spaces"]:
+        space.pop("plan_graph", None)
         space.pop("wall_segments", None)
         space["room_drafts"] = [{
             "id": "legacy-draft",
@@ -1671,6 +1685,8 @@ def test_export_materializes_supported_models_into_the_current_envelope(
     tmp_path: Path, stored: int | None,
 ) -> None:
     config = _config()
+    for space in config["spaces"]:
+        space.pop("plan_graph")
     if stored is None:
         config.pop("model_version", None)
     else:
@@ -2207,6 +2223,9 @@ def test_issue_244_space_import_does_not_repair_target_while_source_exists(tmp_p
 def test_issue_265_import_of_import_flattens_every_owned_namespace(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     space = document["payload"]["config"]["spaces"][0]
+    # Historical transfer mapper coverage; current graph remapping is tested separately.
+    document["model_version"] = 10
+    space.pop("plan_graph")
     space["partitions"] = [{
         "id": "part", "a": [0, 0.5], "b": [1, 0.5], "cm": 15,
     }]
@@ -2363,6 +2382,9 @@ def test_issue_265_apply_uses_the_exact_materialized_preview_candidate(
 def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     space = document["payload"]["config"]["spaces"][0]
+    # Historical transfer mapper coverage; current graph remapping is tested separately.
+    document["model_version"] = 7
+    space.pop("plan_graph")
     space["rooms"] = [
         {"id": "living", "name": "Living", "poly": [[0, 0], [1, 0], [1, 0.5]],
          "open_to": ["kitchen"]},
@@ -3251,8 +3273,8 @@ async def _apply_with_registry_hook(
     rt, response, _ = await _candidate(hass, tmp_path)
     real_commit = wsapi._commit_pair
 
-    async def commit_then_hook(runtime: Any, pending: dict[str, Any], rollback: dict[str, Any]) -> None:
-        await real_commit(runtime, pending, rollback)
+    async def commit_then_hook(runtime: Any, pending: dict[str, Any], rollback: dict[str, Any], **kwargs) -> None:
+        await real_commit(runtime, pending, rollback, **kwargs)
         hook(runtime, response["token"])
 
     fired: list[str] = []
@@ -3566,6 +3588,14 @@ def _opening_house_document(tmp_path: Path, kind: str = "full") -> dict:
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path,
     )
+    # These #1033 cases deliberately corrupt historical opening projections.
+    # Current11 graph projections fail closed; legacy repair keeps its contract.
+    document["model_version"] = 10
+    for space in document["payload"]["config"]["spaces"]:
+        space.pop("plan_graph")
+        for opening in space.get("openings", []):
+            if opening.get("host"):
+                opening["host"].pop("tq", None)
     return document
 
 
@@ -3775,3 +3805,30 @@ def test_issue1000_alert_definitions_full_space_json_and_plan_only(tmp_path: Pat
     markers = parsed["payload"]["config"]["markers"]
     assert markers == [] if plan_only else markers[0]["alert_sources"] == rules
     assert "pending" not in json.dumps(parsed) and "active_since" not in json.dumps(parsed)
+
+
+def test_current_graph_import_refuses_projection_only_edit(tmp_path):
+    document = _document(tmp_path)
+    document["payload"]["config"]["spaces"][0]["rooms"][0]["poly"][0][0] += .1
+    with pytest.raises(ImportFailure, match="projection_mismatch"):
+        parse_document(json.dumps(document).encode())
+
+
+def test_current_space_transfer_remaps_graph_and_exact_host_without_reconstruction(tmp_path):
+    from custom_components.houseplan.plan_graph import verify_projection
+    config, layout = _plan_only_source()
+    original = copy.deepcopy(config["spaces"][0])
+    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
+                               {"layout": layout}, kind="space", space_id="ground",
+                               card_version="review", config_root=tmp_path)
+    merged, _, _ = build_space_merge(document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip")
+    target = merged["spaces"][0]
+    verify_projection(target)
+    before_graph, graph = original["plan_graph"], target["plan_graph"]
+    assert not {n["id"] for n in before_graph["nodes"]} & {n["id"] for n in graph["nodes"]}
+    assert sorted(n["p"] for n in graph["nodes"]) == sorted(n["p"] for n in before_graph["nodes"])
+    assert sorted(e["cm"] for e in graph["edges"]) == sorted(e["cm"] for e in before_graph["edges"])
+    old, new = original["openings"][0], target["openings"][0]
+    assert new["host"]["id"] != old["host"]["id"]
+    assert new["host"]["tq"] == old["host"]["tq"] == ["1", "1"]
+    assert [new["x"], new["y"], new["length"]] == [old["x"], old["y"], old["length"]]

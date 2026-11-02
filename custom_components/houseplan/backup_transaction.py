@@ -33,7 +33,7 @@ async def _notify(hass, target, cr, lr) -> None:
         _LOGGER.warning("House Plan: post-restore refresh deferred")
 
 
-async def _commit(hass, runtime, expected_generation: str, build):
+async def _commit(hass, runtime, expected_generation: str, build, *, authorize):
     """Lock order is write (caller) -> upload -> lifecycle, BEFORE intent."""
     from . import websocket_api as ws
 
@@ -45,7 +45,7 @@ async def _commit(hass, runtime, expected_generation: str, build):
                     raise ImportFailure("conflict")
                 before = await coordinator.async_backup_snapshot()
                 pending, rollback = await build(before)
-                await ws._commit_pair(runtime, pending, rollback)
+                await ws._commit_pair(runtime, pending, rollback, authorize=authorize)
             finally:
                 # Nothing durable was started (or rollback already completed):
                 # clear only the fence, not another user's active scan.
@@ -109,7 +109,7 @@ async def apply_archive(hass, connection, msg, runtime) -> None:
                                  cr, lr, original, {**record, "action": "rollback", "snapshot": before})
                 return pending, rollback
 
-            await _commit(hass, runtime, candidate["archive"]["cache_generation"], build)
+            await _commit(hass, runtime, candidate["archive"]["cache_generation"], build, authorize=ws._write_authority(hass, connection, admin=True))
             runtime.import_previews.pop(msg["token"], None)
     except ImportFailure as err:
         ws._send_import_error(connection, msg["id"], err)
@@ -156,7 +156,7 @@ async def undo_archive_locked(hass, connection, msg, runtime, cd, ld) -> None:
                              cr, lr, original, {"action": "cache", "snapshot": before})
             return pending, rollback
 
-        await _commit(hass, runtime, backup["after_cache_generation"], build)
+        await _commit(hass, runtime, backup["after_cache_generation"], build, authorize=ws._write_authority(hass, connection, admin=True))
     except ImportFailure as err:
         ws._send_import_error(connection, msg["id"], err)
         return

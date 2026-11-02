@@ -134,7 +134,9 @@ def squared_distance(a: ExactPoint, b: ExactPoint) -> Fraction:
 
 def point_at(a: ExactPoint, b: ExactPoint, t: Fraction) -> ExactPoint:
     checked(t)
-    return check_point(ExactPoint(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t))
+    # Infinite support-line intersections may be outside the canvas; only
+    # persisted/source points carry the canvas bound. Keep arithmetic bounded.
+    return ExactPoint(checked(a.x + (b.x - a.x) * t), checked(a.y + (b.y - a.y) * t))
 
 
 def project_parameter(p: ExactPoint, a: ExactPoint, b: ExactPoint) -> Fraction:

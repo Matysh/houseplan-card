@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 
+from .coordinate_canonicalization import canonicalize_number
 from .plan_graph import validate_graph, project_graph_space, propagate_dependencies, edge_key
 from .plan_graph_exact import (
     GraphError, decode_point, decode_rational, encode_point, encode_rational,
@@ -76,7 +77,7 @@ def move_graph_node_space(space, intent):
         old_collinear = point_at(a, b, projected_t) == centre
         t = projected_t if old_collinear else parse_decimal(proposed["host"]["t"])
         opening["host"] = {**host, "tq": encode_rational(t), "t": float(t)}
-        opening["angle"] = proposed["angle"]
+        opening["angle"] = canonicalize_number(proposed["angle"])
     return project_graph_space(base, graph)["space"]
 
 

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import copy
+import decimal
 import hashlib
 import json
 import math
@@ -21,7 +22,6 @@ from .plan_graph_exact import (
 )
 from .wall_segment_model import (
     _angle_matches, _legacy_thickness_at, _shared_boundaries, _wall_key,
-    deterministic_wall_segment_id,
 )
 from .junction_limits import _stored_wall_contact
 
@@ -42,6 +42,22 @@ def source_node_id(ref):
 def graph_split_id(kind, identity, index, lo, hi):
     plain = f"{identity}~{index}"
     return plain if len(plain) <= 64 else "s:" + _hash(_json([kind, identity, index, lo, hi]))[:52]
+
+
+def legacy_wall_segment_id(space_id, a, b, owners):
+    # JavaScript toFixed(12) rounds an exact binary64 half away from zero.
+    # Python's default .12f is ties-even; do not inherit that ID discrepancy.
+    def key(point):
+        values = []
+        for value in point:
+            number = float(value)
+            if number == 0:
+                number = 0.0
+            fixed = decimal.Decimal.from_float(number).quantize(decimal.Decimal("0.000000000001"), rounding=decimal.ROUND_HALF_UP)
+            values.append(format(fixed, ".12f"))
+        return ",".join(values)
+    first, second = sorted((key(a), key(b)))
+    return "wall-" + _hash(space_id + "|" + first + "|" + second + "|" + ",".join(sorted(owners)))[:20]
 
 
 def _pk(p):
@@ -115,7 +131,7 @@ def _collect(space):
                         entry["preferred"].append(preferred)
     generated = {}
     for key, item in sorted(room_only.items()):
-        base = min(item["preferred"]) if item["preferred"] else deterministic_wall_segment_id(str(space.get("id", "")), item["a"], item["b"], item["owners"])
+        base = min(item["preferred"]) if item["preferred"] else legacy_wall_segment_id(str(space.get("id", "")), item["a"], item["b"], item["owners"])
         identity, suffix = base, 2
         while "wall:" + identity in sources:
             identity, suffix = base + "-" + str(suffix), suffix + 1
@@ -197,6 +213,37 @@ def migrate_graph_space(space, options=None):
         graph = dict(version=1, nodes=[], edges=[], rooms=[], dependencies=[])
         nodes, origins, point_node, source_node, endpoints, buckets, cuts = {}, {}, {}, {}, {}, {}, {}
         mapping, bends = dict(nodes={}, edges={}, hosts={}), 0
+
+        def install_dependency(dependency):
+            graph["dependencies"] = [d for d in graph["dependencies"] if d["node"] != dependency["node"]]
+            graph["dependencies"].append(dependency)
+            # Same ordered DFS cycle entry as TS, without Python recursion limits.
+            # A reciprocal source contact becomes a free anchor; no point moves.
+            while True:
+                by_node = {d["node"]: d for d in graph["dependencies"]}
+                active, done, cycle = set(), set(), None
+                for start in by_node:
+                    stack = [(start, False)]
+                    while stack:
+                        node, leaving = stack.pop()
+                        if leaving:
+                            active.remove(node)
+                            done.add(node)
+                        elif node in done or node not in by_node:
+                            continue
+                        elif node in active:
+                            cycle = node
+                            break
+                        else:
+                            active.add(node)
+                            stack.append((node, True))
+                            refs = [r[side] for r in by_node[node]["refs"] for side in ("from", "to")]
+                            stack.extend((support, False) for support in reversed(refs))
+                    if cycle is not None:
+                        break
+                if cycle is None:
+                    return
+                graph["dependencies"] = [d for d in graph["dependencies"] if d["node"] != cycle]
 
         def bucket(p):
             return p.x // radius, p.y // radius
@@ -366,8 +413,7 @@ def migrate_graph_space(space, options=None):
                     graph["dependencies"] = [d for d in graph["dependencies"] if d["node"] != identity]
                     start, end = ends[0][1], ends[1][1]
                     if identity not in (start, end):
-                        graph["dependencies"].append(dict(node=identity, kind="on-edge", refs=[dict(from_=start, to=end)], parameters=[encode_rational(t)]))
-                        graph["dependencies"][-1]["refs"][0]["from"] = graph["dependencies"][-1]["refs"][0].pop("from_")
+                        install_dependency(dict(node=identity, kind="on-edge", refs=[{"from": start, "to": end}], parameters=[encode_rational(t)]))
                 break
 
         position = {_key(s): i for i, s in enumerate(sources)}
@@ -392,7 +438,7 @@ def migrate_graph_space(space, options=None):
                 add_cut(other, hit[2], identity)
                 if current and p == current[0] and identity not in supports:
                     graph["dependencies"] = [d for d in graph["dependencies"] if d["node"] != identity]
-                    graph["dependencies"].append(dict(node=identity, kind="intersection", refs=[{"from": supports[0], "to": supports[1]}, {"from": supports[2], "to": supports[3]}], parameters=[encode_rational(current[1]), encode_rational(current[2])]))
+                    install_dependency(dict(node=identity, kind="intersection", refs=[{"from": supports[0], "to": supports[1]}, {"from": supports[2], "to": supports[3]}], parameters=[encode_rational(current[1]), encode_rational(current[2])]))
                 elif not current or p != current[0]:
                     bends += 1
         for rid, entries in boundaries.items():
@@ -471,19 +517,65 @@ def migrate_graph_space(space, options=None):
         validate_graph(graph, {"room_ids": [r["id"] for r in space.get("rooms", [])]})
         base = copy.deepcopy(space)
         graph_edges = {_key(e): e for e in graph["edges"]}
+        occupied = []
+
+        def positive(s, t):
+            return any(decode_rational(r["sourceInterval"][0]) <= t <= decode_rational(r["sourceInterval"][1]) and graph_edges[_key(r["ref"])]["cm"] > 0 for r in mapping["edges"][_key(s)])
+
+        def eligible(s, opening):
+            if s["kind"] != "wall":
+                return None
+            p = read_source_point([opening["x"], opening["y"]])
+            t = project_parameter(p, s["a"], s["b"])
+            length = math.sqrt(float(squared_distance(s["a"], s["b"])))
+            along, half = float(t)*length, opening.get("length", 0)/2
+            if not (0 <= t <= 1 and _near(p, point_at(s["a"], s["b"], t), radius)
+                    and _angle_matches(to_numbers(s["a"]), to_numbers(s["b"]), opening.get("angle", 0))
+                    and math.isfinite(half) and half >= 0 and along-half >= -1e-9 and along+half <= length+1e-9):
+                return None
+            return t
+
+        def remember(s, t, opening):
+            occupied.append(dict(id=opening["id"], source=_key(s), p=point_at(s["a"], s["b"], t), length=parse_decimal(opening.get("length", 0))))
+
+        def free(s, t, opening):
+            p = point_at(s["a"], s["b"], t)
+            for old in occupied:
+                if old["id"] == opening["id"] or old["source"] != _key(s):
+                    continue
+                half = (old["length"]+parse_decimal(opening.get("length", 0)))/2-parse_decimal("1e-9")
+                if half > 0 and squared_distance(p, old["p"]) < half*half:
+                    return False
+            return True
+
         for opening in base.get("openings", []):
             host = opening.get("host")
-            if not host or _key(host) not in source_by_key:
+            s = source_by_key.get(_key(host)) if host else None
+            if s is None:
+                continue
+            t = eligible(s, opening) if s["kind"] == "wall" else (decode_rational(host["tq"]) if "tq" in host else parse_decimal(host["t"]))
+            if t is None:
+                continue
+            if s["kind"] == "partition" and s["reversed"]:
+                t = 1-t
+            if 0 <= t <= 1 and positive(s, t):
+                remember(s, t, opening)
+        for opening in base.get("openings", []):
+            host = opening.get("host")
+            current = source_by_key.get(_key(host)) if host else None
+            staying = eligible(current, opening) if current and current["kind"] == "wall" else None
+            if staying is not None:
+                raw_t = 1-staying if current["reversed"] else staying
+                opening["host"] = {**host, "tq": encode_rational(raw_t), "t": float(raw_t)}
+            if not host or current is None or current["kind"] == "wall" and staying is None:
                 p = read_source_point([opening["x"], opening["y"]])
-                eligible = []
+                choices = []
                 for s in sources:
-                    if s["kind"] != "wall" or not _angle_matches(to_numbers(s["a"]), to_numbers(s["b"]), opening.get("angle", 0)):
-                        continue
-                    t = project_parameter(p, s["a"], s["b"])
-                    if 0 <= t <= 1 and _near(p, point_at(s["a"], s["b"], t), radius):
-                        eligible.append((s, t))
-                eligible.sort(key=lambda row: (squared_distance(p, point_at(row[0]["a"], row[0]["b"], row[1])), -row[0]["cm"], row[0]["id"]))
-                selected = next(((s, t) for s, t in eligible if any(decode_rational(r["sourceInterval"][0]) <= t <= decode_rational(r["sourceInterval"][1]) and graph_edges[_key(r["ref"])]["cm"] > 0 for r in mapping["edges"][_key(s)])), None)
+                    t = eligible(s, opening)
+                    if t is not None:
+                        choices.append((s, t))
+                choices.sort(key=lambda row: (squared_distance(p, point_at(row[0]["a"], row[0]["b"], row[1])), -row[0]["cm"], row[0]["id"]))
+                selected = next(((s, t) for s, t in choices if positive(s, t) and free(s, t, opening)), None)
                 if selected:
                     s, t = selected
                     raw_t = 1-t if s["reversed"] else t
@@ -504,6 +596,8 @@ def migrate_graph_space(space, options=None):
             next_t = (t-lo)/(hi-lo)
             if span["reverse"]:
                 next_t = 1-next_t
+            if not any(old["id"] == opening["id"] for old in occupied):
+                remember(s, t, opening)
             opening["host"] = {**host, **span["ref"], "tq": encode_rational(next_t), "t": float(next_t)}
             mapping["hosts"][opening["id"]] = copy.deepcopy(opening["host"])
         mapping["nodes"] = {ref: [identity] for ref, identity in source_node.items() if identity in retained}
@@ -526,6 +620,6 @@ def migrate_graph_space(space, options=None):
     try:
         return run(True)
     except GraphError as error:
-        if str(error) in {"zero_length_edge", "room_self_intersection", "zero_area_room", "third_wall_owner", "open_room_cycle", "dependency_value_mismatch", "dependency_cycle"}:
+        if str(error) in {"zero_length_edge", "room_self_intersection", "zero_area_room", "third_wall_owner", "open_room_cycle", "dependency_point_mismatch", "dependency_cycle", "thickness_conflict"}:
             return run(False)
         raise
