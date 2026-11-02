@@ -5,7 +5,7 @@
 import type { EdgeKind, GraphEdge, PlanGraph } from './plan-graph';
 import {
   cmp, decodePoint, decodeRational, orientation, parseDecimal, pointAt,
-  pointSub, dot, pointToNumbers, ZERO, ONE, type GraphPoint, type ExactPoint,
+  pointSub, dot, pointToNumbers, projectParameter, readAuthoredPoint, encodeRational, toNumber, ZERO, ONE, type GraphPoint, type ExactPoint, type ExactRational,
 } from './plan-exact';
 
 export interface GraphOpeningRun {
@@ -161,4 +161,44 @@ export function graphOpeningRunCenter(
     if (cmp(t, ZERO) < 0 || cmp(t, ONE) > 0) return undefined;
     return physicalPoint(pointAt(decodePoint(run.anchor.exactA), decodePoint(run.anchor.exactB), t), run.coordScale);
   } catch { return undefined; }
+}
+
+export interface GraphOpeningRunTarget {
+  host: { kind: EdgeKind; id: string; tq: ExactRational; t: number };
+  center: [number, number];
+  normalized: [number, number];
+}
+
+/** Explicit movement within an already proven physical run. The full run
+ * clamps the point; the containing graph child owns the exact persisted tq.
+ * A shared boundary retains the anchor ID. No coordinate-only host discovery. */
+export function graphOpeningRunTarget(
+  carriers: readonly unknown[], anchorId: string, physical: readonly [number, number],
+): GraphOpeningRunTarget | undefined {
+  if (!physical.every(Number.isFinite)) return undefined;
+  const runs = carriers.map(graphOpeningRun).filter((r): r is GraphOpeningRun => !!r);
+  const anchor = runs.find(r => r.anchor.id === anchorId);
+  if (!anchor) return undefined;
+  const children = runs.filter(r => r.key === anchor.key && r.coordScale === anchor.coordScale);
+  const byId = new Map(children.map(r => [r.anchor.id, r]));
+  if (anchor.members.some(id => !byId.has(id))) return undefined;
+  try {
+    const a = decodePoint(anchor.anchor.exactA), b = decodePoint(anchor.anchor.exactB);
+    let t = projectParameter(readAuthoredPoint(physical.map(v => v / anchor.coordScale)), a, b);
+    const ends = [...byId.values()].flatMap(r => [decodePoint(r.anchor.exactA), decodePoint(r.anchor.exactB)]);
+    const parameters = ends.map(p => projectParameter(p, a, b)).sort(cmp);
+    if (cmp(t, parameters[0]) < 0) t = parameters[0];
+    if (cmp(t, parameters[parameters.length - 1]) > 0) t = parameters[parameters.length - 1];
+    const point = pointAt(a, b, t);
+    const ordered = [anchor, ...[...byId.values()].filter(r => r.anchor.id !== anchorId)
+      .sort((a,b) => a.anchor.id < b.anchor.id ? -1 : a.anchor.id > b.anchor.id ? 1 : 0)];
+    for (const child of ordered) {
+      const ca = decodePoint(child.anchor.exactA), cb = decodePoint(child.anchor.exactB);
+      const tq = projectParameter(point, ca, cb);
+      if (cmp(tq, ZERO) < 0 || cmp(tq, ONE) > 0) continue;
+      return { host: { kind: child.kind, id: child.anchor.id, tq: encodeRational(tq), t: toNumber(tq) },
+        center: physicalPoint(point, anchor.coordScale), normalized: pointToNumbers(point) };
+    }
+  } catch { /* Invalid/stale derived context cannot authorize a host change. */ }
+  return undefined;
 }

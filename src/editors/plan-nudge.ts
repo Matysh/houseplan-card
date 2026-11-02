@@ -4,9 +4,12 @@ import { roomPoly } from '../logic';
 import { freePartitionEnds } from './properties/physical';
 import { materializePartitionOpening, resolvePartitionOpeningStrict } from '../partition-openings';
 import { resolveRoomOpeningHost } from '../wall-segment-model';
+import { annotateSpaceGraphOpeningRuns, annotateGraphOpeningRuns, graphOpeningRun, graphOpeningRunCenter, graphOpeningRunTarget } from '../graph-opening-run';
+import type { PlanGraph } from '../plan-graph';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry } from '../types';
 
 export interface NudgeSpace {
+  plan_graph?: PlanGraph;
   id: string; rooms?: RoomCfg[]; partitions?: PartitionCfg[]; wall_segments?: WallSegmentEntry[]; openings?: OpeningCfg[];
 }
 export interface NudgeSelection { kind: 'partition' | 'contour' | 'opening'; id: string }
@@ -52,7 +55,51 @@ function translateWall<T extends NudgeSpace>(space: T, selection: NudgeSelection
     ...(space.openings ? { openings } : {}) };
 }
 
+/** Graph movements retain the physical run while explicitly choosing its new
+ * anchor child. The input and canonical graph remain untouched. */
+function translateGraphOpening<T extends NudgeSpace>(space: T, id: string, dx: number, dy: number, cellCm: number): T | null {
+  const draft = annotateSpaceGraphOpeningRuns(structuredClone(space));
+  const opening = draft.openings?.find(o => o.id === id), host = opening?.host;
+  if (!opening || !host) return null;
+  const carriers = (host.kind === 'partition' ? draft.partitions : draft.wall_segments) || [];
+  const wall = carriers.find(w => w.id === host.id), run = graphOpeningRun(wall);
+  if (!wall || !run || run.kind !== host.kind) return null;
+  const current = graphOpeningRunCenter(run, host), {dx: wx, dy: wy, length} = axis(wall);
+  if (!current || !(length > EPS)) return null;
+  const horizontal = Math.abs(wx) + EPS >= Math.abs(wy);
+  if (horizontal ? !dx || !!dy : !dy || !!dx) return null;
+  const along = horizontal ? dx * Math.sign(wx) : dy * Math.sign(wy);
+  const desired: [number,number] = [current[0] + wx / length * along, current[1] + wy / length * along];
+  const target = graphOpeningRunTarget(carriers, host.id, desired);
+  // Keyboard movement is a complete authored step, never an endpoint clamp.
+  if (!target || Math.hypot(target.center[0]-desired[0], target.center[1]-desired[1]) > EPS) return null;
+  const ux = wx / length, uy = wy / length;
+  const fullLength = Math.hypot(run.b[0]-run.a[0], run.b[1]-run.a[1]);
+  const fullAlong = (target.center[0]-run.a[0])*ux + (target.center[1]-run.a[1])*uy;
+  if (!(opening.length > 0) || fullAlong-opening.length/2 < -EPS || fullAlong+opening.length/2 > fullLength+EPS) return null;
+  let candidate: OpeningCfg = {...opening, host: {...host,...target.host}, x:target.normalized[0], y:target.normalized[1]};
+  if (!bounded([[candidate.x,candidate.y]])) return null;
+  if (host.kind === 'partition') {
+    const rendered = carriers.map(w => ({...w,a:w.a.map(n=>n*NORM_W),b:w.b.map(n=>n*NORM_W)}));
+    annotateGraphOpeningRuns(draft.plan_graph!, rendered, 'partition', NORM_W);
+    const resolved = resolvePartitionOpeningStrict(candidate, rendered, NORM_W, cellCm, GRID_PITCH).resolved;
+    if (!resolved) return null;
+    candidate = materializePartitionOpening(candidate,resolved,NORM_W);
+  }
+  for (const other of draft.openings || []) {
+    if (other.id === id || other.host?.kind !== host.kind) continue;
+    const otherWall = carriers.find(w=>w.id===other.host!.id), otherRun = graphOpeningRun(otherWall);
+    if (!otherRun || otherRun.key !== run.key) continue;
+    const center = graphOpeningRunCenter(otherRun,other.host);
+    if (!center) return null;
+    const offset = (center[0]-target.center[0])*ux + (center[1]-target.center[1])*uy;
+    if (Math.max(-opening.length/2,offset-other.length/2) < Math.min(opening.length/2,offset+other.length/2)-EPS) return null;
+  }
+  return {...draft,openings:draft.openings?.map(o=>o.id===id?candidate:o)};
+}
+
 function translateOpening<T extends NudgeSpace>(space: T, id: string, dx: number, dy: number, cellCm: number): T | null {
+  if (space.plan_graph) return translateGraphOpening(space,id,dx,dy,cellCm);
   const opening = space.openings?.find(o => o.id === id);
   if (!opening) return null;
   const host = opening.host?.kind === 'partition' ? opening.host : resolveRoomOpeningHost(opening, space.wall_segments ?? []);
@@ -69,6 +116,7 @@ function translateOpening<T extends NudgeSpace>(space: T, id: string, dx: number
   if (!(half > 0) || t - half < -EPS || t + half > 1 + EPS) return null;
   let candidate: OpeningCfg = { ...structuredClone(opening), host: { ...structuredClone(opening.host), ...host, t },
     x: wall.a[0] + wx * t, y: wall.a[1] + wy * t };
+  if (candidate.host) delete candidate.host.tq;
   if (!bounded([[candidate.x, candidate.y]])) return null;
   if (host.kind === 'partition') {
     const rendered = { ...wall, a: wall.a.map(n => n * NORM_W), b: wall.b.map(n => n * NORM_W) };

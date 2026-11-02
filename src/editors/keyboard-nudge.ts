@@ -5,10 +5,15 @@ import { devicePlacement, sameDevicePlacement } from '../device-position-history
 import { prepareContactMove } from '../device-contact-write';
 import { supersedeDeferredWrite } from '../config-adoption';
 import { nudgePlan, type NudgeSelection } from './plan-nudge';
+import { commitGraphEdit, type GraphEditIntent } from '../graph-edit-intent';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import type { PropertiesIdentity } from './properties/controller';
 
 type Identity = { kind: 'device'; id: string } | NudgeSelection;
+const graphIntent = (identity: Identity): GraphEditIntent => identity.kind === 'partition'
+  ? { kind: 'partitions', ids: [identity.id] } : identity.kind === 'opening'
+    ? { kind: 'openings', ids: [identity.id] } : identity.kind === 'contour'
+      ? { kind: 'segments', edges: [{ kind: 'wall', id: identity.id }] } : { kind: 'metadata' };
 interface Owner { identity: Identity; key: string; authority: object; epoch: number; revision: number; layoutRevision: number; retired: boolean; point?: {x:number;y:number} }
 interface Job { owner: Owner; dx: number; dy: number; applied: boolean }
 const contextChanged = () => Object.assign(new Error('keyboard command context changed'), { code: 'context-changed' });
@@ -88,7 +93,8 @@ export class KeyboardNudge {
     for (const job of [...pending, {dx,dy}]) {
       const next = nudgePlan(space, owner.identity, job.dx/NORM_W, job.dy/NORM_W, h._cellCm);
       if (!next) return false;
-      space = next;
+      try { space = space.plan_graph ? commitGraphEdit(space, next, graphIntent(owner.identity)) : next; }
+      catch { return false; }
     }
     try { return !!h._serverCfg && h._checkSpacePhysicalGeometry({...h._serverCfg,spaces:[space]},space.id).ok; }
     catch { return false; }
@@ -134,10 +140,7 @@ export class KeyboardNudge {
     h._adoption.stageLocalConfig(candidate);
     const name = h._t(owner.identity.kind === 'opening' ? 'history.move_opening' : 'history.physical_move');
     if (!r._commitPhysicalGeometry(name, before, [], false,
-      owner.identity.kind === 'partition' ? { kind: 'partitions', ids: [owner.identity.id] }
-        : owner.identity.kind === 'opening' ? { kind: 'openings', ids: [owner.identity.id] }
-          : owner.identity.kind === 'contour' ? { kind:'segments',edges:[{kind:'wall',id:owner.identity.id}] }
-            : { kind: 'metadata' })) { this.retireOwner(owner); return; }
+      graphIntent(owner.identity))) { this.retireOwner(owner); return; }
     const attempt = r._stageOptimisticConfig(previous, r._prepareConfigCandidate(h._serverCfg!));
     const restoreDeferred = supersedeDeferredWrite(h._saveConfigDebounced);
     try {

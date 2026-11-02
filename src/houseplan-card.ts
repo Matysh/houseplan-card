@@ -155,7 +155,7 @@ import {
 } from './virtual-light-state';
 import type { SpaceGeometryState } from './geometry-history-state';
 import type {
-  OpeningCfg, PartitionOpeningHost, RoomCfg, SpaceModel, PdfRef,
+  OpeningCfg, OpeningHost, RoomCfg, SpaceModel, PdfRef,
   Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
   ValueBadgeSource,
 } from './types';
@@ -2177,7 +2177,7 @@ export class HouseplanCard extends LitElement {
     invert: boolean;
     flipH: boolean;
     flipV: boolean;
-    host?: PartitionOpeningHost;
+    host?: OpeningHost;
     x: number; y: number; angle: number; // render units (from the wall snap)
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
@@ -3559,6 +3559,8 @@ export class HouseplanCard extends LitElement {
     const ids = [...this._activeWallChainPartitionIds];
     const terminalId = ids[ids.length - 1];
     const terminal = this._spaceModel()?.partitions.find((item) => item.id === terminalId);
+    const terminalPoint = this._path[this._path.length - 1]?.slice();
+    const terminalCm = this._wallChainSegmentCms[ids.length - 1];
     const start = this._path[0] ? [...this._path[0]] : null;
     const nextPath = this._path.slice(0, -1).map((point) => [...point]);
     const nextCms = this._wallChainSegmentCms.slice(0, -1);
@@ -3576,8 +3578,8 @@ export class HouseplanCard extends LitElement {
     this._activeWallChainPartitionIds = ids.slice(0, -1);
     this._path = nextPath.length ? nextPath : start ? [start] : [];
     this._wallChainSegmentCms = nextCms;
-    if (terminal) this._wallChainRedo.push({
-      id: terminal.id, point: [...terminal.b], cm: terminal.cm,
+    if (terminal && terminalPoint) this._wallChainRedo.push({
+      id: terminal.id, point: terminalPoint, cm: terminalCm ?? terminal.cm,
     });
     this._clearPlanSnapHover();
   }

@@ -1,3 +1,5 @@
+import { graphOpeningRun, graphOpeningRunTarget, copyGraphOpeningRun } from './graph-opening-run';
+import type { ExactRational } from './plan-exact';
 import type { WallInterval } from './wall-thickness';
 
 export type OpeningPlacementType = 'window' | 'door' | 'passage' | 'gate';
@@ -43,7 +45,7 @@ export interface OpeningPlacementCore {
   angle: number;
   renderedLength: number;
   target: OpeningPlacementTarget;
-  host?: { kind: 'partition'; id: string; t: number };
+  host?: { kind: 'partition' | 'wall'; id: string; t: number; tq?: ExactRational };
   measure: OpeningPlacementMeasureGeometry;
 }
 
@@ -151,28 +153,29 @@ export function openingPlacementTargets(
   const targets = new Map<string, OpeningPlacementTarget>();
   intervals.forEach((interval, sourceOrder) => {
     if (!interval.kind || interval.open) return;
-    const ends = canonicalEnds(interval.a, interval.b);
+    const run = graphOpeningRun(interval);
+    const ends = canonicalEnds(run?.a || interval.a, run?.b || interval.b);
     if (Math.hypot(ends.b[0] - ends.a[0], ends.b[1] - ends.a[1]) <= 1e-9) return;
-    const segmentKey = atomicSegmentKey(ends.a, ends.b);
+    const segmentKey = run ? `graph-run:${run.key}` : atomicSegmentKey(ends.a, ends.b);
     const previous = targets.get(segmentKey);
     if (previous) {
       previous.physicalHalfWidth = Math.max(previous.physicalHalfWidth, interval.half || 0);
       previous.sourceOrder = Math.min(previous.sourceOrder, sourceOrder);
       if (interval.partitionHost) {
-        if (previous.partitionHost && previous.partitionHost.id !== interval.partitionHost.id)
+        if (previous.partitionHost && previous.partitionHost.id !== interval.partitionHost.id && !run)
           previous.ambiguousPartitionHost = true;
         else previous.partitionHost = interval.partitionHost;
       }
       return;
     }
-    targets.set(segmentKey, {
+    targets.set(segmentKey, copyGraphOpeningRun(interval, {
       segmentKey,
       a: ends.a,
       b: ends.b,
       physicalHalfWidth: Math.max(0, interval.half || 0),
       sourceOrder,
       ...(interval.partitionHost ? { partitionHost: interval.partitionHost } : {}),
-    });
+    }));
   });
   return [...targets.values()];
 }
@@ -357,6 +360,9 @@ export function resolveOpeningPlacementResult(
   else if (angle < -90) angle += 180;
   const isCentered = Math.abs(along - wallCenter) <= 1e-9;
 
+  const run = graphOpeningRun(target);
+  const runTarget = run ? graphOpeningRunTarget(input.intervals, run.anchor.id, [x,y]) : undefined;
+  if (run && !runTarget) return { candidate: null, jambBlockedTarget: null };
   return { candidate: {
     presetRevision: input.preset.revision,
     geometryRevision: input.geometryRevision,
@@ -365,12 +371,12 @@ export function resolveOpeningPlacementResult(
     lengthCm: input.preset.lengthCm,
     flipH: input.preset.flipH,
     flipV: input.preset.flipV,
-    x,
-    y,
+    x: runTarget?.center[0] ?? x,
+    y: runTarget?.center[1] ?? y,
     angle,
     renderedLength: input.renderedLength,
     target,
-    ...(target.partitionHost ? {
+    ...(runTarget ? {host: runTarget.host} : target.partitionHost ? {
       host: { ...target.partitionHost, t: length > 0 ? along / length : 0 },
     } : {}),
     measure: {

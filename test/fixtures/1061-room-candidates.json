@@ -4,7 +4,7 @@
       0.375
     ],
     "source": {
-      "model_version": 10,
+      "model_version": 11,
       "settings": {},
       "markers": [
         {
@@ -29,6 +29,9 @@
               "id": "old",
               "name": "Old",
               "area": null,
+              "future_room": {
+                "retain": true
+              },
               "poly": [
                 [
                   0,
@@ -47,21 +50,16 @@
                   0.312345678
                 ]
               ],
-              "future_room": {
-                "retain": true
-              },
               "wall_ids": [
-                "wall-19c0883c-ebe7-433f-9369-26684a332650",
-                "wall-733a19c6-bc47-4483-b5d8-4fd0fea3188a",
-                "wall-897fa968-fca3-4a3c-aa8a-63ed9f2f40e7",
-                "wall-efb0c846-aa1f-4c76-b1bb-c4fc18a8c614"
+                "fixture-old-wall-1",
+                "fixture-old-wall-3",
+                "fixture-old-wall-2",
+                "fixture-old-wall-0"
               ]
             }
           ],
           "walls": [
             {
-              "key": "0.125000,0.000000@0.0000",
-              "cm": 20,
               "a": [
                 0,
                 0
@@ -69,27 +67,17 @@
               "b": [
                 0.25,
                 0
-              ]
+              ],
+              "cm": 20,
+              "key": "0.125000,0.000000@0.0000"
             }
           ],
           "partitions": [
             {
-              "id": "north",
+              "id": "east",
               "a": [
-                0.25,
-                0
-              ],
-              "b": [
                 0.75,
                 0
-              ],
-              "cm": 20
-            },
-            {
-              "id": "south",
-              "a": [
-                0.25,
-                0.312345678
               ],
               "b": [
                 0.75,
@@ -110,10 +98,46 @@
               "cm": 20
             },
             {
-              "id": "east",
+              "id": "north",
               "a": [
+                0.25,
+                0
+              ],
+              "b": [
+                0.5,
+                0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "north~1",
+              "a": [
+                0.5,
+                0
+              ],
+              "b": [
                 0.75,
                 0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south",
+              "a": [
+                0.25,
+                0.312345678
+              ],
+              "b": [
+                0.5,
+                0.312345678
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south~1",
+              "a": [
+                0.5,
+                0.312345678
               ],
               "b": [
                 0.75,
@@ -124,7 +148,10 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-efb0c846-aa1f-4c76-b1bb-c4fc18a8c614",
+              "future_wall": {
+                "retain": true
+              },
+              "id": "fixture-old-wall-0",
               "a": [
                 0,
                 0
@@ -133,13 +160,10 @@
                 0,
                 0.312345678
               ],
-              "cm": 0,
-              "future_wall": {
-                "retain": true
-              }
+              "cm": 0
             },
             {
-              "id": "wall-19c0883c-ebe7-433f-9369-26684a332650",
+              "id": "fixture-old-wall-1",
               "a": [
                 0,
                 0
@@ -151,7 +175,7 @@
               "cm": 20
             },
             {
-              "id": "wall-897fa968-fca3-4a3c-aa8a-63ed9f2f40e7",
+              "id": "fixture-old-wall-2",
               "a": [
                 0,
                 0.312345678
@@ -163,7 +187,7 @@
               "cm": 0
             },
             {
-              "id": "wall-733a19c6-bc47-4483-b5d8-4fd0fea3188a",
+              "id": "fixture-old-wall-3",
               "a": [
                 0.25,
                 0
@@ -185,14 +209,233 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-19c0883c-ebe7-433f-9369-26684a332650",
-                "t": 0.5
+                "id": "fixture-old-wall-1",
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
               },
               "future_opening": {
                 "retain": true
               }
             }
           ],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "p": [
+                  "q",
+                  "3",
+                  "4",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "p": [
+                  "l",
+                  "120",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "p": [
+                  "q",
+                  "1",
+                  "2",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "p": [
+                  "q",
+                  "1",
+                  "4",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "0",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "0",
+                  "1",
+                  "156172839",
+                  "500000000"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "east",
+                "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "middle",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-0",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0,
+                "props": {
+                  "future_wall": {
+                    "retain": true
+                  }
+                }
+              },
+              {
+                "id": "fixture-old-wall-1",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "kind": "wall",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-2",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "fixture-old-wall-3",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "old",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-1",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-3",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-2",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-0",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              },
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              }
+            ]
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -230,6 +473,39 @@
             }
           ],
           "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "p": [
+                  "l",
+                  "24",
+                  "24"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "p": [
+                  "l",
+                  "48",
+                  "24"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "remote-wall",
+                "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -245,7 +521,7 @@
     },
     "candidates": [
       {
-        "model_version": 10,
+        "model_version": 11,
         "settings": {},
         "markers": [
           {
@@ -270,6 +546,9 @@
                 "id": "old",
                 "name": "Old",
                 "area": null,
+                "future_room": {
+                  "retain": true
+                },
                 "poly": [
                   [
                     0,
@@ -288,18 +567,15 @@
                     0.312345678
                   ]
                 ],
-                "future_room": {
-                  "retain": true
-                },
                 "wall_ids": [
-                  "wall-19c0883c-ebe7-433f-9369-26684a332650",
-                  "wall-733a19c6-bc47-4483-b5d8-4fd0fea3188a",
-                  "wall-897fa968-fca3-4a3c-aa8a-63ed9f2f40e7",
-                  "wall-efb0c846-aa1f-4c76-b1bb-c4fc18a8c614"
+                  "fixture-old-wall-1",
+                  "fixture-old-wall-3",
+                  "fixture-old-wall-2",
+                  "fixture-old-wall-0"
                 ]
               },
               {
-                "id": "rmvn60307-0",
+                "id": "rmvz238h2-0",
                 "name": "New",
                 "area": null,
                 "poly": [
@@ -321,17 +597,15 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-733a19c6-bc47-4483-b5d8-4fd0fea3188a",
-                  "wall-5e007b2a-b3b7-458d-bc64-22f6529b0674",
+                  "fixture-old-wall-3",
+                  "north",
                   "middle",
-                  "wall-77c313d6-b694-45f0-b1d8-f34362f9a6ea"
+                  "south"
                 ]
               }
             ],
             "walls": [
               {
-                "key": "0.125000,0.000000@0.0000",
-                "cm": 20,
                 "a": [
                   0,
                   0
@@ -339,11 +613,23 @@
                 "b": [
                   0.25,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.125000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.000000@0.0000",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0.312345678
+                ],
                 "cm": 20,
+                "key": "0.500000,0.154167@1.5706"
+              },
+              {
                 "a": [
                   0.25,
                   0
@@ -351,11 +637,11 @@
                 "b": [
                   0.5,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.375000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.312500@0.0000",
-                "cm": 20,
                 "a": [
                   0.25,
                   0.312345678
@@ -363,46 +649,12 @@
                 "b": [
                   0.5,
                   0.312345678
-                ]
-              },
-              {
-                "key": "0.500000,0.154167@1.5706",
-                "cm": 20,
-                "a": [
-                  0.5,
-                  0
                 ],
-                "b": [
-                  0.5,
-                  0.312345678
-                ]
+                "cm": 20,
+                "key": "0.375000,0.312500@0.0000"
               }
             ],
             "partitions": [
-              {
-                "id": "north",
-                "a": [
-                  0.5,
-                  0
-                ],
-                "b": [
-                  0.75,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "south",
-                "a": [
-                  0.5,
-                  0.312345678
-                ],
-                "b": [
-                  0.75,
-                  0.312345678
-                ],
-                "cm": 20
-              },
               {
                 "id": "east",
                 "a": [
@@ -414,26 +666,50 @@
                   0.312345678
                 ],
                 "cm": 20
+              },
+              {
+                "id": "north~1",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "a": [
+                  0.5,
+                  0.312345678
+                ],
+                "b": [
+                  0.75,
+                  0.312345678
+                ],
+                "cm": 20
               }
             ],
             "wall_segments": [
               {
-                "id": "wall-efb0c846-aa1f-4c76-b1bb-c4fc18a8c614",
-                "a": [
-                  0,
-                  0
-                ],
-                "b": [
-                  0,
-                  0.312345678
-                ],
-                "cm": 0,
                 "future_wall": {
                   "retain": true
-                }
+                },
+                "id": "fixture-old-wall-0",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  0.312345678
+                ],
+                "cm": 0
               },
               {
-                "id": "wall-19c0883c-ebe7-433f-9369-26684a332650",
+                "id": "fixture-old-wall-1",
                 "a": [
                   0,
                   0
@@ -445,7 +721,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-897fa968-fca3-4a3c-aa8a-63ed9f2f40e7",
+                "id": "fixture-old-wall-2",
                 "a": [
                   0,
                   0.312345678
@@ -457,7 +733,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-733a19c6-bc47-4483-b5d8-4fd0fea3188a",
+                "id": "fixture-old-wall-3",
                 "a": [
                   0.25,
                   0
@@ -467,36 +743,36 @@
                   0.312345678
                 ],
                 "cm": 0
-              },
-              {
-                "id": "wall-5e007b2a-b3b7-458d-bc64-22f6529b0674",
-                "a": [
-                  0.25,
-                  0
-                ],
-                "b": [
-                  0.5,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "wall-77c313d6-b694-45f0-b1d8-f34362f9a6ea",
-                "a": [
-                  0.25,
-                  0.312345678
-                ],
-                "b": [
-                  0.5,
-                  0.312345678
-                ],
-                "cm": 20
               },
               {
                 "id": "middle",
                 "a": [
                   0.5,
                   0
+                ],
+                "b": [
+                  0.5,
+                  0.312345678
+                ],
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "a": [
+                  0.25,
+                  0.312345678
                 ],
                 "b": [
                   0.5,
@@ -515,14 +791,258 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-19c0883c-ebe7-433f-9369-26684a332650",
-                  "t": 0.5
+                  "id": "fixture-old-wall-1",
+                  "t": 0.5,
+                  "tq": [
+                    "1",
+                    "2"
+                  ]
                 },
                 "future_opening": {
                   "retain": true
                 }
               }
             ],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "3",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "120",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "2",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "p": [
+                    "l",
+                    "0",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "p": [
+                    "q",
+                    "0",
+                    "1",
+                    "156172839",
+                    "500000000"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "east",
+                  "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "north~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "south~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-0",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "kind": "wall",
+                  "cm": 0,
+                  "props": {
+                    "future_wall": {
+                      "retain": true
+                    }
+                  }
+                },
+                {
+                  "id": "fixture-old-wall-1",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-2",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "fixture-old-wall-3",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "middle",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "north",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "south",
+                  "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                }
+              ],
+              "rooms": [
+                {
+                  "room": "old",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-2",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-0",
+                      "reverse": true
+                    }
+                  ]
+                },
+                {
+                  "room": "rmvz238h2-0",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "north",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "middle",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "south",
+                      "reverse": true
+                    }
+                  ]
+                }
+              ],
+              "dependencies": [
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                }
+              ]
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -560,6 +1080,39 @@
               }
             ],
             "wall_segments": [],
+            "walls": [],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "24",
+                    "24"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "48",
+                    "24"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "remote-wall",
+                  "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                }
+              ],
+              "rooms": [],
+              "dependencies": []
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -580,7 +1133,7 @@
       0.625
     ],
     "source": {
-      "model_version": 10,
+      "model_version": 11,
       "settings": {},
       "markers": [
         {
@@ -605,6 +1158,9 @@
               "id": "old",
               "name": "Old",
               "area": null,
+              "future_room": {
+                "retain": true
+              },
               "poly": [
                 [
                   0,
@@ -623,21 +1179,16 @@
                   0.312345678
                 ]
               ],
-              "future_room": {
-                "retain": true
-              },
               "wall_ids": [
-                "wall-82b490ba-738f-4e82-9b6a-052933e77662",
-                "wall-5130c134-383f-4aca-842a-f7667e36a9c1",
-                "wall-b96127e3-1540-47f2-8e76-cf3a09ac1f53",
-                "wall-a35260bd-52e0-4df3-b1b9-b63cfeef594f"
+                "fixture-old-wall-1",
+                "fixture-old-wall-3",
+                "fixture-old-wall-2",
+                "fixture-old-wall-0"
               ]
             }
           ],
           "walls": [
             {
-              "key": "0.125000,0.000000@0.0000",
-              "cm": 20,
               "a": [
                 0,
                 0
@@ -645,27 +1196,17 @@
               "b": [
                 0.25,
                 0
-              ]
+              ],
+              "cm": 20,
+              "key": "0.125000,0.000000@0.0000"
             }
           ],
           "partitions": [
             {
-              "id": "north",
+              "id": "east",
               "a": [
-                0.25,
-                0
-              ],
-              "b": [
                 0.75,
                 0
-              ],
-              "cm": 20
-            },
-            {
-              "id": "south",
-              "a": [
-                0.25,
-                0.312345678
               ],
               "b": [
                 0.75,
@@ -686,10 +1227,46 @@
               "cm": 20
             },
             {
-              "id": "east",
+              "id": "north",
               "a": [
+                0.25,
+                0
+              ],
+              "b": [
+                0.5,
+                0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "north~1",
+              "a": [
+                0.5,
+                0
+              ],
+              "b": [
                 0.75,
                 0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south",
+              "a": [
+                0.25,
+                0.312345678
+              ],
+              "b": [
+                0.5,
+                0.312345678
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south~1",
+              "a": [
+                0.5,
+                0.312345678
               ],
               "b": [
                 0.75,
@@ -700,7 +1277,10 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-a35260bd-52e0-4df3-b1b9-b63cfeef594f",
+              "future_wall": {
+                "retain": true
+              },
+              "id": "fixture-old-wall-0",
               "a": [
                 0,
                 0
@@ -709,13 +1289,10 @@
                 0,
                 0.312345678
               ],
-              "cm": 0,
-              "future_wall": {
-                "retain": true
-              }
+              "cm": 0
             },
             {
-              "id": "wall-82b490ba-738f-4e82-9b6a-052933e77662",
+              "id": "fixture-old-wall-1",
               "a": [
                 0,
                 0
@@ -727,7 +1304,7 @@
               "cm": 20
             },
             {
-              "id": "wall-b96127e3-1540-47f2-8e76-cf3a09ac1f53",
+              "id": "fixture-old-wall-2",
               "a": [
                 0,
                 0.312345678
@@ -739,7 +1316,7 @@
               "cm": 0
             },
             {
-              "id": "wall-5130c134-383f-4aca-842a-f7667e36a9c1",
+              "id": "fixture-old-wall-3",
               "a": [
                 0.25,
                 0
@@ -761,14 +1338,233 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-82b490ba-738f-4e82-9b6a-052933e77662",
-                "t": 0.5
+                "id": "fixture-old-wall-1",
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
               },
               "future_opening": {
                 "retain": true
               }
             }
           ],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "p": [
+                  "q",
+                  "3",
+                  "4",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "p": [
+                  "l",
+                  "120",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "p": [
+                  "q",
+                  "1",
+                  "2",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "p": [
+                  "q",
+                  "1",
+                  "4",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "0",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "0",
+                  "1",
+                  "156172839",
+                  "500000000"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "east",
+                "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "middle",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-0",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0,
+                "props": {
+                  "future_wall": {
+                    "retain": true
+                  }
+                }
+              },
+              {
+                "id": "fixture-old-wall-1",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "kind": "wall",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-2",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "fixture-old-wall-3",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "old",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-1",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-3",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-2",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-0",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              },
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              }
+            ]
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -806,6 +1602,39 @@
             }
           ],
           "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "p": [
+                  "l",
+                  "24",
+                  "24"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "p": [
+                  "l",
+                  "48",
+                  "24"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "remote-wall",
+                "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -821,7 +1650,7 @@
     },
     "candidates": [
       {
-        "model_version": 10,
+        "model_version": 11,
         "settings": {},
         "markers": [
           {
@@ -846,6 +1675,9 @@
                 "id": "old",
                 "name": "Old",
                 "area": null,
+                "future_room": {
+                  "retain": true
+                },
                 "poly": [
                   [
                     0,
@@ -864,18 +1696,15 @@
                     0.312345678
                   ]
                 ],
-                "future_room": {
-                  "retain": true
-                },
                 "wall_ids": [
-                  "wall-82b490ba-738f-4e82-9b6a-052933e77662",
-                  "wall-5130c134-383f-4aca-842a-f7667e36a9c1",
-                  "wall-b96127e3-1540-47f2-8e76-cf3a09ac1f53",
-                  "wall-a35260bd-52e0-4df3-b1b9-b63cfeef594f"
+                  "fixture-old-wall-1",
+                  "fixture-old-wall-3",
+                  "fixture-old-wall-2",
+                  "fixture-old-wall-0"
                 ]
               },
               {
-                "id": "rmvn6030u-0",
+                "id": "rmvz238ic-0",
                 "name": "New",
                 "area": null,
                 "poly": [
@@ -898,16 +1727,26 @@
                 ],
                 "wall_ids": [
                   "middle",
-                  "wall-b4759bef-a745-427e-ada6-02e7a0e95b77",
+                  "north~1",
                   "east",
-                  "wall-3143ef82-a478-4996-82a2-5e440075e49f"
+                  "south~1"
                 ]
               }
             ],
             "walls": [
               {
-                "key": "0.125000,0.000000@0.0000",
+                "a": [
+                  0.75,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0.312345678
+                ],
                 "cm": 20,
+                "key": "0.750000,0.154167@1.5706"
+              },
+              {
                 "a": [
                   0,
                   0
@@ -915,11 +1754,11 @@
                 "b": [
                   0.25,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.125000,0.000000@0.0000"
               },
               {
-                "key": "0.500000,0.154167@1.5706",
-                "cm": 20,
                 "a": [
                   0.5,
                   0
@@ -927,11 +1766,11 @@
                 "b": [
                   0.5,
                   0.312345678
-                ]
+                ],
+                "cm": 20,
+                "key": "0.500000,0.154167@1.5706"
               },
               {
-                "key": "0.625000,0.000000@0.0000",
-                "cm": 20,
                 "a": [
                   0.5,
                   0
@@ -939,11 +1778,11 @@
                 "b": [
                   0.75,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.625000,0.000000@0.0000"
               },
               {
-                "key": "0.625000,0.312500@0.0000",
-                "cm": 20,
                 "a": [
                   0.5,
                   0.312345678
@@ -951,19 +1790,9 @@
                 "b": [
                   0.75,
                   0.312345678
-                ]
-              },
-              {
-                "key": "0.750000,0.154167@1.5706",
-                "cm": 20,
-                "a": [
-                  0.75,
-                  0
                 ],
-                "b": [
-                  0.75,
-                  0.312345678
-                ]
+                "cm": 20,
+                "key": "0.625000,0.312500@0.0000"
               }
             ],
             "partitions": [
@@ -994,7 +1823,22 @@
             ],
             "wall_segments": [
               {
-                "id": "wall-a35260bd-52e0-4df3-b1b9-b63cfeef594f",
+                "id": "east",
+                "a": [
+                  0.75,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0.312345678
+                ],
+                "cm": 20
+              },
+              {
+                "future_wall": {
+                  "retain": true
+                },
+                "id": "fixture-old-wall-0",
                 "a": [
                   0,
                   0
@@ -1003,13 +1847,10 @@
                   0,
                   0.312345678
                 ],
-                "cm": 0,
-                "future_wall": {
-                  "retain": true
-                }
+                "cm": 0
               },
               {
-                "id": "wall-82b490ba-738f-4e82-9b6a-052933e77662",
+                "id": "fixture-old-wall-1",
                 "a": [
                   0,
                   0
@@ -1021,7 +1862,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-b96127e3-1540-47f2-8e76-cf3a09ac1f53",
+                "id": "fixture-old-wall-2",
                 "a": [
                   0,
                   0.312345678
@@ -1033,7 +1874,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-5130c134-383f-4aca-842a-f7667e36a9c1",
+                "id": "fixture-old-wall-3",
                 "a": [
                   0.25,
                   0
@@ -1057,7 +1898,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-b4759bef-a745-427e-ada6-02e7a0e95b77",
+                "id": "north~1",
                 "a": [
                   0.5,
                   0
@@ -1069,22 +1910,10 @@
                 "cm": 20
               },
               {
-                "id": "wall-3143ef82-a478-4996-82a2-5e440075e49f",
+                "id": "south~1",
                 "a": [
                   0.5,
                   0.312345678
-                ],
-                "b": [
-                  0.75,
-                  0.312345678
-                ],
-                "cm": 20
-              },
-              {
-                "id": "east",
-                "a": [
-                  0.75,
-                  0
                 ],
                 "b": [
                   0.75,
@@ -1103,14 +1932,258 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-82b490ba-738f-4e82-9b6a-052933e77662",
-                  "t": 0.5
+                  "id": "fixture-old-wall-1",
+                  "t": 0.5,
+                  "tq": [
+                    "1",
+                    "2"
+                  ]
                 },
                 "future_opening": {
                   "retain": true
                 }
               }
             ],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "3",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "120",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "2",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "p": [
+                    "l",
+                    "0",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "p": [
+                    "q",
+                    "0",
+                    "1",
+                    "156172839",
+                    "500000000"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "north",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "south",
+                  "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "east",
+                  "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-0",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "kind": "wall",
+                  "cm": 0,
+                  "props": {
+                    "future_wall": {
+                      "retain": true
+                    }
+                  }
+                },
+                {
+                  "id": "fixture-old-wall-1",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-2",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "fixture-old-wall-3",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "middle",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "north~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "south~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                }
+              ],
+              "rooms": [
+                {
+                  "room": "old",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-2",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-0",
+                      "reverse": true
+                    }
+                  ]
+                },
+                {
+                  "room": "rmvz238ic-0",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "middle",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "north~1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "east",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "south~1",
+                      "reverse": true
+                    }
+                  ]
+                }
+              ],
+              "dependencies": [
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                }
+              ]
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -1148,6 +2221,39 @@
               }
             ],
             "wall_segments": [],
+            "walls": [],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "24",
+                    "24"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "48",
+                    "24"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "remote-wall",
+                  "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                }
+              ],
+              "rooms": [],
+              "dependencies": []
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -1169,7 +2275,7 @@
       0.625
     ],
     "source": {
-      "model_version": 10,
+      "model_version": 11,
       "settings": {},
       "markers": [
         {
@@ -1194,6 +2300,9 @@
               "id": "old",
               "name": "Old",
               "area": null,
+              "future_room": {
+                "retain": true
+              },
               "poly": [
                 [
                   0,
@@ -1212,21 +2321,16 @@
                   0.312345678
                 ]
               ],
-              "future_room": {
-                "retain": true
-              },
               "wall_ids": [
-                "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
-                "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
-                "wall-7deaf3bc-7848-487c-ac05-27c67376bdb7",
-                "wall-11fe1675-c691-41e1-ba4f-e5fbb7e471a5"
+                "fixture-old-wall-1",
+                "fixture-old-wall-3",
+                "fixture-old-wall-2",
+                "fixture-old-wall-0"
               ]
             }
           ],
           "walls": [
             {
-              "key": "0.125000,0.000000@0.0000",
-              "cm": 20,
               "a": [
                 0,
                 0
@@ -1234,27 +2338,17 @@
               "b": [
                 0.25,
                 0
-              ]
+              ],
+              "cm": 20,
+              "key": "0.125000,0.000000@0.0000"
             }
           ],
           "partitions": [
             {
-              "id": "north",
+              "id": "east",
               "a": [
-                0.25,
-                0
-              ],
-              "b": [
                 0.75,
                 0
-              ],
-              "cm": 20
-            },
-            {
-              "id": "south",
-              "a": [
-                0.25,
-                0.312345678
               ],
               "b": [
                 0.75,
@@ -1275,10 +2369,46 @@
               "cm": 20
             },
             {
-              "id": "east",
+              "id": "north",
               "a": [
+                0.25,
+                0
+              ],
+              "b": [
+                0.5,
+                0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "north~1",
+              "a": [
+                0.5,
+                0
+              ],
+              "b": [
                 0.75,
                 0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south",
+              "a": [
+                0.25,
+                0.312345678
+              ],
+              "b": [
+                0.5,
+                0.312345678
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south~1",
+              "a": [
+                0.5,
+                0.312345678
               ],
               "b": [
                 0.75,
@@ -1289,7 +2419,10 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-11fe1675-c691-41e1-ba4f-e5fbb7e471a5",
+              "future_wall": {
+                "retain": true
+              },
+              "id": "fixture-old-wall-0",
               "a": [
                 0,
                 0
@@ -1298,13 +2431,10 @@
                 0,
                 0.312345678
               ],
-              "cm": 0,
-              "future_wall": {
-                "retain": true
-              }
+              "cm": 0
             },
             {
-              "id": "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
+              "id": "fixture-old-wall-1",
               "a": [
                 0,
                 0
@@ -1316,7 +2446,7 @@
               "cm": 20
             },
             {
-              "id": "wall-7deaf3bc-7848-487c-ac05-27c67376bdb7",
+              "id": "fixture-old-wall-2",
               "a": [
                 0,
                 0.312345678
@@ -1328,7 +2458,7 @@
               "cm": 0
             },
             {
-              "id": "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
+              "id": "fixture-old-wall-3",
               "a": [
                 0.25,
                 0
@@ -1350,14 +2480,233 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
-                "t": 0.5
+                "id": "fixture-old-wall-1",
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
               },
               "future_opening": {
                 "retain": true
               }
             }
           ],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "p": [
+                  "q",
+                  "3",
+                  "4",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "p": [
+                  "l",
+                  "120",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "p": [
+                  "q",
+                  "1",
+                  "2",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "p": [
+                  "q",
+                  "1",
+                  "4",
+                  "156172839",
+                  "500000000"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "0",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "0",
+                  "1",
+                  "156172839",
+                  "500000000"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "east",
+                "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "middle",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-0",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0,
+                "props": {
+                  "future_wall": {
+                    "retain": true
+                  }
+                }
+              },
+              {
+                "id": "fixture-old-wall-1",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "kind": "wall",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-2",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "fixture-old-wall-3",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "old",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-1",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-3",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-2",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-0",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              },
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              }
+            ]
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -1395,6 +2744,39 @@
             }
           ],
           "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "p": [
+                  "l",
+                  "24",
+                  "24"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "p": [
+                  "l",
+                  "48",
+                  "24"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "remote-wall",
+                "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -1410,7 +2792,7 @@
     },
     "candidates": [
       {
-        "model_version": 10,
+        "model_version": 11,
         "settings": {},
         "markers": [
           {
@@ -1435,6 +2817,9 @@
                 "id": "old",
                 "name": "Old",
                 "area": null,
+                "future_room": {
+                  "retain": true
+                },
                 "poly": [
                   [
                     0,
@@ -1453,18 +2838,15 @@
                     0.312345678
                   ]
                 ],
-                "future_room": {
-                  "retain": true
-                },
                 "wall_ids": [
-                  "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
-                  "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
-                  "wall-7deaf3bc-7848-487c-ac05-27c67376bdb7",
-                  "wall-11fe1675-c691-41e1-ba4f-e5fbb7e471a5"
+                  "fixture-old-wall-1",
+                  "fixture-old-wall-3",
+                  "fixture-old-wall-2",
+                  "fixture-old-wall-0"
                 ]
               },
               {
-                "id": "rmvn60314-0",
+                "id": "rmvz238j5-0",
                 "name": "New",
                 "area": null,
                 "poly": [
@@ -1486,17 +2868,15 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
-                  "wall-fa8e497b-a0a1-455a-9ede-51701b096e0a",
+                  "fixture-old-wall-3",
+                  "north",
                   "middle",
-                  "wall-68ceb126-6a5d-402f-b61c-aa6111b213ae"
+                  "south"
                 ]
               }
             ],
             "walls": [
               {
-                "key": "0.125000,0.000000@0.0000",
-                "cm": 20,
                 "a": [
                   0,
                   0
@@ -1504,11 +2884,23 @@
                 "b": [
                   0.25,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.125000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.000000@0.0000",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0.312345678
+                ],
                 "cm": 20,
+                "key": "0.500000,0.154167@1.5706"
+              },
+              {
                 "a": [
                   0.25,
                   0
@@ -1516,11 +2908,11 @@
                 "b": [
                   0.5,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.375000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.312500@0.0000",
-                "cm": 20,
                 "a": [
                   0.25,
                   0.312345678
@@ -1528,46 +2920,12 @@
                 "b": [
                   0.5,
                   0.312345678
-                ]
-              },
-              {
-                "key": "0.500000,0.154167@1.5706",
-                "cm": 20,
-                "a": [
-                  0.5,
-                  0
                 ],
-                "b": [
-                  0.5,
-                  0.312345678
-                ]
+                "cm": 20,
+                "key": "0.375000,0.312500@0.0000"
               }
             ],
             "partitions": [
-              {
-                "id": "north",
-                "a": [
-                  0.5,
-                  0
-                ],
-                "b": [
-                  0.75,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "south",
-                "a": [
-                  0.5,
-                  0.312345678
-                ],
-                "b": [
-                  0.75,
-                  0.312345678
-                ],
-                "cm": 20
-              },
               {
                 "id": "east",
                 "a": [
@@ -1579,26 +2937,50 @@
                   0.312345678
                 ],
                 "cm": 20
+              },
+              {
+                "id": "north~1",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "a": [
+                  0.5,
+                  0.312345678
+                ],
+                "b": [
+                  0.75,
+                  0.312345678
+                ],
+                "cm": 20
               }
             ],
             "wall_segments": [
               {
-                "id": "wall-11fe1675-c691-41e1-ba4f-e5fbb7e471a5",
-                "a": [
-                  0,
-                  0
-                ],
-                "b": [
-                  0,
-                  0.312345678
-                ],
-                "cm": 0,
                 "future_wall": {
                   "retain": true
-                }
+                },
+                "id": "fixture-old-wall-0",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  0.312345678
+                ],
+                "cm": 0
               },
               {
-                "id": "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
+                "id": "fixture-old-wall-1",
                 "a": [
                   0,
                   0
@@ -1610,7 +2992,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-7deaf3bc-7848-487c-ac05-27c67376bdb7",
+                "id": "fixture-old-wall-2",
                 "a": [
                   0,
                   0.312345678
@@ -1622,7 +3004,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
+                "id": "fixture-old-wall-3",
                 "a": [
                   0.25,
                   0
@@ -1632,36 +3014,36 @@
                   0.312345678
                 ],
                 "cm": 0
-              },
-              {
-                "id": "wall-fa8e497b-a0a1-455a-9ede-51701b096e0a",
-                "a": [
-                  0.25,
-                  0
-                ],
-                "b": [
-                  0.5,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "wall-68ceb126-6a5d-402f-b61c-aa6111b213ae",
-                "a": [
-                  0.25,
-                  0.312345678
-                ],
-                "b": [
-                  0.5,
-                  0.312345678
-                ],
-                "cm": 20
               },
               {
                 "id": "middle",
                 "a": [
                   0.5,
                   0
+                ],
+                "b": [
+                  0.5,
+                  0.312345678
+                ],
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "a": [
+                  0.25,
+                  0.312345678
                 ],
                 "b": [
                   0.5,
@@ -1680,14 +3062,258 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
-                  "t": 0.5
+                  "id": "fixture-old-wall-1",
+                  "t": 0.5,
+                  "tq": [
+                    "1",
+                    "2"
+                  ]
                 },
                 "future_opening": {
                   "retain": true
                 }
               }
             ],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "3",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "120",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "2",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "p": [
+                    "l",
+                    "0",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "p": [
+                    "q",
+                    "0",
+                    "1",
+                    "156172839",
+                    "500000000"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "east",
+                  "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "north~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "south~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-0",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "kind": "wall",
+                  "cm": 0,
+                  "props": {
+                    "future_wall": {
+                      "retain": true
+                    }
+                  }
+                },
+                {
+                  "id": "fixture-old-wall-1",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-2",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "fixture-old-wall-3",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "middle",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "north",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "south",
+                  "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                }
+              ],
+              "rooms": [
+                {
+                  "room": "old",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-2",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-0",
+                      "reverse": true
+                    }
+                  ]
+                },
+                {
+                  "room": "rmvz238j5-0",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "north",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "middle",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "south",
+                      "reverse": true
+                    }
+                  ]
+                }
+              ],
+              "dependencies": [
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                }
+              ]
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -1725,6 +3351,39 @@
               }
             ],
             "wall_segments": [],
+            "walls": [],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "24",
+                    "24"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "48",
+                    "24"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "remote-wall",
+                  "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                }
+              ],
+              "rooms": [],
+              "dependencies": []
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -1739,7 +3398,7 @@
         ]
       },
       {
-        "model_version": 10,
+        "model_version": 11,
         "settings": {},
         "markers": [
           {
@@ -1764,36 +3423,36 @@
                 "id": "old",
                 "name": "Old",
                 "area": null,
-                "poly": [
-                  [
-                    0,
-                    0
-                  ],
-                  [
-                    0.25,
-                    0
-                  ],
-                  [
-                    0.25,
-                    0.312345678
-                  ],
-                  [
-                    0,
-                    0.312345678
-                  ]
-                ],
                 "future_room": {
                   "retain": true
                 },
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0.25,
+                    0
+                  ],
+                  [
+                    0.25,
+                    0.312345678
+                  ],
+                  [
+                    0,
+                    0.312345678
+                  ]
+                ],
                 "wall_ids": [
-                  "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
-                  "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
-                  "wall-7deaf3bc-7848-487c-ac05-27c67376bdb7",
-                  "wall-11fe1675-c691-41e1-ba4f-e5fbb7e471a5"
+                  "fixture-old-wall-1",
+                  "fixture-old-wall-3",
+                  "fixture-old-wall-2",
+                  "fixture-old-wall-0"
                 ]
               },
               {
-                "id": "rmvn60314-0",
+                "id": "rmvz238j5-0",
                 "name": "New",
                 "area": null,
                 "poly": [
@@ -1815,46 +3474,56 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
-                  "wall-fa8e497b-a0a1-455a-9ede-51701b096e0a",
-                  "middle",
-                  "wall-68ceb126-6a5d-402f-b61c-aa6111b213ae"
-                ]
-              },
-              {
-                "id": "rmvn60318-0",
-                "name": "New",
-                "area": null,
-                "poly": [
-                  [
-                    0.5,
-                    0.312345678
-                  ],
-                  [
-                    0.5,
-                    0
-                  ],
-                  [
-                    0.75,
-                    0
-                  ],
-                  [
-                    0.75,
-                    0.312345678
-                  ]
-                ],
-                "wall_ids": [
-                  "middle",
+                  "fixture-old-wall-3",
                   "north",
-                  "east",
+                  "middle",
                   "south"
+                ]
+              },
+              {
+                "id": "rmvz238jg-0",
+                "name": "New",
+                "area": null,
+                "poly": [
+                  [
+                    0.5,
+                    0.312345678
+                  ],
+                  [
+                    0.5,
+                    0
+                  ],
+                  [
+                    0.75,
+                    0
+                  ],
+                  [
+                    0.75,
+                    0.312345678
+                  ]
+                ],
+                "wall_ids": [
+                  "middle",
+                  "north~1",
+                  "east",
+                  "south~1"
                 ]
               }
             ],
             "walls": [
               {
-                "key": "0.125000,0.000000@0.0000",
+                "a": [
+                  0.75,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0.312345678
+                ],
                 "cm": 20,
+                "key": "0.750000,0.154167@1.5706"
+              },
+              {
                 "a": [
                   0,
                   0
@@ -1862,11 +3531,23 @@
                 "b": [
                   0.25,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.125000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.000000@0.0000",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0.312345678
+                ],
                 "cm": 20,
+                "key": "0.500000,0.154167@1.5706"
+              },
+              {
                 "a": [
                   0.25,
                   0
@@ -1874,11 +3555,23 @@
                 "b": [
                   0.5,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.375000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.312500@0.0000",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0
+                ],
                 "cm": 20,
+                "key": "0.625000,0.000000@0.0000"
+              },
+              {
                 "a": [
                   0.25,
                   0.312345678
@@ -1886,35 +3579,11 @@
                 "b": [
                   0.5,
                   0.312345678
-                ]
-              },
-              {
-                "key": "0.500000,0.154167@1.5706",
-                "cm": 20,
-                "a": [
-                  0.5,
-                  0
                 ],
-                "b": [
-                  0.5,
-                  0.312345678
-                ]
+                "cm": 20,
+                "key": "0.375000,0.312500@0.0000"
               },
               {
-                "key": "0.625000,0.000000@0.0000",
-                "cm": 20,
-                "a": [
-                  0.5,
-                  0
-                ],
-                "b": [
-                  0.75,
-                  0
-                ]
-              },
-              {
-                "key": "0.625000,0.312500@0.0000",
-                "cm": 20,
                 "a": [
                   0.5,
                   0.312345678
@@ -1922,39 +3591,41 @@
                 "b": [
                   0.75,
                   0.312345678
-                ]
-              },
-              {
-                "key": "0.750000,0.154167@1.5706",
-                "cm": 20,
-                "a": [
-                  0.75,
-                  0
                 ],
-                "b": [
-                  0.75,
-                  0.312345678
-                ]
+                "cm": 20,
+                "key": "0.625000,0.312500@0.0000"
               }
             ],
             "wall_segments": [
               {
-                "id": "wall-11fe1675-c691-41e1-ba4f-e5fbb7e471a5",
+                "id": "east",
                 "a": [
-                  0,
+                  0.75,
                   0
                 ],
                 "b": [
-                  0,
+                  0.75,
                   0.312345678
                 ],
-                "cm": 0,
+                "cm": 20
+              },
+              {
                 "future_wall": {
                   "retain": true
-                }
+                },
+                "id": "fixture-old-wall-0",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  0.312345678
+                ],
+                "cm": 0
               },
               {
-                "id": "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
+                "id": "fixture-old-wall-1",
                 "a": [
                   0,
                   0
@@ -1966,7 +3637,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-7deaf3bc-7848-487c-ac05-27c67376bdb7",
+                "id": "fixture-old-wall-2",
                 "a": [
                   0,
                   0.312345678
@@ -1978,7 +3649,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-dd412230-a36a-40f2-bb37-994fd775adbd",
+                "id": "fixture-old-wall-3",
                 "a": [
                   0.25,
                   0
@@ -1988,30 +3659,6 @@
                   0.312345678
                 ],
                 "cm": 0
-              },
-              {
-                "id": "wall-fa8e497b-a0a1-455a-9ede-51701b096e0a",
-                "a": [
-                  0.25,
-                  0
-                ],
-                "b": [
-                  0.5,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "wall-68ceb126-6a5d-402f-b61c-aa6111b213ae",
-                "a": [
-                  0.25,
-                  0.312345678
-                ],
-                "b": [
-                  0.5,
-                  0.312345678
-                ],
-                "cm": 20
               },
               {
                 "id": "middle",
@@ -2028,6 +3675,18 @@
               {
                 "id": "north",
                 "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "north~1",
+                "a": [
                   0.5,
                   0
                 ],
@@ -2040,20 +3699,20 @@
               {
                 "id": "south",
                 "a": [
-                  0.5,
+                  0.25,
                   0.312345678
                 ],
                 "b": [
-                  0.75,
+                  0.5,
                   0.312345678
                 ],
                 "cm": 20
               },
               {
-                "id": "east",
+                "id": "south~1",
                 "a": [
-                  0.75,
-                  0
+                  0.5,
+                  0.312345678
                 ],
                 "b": [
                   0.75,
@@ -2072,14 +3731,283 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-8826b092-a80f-4244-be6e-dda5881f6bfe",
-                  "t": 0.5
+                  "id": "fixture-old-wall-1",
+                  "t": 0.5,
+                  "tq": [
+                    "1",
+                    "2"
+                  ]
                 },
                 "future_opening": {
                   "retain": true
                 }
               }
             ],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "3",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "120",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "2",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "p": [
+                    "q",
+                    "1",
+                    "4",
+                    "156172839",
+                    "500000000"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "p": [
+                    "l",
+                    "0",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "p": [
+                    "q",
+                    "0",
+                    "1",
+                    "156172839",
+                    "500000000"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "east",
+                  "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-0",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "kind": "wall",
+                  "cm": 0,
+                  "props": {
+                    "future_wall": {
+                      "retain": true
+                    }
+                  }
+                },
+                {
+                  "id": "fixture-old-wall-1",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-2",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22q%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%2C%5C%22156172839%5C%22%2C%5C%22500000000%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "fixture-old-wall-3",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "middle",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "north",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "north~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "south",
+                  "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "south~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                }
+              ],
+              "rooms": [
+                {
+                  "room": "old",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-2",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-0",
+                      "reverse": true
+                    }
+                  ]
+                },
+                {
+                  "room": "rmvz238j5-0",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "north",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "middle",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "south",
+                      "reverse": true
+                    }
+                  ]
+                },
+                {
+                  "room": "rmvz238jg-0",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "middle",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "north~1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "east",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "south~1",
+                      "reverse": true
+                    }
+                  ]
+                }
+              ],
+              "dependencies": [
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                }
+              ]
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -2089,7 +4017,8 @@
                 "c": "#ffffff",
                 "a": 1
               }
-            }
+            },
+            "partitions": []
           },
           {
             "id": "remote",
@@ -2117,6 +4046,39 @@
               }
             ],
             "wall_segments": [],
+            "walls": [],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "24",
+                    "24"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "48",
+                    "24"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "remote-wall",
+                  "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                }
+              ],
+              "rooms": [],
+              "dependencies": []
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -2137,7 +4099,7 @@
       0.375
     ],
     "source": {
-      "model_version": 10,
+      "model_version": 11,
       "settings": {},
       "markers": [
         {
@@ -2162,6 +4124,9 @@
               "id": "old",
               "name": "Old",
               "area": null,
+              "future_room": {
+                "retain": true
+              },
               "poly": [
                 [
                   0,
@@ -2180,21 +4145,16 @@
                   0.3125
                 ]
               ],
-              "future_room": {
-                "retain": true
-              },
               "wall_ids": [
-                "wall-8e61af84-285b-4436-a583-a074aab37642",
-                "wall-e0db4d42-b176-4cfa-b76c-eaa2a4e36b7c",
-                "wall-833d185b-5de2-4d34-b0c9-0b9ef3bfbc50",
-                "wall-3241a289-48cb-4b1f-828d-33e9fc576b5f"
+                "fixture-old-wall-1",
+                "fixture-old-wall-3",
+                "fixture-old-wall-2",
+                "fixture-old-wall-0"
               ]
             }
           ],
           "walls": [
             {
-              "key": "0.125000,0.000000@0.0000",
-              "cm": 20,
               "a": [
                 0,
                 0
@@ -2202,27 +4162,17 @@
               "b": [
                 0.25,
                 0
-              ]
+              ],
+              "cm": 20,
+              "key": "0.125000,0.000000@0.0000"
             }
           ],
           "partitions": [
             {
-              "id": "north",
+              "id": "east",
               "a": [
-                0.25,
-                0
-              ],
-              "b": [
                 0.75,
                 0
-              ],
-              "cm": 20
-            },
-            {
-              "id": "south",
-              "a": [
-                0.25,
-                0.3125
               ],
               "b": [
                 0.75,
@@ -2243,10 +4193,46 @@
               "cm": 20
             },
             {
-              "id": "east",
+              "id": "north",
               "a": [
+                0.25,
+                0
+              ],
+              "b": [
+                0.5,
+                0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "north~1",
+              "a": [
+                0.5,
+                0
+              ],
+              "b": [
                 0.75,
                 0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south",
+              "a": [
+                0.25,
+                0.3125
+              ],
+              "b": [
+                0.5,
+                0.3125
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south~1",
+              "a": [
+                0.5,
+                0.3125
               ],
               "b": [
                 0.75,
@@ -2257,7 +4243,10 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-3241a289-48cb-4b1f-828d-33e9fc576b5f",
+              "future_wall": {
+                "retain": true
+              },
+              "id": "fixture-old-wall-0",
               "a": [
                 0,
                 0
@@ -2266,13 +4255,10 @@
                 0,
                 0.3125
               ],
-              "cm": 0,
-              "future_wall": {
-                "retain": true
-              }
+              "cm": 0
             },
             {
-              "id": "wall-8e61af84-285b-4436-a583-a074aab37642",
+              "id": "fixture-old-wall-1",
               "a": [
                 0,
                 0
@@ -2284,7 +4270,7 @@
               "cm": 20
             },
             {
-              "id": "wall-833d185b-5de2-4d34-b0c9-0b9ef3bfbc50",
+              "id": "fixture-old-wall-2",
               "a": [
                 0,
                 0.3125
@@ -2296,7 +4282,7 @@
               "cm": 0
             },
             {
-              "id": "wall-e0db4d42-b176-4cfa-b76c-eaa2a4e36b7c",
+              "id": "fixture-old-wall-3",
               "a": [
                 0.25,
                 0
@@ -2318,14 +4304,225 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-8e61af84-285b-4436-a583-a074aab37642",
-                "t": 0.5
+                "id": "fixture-old-wall-1",
+                "t": 0.5,
+                "tq": [
+                  "1",
+                  "2"
+                ]
               },
               "future_opening": {
                 "retain": true
               }
             }
           ],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "p": [
+                  "l",
+                  "180",
+                  "75"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "p": [
+                  "l",
+                  "120",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "p": [
+                  "l",
+                  "120",
+                  "75"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "p": [
+                  "l",
+                  "60",
+                  "75"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "0",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%2275%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "0",
+                  "75"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "east",
+                "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "middle",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "north~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-0",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%2275%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0,
+                "props": {
+                  "future_wall": {
+                    "retain": true
+                  }
+                }
+              },
+              {
+                "id": "fixture-old-wall-1",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "kind": "wall",
+                "cm": 20
+              },
+              {
+                "id": "fixture-old-wall-2",
+                "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%2275%5C%22%5D%22%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "fixture-old-wall-3",
+                "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "old",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-1",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-3",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-2",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "fixture-old-wall-0",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              },
+              {
+                "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                "kind": "on-edge",
+                "refs": [
+                  {
+                    "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                    "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                  }
+                ],
+                "parameters": [
+                  [
+                    "1",
+                    "2"
+                  ]
+                ]
+              }
+            ]
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -2363,6 +4560,39 @@
             }
           ],
           "wall_segments": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "p": [
+                  "l",
+                  "24",
+                  "24"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "p": [
+                  "l",
+                  "48",
+                  "24"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "remote-wall",
+                "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                "kind": "partition",
+                "cm": 20
+              }
+            ],
+            "rooms": [],
+            "dependencies": []
+          },
           "settings": {
             "name_color": {
               "c": "#55606c",
@@ -2378,7 +4608,7 @@
     },
     "candidates": [
       {
-        "model_version": 10,
+        "model_version": 11,
         "settings": {},
         "markers": [
           {
@@ -2403,6 +4633,9 @@
                 "id": "old",
                 "name": "Old",
                 "area": null,
+                "future_room": {
+                  "retain": true
+                },
                 "poly": [
                   [
                     0,
@@ -2421,18 +4654,15 @@
                     0.3125
                   ]
                 ],
-                "future_room": {
-                  "retain": true
-                },
                 "wall_ids": [
-                  "wall-8e61af84-285b-4436-a583-a074aab37642",
-                  "wall-e0db4d42-b176-4cfa-b76c-eaa2a4e36b7c",
-                  "wall-833d185b-5de2-4d34-b0c9-0b9ef3bfbc50",
-                  "wall-3241a289-48cb-4b1f-828d-33e9fc576b5f"
+                  "fixture-old-wall-1",
+                  "fixture-old-wall-3",
+                  "fixture-old-wall-2",
+                  "fixture-old-wall-0"
                 ]
               },
               {
-                "id": "rmvn6031h-0",
+                "id": "rmvz238k5-0",
                 "name": "New",
                 "area": null,
                 "poly": [
@@ -2454,17 +4684,15 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-e0db4d42-b176-4cfa-b76c-eaa2a4e36b7c",
-                  "wall-92e52d8f-45a7-4272-abbe-91db1db47670",
+                  "fixture-old-wall-3",
+                  "north",
                   "middle",
-                  "wall-cea1b91a-213e-4d50-8400-bc861d55d6f6"
+                  "south"
                 ]
               }
             ],
             "walls": [
               {
-                "key": "0.125000,0.000000@0.0000",
-                "cm": 20,
                 "a": [
                   0,
                   0
@@ -2472,11 +4700,23 @@
                 "b": [
                   0.25,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.125000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.000000@0.0000",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0.3125
+                ],
                 "cm": 20,
+                "key": "0.500000,0.158333@1.5706"
+              },
+              {
                 "a": [
                   0.25,
                   0
@@ -2484,11 +4724,11 @@
                 "b": [
                   0.5,
                   0
-                ]
+                ],
+                "cm": 20,
+                "key": "0.375000,0.000000@0.0000"
               },
               {
-                "key": "0.375000,0.312500@0.0000",
-                "cm": 20,
                 "a": [
                   0.25,
                   0.3125
@@ -2496,46 +4736,12 @@
                 "b": [
                   0.5,
                   0.3125
-                ]
-              },
-              {
-                "key": "0.500000,0.158333@1.5706",
-                "cm": 20,
-                "a": [
-                  0.5,
-                  0
                 ],
-                "b": [
-                  0.5,
-                  0.3125
-                ]
+                "cm": 20,
+                "key": "0.375000,0.312500@0.0000"
               }
             ],
             "partitions": [
-              {
-                "id": "north",
-                "a": [
-                  0.5,
-                  0
-                ],
-                "b": [
-                  0.75,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "south",
-                "a": [
-                  0.5,
-                  0.3125
-                ],
-                "b": [
-                  0.75,
-                  0.3125
-                ],
-                "cm": 20
-              },
               {
                 "id": "east",
                 "a": [
@@ -2547,26 +4753,50 @@
                   0.3125
                 ],
                 "cm": 20
+              },
+              {
+                "id": "north~1",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south~1",
+                "a": [
+                  0.5,
+                  0.3125
+                ],
+                "b": [
+                  0.75,
+                  0.3125
+                ],
+                "cm": 20
               }
             ],
             "wall_segments": [
               {
-                "id": "wall-3241a289-48cb-4b1f-828d-33e9fc576b5f",
-                "a": [
-                  0,
-                  0
-                ],
-                "b": [
-                  0,
-                  0.3125
-                ],
-                "cm": 0,
                 "future_wall": {
                   "retain": true
-                }
+                },
+                "id": "fixture-old-wall-0",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  0.3125
+                ],
+                "cm": 0
               },
               {
-                "id": "wall-8e61af84-285b-4436-a583-a074aab37642",
+                "id": "fixture-old-wall-1",
                 "a": [
                   0,
                   0
@@ -2578,7 +4808,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-833d185b-5de2-4d34-b0c9-0b9ef3bfbc50",
+                "id": "fixture-old-wall-2",
                 "a": [
                   0,
                   0.3125
@@ -2590,7 +4820,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-e0db4d42-b176-4cfa-b76c-eaa2a4e36b7c",
+                "id": "fixture-old-wall-3",
                 "a": [
                   0.25,
                   0
@@ -2600,36 +4830,36 @@
                   0.3125
                 ],
                 "cm": 0
-              },
-              {
-                "id": "wall-92e52d8f-45a7-4272-abbe-91db1db47670",
-                "a": [
-                  0.25,
-                  0
-                ],
-                "b": [
-                  0.5,
-                  0
-                ],
-                "cm": 20
-              },
-              {
-                "id": "wall-cea1b91a-213e-4d50-8400-bc861d55d6f6",
-                "a": [
-                  0.25,
-                  0.3125
-                ],
-                "b": [
-                  0.5,
-                  0.3125
-                ],
-                "cm": 20
               },
               {
                 "id": "middle",
                 "a": [
                   0.5,
                   0
+                ],
+                "b": [
+                  0.5,
+                  0.3125
+                ],
+                "cm": 20
+              },
+              {
+                "id": "north",
+                "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "a": [
+                  0.25,
+                  0.3125
                 ],
                 "b": [
                   0.5,
@@ -2648,14 +4878,250 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-8e61af84-285b-4436-a583-a074aab37642",
-                  "t": 0.5
+                  "id": "fixture-old-wall-1",
+                  "t": 0.5,
+                  "tq": [
+                    "1",
+                    "2"
+                  ]
                 },
                 "future_opening": {
                   "retain": true
                 }
               }
             ],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "180",
+                    "75"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "120",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "120",
+                    "75"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "60",
+                    "75"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "p": [
+                    "l",
+                    "0",
+                    "0"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%2275%5C%22%5D%22%5D",
+                  "p": [
+                    "l",
+                    "0",
+                    "75"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "east",
+                  "from": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "north~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "south~1",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-0",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%2275%5C%22%5D%22%5D",
+                  "kind": "wall",
+                  "cm": 0,
+                  "props": {
+                    "future_wall": {
+                      "retain": true
+                    }
+                  }
+                },
+                {
+                  "id": "fixture-old-wall-1",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "fixture-old-wall-2",
+                  "from": "n:%5B%22room%22%2C%22old%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%2275%5C%22%5D%22%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "fixture-old-wall-3",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 0
+                },
+                {
+                  "id": "middle",
+                  "from": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "north",
+                  "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "wall",
+                  "cm": 20
+                },
+                {
+                  "id": "south",
+                  "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "wall",
+                  "cm": 20
+                }
+              ],
+              "rooms": [
+                {
+                  "room": "old",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-1",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-2",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-0",
+                      "reverse": true
+                    }
+                  ]
+                },
+                {
+                  "room": "rmvz238k5-0",
+                  "edges": [
+                    {
+                      "kind": "wall",
+                      "id": "fixture-old-wall-3",
+                      "reverse": true
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "north",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "middle",
+                      "reverse": false
+                    },
+                    {
+                      "kind": "wall",
+                      "id": "south",
+                      "reverse": true
+                    }
+                  ]
+                }
+              ],
+              "dependencies": [
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C0%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22north%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C0%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                },
+                {
+                  "node": "n:%5B%22partition%22%2C%22middle%22%2C1%5D",
+                  "kind": "on-edge",
+                  "refs": [
+                    {
+                      "from": "n:%5B%22partition%22%2C%22south%22%2C0%5D",
+                      "to": "n:%5B%22partition%22%2C%22east%22%2C1%5D"
+                    }
+                  ],
+                  "parameters": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                }
+              ]
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",
@@ -2693,6 +5159,39 @@
               }
             ],
             "wall_segments": [],
+            "walls": [],
+            "plan_graph": {
+              "version": 1,
+              "nodes": [
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "p": [
+                    "l",
+                    "24",
+                    "24"
+                  ]
+                },
+                {
+                  "id": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "p": [
+                    "l",
+                    "48",
+                    "24"
+                  ]
+                }
+              ],
+              "edges": [
+                {
+                  "id": "remote-wall",
+                  "from": "n:%5B%22partition%22%2C%22remote-wall%22%2C0%5D",
+                  "to": "n:%5B%22partition%22%2C%22remote-wall%22%2C1%5D",
+                  "kind": "partition",
+                  "cm": 20
+                }
+              ],
+              "rooms": [],
+              "dependencies": []
+            },
             "settings": {
               "name_color": {
                 "c": "#55606c",

@@ -180,7 +180,7 @@ export function partitionPlacementIntervals(
     if (!finitePoint(partition.a) || !finitePoint(partition.b)
         || Math.hypot(partition.b[0] - partition.a[0], partition.b[1] - partition.a[1]) <= 1e-9)
       return [];
-    return [{
+    return [copyGraphOpeningRun(partition, {
       roomId: '',
       a: [partition.a[0], partition.a[1]],
       b: [partition.b[0], partition.b[1]],
@@ -190,7 +190,7 @@ export function partitionPlacementIntervals(
       open: false,
       half: wallCmToUnits(partition.cm, cellCm, gridPitch) / 2,
       partitionHost: { kind: 'partition' as const, id: partition.id },
-    }];
+    })];
   });
 }
 

@@ -1,10 +1,13 @@
-import {commitWallSegmentModel} from '../../test-build/wall-segment-model.js';
+import {commitWallSegmentModel,decodeLegacyWallSegmentModel} from '../../test-build/wall-segment-model.js';
 import {wallKey} from '../../test-build/wall-thickness.js';
+import {legacyGraphWriteChange} from '../../test-build/graph-write-change.js';
+import {projectGraphSpace} from '../../test-build/plan-graph.js';
+import {compareCodePoints} from '../../test-build/codepoint-order.js';
 import {normalizeRoomAppearance} from '../../test-build/room-appearance.js';
 
 export const inheritedY=0.312345678;
 export function roomSource(height=inheritedY){
-  const config=commitWallSegmentModel({model_version:10,settings:{},
+  const config=decodeLegacyWallSegmentModel({model_version:10,settings:{},
     markers:[{id:'unrelated',binding:'virtual',is_light:true}],spaces:[{
     id:'floor',title:'Synthetic',view_box:[0,0,1,1],cell_cm:5,rooms:[{id:'old',name:'Old',area:null,
       poly:[[0,0],[0.25,0],[0.25,height],[0,height]]}],
@@ -18,6 +21,12 @@ export function roomSource(height=inheritedY){
   },{id:'remote',title:'Other floor',view_box:[0,0,1,1],cell_cm:5,rooms:[],
     partitions:[{id:'remote-wall',a:[0.1,0.1],b:[0.2,0.1],cm:20}]}]}).config;
   const space=config.spaces[0];
+  // Allocate fixture identities once while this is still the raw legacy input.
+  // The decoder emits UUIDs; current graph sorting must not randomize which
+  // semantic source edge gets an ordinal in the later receipt bijection.
+  const legacyIds=new Map(space.wall_segments.map((edge,index)=>[edge.id,`fixture-old-wall-${index}`]));
+  for(const edge of space.wall_segments)edge.id=legacyIds.get(edge.id);
+  for(const room of space.rooms)room.wall_ids=room.wall_ids.map(id=>legacyIds.get(id));
   space.rooms[0].future_room={retain:true};
   space.wall_segments[0].future_wall={retain:true};
   space.openings=[{id:'old-window',type:'window',x:0.125,y:0,angle:0,length:0.05,
@@ -44,6 +53,13 @@ export function stableRoomReceiptIds(records,{preserveSourceIdentities=false}={}
     for(const wall of space.wall_segments||[])wall.id=ref(wall.id);
     for(const room of space.rooms||[])if(room.wall_ids)room.wall_ids=room.wall_ids.map(ref);
     for(const opening of space.openings||[])if(opening.host?.kind==='wall')opening.host.id=ref(opening.host.id);
+    // This is an identity-only bijection of real producer output. The current
+    // graph owns carrier identities; projections alone cannot be renamed.
+    if(space.plan_graph){
+      for(const edge of space.plan_graph.edges)if(edge.kind==='wall')edge.id=ref(edge.id);
+      for(const room of space.plan_graph.rooms)for(const edge of room.edges)
+        if(edge.kind==='wall')edge.id=ref(edge.id);
+    }
   }
   for(const row of result){
     const inherited=new Set(row.source.spaces.flatMap(space=>(space.rooms||[]).map(room=>room.id)));
@@ -51,8 +67,23 @@ export function stableRoomReceiptIds(records,{preserveSourceIdentities=false}={}
     for(const config of [row.source,...row.candidates])for(const space of config.spaces)
       for(const room of space.rooms||[])if(!inherited.has(room.id)){
         if(!created.has(room.id))created.set(room.id,`created-room-${created.size}`);
-        room.id=created.get(room.id);
+        const previous=room.id;room.id=created.get(previous);
+        const cycle=space.plan_graph?.rooms.find(cycle=>cycle.room===previous);
+        if(cycle)cycle.room=room.id;
       }
+  }
+  // Node identities and support-node dependencies were not renamed. Preserve
+  // them verbatim; reorder only the renamed canonical collections, then derive
+  // their existing projections from the same graph, never from room polygons.
+  for(const row of result)for(const config of configs(row))for(let i=0;i<config.spaces.length;i++){
+    const space=config.spaces[i],graph=space.plan_graph;if(!graph)continue;
+    graph.edges.sort((a,b)=>compareCodePoints(a.kind+':'+a.id,b.kind+':'+b.id));
+    graph.rooms.sort((a,b)=>compareCodePoints(a.room,b.room));
+    config.spaces[i]=projectGraphSpace(space,graph).space;
+  }
+  for(const row of result)if(row.optimize&&row.original){
+    const change=legacyGraphWriteChange(row.original,row.source);
+    if(change)row.graph_change=change;
   }
   return result;
 }

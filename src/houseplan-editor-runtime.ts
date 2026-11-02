@@ -1,6 +1,9 @@
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
-import { commitGraphEdit, type GraphEditIntent } from './graph-edit-intent';
-import { projectGraphSpace, validateGraph, type PlanGraph } from './plan-graph';
+import { commitGraphEdit, commitGraphEditResult, type GraphEditIntent, type GraphEditResult } from './graph-edit-intent';
+import { projectGraphSpace, validateGraph, type PlanGraph, type TargetPointRef } from './plan-graph';
+import { graphDrawTargetRef } from './graph-draw-binding';
+import { decodePoint, pointToNumbers, microRadius, toNumber } from './plan-exact';
+import { graphOpeningRun, graphOpeningRunTarget } from './graph-opening-run';
 import { sendHouseplanWrite } from './large-write-transport';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
@@ -105,7 +108,7 @@ import {
   prepareResizeAtomContext, type ResizeAtomContext,
 } from './resize-atom-projection';
 import {
-  commitWallChainFinishGeometry, commitWallChainSegmentGeometry,
+  commitWallChainFinishGeometry,
 } from './draft-live-commit';
 import { wallChainLiveSeed } from './draft-live-preflight';
 import {
@@ -200,7 +203,7 @@ import { removeMarkerAreaSnapshots } from './device-area-relocation';
 import { RoomDeviceDiscovery, type CreatedAreaRoom } from './room-device-discovery';
 import { type VirtualLightSnapshot } from './virtual-light-state';
 import type {
-  OpeningCfg, PartitionOpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
+  OpeningCfg, OpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
   Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
   ValueBadgeSource,
 } from './types';
@@ -724,7 +727,7 @@ export interface HouseplanEditorHostPort {
   _openBindingInHa: (binding: string) => void;
   _openCuts: () => number[][];
   _openingAmt: (o: OpeningCfg) => number;
-  _openingDialog: { id?: string; type: "door" | "window" | "gate" | "passage"; lengthCm: number; lengthTouched?: boolean; contact: string; lock: string; contactOpen?: boolean; contactFilter?: string; lockOpen?: boolean; lockFilter?: string; invert: boolean; flipH: boolean; flipV: boolean; host?: PartitionOpeningHost; x: number; y: number; angle: number; } | null;
+  _openingDialog: { id?: string; type: "door" | "window" | "gate" | "passage"; lengthCm: number; lengthTouched?: boolean; contact: string; lock: string; contactOpen?: boolean; contactFilter?: string; lockOpen?: boolean; lockFilter?: string; invert: boolean; flipH: boolean; flipV: boolean; host?: OpeningHost; x: number; y: number; angle: number; } | null;
   _openingDimensionContextCache: { key: string; value: OpeningDimensionContext; } | null;
   _openingEntityAvailable: (eid: string | null | undefined) => boolean;
   _openingFace: (opening: RenderOpening, index: OpeningWallIndex, flipV: boolean) => OpeningFaceOffset;
@@ -965,6 +968,10 @@ export class HouseplanEditorRuntime {
   private _gestureBoundary = false;
   /** The same winning #885 endpoint as the cursor/commit, never a second snap query. */
   private _wallEndGuide: AlignGuide | null = null;
+  private _lastGraphEditResult: GraphEditResult<any> | null = null;
+  private _chainStartTarget?: TargetPointRef;
+  private readonly _drawEdgeNodes = new Map<string, { from: string; to: string }>();
+  private _legacyDrawBaseline: { source: string; result: ReturnType<typeof commitWallSegmentModel<ServerConfig>> } | null = null;
   private readonly physicalWriteHistory = new PhysicalWriteHistory();
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
@@ -1703,6 +1710,26 @@ public _planSnapContextKey(geometryKey: string): string {
     ].join('|');
   }
 
+/** Bind the winning visible snap to a named exact target once per click. */
+private _drawTarget(candidate: PlanSnapCandidate | null): TargetPointRef | undefined {
+    const config = this.host._serverCfg, space = this.host._curSpaceCfg;
+    if (!config || !space || !candidate) return undefined;
+    if (space.plan_graph) return graphDrawTargetRef(space.plan_graph, candidate);
+    // The first geometric write owns migration. This ephemeral baseline only
+    // supplies the same stable IDs to the gesture; it is neither adopted nor saved.
+    const source = JSON.stringify(config);
+    if (this._legacyDrawBaseline?.source !== source)
+      this._legacyDrawBaseline = { source, result: commitWallSegmentModel(config) };
+    const normalized = this._legacyDrawBaseline.result.config.spaces.find(s => s.id === space.id);
+    if (!normalized?.plan_graph) return undefined;
+    const geometry = buildPlanSnapGeometry({ space: { rooms: [], partitions: [], plan_graph: normalized.plan_graph }, epsilon: 0 });
+    const tolerance = toNumber(microRadius(this.host._cellCm)) * NORM_W
+      + Number.EPSILON * 64 * Math.max(1, ...candidate.point.map(Math.abs));
+    const resolved = resolvePlanSnapResult(geometry, candidate.point,
+      { tolerance, gridStep: 0, epsilon: 0 });
+    return resolved.kind === 'resolved' ? graphDrawTargetRef(normalized.plan_graph, resolved.candidate) : undefined;
+  }
+
 public _resolvePlanDrawPoint(
     raw: number[], lock45: boolean,
   ): {
@@ -2194,6 +2221,7 @@ public _commitPhysicalGeometry(
     recordHistory = true,
     intent: StructuralEditIntent = { kind: 'metadata' },
   ): boolean {
+    this._lastGraphEditResult = null;
     if (!before || !this.host._serverCfg) return false;
     const liveCandidate = this.host._serverCfg;
     // The public guard already selects one space internally.  Give it the
@@ -2204,6 +2232,7 @@ public _commitPhysicalGeometry(
         === spacePhysicalGeometryFingerprint(liveSpace)) return false;
     let committedCandidate: ServerConfig;
     let historyBefore = before;
+    let graphEdit: GraphEditResult<any> | null = null;
     let candidateProof: PhysicalCandidateProof | null = null;
     const resizeProof = this._resizePhysicalProof;
     this._resizePhysicalProof = null;
@@ -2214,7 +2243,8 @@ public _commitPhysicalGeometry(
       if (!this._restoreGeometryStateInConfig(baselineSource, before))
         throw new WallSegmentModelError('invalid-room', before.spaceId);
       const legacy = Number(baselineSource.model_version || 0) < WALL_SEGMENT_MODEL_VERSION;
-      const migration = legacy ? commitWallSegmentModel(baselineSource) : null;
+      const migration = legacy ? (this._legacyDrawBaseline?.source === JSON.stringify(baselineSource)
+        ? this._legacyDrawBaseline.result : commitWallSegmentModel(baselineSource)) : null;
       const baseline = migration?.config || baselineSource;
       const baseSpace = baseline.spaces.find(space => space.id === before.spaceId)!;
       if (legacy) {
@@ -2227,9 +2257,12 @@ public _commitPhysicalGeometry(
         if (JSON.stringify(baseSpace.plan_graph) !== JSON.stringify(intent.base)
             || !validateGraph(liveSpace.plan_graph).ok) throw new Error('stale-graph-preview');
         editedSpace = projectGraphSpace(liveSpace, liveSpace.plan_graph!).space;
-      } else editedSpace = commitGraphEdit(baseSpace, liveSpace, intent,
-        legacy ? { ...baselineSource.spaces.find(space => space.id === before.spaceId),
-          graphMapping: migration?.graphMappings?.get(before.spaceId) } : undefined);
+      } else {
+        graphEdit = commitGraphEditResult(baseSpace, liveSpace, intent,
+          legacy ? { ...baselineSource.spaces.find(space => space.id === before.spaceId),
+            graphMapping: migration?.graphMappings?.get(before.spaceId) } : undefined);
+        editedSpace = graphEdit.space;
+      }
       committedCandidate = { ...baseline, ...liveCandidate, model_version: WALL_SEGMENT_MODEL_VERSION,
         spaces: baseline.spaces.map(space => space.id === before.spaceId ? editedSpace : space) };
       candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,
@@ -2256,6 +2289,8 @@ public _commitPhysicalGeometry(
       return false;
     }
     adoptEditedSpaceModelInPlace(liveCandidate, committedCandidate, before.spaceId);
+    this._lastGraphEditResult = graphEdit;
+    this._legacyDrawBaseline = null;
     if (recordHistory) this._recordGeometry(name, historyBefore);
     const afterSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
     const pending = this.host._pendingPhysicalWrites.get(before.spaceId);
@@ -2676,6 +2711,8 @@ public _markupClick(ev: MouseEvent): void {
     // overlaps are still rejected, but only at closing time, when the whole
     // outline is known (roomsOverlap treats full nesting as legal).
     if (!this.host._path.length) {
+      this._drawEdgeNodes.clear();
+      this._chainStartTarget = this._drawTarget(resolved.candidate);
       this.host._activeWallChainId = `chain-${Date.now().toString(36)}`;
       this.host._activeWallChainPartitionIds = [];
       this.host._wallChainSegmentCms = [];
@@ -2694,6 +2731,14 @@ public _markupClick(ev: MouseEvent): void {
     const beforeChainId = this.host._activeWallChainId;
     const beforeIds = [...this.host._activeWallChainPartitionIds];
     const beforeCms = [...this.host._wallChainSegmentCms];
+    const graph = this.host._curSpaceCfg?.plan_graph;
+    const previous = this._drawEdgeNodes.get(beforeIds[beforeIds.length - 1]);
+    const first = this._drawEdgeNodes.get(beforeIds[0]);
+    const from: TargetPointRef | undefined = previous && graph?.nodes.some(n => n.id === previous.to)
+      ? { kind: 'existing-node', node: previous.to } : this._chainStartTarget;
+    const closes = beforePath.length >= 3 && this._samePt(pt, beforePath[0]);
+    const target: TargetPointRef | undefined = closes && first && graph?.nodes.some(n => n.id === first.from)
+      ? { kind: 'existing-node', node: first.from } : this._drawTarget(resolved.candidate);
     const beforeGraphSources = this._wallGraphSources([]);
     const before = this._geometrySnapshot();
     if (before) before.wallChainSeedIds = [...beforeIds];
@@ -2709,12 +2754,27 @@ public _markupClick(ev: MouseEvent): void {
     this.host._wallChainSegmentCms = [...this.host._wallChainSegmentCms, cm];
     this.host._activeWallChainPartitionIds = [...beforeIds, id];
     this.host._wallChainRedo = [];
-    if (!commitWallChainSegmentGeometry(this, this.host._t('history.wall_segment'), before)) {
+    if (!this._commitPhysicalGeometry(this.host._t('history.wall_segment'), before, [], true,
+      { kind: 'partitions', ids: [id], endpointRefs: { [id]: [from, target] } })) {
       this.host._activeWallChainId = beforeChainId;
       this.host._activeWallChainPartitionIds = beforeIds;
       this.host._path = beforePath;
       this.host._wallChainSegmentCms = beforeCms;
       return;
+    }
+    const created = this._lastGraphEditResult?.operations.find(op => op.kind === 'create-edge'
+      && op.edge.kind === 'partition' && op.edge.id === id);
+    if (created?.kind === 'create-edge') {
+      const { from, to } = created.edge;
+      this._drawEdgeNodes.set(id, { from, to });
+      const nodes = this.host._curSpaceCfg?.plan_graph?.nodes || [];
+      const point = (node: string) => {
+        const found = nodes.find(n => n.id === node);
+        return found ? pointToNumbers(decodePoint(found.p)).map(v => v * NORM_W) : undefined;
+      };
+      const a = point(from), b = point(to);
+      if (a) this.host._path[this.host._path.length - 2] = a;
+      if (b) this.host._path[this.host._path.length - 1] = b;
     }
     this._offerWallFaces(beforePath, beforePath.length - 1, beforeGraphSources);
   }
@@ -6216,6 +6276,38 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
     }
     const cfg = drag.preview;
     if (!cfg) return;
+    if (space.plan_graph && cfg.host) {
+      const carriers = cfg.host.kind === 'partition' ? space.partitions : space.wall_segments;
+      const anchor = carriers.find(item => item.id === cfg.host!.id);
+      const run = graphOpeningRun(anchor);
+      if (!anchor || !run) return;
+      const dx = run.b[0] - run.a[0], dy = run.b[1] - run.a[1], length = Math.hypot(dx, dy);
+      if (!(length > 0)) return;
+      const ux = dx / length, uy = dy / length;
+      if (Math.abs((raw[0] - run.a[0]) * uy - (raw[1] - run.a[1]) * ux) > this.host._gridPitch * 4) return;
+      const jamb = cfg.host.kind === 'partition'
+        ? partitionOpeningJambMargin(anchor, this.host._cellCm, this.host._gridPitch) : 0;
+      const shoulder = cfg.length * NORM_W / 2 + jamb;
+      if (length < shoulder * 2 - 1e-9) return;
+      let along = (raw[0] - run.a[0]) * ux + (raw[1] - run.a[1]) * uy;
+      along = Math.max(shoulder, Math.min(length - shoulder,
+        Math.round(along / this.host._gridPitch) * this.host._gridPitch));
+      const target = graphOpeningRunTarget(carriers, cfg.host.id,
+        [run.a[0] + ux * along, run.a[1] + uy * along]);
+      if (!target) return;
+      let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (angle >= 90) angle -= 180;
+      else if (angle < -90) angle += 180;
+      const changed = cfg.x !== target.normalized[0] || cfg.y !== target.normalized[1]
+        || cfg.angle !== angle || cfg.host.id !== target.host.id || cfg.host.t !== target.host.t;
+      drag.moved = true;
+      if (changed) drag.dirty = true;
+      cfg.host = target.host;
+      cfg.x = target.normalized[0]; cfg.y = target.normalized[1]; cfg.angle = angle;
+      this.host._opMeasure = null;
+      this.host.requestUpdate();
+      return;
+    }
     if (cfg.host?.kind === 'partition') {
       const partition = space.partitions.find((item) => item.id === cfg.host!.id);
       if (!partition) return;

@@ -268,27 +268,27 @@
     "spaces": [
       {
         "id": "floor",
-        "cell_cm": 5,
+        "cell_cm": 5.0,
         "rooms": [
           {
             "id": "living",
             "name": "Living",
             "poly": [
               [
-                0,
-                0
+                0.0,
+                0.0
               ],
               [
-                1,
-                0
+                1.0,
+                0.0
               ],
               [
-                1,
-                1
+                1.0,
+                1.0
               ],
               [
-                0,
-                1
+                0.0,
+                1.0
               ]
             ],
             "wall_ids": [
@@ -301,61 +301,168 @@
         ],
         "title": "Synthetic floor",
         "view_box": [
-          0,
-          0,
-          1,
-          1
+          0.0,
+          0.0,
+          1.0,
+          1.0
         ],
         "wall_segments": [
           {
             "id": "wall-2sujcn3ixs6tputfq6un",
             "a": [
-              0,
-              0
+              0.0,
+              0.0
             ],
             "b": [
-              0,
-              1
+              0.0,
+              1.0
             ],
-            "cm": 0
-          },
-          {
-            "id": "wall-p3txrynm27gmffl2dvhp",
-            "a": [
-              0,
-              0
-            ],
-            "b": [
-              1,
-              0
-            ],
-            "cm": 0
-          },
-          {
-            "id": "wall-lc4vrimzgn4kykayxohm",
-            "a": [
-              0,
-              1
-            ],
-            "b": [
-              1,
-              1
-            ],
-            "cm": 0
+            "cm": 0.0
           },
           {
             "id": "wall-7qxe35vnftril2w6gxrs",
             "a": [
-              1,
-              0
+              1.0,
+              0.0
             ],
             "b": [
-              1,
-              1
+              1.0,
+              1.0
             ],
-            "cm": 0
+            "cm": 0.0
+          },
+          {
+            "id": "wall-lc4vrimzgn4kykayxohm",
+            "a": [
+              0.0,
+              1.0
+            ],
+            "b": [
+              1.0,
+              1.0
+            ],
+            "cm": 0.0
+          },
+          {
+            "id": "wall-p3txrynm27gmffl2dvhp",
+            "a": [
+              0.0,
+              0.0
+            ],
+            "b": [
+              1.0,
+              0.0
+            ],
+            "cm": 0.0
           }
-        ]
+        ],
+        "settings": {
+          "name_color": {
+            "c": "#55606c",
+            "a": 0.8
+          },
+          "wall_fill": {
+            "c": "#ffffff",
+            "a": 1.0
+          }
+        },
+        "plan_graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "0",
+                "0"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "0",
+                "240"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "240",
+                "0"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "240",
+                "240"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "id": "wall-2sujcn3ixs6tputfq6un",
+              "kind": "wall",
+              "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "cm": 0.0
+            },
+            {
+              "id": "wall-7qxe35vnftril2w6gxrs",
+              "kind": "wall",
+              "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "cm": 0.0
+            },
+            {
+              "id": "wall-lc4vrimzgn4kykayxohm",
+              "kind": "wall",
+              "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "cm": 0.0
+            },
+            {
+              "id": "wall-p3txrynm27gmffl2dvhp",
+              "kind": "wall",
+              "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "cm": 0.0
+            }
+          ],
+          "rooms": [
+            {
+              "room": "living",
+              "edges": [
+                {
+                  "kind": "wall",
+                  "id": "wall-p3txrynm27gmffl2dvhp",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-7qxe35vnftril2w6gxrs",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-lc4vrimzgn4kykayxohm",
+                  "reverse": true
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-2sujcn3ixs6tputfq6un",
+                  "reverse": true
+                }
+              ]
+            }
+          ],
+          "dependencies": []
+        },
+        "partitions": [],
+        "walls": []
       }
     ],
     "markers": [
@@ -398,12 +505,12 @@
               "map_id": "66",
               "space": "deleted-floor",
               "calibration": [
-                1,
-                0,
-                0,
-                1,
-                3,
-                4
+                1.0,
+                0.0,
+                0.0,
+                1.0,
+                3.0,
+                4.0
               ]
             }
           ]
@@ -413,7 +520,7 @@
     "settings": {
       "bg_mode": "static"
     },
-    "model_version": 10
+    "model_version": 11
   },
   "layout": {
     "radar": {
@@ -423,7 +530,7 @@
     }
   },
   "zip": "UEsDBBQAAAAIAAAAIQC4hTM+dgMAANQHAAANAAAAZG9jdW1lbnQuanNvbuVVUW7rNhC8SsBv2ZBkWbaFh3eC/rVfDQKBolY2nylSISnHquG7d0jZcdImvUCDBKHI5e7s7szywjpje+5ZxQ5mdDQorhd0Hoz1LGHzoj6RddJoVuUJO0rdwrgblYKBsMQ9tXV0kKd5ucjSRZ7+kZZVjt/NskizdbH7E6bOjFZQ3Um9JztYqUNMd+D5uqy6MicSu1IUxWon8lTsCtFm1O22uyxLebHadtl23WZNummKTYmTomjSbZpSKzbtlgck3LYPoMyTCwkgCu0t90D/4TBbbvNlumjI8+UKVr1pST3OszRhA5+U4cj0woTRndyHlRu4IMeq5wuTsQjKGBtik1K16Fm1XuKqNab/YKTkCSnDSvOekPJv9+/BqAm+nlNcwt9L8px9WuELe+E0rF4S9sYRRrbBd1wvhpU/20n3+Wbfd53K29NhQKBgt9i8nmm1PunOW6nyt3J/tu5+pkRxsrL/a6+L43Tk09kc+vtZ7sZfQq/k2ZV+GH33Wo6avVwR3kuvQgK/T9ofyEvx1N3yP0l6qxtzBrBbMgFyhH1D7Wjfk/YfyhJBfhksYfzhCHGb21esBwtlRpBrcutB9PNNIf7tJ8CKtf7azzeFufuZEQQ8j/S+xPNN8YOfB4Kv/cRS99weoTmY37K0vOWBaQ3UF9hUsZZOUlDl7s3A4WwEnr7rNYOENW8Uga3ejgReW9PJ2MbBkiMNRZ6ycBekBbeiY0WQNPZmxQLFhRkhxoFrMdXoovTgbYDC7VTDhzN2GfV2DVIag7ABWzsPHs7Si45vkgRL0uU6YfAR/x+Ih5TqlpAW+golK9nMmg2OevIHE4Bp42tLr6O0EV0vrYX6qo4rh8QeGoSLbvSjpdrJRsVqXdiRaAjVT/KXKwxuWnxQ+Yfs908t93xhSRgUcFpI/YtEmBw/n87/sx80/8TFOEJrF4YBBtnP9On5UFszopUPbmLvnSxok8CYs3z5kZjhVqRAWQbLMEUfRFvcp8invqNTUGqSJaukgCSuYQA58h7tjIRs9nWY2nADmmEWsdBVxSdgC5jfpRDZtrqxrYAP3JgDXsMNPHeCwmSqe65lFx6NoLnZ0Yz5Lr0Ie966IzZvmsBANssVqcWNz9f+U7GKN6RYpfGY4q3CQzOvQ7L48P/AhV1vuXZdCHphrTXDgLd3jl6D6Udkl16vfwNQSwMEFAAAAAgAAAAhAKOSkJywAAAA4wAAAA0AAABtYW5pZmVzdC5qc29uNY7BDoMgEET/Zc+0USoo/krTw4JLtUUwIk2M8d+7PfS0k8nMvD3Ap3XGDXoYU8m0BIwXX0K4WHTvsoCAD615ShH6WoBL8xJoI+i3tZCAIbkyU+T6AXzWnXf+3vWVuSXA7htl6GVVNQLyiFJpTqG0ZlCSvKcGa7TedoS1Nq0zN10539bUDRIdKa2azjhstR46a6RSVdtICSePRVzymJge+WMB04zPH+r+YGpIluVxnl9QSwECFAMUAAAACAAAACEAuIUzPnYDAADUBwAADQAAAAAAAAAAAAAAgIEAAAAAZG9jdW1lbnQuanNvblBLAQIUAxQAAAAIAAAAIQCjkpCcsAAAAOMAAAANAAAAAAAAAAAAAACAgaEDAABtYW5pZmVzdC5qc29uUEsFBgAAAAACAAIAdgAAAHwEAAAAAA==",
-  "exportZip": "UEsDBBQAAAAIAAAAIQBgmnmkzwMAAAkLAAANAAAAZG9jdW1lbnQuanNvbu1W0W7rNgz9lULPSWA7rpMGw75gb9vTisKQZTrRjSy5spwmC/LvO5Ttm/au3fvFVrSoLVHkIXkO5atonG9lEDtxcENPnZF2SefO+SAWYnwoT+R77azYZQtx1LaGcTMYAwPlSQaqy+ggS7JimSbLLPkjKXYZfjerPMnXSfInTHs3eEVlo+2efOe15Zj9QWaPxa4pMiL1VKg8Xz+pLFFPuapTap62T2mayHy9bdLtY51WyabKNwV28rxKtklCtdrUW8lIpK/vQEWgnhNAFNp7GYD+3Wa62marZFlRkKs1rFpXk7nvp8lCdPJinESmV6GcbfSen/pOKurF7vkqdCyCcc5zbDKmVK3YPa5w1DvXvjMy+oSUYWVlS0j5t/m9c+YCX88JDuHvZfGcfnjCG9Z4l59eFuJNIoyu2Xd8XnbrcPYX22abfds0JqtPhw6B2G65eT3T+vFkm+C1yd6K/dn3855R+cnr9q+9zY+Xo7yc3aGd97J++KbsWp/7InRDaF6LwYqXG8IHHQwn8PvFhgMFrR6aKf+TpreycmcAm5JhyBH2hLqnfUs2vCtLBPlpsIWQd0eIW01vsR6Cy4wgt8XUg+jni0L80w/DirX+3M8XhZn9jAgYzz29T/F8UXz2c0fwuZ9Y6lb6IzQH8ylLL2vJTKugPmbTTtR00op2/dwMbI5G4Ol3vaaQsJWVIbC1kaYnENu7Rsc+dp56spDkKeXDYC3IFT0bgqaxNkoWMK7CKTV00qpLiTbqAOIyFukvJXz0zq+i4G6spYGVDdy2DyDiqL3oeNIkaJKsHhcCPuL/A0nOqawJeaGxkLLR1ShadtRSODgGZl0oPb0O2kd0rfYe8psTu4sQLpohDJ7KXlcmlusqjkQdl3+RvdxgMInxzuVfdLt/qGWQS0/KoYKXpbbfSPHo+PXh/B/7QfNPUg0DxHYVmGDQ/cSfVnaldwN6eWcn1r6zBX1SGHRert5Tk09FDhQFW/IcvTNtOc+RD42flcJ6jeNkjf85JuENDXyBEwoBvY3srPYlz3C4BOcwmQS32MgLcHIC34URqbeeqJfDB06MwW98ApefIp5TZSutbvgKYQWOjkb8sxBjCuPSjN69WQIdxShepBkXPh77V/0aWZGBg/9J+bnaUFKNy1jsLD4+mAJ4CT90C6vBS9s33IqrqL3rOnyfjD0pMQyO6Dlf0pPI2ej9uAwOQyt+6CgeZJFdE30wTGdNpCALnWXbmUkG01fRzI4pXGT8vPaTTBwUOWYudkgSY3P83JsSx3iPN9NHUv+EmYEmnlqpbbwdEqj/b1BLAwQUAAAACAAAACEA/DqQlrEAAADjAAAADQAAAG1hbmlmZXN0Lmpzb241jkGOwyAMRe/iNa2AFAi5StWFIc6kMwSiECpVUe5edzErW9Z///mAqWwL7jDAXFqlNWG+TC2lS8D411YQ8KKtPkuGQQmIZVkT7QTDvjUSMJbYFsqMH8Bje3PP/+36W5kSEN47VRh0r42AOqM2llOSuo6iwmCkv9FEpldSyl6N3imvfee98x0jlrzVqCcXiQy66NCH0SoLJ5dlXOtc2J75YwHPBX++qvuDrakEXo/z/ABQSwECFAMUAAAACAAAACEAYJp5pM8DAAAJCwAADQAAAAAAAAAAAAAAgIEAAAAAZG9jdW1lbnQuanNvblBLAQIUAxQAAAAIAAAAIQD8OpCWsQAAAOMAAAANAAAAAAAAAAAAAACAgfoDAABtYW5pZmVzdC5qc29uUEsFBgAAAAACAAIAdgAAANYEAAAAAA==",
+  "exportZip": "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",
   "archive": {
     "complete": true,
     "images": 0,
@@ -436,37 +543,37 @@
       "format": "houseplan-export",
       "export_version": 2,
       "kind": "full",
-      "created_at": "2026-10-20T06:26:27.404300Z",
+      "created_at": "2026-11-02T09:29:44.859563Z",
       "source_fingerprint": "sha256:f62eec96c4439c20c94cd1ef989110a438f185d1b07b4761ef44b0800edc7d8a",
       "card_version": "test",
-      "integration_version": "1.82.0-beta.3",
-      "model_version": 10,
+      "integration_version": "1.84.0-beta.2",
+      "model_version": 11,
       "payload": {
         "config": {
           "spaces": [
             {
               "id": "floor",
-              "cell_cm": 5,
+              "cell_cm": 5.0,
               "rooms": [
                 {
                   "id": "living",
                   "name": "Living",
                   "poly": [
                     [
-                      0,
-                      0
+                      0.0,
+                      0.0
                     ],
                     [
-                      1,
-                      0
+                      1.0,
+                      0.0
                     ],
                     [
-                      1,
-                      1
+                      1.0,
+                      1.0
                     ],
                     [
-                      0,
-                      1
+                      0.0,
+                      1.0
                     ]
                   ],
                   "wall_ids": [
@@ -479,61 +586,168 @@
               ],
               "title": "Synthetic floor",
               "view_box": [
-                0,
-                0,
-                1,
-                1
+                0.0,
+                0.0,
+                1.0,
+                1.0
               ],
               "wall_segments": [
                 {
                   "id": "wall-2sujcn3ixs6tputfq6un",
                   "a": [
-                    0,
-                    0
+                    0.0,
+                    0.0
                   ],
                   "b": [
-                    0,
-                    1
+                    0.0,
+                    1.0
                   ],
-                  "cm": 0
-                },
-                {
-                  "id": "wall-p3txrynm27gmffl2dvhp",
-                  "a": [
-                    0,
-                    0
-                  ],
-                  "b": [
-                    1,
-                    0
-                  ],
-                  "cm": 0
-                },
-                {
-                  "id": "wall-lc4vrimzgn4kykayxohm",
-                  "a": [
-                    0,
-                    1
-                  ],
-                  "b": [
-                    1,
-                    1
-                  ],
-                  "cm": 0
+                  "cm": 0.0
                 },
                 {
                   "id": "wall-7qxe35vnftril2w6gxrs",
                   "a": [
-                    1,
-                    0
+                    1.0,
+                    0.0
                   ],
                   "b": [
-                    1,
-                    1
+                    1.0,
+                    1.0
                   ],
-                  "cm": 0
+                  "cm": 0.0
+                },
+                {
+                  "id": "wall-lc4vrimzgn4kykayxohm",
+                  "a": [
+                    0.0,
+                    1.0
+                  ],
+                  "b": [
+                    1.0,
+                    1.0
+                  ],
+                  "cm": 0.0
+                },
+                {
+                  "id": "wall-p3txrynm27gmffl2dvhp",
+                  "a": [
+                    0.0,
+                    0.0
+                  ],
+                  "b": [
+                    1.0,
+                    0.0
+                  ],
+                  "cm": 0.0
                 }
-              ]
+              ],
+              "settings": {
+                "name_color": {
+                  "c": "#55606c",
+                  "a": 0.8
+                },
+                "wall_fill": {
+                  "c": "#ffffff",
+                  "a": 1.0
+                }
+              },
+              "plan_graph": {
+                "version": 1,
+                "nodes": [
+                  {
+                    "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                    "p": [
+                      "l",
+                      "0",
+                      "0"
+                    ]
+                  },
+                  {
+                    "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+                    "p": [
+                      "l",
+                      "0",
+                      "240"
+                    ]
+                  },
+                  {
+                    "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                    "p": [
+                      "l",
+                      "240",
+                      "0"
+                    ]
+                  },
+                  {
+                    "id": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+                    "p": [
+                      "l",
+                      "240",
+                      "240"
+                    ]
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "wall-2sujcn3ixs6tputfq6un",
+                    "kind": "wall",
+                    "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                    "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+                    "cm": 0.0
+                  },
+                  {
+                    "id": "wall-7qxe35vnftril2w6gxrs",
+                    "kind": "wall",
+                    "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                    "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+                    "cm": 0.0
+                  },
+                  {
+                    "id": "wall-lc4vrimzgn4kykayxohm",
+                    "kind": "wall",
+                    "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+                    "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+                    "cm": 0.0
+                  },
+                  {
+                    "id": "wall-p3txrynm27gmffl2dvhp",
+                    "kind": "wall",
+                    "from": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                    "to": "n:%5B%22room%22%2C%22living%22%2C%22%5B%5C%22l%5C%22%2C%5C%22240%5C%22%2C%5C%220%5C%22%5D%22%5D",
+                    "cm": 0.0
+                  }
+                ],
+                "rooms": [
+                  {
+                    "room": "living",
+                    "edges": [
+                      {
+                        "kind": "wall",
+                        "id": "wall-p3txrynm27gmffl2dvhp",
+                        "reverse": false
+                      },
+                      {
+                        "kind": "wall",
+                        "id": "wall-7qxe35vnftril2w6gxrs",
+                        "reverse": false
+                      },
+                      {
+                        "kind": "wall",
+                        "id": "wall-lc4vrimzgn4kykayxohm",
+                        "reverse": true
+                      },
+                      {
+                        "kind": "wall",
+                        "id": "wall-2sujcn3ixs6tputfq6un",
+                        "reverse": true
+                      }
+                    ]
+                  }
+                ],
+                "dependencies": []
+              },
+              "partitions": [],
+              "walls": []
             }
           ],
           "markers": [
@@ -576,12 +790,12 @@
                     "map_id": "66",
                     "space": "deleted-floor",
                     "calibration": [
-                      1,
-                      0,
-                      0,
-                      1,
-                      3,
-                      4
+                      1.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                      3.0,
+                      4.0
                     ]
                   }
                 ]
@@ -639,7 +853,7 @@
         }
       }
     },
-    "filename": "repaired.json",
+    "filename": "houseplan-full-2026-11-02_09-29-44.json",
     "recovery": {
       "version": 1,
       "total": 2,
