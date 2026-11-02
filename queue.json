@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 805,
-  "nextTicket": 66,
+  "revision": 806,
+  "nextTicket": 67,
   "nextFence": 66,
   "tasks": {
     "1128": {
@@ -946,6 +946,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1211": {
+      "issue": 1211,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1211-easy-doors",
+      "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 66,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793629571958,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1027,7 +1041,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1211
+  ],
   "active": null,
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
@@ -1069,6 +1085,19 @@
     "github:41455519490:1:completions:report:21d6437d0732933f7cc9ee7de8ca0672a33535297a8f5052e8764fb255885081": {
       "digest": "5dcbbd1e4427d41ea3ba0ceed29ffec03da845e056f37a71986e66f67701e5bd",
       "issue": 1165
+    },
+    "finish:41ecc90c-d976-4f12-8e06-a473b432446c": {
+      "digest": "2b2e5f5e403c8cf058e20b27f8fb12090d2d118fa0b9f56a8b32d142f5a01bef",
+      "issue": 1211,
+      "message": {
+        "kind": "queued",
+        "issue": 1211,
+        "at": 1793629571958,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95"
+      }
     }
   },
   "devWebhook": {
