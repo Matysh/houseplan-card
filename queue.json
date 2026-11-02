@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1119,
+  "revision": 1120,
   "nextTicket": 84,
   "nextFence": 84,
   "tasks": {
@@ -377,7 +377,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1174",
-      "materialSha": "f145f759835048773347e148c8d14fd44ed184b8",
+      "materialSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 83,
@@ -385,7 +385,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793642064295,
       "reviewEntry": 3,
-      "patchId": "f5d901556b02095040c4abf20e207a42cd3f234b",
+      "patchId": "31d57973e192013afed2658bf71a373b670cc118",
       "changedFiles": [
         "custom_components/houseplan/validation.py",
         "demo/smoke_summary_weather.mjs",
@@ -1490,11 +1490,12 @@
     "worker": "finish",
     "token": "83:finish:91f7e2ca-bbde-4b49-8277-b76f358b2dc5:finish:1:admit",
     "fence": 83,
-    "materialSha": "f145f759835048773347e148c8d14fd44ed184b8",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+    "expectedBase": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
+    "phase": "testing",
     "admittedAt": 1793642191014,
-    "expiresAt": 1793642491014
+    "expiresAt": 1793642508384,
+    "patchId": "31d57973e192013afed2658bf71a373b670cc118"
   },
   "events": {
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:2:synchronized": {
@@ -1559,6 +1560,10 @@
     },
     "github:41495062732:1:completions:metadata:c107bbe7-a597-441c-bbae-d8e1613dc380:task-notice:1174::": {
       "digest": "3ad47a443a33925993dc146063c285ef7dc100ad426d55e5b05d4f9999f11559",
+      "issue": 1174
+    },
+    "finish:91f7e2ca-bbde-4b49-8277-b76f358b2dc5:finish:2:synchronized": {
+      "digest": "2ae5724e19ef2e5a11cc05d341c74234da6033ebf04972a0a34bbbe8f6109977",
       "issue": 1174
     },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
