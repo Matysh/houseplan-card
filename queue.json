@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 596,
+  "revision": 597,
   "nextTicket": 56,
   "nextFence": 56,
   "tasks": {
@@ -708,31 +708,23 @@
     },
     "1206": {
       "issue": 1206,
+      "branch": "codex/1206-grid-guard",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1206-grid-guard",
-      "materialSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 55,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793604191703,
-      "reviewEntry": 1,
-      "patchId": "b27621ea78b40a31046e5429d816a1fe414d244f",
-      "changedFiles": [
-        "demo/smoke_grid_scale_invariance.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261102T072324181-bd6408c9",
-        "name": "Тесты для задачи #1206 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261102T072324181-bd6408c9/report.json",
-        "materialSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-        "status": "passed",
-        "finishedAt": "2026-11-02T07:24:09.481Z",
-        "failures": []
+      "status": "S8-merged",
+      "mergedSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
+      "mergedAt": 1793604255598,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -811,18 +803,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1206,
-    "worker": "finish",
-    "token": "55:finish:5a2259a6-43d9-4d5a-acf8-323c52b3f302:finish:1:admit",
-    "fence": 55,
-    "materialSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-    "expectedBase": "a3712cf204bb8954ea8b17bd51f67c0081830808",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793604195200,
-    "expiresAt": 1793607850539,
-    "patchId": "b27621ea78b40a31046e5429d816a1fe414d244f"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -840,50 +821,9 @@
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
     },
-    "finish:5a2259a6-43d9-4d5a-acf8-323c52b3f302:finish:2:synchronized": {
-      "digest": "84991ffa6a366640f5139267fccbb4760dc5a0d0cc357492b697ba66957192c3",
-      "issue": 1206
-    },
-    "github:41405958550:1:completions:message:01d4ed52eb6df16af055a3564889879e76a36cdf37aad886dec7cd81757ca825": {
-      "digest": "971b6c81fcbe00828b1ceaa7861e0e149a4147fcfb45b05934296ba8d93b907f",
-      "issue": 1206
-    },
-    "github:41405958550:1:completions:message:619dade5698492e189c62cf24136bd87b7462078588e56e3d0b5e5b9a9c32c5f": {
-      "digest": "31854695dc3328747492e7d152f1d71a66e70d9352df89859030ed0231c451e4",
-      "issue": 1206
-    },
     "1167-spec-round2-submit-20261102:spec-request": {
       "digest": "a4baa8b513d253c8fba483b5de9494c46984ff98796d424d1d63b29793524610",
       "issue": 1167
-    },
-    "finish:5a2259a6-43d9-4d5a-acf8-323c52b3f302": {
-      "digest": "e97e1276cf99b49b5f258c2dae167c759ee54022167af1fef1f236921ce58817",
-      "issue": 1206,
-      "message": {
-        "kind": "queued",
-        "issue": 1206,
-        "at": 1793604191703,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-        "delivered": true
-      }
-    },
-    "finish:5a2259a6-43d9-4d5a-acf8-323c52b3f302:finish:1:admit": {
-      "digest": "276f137cf3040b4124d977faebce38a420833a1442135afe60717265e6d76278",
-      "issue": 1206,
-      "message": {
-        "kind": "admitted",
-        "issue": 1206,
-        "at": 1793604195200,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
-        "phase": "sync",
-        "delivered": true
-      }
     },
     "finish:5a2259a6-43d9-4d5a-acf8-323c52b3f302:finish:3:s6-complete": {
       "digest": "9ec80f48fb4fc9c5653e6b7844d0604a3c9fe5aa0ea2258b5c195b62aa1b4952",
