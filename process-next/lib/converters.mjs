@@ -28,8 +28,8 @@ export function makeConverterStep({ e2eRoot, workRoot, haVersion, candidateRoot,
     inputs: ['process-next/converters/**', 'process-next/lib/converters.mjs', 'process-next/lib/e2e.mjs',
       'scripts/sh3d-convert/fixtures/**', 'package.json'], requires,
     diagnostic: true, timeoutMs: 45 * 60_000,
-    outputs: ['artifacts/process-next/converters/report.json', 'artifacts/process-next/converters/report.md'],
-    reusableReports: ['artifacts/process-next/converters/report.json', 'artifacts/process-next/converters/report.md'] };
+    outputs: ['artifacts/process-next/converters/report.json'],
+    reusableReports: ['artifacts/process-next/converters/report.json'] };
 }
 
 /** Preserve three separate outcomes even if HA setup fails before discovery/tests. */

@@ -2,6 +2,7 @@ import { appendFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync, r
 import { cpus, release } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { converterMarkdown } from '../lib/converters.mjs';
 
 const fullSha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
@@ -84,12 +85,13 @@ export function restoreFallbackResults(workspace) {
       if (value.status === 'passed' && value.fingerprint === entry.name.slice(0, -5)) { save(path.join(workspace, relative), value); files.push(relative); }
     }
   }
-  for (const relative of ['artifacts/process-next/backend-coverage.xml', 'artifacts/process-next/golden-beta/golden-report.json', 'artifacts/process-next/golden-rest/golden-report.json']) {
+  for (const relative of ['artifacts/process-next/backend-coverage.xml', 'artifacts/process-next/golden-beta/golden-report.json', 'artifacts/process-next/golden-rest/golden-report.json', 'artifacts/process-next/converters/report.json']) {
     const source = path.join(prior, relative);
     if (!existsSync(source)) continue;
     const real = realpathSync(source);
     if (!real.startsWith(realpathSync(prior) + path.sep)) throw Error('Restored result leaves its artifact');
     mkdirSync(path.dirname(path.join(workspace, relative)), { recursive: true }); copyFileSync(real, path.join(workspace, relative)); files.push(relative);
+    if (relative === 'artifacts/process-next/converters/report.json') writeFileSync(path.join(workspace, 'artifacts/process-next/converters/report.md'), converterMarkdown(JSON.parse(readFileSync(real, 'utf8'))));
   }
   return files;
 }

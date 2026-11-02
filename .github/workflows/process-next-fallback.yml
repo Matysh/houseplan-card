@@ -114,6 +114,7 @@ jobs:
             process-next/.state/cache
             artifacts/process-next/backend-coverage.xml
             artifacts/process-next/golden-*/golden-report.json
+            artifacts/process-next/converters/report.json
           include-hidden-files: true
           overwrite: true
           if-no-files-found: ignore
