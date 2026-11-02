@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1073,
+  "revision": 1074,
   "nextTicket": 81,
   "nextFence": 80,
   "tasks": {
@@ -397,7 +397,18 @@
         "test/summary-weather.test.mjs",
         "tests_backend/test_ha_summary_weather.py",
         "tests_backend/test_summary_panel.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793641196346,
+        "entry": 1,
+        "detail": "Backend изменённой области: failed; Браузер: summary weather: failed",
+        "eventId": "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174"
+      }
     },
     "1175": {
       "issue": 1175,
@@ -1444,18 +1455,7 @@
   "waiting": [
     1130
   ],
-  "active": {
-    "issue": 1174,
-    "worker": "finish",
-    "token": "79:finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:1:admit",
-    "fence": 79,
-    "materialSha": "f90f1a700ae0187aceb9b5b46c48ffe4387a7393",
-    "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
-    "phase": "testing",
-    "admittedAt": 1793641146312,
-    "expiresAt": 1793641452390,
-    "patchId": "3a38acbb055e6b8983d690559340e8768a85c025"
-  },
+  "active": null,
   "events": {
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:2:synchronized": {
       "digest": "7aa718c0fb333ac26c440e62ab51397afcb7b4f5bf95bd6db3b6b5049f5c9451",
@@ -1471,6 +1471,10 @@
     },
     "github:41493153262:1:completions:message:5923ec88f3038f2d7f022d1c66abdd7b4ad392b01994470ef4148723eac00ae7": {
       "digest": "c597ff669c81808c9b2d90c72bc0cf0cb7b0a45a4674e01fd5613d4ee39d862e",
+      "issue": 1174
+    },
+    "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return": {
+      "digest": "bcf56936b7d3146071b10906b6bf2321b9af3ba2ada4197ff8917e6ec0c4a898",
       "issue": 1174
     },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
@@ -1514,6 +1518,26 @@
         "layer": "product",
         "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
         "delivered": true
+      }
+    },
+    "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174": {
+      "digest": "bcf56936b7d3146071b10906b6bf2321b9af3ba2ada4197ff8917e6ec0c4a898",
+      "issue": 1174,
+      "message": {
+        "kind": "return",
+        "issue": 1174,
+        "at": 1793641196346,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793641196346,
+          "entry": 1,
+          "detail": "Backend изменённой области: failed; Браузер: summary weather: failed",
+          "eventId": "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174"
+        }
       }
     }
   },
