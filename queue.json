@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 790,
+  "revision": 791,
   "nextTicket": 66,
   "nextFence": 66,
   "tasks": {
@@ -1053,26 +1053,6 @@
     "github:41455519490:1:completions:report:21d6437d0732933f7cc9ee7de8ca0672a33535297a8f5052e8764fb255885081": {
       "digest": "5dcbbd1e4427d41ea3ba0ceed29ffec03da845e056f37a71986e66f67701e5bd",
       "issue": 1165
-    },
-    "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return:return:1157": {
-      "digest": "0a8a7d6af3a92e1aaf75b161d378296dfe21b9238189ae582f37a014b7e1b21b",
-      "issue": 1157,
-      "message": {
-        "kind": "return",
-        "issue": 1157,
-        "at": 1793629017627,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793629017627,
-          "entry": 1,
-          "detail": "Браузер: zigbee map explanation: failed",
-          "eventId": "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return:return:1157"
-        }
-      }
     },
     "finish:59f58c40-1af4-4c55-8454-0d65ef2fcc2b": {
       "digest": "1c4c43b88b606c6676926800d3d730f9e6e79be16c09f98763136c35087d633c",
