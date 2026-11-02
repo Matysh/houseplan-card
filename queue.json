@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 869,
+  "revision": 870,
   "nextTicket": 71,
   "nextFence": 70,
   "tasks": {
@@ -118,232 +118,24 @@
     },
     "1165": {
       "issue": 1165,
+      "branch": "codex/issue-1165-screen-profiles",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/issue-1165-screen-profiles",
-      "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 69,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793630835514,
-      "reviewEntry": 1,
-      "patchId": "4f5db2ff168fdf45c9fa48e153bd9b83762774a7",
-      "changedFiles": [
-        "custom_components/houseplan/support_config_projection.py",
-        "custom_components/houseplan/support_wire_schema.py",
-        "custom_components/houseplan/validation.py",
-        "custom_components/houseplan/websocket_api.py",
-        "demo/golden/harness.mjs",
-        "demo/smoke_external_screens.mjs",
-        "demo/smoke_screen_camera_1165.mjs",
-        "demo/srv/fixture-state.js",
-        "demo/ui-lab/mock-ha.mjs",
-        "docs/CANVAS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY-INVENTORY.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/design/1165-profile-constructor/2026-11-02/.gitattributes",
-        "docs/design/1165-profile-constructor/2026-11-02/CONTRACT.md",
-        "docs/design/1165-profile-constructor/2026-11-02/IMPLEMENTATION.md",
-        "docs/design/1165-profile-constructor/2026-11-02/README.md",
-        "docs/design/1165-profile-constructor/2026-11-02/approval.json",
-        "docs/design/1165-profile-constructor/2026-11-02/fixture.json",
-        "docs/design/1165-profile-constructor/2026-11-02/journal.json",
-        "docs/design/1165-profile-constructor/2026-11-02/overrides/ha-dialog.css",
-        "docs/design/1165-profile-constructor/2026-11-02/overrides/houseplan-card.css",
-        "docs/design/1165-profile-constructor/2026-11-02/overrides/hp-dialog.css",
-        "docs/design/1165-profile-constructor/2026-11-02/provenance.json",
-        "docs/design/1165-profile-constructor/2026-11-02/replay.mjs",
-        "docs/design/1165-profile-constructor/2026-11-02/runtime/app.mjs",
-        "docs/design/1165-profile-constructor/2026-11-02/runtime/index.html",
-        "docs/design/1165-profile-constructor/2026-11-02/runtime/lab.css",
-        "docs/design/1165-profile-constructor/2026-11-02/runtime/theme-local.css",
-        "docs/design/1165-profile-constructor/2026-11-02/screenshots/profile-multiple.jpg",
-        "docs/design/1165-profile-constructor/2026-11-02/screenshots/profile-single.jpg",
-        "docs/design/1165-profile-constructor/2026-11-02/screenshots/settings-dividers.jpg",
-        "docs/release-ledger/v1.83.0/1165.json",
-        "scripts/config-compatibility-catalog.mjs",
-        "scripts/config-field-registry.mjs",
-        "scripts/config-schema.json",
-        "scripts/support-relay/hp_relay/support_wire_schema.py",
-        "src/editors/external-screens.ts",
-        "src/editors/form-kit.ts",
-        "src/external-screens.ts",
-        "src/houseplan-card.ts",
-        "src/hp-dialog.ts",
-        "src/i18n/settings/de.json",
-        "src/i18n/settings/en.json",
-        "src/i18n/settings/fr.json",
-        "src/i18n/settings/ru.json",
-        "src/kiosk-viewport-recovery.ts",
-        "src/live-viewport.ts",
-        "src/logic.ts",
-        "src/panel-route-kiosk.ts",
-        "src/screen-camera.ts",
-        "src/styles/external-screens.styles.ts",
-        "src/styles/form-kit.styles.ts",
-        "src/styles/reading-kit.styles.ts",
-        "src/styles/settings-dialogs.styles.ts",
-        "src/summary-panel-runtime-loaded.ts",
-        "src/version-recovery-card.ts",
-        "test/external-screen-views.test.mjs",
-        "test/external-screens.test.mjs",
-        "test/form-kit.test.mjs",
-        "test/hp-dialog-contract.test.mjs",
-        "test/kiosk-viewport-recovery.test.mjs",
-        "test/screen-camera.test.mjs",
-        "test/version-recovery-card.test.mjs",
-        "tests_backend/test_external_screens.py",
-        "tests_backend/test_ha_external_screens_websocket.py",
-        "tests_backend/test_support_config_projection.py"
-      ],
-      "s6": {
-        "id": "20261102T145033980-87ca7ec7",
-        "name": "Тесты для задачи #1165 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T145033980-87ca7ec7/report.json",
-        "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-        "status": "passed",
-        "finishedAt": "2026-11-02T14:51:22.377Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "mergedSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
+      "mergedAt": 1793631627059,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": true,
       "reviewRequest": "review:1165:1:4f5db2ff168fdf45c9fa48e153bd9b83762774a7:16dc19dbd1e6258815c4227d1a6233dadd769236",
-      "reviewMaterial": {
-        "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-        "expectedBase": "16dc19dbd1e6258815c4227d1a6233dadd769236",
-        "patchId": "4f5db2ff168fdf45c9fa48e153bd9b83762774a7"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1165,
-        "requestId": "review:1165:1:4f5db2ff168fdf45c9fa48e153bd9b83762774a7:16dc19dbd1e6258815c4227d1a6233dadd769236",
-        "kind": "code",
-        "base": "16dc19dbd1e6258815c4227d1a6233dadd769236",
-        "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-        "patchId": "4f5db2ff168fdf45c9fa48e153bd9b83762774a7",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1165,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1165",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "S4 r2 принято: [отчёт](https://github.com/Matysh/houseplan-card/actions/runs/41455049137). Реализованы v2/default_view/space_views, read-only проекция v1, перенос только через вложенное ОК и внешнее Сохранить, API=2 при прежнем event API=1, строгая backend-проверка/ограждение старых writers и закрытая support-проекция.\n\nКамера использует существующие canonical/projected bounds и CameraTransitionController. Опорный вид — физический масштаб и центр свободной области, единый для свайпа, version recovery, Fit/idle/carousel и процентного бейджа. Summary хранит border-box на структурную эпоху: state/clock/content-size не меняют камеру. Ручной вид сохраняется при структурном пересчёте. Обнаруженный холодный возврат carousel к первому этажу исправлен в существующей навигации; отдельного таймера нет. Ordinary View zoom не записывается из профиля.\n\nUI Kit изменён общими владельцами form-kit/reading-kit/hp-dialog/settings layout: статические подписи, disabled checkbox, footer separator и фактическая flex-высота. Полная/однопространственная формы сверены с закреплённым replay при одной теме/локали/viewport: шапка 560×78 и футер 560×69, соответствующие поля в тех же координатах. На 390px нет горизонтального overflow. В настоящем HA вертикальная линия проходит от y=150 до y=759, точно между header/footer; без footer линия 0px, при добавлении 1px, после удаления 0px.\n\nАдресно подтверждены 41 browser-проверка сохранения/совместимости, 11 camera-сценариев (включая четыре поворота, 10–1000%, right/bottom summary, 2.5D, отсутствие движения от state values), Node и backend проверки. Отдельный синтетический настоящий HA подтвердил detached ОК, сохранение v2 через внешний Save и сохранность после перезапуска; API=2/event API=1. Общие minimum и адресная выборка S6 выполняются через finish перед S7; их формальный отчёт приложит процесс. Полные beta/golden/E2E не выдаются за выполненные. [E2E impact #9](https://github.com/Matysh/houseplan-e2e/issues/9).\n\nОсобое внимание: границы миграции и revisions/IDs, reference predicate у всех потребителей, фазы/эпохи измерения summary и общие HA/fallback диалоги. Пакет d2a412a464e0ea09f42761d9cd03abbd20067b49 включён без правок; прежний отрицательный S4-отчёт сохранён.\n\n\n---"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Реализация соответствует принятому ТЗ (S4 r2). Блокеров не нашёл.\n- **Хранение.** Модель v2 с `default_view`/`space_views` реализована согласованно во frontend-codec, backend-валидации и support-проекции. v1 только проецируется на чтение и мигрирует через ОК и внешнее «Сохранить». Понижение версии старым writer отклоняется, broken refs сравниваются по привязке, а не по строке целиком.\n- **Камера.** Опорный вид считает одна чистая функция (`screen-camera.ts`), применяет существующий `CameraTransitionController`. Один и тот же предикат `onScreenReference` используют свайп, downstream `swipeTarget`, version recovery и бейдж в Lit и live-viewport. Активность carousel определяется по эффективному cycle. Геометрия summary кэшируется по структурному ключу без значений HA, поэтому state tick и рост содержимого камеру не двигают.\n- **UI Kit.** Изменения сделаны в общих владельцах.\n\nЕсть замечания, не блокирующие приёмку:\n- в профильном киоске на каждом обновлении Lit читается layout (`stage.clientWidth`) и строится JSON-ключ, включающий `hass.themes`. Это противоречит правилу #725, которое соблюдается в соседнем коде;\n- изменения hp-dialog затрагивают все HA-диалоги и все settings-формы, а не только конструктор. Визуальных доказательств для остальных диалогов нет.\nОба пункта стоит закрыть, но работу они не ломают.",
-          "understanding": "**Проблема.** Прежний профиль внешнего экрана (v1) хранил поворот, сводку и размеры на весь профиль. Камера при открытии, idle и прибытии carousel ставилась на `_restoreZoom`/`_fitAll` (zoom=1 по всему stage) и записывала View-preference. hidden_devices/controls и hphidden/hpcontrols создавали kiosk override.\n\n**Что стало.**\n- **Формат.** Namespace `{version:2,next_id,screens}`. Профиль: `{id,space,cycle,idle,default_view,space_views}`. `externalScreensOf` валидирует v1/v2, для v2 ограничивает размер 128 KiB. `externalScreensForEdit` строит memo-проекцию v1→v2 без мутации исходника (WeakMap): unknown-поля сохраняются, hidden/controls удаляются.\n- **Resolver.** `ExternalScreenResolver.read(raw, route, space)` выбирает view текущего пространства; из URL принимаются только поддержанные поля.\n- **Редактор.** Detached draft (`structuredClone`), отдельная карта сырого ввода `zooms` по пространствам. Записи `space_views` материализуются только для существующих пространств. ОК блокируется с локализованной ошибкой, названием пространства и пометкой ⚠ в выборе. Есть сокращённая форма (`spaces.length===1`) и ветки для missing и 0 пространств.\n- **Backend.** `EXTERNAL_SCREENS_V2_SCHEMA` со строгими типами; future-fallback только для version>2; downgrade отклоняется в `validate_external_screens_references`. Ссылки сравниваются по `space` и по ключам `space_views`. Capability `external_screens_api:2`, events API остаётся 1.\n- **Камера.** `_syncScreenCamera()` вызывается из `updated()`. Ключ эпохи состоит из профиля, пространства, поворота, `vb`/display, размера stage и `geometry.key` из summary runtime. Пока камера на старой опоре, она переходит на новую с длительностью 0. После ручного вида сохраняются физический PPU и центр через `physicalPlanCamera`. Явный Fit анимирует 100%.\n- **Применение опоры.** `_restoreZoom`/idle-порт `KioskCarousel` в профиле вызывают `_restoreScreenReference` (pending + continuity candidate). `_saveZoom` в профиле ничего не делает; при profile-переходе `_normalizeCameraState` не ограничивает 10–1000%.\n- **Summary runtime.** Наблюдает border-box панели через ResizeObserver, измеряет offset-координаты относительно stage. Отдаёт геометрию, только когда желаемая видимость совпадает с `presentation.interactive` и CSS-капы совпадают с текущим layout. Иначе возвращает null, и опора ждёт.\n- **UI Kit.** `staticReadingCss` (K01/K02), not-allowed для всей подписи disabled checkbox, `--hp-dialog-separator` на header и `.footer.has-footer` по slotchange (K03). Для settings-layout: flex-цепочка и `flexcontent` (K04).\n\n**Какие пути разобраны:**\n- route-kiosk apply;\n- холодная загрузка (afterAdopt → `_restoreKioskViewport`/`_restoreZoom`);\n- `_slideTo`/`_cycleTick`;\n- pointerdown → `beginSpaceSwipePointer` → release `spaceSwipeTargetForOwner`;\n- `KioskCarousel` (idle/interval/held deadline);\n- `cardVersionReloadSafetySnapshot`;\n- `paintLiveViewport` и Lit-бейдж;\n- порядок `_summary.updated()` → `_syncScreenCamera()` → `_settleContinuityFrame()`;\n- `syncPresentation` против `screenGeometry`, `measureLayout`;\n- `_boundedZoom`;\n- backend ordinary writer: `prepare_ordinary_summary_candidate` → `validate_external_screens_references`;\n- support-проекция v2;\n- рендер конструктора.",
-          "analysis": [
-            {
-              "topic": "Миграция v1→v2, revisions и номера",
-              "assessment": "Устроено правильно.\n- Проекция v1 мемоизирована по identity исходника. Поэтому сравнение `this.rows() === rows` в кнопке удаления и проверка `rows.screens.includes(row)` в `open` работают.\n- ОК и удаление строки переводят весь outer-черновик в v2. Это явное редактирование, а Отмена outer-диалога его отбрасывает.\n- На backend проверка `before.get(\"space\")` заменила сравнение строк целиком (`screen != before`). Неизменённая broken-ссылка переживает смену формы, новая отклоняется.\n- Downgrade проверяется до сужения `old` к версиям 1/2. Значит, обычный writer не может записать v1 поверх v2 и v2 поверх future.\n- next_id и запрет повторного номера сохранены. Тесты покрывают оба случая.",
-              "evidence": "`src/external-screens.ts` (`externalScreensForEdit`, WeakMap); `validation.py:2795-2820`; `tests_backend/test_external_screens.py`: `test_v2_migration_compares_bindings_not_row_shapes_and_preserves_numbers`, `test_v2_downgrade_is_refused_only_for_ordinary_writes`, `test_v2_preserves_old_missing_view_reference_but_rejects_new_missing_key`."
-            },
-            {
-              "topic": "Строгость схем и future fallback",
-              "assessment": "Известные ключи v2 нельзя провести через `_future_external_screens`: он принимает только version>2. Типы проверяются строго:\n- `type(value) in (int, float)` отсекает bool;\n- для `center_summary` используется voluptuous `bool`;\n- шаг 0.01 проверяется с допуском.\n\nРазмер считается в байтах UTF-8 с `allow_nan=False`. Frontend-кодек повторяет те же правила, а событие с невалидным v2 переходит в обычную перезагрузку. Удачное решение: `EXTERNAL_SCREENS_SCHEMA` сохранён как общий вход для import и support.",
-              "evidence": "`validation.py:2717-2766`; `src/external-screens.ts` `viewOf`/`bounded`/`externalScreenEventCandidate` (`integer(value.version, 3)`); параметризованный тест invalid view."
-            },
-            {
-              "topic": "Предикат опорной камеры у всех потребителей",
-              "assessment": "S4-блокер 1 закрыт. `_screenAtReference` используется в:\n- `_swipeZone`;\n- downstream `swipeTarget`: передаётся `atReference = _panLock==='swipe'`, чтобы числовое условие не отменило решение, принятое при pointerdown;\n- `cardVersionReloadSafetySnapshot.baseZoom`;\n- бейдже Lit и live-viewport (общий геттер `_zoomBadge`).\n\nПоиск `_zoom <= 1`/`_zoom > 1` по `src` других мест не находит. Активность carousel везде берётся из `_effectiveCycle`; он учитывает fixed floor и число пространств. `_hasFixedFloor` учитывает `screen.space` через `_fixedFloorState`.\n\nДопуски в `onScreenReference` (отношение ширин canonical viewBox и расстояние центров × PPU) не зависят от оси поворота.",
-              "evidence": "`houseplan-card.ts:2665-2680` (`_screenAtReference`, `_zoomBadge`, `_effectiveCycle`), `:7653` (`_swipeZone`), `:7810-7815`; `logic.ts:2094-2120`; `version-recovery-card.ts:249-254`; `live-viewport.ts:277-292`; `screen-camera.ts:44-56`."
-            },
-            {
-              "topic": "Эпохи и фазы измерения summary",
-              "assessment": "S4-блокер 2 закрыт.\n- В ключе `screenGeometry` нет значений, а измерения ResizeObserver обновляют только `latestPanelBox`, без `requestUpdate`. Поэтому state tick, skeleton→value и рост содержимого камеру не двигают.\n- Ожидание первого измерения корректно: `_summary.updated()` вызывается до `_syncScreenCamera()`. Новый layout сначала даёт `desired !== interactive` → null, после рендера капы совпадают. `measureLayout` сам вызывает `requestUpdate` при изменении, поэтому зависания нет.\n- Если runtime не загрузился, используется полный stage (`summary.unavailable`).\n- Пока опоры нет, держится boot veil. Это закрывает требование «без первого default-fit по полному stage».\n- `offsetLeft/offsetTop` не учитывают ни translate анимации, ни `translateX(-50%)` у нижней панели. Для нижней стороны используется только `y`, поэтому неверный `x` безвреден.",
-              "evidence": "`summary-panel-runtime-loaded.ts:222-270`, `:973-983` (eligible в `syncPresentation` совпадает с `desired`), `:1044-1047`; `houseplan-card.ts:4806` (порядок вызовов), `:2683-2722`, рендер bootveil."
-            },
-            {
-              "topic": "Ручная камера, Fit, idle и прибытие",
-              "assessment": "Поведение совпадает с п. 6–8 ТЗ.\n- Явный Fit анимирует 100% выбранной области и не меняет опору. После него камера считается ручной, и свайп выключен до idle или прибытия. Это прямо следует из п. 11.\n- Idle-порт и прибытие ставят опору через pending. Структурный пересчёт при ручной камере сохраняет физический масштаб и центр.\n- После version recovery флаг `_screenRecoveredCamera` не даёт сразу перезаписать восстановленную камеру.\n- `_saveZoom` в профиле не пишет `LS_ZOOM`. Ограничение `valid()` zoom≤8 в kiosk memo снято под 1000%.\n- `_navApplied=true` в `_slideTo` исправляет холодный откат carousel к первому этажу и согласуется с комментарием поля.",
-              "evidence": "`houseplan-card.ts:2700-2722` (`follow`/else-ветка), `:7497-7503` (`_resetZoom`), `:7538-7540`, `:4447-4451`, `:1870`; `kiosk-carousel.ts:55-112`; `kiosk-viewport-recovery.ts:39`."
-            },
-            {
-              "topic": "Конструктор и транзакции черновика",
-              "assessment": "Корректно: detached draft через `structuredClone`, сырой ввод масштаба отдельно по пространствам, ОК блокируется с объяснением.\n- Записи `space_views` для отсутствующего и для несуществующего при 0 пространств не создаются (проверка в `changeView`).\n- Сокращённая форма зависит от числа пространств во всей инсталляции.\n- Сброс меняет только zoom выбранного пространства.\n- `cycle` при одном или фиксированном пространстве не блокирует idle.\n\nЕсть мелкий UX-пробел. Пусть в пространстве A оставлен некорректный масштаб, а затем выбрано фиксированное пространство B. Тогда ОК заблокирована, и у неё есть текст «Проверьте масштаб: A». Но выбор редактируемого пространства скрыт, и путь исправления неочевиден: нужно вернуть «Все пространства».",
-              "evidence": "`src/editors/external-screens.ts` `open`/`changeView`/`zoom`/`invalidSpaces`/`renderDraft`; `demo/smoke_external_screens.mjs` (`invalidOtherSpaceStillBlocksOK`, `emptyZoomSurvivesSpaceSwitch`, `resetRepairsOnlySelectedZoom`, `hiddenSummaryDisablesButKeepsCenter`)."
-            },
-            {
-              "topic": "Стоимость `_syncScreenCamera` на каждом обновлении",
-              "assessment": "Это слабое место по производительности.\n- В профильном киоске `_syncScreenCamera` на каждом `updated()`, включая каждый HA state tick, читает `stage.clientWidth/clientHeight` после записи DOM Lit. Это принудительный синхронный layout.\n- Затем `screenGeometry` строит JSON-ключ из конфигурации summary, профиля и `hass.themes`, а карточка ещё раз сериализует весь набор в свой ключ.\n- Тот же файл прямо избегает такого чтения в `_settleContinuityFrame`: «Reading its size after Lit writes would force layout only to return below anyway». Summary runtime по #725 измеряет только при изменении входов.\n\nКорректности это не ломает, но на слабых настенных планшетах с частыми обновлениями добавляет работу на каждое обновление.",
-              "evidence": "`houseplan-card.ts:2688-2696`, комментарий там же `:4361-4363`; `summary-panel-runtime-loaded.ts:254-256` (ключ с `hass.themes`), `:985-1007` (правило #725)."
-            },
-            {
-              "topic": "Общие диалоги UI Kit (K01–K04)",
-              "assessment": "Механизм выбран правильно.\n- Общий токен разделителя для header и footer.\n- Признак наличия footer определяется по slotchange; polling и MutationObserver не используются.\n- K04 через flex-цепочку и публичный `flexcontent` HA, без вычитания высот: `--hp-settings-chrome-height` и min-height calc удалены.\n- Courseor и user-select задаются одной функцией `staticReadingCss` в form-kit, reading-kit и hp-dialog.\n\nДва изменения шире конструктора, и визуальных доказательств для остальных диалогов нет:\n1. Все HA-диалоги, не только settings-layout, теперь ставят собственный header в слот `header` вместо `headerTitle`. Коммит #609 сознательно оставлял generic-диалоги без изменений.\n2. Правило `.hpf-form.hpf-settings-form{display:flex;flex-direction:column}` перебивает прежний `form-display: block` (специфичность 0,2,0 против 0,1,1). Во всех settings-формах перестают схлопываться вертикальные margin соседних блоков.\nПредставленные проверки касаются constructor/settings layout и линии разделителя.",
-              "evidence": "`hp-dialog.ts:811-813` (`haHeading = heading('header')`), `:170-171`, `:258-262`; `settings-dialogs.styles.ts:15-18`; `form-kit-settings.styles.ts:7` (`form-display: block`); история: `4c9e01327` #609 «Keep generic dialogs and the native fallback unchanged»."
-            },
-            {
-              "topic": "Hidden devices и URL",
-              "assessment": "`_displayDevices` больше не учитывает override профиля. Из `screenOverrides` убраны hphidden и hpcontrols, а resolver явно отбирает только поддержанные поля, поэтому устаревший intent ни на что не влияет. `controls` в карточке больше не читается.",
-              "evidence": "`houseplan-card.ts:4650-4652`; `panel-route-kiosk.ts:36-38`; `external-screens.ts` `read()`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Убрать layout-чтение и тяжёлые ключи с горячего пути `_syncScreenCamera`. Размер stage стоит брать из существующего RO/`_refitView`-пути (сохранять в поле при resize) или из уже измеренного `summary.stage`. Ключи эпохи стоит сравнивать по identity (`_settings.external_screens`, конфигурация summary, `hass.themes`), а не через `JSON.stringify` на каждый tick. Цена — небольшая перестройка ключа. Выигрыш — профильный киоск не делает forced layout и сериализацию на каждом обновлении HA, в духе #725 и комментария в `_settleContinuityFrame`.",
-            "Приложить на S6 визуальную проверку диалогов вне конструктора: generic confirm/danger и device dialog в HA-оболочке, General settings и Space settings в HA и fallback. Причина — смена `headerTitle` → `header` для всех HA-диалогов и перевод всех `.hpf-settings-form` с block на flex (пропадает схлопывание margin). Если отличия нежелательны, ограничить flex-правило settings-layout контейнером, где оно нужно для K04.",
-            "При живом удалении профиля или переходе в «без профиля» вызывать `_restoreZoom()`. Сейчас камера остаётся на последней профильной опоре, где внутренний `_zoom` может быть 0.1 или 10, а свайп и бейдж снова оцениваются по числовому `_zoom` до следующего idle или прибытия.",
-            "В конструкторе при ошибке масштаба другого пространства и фиксированном `space` подсказать путь исправления, например «переключите на «Все пространства»». Можно и просто сбрасывать сырой ввод пространств, которые больше не редактируются, но ТЗ требует черновой ввод не терять, поэтому подсказка дешевле.",
-            "`measurePanelBox` хранит `x` для нижней панели без учёта `translateX(-50%)`. Сейчас это безвредно, но стоит либо хранить только нужную кромку (left для right, top для bottom), либо пояснить в комментарии, что для bottom значение `x` не используется."
-          ],
-          "boundaries": "Сборки, тесты, browser-smoke и HA сам не запускал. Использован только результат S6: отчёт «Тесты для задачи #1165 (перед ревью)», status passed, материал ef8e4fb. Содержимое выборки в нём не раскрыто. Заявления исполнителя о 41 browser-проверке, 11 camera-сценариях, синтетическом настоящем HA и совпадении с replay (header 560×78, footer 560×69, линия y=150…759) принимаю как его данные, а не как свои наблюдения.\n\nПо исходникам head и base разобраны:\n- `src/external-screens.ts`, `src/screen-camera.ts`, `src/editors/external-screens.ts`;\n- связанные части `src/houseplan-card.ts`: камера, route-kiosk, carousel, свайп, continuity, bootveil;\n- `src/summary-panel-runtime-loaded.ts`, `src/live-viewport.ts`, `src/logic.ts` (swipe), `src/version-recovery-card.ts`, `src/kiosk-carousel.ts`, `src/kiosk-viewport-recovery.ts`, `src/panel-route-kiosk.ts`;\n- `src/hp-dialog.ts` и стили form-kit, reading-kit, settings-dialogs, external-screens, dialog-composition;\n- `validation.py` (схемы и ссылки), support-проекция и wire-схема;\n- i18n en/ru, backend-тесты, `demo/smoke_screen_camera_1165.mjs`, `demo/smoke_external_screens.mjs`.\n\nНе проверял:\n- визуальное соответствие replay d2a412a: прототип не запускал, скриншоты не сравнивал;\n- реальное поведение `ha-dialog` с `flexcontent` и header-слотом в текущей HA;\n- i18n de/fr построчно;\n- `scripts/config-field-registry.mjs` и `config-schema.json`;\n- поведение на реальном слабом планшете.\n\nХранилище v2 и событие в настоящем HA подтверждены только словами исполнителя.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 84,
-          "cache_creation_input_tokens": 258574,
-          "cache_read_input_tokens": 7102293,
-          "output_tokens": 44907,
-          "output_tokens_details": {
-            "thinking_tokens": 31049
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 258574,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1242,
-              "cache_read_input_tokens": 236816,
-              "cache_creation_input_tokens": 25928,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 25928
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРеализация соответствует принятому ТЗ (S4 r2). Блокеров не нашёл.\n- **Хранение.** Модель v2 с `default_view`/`space_views` реализована согласованно во frontend-codec, backend-валидации и support-проекции. v1 только проецируется на чтение и мигрирует через ОК и внешнее «Сохранить». Понижение версии старым writer отклоняется, broken refs сравниваются по привязке, а не по строке целиком.\n- **Камера.** Опорный вид считает одна чистая функция (`screen-camera.ts`), применяет существующий `CameraTransitionController`. Один и тот же предикат `onScreenReference` используют свайп, downstream `swipeTarget`, version recovery и бейдж в Lit и live-viewport. Активность carousel определяется по эффективному cycle. Геометрия summary кэшируется по структурному ключу без значений HA, поэтому state tick и рост содержимого камеру не двигают.\n- **UI Kit.** Изменения сделаны в общих владельцах.\n\nЕсть замечания, не блокирующие приёмку:\n- в профильном киоске на каждом обновлении Lit читается layout (`stage.clientWidth`) и строится JSON-ключ, включающий `hass.themes`. Это противоречит правилу #725, которое соблюдается в соседнем коде;\n- изменения hp-dialog затрагивают все HA-диалоги и все settings-формы, а не только конструктор. Визуальных доказательств для остальных диалогов нет.\nОба пункта стоит закрыть, но работу они не ломают.\n\n## Понимание решения\n\n**Проблема.** Прежний профиль внешнего экрана (v1) хранил поворот, сводку и размеры на весь профиль. Камера при открытии, idle и прибытии carousel ставилась на `_restoreZoom`/`_fitAll` (zoom=1 по всему stage) и записывала View-preference. hidden_devices/controls и hphidden/hpcontrols создавали kiosk override.\n\n**Что стало.**\n- **Формат.** Namespace `{version:2,next_id,screens}`. Профиль: `{id,space,cycle,idle,default_view,space_views}`. `externalScreensOf` валидирует v1/v2, для v2 ограничивает размер 128 KiB. `externalScreensForEdit` строит memo-проекцию v1→v2 без мутации исходника (WeakMap): unknown-поля сохраняются, hidden/controls удаляются.\n- **Resolver.** `ExternalScreenResolver.read(raw, route, space)` выбирает view текущего пространства; из URL принимаются только поддержанные поля.\n- **Редактор.** Detached draft (`structuredClone`), отдельная карта сырого ввода `zooms` по пространствам. Записи `space_views` материализуются только для существующих пространств. ОК блокируется с локализованной ошибкой, названием пространства и пометкой ⚠ в выборе. Есть сокращённая форма (`spaces.length===1`) и ветки для missing и 0 пространств.\n- **Backend.** `EXTERNAL_SCREENS_V2_SCHEMA` со строгими типами; future-fallback только для version>2; downgrade отклоняется в `validate_external_screens_references`. Ссылки сравниваются по `space` и по ключам `space_views`. Capability `external_screens_api:2`, events API остаётся 1.\n- **Камера.** `_syncScreenCamera()` вызывается из `updated()`. Ключ эпохи состоит из профиля, пространства, поворота, `vb`/display, размера stage и `geometry.key` из summary runtime. Пока камера на старой опоре, она переходит на новую с длительностью 0. После ручного вида сохраняются физический PPU и центр через `physicalPlanCamera`. Явный Fit анимирует 100%.\n- **Применение опоры.** `_restoreZoom`/idle-порт `KioskCarousel` в профиле вызывают `_restoreScreenReference` (pending + continuity candidate). `_saveZoom` в профиле ничего не делает; при profile-переходе `_normalizeCameraState` не ограничивает 10–1000%.\n- **Summary runtime.** Наблюдает border-box панели через ResizeObserver, измеряет offset-координаты относительно stage. Отдаёт геометрию, только когда желаемая видимость совпадает с `presentation.interactive` и CSS-капы совпадают с текущим layout. Иначе возвращает null, и опора ждёт.\n- **UI Kit.** `staticReadingCss` (K01/K02), not-allowed для всей подписи disabled checkbox, `--hp-dialog-separator` на header и `.footer.has-footer` по slotchange (K03). Для settings-layout: flex-цепочка и `flexcontent` (K04).\n\n**Какие пути разобраны:**\n- route-kiosk apply;\n- холодная загрузка (afterAdopt → `_restoreKioskViewport`/`_restoreZoom`);\n- `_slideTo`/`_cycleTick`;\n- pointerdown → `beginSpaceSwipePointer` → release `spaceSwipeTargetForOwner`;\n- `KioskCarousel` (idle/interval/held deadline);\n- `cardVersionReloadSafetySnapshot`;\n- `paintLiveViewport` и Lit-бейдж;\n- порядок `_summary.updated()` → `_syncScreenCamera()` → `_settleContinuityFrame()`;\n- `syncPresentation` против `screenGeometry`, `measureLayout`;\n- `_boundedZoom`;\n- backend ordinary writer: `prepare_ordinary_summary_candidate` → `validate_external_screens_references`;\n- support-проекция v2;\n- рендер конструктора.\n\n## Разбор решения\n\n### Миграция v1→v2, revisions и номера\n\nУстроено правильно.\n- Проекция v1 мемоизирована по identity исходника. Поэтому сравнение `this.rows() === rows` в кнопке удаления и проверка `rows.screens.includes(row)` в `open` работают.\n- ОК и удаление строки переводят весь outer-черновик в v2. Это явное редактирование, а Отмена outer-диалога его отбрасывает.\n- На backend проверка `before.get(\"space\")` заменила сравнение строк целиком (`screen != before`). Неизменённая broken-ссылка переживает смену формы, новая отклоняется.\n- Downgrade проверяется до сужения `old` к версиям 1/2. Значит, обычный writer не может записать v1 поверх v2 и v2 поверх future.\n- next_id и запрет повторного номера сохранены. Тесты покрывают оба случая.\n\nОснование: `src/external-screens.ts` (`externalScreensForEdit`, WeakMap); `validation.py:2795-2820`; `tests_backend/test_external_screens.py`: `test_v2_migration_compares_bindings_not_row_shapes_and_preserves_numbers`, `test_v2_downgrade_is_refused_only_for_ordinary_writes`, `test_v2_preserves_old_missing_view_reference_but_rejects_new_missing_key`.\n\n### Строгость схем и future fallback\n\nИзвестные ключи v2 нельзя провести через `_future_external_screens`: он принимает только version>2. Типы проверяются строго:\n- `type(value) in (int, float)` отсекает bool;\n- для `center_summary` используется voluptuous `bool`;\n- шаг 0.01 проверяется с допуском.\n\nРазмер считается в байтах UTF-8 с `allow_nan=False`. Frontend-кодек повторяет те же правила, а событие с невалидным v2 переходит в обычную перезагрузку. Удачное решение: `EXTERNAL_SCREENS_SCHEMA` сохранён как общий вход для import и support.\n\nОснование: `validation.py:2717-2766`; `src/external-screens.ts` `viewOf`/`bounded`/`externalScreenEventCandidate` (`integer(value.version, 3)`); параметризованный тест invalid view.\n\n### Предикат опорной камеры у всех потребителей\n\nS4-блокер 1 закрыт. `_screenAtReference` используется в:\n- `_swipeZone`;\n- downstream `swipeTarget`: передаётся `atReference = _panLock==='swipe'`, чтобы числовое условие не отменило решение, принятое при pointerdown;\n- `cardVersionReloadSafetySnapshot.baseZoom`;\n- бейдже Lit и live-viewport (общий геттер `_zoomBadge`).\n\nПоиск `_zoom <= 1`/`_zoom > 1` по `src` других мест не находит. Активность carousel везде берётся из `_effectiveCycle`; он учитывает fixed floor и число пространств. `_hasFixedFloor` учитывает `screen.space` через `_fixedFloorState`.\n\nДопуски в `onScreenReference` (отношение ширин canonical viewBox и расстояние центров × PPU) не зависят от оси поворота.\n\nОснование: `houseplan-card.ts:2665-2680` (`_screenAtReference`, `_zoomBadge`, `_effectiveCycle`), `:7653` (`_swipeZone`), `:7810-7815`; `logic.ts:2094-2120`; `version-recovery-card.ts:249-254`; `live-viewport.ts:277-292`; `screen-camera.ts:44-56`.\n\n### Эпохи и фазы измерения summary\n\nS4-блокер 2 закрыт.\n- В ключе `screenGeometry` нет значений, а измерения ResizeObserver обновляют только `latestPanelBox`, без `requestUpdate`. Поэтому state tick, skeleton→value и рост содержимого камеру не двигают.\n- Ожидание первого измерения корректно: `_summary.updated()` вызывается до `_syncScreenCamera()`. Новый layout сначала даёт `desired !== interactive` → null, после рендера капы совпадают. `measureLayout` сам вызывает `requestUpdate` при изменении, поэтому зависания нет.\n- Если runtime не загрузился, используется полный stage (`summary.unavailable`).\n- Пока опоры нет, держится boot veil. Это закрывает требование «без первого default-fit по полному stage».\n- `offsetLeft/offsetTop` не учитывают ни translate анимации, ни `translateX(-50%)` у нижней панели. Для нижней стороны используется только `y`, поэтому неверный `x` безвреден.\n\nОснование: `summary-panel-runtime-loaded.ts:222-270`, `:973-983` (eligible в `syncPresentation` совпадает с `desired`), `:1044-1047`; `houseplan-card.ts:4806` (порядок вызовов), `:2683-2722`, рендер bootveil.\n\n### Ручная камера, Fit, idle и прибытие\n\nПоведение совпадает с п. 6–8 ТЗ.\n- Явный Fit анимирует 100% выбранной области и не меняет опору. После него камера считается ручной, и свайп выключен до idle или прибытия. Это прямо следует из п. 11.\n- Idle-порт и прибытие ставят опору через pending. Структурный пересчёт при ручной камере сохраняет физический масштаб и центр.\n- После version recovery флаг `_screenRecoveredCamera` не даёт сразу перезаписать восстановленную камеру.\n- `_saveZoom` в профиле не пишет `LS_ZOOM`. Ограничение `valid()` zoom≤8 в kiosk memo снято под 1000%.\n- `_navApplied=true` в `_slideTo` исправляет холодный откат carousel к первому этажу и согласуется с комментарием поля.\n\nОснование: `houseplan-card.ts:2700-2722` (`follow`/else-ветка), `:7497-7503` (`_resetZoom`), `:7538-7540`, `:4447-4451`, `:1870`; `kiosk-carousel.ts:55-112`; `kiosk-viewport-recovery.ts:39`.\n\n### Конструктор и транзакции черновика\n\nКорректно: detached draft через `structuredClone`, сырой ввод масштаба отдельно по пространствам, ОК блокируется с объяснением.\n- Записи `space_views` для отсутствующего и для несуществующего при 0 пространств не создаются (проверка в `changeView`).\n- Сокращённая форма зависит от числа пространств во всей инсталляции.\n- Сброс меняет только zoom выбранного пространства.\n- `cycle` при одном или фиксированном пространстве не блокирует idle.\n\nЕсть мелкий UX-пробел. Пусть в пространстве A оставлен некорректный масштаб, а затем выбрано фиксированное пространство B. Тогда ОК заблокирована, и у неё есть текст «Проверьте масштаб: A». Но выбор редактируемого пространства скрыт, и путь исправления неочевиден: нужно вернуть «Все пространства».\n\nОснование: `src/editors/external-screens.ts` `open`/`changeView`/`zoom`/`invalidSpaces`/`renderDraft`; `demo/smoke_external_screens.mjs` (`invalidOtherSpaceStillBlocksOK`, `emptyZoomSurvivesSpaceSwitch`, `resetRepairsOnlySelectedZoom`, `hiddenSummaryDisablesButKeepsCenter`).\n\n### Стоимость `_syncScreenCamera` на каждом обновлении\n\nЭто слабое место по производительности.\n- В профильном киоске `_syncScreenCamera` на каждом `updated()`, включая каждый HA state tick, читает `stage.clientWidth/clientHeight` после записи DOM Lit. Это принудительный синхронный layout.\n- Затем `screenGeometry` строит JSON-ключ из конфигурации summary, профиля и `hass.themes`, а карточка ещё раз сериализует весь набор в свой ключ.\n- Тот же файл прямо избегает такого чтения в `_settleContinuityFrame`: «Reading its size after Lit writes would force layout only to return below anyway». Summary runtime по #725 измеряет только при изменении входов.\n\nКорректности это не ломает, но на слабых настенных планшетах с частыми обновлениями добавляет работу на каждое обновление.\n\nОснование: `houseplan-card.ts:2688-2696`, комментарий там же `:4361-4363`; `summary-panel-runtime-loaded.ts:254-256` (ключ с `hass.themes`), `:985-1007` (правило #725).\n\n### Общие диалоги UI Kit (K01–K04)\n\nМеханизм выбран правильно.\n- Общий токен разделителя для header и footer.\n- Признак наличия footer определяется по slotchange; polling и MutationObserver не используются.\n- K04 через flex-цепочку и публичный `flexcontent` HA, без вычитания высот: `--hp-settings-chrome-height` и min-height calc удалены.\n- Courseor и user-select задаются одной функцией `staticReadingCss` в form-kit, reading-kit и hp-dialog.\n\nДва изменения шире конструктора, и визуальных доказательств для остальных диалогов нет:\n1. Все HA-диалоги, не только settings-layout, теперь ставят собственный header в слот `header` вместо `headerTitle`. Коммит #609 сознательно оставлял generic-диалоги без изменений.\n2. Правило `.hpf-form.hpf-settings-form{display:flex;flex-direction:column}` перебивает прежний `form-display: block` (специфичность 0,2,0 против 0,1,1). Во всех settings-формах перестают схлопываться вертикальные margin соседних блоков.\nПредставленные проверки касаются constructor/settings layout и линии разделителя.\n\nОснование: `hp-dialog.ts:811-813` (`haHeading = heading('header')`), `:170-171`, `:258-262`; `settings-dialogs.styles.ts:15-18`; `form-kit-settings.styles.ts:7` (`form-display: block`); история: `4c9e01327` #609 «Keep generic dialogs and the native fallback unchanged».\n\n### Hidden devices и URL\n\n`_displayDevices` больше не учитывает override профиля. Из `screenOverrides` убраны hphidden и hpcontrols, а resolver явно отбирает только поддержанные поля, поэтому устаревший intent ни на что не влияет. `controls` в карточке больше не читается.\n\nОснование: `houseplan-card.ts:4650-4652`; `panel-route-kiosk.ts:36-38`; `external-screens.ts` `read()`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Убрать layout-чтение и тяжёлые ключи с горячего пути `_syncScreenCamera`. Размер stage стоит брать из существующего RO/`_refitView`-пути (сохранять в поле при resize) или из уже измеренного `summary.stage`. Ключи эпохи стоит сравнивать по identity (`_settings.external_screens`, конфигурация summary, `hass.themes`), а не через `JSON.stringify` на каждый tick. Цена — небольшая перестройка ключа. Выигрыш — профильный киоск не делает forced layout и сериализацию на каждом обновлении HA, в духе #725 и комментария в `_settleContinuityFrame`.\n- Приложить на S6 визуальную проверку диалогов вне конструктора: generic confirm/danger и device dialog в HA-оболочке, General settings и Space settings в HA и fallback. Причина — смена `headerTitle` → `header` для всех HA-диалогов и перевод всех `.hpf-settings-form` с block на flex (пропадает схлопывание margin). Если отличия нежелательны, ограничить flex-правило settings-layout контейнером, где оно нужно для K04.\n- При живом удалении профиля или переходе в «без профиля» вызывать `_restoreZoom()`. Сейчас камера остаётся на последней профильной опоре, где внутренний `_zoom` может быть 0.1 или 10, а свайп и бейдж снова оцениваются по числовому `_zoom` до следующего idle или прибытия.\n- В конструкторе при ошибке масштаба другого пространства и фиксированном `space` подсказать путь исправления, например «переключите на «Все пространства»». Можно и просто сбрасывать сырой ввод пространств, которые больше не редактируются, но ТЗ требует черновой ввод не терять, поэтому подсказка дешевле.\n- `measurePanelBox` хранит `x` для нижней панели без учёта `translateX(-50%)`. Сейчас это безвредно, но стоит либо хранить только нужную кромку (left для right, top для bottom), либо пояснить в комментарии, что для bottom значение `x` не используется.\n\n## Границы анализа\n\nСборки, тесты, browser-smoke и HA сам не запускал. Использован только результат S6: отчёт «Тесты для задачи #1165 (перед ревью)», status passed, материал ef8e4fb. Содержимое выборки в нём не раскрыто. Заявления исполнителя о 41 browser-проверке, 11 camera-сценариях, синтетическом настоящем HA и совпадении с replay (header 560×78, footer 560×69, линия y=150…759) принимаю как его данные, а не как свои наблюдения.\n\nПо исходникам head и base разобраны:\n- `src/external-screens.ts`, `src/screen-camera.ts`, `src/editors/external-screens.ts`;\n- связанные части `src/houseplan-card.ts`: камера, route-kiosk, carousel, свайп, continuity, bootveil;\n- `src/summary-panel-runtime-loaded.ts`, `src/live-viewport.ts`, `src/logic.ts` (swipe), `src/version-recovery-card.ts`, `src/kiosk-carousel.ts`, `src/kiosk-viewport-recovery.ts`, `src/panel-route-kiosk.ts`;\n- `src/hp-dialog.ts` и стили form-kit, reading-kit, settings-dialogs, external-screens, dialog-composition;\n- `validation.py` (схемы и ссылки), support-проекция и wire-схема;\n- i18n en/ru, backend-тесты, `demo/smoke_screen_camera_1165.mjs`, `demo/smoke_external_screens.mjs`.\n\nНе проверял:\n- визуальное соответствие replay d2a412a: прототип не запускал, скриншоты не сравнивал;\n- реальное поведение `ha-dialog` с `flexcontent` и header-слотом в текущей HA;\n- i18n de/fr построчно;\n- `scripts/config-field-registry.mjs` и `config-schema.json`;\n- поведение на реальном слабом планшете.\n\nХранилище v2 и событие в настоящем HA подтверждены только словами исполнителя.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 16dc19dbd1e6258815c4227d1a6233dadd769236 → ef8e4fb6507d5047ad3473d103833ba778ab8659\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1165, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nS4 r2 принято: [отчёт](https://github.com/Matysh/houseplan-card/actions/runs/41455049137). Реализованы v2/default_view/space_views, read-only проекция v1, перенос только через вложенное ОК и внешнее Сохранить, API=2 при прежнем event API=1, строгая backend-проверка/ограждение старых writers и закрытая support-проекция.\n\nКамера использует существующие canonical/projected bounds и CameraTransitionController. Опорный вид — физический масштаб и центр свободной области, единый для свайпа, version recovery, Fit/idle/carousel и процентного бейджа. Summary хранит border-box на структурную эпоху: state/clock/content-size не меняют камеру. Ручной вид сохраняется при структурном пересчёте. Обнаруженный холодный возврат carousel к первому этажу исправлен в существующей навигации; отдельного таймера нет. Ordinary View zoom не записывается из профиля.\n\nUI Kit изменён общими владельцами form-kit/reading-kit/hp-dialog/settings layout: статические подписи, disabled checkbox, footer separator и фактическая flex-высота. Полная/однопространственная формы сверены с закреплённым replay при одной теме/локали/viewport: шапка 560×78 и футер 560×69, соответствующие поля в тех же координатах. На 390px нет горизонтального overflow. В настоящем HA вертикальная линия проходит от y=150 до y=759, точно между header/footer; без footer линия 0px, при добавлении 1px, после удаления 0px.\n\nАдресно подтверждены 41 browser-проверка сохранения/совместимости, 11 camera-сценариев (включая четыре поворота, 10–1000%, right/bottom summary, 2.5D, отсутствие движения от state values), Node и backend проверки. Отдельный синтетический настоящий HA подтвердил detached ОК, сохранение v2 через внешний Save и сохранность после перезапуска; API=2/event API=1. Общие minimum и адресная выборка S6 выполняются через finish перед S7; их формальный отчёт приложит процесс. Полные beta/golden/E2E не выдаются за выполненные. [E2E impact #9](https://github.com/Matysh/houseplan-e2e/issues/9).\n\nОсобое внимание: границы миграции и revisions/IDs, reference predicate у всех потребителей, фазы/эпохи измерения summary и общие HA/fallback диалоги. Пакет d2a412a464e0ea09f42761d9cd03abbd20067b49 включён без правок; прежний отрицательный S4-отчёт сохранён.\n\n\n---\n```\n\n</details>\n",
-        "createdAt": "2026-11-02T15:00:05.159Z",
-        "artifactId": 13153246992,
-        "runId": 41465953455,
-        "runAttempt": 1,
-        "completedAt": "2026-11-02T15:00:10Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41465953455",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "16dc19dbd1e6258815c4227d1a6233dadd769236"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1167": {
@@ -1404,60 +1196,8 @@
   "waiting": [
     1210
   ],
-  "active": {
-    "issue": 1165,
-    "worker": "finish",
-    "token": "69:finish:d63e5253-e3ff-4f7f-a890-9e44759adfe2:finish:1:admit",
-    "fence": 69,
-    "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-    "expectedBase": "16dc19dbd1e6258815c4227d1a6233dadd769236",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793631007769,
-    "expiresAt": 1793635221593,
-    "patchId": "4f5db2ff168fdf45c9fa48e153bd9b83762774a7",
-    "reviewRequest": "review:1165:1:4f5db2ff168fdf45c9fa48e153bd9b83762774a7:16dc19dbd1e6258815c4227d1a6233dadd769236"
-  },
+  "active": null,
   "events": {
-    "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
-      "digest": "18a6a1fd53b82729d2781adc60969ae581495be8b728932c814213c6f9387ba5",
-      "issue": 1165
-    },
-    "github:41453915268:1:spec:1165:spec-presentation": {
-      "digest": "771ebc47e3ba27c3a9de155cd1978d3ef6393c51257f9643424559671bbb1c37",
-      "issue": 1165
-    },
-    "github:41453915268:1:spec:1165:spec-complete": {
-      "digest": "0c25e8006ebbfeb96cd66d5d07c24ca546d5f38e8528c7c4ac47bc5f7c90efe5",
-      "issue": 1165
-    },
-    "github:41453915268:1:spec:1165:spec-label": {
-      "digest": "98561e0b20a27c8d32fc6787be5635c646874ee4eee4cec30c6f6fa3b2aac7e6",
-      "issue": 1165
-    },
-    "github:41453915268:1:completions:report:29f5ddf31a9e1ca47f57d1b5436179c06136ef03e37aef0283cca5e3a76f9e6b": {
-      "digest": "57afe3216fd1f1d3f2626acb8f9e162179452e77558eb36ad8cd080a436aeaa4",
-      "issue": 1165
-    },
-    "1165-spec:266818d4-2e96-417a-8509-01cc2ccdae56:spec-request": {
-      "digest": "31ffa4601046923b7ab7cb90033e5fabca1859fad76f2bf287bf43c637c4bf28",
-      "issue": 1165
-    },
-    "github:41455519490:1:spec:1165:spec-presentation": {
-      "digest": "12f2f7eb45bfeb656cb07f6fabd6b46b737605300c032dc2dc685cd932e1af3b",
-      "issue": 1165
-    },
-    "github:41455519490:1:spec:1165:spec-complete": {
-      "digest": "e808ff0712c30409698145d4790b6cda03e2b9901ebbe11be72c336c22d81020",
-      "issue": 1165
-    },
-    "github:41455519490:1:spec:1165:spec-label": {
-      "digest": "dcf6e914b16fc8ddac03bdce2f6ae3a393bc1fa0809ddb6c9e8dd5b55940277b",
-      "issue": 1165
-    },
-    "github:41455519490:1:completions:report:21d6437d0732933f7cc9ee7de8ca0672a33535297a8f5052e8764fb255885081": {
-      "digest": "5dcbbd1e4427d41ea3ba0ceed29ffec03da845e056f37a71986e66f67701e5bd",
-      "issue": 1165
-    },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:2:synchronized": {
       "digest": "46483a17fe7e46831082971a0d2083f228f65529f55af6658fe57f56b8d65697",
       "issue": 1210
@@ -1498,38 +1238,6 @@
       "digest": "7d0dea85d8255c682f7f64886a0fc741e9d0ab101bdd207d500835a1eb9a454c",
       "issue": 1210
     },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee:finish:1:synchronized": {
-      "digest": "6ba04e47940bde81cf24bf9d96a42f312c3945adb996d92ab382d3e8db0400ef",
-      "issue": 1165
-    },
-    "github:41465682263:1:completions:message:c659cf26417fd61c68cdbe462ddd901d64f871ceeed9cb209bd21164f2c0c829": {
-      "digest": "32be8ef5205431fe4e1ee3e60eff7d5b00138470e2a48d6eb141500f18a8db52",
-      "issue": 1165
-    },
-    "finish:7061527b-2366-4f1c-9027-d86ee181ccef": {
-      "digest": "1180ad075c5dbd22ea974409adc2eaf2a430b36ab3fe24aca88d9ff4e2bca034",
-      "issue": 1165
-    },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee:finish:2:s6-label": {
-      "digest": "2e401e46899fba14d5aebb5c969b93a1e2b1d853f5347b9ccbcc0de5200532d8",
-      "issue": 1165
-    },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee:finish:3:review-requested": {
-      "digest": "54d5ce68d85d0da4a3a03527daadda7a290851303cbac13797fcc7d7233dc5e2",
-      "issue": 1165
-    },
-    "github:41465933135:1:completions:message:e964db21b73010f5cb232be182a1b43009c55c6855b4993ae960ed98aced5335": {
-      "digest": "06d5a3ac1969d62c69c0fe5d96db7876fc75f52ed4dc7c79bb69194e213ac16e",
-      "issue": 1165
-    },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee:finish:11:review-presentation": {
-      "digest": "c136f4260cc567a1b04be65ec01fd8d465fd98f5933743ddb87dfabfb5ef8800",
-      "issue": 1165
-    },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee:finish:11:review-complete": {
-      "digest": "1db198b9d06b68446d06f26278c88a57c85a653da03804ff2749228aaedf2734",
-      "issue": 1165
-    },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4": {
       "digest": "0b6eb6ad23af7d1abb95bc5a356b759f646edc42820cd925adb8cb55af370c90",
       "issue": 1210,
@@ -1556,20 +1264,6 @@
         "layer": "infra",
         "materialSha": "582dfcdddefa6ba138eac44be0b0b20d8ebe6c0c",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee": {
-      "digest": "c275f2ebdef94b3f40a2b6ddf2a4dabad7a2bbfc846703a41ee63b225dd16467",
-      "issue": 1165,
-      "message": {
-        "kind": "queued",
-        "issue": 1165,
-        "at": 1793630835514,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "cd06b46e9cabe96452411574edf9c09bf192d2db",
         "delivered": true
       }
     },
@@ -1641,48 +1335,6 @@
           "finishedAt": "2026-11-02T14:47:16.423Z",
           "failures": []
         }
-      }
-    },
-    "finish:d63e5253-e3ff-4f7f-a890-9e44759adfe2:finish:1:admit": {
-      "digest": "af2baef7b95bacda54292fe3e7f29c3d16066de9b742865b22b86b0c0d715b2a",
-      "issue": 1165,
-      "message": {
-        "kind": "admitted",
-        "issue": 1165,
-        "at": 1793631007769,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "cd06b46e9cabe96452411574edf9c09bf192d2db",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee:finish:2:s6-complete": {
-      "digest": "829d2ccf22e7ad3b20cdc87489f1b52d7841146b31f1ab25ab4c41a4f8d91d8d",
-      "issue": 1165,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1165,
-        "at": 1793631083326,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-        "phase": "review",
-        "evidence": {
-          "id": "20261102T145033980-87ca7ec7",
-          "name": "Тесты для задачи #1165 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T145033980-87ca7ec7/report.json",
-          "materialSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-          "status": "passed",
-          "finishedAt": "2026-11-02T14:51:22.377Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
       }
     }
   },
