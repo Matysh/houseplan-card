@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1210,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Delivers picture-elements support already introduced by #1022 in the current cycle to the branded public converter.",
+  "summary": {
+    "ru": "На странице конвертера доступен picture-elements с указанием пропорций картинки.",
+    "en": "The published converter offers picture-elements with explicit image proportions."
+  }
+}

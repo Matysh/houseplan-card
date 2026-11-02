@@ -344,6 +344,10 @@ async function handleFile(file) {
 }
 
 export function mount() {
+  // The branded RU/EN site owns its locale and a small set of editorial copy.
+  // The standalone page keeps its existing saved/browser-language selection.
+  const siteLanguage = window.HOUSEPLAN_CONVERTER_COPY ? document.documentElement.lang : null;
+  if (TEXT[siteLanguage]) Object.assign(TEXT[siteLanguage], window.HOUSEPLAN_CONVERTER_COPY);
   const input = document.getElementById('file');
   const zone = document.getElementById('drop');
   document.getElementById('format').addEventListener('change', () => {
@@ -389,5 +393,5 @@ export function mount() {
   } catch {
     saved = null;
   }
-  applyLanguage(saved || (String(navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en'));
+  applyLanguage(siteLanguage || saved || (String(navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en'));
 }

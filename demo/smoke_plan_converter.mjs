@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { enforcePinnedBrowser, requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 import { convertEasy, TOOL_VERSION } from '../scripts/sh3d-convert/easy.mjs';
+import { CURRENT_MODEL_VERSION } from '../scripts/sh3d-convert/output.mjs';
 import { watchPage, finish } from './serve.mjs';
 import { exercisePictureConverter } from './helpers/picture-converter.mjs';
 
@@ -45,7 +46,7 @@ try {
   const document = JSON.parse(readFileSync(await download.path(), 'utf8'));
   const expected = convertEasy(source, { now: document.created_at, toolVersion: TOOL_VERSION }).documents[0];
   assert.deepEqual(document, expected, 'download and CLI/core must be identical');
-  assert.equal(document.model_version, 10);
+  assert.equal(document.model_version, CURRENT_MODEL_VERSION);
   // Editing an input invalidates the old download immediately, even before
   // another conversion. A closure retained from a detached button is inert.
   await page.locator('.level button').evaluate(button => { window.oldDownload = button; });

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prepare the current branded RU/EN converter for picture-elements, explicit image dimensions and local image measurement, retaining the site shell and canonical conversion code. [#1210](https://github.com/Matysh/houseplan-card/issues/1210)
+
 - Easy Floorplan conversion explicitly keeps imported walls and doors visible when the floor also has a background image. [#1211](https://github.com/Matysh/houseplan-card/issues/1211)
 
 - Explain why Zigbee2MQTT/ZHA neighbor maps can differ from confirmed routes shown by Houseplan, directly below the Zigbee links toggle. [#1157](https://github.com/Matysh/houseplan-card/issues/1157)

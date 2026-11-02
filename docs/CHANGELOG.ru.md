@@ -8,6 +8,8 @@
 
 ## Не выпущено
 
+- Добавлена доставка актуального конвертера в оформленную RU/EN-страницу сайта: picture-elements, ввод размеров и чтение размера локальной картинки без замены оболочки сайта. [#1210](https://github.com/Matysh/houseplan-card/issues/1210)
+
 - При конвертации Easy Floorplan фон больше не скрывает перенесённые стены и двери. [#1211](https://github.com/Matysh/houseplan-card/issues/1211)
 
 - Под переключателем связей Zigbee добавлено пояснение о различиях соседских карт Zigbee2MQTT/ZHA и подтверждённых маршрутов Houseplan. [#1157](https://github.com/Matysh/houseplan-card/issues/1157)

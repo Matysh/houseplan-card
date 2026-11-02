@@ -142,28 +142,44 @@ schema/preview/apply/export, retaining independent physical/topology assertions.
 
 ## Deployment and rollback
 
-Deploy only accepted code. Build/check the exact accepted material; record commit,
-standalone artifact SHA256 and served-payload SHA256 in #937. On the authorized
-demo/dev host the only destination is `/var/www/houseplan/convert/index.html`.
+Deploy only accepted code. Record the commit, module SHA256 and rendered RU/EN
+HTTP identities in the deployment issue. The active branded PHP site (#1210)
+is `/var/www/houseplansite-current`, a symlink to a versioned site release.
+The old `/var/www/houseplan/convert/index.html` is no longer the served converter.
 Do not touch Caddy configuration, HA, demo/dev seeds or services.
 
-The currently served page has an extra site analytics header. Preserve its
-existing wrapper/counters; do not overwrite it with a plain offline artifact.
+Preserve the existing PHP head/header/footer, counters and editable content;
+do not overwrite the branded site with a plain offline artifact.
 The tool's own processing makes no network requests; this does not claim that
 the live site's analytics header makes none. No input or result is sent to it.
-Prepare a sibling temporary file; keep a timestamped copy of the exact current
-page outside the web root; verify expected old digest before atomically replacing
-the target. Compare the embedded converter module against the accepted artifact,
-then HTTP-check both format controls and source version. No service restart is
-needed. Rollback atomically restores the saved page, never rewrites user plans.
+Read the actual `includes/converter.php` and resolved root before preparation.
+`site-converter.mjs --template <snapshot.php> --artifact dist/index.html
+--commit <accepted-sha> --out <directory>` prepares the shared template and an
+immutable content-hashed JS asset. The module is byte-identical to the offline
+artifact. The patch refuses an unexpected/already-updated template. It adds the
+third format and required image-size controls without changing editable content.
+The site locale and editorial copy override only the matching runtime dictionary;
+the standalone page retains its saved/browser-language behavior.
+
+Upload these files, receipt.json and `deploy-site-converter.sh` to a private
+staging directory on the authorized host. Run the accepted script with the
+expected resolved site root, previous-template hash, new-template hash, asset
+basename and module hash. It checks those identities, lints PHP, retains the
+previous template outside the web root, installs the immutable asset first, then
+atomically replaces only `includes/converter.php`. It checks the root and old
+template again immediately before replacement. Never replace the site symlink.
+Verify RU/EN format selection, size controls, downloads and native HA import.
+Rollback checks that the installed template is still ours, then atomically
+restores the backed-up template; its old assets remain untouched. No restart or
+user-plan rewrite is needed.
 Do not publish HACS tags/releases as part of an external-site deployment.
 
-`site-page.mjs --previous <downloaded-live.html> --artifact <dist/index.html>
+The historical standalone `site-page.mjs --previous <downloaded-live.html> --artifact <dist/index.html>
 --commit <full-accepted-sha> --out <prepared.html>` is a local preparer, not a
 publisher. It preserves the existing Google/Yandex wrapper byte-for-byte, refuses
 missing/duplicate/unexpected wrappers, asserts exact executable module identity
 and prints old/artifact/wrapper/page digests. Its output remains local until the
-accepted-material deployment described above.
+accepted-material deployment. It is not the publisher for the current PHP site.
 
 ## Public source fixture and license
 
