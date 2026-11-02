@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 576,
+  "revision": 577,
   "nextTicket": 55,
   "nextFence": 55,
   "tasks": {
@@ -778,7 +778,16 @@
         "package.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261102T062204236-3ac80bde",
+        "name": "Тесты для задачи #1205 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T062204236-3ac80bde/report.json",
+        "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
+        "status": "passed",
+        "finishedAt": "2026-11-02T06:22:39.010Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -849,9 +858,9 @@
     "fence": 54,
     "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
     "expectedBase": "70dc3a9ef35f89d78633c1063a36ff984259c901",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793600512645,
-    "expiresAt": 1793600818930,
+    "expiresAt": 1793604160091,
     "patchId": "fc7e037463f81b17b29cc3b05a79533d094e6526"
   },
   "events": {
@@ -910,6 +919,29 @@
         "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "release-return-finish:61be5318-e46c-44ee-a2e7-044c9e133c53:finish:3:s6-complete": {
+      "digest": "5300092b05b59c03e7c20460de2252a1a33f285008a02c26a22672b8431c3d59",
+      "issue": 1205,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1205,
+        "at": 1793600560091,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261102T062204236-3ac80bde",
+          "name": "Тесты для задачи #1205 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T062204236-3ac80bde/report.json",
+          "materialSha": "a3712cf204bb8954ea8b17bd51f67c0081830808",
+          "status": "passed",
+          "finishedAt": "2026-11-02T06:22:39.010Z",
+          "failures": []
+        }
       }
     }
   },
