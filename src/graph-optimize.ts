@@ -29,16 +29,30 @@ export interface GraphOptimizeResult {
   openingsRehosted: number;
 }
 
-export function optimizeGraphTargets(before: any, draft: any, movesOnly = false): GraphOptimizeResult {
+interface GraphOptimizeOptions {
+  moves?: boolean;
+  partitionIds?: readonly string[];
+  compactWalls?: boolean;
+  alignOpenings?: boolean;
+  metadataFromBefore?: boolean;
+}
+
+export function optimizeGraphTargets(
+  before: any, draft: any, movesOnly = false, options: GraphOptimizeOptions = {},
+): GraphOptimizeResult {
   const projected = projectGraphSpace(before, before.plan_graph);
   const originalOpenings = new Map<string, any>((before.openings || []).map((o: any) => [o.id, o]));
-  let space: any = { ...clone(draft), openings: (draft.openings || []).map((o: any) => {
+  const metadata = options.metadataFromBefore ? before : draft;
+  const openings = (metadata.openings || []).map((o: any) => {
     const original = originalOpenings.get(o.id), next = { ...o };
     if (original?.host) next.host = clone(original.host);
     else delete next.host;
     return next;
-  }) };
+  });
+  let space: any = clone(metadata);
+  if (Object.prototype.hasOwnProperty.call(metadata, 'openings') || openings.length) space.openings = openings;
   let graph: PlanGraph = clone(before.plan_graph);
+  const changedHosts = new Set<string>();
   const stats = { partitionsMerged: 0, partitionsReconciled: 0, wallsMerged: 0, openingsRehosted: 0 };
   const apply = (operations: GraphOperation[]): GraphResult | undefined => {
     if (!operations.length) return undefined;
@@ -47,11 +61,14 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
     for (const opening of space.openings || []) {
       if (!Object.prototype.hasOwnProperty.call(result.mapping.hosts, opening.id)) continue;
       const host = result.mapping.hosts[opening.id];
+      changedHosts.add(opening.id);
       if (host === null) delete opening.host;
       else opening.host = clone(host);
     }
     return result;
   };
+  const numericalPartitions = new Map<string, any>((draft.partitions || []).map((p: any) => [p.id, p]));
+  if (options.moves !== false) {
   const dependent = new Set(graph.dependencies.map(d => d.node));
   const targets = new Map<string, ExactPoint>();
   const setTarget = (id: string, p: number[]) => {
@@ -68,7 +85,6 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
     cycle.edges.forEach((_edge, i) => setTarget(
       projected.bindings.vertices[JSON.stringify([cycle.room, i])], room.poly[i]));
   }
-  const numericalPartitions = new Map<string, any>((draft.partitions || []).map((p: any) => [p.id, p]));
   const alignment = movesOnly ? draft : projectGraphSpace({ ...draft, openings: [] }, draft.plan_graph).space;
   const alignedPartitions = new Map<string, any>((alignment.partitions || []).map((p: any) => [p.id, p]));
   for (const edge of graph.edges) if (edge.kind === 'partition') {
@@ -125,6 +141,7 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
   }
   apply([...targets].filter(([id, p]) => !same(nodes.get(id)!.p, encodePoint(p)))
     .map(([id, p]): GraphOperation => ({ kind: 'move-node', node: id, target: encodePoint(p) })));
+  }
   if (movesOnly) return { space: projectGraphSpace(space, graph).space, ...stats };
 
   const point = (id: string): ExactPoint => decodePoint(graph.nodes.find(n => n.id === id)!.p);
@@ -162,7 +179,7 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
 
   const mergeSpace = projectGraphSpace(space, graph).space;
   const merge = mergeCollinearPartitions(mergeSpace.partitions || [], {
-    pitch: 1 / 240, geometry: spaceMergeGeometry(mergeSpace),
+    pitch: 1 / 240, geometry: spaceMergeGeometry(mergeSpace), seedIds: options.partitionIds,
   });
   const groups = new Map<string, Set<string>>();
   for (const move of merge.openingMoves) {
@@ -198,7 +215,7 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
     stats.partitionsReconciled++; stats.openingsRehosted += hosted.length;
   }
 
-  let progress = true;
+  let progress = options.compactWalls !== false;
   while (progress) {
     progress = false;
     const index = graphIndex(graph);
@@ -218,6 +235,7 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
   const hostMoves: GraphOperation[] = [];
   for (const opening of space.openings || []) {
     const original = originalOpenings.get(opening.id);
+    if (options.alignOpenings === false) continue;
     if (!original?.host || original.host.kind !== 'wall' || opening.host?.kind !== 'wall') continue;
     const target = (draft.openings || []).find((o: any) => o.id === opening.id);
     const edge = graph.edges.find(e => edgeKey(e) === edgeKey(opening.host));
@@ -234,7 +252,8 @@ export function optimizeGraphTargets(before: any, draft: any, movesOnly = false)
   }
   apply(hostMoves);
   space = projectGraphSpace(space, graph).space;
-  for (const opening of space.openings || []) if (opening.host) {
+  for (const opening of space.openings || []) if (opening.host
+      && (options.alignOpenings !== false || changedHosts.has(opening.id))) {
     const edge = graph.edges.find(e => edgeKey(e) === edgeKey(opening.host))!;
     const a = numberPoint(edge.from), b = numberPoint(edge.to);
     let angle = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
@@ -267,4 +286,14 @@ export function graphOptimizeTopologyPoints(space: any, scale: number): number[]
   const support = new Set(graph.dependencies.flatMap(d => d.refs.flatMap(r => [r.from, r.to])));
   return graph.nodes.filter(n => (index.incident.get(n.id)?.length || 0) !== 2 || support.has(n.id))
     .map(n => pointToNumbers(decodePoint(n.p)).map(value => value * scale));
+}
+
+/** Current chain finish: structural compaction only, never whole-plan alignment. */
+export function reconcileGraphDraft(
+  before: any, draft: any, partitionIds: readonly string[],
+): GraphOptimizeResult {
+  return optimizeGraphTargets(before, draft, false, {
+    moves: false, compactWalls: false, alignOpenings: false,
+    metadataFromBefore: true, partitionIds,
+  });
 }
