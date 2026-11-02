@@ -12,6 +12,7 @@
 import { createDeviceBatteryContext } from './device-battery';
 import { createDeviceSignalContext } from './device-signal';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
+import { lowSignalProjectionNeeded } from './signal-visibility';
 import {
   resolveDevicePresentation, type PresentationActivityRuntime, type ResolvePresentationOptions,
   type ResolvedDevicePresentation,
@@ -194,7 +195,7 @@ export function captureRenderDeviceSnapshot(
     const spaceSettings = host._serverCfg?.spaces?.find(space => space.id === device.space)?.settings;
     const mode = deviceBatteryModeOf(host._settings, spaceSettings);
     // Keep the ordinary two-projection cost unless this floor needs low-only.
-    const low = host._settings.show_lqi === 'low' || spaceSettings?.show_lqi_mode === 'low';
+    const low = lowSignalProjectionNeeded(host._settings, spaceSettings);
     for (const showLqi of low ? [false, true, 'low'] as const : [false, true] as const) {
       const build = (): ResolvedDevicePresentation => presentDevice(host, planHass, device, showLqi, {
         showBattery: mode !== 'off' && !ledMarkerIds.has(device.id),

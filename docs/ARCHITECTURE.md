@@ -668,6 +668,8 @@ registry indexing, geometry work or persistence. #1130 adds low-only (LQI ≤ 50
 as a distinct snapshot key, filtering only the system line. Ordinary floors
 retain the two boolean projections; low-only floors add their third projection
 to the same dependency tracking, clone lending and device-retirement cleanup.
+Its demand flag is part of the device key: returning to low-only after ordinary
+mode must rebuild facts that may have changed while that projection slept.
 The static capture also keys whether that projection is needed. The independent room-card `label_lqi`, explicit LQI value sources,
 battery diagnostics and topology ownership do not consume this policy.
 

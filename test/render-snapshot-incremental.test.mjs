@@ -20,6 +20,31 @@ import { resolvedLightSources } from '../test-build/devices.js';
 import { PresentationLightFrame } from '../test-build/presentation-light-frame.js';
 import { reconcileVirtualLightSnapshot, applyVirtualLightEvent, virtualLightWire } from '../test-build/virtual-light-state.js';
 
+test('#1130 conditional low projection cannot revive old device facts after a mode roundtrip', () => {
+  for (const scope of ['global', 'space']) {
+    const host = captureHost(oracleFixture()), reuse = new RenderSnapshotReuseWindow();
+    const device = host._devices.find(d => d.primary?.startsWith('switch.') && host.hass.states[d.primary]);
+    const space = host._serverCfg.spaces.find(s => s.id === device.space);
+    const mode = low => {
+      if (scope === 'global') host._settings.show_lqi = low ? 'low' : true;
+      else { space.settings ||= {}; space.settings.show_lqi_mode = low ? 'low' : 'on'; }
+    };
+    mode(true);
+    const old = captureRenderDeviceSnapshot(host, reuse).presentations.get(presentationSnapshotKey(device.id, 'low'));
+    mode(false); captureRenderDeviceSnapshot(host, reuse);
+    const id = device.primary, row = host.hass.states[id];
+    host.hass = { ...host.hass, states: { ...host.hass.states, [id]: { ...row, state: row.state === 'on' ? 'off' : 'on' } } };
+    host._hassSequence++; captureRenderDeviceSnapshot(host, reuse);
+    mode(true);
+    const actual = captureRenderDeviceSnapshot(host, reuse);
+    const complete = captureRenderDeviceSnapshot(host, null);
+    const fresh = actual.presentations.get(presentationSnapshotKey(device.id, 'low'));
+    assert.notEqual(fresh.visual.status, old.visual.status, `${scope}: changed state must remain current`);
+    assert.deepEqual(fresh, complete.presentations.get(presentationSnapshotKey(device.id, 'low')), `${scope}: full resolver agrees`);
+    assert.deepEqual(plain(actual), plain(complete), `${scope}: entire coherent frame agrees`);
+  }
+});
+
 /** A comparable projection of a snapshot: maps become entry lists, the capture time is dropped. */
 const plain = (snapshot) => ({
   sourceSequence: snapshot.sourceSequence,

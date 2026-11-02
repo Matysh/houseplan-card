@@ -89,7 +89,10 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   const northProblem = problemFor('gs-north');
   const lqiOverrides = (host._serverCfg?.spaces || [])
     .filter((space: { settings?: SignalSpaceSettings }) => signalVisibilityModeOf(space.settings) !== 'inherit')
-    .map(space => `${space.title || space.id} — ${t(signalVisibilityModeOf(space.settings) === 'on' ? 'space.sun_on' : 'space.sun_off')}`);
+    .map(space => {
+      const mode = signalVisibilityModeOf(space.settings);
+      return `${space.title || space.id} — ${st(mode === 'low' ? 'space.lqi_low' : mode === 'on' ? 'space.lqi_on' : 'space.lqi_off')}`;
+    });
   const batteryOverrides = (host._serverCfg?.spaces || [])
     .filter(space => spaceDeviceBatteryModeOf(space.settings) !== 'inherit')
     .map(space => `${space.title || space.id} — ${st(`gs.device_battery_${deviceBatteryModeOf(host._settings,space.settings)}`)}`);

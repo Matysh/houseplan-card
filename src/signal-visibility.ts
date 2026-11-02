@@ -13,6 +13,12 @@ export interface SignalSpaceSettings {
   show_lqi_mode?: unknown;
 }
 
+/** Conditional projections are part of each device's reuse/invalidation key. */
+export function lowSignalProjectionNeeded(settings: { show_lqi?: unknown } | null | undefined,
+  space: SignalSpaceSettings | null | undefined): boolean {
+  return settings?.show_lqi === 'low' || space?.show_lqi_mode === 'low';
+}
+
 /** A historical true was emitted by every form Save; it is not an override. */
 export function signalVisibilityModeOf(settings: SignalSpaceSettings | null | undefined): SignalVisibilityMode {
   const mode = settings?.show_lqi_mode;

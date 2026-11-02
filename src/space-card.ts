@@ -29,6 +29,7 @@ import { createDeviceBatteryContext } from './device-battery';
 import { createDeviceSignalContext } from './device-signal';
 import { DeviceSignalController } from './device-signal-runtime';
 import { deviceBatteryModeOf } from './device-battery-settings';
+import { lowSignalProjectionNeeded } from './signal-visibility';
 import { resolvedLightSources } from './devices';
 import { ledRelease, ledStripsByMarker } from './led-strip-gate';
 import {
@@ -548,7 +549,7 @@ class HouseplanSpaceCard extends LitElement {
       ? `${this._snap.virtualLights.configRev}:${this._snap.virtualLights.rev}` : '';
     const selectedSettings = this._snap?.config?.spaces?.find((space: {id:string}) => space.id === this._config?.space)?.settings;
     const batteryMode = deviceBatteryModeOf(this._snap?.config?.settings,selectedSettings);
-    const lowSignal = this._snap?.config?.settings?.show_lqi === 'low' || selectedSettings?.show_lqi_mode === 'low';
+    const lowSignal = lowSignalProjectionNeeded(this._snap?.config?.settings, selectedSettings);
     if (this._capturedLowSignal === lowSignal && this._capturedBatteryMode === batteryMode && this._capturedSeq === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotActivity === activity

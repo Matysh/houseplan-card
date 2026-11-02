@@ -46,6 +46,7 @@ import { directSignalReadings } from './device-signal-runtime';
 import { openingEntityReferences } from './logic';
 import type { RoomCfg } from './types';
 import { deviceBatteryModeOf } from './device-battery-settings';
+import { lowSignalProjectionNeeded } from './signal-visibility';
 import { ledStripsByMarker } from './led-strip-gate';
 
 /** A recorded iteration of the states map: the device depends on every row. */
@@ -118,7 +119,7 @@ class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
   private memo = new WeakMap<object, unknown>();
   /** Raw HA row of every recorded key at the last capture. */
   private rows = new Map<string, unknown>();
-  /** Recorded rows of each device's two presentations. */
+  /** Recorded rows shared by the two ordinary and optional low presentations. */
   private deps = new Map<string, Set<string>>();
   private lightDeps = new Map<string, Set<string>>();
   private lightFrame: PresentationLightFrame | null = null;
@@ -144,9 +145,13 @@ class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
     const consumerDemand = host._snapshotConsumerDemand?.();
     const batteryModes = new Map(spaces.map(space => [space.id, deviceBatteryModeOf(host._settings,
       'settings' in space ? space.settings : undefined)]));
+    const lowSignal = new Map(spaces.map(space => [space.id, lowSignalProjectionNeeded(host._settings,
+      'settings' in space ? space.settings : undefined)]));
     const ledMarkers = new Map(spaces.map(space => [space.id, ledStripsByMarker(space)]));
+    // A sleeping conditional projection cannot outlive a change of its demand.
     const deviceKeys = new Map(devices.map(device => [device.id, JSON.stringify([device,
       batteryModes.get(device.space) ?? deviceBatteryModeOf(host._settings), ledMarkers.get(device.space)?.has(device.id),
+      lowSignal.get(device.space) ?? lowSignalProjectionNeeded(host._settings, undefined),
       host._alerts?.issuesForDevice(device.id)])]));
     this.changedDevices = new Set([...deviceKeys].filter(([id, key]) => this.deviceKeys.get(id) !== key).map(([id]) => id));
     const rosterChanged = this.changedDevices.size > 0 || deviceKeys.size !== this.deviceKeys.size;

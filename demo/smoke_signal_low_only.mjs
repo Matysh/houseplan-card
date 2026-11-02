@@ -87,6 +87,10 @@ try {
   await select.selectOption('off'); await space.locator('[data-hp="dialog-confirm"]').click();
   await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('hp-dialog[data-kind="space"]'));
   out.actualSpaceSave = await page.evaluate(() => window.__card._serverCfg.spaces.find(s => s.id === 'f1').settings.show_lqi_mode === 'off');
+  await patchSpace('low');
+  await root.locator('[data-hp="settings"]').click();
+  const title = await page.evaluate(() => window.__card._serverCfg.spaces.find(s => s.id === 'f1').title);
+  out.overrideHintNamesLow = (await root.locator('hp-dialog[data-kind="settings"]').textContent()).includes(`${title} — Low only`);
   await page.evaluate(() => document.querySelector('houseplan-space-card').remove());
   checkAll(out);
 } finally { await finish(browser, out); }
