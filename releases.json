@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 71,
+  "revision": 72,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -1184,6 +1184,12 @@
           "status": "completed",
           "branch": "release/v1.84.0-beta.1",
           "sha": "6bb1b3243205f90af1b7dd6d6c315216021c7e1b"
+        },
+        "return-to-dev": {
+          "status": "running",
+          "issue": 1205,
+          "branch": "issue/1205-release-return-783d427d2a57",
+          "worktree": "/home/matysh/hp-beta4-release-20261029/artifacts/process-next/return-worktrees/783d427d2a57"
         }
       }
     }
@@ -1288,6 +1294,7 @@
     "beta1842-publish-e-20261102:completion:cce23a2e-dccb-45ef-8039-1ac1d26c161a": "008d938b0ba09520a77bc9baa8221116b0fff43e34073a6048ae649e24e7064e",
     "beta1842-publish-e-20261102:completion:7daedda0-8a9a-4de5-80c9-1482419caad6": "99ce5d7a517afe9c6c9754a84dd528395f238078d42f9dc801a5e649b928496e",
     "beta1842-publish-e-20261102:completion:6bfb4421-c434-43e5-96b2-b36131e366d1": "03efc6931024e1ef946e5a6ea0a38fcee27075fdc167e7992286b08221260d50",
-    "beta1842-publish-e-20261102:completion:42b10ca8-a20f-4963-b322-6a0fb1b4fd95": "54ec6132ad0ead8fb43dabef4c66ed597f11e850f5e931c8fe549e1c950c8209"
+    "beta1842-publish-e-20261102:completion:42b10ca8-a20f-4963-b322-6a0fb1b4fd95": "54ec6132ad0ead8fb43dabef4c66ed597f11e850f5e931c8fe549e1c950c8209",
+    "beta1842-publish-e-20261102:completion:30f1e2ff-bedb-49cb-9389-2bdf115e5fd9": "ecd121211faf168bce04bb7fd4b5d019df86a0303d7fc3860c34c9d65797f821"
   }
 }
