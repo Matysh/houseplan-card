@@ -256,6 +256,7 @@ export type GraphOperation =
   | { kind: 'insert-intersection'; refs: [EdgeRef, EdgeRef]; node: string; newEdgeIds: [string, string] }
   | { kind: 'create-node'; node: GraphNode }
   | { kind: 'create-edge'; edge: GraphEdge }
+  | { kind: 'retarget-edge'; edge: EdgeRef; from: string; to: string }
   | { kind: 'delete-edge'; edge: EdgeRef; removeHosts?: string[] }
   | { kind: 'replace-room-cycle'; room: string; edges: GraphRoomCycle['edges'] }
   | { kind: 'delete-face'; room: string }
@@ -438,6 +439,7 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
       case 'batch': for (const item of op.operations) apply(item); return;
       case 'create-node': addNode(op.node); return;
       case 'create-edge': addEdge(op.edge); return;
+      case 'retarget-edge': { const edge=findEdge(op.edge);findNode(op.from);findNode(op.to);edge.from=op.from;edge.to=op.to;return; }
       case 'set-dependency': findNode(op.dependency.node); setDependency(op.dependency); return;
       case 'retire-dependency': findNode(op.node); retire(op.node); return;
       case 'move-node': {
@@ -587,9 +589,10 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
       default: { const exhaustive: never = op; fail('operation', String(exhaustive)); }
     }
   };
-  apply(operation); evaluateDependencies(graph); graph = canonicalGraph(graph);
+  apply(operation); evaluateDependencies(graph); graph = freezeGraph(canonicalGraph(graph));
   const remainingHosts = hostRecords.filter(h => mapping.hosts[h.id] !== null).map(h => h.host);
-  assertGraph(graph, { ...context, projection: undefined, hosts: remainingHosts, roomIds: undefined });
+  const validatedIndex=assertGraph(graph, { ...context, projection: undefined, hosts: remainingHosts, roomIds: undefined });
+  preparedGraphs.set(graph,validatedIndex);
   const nextNodeIds=new Set(graph.nodes.map(n=>n.id)),nextEdgeKeys=new Set(graph.edges.map(edgeKey)),nextRoomIds=new Set(graph.rooms.map(r=>r.room));
   const changedNode = [...graph.nodes.filter(n => JSON.stringify(n) !== JSON.stringify(originalIndex.nodes.get(n.id))).map(n => n.id),
     ...before.nodes.filter(n=>!nextNodeIds.has(n.id)).map(n=>n.id)];
