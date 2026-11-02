@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1004,
-  "nextTicket": 76,
+  "revision": 1005,
+  "nextTicket": 77,
   "nextFence": 76,
   "tasks": {
     "1126": {
@@ -1225,6 +1225,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1215": {
+      "issue": 1215,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/restore-ship-batch-review",
+      "materialSha": "eb7d50e580475a6566799f51bed2e35ca3c6071f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 76,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793636329800,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1320,9 +1334,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1215
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:4a8fc371-5574-4836-96be-3add87d37a1f": {
+      "digest": "f05af6540113d8e4fe0e046edfcdec63eaa1cee97f05d249e3130efc45529067",
+      "issue": 1215,
+      "message": {
+        "kind": "queued",
+        "issue": 1215,
+        "at": 1793636329800,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "eb7d50e580475a6566799f51bed2e35ca3c6071f"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
     "status": "delivered",
