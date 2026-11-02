@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18,
+  "revision": 19,
   "active": "v1.84.0-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -27,7 +27,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.84.0-beta.2",
         "candidate": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
         "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
         "issues": [
@@ -677,7 +677,400 @@
           "status": "pending"
         }
       ],
-      "diagnostics": []
+      "diagnostics": [],
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.84.0-beta.2",
+          "candidate": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
+          "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+          "issues": [
+            {
+              "number": 638,
+              "commits": [
+                "5d9ca27e6dc6321bd75252347896ddea43562060"
+              ]
+            },
+            {
+              "number": 682,
+              "commits": [
+                "ecada723a7853a553ede68edb05c988ef7a652a7"
+              ]
+            },
+            {
+              "number": 1105,
+              "commits": [
+                "079590caae29042118e152df5edb368e15e098d8",
+                "7ea7b88bdb8f6b7d2d0460af11ee96aa53151ee5",
+                "84fb518aadf6c0a2f0710b4ace03cce7e2696763",
+                "97cfd359ea4094d2a21adf941e906aadf3860bb7",
+                "a52cd0f3ef08882e1bebe31d7c55f8fe784df903",
+                "b50d8805fc040a455efcf05e21e516cf3b82faca",
+                "b6cd292fbf9e802cbad23e73ab7c7b70194c940e",
+                "c321151d5095a1d61f604c9d8bc1918dcd9d4992",
+                "c73b7d9f6ea8976c9b6dae3b9a57aee1dd97422f",
+                "d85a3e4d563edb5bd1f5ea6ece1cd3d55d2204fc",
+                "e646d4c28723bb4e3159785bc2d33168255fbc4d"
+              ]
+            },
+            {
+              "number": 1128,
+              "commits": [
+                "3da8f630e25f42d43cce35deec3fd3c292c7610e"
+              ]
+            },
+            {
+              "number": 1146,
+              "commits": [
+                "1b2b50fe15c61ae8ba53f37edf3eae27d34ac29f",
+                "d75d34bf89b4a11709791b839689cf43c8c59056",
+                "dfac7a91c34277f62d9a240553f5ba785ed733b2"
+              ]
+            },
+            {
+              "number": 1147,
+              "commits": [
+                "1052c2d8bb178e60cd5c005604804831a41eb085",
+                "aa2079df7e5cb4c597fc4d30256e9e17218c8a4f",
+                "be9084bc652e49db8cddc38ce299bdfc6d15212f",
+                "c2b90b41887e3c28d3f944136d0c036cbb08ca38"
+              ]
+            },
+            {
+              "number": 1148,
+              "commits": [
+                "0887806d6a1e21b9440a3f1394ec448ab41ee893",
+                "1416ffb902e99163dbb71337048f1bf647d917a2",
+                "47c5502c3997d2cb0f66df7b113b21ed359faf80",
+                "47ff3dcf2810ba6869abef03f8a5a4367d0c36cd",
+                "52c35f10312a2edf62aa3c8d49c04ae9b8599026",
+                "725e51144fa6ad60520f04ebf6819b306cdd577b",
+                "9cef68c66d0e391427423335955eeed5480b80f8",
+                "babffd26123ed33ec2f33db353aadf341c606216",
+                "bb737889dd997e3bf2d544e71d24e55d5558ff2e",
+                "d8340bd36b069546af299c38bec98a31d8dbafe5"
+              ]
+            },
+            {
+              "number": 1149,
+              "commits": [
+                "1bc8405159c8e2f5742d4ddc065c482cd18d67ff",
+                "30bed4e3090a3911a7da9239522da11c967a821b",
+                "b3d92b7233362e7ec240b7a950e0677d4dd0d2e5"
+              ]
+            },
+            {
+              "number": 1150,
+              "commits": [
+                "06ec057cd3618d524f726f0420aa2cd9be2f4c4f",
+                "6c5c3f5665390e754f8504ae6219999a2361c07b",
+                "91e406b20319dd5b1a0e7387f1c7c1ee895b8fbf",
+                "c8ff8ace99d7e96c7dda6c826a786830b0d33f60"
+              ]
+            },
+            {
+              "number": 1153,
+              "commits": [
+                "1123084d606e51e9c063b686278d8a664edc2975",
+                "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40",
+                "9627983754445fa7c44b94bee3fe36df8a4fed34"
+              ]
+            },
+            {
+              "number": 1156,
+              "commits": [
+                "333f98685ede7f07b0df5163532f739e338dca19",
+                "de1043f3a3b45c3aa30016a7181cf227ff352713"
+              ]
+            },
+            {
+              "number": 1164,
+              "commits": [
+                "5bd7b73391143a07a3a503d9be78084c15f0b227",
+                "796ebb4039dc35eb45046c5e5c20b8fa00bec71c",
+                "84e5633aa3317f072a36c0a2d9c6a9734012c872"
+              ]
+            },
+            {
+              "number": 1166,
+              "commits": [
+                "688aaca334a257efb215138d74b8c1adf8e69d52",
+                "70b92b353a536f09bdeac1c534779efad2e844c3",
+                "90aa2a68da4cb32f41c795897095fb475e61c81e",
+                "a24893c25b505f8b09f2b5feff2ce1d6b8c2c4cb",
+                "c0fe78a76cdc68297fbbd5d6f593f2d3c4f5317e",
+                "c7af46ac7632a551eb93f7e52b4cb65a48720235"
+              ]
+            },
+            {
+              "number": 1169,
+              "commits": [
+                "37f59faef16f6efad06387486943d51202c7d57c",
+                "c84de6059b5cc6c0c34a7422e8fc1481f2d05bbd"
+              ]
+            },
+            {
+              "number": 1171,
+              "commits": [
+                "19f75084f7bfc007eec3bd47e3ab8a2b8985245a",
+                "26c78835fb1350d956a4fc80fafb87183cd5e983",
+                "5f1258a3a61187df8ffd1288c4547a0320dc0176",
+                "7dfb2d02466a8e93d6e3a65ae2cd1528def1edb3",
+                "996d209307723295c30e9b954a3c734270c43d5a",
+                "f4bb363c89fe68cf34f5d169e2e1cd46bbcb99e7"
+              ]
+            },
+            {
+              "number": 1172,
+              "commits": [
+                "ad295c9c0a7d1d511d53c5d9b4070c0ba8616920"
+              ]
+            },
+            {
+              "number": 1175,
+              "commits": [
+                "05915b336757df16c2af8f63bf535d60d53c8bf9",
+                "24ae8ff93c46d3370879530d083b5aadfa6d5189",
+                "437f17dbf6286fa85ce719984a3c8c7ab601dca9",
+                "64501c85af91f104189c21d5136bcc1106c6329d",
+                "b30d5dd63904b9ab6cb910e18d071c195fba348f"
+              ]
+            },
+            {
+              "number": 1176,
+              "commits": [
+                "231ad8ae8c93206cac279f34573b50091661713b",
+                "4a1b63ed2e1a3336fe97b0a0b2774284e31cf401",
+                "b93eb63218959f5b091aff630bf1ba6533a6d978",
+                "ce45c22f574810a9cde0467b1158affc0b03063e"
+              ]
+            },
+            {
+              "number": 1180,
+              "commits": [
+                "2cb230f04d48d9ffb4862f325641a2c16861fbba",
+                "a1684fa2b83657d42dffa20da73b55c0c904be48",
+                "fcc634d9bcaf390b8e84a1635ebfeb7c2efa4512"
+              ]
+            },
+            {
+              "number": 1181,
+              "commits": [
+                "178eb6878e3d8a9c82f888d7c490f5a1cf5de1b4",
+                "1a67c568f14591446fb7363ba9f0ca5dc0702831",
+                "ebc2ca54e62fb1e433421f75b05a267967efa523",
+                "ebf3132d45bce6876d9d9cedc55f409081763517"
+              ]
+            },
+            {
+              "number": 1182,
+              "commits": [
+                "3a6f0b3360adcbef23fcc940182135024c765cd6",
+                "4a5e7762bf653a9f93bae5bcc551acf151c309d3",
+                "740b42784ef3579f154c8488b0de257c28f68284",
+                "c77c5e4b827d7b93b1abedc93b55512e4dd56e63"
+              ]
+            },
+            {
+              "number": 1183,
+              "commits": [
+                "5249d2caea3d3d522ff030906f81f5b76084109f",
+                "5c780de2025b1c2dc01bfdca9cf6bf40520b6cf5",
+                "b7ec51fa754b36bedb55a4fbee0769103c00a9ac"
+              ]
+            },
+            {
+              "number": 1184,
+              "commits": [
+                "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
+                "4634fd74f44df8c08ae3f89bf282ae1aaf893b4f",
+                "76c0fd89c47001a24967b5314aa54e9a42cb32f3",
+                "7bc13185b6a0135979817cf3689f87754e5dc190",
+                "86e64bdbca60f303f35b20340ace208453725126",
+                "91340074ac3a4a0e35b8cc916d8112dfdaa00458",
+                "922ea77262c9b2cda39b6157928c02905a92b8da"
+              ]
+            },
+            {
+              "number": 1185,
+              "commits": [
+                "0eb815b3490142463f47a9635572a043d972856e",
+                "826ec9c730f68d69a937300f4301cb443c03c8d4",
+                "84f00b45c1a1aa1ce18d1756b2541b42ab8c32af",
+                "9aea30ef3c6323f37c4edf48bd182308a31dbff3",
+                "9bb4f4d59cadc1ebe8cb4036889ab530b638d390",
+                "f89106fcca13486b7ee0acbcd31eb5cfacfe9076"
+              ]
+            },
+            {
+              "number": 1186,
+              "commits": [
+                "bfc2d7324795183834d54794b3c103d77f100e76"
+              ]
+            },
+            {
+              "number": 1187,
+              "commits": [
+                "c0dcad875917c1b8170b4fd0a184f3ccff13e0e2",
+                "c6b1f39e6f37c73db99eec63e47dde97332b4147"
+              ]
+            },
+            {
+              "number": 1189,
+              "commits": [
+                "5cc253e20227415209b314bda63ff71f2a3a2655"
+              ]
+            },
+            {
+              "number": 1190,
+              "commits": [
+                "01d81fc7c02e496c9f15983ab7963f8d19cdd2e6",
+                "08ace28afa47b2ecd157783bf113bba9e24a33a9",
+                "47a5405d117b14e29d25f524a89c8958b29d0d55",
+                "49eea472ac609e770223ba801175801692937bbe",
+                "536ffd2c1e179e1869cca30dce9c23aaa04ac8eb"
+              ]
+            },
+            {
+              "number": 1191,
+              "commits": [
+                "2878fbb9e58205cfab88b6f315090dd98ada0573"
+              ]
+            },
+            {
+              "number": 1192,
+              "commits": [
+                "04fa2a54791def247ce19975a8f4f23218c02fe1",
+                "512c726710aeec1be0ede848aceeab7619472a01",
+                "7274a9139966cfdd1f459615110ba70544709dc7",
+                "783d427d2a571cd89a972c8cc922d52d1fdb6a6b",
+                "e567536e8ce22017eb8a156f4b5cbd3d760ea678"
+              ]
+            },
+            {
+              "number": 1193,
+              "commits": [
+                "33a9d416aa63f2589c6b8b9aac1c984f749a5eef",
+                "84dc95cf5d1c6c67c370f34b53b193459a22aaed",
+                "bcdc82d590b99b658f16056438e1e97b7f7f0c46"
+              ]
+            },
+            {
+              "number": 1194,
+              "commits": [
+                "834850f6fd599551adffbd3e00bd7a4f76cea6df"
+              ]
+            },
+            {
+              "number": 1195,
+              "commits": [
+                "7cc142bca283b8b244fdf4ea20a9fba6d982f836"
+              ]
+            },
+            {
+              "number": 1196,
+              "commits": [
+                "fe4fde1517af322b75aff1bbc2db08fd1c574ebb"
+              ]
+            },
+            {
+              "number": 1197,
+              "commits": [
+                "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
+              ]
+            },
+            {
+              "number": 1198,
+              "commits": [
+                "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5",
+                "1580240501250071feedcc3feede04a62bc5fef7",
+                "32f663809a89a28d7218f909762ff54579756e18"
+              ]
+            },
+            {
+              "number": 1199,
+              "commits": [
+                "c1ab219c12404505ebccb07bf0ddde996a9ce9fd"
+              ]
+            },
+            {
+              "number": 1200,
+              "commits": [
+                "3a5ef0524a6f12ee0382e504c84157f87db300bc"
+              ]
+            },
+            {
+              "number": 1201,
+              "commits": [
+                "bcd8773e35660bde4b207118371c19aa8a36da5e"
+              ]
+            },
+            {
+              "number": 1203,
+              "commits": [
+                "14d758f22031e74f45b60749d282523287612f23"
+              ]
+            },
+            {
+              "number": 1204,
+              "commits": [
+                "48a9358c9cf92ae387621b5637fb55440efd61fa",
+                "70dc3a9ef35f89d78633c1063a36ff984259c901"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          638,
+          682,
+          1105,
+          1128,
+          1146,
+          1147,
+          1148,
+          1149,
+          1150,
+          1153,
+          1156,
+          1164,
+          1166,
+          1169,
+          1171,
+          1172,
+          1175,
+          1176,
+          1180,
+          1181,
+          1182,
+          1183,
+          1184,
+          1185,
+          1186,
+          1187,
+          1189,
+          1190,
+          1191,
+          1192,
+          1193,
+          1194,
+          1195,
+          1196,
+          1197,
+          1198,
+          1199,
+          1200,
+          1201,
+          1203,
+          1204
+        ],
+        "version": "1.84.0-beta.2",
+        "body": "<!-- release: v1.84.0-beta.2 -->\n## Основное\n\n- Общая шапка панели и карточки: согласованные действия и перенос элементов на узких экранах.\n- При копировании пространства можно независимо выбрать мебель и декор; обе опции изначально выключены.\n- «Выбрать» подсвечивает свободные замкнутые контуры и открывает создание комнаты. «Стены» свободно рисуют внутри них.\n- Путь пылесоса сохраняет живое продолжение до фактически отображаемой шайбы при задержке и обновлении маршрута.\n- Исправлена обрисовка внутренних швов в углах стен.\n- Убран повторный расчёт отпечатка при принятии сохранённой конфигурации; механизмы сохранения и конфликтов сохранены.\n\n[Подробный список изменений](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.2/docs/CHANGELOG.ru.md)\n\n## Highlights\n\n- A shared panel and card header with consistent actions and wrapping on narrow screens.\n- Space copies can independently include furniture and decor; both choices start unchecked.\n- Select highlights free closed wall contours and opens room creation. Walls remains free to draw inside them.\n- The vacuum trail keeps its live tip attached to the displayed robot during delayed and partial route updates.\n- Internal seams at wall corners are fixed.\n- Accepted configuration writes avoid a duplicate fingerprint calculation while preserving persistence and conflict handling.\n\n[Detailed changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.2/docs/CHANGELOG.md)\n",
+        "technical": {
+          "ru": "## v1.84.0-beta.2 — 2026-11-02\n\n- Для световой Golden-сцены явно задана нативная команда Fit после готовности данных и представления; в отчёте сохраняются реальные границы камеры и маркеров без изменения содержимого. Исходный редкий CI-снимок остаётся задокументирован; поведение продукта и допуски сравнения не меняются. [#1204](https://github.com/Matysh/houseplan-card/issues/1204)\n\n- Для снимка удерживаемого SafeResize preview явно выбран существующий полный Lit renderer, как в прежнем принятом кадре. Семантические проверки сохраняют активный preview и полный набор handles; жест, сохранённая геометрия и эталоны не меняются. [#1203](https://github.com/Matysh/houseplan-card/issues/1203)\n\n- Отрицательная проверка metadata-шаблона каталога больше не создаёт ложный source input: новый browser-манифест не инвалидирует холодный адресный запуск. [#1201](https://github.com/Matysh/houseplan-card/issues/1201)\n\n- Исправлена подготовка геометрических проверок для транзитивных потребителей манифеста сборки; новый синтетический файл угла учтён с нулём конфигураций без изменения сохранённых идентичностей. Проверки независимого Select-графа сохранены, размер модуля выводится диагностически. [#1196](https://github.com/Matysh/houseplan-card/issues/1196)\n- Добавлены немецкие и французские подписи копирования мебели и декора. Оставленные Node-проверки приведены к согласованной общей шапке и текущему процессу выпуска; проверки измерений, владения стилями и поведения бандла сохранены. [#1197](https://github.com/Matysh/houseplan-card/issues/1197)\n- HA E2E сохраняет один явный loopback-порт на всю жизнь собственной лаборатории; только bind-конфликты получают ограниченный повтор, частично созданные контейнеры очищаются после проверки владения. Сохраняются origin restart/upgrade и обезличенные сведения endpoint. [#1199](https://github.com/Matysh/houseplan-card/issues/1199)\n- Подробные отчёты ревью и разделы ТЗ сворачиваются в спойлеры; русский вердикт и статус видны сразу. Подтверждён порядок публикации ревью перед итогом слияния, без дополнительных прогонов или задержки самого merge. [#1200](https://github.com/Matysh/houseplan-card/issues/1200)\n- В camera-фазе проверки жестов используется широкий desktop host с видимыми кнопками масштаба; узкая проверка границ диалога и все интерактивные assertions сохранены. [#1198](https://github.com/Matysh/houseplan-card/issues/1198)\n\n- Подготовка browser/Golden обновляет синтетическую карту иконок из текущих исходников, не захватывая локальные кадры и частные лаборатории. Отчёт съёмки записывает checksum карты; runtime продукта и визуальные эталоны не меняются. [#1193](https://github.com/Matysh/houseplan-card/issues/1193)\n\n- При сохранении убран повторный полный обход config для fingerprint принятого config/set. Каждое подтверждение по-прежнему считает свежий hash и сохраняет независимые снимки config/layout, ревизии и rollback. Сохранено адресное исследование затрат Save. [#1153](https://github.com/Matysh/houseplan-card/issues/1153)\n- Отчёт Golden отдельно записывает SHA фактически снятого кандидата и SHA запуска workflow: резервный прогон сохраняет верное происхождение без ложного отказа при принятии на том же материале. [#1191](https://github.com/Matysh/houseplan-card/issues/1191)\n- Сохранено воспроизводимое исследование Optimize preflight: сравнимые stable/current серии локализуют стоимость в общем wall boolean проходе. Старый FAIL250ms сохранён; предложены отдельные работы по UI-паузе/reuse без изменения геометрии и релизных условий. [#1172](https://github.com/Matysh/houseplan-card/issues/1172)\n\n- При копировании пространства мебель и декор выбираются отдельными галочками, по умолчанию обе сняты. Выбранные объекты сохраняют порядок и свойства с новыми ID; исходник и проверки/сохранение копии остаются прежними. Используется общий UI Kit. [#1156](https://github.com/Matysh/houseplan-card/issues/1156)\n- Путь пылесоса остаётся доведённым до видимого центра шайбы при редких позиционных событиях и полном догоняющем снимке маршрута. Наблюдённые повороты, приоритет точного пути и настоящие разрывы сохраняются; недоступный робот не оставляет активную шайбу. [#1175](https://github.com/Matysh/houseplan-card/issues/1175)\n- На соединённых углах независимых стен ненулевая вставка больше не обводится внутренними торцевыми швами. Опорные объёмы только для объединения сохраняют внешний mitre, проёмы, глубину штриховки и исходное полупрозрачное превью; сохранённая геометрия не меняется. [#1169](https://github.com/Matysh/houseplan-card/issues/1169)\n- Служебные сообщения процесса сохраняют историю раундов ревью и исправлений, объясняют фактические переходы статусов и дополняются при восстановлении после сбоя без перезаписи прошлых записей. Повтор доставки не создаёт второй комментарий. [#1190](https://github.com/Matysh/houseplan-card/issues/1190)\n\n- На экранах без наведения служебная ссылка зоны у названия комнаты больше не перекрывает лестницы и не мешает панорамированию. Переход с мышью и клавиатурой сохранён. [#1128](https://github.com/Matysh/houseplan-card/issues/1128)\n\n- `finish` сразу распознаёт завершение задачи серверным координатором при гонке допуска к очереди и сообщает об успехе; настоящая потеря допуска остаётся видимой. [#1187](https://github.com/Matysh/houseplan-card/issues/1187)\n- Панель и Lovelace используют единую адаптивную шапку с прямыми действиями и кнопкой выхода 44px. Названия карточек и размеры контейнера сохранены. Старые hooks телефонной шестерёнки header-menu/header-menu-item/header-menu-scrim удалены; используйте hooks прямых действий. [#1184](https://github.com/Matysh/houseplan-card/issues/1184)\n\n- Процесс скачивает ZIP отчётов ревью и резервного S6 с подходящим GitHub REST media type; скачивание release assets сохраняет бинарный media type. Готовое ревью продолжается без повторного вызова модели. [#1186](https://github.com/Matysh/houseplan-card/issues/1186)\n- «Выбрать» подсвечивает свободные замкнутые области стен как комнаты в Просмотре и открывает создание комнаты по клику. «Стены» свободно рисуют внутри готовых контуров; приоритет объектов, сохранение и история комнат сохраняются. [#1176](https://github.com/Matysh/houseplan-card/issues/1176)",
+          "en": "## v1.84.0-beta.2 — 2026-11-02\n\n- Give the lighting Golden scene an explicit native Fit camera intent after data and presentation settle, recording actual camera and marker bounds while preserving content. The original intermittent CI snapshot remains documented; no product behavior or comparison tolerance changes. [#1204](https://github.com/Matysh/houseplan-card/issues/1204)\n\n- Select the existing full Lit capture owner for the still-held SafeResize preview, matching the prior accepted frame. Semantic checks retain the live preview and complete handles; no gesture, saved geometry or visual baseline is changed. [#1203](https://github.com/Matysh/houseplan-card/issues/1203)\n\n- Keep the catalog's negative metadata pattern assertion out of executable source inputs, so a newly generated browser manifest cannot invalidate a cold addressed run. [#1201](https://github.com/Matysh/houseplan-card/issues/1201)\n\n- Restore geometry-check preparation for transitive built-manifest readers and inventory the new zero-config synthetic corner fixture without changing saved identities. Keep Select-only graph assertions while reporting module size diagnostically. [#1196](https://github.com/Matysh/houseplan-card/issues/1196)\n- Complete the German and French Copy furniture/decor labels. Retained Node checks follow the approved shared header and current release process while preserving measurement, stylesheet ownership and bundle behavior checks. [#1197](https://github.com/Matysh/houseplan-card/issues/1197)\n- Keep one explicit loopback port throughout an owned HA E2E lab, retry only bounded bind collisions, and verify ownership before cleaning partial starts. Preserve restart/upgrade origins and save sanitized endpoint evidence. [#1199](https://github.com/Matysh/houseplan-card/issues/1199)\n- Collapse detailed reviews and specification sections while keeping the Russian verdict and status visible. Confirm review-before-merge-comment ordering without extra checks or delaying the merge itself. [#1200](https://github.com/Matysh/houseplan-card/issues/1200)\n- Use a wide desktop host for canvas gesture camera buttons while retaining the narrow dialog-clamp case and all interaction assertions. [#1198](https://github.com/Matysh/houseplan-card/issues/1198)\n\n- Refresh the synthetic browser/Golden icon fixture from current sources during asset preparation, excluding local capture/private output. Capture provenance records the icon-map checksum; product runtime and visual baselines are unchanged. [#1193](https://github.com/Matysh/houseplan-card/issues/1193)\n\n- Save avoids a duplicate full-config fingerprint walk when caching an accepted config/set response. Every acceptance still computes a fresh hash and retains isolated config/layout snapshots, revisions and rollback behavior. Bounded Save profiling and comparison are recorded for #1153. [#1153](https://github.com/Matysh/houseplan-card/issues/1153)\n- Golden capture records the checked-out candidate SHA independently of the workflow event SHA, so fallback reports identify the material correctly while preserving CI provenance and the acceptance checks. [#1191](https://github.com/Matysh/houseplan-card/issues/1191)\n- Document reproducible Optimize preflight research: pinned stable/current raw series locate the cost in the shared wall boolean pass; retain the old 250 ms failure and propose separate UI-blocking/reuse work without changing geometry or release gates. [#1172](https://github.com/Matysh/houseplan-card/issues/1172)\n\n- Copy space offers independent furniture and decor checkboxes, both initially off, using the existing UI Kit. Selected objects keep their order and fields with new IDs; the source and copy validation/write lifecycle are preserved. [#1156](https://github.com/Matysh/houseplan-card/issues/1156)\n- Keep the vacuum path connected to the actually animated puck across sparse telemetry and full native path catch-up; preserve observed turns, native authority and real context/teleport gaps. Unavailable robots retire stale active pucks. [#1175](https://github.com/Matysh/houseplan-card/issues/1175)\n- Connected independent wall corners no longer paint the positive-area join insert as internal cap seams. Union-only full-cap supports preserve the external mitre, openings, hatch depth and raw translucent drawing preview; no saved geometry changes. [#1169](https://github.com/Matysh/houseplan-card/issues/1169)\n- Preserve review rounds and correction history in process comments, explain actual status transitions, and append recovery updates without rewriting past events. Repeated delivery does not create another comment. [#1190](https://github.com/Matysh/houseplan-card/issues/1190)\n\n- Keep the room Area administration shortcut out of the touch hit plane on screens without hover, preserving stairs, pan and intentional mouse/keyboard navigation. [#1128](https://github.com/Matysh/houseplan-card/issues/1128)\n\n- `finish` recognizes a task already merged by the server coordinator after a queue admission race, reports successful completion immediately, and preserves real admission-loss diagnostics. [#1187](https://github.com/Matysh/houseplan-card/issues/1187)\n- Panel and Lovelace share the adaptive outlined header, direct actions and 44px editor close. Preserve card titles and container sizing. The old phone gear hooks header-menu/header-menu-item/header-menu-scrim are retired; use the direct action hooks. [#1184](https://github.com/Matysh/houseplan-card/issues/1184)\n\n- The process reads Actions review/fallback ZIPs with the REST media type expected by GitHub; release asset downloads retain their binary media type. Existing review results resume without another model call. [#1186](https://github.com/Matysh/houseplan-card/issues/1186)\n- Select highlights free closed wall regions using View hover styling and opens room creation on click. Walls draws freely inside existing contours; object selection, room persistence and history keep their existing owners. [#1176](https://github.com/Matysh/houseplan-card/issues/1176)"
+        },
+        "userChangelog": null
+      }
     }
   },
   "published": {
@@ -714,6 +1107,7 @@
     "beta1842-fixes-e-20261102": "8b01d1a83cc165da019fd4cb3549c0e71e3fc3948173aa5c5173aa1ff3c32798",
     "beta1842-run-e-20261102": "2932bc9f89cac6ae34bdb31914478b1071594d6c684b299628a58bdbe9ba15fa",
     "beta1842-publish-e-20261102:runner-report": "395a189da9611b9e0e287b316869d4336f3dec72c0e87d0ca893e27b965df1af",
-    "beta1842-publish-e-20261102:metrics": "59bd4fdadf2b0d83f974ba49e4594c359631f0e537af8065d5f11d009c50c568"
+    "beta1842-publish-e-20261102:metrics": "59bd4fdadf2b0d83f974ba49e4594c359631f0e537af8065d5f11d009c50c568",
+    "beta1842-publish-e-20261102:prepared:772285dc-43ea-4f1e-8992-d391e0c8ba6f": "f7bb529c4bd16bed00572bc31e420296449b9a580d491b90ecd24558bf86a4ff"
   }
 }
