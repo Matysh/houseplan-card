@@ -18,7 +18,18 @@ from custom_components.houseplan.wall_node_delete import (
     node_delete_host_baseline,
     prepare_node_delete,
 )
-from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+from custom_components.houseplan.wall_segment_model import (
+    commit_wall_segment_model, decode_legacy_wall_segment_model,
+)
+from custom_components.houseplan.graph_write import normalize_graph_config
+from custom_components.houseplan.plan_graph_exact import GraphError, decode_point, read_source_point
+
+def graph_intent(config, point):
+    space = config["spaces"][0]
+    node = next(n["id"] for n in space["plan_graph"]["nodes"]
+                if decode_point(n["p"]) == read_source_point(point))
+    return {"point": point, "node_id": node}
+
 
 CASES = json.loads((Path(__file__).parents[1] / "test/fixtures/1045-wall-node-delete.json").read_text())
 
@@ -66,7 +77,8 @@ def fixture():
 
 
 def test_issue_1045_inverse_host_ledger_and_redo_preserve_exact_document():
-    before, intent = fixture(), {"point": [1, 0]}
+    before = fixture()
+    intent = graph_intent(before, [1, 0])
     frozen = copy.deepcopy(before)
     after = node_delete_candidate(before, "f", intent)
     assert CONFIG_SCHEMA(after) == after
@@ -77,16 +89,19 @@ def test_issue_1045_inverse_host_ledger_and_redo_preserve_exact_document():
     validate_partition_opening_hosts(restored, node_delete_host_baseline(after, restored, "f", intent, "undo", before["spaces"][0]))
     assert node_delete_candidate(restored, "f", intent) == after
     assert before == frozen
-    for mutate in [
-        lambda space: space.update(future={"forged": True}),
-        lambda space: space["partitions"][0].update(a=[-.25, 0]),
-        lambda space: space["openings"][0].update(length=.3),
-        lambda space: space["openings"][0].update(host={"kind": "partition", "id": "foreign", "t": .5}),
+    for mutate, error, reason in [
+        (lambda space: space.update(future={"forged": True}), NodeDeleteError, None),
+        (lambda space: space["partitions"][0].update(a=[-.25, 0]), GraphError, "projection_mismatch"),
+        (lambda space: space["openings"][0].update(length=.3), NodeDeleteError, None),
+        (lambda space: space["openings"][0].update(host={"kind": "partition", "id": "foreign", "t": .5}),
+         GraphError, "opening_host_missing"),
     ]:
         forged = copy.deepcopy(before["spaces"][0])
         mutate(forged)
-        with pytest.raises(NodeDeleteError):
+        with pytest.raises(error) as rejected:
             node_delete_candidate(after, "f", intent, "undo", forged)
+        if reason:
+            assert rejected.value.reason == reason
     malicious = copy.deepcopy(after)
     malicious["spaces"][0]["openings"][0]["host"]["id"] = "foreign"
     with pytest.raises(NodeDeleteError):
@@ -107,11 +122,12 @@ def test_issue_1045_room_corner_and_shared_ownership_inverse():
     ]:
         before = commit_wall_segment_model({"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 2, 2],
             "rooms": rooms}], "markers": [], "settings": {}})[0]
-        after = node_delete_candidate(before, "f", {"point": [1, 0]})
+        operation = graph_intent(before, [1, 0])
+        after = node_delete_candidate(before, "f", operation)
         assert CONFIG_SCHEMA(after) == after
         validate_junction_limits(after, before)
         assert len(after["spaces"][0]["wall_segments"]) == len(before["spaces"][0]["wall_segments"]) - 1
-        assert node_delete_candidate(after, "f", {"point": [1, 0]}, "undo", before["spaces"][0]) == before
+        assert node_delete_candidate(after, "f", operation, "undo", before["spaces"][0]) == before
         for old, new in zip(before["spaces"][0]["rooms"], after["spaces"][0]["rooms"], strict=True):
             assert len(new["poly"]) == len(old["poly"]) - 1
             assert [1, 0] not in new["poly"]
@@ -151,9 +167,17 @@ def test_issue_1075_current_target_proof_never_materializes_an_unchanged_other_f
 def test_issue_1075_legacy_basis_still_materializes_the_full_document(monkeypatch):
     from custom_components.houseplan import wall_node_delete as kernel
 
-    current = fixture()
+    # A genuine legacy document has no graph, not a current graph with a forged
+    # version label. Historical decoder makes the fixture explicit.
+    current = decode_legacy_wall_segment_model({"model_version": 7, "spaces": [{
+        "id": "f", "title": "Floor", "view_box": [0, 0, 2, 1], "rooms": [],
+        "partitions": [{"id": "a", "a": [0, 0], "b": [1, 0], "cm": 15},
+                       {"id": "b", "a": [1, 0], "b": [2, 0], "cm": 15}],
+    }, {"id": "legacy-other", "title": "Other", "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "r", "poly": [[0, 0], [1, 0], [0, 1]]}]}],
+        "markers": [], "settings": {}})[0]
     current["model_version"] = 7
-    current["spaces"].append({"id": "legacy-other", "rooms": [{"id": "r", "poly": [[0, 0], [1, 0], [0, 1]]}]})
+    frozen = copy.deepcopy(current)
     calls = []
     commit = kernel.commit_wall_segment_model
 
@@ -162,7 +186,11 @@ def test_issue_1075_legacy_basis_still_materializes_the_full_document(monkeypatc
         return commit(config, **kwargs)
 
     monkeypatch.setattr(kernel, "commit_wall_segment_model", observe)
-    prepared = prepare_node_delete(current, "f", {"point": [1, 0]})
+    baseline = normalize_graph_config(current)
+    operation = graph_intent(baseline, [1, 0])
+    prepared = prepare_node_delete(current, "f", operation)
     assert calls[0] == ["f", "legacy-other"]
-    assert prepared.candidate["model_version"] == 10
-    assert prepared.candidate["spaces"][1]["wall_segments"]
+    assert prepared.candidate["model_version"] == 11
+    assert all(space["plan_graph"] for space in prepared.candidate["spaces"])
+    assert prepared.candidate["spaces"][1] == baseline["spaces"][1]
+    assert current == frozen

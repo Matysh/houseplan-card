@@ -123,20 +123,6 @@ def validate_graph(graph: Any, context: dict | None = None) -> GraphIndex:
         raise GraphError("edge_count_limit", code="plan_graph_resource_limit")
     if list(edges) != sorted(edges):
         raise GraphError("noncanonical_edge_order")
-    # Only strict interior/interior crossings require a shared graph node.
-    # Coincident detached endpoints/Ts deliberately keep independent IDs.
-    from .plan_graph_spatial import SegmentTree
-    segments = [{"a": points[e["from"]], "b": points[e["to"]], "key": key} for key, e in edges.items()]
-    tree = SegmentTree(segments) if segments else None
-    for segment in segments:
-        a, b = segment["a"], segment["b"]
-        lo, hi = ExactPoint(min(a.x, b.x), min(a.y, b.y)), ExactPoint(max(a.x, b.x), max(a.y, b.y))
-        for other in tree.query(lo, hi):
-            if other["key"] <= segment["key"]:
-                continue
-            hit = intersection(a, b, other["a"], other["b"])
-            if hit and 0 < hit[1] < 1 and 0 < hit[2] < 1:
-                raise GraphError("unsplit_proper_crossing")
     rooms: dict[str, list[dict]] = {}
     uses: dict[tuple[str, str], set[str]] = {}
     allowed_rooms = context.get("room_ids")
@@ -181,6 +167,20 @@ def validate_graph(graph: Any, context: dict | None = None) -> GraphIndex:
         rooms[rid] = cycle
     if list(rooms) != sorted(rooms):
         raise GraphError("noncanonical_room_order")
+    # Only strict interior/interior crossings require a shared graph node.
+    # Coincident detached endpoints/Ts deliberately keep independent IDs.
+    from .plan_graph_spatial import SegmentTree
+    segments = [{"a": points[e["from"]], "b": points[e["to"]], "key": key} for key, e in edges.items()]
+    tree = SegmentTree(segments) if segments else None
+    for segment in segments:
+        a, b = segment["a"], segment["b"]
+        lo, hi = ExactPoint(min(a.x, b.x), min(a.y, b.y)), ExactPoint(max(a.x, b.x), max(a.y, b.y))
+        for other in tree.query(lo, hi):
+            if other["key"] <= segment["key"]:
+                continue
+            hit = intersection(a, b, other["a"], other["b"])
+            if hit and 0 < hit[1] < 1 and 0 < hit[2] < 1:
+                raise GraphError("unsplit_proper_crossing")
     dependencies = {}
     for dependency in graph["dependencies"]:
         _record(dependency, {"node", "kind", "refs", "parameters"})

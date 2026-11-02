@@ -69,12 +69,12 @@ async def replay_pair(hass, connection, msg, rt, receipt):
         "config_rev": int(pair.config_data.get("rev", 0)), "layout_rev": int(pair.layout_data.get("rev", 0))})
 
 
-async def commit_history_pair(rt, session, pending, rollback):
+async def commit_history_pair(rt, session, pending, rollback, *, authorize=None):
     from . import websocket_api as ws
     previous = rt.marker_history_owner
     rt.marker_history_owner = session
     try:
-        await ws._commit_pair(rt, pending, rollback)
+        await ws._commit_pair(rt, pending, rollback, authorize=authorize)
     finally:
         rt.marker_history_owner = previous
 
@@ -167,7 +167,8 @@ async def ws_marker_history(hass, connection, msg):
             await commit_history_pair(rt, session, {"kind": "marker_history", "config": target, "layout": positions,
                                       "config_rev": cr + 1, "layout_rev": lr + 1, "final_metadata": final},
                                   {"kind": "marker_history_rollback", "config": previous, "layout": layout,
-                                   "config_rev": cr, "layout_rev": lr, "final_metadata": original})
+                                   "config_rev": cr, "layout_rev": lr, "final_metadata": original},
+                                  authorize=ws._write_authority(hass, connection))
             command.after = forward
             if msg["action"] == "delete":
                 service.accept_create(session, msg.get("retained_tokens"), token, command)
@@ -178,6 +179,9 @@ async def ws_marker_history(hass, connection, msg):
             service.receipt(session, msg["operation_id"], request_payload(msg), result)
             # Runtime trails never form part of a reversible configuration delta.
             await ws._purge_trail_recorder(hass, target)
+    except ws.ImportFailure as error:
+        ws._send_import_error(connection, msg["id"], error)
+        return
     except HistoryError as error:
         connection.send_error(msg["id"], error.code, "Device history is no longer applicable")
         return

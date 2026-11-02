@@ -2,11 +2,23 @@
 from __future__ import annotations
 
 import copy
+import json
 from typing import Any
 
 from .plan_graph import apply_graph_patch, project_graph_space, verify_projection
 from .plan_graph_exact import GraphError
 from .plan_graph_migration import migrate_graph_space
+
+MAX_GRAPH_CONFIG_BYTES = 16 * 1024 * 1024
+
+
+def check_graph_config_size(config):
+    try:
+        size = len(json.dumps(config, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8"))
+    except (ValueError, TypeError, RecursionError) as error:
+        raise GraphError("invalid_graph_document") from error
+    if size > MAX_GRAPH_CONFIG_BYTES:
+        raise GraphError("graph_document_limit", code="plan_graph_resource_limit")
 
 
 def structural_projection(config):
@@ -27,6 +39,8 @@ def structural_projection(config):
 
 def preserve_legacy_structure(checked, source):
     """An unrelated edit cannot trigger the old lattice snap before migration."""
+    if structural_projection(checked) == structural_projection(source):
+        return checked
     originals = {space["id"]: space for space in source.get("spaces", [])}
     for space in checked.get("spaces", []):
         raw = originals[space["id"]]
@@ -48,12 +62,15 @@ def preserve_legacy_structure(checked, source):
 
 def normalize_graph_config(config: dict) -> dict:
     """Detached legacy decode+normalization; never current projection recovery."""
+    check_graph_config_size(config)
     out = copy.deepcopy(config)
     model = int(out.get("model_version", 0) or 0)
     if model > 11:
         raise GraphError("unsupported_plan_model")
     if model == 11:
         for space in out.get("spaces", []):
+            if space.get("room_drafts") == []:
+                space.pop("room_drafts")
             verify_projection(space)
         return out
     from .wall_segment_model import _migrate_room_drafts_to_partitions
@@ -66,6 +83,7 @@ def normalize_graph_config(config: dict) -> dict:
         converted.append(result["space"])
     out["spaces"] = converted
     out["model_version"] = 11
+    check_graph_config_size(out)
     return out
 
 
@@ -76,6 +94,10 @@ async def prepare_graph_pair(runtime, pending, rollback):
     config_data = await runtime.config_store.async_load() or {}
     layout_data = await runtime.store.async_load() or {}
     previous = config_data.get("config") or {}
+    # A failed first migration restores the actual logical source, not an
+    # already snapped projection that a legacy caller used for its rollback.
+    rollback["config"] = copy.deepcopy(previous)
+    rollback["layout"] = copy.deepcopy(layout_data.get("layout", {}))
     candidate = pending["config"]
     current_model = int(previous.get("model_version", 0) or 0)
     target_model = int(candidate.get("model_version", 0) or 0)
@@ -102,7 +124,7 @@ async def prepare_graph_pair(runtime, pending, rollback):
         metadata[PASSPORT_KEY] = {"version": 1, "source_sha256": reference["sha256"], "source_model": current_model, "target_model": 11}
 
 
-def prepare_graph_candidate(candidate: dict, previous: dict | None, change: Any = None, *, force=False) -> dict:
+def prepare_graph_candidate(candidate: dict, previous: dict | None, change: Any = None, *, force=False, schema_will_validate=False) -> dict:
     """Apply a first-write ID delta to the independently normalized source.
 
     ``base`` is diagnostic input, never authority. It cannot overwrite a
@@ -113,13 +135,13 @@ def prepare_graph_candidate(candidate: dict, previous: dict | None, change: Any 
     if old_model >= 11:
         if new_model != 11 or change is not None:
             raise GraphError("stale_plan_graph_writer", code="wall_model_client_outdated")
-        return normalize_graph_config(candidate)
+        return candidate if schema_will_validate else normalize_graph_config(candidate)
     if new_model < 11:
         if change is not None:
             raise GraphError("graph_change_without_current_model")
         if force or structural_projection(candidate) != structural_projection(previous):
             return normalize_graph_config(candidate)
-        return copy.deepcopy(candidate)
+        return candidate if schema_will_validate else copy.deepcopy(candidate)
     if new_model != 11:
         raise GraphError("unsupported_plan_model")
     # No stored source (bootstrap) has no migration delta to rebase.
@@ -146,4 +168,5 @@ def prepare_graph_candidate(candidate: dict, previous: dict | None, change: Any 
         out["spaces"][index] = project_graph_space(space, result["graph"])["space"]
     if set(patches) - {s["id"] for s in out.get("spaces", [])}:
         raise GraphError("graph_change_deleted_space")
+    check_graph_config_size(out)
     return out

@@ -65,7 +65,7 @@ async def test_issue_1045_ws_atomic_concurrency_inverse_store_and_reload(hass, h
     assert after["spaces"][0]["partitions"][0]["a"] == [0, 0]
     assert after["spaces"][0]["partitions"][0]["b"] == [2, 0]
     assert after["spaces"][0]["openings"][0] == {**snapshot["config"]["spaces"][0]["openings"][0],
-        "host": {"kind": "partition", "id": "a", "t": .75}}
+        "host": {"kind": "partition", "id": "a", "t": .75, "tq": ["3", "4"]}}
     assert after["spaces"][0]["future"] == snapshot["config"]["spaces"][0]["future"]
     assert (await runtime.config_store.async_load())["config"] == after
     assert (await runtime.store.async_load())["layout"] == unrelated_layout
@@ -106,7 +106,7 @@ async def test_issue_1045_accepted_delete_export_import_roundtrip(
     after = deleted["result"]
     source_space = copy.deepcopy(after["config"]["spaces"][0])
     assert len(source_space["partitions"]) == 1
-    assert source_space["openings"][0]["host"] == {"kind": "partition", "id": "a", "t": .75}
+    assert source_space["openings"][0]["host"] == {"kind": "partition", "id": "a", "t": .75, "tq": ["3", "4"]}
 
     # The public export endpoint reads the accepted server-owned store pair.
     await client.send_json_auto_id({
@@ -160,7 +160,7 @@ async def test_issue_1045_accepted_delete_export_import_roundtrip(
     assert {key: value for key, value in opening.items() if key not in {"id", "host"}} == {
         key: value for key, value in source_space["openings"][0].items() if key not in {"id", "host"}
     }
-    assert opening["host"] == {"kind": "partition", "id": imported["partitions"][0]["id"], "t": .75}
+    assert opening["host"] == {"kind": "partition", "id": imported["partitions"][0]["id"], "t": .75, "tq": ["3", "4"]}
     assert imported["rooms"] == source_space["rooms"]
     assert imported["future"] == source_space["future"]
 
@@ -226,7 +226,11 @@ async def test_issue_1045_ws_negative_input_never_advances_storage_or_revision(h
     await client.send_json_auto_id(message(snapshot, **bad))
     answer = await client.receive_json()
     assert not answer["success"], answer
-    assert answer["error"]["code"] in {"node_delete_unsafe", "node_delete_degree", "conflict", "invalid_format"}
+    point = bad.get("intent", {}).get("point", [])
+    if point and (type(point[0]) is bool or abs(point[0]) > 5000):
+        assert answer["error"]["code"] == "invalid_plan_graph"
+    else:
+        assert answer["error"]["code"] in {"node_delete_unsafe", "node_delete_degree", "conflict", "invalid_format"}
     assert await get_data(hass).config_store.async_load() == frozen
 
 
@@ -246,7 +250,8 @@ async def test_issue_1045_ws_forged_inverse_cannot_modify_foreign_data(hass, has
         before["openings"][0]["length"] = .4
     await client.send_json_auto_id(message(accepted["result"], direction="undo", before_space=before))
     refused = await client.receive_json()
-    assert not refused["success"] and refused["error"]["code"] == "node_delete_unsafe", refused
+    assert not refused["success"], refused
+    assert refused["error"]["code"] == ("plan_graph_projection_mismatch" if field == "endpoint" else "node_delete_unsafe"), refused
     assert await get_data(hass).config_store.async_load() == frozen
 
 

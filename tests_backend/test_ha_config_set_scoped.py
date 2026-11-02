@@ -110,6 +110,14 @@ def large_house() -> dict:
 
 def _thicken(space: dict, cm: float = 15) -> None:
     """A wall edit as a v10 client sends it: the segment and its projection."""
+    if "plan_graph" in space:
+        from custom_components.houseplan.plan_graph import project_graph_space
+        graph = copy.deepcopy(space["plan_graph"])
+        next(edge for edge in graph["edges"] if edge["kind"] == "wall")["cm"] = cm
+        projected = project_graph_space(space, graph)["space"]
+        space.clear()
+        space.update(projected)
+        return
     segment = space["wall_segments"][0]
     segment["cm"] = cm
     space["walls"] = [{"key": "w-1096", "a": list(segment["a"]), "b": list(segment["b"]), "cm": cm}]
@@ -163,7 +171,7 @@ class Counters:
 
 def _all_floors(doc: dict) -> tuple[int, int, int]:
     spaces = doc["spaces"]
-    return len(spaces), sum(len(space["rooms"]) for space in spaces), len(spaces)
+    return len(spaces), sum(len(space["rooms"]) for space in spaces if "plan_graph" not in space), len(spaces)
 
 
 # ---------- WS helpers ----------
@@ -251,6 +259,12 @@ def test_issue_1096_scoped_candidate_equals_config_schema(stored_house, name):
     candidate = _corpus(stored_house)[name]
     scope = v.ordinary_write_scope(candidate, stored_house)
     assert (scope.touched_spaces, scope.touched_markers, scope.full_reason) == EXPECTED_SCOPE[name]
+    if name == "model-version":
+        with pytest.raises(vol.Invalid, match="unsupported plan model version"):
+            v.CONFIG_SCHEMA(copy.deepcopy(candidate))
+        with pytest.raises(vol.Invalid, match="unsupported plan model version"):
+            v.validate_scoped_candidate(candidate, stored_house, scope)
+        return
     expected = v.CONFIG_SCHEMA(copy.deepcopy(candidate))
     assert v.validate_scoped_candidate(candidate, stored_house, scope) == expected
     if name == "led-link-across-spaces":
@@ -357,7 +371,7 @@ async def test_issue_1096_ordinary_write_judges_touched_floors_only(hass, hass_w
     rt = get_data(hass)
     client = await hass_ws_client(hass)
     source = house()
-    everything = _all_floors(source)  # (3 spaces, 7 rooms, 3 spaces)
+    everything = _all_floors(source)  # (3 schema spaces, zero legacy lattice loops, 3 junction spaces)
 
     async def write(mutate, *, expect=None, success=True):
         """One ordinary write of the stored document with `mutate` applied."""
@@ -381,8 +395,8 @@ async def test_issue_1096_ordinary_write_judges_touched_floors_only(hass, hass_w
     # Stamped: settings-only touches no space; floor b (2 rooms) only itself.
     await write(lambda c: c["settings"].update(show_room_tooltip=True), expect=(0, 0, 0))
     await write(lambda c: c["spaces"][1].update(decor=[
-        {"id": "d1", "kind": "line", "x1": 0.1, "y1": 0.1, "x2": 0.9, "y2": 0.9}]), expect=(1, ROOMS["b"], 1))
-    await write(lambda c: _thicken(c["spaces"][1]), expect=(1, ROOMS["b"], 1))
+        {"id": "d1", "kind": "line", "x1": 0.1, "y1": 0.1, "x2": 0.9, "y2": 0.9}]), expect=(1, 0, 1))
+    await write(lambda c: _thicken(c["spaces"][1]), expect=(1, 0, 1))
     await write(lambda c: c["markers"][0].update(name="Renamed"), expect=(0, 0, 0))
     # The counts the scoped write cached for untouched floors are the full recount.
     stored = (await _stored(client))["config"]
@@ -392,8 +406,8 @@ async def test_issue_1096_ordinary_write_judges_touched_floors_only(hass, hass_w
     await write(lambda c: c["settings"].update(bg_mode="daynight"), expect=everything)
     # A client that does not send model_version (hydrated by the transition
     # guard) differs from the stored document: every floor, at least once.
-    await write(lambda c: c.pop("model_version"))
-    assert all(got >= want for got, want in zip(counters.floors(), everything, strict=True)), counters.floors()
+    await write(lambda c: c.pop("model_version"), success=False)
+    assert counters.floors() == (0, 0, 0), "stale graph writer fails before a schema pass"
     assert (await _stored(client))["config"]["model_version"] == source["model_version"]
     await write(lambda c: c["settings"].update(show_room_tooltip=False), expect=(0, 0, 0))
 
@@ -415,7 +429,7 @@ async def test_issue_1096_ordinary_write_judges_touched_floors_only(hass, hass_w
     assert rt.schema_clean_rev is None
     # ... and the junction baseline (#330): the stored document is re-judged
     # once (3) before the candidate (3), exactly as before this change.
-    await write(lambda c: c["settings"].update(show_room_tooltip=True), expect=(3, 7, 6))
+    await write(lambda c: c["settings"].update(show_room_tooltip=True), expect=(3, 0, 6))
     await write(lambda c: c["settings"].update(show_room_tooltip=False), expect=(0, 0, 0))
 
     # A refused write (conflict, invalid) leaves the stamp as it was.

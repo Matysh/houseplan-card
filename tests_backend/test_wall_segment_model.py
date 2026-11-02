@@ -1,4 +1,4 @@
-"""Stored wall identity and frontend/backend migration parity (#282)."""
+"""Historical v10 decoder parity; current authority is in test_plan_graph*."""
 from __future__ import annotations
 
 import copy
@@ -16,9 +16,9 @@ from custom_components.houseplan.validation import (
     validate_wall_model_transition,
 )
 from custom_components.houseplan.wall_segment_model import (
-    WALL_SEGMENT_MODEL_VERSION,
+    LEGACY_WALL_SEGMENT_MODEL_VERSION as WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
-    commit_wall_segment_model,
+    decode_legacy_wall_segment_model as commit_wall_segment_model,
     deterministic_wall_segment_id,
 )
 

@@ -333,7 +333,8 @@ def validate_wall_model_transition(
         from .plan_graph_exact import GraphError
         try:
             for space in config.get("spaces", []):
-                verify_projection(space)
+                if touched is None or space.get("id") in touched:
+                    verify_projection(space)
         except GraphError as error:
             raise WallModelClientOutdatedError(error.reason) from error
         return
@@ -893,6 +894,11 @@ def validate_partition_opening_hosts(
     for space in config.get("spaces") or []:
         space_id = str(space.get("id", ""))
         old_space = old_spaces.get(space_id)
+        if ("plan_graph" in space and old_space is not None
+                and space["plan_graph"] == old_space.get("plan_graph")
+                and space.get("openings", []) == old_space.get("openings", [])
+                and space.get("cell_cm", 5) == old_space.get("cell_cm", 5)):
+            continue
         old_openings = {
             str(opening.get("id")): opening
             for opening in (old_space or {}).get("openings") or []
@@ -908,6 +914,12 @@ def validate_partition_opening_hosts(
         walls = {str(wall.get("id")): wall for wall in space.get("wall_segments") or []}
         room_wall_ids = {wall_id for room in space.get("rooms") or []
                          for wall_id in room.get("wall_ids") or []}
+        continuity = old_continuity = None
+        if "plan_graph" in space:
+            from .graph_host_continuity import GraphHostContinuity
+            continuity = GraphHostContinuity(space)
+            if old_space and "plan_graph" in old_space:
+                old_continuity = GraphHostContinuity(old_space)
         for opening in space.get("openings") or []:
             opening_id = str(opening.get("id", ""))
             old = old_openings.get(opening_id)
@@ -968,11 +980,20 @@ def validate_partition_opening_hosts(
             ax, ay = partition["a"]
             bx, by = partition["b"]
             span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+            along = float(host["t"]) * span
+            if continuity is not None:
+                run = _graph_host_interval(continuity, host)
+                if run is not None:
+                    _identity, span, along = run
             old_span = None
             if old_partition is not None:
                 old_ax, old_ay = old_partition["a"]
                 old_bx, old_by = old_partition["b"]
                 old_span = ((old_bx - old_ax) ** 2 + (old_by - old_ay) ** 2) ** 0.5
+                if old_continuity is not None:
+                    old_run = _graph_host_interval(old_continuity, old_host)
+                    if old_run is not None:
+                        old_span = old_run[1]
             strict = (
                 old is None
                 or old_host is None
@@ -988,7 +1009,6 @@ def validate_partition_opening_hosts(
             cell_cm = float(space.get("cell_cm", 5))
             margin_cm = float(partition["cm"]) / 2
             margin = margin_cm / cell_cm / NORMALIZED_CANVAS_CELLS
-            along = float(host["t"]) * span
             half = float(opening["length"]) / 2
             if (along - half < margin - 1e-9
                     or along + half > span - margin + 1e-9):
@@ -2064,17 +2084,27 @@ def wall_opening_host_fault(
     )
 
 
+def _graph_host_interval(continuity, host):
+    from .plan_graph_exact import GraphError
+    try:
+        return continuity.interval(host)
+    except GraphError as error:
+        raise vol.Invalid(error.reason) from error
+
+
 def _space_geometry_invariants(value: dict) -> dict:
     """All stored geometry shares ids; draft segments also have a space cap."""
-    seen: set[str] = set()
+    seen: set = set()
+    graph_owned = "plan_graph" in value
     for key in ("rooms", "openings", "decor", "stairs", "room_drafts", "partitions", "wall_columns", "wall_segments"):
         for item in value.get(key, []):
             item_id = item.get("id")
             if not item_id:
                 continue
-            if item_id in seen:
+            identity = (key, item_id) if graph_owned and key in {"partitions", "wall_segments"} else item_id
+            if identity in seen:
                 raise vol.Invalid("geometry object ids must be unique within a space")
-            seen.add(item_id)
+            seen.add(identity)
     draft_segments = sum(
         len(item.get("segments", [])) for item in value.get("room_drafts", [])
     )
@@ -2091,16 +2121,32 @@ def _space_geometry_invariants(value: dict) -> dict:
     partitions = {
         item.get("id"): item for item in value.get("partitions", []) if item.get("id")
     }
-    hosted_intervals: dict[str, list[tuple[float, float]]] = {}
+    hosted_intervals: dict = {}
+    continuity = None
+    if graph_owned:
+        from .graph_host_continuity import GraphHostContinuity
+        from .plan_graph_exact import GraphError
+        try:
+            continuity = GraphHostContinuity(value)
+        except GraphError as error:
+            raise vol.Invalid(error.reason) from error
     for opening in value.get("openings", []):
         host = opening.get("host")
         if host is None:
             continue
         if host["kind"] != "partition":
             continue
-        fault = partition_opening_host_fault(
-            opening, partitions.get(host["id"]), hosted_intervals.setdefault(host["id"], []),
-        )
+        if continuity is not None:
+            run = _graph_host_interval(continuity, host)
+            if run is None:
+                raise vol.Invalid("opening host must have positive thickness")
+            identity, span, along = run
+            fault = _reserve_host_interval(opening, span, along, hosted_intervals.setdefault(identity, []),
+                fit="partition opening must fit inside its host", overlap="partition openings must not overlap")
+        else:
+            fault = partition_opening_host_fault(
+                opening, partitions.get(host["id"]), hosted_intervals.setdefault(host["id"], []),
+            )
         if fault:
             raise vol.Invalid(fault)
     return value
@@ -2390,6 +2436,28 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         # переходов.
         if model >= 10 and space.get("room_drafts"):
             raise vol.Invalid("v10 config must not contain room_drafts")
+        if model == 11:
+            from .graph_host_continuity import GraphHostContinuity
+            continuity = GraphHostContinuity(space)
+            occupied = {}
+            segments_by_id = {row["id"]: row for row in space.get("wall_segments", [])}
+            for opening in space.get("openings", []):
+                host = opening.get("host")
+                if not host or host["kind"] != "wall":
+                    continue
+                run = _graph_host_interval(continuity, host)
+                if run is None:
+                    raise vol.Invalid("opening host must have positive thickness")
+                identity, span, along = run
+                segment = segments_by_id[host["id"]]
+                angle = math.degrees(math.atan2(segment["b"][1]-segment["a"][1], segment["b"][0]-segment["a"][0]))
+                if _angle_delta_mod_180(float(opening["angle"]), angle) > 8:
+                    raise vol.Invalid("wall opening angle must match its host")
+                fault = _reserve_host_interval(opening, span, along, occupied.setdefault(identity, []),
+                    fit="wall opening must fit inside its host", overlap="wall openings must not overlap")
+                if fault:
+                    raise vol.Invalid(fault)
+            continue
         segments = space.get("wall_segments")
         if segments is None:
             raise vol.Invalid("v8+ space requires wall_segments")
