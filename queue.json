@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1098,
-  "nextTicket": 82,
+  "revision": 1099,
+  "nextTicket": 83,
   "nextFence": 82,
   "tasks": {
     "1126": {
@@ -110,14 +110,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1130-low-signal",
-      "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
+      "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 80,
-      "queued": false,
+      "ticket": 82,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793641159054,
-      "reviewEntry": 1,
+      "readyAt": 1793641881581,
+      "reviewEntry": 2,
       "patchId": "bc0a0ad8445b4d4664f8e9d46e75b8da7fc652bc",
       "changedFiles": [
         "custom_components/houseplan/support_package.py",
@@ -169,13 +169,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1130:1:bc0a0ad8445b4d4664f8e9d46e75b8da7fc652bc:4f895343407cd730222fa3b47c188703332f16ce",
-      "reviewMaterial": {
-        "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
-        "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
-        "patchId": "bc0a0ad8445b4d4664f8e9d46e75b8da7fc652bc"
-      },
-      "reason": "review-findings",
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -1548,7 +1541,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1130
+  ],
   "active": {
     "issue": 1174,
     "worker": "github-coordinator",
@@ -1819,6 +1814,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:fe1ecdca-7afe-4ca3-81b6-75f5aee4b6e0": {
+      "digest": "8fa834e0b0073977ab814d0f5a1f080a45ebc7ed36ff4f39d1cb8e4f43421e7c",
+      "issue": 1130,
+      "message": {
+        "kind": "queued",
+        "issue": 1130,
+        "at": 1793641881581,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
+        "evidence": {
+          "id": "20261102T174035029-330cf80c",
+          "name": "Тесты для задачи #1130 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T174035029-330cf80c/report.json",
+          "materialSha": "e6f89af9ded73ea6ac39fa136ba34a181b64c2c9",
+          "status": "passed",
+          "finishedAt": "2026-11-02T17:41:38.254Z",
+          "failures": []
+        }
       }
     }
   },
