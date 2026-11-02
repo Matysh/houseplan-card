@@ -304,7 +304,7 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
         safe_settings["summary_panel"] = _summary(settings["summary_panel"], ids)
     if "external_screens" in settings:
         screens = settings["external_screens"]
-        if isinstance(screens, dict) and type(screens.get("version")) is int and screens["version"] == 1:
+        if isinstance(screens, dict) and type(screens.get("version")) is int and screens["version"] in (1, 2):
             rows = []
             for row in screens.get("screens", []):
                 if not isinstance(row, dict):
@@ -314,8 +314,19 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
                     if row.get(key) in ("local", "show", "hide"):
                         safe[key] = row[key]
                 safe["space"] = ids.get("space", row["space"]) if row.get("space") else None
+                if screens["version"] == 2:
+                    safe = _scalars(row, numbers=("id", "cycle", "idle"))
+                    safe["space"] = ids.get("space", row["space"]) if row.get("space") else None
+                    def view(source):
+                        return _scalars(source, numbers=("rotation", "zoom", "icon_scale", "font_scale"),
+                                        booleans=("center_summary",), enums={"summary": {"local", "show", "hide"}})
+                    safe["default_view"] = view(row.get("default_view"))
+                    values = row.get("space_views")
+                    values = values if isinstance(values, dict) else {}
+                    safe["space_views"] = {ids.get("space", key): view(value)
+                                           for key, value in values.items() if isinstance(key, str) and key}
                 rows.append(safe)
-            safe_settings["external_screens"] = {"version": 1, "next_id": screens.get("next_id"), "screens": rows}
+            safe_settings["external_screens"] = {"version": screens["version"], "next_id": screens.get("next_id"), "screens": rows}
         else:
             safe_settings["external_screens"] = {"status": "unsupported_version"}
     if isinstance(settings.get("exclude_integrations"), list):

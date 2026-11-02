@@ -1888,7 +1888,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                if isinstance(layout_data.get("plan_graph_migration_backup"), dict) else {}),
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
-            "external_screens_api": 1,
+            "external_screens_api": 2,
         "external_screens_events_api": 1,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
             **({"zigbee_scan_api": 1, "zigbee_maps_api": 1} if rt.zigbee_coordinator is not None

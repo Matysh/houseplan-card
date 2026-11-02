@@ -1,5 +1,5 @@
 import type { RouteKiosk } from './route-kiosk';
-import type { ScreenOverrides, ExternalScreen } from './external-screens';
+import type { ScreenOverrides, ExternalScreenView } from './external-screens';
 
 function positionOf(value: string | null): number | null {
   if (!value || !/^\d+$/.test(value)) return null;
@@ -31,11 +31,11 @@ export function screenOverrides(query: URLSearchParams): ScreenOverrides {
     return raw !== null && /^\d+$/.test(raw) && Number.isSafeInteger(Number(raw)) && Number(raw) >= min && Number(raw) <= max ? Number(raw) : undefined;
   };
   const rotation = number('hprotate', 0, 270);
-  if (rotation !== undefined && [0, 90, 180, 270].includes(rotation)) value.rotation = rotation as ExternalScreen['rotation'];
+  if (rotation !== undefined && [0, 90, 180, 270].includes(rotation)) value.rotation = rotation as ExternalScreenView['rotation'];
   for (const [url, key] of [['hpcycle', 'cycle'], ['hpidle', 'idle']] as const) {
     const n = number(url, 0, 3600); if (n !== undefined) value[key] = n;
   }
-  for (const [url, key] of [['hpsummary', 'summary'], ['hphidden', 'hidden_devices'], ['hpcontrols', 'controls']] as const) {
+  for (const [url, key] of [['hpsummary', 'summary']] as const) {
     const raw = query.get(url); if (raw === '0' || raw === '1') value[key] = raw === '1';
   }
   for (const [url, key] of [['hpicons', 'icon_scale'], ['hptext', 'font_scale']] as const) {

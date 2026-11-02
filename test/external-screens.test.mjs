@@ -7,7 +7,7 @@ import { parseRouteKiosk, screenOverrides } from '../test-build/panel-route-kios
 test('#1113 detached draft adds/edits/deletes without reusing numbers or overflowing20', () => {
   let d = emptyExternalScreens(); const original = structuredClone(d);
   d = upsertExternalScreen(d, defaultExternalScreen(1));
-  assert.equal(d.screens[0].controls, false, '#1132 new screens never enable controls over the plan');
+  assert.equal(d.screens[0].controls, undefined, '#1165 profiles no longer carry plan controls');
   assert.deepEqual(original, emptyExternalScreens());
   d = upsertExternalScreen(d, defaultExternalScreen(2));
   d = upsertExternalScreen(d, defaultExternalScreen(3));
@@ -15,8 +15,8 @@ test('#1113 detached draft adds/edits/deletes without reusing numbers or overflo
   d = upsertExternalScreen(d, defaultExternalScreen(4));
   assert.deepEqual(d.screens.map(row => row.id), [1,3,4]);
   assert.equal(d.next_id, 5);
-  d = upsertExternalScreen(d, { ...d.screens[0], rotation: 270 });
-  assert.equal(d.screens[0].rotation, 270); assert.equal(d.next_id,5);
+  d = upsertExternalScreen(d, { ...d.screens[0], default_view: {...d.screens[0].default_view,rotation:270} });
+  assert.equal(d.screens[0].default_view.rotation, 270); assert.equal(d.next_id,5);
   assert.equal(upsertExternalScreen(d, defaultExternalScreen(2)), d);
   while (d.screens.length < 20) d = upsertExternalScreen(d, defaultExternalScreen(d.next_id));
   assert.equal(upsertExternalScreen(d, defaultExternalScreen(d.next_id)), d);
@@ -25,8 +25,8 @@ test('#1113 detached draft adds/edits/deletes without reusing numbers or overflo
 test('#1113 codec is inert on future/malformed envelopes and preserves unknown v1 fields', () => {
   const d = { ...emptyExternalScreens(), next_id:2, screens:[{...defaultExternalScreen(1), controls:true, future:{n:3}}] };
   assert.equal(externalScreensOf(d), d);
-  for (const malformed of [null,[],{...d,version:2},{...d,next_id:1}, {...d,screens:[d.screens[0],d.screens[0]]},
-    {...d,screens:[{...d.screens[0],cycle:true}]}, {...d,screens:[{...d.screens[0],icon_scale:.51}]}]) assert.equal(externalScreensOf(malformed), null);
+  for (const malformed of [null,[],{...d,version:3},{...d,next_id:1}, {...d,screens:[d.screens[0],d.screens[0]]},
+    {...d,screens:[{...d.screens[0],cycle:true}]}, {...d,screens:[{...d.screens[0],default_view:{...d.screens[0].default_view,icon_scale:.51}}]}]) assert.equal(externalScreensOf(malformed), null);
 });
 
 test('#1113 profile enables kiosk independently and path position wins only its own fields', () => {
@@ -42,7 +42,7 @@ test('#1113 profile enables kiosk independently and path position wins only its 
 
 test('#1113 exact syntax and URL boundary matrix, including first repeated values', () => {
   assert.deepEqual(screenOverrides(new URLSearchParams('hprotate=270&hpcycle=3600&hpidle=0&hpsummary=1&hphidden=0&hpcontrols=0&hpicons=52&hptext=300')),
-    {rotation:270,cycle:3600,idle:0,summary:true,hidden_devices:false,controls:false,icon_scale:.5,font_scale:3});
+    {rotation:270,cycle:3600,idle:0,summary:true,icon_scale:.5,font_scale:3});
   assert.deepEqual(screenOverrides(new URLSearchParams('hprotate=45&hpcycle=3601&hpidle=-1&hpsummary=true&hphidden=01&hpcontrols=yes&hpicons=49&hptext=301')),{});
   for (const n of [50,51,52,53,54,55,299,300]) assert.equal(screenOverrides(new URLSearchParams('hpicons='+n)).icon_scale, Math.round(n/5)/20);
   assert.deepEqual(screenOverrides(new URLSearchParams('hpcycle=0&hpcycle=300&hpsummary=0&hpsummary=1')), {cycle:0,summary:false});
@@ -52,14 +52,14 @@ test('#1113 each explicit URL field overrides profile while local sentinels rema
   const row = {...defaultExternalScreen(1),space:'upstairs',rotation:180,cycle:30,idle:120,summary:'show',hidden_devices:'hide',icon_scale:2,font_scale:1.5,controls:false};
   const raw={version:1,next_id:2,screens:[row]}, resolver=new ExternalScreenResolver();
   const base=resolver.read(raw,{enabled:true,profile:1});
-  assert.deepEqual(base,{space:'upstairs',rotation:180,cycle:30,idle:120,summary:true,hidden_devices:false,icon_scale:2,font_scale:1.5,controls:false});
+  assert.deepEqual(base,{profile:1,space:'upstairs',rotation:180,zoom:1,center_summary:false,cycle:30,idle:120,summary:true,icon_scale:2,font_scale:1.5});
   const overrides={rotation:90,cycle:0,idle:0,summary:false,hidden_devices:true,icon_scale:.5,font_scale:3,controls:true};
   const route={enabled:true,profile:1,overrides};
-  const result=resolver.read(raw,route);assert.deepEqual(result,{space:'upstairs',...overrides});
+  const result=resolver.read(raw,route);assert.deepEqual(result,{profile:1,space:'upstairs',zoom:1,center_summary:false,rotation:90,cycle:0,idle:0,summary:false,icon_scale:.5,font_scale:3});
   assert.equal(resolver.read(raw,route),result,'ordinary HA tick does not resolve again');
   assert.deepEqual(resolver.read(raw,{enabled:false,profile:1}),{});
   assert.deepEqual(resolver.read(raw,{enabled:true,profile:404,overrides:{rotation:90}}),{rotation:90});
-  const local={...raw,screens:[defaultExternalScreen(1)]};
+  const local={...emptyExternalScreens(),next_id:2,screens:[defaultExternalScreen(1)]};
   const effective=resolver.read(local,{enabled:true,profile:1});
   for(const field of ['summary','hidden_devices','icon_scale','font_scale'])assert.equal(effective[field],undefined);
   assert.deepEqual(resolver.read({version:2,anything:'opaque'},{enabled:true,profile:1,overrides:{cycle:30}}),{cycle:30});
@@ -69,7 +69,7 @@ test('#1113 each explicit URL field overrides profile while local sentinels rema
 test('#1113 screen-only events require exact successor/base and retain unrelated field identities', async () => {
   const {externalScreenEventCandidate,externalScreenOnlyCandidate}=await import('../test-build/external-screens.js');
   const previous={spaces:[{id:'floor'}],markers:[],settings:{show_lqi:false,external_screens:emptyExternalScreens()}};
-  const value={version:1,next_id:2,screens:[defaultExternalScreen(1)]};
+  const value={version:2,next_id:2,screens:[defaultExternalScreen(1)]};
   const event={rev:8,external_screens_update:{version:1,base_rev:7,value}};
   const result=externalScreenEventCandidate(previous,7,event);
   assert.equal(result.rev,8);assert.equal(result.config.spaces,previous.spaces);assert.equal(result.config.markers,previous.markers);
@@ -116,13 +116,13 @@ test('#1113 nested constructor retires stale sessions/authority and cannot write
   const {ExternalScreensEditor}=await import('../test-build/editors/external-screens.js');
   const {rememberDialogBaseline}=await import('../test-build/editors/dialog-baseline.js');
   let authority={};const controllers=[];
-  const host={isConnected:true,_canEdit:true,_kiosk:false,_connectionWasLost:false,_haExternalScreensApi:1,
+  const host={isConnected:true,_canEdit:true,_kiosk:false,_connectionWasLost:false,_haExternalScreensApi:2,
     _settingsDialog:{externalScreens:emptyExternalScreens(),busy:false},hass:{user:{id:'admin'}},
     _configWriteContext:{claim:()=>authority,current:value=>value===authority},addController:controller=>controllers.push(controller),requestUpdate(){}};
   rememberDialogBaseline(host,'settings','initial');
   const editor=new ExternalScreensEditor({host});
   editor.open();const first=editor.draft;
-  assert.equal(first.row.id,1);editor.change({rotation:90},first.instance);
+  assert.equal(first.row.id,1);editor.change({cycle:30},first.instance);
   assert.equal(host._settingsDialog.externalScreens.screens.length,0,'child edits are detached');
   rememberDialogBaseline(host,'settings','replacement');editor.save(first.instance);
   assert.equal(host._settingsDialog.externalScreens.screens.length,0,'old session has no authority');

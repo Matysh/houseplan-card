@@ -60,6 +60,7 @@ def profiles(config):
 async def test_profile_stream_real_viewer_receives_exact_patch_and_unsubscribes(hass, hass_ws_client, group):
     admin, viewer, _, full = await setup(hass, hass_ws_client, group)
     assert full["external_screens_events_api"] == 1
+    assert full["external_screens_api"] == 2
     count = hass.bus.async_listeners().get(EVENT, 0)
     ident, initial = await subscribe(viewer, full["rev"])
     assert initial == {"kind": "ready", "rev": full["rev"]}

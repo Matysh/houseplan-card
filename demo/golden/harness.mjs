@@ -1207,7 +1207,7 @@ export async function prepareGoldenScenario(page, scenario) {
           ...(scenario.approvedUi === 'summary' ? { summary_panel_api: 1 } : {}),
           ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
-          ...(scenario.externalScreens?{external_screens_api:1,summary_panel_api:1}:{}),
+          ...(scenario.externalScreens?{external_screens_api:2,summary_panel_api:1}:{}),
           ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
             ? { integration_version: scenario.integrationVersion } : {}),

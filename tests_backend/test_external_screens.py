@@ -80,6 +80,8 @@ def test_external_screens_only_unchanged_broken_reference_is_retained():
     old = config(namespace(row(space="gone")))
     assert ordinary(copy.deepcopy(old), old)
     changed = copy.deepcopy(old); changed["settings"]["external_screens"]["screens"][0]["rotation"] = 90
+    assert ordinary(changed, old)  # The old reference itself did not change.
+    changed["settings"]["external_screens"]["screens"][0]["space"] = "another-gone-space"
     with pytest.raises(vol.Invalid, match="space must exist"):
         ordinary(changed, old)
     with pytest.raises(vol.Invalid, match="space must exist"):
@@ -104,3 +106,74 @@ def test_external_screens_event_is_bounded_and_only_proves_exact_namespace_only_
     after["settings"]["show_lqi"] = False
     assert v.external_screens_config_event(before, after, 7, 8) == {"rev": 8}
     assert v.external_screens_config_event(before, before, 7, 7) == {"rev": 7}
+
+
+def view2(**patch):
+    return {"rotation": 0, "zoom": 1, "summary": "local", "center_summary": False,
+            "icon_scale": None, "font_scale": None, **patch}
+
+
+def namespace2(*rows, next_id=2):
+    return dict(version=2, next_id=next_id, screens=list(rows))
+
+
+def row2(number=1, space=None):
+    return dict(id=number, space=space, cycle=0, idle=0,
+                default_view=view2(), space_views={})
+
+
+def test_v2_round_trip_preserves_unknown_fields_and_does_not_mutate_source():
+    value = namespace2(row2())
+    value["opaque"] = {"kept": [1, None]}
+    value["screens"][0]["default_view"]["future"] = {"kept": True}
+    before = copy.deepcopy(value)
+    assert ordinary(config(value))["settings"]["external_screens"] == before
+    assert value == before
+
+
+@pytest.mark.parametrize("patch", [
+    {"zoom": .09}, {"zoom": 10.01}, {"zoom": .105}, {"zoom": True},
+    {"zoom": float("nan")}, {"zoom": float("inf")}, {"rotation": 45},
+    {"center_summary": 1}, {"font_scale": .51}, {"summary": "auto"},
+])
+def test_v2_invalid_known_view_cannot_escape_through_future_schema(patch):
+    value = namespace2(row2())
+    value["screens"][0]["default_view"].update(patch)
+    with pytest.raises(vol.Invalid):
+        ordinary(config(value))
+
+
+def test_v2_migration_compares_bindings_not_row_shapes_and_preserves_numbers():
+    old = config(namespace(row(1, "gone"), next_id=4))
+    value = namespace2(row2(1, "gone"), next_id=4)
+    assert ordinary(config(value), old)
+    with pytest.raises(vol.Invalid, match="number cannot be reused"):
+        ordinary(config(namespace2(row2(1), row2(2), next_id=4)), old)
+    with pytest.raises(vol.Invalid, match="next_id cannot decrease"):
+        ordinary(config(namespace2(row2(1), next_id=2)), old)
+
+
+def test_v2_preserves_old_missing_view_reference_but_rejects_new_missing_key():
+    value = namespace2(row2())
+    value["screens"][0]["space_views"]["gone"] = view2()
+    old = config(copy.deepcopy(value))
+    assert ordinary(config(value), old)
+    value["screens"][0]["space_views"]["another-gone"] = view2()
+    with pytest.raises(vol.Invalid, match="view space must exist"):
+        ordinary(config(value), old)
+
+
+def test_v2_downgrade_is_refused_only_for_ordinary_writes():
+    previous = config(namespace2(row2()))
+    assert ordinary(config(), previous)["settings"]["external_screens"] == previous["settings"]["external_screens"]
+    with pytest.raises(vol.Invalid, match="version cannot be downgraded"):
+        ordinary(config(namespace(row())), previous)
+    assert v.CONFIG_SCHEMA(config(namespace(row())))["settings"]["external_screens"]["version"] == 1
+
+
+def test_v2_bounded_utf8_and_future_stay_lossless_without_recognizing_bad_v2():
+    value = namespace2(row2()); value["opaque"] = "я" * 70000
+    with pytest.raises(vol.Invalid):
+        ordinary(config(value))
+    future = {"version": 3, "opaque": {"still": [1, None]}}
+    assert ordinary(config(), config(future))["settings"]["external_screens"] == future

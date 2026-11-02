@@ -2707,19 +2707,60 @@ _EXTERNAL_SCREEN_SCHEMA = vol.Schema({
     vol.Required("font_scale"): _screen_scale,
     vol.Required("controls"): bool,
 }, extra=vol.ALLOW_EXTRA)
-EXTERNAL_SCREENS_SCHEMA = vol.All(vol.Schema({
+EXTERNAL_SCREENS_V1_SCHEMA = vol.All(vol.Schema({
     vol.Required("version"): vol.All(_screen_int, vol.Equal(1)),
     vol.Required("next_id"): _screen_int,
     vol.Required("screens"): vol.All([_EXTERNAL_SCREEN_SCHEMA], vol.Length(max=20)),
 }, extra=vol.ALLOW_EXTRA), _external_screen_invariants)
 
 
-def _future_external_screens(value: object) -> dict:
-    if not isinstance(value, dict) or type(value.get("version")) is not int or value["version"] <= 1:
-        raise vol.Invalid("unsupported external screens version")
-    if len(json.dumps(value, separators=(",", ":"), ensure_ascii=False)) > 128 * 1024:
+def _screen_zoom(value: object) -> float:
+    if (type(value) not in (int, float) or not math.isfinite(value)
+            or not .1 <= value <= 10 or abs(value * 100 - round(value * 100)) > 1e-8):
+        raise vol.Invalid("screen zoom must use steps of 0.01 from 0.1 to 10")
+    return value
+
+
+def _bounded_external_screens(value: dict) -> dict:
+    try:
+        size = len(json.dumps(value, separators=(",", ":"), ensure_ascii=False,
+                              allow_nan=False).encode("utf-8"))
+    except (ValueError, TypeError, OverflowError) as err:
+        raise vol.Invalid("external screens must be JSON") from err
+    if size > 128 * 1024:
         raise vol.Invalid("external screens are too large")
     return value
+
+
+_EXTERNAL_SCREEN_VIEW_SCHEMA = vol.Schema({
+    vol.Required("rotation"): _screen_rotation,
+    vol.Required("zoom"): _screen_zoom,
+    vol.Required("summary"): vol.In(("local", "show", "hide")),
+    vol.Required("center_summary"): bool,
+    vol.Required("icon_scale"): _screen_scale,
+    vol.Required("font_scale"): _screen_scale,
+}, extra=vol.ALLOW_EXTRA)
+_EXTERNAL_SCREEN_V2_SCHEMA = vol.Schema({
+    vol.Required("id"): _screen_int,
+    vol.Required("space"): vol.Any(None, _NONEMPTY_TEXT),
+    vol.Required("cycle"): _screen_seconds,
+    vol.Required("idle"): _screen_seconds,
+    vol.Required("default_view"): _EXTERNAL_SCREEN_VIEW_SCHEMA,
+    vol.Required("space_views"): {_NONEMPTY_TEXT: _EXTERNAL_SCREEN_VIEW_SCHEMA},
+}, extra=vol.ALLOW_EXTRA)
+EXTERNAL_SCREENS_V2_SCHEMA = vol.All(vol.Schema({
+    vol.Required("version"): vol.All(_screen_int, vol.Equal(2)),
+    vol.Required("next_id"): _screen_int,
+    vol.Required("screens"): vol.All([_EXTERNAL_SCREEN_V2_SCHEMA], vol.Length(max=20)),
+}, extra=vol.ALLOW_EXTRA), _external_screen_invariants, _bounded_external_screens)
+# Keep the named known-schema entry point for import/support consumers.
+EXTERNAL_SCREENS_SCHEMA = vol.Any(EXTERNAL_SCREENS_V1_SCHEMA, EXTERNAL_SCREENS_V2_SCHEMA)
+
+
+def _future_external_screens(value: object) -> dict:
+    if not isinstance(value, dict) or type(value.get("version")) is not int or value["version"] <= 2:
+        raise vol.Invalid("unsupported external screens version")
+    return _bounded_external_screens(value)
 
 
 EXTERNAL_SCREENS_WIRE_SCHEMA = vol.Any(EXTERNAL_SCREENS_SCHEMA, _future_external_screens)
@@ -2753,10 +2794,13 @@ def preserve_external_screens_namespace(config: dict, previous: dict | None) -> 
 
 def validate_external_screens_references(config: dict, previous: dict | None) -> None:
     value = (config.get("settings") or {}).get("external_screens")
-    if not isinstance(value, dict) or value.get("version") != 1:
+    if not isinstance(value, dict) or value.get("version") not in (1, 2):
         return
     old = ((previous or {}).get("settings") or {}).get("external_screens")
-    old = old if isinstance(old, dict) and old.get("version") == 1 else {}
+    old = old if isinstance(old, dict) else {}
+    if type(old.get("version")) is int and old["version"] > value["version"]:
+        raise vol.Invalid("external screen version cannot be downgraded by an ordinary writer")
+    old = old if old.get("version") in (1, 2) else {}
     if value["next_id"] < old.get("next_id", 1):
         raise vol.Invalid("external screen next_id cannot decrease")
     old_rows = {row["id"]: row for row in old.get("screens", [])}
@@ -2765,8 +2809,15 @@ def validate_external_screens_references(config: dict, previous: dict | None) ->
         before = old_rows.get(screen["id"])
         if before is None and screen["id"] < old.get("next_id", 1):
             raise vol.Invalid("external screen number cannot be reused")
-        if screen != before and screen["space"] is not None and screen["space"] not in spaces:
+        # A version migration changes the row's shape, not its stable binding.
+        # Preserve an old broken reference, but never introduce a new one.
+        if (screen["space"] is not None and screen["space"] not in spaces
+                and (before is None or screen["space"] != before.get("space"))):
             raise vol.Invalid("new or changed external screen space must exist")
+        old_views = before.get("space_views", {}) if before else {}
+        for space in screen.get("space_views", {}):
+            if space not in spaces and space not in old_views:
+                raise vol.Invalid("new external screen view space must exist")
 
 
 def summary_panel_entity_ids(panel: object) -> set[str]:

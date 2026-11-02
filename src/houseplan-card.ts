@@ -947,7 +947,7 @@ export class HouseplanCard extends LitElement {
 
   private readonly _externalScreenResolver = new ExternalScreenResolver();
   private get _externalScreen(): ResolvedScreen {
-    return this._externalScreenResolver.read(this._settings.external_screens, this.panelHost ? this._routeKiosk : null);
+    return this._externalScreenResolver.read(this._settings.external_screens, this.panelHost ? this._routeKiosk : null, this._space);
   }
   private get _effectiveKioskScale() {
     const screen = this._externalScreen;
@@ -4572,7 +4572,7 @@ export class HouseplanCard extends LitElement {
   private readonly _hiddenDevicePreference = new HiddenDevicePreference();
   private readonly _hiddenDeviceRoster = new HiddenDeviceRoster<DevItem>();
   private get _displayDevices(): readonly DevItem[] {
-    return this._hiddenDeviceRoster.read(this._devices, this._externalScreen.hidden_devices ?? this._showHidden, this._cfgEpoch);
+    return this._hiddenDeviceRoster.read(this._devices, this._showHidden, this._cfgEpoch);
   }
 
   private get _showAll(): boolean {

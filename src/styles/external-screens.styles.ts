@@ -6,7 +6,16 @@ export const externalScreensCss = `
 .hp-screen-link{grid-column:1/-1;display:flex;align-items:center;gap:8px;}
 .hp-screen-link input{flex:1;min-width:0;}
 .hp-screen-fields{align-items:start;gap:20px 24px;}
+.hp-screen-fields,.hp-screen-general{grid-template-columns:repeat(2,minmax(0,1fr));}
+.hp-screen-general > :last-child{grid-column:1/-1;}
+.hp-screen-constructor .hpf-card{display:block;}
+.hp-screen-constructor .hpf-head h3{font-size:var(--fs-l);font-weight:600;}
+.hp-screen-space-hint{margin:0 0 var(--sp-6)!important;}
+.hp-screen-zoom{display:flex;align-items:center;gap:var(--sp-4);}
+.hp-screen-zoom .hpf-unit{flex:1;min-width:0;}
+.hp-screen-zoom button{flex:none;}
+.hp-screen-center{min-height:44px;}
+.hp-screen-single-return{margin-top:var(--sp-6);}
 .hp-screen-note{margin:24px 0 0!important;}
 .hp-screen-row .hpf-error{grid-column:1/-1;}
-@media(max-width:550px){.hp-screen-fields{grid-template-columns:1fr;}}
 `;

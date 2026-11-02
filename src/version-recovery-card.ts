@@ -107,7 +107,7 @@ export function adoptCardConfigCapabilities(
     ? DECOR_ASSETS_API_VERSION : null;
   host._haSummaryPanelApi = capabilities.summary_panel_api === SUMMARY_PANEL_API_VERSION
     ? SUMMARY_PANEL_API_VERSION : null;
-  host._haExternalScreensApi = capabilities.external_screens_api === 1 ? 1 : null;
+  host._haExternalScreensApi = capabilities.external_screens_api === 1 || capabilities.external_screens_api === 2 ? capabilities.external_screens_api : null;
   host._haExternalScreensEventsApi = capabilities.external_screens_events_api === 1 ? 1 : null;
   host._haRadarStage1Api = capabilities.radar_stage1_api === 1 ? 1 : null;
   host._haWallNodeMoveApi = capabilities.wall_node_move_api === 1 ? 1 : null;
