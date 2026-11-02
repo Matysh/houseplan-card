@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 849,
-  "nextTicket": 69,
+  "revision": 850,
+  "nextTicket": 70,
   "nextFence": 69,
   "tasks": {
     "1128": {
@@ -115,6 +115,20 @@
         "status": "published",
         "sourceSha": "c356cd6c04a2b64bf151f1337f1de218abceb21b"
       }
+    },
+    "1165": {
+      "issue": 1165,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/issue-1165-screen-profiles",
+      "materialSha": "cd06b46e9cabe96452411574edf9c09bf192d2db",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 69,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793630835514,
+      "reviewEntry": 1
     },
     "1167": {
       "issue": 1167,
@@ -1125,7 +1139,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1165
+  ],
   "active": {
     "issue": 1210,
     "worker": "finish",
@@ -1216,6 +1232,19 @@
         "layer": "infra",
         "materialSha": "582dfcdddefa6ba138eac44be0b0b20d8ebe6c0c",
         "phase": "sync"
+      }
+    },
+    "finish:273abbd3-4c2e-467c-95d5-5c317c56dfee": {
+      "digest": "c275f2ebdef94b3f40a2b6ddf2a4dabad7a2bbfc846703a41ee63b225dd16467",
+      "issue": 1165,
+      "message": {
+        "kind": "queued",
+        "issue": 1165,
+        "at": 1793630835514,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "cd06b46e9cabe96452411574edf9c09bf192d2db"
       }
     }
   },
