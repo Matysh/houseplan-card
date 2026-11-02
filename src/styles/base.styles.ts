@@ -63,10 +63,15 @@ export const baseStyles = [readingKitStyles, navigationStyles, iconActionStyles,
       flex-direction: column;
       overflow: hidden;
       border: 0;
-      border-radius: 0;
       box-shadow: none;
-      --ha-card-border-radius: 0;
       --ha-card-box-shadow: none;
+    }
+    :host([panel-host]) ha-card {
+      border-radius: 0;
+      --ha-card-border-radius: 0;
+    }
+    :host([layout="grid"]:not([panel-host])) ha-card {
+      border-radius: var(--ha-card-border-radius, 12px);
     }
     :host([panel-host]) .hdr {
       position: relative;
@@ -76,6 +81,8 @@ export const baseStyles = [readingKitStyles, navigationStyles, iconActionStyles,
     }
     :host([layout="grid"]) .hdr {
       flex: 0 0 auto;
+      position: relative;
+      top: auto;
     }
     :host([panel-host]) .stage,
     :host([panel-host]) .empty,

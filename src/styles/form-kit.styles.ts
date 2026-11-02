@@ -2,6 +2,7 @@ import { floatingSurfaceCss } from './floating-surface.styles';
 import { formKitErrorCss, formKitTextareaCss } from './form-input.styles';
 import { settingsTextLinkCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
+import { selectionListCss } from './selection-list.styles';
 import { formKitValue, formKitRecipeCss, type FormKitRecipe } from './form-kit-parameters';
 /**
  * Общий набор контролов формы (#594, шаг 1 эпика #591).
@@ -571,9 +572,9 @@ ${options.parameterized ? floatingSurfaceCss(`.${p}-panel`, '5px') + `  .${p}-pa
   .${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
   .${p}-panel .${p}-cand { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 10px 12px; border-radius: 6px; font: inherit; line-height: 20px; overflow-wrap: anywhere; white-space: normal; transition: background-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); }
   .${p}-panel .${p}-cand > :is(span, small) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
-  .${p}-cand.sel { background: transparent; color: var(${tokens.accent}); }
-  .${p}-cand:is(:hover, :focus-visible) { background: var(${tokens.tint}); }
-  .${p}-cand:focus-visible { outline: 2px solid var(${tokens.accent}); outline-offset: -2px; }
+  ${selectionListCss(`.${p}-cand`, '.sel', undefined, { accent: `var(${tokens.accent})`, tint: `var(${tokens.tint})` })}
+  .${p}-panel .${p}-cand { position:relative; padding-inline-end:36px; }
+  .${p}-cand > .${p}-choice-check { position:absolute; inset-inline-end:12px; top:50%; translate:0 -50%; pointer-events:none; }
   .${p}-block { display: grid; gap: 15px; }
   .${p}-block.${p}-disabled > :not(.${p}-sub):not(.${p}-callout) { opacity: .45; }
   .${p}-block.${p}-disabled .${p}-seg label, .${p}-block.${p}-disabled .${p}-colorfield, .${p}-block.${p}-disabled .${p}-range { pointer-events: none; }

@@ -14,6 +14,8 @@ export interface OpeningVisibleSpec {
   flipV: boolean;
   base: string;
   tone: string;
+  /** State paint is confined to a door's arc; other opening types keep tone. */
+  sensorActive?: boolean;
   cellCm: number;
   gridPitch: number;
   face: OpeningFaceOffset;
@@ -246,10 +248,10 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
     body = svg`
       <g transform="translate(${swingTx} ${swingTy})">
       <path class="op-arc" d="M ${half} 0 A ${spec.length} ${spec.length} 0 0 0 ${-half} ${-spec.length}" fill="none"
-        stroke="${spec.tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
+        stroke="${spec.sensorActive ? 'var(--primary-color, #03a9f4)' : spec.base}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
       <g transform="translate(${-half} 0)">
         <g class="op-leaf" style="transform:rotate(${-90 * amount}deg)">
-          <rect x="0" y="${-leafHalf}" width="${spec.length}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
+          <rect x="0" y="${-leafHalf}" width="${spec.length}" height="${leafHalf * 2}" fill="${spec.base}"></rect>
         </g>
       </g>
       </g>`;

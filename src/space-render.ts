@@ -939,8 +939,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const amount = openingAmount(
       opening.type, entity?.state, !!opening.invert, entity?.attributes?.current_position,
     );
-    const active = amount > 0 && available;
+    const active = amount > 0 && !!opening.contact && available;
     const spec = visibleSpec(opening, amount, wallStroke, active ? 'var(--hp-open)' : wallStroke);
+    spec.sensorActive = active;
     return svg`<g class="opening static-opening" data-hp="opening"
       data-id=${opening.id} data-kind=${opening.type} pointer-events="none"
       transform="translate(${opening.rx} ${opening.ry}) rotate(${opening.angle})">

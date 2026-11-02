@@ -4,6 +4,7 @@ export const controlMotion = {
   appear: { duration: 180, easing: 'ease-out' },
   leave: { duration: 140, easing: 'ease' },
   disclosure: { duration: 220, easing: 'cubic-bezier(.2,0,.2,1)' },
+  mode: { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' },
   spin: { duration: 1000, easing: 'linear' },
   pulse: { duration: 1200, easing: 'ease-in-out' },
 } as const;

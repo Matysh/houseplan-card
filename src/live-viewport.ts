@@ -290,7 +290,7 @@ const frameOf = (host: LiveViewportHost): LiveViewportFrame => {
 };
 
 /** Coalesce camera input into one lightweight paint per animation frame. */
-export function scheduleHouseplanViewport(value: object, now = false): void {
+export function scheduleHouseplanViewport(value: object, now = false, force = false): void {
   const host = value as LiveViewportHost;
   const state = stateOf(value);
   const next = frameOf(host);
@@ -299,7 +299,7 @@ export function scheduleHouseplanViewport(value: object, now = false): void {
     state.raf = 0; state.pending = null;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true },
+      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force },
     );
     return;
   }

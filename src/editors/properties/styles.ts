@@ -15,6 +15,8 @@ export const propertiesStyles = unsafeCSS(css`
     position: absolute; right: 0; top: 0; bottom: 0;
     width: 360px; min-height: 0; display: flex; flex-direction: column;
     z-index: 21;
+    opacity: var(--hp-mode-editor-weight, 1);
+    transform: translateX(calc((1 - var(--hp-mode-editor-weight, 1)) * 100%));
   }
   .hp-properties[data-theme='light'] { color-scheme: light; }
   .hp-properties[data-theme='dark'] { color-scheme: dark; }

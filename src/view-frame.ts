@@ -97,6 +97,19 @@ export function canonicalView(
   return { x: base[0] + delta[0] - w / 2, y: base[1] + delta[1] - h / 2, w, h };
 }
 
+/** Rebase a physical camera onto a new fit without re-fitting its contents.
+ * Its scalar zoom may legitimately exceed the ordinary user-command limits. */
+export function physicalPlanCamera(
+  camera: { centerX: number; centerY: number; pixelsPerUnit: number },
+  vb: number[], display: FrameRect, rotation: PlanRotation, width: number, height: number,
+): CameraState {
+  const fit = fitView(vb, width / height);
+  const displayFit = rotation ? fitView([display.x, display.y, display.w, display.h], width / height) : fit;
+  const zoom = displayFit.w * camera.pixelsPerUnit / width;
+  const w = fit.w / zoom, h = fit.h / zoom;
+  return { zoom, viewBox: { x: camera.centerX - w / 2, y: camera.centerY - h / 2, w, h } };
+}
+
 /** Rendering uses the observed stage size; it never asks layout for a new one. */
 export function presentationViewport(
   view: FrameRect, vb: number[], display: FrameRect, rotation: PlanRotation, zoom: number,

@@ -22,6 +22,12 @@ export function gridVisualUnits(baseUnits: number, cellCm: unknown): number {
   return baseUnits * gridVisualScale(cellCm);
 }
 
+/** Visible wall node, shared by existing endpoints and a proposed junction.
+ * Picking tolerances are deliberately independent of this paint metric. */
+export function wallNodeRadius(cellCm: number, gridPitch: number): number {
+  return wallCmToUnits(5, cellCm, gridPitch);
+}
+
 /** Half-width of the Plan-editor wall-thickness hover strip, in plan units. */
 export function wallThickHoverHalfUnits(
   cm: number, cellCm: number, gridPitch: number,

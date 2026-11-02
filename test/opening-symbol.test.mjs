@@ -24,6 +24,19 @@ const templateText = (value) => {
   ), '');
 };
 
+test('#1207 only a sensor-active door arc uses the theme accent; leaves keep base in all states', () => {
+  for (const amount of [0, 1]) for (const sensorActive of [false, true]) {
+    const text = templateText(renderOpeningVisibleGeometry(spec({ amount, sensorActive, base: '#abcdef', tone: 'orange' })));
+    assert.match(text, /width="100" height="[^"]+" fill="#abcdef"/);
+    assert.ok(text.includes(`stroke="${sensorActive ? 'var(--primary-color, #03a9f4)' : '#abcdef'}" stroke-dasharray`));
+    assert.ok(!text.includes('orange'));
+  }
+  for (const type of ['window','gate']) {
+    assert.equal(templateText(renderOpeningVisibleGeometry(spec({type,tone:'orange',sensorActive:true}))),
+      templateText(renderOpeningVisibleGeometry(spec({type,tone:'orange',sensorActive:false}))));
+  }
+});
+
 test('opening metrics expand hit and outline zones with a thick wall face', () => {
   assert.deepEqual(openingVisibleMetrics(spec()), {
     half: 50, jambHalf: 2, gateDepth: 0, outlineHalf: 8, hitHalf: 10,

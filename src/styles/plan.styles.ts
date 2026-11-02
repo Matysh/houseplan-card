@@ -41,6 +41,17 @@ export const planStyles = css`
     .stage.mode-transition .zoomwrap {
       transition: none !important;
     }
+    .stage.mode-transition .zoomwrap {
+      inset: auto;
+      left: 50%; top: 50%; translate: -50% -50%;
+    }
+    .stage.mode-transition .hp-view-only-layer,
+    .stage.mode-transition .hp-day-cycle-env,
+    .stage.mode-transition .hp-moon-sky { opacity: var(--hp-mode-view-weight) !important; }
+    .stage.mode-transition .hp-editor-only-layer { opacity: var(--hp-mode-editor-weight) !important; }
+    .stage.mode-transition .hp-plan-only-layer { opacity: var(--hp-mode-plan-weight) !important; pointer-events:none; }
+    .stage.mode-transition .glow-pools-frame,
+    .stage.mode-transition .led-fields { display: block; opacity: var(--hp-mode-view-weight); }
     .stage.mode-transition .hp-view-only-layer,
     .stage.mode-transition .hp-editor-only-layer {
       pointer-events: none;
@@ -1368,6 +1379,8 @@ export const planStyles = css`
     .plan-snap-node.active {
       fill: #ffc14d;
       stroke: #171006;
+    }
+    .plan-snap-node.active:not(.dynamic) {
       stroke-width: 2;
     }
     .plan-snap-node.active.dynamic {

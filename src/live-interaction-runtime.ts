@@ -104,7 +104,7 @@ export class LiveRuntime {
     this.deferredHass = false;
     return pending;
   }
-  public viewport(now = false): void { scheduleHouseplanViewport(this.host, now); }
+  public viewport(now = false, force = false): void { scheduleHouseplanViewport(this.host, now, force); }
   public syncContacts(): void { syncHouseplanDeviceContacts(this.host, this.contacts); }
   public hover(): void { syncHouseplanHover(this.host); }
   public devicePointerTip(event: PointerEvent, device: DevItem): void {

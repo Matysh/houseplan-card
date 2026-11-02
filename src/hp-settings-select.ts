@@ -2,6 +2,7 @@ import { LitElement, css, unsafeCSS, html, nothing, type TemplateResult } from '
 import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
 import { floatingSurfaceCss } from './styles/floating-surface.styles';
 import { settingsActionTransition } from './styles/settings-action.styles';
+import { selectionListCss } from './styles/selection-list.styles';
 import { controlReducedMotionCss } from './styles/ui-motion.styles';
 import { FloatingSurfaceController } from './floating-surface-controller';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
@@ -16,7 +17,7 @@ export class HpSettingsSelect extends LitElement {
     _version: { state: true }, _open: { state: true }, _active: { state: true },
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
   };
-  static styles = unsafeCSS(floatingSurfaceCss('.menu', '5px') + css`
+  static styles = unsafeCSS(floatingSurfaceCss('.menu', '5px') + selectionListCss('[role=option]', '[aria-selected=true]', '.active') + css`
     :host { display:block; position:relative; min-width:0; font:inherit; }
     ::slotted(select) { position:absolute!important; width:1px!important; height:1px!important;
       min-width:0!important; min-height:0!important; padding:0!important; margin:0!important;
@@ -41,7 +42,6 @@ export class HpSettingsSelect extends LitElement {
       padding:10px 12px; border-radius:6px; cursor:pointer; overflow-wrap:anywhere; }
     [role=option] span { flex:1; min-width:0; }
     [role=option][aria-selected=true] { color:var(--hpf-accent,var(--primary-color,#03a9f4)); }
-    [role=option].active,[role=option]:hover { background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 12%,transparent)); }
     [role=option][aria-disabled=true] { opacity:.45; cursor:not-allowed; background:transparent; }
     @media(max-width:550px) { button { font-size:16px; } }
     :host([variant^='header']) button { height:44px; min-height:44px; padding:10px 14px; border-radius:7px; font-size:13px; }

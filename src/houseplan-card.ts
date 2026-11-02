@@ -295,7 +295,7 @@ import {
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { liveGridBounds } from './live-viewport';
+import { liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -321,10 +321,12 @@ import {
 import {
   PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation,
   turnPoint, turnVector, turnRect, turnMatrix, inversePlanRotation, framePercent, frameStyle,
-  presentationViewport, planZoomTarget, type FrameRect, type PlanRotation,
+  presentationViewport, physicalPlanCamera, planZoomTarget, type FrameRect, type PlanRotation,
 } from './view-frame';
 import { renderHomeArrow, renderPlanRotationControls } from './view-frame-view';
 import { PlanRotationMotion } from './plan-rotation-motion';
+import { HeaderMotion } from './header-motion';
+import { controlMotion } from './ui-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
 import type {
@@ -1007,7 +1009,7 @@ export class HouseplanCard extends LitElement {
   private _panelHeaderContentKey(head: HTMLElement, mode: HouseplanMode = this._mode): string {
     const typography = getComputedStyle(head);
     return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor,
-      langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey, this._config?.title,
+      langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey,
       typography.fontFamily, typography.fontSize, typography.fontWeight, typography.letterSpacing,
       this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
       Array.from(head.querySelector('.header-actions')?.children || [])
@@ -1321,6 +1323,19 @@ export class HouseplanCard extends LitElement {
   /** Last editor kept in the collapsing chrome so leaving it can animate out. */
   private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
   private _modeTransitionVisual: ModeVisualState | null = null;
+  /** Fixed raster viewport, centred and clipped by the moving stage. Changing
+   * its clipping edges must not resize/repaint every SVG on every frame. */
+  private _modeSceneSize: [number, number] | null = null;
+  private _modeProjectionSource: 'flat' | 'iso' | null = null;
+  private _modeProjectionCrossing = false;
+  private _modeProjectionOpacity = 1;
+  private readonly _modeEditorInk = new Map<string, TemplateResult>();
+  private _editorInk(key: string, active: boolean, render: () => TemplateResult): TemplateResult | typeof nothing {
+    if (active) { const ink = render(); this._modeEditorInk.set(key, ink); return ink; }
+    return this._modeTransitionBusy ? this._modeEditorInk.get(key) ?? nothing : nothing;
+  }
+  private readonly _headerMotion = new HeaderMotion();
+  private _modeHeaderPositions = new Map<string, { x: number; y: number }>();
   private _modeTransitionPreparing = false;
   /** A visibility/reduced-motion interruption during the measurement frame
    * must still publish the measured target atomically, without waiting for a
@@ -1372,8 +1387,7 @@ export class HouseplanCard extends LitElement {
 
   private _normalizeCameraState(state: CameraState): CameraState {
     const fit = this._cameraTransitionFit || fitView(this._baseVb(), this._stageAspect());
-    const zoom = Math.min(HouseplanCard.ZOOM_MAX,
-      Math.max(HouseplanCard.ZOOM_MIN, state.zoom));
+    const zoom = this._boundedZoom(state.zoom);
     return { zoom, viewBox: this._clampView({ ...state.viewBox }, fit) };
   }
 
@@ -1463,13 +1477,15 @@ export class HouseplanCard extends LitElement {
   }
 
   private _currentModeVisual(mode = this._mode as HouseplanMode): ModeVisualState | null {
+    this._modeHeaderPositions = this._headerMotion.capture(this.renderRoot.querySelector('.head'));
+    if (mode === 'view' && !this._modeTransitionBusy) this._modeEditorInk.clear();
     // During the one-frame target measurement the controller has not started
     // yet, but `_modeTransitionVisual` is already the exact painted endpoint.
     // A rapid second click must retarget from that frame instead of rebuilding
     // an approximation from the newly committed logical mode.
     const presented = this._modeTransition.presented || this._modeTransitionVisual;
     if (presented) return { ...presented, viewport: {
-      ...presented.viewport, viewBox: { ...presented.viewport.viewBox },
+      ...presented.viewport, viewBox: this._physicalCamera(presented.viewport, presented.stageWidth, presented.stageHeight).viewBox,
     } };
     const stage = this._stageEl;
     if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
@@ -1487,7 +1503,8 @@ export class HouseplanCard extends LitElement {
       editorChromeHeight: mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0,
       stageWidth: stage.clientWidth,
       stageHeight: stage.clientHeight,
-      viewport: viewportFromViewBox(view, stage.clientWidth),
+      viewport: { ...viewportFromViewBox(view, stage.clientWidth),
+        pixelsPerUnit: stage.clientWidth / this._viewOr(this._baseVb()).w },
       stageColor: getComputedStyle(stage).backgroundColor || 'rgb(255, 255, 255)',
       paperColor: paper ? getComputedStyle(paper).fill : 'rgb(255, 255, 255)',
       sceneBrightness: Number.isFinite(brightness) ? brightness : 1,
@@ -1497,6 +1514,7 @@ export class HouseplanCard extends LitElement {
         : mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
       viewWeight: mode === 'view' ? 1 : 0,
       editorWeight: mode === 'view' ? 0 : 1,
+      planWeight: mode === 'plan' ? 1 : 0,
       toolbarContentOpacity: mode === 'view' ? 0 : 1,
     };
   }
@@ -1507,7 +1525,7 @@ export class HouseplanCard extends LitElement {
   ): ModeViewBox {
     const vb = this._baseVb();
     const fit = fitView(vb, stageWidth / stageHeight);
-    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
+    const z = this._boundedZoom(zoom);
     const w = fit.w / z, h = fit.h / z;
     const cx = centerX ?? fit.x + fit.w / 2;
     const cy = centerY ?? fit.y + fit.h / 2;
@@ -1518,6 +1536,54 @@ export class HouseplanCard extends LitElement {
     if (mode !== 'view') return 'rgb(255, 255, 255)';
     return this._cssColor(this._stageBg(this._spaceDisplayForRender()),
       this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)'));
+  }
+
+  private _physicalCamera(camera: ModeVisualState['viewport'], width: number, height: number): CameraState {
+    const vb = this._baseVb();
+    return physicalPlanCamera(camera, vb, this._displayBase(vb), this._rotation, width, height);
+  }
+
+  /** Only presentation properties and the existing live camera are painted
+   * per frame. Lit constructs the target scene/overflow once before motion. */
+  private _paintModePresentation(visual: ModeVisualState): void {
+    const root = this.renderRoot;
+    const head = root.querySelector<HTMLElement>('.hdr > .head');
+    const chrome = root.querySelector<HTMLElement>('.editorchrome');
+    const inner = root.querySelector<HTMLElement>('.editorchrome-inner');
+    const stage = this._stageEl;
+    if (head) head.style.height = `${visual.headerHeight}px`;
+    if (chrome) { chrome.style.height = `${visual.editorChromeHeight}px`; chrome.style.opacity = String(visual.editorWeight); }
+    if (inner) inner.style.opacity = String(visual.toolbarContentOpacity);
+    if (stage) {
+      stage.style.height = `${visual.stageHeight}px`; stage.style.width = `${visual.stageWidth}px`;
+      stage.style.background = visual.stageColor;
+      stage.style.setProperty('--hp-mode-architecture-opacity', String(visual.architectureOpacity));
+      stage.style.setProperty('--hp-mode-paper', visual.paperColor);
+      stage.style.setProperty('--hp-mode-view-weight', String(visual.viewWeight));
+      stage.style.setProperty('--hp-mode-editor-weight', String(visual.editorWeight));
+      stage.style.setProperty('--hp-mode-plan-weight', String(visual.planWeight ?? 0));
+    }
+    root.querySelector<HTMLElement>('ha-card')?.style.setProperty('--hp-mode-editor-weight', String(visual.editorWeight));
+    const backdrop = root.querySelector<SVGElement>('.hp-backdrop');
+    if (backdrop) backdrop.style.opacity = String((this._spaceModel()?.bg?.opacity ?? 1) * visual.backdropOpacity);
+    const properties = root.querySelector<HTMLElement>('.hp-properties');
+    if (properties) {
+      properties.inert = true;
+      properties.style.transform = `translateX(${(1 - visual.editorWeight) * 100}%)`;
+      properties.style.opacity = String(visual.editorWeight);
+    }
+    scheduleHouseplanViewport(this, true);
+    this._toastPresentation.refresh();
+  }
+
+  private _clearModePresentation(): void {
+    for (const [selector, names] of [
+      ['.hdr > .head', ['width']], ['.stage', ['width']],
+      ['.hp-backdrop', ['opacity']], ['.hp-properties', ['transform', 'opacity']], ['.zoomwrap', ['width', 'height', 'opacity']],
+    ] as const) for (const element of this.renderRoot.querySelectorAll<HTMLElement>(selector)) {
+      for (const name of names) element.style.removeProperty(name);
+      if (selector === '.hp-properties') element.inert = false;
+    }
   }
 
   private _targetPaperColor(mode: HouseplanMode): string {
@@ -1531,16 +1597,36 @@ export class HouseplanCard extends LitElement {
 
   private _applyModeTransitionFrame(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
+    if (this._modeProjectionCrossing) {
+      const progress = state.duration > 0 ? Math.min(1, Math.max(0, (performance.now() - state.startedAt) / state.duration)) : 1;
+      if (progress >= .5 && this._modeProjectionSource) {
+        // One projection commit while the real scene is transparent. No
+        // overlaid scenes or copied DOM, and no per-frame scene construction.
+        this._modeProjectionSource = null; this._isoProjectionSnapshot = null;
+        this.requestUpdate();
+      }
+      this._modeProjectionOpacity = Math.abs(progress * 2 - 1);
+      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
+      if (scene) scene.style.opacity = String(this._modeProjectionOpacity);
+    }
+    const size = this._modeSceneSize ?? [state.presented.stageWidth, state.presented.stageHeight];
+    const camera = this._physicalCamera(state.presented.viewport, size[0], size[1]);
+    state.presented.viewport.viewBox = { ...camera.viewBox };
     this._modeTransitionVisual = state.presented;
-    this._view = { ...state.presented.viewport.viewBox };
-    this.requestUpdate();
+    this._view = { ...camera.viewBox };
+    this._zoom = camera.zoom;
+    this._paintModePresentation(state.presented);
   }
 
   private _settleModeTransition(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
     const settledRequest = this._modeTransitionRequest;
-    this._view = { ...state.to.viewport.viewBox };
-    this._zoom = this._modeTransitionTargetZoom;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._isoProjectionSnapshot = null;
+    this._clearModePresentation();
+    const targetCamera = this._physicalCamera(state.to.viewport, state.to.stageWidth, state.to.stageHeight);
+    this._view = targetCamera.viewBox;
+    this._zoom = targetCamera.zoom;
+    this._modeSceneSize = null;
     this._hdrH = Math.round(state.to.headerBudget);
     this._modeTransitionVisual = null;
     this._modeTransitionPreparing = false;
@@ -1561,13 +1647,10 @@ export class HouseplanCard extends LitElement {
       if (stage && stage.clientWidth > 0 && stage.clientHeight > 0
           && (Math.abs(stage.clientWidth - state.to.stageWidth) > 0.5
             || Math.abs(stage.clientHeight - state.to.stageHeight) > 0.5)) {
-        const current = this._view;
+        const camera = this._physicalCamera(state.to.viewport, stage.clientWidth, stage.clientHeight);
         this._lastValidStageSize = [stage.clientWidth, stage.clientHeight];
-        this._applyView(
-          this._zoom,
-          current ? current.x + current.w / 2 : undefined,
-          current ? current.y + current.h / 2 : undefined,
-        );
+        this._view = camera.viewBox; this._zoom = camera.zoom;
+        this._saveZoom();
         this.requestUpdate();
       }
       const focused = (this.renderRoot as ShadowRoot).activeElement as HTMLElement | null;
@@ -1582,11 +1665,20 @@ export class HouseplanCard extends LitElement {
 
   private _cancelModeTransition(commitTarget = true): void {
     this._cancelCameraTransition(false);
+    const presented = this._modeTransition.presented || this._modeTransitionVisual;
+    const retained = presented ? this._physicalCamera(presented.viewport, presented.stageWidth, presented.stageHeight) : null;
     const hadControllerState = !!this._modeTransition.state;
     this._modeTransitionRequest++;
     this._modeTransitionPreparing = false;
     this._modeTransitionForceAtomic = false;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._isoProjectionSnapshot = null;
     this._modeTransition.cancel(commitTarget);
+    this._modeSceneSize = null;
+    this._headerMotion.cancel();
+    this._clearModePresentation();
+    if (!commitTarget && retained) { this._view = retained.viewBox; this._zoom = retained.zoom; }
+    if (commitTarget && !hadControllerState && presented && this._mode === 'view')
+      this._commitViewModeAtomic(presented, this._zoom);
     // A preparing transition has no controller state to settle. Its measured
     // callback is invalidated above, so always discard the retained frame;
     // otherwise a space switch/recovery during measurement can leave inline
@@ -1619,13 +1711,16 @@ export class HouseplanCard extends LitElement {
     this._modeTransitionForceAtomic = false;
     this._zoom = targetZoom;
     if (from) {
-      const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
+      const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
+      const properties = this.renderRoot.querySelector<HTMLElement>('.hp-properties');
+      const targetStageWidth = card?.clientWidth
+        ? card.clientWidth - (this._editorRuntime?.properties.wide ? properties?.offsetWidth || 0 : 0)
+        : this._stageEl?.clientWidth || from.stageWidth;
       const headerHeight = this._editorRuntime?._modeHeaderHeight('view') ?? from.headerHeight;
       const targetStageHeight = modeStageHeight(from, headerHeight);
       this._hdrH = Math.round(from.headerBudget + from.stageHeight - targetStageHeight);
-      this._view = this._viewForModeTarget(
-        targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
-      );
+      const camera = this._physicalCamera(from.viewport, targetStageWidth, targetStageHeight);
+      this._view = camera.viewBox; this._zoom = camera.zoom;
       this._lastValidStageSize = [targetStageWidth, targetStageHeight];
     } else {
       this._view = null;
@@ -1672,10 +1767,14 @@ export class HouseplanCard extends LitElement {
       // The hidden frame preserves source sizes; keep the header + stage + chrome budget
       // constant so every RAF moves both edges without a final layout jump.
       const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);
-      const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
-      const targetView = this._viewForModeTarget(
-        targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
-      );
+      const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
+      const properties = this.renderRoot.querySelector<HTMLElement>('.hp-properties');
+      const targetStageWidth = card?.clientWidth
+        ? card.clientWidth - (this._editorRuntime?.properties.wide ? properties?.offsetWidth || 0 : 0)
+        : this._stageEl?.clientWidth || from.stageWidth;
+      const targetCamera = this._physicalCamera(from.viewport, targetStageWidth, targetStageHeight);
+      const targetView = targetCamera.viewBox;
+      this._modeTransitionTargetZoom = targetCamera.zoom;
       const to: ModeVisualState = {
         presentedMode: targetMode,
         headerHeight,
@@ -1683,7 +1782,7 @@ export class HouseplanCard extends LitElement {
         editorChromeHeight: targetChromeHeight,
         stageWidth: targetStageWidth,
         stageHeight: targetStageHeight,
-        viewport: viewportFromViewBox(targetView, targetStageWidth),
+        viewport: { ...from.viewport, viewBox: targetView },
         stageColor: this._targetStageColor(targetMode),
         paperColor: this._targetPaperColor(targetMode),
         sceneBrightness: this._targetBrightness(targetMode),
@@ -1691,13 +1790,24 @@ export class HouseplanCard extends LitElement {
         backdropOpacity: targetMode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
         viewWeight: targetMode === 'view' ? 1 : 0,
         editorWeight: targetMode === 'view' ? 0 : 1,
+        planWeight: targetMode === 'plan' ? 1 : 0,
         toolbarContentOpacity: targetMode === 'view' ? 0 : 1,
       };
       this._modeTransitionPreparing = false;
       const forceAtomic = this._modeTransitionForceAtomic;
       this._modeTransitionForceAtomic = false;
+      commitHouseplanViewport(this);
+      this._modeSceneSize = [Math.max(from.stageWidth, targetStageWidth), Math.max(from.stageHeight, targetStageHeight)];
+      const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
+      if (scene) {
+        scene.style.width = `${this._modeSceneSize[0]}px`; scene.style.height = `${this._modeSceneSize[1]}px`;
+      }
+      const rasterCamera = this._physicalCamera(from.viewport, ...this._modeSceneSize);
+      this._view = rasterCamera.viewBox; this._zoom = rasterCamera.zoom;
+      scheduleHouseplanViewport(this, true, true);
+      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic);
       this._modeTransition.start(from, to, targetMode,
-        this._reducedMotion || forceAtomic ? 0 : 220);
+        this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
     });
   }
 
@@ -1732,6 +1842,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._modeEditorInk.clear();
       ++this._viewDeviceMenuRequest;
       if (!authority) { this._read.invalidate(); this._loading = false;
         if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
@@ -2765,8 +2876,7 @@ export class HouseplanCard extends LitElement {
   private _rezoom(): void {
     const v = this._view;
     const z = v ? fitView(this._baseVb(), v.w / v.h).w / v.w : 0;
-    if (z >= MIN_ZOOM && z <= 8) this._zoom = z;
-    else if (v) this._applyView(z, v.x + v.w / 2, v.y + v.h / 2);
+    if (Number.isFinite(z) && z > 0) this._zoom = z;
   }
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
@@ -3177,6 +3287,10 @@ export class HouseplanCard extends LitElement {
     this._editorRuntimeLoadingTimer = undefined;
     this._editorRuntimeLoadingVisible = false;
     this._modeTransition.dispose();
+    this._clearModePresentation(); this._modeSceneSize = null;
+    this._modeProjectionSource = null; this._modeProjectionCrossing = false;
+    this._modeEditorInk.clear();
+    this._headerMotion.cancel();
     this._cameraTransition.dispose();
     this._zoomScaleActivity.dispose();
     this._cameraTransitionFit = null;
@@ -4628,7 +4742,7 @@ export class HouseplanCard extends LitElement {
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
-    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit();
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this);
     this._editorRuntime?._commitLiveEditor();
     this._liveRt?.syncContacts();
     this._pruneDevicePressFeedback();
@@ -4681,7 +4795,7 @@ export class HouseplanCard extends LitElement {
       let frame = 0;
       const ownsHeader = () => this.isConnected && this._roHdr === observer && stage === this._stageEl;
       const measure = () => {
-        if (!ownsHeader()) return;
+        if (!ownsHeader() || this._modeTransition.active) return;
         const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
         let compact = this._compactSpaces;
         if (head && headerWidth > 0) {
@@ -5114,7 +5228,7 @@ export class HouseplanCard extends LitElement {
   private _renderLife = new RenderLifecycle();
   private _liveEditorPaintCount = 0;
 
-  private _liveVp(now = false): void { this._liveRt ? this._liveRt.viewport(now) : this.requestUpdate(); }
+  private _liveVp(now = false, force = false): void { this._liveRt ? this._liveRt.viewport(now, force) : this.requestUpdate(); }
   private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
   /** Bypass live routing so a gesture terminal publishes the last HA frame. */
   private _flushHa(): void { if (this._liveRt?.take()) { this._terminalFrame = 2; super.requestUpdate(); } }
@@ -6650,6 +6764,18 @@ export class HouseplanCard extends LitElement {
       id: m.id, model: m, layout: this._layout, devs: this._displayDevices,
       far: this._showFar, grow, rect, all, outliers: cf.outliers,
     };
+    if (f?.id === m.id && this._view && this._lastValidStageSize && !this._modeTransitionBusy
+        && (this._mode !== 'view' || !this._isoEnabled)
+        && (f.rect.x !== rect.x || f.rect.y !== rect.y || f.rect.w !== rect.w || f.rect.h !== rect.h)) {
+      const [width, height] = this._lastValidStageSize;
+      const old = f.rect, previousBase = [old.x, old.y, old.w, old.h];
+      const previous = presentationViewport(this._view, previousBase, turnRect(old, this._rotation),
+        this._rotation, this._zoom, [width, height], null);
+      const camera = physicalPlanCamera({ centerX: this._view.x + this._view.w / 2,
+        centerY: this._view.y + this._view.h / 2, pixelsPerUnit: width / previous.w },
+      [rect.x, rect.y, rect.w, rect.h], turnRect(rect, this._rotation), this._rotation, width, height);
+      this._view = camera.viewBox; this._zoom = camera.zoom;
+    }
     return this._frame;
   }
 
@@ -6718,7 +6844,7 @@ export class HouseplanCard extends LitElement {
     const finish = (value: 'flat' | 'iso') => this._isoProjectionSnapshot = value;
     const fallback = () => { if (this._renderProjection === 'iso') { this._cancelCameraTransition(false); this._view = null; this._viewModeSnap = null; } return finish('flat'); };
     this._renderIsoScene = null;
-    if (this._desiredProjection !== 'iso' || !this._model.length || !this._isoSceneRuntime)
+    if ((this._modeProjectionSource ?? this._desiredProjection) !== 'iso' || !this._model.length || !this._isoSceneRuntime)
       return finish('flat');
     if (!this._spaceDisplayForRender().showBorders)
       return this._isoFallback.has(`${this._space}|no-borders`) ? fallback() : finish('iso');
@@ -6975,6 +7101,8 @@ export class HouseplanCard extends LitElement {
     return turnRect({ x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, this._rotation);
   }
   private _presentationView(view: FrameRect, zoom = this._zoom, vb = this._baseVb()): FrameRect {
+    if (this._modeSceneSize) return presentationViewport(view, vb, this._displayBase(vb), this._rotation, zoom,
+      this._modeSceneSize, null);
     return !this._rotation ? view : presentationViewport(view, vb, this._displayBase(vb), this._rotation, zoom,
       this._lastValidStageSize, this._modeTransitionVisual);
   }
@@ -7022,6 +7150,13 @@ export class HouseplanCard extends LitElement {
   private static readonly ZOOM_MAX = 8;
   private static readonly ZOOM_MIN = MIN_ZOOM;
 
+  /** Automatic rebasing may carry a camera outside the ordinary fit bounds.
+   * Each explicit step can move back continuously; no command snaps it home. */
+  private _boundedZoom(zoom: number): number {
+    return Math.min(Math.max(HouseplanCard.ZOOM_MAX, this._zoom),
+      Math.max(Math.min(HouseplanCard.ZOOM_MIN, this._zoom), zoom));
+  }
+
   /**
    * Keep the view within reach of the content (docs/CANVAS.md §5).
    *
@@ -7036,20 +7171,25 @@ export class HouseplanCard extends LitElement {
     v: { x: number; y: number; w: number; h: number },
     fit: { x: number; y: number; w: number; h: number },
   ): { x: number; y: number; w: number; h: number } {
-    const axis = (vp: number, vs: number, fp: number, fs: number): number => {
+    const axis = (vp: number, vs: number, fp: number, fs: number, current?: number): number => {
       const slack = Math.max(vs, fs) * PAN_SLACK;
       const a = fp - slack, b = fp + fs - vs + slack;
-      return Math.max(Math.min(a, b), Math.min(Math.max(a, b), vp));
+      const retained = current == null ? a : current - vs / 2;
+      return Math.max(Math.min(a, b, retained), Math.min(Math.max(a, b, retained), vp));
     };
-    return { w: v.w, h: v.h, x: axis(v.x, v.w, fit.x, fit.w), y: axis(v.y, v.h, fit.y, fit.h) };
+    const current = this._view;
+    return { w: v.w, h: v.h,
+      x: axis(v.x, v.w, fit.x, fit.w, current ? current.x + current.w / 2 : undefined),
+      y: axis(v.y, v.h, fit.y, fit.h, current ? current.y + current.h / 2 : undefined) };
   }
 
   /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
   private _applyView(zoom: number, cx?: number, cy?: number): boolean {
     this._cancelCameraTransition(false);
+    const previousZoom = this._zoom;
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
-    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
+    const z = this._boundedZoom(zoom === previousZoom ? this._zoom : zoom);
     const w = fit.w / z, h = fit.h / z;
     const cur = this._cameraView(vb);
     const ccx = cx ?? cur.x + cur.w / 2;
@@ -7240,7 +7380,7 @@ export class HouseplanCard extends LitElement {
     const stage = this._stageEl;
     if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
     const vb = this._baseVb();
-    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
+    const z = this._boundedZoom(newZoom);
     // #396 AC3: the world point under the pointer is read from the SAME state
     // the zoom is accumulated from — the running target. Reading it from the
     // lagging presented frame made a fast trackpad series walk the anchor
@@ -7321,13 +7461,8 @@ export class HouseplanCard extends LitElement {
 
   /** Save the current space zoom to localStorage (view mode only). */
   private _saveZoom(): void {
-    // Editor zoom is a working tool, never the viewing intent: while an editor
-    // is open the wheel/pinch keep calling _saveZoom, but the per-space VIEW
-    // zoom must not learn about it. The exit-editor restore used to re-save the
-    // view zoom from a rAF — on a slow tablet the floor-tab click lands BEFORE
-    // that rAF (input runs first in the frame), the space guard skipped the
-    // fix-up and the editor 500% stayed in _zoomBySpace/LS_ZOOM for the next
-    // visit to that floor. Editors do not need zoom persistence at all.
+    // Intermediate editor gestures are session-only. Exiting commits the
+    // current floor's working camera as the new View preference (#1207).
     if (this._mode !== 'view') return;
     this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
     try {
@@ -7869,7 +8004,7 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._toastTimer);
     this._toastTimer = window.setTimeout(() => {
       this._toast = '';
-      this._toastPresentation.clear();
+      this._toastPresentation.clearMessage();
     }, 3500);
   }
 
@@ -10409,7 +10544,7 @@ export class HouseplanCard extends LitElement {
 
   /** Current four-phase environment. Editors stay static; #101 supplies viewWeight. */
   private _dayCycleState(now: Date | number = new Date()): DayCycleState | null {
-    const viewWeight = this._modeTransitionVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
+    const viewWeight = Math.max(this._modeTransitionVisual?.viewWeight ?? 0, this._mode === 'view' ? 1 : 0);
     if (viewWeight <= 0 || this._effBgMode() !== 'daynight') return null;
     return resolveDayCycle(this._renderPlanHass, now);
   }
@@ -10417,7 +10552,7 @@ export class HouseplanCard extends LitElement {
   /** #718 K1/K5: the moon's phase without an environment (static background, moon on, View). */
   private _moonSkyState(): DayCycleState | null {
     return moonSkyState(this._sunGlobal(), this._effBgMode() === 'daynight',
-      this._modeTransitionVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0), this._renderPlanHass);
+      Math.max(this._modeTransitionVisual?.viewWeight ?? 0, this._mode === 'view' ? 1 : 0), this._renderPlanHass);
   }
 
   private _dayCycleTick = (): void => {
@@ -11461,7 +11596,7 @@ export class HouseplanCard extends LitElement {
       && warmCameraUnchanged(this._view, this._warmVp) && this._warmSlot?.ownHdrH;
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
-    const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
+    const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = !this._modeProjectionCrossing && this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
     const transitionFromMode = this._modeTransition.state?.from.presentedMode;
     const glowLayerVisible = !this._markup || !!modeVisual && (
       modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
@@ -11475,11 +11610,12 @@ export class HouseplanCard extends LitElement {
     const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
         width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
     const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
-          class="closex" title=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
+          class="closex" data-hp-tooltip=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
       : nothing}</span>`;
     return html`
       <ha-card
+        style="--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}"
         ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
         data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-continuity-state=${this._continuity.state}
@@ -11504,10 +11640,7 @@ export class HouseplanCard extends LitElement {
           ?data-panel-phone=${this._panelHeaderChoice.phone}
           data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
         <div class="head hpf-chrome-group" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
-          ${this.panelHost ? this._renderPanelMenu() : html`<div class="title hpf-heading hpf-heading-inline" title=${this._config.title || this._t('card.title')}>
-            <ha-icon icon="mdi:home-city"></ha-icon>
-            <span>${this._config.title || this._t('card.title')}</span>
-          </div>`}
+          ${this._renderPanelMenu()}
           ${renderHeaderSpaceNavigation({
             spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
             labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
@@ -11524,7 +11657,7 @@ export class HouseplanCard extends LitElement {
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).map(
                   ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
                     data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
-                    title=${this._t(('mode.' + m + '_tip') as any)}
+                    data-hp-tooltip=${this._t(('mode.' + m + '_tip') as any)}
                     aria-label=${this._t(`mode.${m}` as const)}
                     @click=${() => this._setMode(m)}>
                     <ha-icon class="panel-mode-compact" icon=${ic}></ha-icon>
@@ -11576,7 +11709,7 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${modeVisual ? `;width:${modeVisual.stageWidth}px` : ''}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-plan-weight:${modeVisual?.planWeight ?? (this._mode === 'plan' ? 1 : 0)};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e) : nothing}
@@ -11597,7 +11730,7 @@ export class HouseplanCard extends LitElement {
           ${this._ledEditor?.chrome() ?? nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
-            style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}">
+            style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}${this._modeProjectionCrossing ? `;opacity:${this._modeProjectionOpacity}` : ''}${modeVisual ? `;width:${this._modeSceneSize?.[0] ?? modeVisual.stageWidth}px;height:${this._modeSceneSize?.[1] ?? modeVisual.stageHeight}px` : ''}">
           ${iso && isoLayers?.structural ? svg`<svg class="iso-underlay-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
@@ -11786,10 +11919,8 @@ export class HouseplanCard extends LitElement {
             ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
             ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
             ${this._renderSunRays(space)}
-            ${this._editing ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderAlignGuides()}</g>` : nothing}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderMarkupLayer(vb)}</g>` : nothing}
+            ${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}
+            ${this._editorInk('markup', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
             ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
                    editor keeps drawing doors, windows and gates so they stay
                    editable, and only the symbols are hidden elsewhere. What
@@ -11808,10 +11939,8 @@ export class HouseplanCard extends LitElement {
                    thick wall bodies. Their
                    full centreline geometry remains visible for editing. */}
             ${this._editing ? this._renderZeroWalls(disp) : nothing}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
+            ${this._editorInk('hidden-walls', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay()}</g>`)}
+            ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
             ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${''/* Static architectural axes and endpoints are a Plan-editor
@@ -11821,10 +11950,8 @@ export class HouseplanCard extends LitElement {
                    draft segments already own opaque masonry, which would
                    otherwise cover the chain axis and nodes (#307). It stays
                    below the snap overlay so snap highlights keep priority. */}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderActiveChainInk()}</g>` : nothing}
-            ${this._markup ? svg`<g class="hp-editor-only-layer hp-plan-snap-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
+            ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
+            ${this._editorInk('nodes', this._markup, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay()}</g>`)}
             ${disp.hideOpenings && !this._markup
               ? nothing
               : isoLayers && !isoLayers.floorSymbols
@@ -13194,6 +13321,7 @@ export class HouseplanCard extends LitElement {
         flipV: !!o.flip_v,
         base,
         tone,
+        sensorActive: active,
         cellCm: this._cellCm,
         gridPitch: this._gridPitch,
         face,

@@ -3,13 +3,28 @@ import assert from 'node:assert/strict';
 import {
   turnPoint, turnVector, turnRect, turnMatrix, framePercent, inversePlanRotation,
   stepPlanRotation, validPlanRotation, effectivePlanRotation, PlanRotationPreference,
-  PLAN_ROTATION_STORAGE, presentationView, canonicalView,
+  PLAN_ROTATION_STORAGE, presentationView, canonicalView, physicalPlanCamera, presentationViewport,
 } from '../test-build/view-frame.js';
 import { isoCameraFor, isoPlaneMatrix, projectPlanPoint, unprojectFloorPoint } from '../test-build/iso-projection.js';
 import { resolveIsoScene } from '../test-build/iso-scene-render.js';
 import { fitView } from '../test-build/logic.js';
 import { rotatePdfCommands, pdfCommandBounds } from '../test-build/pdf/pdf-layout.js';
 import { invalidCardRotation, rotationConfigValue } from '../test-build/card-editor-validation.js';
+
+test('#1207 physical camera survives frame growth/shrink and stage resize at every quarter turn', () => {
+  const camera = { centerX: -150, centerY: 2900, pixelsPerUnit: 2.75 };
+  for (const rotation of [0, 90, 180, 270]) for (const frame of [
+    { x: 0, y: 0, w: 100, h: 40 }, { x: -500, y: -200, w: 3000, h: 9000 },
+  ]) for (const [width, height] of [[1200, 760], [840, 630], [320, 600]]) {
+    const vb = [frame.x, frame.y, frame.w, frame.h], display = turnRect(frame, rotation);
+    const result = physicalPlanCamera(camera, vb, display, rotation, width, height);
+    const presented = presentationViewport(result.viewBox, vb, display, rotation, result.zoom, [width, height], null);
+    assert.ok(Math.abs(width / presented.w - camera.pixelsPerUnit) < 1e-10);
+    assert.ok(Math.abs(height / presented.h - camera.pixelsPerUnit) < 1e-10);
+    assert.ok(Math.abs(result.viewBox.x + result.viewBox.w / 2 - camera.centerX) < 1e-10);
+    assert.ok(Math.abs(result.viewBox.y + result.viewBox.h / 2 - camera.centerY) < 1e-10);
+  }
+});
 
 test('#1070 AC2: exact clockwise quarter turns, inverse, and four-turn composition on the infinite canvas', () => {
   assert.deepEqual(turnPoint([600, 400], 90), [600, 600]);

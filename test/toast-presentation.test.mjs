@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {ToastPresentation,setToastOwner,toastRootOf} from '../test-build/toast-presentation.js';
+import {ToastPresentation,setToastOwner,toastRootOf,visibleToastBounds} from '../test-build/toast-presentation.js';
 
 // Small DOM adapter, not a second implementation of owner/announcement policy.
 class NodeStub {
@@ -22,6 +22,22 @@ after(()=>Object.assign(globalThis,original));
 const flush=()=>{for(const [id,fn]of [...frames]){frames.delete(id);fn();}};
 const setup=()=>{const root=new Root({localName:'houseplan-card'}),p=new ToastPresentation();p.connect(root);return {root,p};};
 const owner=root=>{const portal=new NodeStub();return {host:new NodeStub(root),portal:()=>portal};};
+
+test('#1207 visible plan intersection follows viewport clipping and has a bounded fallback',()=>{
+ const viewport={left:0,top:25,right:1000,bottom:625};
+ assert.deepEqual(visibleToastBounds({left:100,top:-300,right:740,bottom:500},viewport),{left:100,top:25,right:740,bottom:500});
+ assert.deepEqual(visibleToastBounds({left:0,top:900,right:400,bottom:1000},viewport),viewport);
+ assert.deepEqual(visibleToastBounds(null,viewport),viewport);
+});
+test('#1207 hint identity is stable; hints never supersede a message and leave only clears its own hint',()=>{
+ const {root,p}=setup();p.showHint('create room','room-face');flush();const notice=root.portal.children[0];
+ p.showHint('create room','room-face');assert.equal(frames.size,0);assert.equal(notice.textContent,'create room');
+ p.clearHint('other');assert.equal(root.portal.children.length,1);
+ p.show('save failed','toast.error');flush();p.showHint('create room','room-face');p.clearHint('room-face');
+ assert.equal(notice.textContent,'save failed');assert.equal(notice.dataset.kind,'message');
+ p.clear(true);p.showHint('create room','room-face');flush();p.clearHint('room-face');flush();
+ assert.equal(root.portal.children.length,0);p.disconnect();
+});
 
 test('new text announces once; renders and owner changes preserve one non-live visible node',()=>{
  const {root,p}=setup(),a=owner(root),b=owner(root);p.show('first','toast.saved');flush();

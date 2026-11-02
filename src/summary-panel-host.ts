@@ -29,6 +29,7 @@ export interface SummaryHass {
  * prevents the lazy modules from spreading that legacy untyped boundary.
  */
 export interface SummaryPanelHost extends Node {
+  readonly _modeTransitionBusy?: boolean;
   hass?: SummaryHass;
   panelHost: boolean;
   narrow: boolean | null;

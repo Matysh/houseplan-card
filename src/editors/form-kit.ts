@@ -440,6 +440,9 @@ export interface UnitInputOptions {
   describedBy?: string;
   value: string;
   unit: string;
+  /** Limits user insertions only; existing/programmatically loaded text remains intact. */
+  maxCharacters?: number;
+  tooltip?: string;
   min?: number;
   max?: number;
   step?: number | 'any';
@@ -458,17 +461,32 @@ export interface UnitInputOptions {
 
 /** Числовое поле с единицей внутри рамки (§3.1 «unit-inside»). */
 export function unitInput({
-  id, fieldId = id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, readonly,
+  id, fieldId = id, describedBy, value, unit, maxCharacters, tooltip, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, readonly,
   onInput, onChange,
 }: UnitInputOptions): TemplateResult {
+  let accepted = value;
   return html`<span class="hpf-unit ${wide ? 'hpf-unit-wide' : ''}">
     <input data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="number" inputmode="decimal" .value=${value}
       aria-describedby=${describedBy ?? nothing}
       min=${min ?? nothing} max=${max ?? nothing} step=${step ?? nothing}
       placeholder=${placeholder ?? nothing} aria-label=${ariaLabel ?? nothing}
+      data-hp-tooltip=${tooltip ?? nothing} maxlength=${maxCharacters ?? nothing}
       aria-invalid=${invalid ? 'true' : nothing} ?disabled=${disabled}
       ?readonly=${readonly}
-      @input=${(e: Event) => onInput((e.target as HTMLInputElement).value)}
+      @focus=${(e: Event) => { accepted = (e.currentTarget as HTMLInputElement).value; }}
+      @input=${(e: InputEvent) => {
+        const input = e.currentTarget as HTMLInputElement, raw = input.value;
+        // maxlength is ignored by native number inputs. Reject insertions at
+        // this shared boundary before a caller mutates its numeric draft.
+        // Deleting from a legacy long value must still allow reaching a short one.
+        if (maxCharacters != null && raw.length > maxCharacters && raw !== accepted
+            && !((e.inputType ?? '').startsWith('delete') && raw.length < accepted.length)) {
+          input.value = accepted;
+          return;
+        }
+        accepted = raw;
+        onInput(raw);
+      }}
       @change=${onChange
         ? (e: Event) => onChange((e.target as HTMLInputElement).value, e.target as HTMLInputElement)
         : nothing} />
@@ -686,6 +704,7 @@ export function sourcePicker({
               ? candidates.map((c) => html`<button data-hp="field-option" data-field=${fieldId ?? nothing} data-value=${c.value} type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"
                   aria-selected=${c.value === selected ? 'true' : 'false'} @click=${() => onPick(c.value)}>
                   <span>${c.label}</span><small>${c.sub}</small>
+                  ${c.value === selected ? html`<b class="hpf-choice-check" aria-hidden="true">✓</b>` : nothing}
                 </button>`)
               : html`<p class="hpf-hint">${emptyText}</p>`}
           </div>

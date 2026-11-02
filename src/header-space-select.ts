@@ -47,7 +47,7 @@ export function renderHeaderSpaceSelect(
   spaces: readonly SpaceChoice[], current: string, label: string, pick: (id: string) => void,
 ): TemplateResult {
   return html`<hp-settings-select class="compact-space-select" variant="header" data-hp="space-select"
-      title=${spaces.find(space => space.id === current)?.title || ''}>
+      data-hp-tooltip=${spaces.find(space => space.id === current)?.title || ''}>
     <select data-hp="space-select-value" data-field="header-space" .value=${current} aria-label=${label}
       @change=${(event: Event) => chooseHeaderSpace(event.currentTarget as HTMLSelectElement, current, pick)}>
       ${spaces.map(space => html`<option value=${space.id} ?selected=${space.id === current}>${space.title}</option>`)}
@@ -66,18 +66,19 @@ export function renderHeaderSpaceNavigation(nav: HeaderSpaceNavigation): Templat
             drag?.moved && drag.targetId === space.id ? ` drop-${drag.placement}` : ''}"
           ?data-reorderable=${nav.reorderable}
           aria-current=${current === space.id ? 'page' : nothing}
+          aria-label=${space.title} data-hp-tooltip=${space.title}
           @pointerdown=${(event: PointerEvent) => nav.pointerDown(event, space.id)}
           @pointerup=${nav.pointerUp} @pointercancel=${nav.cancelDrag} @click=${() => nav.tabClick(space.id)}>
         <span class="tabtitle">${space.title}</span>${nav.configure
           ? html`<ha-icon class="tabedit" icon="mdi:cog-outline" data-hp="space-settings" data-id=${space.id}
-              title=${labels.configure} @click=${(event: Event) => {
+              data-hp-tooltip=${labels.configure} aria-label=${labels.configure} @click=${(event: Event) => {
                 event.stopPropagation(); nav.configure?.(space.id);
               }}></ha-icon>` : nothing}
       </button>`)}
     ${compact && nav.configure ? html`<button class="${headerNavigationItem} tabedit compact-space-settings"
-        data-hp="space-settings" data-id=${current} title=${labels.configure} aria-label=${labels.configure}
+        data-hp="space-settings" data-id=${current} data-hp-tooltip=${labels.configure} aria-label=${labels.configure}
         @click=${() => nav.configure?.(current)}><ha-icon icon="mdi:cog-outline"></ha-icon></button>` : nothing}
-    ${nav.create ? html`<button class="${headerNavigationItem} tabadd" data-hp="space-add" title=${labels.add}
+    ${nav.create ? html`<button class="${headerNavigationItem} tabadd" data-hp="space-add" data-hp-tooltip=${labels.add} aria-label=${labels.add}
         @click=${nav.create}><ha-icon icon="mdi:plus"></ha-icon></button>` : nothing}
   </nav>`;
 }

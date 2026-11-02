@@ -953,6 +953,10 @@ export class LoadedSummaryPanelRuntime {
    * Render paths use what it stored.
    */
   private measureLayout(): void {
+    // The mode controller owns the moving stage. Measuring the summary on
+    // every resize would force a full scene render per animation frame.
+    // The terminal card update measures its final available box once.
+    if (this.host._modeTransitionBusy) return;
     const stage = this.host._stageEl;
     if (!stage) return;
     const root = this.host.renderRoot;

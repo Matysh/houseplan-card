@@ -1,5 +1,5 @@
 import { cardDialogFormKitTokens } from './form-kit-tokens';
-import { CARD_DIALOG_FORM_KIT, textFieldsCss } from './form-kit.styles';
+import { CARD_DIALOG_FORM_KIT, textFieldsCss, unitFieldsCss } from './form-kit.styles';
 import { formKitCheckboxCss } from './form-input.styles';
 import { readingTextCss, readingSeparatorCss } from './reading-kit.styles';
 import { settingsActionsCss } from './settings-action.styles';
@@ -15,6 +15,8 @@ export const editorFormKitCss = cardDialogFormKitTokens.replace('hp-dialog .hpf-
   + settingsActionsCss('.editor-secondary .btn.imageassetdelete', '.on', { density:'editor-delete' })
   + textFieldsCss({ ...CARD_DIALOG_FORM_KIT, parameterized:true }, '.editor-secondary input[type=number]', 'editor', '74px')
   + textFieldsCss({ ...CARD_DIALOG_FORM_KIT, parameterized:true }, '.editor-secondary .drawwall input', 'editor', '4.2em')
+  + unitFieldsCss({ ...CARD_DIALOG_FORM_KIT, parameterized:true }, '.editor-secondary .hpf-unit', 'editor')
+  + '.editor-secondary .drawwall > .hpf-unit { flex:0 0 78px; width:78px; }'
   + textFieldsCss({ ...CARD_DIALOG_FORM_KIT, parameterized:true }, '.wallthick-dlg input[type=number]', 'editor', '5.5em')
   + formKitCheckboxCss('.editor-secondary input[type=checkbox]', 'editor')
   + readingTextCss('.editor-secondary :is(label,.hint,.bdhint),.editor-context-label:not(.hpf-heading),.furnhint')

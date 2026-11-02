@@ -28,6 +28,8 @@ export interface ModeVisualState {
   backdropOpacity: number;
   viewWeight: number;
   editorWeight: number;
+  /** Plan ink retires independently when moving to another open editor. */
+  planWeight?: number;
   toolbarContentOpacity: number;
 }
 
@@ -166,6 +168,8 @@ export function interpolateModeVisualState(
     backdropOpacity: lerp(from.backdropOpacity, to.backdropOpacity, p),
     viewWeight: lerp(from.viewWeight, to.viewWeight, p),
     editorWeight: lerp(from.editorWeight, to.editorWeight, p),
+    planWeight: lerp(from.planWeight ?? (from.presentedMode === 'plan' ? 1 : 0),
+      to.planWeight ?? (to.presentedMode === 'plan' ? 1 : 0), p),
     toolbarContentOpacity: lerp(from.toolbarContentOpacity, to.toolbarContentOpacity, p),
   };
 }

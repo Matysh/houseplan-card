@@ -13,7 +13,7 @@ import { sendHouseplanWrite } from './large-write-transport';
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
-import { callout, disclosure } from './editors/form-kit';
+import { callout, disclosure, unitInput } from './editors/form-kit';
 import { html, svg, nothing, TemplateResult } from 'lit';
 import { difference, type Geom } from 'polyclip-ts';
 import { LazyBackupArchiveClient } from './backup-archive-lazy';
@@ -89,7 +89,7 @@ import {
   spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, type FillColors,
   type FillColorEntry, type SpaceDisplay, RUN_TARGET_DOMAINS, stageBgOf,
   showRoomTooltipOf, volumetricViewOf, normalizeDeviceDisplay,
-  type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE, fitView,
+  type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE,
 } from './logic';
 import {
   resolveSafeResize,
@@ -325,7 +325,6 @@ import {
 } from './device-value-badge';
 import { type RenderDeviceSnapshot } from './render-device-snapshot';
 import { type HouseplanMode, type ModeVisualState } from './mode-transition';
-import { projectPlanPoint } from './iso-projection';
 import { type HaBindingStatus, type HaRegistrySnapshot } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import {
@@ -354,7 +353,7 @@ import {
 import type { OpeningPlacementCandidate, OpMeasure, RenderOpening, OpeningDragState } from './interaction-types';
 import { OpeningDragWalls, renderOpeningDragGeometry } from './opening-drag-preview';
 import { safeStoredColor } from './color';
-import { gridVisualUnits } from './grid-scale';
+import { gridVisualUnits, wallNodeRadius } from './grid-scale';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
 import { selectWallFaceLineage, settleWallFaceLineage } from './wall-face-lineage';
@@ -703,6 +702,8 @@ export interface HouseplanEditorHostPort {
   _mergeSel: string | null;
   _mode: "view" | "plan" | "devices" | "decor";
   _modeTransitionBusy: boolean;
+  _modeProjectionSource: 'flat' | 'iso' | null;
+  _modeProjectionCrossing: boolean;
   _modeTransitionEditorCamera: { zoom: number; centerX?: number; centerY?: number; } | null;
   _modeTransitionForceAtomic: boolean;
   _modeTransitionPreparing: boolean;
@@ -817,6 +818,7 @@ export interface HouseplanEditorHostPort {
   _showHidden: boolean;
   _setShowHidden: (shown: boolean) => void;
   _showToast: (msg: string, id?: string) => void;
+  _toastPresentation: Pick<import('./toast-presentation').ToastPresentation, 'showHint' | 'clearHint'>;
   _signer: ContentSigner;
   _space: string;
   _spaceDialog: SpaceDialogState | null;
@@ -1303,7 +1305,6 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     const previousMode = this.host._mode;
     const previousProjection = this.host._effectiveProjection();
     const capturedVisual = this.host._currentModeVisual(previousMode);
-    const retargeting = this.host._modeTransitionBusy;
     // The target toolbar replaces the old editor markup during the hidden
     // measurement frame. Give that incoming content its own coordinate on the
     // shared controller so editor-to-editor switches do not pop abruptly.
@@ -1316,50 +1317,11 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     // restore it, not merely forget its pointer record after the config has
     // already been mutated by move/resize.
     if (this.host._decorMove || this.host._dtDrag || this.backdropGesture.active) this._cancelDecorGesture();
-    const baseChanges = !space.bg && (mode === 'view') !== (previousMode === 'view');
-    // A running/preparing transition has not committed its target to `_zoom`
-    // yet. Retarget from the painted frame, but preserve the latest camera
-    // intent; otherwise rapid View -> editor A -> editor B resurrects the old
-    // View zoom/center and settles somewhere a direct transition never would.
-    const returningToEditor = retargeting && previousMode === 'view' && mode !== 'view'
-      ? this.host._modeTransitionEditorCamera : null;
-    let targetZoom = returningToEditor?.zoom
-      ?? (retargeting ? this.host._modeTransitionTargetZoom : this.host._zoom);
-    let targetCenterX = returningToEditor
-      ? returningToEditor.centerX
-      : retargeting ? this.host._modeTransitionTargetCenterX : fromVisual?.viewport.centerX;
-    let targetCenterY = returningToEditor
-      ? returningToEditor.centerY
-      : retargeting ? this.host._modeTransitionTargetCenterY : fromVisual?.viewport.centerY;
-    if (previousMode === 'view' && mode !== 'view' && !retargeting) {
-      // remember the view-mode viewport: whatever zooming happens inside the
-      // editors is a working tool, not what the user wants to see afterwards
-      const v = this.host._view;
-      this.host._viewModeSnap = {
-        space: this.host._space,
-        zoom: this.host._zoom,
-        cx: v ? this.host._logicalViewCenter()?.x : undefined,
-        cy: v ? this.host._logicalViewCenter()?.y : undefined, w: previousProjection === 'flat' ? v?.w : undefined,
-      };
-      if (previousProjection === 'iso') {
-        // #713: the 2.5D floor is the Flat plane. Enter the Flat editor with
-        // the same screen scale and centre, exactly as from a Flat View
-        // showing this picture: only the scalar zoom is re-read.
-        if (v) {
-          targetZoom = fitView(this.host._baseVb('flat'), v.w / v.h).w / v.w;
-          targetCenterX = v.x + v.w / 2;
-          targetCenterY = v.y + v.h / 2;
-        }
-        this.host._view = null;
-        this.host._mode = mode;
-        this.host._applyView(targetZoom, targetCenterX, targetCenterY);
-      }
-      if (baseChanges) {
-        targetZoom = 1;
-        targetCenterX = undefined;
-        targetCenterY = undefined;
-      }
-    }
+    // Mode changes preserve the painted physical camera, including a rapid
+    // retarget. The new frame/available stage only changes its relative zoom.
+    const targetZoom = this.host._zoom;
+    const targetCenterX = fromVisual?.viewport.centerX;
+    const targetCenterY = fromVisual?.viewport.centerY;
     this.host._mode = mode;
     if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
     if (previousMode === 'devices' && mode !== 'devices') {
@@ -1368,49 +1330,14 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       this.host._deviceInboxMemo = null;
     }
     this.host._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
-    if (mode === 'view') {
-      if (previousMode !== 'view' && !retargeting) {
-        this.host._modeTransitionEditorCamera = {
-          zoom: this.host._zoom,
-          centerX: fromVisual?.viewport.centerX,
-          centerY: fromVisual?.viewport.centerY,
-        };
-      }
-      const snap = this.host._viewModeSnap;
-      // restore the snapshot only for the space it was taken in
-      if (snap && snap.space === this.host._space) {
-        targetZoom = snap.zoom;
-        const targetProjection = this.host._isoEnabled ? 'iso' : 'flat';
-        const center = snap.cx != null && snap.cy != null && targetProjection === 'iso'
-          ? projectPlanPoint([snap.cx, snap.cy], 0) : null;
-        targetCenterX = center?.[0] ?? snap.cx;
-        targetCenterY = center?.[1] ?? snap.cy;
-      } else if (snap) {
-        // HP-1543-01: the floor CHANGED inside the editor — the snapshot
-        // belongs to the floor the editor was entered from, while _zoom still
-        // carries the editor's working zoom for the floor we are exiting on.
-        // Dropping the snapshot alone left that editor zoom (say 500%) on
-        // screen in view mode. The per-space store was never polluted
-        // (_saveZoom is view-only), so the standard centred
-        // _restoreZoom() puts back this floor's saved VIEW viewport. Its rAF
-        // reads _zoomBySpace, not the snapshot, so the same-tick floor-tab
-        // race the view-only guard protects against stays closed.
-        targetZoom = this.host._zoomBySpace[this.host._space] || 1;
-        targetCenterX = undefined;
-        targetCenterY = undefined;
-      }
-    } else {
-      this.host._modeTransitionEditorCamera = {
-        zoom: targetZoom, centerX: targetCenterX, centerY: targetCenterY,
-      };
-    }
+    this.host._viewModeSnap = null;
+    this.host._modeTransitionEditorCamera = null;
     this.host._modeTransitionTargetZoom = targetZoom;
     this.host._modeTransitionTargetCenterX = targetCenterX;
     this.host._modeTransitionTargetCenterY = targetCenterY;
-    if (previousProjection === 'iso'
-        || (mode === 'view' && this.host._isoEnabled)) {
-      this.host._modeTransitionForceAtomic = true;
-    }
+    const targetProjection = mode === 'view' && this.host._isoEnabled ? 'iso' : 'flat';
+    this.host._modeProjectionCrossing = animate && !this.host._reducedMotion && previousProjection !== targetProjection;
+    this.host._modeProjectionSource = this.host._modeProjectionCrossing ? previousProjection : null;
     const request = ++this.host._modeTransitionRequest;
     if (!animate) {
       // The only non-animated caller is route departure; keep the guard local
@@ -2942,6 +2869,7 @@ private _roomFaceObjectHit(raw: number[], path: readonly EventTarget[]): boolean
 public _clearRoomFaceHover(): void {
     if (!this._roomFaceHover) return;
     this._roomFaceHover = null;
+    this.host._toastPresentation.clearHint('room-face');
     this.host.requestUpdate();
   }
 
@@ -2985,6 +2913,7 @@ private _hoverExistingWallFace(ev: MouseEvent, path: readonly EventTarget[]): vo
     if (!paths) { this._clearRoomFaceHover(); return; }
     // Share View paint without creating a Room or rebuilding a body union.
     this._roomFaceHover = { key, face, paths };
+    this.host._toastPresentation.showHint(this.host._t('toast.room_face_create'), 'room-face');
     this.host.requestUpdate();
   }
 
@@ -5129,15 +5058,13 @@ public _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel 
 public _renderDrawWallControl(): TemplateResult {
     const min = this.host._tool === 'column' ? 1 : 0;
     return html`<label class="drawwall ${this.host._drawWallCm == null ? 'invalid' : ''}">${this.host._t('wallthick.field')}
-      <input data-hp="field" data-field=${this.host._tool === 'column' ? 'column-size' : 'wall-thickness'} type="number" min=${cmToField(min, this.host._imperial)}
-        max=${cmToField(this.host._drawWallMaxCm, this.host._imperial)} step="any"
-        .value=${this.host._drawWallFieldValue}
-        @input=${(e: Event) => {
-          this.host._drawWallField = (e.target as HTMLInputElement).value;
-        }}
-        data-hp-tooltip=${this.host._t(this.host._tool === 'draw' ? 'markup.draw_wall_title'
-          : 'physical.column_size_title')} />
-      <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+      ${unitInput({ fieldId: this.host._tool === 'column' ? 'column-size' : 'wall-thickness',
+        min: Number(cmToField(min, this.host._imperial)), max: Number(cmToField(this.host._drawWallMaxCm, this.host._imperial)), step: 'any',
+        value: this.host._drawWallFieldValue, maxCharacters: this.host._tool === 'draw' ? 3 : undefined,
+        unit: this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
+        ariaLabel: this.host._t('wallthick.field'),
+        tooltip: this.host._t(this.host._tool === 'draw' ? 'markup.draw_wall_title' : 'physical.column_size_title'),
+        onInput: raw => { this.host._drawWallField = raw; } })}
       <span class="rangehint">${this.host._t('physical.allowed_range', {
         min: cmToField(min, this.host._imperial),
         max: cmToField(this.host._drawWallMaxCm, this.host._imperial),
@@ -5286,13 +5213,15 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               this._updateDecorStyle({ ...this.host._decorStyle, ...e.detail })}></hp-color-opacity>
           <label class="drawwall">${this.host._t('decor.width')}
-            <input data-hp="field" data-field="decor-stroke-width" type="number" min=${this.host._decorSmallField(0.1)}
-              max=${this.host._decorSmallField(100)} step="0.1"
-              .value=${String(this.host._decorSmallField(this.host._decorStyle.widthCm))}
-              @input=${(e: Event) => this._updateDecorStyle({ ...this.host._decorStyle,
-                widthCm: this.host._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
-            <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+            ${unitInput({ fieldId: 'decor-stroke-width', min: this.host._decorSmallField(0.1),
+              max: this.host._decorSmallField(100), step: 0.1,
+              value: String(this.host._decorSmallField(this.host._decorStyle.widthCm)), maxCharacters: 3,
+              unit: this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
+              ariaLabel: this.host._t('decor.width'),
+              onInput: raw => this._updateDecorStyle({ ...this.host._decorStyle,
+                widthCm: this.host._decorSmallCm(Number(raw)) }) })}
           </label>
+          ${this.host._decorTool === 'line' ? html`<span class="hint">${this.host._t('markup.shift_45')}</span>` : nothing}
           ${canFill ? html`<label class="dfill"><input data-hp="field" data-field="decor-fill" type="checkbox" .checked=${this.host._decorStyle.fill}
               @change=${(e: Event) => this._updateDecorStyle({ ...this.host._decorStyle,
                 fill: (e.target as HTMLInputElement).checked })} />${this.host._t('decor.fill')}</label>
@@ -10988,7 +10917,7 @@ public _renderHiddenWallDiagnosticOverlay(): TemplateResult {
     if (!this.host._markup) return svg`` as unknown as TemplateResult;
     const geometry = this._hiddenWallDiagnosticSnapshot().value;
     if (!geometry.segments.length) return svg`` as unknown as TemplateResult;
-    const radius = wallCmToUnits(5, this.host._cellCm, this.host._gridPitch);
+    const radius = wallNodeRadius(this.host._cellCm, this.host._gridPitch);
     return svg`<g class="hidden-wall-diagnostic" data-hp="hidden-wall-diagnostic"
       data-segment-count=${geometry.segments.length}
       data-endpoint-count=${geometry.endpoints.length}
@@ -11013,8 +10942,9 @@ public _renderPlanSnapOverlay(): TemplateResult {
     const geometry = this._planSnapGeometrySnapshot().value;
     const active = this.host._activePlanSnapCandidate;
     const conflictKeys = new Set(this.host._activePlanSnapConflicts.map((item) => item.key));
-    const staticRadius = wallCmToUnits(5, this.host._cellCm, this.host._gridPitch);
-    const activeRadius = wallCmToUnits(10, this.host._cellCm, this.host._gridPitch);
+    const staticRadius = wallNodeRadius(this.host._cellCm, this.host._gridPitch);
+    const activeRadius = active?.kind === 'line' ? staticRadius
+      : wallCmToUnits(10, this.host._cellCm, this.host._gridPitch);
     return svg`<g class="plan-snap-overlay" data-hp="plan-snap-overlay"
       data-segment-count=${geometry.segments.length}
       data-endpoint-count=${geometry.endpoints.length}
@@ -11057,7 +10987,9 @@ public _syncPlanSnapActiveMarker(candidate: PlanSnapCandidate | null): void {
     marker.setAttribute('data-key', candidate.key);
     marker.setAttribute('cx', String(candidate.point[0]));
     marker.setAttribute('cy', String(candidate.point[1]));
-    marker.setAttribute('r', String(wallCmToUnits(10, this.host._cellCm, this.host._gridPitch)));
+    marker.setAttribute('r', String(candidate.kind === 'line'
+      ? wallNodeRadius(this.host._cellCm, this.host._gridPitch)
+      : wallCmToUnits(10, this.host._cellCm, this.host._gridPitch)));
   }
 
 public _syncPlanSnapConflictMarkers(conflicts: readonly PlanSnapEndpoint[]): void {

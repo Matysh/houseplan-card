@@ -348,7 +348,7 @@
   "marker.history_empty_path": "Für diese Reinigung ist kein Pfad aufgezeichnet.",
   "editor.rotation": "Grundrissdrehung",
   "editor.rotation_invalid": "Die Grundrissdrehung muss 0°, 90°, 180° oder 270° sein.",
-  "editor.title": "Titel",
+  "editor.title": "PDF-Titel (nicht auf der Karte angezeigt)",
   "editor.default_floor": "Anfangsbereich",
   "editor.default_floor_missing": "Anfangsbereich „{id}“ existiert nicht mehr. Wählen Sie einen anderen Bereich.",
   "editor.floor": "Fester Bereich",

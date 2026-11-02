@@ -73,6 +73,7 @@ export class PropertiesEditor {
     } else if (node) this.setSelection(null);
   };
   private width = 0;
+  private presentation: TemplateResult | null = null;
   private planHover: { clientX: number; clientY: number } | null = null;
   private suspendedColor: {draft: NonNullable<PropertiesFieldController['draft']>; value: ColorHexDraft} | null = null;
   private handoff: object | null = null;
@@ -237,6 +238,7 @@ export class PropertiesEditor {
     update();
   }
   dispose(): void {
+    this.presentation = null;
     this.clearPlanHover();
     this.motionEpoch++; this.sectionMotion.dispose();
     this.observer?.disconnect(); this.observed?.removeEventListener('pointerdown', this.pointerGuard, true);
@@ -673,6 +675,10 @@ export class PropertiesEditor {
 
   render(): TemplateResult | typeof nothing {
     this.observe();
+    // Keep the actual outgoing surface mounted for the shared closing motion.
+    // Its callbacks still reject View authority and the presentation is inert.
+    if (this.host._mode === 'view' && this.host._modeTransitionBusy && this.host._canEdit
+        && this.width >= PROPERTIES_MIN_WIDTH && this.presentation) return this.presentation;
     const motionEpoch = ++this.motionEpoch;
     void this.host.updateComplete.then(() => {
       this.paintPlanHover();
@@ -682,11 +688,11 @@ export class PropertiesEditor {
     const owner = this.identity;
     if (this.selected && !owner) this.setSelection(null);
     this.fields.sync();
-    if (!this.wide) return nothing;
+    if (!this.wide) { this.presentation = null; return nothing; }
     ensureFormKitStyles(this.host);
     const model = this.model(owner);
     const authority = this.host._configWriteContext.claim();
-    const current = () => this.wide && !this.variable && !this.host._editorSecondaryDialogBlocked
+    const current = () => this.wide && !this.host._modeTransitionBusy && !this.variable && !this.host._editorSecondaryDialogBlocked
       && this.host._configWriteContext.current(authority, this.host.hass)
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
@@ -711,8 +717,8 @@ export class PropertiesEditor {
           picker.resumeHexDraft(suspended.value); this.suspendedColor=null;
         } else if (suspended?.draft!==this.fields.draft) this.suspendedColor=null;
       },
-    }, this.host._editorSecondaryDialogBlocked || !!this.variable || this.host._devicePositionBusy);
-    return html`${view}${dialogPresence(this.renderVariable())}`;
+    }, this.host._modeTransitionBusy || this.host._editorSecondaryDialogBlocked || !!this.variable || this.host._devicePositionBusy);
+    return this.presentation = html`${view}${dialogPresence(this.renderVariable())}`;
   }
   selection(): TemplateResult | typeof nothing {
     if ((!this.wide && this.decorSelectionCount < 2) || !this.identity) return nothing;

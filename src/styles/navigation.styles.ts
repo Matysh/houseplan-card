@@ -39,10 +39,14 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-nav-modes > .hpf-nav-item:has(+ .editor-close-slot[aria-hidden='true']) { border-radius:0 7px 7px 0; }
   .hpf-nav-modes > .hpf-nav-item.active::after { display:none; }
   .hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { display:none; }
-  .hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']) { position:relative; width:44px; height:44px; border:1px solid var(--divider-color); border-radius:0 7px 7px 0; }
-  .hpf-nav-modes .closex { position:absolute; inset:-1px; width:44px; height:44px; color:var(--primary-text-color); opacity:1; }
+  .hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']) { position:relative; width:44px; height:44px; border:1px solid var(--divider-color); border-radius:0; }
+  .hpf-nav-modes > .editor-close-slot:last-child:not([aria-hidden='true']) { border-radius:0 7px 7px 0; }
+  .hpf-nav-modes .closex { position:absolute; inset:-1px; width:44px; height:44px; border:1px solid transparent; border-radius:inherit; color:var(--primary-text-color); opacity:1; }
 `.cssText + `
-  .hpf-navigation > .hpf-nav-item { ${settingsActionTransition} }
+  .hpf-navigation > .hpf-nav-item, .hpf-nav-modes .closex { ${settingsActionTransition} }
   :host([data-pointer-hover]) .hpf-navigation > .hpf-nav-item:not(:disabled):hover { ${settingsActionHover} z-index:2; }
+  :host([data-pointer-hover]) .hpf-nav-modes .closex:not(:disabled):hover { ${settingsActionHover} }
+  :host([data-pointer-hover]) .hpf-nav-modes > .editor-close-slot:has(.closex:hover),
+  :host([data-pointer-hover]) .hpf-nav-compact > .compact-space-select:hover { position:relative; z-index:3; }
   ${controlReducedMotionCss('.hpf-navigation > .hpf-nav-item, .hpf-nav-modes .closex')}
 `);

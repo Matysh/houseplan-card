@@ -9,6 +9,7 @@ import {
 import {
   TILE_INK_DARK, TILE_INK_LIGHT, colorTileInk, isLightHex,
 } from '../test-build/editors/color-tile-ink.js';
+import { selectionListCss } from '../test-build/styles/selection-list.styles.js';
 
 /**
  * #594. Набор контролов поднят из редактора боковой панели, и главный вопрос к
@@ -52,6 +53,9 @@ function acceptedDialogCss(text) {
   // #1147 adds named read-only/structured variants and shared motion; keep the
   // independent UI-029 snapshot and allow precisely this declared delta.
   const changes = [
+    // #1207 UI-015/016 replaces only source-list selection/hover/focus paint.
+    [`  .hpf-cand.sel { background: transparent; color: var(--hpf-accent); }\n  .hpf-cand:is(:hover, :focus-visible) { background: var(--hpf-tint); }\n  .hpf-cand:focus-visible { outline: 2px solid var(--hpf-accent); outline-offset: -2px; }`,
+      `  ${selectionListCss('.hpf-cand', '.sel', undefined, {accent:'var(--hpf-accent)',tint:'var(--hpf-tint)'})}\n  .hpf-panel .hpf-cand { position:relative; padding-inline-end:36px; }\n  .hpf-cand > .hpf-choice-check { position:absolute; inset-inline-end:12px; top:50%; translate:0 -50%; pointer-events:none; }`],
     ['transition: left .15s;', 'transition: left var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);'],
     ['cursor: pointer; transition:color 150ms ease;', 'cursor: pointer;'],
     ['transition: background 160ms, border-color 160ms;', 'transition: background var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), border-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);'],
