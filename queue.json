@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 846,
+  "revision": 847,
   "nextTicket": 69,
   "nextFence": 69,
   "tasks": {
@@ -959,7 +959,20 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793630731712,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "aa94e3f8ef0c9844428bd6e9a0390d4909f610ac",
+      "changedFiles": [
+        "demo/smoke_plan_converter.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1210.json",
+        "scripts/sh3d-convert/README.md",
+        "scripts/sh3d-convert/deploy-site-converter.sh",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/page/app.mjs",
+        "scripts/sh3d-convert/site-converter.mjs",
+        "test/converter-site.test.mjs"
+      ]
     },
     "1211": {
       "issue": 1211,
@@ -1116,10 +1129,11 @@
     "token": "68:finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:1:admit",
     "fence": 68,
     "materialSha": "582dfcdddefa6ba138eac44be0b0b20d8ebe6c0c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "16dc19dbd1e6258815c4227d1a6233dadd769236",
+    "phase": "testing",
     "admittedAt": 1793630735542,
-    "expiresAt": 1793631035542
+    "expiresAt": 1793631041673,
+    "patchId": "aa94e3f8ef0c9844428bd6e9a0390d4909f610ac"
   },
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
@@ -1161,6 +1175,10 @@
     "github:41455519490:1:completions:report:21d6437d0732933f7cc9ee7de8ca0672a33535297a8f5052e8764fb255885081": {
       "digest": "5dcbbd1e4427d41ea3ba0ceed29ffec03da845e056f37a71986e66f67701e5bd",
       "issue": 1165
+    },
+    "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:2:synchronized": {
+      "digest": "46483a17fe7e46831082971a0d2083f228f65529f55af6658fe57f56b8d65697",
+      "issue": 1210
     },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4": {
       "digest": "0b6eb6ad23af7d1abb95bc5a356b759f646edc42820cd925adb8cb55af370c90",
