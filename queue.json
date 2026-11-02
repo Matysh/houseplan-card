@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1020,
-  "nextTicket": 77,
+  "revision": 1021,
+  "nextTicket": 78,
   "nextFence": 77,
   "tasks": {
     "1126": {
@@ -1231,14 +1231,14 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/restore-ship-batch-review",
-      "materialSha": "ae4629f759db9dc99186cbfc6a282190b3c49639",
+      "materialSha": "a37a0460582fc2ed38d4de92f1608082521ea94d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 76,
-      "queued": false,
+      "ticket": 77,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793636329800,
-      "reviewEntry": 1,
+      "readyAt": 1793637610051,
+      "reviewEntry": 2,
       "patchId": "5307f65d33b8db7c0648d4160bcc66ecf830b08b",
       "changedFiles": [
         ".github/workflows/process-next-review.yml",
@@ -1275,13 +1275,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1215:1:5307f65d33b8db7c0648d4160bcc66ecf830b08b:89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-      "reviewMaterial": {
-        "materialSha": "ae4629f759db9dc99186cbfc6a282190b3c49639",
-        "expectedBase": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
-        "patchId": "5307f65d33b8db7c0648d4160bcc66ecf830b08b"
-      },
-      "reason": "review-findings",
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -1387,7 +1380,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1215
+  ],
   "active": null,
   "events": {
     "finish:fe501fb0-3ffd-4bff-8d6a-ccfb3c9ba29e": {
@@ -1496,6 +1491,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:0016ea67-7720-4d53-b067-0690b000b58c": {
+      "digest": "bcf673bcee2942fff1fdb0e510872e7d73227708dc4b17cc8bc1ef240c08b7e7",
+      "issue": 1215,
+      "message": {
+        "kind": "queued",
+        "issue": 1215,
+        "at": 1793637610051,
+        "entry": 2,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "a37a0460582fc2ed38d4de92f1608082521ea94d",
+        "evidence": {
+          "id": "20261102T162033951-8e636210",
+          "name": "Тесты для задачи #1215 (перед ревью)",
+          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261102T162033951-8e636210/report.json",
+          "materialSha": "ae4629f759db9dc99186cbfc6a282190b3c49639",
+          "status": "passed",
+          "finishedAt": "2026-11-02T16:21:12.864Z",
+          "failures": []
+        }
       }
     }
   },
