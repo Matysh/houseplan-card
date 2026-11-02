@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 55,
+  "revision": 56,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -1145,7 +1145,8 @@
             1191,
             1193,
             1195,
-            1196
+            1196,
+            1197
           ],
           "completed": [
             1128,
@@ -1253,6 +1254,7 @@
     "beta1842-publish-e-20261102:completion:d997b7fa-6377-45af-9e3c-b1b227612ed3": "7ea699e9af2d423a75a41664738db940f57950b262e8c42f7f18e341dfb731ef",
     "beta1842-publish-e-20261102:completion:dc7e684a-91a1-49fc-ab63-8ad31dce9db2": "5fb1fc563032c9ac04eec7e9711b0f85b415464e06c6a869c72e638a56298194",
     "beta1842-publish-e-20261102:completion:c8104df9-d065-46d8-bff7-843ebac81652": "d58b29f5680817dec76fdf0566345dc2ec52d5518f37867b05f036ac2701490a",
-    "beta1842-publish-e-20261102:completion:3aa1aa40-0682-41d6-be9c-380f9e3185fd": "74201ce98bd0da67a7d44da9bd6d45133a276fc906c0865ef01dd9a3d23270d5"
+    "beta1842-publish-e-20261102:completion:3aa1aa40-0682-41d6-be9c-380f9e3185fd": "74201ce98bd0da67a7d44da9bd6d45133a276fc906c0865ef01dd9a3d23270d5",
+    "beta1842-publish-e-20261102:completion:4af90994-e865-4d57-a8d6-7237d22b4e93": "63b6aa6d1dfd5b1780fdec26068b2f779b61a547d22463a855b260fdf1215dd3"
   }
 }
