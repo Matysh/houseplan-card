@@ -2,7 +2,7 @@
   "schema": 1,
   "issue": 1211,
   "baseStable": "v1.83.0",
-  "category": "cycle-fix",
+  "category": "line-fix",
   "rationale": "Corrects the Easy converter introduced in the current unreleased stable cycle; no existing Houseplan display defaults change.",
   "summary": {
     "ru": "Конвертер Easy Floorplan сохраняет видимость стен и дверей поверх фоновой картинки.",
