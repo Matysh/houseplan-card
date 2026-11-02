@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 692,
+  "revision": 693,
   "nextTicket": 61,
   "nextFence": 61,
   "tasks": {
@@ -791,7 +791,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793624263836,
       "reviewEntry": 2,
-      "patchId": "d27fee94e56f89d6761e86eec9df67c12089f93c",
+      "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee",
       "changedFiles": [
         "demo/smoke_approved_ui_1207.mjs",
         "demo/smoke_isometric_contract.mjs",
@@ -1009,10 +1009,11 @@
     "token": "60:finish:0bfab811-439d-4472-955e-15c0671f2002:finish:1:admit",
     "fence": 60,
     "materialSha": "5470c0e64efb0ed34973013575b86c4e3b27567c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
+    "phase": "testing",
     "admittedAt": 1793624267308,
-    "expiresAt": 1793624567308
+    "expiresAt": 1793624573436,
+    "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee"
   },
   "events": {
     "1207-spec-round1-submit-20261102:spec-request": {
@@ -1101,6 +1102,10 @@
     },
     "github:41448146313:1:completions:metadata:8784889f-8923-46ff-af9a-7d24cd1367bd:task-notice:1207::": {
       "digest": "c7e4c05d0aab2b4a1beb9313cd4db7fc14d299f71d4d36a9087236debd88348c",
+      "issue": 1207
+    },
+    "finish:0bfab811-439d-4472-955e-15c0671f2002:finish:2:synchronized": {
+      "digest": "00b60d62b688853b02b199dd7e58cae2a96f068f086704b4e70530c13e001023",
       "issue": 1207
     },
     "finish:eb71ba1e-123c-44e7-a0c1-a8a26968b0e5": {
