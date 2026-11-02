@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1041,
-  "nextTicket": 78,
+  "revision": 1042,
+  "nextTicket": 79,
   "nextFence": 78,
   "tasks": {
     "1126": {
@@ -40,6 +40,20 @@
         "status": "published",
         "sourceSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe"
       }
+    },
+    "1127": {
+      "issue": 1127,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1127-kiosk-switcher",
+      "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 78,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793639124501,
+      "reviewEntry": 1
     },
     "1128": {
       "issue": 1128,
@@ -1352,9 +1366,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1127
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:ac8a721c-a29f-49ae-ab7a-7b52c9397ad9": {
+      "digest": "2345bb5c7a774aa115e4c627a18be2a6d61e4dd83d5da86d3c2f65d7d73a6f25",
+      "issue": 1127,
+      "message": {
+        "kind": "queued",
+        "issue": 1127,
+        "at": 1793639124501,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4f895343407cd730222fa3b47c188703332f16ce"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "89224e3bf7257f8a19735b4de50c80eeb3a126fe",
     "status": "delivered",
