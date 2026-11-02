@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 696,
+  "revision": 697,
   "nextTicket": 61,
   "nextFence": 61,
   "tasks": {
@@ -888,7 +888,7 @@
         "finishedAt": "2026-11-02T12:59:47.454Z",
         "failures": []
       },
-      "reviewRound": 1,
+      "reviewRound": 2,
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -898,6 +898,12 @@
         "entry": 1,
         "requestId": "review:1207:1:d27fee94e56f89d6761e86eec9df67c12089f93c:efa1b130fc69da8277de8bb013b08ea65b581010",
         "transitionConfirmed": true
+      },
+      "reviewRequest": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010",
+      "reviewMaterial": {
+        "materialSha": "5470c0e64efb0ed34973013575b86c4e3b27567c",
+        "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
+        "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee"
       }
     },
     "1208": {
@@ -1001,7 +1007,21 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41432045581"
     }
   },
-  "reviewPublications": {},
+  "reviewPublications": {
+    "code:1207:review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010": {
+      "issue": 1207,
+      "kind": "code",
+      "requestId": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010",
+      "materialSha": "5470c0e64efb0ed34973013575b86c4e3b27567c",
+      "expectedBase": "efa1b130fc69da8277de8bb013b08ea65b581010",
+      "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-02T12:59:58.351Z"
+      }
+    }
+  },
   "waiting": [],
   "active": {
     "issue": 1207,
@@ -1013,7 +1033,8 @@
     "phase": "review",
     "admittedAt": 1793624267308,
     "expiresAt": 1793627988679,
-    "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee"
+    "patchId": "48639b1cc67d169735fb9290d59264e8cce85fee",
+    "reviewRequest": "review:1207:2:48639b1cc67d169735fb9290d59264e8cce85fee:efa1b130fc69da8277de8bb013b08ea65b581010"
   },
   "events": {
     "1207-spec-round1-submit-20261102:spec-request": {
@@ -1114,6 +1135,10 @@
     },
     "finish:e895caa7-ac89-4178-b1d4-2279a8bb4be6:finish:1:s6-label": {
       "digest": "895dbcd0122f5f7716b4854bc6f59ea8db56fb312be2082ee3755e7b70f297ea",
+      "issue": 1207
+    },
+    "finish:e895caa7-ac89-4178-b1d4-2279a8bb4be6:finish:2:review-requested": {
+      "digest": "b021139d86975a00ea708233b0fe9a9146107d8c260aa9d03b922714a577dab3",
       "issue": 1207
     },
     "finish:eb71ba1e-123c-44e7-a0c1-a8a26968b0e5": {
