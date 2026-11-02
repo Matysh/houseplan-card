@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1043,
+  "revision": 1044,
   "nextTicket": 79,
   "nextFence": 79,
   "tasks": {
@@ -53,7 +53,52 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793639124501,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c1f6eca923f68b8cb37ebf0272e2b04cbcdb06e3",
+      "changedFiles": [
+        "demo/smoke_fixed_floor.mjs",
+        "demo/smoke_kiosk.mjs",
+        "demo/smoke_kiosk_scale_no_editor.mjs",
+        "demo/smoke_kiosk_space_navigation.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DIALOG-UI-KIT.md",
+        "docs/STYLING-HOOKS.md",
+        "docs/TOUCH-SUPPORT.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/design/1127-kiosk-switcher/2026-11-02/.gitattributes",
+        "docs/design/1127-kiosk-switcher/2026-11-02/CONTRACT.md",
+        "docs/design/1127-kiosk-switcher/2026-11-02/IMPLEMENTATION.md",
+        "docs/design/1127-kiosk-switcher/2026-11-02/README.md",
+        "docs/design/1127-kiosk-switcher/2026-11-02/approval.json",
+        "docs/design/1127-kiosk-switcher/2026-11-02/fixture.json",
+        "docs/design/1127-kiosk-switcher/2026-11-02/journal.json",
+        "docs/design/1127-kiosk-switcher/2026-11-02/overrides/ha-dialog.css",
+        "docs/design/1127-kiosk-switcher/2026-11-02/overrides/houseplan-card.css",
+        "docs/design/1127-kiosk-switcher/2026-11-02/overrides/hp-dialog.css",
+        "docs/design/1127-kiosk-switcher/2026-11-02/provenance.json",
+        "docs/design/1127-kiosk-switcher/2026-11-02/replay.mjs",
+        "docs/design/1127-kiosk-switcher/2026-11-02/runtime/app.mjs",
+        "docs/design/1127-kiosk-switcher/2026-11-02/runtime/index.html",
+        "docs/design/1127-kiosk-switcher/2026-11-02/runtime/lab.css",
+        "docs/design/1127-kiosk-switcher/2026-11-02/runtime/theme-local.css",
+        "docs/design/1127-kiosk-switcher/2026-11-02/screenshots/kiosk-switcher.jpg",
+        "docs/release-ledger/v1.83.0/1127.json",
+        "src/houseplan-card.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/kiosk-space-navigation.ts",
+        "src/styles/devices.styles.ts",
+        "src/styles/navigation.styles.ts",
+        "src/styles/plan.styles.ts",
+        "src/styles/ui-motion.styles.ts",
+        "test/fixed-floor-contract.test.mjs",
+        "test/kiosk-space-navigation.test.mjs"
+      ]
     },
     "1128": {
       "issue": 1128,
@@ -1373,12 +1418,17 @@
     "token": "78:finish:ac8a721c-a29f-49ae-ab7a-7b52c9397ad9:finish:1:admit",
     "fence": 78,
     "materialSha": "4f895343407cd730222fa3b47c188703332f16ce",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "a37a0460582fc2ed38d4de92f1608082521ea94d",
+    "phase": "testing",
     "admittedAt": 1793639128321,
-    "expiresAt": 1793639428321
+    "expiresAt": 1793639434685,
+    "patchId": "c1f6eca923f68b8cb37ebf0272e2b04cbcdb06e3"
   },
   "events": {
+    "finish:ac8a721c-a29f-49ae-ab7a-7b52c9397ad9:finish:2:synchronized": {
+      "digest": "63e4cb3e107c18c8025ce73595cb8a73bc980e0c31ba6d6541f493f0228978f7",
+      "issue": 1127
+    },
     "finish:ac8a721c-a29f-49ae-ab7a-7b52c9397ad9": {
       "digest": "2345bb5c7a774aa115e4c627a18be2a6d61e4dd83d5da86d3c2f65d7d73a6f25",
       "issue": 1127,
