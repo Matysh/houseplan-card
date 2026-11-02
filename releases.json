@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 70,
+  "revision": 71,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -1179,6 +1179,11 @@
             1203,
             1204
           ]
+        },
+        "retire-beta": {
+          "status": "completed",
+          "branch": "release/v1.84.0-beta.1",
+          "sha": "6bb1b3243205f90af1b7dd6d6c315216021c7e1b"
         }
       }
     }
@@ -1282,6 +1287,7 @@
     "beta1842-publish-e-20261102:completion:1ff2b11b-6c47-4a56-9f7c-8cd360c4da62": "15f37ea099d51d0f78e9e3d0c0ca5e597a538b6d8c711a6815f1005dd01cebd2",
     "beta1842-publish-e-20261102:completion:cce23a2e-dccb-45ef-8039-1ac1d26c161a": "008d938b0ba09520a77bc9baa8221116b0fff43e34073a6048ae649e24e7064e",
     "beta1842-publish-e-20261102:completion:7daedda0-8a9a-4de5-80c9-1482419caad6": "99ce5d7a517afe9c6c9754a84dd528395f238078d42f9dc801a5e649b928496e",
-    "beta1842-publish-e-20261102:completion:6bfb4421-c434-43e5-96b2-b36131e366d1": "03efc6931024e1ef946e5a6ea0a38fcee27075fdc167e7992286b08221260d50"
+    "beta1842-publish-e-20261102:completion:6bfb4421-c434-43e5-96b2-b36131e366d1": "03efc6931024e1ef946e5a6ea0a38fcee27075fdc167e7992286b08221260d50",
+    "beta1842-publish-e-20261102:completion:42b10ca8-a20f-4963-b322-6a0fb1b4fd95": "54ec6132ad0ead8fb43dabef4c66ed597f11e850f5e931c8fe549e1c950c8209"
   }
 }
