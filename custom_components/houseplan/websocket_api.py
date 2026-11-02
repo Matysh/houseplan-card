@@ -24,6 +24,8 @@ from homeassistant.helpers import issue_registry as ir
 
 from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
+from .structural_websocket import structural_websocket_command
+from .plan_graph_exact import GraphError
 from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     ASSETS_DIR,
@@ -469,6 +471,9 @@ async def _commit_pair(
     restore the old pair; setup will therefore restore, never unexpectedly
     finish an import that was reported as failed.
     """
+    from .graph_write import prepare_graph_pair
+    if getattr(rt, "hass", None) is not None:
+        await prepare_graph_pair(rt, pending, rollback)
     # #1096: a pair writer replaces the stored document outside the ordinary
     # validation path; `ws_config_set` re-stamps after its own pair commit.
     rt.schema_clean_rev = None
@@ -495,7 +500,7 @@ async def _commit_pair(
     raise PairCommitFailure(recovery_pending=False)
 
 
-@websocket_api.websocket_command({
+@structural_websocket_command({
     vol.Required("type"): "houseplan/marker/copy",
     vol.Required("source_id"): str,
     vol.Required("source_binding"): vol.Match(r"^(device:.+|entity:.+|virtual)$"),
@@ -631,6 +636,7 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
         vol.Optional("card_version", default=""): str,
         vol.Optional("archive", default=False): bool,
         vol.Optional("migration_source", default=False): bool,
+        vol.Optional("migration_source_kind", default="config"): vol.In(["config", "graph"]),
     }
 )
 @websocket_api.async_response
@@ -656,7 +662,14 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         try:
             async with rt.write_lock:
                 saved = await rt.store.async_load() or {}
-                snapshot = copy.deepcopy(saved.get(CONFIG_MIGRATION_BACKUP))
+                if msg.get("migration_source_kind") == "graph":
+                    from .plan_graph_source import BACKUP_KEY, load_source
+                    original = await load_source(hass, saved.get(BACKUP_KEY))
+                    snapshot = {"version": 1,
+                                "config_data": {"config": original["config"], "rev": original["config_rev"]},
+                                "layout_data": {"layout": original["layout"], "rev": original["layout_rev"], **original.get("passports", {})}}
+                else:
+                    snapshot = copy.deepcopy(saved.get(CONFIG_MIGRATION_BACKUP))
             document, filename = await hass.async_add_executor_job(partial(
                 create_migration_source_export, rt, snapshot,
                 card_version=msg.get("card_version", ""), config_root=Path(hass.config.path(""))))
@@ -1047,7 +1060,7 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     )
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/layout/set",
         vol.Required("layout"): LAYOUT_SCHEMA,
@@ -1117,7 +1130,7 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/layout/update",
         vol.Required("device_id"): str,
@@ -1840,6 +1853,10 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "vacuum_history_api": 1,
             "device_contact_api": 1,
             "device_history_api": 1,
+            "plan_graph_api": 1,
+            "structural_upload_api": 1,
+            **({"graph_migration": {"version": 1, "source_available": True}}
+               if isinstance(layout_data.get("plan_graph_migration_backup"), dict) else {}),
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             "external_screens_api": 1,
@@ -2026,7 +2043,7 @@ def _readable_entity_ids(
     return readable
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/config/set",
         # Semantic stale-client detection needs the stored v8 document and
@@ -2035,6 +2052,7 @@ def _readable_entity_ids(
         vol.Optional("expected_rev"): int,
         vol.Optional("contact_layout"): LAYOUT_SCHEMA,
         vol.Optional("expected_layout_rev"): int,
+        vol.Optional("graph_change"): dict,
     }
 )
 @websocket_api.async_response
@@ -2054,7 +2072,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     # Per-field limits bound each list; this bounds their product (HP-1454-05).
     # Everything below the caps can still add up to something no dashboard can
     # render, and the store writes it to disk on every save.
-    size = len(json.dumps(msg["config"], separators=(",", ":")))
+    size = len(json.dumps(msg["config"], ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     if size > MAX_CONFIG_BYTES:
         connection.send_error(
             msg["id"], "too_large",
@@ -2143,6 +2161,8 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
             def _normalize(candidate):
                 nonlocal touched
+                from .graph_write import prepare_graph_candidate, preserve_legacy_structure
+                candidate = prepare_graph_candidate(candidate, stored_config, msg.get("graph_change"))
                 # Judged after the preservation steps of
                 # `prepare_ordinary_summary_candidate`: an older client that
                 # omitted a preserved field is compared on equal terms.
@@ -2150,7 +2170,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                          else OrdinaryWriteScope(set(), set(), "stored document not stamped"))
                 touched = None if scope.full else set(scope.touched_spaces)
                 validate_wall_model_transition(candidate, stored_config, touched=touched)
-                return validate_scoped_candidate(candidate, stored_config, scope)
+                checked = validate_scoped_candidate(candidate, stored_config, scope)
+                if int(candidate.get("model_version", 0) or 0) < 11:
+                    checked = preserve_legacy_structure(checked, candidate)
+                return checked
 
             checked = prepare_ordinary_summary_candidate(
                 msg["config"], stored_config, readable_entity_ids, _normalize,
@@ -2183,7 +2206,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
-        except RadarValidationError as err:
+        except (RadarValidationError, GraphError) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
         except vol.Invalid as err:
@@ -2228,6 +2251,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         from .zigbee_topology import ZigbeeScanError
 
         try:
+            if not _check_write(hass, connection):
+                connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")
+                return
             if contact_layout is None:
                 await async_save_config_state(
                     rt, msg["config"], new_rev, previous_rev=int(current_rev),
@@ -2296,6 +2322,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
         hass.async_create_task(async_check_plan_files(hass, entry))
     result: dict[str, Any] = {"ok": True, "rev": new_rev}
+    if msg["config"].get("model_version") == 11:
+        accepted_layout = await rt.store.async_load() or {}
+        result.update(config=msg["config"], layout=accepted_layout.get("layout", {}),
+                      config_rev=new_rev, layout_rev=int(accepted_layout.get("rev", 0)))
     if contact_layout is not None:
         result["layout_rev"] = next_layout_rev
         result["contact_layout"] = {key: contact_layout.get(key) for key in msg["contact_layout"]}
@@ -2304,7 +2334,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     connection.send_result(msg["id"], result)
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/wall/node_move",
         vol.Required("space_id"): str,
@@ -2385,7 +2415,7 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "config": candidate})
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/wall/node_delete",
         vol.Required("space_id"): str,
@@ -2826,7 +2856,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     })
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/plan/optimize",
         vol.Required("config"): dict,
@@ -3046,7 +3076,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
     })
 
 
-@websocket_api.websocket_command(
+@structural_websocket_command(
     {
         vol.Required("type"): "houseplan/plan/optimize_undo",
         vol.Required("expected_config_rev"): int,

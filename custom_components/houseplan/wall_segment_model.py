@@ -20,7 +20,7 @@ from .coordinate_canonicalization import (
     canonicalize_lattice_coordinate,
 )
 
-WALL_SEGMENT_MODEL_VERSION = 10
+WALL_SEGMENT_MODEL_VERSION = 11
 GRID_STEP_N = 1 / 240
 EPS = 1e-9
 LEGACY_DRAFT_POINT_EPSILON = 0.001
@@ -936,7 +936,7 @@ def _migrate_space(
     )
 
 
-def commit_wall_segment_model(
+def decode_legacy_wall_segment_model(
     config: Any, *, migration_report: dict[str, int] | None = None,
 ) -> tuple[Any, int]:
     """Return one migrated deep copy and the count of newly assigned wall ids."""
@@ -946,13 +946,13 @@ def commit_wall_segment_model(
     migrated = 0
     migrated_drafts = 0
     migrated_draft_segments = 0
-    initial_migration = int(candidate.get("model_version", 0) or 0) < WALL_SEGMENT_MODEL_VERSION
+    initial_migration = int(candidate.get("model_version", 0) or 0) < 10
     for space in candidate.get("spaces") or []:
         wall_segments, drafts, draft_segments = _migrate_space(space, initial_migration)
         migrated += wall_segments
         migrated_drafts += drafts
         migrated_draft_segments += draft_segments
-    candidate["model_version"] = WALL_SEGMENT_MODEL_VERSION
+    candidate["model_version"] = 10
     if migration_report is not None:
         migration_report.clear()
         migration_report.update({
@@ -960,3 +960,19 @@ def commit_wall_segment_model(
             "room_draft_segments": migrated_draft_segments,
         })
     return canonicalize_config_geometry(candidate), migrated
+
+
+def commit_wall_segment_model(
+    config: Any, *, migration_report: dict[str, int] | None = None,
+) -> tuple[Any, int]:
+    """Structural writer facade; model11 is verified, never reconstructed."""
+    from .graph_write import normalize_graph_config
+
+    previous_ids = {(space.get("id"), edge.get("id")) for space in config.get("spaces", []) for edge in space.get("wall_segments", [])}
+    candidate = normalize_graph_config(config)
+    migrated = sum((space.get("id"), edge.get("id")) not in previous_ids for space in candidate.get("spaces", []) for edge in space.get("wall_segments", []))
+    if migration_report is not None:
+        drafts = [draft for space in config.get("spaces", []) for draft in space.get("room_drafts", [])]
+        migration_report.clear()
+        migration_report.update(room_drafts=len(drafts), room_draft_segments=sum(len(draft.get("segments", [])) for draft in drafts))
+    return candidate, migrated

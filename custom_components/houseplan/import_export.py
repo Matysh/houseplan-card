@@ -69,6 +69,7 @@ from .wall_segment_model import (
     WallSegmentMigrationError,
     commit_wall_segment_model,
 )
+from .plan_graph_exact import GraphError
 
 FORMAT = "houseplan-export"
 
@@ -341,6 +342,13 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
             selected = _pick_fields(item, fields)
             values.append(selected)
         projected[name] = values
+    if "plan_graph" in space:
+        # Plan-only exports retain the authoritative exact geometry but omit
+        # arbitrary future/private edge properties just like the carriers.
+        graph = _json_copy(space["plan_graph"])
+        for edge in graph["edges"]:
+            edge.pop("props", None)
+        projected["plan_graph"] = graph
     if "openings" in space:
         projected["openings"] = [
             _pick_fields(
@@ -747,7 +755,7 @@ def parse_document(
     """Parse and validate one export; ``opening_repairs`` is a report this
     server already made for the same document (a ZIP is parsed twice)."""
     if len(raw) > MAX_EXPORT_BYTES:
-        raise ImportFailure("too_large", "Import is larger than 8 MiB")
+        raise ImportFailure("too_large", "Import exceeds the portable document limit")
     try:
         # utf-8-sig accepts a BOM only at the very start.  A later U+FEFF is a
         # normal character and cannot disguise trailing JSON.
@@ -1471,12 +1479,35 @@ def build_space_merge(
         host = opening.get("host") if isinstance(opening, dict) else None
         if isinstance(host, dict) and host.get("kind") in ("partition", "wall"):
             old_host_id = str(host.get("id"))
-            if old_host_id in id_map:
-                host["id"] = id_map[old_host_id]
+            host_map = id_maps[host["kind"]]
+            if old_host_id in host_map:
+                host["id"] = host_map[old_host_id]
                 _report_remap(
                     reference_report, "incoming", "opening.host",
                     str(opening.get("id", "?")), old_host_id,
                 )
+    if "plan_graph" in space:
+        graph = space["plan_graph"]
+        node_map = {node["id"]: _fresh("node", node["id"], used) for node in graph["nodes"]}
+        for node in graph["nodes"]:
+            node["id"] = node_map[node["id"]]
+        for edge in graph["edges"]:
+            edge["id"] = id_maps[edge["kind"]][edge["id"]]
+            edge["from"], edge["to"] = node_map[edge["from"]], node_map[edge["to"]]
+        for room in graph["rooms"]:
+            room["room"] = id_maps["room"][room["room"]]
+            for ref in room["edges"]:
+                ref["id"] = id_maps[ref["kind"]][ref["id"]]
+        for dependency in graph["dependencies"]:
+            dependency["node"] = node_map[dependency["node"]]
+            for ref in dependency["refs"]:
+                ref["from"], ref["to"] = node_map[ref["from"]], node_map[ref["to"]]
+        graph["nodes"].sort(key=lambda n: n["id"])
+        graph["edges"].sort(key=lambda e: (e["kind"], e["id"]))
+        graph["rooms"].sort(key=lambda r: r["room"])
+        graph["dependencies"].sort(key=lambda d: d["node"])
+        from .plan_graph import project_graph_space
+        space.update(project_graph_space(space, graph)["space"])
     # A one-space export cannot carry a trustworthy external floor target.
     # Self-links are invalid too because the imported source gets a new id.
     for stair in space.get("stairs") or []:
@@ -1957,7 +1988,7 @@ def _materialize_import_candidate(
         prepared["payload"]["config"] = imported_config
         if prepared["kind"] == "space":
             current_config, _ = commit_wall_segment_model(current_config)
-    except WallSegmentMigrationError as err:
+    except (WallSegmentMigrationError, GraphError) as err:
         raise ImportFailure(err.code, str(err)) from err
     repairs = _opening_repair_details(prepared, imported_config, incoming_model)
     if prepared["kind"] == "space":

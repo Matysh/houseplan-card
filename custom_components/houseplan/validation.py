@@ -326,6 +326,21 @@ def validate_wall_model_transition(
     except (TypeError, ValueError):
         return  # CONFIG_SCHEMA owns malformed values.
     previous = previous or {}
+    if old_model >= 11:
+        if new_model != 11:
+            raise WallModelClientOutdatedError("stored graph model requires a current graph writer")
+        from .plan_graph import verify_projection
+        from .plan_graph_exact import GraphError
+        try:
+            for space in config.get("spaces", []):
+                verify_projection(space)
+        except GraphError as error:
+            raise WallModelClientOutdatedError(error.reason) from error
+        return
+    if new_model == 11:
+        # First graph migration is independently prepared by the writer. The
+        # legacy catalogue comparison cannot judge graph-owned projections.
+        return
     stored_drafts = any(
         "room_drafts" in space for space in previous.get("spaces") or []
         if isinstance(space, dict)
@@ -1468,7 +1483,7 @@ MAX_URL = 2000
 # closes with 1009 and the user sees a dropped connection instead of an error
 # they can act on. For scale, a real three-floor home with ~200 devices stores
 # about 70 KB, so this is ~30x headroom.
-MAX_CONFIG_BYTES = 2 * 1024 * 1024
+MAX_CONFIG_BYTES = 16 * 1024 * 1024
 CELL_CM_MIN = 0.1
 CELL_CM_MAX = 1000.0
 
@@ -1952,11 +1967,23 @@ WALL_COLUMN_SCHEMA = vol.All(
     _strict_wall_column,
 )
 
+def _exact_host_parameter(value):
+    from .plan_graph_exact import GraphError, decode_rational
+    try:
+        t = decode_rational(value)
+        if not 0 <= t <= 1:
+            raise GraphError("opening_parameter_range")
+    except GraphError as err:
+        raise vol.Invalid(err.reason) from err
+    return value
+
+
 PARTITION_OPENING_HOST_SCHEMA = vol.Schema(
     {
         vol.Required("kind"): vol.Equal("partition"),
         vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
         vol.Required("t"): vol.All(_finite, vol.Range(min=0, max=1)),
+        vol.Optional("tq"): _exact_host_parameter,
     },
     extra=vol.PREVENT_EXTRA,
 )
@@ -1966,6 +1993,7 @@ WALL_OPENING_HOST_SCHEMA = vol.Schema(
         vol.Required("kind"): vol.Equal("wall"),
         vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
         vol.Required("t"): vol.All(_finite, vol.Range(min=0, max=1)),
+        vol.Optional("tq"): _exact_host_parameter,
     },
     extra=vol.PREVENT_EXTRA,
 )
@@ -2341,6 +2369,16 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         raise vol.Invalid("model_version must be an integer") from None
     if model < 8:
         return value
+    if model > 11:
+        raise vol.Invalid("unsupported plan model version")
+    if model == 11:
+        from .plan_graph import verify_projection
+        from .plan_graph_exact import GraphError
+        try:
+            for space in value.get("spaces", []):
+                verify_projection(space)
+        except GraphError as err:
+            raise vol.Invalid(err.reason) from err
 
     for space in value.get("spaces", []):
         if model >= 9:

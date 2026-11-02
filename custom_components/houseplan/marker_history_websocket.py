@@ -10,6 +10,7 @@ from homeassistant.components import websocket_api
 from .const import DEFAULT_CONFIG, FILES_DIR
 from .marker_history import MAX_COMMANDS, HistoryError, MarkerHistory, delete_candidate
 from .store import get_data
+from .structural_websocket import structural_websocket_command
 from .validation import CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES
 
 _ID = vol.All(str, vol.Match(r"^[A-Za-z0-9_-]{16,100}$"))
@@ -97,7 +98,7 @@ async def _validate(hass, candidate, previous):
     return await hass.async_add_executor_job(validate)
 
 
-@websocket_api.websocket_command({
+@structural_websocket_command({
     vol.Required("type"): "houseplan/marker/history",
     vol.Required("history_session"): _ID,
     vol.Required("operation_id"): _ID,

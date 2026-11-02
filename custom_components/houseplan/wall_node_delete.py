@@ -290,16 +290,18 @@ def prepare_node_delete(current: dict[str, Any], space_id: str, intent: dict[str
     source = next((s for s in baseline.get("spaces", []) if s["id"] == space_id), None)
     if source is None or direction not in {"apply", "undo"}:
         raise NodeDeleteError()
+    from .graph_node_write import delete_graph_node_space
+    apply_delete = delete_graph_node_space if source.get("plan_graph") is not None else delete_node_space
     if direction == "undo":
         if before_space is None or before_space.get("id") != space_id:
             raise NodeDeleteError()
-        forward = delete_node_space(before_space, intent)
+        forward = apply_delete(before_space, intent)
         proof = _replace_space(baseline, space_id, forward, local)
         if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):
             raise NodeDeleteError()
         target = before_space
     else:
-        target = delete_node_space(source, intent)
+        target = apply_delete(source, intent)
     return PreparedNodeDelete(baseline, _replace_space(baseline, space_id, target, local), space_id,
                               copy.deepcopy(intent), direction, copy.deepcopy(before_space))
 
@@ -324,7 +326,13 @@ def _host_baseline(current: dict[str, Any], candidate: dict[str, Any], space_id:
     source = before_space if direction == "undo" else old_spaces.get(space_id)
     if source is None or source.get("id") != space_id or old_spaces.keys() != new_spaces.keys() or direction not in {"apply", "undo"}:
         raise NodeDeleteError()
-    _, keep, drop, _, _, _ = _deletion(source, intent)
+    diagnostic_intent = {"point": intent["point"]}
+    if source.get("plan_graph") is not None:
+        from .graph_node_write import node_identity
+        from .plan_graph_exact import to_numbers
+        identity, index = node_identity(source, intent)
+        diagnostic_intent = {"point": to_numbers(index.points[identity])}
+    _, keep, drop, _, _, _ = _deletion(source, diagnostic_intent)
     baseline = copy.deepcopy(current)
     def identity(opening):
         host = opening.get("host")

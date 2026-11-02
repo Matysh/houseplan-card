@@ -81,9 +81,9 @@ MAX_SUPPORT_CONTACT_CODEPOINTS = 320
 # Portable backup format.  This is deliberately independent from the Home
 # Assistant Store version above: storage migrations and files exported by a
 # user have different compatibility lifecycles.
-PLAN_MODEL_VERSION = 10
+PLAN_MODEL_VERSION = 11
 EXPORT_VERSION = 2
-MAX_EXPORT_BYTES = 8 * 1024 * 1024
+MAX_EXPORT_BYTES = 32 * 1024 * 1024
 IMPORT_PREVIEW_TTL_S = 10 * 60
 MAX_IMPORT_PREVIEWS_PER_USER = 3
 # Parsed documents are larger than their wire representation.  Keep the

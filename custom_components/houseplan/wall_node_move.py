@@ -337,6 +337,8 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
     # Normalize a COPY with the same read-compatible identity model as the first
     # proof; raw legacy absence is not evidence of a missing node or new host.
     current, _ = commit_wall_segment_model(current)
+    if "node_id" in intent or "target_p" in intent:
+        intent = {key: value for key, value in intent.items() if key in {"point", "target", "axis", "split_ids"}}
     old_spaces = {s["id"]: s for s in current.get("spaces", [])}
     new_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
     if old_spaces.keys() != new_spaces.keys() or direction not in {"apply", "undo"}:
@@ -396,6 +398,8 @@ def node_move_candidate(current: dict[str, Any], space_id: str, intent: dict[str
     space = next((s for s in baseline.get("spaces", []) if s["id"] == space_id), None)
     if space is None or direction not in {"apply", "undo"}:
         raise NodeMoveError()
+    from .graph_node_write import move_graph_node_space
+    apply_move = move_graph_node_space if space.get("plan_graph") is not None else move_node_space
     if direction == "undo":
         if before_space is None or before_space.get("id") != space_id:
             raise NodeMoveError()
@@ -404,7 +408,7 @@ def node_move_candidate(current: dict[str, Any], space_id: str, intent: dict[str
         # Proof has to reach exactly the current canonical document, including
         # every foreign field. A forged baseline cannot move a distal endpoint,
         # rehost another opening, alter metadata or change another floor.
-        forward = move_node_space(before_space, intent)
+        forward = apply_move(before_space, intent)
         proof = copy.deepcopy(baseline)
         proof["spaces"] = [forward if s["id"] == space_id else s for s in proof["spaces"]]
         proof, _ = commit_wall_segment_model(proof)
@@ -412,7 +416,7 @@ def node_move_candidate(current: dict[str, Any], space_id: str, intent: dict[str
             raise NodeMoveError()
         candidate, _ = commit_wall_segment_model(proposed)
         return candidate
-    moved = move_node_space(space, intent)
+    moved = apply_move(space, intent)
     baseline["spaces"] = [moved if s["id"] == space_id else s for s in baseline["spaces"]]
     candidate, _ = commit_wall_segment_model(baseline)
     return candidate

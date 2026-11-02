@@ -126,6 +126,7 @@ def canonicalize_config_geometry(config: Any) -> Any:
         return result
 
     for space in _records(root.get("spaces")):
+        graph_owned = root.get("model_version") == 11 and isinstance(space.get("plan_graph"), dict)
         _scalar_fields(
             space,
             (
@@ -139,22 +140,26 @@ def canonicalize_config_geometry(config: Any) -> Any:
         )
 
         for room in _records(space.get("rooms")):
-            _lattice_fields(room, ("x", "y", "w", "h"))
-            _lattice_points(room.get("poly"))
+            if not graph_owned:
+                _lattice_fields(room, ("x", "y", "w", "h"))
+                _lattice_points(room.get("poly"))
 
         for wall in _records(space.get("walls")):
-            _lattice_point(wall.get("a"))
-            _lattice_point(wall.get("b"))
+            if not graph_owned:
+                _lattice_point(wall.get("a"))
+                _lattice_point(wall.get("b"))
 
         for segment in _records(space.get("wall_segments")):
-            _lattice_point(segment.get("a"))
-            _lattice_point(segment.get("b"))
+            if not graph_owned:
+                _lattice_point(segment.get("a"))
+                _lattice_point(segment.get("b"))
 
         for opening in _records(space.get("openings")):
-            _lattice_fields(opening, ("x", "y"))
+            if not graph_owned:
+                _lattice_fields(opening, ("x", "y"))
             _scalar_fields(opening, ("angle", "length"))
             host = _record(opening.get("host"))
-            if host is not None:
+            if host is not None and not graph_owned:
                 _scalar_fields(host, ("t",))
 
         for decor in _records(space.get("decor")):
@@ -180,8 +185,9 @@ def canonicalize_config_geometry(config: Any) -> Any:
             _lattice_points(draft.get("points"))
 
         for partition in _records(space.get("partitions")):
-            _lattice_point(partition.get("a"))
-            _lattice_point(partition.get("b"))
+            if not graph_owned:
+                _lattice_point(partition.get("a"))
+                _lattice_point(partition.get("b"))
 
         for column in _records(space.get("wall_columns")):
             _lattice_point(column.get("center"))
