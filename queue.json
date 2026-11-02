@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 817,
+  "revision": 818,
   "nextTicket": 67,
   "nextFence": 67,
   "tasks": {
@@ -949,153 +949,25 @@
     },
     "1211": {
       "issue": 1211,
+      "branch": "codex/1211-easy-doors",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1211-easy-doors",
-      "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 66,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793629571958,
-      "reviewEntry": 1,
-      "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162",
-      "changedFiles": [
-        "demo/smoke_easy_converter_openings.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1211.json",
-        "scripts/sh3d-convert/README.md",
-        "scripts/sh3d-convert/dist/index.html",
-        "scripts/sh3d-convert/easy.mjs",
-        "scripts/sh3d-convert/golden/easy-content.space-1.json",
-        "scripts/sh3d-convert/golden/easy-public-demo.space-1.json",
-        "scripts/sh3d-convert/golden/easy-public-demo.space-2.json",
-        "test/converter-consumers.test.mjs",
-        "tests_backend/test_ha_easy_floorplan_convert.py"
-      ],
-      "s6": {
-        "id": "20261102T142625709-9e14969f",
-        "name": "Тесты для задачи #1211 (перед ревью)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261102T142625709-9e14969f/report.json",
-        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-        "status": "passed",
-        "finishedAt": "2026-11-02T14:26:32.464Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "mergedSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
+      "mergedAt": 1793629814703,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": true,
       "reviewRequest": "review:1211:1:ad262ee83a8e2d2268d821adac050806a9eb2162:c356cd6c04a2b64bf151f1337f1de218abceb21b",
-      "reviewMaterial": {
-        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-        "expectedBase": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
-        "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1211,
-        "requestId": "review:1211:1:ad262ee83a8e2d2268d821adac050806a9eb2162:c356cd6c04a2b64bf151f1337f1de218abceb21b",
-        "kind": "code",
-        "base": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
-        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-        "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1211,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1211",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление адресное и подходит для задачи. Easy-конвертер теперь явно записывает `settings.show_borders: true`, если в этаже есть векторная геометрия или проёмы: комнаты, стены, перегородки или openings. Импорт сохраняет этот флаг в обоих режимах переноса. `normalize_space_display` после этого не записывает `hide_openings: true`, а `spaceDisplayOf` показывает и границы, и символы дверей поверх фоновой картинки. У плана, где есть только картинка, флага нет, и поведение по умолчанию прежнее. Общий renderer и существующие пользовательские настройки не затронуты. Блокеров нет.",
-          "understanding": "До изменения: Easy-конвертер записывал в space `plan_url` фоновой картинки, а `settings.show_borders` не задавал. В Houseplan `show_borders` по умолчанию равно `!plan_url` (`src/logic.ts:1390`), и `hideOpenings` выводится из этого же значения (`src/logic.ts:1413`, решение #945). Бэкенд `normalize_space_display` (`custom_components/houseplan/validation.py:2850-2861`) при отсутствии флага и наличии картинки записывал `hide_openings: true`. Поэтому дверь и её wall-host сохранялись в config, но на плане не рисовались. Это ровно то, что показал WS trace в #1211.\n\nПосле изменения: `scripts/sh3d-convert/easy.mjs:60-66` добавляет `show_borders: true`, если есть хотя бы одно из `rooms`, `projected.walls`, `projected.partitions`, `openings`. Разобранные пути:\n- Импорт. Поле `show_borders` есть в `_SPACE_DISPLAY_FIELDS` (`import_export.py:154-161`), поэтому сохраняется и при plan-only проекции (`_project_plan_only_space`, строки 320-326), и при полном переносе.\n- Нормализация. При `borders=True` и отсутствии `hide_openings` в settings ничего не записывается.\n- Отображение. `spaceDisplayOf` даёт `showBorders=true` и `hideOpenings=false`.\n- Уже импортированные планы. Если пользователь включит границы в настройках, условие `\"hide_openings\" in settings` на строке 2859 перезапишет флаг в `false`, так что совет в README работает.\n\nПересобраны опубликованная страница `dist/index.html` и golden-файлы. Добавлены unit-проверка через настоящий `spaceDisplayOf` (варианты с картинкой, без картинки и только с картинкой), проверка HA backend (apply и повторный export) и browser-smoke. Smoke сверяет байты скачанного со страницы файла с `convertEasy`, затем монтирует настоящую панель в режиме View и проверяет видимость `[data-hp=opening]` при первом показе и после reload.",
-          "analysis": [
-            {
-              "topic": "Место исправления и границы ответственности",
-              "assessment": "Правка сделана на правильном уровне. Дефект сидит в выходных настройках конвертера, а умолчание Houseplan «картинка = без разметки» (#945) осознанное и касается всех пространств с картинкой. Если бы правили renderer или умолчание, поменялось бы отображение у существующих пользователей. Комментарий в коде объясняет неочевидное: фон Easy — подложка, а не замена геометрии. Такой комментарий стоит сохранить.",
-              "evidence": "`scripts/sh3d-convert/easy.mjs:60-66`; `src/logic.ts:1390,1413`; `custom_components/houseplan/validation.py:2856-2861`."
-            },
-            {
-              "topic": "Условие включения флага",
-              "assessment": "Флаг выставляется только при наличии геометрии или проёмов, поэтому этаж с одной картинкой сохраняет обычное поведение, как требует issue. Если картинки нет, явное `true` совпадает с умолчанием `noPlan`, и видимое поведение не меняется. Цена — лишний ключ в golden-файлах, что приемлемо. В условие входят и комнаты без стен: Easy-areas тоже являются переносимой векторной разметкой, так что их показ поверх картинки логичен и согласуется с формулировкой issue «переносимая векторная геометрия».",
-              "evidence": "Golden-файлы `easy-content.space-1.json` и `easy-public-demo.space-2.json` получили `\"show_borders\": true`. Unit-тест `test/converter-consumers.test.mjs` для `imageOnly` проверяет `showBorders=false` и `hideOpenings=true`."
-            },
-            {
-              "topic": "Сквозной путь через импорт",
-              "assessment": "Импорт не теряет флаг ни в полном, ни в plan-only режиме. Нормализация на бэкенде при `show_borders=true` не создаёт `hide_openings`. Новая проверка в `tests_backend/test_ha_easy_floorplan_convert.py` касается и материализованного config, и повторного export, поэтому закрывает именно то звено, где в #1211 появлялось `hide_openings: true`.",
-              "evidence": "`import_export.py:154-161,320-326`; `tests_backend/test_ha_easy_floorplan_convert.py` — добавленные assert `copied[\"settings\"][\"show_borders\"] is True` и `.get(\"hide_openings\") is not True`."
-            },
-            {
-              "topic": "Проверка опубликованных байтов и настоящего consumer",
-              "assessment": "`demo/smoke_easy_converter_openings.mjs` проходит путь, близкий к пользовательскому: страница из `dist/index.html` без сети, вставка fixture, скачивание, `deepEqual` с `convertEasy`, монтирование настоящей `houseplan-panel` в режиме View, проверка видимости символа двери, сохранения host и отсутствия orphan, затем reload. `deepEqual` заодно гарантирует, что пересобранная страница совпадает с исходником. Транспорт в smoke синтетический, это честно указано в комментарии файла. Персистентность проверяет отдельный backend-тест.",
-              "evidence": "`demo/smoke_easy_converter_openings.mjs:13-61`."
-            },
-            {
-              "topic": "Документация и миграция ранее импортированных планов",
-              "assessment": "README точно описывает ручное восстановление: геометрия и host сохранены, достаточно включить границы. Это подтверждается кодом нормализации (строка 2859 перезаписывает `hide_openings` по `show_borders`). Автоматическая миграция старых импортов не предусмотрена — так решил владелец в issue.",
-              "evidence": "`scripts/sh3d-convert/README.md:89-95`; `validation.py:2859-2860`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Новый `demo/smoke_easy_converter_openings.mjs` нигде не зарегистрирован: в каталоге smoke-проверок (`process-next/catalog/inventory.json`) и в README конвертера его нет, тогда как соседний `smoke_plan_converter.mjs` указан и там, и там. Если этот smoke должен запускаться при будущих правках конвертера, стоит добавить его в README рядом с `node demo/smoke_plan_converter.mjs` (строка 111) или в соответствующий реестр. Тогда запуск не будет зависеть от памяти исполнителя. Цена — одна строка."
-          ],
-          "boundaries": "Сборку, тесты и smoke я не запускал (S7). Использована квитанция S6 `20261102T142625709-9e14969f` («Тесты для задачи #1211 (перед ревью)», status passed, материал `a006eb43…`). Её состав по снимку не виден, поэтому я не могу подтвердить, что в неё входили именно новый browser-smoke и backend-тест. По исходникам изучено: `scripts/sh3d-convert/easy.mjs` (функция `convertEasy` целиком), `spaceDisplayOf` в `src/logic.ts`, `normalize_space_display` в `validation.py`, проекция plan-only и whitelist полей в `import_export.py`, diff тестов и golden-файлов. Минифицированный `dist/index.html` целиком не читал: его соответствие исходнику держится на `deepEqual` в smoke и на пересборке. Внешнюю публикацию houseplan.tech и настоящий HA-прогон #1179 проверить невозможно."
-        },
-        "usage": {
-          "input_tokens": 34,
-          "cache_creation_input_tokens": 101140,
-          "cache_read_input_tokens": 1262433,
-          "output_tokens": 7766,
-          "output_tokens_details": {
-            "thinking_tokens": 1744
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 101140,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 855,
-              "cache_read_input_tokens": 95039,
-              "cache_creation_input_tokens": 10271,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10271
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление адресное и подходит для задачи. Easy-конвертер теперь явно записывает `settings.show_borders: true`, если в этаже есть векторная геометрия или проёмы: комнаты, стены, перегородки или openings. Импорт сохраняет этот флаг в обоих режимах переноса. `normalize_space_display` после этого не записывает `hide_openings: true`, а `spaceDisplayOf` показывает и границы, и символы дверей поверх фоновой картинки. У плана, где есть только картинка, флага нет, и поведение по умолчанию прежнее. Общий renderer и существующие пользовательские настройки не затронуты. Блокеров нет.\n\n## Понимание решения\n\nДо изменения: Easy-конвертер записывал в space `plan_url` фоновой картинки, а `settings.show_borders` не задавал. В Houseplan `show_borders` по умолчанию равно `!plan_url` (`src/logic.ts:1390`), и `hideOpenings` выводится из этого же значения (`src/logic.ts:1413`, решение #945). Бэкенд `normalize_space_display` (`custom_components/houseplan/validation.py:2850-2861`) при отсутствии флага и наличии картинки записывал `hide_openings: true`. Поэтому дверь и её wall-host сохранялись в config, но на плане не рисовались. Это ровно то, что показал WS trace в #1211.\n\nПосле изменения: `scripts/sh3d-convert/easy.mjs:60-66` добавляет `show_borders: true`, если есть хотя бы одно из `rooms`, `projected.walls`, `projected.partitions`, `openings`. Разобранные пути:\n- Импорт. Поле `show_borders` есть в `_SPACE_DISPLAY_FIELDS` (`import_export.py:154-161`), поэтому сохраняется и при plan-only проекции (`_project_plan_only_space`, строки 320-326), и при полном переносе.\n- Нормализация. При `borders=True` и отсутствии `hide_openings` в settings ничего не записывается.\n- Отображение. `spaceDisplayOf` даёт `showBorders=true` и `hideOpenings=false`.\n- Уже импортированные планы. Если пользователь включит границы в настройках, условие `\"hide_openings\" in settings` на строке 2859 перезапишет флаг в `false`, так что совет в README работает.\n\nПересобраны опубликованная страница `dist/index.html` и golden-файлы. Добавлены unit-проверка через настоящий `spaceDisplayOf` (варианты с картинкой, без картинки и только с картинкой), проверка HA backend (apply и повторный export) и browser-smoke. Smoke сверяет байты скачанного со страницы файла с `convertEasy`, затем монтирует настоящую панель в режиме View и проверяет видимость `[data-hp=opening]` при первом показе и после reload.\n\n## Разбор решения\n\n### Место исправления и границы ответственности\n\nПравка сделана на правильном уровне. Дефект сидит в выходных настройках конвертера, а умолчание Houseplan «картинка = без разметки» (#945) осознанное и касается всех пространств с картинкой. Если бы правили renderer или умолчание, поменялось бы отображение у существующих пользователей. Комментарий в коде объясняет неочевидное: фон Easy — подложка, а не замена геометрии. Такой комментарий стоит сохранить.\n\nОснование: `scripts/sh3d-convert/easy.mjs:60-66`; `src/logic.ts:1390,1413`; `custom_components/houseplan/validation.py:2856-2861`.\n\n### Условие включения флага\n\nФлаг выставляется только при наличии геометрии или проёмов, поэтому этаж с одной картинкой сохраняет обычное поведение, как требует issue. Если картинки нет, явное `true` совпадает с умолчанием `noPlan`, и видимое поведение не меняется. Цена — лишний ключ в golden-файлах, что приемлемо. В условие входят и комнаты без стен: Easy-areas тоже являются переносимой векторной разметкой, так что их показ поверх картинки логичен и согласуется с формулировкой issue «переносимая векторная геометрия».\n\nОснование: Golden-файлы `easy-content.space-1.json` и `easy-public-demo.space-2.json` получили `\"show_borders\": true`. Unit-тест `test/converter-consumers.test.mjs` для `imageOnly` проверяет `showBorders=false` и `hideOpenings=true`.\n\n### Сквозной путь через импорт\n\nИмпорт не теряет флаг ни в полном, ни в plan-only режиме. Нормализация на бэкенде при `show_borders=true` не создаёт `hide_openings`. Новая проверка в `tests_backend/test_ha_easy_floorplan_convert.py` касается и материализованного config, и повторного export, поэтому закрывает именно то звено, где в #1211 появлялось `hide_openings: true`.\n\nОснование: `import_export.py:154-161,320-326`; `tests_backend/test_ha_easy_floorplan_convert.py` — добавленные assert `copied[\"settings\"][\"show_borders\"] is True` и `.get(\"hide_openings\") is not True`.\n\n### Проверка опубликованных байтов и настоящего consumer\n\n`demo/smoke_easy_converter_openings.mjs` проходит путь, близкий к пользовательскому: страница из `dist/index.html` без сети, вставка fixture, скачивание, `deepEqual` с `convertEasy`, монтирование настоящей `houseplan-panel` в режиме View, проверка видимости символа двери, сохранения host и отсутствия orphan, затем reload. `deepEqual` заодно гарантирует, что пересобранная страница совпадает с исходником. Транспорт в smoke синтетический, это честно указано в комментарии файла. Персистентность проверяет отдельный backend-тест.\n\nОснование: `demo/smoke_easy_converter_openings.mjs:13-61`.\n\n### Документация и миграция ранее импортированных планов\n\nREADME точно описывает ручное восстановление: геометрия и host сохранены, достаточно включить границы. Это подтверждается кодом нормализации (строка 2859 перезаписывает `hide_openings` по `show_borders`). Автоматическая миграция старых импортов не предусмотрена — так решил владелец в issue.\n\nОснование: `scripts/sh3d-convert/README.md:89-95`; `validation.py:2859-2860`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Новый `demo/smoke_easy_converter_openings.mjs` нигде не зарегистрирован: в каталоге smoke-проверок (`process-next/catalog/inventory.json`) и в README конвертера его нет, тогда как соседний `smoke_plan_converter.mjs` указан и там, и там. Если этот smoke должен запускаться при будущих правках конвертера, стоит добавить его в README рядом с `node demo/smoke_plan_converter.mjs` (строка 111) или в соответствующий реестр. Тогда запуск не будет зависеть от памяти исполнителя. Цена — одна строка.\n\n## Границы анализа\n\nСборку, тесты и smoke я не запускал (S7). Использована квитанция S6 `20261102T142625709-9e14969f` («Тесты для задачи #1211 (перед ревью)», status passed, материал `a006eb43…`). Её состав по снимку не виден, поэтому я не могу подтвердить, что в неё входили именно новый browser-smoke и backend-тест. По исходникам изучено: `scripts/sh3d-convert/easy.mjs` (функция `convertEasy` целиком), `spaceDisplayOf` в `src/logic.ts`, `normalize_space_display` в `validation.py`, проекция plan-only и whitelist полей в `import_export.py`, diff тестов и golden-файлов. Минифицированный `dist/index.html` целиком не читал: его соответствие исходнику держится на `deepEqual` в smoke и на пересборке. Внешнюю публикацию houseplan.tech и настоящий HA-прогон #1179 проверить невозможно.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c356cd6c04a2b64bf151f1337f1de218abceb21b → a006eb434f26caa0c061dba200c3f1cfd14e2a95\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-02T14:29:21.361Z",
-        "artifactId": 13150471240,
-        "runId": 41462009034,
-        "runAttempt": 1,
-        "completedAt": "2026-11-02T14:29:26Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41462009034",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "c356cd6c04a2b64bf151f1337f1de218abceb21b"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793629811059,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     }
   },
   "ownerDecisions": {},
@@ -1193,19 +1065,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1211,
-    "worker": "finish",
-    "token": "66:finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:1:admit",
-    "fence": 66,
-    "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-    "expectedBase": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793629576317,
-    "expiresAt": 1793633406992,
-    "patchId": "ad262ee83a8e2d2268d821adac050806a9eb2162",
-    "reviewRequest": "review:1211:1:ad262ee83a8e2d2268d821adac050806a9eb2162:c356cd6c04a2b64bf151f1337f1de218abceb21b"
-  },
+  "active": null,
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
       "digest": "18a6a1fd53b82729d2781adc60969ae581495be8b728932c814213c6f9387ba5",
@@ -1246,98 +1106,6 @@
     "github:41455519490:1:completions:report:21d6437d0732933f7cc9ee7de8ca0672a33535297a8f5052e8764fb255885081": {
       "digest": "5dcbbd1e4427d41ea3ba0ceed29ffec03da845e056f37a71986e66f67701e5bd",
       "issue": 1165
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:2:synchronized": {
-      "digest": "91e2cb4af50f3a3de24255e118f614a84e5b3753f1d9bfa8dd8db7ec9221a7f2",
-      "issue": 1211
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:3:s6-label": {
-      "digest": "4ce8b84c9e3f8ecfb28c655f067994c53cb7da48bf7a977e8e44c75fd97c0818",
-      "issue": 1211
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:4:review-requested": {
-      "digest": "e9092b1ef117f411d2eee719d8caf1f73c91b5edba587aa6d301b29b9ce43aa3",
-      "issue": 1211
-    },
-    "github:41461988791:1:completions:message:60bc0cd6c71a03ad4ad0db327a3602e396735935b9fb56f1e4aa145d7e754f76": {
-      "digest": "90398638b4a880cbf5e4e093b53face70b3fbd4e0a8ab3f84209165f01166abd",
-      "issue": 1211
-    },
-    "github:41461988791:1:completions:message:6369f6e39a24fc8d5bc529b57da935a775dde86ad84aab37bc3af2b322e1ff3c": {
-      "digest": "3e851299a266853df6bb083ec0edfa2eca071b5fc0dda5100548d419f12e5d2c",
-      "issue": 1211
-    },
-    "github:41461988791:1:completions:message:49d65c5e225aa22ac7a987b88d9509a9387b931ed372c2c0f7f02f6480d710b4": {
-      "digest": "f3ae8d623e4816cca5b026d16c15ecf9d405cd6dd4da8b9bcf2cb74ceffda7e4",
-      "issue": 1211
-    },
-    "github:41462439988:1:tick:0:review-presentation": {
-      "digest": "67546f9607efd87e31b71eec550eab83d2e9daa36065d8d48a8ecbc4ef845501",
-      "issue": 1211
-    },
-    "github:41462439988:1:tick:0:review-complete": {
-      "digest": "a9b6ca89f599d05337414ab679f71979bc7a811e5831f281af78f96d25a1a273",
-      "issue": 1211
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:7:automation-pending": {
-      "digest": "df27556a5f04fb13b546eea720160488661f031b00d993101e8ab9e0f65a062f",
-      "issue": 1211
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c": {
-      "digest": "2b2e5f5e403c8cf058e20b27f8fb12090d2d118fa0b9f56a8b32d142f5a01bef",
-      "issue": 1211,
-      "message": {
-        "kind": "queued",
-        "issue": 1211,
-        "at": 1793629571958,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-        "delivered": true
-      }
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:1:admit": {
-      "digest": "08b4fb17c7b89681699ed974b075ef9aa49944e3c6cfd635f8a7b6150bb5855b",
-      "issue": 1211,
-      "message": {
-        "kind": "admitted",
-        "issue": 1211,
-        "at": 1793629576317,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:41ecc90c-d976-4f12-8e06-a473b432446c:finish:3:s6-complete": {
-      "digest": "3cd5a9565b0ae82ebef9a76eb8b126d9254569c63132511ebad7c7121d65231e",
-      "issue": 1211,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1211,
-        "at": 1793629593723,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-        "phase": "review",
-        "evidence": {
-          "id": "20261102T142625709-9e14969f",
-          "name": "Тесты для задачи #1211 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261102T142625709-9e14969f/report.json",
-          "materialSha": "a006eb434f26caa0c061dba200c3f1cfd14e2a95",
-          "status": "passed",
-          "finishedAt": "2026-11-02T14:26:32.464Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
     }
   },
   "devWebhook": {
