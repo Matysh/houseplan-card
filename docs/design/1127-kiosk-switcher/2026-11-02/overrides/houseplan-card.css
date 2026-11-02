@@ -1,0 +1,296 @@
+/* UI-018: the dashboard card starts directly with navigation, without title/icon.
+   Match the measurement clone too so overflow calculation sees the same width. */
+:host(:not([panel-host])) .hdr[data-panel-flow] .head > .title {
+  display: none;
+}
+
+/* #1165 composition only; fields, selects, help, toggles and dialog paint
+   remain owned by the existing UI Kit. */
+hp-dialog[data-kind="external-screen-constructor"] { --hp-dialog-wide-width: 800px; }
+.lab-profile1165 { padding: var(--sp-6) !important; box-sizing: border-box; }
+.lab-profile1165 .hpf-section { display: block; }
+.lab-profile1165 .lab-profile-general { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.lab-profile1165 .lab-profile-general > :last-child { grid-column: 1 / -1; }
+.lab-profile1165 .lab-profile-heading {
+  margin: 0 0 var(--sp-6);
+  font-size: var(--fs-l);
+  font-weight: 600;
+}
+.lab-profile1165 .lab-profile-space-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: end;
+}
+.lab-profile1165 .lab-profile-space-heading .lab-profile-heading { margin: 0; }
+.lab-profile1165 .lab-profile-space-hint { margin: var(--sp-5) 0 var(--sp-6); }
+.lab-profile1165 .lab-profile-zoom { display: flex; align-items: center; gap: var(--sp-4); }
+.lab-profile1165 .lab-profile-zoom .hpf-unit { flex: 1; min-width: 0; }
+.lab-profile1165 .lab-profile-zoom button { flex: 0 0 auto; }
+.lab-profile1165 .lab-profile-center { min-height: 44px; }
+/* Shared UI Kit checkbox row: disabled input and its label have one cursor. */
+hp-dialog:has(> [slot="footer"]) {
+  --hp-dialog-footer-separator: 1px solid var(--hp-line, rgb(255 255 255 / 0.12));
+}
+.hpf-form .hpf-labelrow > label,
+.hpf-form .hpf-hint,
+.hpf-form .hpf-note,
+.hpf-form :is(h1, h2, h3, h4, h5, h6),
+.hpf-heading {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hpf-check:has(> input:disabled),
+.hpf-check:has(> input:disabled) * { cursor: not-allowed; }
+.lab-profile1165 .hpf-field:has(#profile-center) > .hpf-hint { display: none; }
+.lab-profile1165 .lab-profile-single-return { margin-top: var(--sp-6); }
+
+/* UI-019: Sections cards inherit HA theme corners; only the full panel is square.
+   A grid card owns its height, so its toolbar stays in normal flow, not 56px
+   below the top of its own overflow container. */
+:host([layout="grid"]:not([panel-host])) {
+  border-radius: var(--ha-card-border-radius, 12px);
+}
+:host([layout="grid"]:not([panel-host])) ha-card {
+  --ha-card-border-radius: inherit;
+  border-radius: var(--ha-card-border-radius, 12px);
+}
+:host([layout="grid"]:not([panel-host])) .hdr {
+  position: relative;
+  top: auto;
+}
+
+/* UI-003: non-editable unit inside the numeric field outline.
+   Keep native inputs and their Lit bindings intact. */
+.editor-secondary .drawwall:has(> input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])) {
+  display: inline-grid;
+  grid-template-columns: auto 6.5em auto;
+  align-items: center;
+  column-gap: var(--sp-3);
+}
+.editor-secondary .drawwall > input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"]) {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  padding-inline-end: 2.3em;
+  appearance: textfield;
+}
+.editor-secondary .drawwall > input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])::-webkit-inner-spin-button,
+.editor-secondary .drawwall > input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.editor-secondary .drawwall:has(> input:is([data-field="decor-stroke-width"], [data-field="wall-thickness"])) > .opl {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  margin-inline-end: 10px;
+  font-size: 11px;
+  color: var(--hp-muted);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+.editor-secondary .drawwall:has(> input[data-field="wall-thickness"]) > .rangehint {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* UI-005: green wall preview uses the existing node radius and outline. */
+
+/* UI-017: sensor-active door arc uses HA accent, leaf keeps ordinary paint.
+   The renderer emits --hp-open only for a bound, available, open contact. */
+.opening[data-kind="door"] .op-arc[stroke="var(--hp-open)"] {
+  stroke: var(--primary-color, #3ea6ff);
+}
+.opening[data-kind="door"] .op-leaf > rect[fill="var(--hp-open)"] {
+  fill: var(--lab-door-base);
+}
+
+.stage.tool-draw [data-hp="plan-snap-active-marker"],
+.stage.tool-draw .active-vertex {
+  r: var(--lab-wall-node-radius);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* UI-006: an editor close button between adjacent segments is not an outer edge. */
+.hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']):has(+ .hpf-nav-item),
+.hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']):has(+ .hpf-nav-item) > .closex {
+  border-radius: 0;
+}
+
+/* UI-007: editor close uses the same interaction paint as navigation buttons. */
+.hpf-nav-modes > .editor-close-slot > .closex {
+  border: 1px solid transparent;
+  border-radius: inherit;
+  transition: background var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    color var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    border-color var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    box-shadow var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease);
+}
+:host([data-pointer-hover]) .hpf-nav-modes > .editor-close-slot:has(> .closex:not(:disabled):hover) {
+  z-index: 2;
+}
+:host([data-pointer-hover]) .hpf-nav-modes > .editor-close-slot > .closex:not(:disabled):hover {
+  background: var(--hpf-tint, color-mix(in srgb, var(--primary-color, #03a9f4) 10%, transparent));
+  color: var(--hpf-accent, var(--primary-color, #03a9f4));
+  border-color: var(--hpf-accent, var(--primary-color, #03a9f4));
+  box-shadow: 0 0 0 1px var(--hpf-tint-line, var(--primary-color, #03a9f4));
+  filter: brightness(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hpf-nav-modes > .editor-close-slot > .closex { transition: none !important; }
+}
+
+
+/* UI-009: common UI Kit toast surface, all messages without ID exceptions. */
+
+/* UI-016: two-line source-picker rows must retain their intrinsic height
+   inside the capped flex scroller. Otherwise text overflows a shrunk hover box. */
+.hpf-panel .hpf-list > .hpf-cand {
+  flex: 0 0 auto;
+  height: auto;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: background-color var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    color var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease),
+    box-shadow var(--hpf-paint-duration, 160ms) var(--hpf-paint-easing, ease);
+}
+.hpf-panel .hpf-list > .hpf-cand:is(:hover, :focus-visible) {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--hpf-accent, var(--primary-color, #03a9f4));
+  outline: none;
+}
+.hpf-panel .hpf-list > .hpf-cand[aria-selected="true"] {
+  background: var(--hpf-tint, color-mix(in srgb, var(--primary-color, #03a9f4) 12%, transparent));
+}
+@media (prefers-reduced-motion: reduce) {
+  .hpf-panel .hpf-list > .hpf-cand { transition: none; }
+}
+
+/* UI-014: the neighbouring settings segment overlaps the shared border by
+   1px. Raise the hovered select just like the other navigation segments. */
+.hpf-nav-compact > .compact-space-select[data-pointer-hover]:hover,
+.hpf-nav-compact > .compact-space-select:focus-within {
+  z-index: 2;
+}
+
+[data-hp="toast-portal"] > .toast[data-hp="toast"] {
+  left: var(--lab-plan-toast-center, 50%);
+  max-width: var(--lab-plan-toast-max-width, 90vw);
+}
+
+/* UI-011: one animation clock for scene, properties and header layout. */
+ha-card[data-lab-editor-motion] { overflow: clip; }
+ha-card[data-lab-editor-motion] > .stage,
+ha-card[data-lab-editor-motion] .editorchrome {
+  width: var(--lab-editor-width) !important;
+  box-sizing: border-box;
+}
+ha-card[data-lab-editor-motion] > .hdr:not(.lab-header-snapshot) > .head {
+  width: var(--lab-header-width) !important;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+ha-card[data-lab-header-measuring] > .hdr:not(.lab-header-snapshot) > .head { visibility: hidden; }
+ha-card > .lab-header-snapshot {
+  position: absolute !important;
+  inset: 0 auto auto 0;
+  z-index: 25;
+  pointer-events: none;
+  margin: 0;
+}
+.lab-header-snapshot > .head { overflow: visible !important; }
+/* UI-012: scene appearance shares the mode controller's single progress. */
+ha-card[data-lab-editor-motion] > .stage > .zoomwrap { will-change: transform, opacity; }
+ha-card > .stage.lab-scene-snapshot {
+  position: absolute !important;
+  left: 0;
+  margin: 0 !important;
+  z-index: 19;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  contain: layout paint;
+  will-change: opacity;
+}
+.lab-scene-snapshot, .lab-scene-snapshot * { pointer-events: none !important; }
+.hp-properties {
+  transform: translateX(var(--lab-properties-shift, 0px));
+}
+.hp-properties[data-lab-outgoing] { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hp-properties { transform: none; }
+}
+/* Shared settings body fills the dialog between its actual header and footer. */
+hp-dialog[settings-layout] > .hpf-settings-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-height: 0;
+}
+hp-dialog[settings-layout] > .hpf-settings-form > .hpf-settings-layout {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+
+/* #1126: two soft accent pulses; same footprint in Flat and 2.5D. */
+.lab-stair-arrival {
+  fill: var(--hp-accent);
+  fill-opacity: .22;
+  stroke: var(--hp-accent);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  animation: lab-stair-arrival 1s ease-in-out 2 both;
+}
+@keyframes lab-stair-arrival {
+  0%, 100% { opacity: 0; }
+  30%, 55% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-stair-arrival { animation: none; opacity: 1; }
+}
+
+/* #1127: kiosk-only transient space navigation, using shared UI Kit buttons. */
+:host([data-lab-kiosk-spaces]) .kioskdots { display: none; }
+.lab-kiosk-spaces.hpf-navigation {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  background: var(--hp-bg);
+  border: 1px solid var(--hp-line);
+  border-radius: 0 var(--rad-l) var(--rad-l) 0;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--hpf-leave-duration) var(--hpf-leave-easing),
+    visibility 0s linear var(--hpf-leave-duration);
+}
+.lab-kiosk-spaces.hpf-navigation.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity var(--hpf-appear-duration) var(--hpf-appear-easing), visibility 0s;
+}
+.lab-kiosk-spaces.hpf-navigation > .hpf-nav-item { flex: 0 0 44px; }
+.lab-kiosk-spaces.hpf-navigation > .hpf-nav-item.active {
+  color: var(--hp-accent);
+  background: var(--hpf-tint, color-mix(in srgb, var(--hp-accent) 12%, transparent));
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-kiosk-spaces.hpf-navigation { transition: none; }
+}

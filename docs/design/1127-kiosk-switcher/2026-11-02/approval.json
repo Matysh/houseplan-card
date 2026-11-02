@@ -1,0 +1,9 @@
+{
+  "issue": 1127,
+  "date": "2026-11-02",
+  "status": "owner-approved visual prototype",
+  "ownerMessage": "отлично, фиксируй вид и принятые решения в задаче",
+  "scope": "Kiosk-only transient 5-second switcher, flush-left overlay with no camera reservation",
+  "productAcceptance": false,
+  "privateDataPublished": false
+}
