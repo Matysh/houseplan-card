@@ -3,6 +3,7 @@ import copy
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from custom_components.houseplan.const import DOMAIN
 
 
 @pytest.fixture(autouse=True)
@@ -12,7 +13,7 @@ def _custom_integrations(enable_custom_integrations):
 
 @pytest.mark.parametrize("endpoint", ["houseplan/config/set", "houseplan/plan/optimize"])
 async def test_weather_reference_persists_and_cannot_be_replaced_by_an_unreadable_source(hass, hass_ws_client, endpoint):
-    entry = MockConfigEntry(domain="houseplan", title="House Plan", data={})
+    entry = MockConfigEntry(domain=DOMAIN, title="House Plan", data={})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()

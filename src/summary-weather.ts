@@ -24,7 +24,7 @@ export function weatherDirection(value: unknown): number | null {
   const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   if (typeof value === 'string' && directions.includes(value.toUpperCase())) return directions.indexOf(value.toUpperCase());
   const numeric = typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value.trim()) ? Number(value) : weatherNumber(value);
-  return numeric === null ? null : Math.round(((numeric % 360 + 360) % 360) / 45) % 8;
+  return numeric === null || !Number.isFinite(numeric) ? null : Math.round(((numeric % 360 + 360) % 360) / 45) % 8;
 }
 export function weatherDay(date: Date, timeZone?: string): string {
   const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone } as const;

@@ -1,12 +1,17 @@
 // Synthetic HA forecast transport; real product summary/editor rendering and lifecycle.
 import { launch, check, finish } from './serve.mjs';
 import { mkdirSync } from 'node:fs';
+import { mdiWeatherCloudy, mdiWeatherPartlyCloudy, mdiWeatherRainy } from '@mdi/js';
 const { page, browser } = await launch({ width: 1280, height: 720 });
 mkdirSync('output/issue1174', { recursive: true });
 try {
-  await page.waitForFunction(() => !!window.__card?._summary);
-  await page.evaluate(async () => {
+  await page.waitForFunction(() => !!window.__card?._serverCfg && !!window.__card?.shadowRoot?.querySelector('.summary-control'));
+  await page.evaluate(async icons => {
     const card = window.__card, root = () => card.shadowRoot;
+    Object.assign(window.__ICONS, icons);
+    document.querySelector('#host').style.cssText = 'width:1280px;padding:0;margin:0';
+    for (const [key, value] of Object.entries({ '--card-background-color': '#1e1e1e', '--ha-card-background': '#1e1e1e',
+      '--secondary-background-color': '#1e1e1e', '--primary-text-color': '#e1e1e1', '--secondary-text-color': '#aaa', '--divider-color': '#383838', '--primary-color': '#64b5f6' })) card.style.setProperty(key, value);
     const settle = async () => { await card.updateComplete; await new Promise(requestAnimationFrame); await card.updateComplete;
       await root().querySelector('hp-summary-weather')?.updateComplete; };
     card._config = { ...card._config, language: 'ru', kiosk: false };
@@ -14,16 +19,19 @@ try {
     const subscriptions = [], opened = [], writes = [];
     const weather = { state: 'cloudy', attributes: { friendly_name: 'Дом', temperature: 8, apparent_temperature: 6,
       temperature_unit: '°C', wind_speed: 3.2, wind_speed_unit: 'm/s', wind_bearing: 225, humidity: 76, supported_features: 1 } };
+    const cfg = structuredClone(card._serverCfg), originalCallWS = card.hass.callWS;
+    cfg.settings = { ...cfg.settings, summary_panel: { version: 1, title: 'Обзор дома', show_on_mobile: true,
+      blocks: [], weather: { enabled: true, entity_id: 'weather.lab_home' } } };
     const connection = { subscribeMessage(callback, message) {
       const sub = { callback, message, released: false }; subscriptions.push(sub);
       return Promise.resolve(() => { sub.released = true; });
     } };
     card.hass = { ...card.hass, connection, language: 'ru', locale: { language: 'ru', number_format: 'decimal_comma' },
+      formatEntityState: state => ({ cloudy: 'Облачно', sunny: 'Солнечно' })[state.state] || state.state,
+      callWS: async message => message.type === 'houseplan/config/get'
+        ? { config: structuredClone(cfg), rev: card._cfgRev, can_write: true, summary_panel_api: 1 } : originalCallWS(message),
       config: { ...card.hass.config, time_zone: 'Europe/Moscow', unit_system: { temperature: '°C' } },
       states: { ...card.hass.states, 'weather.lab_home': weather } };
-    const cfg = structuredClone(card._serverCfg);
-    cfg.settings = { ...cfg.settings, summary_panel: { version: 1, title: 'Обзор дома', show_on_mobile: true,
-      blocks: [], weather: { enabled: true, entity_id: 'weather.lab_home' } } };
     card._serverCfg = cfg; card._settings = cfg.settings; card._cfgEpoch = (card._cfgEpoch || 0) + 1;
     card._sendConfigCandidate = async candidate => { writes.push(structuredClone(candidate)); card._cfgRev++; };
     root().addEventListener('hass-more-info', event => opened.push(event.detail.entityId));
@@ -38,7 +46,7 @@ try {
         next.settings.summary_panel.weather = weatherConfig; card._serverCfg = next; card._settings = next.settings;
         card._summary.updated(); card.requestUpdate(); await settle(); },
     };
-  });
+  }, { 'mdi:weather-cloudy': mdiWeatherCloudy, 'mdi:weather-partly-cloudy': mdiWeatherPartlyCloudy, 'mdi:weather-rainy': mdiWeatherRainy });
   await page.waitForFunction(() => window.__weather1174.widget()?.textContent.includes('+8°'));
   check('weather works as the only panel content', await page.evaluate(() => {
     const f = window.__weather1174;
@@ -55,6 +63,15 @@ try {
     ] }); await f.settle();
   });
   check('daily forecast shows three ordered days', await page.locator('hp-summary-weather .summary-weather-forecast > div').count() === 3);
+  check('approved composition: square upper hover corners, matching separator rhythm and 3 columns', await page.evaluate(() => {
+    const widget = window.__weather1174.widget(), action = getComputedStyle(widget.querySelector('button'));
+    const wind = widget.querySelectorAll('.summary-weather-meta > div')[1].getBoundingClientRect();
+    const humidity = widget.querySelectorAll('.summary-weather-meta > div')[2].getBoundingClientRect();
+    const forecast = widget.querySelector('.summary-weather-forecast').getBoundingClientRect();
+    return action.borderTopLeftRadius === '0px' && action.borderTopRightRadius === '0px'
+      && parseFloat(action.borderBottomLeftRadius) > 0 && Math.abs(forecast.top - humidity.bottom) < 1
+      && wind.height === humidity.height && getComputedStyle(widget.querySelector('.summary-weather-forecast')).paddingTop === '12px';
+  }));
   await page.locator('hp-summary-weather').screenshot({ path: 'output/issue1174/weather-widget.png' });
   await page.screenshot({ path: 'output/issue1174/weather-only.png' });
   await page.locator('hp-summary-weather button').click();
@@ -89,6 +106,7 @@ try {
     await f.card._summary.openDialog(); await f.settle();
   });
   await page.waitForSelector('[data-field="summary-weather-enabled"]');
+  await page.evaluate(async () => { await Promise.all(window.__weather1174.root().querySelector('hp-dialog').getAnimations({ subtree: true }).filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {}))); });
   await page.screenshot({ path: 'output/issue1174/weather-settings.png' });
   const picker = page.locator('[data-field="summary-weather-entity"]');
   await picker.selectOption('weather.lab_country');
