@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 545,
-  "nextTicket": 53,
+  "revision": 546,
+  "nextTicket": 54,
   "nextFence": 53,
   "tasks": {
     "1128": {
@@ -642,14 +642,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/golden-lighting-snapshot",
-      "materialSha": "48a9358c9cf92ae387621b5637fb55440efd61fa",
+      "materialSha": "70dc3a9ef35f89d78633c1063a36ff984259c901",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 52,
-      "queued": false,
+      "ticket": 53,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793578454829,
-      "reviewEntry": 1,
+      "readyAt": 1793578761969,
+      "reviewEntry": 2,
       "patchId": "1400594f3b645b3384c21769ab1aedcd20e67fd4",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -657,7 +657,6 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -730,7 +729,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1204
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -802,6 +803,19 @@
           "detail": "Поведение изменённой области: failed",
           "eventId": "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab:finish:3:return:return:1204"
         }
+      }
+    },
+    "finish:96dabe24-27cc-40f9-aa36-a4aa39598a30": {
+      "digest": "c1995b79a701eb82bd632b0bb57af43f23765314623501d5586c3b25cbad5faa",
+      "issue": 1204,
+      "message": {
+        "kind": "queued",
+        "issue": 1204,
+        "at": 1793578761969,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "70dc3a9ef35f89d78633c1063a36ff984259c901"
       }
     }
   },
