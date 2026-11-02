@@ -36,7 +36,8 @@ async def test_room_creation_then_reload_and_geometry_undo_redo(
     revision = 7
     if case["optimize"]:
         await client.send_json_auto_id({"type": "houseplan/plan/optimize", "config": case["source"],
-                                       "layout": {}, "expected_config_rev": 7, "expected_layout_rev": 4})
+                                       "layout": {}, "expected_config_rev": 7, "expected_layout_rev": 4,
+                                       **({"graph_change": case["graph_change"]} if "graph_change" in case else {})})
         response = await client.receive_json()
         assert response["success"], response
         revision = 8
