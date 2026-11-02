@@ -11551,7 +11551,7 @@ export class HouseplanCard extends LitElement {
         ? isoScene?.key || this._isoInvalidKey() : `${space.id}|no-borders`, error);
       this._cancelCameraTransition(false); projection = 'flat'; iso = false; isoScene = null; isoFrame = null;
       this._renderProjection = 'flat'; this._renderIsoScene = null;
-      this._isoProjectionSnapshot = 'flat'; this._view = null; 
+      this._isoProjectionSnapshot = 'flat'; this._view = null;
       view = this._viewOr(this._baseVb('flat', null));
     }
     const isoLayers = isoFrame?.layers ?? null;
