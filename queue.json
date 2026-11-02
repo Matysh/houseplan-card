@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1084,
-  "nextTicket": 81,
+  "revision": 1085,
+  "nextTicket": 82,
   "nextFence": 81,
   "tasks": {
     "1126": {
@@ -425,14 +425,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1174",
-      "materialSha": "f90f1a700ae0187aceb9b5b46c48ffe4387a7393",
+      "materialSha": "313be81a6a32f1a29f14beb87e08dabaf1aa7028",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 79,
-      "queued": false,
+      "ticket": 81,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793641142772,
-      "reviewEntry": 1,
+      "readyAt": 1793641376934,
+      "reviewEntry": 2,
       "patchId": "3a38acbb055e6b8983d690559340e8768a85c025",
       "changedFiles": [
         "custom_components/houseplan/validation.py",
@@ -455,7 +455,6 @@
         "tests_backend/test_ha_summary_weather.py",
         "tests_backend/test_summary_panel.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -1522,7 +1521,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1174
+  ],
   "active": {
     "issue": 1130,
     "worker": "finish",
@@ -1693,6 +1694,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:14e1d2b0-96cc-46bb-8304-be130dc08e37": {
+      "digest": "a7cf61f918e1b4cad3a336cfccd5d46cb9744a27c75013919648427aaed5e64d",
+      "issue": 1174,
+      "message": {
+        "kind": "queued",
+        "issue": 1174,
+        "at": 1793641376934,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "313be81a6a32f1a29f14beb87e08dabaf1aa7028"
       }
     }
   },
