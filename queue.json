@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 646,
+  "revision": 647,
   "nextTicket": 59,
   "nextFence": 59,
   "tasks": {
@@ -272,7 +272,7 @@
         "finishedAt": "2026-11-02T10:14:05.490Z",
         "failures": []
       },
-      "reviewRound": 1,
+      "reviewRound": 2,
       "notice": {
         "key": "1:review-retry-exhausted",
         "reason": "review-retry-exhausted",
@@ -283,6 +283,12 @@
         "requestId": "review:1167:1:be70c1ab06c3c8b66516c1eefb62f18624126d69:56fa550edcad46c6f0f9775deaf079ecd6ceaf4b",
         "eventId": "finish:331432e1-67ec-4338-ad70-75b51d429f4d:finish:6:return:return:1167",
         "transitionConfirmed": true
+      },
+      "reviewRequest": "review:1167:2:58dd4b5a7374b17c92d236bdb2e0b8026399f8c8:723d016df0bfe6affb2577ef2928aed4371c9d56",
+      "reviewMaterial": {
+        "materialSha": "efa1b130fc69da8277de8bb013b08ea65b581010",
+        "expectedBase": "723d016df0bfe6affb2577ef2928aed4371c9d56",
+        "patchId": "58dd4b5a7374b17c92d236bdb2e0b8026399f8c8"
       }
     },
     "1169": {
@@ -1039,7 +1045,21 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41347941567"
     }
   },
-  "reviewPublications": {},
+  "reviewPublications": {
+    "code:1167:review:1167:2:58dd4b5a7374b17c92d236bdb2e0b8026399f8c8:723d016df0bfe6affb2577ef2928aed4371c9d56": {
+      "issue": 1167,
+      "kind": "code",
+      "requestId": "review:1167:2:58dd4b5a7374b17c92d236bdb2e0b8026399f8c8:723d016df0bfe6affb2577ef2928aed4371c9d56",
+      "materialSha": "efa1b130fc69da8277de8bb013b08ea65b581010",
+      "expectedBase": "723d016df0bfe6affb2577ef2928aed4371c9d56",
+      "patchId": "58dd4b5a7374b17c92d236bdb2e0b8026399f8c8",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-02T10:14:14.428Z"
+      }
+    }
+  },
   "waiting": [],
   "active": {
     "issue": 1167,
@@ -1051,7 +1071,8 @@
     "phase": "review",
     "admittedAt": 1793614415695,
     "expiresAt": 1793618046399,
-    "patchId": "58dd4b5a7374b17c92d236bdb2e0b8026399f8c8"
+    "patchId": "58dd4b5a7374b17c92d236bdb2e0b8026399f8c8",
+    "reviewRequest": "review:1167:2:58dd4b5a7374b17c92d236bdb2e0b8026399f8c8:723d016df0bfe6affb2577ef2928aed4371c9d56"
   },
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -1144,6 +1165,10 @@
     },
     "finish:81697601-05e6-45f7-b124-f711af92f247:finish:3:s6-label": {
       "digest": "6ef8ab53c596e3859722407e321d1ad109bdd466f0c929ee0f0eaa5862e56cdf",
+      "issue": 1167
+    },
+    "finish:81697601-05e6-45f7-b124-f711af92f247:finish:4:review-requested": {
+      "digest": "b8e333da18080955ed1974d2717886cf1383f7c7b63730624f31eed1bdc2147e",
       "issue": 1167
     },
     "finish:331432e1-67ec-4338-ad70-75b51d429f4d": {
