@@ -350,9 +350,21 @@ const openingEdgeAction = async (cellCm) => {
   await setTheme('light');
   await page.evaluate((cell) => window.__applyGridScaleFixture(cell, 'plan', 'flat'), cellCm);
   const before = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
-  // The accepted shared tray now overlaps this fit's original edge point.
-  // A real zoom-out exposes the SAME right edge; never click through controls.
-  await page.locator('[data-hp="zoom-out"]').click();
+  // #1206: the intrinsic header may legitimately hide zoom buttons at this
+  // width. Use the supported Ctrl+wheel gesture to expose the SAME right edge;
+  // never force-click hidden controls or bypass the camera handler.
+  const box = await stage.boundingBox();
+  const zoomBefore = await page.evaluate(() => window.__card._zoom);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.down('Control');
+  try {
+    for (let step = 0; step < 3; step++) {
+      const previous = await page.evaluate(() => window.__card._zoom);
+      await page.mouse.wheel(0, 180);
+      await page.waitForFunction(value => window.__card._zoom < value, previous);
+    }
+  } finally { await page.keyboard.up('Control'); }
+  const zoomAfter = await page.evaluate(() => window.__card._zoom);
   await page.evaluate(async () => {
     const svg = window.__card.renderRoot.querySelector('.plan-svg');
     let previous = '', stable = 0;
@@ -386,8 +398,8 @@ const openingEdgeAction = async (cellCm) => {
     card.requestUpdate();
     return opened && JSON.stringify(card._serverCfg) === snapshot;
   }, before);
-  return { ok: ok && point.stack[0]?.id === 'grid-door'
-    && point.stack[0]?.class === 'op-hit', cellCm, stack: point.stack };
+  return { ok: ok && zoomAfter < zoomBefore && point.stack[0]?.id === 'grid-door'
+    && point.stack[0]?.class === 'op-hit', cellCm, zoomBefore, zoomAfter, stack: point.stack };
 };
 
 const backgroundCancel = async (cellCm) => {

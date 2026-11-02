@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Grid-scale invariance smoke uses native Ctrl+wheel when the adaptive header hides zoom controls; keeps its opening-edge hit and raster assertions unchanged. [#1206](https://github.com/Matysh/houseplan-card/issues/1206)
+
 ## v1.84.0-beta.2 — 2026-11-02
 
 - Give the lighting Golden scene an explicit native Fit camera intent after data and presentation settle, recording actual camera and marker bounds while preserving content. The original intermittent CI snapshot remains documented; no product behavior or comparison tolerance changes. [#1204](https://github.com/Matysh/houseplan-card/issues/1204)
