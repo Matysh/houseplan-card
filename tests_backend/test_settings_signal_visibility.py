@@ -17,14 +17,14 @@ def config(global_value=False, mode="on"):
     }}], "settings": {"show_lqi": global_value, "future_namespace": {"kept": 2}}}
 
 
-@pytest.mark.parametrize("global_value", [False, True])
-@pytest.mark.parametrize("mode", ["inherit", "on", "off"])
+@pytest.mark.parametrize("global_value", [False, True, "low"])
+@pytest.mark.parametrize("mode", ["inherit", "on", "low", "off"])
 def test_signal_visibility_preserves_explicit_values_and_extensions(global_value, mode):
     before = config(global_value, mode)
     after = validation.CONFIG_SCHEMA(copy.deepcopy(before))
     assert after["settings"] == before["settings"]
     assert after["spaces"][0]["settings"] == before["spaces"][0]["settings"]
-    assert type(after["settings"]["show_lqi"]) is bool
+    assert type(after["settings"]["show_lqi"]) is bool or after["settings"]["show_lqi"] == "low"
 
 
 @pytest.mark.parametrize("bad", ["false", "true", 0, 1, None, [], {}])
@@ -45,11 +45,11 @@ def test_signal_visibility_absence_is_not_materialized():
 
 
 def test_signal_visibility_support_projection_is_validated_and_contains_no_radio_data():
-    for value in (False, True):
+    for value in (False, True, "low"):
         assert support._global_settings({"show_lqi": value, "radio": {"secret": 1}}) == {"show_lqi": value}
     for value in ("false", 0, 1, None, [], {}):
         assert "show_lqi" not in support._global_settings({"show_lqi": value})
-    for mode in ("inherit", "on", "off"):
+    for mode in ("inherit", "on", "low", "off"):
         assert support._space_settings({"show_lqi_mode": mode, "radio": {"secret": 1}}) == {"show_lqi_mode": mode}
     for mode in ("ON", False, 0, None, [], {}):
         assert "show_lqi_mode" not in support._space_settings({"show_lqi_mode": mode})

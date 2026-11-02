@@ -85,7 +85,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     }
   }
 
-  public present(id: string, showLqi: boolean, build: () => ResolvedDevicePresentation): ResolvedDevicePresentation {
+  public present(id: string, showLqi: import('./signal-visibility').SignalVisibility, build: () => ResolvedDevicePresentation): ResolvedDevicePresentation {
     const slot = this.active, before = slot.stats.presentations;
     try { return slot.present(id, showLqi, build); }
     finally { this.stats.presentations += slot.stats.presentations - before; }
@@ -216,7 +216,7 @@ class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
   }
 
   public present(
-    id: string, showLqi: boolean, build: () => ResolvedDevicePresentation,
+    id: string, showLqi: import('./signal-visibility').SignalVisibility, build: () => ResolvedDevicePresentation,
   ): ResolvedDevicePresentation {
     const key = presentationSnapshotKey(id, showLqi);
     const deps = this.deps.get(id);
@@ -249,6 +249,7 @@ class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
       this.deps.delete(id); this.lightDeps.delete(id);
       this.built.delete(presentationSnapshotKey(id, false));
       this.built.delete(presentationSnapshotKey(id, true));
+      this.built.delete(presentationSnapshotKey(id, 'low'));
     }
     this.rows.clear();
     for (const deps of this.deps.values()) for (const id of deps) this.rows.set(id, this.raw[id]);
@@ -291,7 +292,7 @@ class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
       && devices.every((device, index) => device.id === previous.devices[index].id)) pair(devices, previous.devices);
     for (const device of devices) if (!this.changedDevices.has(device.id)) {
       pair(device, prior.get(device.id));
-      for (const showLqi of [false, true]) {
+      for (const showLqi of [false, true, 'low'] as const) {
         const key = presentationSnapshotKey(device.id, showLqi);
         pair(this.built.get(key), previous.presentations.get(key));
       }

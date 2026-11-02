@@ -664,8 +664,11 @@ System LQI visibility (#876) has one bounded policy in `signal-visibility.ts`.
 static, hover and preview consumer feeds that local override, the exact card
 option and accepted installation setting into `effectiveShowLqi`. A card's
 default true cannot hide the global setting. The policy performs no HA reads,
-registry indexing, geometry work or persistence; snapshot boolean variants stay
-reusable. The independent room-card `label_lqi`, explicit LQI value sources,
+registry indexing, geometry work or persistence. #1130 adds low-only (LQI ≤ 50)
+as a distinct snapshot key, filtering only the system line. Ordinary floors
+retain the two boolean projections; low-only floors add their third projection
+to the same dependency tracking, clone lending and device-retirement cleanup.
+The static capture also keys whether that projection is needed. The independent room-card `label_lqi`, explicit LQI value sources,
 battery diagnostics and topology ownership do not consume this policy.
 
 The synthetic QA boundary (#896) is outside both product bundles and persisted

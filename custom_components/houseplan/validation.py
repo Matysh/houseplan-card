@@ -1719,7 +1719,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,
-        vol.Optional("show_lqi_mode"): vol.In(["inherit", "on", "off"]),
+        vol.Optional("show_lqi_mode"): vol.In(["inherit", "on", "low", "off"]),
         vol.Optional("show_device_battery_mode"): vol.In(["inherit", "all", "low", "off"]),
         # "draw less" switches; absent = False = everything is drawn as before
         vol.Optional("hide_decor"): bool,
@@ -2949,7 +2949,7 @@ CONFIG_TYPE_SCHEMA = vol.Schema(
                     vol.Optional("sun_rays"): bool,
                     vol.Optional("sun_ray_origin"): _SUN_RAY_ORIGIN,
                     vol.Optional("show_room_tooltip"): bool,
-                    vol.Optional("show_lqi"): bool,
+                    vol.Optional("show_lqi"): vol.Any(bool, "low"),
                     vol.Optional("show_device_battery"): _DEVICE_BATTERY,
                     # #649: installation-wide 2.5D View; absent/false keeps Flat.
                     vol.Optional("volumetric_view"): bool,

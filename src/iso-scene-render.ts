@@ -741,12 +741,12 @@ export interface IsoOverlaySceneInput {
   structure: IsoWallGeometry;
   iconPct: number;
   deviceBasePct: number;
-  showLqi: boolean;
+  showLqi: import('./signal-visibility').SignalVisibility;
   cellCm: number;
   kioskIconScale: number;
   kioskFontScale: number;
   positionOf(device: DevItem): { x: number; y: number };
-  presentationOf(device: DevItem, showLqi: boolean): ResolvedDevicePresentation;
+  presentationOf(device: DevItem, showLqi: import('./signal-visibility').SignalVisibility): ResolvedDevicePresentation;
   labelPositionOf(room: RoomCfg, spaceId: string): { x: number; y: number };
   labelScaleOf(room: RoomCfg): number;
   openingEntityAvailable(entityId: string): boolean;

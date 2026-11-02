@@ -130,10 +130,18 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
 
           }),
           batteryOverrides.length ? callout({ text: st('gs.space_overrides', { names: batteryOverrides.join(', ') }) }) : nothing,
-          toggleRow({
-            id: 'gs-show-lqi', icon: 'mdi:zigbee',
-            title: st('gs.show_lqi'), help:help(st('gs.signal_help'),st('gs.show_lqi')),
-            checked: d.showLqi, onChange: (showLqi) => set({ showLqi }),
+          field({
+            label: st('gs.show_lqi'), help:help(st('gs.signal_help'),st('gs.show_lqi')),
+            control: selectControl<'on' | 'low' | 'off'>({
+              name: 'gs-show-lqi', value: d.showLqi === 'low' ? 'low' : d.showLqi ? 'on' : 'off',
+              ariaLabel: st('gs.show_lqi'),
+              options: [
+                { value: 'on', label: st('space.lqi_on') },
+                { value: 'low', label: st('space.lqi_low') },
+                { value: 'off', label: st('space.lqi_off') },
+              ],
+              onChange: mode => set({ showLqi: mode === 'low' ? 'low' : mode === 'on' }),
+            }),
           }),
           lqiOverrides.length ? callout({ text: st('gs.space_overrides', { names: lqiOverrides.join(', ') }) }) : nothing,
         ]),

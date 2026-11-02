@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1130,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "New global and per-space low-only Zigbee signal mode with an inclusive LQI threshold of 50; extends persisted settings compatibly without a model version change.",
+  "summary": {
+    "ru": "Добавлен режим показа только низкого Zigbee-сигнала (LQI не выше 50).",
+    "en": "Add low-only Zigbee signal visibility for LQI values up to 50."
+  }
+}

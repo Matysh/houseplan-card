@@ -2038,14 +2038,18 @@ now. A real LQI of zero is shown as zero. Values remain in memory only and are
 excluded from backups and exports.
 
 **General settings → Display → Show Zigbee signal**, immediately below battery
-status, controls system signal numbers for the whole home. It defaults to On.
+status, offers **Always show** (default), **Low only** and **Do not show** for
+system signal numbers. Low only keeps **LQI ≤ 50**, including 50 and zero;
+missing data is not zero. This is a weak-link indicator, not a confirmed fault,
+and the colour scale stays unchanged.
 In **Space settings → Appearance → Visible layers**, choose **Use general
-settings**, **On** or **Off**. The inherited choice shows the current shared
+settings** or any of those three modes. The inherited choice shows the current shared
 value; saving another field does not turn inheritance into an override.
 
 Existing Off choices stay Off. Historical On choices inherit the new shared
 setting. YAML `show_signal: false` remains a card exception; true or omission
-inherits. An explicit new space On wins over that exception. The two visual
+inherits. An explicit space mode, including Low only, wins over that exception.
+A device's local Hide Zigbee signal option still removes its system number. The two visual
 card editors no longer duplicate this control.
 
 The panel, full/static cards, kiosk and preview agree. Room-card signal metrics,

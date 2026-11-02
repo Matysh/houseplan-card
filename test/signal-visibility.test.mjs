@@ -3,22 +3,40 @@ import assert from 'node:assert/strict';
 import {
   effectiveShowLqi, globalSignalVisibleOf, signalVisibilityModeOf,
   signalVisibilityOverrideOf, writeGlobalSignalVisibility, writeSpaceSignalVisibility,
+  systemSignalVisible,
 } from '../test-build/signal-visibility.js';
 import { spaceDisplayOf } from '../test-build/logic.js';
 import { rememberGeneralBaseline, generalDirty } from '../test-build/editors/general-form-state.js';
 import { resolveDevicePresentation } from '../test-build/device-presentation.js';
 import { createDeviceSignalContext } from '../test-build/device-signal.js';
 
+test('#1130 low-only filters system numbers at 50, retaining full tooltip facts and marker overrides', () => {
+  for (const value of [0, 49, 50, 51, 180, 255, null, NaN, Infinity, -1]) {
+    assert.equal(systemSignalVisible('low', value), Number.isFinite(value) && value >= 0 && value <= 50, String(value));
+  }
+  for (const sample of ['0', '49', '50', '51', '180', 'unknown', 'unavailable']) for (const hide of [false, true]) {
+    const h = { states: { 'sensor.radio_lqi': { state: sample, attributes: { unit_of_measurement: 'lqi' } } },
+      entities: { 'sensor.radio_lqi': { device_id: 'radio' } }, devices: { radio: {} } };
+    const device = { id: 'radio', name: 'Radio', icon: 'mdi:chip', entities: ['sensor.radio_lqi'], space: 'floor',
+      bindingKind: 'device', bindingRef: 'radio', bindingStatus: { kind: 'active' },
+      marker: { id: 'radio', binding: 'device:radio', display: 'badge', hide_signal: hide } };
+    const p = resolveDevicePresentation(h, device, { liveStates: true, showTemperature: true, showSignal: 'low' });
+    const numeric = Number.isFinite(Number(sample));
+    assert.equal(p.lqiText, !hide && numeric && Number(sample) <= 50 ? sample : null, `${sample}/${hide}`);
+    assert.equal(p.lqiTipText, numeric ? sample : null, 'tooltip keeps evidence rather than applying the plan clutter filter');
+  }
+});
+
 test('#876 AC1: complete global × space × YAML matrix, including the old true default', () => {
-  for (const global of [undefined, true, false]) for (const card of [undefined, true, false]) {
-    for (const mode of ['inherit', 'on', 'off']) {
+  for (const global of [undefined, true, false, 'low']) for (const card of [undefined, true, false]) {
+    for (const mode of ['inherit', 'on', 'low', 'off']) {
       const space = { show_lqi_mode: mode, show_lqi: mode === 'inherit' ? false : mode === 'on' };
-      const expected = mode === 'on' ? true : mode === 'off' ? false : card === false ? false : global !== false;
+      const expected = mode === 'low' ? 'low' : mode === 'on' ? true : mode === 'off' ? false : card === false ? false : global === 'low' ? 'low' : global !== false;
       assert.equal(effectiveShowLqi({ show_lqi: global }, spaceDisplayOf({ settings: space }).showLqi, card),
         expected, JSON.stringify({ global, card, mode }));
     }
     for (const legacy of [undefined, true, false]) {
-      const expected = legacy === false ? false : card === false ? false : global !== false;
+      const expected = legacy === false ? false : card === false ? false : global === 'low' ? 'low' : global !== false;
       assert.equal(effectiveShowLqi({ show_lqi: global }, spaceDisplayOf({ settings: { show_lqi: legacy } }).showLqi, card),
         expected, JSON.stringify({ global, card, legacy }));
     }
@@ -38,7 +56,7 @@ test('#876 AC1: invalid legacy values default on, exact false alone is an except
 
 test('#876 AC2/4: form round-trip is idempotent, inherit removes a historical false without losing extensions', () => {
   const original = { show_lqi: false, future: { untouched: 1 }, label_lqi: true };
-  for (const mode of ['inherit', 'on', 'off']) {
+  for (const mode of ['inherit', 'on', 'low', 'off']) {
     const next = writeSpaceSignalVisibility(original, mode);
     assert.equal(signalVisibilityModeOf(JSON.parse(JSON.stringify(next))), mode);
     assert.deepEqual(writeSpaceSignalVisibility(next, mode), next);
@@ -48,7 +66,7 @@ test('#876 AC2/4: form round-trip is idempotent, inherit removes a historical fa
     if (mode === 'inherit') {
       assert.equal(Object.hasOwn(next, 'show_lqi'), false);
       assert.equal(Object.hasOwn(next, 'show_lqi_mode'), false);
-    } else assert.equal(next.show_lqi, mode === 'on');
+    } else assert.equal(next.show_lqi, mode !== 'off');
   }
   const historicalTrue = { show_lqi: true, future: 7 };
   assert.deepEqual(writeSpaceSignalVisibility(historicalTrue, signalVisibilityModeOf(historicalTrue)), { future: 7 });
@@ -66,6 +84,8 @@ test('#876 AC2: global draft dirty/cancel is independent of accepted settings', 
   assert.deepEqual(next, { future: 7 });
   writeGlobalSignalVisibility(next, false);
   assert.deepEqual(next, { future: 7, show_lqi: false });
+  writeGlobalSignalVisibility(next, 'low');
+  assert.deepEqual(next, { future: 7, show_lqi: 'low' });
 });
 
 test('#876 AC7: room-card metric stays independent of effective system LQI', () => {
@@ -105,7 +125,7 @@ test('#876 AC3: effective off does not hide an explicit LQI value or a separate 
     bindingStatus: { kind: 'active', enabledEntityIds: Object.keys(hass.entities), allEntityIds: Object.keys(hass.entities) },
     marker: { id: 'radio', binding: 'device:radio', display: 'value', value_source: { kind: 'derived_lqi' } },
   };
-  for (const global of [false, true]) {
+  for (const global of [false, true, 'low']) {
     const presentation = resolveDevicePresentation(hass, device, {
       showSignal: effectiveShowLqi({ show_lqi: global }, null, true), showBattery: true,
       liveStates: true, showTemperature: true,

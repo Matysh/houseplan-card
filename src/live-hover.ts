@@ -53,8 +53,8 @@ interface DeviceTipHost extends LiveHoverHost {
   _settings: { show_lqi?: unknown };
   _pointerModality: { hoverEnabled: boolean };
   _deviceHits: { hover: (root: ParentNode, id: string | null) => void };
-  _spaceDisplayForRender: () => { showLqi?: boolean | null };
-  _devicePresentation: (device: DevItem, showLqi: boolean) => ResolvedDevicePresentation;
+  _spaceDisplayForRender: () => { showLqi?: import('./signal-visibility').SignalVisibility | null };
+  _devicePresentation: (device: DevItem, showLqi: import('./signal-visibility').SignalVisibility) => ResolvedDevicePresentation;
   _notePointer: (event: PointerEvent) => void;
   _t: LiveHoverHost['_t'] & ((key: I18nKey, vars?: Record<string, string | number>) => string);
   /** Same active states and registry as the plan battery; never unfiltered `hass`. */

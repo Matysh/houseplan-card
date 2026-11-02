@@ -1272,7 +1272,7 @@ export interface SpaceDisplay {
   tempMin: number; // comfort range lower bound, °C
   tempMax: number; // comfort range upper bound, °C
   /** Explicit local system-LQI override; null inherits the shared/card policy. */
-  showLqi: boolean | null;
+  showLqi: import('./signal-visibility').SignalVisibility | null;
   /** Base font multiplier for room cards (tier 2; rooms multiply on top). */
   cardFontScale: number;
   cardNameScale: number;

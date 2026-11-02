@@ -2515,7 +2515,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; showLqi: boolean; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean;
+    showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -6964,7 +6964,7 @@ export class HouseplanCard extends LitElement {
     structural: IsoRenderScene | null,
     iconPct: number,
     deviceBasePct: number,
-    showLqi: boolean,
+    showLqi: import('./signal-visibility').SignalVisibility,
   ): IsoOverlayRenderScene | null {
     const runtime = this._isoSceneRuntime;
     if (!runtime || !layers?.structural || !structural) return null;
@@ -12748,7 +12748,7 @@ export class HouseplanCard extends LitElement {
   private _renderDevice(
     d: DevItem,
     view: { x: number; y: number; w: number; h: number },
-    showLqi = true,
+    showLqi: import('./signal-visibility').SignalVisibility = true,
     isoPlacement?: IsoOverlayPlacement,
     ghost = false,
   ): TemplateResult {

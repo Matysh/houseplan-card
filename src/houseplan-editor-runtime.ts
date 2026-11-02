@@ -809,7 +809,7 @@ export interface HouseplanEditorHostPort {
   _serverStorage: boolean;
   _settings: { external_screens?: unknown; exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_lqi?: boolean; show_device_battery?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: boolean; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;

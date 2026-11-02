@@ -1,5 +1,13 @@
 # Отображение маркера устройства: таблица решений
 
+System LQI visibility (#1130) shares `signal-visibility.ts` across full, preview,
+2.5D and static consumers. The resolved value is boolean or `low`; low filters
+only `lqiText` at LQI ≤ 50 without suppressing diagnostic facts in the tooltip,
+configured LQI values/badges, colour bands or room aggregates. Local marker hide
+always wins. Snapshot keys distinguish low from true, and only a configured
+low-only floor adds the third projection; settings/state changes invalidate it
+through the existing coherent frame/reuse boundaries.
+
 
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
 

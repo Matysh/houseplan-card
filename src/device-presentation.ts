@@ -31,6 +31,7 @@ import {
 } from './device-battery';
 import { showMarkerBatteryOf } from './device-battery-settings';
 import { createDeviceSignalContext, deviceLqi, deviceSignalSource, showMarkerSignalOf, type DeviceSignalContext } from './device-signal';
+import { systemSignalVisible, type SignalVisibility } from './signal-visibility';
 import {
   resolveDeviceValueBadge, resolveValueSource, valueBadgeSourceKey,
   type ResolvedValueBadge,
@@ -149,7 +150,7 @@ export interface ResolvePresentationOptions {
   alertIssues?: readonly ResolvedDeviceIssue[];
   liveStates: boolean;
   showTemperature: boolean;
-  showSignal: boolean;
+  showSignal: SignalVisibility;
   /** Independent diagnostic: static face modes do not suppress battery. */
   showBattery?: boolean;
   /** #807: the low-only mode keeps the indicator only in the red `low` state. */
@@ -840,7 +841,7 @@ export function resolveDevicePresentation(
   const lqi = policy.metrics && options.showSignal ? deviceLqi(hass, d, signalContext) : null;
   const valueBadge = resolveDeviceValueBadge(hass, d, {
     showTemperature: options.showTemperature,
-    showSignal: options.showSignal,
+    showSignal: options.showSignal !== false,
     display,
     effectiveHidden,
     markerStates,
@@ -950,7 +951,7 @@ export function resolveDevicePresentation(
       ? customIssues.find(issue => issue.severity === 'attention')?.groupTitle : undefined,
     maintenance: !neutralFace && !effectiveHidden && !policy.bindingUnavailable
       && visual.status !== 'alarm' && sources.issues.some(issue => issue.severity === 'maintenance'),
-    lqiText: !showMarkerSignalOf(d.marker) || lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
+    lqiText: !showMarkerSignalOf(d.marker) || !systemSignalVisible(options.showSignal, lqi) || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
       ? null : String(lqi),
     lqiTipText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi' ? null : String(lqi),
     lqiSource: lqi == null ? null : deviceSignalSource(d, signalContext),

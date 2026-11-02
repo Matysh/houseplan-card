@@ -27,7 +27,7 @@ test('#867 AC7 real static-card captures reuse the full-registry signal index', 
   const config = { spaces: [{ id: 'floor', name: 'Floor', vb: [0, 0, 1000, 1000],
     rooms: [{ id: 'room', area: 'room', poly: [[0, 0], [100, 0], [100, 100], [0, 100]] }] }],
     markers: [{ id: 'entity-marker', binding: `entity:${primary}`, area: 'room', space: 'floor' }],
-    settings: { filter_seeded: true, show_device_battery: false } };
+    settings: { filter_seeded: true, show_device_battery: false, show_lqi: 'low' } };
   const h = { entities, devices: { radio: { area_id: 'room', name: 'Radio' } },
     states: {}, areas: { room: { name: 'Room' } }, config: {}, locale: { language: 'en' },
     callWS: async message => {
@@ -63,6 +63,7 @@ test('#867 AC7 real static-card captures reuse the full-registry signal index', 
       const snapshot = card._visibleDeviceSnapshot;
       assert.ok(snapshot, 'the actual static consumer captured a frame');
       assert.equal(snapshot.presentations.get('entity-marker:1').lqiText, String(reading));
+      assert.equal(snapshot.presentations.get('entity-marker:low').lqiText, reading <= 50 ? String(reading) : null);
       assert.ok(snapshot.entityIds.includes(sibling));
       assert.equal(snapshot.presentations.get('entity-marker:1').battery, null);
     }

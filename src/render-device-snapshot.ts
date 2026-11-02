@@ -223,5 +223,5 @@ export function createRenderDeviceSnapshot(options: {
   });
 }
 
-export const presentationSnapshotKey = (deviceId: string, showLqi: boolean): string =>
-  `${deviceId}:${showLqi ? 1 : 0}`;
+export const presentationSnapshotKey = (deviceId: string, showLqi: import('./signal-visibility').SignalVisibility): string =>
+  `${deviceId}:${showLqi === 'low' ? 'low' : showLqi ? 1 : 0}`;

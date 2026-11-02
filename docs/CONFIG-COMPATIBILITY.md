@@ -414,24 +414,30 @@ validated boolean.
 
 ## Shared Zigbee signal visibility (#876)
 
-`settings.show_lqi` is optional and strictly boolean on new writes. Absence or
+`settings.show_lqi` is optional and accepts a strict boolean or `"low"` (#1130). Absence or
 invalid historical values read as on. General settings stores Off as false
-and removes the key for On. No model/store version changes or read-side writes.
+and removes the key for On; low-only stores `"low"`. No model/store version changes or read-side writes.
 
-`space.settings.show_lqi_mode` is optional `inherit | on | off`. An explicit
-on/off wins over every shared/card preference. Without a valid new mode, old
+`space.settings.show_lqi_mode` is optional `inherit | on | low | off`. An explicit
+on/low/off wins over every shared/card preference. Without a valid new mode, old
 `show_lqi:false` remains a local Off; historical true/absence inherits because
 old forms wrote true on every Save. Inherit removes both local keys; on/off
-writes a matching legacy boolean mirror. Unknown unrelated settings survive.
+writes a matching legacy boolean mirror; low uses true. Unknown unrelated settings survive.
 Only exact Lovelace `show_signal:false` is a card exception; true, absence and
 invalid historical values inherit. Both visual card editors hide that legacy
 option but preserve it on unrelated edits.
 
 Full backup/import retains shared and local values. Space/plan-only transfer
 and copy retain local mode without changing target global settings. Support
-packages include only the valid boolean/enum, never current radio readings.
+packages include only the valid boolean/low/enum, never current radio readings.
 Older clients ignore the shared setting/new enum but read explicit mode mirrors;
 inherited floors temporarily follow their old card default after downgrade.
+
+Low-only filters only system marker LQI lines at the inclusive threshold 50.
+The colour/band boundaries, chosen values/badges, tooltips and room metrics retain
+their existing policy. Ordinary snapshots keep the same two boolean projections;
+only a floor configured for low-only captures its distinct third presentation.
+Static cards also invalidate capture when the need for that projection changes.
 Before downgrade, enable the shared setting if that old appearance is required.
 
 ## Derived device contacts (#866)

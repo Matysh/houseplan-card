@@ -157,6 +157,7 @@ class HouseplanSpaceCard extends LitElement {
   private _stagedToken = -1;
   private _capturedSeq = -1;
   private _capturedBatteryMode = '';
+  private _capturedLowSignal = false;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotVirtual = '';
@@ -547,7 +548,8 @@ class HouseplanSpaceCard extends LitElement {
       ? `${this._snap.virtualLights.configRev}:${this._snap.virtualLights.rev}` : '';
     const selectedSettings = this._snap?.config?.spaces?.find((space: {id:string}) => space.id === this._config?.space)?.settings;
     const batteryMode = deviceBatteryModeOf(this._snap?.config?.settings,selectedSettings);
-    if (this._capturedBatteryMode === batteryMode && this._capturedSeq === this._hassSequence
+    const lowSignal = this._snap?.config?.settings?.show_lqi === 'low' || selectedSettings?.show_lqi_mode === 'low';
+    if (this._capturedLowSignal === lowSignal && this._capturedBatteryMode === batteryMode && this._capturedSeq === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotActivity === activity
         && this._capturedSnapshotVirtual === virtualFingerprint) return;
@@ -586,7 +588,7 @@ class HouseplanSpaceCard extends LitElement {
     );
     const lightFrame = new PresentationLightFrame(planLightSources);
     for (const device of this._devices) {
-      for (const showLqi of [false, true]) {
+      for (const showLqi of lowSignal ? [false, true, 'low'] as const : [false, true] as const) {
         presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
           planHass, device, {
             liveStates: this._config?.live_states !== false,
@@ -613,6 +615,7 @@ class HouseplanSpaceCard extends LitElement {
       geometry: this._snapshotGeometry(),
     });
     this._capturedBatteryMode = batteryMode;
+    this._capturedLowSignal = lowSignal;
     this._capturedSeq = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
     this._capturedSnapshotActivity = activity;

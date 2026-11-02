@@ -1892,8 +1892,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test test/signal-visibility.test.mjs',
     because: '#876 AC1: a historical card true must inherit the installation default, not mask it.',
     patches: [{ file: 'src/signal-visibility.ts',
-      find: "  return typeof local === 'boolean' ? local : card === false ? false : globalSignalVisibleOf(settings);",
-      replace: "  return typeof local === 'boolean' ? local : typeof card === 'boolean' ? card : globalSignalVisibleOf(settings);" }],
+      find: "  return typeof local === 'boolean' || local === 'low' ? local : card === false ? false : globalSignalVisibleOf(settings);",
+      replace: "  return typeof local === 'boolean' || local === 'low' ? local : typeof card === 'boolean' ? card : globalSignalVisibleOf(settings);" }],
   },
   {
     id: 'signal-visibility-legacy-true-becomes-explicit',
@@ -1912,9 +1912,9 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'signal-visibility-global-write-coerced',
     guard: 'python -m pytest tests_backend/test_settings_signal_visibility.py -q',
-    because: '#876 AC4: a new shared signal write accepts a strict boolean, not a truthy legacy string.',
+    because: '#876/#1130: a new shared signal write accepts a strict boolean or low, not a truthy legacy string.',
     patches: [{ file: 'custom_components/houseplan/validation.py',
-      find: '                    vol.Optional("show_lqi"): bool,',
+      find: '                    vol.Optional("show_lqi"): vol.Any(bool, "low"),',
       replace: '                    vol.Optional("show_lqi"): vol.Coerce(bool),' }],
   },
   {

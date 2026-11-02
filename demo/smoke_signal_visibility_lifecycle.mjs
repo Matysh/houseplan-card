@@ -26,6 +26,12 @@ import { launch, launchColdView, checkAll, finish } from './serve.mjs';
       if (closed.confirm) closed.confirm.querySelector('[data-hp="dialog-confirm"]').click();
       await wait(() => !dialog(), 'discard closes');
     };
+    const choose = async value => {
+      const select = dialog().querySelector('#gs-show-lqi');
+      select.value = value;
+      select.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+      await hp.settled();
+    };
     const original = card.hass.callWS;
     let pending, release;
     const blocked = new Promise(resolve => { release = resolve; });
@@ -34,7 +40,7 @@ import { launch, launchColdView, checkAll, finish } from './serve.mjs';
       return original(message);
     } };
     await open();
-    dialog().querySelector('#gs-show-lqi').click();
+    await choose('off');
     await hp.settled();
     dialog().querySelector('[data-hp="dialog-confirm"]').click();
     await wait(() => !!pending, 'write dispatched');
@@ -42,13 +48,13 @@ import { launch, launchColdView, checkAll, finish } from './serve.mjs';
     await open();
     const replacement = dialog();
     const replacementInput = replacement.querySelector('#gs-show-lqi');
-    replacementInput.click();
+    await choose('low');
     await hp.settled();
-    const replacementValue = replacementInput.checked;
+    const replacementValue = replacementInput.value;
     release();
     await hp.waitForWrites();
     results.oldSuccessKeepsNewOpening = dialog() === replacement
-      && replacement.querySelector('#gs-show-lqi').checked === replacementValue;
+      && replacement.querySelector('#gs-show-lqi').value === replacementValue;
     results.acceptedWriteHasOwnValue = card._serverCfg.settings.show_lqi === false;
     await cancel();
     card.hass = { ...card.hass, callWS: original };
@@ -56,7 +62,7 @@ import { launch, launchColdView, checkAll, finish } from './serve.mjs';
     // A real conflict reload must win over the optimistic proposed global value.
     await hp.setServerConfig(cfg => { delete cfg.settings.show_lqi; cfg.settings.future_876 = 'server'; return cfg; });
     await open();
-    dialog().querySelector('#gs-show-lqi').click();
+    await choose('off');
     await hp.settled();
     card.hass = { ...card.hass, callWS: async message => {
       if (message.type === 'houseplan/config/set') throw Object.assign(new Error('conflict'), { code: 'conflict' });
@@ -65,7 +71,7 @@ import { launch, launchColdView, checkAll, finish } from './serve.mjs';
     dialog().querySelector('[data-hp="dialog-confirm"]').click();
     await wait(() => card._settingsDialog?.busy === false, 'conflict settles');
     results.conflictReloadKeepsServerAndDraft = !Object.hasOwn(card._serverCfg.settings, 'show_lqi')
-      && card._serverCfg.settings.future_876 === 'server' && dialog().querySelector('#gs-show-lqi').checked === false;
+      && card._serverCfg.settings.future_876 === 'server' && dialog().querySelector('#gs-show-lqi').value === 'off';
     await cancel();
     card.hass = { ...card.hass, callWS: original };
 

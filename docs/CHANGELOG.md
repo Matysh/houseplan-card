@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Low only to Zigbee signal visibility: system LQI numbers stay on the plan only at ≤50. Spaces can override the mode, while existing settings retain their meaning. [#1130](https://github.com/Matysh/houseplan-card/issues/1130)
+
 - Kiosk field interaction reveals a compact left-edge space switcher that works while zoomed and hides after five idle seconds without changing the camera. Fixed floors and single-space profiles omit it. [#1127](https://github.com/Matysh/houseplan-card/issues/1127)
 
 - Stair navigation in View and kiosk highlights every return stair with two theme-accent pulses over two seconds, without extra camera movement; reduced motion uses static feedback. [#1126](https://github.com/Matysh/houseplan-card/issues/1126)

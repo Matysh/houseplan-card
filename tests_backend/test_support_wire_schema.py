@@ -80,6 +80,16 @@ def test_issue940_support_projects_only_public_boolean_and_bounded_empty_reason(
     assert "private-job" not in json.dumps(projected)
 
 
+def test_low_signal_settings_survive_closed_support_projection():
+    config = {"spaces": [{"id": "s", "rooms": [], "settings": {"show_lqi_mode": "low", "show_lqi": True}}],
+              "settings": {"show_lqi": "low"}, "markers": []}
+    projected, _ = project(config)
+    projected["model_version"] = 10
+    validate(projected, CONFIG)
+    assert projected["settings"]["show_lqi"] == "low"
+    assert projected["spaces"][0]["settings"]["show_lqi_mode"] == "low"
+
+
 def test_closed_schema_accepts_projected_known_fields_and_raw_client_refs_only_on_input():
     config = {
         "model_version": 10,

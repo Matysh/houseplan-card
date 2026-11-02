@@ -171,7 +171,7 @@ def _global_settings(value: object) -> dict[str, Any]:
     if isinstance(show_room_tooltip, bool):
         out["show_room_tooltip"] = show_room_tooltip
     show_lqi = value.get("show_lqi")
-    if isinstance(show_lqi, bool):
+    if isinstance(show_lqi, bool) or show_lqi == "low":
         out["show_lqi"] = show_lqi
     show_device_battery = value.get("show_device_battery")
     if isinstance(show_device_battery, bool) or show_device_battery == "low":
@@ -232,6 +232,7 @@ def _space_settings(value: object) -> dict[str, Any]:
     if isinstance(value, dict) and value.get("show_lqi_mode") in (
         "inherit",
         "on",
+        "low",
         "off",
     ):
         out["show_lqi_mode"] = value["show_lqi_mode"]

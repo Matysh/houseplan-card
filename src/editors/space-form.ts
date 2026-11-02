@@ -391,8 +391,8 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
       onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}`,
           html`${field({label:t('space.show_lqi'),help:shelp('gs.signal_help'),control:selectControl<SignalVisibilityMode>({
       name:id('show-lqi'),value:d.showLqiMode,ariaLabel:t('space.show_lqi'),
-      options:[{value:'inherit',label:st('space.inherited_value',{v:st(globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off')})},
-        {value:'on',label:st('space.lqi_on')},{value:'off',label:st('space.lqi_off')}],
+      options:[{value:'inherit',label:st('space.inherited_value',{v:st(globalSignalVisibleOf(host._settings) === 'low' ? 'space.lqi_low' : globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off')})},
+        {value:'on',label:st('space.lqi_on')},{value:'low',label:st('space.lqi_low')},{value:'off',label:st('space.lqi_off')}],
       onChange:showLqiMode => set(port,{...d,showLqiMode})})})}
           ${port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing}`,
         ])});

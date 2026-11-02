@@ -79,7 +79,7 @@ export interface RenderSnapshotWindow {
 /** The live runtime's incremental capture (render-snapshot-reuse.ts). */
 export interface RenderSnapshotReuse {
   begin(host: RenderSnapshotHost, lightSources: unknown, devices?: readonly DevItem[]): RenderSnapshotWindow;
-  present(id: string, showLqi: boolean, build: () => ResolvedDevicePresentation): ResolvedDevicePresentation;
+  present(id: string, showLqi: import('./signal-visibility').SignalVisibility, build: () => ResolvedDevicePresentation): ResolvedDevicePresentation;
   end(snapshot: RenderDeviceSnapshot): void;
 }
 
@@ -90,14 +90,14 @@ export interface RenderSnapshotReuse {
  */
 export function presentDevice(
   host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion' | '_showHidden' | '_alerts'>,
-  hass: any, device: DevItem, showLqi: boolean, // any-ok: the card's HA projection
+  hass: any, device: DevItem, showLqi: import('./signal-visibility').SignalVisibility, // any-ok: the card's HA projection
   options: Omit<ResolvePresentationOptions, 'liveStates' | 'showTemperature' | 'showSignal'>,
 ): ResolvedDevicePresentation {
   return resolveDevicePresentation(hass, device, {
     liveStates: host._config?.live_states !== false,
     showTemperature: host._config?.show_temperature !== false,
     // The caller resolves shared/local/YAML policy once. Snapshot both
-    // boolean projections exactly as requested so the
+    // visibility projections exactly as requested so the
     // full card, preview and static card cannot disagree.
     showSignal: showLqi,
     activityRuntime: host._activityRt.get(device.id),
@@ -193,7 +193,9 @@ export function captureRenderDeviceSnapshot(
   for (const device of visibleDevices) {
     const spaceSettings = host._serverCfg?.spaces?.find(space => space.id === device.space)?.settings;
     const mode = deviceBatteryModeOf(host._settings, spaceSettings);
-    for (const showLqi of [false, true]) {
+    // Keep the ordinary two-projection cost unless this floor needs low-only.
+    const low = host._settings.show_lqi === 'low' || spaceSettings?.show_lqi_mode === 'low';
+    for (const showLqi of low ? [false, true, 'low'] as const : [false, true] as const) {
       const build = (): ResolvedDevicePresentation => presentDevice(host, planHass, device, showLqi, {
         showBattery: mode !== 'off' && !ledMarkerIds.has(device.id),
         batteryLowOnly: mode === 'low',

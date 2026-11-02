@@ -33,18 +33,20 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     const settingsButton = page.locator('houseplan-card [data-hp="settings"]');
     await settingsButton.click();
     const general = page.locator('houseplan-card hp-dialog[data-kind="settings"]');
-    const checkbox = general.locator('#gs-show-lqi');
-    await checkbox.waitFor();
-    await checkbox.scrollIntoViewIfNeeded();
-    const before = await checkbox.isChecked();
-    await checkbox.focus();
-    await page.keyboard.press('Space');
-    results[`${prefix}-keyboardSpace`] = await checkbox.isChecked() !== before;
-    await page.keyboard.press('Space');
-    results[`${prefix}-keyboardRestores`] = await checkbox.isChecked() === before;
-    const measured = await checkbox.evaluate(input => {
-      const box = input.getBoundingClientRect(), row = input.closest('.hpf-toggle');
-      const label = row.querySelector('.hpf-toggle-title').getBoundingClientRect();
+    const nativeGlobal = general.locator('#gs-show-lqi');
+    const globalSelect = general.locator('hp-settings-select:has(#gs-show-lqi)');
+    const globalButton = globalSelect.locator('button').first();
+    await globalButton.scrollIntoViewIfNeeded();
+    const before = await nativeGlobal.inputValue();
+    await globalButton.focus();
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('End'); await page.keyboard.press('Enter');
+    results[`${prefix}-keyboardSelect`] = await nativeGlobal.inputValue() !== before;
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('Home'); await page.keyboard.press('Enter');
+    results[`${prefix}-keyboardRestores`] = await nativeGlobal.inputValue() === before;
+    results[`${prefix}-threeChoices`] = await nativeGlobal.locator('option').count() === 3;
+    const measured = await globalButton.evaluate(input => {
+      const box = input.getBoundingClientRect(), row = input.getRootNode().host.closest('.hpf-field');
+      const label = row.querySelector('.hpf-label').getBoundingClientRect();
       return { target: box.width >= 44 && box.height >= 44,
         readable: label.width > 40 && label.left >= 0 && label.right <= innerWidth + 1,
         text: row.textContent, focused: input.getRootNode().activeElement === input };
@@ -53,7 +55,7 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     results[`${prefix}-readableLocalized`] = measured.readable && measured.text.includes(language === 'ru' ? 'Показывать Zigbee-сигнал' : 'Show Zigbee signal');
     results[`${prefix}-focusStable`] = measured.focused;
     await page.keyboard.press('Tab');
-    results[`${prefix}-tabLeavesControl`] = !(await checkbox.evaluate(input => input.getRootNode().activeElement === input));
+    results[`${prefix}-tabLeavesControl`] = !(await globalButton.evaluate(input => input.getRootNode().activeElement === input));
     await page.evaluate(async () => {
       await window.__hpTest.close(document.querySelector('houseplan-card').shadowRoot.querySelector('hp-dialog[data-kind="settings"]'), { via: 'cancel' });
       await window.__hpTest.openSpaceDialog('edit', 'f1');
@@ -75,7 +77,7 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     await button.click();
     await select.locator('[role=listbox].visible').waitFor({state:'visible'});
     await select.locator('[role=listbox]').evaluate(async el=>{el.getBoundingClientRect();await Promise.all(el.getAnimations().map(a=>a.finished.catch(()=>{})));});
-    results[`${prefix}-localChoicesFit`] = await select.locator('[role=option]').evaluateAll(options => options.length===3&&options.every(option=>{
+    results[`${prefix}-localChoicesFit`] = await select.locator('[role=option]').evaluateAll(options => options.length===4&&options.every(option=>{
       const box=option.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth+1&&box.height>=44-.01;
     }));
     results[`${prefix}-noRawKeys`] = !(await select.locator('[role=listbox]').innerText()).includes('space.lqi_');
