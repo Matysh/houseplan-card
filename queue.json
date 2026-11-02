@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 955,
+  "revision": 956,
   "nextTicket": 75,
   "nextFence": 75,
   "tasks": {
@@ -126,7 +126,7 @@
       "ownerDecision": null,
       "ticket": 74,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793633045982,
       "reviewEntry": 2,
       "patchId": "7ea850062ab804138479086802927eb9bc6fdea6",
@@ -142,12 +142,12 @@
         "src/hp-zigbee-topology-overlay.ts"
       ],
       "s6": {
-        "id": "20261102T151806527-9c8d5429",
+        "id": "20261102T152421518-810de436",
         "name": "Тесты для задачи #1158 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T151806527-9c8d5429/report.json",
-        "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T152421518-810de436/report.json",
+        "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
         "status": "passed",
-        "finishedAt": "2026-11-02T15:18:45.195Z",
+        "finishedAt": "2026-11-02T15:24:23.257Z",
         "failures": []
       },
       "reviewRound": 1,
@@ -1300,9 +1300,9 @@
     "fence": 74,
     "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
     "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793633052333,
-    "expiresAt": 1793633357893,
+    "expiresAt": 1793636663926,
     "patchId": "7ea850062ab804138479086802927eb9bc6fdea6"
   },
   "events": {
@@ -1455,6 +1455,29 @@
           "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
           "status": "passed",
           "finishedAt": "2026-11-02T15:18:45.195Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:0fbdecca-1bdc-4efa-86f7-a2eb05e2c8fc:finish:3:s6-complete": {
+      "digest": "13e5053e1c106f801638fb93086b4b99ec39f3167fd672b0a9777376182a8497",
+      "issue": 1158,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1158,
+        "at": 1793633063926,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
+        "phase": "review",
+        "evidence": {
+          "id": "20261102T152421518-810de436",
+          "name": "Тесты для задачи #1158 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261102T152421518-810de436/report.json",
+          "materialSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
+          "status": "passed",
+          "finishedAt": "2026-11-02T15:24:23.257Z",
           "failures": []
         }
       }
