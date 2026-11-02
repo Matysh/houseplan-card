@@ -372,6 +372,450 @@
         "edges": 1,
         "rooms": 0
       }
+    },
+    {
+      "id": "legacy-partial-zero",
+      "space": {
+        "id": "two",
+        "rooms": [
+          {
+            "id": "a",
+            "poly": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "b",
+            "poly": [
+              [
+                1,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "a": [
+              1,
+              0
+            ],
+            "b": [
+              1,
+              1
+            ],
+            "key": "1.000000,0.500000@1.5711",
+            "cm": 15
+          }
+        ],
+        "open_spans": [
+          {
+            "a": [
+              1,
+              0.25
+            ],
+            "b": [
+              1,
+              0.75
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 8,
+        "edges": 9,
+        "rooms": 2
+      }
+    },
+    {
+      "id": "legacy-zero-door",
+      "space": {
+        "id": "two",
+        "rooms": [
+          {
+            "id": "a",
+            "poly": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "b",
+            "poly": [
+              [
+                1,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "a": [
+              1,
+              0
+            ],
+            "b": [
+              1,
+              1
+            ],
+            "key": "1.000000,0.500000@1.5711",
+            "cm": 15
+          }
+        ],
+        "open_spans": [
+          {
+            "a": [
+              1,
+              0.25
+            ],
+            "b": [
+              1,
+              0.75
+            ]
+          }
+        ],
+        "openings": [
+          {
+            "id": "door",
+            "type": "door",
+            "x": 1,
+            "y": 0.5,
+            "length": 0.1,
+            "angle": 90
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 10,
+        "edges": 11,
+        "rooms": 2
+      }
+    },
+    {
+      "id": "legacy-open-to",
+      "space": {
+        "id": "two",
+        "rooms": [
+          {
+            "id": "a",
+            "poly": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "open_to": [
+              "b"
+            ]
+          },
+          {
+            "id": "b",
+            "poly": [
+              [
+                1,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "a": [
+              1,
+              0
+            ],
+            "b": [
+              1,
+              1
+            ],
+            "key": "1.000000,0.500000@1.5711",
+            "cm": 15
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 6,
+        "edges": 7,
+        "rooms": 2
+      }
+    },
+    {
+      "id": "old-lineage",
+      "space": {
+        "id": "lineage",
+        "rooms": [
+          {
+            "id": "r",
+            "poly": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "wall_ids": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "key": "0.500000,0.000000@0.0000",
+            "cm": 15
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 4,
+        "edges": 4,
+        "rooms": 1
+      }
+    },
+    {
+      "id": "unicode-source-order",
+      "space": {
+        "id": "unicode",
+        "rooms": [],
+        "partitions": [
+          {
+            "id": "",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              1,
+              0
+            ],
+            "cm": 10
+          },
+          {
+            "id": "😀",
+            "a": [
+              0,
+              1
+            ],
+            "b": [
+              1,
+              1
+            ],
+            "cm": 10
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 4,
+        "edges": 2,
+        "rooms": 0
+      }
+    },
+    {
+      "id": "long-edge-split",
+      "space": {
+        "id": "long",
+        "rooms": [],
+        "partitions": [
+          {
+            "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              1,
+              0
+            ],
+            "cm": 10
+          },
+          {
+            "id": "branch",
+            "a": [
+              0.5,
+              0
+            ],
+            "b": [
+              0.5,
+              1
+            ],
+            "cm": 10
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 4,
+        "edges": 3,
+        "rooms": 0
+      }
+    },
+    {
+      "id": "outside-radius",
+      "space": {
+        "id": "gap",
+        "rooms": [],
+        "partitions": [
+          {
+            "id": "host",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              1,
+              0
+            ],
+            "cm": 10
+          },
+          {
+            "id": "branch",
+            "a": [
+              0.5,
+              1e-05
+            ],
+            "b": [
+              0.5,
+              1
+            ],
+            "cm": 10
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 4,
+        "edges": 2,
+        "rooms": 0
+      }
+    },
+    {
+      "id": "conflicting-opaque-props",
+      "space": {
+        "id": "props",
+        "rooms": [],
+        "partitions": [
+          {
+            "id": "a",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              1,
+              0
+            ],
+            "cm": 10,
+            "custom": "one"
+          },
+          {
+            "id": "b",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              1,
+              0
+            ],
+            "cm": 10,
+            "custom": "two"
+          }
+        ]
+      },
+      "expected": {
+        "nodes": 2,
+        "edges": 2,
+        "rooms": 0
+      }
     }
   ]
 }

@@ -48,6 +48,7 @@ const canonicalHost=(host:any,q:Exact):any=>({...host,tq:encodeRational(q),t:toN
 export interface GraphIndex {
   nodes: Map<string, GraphNode>; points: Map<string, ExactPoint>; edges: Map<string, GraphEdge>;
   incident: Map<string, GraphEdge[]>; owners: Map<string, string[]>;
+  edgeTree?: Tree<GraphEdge>|null; dirtyEdges?: Set<string>;
 }
 export interface ValidationContext {
   roomIds?: readonly string[]; limits?: Partial<GraphLimits>; hosts?: readonly any[];
@@ -127,6 +128,15 @@ export function validateGraph(input: unknown, context: ValidationContext = {}):
         if (hit && between(hit.t) && between(hit.u)) fail('self-intersection', room.room);
       }
     }
+    index.edgeTree=makeTree([...graph.edges],e=>boxPoints(index.points.get(e.from)!,index.points.get(e.to)!));
+    const positions=new Map(graph.edges.map((e,i)=>[edgeKey(e),i]));
+    for(const edge of graph.edges){
+      const box=boxPoints(index.points.get(edge.from)!,index.points.get(edge.to)!);
+      for(const other of queryTree(index.edgeTree,box,[])){
+        if(positions.get(edgeKey(other))!<=positions.get(edgeKey(edge))!)continue;
+        if(properCross(edge,other,index.points))fail('unsplit-crossing',edgeKey(edge));
+      }
+    }
     for (const [key, owners] of index.owners) if (index.edges.get(key)?.kind === 'wall' && owners.length > 2) fail('third-owner', key);
     const dependent = new Set<string>();
     for (const dep of graph.dependencies) {
@@ -178,7 +188,7 @@ export interface GraphResult {
 export interface GraphBindings {
   vertices: Record<string, string>; edges: Record<string, EdgeRef>;
 }
-const emptyMapping = (): GraphMapping => ({ nodes: {}, edges: {}, hosts: {} });
+const emptyMapping = (): GraphMapping => ({ nodes: Object.create(null), edges: Object.create(null), hosts: Object.create(null) });
 function metadataProps(entry: any, omitted: string[]): Record<string, unknown> | undefined {
   const pairs = Object.entries(entry).filter(([k]) => !omitted.includes(k));
   return pairs.length ? Object.fromEntries(pairs.filter(([,v])=>v!==undefined).map(([k, v]) => [k, clone(v)])) : undefined;
@@ -237,7 +247,7 @@ export type GraphOperation =
   | { kind: 'batch'; operations: GraphOperation[] }
   | { kind: 'set-dependency'; dependency: GraphDependency }
   | { kind: 'retire-dependency'; node: string }
-  | { kind: 'collapse-node'; node: string; retained: EdgeRef; removed: EdgeRef }
+  | { kind: 'collapse-node'; node: string; retained: EdgeRef; removed: EdgeRef; retireDependencies?: string[] }
   | { kind: 'move-node'; node: string; target: GraphPoint; detachDependency?: boolean }
   | { kind: 'detach-node'; node: string; newId: string; target: GraphPoint; edges: EdgeRef[];
       rooms: string[]; edgeIds?: Record<string, string>; hosts?: string[] }
@@ -250,6 +260,7 @@ export type GraphOperation =
   | { kind: 'replace-room-cycle'; room: string; edges: GraphRoomCycle['edges'] }
   | { kind: 'delete-face'; room: string }
   | { kind: 'merge-faces'; room: string; remove: string[]; edges: GraphRoomCycle['edges'] }
+  | { kind: 'convert-edge'; edge: EdgeRef; target: EdgeRef; cm?: number }
   | { kind: 'set-thickness'; edges: EdgeRef[]; cm: number }
   | { kind: 'rehost-opening'; opening: string; host: EdgeRef & { t: ExactRational } }
   | { kind: 'normalize-current' }
@@ -257,6 +268,13 @@ export type GraphOperation =
   | { kind: 'import-graph'; graph: PlanGraph; nodes: Record<string, string>; edges: Record<string, string>; rooms: Record<string, string> };
 export interface OperationContext extends ValidationContext { hosts?: any[] }
 
+function properCross(a:GraphEdge,b:GraphEdge,points:Map<string,ExactPoint>):boolean{
+  const pa=points.get(a.from)!,pb=points.get(a.to)!,pc=points.get(b.from)!,pd=points.get(b.to)!;
+  const ba=boxPoints(pa,pb),bb=boxPoints(pc,pd);
+  if([0,1].some(i=>cmp(ba.hi[i],bb.lo[i])<0||cmp(bb.hi[i],ba.lo[i])<0))return false;
+  const hit=intersection(pa,pb,pc,pd);
+  return !!hit&&cmp(hit.t,ZERO)>0&&cmp(hit.t,ONE)<0&&cmp(hit.u,ZERO)>0&&cmp(hit.u,ONE)<0;
+}
 function dependencyOrder(graph: PlanGraph): GraphDependency[] {
   const byNode = new Map(graph.dependencies.map(d => [d.node, d])), active = new Set<string>();
   const done = new Set<string>(), result: GraphDependency[] = [];
@@ -330,6 +348,12 @@ function preparedMove(before:PlanGraph,op:Extract<GraphOperation,{kind:'move-nod
   const affected=new Map<string,GraphEdge>();
   for(const id of changed.keys())for(const edge of index.incident.get(id)||[])affected.set(edgeKey(edge),edge);
   const affectedRoomIds=new Set([...affected.keys()].flatMap(key=>index.owners.get(key)||[]));
+  const dirty=new Set([...(index.dirtyEdges||[]),...affected.keys()]);
+  for(const edge of affected.values()){
+    const candidates=new Map(queryTree(index.edgeTree,boxPoints(points.get(edge.from)!,points.get(edge.to)!),[]).map(e=>[edgeKey(e),e]));
+    for(const key of dirty){const e=index.edges.get(key);if(e)candidates.set(key,e);}
+    for(const other of candidates.values())if(edgeKey(other)!==edgeKey(edge)&&properCross(edge,other,points))fail('unsplit-crossing',edgeKey(edge));
+  }
   const rooms=before.rooms.filter(room=>affectedRoomIds.has(room.room));
   const edgeIds=new Set([...affected.keys(),...rooms.flatMap(room=>room.edges.map(edgeKey))]);
   const edges=before.edges.filter(e=>edgeIds.has(edgeKey(e))),ids=new Set(edges.flatMap(e=>[e.from,e.to]));
@@ -337,7 +361,7 @@ function preparedMove(before:PlanGraph,op:Extract<GraphOperation,{kind:'move-nod
   assertGraph({version:1,nodes:[...ids].map(id=>nodes.get(id)!),edges,rooms,dependencies:[...depChanges.values()]});
   const graph=freezeGraph({...before,nodes:before.nodes.map(n=>changed.get(n.id)||n),
     dependencies:deps.map(d=>depChanges.get(d.node)||d)});
-  preparedGraphs.set(graph,{...index,nodes,points});
+  preparedGraphs.set(graph,{...index,nodes,points,dirtyEdges:dirty});
   return{graph,changed:op.detachDependency===true||[...changed].some(([id,n])=>JSON.stringify(n)!==JSON.stringify(index.nodes.get(id))),mapping:emptyMapping(),
     touched:{nodes:[...changed.keys()],edges:[...affected.values()].map(targetRef),rooms:rooms.map(r=>r.room),hosts:[]},diagnostics:[]};
 }
@@ -484,6 +508,30 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
       case 'merge-faces':
         graph.rooms = graph.rooms.filter(r => !op.remove.includes(r.room) && r.room !== op.room);
         graph.rooms.push({ room: op.room, edges: clone(op.edges) }); return;
+      case 'convert-edge': {
+        const source=findEdge(op.edge),old=targetRef(source);
+        if(edgeKey(old)===edgeKey(op.target)){if(op.cm!==undefined)source.cm=op.cm;return;}
+        const target=graph.edges.find(e=>edgeKey(e)===edgeKey(op.target));let reverse=false;
+        if(target){
+          const a=decodePoint(findNode(source.from).p),b=decodePoint(findNode(source.to).p);
+          const c=decodePoint(findNode(target.from).p),d=decodePoint(findNode(target.to).p);
+          if(pointEq(a,c)&&pointEq(b,d))reverse=false;
+          else if(pointEq(a,d)&&pointEq(b,c))reverse=true;
+          else fail('convert-geometry');
+          for(const[k,value]of Object.entries(source.props||{}))
+            if(k in (target.props||{})&&JSON.stringify(target.props![k])!==JSON.stringify(value))fail('props-conflict',k);
+          const props={...(source.props||{}),...(target.props||{})};
+          if(Object.keys(props).length)target.props=props;
+          if(op.cm!==undefined)target.cm=op.cm;
+          graph.edges=graph.edges.filter(e=>e!==source);
+        }else{
+          source.id=op.target.id;source.kind=op.target.kind;if(op.cm!==undefined)source.cm=op.cm;
+        }
+        for(const room of graph.rooms)room.edges=room.edges.map(ref=>edgeKey(ref)===edgeKey(old)
+          ?{...op.target,reverse:ref.reverse!==reverse}:ref);
+        const ranges:EdgeRange[]=[{ref:targetRef(op.target),sourceInterval:[['0','1'],['1','1']],reverse}];
+        mapping.edges[edgeKey(old)]=ranges;remapHosts(old,ranges);return;
+      }
       case 'set-thickness': for (const ref of op.edges) findEdge(ref).cm = op.cm; return;
       case 'rehost-opening': {
         findEdge(op.host); if (!between(decodeRational(op.host.t))) fail('host-parameter');
@@ -496,6 +544,8 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
         const keep = findEdge(op.retained), remove = findEdge(op.removed), p = findNode(op.node);
         if (![keep.from, keep.to].includes(p.id) || ![remove.from, remove.to].includes(p.id)) fail('collapse-incidence');
         const left = keep.from === p.id ? keep.to : keep.from, right = remove.from === p.id ? remove.to : remove.from;
+        const affectedDependencies=graph.dependencies.filter(d=>d.node!==p.id&&d.refs.some(r=>r.from===p.id||r.to===p.id));
+        if(affectedDependencies.some(d=>!op.retireDependencies?.includes(d.node)))fail('dependency-support');
         if (graph.edges.some(e => e !== keep && e !== remove && [e.from, e.to].includes(p.id))) fail('collapse-degree');
         const oldKeep = clone(keep), oldRemove = clone(remove);
         if (keep.from === p.id) keep.from = right; else keep.to = right;
@@ -540,11 +590,15 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
   apply(operation); evaluateDependencies(graph); graph = canonicalGraph(graph);
   const remainingHosts = hostRecords.filter(h => mapping.hosts[h.id] !== null).map(h => h.host);
   assertGraph(graph, { ...context, projection: undefined, hosts: remainingHosts, roomIds: undefined });
-  const changedNode = graph.nodes.filter(n => JSON.stringify(n) !== JSON.stringify(originalIndex.nodes.get(n.id))).map(n => n.id);
+  const nextNodeIds=new Set(graph.nodes.map(n=>n.id)),nextEdgeKeys=new Set(graph.edges.map(edgeKey)),nextRoomIds=new Set(graph.rooms.map(r=>r.room));
+  const changedNode = [...graph.nodes.filter(n => JSON.stringify(n) !== JSON.stringify(originalIndex.nodes.get(n.id))).map(n => n.id),
+    ...before.nodes.filter(n=>!nextNodeIds.has(n.id)).map(n=>n.id)];
   const changedSet=new Set(changedNode);
-  const changedEdge = graph.edges.filter(e => changedSet.has(e.from)||changedSet.has(e.to)||JSON.stringify(e) !== JSON.stringify(originalIndex.edges.get(edgeKey(e)))).map(targetRef);
+  const changedEdge = [...graph.edges.filter(e => changedSet.has(e.from)||changedSet.has(e.to)||JSON.stringify(e) !== JSON.stringify(originalIndex.edges.get(edgeKey(e)))).map(targetRef),
+    ...before.edges.filter(e=>!nextEdgeKeys.has(edgeKey(e))).map(targetRef)];
   const changedEdgeSet=new Set(changedEdge.map(edgeKey));
-  const changedRoom = graph.rooms.filter(r => r.edges.some(e=>changedEdgeSet.has(edgeKey(e)))||JSON.stringify(r) !== JSON.stringify(originalRooms.get(r.room))).map(r => r.room);
+  const changedRoom = [...graph.rooms.filter(r => r.edges.some(e=>changedEdgeSet.has(edgeKey(e)))||JSON.stringify(r) !== JSON.stringify(originalRooms.get(r.room))).map(r => r.room),
+    ...before.rooms.filter(r=>!nextRoomIds.has(r.room)).map(r=>r.room)];
   return { graph, changed: JSON.stringify(graph) !== JSON.stringify(before), mapping,
     touched: { nodes: changedNode, edges: changedEdge, rooms: changedRoom, hosts: Object.keys(mapping.hosts) }, diagnostics: [] };
 }
@@ -998,6 +1052,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         const existing=(byGeometry.get(gkey)||[]).find(e=>{
           const a=e.props||{},b=props||{};return Object.keys(a).every(k=>!(k in b)||stable(a[k])===stable(b[k]));
         });
+        if(!existing&&s.kind==='wall'&&(byGeometry.get(gkey)||[]).length)fail('props-conflict',gkey);
         let edge:GraphEdge,reverse=false;
         if(existing) {
           if(existing.cm!==cm)fail('thickness-conflict');
@@ -1026,8 +1081,9 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
     const retained=new Set(graph.edges.flatMap(e=>[e.from,e.to]));
     graph.dependencies=graph.dependencies.filter(d=>retained.has(d.node)&&d.refs.every(r=>retained.has(r.from)&&retained.has(r.to)));
     graph.nodes=graph.nodes.filter(n=>retained.has(n.id));
-    let result=canonicalGraph(graph);
-    assertGraph(result,{limits,roomIds:(space.rooms||[]).map((r:any)=>r.id)});
+    const result=freezeGraph(canonicalGraph(graph));
+    const validated=assertGraph(result,{limits,roomIds:(space.rooms||[]).map((r:any)=>r.id)});
+    preparedGraphs.set(result,validated);
     const base:any=clone(space);
     for(const opening of base.openings||[]){
       if(!opening.host || !sourceByKey.has(edgeKey(opening.host))) {
