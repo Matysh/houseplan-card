@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 847,
+  "revision": 848,
   "nextTicket": 69,
   "nextFence": 69,
   "tasks": {
@@ -972,7 +972,10 @@
         "scripts/sh3d-convert/page/app.mjs",
         "scripts/sh3d-convert/site-converter.mjs",
         "test/converter-site.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1793630746658,
+      "automationDetail": "Infrastructure profile cannot silently include browser product checks"
     },
     "1211": {
       "issue": 1211,
@@ -1178,6 +1181,10 @@
     },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:2:synchronized": {
       "digest": "46483a17fe7e46831082971a0d2083f228f65529f55af6658fe57f56b8d65697",
+      "issue": 1210
+    },
+    "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4:finish:3:automation-pending": {
+      "digest": "ade17c2bbfe89997120b41f9f9269e5107411c2bddde2293374b74a75403c303",
       "issue": 1210
     },
     "finish:15e85993-3e1e-4a42-8d1a-e359fff6a3c4": {
