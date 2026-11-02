@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 785,
-  "nextTicket": 65,
+  "revision": 786,
+  "nextTicket": 66,
   "nextFence": 65,
   "tasks": {
     "1128": {
@@ -84,14 +84,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1157-zigbee-hint",
-      "materialSha": "6e4571fab9f027172075debfc95604f0f0ce3317",
+      "materialSha": "c356cd6c04a2b64bf151f1337f1de218abceb21b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 64,
-      "queued": false,
+      "ticket": 65,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793628937581,
-      "reviewEntry": 1,
+      "readyAt": 1793629053413,
+      "reviewEntry": 2,
       "patchId": "3eee776f0fd14f652a121c446f3b3bbd96250bab",
       "changedFiles": [
         "demo/smoke_zigbee_map_explanation.mjs",
@@ -104,7 +104,6 @@
         "src/i18n/topology/fr.json",
         "src/i18n/topology/ru.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -1027,7 +1026,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1157
+  ],
   "active": null,
   "events": {
     "1165-spec:a61709a8-8315-4ffa-819b-bf75eccebf4a:spec-request": {
@@ -1137,6 +1138,19 @@
           "detail": "Браузер: zigbee map explanation: failed",
           "eventId": "finish:82c435cf-c3a9-414e-a57d-1f0985925686:finish:3:return:return:1157"
         }
+      }
+    },
+    "finish:59f58c40-1af4-4c55-8454-0d65ef2fcc2b": {
+      "digest": "1c4c43b88b606c6676926800d3d730f9e6e79be16c09f98763136c35087d633c",
+      "issue": 1157,
+      "message": {
+        "kind": "queued",
+        "issue": 1157,
+        "at": 1793629053413,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c356cd6c04a2b64bf151f1337f1de218abceb21b"
       }
     }
   },
