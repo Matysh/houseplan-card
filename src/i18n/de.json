@@ -1258,6 +1258,7 @@
   "backup.error.duplicate_marker_control": "Das Backup enthält eine doppelte Plan-Licht-Verknüpfung.",
   "backup.error.no_backup": "Es gibt keinen Import- oder Optimierungssnapshot zur Wiederherstellung.",
   "backup.error.in_use": "Das Element wird noch verwendet",
+  "backup.error.plan_graph_projection_mismatch": "Die Plangeometrie ist inkonsistent. Die Änderung wurde nicht gespeichert.",
   "backup.error.invalid_data": "Die Anfrage enthält ungültige Daten",
   "backup.error.invalid_light_entity": "Das führende Licht muss eine light.*- oder switch.*-Entität sein",
   "backup.error.invalid_marker_control": "Ungültige Marker-Steuerungsreferenz",

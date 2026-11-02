@@ -9,7 +9,7 @@ from homeassistant.components import websocket_api
 
 from .auth import may_write
 from .store import get_data
-from .structural_upload import CONTROL_KEYS, UploadError, uploads
+from .structural_upload import CONTROL_KEYS, UploadError, uploads, prepare_resolution
 
 
 def structural_websocket_command(schema):
@@ -48,14 +48,15 @@ No access to HA's command registry or global websocket size is needed.
             try:
                 # JSON/schema work is bounded but can exceed an event-loop
                 # turn. The ordinary writer still owns all domain/CAS proof.
-                expanded = await hass.async_add_executor_job(manager.resolve, message, owner)
+                snapshot, compact = manager.resolution_snapshot(message, owner)
+                expanded = await hass.async_add_executor_job(prepare_resolution, snapshot, compact)
                 expanded = await hass.async_add_executor_job(original_schema, expanded)
                 if not may_write(hass, getattr(connection, "user", None)) or connection.user is not user:
                     raise UploadError("unauthorized")
                 # Recheck expiry/owner after awaits, and consume atomically in
                 # this event-loop turn. Concurrent/replayed commits cannot use
                 # the token twice, even when the original writer later fails.
-                manager.consume(message["upload_token"], owner)
+                manager.consume(message["upload_token"], owner, snapshot)
             except (UploadError, vol.Invalid) as err:
                 connection.send_error(message["id"], getattr(err, "code", "invalid_format"), "Large write could not be accepted; reload and retry")
                 return

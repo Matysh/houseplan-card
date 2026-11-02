@@ -209,7 +209,7 @@ def migrate_graph_space(space, options=None):
     tree = _Tree(sources) if sources else None
     source_by_key = {_key(s): s for s in sources}
 
-    def run(optional):
+    def run(optional, terminal=False):
         graph = dict(version=1, nodes=[], edges=[], rooms=[], dependencies=[])
         nodes, origins, point_node, source_node, endpoints, buckets, cuts = {}, {}, {}, {}, {}, {}, {}
         mapping, bends = dict(nodes={}, edges={}, hosts={}), 0
@@ -384,7 +384,9 @@ def migrate_graph_space(space, options=None):
                 t = project_parameter(p0, a, b)
                 if not 0 <= t <= 1:
                     continue
-                p, group = point_at(a, b, t), origins[identity]
+                p, group = p0 if terminal else point_at(a, b, t), origins[identity]
+                if terminal and p != point_at(a, b, t):
+                    bends += 1
                 if not all(_near(o["p"], p, radius) for o in group):
                     p = next((o["p"] for o in group if all(_near(other["p"], o["p"], radius) for other in group)), p0)
                     if not all(_near(o["p"], p, radius) for o in group):
@@ -422,7 +424,8 @@ def migrate_graph_space(space, options=None):
                     start, end = ends[0][1], ends[1][1]
                     if identity not in (start, end):
                         install_dependency(dict(node=identity, kind="on-edge", refs=[{"from": start, "to": end}], parameters=[encode_rational(t)]))
-                break
+                if not terminal:
+                    break
 
         position = {_key(s): i for i, s in enumerate(sources)}
         for s in sources:
@@ -461,6 +464,82 @@ def migrate_graph_space(space, options=None):
                         identity = source_node_id(_json(["room-point", rid, _pk(p)]))
                         place(identity, p, [])
                     add_cut(host, t, identity)
+        if terminal:
+            parents = {identity: identity for identity in nodes}
+            def root(identity):
+                while parents[identity] != identity:
+                    parents[identity] = parents[parents[identity]]
+                    identity = parents[identity]
+                return identity
+            groups = {identity: dict(owners=list(origins.get(identity, [])),
+                                    bounds=[o["p"] for o in origins.get(identity, [])],
+                                    point=decode_point(node["p"])) for identity, node in nodes.items()}
+            for s in sources:
+                for t, identity in cuts[_key(s)]:
+                    groups[identity]["bounds"].append(point_at(s["a"],s["b"],t))
+            pairs = {}
+            for s in sources:
+                entries = sorted((t,n) for t,n in cuts[_key(s)])
+                for left,right in zip(entries,entries[1:]):
+                    a,b = left[1],right[1]
+                    if a == b:
+                        continue
+                    distance = squared_distance(groups[a]["point"],groups[b]["point"])
+                    if distance <= radius*radius:
+                        a,b = sorted((a,b))
+                        pairs[(a,b)] = distance
+            for (left,right),distance in sorted(pairs.items(),key=lambda item:(item[1],item[0])):
+                a,b = root(left),root(right)
+                if a == b:
+                    continue
+                ga,gb = groups[a],groups[b]
+                merged_owners = [*ga["owners"],*gb["owners"]]
+                bounds = [*ga["bounds"],*gb["bounds"]]
+                endpoint_members = {e for o in merged_owners for e in o["endpoints"]}
+                if any(e[:-1]+("1" if e.endswith("0") else "0") in endpoint_members for e in endpoint_members):
+                    continue
+                candidates = sorted([o["p"] for o in merged_owners] if merged_owners else bounds,key=_xy)
+                anchor = next((p for p in candidates if all(_near(p,q,radius) for q in bounds)),None)
+                if anchor is None:
+                    continue
+                keep,drop = sorted((a,b))
+                parents[drop] = keep
+                groups[keep] = dict(owners=merged_owners,bounds=bounds,point=anchor)
+                del groups[drop]
+            for mapping_table in (source_node,endpoints):
+                for key,identity in list(mapping_table.items()):
+                    mapping_table[key] = root(identity)
+            for entries in cuts.values():
+                for entry in entries:
+                    entry[1] = root(entry[1])
+            nodes.clear();origins.clear();point_node.clear();buckets.clear()
+            for identity,group in groups.items():
+                place(identity,group["point"],group["owners"])
+            graph["dependencies"] = []
+            pieces = []
+            for s in sources:
+                entries = sorted(set((t,n) for t,n in cuts[_key(s)]))
+                for lo, hi in zip(entries, entries[1:]):
+                    pa, pb = decode_point(nodes[lo[1]]["p"]), decode_point(nodes[hi[1]]["p"])
+                    if lo[0] >= hi[0] or pa == pb:
+                        continue
+                    pieces.append(dict(source=s, lo=lo[0], hi=hi[0], pa=pa, pb=pb,
+                                       a=P(min(pa.x,pb.x),min(pa.y,pb.y)), b=P(max(pa.x,pb.x),max(pa.y,pb.y)), index=len(pieces)))
+            actual_tree = _Tree(pieces) if pieces else None
+            for left in pieces:
+                for right in actual_tree.query(left["a"],left["b"]) if actual_tree else []:
+                    if right["index"] <= left["index"] or _key(left["source"]) == _key(right["source"]):
+                        continue
+                    hit = intersection(left["pa"],left["pb"],right["pa"],right["pb"])
+                    if not hit or not 0 < hit[1] < 1 or not 0 < hit[2] < 1:
+                        continue
+                    p, t, u = hit[0], left["lo"]+(left["hi"]-left["lo"])*hit[1], right["lo"]+(right["hi"]-right["lo"])*hit[2]
+                    identity = point_node.get(_pk(p))
+                    if identity is None:
+                        identity = source_node_id(_json(["terminal-intersection",_key(left["source"]),_key(right["source"]),encode_rational(t),encode_rational(u)]))
+                        place(identity,p,[])
+                    add_cut(left["source"],t,identity)
+                    add_cut(right["source"],u,identity)
         by_geometry, used_ids = {}, set()
         for s in sources:
             entries = sorted(set((t, n) for t, n in cuts[_key(s)]))
@@ -513,7 +592,10 @@ def migrate_graph_space(space, options=None):
             for entry in entries:
                 forward = entry["start"] < entry["end"]
                 lo, hi = sorted((entry["start"], entry["end"]))
-                ranges = [r for r in mapping["edges"][entry["source"]] if decode_rational(r["sourceInterval"][0]) >= lo and decode_rational(r["sourceInterval"][1]) <= hi]
+                # Room vertices are explicit cuts. A zero geometric interval
+                # may collapse between distinct source parameters, so retain
+                # the surviving edge that overlaps this boundary's interval.
+                ranges = [r for r in mapping["edges"][entry["source"]] if decode_rational(r["sourceInterval"][1]) > lo and decode_rational(r["sourceInterval"][0]) < hi]
                 for r in ranges if forward else reversed(ranges):
                     edges.append({**r["ref"], "reverse": r["reverse"] if forward else not r["reverse"]})
             graph["rooms"].append(dict(room=rid, edges=[e for i, e in enumerate(edges) if i == 0 or _key(e) != _key(edges[i-1])]))
@@ -625,9 +707,15 @@ def migrate_graph_space(space, options=None):
                     touched=dict(nodes=[n["id"] for n in graph["nodes"]], edges=[_ref(e) for e in graph["edges"]], rooms=[r["room"] for r in graph["rooms"]], hosts=list(mapping["hosts"])), diagnostics=[],
                     migrationReport=dict(moved=moved, joined=joined, maxDisplacementCm=max_distance*240*cell, bends=bends))
 
+    retry_codes = {"zero_length_edge", "room_self_intersection", "zero_area_room", "third_wall_owner", "open_room_cycle", "dependency_point_mismatch", "dependency_cycle", "thickness_conflict", "unsplit_proper_crossing"}
     try:
         return run(True)
     except GraphError as error:
-        if str(error) in {"zero_length_edge", "room_self_intersection", "zero_area_room", "third_wall_owner", "open_room_cycle", "dependency_point_mismatch", "dependency_cycle", "thickness_conflict"}:
-            return run(False)
+        if str(error) in retry_codes:
+            try:
+                return run(False)
+            except GraphError as conservative_error:
+                if str(conservative_error) in retry_codes:
+                    return run(False, True)
+                raise
         raise

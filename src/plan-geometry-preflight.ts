@@ -41,6 +41,7 @@ export interface RoomOpeningGeometryInput {
   y: number;
   angle: number;
   length: number;
+  host?: OpeningCfg['host'];
 }
 
 export interface SpacePhysicalGeometryInputs {
@@ -278,6 +279,7 @@ export function geometryRoomOpeningInputs(
       y: opening.ry,
       angle: Number(opening.angle) || 0,
       length: opening.rlen,
+      ...(opening.host ? {host:opening.host} : {}),
     };
     if (!opening.host || opening.host.kind === 'wall') return [input];
     if (!opening.partitionHost) return [];

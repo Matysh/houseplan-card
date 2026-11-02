@@ -8,6 +8,13 @@ import { BackdropFrameGestureRuntime } from '../test-build/backdrop-frame-gestur
 const pending = (size = 0) => ({ size });
 const debounce = (value = false) => ({ pending: () => value });
 
+test('#1216 graph-change version comes only from explicit backend capability',()=>{
+ const host={_syncVersionRecovery(){}};
+ for(const value of [undefined,null,1,'2',true,3]){adoptCardConfigCapabilities(host,{graph_change_api:value,config:{graph_change_api:2}});assert.equal(host._haGraphChangeApi,null);}
+ adoptCardConfigCapabilities(host,{graph_change_api:2});assert.equal(host._haGraphChangeApi,2);
+ adoptCardConfigCapabilities(host,{});assert.equal(host._haGraphChangeApi,null);
+});
+
 test('#1045 node deletion is a literal transport capability, never a saved config grant', () => {
   const host = { _syncVersionRecovery() {} };
   adoptCardConfigCapabilities(host, { wall_node_delete_api: 1, wall_node_move_api: 1,

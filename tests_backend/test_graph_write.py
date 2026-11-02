@@ -52,3 +52,13 @@ def test_current_projection_echo_and_downgrade_fail_before_store():
     with pytest.raises(GraphError) as caught:
         prepare_graph_candidate(legacy(), current)
     assert caught.value.code == "wall_model_client_outdated"
+
+
+def test_v2_digest_is_diagnostic_and_never_replaces_backend_baseline():
+    before = legacy()
+    normalized = normalize_graph_config(before)
+    change = {"version": 2, "spaces": [{"space_id": "s", "base_digest": "0" * 64, "patch": empty_patch()}]}
+    assert prepare_graph_candidate(copy.deepcopy(normalized), before, change) == normalized
+    change["spaces"][0]["patch"]["nodes"]["remove"] = ["missing-node"]
+    with pytest.raises(GraphError):
+        prepare_graph_candidate(copy.deepcopy(normalized), before, change)

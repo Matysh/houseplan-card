@@ -1,7 +1,7 @@
 # ADR #282 — Wall geometry representation
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/282
-- Status: accepted; stages 1–3 implemented (model 11, #1167); stage 4 deferred
+- Status: accepted; stages 1–3 implemented (model 11, #1167); stage 4 implemented in #1216
 - Date: 2026-08-24
 - Related: #34 (frontend decomposition), #264 (resize controller slice),
   `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`
@@ -129,6 +129,13 @@ contour" becomes a stored fact. This is the owner's sentence expressed as a
 model.
 
 ### Stage 4 — junctions in closed form
+
+Implemented by `direct-wall-geometry.ts` and `wall-arrangement.ts` for model 11.
+Local finite domains define joins; an exact render-only arrangement traces
+their common boundary without offset-polygon booleans. Exact-coordinate
+contacts/virtual T spans preserve detached IDs. Legacy-only reading keeps the
+old renderer until its ordinary first structural migration. See PLAN-GRAPH.md
+for numerical bounds, consumers and durability follow-ups R1–R7.
 
 At a node of degree n with known thicknesses, sort the rays by angle and compute
 the junction outline directly. No polygon booleans, therefore no slivers, no

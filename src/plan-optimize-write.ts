@@ -14,6 +14,7 @@ export interface PlanOptimizeWriteHost {
   readonly _cfgRev: number;
   readonly _layoutRev: number;
   readonly _haPlanGraphApi?: number | null;
+  readonly _haGraphChangeApi?: number | null;
   /** #500: identity owner — bodies and revisions of the pair land through it. */
   readonly _adoption: ConfigAdoption;
   _geometryHistory: Clearable;
@@ -51,7 +52,7 @@ export async function commitPlanOptimization(
   const expectedLayoutRev = guard?.source.layoutRev ?? host._layoutRev;
   const accepted = host._adoption.snapshot(null)?.config;
   const graph_change = Number(config.model_version) === 11 && Number(accepted?.model_version || 0) < 11
-    ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, config) : undefined;
+    ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, config, host._haGraphChangeApi===2?2:1) : undefined;
   const response = await sendHouseplanWrite<Record<string, unknown>>(writeHass, {
     type: 'houseplan/plan/optimize',
     config,

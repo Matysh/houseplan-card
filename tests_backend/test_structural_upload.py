@@ -87,3 +87,37 @@ def test_malformed_or_wrong_purpose_upload_has_no_retained_candidate(raw):
     with pytest.raises(UploadError):
         manager.finish(token, "alice")
     assert not manager.uploads
+
+
+@pytest.mark.parametrize("interruption", ["cancel", "replace", "expire", "append", "finish"])
+def test_immutable_executor_result_cannot_resurrect_or_commit_a_changed_record(interruption):
+    now = [10]
+    manager = StructuralUploads(clock=lambda: now[0])
+    token = manager.begin("alice")
+    manager.append(token, "alice", b'{"type":"houseplan/config/set"}')
+    snapshot = manager.snapshot(token, "alice")
+    prepared = module.prepare_finish(snapshot)
+    if interruption == "cancel":
+        manager.cancel(token, "alice")
+    elif interruption == "replace":
+        manager.begin("alice")
+    elif interruption == "expire":
+        now[0] += 121
+    elif interruption == "append":
+        manager.append(token, "alice", b" ")
+    else:
+        manager.complete_finish(snapshot, prepared)
+    with pytest.raises(UploadError):
+        manager.complete_finish(snapshot, prepared)
+    if interruption in {"cancel", "replace", "expire"}:
+        assert token not in manager.uploads
+
+
+def test_resolve_lease_is_single_use_after_worker_return():
+    manager = StructuralUploads()
+    compact, _ = staged(manager)
+    snapshot, command = manager.resolution_snapshot(compact, "alice")
+    assert module.prepare_resolution(snapshot, command)["id"] == 42
+    manager.consume(snapshot.token, snapshot.owner, snapshot)
+    with pytest.raises(UploadError, match="expired"):
+        manager.consume(snapshot.token, snapshot.owner, snapshot)

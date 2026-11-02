@@ -9,12 +9,30 @@ const migrate=space=>G.migrateGraphSpace(space).space;
 const base=()=>migrate({id:'floor',rooms:[rectangle('a')],extra:{keep:1}});
 test('metadata intent preserves exact graph and opaque room/space properties',()=>{
   const before=base(),draft=copy(before);draft.title='New';draft.rooms[0].name='Renamed';
-  draft.rooms[0].poly[0][0]=0.1;
   const result=commitGraphEdit(before,draft,{kind:'metadata'});
   assert.deepEqual(result.plan_graph,before.plan_graph);
   assert.deepEqual(result.rooms[0].poly,before.rooms[0].poly);
   assert.equal(result.rooms[0].name,'Renamed');assert.deepEqual(result.extra,before.extra);
   assert.deepEqual(before,base());
+});
+
+test('metadata refuses implicit graph geometry instead of silently dropping it',()=>{
+  const before=base();
+  for(const change of [
+    d=>{d.rooms[0].poly[0][0]=.1;},d=>{d.rooms=[];},
+    d=>{d.wall_segments[0].a[0]+=.1;},d=>{d.wall_segments[0].cm+=1;},
+    d=>{d.plan_graph.nodes[0].p=['l','1','1'];},d=>{d.partitions=[{id:'new',a:[0,0],b:[1,1],cm:10}];},
+  ]){const draft=copy(before);change(draft);assert.throws(()=>commitGraphEdit(before,draft,{kind:'metadata'}),/projection-only-write/);}
+});
+
+test('metadata explicitly transfers edge props and allows independent columns/decor',()=>{
+  const before=base(),draft=copy(before),id=draft.wall_segments[0].id;
+  draft.wall_segments[0].custom={paint:'blue'};draft.wall_columns=[{id:'c',center:[.5,.5],shape:'circle',cm:20}];
+  draft.decor=[{id:'d',kind:'box',x:.1,y:.1}];
+  const result=commitGraphEdit(before,draft,{kind:'metadata'});
+  assert.deepEqual(result.plan_graph.edges.find(e=>e.id===id).props.custom,{paint:'blue'});
+  assert.deepEqual(result.wall_columns,draft.wall_columns);assert.deepEqual(result.decor,draft.decor);
+  assert.deepEqual(result.plan_graph.nodes,before.plan_graph.nodes);
 });
 test('thickness names edges and changes only their cm',()=>{
   const before=base(),draft=copy(before);draft.rooms[0].poly[0][0]=0.25;
@@ -70,8 +88,7 @@ test('explicit opening edit cannot leave stale q overriding the new scalar t',()
   const before=migrate({id:'o',rooms:[],partitions:[{id:'p',a:[0,0],b:[1,0],cm:10}],
     openings:[{id:'o',type:'door',x:.25,y:0,length:.1,angle:0,host:{kind:'partition',id:'p',t:.25}}]});
   const draft=copy(before);draft.openings[0].host.t=.75;draft.openings[0].x=.75;
-  const metadata=commitGraphEdit(before,draft,{kind:'metadata'});
-  assert.deepEqual(metadata.openings[0].host,before.openings[0].host);
+  assert.throws(()=>commitGraphEdit(before,draft,{kind:'metadata'}),/projection-only-write/);
   const edited=commitGraphEdit(before,draft,{kind:'openings',ids:['o']});
   assert.deepEqual(edited.openings[0].host.tq,['3','4']);assert.equal(edited.openings[0].x,.75);
 });

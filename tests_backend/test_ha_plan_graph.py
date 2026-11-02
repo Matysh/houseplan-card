@@ -172,3 +172,73 @@ async def test_current_opening_crosses_atomic_host_seam_and_undo_via_real_config
     undone = await socket.send({"type": TYPE, "config": before, "expected_rev": 41})
     assert undone["success"], undone
     assert (await socket.pair())[0]["config"] == before
+
+
+async def test_new_migration_after_legacy_edit_keeps_fresh_source_and_exportable_history(hass,hass_client,hass_access_token):
+    from custom_components.houseplan.plan_graph_source import PREVIOUS_BACKUP_KEY
+    _, socket, _ = await _setup(hass,hass_client,hass_access_token)
+    runtime=get_data(hass)
+    original=legacy()
+    await runtime.config_store.async_save({"config":original,"rev":1})
+    await runtime.store.async_save({"layout":{},"rev":1})
+    edit=copy.deepcopy(original);edit["spaces"][0]["partitions"][1]["b"]=[.5,.6]
+    assert (await socket.send({"type":TYPE,"config":edit,"expected_rev":1}))["success"]
+    saved=await runtime.store.async_load();first=saved[BACKUP_KEY]
+    first_source=await load_source(hass,first)
+    # An older backend can author legacy geometry/layout after a downgrade.
+    later=legacy();later["spaces"][0]["title"]="Changed on old version"
+    await runtime.config_store.async_save({"config":later,"rev":20})
+    await runtime.store.async_save({**saved,"layout":{"independent":{"s":"s","x":.1,"y":.2}},"rev":21})
+    before=await socket.pair();edit=copy.deepcopy(before[0]["config"])
+    edit["spaces"][0]["partitions"][1]["b"]=[.5,.7]
+    reply=await socket.send({"type":TYPE,"config":edit,"expected_rev":20})
+    assert reply["success"],reply
+    current=await runtime.store.async_load();second=current[BACKUP_KEY]
+    assert second["sha256"]!=first["sha256"]
+    source=await load_source(hass,second)
+    assert source["config"]==later and source["layout"]==before[1]["layout"]
+    assert source["config_rev"]==20 and source["layout_rev"]==21
+    assert source["passports"][PREVIOUS_BACKUP_KEY]==first
+    assert await load_source(hass,first)==first_source
+    exported=await socket.send({"type":"houseplan/export/create","kind":"full","plan_graph_migration_source":True,"migration_source_sha256":first["sha256"]})
+    assert exported["success"],exported
+    assert exported["result"]["document"]["payload"]["config"]==first_source["config"]
+
+
+async def test_real_v2_first_write_adopts_server_pair_even_with_diagnostic_mismatch(hass,hass_client,hass_access_token):
+    from custom_components.houseplan.graph_write import normalize_graph_config
+    from custom_components.houseplan.plan_graph import project_graph_space
+    from custom_components.houseplan.plan_graph_exact import decode_point,to_numbers
+    from tests_backend.test_graph_write import empty_patch
+    _,socket,_=await _setup(hass,hass_client,hass_access_token)
+    runtime=get_data(hass);before=legacy()
+    await runtime.config_store.async_save({"config":before,"rev":30})
+    capabilities=await socket.send({"type":"houseplan/config/get"})
+    assert capabilities["result"]["graph_change_api"]==2
+    candidate=normalize_graph_config(before);space=candidate["spaces"][0]
+    graph=copy.deepcopy(space["plan_graph"])
+    node=next(n for n in graph["nodes"] if to_numbers(decode_point(n["p"]))==[.5,.5])
+    node["p"]=["l","120","168"]
+    candidate["spaces"][0]=project_graph_space(space,graph)["space"]
+    patch=empty_patch();patch["nodes"]["set"]=[node]
+    response=await socket.send({"type":TYPE,"config":candidate,"expected_rev":30,
+        "graph_change":{"version":2,"spaces":[{"space_id":"s","base_digest":"0"*64,"patch":patch}]}})
+    assert response["success"],response
+    accepted=await socket.pair()
+    assert response["result"]["config"]==accepted[0]["config"]
+    assert accepted[0]["rev"]==31
+    assert next(n for n in accepted[0]["config"]["spaces"][0]["plan_graph"]["nodes"] if n["id"]==node["id"])["p"]==node["p"]
+
+
+async def test_real_projection_room_count_refusal_is_atomic_and_public(hass,hass_client,hass_access_token):
+    from custom_components.houseplan.graph_write import normalize_graph_config
+    _,socket,_=await _setup(hass,hass_client,hass_access_token)
+    runtime=get_data(hass);source=legacy()
+    source["spaces"][0]["rooms"]=[{"id":"r","poly":[[0,0],[1,0],[1,1],[0,1]]}]
+    current=normalize_graph_config(source)
+    await runtime.config_store.async_save({"config":current,"rev":50})
+    before=await socket.pair();candidate=copy.deepcopy(before[0]["config"])
+    candidate["spaces"][0]["rooms"]=[]
+    refused=await socket.send({"type":TYPE,"config":candidate,"expected_rev":50})
+    assert not refused["success"] and refused["error"]["code"]=="plan_graph_projection_mismatch",refused
+    assert await socket.pair()==before

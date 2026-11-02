@@ -16,6 +16,8 @@ import type { wallQuadCovered } from './wall-quad-coverage';
 import { unionClippedWallCornersSequential, subtractWallOpeningCuts } from './wall-geometry-batch';
 import { applyWallLocalReplacements, type WallLocalReplacement } from './wall-local-replacements';
 import { hasPaintableRingArea } from './polygon-paint';
+import { wallGraphSource } from './wall-graph-source';
+import { directWallGeometry, directRecut, directStructure } from './direct-wall-geometry';
 
 export interface WallEntry {
   key: string;
@@ -39,6 +41,9 @@ export interface WallGeometryComponent {
 
 export interface WallBodiesGeometryResult {
   status: WallGeometryStatus;
+  /** Units of the retained geometry relative to persisted coordinates. */
+  coordinateScale?: number;
+  failurePhase?: 'direct-extra' | 'direct-arrangement';
   /** Last successful primary union. Isolated fallback components stay separate. */
   geom: any;
   components: readonly WallGeometryComponent[];
@@ -2494,6 +2499,8 @@ export function multiWallNodesForGeometry(
   gridPitch: number,
   coordScale: number,
 ): MultiWallNodeMap {
+  const graphSource=wallGraphSource(rooms);
+  if(graphSource)return directStructure(graphSource,cellCm,gridPitch).nodes;
   return buildMultiWallNodeMap(
     wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale),
     openEps(pitch, coordScale) * 4,
@@ -2820,6 +2827,16 @@ export function innerContourForRoom(
   const room = (rooms || []).find((r) => r?.id === roomId);
   const poly = roomPoly(room);
   if (!poly || poly.length < 3) return null;
+  const graphSource=wallGraphSource(rooms);
+  if(graphSource){
+    const geometry=sharedRoomWallGeometry==null
+      ? directWallGeometry(graphSource,cellCm,gridPitch,[],[]).roomGeom : sharedRoomWallGeometry;
+    if(geometry){
+      const floor=subtractRoomMasonry(closedRing(poly),geometry as any);
+      return largestOuterContour(floor);
+    }
+    return poly.map(p=>[p[0],p[1]]);
+  }
   if (!walls?.length) return poly.map((p) => [p[0], p[1]]);
   const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
   if (!pr || !pr.offsets.some((o) => o > 0)) return poly.map((p) => [p[0], p[1]]);
@@ -3442,6 +3459,8 @@ export function floorFootprintGeometry(
   coordScale = 1,
 ): any | null {
   try {
+    const graphSource=wallGraphSource(rooms);
+    if(graphSource)return directWallGeometry(graphSource,cellCm,gridPitch,[],[]).paperGeom;
     const multiWallNodes = multiWallNodesForGeometry(
       rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
     );
@@ -3527,7 +3546,7 @@ export function polyclipToPathD(geom: any): string {
     for (const ring of poly) {
       if (!Array.isArray(ring) || ring.length < 4) continue;
       const pts = ring.slice(0, ring.length - 1);
-      if (!hasPaintableRingArea(pts)) continue;
+      if (!hasPaintableRingArea(ring)) continue;
       d += (d ? ' ' : '') + polyToPath(pts.map((p: number[]) => [p[0], p[1]]));
     }
   }
@@ -3762,6 +3781,18 @@ export function wallBodiesGeometry(
   extraBodies: number[][][] = [],
   operations: WallGeometryOperations = {},
 ): WallBodiesGeometryResult {
+  const graphSource=wallGraphSource(rooms);
+  if(graphSource){
+    try{
+      const result=directWallGeometry(graphSource,cellCm,gridPitch,openings,extraBodies);
+      if(result.failurePhase)operations.onCoreFailure?.(result.failurePhase);
+      result.openingIndex=openings.length?openingWallIndex(rooms,walls,openCuts,pitch,cellCm,gridPitch,coordScale):null;
+      return result;
+    }catch{
+      operations.onCoreFailure?.('direct-arrangement');
+      return{status:'failed-core',geom:[],components:[],roomGeom:[],roomComponents:[],paperGeom:[],depthUnits:0,openingIndex:null,multiWallNodes:null,degradedExtraCount:0};
+    }
+  }
   if (!walls?.length && !extraBodies.length) return {
     status: 'not-applicable', geom: [], components: [], roomGeom: [], paperGeom: [],
     roomComponents: [],
@@ -4014,6 +4045,7 @@ export function wallBodiesGeometry(
     ];
     return {
       status: degradedExtraCount || degradedCoreCount ? 'degraded-extra' : 'ok',
+      coordinateScale: coordScale,
       geom: primary, components, roomGeom, roomComponents, paperGeom,
       depthUnits: maxDepth,
       openingPadUnits: Math.max(maxDepth, pitch * coordScale) * 1.25,
@@ -4056,8 +4088,9 @@ export function wallBodiesUnionPath(
   depthUnits: number;
   openingPadUnits?: number;
   fillRule: 'evenodd' | 'nonzero';
+  coordinateScale?: number;
 } | null {
-  if (!walls?.length && !extraBodies.length) return null;
+  if (!walls?.length && !extraBodies.length && !wallGraphSource(rooms)) return null;
   const united = wallBodiesGeometry(
     rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
     operations,
@@ -4104,6 +4137,7 @@ export function wallBodiesGeometryPath(
       roomComponents: { value: united.roomComponents || [], enumerable: false },
       openingIndex: { value: united.openingIndex, enumerable: false },
       openingPadUnits: { value: united.openingPadUnits, enumerable: false },
+      coordinateScale: { value: united.coordinateScale, enumerable: false },
     });
     return projected;
   }
@@ -4135,6 +4169,8 @@ export function recutWallBodiesGeometry(
   operations: WallGeometryOperations = {},
 ): { status: 'ok' | 'degraded-extra'; geom: any; components: readonly WallGeometryComponent[] } | null {
   if (base.status === 'failed-core' || base.status === 'not-applicable') return null;
+  const direct=base.roomGeom&&directRecut(base.roomGeom,openings,extraBodies);
+  if(direct)return direct;
   const retained = base.roomComponents?.length
     ? base.roomComponents
     : (structurallyValidWallGeometry(base.roomGeom)

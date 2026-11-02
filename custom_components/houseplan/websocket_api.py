@@ -665,6 +665,7 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
         vol.Optional("migration_source", default=False): bool,
         vol.Optional("migration_source_kind", default="config"): vol.In(["config", "graph"]),
         vol.Optional("plan_graph_migration_source", default=False): bool,
+        vol.Optional("migration_source_sha256"): vol.All(str, vol.Match(r"^[0-9a-f]{64}$")),
     }
 )
 @websocket_api.async_response
@@ -691,8 +692,8 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
             async with rt.write_lock:
                 saved = await rt.store.async_load() or {}
                 if msg.get("plan_graph_migration_source") or msg.get("migration_source_kind") == "graph":
-                    from .plan_graph_source import BACKUP_KEY, load_source
-                    original = await load_source(hass, saved.get(BACKUP_KEY))
+                    from .plan_graph_source import BACKUP_KEY, load_source_at
+                    original = await load_source_at(hass, saved.get(BACKUP_KEY), msg.get("migration_source_sha256"))
                     snapshot = {"version": 1,
                                 "config_data": {"config": original["config"], "rev": original["config_rev"]},
                                 "layout_data": {"layout": original["layout"], "rev": original["layout_rev"], **original.get("passports", {})}}
@@ -1883,6 +1884,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "device_contact_api": 1,
             "device_history_api": 1,
             "plan_graph_api": 1,
+            "graph_change_api": 2,
             "structural_upload_api": 1,
             **({"graph_migration": {"version": 1, "source_available": True}}
                if isinstance(layout_data.get("plan_graph_migration_backup"), dict) else {}),

@@ -4,6 +4,7 @@ import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { applyGraphOperation, applyGraphPatch, projectGraphSpace } from '../test-build/plan-graph.js';
 import { legacyGraphWriteChange } from '../test-build/graph-write-change.js';
 import { commitGraphEdit } from '../test-build/graph-edit-intent.js';
+import { graphDigest } from '../test-build/graph-digest.js';
 
 const legacy = () => ({model_version:10,settings:{},markers:[],spaces:[{
   id:'floor',title:'Floor',view_box:[0,0,1,1],rooms:[],
@@ -31,7 +32,8 @@ test('first write patch is rooted in the accepted pre-gesture normalized graph',
   candidate.spaces[0]=projectGraphSpace(space,changed.graph).space;
   const delta=legacyGraphWriteChange(source,candidate);
   assert.equal(JSON.stringify(source),sourceText);
-  assert.deepEqual(delta.spaces[0].base,space.plan_graph);
+  assert.equal(delta.version,2);assert.equal(delta.spaces[0].base_digest,graphDigest(space.plan_graph));
+  assert.ok(!('base' in delta.spaces[0]),'no duplicate full baseline');
   assert.deepEqual(applyGraphPatch(space.plan_graph,delta.spaces[0].patch).graph,changed.graph);
   assert.deepEqual(delta.spaces[0].patch.nodes.set,[changed.graph.nodes.find(node=>node.id===edge.to)]);
 });
@@ -47,6 +49,14 @@ test('first write patch includes all queued explicit graph commands, not only th
   const delta=legacyGraphWriteChange(source,candidate);
   assert.equal(delta.spaces[0].patch.nodes.set.length,1);
   assert.equal(delta.spaces[0].patch.edges.set[0].cm,20);
-  assert.deepEqual(applyGraphPatch(delta.spaces[0].base,delta.spaces[0].patch).graph,changed.graph);
+  assert.deepEqual(applyGraphPatch(space.plan_graph,delta.spaces[0].patch).graph,changed.graph);
   assert.equal(legacyGraphWriteChange(candidate,candidate),undefined,'current saves do not normalize again');
+});
+
+test('older backend without graph_change_api 2 retains the v1 diagnostic-base transport',()=>{
+ const source=legacy(),candidate=commitWallSegmentModel(source).config;
+ const v1=legacyGraphWriteChange(source,candidate,1),v2=legacyGraphWriteChange(source,candidate,2);
+ assert.equal(v1.version,1);assert.deepEqual(v1.spaces[0].base,candidate.spaces[0].plan_graph);
+ assert.equal(v2.version,2);assert.ok(!('base' in v2.spaces[0]));assert.deepEqual(v1.spaces[0].patch,v2.spaces[0].patch);
+ assert.ok(JSON.stringify(v2).length<JSON.stringify(v1).length);
 });

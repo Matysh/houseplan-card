@@ -1258,6 +1258,7 @@
   "backup.error.duplicate_marker_control": "La sauvegarde contient un lien de lumière du plan en doublon.",
   "backup.error.no_backup": "Aucun instantané d’importation ou d’optimisation n’est disponible à restaurer.",
   "backup.error.in_use": "L'élément est encore utilisé",
+  "backup.error.plan_graph_projection_mismatch": "La géométrie du plan est incohérente. La modification n’a pas été enregistrée.",
   "backup.error.invalid_data": "La requête contient des données invalides",
   "backup.error.invalid_light_entity": "La lumière principale doit être une entité light.* ou switch.*",
   "backup.error.invalid_marker_control": "Référence de contrôle de marqueur invalide",

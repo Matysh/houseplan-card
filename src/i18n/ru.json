@@ -1258,6 +1258,7 @@
   "backup.error.duplicate_marker_control": "Резервная копия содержит повторяющуюся связь с источником света.",
   "backup.error.no_backup": "Нет снимка импорта или оптимизации, который можно восстановить.",
   "backup.error.in_use": "Элемент ещё используется",
+  "backup.error.plan_graph_projection_mismatch": "Геометрия плана несогласована. Изменение не сохранено.",
   "backup.error.invalid_data": "Запрос содержит некорректные данные",
   "backup.error.invalid_light_entity": "Ведущий свет должен быть сущностью light.* или switch.*",
   "backup.error.invalid_marker_control": "Некорректная ссылка управления маркером",

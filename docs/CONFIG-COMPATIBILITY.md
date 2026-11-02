@@ -16,6 +16,16 @@ Full/space/plan-only transfers, copies and Undo preserve graph closure and exact
 hosts; support uses a closed pseudonymous geometry projection, never the source
 backup. Config and portable limits are 16/32 MiB; oversized normal writes use
 upload/token without changing HA's WS limit. See [PLAN-GRAPH.md](PLAN-GRAPH.md).
+
+#1216 keeps model/store/envelope versions unchanged. `graph_change` v2 replaces
+the repeated diagnostic base with a structural digest; v1 retains its former
+server-authoritative behavior, including when client/server baselines differ.
+The v2 format is selected only for literal `config/get.graph_change_api:2`;
+unknown/older backends keep the v1 client path for Save and Optimize/Copy.
+Canonical graph room-ID order is also projection order: legacy migration may
+reorder JSON rooms and overlap layers, while stable IDs/bindings and space order
+remain intact. Historical graph-source refs live at `passports.previous_backup`
+and remain selectable through the existing admin-only source export.
 Unreleased model 11 has no published stable sunset date for its legacy decoders.
 
 ## Compatibility lifetime and canonical migration (#1015)

@@ -162,7 +162,7 @@ class HouseplanStructuralUploadView(HomeAssistantView):
     requires_auth = True
 
     async def post(self, request: web.Request) -> web.Response:
-        from .structural_upload import UploadError, uploads
+        from .structural_upload import UploadError, uploads, prepare_finish
 
         hass = request.app[KEY_HASS]
         user = request.get("hass_user")
@@ -181,10 +181,11 @@ class HouseplanStructuralUploadView(HomeAssistantView):
                 if not may_write(hass, user):
                     raise UploadError("unauthorized")
                 manager.append(token, owner, block)
-            result = await hass.async_add_executor_job(manager.finish, token, owner)
+            snapshot = manager.snapshot(token, owner)
+            prepared = await hass.async_add_executor_job(prepare_finish, snapshot)
             if not may_write(hass, request.get("hass_user")) or request.get("hass_user") is not user:
                 raise UploadError("unauthorized")
-            manager._get(token, owner)  # TTL after executor, without renewing it.
+            result = manager.complete_finish(snapshot, prepared)
             retained = True
             return web.json_response(result)
         except UploadError as err:

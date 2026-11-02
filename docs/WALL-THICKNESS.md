@@ -1,5 +1,18 @@
 # Wall thickness — the spec
 
+## Model-11 direct masonry (#1216)
+
+Current graphs use exact incident rays, finite strips and bounded local fans,
+then exact noding/side classification of their computed boundary. No legacy
+offset-ring boolean builder runs for model 11. Existing multi-ray mitre 4 /
+visual 1.5H, full two-ray points (#310), inherited sharp room apices (#329/#339),
+finite support and host-owned openings still apply. Coincident distinct IDs
+and exact unsplit T contacts join only in render topology. One shared result
+supplies all scenes and physical consumers, with an explicit coordinate scale
+at normalized guards. Legacy-only read compatibility retains the historical
+sections below. [PLAN-GRAPH.md](PLAN-GRAPH.md) defines the current algorithm,
+tolerance, source authority, failure and cache contracts.
+
 ## Paint-independent physical keys (#1093)
 
 Known background, room/name/wall paint, label/display and solar presentation settings are excluded from the physical record projection only. Unknown compatible fields and wall/room/opening/body/cell/transform semantics stay significant; the complete storage/history record is unchanged. Demand-based floor models preserve physical reuse across equivalent ACK clones and unrelated floor edits. Positive structural and model/preview tests still require fresh wall/contact geometry when those inputs change.

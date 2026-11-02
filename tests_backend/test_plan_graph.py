@@ -21,6 +21,20 @@ def graph():
         "dependencies": []}
 
 
+@pytest.mark.parametrize("change", ["missing", "extra", "wrong_id"])
+def test_projection_room_mismatch_is_a_graph_error_before_zip(change):
+    space = project_graph_space({"id": "s", "rooms": [{"id": "r"}]}, graph())["space"]
+    if change == "missing":
+        space["rooms"] = []
+    elif change == "extra":
+        space["rooms"].append({"id": "extra", "poly": [[0,0],[1,0],[0,1]]})
+    else:
+        space["rooms"][0]["id"] = "wrong"
+    with pytest.raises(GraphError) as caught:
+        verify_projection(space)
+    assert caught.value.code == "plan_graph_projection_mismatch"
+
+
 def test_exact_crossing_and_correct_binary64_projection_survive_100_round_trips():
     # y=x intersects y=(1-x)/2 at (1/3,1/3): rational and also lattice80.
     p, t, u = intersection(read_source_point(0, 0), read_source_point(1, 1),

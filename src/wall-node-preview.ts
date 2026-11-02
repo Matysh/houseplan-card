@@ -74,10 +74,17 @@ export function nodeMoveLocalSpaces(before: NodeMoveSpace, next: NodeMoveSpace):
       for (const version of [oldWalls, newWalls]) for (const own of version.filter(o => o.id === w.id)) boxes.push(bodyBoxes.get(own)!);
     }
   }
-  const select = (space: NodeMoveSpace): NodeMoveSpace => ({ ...space,
-    // This bounded proof carries a projection selected from its full graph.
-    // It is never a writer or an independent structural document.
-    plan_graph: undefined,
+  const select = (space: NodeMoveSpace): NodeMoveSpace => {
+    const graph=space.plan_graph;
+    const edges=graph?.edges.filter(e=>bodyIds.has(e.id));
+    const nodes=new Set(edges?.flatMap(e=>[e.from,e.to]));
+    // Read-only accepted graph subset: exact values/IDs survive the local
+    // preview. It cannot be saved or mistaken for a new editable model.
+    const plan_graph=graph&&{...graph,edges:edges!,nodes:graph.nodes.filter(n=>nodes.has(n.id)),
+      rooms:graph.rooms.filter(r=>roomIds.has(r.room)),
+      dependencies:graph.dependencies.filter(d=>nodes.has(d.node)&&d.refs.every(r=>nodes.has(r.from)&&nodes.has(r.to)))};
+    return { ...space,
+    plan_graph,
     rooms: space.rooms.filter(r => roomIds.has(r.id)),
     wall_segments: space.wall_segments?.filter(w => bodyIds.has(w.id)),
     partitions: space.partitions?.filter(w => bodyIds.has(w.id)),
@@ -88,7 +95,7 @@ export function nodeMoveLocalSpaces(before: NodeMoveSpace, next: NodeMoveSpace):
     wall_columns: Array.isArray(space.wall_columns) ? space.wall_columns.filter((column: { center: number[]; cm: number }) =>
       !Array.isArray(column.center) || boxes.some(box => overlap(bounds([column.center], column.cm / cm * GRID_STEP_N), box))) : space.wall_columns,
     openings: space.openings?.filter(o => o.host ? bodyIds.has(o.host.id) : boxes.some(box => overlap(bounds([[o.x, o.y]]), box))),
-  });
+  };};
   return [select(before), select(next)];
 }
 

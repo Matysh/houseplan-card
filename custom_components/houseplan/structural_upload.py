@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import copy
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -60,9 +61,41 @@ class Upload:
     size: int = 0
     digest: str | None = None
     purpose: str | None = None
+    revision: int = 0
+    identity: object = field(default_factory=object)
+
+
+@dataclass(frozen=True, slots=True)
+class UploadSnapshot:
+    """Lease plus immutable bytes; only this value may cross into an executor."""
+    token: str
+    owner: str
+    identity: object
+    revision: int
+    blocks: tuple[bytes, ...]
+    digest: str | None
+    purpose: str | None
+
+
+def prepare_finish(snapshot: UploadSnapshot) -> tuple[bytes, str, str]:
+    raw = b"".join(snapshot.blocks)
+    message = parse_payload(raw)
+    return raw, hashlib.sha256(raw).hexdigest(), message["type"]
+
+
+def prepare_resolution(snapshot: UploadSnapshot, compact: dict) -> dict:
+    raw = snapshot.blocks[0]
+    if hashlib.sha256(raw).hexdigest() != snapshot.digest:
+        raise UploadError("upload_digest_mismatch")
+    message = parse_payload(raw)
+    for key in CONTROL_KEYS:
+        if (key in compact) != (key in message) or key in compact and (type(compact[key]) is not type(message[key]) or compact[key] != message[key]):
+            raise UploadError("upload_control_mismatch")
+    return {**message, "id": compact["id"]}
 
 
 class StructuralUploads:
+    """Mutable records are owned by the HA event loop, never by its executor."""
     def __init__(self, *, clock: Callable[[], float] = time.time) -> None:
         self.clock = clock
         self.uploads: dict[str, Upload] = {}
@@ -109,22 +142,39 @@ class StructuralUploads:
             raise UploadError("upload_capacity")
         value.blocks.append(bytes(chunk))
         value.size += len(chunk)
+        value.revision += 1
 
-    def finish(self, token: str, owner: str) -> dict:
+    def snapshot(self, token: str, owner: str) -> UploadSnapshot:
         value = self._get(token, owner)
-        try:
-            raw = b"".join(value.blocks)
-            message = parse_payload(raw)
-        except Exception:
-            self.uploads.pop(token, None)
-            raise
+        return UploadSnapshot(token, owner, value.identity, value.revision,
+                              tuple(value.blocks), value.digest, value.purpose)
+
+    def _lease(self, snapshot: UploadSnapshot) -> Upload:
+        value = self._get(snapshot.token, snapshot.owner)
+        if value.identity is not snapshot.identity or value.revision != snapshot.revision:
+            raise UploadError("upload_consumed")
+        return value
+
+    def complete_finish(self, snapshot: UploadSnapshot, prepared: tuple[bytes, str, str]) -> dict:
+        value = self._lease(snapshot)
+        raw, digest, purpose = prepared
         value.blocks = [raw]
-        value.digest = hashlib.sha256(raw).hexdigest()
-        value.purpose = message["type"]
-        return {"token": token, "sha256": value.digest, "purpose": value.purpose,
+        value.digest, value.purpose = digest, purpose
+        value.revision += 1
+        return {"token": snapshot.token, "sha256": digest, "purpose": purpose,
                 "expires_at": datetime.fromtimestamp(value.expires, timezone.utc).isoformat().replace("+00:00", "Z")}
 
-    def resolve(self, compact: dict, owner: str) -> dict:
+    def finish(self, token: str, owner: str) -> dict:
+        """Synchronous adapter for bounded callers/tests; HTTP uses the split API."""
+        snapshot = self.snapshot(token, owner)
+        try:
+            prepared = prepare_finish(snapshot)
+        except Exception:
+            self.cancel(token, owner)
+            raise
+        return self.complete_finish(snapshot, prepared)
+
+    def resolution_snapshot(self, compact: dict, owner: str) -> tuple[UploadSnapshot, dict]:
         token = compact.get("upload_token")
         if not isinstance(token, str):
             raise UploadError("invalid_format")
@@ -135,17 +185,19 @@ class StructuralUploads:
             raise UploadError("upload_digest_mismatch")
         if compact.keys() - CONTROL_KEYS - {"type", "id", "upload_token", "upload_sha256"}:
             raise UploadError("invalid_format")
-        raw = value.blocks[0]
-        if hashlib.sha256(raw).hexdigest() != value.digest:
-            raise UploadError("upload_digest_mismatch")
-        message = parse_payload(raw)
-        for key in CONTROL_KEYS:
-            if (key in compact) != (key in message) or key in compact and (type(compact[key]) is not type(message[key]) or compact[key] != message[key]):
-                raise UploadError("upload_control_mismatch")
-        return {**message, "id": compact["id"]}
+        return self.snapshot(token, owner), copy.deepcopy(compact)
 
-    def consume(self, token: str, owner: str) -> None:
-        self._get(token, owner)
+    def resolve(self, compact: dict, owner: str) -> dict:
+        snapshot, message = self.resolution_snapshot(compact, owner)
+        return prepare_resolution(snapshot, message)
+
+    def consume(self, token: str, owner: str, snapshot: UploadSnapshot | None = None) -> None:
+        if snapshot is not None:
+            if token != snapshot.token or owner != snapshot.owner:
+                raise UploadError("upload_owner_mismatch")
+            self._lease(snapshot)
+        else:
+            self._get(token, owner)
         self.uploads.pop(token)
 
     def cancel(self, token: str, owner: str) -> None:

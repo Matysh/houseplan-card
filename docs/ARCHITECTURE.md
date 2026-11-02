@@ -10,6 +10,15 @@ paired backup; `large-write-transport` carries oversized writes via authenticate
 upload plus a purpose-bound compact WS token. [PLAN-GRAPH.md](PLAN-GRAPH.md)
 defines the numerical, history, transfer and privacy contracts.
 
+Stage 4 (#1216) projects accepted graph incidence into finite material domains
+and one exact boundary arrangement (`direct-wall-geometry`, `wall-arrangement`,
+`render-exact`). An ephemeral projection registry carries graph authority into
+scaled scenes and previews; no derived contour is persisted. The shared result
+feeds View, Static, ISO, PDF, physical guards and lighting apertures. Legacy-only
+reads retain the previous renderer. Graph-change v2 is capability-selected;
+the server applies ID patches to its own baseline, retains immutable source
+history and owns staged-upload state solely in the HA event loop.
+
 This document describes product architecture and technical ownership. Development,
 review and release rules live only in [PROCESS.md](../PROCESS.md). The #1105
 branch is prepared; the live workflows and hooks have not been switched.

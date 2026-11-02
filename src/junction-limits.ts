@@ -15,6 +15,7 @@
 import { GRID_STEP_N } from './space-geometry';
 import { WALL_INCIDENT_EPS as INCIDENT_EPS } from './wall-incidence';
 import { storedWallContact } from './stored-wall-contact';
+import { graphViewSpace } from './plan-graph-view';
 import {
   innerContourForRoom, multiWallNodesForGeometry, wallBodiesGeometry,
   type MultiWallNodeMap, type WallBodiesGeometryResult, type WallEntry,
@@ -31,7 +32,7 @@ interface JunctionLimitSpace {
 
 type JunctionLimitConfig = { spaces?: JunctionLimitSpace[] };
 export type JunctionSharedGeometry =
-  | (Pick<WallBodiesGeometryResult, 'status' | 'roomGeom' | 'multiWallNodes'> & {
+  | (Pick<WallBodiesGeometryResult, 'status' | 'roomGeom' | 'multiWallNodes' | 'coordinateScale'> & {
     /** Observation only: the guard always computes and judges the contour.
      * Consumers may copy it for painting; it is never a validation input. */
     onRoomInnerContour?: (roomId: string, contour: readonly (readonly number[])[] | null) => void;
@@ -79,15 +80,17 @@ export function junctionLimitViolations(
   roomIds?: ReadonlySet<string>,
 ): JunctionLimitViolation[] {
   const spaces = (config as JunctionLimitConfig | null)?.spaces || [];
-  const space = spaces.find((item) => item?.id === spaceId);
-  if (!space) return [];
+  const rawSpace = spaces.find((item) => item?.id === spaceId);
+  if (!rawSpace) return [];
+  const space = graphViewSpace(rawSpace);
   const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : 5;
   const violations = [
     ...checkNodes(segments), ...checkSegmentLengths(segments, cellCm, GRID_STEP_N),
     ...checkNodeDistances(segments, cellCm, GRID_STEP_N),
   ];
+  const geometryScale=sharedGeometry&&sharedGeometry.status!=='lightweight'?sharedGeometry.coordinateScale||1:1;
   let nodes: ReturnType<typeof multiWallNodesForGeometry> | null =
-    sharedGeometry?.multiWallNodes || null;
+    geometryScale===1?sharedGeometry?.multiWallNodes || null:null;
   if (!nodes) {
     try {
       nodes = multiWallNodesForGeometry(
@@ -99,6 +102,8 @@ export function junctionLimitViolations(
     ? sharedGeometry : null;
   let roomGeometry: unknown = completeGeometry?.status === 'ok'
     || completeGeometry?.status === 'degraded-extra' ? completeGeometry.roomGeom : null;
+  if(roomGeometry&&geometryScale!==1)roomGeometry=(roomGeometry as number[][][][])
+    .map(p=>p.map(r=>r.map(point=>point.map(value=>value/geometryScale))));
   const lightweight = sharedGeometry === null || sharedGeometry?.status === 'lightweight';
   if (!roomGeometry && !lightweight && nodes?.nodes.length) {
     try {

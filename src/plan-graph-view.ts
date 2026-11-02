@@ -2,6 +2,7 @@
 import { decodePoint, pointToNumbers } from './plan-exact';
 import type { PlanGraph } from './plan-graph';
 import { annotateGraphOpeningRuns } from './graph-opening-run';
+import { registerWallGraph } from './wall-graph-source';
 
 interface GraphView {
   rooms: Map<string, { poly: number[][]; wall_ids: string[] }>;
@@ -32,10 +33,12 @@ export function graphViewSpace<T extends Record<string, any>>(space: T): T {
     cache.set(graph, view);
   }
   const metadata = new Map((space.rooms || []).map((room: any) => [room.id, room]));
-  return { ...space,
+  const projected = { ...space,
     rooms: [...view.rooms].map(([id, geometry]) => {
       const { poly: _poly, x: _x, y: _y, w: _w, h: _h, wall_ids: _ids, ...rest } = metadata.get(id) as any || { id };
       return { ...rest, ...geometry };
     }), wall_segments: view.wall_segments, partitions: view.partitions,
   };
+  registerWallGraph(projected.rooms,projected.partitions,graph,1);
+  return projected;
 }

@@ -19,6 +19,7 @@ MAX_SOURCE_BYTES = 32 * 1024 * 1024
 SOURCE_KEY_PREFIX = "houseplan.plan_graph_source."
 BACKUP_KEY = "plan_graph_migration_backup"
 PASSPORT_KEY = "plan_graph_migration"
+PREVIOUS_BACKUP_KEY = "previous_backup"
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -82,3 +83,15 @@ async def load_source(hass, reference: dict) -> dict:
     if hashlib.sha256(raw).hexdigest() != digest or len(raw) != reference.get("bytes"):
         raise GraphError("migration_source_corrupt")
     return copy.deepcopy(stored["source"])
+
+
+async def load_source_at(hass, reference: dict, digest: str | None = None) -> dict:
+    """Select only a verified ancestor of the current immutable source."""
+    seen = set()
+    while isinstance(reference, dict) and reference.get("sha256") not in seen:
+        seen.add(reference.get("sha256"))
+        source = await load_source(hass, reference)
+        if digest is None or reference["sha256"] == digest:
+            return source
+        reference = source.get("passports", {}).get(PREVIOUS_BACKUP_KEY)
+    raise GraphError("migration_source_missing")

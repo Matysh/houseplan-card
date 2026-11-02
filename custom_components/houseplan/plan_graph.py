@@ -250,12 +250,23 @@ def project_graph_space(base_space: dict, graph: dict, context: dict | None = No
 
 def verify_projection(space: dict, graph: dict | None = None) -> None:
     graph = graph if graph is not None else space.get("plan_graph")
+    # project_graph_space also validates room ownership. Classify a bad
+    # projection before that context can turn missing IDs into a graph error.
+    if isinstance(graph, dict) and isinstance(graph.get("rooms"), list):
+        graph_rooms = graph["rooms"]
+        actual_rooms = space.get("rooms", [])
+        if all(isinstance(r, dict) and isinstance(r.get("room"), str) for r in graph_rooms):
+            if not isinstance(actual_rooms, list) or [r.get("id") if isinstance(r, dict) else None for r in actual_rooms] != [r["room"] for r in graph_rooms]:
+                raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
     expected = project_graph_space(space, graph)["space"]
     for field in ("wall_segments", "walls", "partitions"):
         if space.get(field, []) != expected.get(field, []):
             raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
-    for actual, derived in zip(space.get("rooms", []), expected.get("rooms", []), strict=True):
-        if actual.get("poly") != derived["poly"] or actual.get("wall_ids") != derived["wall_ids"]:
+    rooms, projected_rooms = space.get("rooms", []), expected.get("rooms", [])
+    if len(rooms) != len(projected_rooms):
+        raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
+    for actual, derived in zip(rooms, projected_rooms, strict=True):
+        if actual.get("id") != derived["id"] or actual.get("poly") != derived["poly"] or actual.get("wall_ids") != derived["wall_ids"]:
             raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
     if space.get("openings", []) != expected.get("openings", []):
         raise GraphError("opening_projection_mismatch", code="plan_graph_projection_mismatch")

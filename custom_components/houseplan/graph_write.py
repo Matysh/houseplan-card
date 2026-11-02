@@ -89,7 +89,7 @@ def normalize_graph_config(config: dict) -> dict:
 
 async def prepare_graph_pair(runtime, pending, rollback):
     """Persist an immutable logical source before the first graph intent."""
-    from .plan_graph_source import BACKUP_KEY, PASSPORT_KEY, logical_source, save_source, load_source
+    from .plan_graph_source import BACKUP_KEY, PASSPORT_KEY, PREVIOUS_BACKUP_KEY, logical_source, source_bytes, save_source, load_source
 
     config_data = await runtime.config_store.async_load() or {}
     layout_data = await runtime.store.async_load() or {}
@@ -115,11 +115,21 @@ async def prepare_graph_pair(runtime, pending, rollback):
         if key in layout_data:
             metadata[key] = copy.deepcopy(layout_data[key])
     if current_model < 11 and candidate.get("model_version") == 11:
+        source = await runtime.hass.async_add_executor_job(logical_source, config_data, layout_data)
+        previous_source = None
         if BACKUP_KEY in layout_data:
-            await load_source(runtime.hass, layout_data[BACKUP_KEY])
+            previous_source = await load_source(runtime.hass, layout_data[BACKUP_KEY])
+        # History is not part of the logical pair's freshness, but revisions,
+        # config/layout content and passports are. Never reuse merely by presence.
+        comparable = copy.deepcopy(previous_source)
+        if comparable is not None:
+            comparable.get("passports", {}).pop(PREVIOUS_BACKUP_KEY, None)
+        same = comparable is not None and await runtime.hass.async_add_executor_job(source_bytes, comparable) == await runtime.hass.async_add_executor_job(source_bytes, source)
+        if same:
             reference = copy.deepcopy(layout_data[BACKUP_KEY])
         else:
-            source = await runtime.hass.async_add_executor_job(logical_source, config_data, layout_data)
+            if BACKUP_KEY in layout_data:
+                source["passports"][PREVIOUS_BACKUP_KEY] = copy.deepcopy(layout_data[BACKUP_KEY])
             reference = await save_source(runtime.hass, source)
         metadata[BACKUP_KEY] = reference
         metadata[PASSPORT_KEY] = {"version": 1, "source_sha256": reference["sha256"], "source_model": current_model, "target_model": 11}
@@ -148,14 +158,24 @@ def prepare_graph_candidate(candidate: dict, previous: dict | None, change: Any 
     # No stored source (bootstrap) has no migration delta to rebase.
     if not previous.get("spaces"):
         return normalize_graph_config(candidate)
-    if not isinstance(change, dict) or change.get("version") != 1 or set(change) != {"version", "spaces"} or not isinstance(change["spaces"], list):
+    if not isinstance(change, dict) or change.get("version") not in (1, 2) or set(change) != {"version", "spaces"} or not isinstance(change["spaces"], list):
         raise GraphError("missing_first_graph_change")
     normalized = normalize_graph_config(previous)
     before = {s["id"]: s for s in normalized.get("spaces", [])}
     patches = {}
     for item in change["spaces"]:
-        if not isinstance(item, dict) or set(item) != {"space_id", "base", "patch"} or item["space_id"] in patches or item["space_id"] not in before:
+        base_key = "base" if change["version"] == 1 else "base_digest"
+        if not isinstance(item, dict) or set(item) != {"space_id", base_key, "patch"} or item["space_id"] in patches or item["space_id"] not in before:
             raise GraphError("invalid_graph_change")
+        if change["version"] == 2:
+            from .graph_digest import graph_digest
+            import logging
+            import re
+            if not isinstance(item["base_digest"], str) or not re.fullmatch(r"[0-9a-f]{64}", item["base_digest"]):
+                raise GraphError("invalid_graph_change")
+            if item["base_digest"] != graph_digest(before[item["space_id"]]["plan_graph"]):
+                # Bounded diagnosis: no graph, coordinates, IDs or private props.
+                logging.getLogger(__name__).debug("graph_baseline_digest_mismatch")
         patches[item["space_id"]] = item["patch"]
     out = copy.deepcopy(candidate)
     for index, space in enumerate(out.get("spaces", [])):

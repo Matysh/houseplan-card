@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1216,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Complete ADR282 stage4 on model11 with direct graph-derived material domains and exact boundary arrangement shared by all wall consumers; harden original-bounded migration, first-write transport, backup history, projection/metadata guards and upload ownership without changing persisted model/store/envelope versions.",
+  "summary": {
+    "ru": "Прямой расчёт стыков по точному графу стен и надёжная миграция, сохранение и история исходных планов.",
+    "en": "Direct exact-graph wall junctions with reliable migration, writes and original-plan history."
+  }
+}

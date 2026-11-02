@@ -16,7 +16,8 @@ test('local production preview keeps complete far-end junctions and excludes rem
   assert.equal(moved.ok, true);
   const [localBefore, localNext] = nodeMoveLocalSpaces(before, moved.space);
   assert.deepEqual(localBefore.rooms.map(r => r.id), ['local']);
-  assert.deepEqual(localNext.partitions.map(w => w.id), ['local-wall', 'far-end-neighbour']);
+  assert.deepEqual(localNext.partitions.map(w => w.id).sort(), ['far-end-neighbour', 'local-wall']);
+  assert.ok(localNext.plan_graph,'current preview keeps accepted exact graph identity');
   assert.equal(buildNodePreview(localNext).safe, true);
   assert.deepEqual(before.rooms.map(r => r.id), ['local', 'remote']);
   assert.deepEqual(moved.space.partitions[2], before.partitions[2]);

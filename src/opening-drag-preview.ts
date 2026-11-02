@@ -120,6 +120,10 @@ export class OpeningDragWalls {
         this.parts = retainedParts;
     }
     private prepare(opening: RenderOpening, viewport: OpeningDragViewport): boolean {
+        // Current graphs retain host-owned analytic domains. The legacy local
+        // crop loses those owners; use the cached canonical direct pass.
+        if (this.space.plan_graph)
+            return false;
         if (!this.original || opening.orphanReason)
             return false;
         if (opening.host?.kind !== 'partition') {

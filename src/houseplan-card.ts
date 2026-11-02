@@ -2504,6 +2504,7 @@ export class HouseplanCard extends LitElement {
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
   private _haPlanGraphApi: number | null = null;
+  private _haGraphChangeApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
   private _haDeviceHistoryApi: number | null = null;
@@ -8590,7 +8591,7 @@ export class HouseplanCard extends LitElement {
     const expectedRev = this._cfgRev;
     const accepted = this._adoption.snapshot(null)?.config;
     const graph_change = Number(canonicalCandidate.model_version) === 11 && Number(accepted?.model_version || 0) < 11
-      ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, canonicalCandidate) : undefined;
+      ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, canonicalCandidate, this._haGraphChangeApi===2?2:1) : undefined;
     if (!isCurrent()) throw Object.assign(new Error('config authority changed'), {code:'context-changed'});
     const finish=contactLayout?this._layoutIO.begin():()=>undefined;
     try {

@@ -285,8 +285,9 @@ async def test_real_permission_revocation_during_executor_await_prevents_accepta
     message = _candidate(before)
     manager = uploads(get_data(hass))
     staged = await _stage(http, message) if boundary == "ws_resolve" else None
-    method = "finish" if boundary == "http_finish" else "resolve"
-    original = getattr(manager, method)
+    from custom_components.houseplan import structural_upload, http_api, structural_websocket
+    method = "prepare_finish" if boundary == "http_finish" else "prepare_resolution"
+    original = getattr(structural_upload, method)
     entered = asyncio.Event()
     released = threading.Event()
     loop = asyncio.get_running_loop()
@@ -298,7 +299,8 @@ async def test_real_permission_revocation_during_executor_await_prevents_accepta
         assert released.wait(5), "test failed to release the real executor result"
         return result
 
-    monkeypatch.setattr(manager, method, pause_after_real_work)
+    target = structural_upload if boundary == "http_finish" else structural_websocket
+    monkeypatch.setattr(target, method, pause_after_real_work)
     saves = _observe_saves(hass, monkeypatch)
     if boundary == "http_finish":
         pending = asyncio.ensure_future(http.post(

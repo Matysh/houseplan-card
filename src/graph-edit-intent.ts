@@ -7,6 +7,7 @@ import {
 import * as Q from './plan-exact';
 import { wallKey, thicknessCmAt } from './wall-thickness';
 import { compareCodePoints } from './codepoint-order';
+import { contentFingerprint } from './visual-continuity';
 export type GraphEditIntent =
   | { kind: 'metadata' }
   | { kind: 'openings'; ids: readonly string[] }
@@ -601,13 +602,54 @@ function openingTargets(before:any,draft:any,intent:GraphEditIntent,sourceBefore
     }else if(mapping.hosts[opening.id]===undefined)mapping.hosts[opening.id]=clone(oldHost);
   }
 }
+function metadataStructure(space:any):unknown {
+  const graph=space.plan_graph as PlanGraph|undefined;
+  const sorted=(entries:any[],key:(entry:any)=>string)=>(entries||[]).slice().sort((a,b)=>codepoint(key(a),key(b)));
+  return {
+    rooms:sorted(space.rooms,r=>r.id).map(r=>[r.id,sourcePoly(r),r.wall_ids,r.open_to||[]]),
+    wall_segments:sorted(space.wall_segments,e=>e.id).map(e=>[e.id,e.a,e.b,e.cm]),
+    partitions:sorted(space.partitions,e=>e.id).map(e=>[e.id,e.a,e.b,e.cm]),
+    walls:sorted(space.walls,e=>e.key).map(e=>[e.key,e.a,e.b,e.cm]),
+    open_spans:space.open_spans||[],
+    openings:sorted(space.openings,o=>o.id).map(o=>[o.id,o.host,o.x,o.y,o.angle,o.length]),
+    graph:graph&&{...graph,edges:graph.edges.map(({props:_props,...edge})=>edge)},
+  };
+}
+function guardMetadata(before:any,draft:any,sourceBefore?:Record<string,any>):void {
+  const actual=contentFingerprint(metadataStructure(draft));
+  if(actual!==contentFingerprint(metadataStructure(before))
+      &&(!sourceBefore||actual!==contentFingerprint(metadataStructure(sourceBefore))))
+    throw new PlanGraphError('projection-only-write');
+}
+function mergeEdgeMetadata(graph:PlanGraph,before:any,draft:any):PlanGraph {
+  const result=clone(graph);
+  for(const kind of ['wall','partition'] as const){
+    const field=kind==='wall'?'wall_segments':'partitions';
+    const old=new Map<string,any>((before[field]||[]).map((e:any)=>[e.id,e]));
+    const entries=new Map<string,any>((draft[field]||[]).map((e:any)=>[e.id,e]));
+    const proposedGraph=new Map<string,GraphEdge>((draft.plan_graph?.edges||[]).map((e:GraphEdge)=>[edgeKey(e),e]));
+    for(const edge of result.edges)if(edge.kind===kind){
+      const entry=entries.get(edge.id),previous=old.get(edge.id);
+      const props=entry&&opaque(entry,['id','a','b','cm']);
+      const previousProps=previous&&opaque(previous,['id','a','b','cm']);
+      if(entry&&contentFingerprint(props)!==contentFingerprint(previousProps)){
+        if(props)edge.props=props;else delete edge.props;
+      }else{
+        const proposed=proposedGraph.get(edgeKey(edge));
+        if(proposed){if(proposed.props)edge.props=clone(proposed.props);else delete edge.props;}
+      }
+    }
+  }
+  return result;
+}
 export function commitGraphEditResult<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
   sourceBefore?:Record<string,any>):GraphEditResult<T>{
   const prepared=prepareGraph(beforeNormalizedSpace.plan_graph as PlanGraph),graph=prepared.graph,index=prepared.index;
   const before:any=projectGraphSpace(beforeNormalizedSpace,graph).space,draft:any=clone(draftSpace);
   const allocation=new Allocation(graph),plan=newPlan(graph);
   switch(intent.kind){
-    case'metadata':case'openings':break;
+    case'metadata':guardMetadata(before,draft,sourceBefore);break;
+    case'openings':break;
     case'partitions':{const expanded=legacyPartitionTargets(before,draft,intent,sourceBefore);partitionPlan(before,expanded.draft,expanded.intent,undefined,graph,index,allocation,plan);break;}
     case'segments':{
       for(const namespace of['wall','partition']as const){
@@ -659,6 +701,7 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
   if(intent.kind==='partitions'||intent.kind==='segments')planarizeSegmentTargets(graph,allocation,plan);
   const result=plan.operations.length?applyGraphOperation(graph,{kind:'batch',operations:plan.operations},{hosts:before.openings||[]})
     :{graph,mapping:emptyMapping()};
+  if(intent.kind==='metadata')result.graph=mergeEdgeMetadata(result.graph,before,draft);
   const operations=plan.operations.slice(),mapping=result.mapping;
   openingTargets(before,draft,intent,sourceBefore,result.graph,plan.variants,mapping,operations);
   const metadata=new Map<string,any>((before.rooms||[]).map((r:any)=>[r.id,r]));

@@ -12,6 +12,7 @@ import { stairList, stairOutline } from './stairs';
 import { CANVAS_LIMIT, GRID_N, GRID_PITCH, NORM_W } from './canvas-constants';
 import { graphViewSpace } from './plan-graph-view';
 import { annotateGraphOpeningRuns } from './graph-opening-run';
+import { registerWallGraph } from './wall-graph-source';
 
 export { CANVAS_LIMIT, GRID_N, GRID_PITCH, GRID_STEP_N, NORM_W } from './canvas-constants';
 
@@ -171,6 +172,7 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       led_strips: s.led_strips,
     } as SpaceModel;
     if (s.plan_graph) {
+      registerWallGraph(model.rooms,model.partitions,s.plan_graph,NORM_W);
       annotateGraphOpeningRuns(s.plan_graph,model.wall_segments,'wall',NORM_W);
       annotateGraphOpeningRuns(s.plan_graph,model.partitions,'partition',NORM_W);
     }

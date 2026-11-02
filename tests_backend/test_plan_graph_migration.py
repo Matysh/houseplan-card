@@ -72,3 +72,33 @@ def test_connected_834_contacts_do_not_feed_previous_projection_rounds():
         assert max(abs(q.numerator).bit_length() for q in (point.x, point.y)) <= MAX_BITS
         assert max(q.denominator.bit_length() for q in (point.x, point.y)) <= MAX_BITS
     assert json.dumps(source, sort_keys=True) == before
+
+
+def test_1216_witnessed_contacts_match_ts_canonical_digest():
+    from custom_components.houseplan.graph_digest import graph_digest
+    from custom_components.houseplan.plan_graph import validate_graph
+    cases = json.loads((Path(__file__).parents[1] / "test/fixtures/1216-contact-corpus.json").read_text())["cases"]
+    for case in cases:
+        source = case["space"]
+        witness = case["witness"]
+        # Independent witness is checked before either implementation runs.
+        assert len(source["partitions"]) <= 32
+        assert sum((a-b)**2 for a,b in zip(witness["owner"],witness["host"])) <= witness["radius"]**2
+        result = migrate_graph_space(source, {"source_model_version":10})
+        assert graph_digest(result["graph"]) == case["expected_digest"], case["seed"]
+        validate_graph(result["graph"])
+        assert result["migrationReport"]["maxDisplacementCm"] <= .001000000001
+
+
+def test_1216_room_owner_witness_preserves_closed_cycles_and_ts_parity():
+    from custom_components.houseplan.graph_digest import graph_digest
+    from custom_components.houseplan.plan_graph import validate_graph
+    corpus = json.loads((Path(__file__).parents[1] / "test/fixtures/1216-contact-corpus.json").read_text())
+    for case in corpus["room_cases"]:
+        source = case["space"]
+        owners = [p for r in source["rooms"] for p in r["poly"]] + [e[side] for e in source["wall_segments"] for side in ("a","b")]
+        assert all(any(sum((a-b)**2 for a,b in zip(p,q)) <= (1/1200000)**2 for q in case["witness"]) for p in owners)
+        result = migrate_graph_space(source,{"source_model_version":10})
+        validate_graph(result["graph"])
+        assert graph_digest(result["graph"]) == case["expected_digest"]
+        assert result["migrationReport"]["maxDisplacementCm"] <= .001000000001

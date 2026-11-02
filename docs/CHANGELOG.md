@@ -5,6 +5,7 @@
 - Point the CI badge directly to the actual source test run for the current stable, preserving its dynamic status and the separate CodeQL badge. [#1219](https://github.com/Matysh/houseplan-card/issues/1219)
 
 - Restore separate CI and CodeQL badges in the README. CI reflects recorded test results for the released product in `main`, links to its evidence, and never reruns tests; missing evidence is not reported as success. [#1217](https://github.com/Matysh/houseplan-card/issues/1217)
+- Build current wall junctions directly from the exact plan graph, preserving physical opening ownership across scenes. Harden legacy contact migration, source backup history, projection errors and large-write concurrency; avoid sending a duplicate first-write baseline. [#1216](https://github.com/Matysh/houseplan-card/issues/1216)
 
 - Add Low only to Zigbee signal visibility: system LQI numbers stay on the plan only at ≤50. Spaces can override the mode, while existing settings retain their meaning. [#1130](https://github.com/Matysh/houseplan-card/issues/1130)
 - Add an optional weather widget at the bottom of the summary panel, with current conditions, three daily forecasts and a saved Home Assistant weather source. Forecast updates do not repaint the plan. [#1174](https://github.com/Matysh/houseplan-card/issues/1174)

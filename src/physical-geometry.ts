@@ -2,12 +2,14 @@
 import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
 import { graphOpeningRun } from './graph-opening-run';
-import { hasPaintableRingArea } from './polygon-paint';
+import { hasPaintableRingArea, inheritExactPaintRing } from './polygon-paint';
 import {
   linearWallBody, linearWallJoinPatches, pairButtEndTrimWedges, wallCmToUnits,
   type LinearWallSegment,
 } from './wall-thickness';
 import type { SpaceModel, WallColumnCfg } from './types';
+import { wallGraphSource } from './wall-graph-source';
+import { directIndependentParts } from './direct-wall-geometry';
 
 export const COLUMN_MIN_CM = 1;
 export const COLUMN_MAX_CM = 150;
@@ -69,7 +71,7 @@ export function normalizeBooleanBody(
 export function polyclipPathD(geom: any): string {
   const out: string[] = [];
   for (const poly of geom || []) for (const ring of poly || []) {
-    const pts = (ring || []).filter((p: any) => Array.isArray(p) && p.length >= 2);
+    const pts = inheritExactPaintRing(ring || [], (ring || []).filter((p: any) => Array.isArray(p) && p.length >= 2));
     if (pts.length < 4 || !hasPaintableRingArea(pts)) continue;
     out.push(`M ${pts.slice(0, -1).map((p: number[]) => `${p[0]} ${p[1]}`).join(' L ')} Z`);
   }
@@ -229,6 +231,10 @@ export function physicalBodyParts(
   epsilon = Math.max(gridPitch * 0.0002, 1e-9),
   partitionCuts: readonly PartitionOpeningCut[] = [],
 ): PhysicalBodyParts {
+  const graphSource=wallGraphSource(space.partitions);
+  if(graphSource)return directIndependentParts(graphSource,cellCm,gridPitch,
+    (space.wall_columns||[]).map(column=>columnBody(column,cellCm,gridPitch)),partitionCuts,
+    (space.partitions||[]).flatMap(p=>{const body=linearWallBody({a:p.a,b:p.b,halfDepth:wallCmToUnits(p.cm,cellCm,gridPitch)/2});return body?[body]:[];}));
   const partitionSegments: LinearWallSegment[] = [];
   const cutsByPartition = new Map<string, PartitionOpeningCut[]>();
   for (const cut of partitionCuts) {
@@ -488,7 +494,7 @@ export function geometryAllRings(geom: any): number[][][] {
   const out: number[][][] = [];
   for (const poly of geom || []) {
     for (const ring of poly || []) {
-      if (ring?.length >= 4) out.push(ring.slice(0, -1).map((p: number[]) => [p[0], p[1]]));
+      if (ring?.length >= 4) out.push(inheritExactPaintRing(ring,ring.slice(0, -1).map((p: number[]) => [p[0], p[1]])));
     }
   }
   return out;
@@ -498,7 +504,7 @@ export function geometryOuterRings(geom: any): number[][][] {
   const out: number[][][] = [];
   for (const poly of geom || []) {
     const ring = poly?.[0];
-    if (ring?.length >= 4) out.push(ring.slice(0, -1).map((p: number[]) => [p[0], p[1]]));
+    if (ring?.length >= 4) out.push(inheritExactPaintRing(ring,ring.slice(0, -1).map((p: number[]) => [p[0], p[1]])));
   }
   return out;
 }

@@ -1258,6 +1258,7 @@
   "backup.error.duplicate_marker_control": "The backup contains a duplicate plan-light link.",
   "backup.error.no_backup": "There is no import or optimization snapshot to restore.",
   "backup.error.in_use": "The item is still in use",
+  "backup.error.plan_graph_projection_mismatch": "The plan geometry is inconsistent. The change was not saved.",
   "backup.error.invalid_data": "The request carries invalid data",
   "backup.error.invalid_light_entity": "The leading light must be a light.* or switch.* entity",
   "backup.error.invalid_marker_control": "Invalid marker control reference",

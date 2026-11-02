@@ -5,11 +5,17 @@ import { commitWallSegmentModel } from './wall-segment-model';
 import type { PlanGraph, GraphPatch, GraphEdgeRef } from './plan-graph';
 import type { ServerConfig } from './types';
 import { contentFingerprint } from './visual-continuity';
+import { graphDigest } from './graph-digest';
 
-export interface LegacyGraphChange {
+export interface LegacyGraphChangeV2 {
+  version: 2;
+  spaces: Array<{ space_id: string; base_digest: string; patch: GraphPatch }>;
+}
+export interface LegacyGraphChangeV1 {
   version: 1;
   spaces: Array<{ space_id: string; base: PlanGraph; patch: GraphPatch }>;
 }
+export type LegacyGraphChange=LegacyGraphChangeV1|LegacyGraphChangeV2;
 const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const edgeKey = (edge: GraphEdgeRef): string => edge.kind + ':' + edge.id;
 
@@ -36,19 +42,20 @@ export function graphPatch(before: PlanGraph, after: PlanGraph): GraphPatch {
 }
 
 export function legacyGraphWriteChange(accepted: ServerConfig | null | undefined,
-  candidate: ServerConfig): LegacyGraphChange | undefined {
+  candidate: ServerConfig, version:1|2=2): LegacyGraphChange | undefined {
   if (!accepted || Number(accepted.model_version || 0) >= 11 || Number(candidate.model_version) !== 11)
     return undefined;
   const baseline = commitWallSegmentModel(accepted).config;
   const previous = new Map(baseline.spaces.map(s => [String(s.id), s]));
-  const spaces: LegacyGraphChange['spaces'] = [];
+  const spaces: LegacyGraphChangeV2['spaces'] = [],legacySpaces:LegacyGraphChangeV1['spaces']=[];
   for (const space of candidate.spaces) {
     const source = previous.get(String(space.id));
     // New/deleted floors are independently checked against the submitted
     // namespace by the ordinary config writer. Existing floors get a delta.
     if (!source?.plan_graph || !space.plan_graph) continue;
-    spaces.push({space_id:String(space.id),base:source.plan_graph,
-      patch:graphPatch(source.plan_graph,space.plan_graph)});
+    const patch=graphPatch(source.plan_graph,space.plan_graph);
+    if(version===1)legacySpaces.push({space_id:String(space.id),base:source.plan_graph,patch});
+    else spaces.push({space_id:String(space.id),base_digest:graphDigest(source.plan_graph),patch});
   }
-  return {version:1,spaces};
+  return version===1?{version:1,spaces:legacySpaces}:{version:2,spaces};
 }
