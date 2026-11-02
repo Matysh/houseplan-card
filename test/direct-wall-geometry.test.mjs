@@ -33,6 +33,17 @@ test('exact predicates retain a real dyadic gap and irrational diagonal intersec
  const tiny=R.exact(1n,1n<<5000n);
  assert.equal(R.orientation([R.ZERO,R.ZERO],[R.ONE,tiny],[R.ONE,R.ZERO]).n,-1n,'derived predicates do not inherit the persisted integer cap');
 });
+
+test('predicate-only signs agree with independently reduced rational determinants',()=>{
+ const sign=n=>n<0n?-1:n>0n?1:0;
+ for(let i=1n;i<=127n;i++){
+  const a=[R.exact(i-65n,i+1n),R.exact(i*i-100n,17n)],b=[R.exact(-i,19n),R.exact(i+7n,i+3n)],c=[R.exact(2n*i,23n),R.exact(-i*i,29n)];
+  assert.equal(R.orientationSign(a,b,c),sign(R.orientation(a,b,c).n));
+  assert.equal(R.crossSign(a,b),sign(R.cross(a,b).n));
+ }
+ const tiny=R.exact(1n,1n<<5000n);
+ assert.equal(R.orientationSign([R.ZERO,R.ZERO],[R.ONE,tiny],[R.ONE,R.ZERO]),-1);
+});
 test('shared and distinct equal-coordinate IDs join identically; no graph mutation',()=>{
  const shared=graph([[0,0],[10,0],[0,10]],[[0,1],[0,2]]),separate=graph([[0,0],[10,0],[0,0],[0,10]],[[0,1],[2,3]]);
  const before=JSON.stringify(separate),a=build(shared),b=build(separate);

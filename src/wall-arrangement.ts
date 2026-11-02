@@ -26,7 +26,14 @@ export function clean(poly:Polygon):Polygon {
   const result=poly.filter((p,i)=>!i||!Q.pointEq(p,poly[i-1]));
   if(result.length>1&&Q.pointEq(result[0],result[result.length-1]))result.pop();
   if(result.length<3||!area(result).n)return [];
-  return result;
+  // The arrangement may split one straight facade at many material endpoints.
+  // Keep exact coverage, but do not hand all those internal events to SVG,
+  // clean-floor booleans and every other downstream consumer as real corners.
+  return result.filter((p,i)=>{
+    const a=result[(i+result.length-1)%result.length],b=result[(i+1)%result.length];
+    return Q.orientationSign(a,p,b)!==0||Q.cmp(Q.sub(p[0],a[0]),Q.ZERO)*Q.cmp(Q.sub(p[0],b[0]),Q.ZERO)>0
+      ||Q.cmp(Q.sub(p[1],a[1]),Q.ZERO)*Q.cmp(Q.sub(p[1],b[1]),Q.ZERO)>0;
+  });
 }
 export function polygon(points:readonly (readonly number[])[]):Polygon {
   const result=clean(points.map(numericPoint));
@@ -55,14 +62,13 @@ export function query<T>(node:Tree<T>|undefined,box:Box,out:T[]=[]):T[]{
   return out;
 }
 const sign=(q:Q.Exact)=>q.n<0n?-1:q.n>0n?1:0;
-const symbolic=(constant:Q.Exact,linear:Q.Exact)=>sign(constant)||sign(linear);
 /** Winding at p + epsilon*d, epsilon positive infinitesimal; no sample epsilon. */
 export function contains(poly:Polygon,p:Point,d:Point=[Q.ZERO,Q.ZERO]):boolean {
   let winding=0;
   for(let i=0;i<poly.length;i++){
     const a=poly[i],b=poly[(i+1)%poly.length];
-    const ay=symbolic(Q.sub(a[1],p[1]),Q.neg(d[1])),by=symbolic(Q.sub(b[1],p[1]),Q.neg(d[1]));
-    const side=symbolic(Q.orientation(a,b,p),Q.cross(Q.pointSub(b,a),d));
+    const ay=Q.cmp(a[1],p[1])||-sign(d[1]),by=Q.cmp(b[1],p[1])||-sign(d[1]);
+    const side=Q.orientationSign(a,b,p)||Q.crossSign(Q.pointSub(b,a),d);
     if(ay<=0&&by>0&&side>0)winding++;
     if(by<=0&&ay>0&&side<0)winding--;
   }
@@ -92,7 +98,7 @@ export function subtractConvex(subject:Polygon,cut:Polygon):Polygon[]{
 }
 export function angleCompare(a:Point,b:Point):number {
   const half=(v:Point)=>v[1].n>0n||!v[1].n&&v[0].n>=0n?0:1;
-  return half(a)-half(b)||-sign(Q.cross(a,b));
+  return half(a)-half(b)||-Q.crossSign(a,b);
 }
 interface Segment {a:Point;b:Point;box:Box;cuts:Map<string,Point>;index:number}
 const between=(t:Q.Exact)=>Q.cmp(t,Q.ZERO)>=0&&Q.cmp(t,Q.ONE)<=0;
@@ -130,7 +136,8 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
     const hit=Q.intersection(a.a,a.b,b.a,b.b);
     if(hit&&between(hit.t)&&between(hit.u)){a.cuts.set(pointKey(hit.p),hit.p);b.cuts.set(pointKey(hit.p),hit.p);}
   }
-  const polyTree=tree(polys,p=>bounds(p)),atomic=new Map<string,[Point,Point]>();
+  const boxes=new Map(polys.map(p=>[p,bounds(p)]));
+  const polyTree=tree(polys,p=>boxes.get(p)!),atomic=new Map<string,[Point,Point]>();
   for(const segment of segments){
     const points=[...segment.cuts.values()].sort(Q.pointCmp);
     for(let i=0;i+1<points.length;i++)atomic.set(pointKey(points[i])+'|'+pointKey(points[i+1]),[points[i],points[i+1]]);
@@ -138,7 +145,7 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
   const edges:Array<{a:Point;b:Point;used:boolean}>=[];
   for(const[a,b]of atomic.values()){
     const mid=Q.pointAt(a,b,Q.exact(1n,2n)),delta=Q.pointSub(b,a),left:Point=[Q.neg(delta[1]),delta[0]];
-    const pointBox=bounds([mid]),candidates=query(polyTree,pointBox).filter(p=>overlaps(bounds(p),pointBox));
+    const pointBox=bounds([mid]),candidates=query(polyTree,pointBox).filter(p=>overlaps(boxes.get(p)!,pointBox));
     const l=candidates.some(p=>contains(p,mid,left)),r=candidates.some(p=>contains(p,mid,[Q.neg(left[0]),Q.neg(left[1])]));
     if(l!==r)edges.push({a:l?a:b,b:l?b:a,used:false});
   }

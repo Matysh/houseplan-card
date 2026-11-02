@@ -102,5 +102,14 @@ node reducer в synthetic authority, adoption ответа и два RAF. Это
 карточки до accepted frame, плюс retained heap после forced GC в каждой серии;
 кратковременная аллокация и GC внутри одного синхронного task не наблюдаются.
 
+Первый кандидат выявил реальную регрессию повторных rational→Number conversions
+в AABB-поиске. Профиль `toNumber` объяснил большую часть CPU. Derived rationals
+неизменяемы: их rounded projection теперь memoized в WeakMap, polygon boxes
+строятся один раз на arrangement. Геометрические predicates/допуски не менялись.
+Predicate-only orientation/cross signs очищают положительные знаменатели без
+ненужного gcd; отдельный rational oracle проверяет знаки, включая 5000-битный
+знаменатель. Точные коллинеарные промежуточные события не передаются далее как
+углы итоговой границы. Это не epsilon-cleanup и не удаление настоящих отверстий.
+
 Размеры записываются без изменения лимитов ради PASS. Итоговые результаты и
 сырые отчёты прикладываются после окончательного прогона.

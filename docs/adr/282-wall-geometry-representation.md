@@ -71,8 +71,8 @@ microscopic legacy discrepancies within an original Euclidean bound, without
 asking the user. Current graphs are edited by explicit operations, never
 reconstructed from polygon projections. Original paired backups, atomicity,
 ACL/CAS and ordinary Undo remain required. [PLAN-GRAPH.md](../PLAN-GRAPH.md)
-defines the wire, numerical bounds and writer/transport boundary. Stage 4's
-closed-form masonry is not included.
+defines the wire, numerical bounds and writer/transport boundary. That
+stages-2–3 delivery did not include Stage 4 masonry; #1216 completes it below.
 
 ## Original staged decision (historical)
 
