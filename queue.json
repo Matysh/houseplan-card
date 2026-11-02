@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1164,
-  "nextTicket": 84,
+  "revision": 1165,
+  "nextTicket": 85,
   "nextFence": 84,
   "tasks": {
     "1126": {
@@ -1374,6 +1374,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1216": {
+      "issue": 1216,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/issue-1216-direct-wall-junctions",
+      "materialSha": "c90041db2988466f8412c1d4a05ccce724a5079b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 84,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793657484432,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1478,7 +1492,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1216
+  ],
   "active": null,
   "events": {
     "github:41504682134:1:label:spec-request": {
@@ -1520,6 +1536,19 @@
     "github:41508000787:1:completions:report:42f740964b0278d9d121af2c1caa3192dbed059d694fb74455558c1c72739b95": {
       "digest": "2d5fc0e77413ce9f5cb6e582c446f8a890d2ad4b3231d20089e1181b7bd9505f",
       "issue": 1216
+    },
+    "finish:76fee0a2-808b-4b07-b51c-a30b938993cb": {
+      "digest": "ee6d764f3a24111019baa79c57fbd4520de5ef2cf4f7e684ac42fb9b8ad4ec83",
+      "issue": 1216,
+      "message": {
+        "kind": "queued",
+        "issue": 1216,
+        "at": 1793657484432,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c90041db2988466f8412c1d4a05ccce724a5079b"
+      }
     }
   },
   "devWebhook": {
