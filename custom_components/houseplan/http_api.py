@@ -122,7 +122,7 @@ class HouseplanImportPreviewView(HomeAssistantView):
         owner_id = str(getattr(user, "id", ""))
         try:
             # Hold the global writer only while taking one coherent store
-            # snapshot. Parsing up to 8 MiB, schema validation and space remap
+            # snapshot. Parsing up to 32 MiB, schema validation and space remap
             # are CPU work and apply will revalidate both revisions anyway.
             async with runtime.write_lock:
                 pair = await async_resolve_pending_pair(runtime)

@@ -721,7 +721,7 @@ def create_export(
         document, ensure_ascii=False, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
     if len(encoded) > MAX_EXPORT_BYTES:
-        raise ImportFailure("too_large", "Export is larger than 8 MiB")
+        raise ImportFailure("too_large", "Export is larger than 32 MiB")
     # Export and Import must agree on the actual portable document, not merely
     # on its marker subtrees. This is a pure dry run: no preview token, staging,
     # live config writes or HA registry-dependent repairs are involved.
