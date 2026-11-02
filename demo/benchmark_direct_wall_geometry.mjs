@@ -50,6 +50,7 @@ const saveReport=complete=>{
  const report={schema:1,issue:1216,complete,runnerSHA256,rootFingerprint:loadedFingerprint,node:process.version,cpu:cpus()[0].model,browser:browser.version(),viewport:[1440,1000],series:seriesCount,warmups,samples,
   fixture:'makeSelectiveInvalidationFixture(true) -> model11',fixtureSHA256:createHash('sha256').update(JSON.stringify(fixture)).digest('hex'),
   transport:'deterministic synthetic authority using production exact node reducer; no HA/network latency claim',
+  coldReadiness:'static warm-boot placement cache reset; load/data complete, actual masonry, boot/fade/settle/soft ended, continuity steady and interactive',
   heapSampling:'maximum usedJSHeapSize sampled on every animation frame from cold card creation through accepted node frame; retained heap after CDP forced GC once per series; allocations born and collected within one synchronous task are not observable',rows};
  writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 };
@@ -84,9 +85,14 @@ try{
    if(window.__directHeapRAF)cancelAnimationFrame(window.__directHeapRAF);
    window.__directPeakHeap=0;
    const sampleHeap=()=>{window.__directPeakHeap=Math.max(window.__directPeakHeap,performance.memory?.usedJSHeapSize??0);window.__directHeapRAF=requestAnimationFrame(sampleHeap);};
-   sampleHeap();const start=performance.now(),card=document.createElement('houseplan-card');
-   card.setConfig({type:'custom:houseplan-card',language:'en'});old.remove();document.getElementById('host').appendChild(card);window.__card=card;card.hass=hass;
-   while(card._booting!==false||card._space!=='f1'||!card._floorCacheBuilds.wallUnion||!card.renderRoot.querySelector('.wallbody-fill')){
+   sampleHeap();const start=performance.now();old.remove();
+   customElements.get('houseplan-card')._warmBootReset?.();
+   const card=document.createElement('houseplan-card');
+   card.setConfig({type:'custom:houseplan-card',language:'en'});document.getElementById('host').appendChild(card);window.__card=card;card.hass=hass;
+   while(card._booting!==false||card._loading||card._bootFading||card._bootSettling||card._bootSoft
+      ||!card._loadOk||!card._continuityDataReady||!card._continuity.hasCompleteFrame
+      ||card._continuity.state!=='steady'||card._continuity.overlayBlocksInteraction
+      ||card._space!=='f1'||!card._floorCacheBuilds.wallUnion||!card.renderRoot.querySelector('.wallbody-fill')){
     if(performance.now()-start>15000)throw Error('cold-open did not settle');await frame();
    }
    await card.updateComplete;await frame();const cold=performance.now()-start,before={...card._floorCacheBuilds};

@@ -101,6 +101,16 @@ node reducer в synthetic authority, adoption ответа и два RAF. Это
 сетевой задержки или скорости HA. Heap — максимум покадровых samples от создания
 карточки до accepted frame, плюс retained heap после forced GC в каждой серии;
 кратковременная аллокация и GC внутри одного синхронного task не наблюдаются.
+Heap в обычных временных отчётах квантован Chromium и остаётся диагностикой.
+Для приёмки памяти `memory.mjs` повторяет journey с
+`--enable-precise-memory-info`: три серии, пять warmups и один sampled journey
+на серию. Эти отдельные raw reports сравнивают точный покадровый peak и retained
+heap при одинаковой длине серий. Их тайминги не подмешиваются в 60 timing samples.
+Холодный прогон также сбрасывает static warm-boot placement cache и ждёт
+окончания boot/fade/settle/soft и `continuity.state=steady`. Ранний диагностический
+прогон измерял тёплый remount с `_bootSoft=true`, поэтому следующая смена этажа
+перекрывалась со стабилизацией камеры. Окончательные before/after серии не
+используют эти преждевременные cold/switch данные.
 
 Первый кандидат выявил реальную регрессию повторных rational→Number conversions
 в AABB-поиске. Профиль `toNumber` объяснил большую часть CPU. Derived rationals
