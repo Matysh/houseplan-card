@@ -29,6 +29,8 @@ import {
 } from './summary-panel-picker';
 import { cleanFloorFingerprint, floorRecordKeyMemo } from './floor-geometry-key';
 import type { FrameRect } from './view-frame';
+import './hp-summary-weather';
+import type { HpSummaryWeather } from './hp-summary-weather';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -196,6 +198,8 @@ export class LoadedSummaryPanelRuntime {
 
   public visibility(kind: 'hidden' | 'visible' | 'pageshow'): void {
     if (kind === 'hidden') {
+      const weather = this.host.renderRoot.querySelector<HpSummaryWeather>('hp-summary-weather');
+      if (weather) weather.active = false;
       if (this.clockTimer) clearTimeout(this.clockTimer);
       this.clockTimer = 0;
       this.syncPresentation(true);
@@ -273,6 +277,9 @@ export class LoadedSummaryPanelRuntime {
   /** Wake a filtered HA render only when an open picker composition changed. */
   public observeHassComposition(): boolean {
     this.syncLifecycle();
+    // Weather owns its own Lit updates. A weather-only HA tick never wakes the plan.
+    const weather = this.host.renderRoot.querySelector<HpSummaryWeather>('hp-summary-weather');
+    if (weather) weather.hass = this.host.hass;
     if (!this.dialog || this.dialog.localOnly) return false;
     const previous = this.entityIndex;
     this.refreshEntityIndex();
@@ -338,7 +345,10 @@ export class LoadedSummaryPanelRuntime {
                 : html`<strong class="hpf-reading-value">${state.kind === 'ready' ? state.text : this.t('summary.unavailable')}</strong>`}
             </div>`;
           }) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_block')}</div>`}
-        </section>`) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_space')}</div>`}
+        </section>`) : config.weather?.enabled ? nothing : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_space')}</div>`}
+        ${config.weather?.enabled ? html`<hp-summary-weather .hass=${this.host.hass} .config=${config.weather}
+          .language=${langOf(this.host.hass, this.host._config?.language)}
+          .active=${this.presentation.interactive && this.host.ownerDocument.visibilityState !== 'hidden'}></hp-summary-weather>` : nothing}
       </div>
     </aside>`;
   }

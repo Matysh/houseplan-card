@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add Low only to Zigbee signal visibility: system LQI numbers stay on the plan only at ≤50. Spaces can override the mode, while existing settings retain their meaning. [#1130](https://github.com/Matysh/houseplan-card/issues/1130)
+- Add an optional weather widget at the bottom of the summary panel, with current conditions, three daily forecasts and a saved Home Assistant weather source. Forecast updates do not repaint the plan. [#1174](https://github.com/Matysh/houseplan-card/issues/1174)
 
 - Kiosk field interaction reveals a compact left-edge space switcher that works while zoomed and hides after five idle seconds without changing the camera. Fixed floors and single-space profiles omit it. [#1127](https://github.com/Matysh/houseplan-card/issues/1127)
 

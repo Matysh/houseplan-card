@@ -2627,6 +2627,10 @@ SUMMARY_PANEL_SCHEMA = vol.All(vol.Schema({
     vol.Required("title"): _SUMMARY_TITLE,
     vol.Required("show_on_mobile"): bool,
     vol.Required("blocks"): vol.All([_SUMMARY_BLOCK_SCHEMA], vol.Length(max=10)),
+    vol.Optional("weather"): vol.Schema({
+        vol.Required("enabled"): bool,
+        vol.Optional("entity_id"): vol.All(_summary_text(500), vol.Match(r"^weather\.[a-z0-9_]+$")),
+    }, extra=vol.ALLOW_EXTRA),
 }, extra=vol.ALLOW_EXTRA), _summary_panel_invariants)
 
 
@@ -2825,6 +2829,9 @@ def summary_panel_entity_ids(panel: object) -> set[str]:
     ids: set[str] = set()
     if not isinstance(panel, dict):
         return ids
+    weather = panel.get("weather")
+    if isinstance(weather, dict) and isinstance(weather.get("entity_id"), str):
+        ids.add(weather["entity_id"])
     for block in panel.get("blocks") or []:
         if not isinstance(block, dict):
             continue
@@ -2843,6 +2850,11 @@ def validate_summary_panel_references(
     if not isinstance(panel, dict) or panel.get("version") != 1:
         return
     old_panel = ((previous or {}).get("settings") or {}).get("summary_panel")
+    weather_entity = (panel.get("weather") or {}).get("entity_id")
+    old_weather = (old_panel or {}).get("weather") if isinstance(old_panel, dict) else None
+    if weather_entity and weather_entity not in readable_entity_ids:
+        if not isinstance(old_weather, dict) or old_weather.get("entity_id") != weather_entity:
+            raise vol.Invalid("new summary weather reference must be readable")
     old_blocks = {
         block.get("id"): block for block in (old_panel or {}).get("blocks", [])
         if isinstance(block, dict) and block.get("id")

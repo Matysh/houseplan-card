@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1174,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Adds an optional HA weather widget to the summary panel, including daily forecasts and explicit source selection.",
+  "summary": {
+    "ru": "Погода и прогноз на три дня в сводной панели, с выбором источника Home Assistant.",
+    "en": "Weather and a three-day forecast in the summary panel, using a selected Home Assistant source."
+  }
+}

@@ -43,6 +43,26 @@ def test_summary_v1_schema_accepts_bounded_content_and_rejects_duplicate_ids():
         v.CONFIG_SCHEMA(config(duplicate))
 
 
+def test_weather_namespace_roundtrip_and_reference_validation():
+    value = panel()
+    value["blocks"] = []
+    value["weather"] = {"enabled": True, "entity_id": "weather.home"}
+    previous = config(value)
+    checked = v.prepare_ordinary_summary_candidate(previous, config(), {"weather.home"}, v.CONFIG_SCHEMA)
+    assert checked["settings"]["summary_panel"] == value
+    assert "weather.home" in v.summary_panel_entity_ids(value)
+    omitted = config()
+    v.preserve_summary_panel_namespace(omitted, previous)
+    assert omitted["settings"]["summary_panel"]["weather"] == value["weather"]
+    # A deleted source remains editable; introducing an unreadable one is rejected.
+    v.validate_summary_panel_references(config(value), previous, set())
+    with pytest.raises(vol.Invalid, match="weather reference"):
+        v.validate_summary_panel_references(config(value), config(), set())
+    value["weather"]["entity_id"] = "sensor.temperature"
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA(config(value))
+
+
 @pytest.mark.parametrize("mutation", [
     lambda p: p.update(title=""),
     lambda p: p.update(title="   "),

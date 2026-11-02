@@ -92,6 +92,9 @@ function runnableSummaryPanel(raw: unknown): raw is SummaryPanelConfig {
   const panel = raw;
   if (panel.version !== 1 || typeof panel.title !== 'string'
       || typeof panel.show_on_mobile !== 'boolean' || !Array.isArray(panel.blocks)) return false;
+  if (panel.weather !== undefined && (!record(panel.weather) || typeof panel.weather.enabled !== 'boolean'
+      || panel.weather.entity_id !== undefined && (typeof panel.weather.entity_id !== 'string'
+        || !/^weather\.[a-z0-9_]+$/.test(panel.weather.entity_id)))) return false;
   return panel.blocks.every((candidate) => {
     if (!record(candidate) || typeof candidate.id !== 'string'
         || typeof candidate.title !== 'string' || typeof candidate.visible !== 'boolean'
@@ -133,6 +136,7 @@ export function summaryPanelEntityIds(
 ): readonly string[] {
   if (!config || !runnableSummaryPanel(config)) return [];
   const ids = new Set<string>();
+  if (config.weather?.entity_id) ids.add(config.weather.entity_id);
   for (const block of config.blocks) for (const value of block.values) {
     if (value.source.type !== 'entity') continue;
     const id = cleanText(value.source.entity_id);
@@ -171,6 +175,10 @@ export function validateSummaryDraft(
     else if (cpLength(normalized) > max) out.push({ path, kind: 'error', code: 'limit' });
   };
   text(draft.title, SUMMARY_PANEL_LIMITS.title, 'title');
+  const weatherEntity = draft.weather?.entity_id;
+  if (weatherEntity && (!/^weather\.[a-z0-9_]+$/.test(weatherEntity) || !entityIds.has(weatherEntity))) {
+    out.push({ path: 'weather.entity_id', kind: base?.weather?.entity_id === weatherEntity ? 'warning' : 'error', code: 'missing_entity' });
+  }
   if (draft.blocks.length > SUMMARY_PANEL_LIMITS.blocks) {
     out.push({ path: 'blocks', kind: 'error', code: 'limit' });
   }

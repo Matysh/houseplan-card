@@ -12,6 +12,9 @@ import {
   searchSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
 import { summaryIcon } from './summary-panel-icons';
+import { weatherSources } from './summary-weather';
+import { weatherText } from './summary-weather-i18n';
+import { langOf } from './i18n';
 
 export type SummaryPanelEditorContext = {
   host: SummaryPanelHost;
@@ -43,6 +46,9 @@ export type SummaryPanelEditorRenderer = (
 /** Lazy settings surface for #437; imported only after the gear is pressed. */
 export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) => {
   const { host, dialog, problems, t } = context;
+  const sources = weatherSources(host.hass?.states);
+  const weather = dialog.draft.weather;
+  const weatherT = (key: Parameters<typeof weatherText>[1]) => weatherText(langOf(host.hass, host._config?.language), key);
   const firstError = problems.find((problem) => problem.kind === 'error');
   const changed = dialog.localShow !== dialog.baseLocalShow
     || !dialog.localOnly && !sameSummaryPanel(normalizeSummaryDraft(dialog.draft), dialog.base);
@@ -93,6 +99,31 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
             draft.show_on_mobile = (event.target as HTMLInputElement).checked;
           })} /></label>` : nothing}
         </div>
+        ${!dialog.localOnly ? html`<div class="summary-weather-settings hpf-divider-before">
+          <div class="summary-weather-setting-row">
+            <label class="hpf-check"><input type="checkbox" data-hp="field" data-field="summary-weather-enabled"
+              aria-label=${weatherT('show')} .checked=${weather?.enabled === true} ?disabled=${dialog.busy}
+              @change=${(event: Event) => context.mutate(draft => {
+                const enabled = (event.target as HTMLInputElement).checked;
+                draft.weather = { ...draft.weather, enabled,
+                  ...(!draft.weather?.entity_id && enabled && sources.length === 1 ? { entity_id: sources[0].id } : {}) };
+              })}><span>${weatherT('show')}</span></label>
+            ${weather?.enabled && (sources.length > 1 || weather.entity_id && !sources.some(source => source.id === weather.entity_id))
+              ? html`<hp-settings-select><select class="hpf-select" data-hp="field" data-field="summary-weather-entity"
+                  aria-label=${weatherT('source')} .value=${weather.entity_id || ''} ?disabled=${dialog.busy}
+                  @change=${(event: Event) => context.mutate(draft => {
+                    const entity = (event.target as HTMLSelectElement).value;
+                    draft.weather = { enabled: true, ...(entity ? { entity_id: entity } : {}) };
+                  })}>
+                  <option value="" ?selected=${!weather.entity_id}>${weatherT('choose')}</option>
+                  ${weather.entity_id && !sources.some(source => source.id === weather.entity_id)
+                    ? html`<option value=${weather.entity_id} selected>${weatherT('removed')} · ${weather.entity_id}</option>` : nothing}
+                  ${sources.map(source => html`<option value=${source.id} ?selected=${source.id === weather.entity_id}>${source.name} · ${source.id}</option>`)}
+                </select></hp-settings-select>` : nothing}
+          </div>
+          ${weather?.enabled && !sources.length ? html`<p class="hpf-hint">${weatherT('no_source')}</p>` : nothing}
+          ${fieldProblem('weather.entity_id') ? html`<p class="hpf-hint">${problemText(fieldProblem('weather.entity_id'))}</p>` : nothing}
+        </div>` : nothing}
         ${context.storageUnavailable
           ? html`<div class="summary-problem hpf-note-warning warning">${t('summary.storage_unavailable')}</div>` : nothing}
       </section>

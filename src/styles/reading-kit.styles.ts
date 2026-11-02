@@ -81,6 +81,11 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-reading-value { min-width:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; text-align:end; }
   .hpf-reading-pair { box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,auto); align-items:baseline; gap:10px; min-height:36px; padding:8px 0; border-bottom:1px solid var(--divider-color); }
   .hpf-reading-pair:last-child { border-bottom:0; }
+  .hpf-reading-pair-compact { margin:0; padding:0; }
+  .hpf-reading-pair.hpf-reading-pair-compact > strong { font-weight:500; }
+  .hpf-reading-action { display:block; width:100%; box-sizing:border-box; border:0; padding:8px 11px 10px; border-radius:0 0 var(--rad-m,11px) var(--rad-m,11px); background:transparent; color:inherit; font:inherit; text-align:start; cursor:pointer; transition:background var(--hpf-paint-duration) var(--hpf-paint-easing); }
+  .hpf-reading-action:hover { background:color-mix(in srgb,var(--primary-color) 7%,transparent); }
+  .hpf-reading-action:focus-visible { outline:2px solid var(--primary-color); outline-offset:-2px; }
   .hpf-reading-pair > strong { font-weight:700; }
   .hpf-reading-pair > strong:not(.hpf-loading-value) { animation:hp-ui-appear var(--hpf-appear-duration) var(--hpf-appear-easing) both; }
   .hpf-reading-empty { margin:0; padding:10px 11px; color:var(--secondary-text-color); }

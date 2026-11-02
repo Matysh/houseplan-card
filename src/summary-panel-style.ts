@@ -35,6 +35,22 @@ export const summaryPanelCss = `
   }
   .summary-block { margin:0 0 9px; }
   .summary-block:last-child { margin-bottom:0; }
+  hp-summary-weather { display:block; }
+  .summary-weather { margin-top:12px; }
+  .summary-scroll > hp-summary-weather:first-child .summary-weather { margin-top:0; }
+  .summary-weather-now { display:flex; align-items:center; gap:10px; margin:0 0 12px; }
+  .summary-weather-now > ha-icon { --mdc-icon-size:36px; color:var(--primary-color); }
+  .summary-weather-now > strong { font-size:32px; font-weight:500; line-height:1.2; white-space:nowrap; }
+  .summary-weather-now > span { color:var(--secondary-text-color); font-size:var(--fs-m,12px); }
+  .summary-weather-meta { display:grid; gap:5px; font-size:var(--fs-m,12px); }
+  .summary-weather-forecast { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:0; padding-top:12px; }
+  .summary-weather-forecast > div { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:var(--fs-m,12px); }
+  .summary-weather-forecast ha-icon { --mdc-icon-size:24px; color:var(--secondary-text-color); }
+  .summary-weather-forecast small { color:var(--secondary-text-color); }
+  .summary-weather-settings { padding-top:14px; margin-top:14px; }
+  .summary-weather-setting-row { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .summary-weather-setting-row > hp-settings-select { flex:1; min-width:min(220px,100%); }
+  .summary-weather-setting-row > .hpf-check { flex-shrink:0; }
   .summary-value { margin:0 11px; }
   .summary-measure {
     position: fixed;

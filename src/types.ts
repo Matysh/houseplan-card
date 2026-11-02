@@ -403,6 +403,7 @@ export interface SummaryPanelConfig extends Record<string, unknown> {
   title: string;
   show_on_mobile: boolean;
   blocks: SummaryPanelBlock[];
+  weather?: { enabled: boolean; entity_id?: string };
 }
 
 export type MarkerAreaBinding = `device:${string}` | `entity:${string}`;

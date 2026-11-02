@@ -607,6 +607,13 @@ New entity and space references are checked identically at `config/set` and
 `plan/optimize`; an unchanged old broken reference remains editable and is
 shown as a warning.
 
+Version 1 also accepts optional `weather: { enabled: boolean, entity_id?: string }`.
+The weather source is a saved `weather.*` reference, checked for readability on
+new assignments; an unchanged deleted source remains editable. Forecasts and
+current weather are runtime HA data, never stored in this namespace. Older
+clients preserve the optional object. The diagnostic support projection omits
+weather configuration and its runtime data.
+
 An old ordinary client that omits an existing namespace cannot erase it. A
 bounded future version is preserved losslessly but stays inert in an older
 frontend. Full backup/restore remains authoritative. Per-user/per-card show and
