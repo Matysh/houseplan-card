@@ -2710,9 +2710,16 @@ public _markupClick(ev: MouseEvent): void {
     // contour may become a nested room (a column, an inner room). Partial
     // overlaps are still rejected, but only at closing time, when the whole
     // outline is known (roomsOverlap treats full nesting as legal).
+    let clickedTarget: TargetPointRef | undefined;
+    try { clickedTarget = this._drawTarget(resolved.candidate); }
+    catch (error) {
+      this._legacyDrawBaseline = null;
+      this._showWallModelMigrationBlocked(error);
+      return;
+    }
     if (!this.host._path.length) {
       this._drawEdgeNodes.clear();
-      this._chainStartTarget = this._drawTarget(resolved.candidate);
+      this._chainStartTarget = clickedTarget;
       this.host._activeWallChainId = `chain-${Date.now().toString(36)}`;
       this.host._activeWallChainPartitionIds = [];
       this.host._wallChainSegmentCms = [];
@@ -2738,7 +2745,7 @@ public _markupClick(ev: MouseEvent): void {
       ? { kind: 'existing-node', node: previous.to } : this._chainStartTarget;
     const closes = beforePath.length >= 3 && this._samePt(pt, beforePath[0]);
     const target: TargetPointRef | undefined = closes && first && graph?.nodes.some(n => n.id === first.from)
-      ? { kind: 'existing-node', node: first.from } : this._drawTarget(resolved.candidate);
+      ? { kind: 'existing-node', node: first.from } : clickedTarget;
     const beforeGraphSources = this._wallGraphSources([]);
     const before = this._geometrySnapshot();
     if (before) before.wallChainSeedIds = [...beforeIds];
