@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 768,
+  "revision": 769,
   "nextTicket": 64,
   "nextFence": 64,
   "tasks": {
@@ -258,6 +258,133 @@
         "materialSha": "70c2c6cfcd8ee755f143890d09e8e60e9d591412",
         "expectedBase": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
         "patchId": "f35df3bd6b558480650c5932150d9bb1f09bc287"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1179,
+        "requestId": "review:1179:1:f35df3bd6b558480650c5932150d9bb1f09bc287:c44ac63846812de2ef18a17489df7fac1b5dad7f",
+        "kind": "code",
+        "base": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
+        "materialSha": "70c2c6cfcd8ee755f143890d09e8e60e9d591412",
+        "patchId": "f35df3bd6b558480650c5932150d9bb1f09bc287",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1179,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1179",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Работа решает задачу #1179 по существу. В stable-профиле один раз, отдельным диагностическим шагом `converters-stable`, проходится путь трёх форматов. Опубликованная страница открывается в чистом контексте. Скачанные байты без изменений подаются в обычный chooser импорта изолированного HA. Затем проверяются preview/apply, сохранённые данные и отображение после reload. Отчёт различает passed / failed / unavailable и этап отказа. В нём сохранены HTML SHA256 и хеши ресурсов, версия и хеш скачанного JSON, ref и версия Houseplan, версия HA и identity companion. На готовность релиза шаг не влияет: и `classifyRun`, и `runnerReceipt` в `release.mjs` пропускают diagnostic-шаги. Бета, task и hotfix не расширены, это закреплено тестом. Использован существующий `runE2E` с собственным контейнером и рабочим каталогом. Второй Docker-менеджер не появился, companion не редактировался. Настоящий прогон 41456147729 по описанию исполнителя честно дал 1 PASS / 2 FAIL с отдельными багами, ассерты не ослаблялись. Блокеров не нашёл. Остаются эксплуатационные риски, их стоит закрыть до первого stable или сразу после. Возможны дубликаты багов к уже заведённым вручную #1210/#1211. В общем отчёте runner недоступное окружение показывается как `failed`. Успешный результат кешируется, хотя внешний сайт мог измениться. Резервный workflow отдаёт токен с `issues: write` всему набору, а не только публикации.",
+          "understanding": "Проблема: в houseplan-e2e не было сквозного пути «UI опубликованного конвертера → скачанный файл → UI импорта в настоящем HA». Раньше в каталоге вместо этого стояла заглушка `converterStep()` со статусом unavailable. Владелец решил: отказ конвертера показывается и заводится багом, но stable Houseplan не блокирует.\n\nПосле изменения:\n- `process-next/converters/cases.mjs` описывает три синтетические фикстуры из `scripts/sh3d-convert/fixtures` и их характерные ожидания. Ожидания сверены с golden: «Full transfer», маркер `light.strip` с glow 150/#aabbcc, «Night script» → `script.night`.\n- `journeys.spec.mjs` при подготовке копируется в private workspace companion. Каждый сценарий открывает https://houseplan.tech/convert/ в новом контексте с пустым storageState и записывает хеши HTML, JS и CSS. Затем выбирает формат кнопкой `data-format`, если его нет — падает с явным сообщением. Дальше native chooser, скачивание, проверка JSON против фикстуры. Потом импорт тех же байтов через `chooseBackup`: preview, apply, toast. Сверяет добавленное пространство с исходным, после reload проверяет `toEqual` сохранённых данных и видимость комнат, проёмов и маркеров. Этап и статус пишутся в per-format JSON на каждом переходе, так что прерывание не превращается в PASS.\n- `prepare.mjs` генерирует базовый конфиг с проектом `converters`, который зависит только от `setup`. `selectedConfig` в `e2e.mjs` для этого набора оставляет только `setup`, без plan-model.\n- `lib/converters.mjs` собирает шаг плана (`companion-identity` входит в команду), сводный report.json/.md и публикует баги с дедупликацией по маркеру или заголовку. Публикация включается флагом `--publish-failures` только в stable.\n- В `catalog.mjs` stable-шаг требует `release-package`, ставит готовый candidateRoot и запускается после `release-measurements` и последнего E2E. Измерения ждут только не-diagnostic шаги, поэтому цикла нет.\n- Резерв: `event=converters` ставит точный source SHA. Workflow получает `issues: write`, а `GITHUB_TOKEN` передаётся в шаг запуска набора.\n\nРазобраны пути: `planProfile` (stable/converters/task/beta/hotfix), `runPlan` (`after`/`requires`, blocked, identity и кеш, restoreReports), `executeStep` (exit code и PROCESS_NEXT_RESULT), `runE2E` (copy, config, discovery, selectExact, контейнер, error.workspace), `release.mjs` (`runnerReceipt`/`releaseReadiness`), `prepare-fallback` (normalize/restore) и workflow.",
+          "analysis": [
+            {
+              "topic": "Подлинность пользовательского пути и отказ от подмен",
+              "assessment": "Требования п.2–3 выполнены. Сайт берётся только опубликованный: подстановки локального dist/index.html нет. Комментарий в spec прямо объясняет, почему UI опубликованного сайта отличается от офлайн-оболочки. HA-авторизация в публичный контекст не передаётся. Импортируются ровно скачанные байты, и проверка идёт через UI, а не через backend API. Перед импортом скачанный JSON сверяется с ожиданиями фикстуры, после импорта — с источником. Так видно, где разошлись данные: в конвертере или при приёме. Это решение стоит сохранить.",
+              "evidence": "`process-next/converters/journeys.spec.mjs:30` — `storageState: { cookies: [], origins: [] }`; `:66-77` — проверки скачанного документа; `:96` — `chooseBackup(..., { buffer: bytes })`; `:113-126` — сверка принятого и сохранённого после reload. Ожидания совпадают с `scripts/sh3d-convert/golden/easy-content.space-1.json:14,306-326` и с `tests_backend/test_ha_picture_elements_convert.py:47`."
+            },
+            {
+              "topic": "Не блокирует выпуск и не расширяет другие профили",
+              "assessment": "Поведение корректно. Шаг помечен `diagnostic: true`, его отказ, blocked или unavailable не меняет ни `classifyRun`, ни `runnerReceipt.ready`. В профиле stable шаг добавлен один раз. Task, beta и hotfix его не получают, `makeE2ESteps` теперь явно перечисляет три старых набора и не подхватывает converters. Порядок после замеров убирает шум в performance.",
+              "evidence": "`process-next/lib/runner.mjs:44-46`, `process-next/lib/release.mjs:27-33`, `process-next/lib/catalog.mjs:286-288,296`, `process-next/lib/e2e.mjs:77`, тест `converters.test.mjs:61-77`."
+            },
+            {
+              "topic": "Разделение исходов и устойчивость отчёта",
+              "assessment": "Per-format JSON обновляется на каждом этапе. Если записи нет, нет `finishedAt` или JSON повреждён, результат становится `unavailable`, а не failed или passed. Общий статус `passed` требует трёх PASS и успешного runE2E. `error.workspace` позволяет собрать частичные результаты, даже если упала очистка контейнера. Слабое место — уровень runner: процесс завершается с кодом 1 при любом не-passed исходе. В общем отчёте набора недоступное окружение выглядит как `failed`, а различие есть только в `converters/report.json`/`.md` и step summary. Критерий приёмки выполнен через отдельный отчёт, но в общей сводке владелец увидит «отказ».",
+              "evidence": "`process-next/lib/converters.mjs:38-56,137`; `process-next/lib/runner.mjs:88-98` — из PROCESS_NEXT_RESULT учитываются только `not-required` и `failed`."
+            },
+            {
+              "topic": "Дедупликация багов",
+              "assessment": "Механизм разумный. Сначала ищется маркер формата и HTML-идентичности в начале тела открытого issue, затем точный заголовок `[converter E2E] <format>: <phase>`. Повтор добавляет комментарий через идемпотентный `upsertComment`. Риск в переходе от ручных багов: #1210 и #1211 заведены до того, как менялась дедупликация. Если в их теле нет текущего маркера, а заголовок другой, первый stable создаст дубликаты. Проверить по исходникам нельзя: тела GitHub-issues в материале отсутствуют. Кроме того, недоступность HA на этапе импорта будет опубликована как баг конвертера. Тело бага честно говорит, что причина не установлена, это приемлемо.",
+              "evidence": "`process-next/lib/converters.mjs:80-96`; README `process-next/converters/README.md:66-71`; контекст исполнителя: дедупликация менялась после прогона 41456147729."
+            },
+            {
+              "topic": "Кеш и внешний изменяемый артефакт",
+              "assessment": "Идентичность шага включает входы набора, `release-package`, identity companion, haVersion и targetRef, но не состояние опубликованного сайта. В кеш попадает только passed. Значит, при повторе stable на том же SHA (возобновление, previous_run в резерве) прежний зелёный результат будет переиспользован, даже если сайт с тех пор изменился. Для детерминированных проверок это верно, для внешнего продукта «проверить перед каждым stable» ослабляется. Отказы не кешируются, поэтому ложного красного нет.",
+              "evidence": "`process-next/lib/converters.mjs:26-36` (нет `alwaysRun`), `process-next/lib/runner.mjs:134-137`; для сравнения `release-measurements` с `alwaysRun: true` в `catalog.mjs:249`."
+            },
+            {
+              "topic": "Резервный workflow и права токена",
+              "assessment": "`issues: write` и `GITHUB_TOKEN` выданы шагу, который выполняет весь набор: продуктовые node, browser и backend проверки, companion Playwright. `privateEnvironment` не удаляет `GITHUB_TOKEN`, так что токен доходит и до кода companion. Для публикации нужен только финальный вызов `publishConverterFailures`. Похожий прецедент уже есть в `background.yml`, а workflow запускается только через `workflow_dispatch`, поэтому это не блокер. Но привилегия шире, чем нужна.",
+              "evidence": "`.github/workflows/process-next-fallback.yml:30-33,104-107`; `process-next/lib/runner.mjs:64`; `process-next/lib/e2e.mjs:151-153`; `process-next/templates/background.yml:8-28`."
+            },
+            {
+              "topic": "Восстановление отчёта в резерве",
+              "assessment": "`restoreFallbackResults` копирует прежний `converters/report.json` без условий и перегенерирует `report.md`. Если шаг converters перезапускается, файлы перезаписываются. Если он blocked (упал `release-package`) или не запускался, устаревший отчёт прошлого прогона попадёт в `process-next-result` текущего и может быть принят за свежий. Для golden-отчётов так было и раньше, но у converters отчёт читает человек.",
+              "evidence": "`process-next/templates/prepare-fallback.mjs:88-95`; `.github/workflows/process-next-fallback.yml:122-130`."
+            },
+            {
+              "topic": "Драйвер picture-elements на будущем UI сайта",
+              "assessment": "Сейчас picture честно падает на проверке предложенных форматов (#1210). Дальнейшие шаги (`#picture-width`/`#picture-height`, `.level button`) против опубликованного UI с picture никогда не выполнялись: селекторы взяты из офлайн-оболочки, хотя автор сам отмечает, что опубликованный UI отличается. Когда #1210 исправят, расхождение драйвера с сайтом будет опубликовано как отказ конвертера на этапе conversion. Это ожидаемая граница: результат станет известен после исправления сайта.",
+              "evidence": "`process-next/converters/journeys.spec.mjs:48-60`; `scripts/sh3d-convert/page/shell.html:102,119`; `demo/helpers/picture-converter.mjs:16`."
+            },
+            {
+              "topic": "Изоляция лаборатории и companion",
+              "assessment": "Удачная интеграция. Сценарии и фикстуры копируются только в только что созданный workspace, checkout companion не меняется, что проверено тестом. Выборка строится через `selectExact` по трём точным заголовкам, а `verifyE2ESelection` отвергает лишние сценарии. Перед запуском `runConverters` сверяет identity companion с той, что была при планировании. Discovery с `--config=${baseConfig}` для обычных наборов эквивалентен прежнему поведению.",
+              "evidence": "`process-next/converters/prepare.mjs:7-27`; `process-next/lib/e2e.mjs:43-51,165-166,178-180,214`; `process-next/lib/converters.mjs:107-110`; `process-next/test/e2e.test.mjs` — новый тест converters."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "До первого stable убедиться, что #1210 и #1211 находятся текущей дедупликацией. Самое дешёвое — привести их заголовки к `[converter E2E] picture: conversion` и `[converter E2E] easy: houseplan-import` или вставить маркер `<!-- process-next-converter:<format>:<id> -->` в начало тела. Иначе первый stable, скорее всего, создаст два дубликата, что нарушает п.6 ТЗ. Подтвердить или опровергнуть можно, прочитав тела этих issue.",
+            "Передавать в runner статус `unavailable` из PROCESS_NEXT_RESULT. Например, в `executeStep` при `result.status === 'unavailable'` ставить шагу `unavailable`, а не `failed`, либо возвращать отдельный код выхода. Тогда общая сводка stable тоже различит «отказ конвертера» и «проверка не выполнена». Цена — небольшое изменение `runner.mjs` и его тест.",
+            "Пометить `converters-stable` как `alwaysRun: true` либо не кешировать его PASS. Шаг проверяет внешний изменяемый сайт, и повтор stable на том же SHA должен проверить его заново. Цена — повторные 3 сценария при возобновлении, это минуты в рамках 45-минутного лимита.",
+            "Сузить права токена в резерве. Запускать набор без `GITHUB_TOKEN`, а публикацию багов вынести в отдельный последующий шаг workflow (`if: always()`), который читает уже готовый `artifacts/process-next/converters/report.json` и вызывает `publishConverterFailures`. Тогда продуктовые тесты и код companion не получают токен с правом записи.",
+            "В `restoreFallbackResults` не копировать отчёт converters, если в кеше нет соответствующего passed-результата: он нужен только для переиспользования. Либо помечать восстановленный `report.md` как отчёт прошлого прогона с его runId. Тогда устаревший результат не будет выглядеть результатом текущего stable.",
+            "В README явно сослаться на #1105 и место шага в общем stable-запуске: этого требует последний критерий приёмки. Сейчас там «stable-профиль» без ссылки на решение процесса."
+          ],
+          "boundaries": "Ревью проведено только по исходникам: прочитаны diff и затронутые файлы целиком (`converters.mjs`, `e2e.mjs`, `catalog.mjs` в части планирования, `runner.mjs`, `storage.mjs` в части кеша, `release.mjs` в части готовности, `prepare-fallback.mjs`, оба workflow, `github.mjs`), фикстуры и golden-ожидания. Сборку, тесты, Playwright и Docker я не запускал. Хелперы companion (`tests/lib/backup.mjs`, `ha-ws.mjs`, `ha-page.mjs`, `plan.mjs`, `hooks.mjs`, `playwright.config.mjs`, `scripts/users.mjs`) в материале отсутствуют. Их работоспособность принимаю по описанию исполнителя: в прогоне 41456147729 SH3D прошёл полный путь. Логи и артефакты этого прогона, а также тела GitHub-issues #1210 и #1211 недоступны. Поэтому риск дубликатов — проверяемая гипотеза, а не установленный дефект. Шаги после импорта для easy (видимость маркеров) и весь путь импорта для picture на настоящем сайте ещё не исполнялись: их надёжность неизвестна. Использован S6-результат `20261102T135923081-6773283c` (`passed`, материал `70c2c6cf`). По описанию это синтаксис и адресные тесты converters/e2e/catalog/fallback, и он не доказывает прохождение HA-сценариев."
+        },
+        "usage": {
+          "input_tokens": 54,
+          "cache_creation_input_tokens": 140664,
+          "cache_read_input_tokens": 2296118,
+          "output_tokens": 21853,
+          "output_tokens_details": {
+            "thinking_tokens": 11939
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 140664,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 1045,
+              "cache_read_input_tokens": 121090,
+              "cache_creation_input_tokens": 23744,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 23744
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРабота решает задачу #1179 по существу. В stable-профиле один раз, отдельным диагностическим шагом `converters-stable`, проходится путь трёх форматов. Опубликованная страница открывается в чистом контексте. Скачанные байты без изменений подаются в обычный chooser импорта изолированного HA. Затем проверяются preview/apply, сохранённые данные и отображение после reload. Отчёт различает passed / failed / unavailable и этап отказа. В нём сохранены HTML SHA256 и хеши ресурсов, версия и хеш скачанного JSON, ref и версия Houseplan, версия HA и identity companion. На готовность релиза шаг не влияет: и `classifyRun`, и `runnerReceipt` в `release.mjs` пропускают diagnostic-шаги. Бета, task и hotfix не расширены, это закреплено тестом. Использован существующий `runE2E` с собственным контейнером и рабочим каталогом. Второй Docker-менеджер не появился, companion не редактировался. Настоящий прогон 41456147729 по описанию исполнителя честно дал 1 PASS / 2 FAIL с отдельными багами, ассерты не ослаблялись. Блокеров не нашёл. Остаются эксплуатационные риски, их стоит закрыть до первого stable или сразу после. Возможны дубликаты багов к уже заведённым вручную #1210/#1211. В общем отчёте runner недоступное окружение показывается как `failed`. Успешный результат кешируется, хотя внешний сайт мог измениться. Резервный workflow отдаёт токен с `issues: write` всему набору, а не только публикации.\n\n## Понимание решения\n\nПроблема: в houseplan-e2e не было сквозного пути «UI опубликованного конвертера → скачанный файл → UI импорта в настоящем HA». Раньше в каталоге вместо этого стояла заглушка `converterStep()` со статусом unavailable. Владелец решил: отказ конвертера показывается и заводится багом, но stable Houseplan не блокирует.\n\nПосле изменения:\n- `process-next/converters/cases.mjs` описывает три синтетические фикстуры из `scripts/sh3d-convert/fixtures` и их характерные ожидания. Ожидания сверены с golden: «Full transfer», маркер `light.strip` с glow 150/#aabbcc, «Night script» → `script.night`.\n- `journeys.spec.mjs` при подготовке копируется в private workspace companion. Каждый сценарий открывает https://houseplan.tech/convert/ в новом контексте с пустым storageState и записывает хеши HTML, JS и CSS. Затем выбирает формат кнопкой `data-format`, если его нет — падает с явным сообщением. Дальше native chooser, скачивание, проверка JSON против фикстуры. Потом импорт тех же байтов через `chooseBackup`: preview, apply, toast. Сверяет добавленное пространство с исходным, после reload проверяет `toEqual` сохранённых данных и видимость комнат, проёмов и маркеров. Этап и статус пишутся в per-format JSON на каждом переходе, так что прерывание не превращается в PASS.\n- `prepare.mjs` генерирует базовый конфиг с проектом `converters`, который зависит только от `setup`. `selectedConfig` в `e2e.mjs` для этого набора оставляет только `setup`, без plan-model.\n- `lib/converters.mjs` собирает шаг плана (`companion-identity` входит в команду), сводный report.json/.md и публикует баги с дедупликацией по маркеру или заголовку. Публикация включается флагом `--publish-failures` только в stable.\n- В `catalog.mjs` stable-шаг требует `release-package`, ставит готовый candidateRoot и запускается после `release-measurements` и последнего E2E. Измерения ждут только не-diagnostic шаги, поэтому цикла нет.\n- Резерв: `event=converters` ставит точный source SHA. Workflow получает `issues: write`, а `GITHUB_TOKEN` передаётся в шаг запуска набора.\n\nРазобраны пути: `planProfile` (stable/converters/task/beta/hotfix), `runPlan` (`after`/`requires`, blocked, identity и кеш, restoreReports), `executeStep` (exit code и PROCESS_NEXT_RESULT), `runE2E` (copy, config, discovery, selectExact, контейнер, error.workspace), `release.mjs` (`runnerReceipt`/`releaseReadiness`), `prepare-fallback` (normalize/restore) и workflow.\n\n## Разбор решения\n\n### Подлинность пользовательского пути и отказ от подмен\n\nТребования п.2–3 выполнены. Сайт берётся только опубликованный: подстановки локального dist/index.html нет. Комментарий в spec прямо объясняет, почему UI опубликованного сайта отличается от офлайн-оболочки. HA-авторизация в публичный контекст не передаётся. Импортируются ровно скачанные байты, и проверка идёт через UI, а не через backend API. Перед импортом скачанный JSON сверяется с ожиданиями фикстуры, после импорта — с источником. Так видно, где разошлись данные: в конвертере или при приёме. Это решение стоит сохранить.\n\nОснование: `process-next/converters/journeys.spec.mjs:30` — `storageState: { cookies: [], origins: [] }`; `:66-77` — проверки скачанного документа; `:96` — `chooseBackup(..., { buffer: bytes })`; `:113-126` — сверка принятого и сохранённого после reload. Ожидания совпадают с `scripts/sh3d-convert/golden/easy-content.space-1.json:14,306-326` и с `tests_backend/test_ha_picture_elements_convert.py:47`.\n\n### Не блокирует выпуск и не расширяет другие профили\n\nПоведение корректно. Шаг помечен `diagnostic: true`, его отказ, blocked или unavailable не меняет ни `classifyRun`, ни `runnerReceipt.ready`. В профиле stable шаг добавлен один раз. Task, beta и hotfix его не получают, `makeE2ESteps` теперь явно перечисляет три старых набора и не подхватывает converters. Порядок после замеров убирает шум в performance.\n\nОснование: `process-next/lib/runner.mjs:44-46`, `process-next/lib/release.mjs:27-33`, `process-next/lib/catalog.mjs:286-288,296`, `process-next/lib/e2e.mjs:77`, тест `converters.test.mjs:61-77`.\n\n### Разделение исходов и устойчивость отчёта\n\nPer-format JSON обновляется на каждом этапе. Если записи нет, нет `finishedAt` или JSON повреждён, результат становится `unavailable`, а не failed или passed. Общий статус `passed` требует трёх PASS и успешного runE2E. `error.workspace` позволяет собрать частичные результаты, даже если упала очистка контейнера. Слабое место — уровень runner: процесс завершается с кодом 1 при любом не-passed исходе. В общем отчёте набора недоступное окружение выглядит как `failed`, а различие есть только в `converters/report.json`/`.md` и step summary. Критерий приёмки выполнен через отдельный отчёт, но в общей сводке владелец увидит «отказ».\n\nОснование: `process-next/lib/converters.mjs:38-56,137`; `process-next/lib/runner.mjs:88-98` — из PROCESS_NEXT_RESULT учитываются только `not-required` и `failed`.\n\n### Дедупликация багов\n\nМеханизм разумный. Сначала ищется маркер формата и HTML-идентичности в начале тела открытого issue, затем точный заголовок `[converter E2E] <format>: <phase>`. Повтор добавляет комментарий через идемпотентный `upsertComment`. Риск в переходе от ручных багов: #1210 и #1211 заведены до того, как менялась дедупликация. Если в их теле нет текущего маркера, а заголовок другой, первый stable создаст дубликаты. Проверить по исходникам нельзя: тела GitHub-issues в материале отсутствуют. Кроме того, недоступность HA на этапе импорта будет опубликована как баг конвертера. Тело бага честно говорит, что причина не установлена, это приемлемо.\n\nОснование: `process-next/lib/converters.mjs:80-96`; README `process-next/converters/README.md:66-71`; контекст исполнителя: дедупликация менялась после прогона 41456147729.\n\n### Кеш и внешний изменяемый артефакт\n\nИдентичность шага включает входы набора, `release-package`, identity companion, haVersion и targetRef, но не состояние опубликованного сайта. В кеш попадает только passed. Значит, при повторе stable на том же SHA (возобновление, previous_run в резерве) прежний зелёный результат будет переиспользован, даже если сайт с тех пор изменился. Для детерминированных проверок это верно, для внешнего продукта «проверить перед каждым stable» ослабляется. Отказы не кешируются, поэтому ложного красного нет.\n\nОснование: `process-next/lib/converters.mjs:26-36` (нет `alwaysRun`), `process-next/lib/runner.mjs:134-137`; для сравнения `release-measurements` с `alwaysRun: true` в `catalog.mjs:249`.\n\n### Резервный workflow и права токена\n\n`issues: write` и `GITHUB_TOKEN` выданы шагу, который выполняет весь набор: продуктовые node, browser и backend проверки, companion Playwright. `privateEnvironment` не удаляет `GITHUB_TOKEN`, так что токен доходит и до кода companion. Для публикации нужен только финальный вызов `publishConverterFailures`. Похожий прецедент уже есть в `background.yml`, а workflow запускается только через `workflow_dispatch`, поэтому это не блокер. Но привилегия шире, чем нужна.\n\nОснование: `.github/workflows/process-next-fallback.yml:30-33,104-107`; `process-next/lib/runner.mjs:64`; `process-next/lib/e2e.mjs:151-153`; `process-next/templates/background.yml:8-28`.\n\n### Восстановление отчёта в резерве\n\n`restoreFallbackResults` копирует прежний `converters/report.json` без условий и перегенерирует `report.md`. Если шаг converters перезапускается, файлы перезаписываются. Если он blocked (упал `release-package`) или не запускался, устаревший отчёт прошлого прогона попадёт в `process-next-result` текущего и может быть принят за свежий. Для golden-отчётов так было и раньше, но у converters отчёт читает человек.\n\nОснование: `process-next/templates/prepare-fallback.mjs:88-95`; `.github/workflows/process-next-fallback.yml:122-130`.\n\n### Драйвер picture-elements на будущем UI сайта\n\nСейчас picture честно падает на проверке предложенных форматов (#1210). Дальнейшие шаги (`#picture-width`/`#picture-height`, `.level button`) против опубликованного UI с picture никогда не выполнялись: селекторы взяты из офлайн-оболочки, хотя автор сам отмечает, что опубликованный UI отличается. Когда #1210 исправят, расхождение драйвера с сайтом будет опубликовано как отказ конвертера на этапе conversion. Это ожидаемая граница: результат станет известен после исправления сайта.\n\nОснование: `process-next/converters/journeys.spec.mjs:48-60`; `scripts/sh3d-convert/page/shell.html:102,119`; `demo/helpers/picture-converter.mjs:16`.\n\n### Изоляция лаборатории и companion\n\nУдачная интеграция. Сценарии и фикстуры копируются только в только что созданный workspace, checkout companion не меняется, что проверено тестом. Выборка строится через `selectExact` по трём точным заголовкам, а `verifyE2ESelection` отвергает лишние сценарии. Перед запуском `runConverters` сверяет identity companion с той, что была при планировании. Discovery с `--config=${baseConfig}` для обычных наборов эквивалентен прежнему поведению.\n\nОснование: `process-next/converters/prepare.mjs:7-27`; `process-next/lib/e2e.mjs:43-51,165-166,178-180,214`; `process-next/lib/converters.mjs:107-110`; `process-next/test/e2e.test.mjs` — новый тест converters.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- До первого stable убедиться, что #1210 и #1211 находятся текущей дедупликацией. Самое дешёвое — привести их заголовки к `[converter E2E] picture: conversion` и `[converter E2E] easy: houseplan-import` или вставить маркер `<!-- process-next-converter:<format>:<id> -->` в начало тела. Иначе первый stable, скорее всего, создаст два дубликата, что нарушает п.6 ТЗ. Подтвердить или опровергнуть можно, прочитав тела этих issue.\n- Передавать в runner статус `unavailable` из PROCESS_NEXT_RESULT. Например, в `executeStep` при `result.status === 'unavailable'` ставить шагу `unavailable`, а не `failed`, либо возвращать отдельный код выхода. Тогда общая сводка stable тоже различит «отказ конвертера» и «проверка не выполнена». Цена — небольшое изменение `runner.mjs` и его тест.\n- Пометить `converters-stable` как `alwaysRun: true` либо не кешировать его PASS. Шаг проверяет внешний изменяемый сайт, и повтор stable на том же SHA должен проверить его заново. Цена — повторные 3 сценария при возобновлении, это минуты в рамках 45-минутного лимита.\n- Сузить права токена в резерве. Запускать набор без `GITHUB_TOKEN`, а публикацию багов вынести в отдельный последующий шаг workflow (`if: always()`), который читает уже готовый `artifacts/process-next/converters/report.json` и вызывает `publishConverterFailures`. Тогда продуктовые тесты и код companion не получают токен с правом записи.\n- В `restoreFallbackResults` не копировать отчёт converters, если в кеше нет соответствующего passed-результата: он нужен только для переиспользования. Либо помечать восстановленный `report.md` как отчёт прошлого прогона с его runId. Тогда устаревший результат не будет выглядеть результатом текущего stable.\n- В README явно сослаться на #1105 и место шага в общем stable-запуске: этого требует последний критерий приёмки. Сейчас там «stable-профиль» без ссылки на решение процесса.\n\n## Границы анализа\n\nРевью проведено только по исходникам: прочитаны diff и затронутые файлы целиком (`converters.mjs`, `e2e.mjs`, `catalog.mjs` в части планирования, `runner.mjs`, `storage.mjs` в части кеша, `release.mjs` в части готовности, `prepare-fallback.mjs`, оба workflow, `github.mjs`), фикстуры и golden-ожидания. Сборку, тесты, Playwright и Docker я не запускал. Хелперы companion (`tests/lib/backup.mjs`, `ha-ws.mjs`, `ha-page.mjs`, `plan.mjs`, `hooks.mjs`, `playwright.config.mjs`, `scripts/users.mjs`) в материале отсутствуют. Их работоспособность принимаю по описанию исполнителя: в прогоне 41456147729 SH3D прошёл полный путь. Логи и артефакты этого прогона, а также тела GitHub-issues #1210 и #1211 недоступны. Поэтому риск дубликатов — проверяемая гипотеза, а не установленный дефект. Шаги после импорта для easy (видимость маркеров) и весь путь импорта для picture на настоящем сайте ещё не исполнялись: их надёжность неизвестна. Использован S6-результат `20261102T135923081-6773283c` (`passed`, материал `70c2c6cf`). По описанию это синтаксис и адресные тесты converters/e2e/catalog/fallback, и он не доказывает прохождение HA-сценариев.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c44ac63846812de2ef18a17489df7fac1b5dad7f → 70c2c6cfcd8ee755f143890d09e8e60e9d591412\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-02T14:04:24.145Z",
+        "artifactId": 13146694260,
+        "runId": 41457791146,
+        "runAttempt": 1,
+        "completedAt": "2026-11-02T14:04:30Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41457791146",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "c44ac63846812de2ef18a17489df7fac1b5dad7f"
       }
     },
     "1184": {
@@ -1030,9 +1157,9 @@
     "fence": 63,
     "materialSha": "70c2c6cfcd8ee755f143890d09e8e60e9d591412",
     "expectedBase": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793627954041,
-    "expiresAt": 1793631571955,
+    "expiresAt": 1793631909570,
     "patchId": "f35df3bd6b558480650c5932150d9bb1f09bc287",
     "reviewRequest": "review:1179:1:f35df3bd6b558480650c5932150d9bb1f09bc287:c44ac63846812de2ef18a17489df7fac1b5dad7f"
   },
@@ -1103,6 +1230,10 @@
     },
     "github:41458515168:1:tick:0:review-presentation": {
       "digest": "bcab94604a47c4c709a5a0570464f889a5a72fb67868a7bf838b6b56a14c6420",
+      "issue": 1179
+    },
+    "github:41458515168:1:tick:0:review-complete": {
+      "digest": "513cd4ea15a947eb2383ef4ff4f9f0ac0d630c4295f0370a926bbdf6b9b90103",
       "issue": 1179
     },
     "finish:c20ab301-69bd-467b-8201-eb98ef8b0bd9": {
