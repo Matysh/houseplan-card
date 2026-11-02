@@ -12,6 +12,7 @@ from custom_components.houseplan.backup_archive import build_archive, read_archi
 from custom_components.houseplan.const import DOMAIN, PLAN_MODEL_VERSION
 from custom_components.houseplan.import_export import create_export, create_preview, parse_document
 from custom_components.houseplan.store import get_data
+from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 from custom_components.houseplan.validation import CONFIG_SCHEMA
 
 GOLDEN = Path(__file__).resolve().parent.parent / "scripts/sh3d-convert/golden"
@@ -71,9 +72,12 @@ async def test_picture_ha_transfer(hass, tmp_path, carrier):
     runtime = get_data(hass)
     root = Path(hass.config.path(""))
     source = json.loads((GOLDEN / "picture-elements.space-1.json").read_text())
-    empty = {"model_version": PLAN_MODEL_VERSION, "spaces": [{"id": "existing", "title": "Untouched",
+    empty = {"model_version": 10, "spaces": [{"id": "existing", "title": "Untouched",
              "cell_cm": 5, "view_box": [0, 0, 1, 1], "rooms": [], "wall_segments": [], "partitions": []}],
              "markers": [], "settings": {}}
+
+    empty, _ = commit_wall_segment_model(empty)
+    assert empty["model_version"] == PLAN_MODEL_VERSION
 
     async def apply(document):
         await runtime.config_store.async_save({"config": copy.deepcopy(empty), "rev": 1})

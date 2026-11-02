@@ -952,9 +952,14 @@ def _validate_plan_only_document(
     if len(spaces) != 1 or config.get("markers") != []:
         raise ImportFailure("invalid_format", "Plan-only export has invalid owners")
     expected_config = _appearance_config({
+        # Privacy projection must use the same structural codec as the input.
+        # Omitting the envelope version here applies legacy 9-decimal rounding
+        # to current exact host.t while preserving tq, creating a false mismatch.
+        "model_version": document.get("model_version", 0),
         "spaces": [_project_plan_only_space(spaces[0])],
         "markers": [],
     })
+    expected_config.pop("model_version", None)
     if config != expected_config:
         raise ImportFailure("invalid_format", "Plan-only export contains private fields")
     expected_layout = _plan_only_room_label_layout(layout, spaces[0])

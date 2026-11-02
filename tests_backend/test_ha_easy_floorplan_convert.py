@@ -10,6 +10,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.houseplan.const import DOMAIN, PLAN_MODEL_VERSION
 from custom_components.houseplan.import_export import create_export, create_preview, parse_document
 from custom_components.houseplan.store import get_data
+from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 from custom_components.houseplan import websocket_api as wsapi
 from custom_components.houseplan.validation import CONFIG_SCHEMA
 from custom_components.houseplan.room_appearance import normalize_room_appearance
@@ -44,10 +45,12 @@ async def test_issue_937_ha_applies_exports_and_deduplicates_without_changing_ex
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     runtime = get_data(hass)
-    existing = {"model_version": PLAN_MODEL_VERSION, "spaces": [{
+    existing = {"model_version": 10, "spaces": [{
         "id": "existing", "title": "Keep me", "cell_cm": 5, "view_box": [0, 0, 1, 1],
         "rooms": [], "wall_segments": [], "partitions": [],
     }], "markers": [], "settings": {"bg_mode": "static", "glow_radius_cm": 222}}
+    existing, _ = commit_wall_segment_model(existing)
+    assert existing["model_version"] == PLAN_MODEL_VERSION
     await runtime.config_store.async_save({"config": existing, "rev": 1})
     await runtime.store.async_save({"layout": {}, "rev": 1})
     document = json.loads((GOLDEN / filename).read_text())

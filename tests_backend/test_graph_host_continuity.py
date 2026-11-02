@@ -121,3 +121,31 @@ def test_same_run_rehost_still_reserves_physical_end_jambs():
     assert CONFIG_SCHEMA(_config(after)) == _config(after)
     with pytest.raises(PartitionOpeningJambMarginError):
         validate_partition_opening_hosts(_config(after), _config(before))
+
+
+def test_current_plan_only_transfer_keeps_exact_host_parameter(tmp_path):
+    import json
+    from types import SimpleNamespace
+    from custom_components.houseplan.import_export import create_export, parse_document, ImportFailure
+    graph = {"version": 1, "nodes": [
+        {"id": "a", "p": ["l", "0", "0"]}, {"id": "b", "p": ["l", "80", "0"]}],
+        "edges": [{"id": "one", "kind": "wall", "from": "a", "to": "b", "cm": 12}],
+        "rooms": [], "dependencies": []}
+    host = {"kind": "wall", "id": "one", "t": .5125000000000001,
+            "tq": ["5125000000000001", "10000000000000000"]}
+    current = project_graph_space({"id": "s", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "openings": [{"id": "o", "type": "window", "x": 0, "y": 0, "angle": 0, "length": .05,
+                      "host": host}]}, graph)["space"]
+    config = _config(current)
+    assert CONFIG_SCHEMA(config) == config
+    document, _ = create_export(SimpleNamespace(instance_id="exact-transfer"), {"config": config, "rev": 1},
+        {"layout": {}, "rev": 1}, kind="space", space_id="s", plan_only=True, card_version="test", config_root=tmp_path)
+    assert document["payload"]["config"]["spaces"][0]["openings"][0]["host"] == host
+    decoded = parse_document(json.dumps(document).encode())
+    assert decoded["payload"]["config"]["spaces"][0]["openings"][0]["host"] == host
+    forged = copy.deepcopy(document)
+    forged["payload"]["config"]["spaces"][0]["openings"][0]["host"]["t"] = .5125
+    with pytest.raises(ImportFailure) as refused:
+        parse_document(json.dumps(forged).encode())
+    assert refused.value.code == "invalid_config"
+    assert "opening_projection_mismatch" in str(refused.value)
