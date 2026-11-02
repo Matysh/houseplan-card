@@ -1,0 +1,11 @@
+{
+  "issue": 1207,
+  "approvedAt": "2026-11-02",
+  "kind": "visual approval and implementation specification, not product acceptance",
+  "scope": "UI-001 through UI-019",
+  "ownerMessage": "Отлично, всё, фиксируемся, сохраняемся, заводим задачу, пишем ТЗ, сохраняем все необходимые материалы для исполнителя в репозиторий. Ну, всё как обычно.",
+  "ownerAddendum": "Все UI-ные изменения, если они могут, то должны относиться к UI Kit; унификация размеров узлов — единый размер, а не новый размер и отдельные стили.",
+  "performanceStatus": "Visual approved; stable 60 FPS and preparation latency still require product optimization",
+  "productTestsRun": false,
+  "privateDataPublished": false
+}

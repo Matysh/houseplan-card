@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-02",
+  "environment": "IAB, 1500x900, Ground floor, local 1.84 beta 2, normal concurrent desktop workload",
+  "metric": "Mode controller callback intervals, not GPU-presented FPS; preparation measured separately",
+  "before": [
+    {"mode":"plan","frameTimesMs":[0,133.6,367.5],"prepareMs":361,"maxGapMs":234,"frameWorkMaxMs":53.1,"renders":8},
+    {"mode":"devices","frameTimesMs":[0,135.5,237.1,333],"prepareMs":261,"maxGapMs":136,"frameWorkMaxMs":52,"renders":6},
+    {"mode":"decor","frameTimesMs":[0,134.3,289.6],"prepareMs":332,"maxGapMs":155,"frameWorkMaxMs":68.5,"renders":4},
+    {"mode":"view","frameTimesMs":[0,154.8,328.7],"prepareMs":343,"maxGapMs":174,"frameWorkMaxMs":74.2,"renders":7}
+  ],
+  "after": [
+    {"mode":"plan","frameTimesMs":[0,26.1,44.7,54.8,162.2,216.1,239.1],"prepareMs":440,"maxGapMs":107,"frameWorkMaxMs":1.4,"renders":3},
+    {"mode":"devices","frameTimesMs":[0,38.1,104.5,124.3,134.1,144.6,159.5,171.8,184,190.5,202.7,208.8,216.7,222],"prepareMs":335,"maxGapMs":66,"frameWorkMaxMs":0.6,"renders":3},
+    {"mode":"decor","frameTimesMs":[0,19.2,31.3,45.6,180.1,190.4,195.4,220.7,226.2],"prepareMs":405,"maxGapMs":135,"frameWorkMaxMs":0.4,"renders":3},
+    {"mode":"view","frameTimesMs":[0,35.4,46.3,59.2,146.3,171.6,197.8,238.6],"prepareMs":402,"maxGapMs":87,"frameWorkMaxMs":0.6,"renders":3}
+  ],
+  "limits": "Short exploratory samples, variable host/browser load, not isolated benchmark. Other post-change samples produced 11-20 callbacks, repeat plan 7. Stable 60 FPS NOT established. Preparation remains expensive (roughly 0.3-0.9 seconds observed)."
+}
