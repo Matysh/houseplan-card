@@ -851,6 +851,20 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
     const nodes=new Map<string,GraphNode>(), origins=new Map<string,SourcePoint[]>(), pointNode=new Map<string,string>();
     const sourcePointNode=new Map<string,string>(), endpointNode=new Map<string,string>(), buckets=new Map<string,Set<string>>();
     const cutMap=new Map<string,Cut[]>(), mapping=emptyMapping();
+    const installDependency=(dep:GraphDependency):void=>{
+      graph.dependencies=graph.dependencies.filter(d=>d.node!==dep.node);graph.dependencies.push(dep);
+      // Reciprocal legacy contacts are incidence, not a cyclic affine program.
+      // A deterministic existing source node becomes a free anchor; no point moves.
+      while(true){
+        try{dependencyOrder(graph);break;}catch(error){
+          if(!(error instanceof PlanGraphError)||error.code!=='dependency-cycle')throw error;
+          const count=graph.dependencies.length;
+          graph.dependencies=graph.dependencies.filter(d=>d.node!==error.subject);
+          if(graph.dependencies.length===count)throw error;
+        }
+      }
+    };
+
     let bends=0;
     const bucket=(p:ExactPoint):[bigint,bigint]=>[floor(div(p[0],radius)),floor(div(p[1],radius))];
     const place=(id:string,p:ExactPoint,owners:SourcePoint[])=>{
@@ -980,7 +994,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         if(cmp(oldT,ZERO)>0&&cmp(oldT,ONE)<0 && pointEq(p,pointAt(a,b,t))) {
           graph.dependencies=graph.dependencies.filter(d=>d.node!==node);
           const from=ends[0].node,to=ends[1].node;
-          if(node!==from&&node!==to) graph.dependencies.push({node,kind:'on-edge',refs:[{from,to}],parameters:[encodeRational(t)]});
+          if(node!==from&&node!==to) installDependency({node,kind:'on-edge',refs:[{from,to}],parameters:[encodeRational(t)]});
         }
         break;
       }
@@ -1002,7 +1016,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         addCut(s,hit.t,id);addCut(other,hit.u,id);
         if(current&&pointEq(p,current.p)&&![a[0].node,a[1].node,b[0].node,b[1].node].includes(id)) {
           graph.dependencies=graph.dependencies.filter(d=>d.node!==id);
-          graph.dependencies.push({node:id,kind:'intersection',refs:[{from:a[0].node,to:a[1].node},{from:b[0].node,to:b[1].node}],
+          installDependency({node:id,kind:'intersection',refs:[{from:a[0].node,to:a[1].node},{from:b[0].node,to:b[1].node}],
             parameters:[encodeRational(current.t),encodeRational(current.u)]});
         } else if(!current||!pointEq(p,current.p)) bends++;
       }
@@ -1085,24 +1099,54 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
     const validated=assertGraph(result,{limits,roomIds:(space.rooms||[]).map((r:any)=>r.id)});
     preparedGraphs.set(result,validated);
     const base:any=clone(space);
+    const occupied:Array<{id:string;source:string;p:ExactPoint;length:Exact}>=[];
+    const positive=(s:SourceEdge,t:Exact)=>(mapping.edges[edgeKey(s)]||[]).some(r=>
+      cmp(t,decodeRational(r.sourceInterval[0]))>=0&&cmp(t,decodeRational(r.sourceInterval[1]))<=0
+      &&graph.edges.find(e=>edgeKey(e)===edgeKey(r.ref))!.cm>0);
+    const eligible=(s:SourceEdge,opening:any):Exact|null=>{
+      if(s.kind!=='wall')return null;
+      const p=readSourcePoint([opening.x,opening.y]),t=projectParameter(p,s.a,s.b);
+      const length=Math.sqrt(toNumber(squaredDistance(s.a,s.b))),along=toNumber(t)*length,half=Number(opening.length)/2;
+      if(!between(t)||!withinRadius(p,pointAt(s.a,s.b,t),radius)
+          ||!wallAngleMatches(pointToNumbers(s.a),pointToNumbers(s.b),Number(opening.angle))
+          ||!Number.isFinite(half)||half<0||along-half < -1e-9||along+half>length+1e-9)return null;
+      return t;
+    };
     for(const opening of base.openings||[]){
-      if(!opening.host || !sourceByKey.has(edgeKey(opening.host))) {
+      const s=opening.host&&sourceByKey.get(edgeKey(opening.host));if(!s)continue;
+      let t=s.kind==='wall'?eligible(s,opening):hostParameter(opening.host);if(!t)continue;
+      if(s.kind==='partition'&&s.reversed)t=sub(ONE,t);
+      if(between(t)&&positive(s,t))occupied.push({id:opening.id,source:edgeKey(s),p:pointAt(s.a,s.b,t),length:parseDecimal(Number(opening.length)||0)});
+    }
+    const free=(s:SourceEdge,t:Exact,opening:any):boolean=>{
+      const p=pointAt(s.a,s.b,t);
+      return occupied.every(old=>{
+        if(old.id===opening.id||old.source!==edgeKey(s))return true;
+        const half=sub(div(add(old.length,parseDecimal(Number(opening.length)||0)),exact(2n)),parseDecimal('1e-9'));
+        return cmp(half,ZERO)<=0||cmp(squaredDistance(p,old.p),mul(half,half))>=0;
+      });
+    };
+    for(const opening of base.openings||[]){
+      const previousHost=opening.host,currentSource=opening.host&&sourceByKey.get(edgeKey(opening.host));
+      const staying=currentSource?.kind==='wall'?eligible(currentSource,opening):null;
+      if(staying)opening.host=canonicalHost(opening.host,currentSource.reversed?sub(ONE,staying):staying);
+      if(!opening.host || !currentSource || currentSource.kind==='wall'&&!staying) {
         const p=readSourcePoint([opening.x,opening.y]);
-        const eligible=source.sources.filter(s=>s.kind==='wall'&&wallAngleMatches(pointToNumbers(s.a),pointToNumbers(s.b),Number(opening.angle)))
-          .map(s=>({s,t:projectParameter(p,s.a,s.b)})).filter(({s,t})=>between(t)&&withinRadius(p,pointAt(s.a,s.b,t),radius))
+        const choices=source.sources.map(s=>({s,t:eligible(s,opening)})).filter((v):v is {s:SourceEdge;t:Exact}=>v.t!==null)
           .sort((a,b)=>cmp(squaredDistance(p,pointAt(a.s.a,a.s.b,a.t)),squaredDistance(p,pointAt(b.s.a,b.s.b,b.t)))||b.s.cm-a.s.cm||order(a.s.id,b.s.id));
-        const selected=eligible.find(({s,t})=>(mapping.edges[edgeKey(s)]||[]).some(r=>
-          cmp(t,decodeRational(r.sourceInterval[0]))>=0&&cmp(t,decodeRational(r.sourceInterval[1]))<=0&&graph.edges.find(e=>edgeKey(e)===edgeKey(r.ref))!.cm>0));
+        const selected=choices.find(({s,t})=>positive(s,t)&&free(s,t,opening));
         if(selected) opening.host={kind:'wall',id:selected.s.id,tq:encodeRational(selected.s.reversed?sub(ONE,selected.t):selected.t),t:toNumber(selected.s.reversed?sub(ONE,selected.t):selected.t)};
         else delete opening.host;
       }
       if(!opening.host)continue;
+      void previousHost;
       const sourceEdge=sourceByKey.get(edgeKey(opening.host));if(!sourceEdge)fail('host',opening.id);
       let t=hostParameter(opening.host);if(sourceEdge.reversed)t=sub(ONE,t);
       const range=(mapping.edges[edgeKey(sourceEdge)]||[]).find(r=>cmp(t,decodeRational(r.sourceInterval[0]))>=0&&cmp(t,decodeRational(r.sourceInterval[1]))<=0);
       if(!range)fail('host-range',opening.id);
       let next=div(sub(t,decodeRational(range.sourceInterval[0])),sub(decodeRational(range.sourceInterval[1]),decodeRational(range.sourceInterval[0])));
       if(range.reverse)next=sub(ONE,next);
+      if(!occupied.some(o=>o.id===opening.id))occupied.push({id:opening.id,source:edgeKey(sourceEdge),p:pointAt(sourceEdge.a,sourceEdge.b,t),length:parseDecimal(Number(opening.length)||0)});
       opening.host=canonicalHost({...opening.host,...range.ref},next);
       mapping.hosts[opening.id]=clone(opening.host);
     }

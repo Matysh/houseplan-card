@@ -195,3 +195,23 @@ test('opaque property conflict does not create two canonical shared wall edges',
     {id:'a',a:[0,0],b:[1,0],cm:10,custom:'one'},{id:'b',a:[0,0],b:[1,0],cm:10,custom:'two'}]};
   assert.throws(()=>G.migrateGraphSpace(source),/props-conflict/);
 });
+
+test('supported minimized legacy plan has finite contact anchors instead of cyclic dependencies',()=>{
+  const fixture=JSON.parse(readFileSync(new URL('./fixtures/real-plan-first-floor.json',import.meta.url),'utf8'));
+  const result=G.migrateGraphSpace(fixture.space,{sourceModelVersion:10});
+  assert.equal(G.validateGraph(result.graph).ok,true);
+  assert.equal(G.applyGraphOperation(result.graph,{kind:'normalize-current'}).changed,false);
+  assert.ok(result.migrationReport.maxDisplacementCm<=0.001000000001);
+});
+test('legacy opening migration retains the existing occupancy contract (#1033)',()=>{
+  const cases=JSON.parse(readFileSync(new URL('./fixtures/1033-opening-overlap-guard.json',import.meta.url),'utf8')).cases;
+  for(const row of cases){
+    const result=G.migrateGraphSpace(row.input.spaces[0],{sourceModelVersion:row.input.model_version});
+    const index=G.graphIndex(result.graph);
+    const observed=Object.fromEntries(result.space.openings.map(o=>{
+      const host=o.host,e=host&&index.edges.get(G.edgeKey(host));
+      return[o.id,host?{a:Q.pointToNumbers(index.points.get(e.from)),b:Q.pointToNumbers(index.points.get(e.to)),t:host.t}:null];
+    }));
+    assert.deepEqual(observed,row.expect,row.name);
+  }
+});
