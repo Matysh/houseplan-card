@@ -91,6 +91,7 @@ class HouseplanData:
     store: HouseplanStore
     config_store: HouseplanStore
     virtual_light_store: HouseplanStore
+    hass: HomeAssistant | None = None
     virtual_lights: Any | None = None
     # One lock for every load→modify→save cycle of both stores: prevents
     # lost updates from concurrent WS calls and makes the rev check atomic.
@@ -149,6 +150,7 @@ HouseplanConfigEntry = ConfigEntry[HouseplanData]
 def create_data(hass: HomeAssistant) -> HouseplanData:
     """Create the stores for a config entry."""
     data = HouseplanData(
+        hass=hass,
         store=HouseplanStore(hass, STORAGE_VERSION, STORAGE_KEY, minor_version=STORAGE_MINOR_VERSION),
         config_store=HouseplanStore(
             hass, STORAGE_VERSION, STORAGE_CONFIG_KEY, minor_version=STORAGE_MINOR_VERSION
@@ -241,6 +243,7 @@ async def async_save_config_state(
     observe_history: bool = True,
     previous: dict[str, Any] | None = None,
     canonical: bool = False,
+    graph_pair: bool = False,
 ) -> dict[str, Any]:
     """Persist configuration and reconcile dependent operational state.
 
@@ -261,6 +264,23 @@ async def async_save_config_state(
             previous_rev = int(previous.get("rev", 0))
         except (TypeError, ValueError):
             previous_rev = 0
+
+    if not graph_pair and getattr(runtime, "hass", None) is not None:
+        from .graph_write import prepare_graph_candidate, normalize_graph_config
+        from .websocket_api import _commit_pair, _layout_metadata
+
+        if config.get("model_version") == 11:
+            prepared = await runtime.hass.async_add_executor_job(normalize_graph_config, config)
+        else:
+            prepared = await runtime.hass.async_add_executor_job(prepare_graph_candidate, config, previous.get("config"))
+        if prepared.get("model_version") == 11 and int((previous.get("config") or {}).get("model_version", 0) or 0) < 11:
+            layout_data = await runtime.store.async_load() or {}
+            metadata = _layout_metadata(layout_data)
+            target = {"kind": "graph_migration", "config": prepared, "layout": layout_data.get("layout", {}), "config_rev": rev, "layout_rev": int(layout_data.get("rev", 0)), "final_metadata": metadata}
+            rollback = {"kind": "graph_migration_rollback", "config": previous.get("config", {}), "layout": layout_data.get("layout", {}), "config_rev": previous_rev, "layout_rev": int(layout_data.get("rev", 0)), "final_metadata": copy.deepcopy(metadata)}
+            await _commit_pair(runtime, target, rollback)
+            return await runtime.config_store.async_load()
+        config = prepared
 
     if canonical:
         # The ordinary write path hands over the output of CONFIG_SCHEMA, which
@@ -434,6 +454,7 @@ async def _async_converge_pair_documents(
                 config_rev,
                 previous_rev=previous_config_rev,
                 observe_history=False,
+                graph_pair=True,
             )
         except Exception:
             # A Store write is allowed to fail after its atomic replacement.

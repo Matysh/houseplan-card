@@ -154,6 +154,50 @@ class HouseplanImportPreviewView(HomeAssistantView):
         return web.json_response(result)
 
 
+class HouseplanStructuralUploadView(HomeAssistantView):
+    """Stage exact ordinary-command bytes; this endpoint never changes a plan."""
+
+    url = "/api/houseplan/structural/upload"
+    name = "api:houseplan:structural-upload"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:
+        from .structural_upload import UploadError, uploads
+
+        hass = request.app[KEY_HASS]
+        user = request.get("hass_user")
+        if not may_write(hass, user):
+            return web.json_response({"error": "unauthorized"}, status=403)
+        runtime = get_data(hass)
+        if runtime is None:
+            return web.json_response({"error": "not_ready"}, status=503)
+        owner = str(getattr(user, "id", ""))
+        manager = uploads(runtime)
+        token = None
+        retained = False
+        try:
+            token = manager.begin(owner, request.content_length)
+            async for block in request.content.iter_chunked(_CHUNK):
+                if not may_write(hass, user):
+                    raise UploadError("unauthorized")
+                manager.append(token, owner, block)
+            result = await hass.async_add_executor_job(manager.finish, token, owner)
+            if not may_write(hass, request.get("hass_user")) or request.get("hass_user") is not user:
+                raise UploadError("unauthorized")
+            manager._get(token, owner)  # TTL after executor, without renewing it.
+            retained = True
+            return web.json_response(result)
+        except UploadError as err:
+            status = 403 if err.code == "unauthorized" else 413 if err.code in {"too_large", "upload_capacity"} else 400
+            return web.json_response({"error": err.code}, status=status)
+        except (ConnectionError, ValueError):
+            return web.json_response({"error": "invalid_format"}, status=400)
+        finally:
+            # Includes task cancellation/disconnect while streaming.
+            if token is not None and not retained:
+                manager.cancel(token, owner)
+
+
 class HouseplanContentView(HomeAssistantView):
     """Authenticated read access to plans and marker files (audit B1).
 
