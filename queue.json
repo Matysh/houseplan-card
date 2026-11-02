@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1100,
+  "revision": 1101,
   "nextTicket": 83,
   "nextFence": 82,
   "tasks": {
@@ -434,7 +434,7 @@
       "ownerDecision": null,
       "ticket": 81,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793641376934,
       "reviewEntry": 2,
       "patchId": "f5d901556b02095040c4abf20e207a42cd3f234b",
@@ -460,14 +460,13 @@
         "tests_backend/test_summary_panel.py"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793641196346,
-        "entry": 1,
-        "detail": "Backend изменённой области: failed; Браузер: summary weather: failed",
-        "eventId": "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:3:return:return:1174"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793641889198,
+        "entry": 2,
+        "requestId": "review:1174:2:f5d901556b02095040c4abf20e207a42cd3f234b:4f895343407cd730222fa3b47c188703332f16ce"
       },
       "s6": {
         "id": "20261102T174611511-23bd0bf1",
@@ -484,7 +483,8 @@
         "materialSha": "313be81a6a32f1a29f14beb87e08dabaf1aa7028",
         "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
         "patchId": "f5d901556b02095040c4abf20e207a42cd3f234b"
-      }
+      },
+      "reason": "review-findings"
     },
     "1175": {
       "issue": 1175,
@@ -1545,19 +1545,7 @@
   "waiting": [
     1130
   ],
-  "active": {
-    "issue": 1174,
-    "worker": "github-coordinator",
-    "token": "81:github:41494097196:1:tick:0:admit",
-    "fence": 81,
-    "materialSha": "313be81a6a32f1a29f14beb87e08dabaf1aa7028",
-    "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
-    "phase": "review",
-    "admittedAt": 1793641536417,
-    "expiresAt": 1793645212094,
-    "patchId": "f5d901556b02095040c4abf20e207a42cd3f234b",
-    "reviewRequest": "review:1174:2:f5d901556b02095040c4abf20e207a42cd3f234b:4f895343407cd730222fa3b47c188703332f16ce"
-  },
+  "active": null,
   "events": {
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e:finish:2:synchronized": {
       "digest": "7aa718c0fb333ac26c440e62ab51397afcb7b4f5bf95bd6db3b6b5049f5c9451",
@@ -1657,6 +1645,10 @@
     },
     "finish:14e1d2b0-96cc-46bb-8304-be130dc08e37:finish:7:review-presentation": {
       "digest": "941f86e574a9a01ede07ee6c35e219db73fafa67668d5959a2b1e9272d2c653e",
+      "issue": 1174
+    },
+    "finish:14e1d2b0-96cc-46bb-8304-be130dc08e37:finish:7:return": {
+      "digest": "5da736bb3e6d76b27cff21f407dd9f514da6eef0458911ac7fac3e440f166c7a",
       "issue": 1174
     },
     "finish:415db696-9a1a-4436-aaaa-229951ec3b3e": {
