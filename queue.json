@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 554,
+  "revision": 555,
   "nextTicket": 54,
   "nextFence": 54,
   "tasks": {
@@ -823,6 +823,10 @@
       "digest": "1ba85ef5f3b5879d7ae350adeefdf72f21fa42445db9c3e859d330dc07174914",
       "issue": 1204
     },
+    "github:41366596154:1:completions:message:b426a71933d2d0e493cc4cc860be93f76500fa9c48bf236e3568565d8679ea22": {
+      "digest": "738d7a5c16f6a9632820948bb92741f92db09b321091166ff5d2a584b2cb0694",
+      "issue": 1204
+    },
     "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab": {
       "digest": "ad740dea1ac6bb3f007e5ba6f9a615873153e4fe47dad5e63e25bd60cbb31481",
       "issue": 1204,
@@ -869,7 +873,8 @@
           "entry": 1,
           "detail": "Поведение изменённой области: failed",
           "eventId": "finish:1c74a995-bfd9-4e2e-8362-eb13338ec0ab:finish:3:return:return:1204"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:96dabe24-27cc-40f9-aa36-a4aa39598a30": {
