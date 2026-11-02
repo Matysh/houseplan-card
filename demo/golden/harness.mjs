@@ -1325,6 +1325,7 @@ export async function prepareGoldenScenario(page, scenario) {
 
     let card = await mount();
     let safeResizeCapture;
+    let nativeFitCapture;
     if (scenario.warmRemount) {
       card.remove();
       await wait(0);
@@ -2811,6 +2812,50 @@ export async function prepareGoldenScenario(page, scenario) {
     // Camera motion is intentionally visible in production, but reviewed
     // goldens own the settled UI. Never capture a timing-dependent RAF frame.
     await settleCamera(card);
+    if (scenario.nativeFitBeforeCapture) {
+      const dataReady = () => {
+        const snapshot = card._renderDeviceSnapshot;
+        return card._loadOk && !!card._norm && !!card._serverCfg && !!card._layout
+          && !card._booting && !card._bootFading && !card._bootSoft
+          && card._continuity.state === 'steady' && !card._continuity.overlayVisible
+          && !card._modeTransitionBusy && !card._cameraTransition?.active
+          && !card._writesPending && !card._dirtyPos.size && !card._sentPos.size
+          && !card._saveConfigDebounced.pending() && !card._persistLayout.pending()
+          && snapshot?.sourceSequence === card._hassSequence && snapshot.geometry === card._cfgEpoch;
+      };
+      await until(dataReady);
+      await card.updateComplete;
+      const native = () => JSON.stringify([card._config, card._serverCfg, card._layout,
+        card._cfgRev, card._layoutRev]);
+      const facts = () => {
+        const snapshot = card._renderDeviceSnapshot;
+        return JSON.stringify([snapshot.sourceSequence, snapshot.geometry,
+          [...snapshot.positions], [...snapshot.presentations]]);
+      };
+      const before = native(), beforeFacts = facts(), writeChain = card._writeChain;
+      // A capture-fixture API call to the real Fit action. The responsive header
+      // may hide its button; no forced click, camera assignment or timer is used.
+      card._fitAll();
+      await settleCamera(card);
+      await until(dataReady);
+      if (card._mode !== 'view' || card._space !== scenario.space
+          || native() !== before || facts() !== beforeFacts || card._writeChain !== writeChain) {
+        throw new Error(`golden native Fit changed lighting content: ${scenario.id}`);
+      }
+      const rect = node => {
+        const value = node?.getBoundingClientRect();
+        return value ? [value.x, value.y, value.width, value.height] : null;
+      };
+      nativeFitCapture = { intent: 'after-native-fit', fixtureApi: '_fitAll', dataReady: true,
+        nativeContentUnchanged: true, config: { ...card._config },
+        sourceSequence: card._renderDeviceSnapshot.sourceSequence, hassSequence: card._hassSequence,
+        view: card._view ? { ...card._view } : null, zoom: card._zoom,
+        viewBox: card.renderRoot.querySelector('svg.plan-svg')?.getAttribute('viewBox'),
+        stageBounds: rect(card.renderRoot.querySelector('.stage')),
+        wallBounds: rect(card.renderRoot.querySelector('.wallbodies')),
+        markerBounds: [...card.renderRoot.querySelectorAll('.dev[data-id]')]
+          .map(node => ({ id: node.getAttribute('data-id'), bounds: rect(node) })) };
+    }
     if (scenario.uiKit1051) {
       if (scenario.uiKit1051 === 'device') {
         const device=card._devices.find(item=>item.id==='ui1051-lamp');
@@ -2832,6 +2877,7 @@ export async function prepareGoldenScenario(page, scenario) {
       space: card._space,
       mode: card._mode,
       ...(safeResizeCapture ? { safeResizeCapture } : {}),
+      ...(nativeFitCapture ? { nativeFitCapture } : {}),
       devices: card._devices.length,
       dialog: !!card.renderRoot.querySelector('hp-dialog'),
       helpOpen: [...card.renderRoot.querySelectorAll('hp-help')]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Give the lighting Golden scene an explicit native Fit camera intent after data and presentation settle, recording actual camera and marker bounds while preserving content. The original intermittent CI snapshot remains documented; no product behavior or comparison tolerance changes. [#1204](https://github.com/Matysh/houseplan-card/issues/1204)
+
 - Select the existing full Lit capture owner for the still-held SafeResize preview, matching the prior accepted frame. Semantic checks retain the live preview and complete handles; no gesture, saved geometry or visual baseline is changed. [#1203](https://github.com/Matysh/houseplan-card/issues/1203)
 
 - Keep the catalog's negative metadata pattern assertion out of executable source inputs, so a newly generated browser manifest cannot invalidate a cold addressed run. [#1201](https://github.com/Matysh/houseplan-card/issues/1201)
