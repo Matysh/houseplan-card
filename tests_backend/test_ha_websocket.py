@@ -21,6 +21,10 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 from custom_components.houseplan.room_appearance import normalize_room_appearance
+from custom_components.houseplan.graph_write import normalize_graph_config
+from custom_components.houseplan.graph_node_write import move_graph_node_space
+from custom_components.houseplan.plan_graph import project_graph_space
+from custom_components.houseplan.plan_graph_exact import decode_point, encode_point, read_source_point
 
 from custom_components.houseplan.const import (
     CONF_ADMIN_ONLY,
@@ -44,6 +48,42 @@ async def _setup(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+async def _accepted_config(client) -> dict:
+    """Re-read actual server authority before constructing the next UI intent."""
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    answer = await client.receive_json()
+    assert answer["success"], answer
+    return answer["result"]["config"]
+
+
+def _node_intent(space, point, target, axis=None) -> dict:
+    identity = next(n["id"] for n in space["plan_graph"]["nodes"]
+                    if decode_point(n["p"]) == read_source_point(point))
+    return {"point": point, "target": target, "axis": axis, "split_ids": {},
+            "node_id": identity, "target_p": encode_point(read_source_point(target))}
+
+
+def _add_current_room(config, space_id, room, cm):
+    """Craft an explicit valid graph edit so domain guards, not stale carriers, judge it."""
+    result = copy.deepcopy(config)
+    space = next(s for s in result["spaces"] if s["id"] == space_id)
+    graph = copy.deepcopy(space["plan_graph"])
+    nodes = ["test-room:" + room["id"] + ":" + str(i) for i in range(len(room["poly"]))]
+    edges = ["test-edge:" + room["id"] + ":" + str(i) for i in range(len(nodes))]
+    graph["nodes"].extend({"id": node, "p": encode_point(read_source_point(point))}
+                          for node, point in zip(nodes, room["poly"], strict=True))
+    graph["edges"].extend({"kind": "wall", "id": edge, "from": nodes[i],
+                          "to": nodes[(i + 1) % len(nodes)], "cm": cm} for i, edge in enumerate(edges))
+    graph["rooms"].append({"room": room["id"], "edges": [
+        {"kind": "wall", "id": edge, "reverse": False} for edge in edges]})
+    graph["nodes"].sort(key=lambda item: item["id"])
+    graph["edges"].sort(key=lambda item: item["kind"] + ":" + item["id"])
+    graph["rooms"].sort(key=lambda item: item["room"])
+    space["rooms"].append(copy.deepcopy(room))
+    result["spaces"][result["spaces"].index(space)] = project_graph_space(space, graph)["space"]
+    return result
 
 
 async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
@@ -195,8 +235,7 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     before = snapshot["config"]["spaces"][0]
     events = []
     unsubscribe = hass.bus.async_listen("houseplan_config_updated", lambda event: events.append(event.data))
-    operation = {"point": [0, 0], "target": [0.25, 0], "axis": "partition:h",
-                 "split_ids": {"partition:v": "partition-00000000-0000-4000-8000-000000000001"}}
+    operation = _node_intent(before, [0, 0], [.25, 0], "partition:h")
     message = {"type": "houseplan/wall/node_move", "space_id": "f", "intent": operation,
                "expected_rev": snapshot["rev"]}
     contender = await hass_ws_client(hass)
@@ -207,8 +246,10 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     assert rejected["error"]["code"] == "conflict", answers
     assert applied["success"], applied
     after = applied["result"]["config"]
-    assert len(after["spaces"][0]["partitions"]) == 3 + 2 * fixed_neighbours
-    assert after["spaces"][0]["openings"][0]["host"]["id"] == operation["split_ids"]["partition:v"]
+    assert len(after["spaces"][0]["partitions"]) == 4 + 2 * fixed_neighbours
+    assert [(e["kind"], e["id"]) for e in after["spaces"][0]["plan_graph"]["edges"]] == [
+        (e["kind"], e["id"]) for e in before["plan_graph"]["edges"]]
+    assert after["spaces"][0]["openings"][0]["host"]["id"] == before["openings"][0]["host"]["id"]
     await client.send_json_auto_id(message)
     stale = await client.receive_json()
     assert not stale["success"] and stale["error"]["code"] == "conflict"
@@ -216,8 +257,7 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     await readonly.send_json_auto_id({**message, "expected_rev": applied["result"]["rev"]})
     denied = await readonly.receive_json()
     assert not denied["success"] and denied["error"]["code"] == "unauthorized"
-    forged = copy.deepcopy(before)
-    forged["partitions"][1]["b"] = [0, 1.2]
+    forged = move_graph_node_space(before, _node_intent(before, [0, 1], [0, 1.2]))
     await client.send_json_auto_id({**message, "expected_rev": applied["result"]["rev"],
                                    "direction": "undo", "before_space": forged})
     refused = await client.receive_json()
@@ -227,11 +267,14 @@ async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
     undo = await client.receive_json()
     assert undo["success"], undo
     assert undo["result"]["config"]["spaces"][0] == before
-    # Ordinary set still rejects this independently rehosted opening.
-    await client.send_json_auto_id({"type": "houseplan/config/set", "config": after,
+    # An ordinary writer cannot replace only compatibility carriers while
+    # echoing the unchanged current graph, even when this was a valid node move.
+    projection_only = copy.deepcopy(undo["result"]["config"])
+    projection_only["spaces"][0]["partitions"] = copy.deepcopy(after["spaces"][0]["partitions"])
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": projection_only,
                                    "expected_rev": undo["result"]["rev"]})
     ordinary = await client.receive_json()
-    assert not ordinary["success"] and ordinary["error"]["code"] == "invalid_partition_opening_host"
+    assert not ordinary["success"] and ordinary["error"]["code"] == "wall_model_client_outdated"
     await client.send_json_auto_id({**message, "expected_rev": undo["result"]["rev"]})
     redo = await client.receive_json()
     assert redo["success"], redo
@@ -267,6 +310,14 @@ async def test_issue_803_second_host_identity_gate_rejects_foreign_rehost(
                       "angle": -90, "host": {"kind": "partition", "id": "z", "t": .5}}]}],
         "markers": [], "settings": {}}
     source, _ = commit_wall_segment_model(source)
+    # Migration deduplicates a legacy coincident carrier. A deliberately
+    # independent CURRENT edge keeps its own valid ID for the second gate.
+    graph = copy.deepcopy(source["spaces"][0]["plan_graph"])
+    original = next(edge for edge in graph["edges"] if edge["kind"] == "partition" and edge["id"] == "z")
+    graph["edges"].append({**original, "id": "z-copy"})
+    graph["edges"].sort(key=lambda edge: edge["kind"] + ":" + edge["id"])
+    source["spaces"][0] = project_graph_space(source["spaces"][0], graph)["space"]
+    assert {"z", "z-copy"} <= {p["id"] for p in source["spaces"][0]["partitions"]}
     await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
     assert (await client.receive_json())["success"]
     await client.send_json_auto_id({"type": "houseplan/config/get"})
@@ -282,8 +333,7 @@ async def test_issue_803_second_host_identity_gate_rejects_foreign_rehost(
     events = []
     unsubscribe = hass.bus.async_listen("houseplan_config_updated", lambda event: events.append(event.data))
     await client.send_json_auto_id({"type": "houseplan/wall/node_move", "space_id": "f",
-        "expected_rev": before["rev"], "intent": {"point": [0, 0], "target": [.25, 0],
-            "axis": "partition:h", "split_ids": {"partition:v": "new-v"}}})
+        "expected_rev": before["rev"], "intent": _node_intent(before["config"]["spaces"][0], [0, 0], [.25, 0], "partition:h")})
     refused = await client.receive_json()
     assert not refused["success"] and refused["error"]["code"] == "node_move_invalid", refused
     await hass.async_block_till_done()
@@ -509,6 +559,7 @@ async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
     from custom_components.houseplan.const import VERSION
     assert unchanged_config["result"]["integration_version"] == VERSION
 
+    config = copy.deepcopy(unchanged_config["result"]["config"])
     config["markers"] = [{
         "id": "device", "binding": "virtual", "space": "f1", "removed": True,
         "name": "Kept tombstone",
@@ -1094,7 +1145,7 @@ async def test_issue_495_config_set_dropping_a_route_purges_its_runs_durably(
     }}
     await recorder.store.async_save(copy.deepcopy(recorder.book.data))
 
-    candidate = {**copy.deepcopy(initial), "markers": [robot("vr_keep")]}
+    candidate = {**await _accepted_config(client), "markers": [robot("vr_keep")]}
     await client.send_json_auto_id({
         "type": "houseplan/config/set", "config": candidate,
         "expected_rev": first["result"]["rev"],
@@ -1357,7 +1408,7 @@ async def test_canonical_rewrites_are_noops_without_events_or_undo_loss(
     assert first["success"] and first["result"]["rev"] == 1
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     canonical_config = (await client.receive_json())["result"]["config"]
-    assert canonical_config["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+    assert canonical_config["spaces"][0]["rooms"][0]["poly"][0][0] == noisy_config["spaces"][0]["rooms"][0]["poly"][0][0]
 
     runtime = get_data(hass)
     assert runtime is not None
@@ -1417,7 +1468,7 @@ async def test_canonical_rewrites_are_noops_without_events_or_undo_loss(
 async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """#224 supersedes #223's invisible exact-bit Undo promise."""
+    """Current graph Undo preserves structural exact points and ordinary layout scalar policy."""
     from custom_components.houseplan.store import get_data
 
     await _setup(hass)
@@ -1456,7 +1507,7 @@ async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
     assert optimized["success"]
     stored_layout = await runtime.store.async_load()
     backup = stored_layout["optimize_backup"]
-    assert backup["config"]["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+    assert backup["config"]["spaces"][0]["rooms"][0]["poly"][0][0] == noisy_config["spaces"][0]["rooms"][0]["poly"][0][0]
     assert backup["layout"]["lamp"]["x"] == -0.12345679
 
     await client.send_json_auto_id({
@@ -1468,7 +1519,7 @@ async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
     assert undone["success"] and undone["result"]["can_undo"] is False
     restored_config = (await runtime.config_store.async_load())["config"]
     restored_layout = (await runtime.store.async_load())["layout"]
-    assert restored_config["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+    assert restored_config["spaces"][0]["rooms"][0]["poly"][0][0] == noisy_config["spaces"][0]["rooms"][0]["poly"][0][0]
     assert restored_layout["lamp"]["x"] == -0.12345679
 
 
@@ -1525,7 +1576,7 @@ async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
     restored_space = restored["spaces"][0]
     assert any(item["id"] == partition_id for item in restored_space["partitions"])
     assert restored_space["openings"][0]["host"] == {
-        "kind": "partition", "id": partition_id, "t": 0.5,
+        "kind": "partition", "id": partition_id, "t": 0.5, "tq": ["1", "2"],
     }
 
 
@@ -1543,7 +1594,10 @@ async def test_plan_optimize_persists_exact_storage_roundtrip_target(
     ).read_text(encoding="utf-8"))
     source = fixture["input"]
     expected = fixture["expected"]
-    expected["config"] = normalize_room_appearance(expected["config"])
+    # The current client target is prepared from the raw SOURCE, retaining its
+    # stable migration IDs. Reconstructing a graph from the old float target
+    # creates different source-reference IDs and is not the current protocol.
+    expected["config"] = normalize_graph_config(normalize_room_appearance(source["config"]))
 
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -1983,6 +2037,7 @@ async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
             "future_namespace": {"sentinel": "undo-kept"},
         },
     }
+    original = normalize_graph_config(original)
     original_layout = {"dev": {"s": "f1", "x": 0.1, "y": 0.2}}
 
     await client.send_json_auto_id({
@@ -1994,7 +2049,8 @@ async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
     })
     assert (await client.receive_json())["success"]
 
-    optimized = {**original, "model_version": 1}
+    original = await _accepted_config(client)
+    optimized = copy.deepcopy(original)
     optimized_layout = {"dev": {"s": "f1", "x": 0.125, "y": 0.25}}
     await client.send_json_auto_id({
         "type": "houseplan/plan/optimize",
@@ -3222,14 +3278,14 @@ async def test_files_migrate_copies_and_reports_mapping(
 
 async def _cfg(spaces: list[dict]) -> dict:
     """Minimal accepted configuration with the given spaces."""
-    return {
+    return normalize_graph_config({
         "spaces": [
             {"id": sp["id"], "title": sp["id"], "plan_url": sp.get("plan_url"),
              "aspect": 1.4, "view_box": [0, 0, 1, 1], "rooms": []}
             for sp in spaces
         ],
         "markers": [],
-    }
+    })
 
 
 async def _save(client, config, expected_rev):
@@ -3947,7 +4003,7 @@ async def test_signing_one_path_may_fail_without_failing_the_request(
 
 
 async def test_config_write_is_capped_by_total_size(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client,
 ) -> None:
     """HP-1454-05: per-field limits bound each list, this bounds their product."""
     from custom_components.houseplan.validation import MAX_CONFIG_BYTES, MAX_TEXT
@@ -3958,7 +4014,20 @@ async def test_config_write_is_capped_by_total_size(
     # every field inside the caps, the whole thing far past them
     blob = "d" * MAX_TEXT
     cfg["settings"] = {"known_devices": [blob] * (MAX_CONFIG_BYTES // MAX_TEXT + 100)}
-    resp = await _save(client, cfg, 0)
+    # The documented config ceiling now exceeds HA's unchanged4MiB WS input.
+    # Exercise the real authorized HTTP staging path, then the ordinary WS
+    # writer/validator via a compact owner-bound one-use token.
+    http = await hass_client()
+    message = {"type": "houseplan/config/set", "config": cfg, "expected_rev": 0}
+    raw = json.dumps(message, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    assert MAX_CONFIG_BYTES < len(raw) < 32 * 1024 * 1024
+    staged_response = await http.post("/api/houseplan/structural/upload", data=raw,
+        headers={"content-type": "application/json"})
+    assert staged_response.status == 200
+    staged = await staged_response.json()
+    await client.send_json_auto_id({"type": message["type"], "expected_rev": 0,
+        "upload_token": staged["token"], "upload_sha256": staged["sha256"]})
+    resp = await client.receive_json()
     assert not resp["success"] and resp["error"]["code"] == "too_large"
 
     cfg["settings"] = {"known_devices": ["ok"]}
@@ -4942,6 +5011,7 @@ async def test_330_config_set_validators_run_in_the_executor(
             {"key": "s1", "a": [0.3167, 0.24], "b": [0.36, 0.68], "cm": 15},
             {"key": "s2", "a": [0.36, 0.68], "b": [0.30, 0.70], "cm": 15},
         ]
+        broken = normalize_graph_config(broken)
         await client.send_json_auto_id({
             "type": "houseplan/config/set", "config": broken, "expected_rev": 1,
         })
@@ -4967,16 +5037,10 @@ async def test_333_optimize_refuses_a_crafted_violation_and_keeps_the_plan(
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     stored = (await client.receive_json())["result"]
 
-    crafted = copy.deepcopy(stored["config"])
-    crafted["spaces"][0]["rooms"].append({
+    crafted = _add_current_room(stored["config"], "f1", {
         "id": "spike", "name": "spike",
         "poly": [[0.30, 0.70], [0.3167, 0.24], [0.36, 0.68]],
-    })
-    crafted["spaces"][0].setdefault("walls", []).extend([
-        {"key": "s0", "a": [0.30, 0.70], "b": [0.3167, 0.24], "cm": 15},
-        {"key": "s1", "a": [0.3167, 0.24], "b": [0.36, 0.68], "cm": 15},
-        {"key": "s2", "a": [0.36, 0.68], "b": [0.30, 0.70], "cm": 15},
-    ])
+    }, 15)
     await client.send_json_auto_id({
         "type": "houseplan/plan/optimize",
         "config": crafted, "layout": {},
@@ -5108,6 +5172,7 @@ async def test_issue_780_old_client_deleting_a_bound_marker_still_saves(
     # The empty marker.space was adopted from the strip's space.
     assert first["result"]["led_strips"] == {"unbound": 0, "space_adopted": 1}
 
+    config = await _accepted_config(client)
     old_client = copy.deepcopy(config)
     old_client["markers"] = []
     await client.send_json_auto_id({
@@ -5163,6 +5228,7 @@ async def test_issue_780_old_writer_omitting_led_strips_keeps_the_shapes(
     assert first["success"], first
 
     # The old writer: the same plan, no `led_strips` key anywhere.
+    config = await _accepted_config(client)
     old_writer = copy.deepcopy(config)
     for item in old_writer["spaces"]:
         item.pop("led_strips", None)
