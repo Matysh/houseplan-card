@@ -1,5 +1,15 @@
 # House Plan architecture
 
+Structural model 11 (#1167) uses one exact per-space graph: `plan-exact` owns
+bounded rational arithmetic, `plan-graph` owns validation/migration/explicit
+commands, and `graph-edit-intent` binds editor targets to frozen identities.
+`plan-graph-view` memoizes accepted graph projections without a migration on HA
+ticks. `graph-optimize` retains stable identity through existing maintenance
+passes. The backend independently owns graph acceptance and immutable original
+paired backup; `large-write-transport` carries oversized writes via authenticated
+upload plus a purpose-bound compact WS token. [PLAN-GRAPH.md](PLAN-GRAPH.md)
+defines the numerical, history, transfer and privacy contracts.
+
 This document describes product architecture and technical ownership. Development,
 review and release rules live only in [PROCESS.md](../PROCESS.md). The #1105
 branch is prepared; the live workflows and hooks have not been switched.

@@ -1,6 +1,7 @@
 /** Shared types of the House Plan card. */
 
 import type { HaBindingStatus } from './ha-binding-status';
+import type { PlanGraph, ExactRational } from './plan-graph';
 
 export interface RoomCfg {
   /** Deprecated pre-v9 room links used only by legacy compatibility readers. */
@@ -78,6 +79,8 @@ export type WallColumnCfg =
 
 export interface SpaceModel {
   id: string;
+  /** Canonical structural identity; render coordinates below are its projection. */
+  plan_graph?: PlanGraph;
   title: string;
   /** Canonical centimetres represented by one stored grid cell. */
   cellCm?: number;
@@ -294,6 +297,8 @@ export interface PartitionOpeningHost {
   id: string;
   /** Centre position along the directed partition a -> b. */
   t: number;
+  /** Model11 exact parameter; t is its correctly rounded display projection. */
+  tq?: ExactRational;
 }
 
 export interface WallOpeningHost {
@@ -302,6 +307,8 @@ export interface WallOpeningHost {
   id: string;
   /** Centre position along the canonical stored segment a -> b. */
   t: number;
+  /** Model11 exact parameter; t is its correctly rounded display projection. */
+  tq?: ExactRational;
 }
 
 export type OpeningHost = PartitionOpeningHost | WallOpeningHost;

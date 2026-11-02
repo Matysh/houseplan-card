@@ -1,7 +1,7 @@
 # ADR #282 — Wall geometry representation
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/282
-- Status: accepted; Stage 1 stored identity implemented, Stages 2–3 deferred
+- Status: accepted; stages 1–3 implemented (model 11, #1167); stage 4 deferred
 - Date: 2026-08-24
 - Related: #34 (frontend decomposition), #264 (resize controller slice),
   `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`
@@ -61,7 +61,20 @@ in its own right. Separately, a diagonal between two lattice nodes is legal
 while its offset contour has irrational vertices — integers remove identity and
 topology problems, not the arithmetic of mitres.
 
-## Decision
+## Current decision (#1167, 2026-11-02)
+
+Stages 2–3 use exact lattice indices **and reduced rational points**, including
+true diagonal intersections. One per-space graph owns node/edge identity and
+oriented room cycles. Model version becomes 11; Store 1.2 and portable envelope
+2 remain their independent protocols. Structural writes automatically repair
+microscopic legacy discrepancies within an original Euclidean bound, without
+asking the user. Current graphs are edited by explicit operations, never
+reconstructed from polygon projections. Original paired backups, atomicity,
+ACL/CAS and ordinary Undo remain required. [PLAN-GRAPH.md](../PLAN-GRAPH.md)
+defines the wire, numerical bounds and writer/transport boundary. Stage 4's
+closed-form masonry is not included.
+
+## Original staged decision (historical)
 
 Change the representation in four independently shippable stages. Each stage
 removes a named class of defect and is worthless as a partial migration, so each

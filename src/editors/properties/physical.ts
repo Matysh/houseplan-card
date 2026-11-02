@@ -61,7 +61,7 @@ export function patchPartitionEndpoint(
     if (opening.host?.kind !== 'partition' || opening.host.id !== wall.id) { updated.push(opening); continue; }
     const distance = (endpoint === 'a' ? 1 - opening.host.t : opening.host.t) * oldLength;
     const t = endpoint === 'a' ? 1 - distance / newLength : distance / newLength;
-    const candidate = { ...opening, host: { ...opening.host, t } };
+    const candidate = { ...opening, host: { kind: opening.host.kind, id: opening.host.id, t } };
     const resolved = resolvePartitionOpeningStrict(candidate, [rendered], NORM_W, cellCm, GRID_PITCH).resolved;
     if (!resolved) return null;
     updated.push(materializePartitionOpening(candidate, resolved, NORM_W));
@@ -161,12 +161,12 @@ export function patchOpeningProperties(
   if (candidate.host?.kind === 'partition') {
     const dx = core.target.b[0] - core.target.a[0], dy = core.target.b[1] - core.target.a[1];
     const t = ((candidate.x * NORM_W - core.target.a[0]) * dx + (candidate.y * NORM_W - core.target.a[1]) * dy) / (dx * dx + dy * dy);
-    candidate.host = { ...candidate.host, t };
+    if (field === 'gap') candidate.host = { kind: candidate.host.kind, id: candidate.host.id, t };
     const rendered = partitions.map(p => ({ ...p, a: p.a.map(n => n * NORM_W), b: p.b.map(n => n * NORM_W) }));
     const resolved = resolvePartitionOpeningStrict(candidate, rendered, NORM_W, cellCm, GRID_PITCH).resolved;
     return resolved ? materializePartitionOpening(candidate, resolved, NORM_W) : null;
   }
-  const host = resolveRoomOpeningHost(candidate, walls);
+  const host = field === 'length' && opening.host ? { ...opening.host } : resolveRoomOpeningHost(candidate, walls);
   if (!host || host.id !== opening.host?.id) return null;
   candidate.host = host;
   return candidate;

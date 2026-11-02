@@ -56,14 +56,22 @@ their structural cache inputs.
 
 ### Persisted coordinate canonicalisation
 
-Every current config/layout write removes IEEE-754 representation tails from
+Model 11 structural geometry uses exact `l`/`q` points and stable identities in
+one [plan graph](PLAN-GRAPH.md). Room/wall/partition coordinates and opening
+host `t` are correctly rounded projections of that graph and exact `tq`.
+They do not pass through the old nine-decimal or near-grid canonicalizer.
+An exact diagonal intersection can legitimately be off the coarse grid.
+The first structural legacy migration freezes raw coordinates before bounded
+automatic normalization; metadata saves and reads do not migrate a house.
+
+The legacy structural decoder and nonstructural config/layout writes remove IEEE-754 representation tails from
 the explicit persisted-coordinate allow-list. A value less than `1e-4` of one
 grid step from a `1/240` node becomes the exact same `k / 240` double in Python
 and TypeScript. A farther off-grid or diagonal value stays where the editor put
 it and receives only the existing nine-decimal storage canonicalisation.
 Negative zero becomes positive zero.
 
-The lattice allow-list covers room outlines/extents, exact wall endpoints,
+Before model 11 the lattice allow-list covers room outlines/extents, wall endpoints,
 opening `x/y`, decor origins/sizes/endpoints, drafts, partitions, columns, open
 spans and layout `x/y`. Angles, opening length/host `t`, decor scale, backdrop
 transforms and every stair transform field retain the nine-decimal scalar

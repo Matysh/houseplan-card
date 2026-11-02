@@ -5,8 +5,9 @@ import { polygonArea, roomsOverlap, polyIsSimple } from './logic';
 import { sameNodePoint, structuralNodeWalls, structuralWallNodes,
   type NodeMoveSpace, type NodePoint, type NodeWall } from './wall-node-move';
 import { wallKey } from './wall-thickness';
+import { applyGraphOperation, projectGraphSpace } from './plan-graph';
 
-export interface NodeDeleteIntent { point: NodePoint }
+export interface NodeDeleteIntent { point: NodePoint; node_id?: string }
 export type NodeDeleteReason = 'degree' | 'unsafe' | 'opening';
 export type NodeDeleteResult = { ok: true; space: NodeMoveSpace; retained: string; removed: string }
   | { ok: false; reason: NodeDeleteReason };
@@ -61,11 +62,12 @@ function simple(poly: number[][]): boolean {
 
 export function applyNodeDelete(source: NodeMoveSpace, intent: NodeDeleteIntent): NodeDeleteResult {
   const fail = (reason: NodeDeleteReason = 'unsafe'): NodeDeleteResult => ({ ok: false, reason });
-  if (!intent || Object.keys(intent).length !== 1 || !bounded(intent.point)) return fail();
+  if (!intent || Object.keys(intent).some(k => !['point', 'node_id'].includes(k)) || !bounded(intent.point)) return fail();
   const raw = [...(source.wall_segments || []), ...(source.partitions || [])];
   if (raw.some(w => !bounded(w.a) || !bounded(w.b) || distance(w.a, w.b) <= EPS)) return fail();
   const walls = structuralNodeWalls(source), nodes = structuralWallNodes(source);
-  const node = nodes.find(n => sameNodePoint(n.point, intent.point));
+  const node = intent.node_id ? nodes.find(n => n.nodeId === intent.node_id)
+    : nodes.find(n => sameNodePoint(n.point, intent.point));
   if (!node || node.valence !== 2 || node.walls.length !== 2
       || node.walls.some(w => !sameNodePoint(w.a, node.point) && !sameNodePoint(w.b, node.point))) return fail('degree');
   const incident = [...node.walls].sort((a, b) => compareCodePoints(a.id, b.id));
@@ -139,5 +141,14 @@ export function applyNodeDelete(source: NodeMoveSpace, intent: NodeDeleteIntent)
   if (source.walls) out.walls = (out.wall_segments || []).filter(w => w.cm > 0).map(w => ({
     key: wallKey(w.a, w.b, GRID_STEP_N), cm: w.cm, a: [...w.a], b: [...w.b],
   }));
+  if (source.plan_graph && node.nodeId) {
+    try {
+      const result = applyGraphOperation(source.plan_graph, { kind: 'collapse-node', node: node.nodeId,
+        retained: { kind: keep.kind, id: keep.id }, removed: { kind: drop.kind, id: drop.id } },
+      { hosts: source.openings || [] });
+      for (const opening of out.openings || []) if (opening.id in result.mapping.hosts) opening.host = result.mapping.hosts[opening.id];
+      return { ok: true, space: projectGraphSpace(out, result.graph).space, retained: keep.id, removed: drop.id };
+    } catch { return fail(); }
+  }
   return { ok: true, space: out, retained: keep.id, removed: drop.id };
 }

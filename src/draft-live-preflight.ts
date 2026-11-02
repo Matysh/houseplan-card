@@ -299,6 +299,7 @@ export function wallChainLiveCandidateSpace(
   return {
     space: {
       ...space,
+      plan_graph: undefined,
       rooms: selectedRooms,
       walls,
       wall_segments: wallSegments,

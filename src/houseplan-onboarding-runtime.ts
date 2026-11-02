@@ -231,7 +231,7 @@ export class HouseplanOnboardingRuntime {
       const config = this.host._serverCfg!;
       let space = config.spaces.find((candidate) => candidate.id === spaceId);
       if (dialog.mode === 'create') {
-        space = createEmptySpaceConfig(spaceId, dialog.title.trim());
+        space = createEmptySpaceConfig(spaceId, dialog.title.trim(), Number(this.host._serverCfg?.model_version || 0));
         config.spaces.push(space);
       } else {
         if (!space) throw new Error(`space ${spaceId} is gone from the config`);

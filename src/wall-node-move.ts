@@ -6,6 +6,10 @@ import { compareCodePoints as compare } from './codepoint-order';
 import { alignWallEnd } from './wall-end-align';
 import { wallKey } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry, WallEntry } from './types';
+import { applyGraphOperation, projectGraphSpace, prepareGraph, type PlanGraph, type GraphOperation } from './plan-graph';
+import { decodePoint, encodePoint, readSourcePoint, pointToNumbers, parseDecimal, encodeRational,
+  projectParameter, pointAt, cmp, ZERO, ONE, decodeRational } from './plan-exact';
+import type { GraphPoint } from './plan-exact';
 
 export type NodePoint = [number, number];
 export interface NodeMoveSpace {
@@ -16,6 +20,7 @@ export interface NodeMoveSpace {
   walls?: WallEntry[];
   openings?: OpeningCfg[];
   cell_cm?: number;
+  plan_graph?: PlanGraph;
   [key: string]: unknown;
 }
 export interface NodeWall {
@@ -24,16 +29,19 @@ export interface NodeWall {
 export interface NodeAxis { key: string; direction: NodePoint; walls: NodeWall[]; passing: boolean }
 export interface WallNode {
   key: string; point: NodePoint; walls: NodeWall[]; axes: NodeAxis[];
+  nodeId?: string;
   passing: number; branches: number; valence: number; supported: boolean;
 }
 export interface NodeMoveIntent {
   point: NodePoint; target: NodePoint; axis: string | null;
+  node_id?: string; target_p?: GraphPoint;
   /** Allocated once at pointerdown; no new identities during move/Redo. */
   split_ids: Record<string, string>;
 }
 export interface NodeMovePlan {
   source: NodeMoveSpace; node: WallNode; nodes: readonly WallNode[];
   splitIds: Record<string, string>;
+  graph?: PlanGraph;
 }
 export type NodeMoveReason = 'unsupported_junction' | 'invalid' | 'opening_blocked';
 export type NodeMoveResult = { ok: true; space: NodeMoveSpace; changed: boolean; affected: string[] }
@@ -86,13 +94,26 @@ const intersection = (a: NodeWall, b: NodeWall): NodePoint | null => {
 
 export function structuralWallNodes(space: NodeMoveSpace): WallNode[] {
   const walls = structuralNodeWalls(space), points = new Map<string, NodePoint>();
+  const graph = space.plan_graph;
+  const incidentByNode = graph && new Map(graph.nodes.map(n => [n.id, [] as NodeWall[]]));
+  if (graph) {
+    const byRef = new Map(walls.map(w => [wallRef(w), w]));
+    for (const n of graph.nodes) points.set(n.id, pointToNumbers(decodePoint(n.p)));
+    for (const edge of graph.edges) {
+      const wall = byRef.get(`${edge.kind}:${edge.id}`);
+      if (wall) { incidentByNode!.get(edge.from)?.push(wall); incidentByNode!.get(edge.to)?.push(wall); }
+    }
+  } else {
   const add = (p: NodePoint): void => { points.set(key(p), p); };
   for (const wall of walls) { add(wall.a); add(wall.b); }
   for (let i = 0; i < walls.length; i++) for (let j = i + 1; j < walls.length; j++) {
     const p = intersection(walls[i], walls[j]); if (p) add(p);
   }
-  return [...points].sort(([a], [b]) => compare(a, b)).map(([id, p]) => {
-    const incident = walls.filter(w => onWall(p, w)).sort((a, b) => compare(wallRef(a), wallRef(b)));
+  }
+  return [...points].filter(([id]) => !incidentByNode || incidentByNode.get(id)!.length > 0)
+    .sort(([a], [b]) => compare(a, b)).map(([id, p]) => {
+    const incident = (incidentByNode?.get(id) || walls.filter(w => onWall(p, w)))
+      .sort((a, b) => compare(wallRef(a), wallRef(b)));
     const axes: NodeAxis[] = [];
     const rays = new Map<NodeAxis, NodePoint[]>();
     for (const w of incident) {
@@ -121,7 +142,7 @@ export function structuralWallNodes(space: NodeMoveSpace): WallNode[] {
     const passing = axes.filter(a => a.passing).length, branches = valence - 2 * passing;
     const supported = valence <= 6 && ((passing === 0 && branches >= 1)
       || (passing === 1 && branches <= 1) || (passing === 2 && branches === 0));
-    return { key: id, point: p, walls: incident, axes, passing, branches,
+    return { key: id, ...(graph ? { nodeId: id } : {}), point: p, walls: incident, axes, passing, branches,
       valence, supported };
   });
 }
@@ -130,7 +151,8 @@ export function prepareNodeMove(
   space: NodeMoveSpace, node: WallNode, nodes: readonly WallNode[],
   splitIds: Record<string, string> = {},
 ): NodeMovePlan {
-  return { source: space, node, nodes, splitIds: { ...splitIds } };
+  return { source: space, node, nodes, splitIds: { ...splitIds },
+    ...(space.plan_graph ? { graph: prepareGraph(space.plan_graph).graph } : {}) };
 }
 
 /** Screen-space arbitration is kept independent of SVG target stacking. */
@@ -415,5 +437,43 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
   if (source.walls) out.walls = (out.wall_segments || []).filter(w => w.cm > 0).map(w => ({
     key: wallKey(w.a, w.b, GRID_STEP_N), cm: w.cm, a: [...w.a], b: [...w.b],
   }));
+  if (source.plan_graph && n.nodeId) {
+    try {
+      const operations: GraphOperation[] = [];
+      const dependency = source.plan_graph.dependencies.find(d => d.node === n.nodeId);
+      let keepDependency = false;
+      if (dependency && carrier) {
+        const byId = new Map(source.plan_graph.nodes.map(v => [v.id, v]));
+        for (const support of dependency.refs) {
+          const a = decodePoint(byId.get(support.from)!.p), b = decodePoint(byId.get(support.to)!.p);
+          const targetPoint = readSourcePoint(target), t = projectParameter(targetPoint, a, b);
+          const supportDirection = sub(pointToNumbers(b), pointToNumbers(a));
+          if (cmp(t, ZERO) < 0 || cmp(t, ONE) > 0
+              || !parallel(unit(supportDirection), carrier.direction)) continue;
+          operations.push({ kind: 'set-dependency', dependency: { node: n.nodeId,
+            kind: 'on-edge', refs: [support], parameters: [encodeRational(t)] } });
+          keepDependency = true; break;
+        }
+      }
+      if (!keepDependency) operations.push({ kind: 'move-node', node: n.nodeId,
+        target: encodePoint(readSourcePoint(target)), detachDependency: true });
+      for (const opening of out.openings || []) if (opening.host && affected.includes(`${opening.host.kind}:${opening.host.id}`)) {
+        const edge = source.plan_graph.edges.find(edge => edge.kind === opening.host!.kind && edge.id === opening.host!.id)!;
+        const passing = carrier?.walls.some(w => w.kind === edge.kind && w.id === edge.id);
+        const byId = new Map(source.plan_graph.nodes.map(v => [v.id, v]));
+        const endpoint = (id: string) => id === n.nodeId ? readSourcePoint(target) : decodePoint(byId.get(id)!.p);
+        const old = source.openings!.find(item => item.id === opening.id)!;
+        const oldT = old.host!.tq ? decodeRational(old.host!.tq) : parseDecimal(old.host!.t);
+        const center = pointAt(decodePoint(byId.get(edge.from)!.p), decodePoint(byId.get(edge.to)!.p), oldT);
+        const t = passing ? projectParameter(center, endpoint(edge.from), endpoint(edge.to)) : parseDecimal(opening.host.t);
+        operations.push({ kind: 'rehost-opening', opening: opening.id,
+          host: { kind: opening.host.kind, id: opening.host.id, t: encodeRational(t) } });
+      }
+      const result = applyGraphOperation(plan.graph || source.plan_graph,
+        operations.length === 1 ? operations[0] : { kind: 'batch', operations }, { hosts: source.openings || [] });
+      for (const opening of out.openings || []) if (opening.id in result.mapping.hosts) opening.host = result.mapping.hosts[opening.id];
+      return { ok: true, space: projectGraphSpace(out, result.graph).space, changed: result.changed, affected };
+    } catch { return { ok: false, reason: 'invalid' }; }
+  }
   return { ok: true, space: out, changed: true, affected };
 }

@@ -563,7 +563,11 @@ export class PropertiesEditor {
     name = this.t(target.kind === 'decor-group' ? 'group_style_history' : 'history', { name: this.model(identity).title });
     const authored = target.kind === 'partition' && /^[ab][01]$/.test(field)
       ? [(space.partitions?.find(w => w.id === target.value.id) ?? target.value)[field[0] as 'a' | 'b']] : [];
-    if (physical && !this.runtime._commitPhysicalGeometry(name, snapshot, authored, false)) return failure('geometry_error');
+    if (physical && !this.runtime._commitPhysicalGeometry(name, snapshot, authored, false,
+      target.kind === 'partition' ? { kind: 'partitions', ids: [target.value.id] }
+        : target.kind === 'contour' ? { kind: 'thickness', edges: [{ kind: 'wall', id: target.value.id }], cm: value as number }
+          : target.kind === 'opening' ? { kind: 'openings', ids: [target.value.id] }
+            : { kind: 'metadata' })) return failure('geometry_error');
     if (target.kind === 'decor' && target.value.kind !== 'image' && ['stroke', 'fill', 'width_cm'].includes(field)) {
       const changed = this.target(identity);
       if (changed?.kind === 'decor') this.runtime._updateDecorStyle(decorStyleOf(changed.value, host._cellCm, GRID_PITCH, host._decorStyle), true);

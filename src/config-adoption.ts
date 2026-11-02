@@ -207,11 +207,17 @@ export class MutableConfigAdoption {
    * together with the body it belongs to (I2). A reply without `rev` keeps the
    * historical `+1` guess — centralized here, see #500 §15 п.3.
    */
-  acceptConfigWrite(candidate: ServerConfig, response: { rev?: unknown } | null | undefined): void {
-    const fingerprint = contentFingerprint(candidate);
+  acceptConfigWrite(candidate: ServerConfig, response: { rev?: unknown; config?: ServerConfig } | null | undefined): void {
+    const accepted = response?.config ?? candidate;
+    const candidateFingerprint = contentFingerprint(candidate);
+    const fingerprint = accepted === candidate ? candidateFingerprint : contentFingerprint(accepted);
+    // A graph migration is decided by the server. Its actual body owns the
+    // accepted revision; a later optimistic edit must still keep its own draft.
+    if (fingerprint !== candidateFingerprint && contentFingerprint(this.config) === candidateFingerprint)
+      this.setConfig(accepted);
     this.configFingerprint = fingerprint;
     this.configRev = finiteRevision(response?.rev, this.configRev + 1);
-    this.rememberAccepted(candidate, this.acceptedCache?.layout ?? this.layout,
+    this.rememberAccepted(accepted, this.acceptedCache?.layout ?? this.layout,
       this.acceptedCache?.layout_rev ?? this.layoutRev, fingerprint);
   }
 
@@ -219,8 +225,10 @@ export class MutableConfigAdoption {
   acceptPairWrite(
     config: ServerConfig,
     layout: DeviceLayout,
-    response: { config_rev?: unknown; layout_rev?: unknown } | null | undefined,
+    response: { config_rev?: unknown; layout_rev?: unknown; config?: ServerConfig; layout?: DeviceLayout } | null | undefined,
   ): void {
+    config = response?.config ?? config;
+    layout = response?.layout ?? layout;
     this.setConfig(config);
     this.configFingerprint = contentFingerprint(config);
     this.setLayout(layout);

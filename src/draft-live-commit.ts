@@ -1,6 +1,8 @@
 import type { JunctionSharedGeometry } from './junction-limits';
 import type { I18nKey } from './i18n';
 import type { ServerConfig } from './types';
+import type { GraphEditIntent } from './graph-edit-intent';
+import type { PlanGraph } from './plan-graph';
 import {
   WALL_SEGMENT_MODEL_VERSION,
   adoptWallSegmentModelCandidateInPlace,
@@ -38,6 +40,7 @@ export interface WallChainLiveCommitRuntime<
   _commitPhysicalGeometry: (
     name: string, before: State | null,
     additionalAuthoredPoints?: readonly (readonly number[])[], recordHistory?: boolean,
+    intent?: GraphEditIntent | { kind: 'prepared'; base: PlanGraph },
   ) => boolean;
   _clearGeometryGesture: () => void;
   _restoreGeometryStateInConfig: (config: ServerConfig, state: State) => boolean;
@@ -70,7 +73,13 @@ export function commitWallChainFinishGeometry<
 ): boolean {
   const { host } = runtime;
   const liveCandidate = host._serverCfg;
-  const fallback = () => runtime._commitPhysicalGeometry(name, before, [], false);
+  const graphBefore = (before as { plan_graph?: PlanGraph } | null)?.plan_graph;
+  const fallback = () => runtime._commitPhysicalGeometry(name, before, [], false,
+    graphBefore ? { kind: 'prepared', base: graphBefore }
+      : { kind: 'partitions', ids: [...host._activeWallChainPartitionIds] });
+  // Current finish has already produced its graph with explicit operations.
+  // The projection-only local fast path is a historical codec path.
+  if (graphBefore) return fallback();
   if (!before || !liveCandidate || !seed
       || Number(liveCandidate.model_version || 0) !== WALL_SEGMENT_MODEL_VERSION) return fallback();
 
@@ -157,7 +166,9 @@ export function commitWallChainSegmentGeometry<
   const partitionId = host._activeWallChainPartitionIds[
     host._activeWallChainPartitionIds.length - 1
   ] || null;
-  const fallback = () => runtime._commitPhysicalGeometry(name, before);
+  const fallback = () => runtime._commitPhysicalGeometry(name, before, [], true,
+    { kind: 'partitions', ids: partitionId ? [partitionId] : [] });
+  if (Number(liveCandidate?.model_version || 0) >= 11) return fallback();
   if (!before || !liveCandidate || !partitionId
       || Number(liveCandidate.model_version || 0) !== WALL_SEGMENT_MODEL_VERSION) return fallback();
   const liveSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);

@@ -1,4 +1,5 @@
 import type { ConfigAdoption } from './config-adoption';
+import { sendHouseplanWrite } from './large-write-transport';
 import type { DeviceLayout } from './device-position-history';
 import type { ServerConfig } from './types';
 import { OptimizePreviewChangedError, sameOptimizeSource, type OptimizeWriteGuard } from './optimize-source';
@@ -7,11 +8,12 @@ interface Clearable { clear(): void }
 interface Flushable { pending(): boolean; flush(): void }
 
 export interface PlanOptimizeWriteHost {
-  hass: { callWS(message: Record<string, unknown>): Promise<Record<string, unknown>> };
+  hass: { callWS<T>(message: Record<string, unknown>): Promise<T> };
   _saveConfigDebounced: Flushable;
   _writeChain: Promise<void>;
   readonly _cfgRev: number;
   readonly _layoutRev: number;
+  readonly _haPlanGraphApi?: number | null;
   /** #500: identity owner — bodies and revisions of the pair land through it. */
   readonly _adoption: ConfigAdoption;
   _geometryHistory: Clearable;
@@ -39,16 +41,27 @@ export async function commitPlanOptimization(
 ): Promise<void> {
   if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
   await host._writeChain;
+  if (Number(config.model_version || 0) >= 11 && host._haPlanGraphApi === null)
+    throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
   if (guard && (!guard.canWrite() || !sameOptimizeSource(guard.source, guard.current()))) {
     throw new OptimizePreviewChangedError();
   }
-  const response = await host.hass.callWS({
+  const writeHass = host.hass;
+  const expectedConfigRev = guard?.source.configRev ?? host._cfgRev;
+  const expectedLayoutRev = guard?.source.layoutRev ?? host._layoutRev;
+  const accepted = host._adoption.snapshot(null)?.config;
+  const graph_change = Number(config.model_version) === 11 && Number(accepted?.model_version || 0) < 11
+    ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, config) : undefined;
+  const response = await sendHouseplanWrite<Record<string, unknown>>(writeHass, {
     type: 'houseplan/plan/optimize',
     config,
     layout,
-    expected_config_rev: guard?.source.configRev ?? host._cfgRev,
-    expected_layout_rev: guard?.source.layoutRev ?? host._layoutRev,
-  });
+    expected_config_rev: expectedConfigRev,
+    expected_layout_rev: expectedLayoutRev,
+    ...(graph_change ? {graph_change} : {}),
+  }, { isCurrent: () => host.hass === writeHass
+    && (!guard || guard.source.authorityCurrent?.() !== false
+      && guard.current().connection === guard.source.connection) });
   if (guard && (guard.source.authorityCurrent?.() === false
       || guard.current().connection !== guard.source.connection)) {
     throw new OptimizePreviewChangedError();

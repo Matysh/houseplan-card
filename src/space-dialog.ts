@@ -84,7 +84,7 @@ export interface SpaceDisplayDraft {
  * absence means an outdated/partial writer, while an empty array is the
  * canonical empty catalogue.
  */
-export function createEmptySpaceConfig(id: string, title: string): Record<string, unknown> {
+export function createEmptySpaceConfig(id: string, title: string, modelVersion = 10): Record<string, unknown> {
   return {
     id,
     title,
@@ -92,6 +92,8 @@ export function createEmptySpaceConfig(id: string, title: string): Record<string
     view_box: [0, 0, 1, 1],
     rooms: [],
     wall_segments: [],
+    ...(modelVersion >= 11 ? { plan_graph: { version: 1, nodes: [], edges: [], rooms: [], dependencies: [] },
+      walls: [], partitions: [] } : {}),
     settings: { room_color: '#55606c', room_opacity: 0.55,
       name_color: { ...DEFAULT_NAME_COLOR }, wall_fill: { ...DEFAULT_WALL_FILL },
       fill_mode: 'custom', custom_fill: { c: '#607d8b', a: 0 } },

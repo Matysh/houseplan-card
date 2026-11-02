@@ -10,6 +10,7 @@ import { canonicalColumnAngle } from './physical-geometry';
 import { gridVisualScale } from './grid-scale';
 import { stairList, stairOutline } from './stairs';
 import { CANVAS_LIMIT, GRID_N, GRID_PITCH, NORM_W } from './canvas-constants';
+import { graphViewSpace } from './plan-graph-view';
 
 export { CANVAS_LIMIT, GRID_N, GRID_PITCH, GRID_STEP_N, NORM_W } from './canvas-constants';
 
@@ -111,7 +112,8 @@ function normRect(r: any): { x?: number; y?: number; w?: number; h?: number } {
 
 export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
   if (!cfg || !Array.isArray(cfg.spaces)) return [];
-  return cfg.spaces.map((s: any) => {
+  return cfg.spaces.map((rawSpace: any) => {
+    const s = graphViewSpace(rawSpace);
     const H = NORM_W; // square canvas
     const scale = (raw: any): RoomCfg => { const r = { ...raw, ...normRect(raw) }; return {
       id: r.id,

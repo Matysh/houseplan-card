@@ -128,7 +128,16 @@ materialization, but an inactive room's physical contour/corners stay unchanged.
 Only a same-thickness identity-only collinear point can slide on that original
 run; contradictory incidence, a real corner or physical breakpoint refuses.
 The existing physical and junction barriers are not relaxed (#832).
-An actual side-wall ownership split at an unchanged neighbouring corner is
+For model 11 the frozen correspondence binds directly to graph node/edge IDs.
+Every preview issues explicit moves/detaches and projects its resulting exact
+graph; pointerup adopts that same graph after the existing physical and junction
+proofs. A shared side may split its selected ownership at an unchanged neighbour's
+corner, preserving that neighbour's coordinates and IDs. Current geometry is
+never sent back through a coordinate-based legacy materializer. T dependencies
+evaluate after their supports; rational intersections are not rounded onto the
+coarse grid. Undo restores the accepted graph snapshot.
+
+In the historical catalogue decoder, an actual side-wall ownership split at an unchanged neighbouring corner is
 distinct from moving that corner. Only overlapping same-carrier changes may
 cross the existing structural materializer on the changed-ID owner closure before live
 proof; unchanged owners retain their physical contours. The exact-multiplicity

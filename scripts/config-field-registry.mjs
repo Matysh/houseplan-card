@@ -10,6 +10,27 @@ import { fieldLifecycle } from './config-compatibility-catalog.mjs';
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'spaces[].plan_graph', selector: { path: ['spaces', '*', 'plan_graph'] },
+    enforcedBy: 'plan-graph.ts + plan_graph.py; model11 transition and projection verification',
+    storage: 'House Plan server config', type: 'v1 exact nodes/edges/oriented room cycles/dependency DAG',
+    default: 'required in model11, including an empty graph', level: 'space',
+    ui: 'internal structural authority; no microscopic-repair confirmation',
+    runtime: 'stable IDs; l/q exact points; poly/wall_segments/partitions/walls are derived projections',
+    introduced: '#1167, model11', status: 'current',
+    migration: 'automatic original-source-bounded structural migration, paired immutable backup before durable commit',
+    compatibility: 'full/space/plan-only transfers and history preserve; copies remap; support pseudonymizes closed exact geometry; old writer rejected',
+  },
+  {
+    id: 'spaces[].openings[].host.tq', selector: { path: ['spaces', '*', 'openings', '*', 'host', 'tq'] },
+    enforcedBy: 'plan-graph.ts + plan_graph.py host validation/projection',
+    storage: 'House Plan server config', type: '[canonical numerator string, positive denominator string]',
+    default: 'required on model11 hosted openings', level: 'opening host',
+    ui: 'internal exact opening parameter', runtime: 'authoritative parameter; t is its correctly rounded double',
+    introduced: '#1167, model11', status: 'current',
+    migration: 'mapped with source orientation and splits; explicit rehost updates both tq and t',
+    compatibility: 'metadata preserves exact value; history/transfers/copies retain; legacy numeric host.t remains readable',
+  },
+  {
     id:'spaces[].settings.card_font_scale', selector:{path:['spaces','*','settings','card_font_scale']},
     enforcedBy:'logic.ts spaceDisplayOf + validation.py SPACE_DISPLAY_SCHEMA',
     storage:'House Plan server config',type:'number 0.5..3',default:'absent (=1)',level:'space',
@@ -629,12 +650,12 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     type: 'Array<{ id: string; a: Point; b: Point; cm: number }>',
     default: '[] after the first v8 structural write; required in model v9',
     level: 'space',
-    ui: 'internal canonical wall identity',
-    runtime: 'authoritative contour-wall identity and thickness; cm:0 is a zero-thickness wall in model v9',
+    ui: 'internal wall projection',
+    runtime: 'model8–10 catalogue authority; model11 graph-derived contour identity/thickness; cm:0 remains a bodyless wall',
     introduced: 'model v8 / issue #282',
     status: 'current',
     migration: 'materialize atomically on a structural write, Optimize or import',
-    compatibility: 'legacy walls[] remains a validated generated projection',
+    compatibility: 'model11 validates against plan_graph; projection-only edits cannot rebuild current identity',
   },
   {
     id: 'spaces[].rooms[].wall_ids',

@@ -7,6 +7,7 @@ import { canonicalizeConfigGeometryInPlace } from './coordinate-canonicalization
 import { nodeDeleteRefusalKey } from './wall-node-refusal';
 import type { NodeDeleteHistory } from './wall-node-editor';
 import type { NodeMoveSpace, NodePoint, WallNode } from './wall-node-move';
+import { sameNodePoint } from './wall-node-move';
 import type { NodeWriteBasis } from './wall-node-write';
 import type { ServerConfig } from './types';
 
@@ -103,9 +104,11 @@ export class WallNodeDeleteMenu {
   private candidate(menu: Menu): NodeMoveSpace | string {
     if (!menu.point) return 'node_delete_unsafe';
     try {
-      const result = applyNodeDelete(menu.source, { point: menu.point });
+      const node = this.port.topology()?.nodes.find(n => sameNodePoint(n.point, menu.point!));
+      const result = applyNodeDelete(menu.source, { point: menu.point,
+        ...(node?.nodeId ? { node_id: node.nodeId } : {}) });
       if (!result.ok) return `node_delete_${result.reason}`;
-      canonicalizeConfigGeometryInPlace({ spaces: [result.space] });
+      canonicalizeConfigGeometryInPlace({ model_version: result.space.plan_graph ? 11 : 10, spaces: [result.space] });
       return this.port.validate(result.space, menu.source) ? result.space : 'node_delete_unsafe';
     } catch { return 'node_delete_unsafe'; }
   }
@@ -127,7 +130,8 @@ export class WallNodeDeleteMenu {
     if (this.port.beforeIntent(send)) send();
   }
   private async write(menu: Menu): Promise<void> {
-    const intent: NodeDeleteIntent = { point: [...menu.point!] };
+    const node = this.port.topology()?.nodes.find(n => sameNodePoint(n.point, menu.point!));
+    const intent: NodeDeleteIntent = { point: [...menu.point!], ...(node?.nodeId ? { node_id: node.nodeId } : {}) };
     const history: NodeDeleteHistory = { kind: 'delete', beforeSpace: menu.source, intent, direction: 'apply' };
     const current = () => this.intent === menu && this.current(menu, true);
     this.port.setBusy(true); this.port.changed();

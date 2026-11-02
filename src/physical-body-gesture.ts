@@ -25,7 +25,8 @@ export interface PhysicalBodyGesturePort {
   point(event: MouseEvent): number[];
   snap(point: number[]): number[];
   snapshot(): SpaceGeometryState | null;
-  commit(key: 'history.physical_move' | 'history.physical_edit', before: SpaceGeometryState | null): void;
+  commit(key: 'history.physical_move' | 'history.physical_edit', before: SpaceGeometryState | null,
+    selection?: PhysicalSelection): void;
   select(selection: PhysicalSelection): boolean | void;
   openDialog(kind: PhysicalKind, id: string): void;
   toast(key: 'toast.column_duplicate'): void;
@@ -184,7 +185,7 @@ export class PhysicalBodyGestureRuntime {
         (base.center[1] + drag.delta[1]) / NORM_W,
       ];
     }
-    this.port.commit('history.physical_move', drag.before);
+    this.port.commit('history.physical_move', drag.before, { kind: drag.kind, id: drag.id });
   }
 
   private registerTap(kind: PhysicalKind, id: string): void {
@@ -265,6 +266,6 @@ export class PhysicalBodyGestureRuntime {
     const stored = geometry.wall_columns?.find((column) => column.id === drag.id);
     if (!stored) return;
     Object.assign(stored, { angle: drag.angle });
-    this.port.commit('history.physical_edit', drag.before);
+    this.port.commit('history.physical_edit', drag.before, { kind: 'column', id: drag.id });
   }
 }

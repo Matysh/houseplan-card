@@ -326,25 +326,30 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
       'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle',
     ]);
 
-    for (const room of records(space.rooms)) {
-      latticeFields(room, ['x', 'y', 'w', 'h']);
-      latticePoints(room.poly);
-    }
-
-    for (const wall of records(space.walls)) {
-      latticePoint(wall.a);
-      latticePoint(wall.b);
-    }
-    for (const segment of records(space.wall_segments)) {
-      latticePoint(segment.a);
-      latticePoint(segment.b);
+    // Current structural carriers are correctly rounded projections of exact
+    // graph points. Applying the legacy nine-decimal/lattice policy here would
+    // move a point away from its canonical owner on an unrelated metadata Save.
+    const exactGraph = Number(root.model_version) >= 11 && record(space.plan_graph);
+    if (!exactGraph) {
+      for (const room of records(space.rooms)) {
+        latticeFields(room, ['x', 'y', 'w', 'h']);
+        latticePoints(room.poly);
+      }
+      for (const wall of records(space.walls)) {
+        latticePoint(wall.a);
+        latticePoint(wall.b);
+      }
+      for (const segment of records(space.wall_segments)) {
+        latticePoint(segment.a);
+        latticePoint(segment.b);
+      }
     }
 
     for (const opening of records(space.openings)) {
-      latticeFields(opening, ['x', 'y']);
+      if (!exactGraph) latticeFields(opening, ['x', 'y']);
       scalarFields(opening, ['angle', 'length']);
       const host = record(opening.host);
-      if (host) scalarFields(host, ['t']);
+      if (host && !exactGraph) scalarFields(host, ['t']);
     }
 
     for (const decor of records(space.decor)) {
@@ -368,7 +373,7 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
     // Legacy-only read boundary; current v10 documents reject this field.
     for (const draft of records(space.room_drafts)) latticePoints(draft.points);
 
-    for (const partition of records(space.partitions)) {
+    if (!exactGraph) for (const partition of records(space.partitions)) {
       latticePoint(partition.a);
       latticePoint(partition.b);
     }

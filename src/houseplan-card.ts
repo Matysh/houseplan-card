@@ -1,4 +1,5 @@
 import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
+import { sendHouseplanWrite } from './large-write-transport';
 import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
@@ -2394,6 +2395,7 @@ export class HouseplanCard extends LitElement {
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
+  private _haPlanGraphApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
   private _haDeviceHistoryApi: number | null = null;
@@ -8369,15 +8371,25 @@ export class HouseplanCard extends LitElement {
    * converge on the same payload contract without making View load the editor.
    */
   private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean): Promise<void> {
+    if (Number(candidate.model_version || 0) >= 11 && this._haPlanGraphApi !== 1)
+      throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
     const isCurrent = this._configWriteGuard();
     if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     const canonicalCandidate = canonicalizeConfigGeometry(candidate);
+    const expectedRev = this._cfgRev;
+    const accepted = this._adoption.snapshot(null)?.config;
+    const graph_change = Number(canonicalCandidate.model_version) === 11 && Number(accepted?.model_version || 0) < 11
+      ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, canonicalCandidate) : undefined;
+    if (!isCurrent()) throw Object.assign(new Error('config authority changed'), {code:'context-changed'});
     const finish=contactLayout?this._layoutIO.begin():()=>undefined;
     try {
-      const response = await this.hass.callWS({
-        type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
+      const writeHass = this.hass;
+      const response = await sendHouseplanWrite<any>(writeHass, {
+        type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
+        ...(graph_change ? {graph_change} : {}),
         ...(contactLayout?{contact_layout:contactLayout,expected_layout_rev:this._layoutRev}:{}),
-      });
+      }, { isCurrent: () => isCurrent() && this.hass === writeHass
+        && (!acknowledgementCurrent || acknowledgementCurrent()) });
       if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       this._adoption.acceptConfigWrite(canonicalCandidate, response);
       if(contactLayout)for(const [id,pos] of Object.entries((response as {contact_layout?:DeviceLayout})?.contact_layout??{})) {

@@ -75,6 +75,9 @@ export function nodeMoveLocalSpaces(before: NodeMoveSpace, next: NodeMoveSpace):
     }
   }
   const select = (space: NodeMoveSpace): NodeMoveSpace => ({ ...space,
+    // This bounded proof carries a projection selected from its full graph.
+    // It is never a writer or an independent structural document.
+    plan_graph: undefined,
     rooms: space.rooms.filter(r => roomIds.has(r.id)),
     wall_segments: space.wall_segments?.filter(w => bodyIds.has(w.id)),
     partitions: space.partitions?.filter(w => bodyIds.has(w.id)),

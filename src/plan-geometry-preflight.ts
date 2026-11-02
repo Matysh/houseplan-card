@@ -123,7 +123,8 @@ export interface SpacePhysicalGeometryResult extends OptimizeSpaceGeometryCheck 
 /** Fingerprint only fields capable of changing canonical physical geometry. */
 export function spacePhysicalGeometryFingerprint(spaceConfig: any): string {
   return contentFingerprint({
-    id: spaceConfig?.id ?? '',
+    id: spaceConfig?.id ?? spaceConfig?.spaceId ?? '',
+    plan_graph: spaceConfig?.plan_graph,
     cell_cm: spaceConfig?.cell_cm,
     rooms: spaceConfig?.rooms || [],
     walls: spaceConfig?.walls || [],

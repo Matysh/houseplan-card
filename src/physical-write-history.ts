@@ -3,7 +3,7 @@ import type { NamedCommand, CommandStack, CommandPosition } from './command-stac
 import type { SpaceGeometryState } from './geometry-history-state';
 import { contentFingerprint } from './visual-continuity';
 
-const PHYSICAL = ['rooms', 'openings', 'walls', 'wall_segments', 'open_spans',
+const PHYSICAL = ['plan_graph', 'rooms', 'openings', 'walls', 'wall_segments', 'open_spans',
   'partitions', 'wall_columns'] as const;
 const fingerprint = (state: SpaceGeometryState): string =>
   contentFingerprint(PHYSICAL.map(key => state[key] ?? []));

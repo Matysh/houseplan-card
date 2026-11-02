@@ -9,6 +9,7 @@ import type { OpenSpanEntry } from './open-spans';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import type { Stair } from './stairs';
 import type { OpeningCfg, PartitionCfg, WallColumnCfg } from './types';
+import type { PlanGraph } from './plan-graph';
 import type { NodeCommandHistory } from './wall-node-editor';
 import type { WallEntry } from './wall-thickness';
 
@@ -17,6 +18,8 @@ export interface SpaceGeometryState {
   /** #843: a server-applied node command; never restored as local state. */
   nodeMove?: NodeCommandHistory;
   spaceId: string;
+  /** Restore the accepted graph directly; poly is never a history writer. */
+  plan_graph?: PlanGraph;
   rooms: any[];
   openings?: OpeningCfg[];
   walls?: WallEntry[];

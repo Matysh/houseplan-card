@@ -1,5 +1,23 @@
 # Config compatibility registry
 
+## Exact structural graph, model 11 (#1167)
+
+`spaces[].plan_graph` version 1 is structural authority. `poly`, `wall_ids`,
+`wall_segments`, `partitions` and `walls` remain derived projection ABI;
+opening hosts add exact `tq` while retaining numeric `t`. Current graphs are
+never inferred from changed projections. Old readers stay available for
+untouched legacy input and older-backend View; an old writer cannot downgrade
+or erase a model-11 graph. Legacy normalization is automatic at the first
+structural write/import/Optimize, bounded from the original source, and saves
+an immutable original pair before the existing durable paired intent.
+Store 1.2, portable envelope/archive 2 and scalar migration passport 1 keep
+their independent versions. The graph passport/source reference is separate.
+Full/space/plan-only transfers, copies and Undo preserve graph closure and exact
+hosts; support uses a closed pseudonymous geometry projection, never the source
+backup. Config and portable limits are 16/32 MiB; oversized normal writes use
+upload/token without changing HA's WS limit. See [PLAN-GRAPH.md](PLAN-GRAPH.md).
+Unreleased model 11 has no published stable sunset date for its legacy decoders.
+
 ## Compatibility lifetime and canonical migration (#1015)
 
 Every actual superseded config/layout representation has a stable branch ID,

@@ -186,6 +186,7 @@ export function resizeLiveCandidateSpace(
   });
   return {
     ...space,
+    plan_graph: undefined,
     rooms,
     walls,
     wall_segments: wallSegments,

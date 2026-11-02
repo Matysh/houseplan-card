@@ -1,4 +1,5 @@
 import type { ServerConfig } from './types';
+import { projectGraphSpace, type PlanGraph } from './plan-graph';
 
 export const SPACE_COPY_LIMITS = Object.freeze({
   spaces: 50,
@@ -144,7 +145,7 @@ export function createSpaceCopyCandidate(
     }
     const id = nextId('cw');
     wallMap.set(wall.id, id);
-    copiedPartitions.push({ id, a: clone(wall.a), b: clone(wall.b), cm: wall.cm });
+    copiedPartitions.push({ ...clone(wall), id, a: clone(wall.a), b: clone(wall.b), cm: wall.cm });
   }
   for (const partition of sourcePartitions) {
     if (partitionMap.has(partition.id) || !point(partition.a) || !point(partition.b)
@@ -153,7 +154,7 @@ export function createSpaceCopyCandidate(
     }
     const id = nextId('cp');
     partitionMap.set(partition.id, id);
-    copiedPartitions.push({ id, a: clone(partition.a), b: clone(partition.b), cm: partition.cm });
+    copiedPartitions.push({ ...clone(partition), id, a: clone(partition.a), b: clone(partition.b), cm: partition.cm });
   }
 
   const copiedOpenings = openings.map((opening) => {
@@ -195,6 +196,26 @@ export function createSpaceCopyCandidate(
   if (copiedDecor.length) copiedSpace.decor = copiedDecor;
   if (copiedColumns.length) copiedSpace.wall_columns = copiedColumns;
   if (copiedStairs.length) copiedSpace.stairs = copiedStairs;
+
+  if (Number(input.model_version || 0) >= 11) {
+    const graph = source.plan_graph as PlanGraph | undefined;
+    if (!graph) throw new SpaceCopyError('source_invalid');
+    const nodeMap = new Map(graph.nodes.map(node => [node.id, nextId('cn')]));
+    const nodeId = (id: string): string => {
+      const mapped = nodeMap.get(id); if (!mapped) throw new SpaceCopyError('source_invalid'); return mapped;
+    };
+    const copiedGraph: PlanGraph = { version: 1,
+      nodes: graph.nodes.map(node => ({ id: nodeId(node.id), p: clone(node.p) })),
+      edges: graph.edges.map(edge => {
+        const id = (edge.kind === 'wall' ? wallMap : partitionMap).get(edge.id);
+        if (!id) throw new SpaceCopyError('source_invalid');
+        return { ...clone(edge), kind: 'partition', id, from: nodeId(edge.from), to: nodeId(edge.to) };
+      }), rooms: [],
+      dependencies: graph.dependencies.map(dependency => ({ ...clone(dependency), node: nodeId(dependency.node),
+        refs: dependency.refs.map(ref => ({ from: nodeId(ref.from), to: nodeId(ref.to) })) })),
+    };
+    Object.assign(copiedSpace, projectGraphSpace(copiedSpace, copiedGraph).space);
+  }
 
   const config = clone(input);
   config.spaces.splice(sourceIndex + 1, 0, copiedSpace);

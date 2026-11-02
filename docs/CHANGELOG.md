@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Read large review diffs with a separate 32 MiB internal Git buffer while preserving bounded reviewer output and path permissions; expose empty-stderr transport failures such as ENOBUFS. [#1208](https://github.com/Matysh/houseplan-card/issues/1208)
+- Store shared nodes, walls and room cycles in an exact plan graph. Structural saves automatically normalize microscopic legacy discrepancies while retaining the original paired backup. Editors, Resize, Optimize, history and transfers preserve stable IDs and exact opening hosts; large saves use the shared HTTP/token channel. [#1167](https://github.com/Matysh/houseplan-card/issues/1167)
 
 - Grid-scale invariance smoke uses native Ctrl+wheel when the adaptive header hides zoom controls; keeps its opening-edge hit and raster assertions unchanged. [#1206](https://github.com/Matysh/houseplan-card/issues/1206)
 

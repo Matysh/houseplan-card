@@ -21,6 +21,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _space: string; readonly _canEdit: boolean; readonly _kiosk: boolean;
   readonly _haWallNodeMoveApi: number | null;
   readonly _haWallNodeDeleteApi: number | null;
+  readonly _haPlanGraphApi?: number | null;
   readonly _stageEl: HTMLElement | null;
   readonly _config: { language?: string | null } | undefined;
   readonly renderRoot: HTMLElement | DocumentFragment;
@@ -59,7 +60,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   const writer = () => host._canEdit && !host._kiosk && host.isConnected;
   const deleteEnabled = () => host._mode === 'plan' && writer()
     && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
-  const api = () => host._haWallNodeMoveApi === 1;
+  const api = () => host._haWallNodeMoveApi === 1 && host._haPlanGraphApi !== null;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
       space: host._space, revision: host._cfgRev, api: api() };

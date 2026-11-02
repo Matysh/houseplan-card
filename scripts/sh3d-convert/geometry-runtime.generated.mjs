@@ -41,13 +41,13 @@ function canonicalizeLatticeCoordinate(value) {
     }
     return canonicalizeNumber(value);
 }
-function record(value) {
+function record$1(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
         ? value : null;
 }
 function records(value) {
     return Array.isArray(value)
-        ? value.filter((item) => record(item) !== null)
+        ? value.filter((item) => record$1(item) !== null)
         : [];
 }
 function isDecorBoxKind(value) {
@@ -83,30 +83,37 @@ function latticePoints(value) {
 }
 function canonicalizeConfigGeometryInPlace(config) {
     const result = config;
-    const root = record(result);
+    const root = record$1(result);
     if (!root)
         return result;
     for (const space of records(root.spaces)) {
         scalarFields(space, [
             'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle',
         ]);
-        for (const room of records(space.rooms)) {
-            latticeFields(room, ['x', 'y', 'w', 'h']);
-            latticePoints(room.poly);
-        }
-        for (const wall of records(space.walls)) {
-            latticePoint(wall.a);
-            latticePoint(wall.b);
-        }
-        for (const segment of records(space.wall_segments)) {
-            latticePoint(segment.a);
-            latticePoint(segment.b);
+        // Current structural carriers are correctly rounded projections of exact
+        // graph points. Applying the legacy nine-decimal/lattice policy here would
+        // move a point away from its canonical owner on an unrelated metadata Save.
+        const exactGraph = Number(root.model_version) >= 11 && record$1(space.plan_graph);
+        if (!exactGraph) {
+            for (const room of records(space.rooms)) {
+                latticeFields(room, ['x', 'y', 'w', 'h']);
+                latticePoints(room.poly);
+            }
+            for (const wall of records(space.walls)) {
+                latticePoint(wall.a);
+                latticePoint(wall.b);
+            }
+            for (const segment of records(space.wall_segments)) {
+                latticePoint(segment.a);
+                latticePoint(segment.b);
+            }
         }
         for (const opening of records(space.openings)) {
-            latticeFields(opening, ['x', 'y']);
+            if (!exactGraph)
+                latticeFields(opening, ['x', 'y']);
             scalarFields(opening, ['angle', 'length']);
-            const host = record(opening.host);
-            if (host)
+            const host = record$1(opening.host);
+            if (host && !exactGraph)
                 scalarFields(host, ['t']);
         }
         for (const decor of records(space.decor)) {
@@ -131,10 +138,11 @@ function canonicalizeConfigGeometryInPlace(config) {
         // Legacy-only read boundary; current v10 documents reject this field.
         for (const draft of records(space.room_drafts))
             latticePoints(draft.points);
-        for (const partition of records(space.partitions)) {
-            latticePoint(partition.a);
-            latticePoint(partition.b);
-        }
+        if (!exactGraph)
+            for (const partition of records(space.partitions)) {
+                latticePoint(partition.a);
+                latticePoint(partition.b);
+            }
         for (const column of records(space.wall_columns)) {
             latticePoint(column.center);
             if (column.shape === 'square')
@@ -243,7 +251,7 @@ var
 /*
  * Create and return a BigNumber constructor.
  */
-function clone$1(configObject) {
+function clone$2(configObject) {
   var div, convertBase, parseNumeric,
     P = BigNumber.prototype = { constructor: BigNumber, toString: null, valueOf: null },
     ONE = new BigNumber(1),
@@ -549,7 +557,7 @@ function clone$1(configObject) {
   // CONSTRUCTOR PROPERTIES
 
 
-  BigNumber.clone = clone$1;
+  BigNumber.clone = clone$2;
 
   BigNumber.ROUND_UP = 0;
   BigNumber.ROUND_DOWN = 1;
@@ -3075,7 +3083,7 @@ function toFixedPoint(str, e, z) {
 // EXPORT
 
 
-clone$1();
+clone$2();
 
 /**
  * Pure functions with no Lit/DOM dependencies — easy to cover with unit tests.
@@ -3369,66 +3377,6 @@ function wallAngleMatches(a, b, openingAngleDeg, tolDeg = 8) {
         d = Math.PI - d;
     return d <= (tolDeg * Math.PI) / 180;
 }
-/** Collinearity / on-segment tolerance for interval work (plan units). */
-function openEps(pitch, coordScale) {
-    return Math.max(pitch * (coordScale > 0 ? coordScale : 1) * 0.04, 1e-9);
-}
-function atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale = 1, wallBreaks = []) {
-    const room = (rooms || []).find((r) => r?.id === roomId);
-    const orig = roomPoly(room);
-    if (!orig || orig.length < 3)
-        return null;
-    const eps = openEps(pitch, coordScale);
-    const breaks = [];
-    for (const other of rooms || []) {
-        if (!other || other.id === roomId)
-            continue;
-        const op = roomPoly(other);
-        if (!op)
-            continue;
-        for (const sg of sharedBoundary(orig, op, eps)) {
-            breaks.push([sg[0], sg[1]], [sg[2], sg[3]]);
-        }
-    }
-    for (const c of openCuts || [])
-        breaks.push([c[0], c[1]], [c[2], c[3]]);
-    // A closed virtual span may have been the only geometric breakpoint between
-    // two real intervals of different thickness. New wall entries retain their
-    // exact endpoints so deleting that span cannot erase the thickness boundary.
-    for (const w of wallBreaks || []) {
-        const span = entrySpan(w, coordScale);
-        if (span)
-            breaks.push(span[0], span[1]);
-    }
-    const poly = [];
-    const parent = [];
-    for (let i = 0; i < orig.length; i++) {
-        const a = orig[i], b = orig[(i + 1) % orig.length];
-        poly.push([a[0], a[1]]);
-        parent.push(i);
-        const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-        if (L < eps * 2 || !breaks.length)
-            continue;
-        const gap = Math.min(0.499, (eps * 2) / L);
-        const ts = [];
-        for (const p of breaks) {
-            if (distToSeg(p[0], p[1], a[0], a[1], b[0], b[1]) > eps)
-                continue;
-            const t = ((p[0] - a[0]) * (b[0] - a[0]) + (p[1] - a[1]) * (b[1] - a[1])) / (L * L);
-            if (t <= gap || t >= 1 - gap)
-                continue;
-            if (ts.some((u) => Math.abs(u - t) * L <= eps * 2))
-                continue;
-            ts.push(t);
-        }
-        ts.sort((x, y) => x - y);
-        for (const t of ts) {
-            poly.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-            parent.push(i);
-        }
-    }
-    return { poly, parent, orig };
-}
 function distToSeg(px, py, ax, ay, bx, by) {
     const abx = bx - ax, aby = by - ay;
     const L2 = abx * abx + aby * aby;
@@ -3458,7 +3406,7 @@ function entryToSeg(e, coordScale) {
     const s = coordScale ;
     return [e.a[0] * s, e.a[1] * s, e.b[0] * s, e.b[1] * s];
 }
-function finitePoint$1(p) {
+function finitePoint(p) {
     return Array.isArray(p) && p.length >= 2
         && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]));
 }
@@ -3477,7 +3425,7 @@ function sanitizeOpenSpans(spans) {
         if (!e || typeof e !== 'object')
             continue;
         const raw = e;
-        if (!finitePoint$1(raw.a) || !finitePoint$1(raw.b))
+        if (!finitePoint(raw.a) || !finitePoint(raw.b))
             continue;
         const a = [Number(raw.a[0]), Number(raw.a[1])];
         const b = [Number(raw.b[0]), Number(raw.b[1])];
@@ -3651,14 +3599,1586 @@ function clipOpenSpansToShared(spans, roomsModel, coordScale, eps) {
     return out;
 }
 
-/**
- * Dependency-free coordinate constants shared by low-level geometry modules.
- * Keep this leaf free of model/render imports: modules such as stairs are
- * consumed by space-geometry itself and must not form an ESM initialisation
- * cycle through that higher-level facade.
- */
-const GRID_N = 240;
-const GRID_STEP_N = 1 / GRID_N;
+/** Exact structural arithmetic. Floats are source decoders / render projections only. */
+const EXACT_BITS = 4096;
+class PlanExactError extends Error {
+    constructor(code, detail = '') {
+        super('plan-exact:' + code + (detail ? ':' + detail : ''));
+        this.code = code;
+        this.name = 'PlanExactError';
+    }
+}
+const abs = (n) => n < 0n ? -n : n;
+const bitLength = (n) => abs(n).toString(2).length;
+function gcd(a, b) {
+    a = abs(a);
+    b = abs(b);
+    while (b) {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+function exact(n, d = 1n) {
+    if (!d)
+        throw new PlanExactError('format', 'zero-denominator');
+    if (d < 0n) {
+        n = -n;
+        d = -d;
+    }
+    const g = gcd(n, d);
+    n /= g;
+    d /= g;
+    if (bitLength(n) > EXACT_BITS || bitLength(d) > EXACT_BITS)
+        throw new PlanExactError('resource');
+    return { n, d };
+}
+const ZERO = exact(0n), ONE = exact(1n);
+function parseDecimal(value) {
+    if (typeof value === 'number' && !Number.isFinite(value))
+        throw new PlanExactError('format', 'finite');
+    const text = String(value);
+    if (text.length > 2600)
+        throw new PlanExactError('resource');
+    const match = /^([+-]?)(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(text);
+    if (!match)
+        throw new PlanExactError('format', 'decimal');
+    const exponent = Number(match[4] || 0) - (match[3]?.length || 0);
+    if (!Number.isSafeInteger(exponent) || Math.abs(exponent) > 2500)
+        throw new PlanExactError('resource');
+    const digits = BigInt(match[2] + (match[3] || '')) * (match[1] === '-' ? -1n : 1n);
+    return exponent >= 0 ? exact(digits * 10n ** BigInt(exponent))
+        : exact(digits, 10n ** BigInt(-exponent));
+}
+const integer = (s) => {
+    if (typeof s !== 'string' || !/^(?:0|-?[1-9]\d*)$/.test(s))
+        throw new PlanExactError('format', 'integer');
+    if (s.length > 1235)
+        throw new PlanExactError('resource');
+    return BigInt(s);
+};
+function decodeRational(input) {
+    if (!Array.isArray(input) || input.length !== 2)
+        throw new PlanExactError('format', 'rational');
+    const n = integer(input[0]), d = integer(input[1]);
+    const q = exact(n, d);
+    if (q.n !== n || q.d !== d)
+        throw new PlanExactError('format', 'noncanonical-rational');
+    return q;
+}
+const encodeRational = (q) => [q.n.toString(), q.d.toString()];
+const add = (a, b) => exact(a.n * b.d + b.n * a.d, a.d * b.d);
+const sub = (a, b) => exact(a.n * b.d - b.n * a.d, a.d * b.d);
+const mul = (a, b) => {
+    const g = gcd(a.n, b.d), h = gcd(b.n, a.d);
+    return exact((a.n / g) * (b.n / h), (a.d / h) * (b.d / g));
+};
+const div = (a, b) => mul(a, exact(b.d, b.n));
+const neg = (a) => ({ n: -a.n, d: a.d });
+const cmp = (a, b) => {
+    const v = a.n * b.d - b.n * a.d;
+    return v < 0n ? -1 : v > 0n ? 1 : 0;
+};
+const eq = (a, b) => a.n === b.n && a.d === b.d;
+const min = (a, b) => cmp(a, b) <= 0 ? a : b;
+const max = (a, b) => cmp(a, b) >= 0 ? a : b;
+function floor(q) {
+    const n = q.n / q.d;
+    return q.n < 0n && q.n % q.d ? n - 1n : n;
+}
+function nearestInteger(q) {
+    const f = floor(q), remainder = sub(q, exact(f)), c = cmp(remainder, exact(1n, 2n));
+    return c < 0 || c === 0 && f % 2n === 0n ? f : f + 1n;
+}
+const roundRatio = (n, d) => {
+    const v = n / d, r = n % d, twice = r * 2n;
+    return twice > d || twice === d && v % 2n !== 0n ? v + 1n : v;
+};
+/** IEEE754 nearest, ties-to-even; never independently converts huge n and d. */
+function toNumber(q) {
+    if (!q.n)
+        return 0;
+    const sign = q.n < 0n ? 1n << 63n : 0n, n = abs(q.n), d = q.d;
+    let e = bitLength(n) - bitLength(d);
+    if (e >= 0 ? n < (d << BigInt(e)) : (n << BigInt(-e)) < d)
+        e--;
+    let bits;
+    if (e < -1022) {
+        const mantissa = roundRatio(n << 1074n, d);
+        bits = sign | mantissa; // A carry naturally becomes the minimum normal.
+    }
+    else if (e > 1023)
+        bits = sign | (0x7ffn << 52n);
+    else {
+        const shift = 52 - e;
+        let mantissa = shift >= 0 ? roundRatio(n << BigInt(shift), d)
+            : roundRatio(n, d << BigInt(-shift));
+        if (mantissa === 1n << 53n) {
+            mantissa >>= 1n;
+            e++;
+        }
+        bits = e > 1023 ? sign | (0x7ffn << 52n)
+            : sign | (BigInt(e + 1023) << 52n) | (mantissa - (1n << 52n));
+    }
+    const view = new DataView(new ArrayBuffer(8));
+    view.setBigUint64(0, bits, false);
+    return view.getFloat64(0, false);
+}
+function readSourcePoint(p) {
+    if (!Array.isArray(p) || p.length !== 2)
+        throw new PlanExactError('format', 'point');
+    return checkedPoint([parseDecimal(p[0]), parseDecimal(p[1])]);
+}
+function checkedPoint(p) {
+    const limit = exact(5000n);
+    if (p.some(q => cmp(q, limit) > 0 || cmp(q, neg(limit)) < 0))
+        throw new PlanExactError('range');
+    return p;
+}
+function encodePoint(p) {
+    checkedPoint(p);
+    const x = mul(p[0], exact(240n)), y = mul(p[1], exact(240n));
+    return x.d === 1n && y.d === 1n ? ['l', x.n.toString(), y.n.toString()]
+        : ['q', p[0].n.toString(), p[0].d.toString(), p[1].n.toString(), p[1].d.toString()];
+}
+function decodePoint(p) {
+    if (!Array.isArray(p))
+        throw new PlanExactError('format', 'point');
+    let result;
+    if (p.length === 3 && p[0] === 'l')
+        result = [exact(integer(p[1]), 240n), exact(integer(p[2]), 240n)];
+    else if (p.length === 5 && p[0] === 'q')
+        result = [decodeRational([p[1], p[2]]), decodeRational([p[3], p[4]])];
+    else
+        throw new PlanExactError('format', 'point');
+    checkedPoint(result);
+    if (JSON.stringify(encodePoint(result)) !== JSON.stringify(p))
+        throw new PlanExactError('format', 'noncanonical-point');
+    return result;
+}
+const pointEq = (a, b) => eq(a[0], b[0]) && eq(a[1], b[1]);
+const pointCmp = (a, b) => cmp(a[0], b[0]) || cmp(a[1], b[1]);
+const pointAdd = (a, b) => [add(a[0], b[0]), add(a[1], b[1])];
+const pointSub = (a, b) => [sub(a[0], b[0]), sub(a[1], b[1])];
+const dot = (a, b) => add(mul(a[0], b[0]), mul(a[1], b[1]));
+const cross = (a, b) => sub(mul(a[0], b[1]), mul(a[1], b[0]));
+const squaredDistance = (a, b) => dot(pointSub(a, b), pointSub(a, b));
+const withinRadius = (a, b, r) => cmp(squaredDistance(a, b), mul(r, r)) <= 0;
+const pointAt = (a, b, t) => [add(a[0], mul(sub(b[0], a[0]), t)), add(a[1], mul(sub(b[1], a[1]), t))];
+const projectParameter = (p, a, b) => div(dot(pointSub(p, a), pointSub(b, a)), squaredDistance(a, b));
+function intersection(a, b, c, d) {
+    const ab = pointSub(b, a), cd = pointSub(d, c), den = cross(ab, cd);
+    if (!den.n)
+        return null;
+    const t = div(cross(pointSub(c, a), cd), den), u = div(cross(pointSub(c, a), ab), den);
+    return { p: pointAt(a, b, t), t, u };
+}
+const microRadius = (cellCm) => {
+    if (!Number.isFinite(cellCm) || cellCm <= 0)
+        throw new PlanExactError('range', 'cell');
+    return min(exact(1n, 1200000n), div(exact(1n, 10n), mul(exact(240n), parseDecimal(cellCm))));
+};
+const pointToNumbers = (p) => [toNumber(p[0]), toNumber(p[1])];
+
+/** Existing #331 P4 incidence quantum, in normalized plan coordinates.
+ * Mirrors junction_limits.py:_INCIDENT_EPS. This is not a drawing/repair gap. */
+const WALL_INCIDENT_EPS = 2e-7;
+
+const storageUncertainty = (value) => {
+    const steps = value * LATTICE_GRID_N;
+    const roundoff = Number.EPSILON * 16 * Math.max(1, Math.abs(steps));
+    // The storage boundary retains exact lattice fractions, rather than
+    // rounding them to nine decimals. Only off-lattice scalars lose precision.
+    return Math.abs(steps - Math.round(steps)) <= roundoff ? 0 : .5 / COORDINATE_FACTOR;
+};
+/** Prove a stored endpoint can lie on the finite carrier within the existing
+ * scalar quantization envelopes. The cross-product bound accounts for both
+ * the endpoint and the two stored carrier ends, not the topology epsilon.
+ * Existing interior T incidences also retain the unchanged P4 quantum. It
+ * is not permission to merge two distinct authored endpoints. */
+function storedWallContact(point, a, b, coordinateScale = 1, allowExistingIncidence = true) {
+    if (!(Number.isFinite(coordinateScale) && coordinateScale > 0))
+        return false;
+    const p = point.map(value => value / coordinateScale);
+    const left = a.map(value => value / coordinateScale);
+    const right = b.map(value => value / coordinateScale);
+    if (![...p, ...left, ...right].every(Number.isFinite))
+        return false;
+    const dx = right[0] - left[0], dy = right[1] - left[1];
+    const length2 = dx * dx + dy * dy;
+    if (!(length2 > 0))
+        return false;
+    const ex = storageUncertainty(p[0])
+        + Math.max(storageUncertainty(left[0]), storageUncertainty(right[0]));
+    const ey = storageUncertainty(p[1])
+        + Math.max(storageUncertainty(left[1]), storageUncertainty(right[1]));
+    const roundoff = Number.EPSILON * 16 * Math.max(1, ...p.map(Math.abs), ...left.map(Math.abs), ...right.map(Math.abs)) ** 2;
+    const cross = Math.abs(dx * (p[1] - left[1]) - dy * (p[0] - left[0]));
+    const t = ((p[0] - left[0]) * dx + (p[1] - left[1]) * dy) / length2;
+    if (cross > Math.abs(dy) * ex + Math.abs(dx) * ey + roundoff)
+        return allowExistingIncidence && t > 0 && t < 1
+            && cross / Math.sqrt(length2) <= WALL_INCIDENT_EPS;
+    const along = (Math.abs(dx) * ex + Math.abs(dy) * ey + roundoff) / length2;
+    return t >= -along && t <= 1 + along;
+}
+
+/** Persisted structural graph; current mutations are explicit ID operations. */
+class PlanGraphError extends Error {
+    constructor(code, subject = '') {
+        super('plan-graph:' + code + (subject ? ':' + subject : ''));
+        this.code = code;
+        this.subject = subject;
+        this.name = 'PlanGraphError';
+    }
+}
+const GRAPH_LIMITS = { edges: 202000, rooms: 400, nodes: 404000 };
+const edgeKey = (r) => r.kind + ':' + r.id;
+const order = compareCodePoints;
+const clone$1 = (v) => JSON.parse(JSON.stringify(v));
+function fail(code, subject = '') { throw new PlanGraphError(code, subject); }
+const record = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+const idValid = (v) => typeof v === 'string' && v.length > 0 && v.length <= 4096;
+const between = (t) => cmp(t, ZERO) >= 0 && cmp(t, ONE) <= 0;
+const pointKey$1 = (p) => JSON.stringify(encodePoint(p));
+const hostParameter = (host) => host.tq ? decodeRational(host.tq)
+    : Array.isArray(host.t) ? decodeRational(host.t) : parseDecimal(host.t);
+const canonicalHost = (host, q) => ({ ...host, tq: encodeRational(q), t: toNumber(q) });
+function graphIndex(graph) {
+    const nodes = new Map(graph.nodes.map(n => [n.id, n]));
+    const points = new Map(graph.nodes.map(n => [n.id, decodePoint(n.p)]));
+    const edges = new Map(graph.edges.map(e => [edgeKey(e), e]));
+    const incident = new Map(), owners = new Map();
+    for (const e of graph.edges)
+        for (const n of [e.from, e.to]) {
+            const list = incident.get(n) || [];
+            list.push(e);
+            incident.set(n, list);
+        }
+    for (const room of graph.rooms)
+        for (const r of room.edges) {
+            const list = owners.get(edgeKey(r)) || [];
+            list.push(room.room);
+            owners.set(edgeKey(r), list);
+        }
+    return { nodes, points, edges, incident, owners };
+}
+function canonicalGraph(graph) {
+    return { version: 1,
+        nodes: graph.nodes.map(n => ({ id: n.id, p: encodePoint(decodePoint(n.p)) })).sort((a, b) => order(a.id, b.id)),
+        edges: graph.edges.map(e => ({ id: e.id, from: e.from, to: e.to, kind: e.kind, cm: e.cm,
+            ...(e.props && Object.keys(e.props).length ? { props: clone$1(e.props) } : {}) }))
+            .sort((a, b) => order(edgeKey(a), edgeKey(b))),
+        rooms: graph.rooms.map(r => ({ room: r.room, edges: r.edges.map(e => ({ kind: e.kind, id: e.id, reverse: e.reverse })) }))
+            .sort((a, b) => order(a.room, b.room)),
+        dependencies: graph.dependencies.map(d => ({ node: d.node, kind: d.kind,
+            refs: d.refs.map(r => ({ from: r.from, to: r.to })), parameters: d.parameters.map(p => encodeRational(decodeRational(p))) }))
+            .sort((a, b) => order(a.node, b.node)) };
+}
+function validateGraph(input, context = {}) {
+    try {
+        if (!record(input) || input.version !== 1 || !['nodes', 'edges', 'rooms', 'dependencies'].every(k => Array.isArray(input[k])))
+            fail('format');
+        const graph = input, limits = { ...GRAPH_LIMITS, ...context.limits };
+        if (graph.edges.length > limits.edges || graph.rooms.length > limits.rooms || graph.nodes.length > limits.nodes)
+            fail('resource');
+        const nodeIds = new Set(), edgeIds = new Set(), roomIds = new Set();
+        for (const n of graph.nodes) {
+            if (!record(n) || !idValid(n.id) || nodeIds.has(n.id))
+                fail('node-id');
+            nodeIds.add(n.id);
+            decodePoint(n.p);
+        }
+        const index = graphIndex(graph);
+        for (const e of graph.edges) {
+            if (!record(e) || (!idValid(e.id) || e.id.length > 64) || !['wall', 'partition'].includes(e.kind) || edgeIds.has(edgeKey(e)))
+                fail('edge-id');
+            edgeIds.add(edgeKey(e));
+            if (!nodeIds.has(e.from) || !nodeIds.has(e.to) || e.from === e.to
+                || pointEq(index.points.get(e.from), index.points.get(e.to)))
+                fail('zero-length', edgeKey(e));
+            if (typeof e.cm !== 'number' || !Number.isFinite(e.cm) || e.cm < 0 || e.cm > 100)
+                fail('thickness', edgeKey(e));
+            if (e.props !== undefined && (!record(e.props) || ['id', 'a', 'b', 'cm', 'from', 'to', 'kind'].some(k => k in e.props)))
+                fail('props', edgeKey(e));
+        }
+        const allowed = context.roomIds && new Set(context.roomIds);
+        for (const room of graph.rooms) {
+            if (!idValid(room.room) || roomIds.has(room.room) || allowed && !allowed.has(room.room)
+                || !Array.isArray(room.edges) || room.edges.length < 3)
+                fail('room');
+            roomIds.add(room.room);
+            const starts = [], ends = [], own = new Set();
+            for (const ref of room.edges) {
+                const e = index.edges.get(edgeKey(ref));
+                if (!e || typeof ref.reverse !== 'boolean' || own.has(edgeKey(ref)))
+                    fail('room-edge', room.room);
+                own.add(edgeKey(ref));
+                starts.push(ref.reverse ? e.to : e.from);
+                ends.push(ref.reverse ? e.from : e.to);
+            }
+            if (ends.some((v, i) => v !== starts[(i + 1) % starts.length]))
+                fail('open-cycle', room.room);
+            let area = ZERO;
+            for (let i = 0; i < starts.length; i++) {
+                const a = index.points.get(starts[i]), b = index.points.get(ends[i]);
+                area = add(area, sub(mul(a[0], b[1]), mul(a[1], b[0])));
+            }
+            if (!area.n)
+                fail('room-area', room.room);
+            for (let i = 0; i < starts.length; i++)
+                for (let j = i + 1; j < starts.length; j++) {
+                    if (j === i + 1 || i === 0 && j === starts.length - 1)
+                        continue;
+                    const a = index.points.get(starts[i]), b = index.points.get(ends[i]);
+                    const c = index.points.get(starts[j]), d = index.points.get(ends[j]);
+                    const hit = intersection(a, b, c, d);
+                    if (hit && between(hit.t) && between(hit.u))
+                        fail('self-intersection', room.room);
+                }
+        }
+        index.edgeTree = makeTree([...graph.edges], e => boxPoints(index.points.get(e.from), index.points.get(e.to)));
+        const positions = new Map(graph.edges.map((e, i) => [edgeKey(e), i]));
+        for (const edge of graph.edges) {
+            const box = boxPoints(index.points.get(edge.from), index.points.get(edge.to));
+            for (const other of queryTree(index.edgeTree, box, [])) {
+                if (positions.get(edgeKey(other)) <= positions.get(edgeKey(edge)))
+                    continue;
+                if (properCross(edge, other, index.points))
+                    fail('unsplit-crossing', edgeKey(edge));
+            }
+        }
+        for (const [key, owners] of index.owners)
+            if (index.edges.get(key)?.kind === 'wall' && owners.length > 2)
+                fail('third-owner', key);
+        const dependent = new Set();
+        for (const dep of graph.dependencies) {
+            if (!nodeIds.has(dep.node) || dependent.has(dep.node)
+                || !['on-edge', 'intersection'].includes(dep.kind)
+                || dep.refs.length !== (dep.kind === 'on-edge' ? 1 : 2)
+                || dep.parameters.length !== dep.refs.length)
+                fail('dependency');
+            dependent.add(dep.node);
+            dep.refs.forEach((ref, i) => {
+                if (!nodeIds.has(ref.from) || !nodeIds.has(ref.to) || ref.from === ref.to)
+                    fail('dependency-support');
+                const t = decodeRational(dep.parameters[i]);
+                if (!between(t))
+                    fail('dependency-parameter');
+                if (!pointEq(index.points.get(dep.node), pointAt(index.points.get(ref.from), index.points.get(ref.to), t)))
+                    fail('dependency-value', dep.node);
+            });
+        }
+        dependencyOrder(graph);
+        for (const item of context.hosts || []) {
+            const host = item && 'host' in item ? item.host : item;
+            if (!host)
+                continue;
+            const e = index.edges.get(edgeKey(host));
+            if (!e)
+                fail('host');
+            const t = hostParameter(host);
+            if (host.tq && host.t !== toNumber(t))
+                fail('host-projection');
+            if (!between(t))
+                fail('host-parameter');
+        }
+        if (context.projection)
+            verifyGraphProjection(context.projection, graph);
+        return { ok: true, issues: [], index };
+    }
+    catch (error) {
+        return { ok: false, issues: [{ code: error instanceof PlanGraphError ? error.code
+                        : error instanceof PlanExactError ? error.code : 'format',
+                    ...(error instanceof PlanGraphError && error.subject ? { subject: error.subject } : {}) }] };
+    }
+}
+const preparedGraphs = new WeakMap();
+function assertGraph(graph, context = {}) {
+    const prepared = preparedGraphs.get(graph);
+    if (prepared && !context.projection && !context.hosts?.length && !context.roomIds && !context.limits)
+        return prepared;
+    const result = validateGraph(graph, context);
+    if (!result.ok)
+        fail(result.issues[0].code, result.issues[0].subject);
+    return result.index;
+}
+const emptyMapping = () => ({ nodes: Object.create(null), edges: Object.create(null), hosts: Object.create(null) });
+function metadataProps(entry, omitted) {
+    const pairs = Object.entries(entry).filter(([k]) => !omitted.includes(k));
+    return pairs.length ? Object.fromEntries(pairs.filter(([, v]) => v !== undefined).map(([k, v]) => [k, clone$1(v)])) : undefined;
+}
+/** Project only structural fields. Metadata stays owned by its original object. */
+function projectGraphSpace(base, graph) {
+    const index = assertGraph(graph), space = clone$1(base);
+    const bindings = { vertices: {}, edges: {} };
+    const roomMetadata = new Map((space.rooms || []).map((r) => [String(r.id), r]));
+    space.rooms = graph.rooms.map(cycle => {
+        const meta = roomMetadata.get(cycle.room) || { id: cycle.room };
+        const poly = cycle.edges.map((ref, i) => {
+            const e = index.edges.get(edgeKey(ref)), n = ref.reverse ? e.to : e.from;
+            bindings.vertices[JSON.stringify([cycle.room, i])] = n;
+            bindings.edges[JSON.stringify([cycle.room, i])] = { kind: e.kind, id: e.id };
+            return pointToNumbers(index.points.get(n));
+        });
+        const { x: _x, y: _y, w: _w, h: _h, poly: _p, wall_ids: _ids, open_to: _open, ...rest } = meta;
+        return { ...rest, poly, wall_ids: cycle.edges.map(r => r.id) };
+    });
+    const projected = (e) => ({ ...(e.props || {}), id: e.id,
+        a: pointToNumbers(index.points.get(e.from)), b: pointToNumbers(index.points.get(e.to)), cm: e.cm });
+    space.wall_segments = graph.edges.filter(e => e.kind === 'wall').map(projected);
+    space.partitions = graph.edges.filter(e => e.kind === 'partition').map(projected);
+    // Compatibility key is a cache key only; structural identity always uses (kind,id).
+    space.walls = space.wall_segments.filter((e) => e.cm > 0).map((e) => ({
+        a: e.a.slice(), b: e.b.slice(), cm: e.cm,
+        key: wallKey(e.a, e.b, 1 / 240),
+    }));
+    const openings = space.openings || [];
+    for (const opening of openings)
+        if (opening.host) {
+            const e = index.edges.get(edgeKey(opening.host));
+            if (!e)
+                fail('host', opening.id);
+            const t = hostParameter(opening.host);
+            opening.host = canonicalHost(opening.host, t);
+            if (!between(t))
+                fail('host-parameter', opening.id);
+            const p = pointToNumbers(pointAt(index.points.get(e.from), index.points.get(e.to), t));
+            opening.x = p[0];
+            opening.y = p[1];
+        }
+    space.plan_graph = clone$1(graph);
+    delete space.open_spans;
+    return { space, bindings };
+}
+function verifyGraphProjection(space, graph) {
+    const { space: projected } = projectGraphSpace(space, graph);
+    for (const key of ['rooms', 'wall_segments', 'partitions', 'walls', 'openings']) {
+        if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || []))
+            fail('projection', key);
+    }
+}
+function properCross(a, b, points) {
+    const pa = points.get(a.from), pb = points.get(a.to), pc = points.get(b.from), pd = points.get(b.to);
+    const ba = boxPoints(pa, pb), bb = boxPoints(pc, pd);
+    if ([0, 1].some(i => cmp(ba.hi[i], bb.lo[i]) < 0 || cmp(bb.hi[i], ba.lo[i]) < 0))
+        return false;
+    const hit = intersection(pa, pb, pc, pd);
+    return !!hit && cmp(hit.t, ZERO) > 0 && cmp(hit.t, ONE) < 0 && cmp(hit.u, ZERO) > 0 && cmp(hit.u, ONE) < 0;
+}
+function dependencyOrder(graph) {
+    const byNode = new Map(graph.dependencies.map(d => [d.node, d])), active = new Set();
+    const done = new Set(), result = [];
+    const visit = (node) => {
+        if (done.has(node))
+            return;
+        if (active.has(node))
+            fail('dependency-cycle', node);
+        const d = byNode.get(node);
+        if (!d)
+            return;
+        active.add(node);
+        for (const ref of d.refs) {
+            visit(ref.from);
+            visit(ref.to);
+        }
+        active.delete(node);
+        done.add(node);
+        result.push(d);
+    };
+    for (const node of byNode.keys())
+        visit(node);
+    return result;
+}
+function evaluateDependencies(graph) {
+    const nodes = new Map(graph.nodes.map(n => [n.id, n]));
+    for (const d of dependencyOrder(graph)) {
+        if (d.kind === 'intersection') {
+            const [a, b] = d.refs;
+            const hit = intersection(decodePoint(nodes.get(a.from).p), decodePoint(nodes.get(a.to).p), decodePoint(nodes.get(b.from).p), decodePoint(nodes.get(b.to).p));
+            if (!hit || !between(hit.t) || !between(hit.u))
+                fail('dependency-intersection', d.node);
+            d.parameters = [encodeRational(hit.t), encodeRational(hit.u)];
+        }
+        let result;
+        d.refs.forEach((r, i) => {
+            const from = nodes.get(r.from), to = nodes.get(r.to);
+            if (!from || !to)
+                fail('dependency-support', d.node);
+            const p = pointAt(decodePoint(from.p), decodePoint(to.p), decodeRational(d.parameters[i]));
+            if (result && !pointEq(result, p))
+                fail('dependency-intersection', d.node);
+            result = p;
+        });
+        const node = nodes.get(d.node);
+        if (!node || !result)
+            fail('dependency-node');
+        node.p = encodePoint(result);
+    }
+}
+function targetRef(ref) { return { kind: ref.kind, id: ref.id }; }
+function freezeGraph(graph) {
+    const freeze = (v) => { if (v && typeof v === 'object' && !Object.isFrozen(v)) {
+        for (const value of Object.values(v))
+            freeze(value);
+        Object.freeze(v);
+    } };
+    freeze(graph);
+    return graph;
+}
+function preparedMove(before, op, context) {
+    const index = preparedGraphs.get(before);
+    if (!index || context.projection || context.limits)
+        return null;
+    const old = index.nodes.get(op.node) || fail('node-missing', op.node), p = decodePoint(op.target);
+    if (pointEq(decodePoint(old.p), p) && !op.detachDependency)
+        return { graph: before, changed: false, mapping: emptyMapping(), touched: { nodes: [], edges: [], rooms: [], hosts: [] }, diagnostics: [] };
+    if (before.dependencies.some(d => d.node === op.node) && !op.detachDependency)
+        fail('dependent-move', op.node);
+    for (const item of context.hosts || []) {
+        const host = item && 'host' in item ? item.host : item;
+        if (!host)
+            continue;
+        if (!index.edges.has(edgeKey(host)) || !between(hostParameter(host)))
+            fail('host');
+        if (host.tq && host.t !== toNumber(hostParameter(host)))
+            fail('host-projection');
+    }
+    const points = new Map(index.points), nodes = new Map(index.nodes), changed = new Map();
+    const first = { id: old.id, p: encodePoint(p) };
+    points.set(first.id, p);
+    nodes.set(first.id, first);
+    changed.set(first.id, first);
+    const deps = before.dependencies.filter(d => !op.detachDependency || d.node !== op.node), depChanges = new Map();
+    for (const previous of dependencyOrder({ ...before, dependencies: deps })) {
+        if (!previous.refs.some(r => changed.has(r.from) || changed.has(r.to)))
+            continue;
+        const d = clone$1(previous);
+        let value;
+        if (d.kind === 'intersection') {
+            const [a, b] = d.refs, hit = intersection(points.get(a.from), points.get(a.to), points.get(b.from), points.get(b.to));
+            if (!hit || !between(hit.t) || !between(hit.u))
+                fail('dependency-intersection', d.node);
+            d.parameters = [encodeRational(hit.t), encodeRational(hit.u)];
+            value = hit.p;
+        }
+        else
+            value = pointAt(points.get(d.refs[0].from), points.get(d.refs[0].to), decodeRational(d.parameters[0]));
+        const n = { id: d.node, p: encodePoint(value) };
+        points.set(n.id, value);
+        nodes.set(n.id, n);
+        changed.set(n.id, n);
+        depChanges.set(d.node, d);
+    }
+    const affected = new Map();
+    for (const id of changed.keys())
+        for (const edge of index.incident.get(id) || [])
+            affected.set(edgeKey(edge), edge);
+    const affectedRoomIds = new Set([...affected.keys()].flatMap(key => index.owners.get(key) || []));
+    const dirty = new Set([...(index.dirtyEdges || []), ...affected.keys()]);
+    for (const edge of affected.values()) {
+        const candidates = new Map(queryTree(index.edgeTree, boxPoints(points.get(edge.from), points.get(edge.to)), []).map(e => [edgeKey(e), e]));
+        for (const key of dirty) {
+            const e = index.edges.get(key);
+            if (e)
+                candidates.set(key, e);
+        }
+        for (const other of candidates.values())
+            if (edgeKey(other) !== edgeKey(edge) && properCross(edge, other, points))
+                fail('unsplit-crossing', edgeKey(edge));
+    }
+    const rooms = before.rooms.filter(room => affectedRoomIds.has(room.room));
+    const edgeIds = new Set([...affected.keys(), ...rooms.flatMap(room => room.edges.map(edgeKey))]);
+    const edges = before.edges.filter(e => edgeIds.has(edgeKey(e))), ids = new Set(edges.flatMap(e => [e.from, e.to]));
+    for (const d of depChanges.values()) {
+        ids.add(d.node);
+        for (const ref of d.refs) {
+            ids.add(ref.from);
+            ids.add(ref.to);
+        }
+    }
+    assertGraph({ version: 1, nodes: [...ids].map(id => nodes.get(id)), edges, rooms, dependencies: [...depChanges.values()] });
+    const graph = freezeGraph({ ...before, nodes: before.nodes.map(n => changed.get(n.id) || n),
+        dependencies: deps.map(d => depChanges.get(d.node) || d) });
+    preparedGraphs.set(graph, { ...index, nodes, points, dirtyEdges: dirty });
+    return { graph, changed: op.detachDependency === true || [...changed].some(([id, n]) => JSON.stringify(n) !== JSON.stringify(index.nodes.get(id))), mapping: emptyMapping(),
+        touched: { nodes: [...changed.keys()], edges: [...affected.values()].map(targetRef), rooms: rooms.map(r => r.room), hosts: [] }, diagnostics: [] };
+}
+function applyGraphOperation(before, operation, context = {}) {
+    if (operation.kind === 'move-node') {
+        const fast = preparedMove(before, operation, context);
+        if (fast)
+            return fast;
+    }
+    const originalIndex = assertGraph(before, { ...context, projection: undefined });
+    const originalRooms = new Map(before.rooms.map(r => [r.room, r]));
+    let graph = clone$1(before);
+    const mapping = emptyMapping(), hostRecords = (context.hosts || []).map((item, i) => ({
+        id: String(item.id ?? i), host: clone$1(item && 'host' in item ? item.host : item),
+    })).filter(item => item.host);
+    const findEdge = (ref) => graph.edges.find(e => edgeKey(e) === edgeKey(ref)) || fail('edge-missing', edgeKey(ref));
+    const findNode = (id) => graph.nodes.find(n => n.id === id) || fail('node-missing', id);
+    const addNode = (node) => {
+        if (graph.nodes.some(n => n.id === node.id))
+            fail('node-id', node.id);
+        decodePoint(node.p);
+        graph.nodes.push(clone$1(node));
+    };
+    const addEdge = (edge) => {
+        if (graph.edges.some(e => edgeKey(e) === edgeKey(edge)))
+            fail('edge-id', edgeKey(edge));
+        const added = clone$1(edge);
+        graph.edges.push(added);
+        return added;
+    };
+    const retire = (node) => { graph.dependencies = graph.dependencies.filter(d => d.node !== node); };
+    const setDependency = (dep) => { retire(dep.node); graph.dependencies.push(clone$1(dep)); };
+    const remapHosts = (old, ranges) => {
+        for (const record of hostRecords)
+            if (edgeKey(record.host) === edgeKey(old)) {
+                const t = hostParameter(record.host);
+                const range = ranges.find(r => cmp(t, decodeRational(r.sourceInterval[0])) >= 0
+                    && cmp(t, decodeRational(r.sourceInterval[1])) <= 0) || fail('host-remap', record.id);
+                const start = decodeRational(range.sourceInterval[0]), end = decodeRational(range.sourceInterval[1]);
+                let next = div(sub(t, start), sub(end, start));
+                if (range.reverse)
+                    next = sub(ONE, next);
+                record.host = canonicalHost({ ...record.host, ...range.ref }, next);
+                mapping.hosts[record.id] = clone$1(record.host);
+            }
+    };
+    const split = (ref, t, nodeId, newEdgeId) => {
+        if (cmp(t, ZERO) <= 0 || cmp(t, ONE) >= 0)
+            fail('split-parameter');
+        const edge = findEdge(ref), a = findNode(edge.from), b = findNode(edge.to);
+        const point = pointAt(decodePoint(a.p), decodePoint(b.p), t);
+        const node = graph.nodes.find(n => n.id === nodeId);
+        if (node && !pointEq(decodePoint(node.p), point))
+            fail('split-point');
+        if (!node)
+            addNode({ id: nodeId, p: encodePoint(point) });
+        const oldTo = edge.to, next = { ...clone$1(edge), id: newEdgeId, from: nodeId };
+        addEdge(next);
+        edge.to = nodeId;
+        const ranges = [
+            { ref: targetRef(edge), sourceInterval: [encodeRational(ZERO), encodeRational(t)], reverse: false },
+            { ref: targetRef(next), sourceInterval: [encodeRational(t), encodeRational(ONE)], reverse: false },
+        ];
+        // Compose prior ranges so callers receive mappings from the original graph.
+        for (const list of Object.values(mapping.edges)) {
+            const i = list.findIndex(r => edgeKey(r.ref) === edgeKey(ref));
+            if (i >= 0) {
+                const prev = list[i], lo = decodeRational(prev.sourceInterval[0]), hi = decodeRational(prev.sourceInterval[1]);
+                const mid = add(lo, mul(sub(hi, lo), prev.reverse ? sub(ONE, t) : t));
+                list.splice(i, 1, ...(prev.reverse ? [
+                    { ref: targetRef(next), sourceInterval: [encodeRational(lo), encodeRational(mid)], reverse: true },
+                    { ref: targetRef(edge), sourceInterval: [encodeRational(mid), encodeRational(hi)], reverse: true },
+                ] : [
+                    { ref: targetRef(edge), sourceInterval: [encodeRational(lo), encodeRational(mid)], reverse: false },
+                    { ref: targetRef(next), sourceInterval: [encodeRational(mid), encodeRational(hi)], reverse: false },
+                ]));
+            }
+        }
+        if (!mapping.edges[edgeKey(ref)])
+            mapping.edges[edgeKey(ref)] = ranges;
+        for (const room of graph.rooms)
+            room.edges = room.edges.flatMap(r => edgeKey(r) !== edgeKey(ref) ? [r] : r.reverse
+                ? [{ ...targetRef(next), reverse: true }, { ...targetRef(edge), reverse: true }]
+                : [{ ...targetRef(edge), reverse: false }, { ...targetRef(next), reverse: false }]);
+        setDependency({ node: nodeId, kind: 'on-edge', refs: [{ from: edge.from, to: oldTo }], parameters: [encodeRational(t)] });
+        remapHosts(ref, ranges);
+    };
+    const apply = (op) => {
+        switch (op.kind) {
+            case 'batch':
+                for (const item of op.operations)
+                    apply(item);
+                return;
+            case 'create-node':
+                addNode(op.node);
+                return;
+            case 'create-edge':
+                addEdge(op.edge);
+                return;
+            case 'set-dependency':
+                findNode(op.dependency.node);
+                setDependency(op.dependency);
+                return;
+            case 'retire-dependency':
+                findNode(op.node);
+                retire(op.node);
+                return;
+            case 'move-node': {
+                const node = findNode(op.node);
+                decodePoint(op.target);
+                if (graph.dependencies.some(d => d.node === node.id)) {
+                    if (!op.detachDependency && !pointEq(decodePoint(node.p), decodePoint(op.target)))
+                        fail('dependent-move', node.id);
+                    if (op.detachDependency)
+                        retire(node.id);
+                }
+                node.p = clone$1(op.target);
+                return;
+            }
+            case 'detach-node': {
+                const source = findNode(op.node);
+                addNode({ id: op.newId, p: clone$1(op.target) });
+                const selected = new Set(op.rooms);
+                for (const ref of op.edges) {
+                    const edge = findEdge(ref);
+                    if (edge.from !== source.id && edge.to !== source.id)
+                        fail('detach-incidence');
+                    const outside = graph.rooms.some(r => !selected.has(r.room) && r.edges.some(e => edgeKey(e) === edgeKey(edge)));
+                    let target = edge;
+                    if (outside) {
+                        const newId = op.edgeIds?.[edgeKey(edge)] || fail('detach-edge-id');
+                        target = addEdge({ ...clone$1(edge), id: newId });
+                        for (const room of graph.rooms)
+                            if (selected.has(room.room))
+                                room.edges = room.edges.map(r => edgeKey(r) === edgeKey(edge) ? { ...r, id: newId } : r);
+                        for (const host of hostRecords)
+                            if (op.hosts?.includes(host.id) && edgeKey(host.host) === edgeKey(edge)) {
+                                host.host = { ...host.host, id: newId };
+                                mapping.hosts[host.id] = clone$1(host.host);
+                            }
+                    }
+                    if (target.from === source.id)
+                        target.from = op.newId;
+                    if (target.to === source.id)
+                        target.to = op.newId;
+                }
+                mapping.nodes[source.id] = [source.id, op.newId];
+                return;
+            }
+            case 'translate-edges': {
+                const ids = new Set(op.edges.flatMap(ref => { const e = findEdge(ref); return [e.from, e.to]; }));
+                const delta = decodePoint(op.delta);
+                for (const id of ids) {
+                    if (graph.dependencies.some(d => d.node === id && d.refs.some(r => !ids.has(r.from) || !ids.has(r.to))))
+                        fail('dependent-move', id);
+                    const n = findNode(id);
+                    n.p = encodePoint(pointAdd(decodePoint(n.p), delta));
+                }
+                return;
+            }
+            case 'insert-on-edge':
+                split(op.edge, decodeRational(op.t), op.node, op.newEdgeId);
+                return;
+            case 'insert-intersection': {
+                const a = findEdge(op.refs[0]), b = findEdge(op.refs[1]);
+                const support = [{ from: a.from, to: a.to }, { from: b.from, to: b.to }];
+                const hit = intersection(decodePoint(findNode(a.from).p), decodePoint(findNode(a.to).p), decodePoint(findNode(b.from).p), decodePoint(findNode(b.to).p));
+                if (!hit || !between(hit.t) || !between(hit.u))
+                    fail('intersection');
+                split(op.refs[0], hit.t, op.node, op.newEdgeIds[0]);
+                split(op.refs[1], hit.u, op.node, op.newEdgeIds[1]);
+                setDependency({ node: op.node, kind: 'intersection', refs: support,
+                    parameters: [encodeRational(hit.t), encodeRational(hit.u)] });
+                return;
+            }
+            case 'delete-edge': {
+                const e = findEdge(op.edge);
+                if (graph.rooms.some(r => r.edges.some(ref => edgeKey(ref) === edgeKey(e))))
+                    fail('edge-owned');
+                for (const host of hostRecords)
+                    if (edgeKey(host.host) === edgeKey(e) && !op.removeHosts?.includes(host.id))
+                        fail('edge-hosted');
+                graph.edges = graph.edges.filter(x => x !== e);
+                for (const id of op.removeHosts || [])
+                    mapping.hosts[id] = null;
+                return;
+            }
+            case 'replace-room-cycle': {
+                const old = graph.rooms.find(r => r.room === op.room);
+                if (old)
+                    old.edges = clone$1(op.edges);
+                else
+                    graph.rooms.push({ room: op.room, edges: clone$1(op.edges) });
+                return;
+            }
+            case 'delete-face':
+                graph.rooms = graph.rooms.filter(r => r.room !== op.room);
+                return;
+            case 'merge-faces':
+                graph.rooms = graph.rooms.filter(r => !op.remove.includes(r.room) && r.room !== op.room);
+                graph.rooms.push({ room: op.room, edges: clone$1(op.edges) });
+                return;
+            case 'convert-edge': {
+                const source = findEdge(op.edge), old = targetRef(source);
+                if (edgeKey(old) === edgeKey(op.target)) {
+                    if (op.cm !== undefined)
+                        source.cm = op.cm;
+                    return;
+                }
+                const target = graph.edges.find(e => edgeKey(e) === edgeKey(op.target));
+                let reverse = false;
+                if (target) {
+                    const a = decodePoint(findNode(source.from).p), b = decodePoint(findNode(source.to).p);
+                    const c = decodePoint(findNode(target.from).p), d = decodePoint(findNode(target.to).p);
+                    if (pointEq(a, c) && pointEq(b, d))
+                        reverse = false;
+                    else if (pointEq(a, d) && pointEq(b, c))
+                        reverse = true;
+                    else
+                        fail('convert-geometry');
+                    for (const [k, value] of Object.entries(source.props || {}))
+                        if (k in (target.props || {}) && JSON.stringify(target.props[k]) !== JSON.stringify(value))
+                            fail('props-conflict', k);
+                    const props = { ...(source.props || {}), ...(target.props || {}) };
+                    if (Object.keys(props).length)
+                        target.props = props;
+                    if (op.cm !== undefined)
+                        target.cm = op.cm;
+                    graph.edges = graph.edges.filter(e => e !== source);
+                }
+                else {
+                    source.id = op.target.id;
+                    source.kind = op.target.kind;
+                    if (op.cm !== undefined)
+                        source.cm = op.cm;
+                }
+                for (const room of graph.rooms)
+                    room.edges = room.edges.map(ref => edgeKey(ref) === edgeKey(old)
+                        ? { ...op.target, reverse: ref.reverse !== reverse } : ref);
+                const ranges = [{ ref: targetRef(op.target), sourceInterval: [['0', '1'], ['1', '1']], reverse }];
+                mapping.edges[edgeKey(old)] = ranges;
+                remapHosts(old, ranges);
+                return;
+            }
+            case 'set-thickness':
+                for (const ref of op.edges)
+                    findEdge(ref).cm = op.cm;
+                return;
+            case 'rehost-opening': {
+                findEdge(op.host);
+                if (!between(decodeRational(op.host.t)))
+                    fail('host-parameter');
+                const host = hostRecords.find(r => r.id === op.opening);
+                const canonical = canonicalHost(op.host, decodeRational(op.host.t));
+                if (host)
+                    host.host = canonical;
+                mapping.hosts[op.opening] = canonical;
+                return;
+            }
+            case 'collapse-node': {
+                const keep = findEdge(op.retained), remove = findEdge(op.removed), p = findNode(op.node);
+                if (![keep.from, keep.to].includes(p.id) || ![remove.from, remove.to].includes(p.id))
+                    fail('collapse-incidence');
+                keep.from === p.id ? keep.to : keep.from; const right = remove.from === p.id ? remove.to : remove.from;
+                const affectedDependencies = graph.dependencies.filter(d => d.node !== p.id && d.refs.some(r => r.from === p.id || r.to === p.id));
+                if (affectedDependencies.some(d => !op.retireDependencies?.includes(d.node)))
+                    fail('dependency-support');
+                if (graph.edges.some(e => e !== keep && e !== remove && [e.from, e.to].includes(p.id)))
+                    fail('collapse-degree');
+                const oldKeep = clone$1(keep), oldRemove = clone$1(remove);
+                if (keep.from === p.id)
+                    keep.from = right;
+                else
+                    keep.to = right;
+                for (const room of graph.rooms) {
+                    room.edges = room.edges.filter(r => edgeKey(r) !== edgeKey(remove));
+                    for (let i = 0; i < room.edges.length; i++)
+                        if (edgeKey(room.edges[i]) === edgeKey(keep)) {
+                            const prev = room.edges[(i + room.edges.length - 1) % room.edges.length], prevEdge = findEdge(prev);
+                            const start = prev.reverse ? prevEdge.from : prevEdge.to;
+                            room.edges[i].reverse = keep.to === start;
+                        }
+                }
+                for (const host of hostRecords)
+                    if ([edgeKey(keep), edgeKey(remove)].includes(edgeKey(host.host))) {
+                        const old = edgeKey(host.host) === edgeKey(keep) ? oldKeep : oldRemove;
+                        const t = hostParameter(host.host);
+                        const point = pointAt(decodePoint(findNode(old.from).p), decodePoint(findNode(old.to).p), t);
+                        const next = projectParameter(point, decodePoint(findNode(keep.from).p), decodePoint(findNode(keep.to).p));
+                        host.host = canonicalHost({ ...host.host, ...targetRef(keep) }, next);
+                        mapping.hosts[host.id] = clone$1(host.host);
+                    }
+                graph.edges = graph.edges.filter(e => e !== remove);
+                graph.dependencies = graph.dependencies.filter(d => d.node !== p.id && !d.refs.some(r => r.from === p.id || r.to === p.id));
+                graph.nodes = graph.nodes.filter(n => n !== p);
+                mapping.nodes[p.id] = [];
+                mapping.edges[edgeKey(remove)] = [{ ref: targetRef(keep), sourceInterval: [['0', '1'], ['1', '1']], reverse: false }];
+                return;
+            }
+            case 'normalize-current': return; // Canonical serialization only: preserve intentional detach.
+            case 'restore-graph':
+                assertGraph(op.graph, context);
+                graph = clone$1(op.graph);
+                return;
+            case 'import-graph': {
+                assertGraph(op.graph);
+                const mapNode = (id) => op.nodes[id] || fail('import-node-map', id);
+                const mapEdge = (r) => ({ kind: r.kind, id: op.edges[edgeKey(r)] || fail('import-edge-map') });
+                for (const n of op.graph.nodes)
+                    addNode({ id: mapNode(n.id), p: clone$1(n.p) });
+                for (const e of op.graph.edges)
+                    addEdge({ ...clone$1(e), ...mapEdge(e), from: mapNode(e.from), to: mapNode(e.to) });
+                for (const r of op.graph.rooms)
+                    graph.rooms.push({ room: op.rooms[r.room] || fail('import-room-map'),
+                        edges: r.edges.map(e => ({ ...mapEdge(e), reverse: e.reverse })) });
+                for (const d of op.graph.dependencies)
+                    graph.dependencies.push({ ...clone$1(d), node: mapNode(d.node),
+                        refs: d.refs.map(r => ({ from: mapNode(r.from), to: mapNode(r.to) })) });
+                return;
+            }
+            default: {
+                const exhaustive = op;
+                fail('operation', String(exhaustive));
+            }
+        }
+    };
+    apply(operation);
+    evaluateDependencies(graph);
+    graph = canonicalGraph(graph);
+    const remainingHosts = hostRecords.filter(h => mapping.hosts[h.id] !== null).map(h => h.host);
+    assertGraph(graph, { ...context, projection: undefined, hosts: remainingHosts, roomIds: undefined });
+    const nextNodeIds = new Set(graph.nodes.map(n => n.id)), nextEdgeKeys = new Set(graph.edges.map(edgeKey)), nextRoomIds = new Set(graph.rooms.map(r => r.room));
+    const changedNode = [...graph.nodes.filter(n => JSON.stringify(n) !== JSON.stringify(originalIndex.nodes.get(n.id))).map(n => n.id),
+        ...before.nodes.filter(n => !nextNodeIds.has(n.id)).map(n => n.id)];
+    const changedSet = new Set(changedNode);
+    const changedEdge = [...graph.edges.filter(e => changedSet.has(e.from) || changedSet.has(e.to) || JSON.stringify(e) !== JSON.stringify(originalIndex.edges.get(edgeKey(e)))).map(targetRef),
+        ...before.edges.filter(e => !nextEdgeKeys.has(edgeKey(e))).map(targetRef)];
+    const changedEdgeSet = new Set(changedEdge.map(edgeKey));
+    const changedRoom = [...graph.rooms.filter(r => r.edges.some(e => changedEdgeSet.has(edgeKey(e))) || JSON.stringify(r) !== JSON.stringify(originalRooms.get(r.room))).map(r => r.room),
+        ...before.rooms.filter(r => !nextRoomIds.has(r.room)).map(r => r.room)];
+    return { graph, changed: JSON.stringify(graph) !== JSON.stringify(before), mapping,
+        touched: { nodes: changedNode, edges: changedEdge, rooms: changedRoom, hosts: Object.keys(mapping.hosts) }, diagnostics: [] };
+}
+// Frozen legacy ID codec; kept local to avoid a current-commit -> core import cycle.
+const sha256$1 = (text) => {
+    const bytes = new TextEncoder().encode(text);
+    const bitLength = bytes.length * 8;
+    const size = Math.ceil((bytes.length + 9) / 64) * 64;
+    const data = new Uint8Array(size);
+    data.set(bytes);
+    data[bytes.length] = 0x80;
+    const view = new DataView(data.buffer);
+    view.setUint32(size - 8, Math.floor(bitLength / 0x100000000), false);
+    view.setUint32(size - 4, bitLength >>> 0, false);
+    const k = new Uint32Array([
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
+        0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786,
+        0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147,
+        0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a,
+        0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+    ]);
+    const h = new Uint32Array([
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    ]);
+    const w = new Uint32Array(64);
+    const rotr = (value, bits) => (value >>> bits) | (value << (32 - bits));
+    for (let offset = 0; offset < size; offset += 64) {
+        for (let i = 0; i < 16; i++)
+            w[i] = view.getUint32(offset + i * 4, false);
+        for (let i = 16; i < 64; i++) {
+            const x = w[i - 15], y = w[i - 2];
+            const s0 = rotr(x, 7) ^ rotr(x, 18) ^ (x >>> 3);
+            const s1 = rotr(y, 17) ^ rotr(y, 19) ^ (y >>> 10);
+            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+        }
+        let [a, b, c, d, e, f, g, hh] = h;
+        for (let i = 0; i < 64; i++) {
+            const s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+            const ch = (e & f) ^ (~e & g);
+            const t1 = (hh + s1 + ch + k[i] + w[i]) >>> 0;
+            const s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+            const maj = (a & b) ^ (a & c) ^ (b & c);
+            const t2 = (s0 + maj) >>> 0;
+            hh = g;
+            g = f;
+            f = e;
+            e = (d + t1) >>> 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (t1 + t2) >>> 0;
+        }
+        h[0] = (h[0] + a) >>> 0;
+        h[1] = (h[1] + b) >>> 0;
+        h[2] = (h[2] + c) >>> 0;
+        h[3] = (h[3] + d) >>> 0;
+        h[4] = (h[4] + e) >>> 0;
+        h[5] = (h[5] + f) >>> 0;
+        h[6] = (h[6] + g) >>> 0;
+        h[7] = (h[7] + hh) >>> 0;
+    }
+    const out = new Uint8Array(32);
+    const outView = new DataView(out.buffer);
+    for (let i = 0; i < h.length; i++)
+        outView.setUint32(i * 4, h[i], false);
+    return out;
+};
+const base32$1 = (bytes) => {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+    let bits = 0, value = 0, result = '';
+    for (const byte of bytes) {
+        value = (value << 8) | byte;
+        bits += 8;
+        while (bits >= 5) {
+            result += alphabet[(value >>> (bits - 5)) & 31];
+            bits -= 5;
+        }
+    }
+    if (bits)
+        result += alphabet[(value << (5 - bits)) & 31];
+    return result;
+};
+function legacyWallSegmentId(spaceId, a, b, owners) {
+    const key = (p) => Number(p[0]).toFixed(12) + ',' + Number(p[1]).toFixed(12);
+    const ca = key(a) <= key(b) ? a : b, cb = ca === a ? b : a;
+    return 'wall-' + base32$1(sha256$1(spaceId + '|' + key(ca) + '|' + key(cb) + '|' + [...owners].sort(order).join(','))).slice(0, 20);
+}
+const sourceNodeId = (ref) => {
+    const id = 'n:' + encodeURIComponent(ref);
+    return id.length <= 4096 ? id : 'n:h:' + base32$1(sha256$1(ref));
+};
+const graphSplitId = (kind, id, index, lo, hi) => {
+    const plain = id + '~' + index;
+    return plain.length <= 64 ? plain : 's:' + base32$1(sha256$1(JSON.stringify([kind, id, index, lo, hi]))).slice(0, 52);
+};
+const boxPoints = (a, b) => ({
+    lo: [min(a[0], b[0]), min(a[1], b[1])], hi: [max(a[0], b[0]), max(a[1], b[1])],
+});
+function makeTree(items, box, depth = 0) {
+    if (!items.length)
+        return null;
+    const boxes = items.map(box), lo = [boxes[0].lo[0], boxes[0].lo[1]], hi = [boxes[0].hi[0], boxes[0].hi[1]];
+    let x0 = lo[0], y0 = lo[1], x1 = hi[0], y1 = hi[1];
+    for (const b of boxes) {
+        x0 = min(x0, b.lo[0]);
+        y0 = min(y0, b.lo[1]);
+        x1 = max(x1, b.hi[0]);
+        y1 = max(y1, b.hi[1]);
+    }
+    const result = { lo: [x0, y0], hi: [x1, y1] };
+    if (items.length <= 8)
+        result.items = items;
+    else {
+        const axis = depth % 2;
+        items.sort((a, b) => cmp(add(box(a).lo[axis], box(a).hi[axis]), add(box(b).lo[axis], box(b).hi[axis])));
+        const mid = Math.floor(items.length / 2);
+        result.left = makeTree(items.slice(0, mid), box, depth + 1);
+        result.right = makeTree(items.slice(mid), box, depth + 1);
+    }
+    return result;
+}
+function queryTree(tree, query, out) {
+    if (!tree || [0, 1].some(i => cmp(tree.hi[i], query.lo[i]) < 0 || cmp(tree.lo[i], query.hi[i]) > 0))
+        return out;
+    if (tree.items)
+        out.push(...tree.items);
+    else {
+        queryTree(tree.left, query, out);
+        queryTree(tree.right, query, out);
+    }
+    return out;
+}
+function collectSources(space) {
+    const sources = new Map(), pointTable = new Map();
+    const exactSources = new Map();
+    const boundaries = new Map(), roomOnly = new Map();
+    const addSource = (raw, kind, owners = []) => {
+        if (!idValid(raw.id))
+            fail('source-edge-id');
+        const a = readSourcePoint(raw.a), b = readSourcePoint(raw.b), reversed = pointCmp(a, b) > 0;
+        if (pointEq(a, b))
+            fail('zero-length');
+        const result = { kind, id: raw.id, a: reversed ? b : a, b: reversed ? a : b,
+            raw: clone$1(raw), cm: Number(raw.cm ?? 0), reversed, owners: new Set(owners) };
+        if (sources.has(edgeKey(result)))
+            fail('duplicate-id', edgeKey(result));
+        sources.set(edgeKey(result), result);
+        if (kind === 'wall')
+            exactSources.set(pointKey$1(result.a) + '|' + pointKey$1(result.b), result);
+        return result;
+    };
+    for (const raw of space.wall_segments || [])
+        addSource(raw, 'wall');
+    for (const raw of space.partitions || [])
+        addSource(raw, 'partition');
+    const roomPolys = new Map();
+    for (const room of space.rooms || []) {
+        if (!idValid(room.id) || roomPolys.has(room.id))
+            fail('room');
+        const poly = room.poly || (['x', 'y', 'w', 'h'].every(k => Number.isFinite(room[k])) ? [
+            [room.x, room.y], [room.x + room.w, room.y], [room.x + room.w, room.y + room.h], [room.x, room.y + room.h],
+        ] : []);
+        if (poly.length < 3)
+            fail('room');
+        roomPolys.set(room.id, poly);
+        for (let i = 0; i < poly.length; i++) {
+            const a = readSourcePoint(poly[i]), b = readSourcePoint(poly[(i + 1) % poly.length]);
+            const key = pointCmp(a, b) <= 0 ? pointKey$1(a) + '|' + pointKey$1(b) : pointKey$1(b) + '|' + pointKey$1(a);
+            if (!room.wall_ids?.[i] || !sources.has('wall:' + room.wall_ids[i])) {
+                const same = exactSources.get(key);
+                if (!same) {
+                    const value = roomOnly.get(key) || { a: poly[i], b: poly[(i + 1) % poly.length], owners: [], preferred: [] };
+                    value.owners.push(room.id);
+                    if (idValid(room.wall_ids?.[i]))
+                        value.preferred.push(room.wall_ids[i]);
+                    roomOnly.set(key, value);
+                }
+            }
+        }
+    }
+    const generated = [...roomOnly].sort(([a], [b]) => order(a, b));
+    const generatedByKey = new Map();
+    for (const [key, item] of generated) {
+        const base = [...item.preferred].sort(order)[0] || legacyWallSegmentId(String(space.id || ''), item.a, item.b, item.owners);
+        let id = base;
+        for (let suffix = 2; sources.has('wall:' + id); suffix++)
+            id = base + '-' + suffix;
+        // Legacy wall overlays are decoded by the existing compatibility key.
+        const overlay = (space.walls || []).find((w) => w.key === wallKey(item.a, item.b, 1 / 240));
+        generatedByKey.set(key, addSource({ id, a: item.a, b: item.b, cm: Number(overlay?.cm ?? 0) }, 'wall', item.owners));
+    }
+    const all = [...sources.values()].sort((a, b) => order(edgeKey(a), edgeKey(b)));
+    const addPoint = (ref, p, endpoint) => {
+        const old = pointTable.get(ref);
+        if (old && !pointEq(old.p, p))
+            fail('source-reference');
+        if (!old)
+            pointTable.set(ref, { ref, p, endpoints: endpoint ? [endpoint] : [] });
+        else if (endpoint && !old.endpoints.includes(endpoint))
+            old.endpoints.push(endpoint);
+    };
+    for (const source of all) {
+        addPoint(JSON.stringify([source.kind, source.id, 0]), source.a, edgeKey(source) + ':0');
+        addPoint(JSON.stringify([source.kind, source.id, 1]), source.b, edgeKey(source) + ':1');
+    }
+    for (const room of space.rooms || []) {
+        const poly = roomPolys.get(room.id), result = [];
+        for (let i = 0; i < poly.length; i++) {
+            const a = readSourcePoint(poly[i]), b = readSourcePoint(poly[(i + 1) % poly.length]);
+            const low = pointCmp(a, b) <= 0 ? a : b, high = low === a ? b : a, key = pointKey$1(low) + '|' + pointKey$1(high);
+            const source = (room.wall_ids?.[i] && sources.get('wall:' + room.wall_ids[i]))
+                || exactSources.get(key) || generatedByKey.get(key);
+            if (!source)
+                fail('source-room-edge');
+            source.owners.add(room.id);
+            const ta = projectParameter(a, source.a, source.b), tb = projectParameter(b, source.a, source.b);
+            if (!between(ta) || !between(tb))
+                fail('source-room-range');
+            result.push({ source: edgeKey(source), start: ta, end: tb, startRef: JSON.stringify(['room', room.id, pointKey$1(a)]), endRef: JSON.stringify(['room', room.id, pointKey$1(b)]) });
+            // Repeated same-coordinate room owners are source constraints as well.
+            addPoint(JSON.stringify(['room', room.id, pointKey$1(a)]), a);
+        }
+        boundaries.set(room.id, result);
+    }
+    return { sources: all, points: [...pointTable.values()].sort((a, b) => order(a.ref, b.ref)), boundaries };
+}
+/** Detached v10 -> one exact graph. Current11 never uses this reconstruction. */
+function migrateGraphSpace(space, options = {}) {
+    if (space.plan_graph)
+        fail('current-migration');
+    const source = collectSources(space), sourceByKey = new Map(source.sources.map(s => [edgeKey(s), s])), radius = microRadius(options.cellCm ?? Number(space.cell_cm || 5));
+    const limits = { ...GRAPH_LIMITS, ...options.limits };
+    const sourceVersion = options.sourceModelVersion ?? (Array.isArray(space.wall_segments) && space.wall_segments.length ? 10 : 0);
+    if (!Number.isInteger(sourceVersion) || sourceVersion < 0 || sourceVersion > 10)
+        fail('source-version');
+    const canonicalSegments = new Set((space.wall_segments || []).map((e) => e.id));
+    if (source.sources.length > limits.edges || (space.rooms || []).length > limits.rooms)
+        fail('resource');
+    const run = (optional) => {
+        const graph = { nodes: [], edges: [], rooms: [], dependencies: [] };
+        const nodes = new Map(), origins = new Map(), pointNode = new Map();
+        const sourcePointNode = new Map(), endpointNode = new Map(), buckets = new Map();
+        const cutMap = new Map(), mapping = emptyMapping();
+        let bends = 0;
+        const bucket = (p) => [floor(div(p[0], radius)), floor(div(p[1], radius))];
+        const place = (id, p, owners) => {
+            const node = nodes.get(id);
+            if (node) {
+                const oldKey = pointKey$1(decodePoint(node.p));
+                if (pointNode.get(oldKey) === id)
+                    pointNode.delete(oldKey);
+                node.p = encodePoint(p);
+            }
+            else {
+                const n = { id, p: encodePoint(p) };
+                nodes.set(id, n);
+                graph.nodes.push(n);
+            }
+            origins.set(id, owners);
+            pointNode.set(pointKey$1(p), id);
+            const b = bucket(p), key = b[0] + ',' + b[1], list = buckets.get(key) || new Set();
+            list.add(id);
+            buckets.set(key, list);
+        };
+        const compatible = (owner, id, p) => {
+            const group = origins.get(id) || [];
+            if (![owner, ...group].every(s => withinRadius(s.p, p, radius)))
+                return false;
+            const membership = new Set(group.flatMap(s => s.endpoints));
+            return owner.endpoints.every(ref => !membership.has(ref.slice(0, -1) + (ref.endsWith('0') ? '1' : '0')));
+        };
+        for (const owner of source.points) {
+            const b = bucket(owner.p), candidates = [];
+            for (let x = -1n; x <= 1n; x++)
+                for (let y = -1n; y <= 1n; y++)
+                    for (const id of buckets.get((b[0] + x) + ',' + (b[1] + y)) || []) {
+                        const p = decodePoint(nodes.get(id).p);
+                        if (withinRadius(owner.p, p, radius) && compatible(owner, id, p))
+                            candidates.push({ id, p });
+                    }
+            if (optional) {
+                const grid = [exact(nearestInteger(mul(owner.p[0], exact(240n))), 240n), exact(nearestInteger(mul(owner.p[1], exact(240n))), 240n)];
+                if (withinRadius(owner.p, grid, radius)) {
+                    const id = pointNode.get(pointKey$1(grid));
+                    if (!id || compatible(owner, id, grid))
+                        candidates.push({ id, p: grid });
+                }
+            }
+            const exactExisting = pointNode.get(pointKey$1(owner.p));
+            if (exactExisting && compatible(owner, exactExisting, owner.p))
+                candidates.push({ id: exactExisting, p: owner.p });
+            const ranked = candidates.filter(c => optional || pointEq(c.p, owner.p)).sort((a, b) => cmp(squaredDistance(owner.p, a.p), squaredDistance(owner.p, b.p)) || pointCmp(a.p, b.p) || order(a.id || '', b.id || ''));
+            const selected = ranked[0] || { p: owner.p }, id = selected.id || sourceNodeId(owner.ref);
+            const group = origins.get(id) || [];
+            place(id, selected.p, [...group, owner]);
+            sourcePointNode.set(owner.ref, id);
+            for (const endpoint of owner.endpoints)
+                endpointNode.set(endpoint, id);
+        }
+        const explicitCuts = sourceVersion < 9 ? sanitizeOpenSpans(space.open_spans) : [];
+        const legacyCuts = explicitCuts.length ? explicitCuts.map(c => [...c.a, ...c.b])
+            : sourceVersion < 9 ? resolveOpenCuts(space.rooms || [], null, 1, (1 / 240) * 0.04, true) : [];
+        const zeroIntervals = new Map(), openingIntervals = new Map();
+        for (const s of source.sources)
+            cutMap.set(edgeKey(s), [
+                { t: ZERO, node: endpointNode.get(edgeKey(s) + ':0') }, { t: ONE, node: endpointNode.get(edgeKey(s) + ':1') }
+            ]);
+        const tree = makeTree([...source.sources], s => boxPoints(s.a, s.b));
+        const addCut = (s, t, id) => {
+            if (!between(t))
+                return;
+            const cuts = cutMap.get(edgeKey(s));
+            if (!cuts.some(c => eq(c.t, t) && c.node === id))
+                cuts.push({ t, node: id });
+        };
+        const contactCandidates = (p) => queryTree(tree, { lo: pointSub(p, [radius, radius]), hi: pointAdd(p, [radius, radius]) }, [])
+            .sort((a, b) => order(edgeKey(a), edgeKey(b)));
+        const cutPoint = (host, t, tag) => {
+            if (cmp(t, ZERO) <= 0 || cmp(t, ONE) >= 0)
+                return;
+            const ends = cutMap.get(edgeKey(host)), p = pointAt(decodePoint(nodes.get(ends[0].node).p), decodePoint(nodes.get(ends[1].node).p), t);
+            let id = pointNode.get(pointKey$1(p));
+            if (!id) {
+                id = sourceNodeId(JSON.stringify(['cut', edgeKey(host), encodeRational(t)]));
+                place(id, p, []);
+            }
+            addCut(host, t, id);
+        };
+        const interval = (host, a, b) => {
+            const ta = projectParameter(a, host.a, host.b), tb = projectParameter(b, host.a, host.b);
+            if (!withinRadius(a, pointAt(host.a, host.b, ta), radius) || !withinRadius(b, pointAt(host.a, host.b, tb), radius))
+                return null;
+            const lo = max(ZERO, min(ta, tb)), hi = min(ONE, max(ta, tb));
+            return cmp(lo, hi) < 0 ? [lo, hi] : null;
+        };
+        for (const s of source.sources)
+            if (s.kind === 'wall') {
+                const zeros = [], openingRuns = [];
+                for (const cut of legacyCuts) {
+                    const run = interval(s, readSourcePoint(cut.slice(0, 2)), readSourcePoint(cut.slice(2, 4)));
+                    if (run) {
+                        zeros.push(run);
+                        for (const t of run)
+                            cutPoint(s, t);
+                    }
+                }
+                zeroIntervals.set(edgeKey(s), zeros);
+                for (const overlay of space.walls || [])
+                    if (Array.isArray(overlay.a) && Array.isArray(overlay.b)) {
+                        const run = interval(s, readSourcePoint(overlay.a), readSourcePoint(overlay.b));
+                        if (run)
+                            for (const t of run)
+                                cutPoint(s, t);
+                    }
+                for (const opening of space.openings || [])
+                    if (zeros.length && opening.host?.kind !== 'partition'
+                        && Number.isFinite(opening.x) && Number.isFinite(opening.y) && Number(opening.length) > 0
+                        && wallAngleMatches(pointToNumbers(s.a), pointToNumbers(s.b), Number(opening.angle))) {
+                        const centre = readSourcePoint([opening.x, opening.y]), t = projectParameter(centre, s.a, s.b);
+                        if (!between(t) || !withinRadius(centre, pointAt(s.a, s.b, t), radius))
+                            continue;
+                        const length = Math.sqrt(toNumber(squaredDistance(s.a, s.b)));
+                        const half = div(parseDecimal(Number(opening.length) / 2), parseDecimal(length));
+                        const run = [max(ZERO, sub(t, half)), min(ONE, add(t, half))];
+                        if (zeros.some(([lo, hi]) => cmp(t, lo) >= 0 && cmp(t, hi) <= 0)) {
+                            openingRuns.push(run);
+                            for (const end of run)
+                                cutPoint(s, end);
+                        }
+                    }
+                openingIntervals.set(edgeKey(s), openingRuns);
+            }
+        // Required old-reader endpoint contacts, evaluated after both host endpoints.
+        for (const owner of source.points) {
+            let node = sourcePointNode.get(owner.ref);
+            const p0 = owner.p;
+            const candidates = contactCandidates(p0).filter(s => !owner.endpoints.some(e => e.startsWith(edgeKey(s) + ':')));
+            for (const host of candidates) {
+                const oldT = projectParameter(p0, host.a, host.b);
+                if (!between(oldT))
+                    continue;
+                const rawContact = pointAt(host.a, host.b, oldT);
+                // P4/face-reader envelope. Its shift is still checked against R.
+                if (!withinRadius(p0, rawContact, radius))
+                    continue;
+                if (!optional && !storedWallContact(pointToNumbers(p0), pointToNumbers(host.a), pointToNumbers(host.b), 1, true))
+                    continue;
+                const ends = cutMap.get(edgeKey(host)), a = decodePoint(nodes.get(ends[0].node).p), b = decodePoint(nodes.get(ends[1].node).p);
+                const t = projectParameter(p0, a, b);
+                if (!between(t))
+                    continue;
+                let p = pointAt(a, b, t), group = origins.get(node);
+                if (!group.every(o => withinRadius(o.p, p, radius))) {
+                    p = group.map(o => o.p).find(candidate => group.every(o => withinRadius(o.p, candidate, radius))) || p0;
+                    if (!group.every(o => withinRadius(o.p, p, radius)))
+                        continue;
+                    bends++;
+                }
+                // Never collapse the opposite ends of an existing source segment.
+                if (group.some(o => o.endpoints.some(e => {
+                    const other = endpointNode.get(e.slice(0, -1) + (e.endsWith('0') ? '1' : '0'));
+                    return other !== node && other && pointEq(decodePoint(nodes.get(other).p), p);
+                })))
+                    continue;
+                const existing = pointNode.get(pointKey$1(p));
+                if (existing && existing !== node) {
+                    const others = origins.get(existing) || [];
+                    if (![...group, ...others].every(o => withinRadius(o.p, p, radius)))
+                        continue;
+                    const previous = node;
+                    for (const [key, value] of sourcePointNode)
+                        if (value === previous)
+                            sourcePointNode.set(key, existing);
+                    for (const [key, value] of endpointNode)
+                        if (value === previous)
+                            endpointNode.set(key, existing);
+                    for (const cuts of cutMap.values())
+                        for (const cut of cuts)
+                            if (cut.node === previous)
+                                cut.node = existing;
+                    origins.set(existing, [...others, ...group]);
+                    nodes.delete(previous);
+                    graph.nodes = graph.nodes.filter(n => n.id !== previous);
+                    for (const [key, value] of pointNode)
+                        if (value === previous)
+                            pointNode.delete(key);
+                    for (const ids of buckets.values())
+                        ids.delete(previous);
+                    node = existing;
+                    group = origins.get(node);
+                }
+                place(node, p, group);
+                addCut(host, oldT, node);
+                if (cmp(oldT, ZERO) > 0 && cmp(oldT, ONE) < 0 && pointEq(p, pointAt(a, b, t))) {
+                    graph.dependencies = graph.dependencies.filter(d => d.node !== node);
+                    const from = ends[0].node, to = ends[1].node;
+                    if (node !== from && node !== to)
+                        graph.dependencies.push({ node, kind: 'on-edge', refs: [{ from, to }], parameters: [encodeRational(t)] });
+                }
+                break;
+            }
+        }
+        // Exact crossings; broad phase is a bounded tree, never an all-pairs scan.
+        const sourcePosition = new Map(source.sources.map((s, i) => [edgeKey(s), i]));
+        for (const s of source.sources) {
+            for (const other of queryTree(tree, boxPoints(s.a, s.b), [])) {
+                if (sourcePosition.get(edgeKey(other)) <= sourcePosition.get(edgeKey(s)))
+                    continue;
+                const hit = intersection(s.a, s.b, other.a, other.b);
+                if (!hit || !between(hit.t) || !between(hit.u))
+                    continue;
+                const a = cutMap.get(edgeKey(s)), b = cutMap.get(edgeKey(other));
+                const sa = decodePoint(nodes.get(a[0].node).p), sb = decodePoint(nodes.get(a[1].node).p);
+                const oa = decodePoint(nodes.get(b[0].node).p), ob = decodePoint(nodes.get(b[1].node).p);
+                const current = intersection(sa, sb, oa, ob);
+                const p = current && between(current.t) && between(current.u) && withinRadius(current.p, hit.p, radius) ? current.p : hit.p;
+                let id = pointNode.get(pointKey$1(p));
+                if (!id) {
+                    id = sourceNodeId(JSON.stringify(['intersection', edgeKey(s), edgeKey(other)]));
+                    place(id, p, []);
+                }
+                addCut(s, hit.t, id);
+                addCut(other, hit.u, id);
+                if (current && pointEq(p, current.p) && ![a[0].node, a[1].node, b[0].node, b[1].node].includes(id)) {
+                    graph.dependencies = graph.dependencies.filter(d => d.node !== id);
+                    graph.dependencies.push({ node: id, kind: 'intersection', refs: [{ from: a[0].node, to: a[1].node }, { from: b[0].node, to: b[1].node }],
+                        parameters: [encodeRational(current.t), encodeRational(current.u)] });
+                }
+                else if (!current || !pointEq(p, current.p))
+                    bends++;
+            }
+        }
+        // Room carrier vertices are explicit cuts on their named catalogue edge.
+        for (const room of space.rooms || []) {
+            room.poly || [];
+            for (const boundary of source.boundaries.get(room.id) || []) {
+                const host = sourceByKey.get(boundary.source);
+                for (const [t, sourceRef] of [[boundary.start, boundary.startRef], [boundary.end, boundary.endRef]]) {
+                    const point = pointAt(host.a, host.b, t);
+                    let id = sourcePointNode.get(sourceRef) || pointNode.get(pointKey$1(point));
+                    if (!id) {
+                        const near = [...nodes.values()].find(n => withinRadius(point, decodePoint(n.p), radius));
+                        id = near?.id;
+                    }
+                    if (!id) {
+                        id = sourceNodeId(JSON.stringify(['room-point', room.id, pointKey$1(point)]));
+                        place(id, point, []);
+                    }
+                    addCut(host, t, id);
+                }
+            }
+        }
+        const byGeometry = new Map(), usedIds = new Set();
+        for (const s of source.sources) {
+            const cuts = cutMap.get(edgeKey(s)).sort((a, b) => cmp(a.t, b.t) || order(a.node, b.node));
+            const unique = cuts.filter((c, i) => !i || !eq(c.t, cuts[i - 1].t) || c.node !== cuts[i - 1].node);
+            const ranges = [];
+            for (let i = 0; i + 1 < unique.length; i++) {
+                const a = unique[i], b = unique[i + 1];
+                if (eq(a.t, b.t) || a.node === b.node || pointEq(decodePoint(nodes.get(a.node).p), decodePoint(nodes.get(b.node).p)))
+                    continue;
+                const middle = div(add(a.t, b.t), exact(2n));
+                const covered = (runs) => runs.some(([lo, hi]) => cmp(middle, lo) >= 0 && cmp(middle, hi) <= 0);
+                let cm = s.cm;
+                if (s.kind === 'wall' && !(sourceVersion >= 9 && canonicalSegments.has(s.id))) {
+                    const pa = pointToNumbers(pointAt(s.a, s.b, a.t)), pb = pointToNumbers(pointAt(s.a, s.b, b.t));
+                    const resolved = thicknessCmAt(space.walls || [], pa, pb, 1 / 240, 1);
+                    const parent = (space.walls || []).filter((w) => w.key === wallKey(pointToNumbers(s.a), pointToNumbers(s.b), 1 / 240));
+                    const values = new Set(parent.map((w) => Number(w.cm)).filter((v) => v > 0));
+                    if (values.size > 1)
+                        fail('thickness-conflict');
+                    cm = resolved > 0 ? resolved : values.size ? Number([...values][0]) : s.cm;
+                    if (s.raw.cm === 0 && Array.isArray(space.wall_segments) && space.wall_segments.some((w) => w.id === s.id))
+                        cm = 0;
+                    if (covered(zeroIntervals.get(edgeKey(s)) || []) && !covered(openingIntervals.get(edgeKey(s)) || []))
+                        cm = 0;
+                }
+                const pair = order(a.node, b.node) <= 0 ? [a.node, b.node] : [b.node, a.node];
+                const gkey = s.kind + ':' + pair.join('|'), props = metadataProps(s.raw, ['id', 'a', 'b', 'cm']);
+                const stable = (v) => JSON.stringify(v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort(order).map(k => [k, JSON.parse(stable(v[k]))])) : v);
+                const existing = (byGeometry.get(gkey) || []).find(e => {
+                    const a = e.props || {}, b = props || {};
+                    return Object.keys(a).every(k => !(k in b) || stable(a[k]) === stable(b[k]));
+                });
+                if (!existing && s.kind === 'wall' && (byGeometry.get(gkey) || []).length)
+                    fail('props-conflict', gkey);
+                let edge, reverse = false;
+                if (existing) {
+                    if (existing.cm !== cm)
+                        fail('thickness-conflict');
+                    edge = existing;
+                    edge.props = { ...(edge.props || {}), ...(props || {}) };
+                    if (!Object.keys(edge.props).length)
+                        delete edge.props;
+                    reverse = edge.from !== a.node;
+                }
+                else {
+                    const preferred = i === 0 ? s.id : graphSplitId(s.kind, s.id, i, encodeRational(a.t), encodeRational(b.t));
+                    let id = preferred;
+                    for (let suffix = 2; usedIds.has(s.kind + ':' + id); suffix++)
+                        id = preferred.slice(0, 64 - String(suffix).length - 1) + '-' + suffix;
+                    usedIds.add(s.kind + ':' + id);
+                    edge = { id, kind: s.kind, from: a.node, to: b.node, cm, ...(props ? { props } : {}) };
+                    const list = byGeometry.get(gkey) || [];
+                    list.push(edge);
+                    byGeometry.set(gkey, list);
+                    graph.edges.push(edge);
+                }
+                ranges.push({ ref: targetRef(edge), sourceInterval: [encodeRational(a.t), encodeRational(b.t)], reverse });
+            }
+            mapping.edges[edgeKey(s)] = ranges;
+        }
+        for (const [room, boundaries] of source.boundaries) {
+            const edges = [];
+            for (const b of boundaries) {
+                const forward = cmp(b.start, b.end) < 0, lo = min(b.start, b.end), hi = max(b.start, b.end);
+                let ranges = (mapping.edges[b.source] || []).filter(r => cmp(decodeRational(r.sourceInterval[0]), lo) >= 0 && cmp(decodeRational(r.sourceInterval[1]), hi) <= 0);
+                if (!forward)
+                    ranges = ranges.slice().reverse();
+                edges.push(...ranges.map(r => ({ ...r.ref, reverse: forward ? r.reverse : !r.reverse })));
+            }
+            graph.rooms.push({ room, edges: edges.filter((e, i) => i === 0 || edgeKey(e) !== edgeKey(edges[i - 1])) });
+        }
+        const retained = new Set(graph.edges.flatMap(e => [e.from, e.to]));
+        graph.dependencies = graph.dependencies.filter(d => retained.has(d.node) && d.refs.every(r => retained.has(r.from) && retained.has(r.to)));
+        graph.nodes = graph.nodes.filter(n => retained.has(n.id));
+        const result = freezeGraph(canonicalGraph(graph));
+        const validated = assertGraph(result, { limits, roomIds: (space.rooms || []).map((r) => r.id) });
+        preparedGraphs.set(result, validated);
+        const base = clone$1(space);
+        for (const opening of base.openings || []) {
+            if (!opening.host || !sourceByKey.has(edgeKey(opening.host))) {
+                const p = readSourcePoint([opening.x, opening.y]);
+                const eligible = source.sources.filter(s => s.kind === 'wall' && wallAngleMatches(pointToNumbers(s.a), pointToNumbers(s.b), Number(opening.angle)))
+                    .map(s => ({ s, t: projectParameter(p, s.a, s.b) })).filter(({ s, t }) => between(t) && withinRadius(p, pointAt(s.a, s.b, t), radius))
+                    .sort((a, b) => cmp(squaredDistance(p, pointAt(a.s.a, a.s.b, a.t)), squaredDistance(p, pointAt(b.s.a, b.s.b, b.t))) || b.s.cm - a.s.cm || order(a.s.id, b.s.id));
+                const selected = eligible.find(({ s, t }) => (mapping.edges[edgeKey(s)] || []).some(r => cmp(t, decodeRational(r.sourceInterval[0])) >= 0 && cmp(t, decodeRational(r.sourceInterval[1])) <= 0 && graph.edges.find(e => edgeKey(e) === edgeKey(r.ref)).cm > 0));
+                if (selected)
+                    opening.host = { kind: 'wall', id: selected.s.id, tq: encodeRational(selected.s.reversed ? sub(ONE, selected.t) : selected.t), t: toNumber(selected.s.reversed ? sub(ONE, selected.t) : selected.t) };
+                else
+                    delete opening.host;
+            }
+            if (!opening.host)
+                continue;
+            const sourceEdge = sourceByKey.get(edgeKey(opening.host));
+            if (!sourceEdge)
+                fail('host', opening.id);
+            let t = hostParameter(opening.host);
+            if (sourceEdge.reversed)
+                t = sub(ONE, t);
+            const range = (mapping.edges[edgeKey(sourceEdge)] || []).find(r => cmp(t, decodeRational(r.sourceInterval[0])) >= 0 && cmp(t, decodeRational(r.sourceInterval[1])) <= 0);
+            if (!range)
+                fail('host-range', opening.id);
+            let next = div(sub(t, decodeRational(range.sourceInterval[0])), sub(decodeRational(range.sourceInterval[1]), decodeRational(range.sourceInterval[0])));
+            if (range.reverse)
+                next = sub(ONE, next);
+            opening.host = canonicalHost({ ...opening.host, ...range.ref }, next);
+            mapping.hosts[opening.id] = clone$1(opening.host);
+        }
+        for (const [ref, id] of sourcePointNode)
+            if (retained.has(id))
+                mapping.nodes[ref] = [id];
+        const projected = projectGraphSpace(base, result);
+        let moved = 0, joined = 0, maxDistance = 0;
+        for (const [id, owners] of origins) {
+            if (!retained.has(id))
+                continue;
+            if (owners.length > 1)
+                joined += owners.length - 1;
+            const p = decodePoint(nodes.get(id).p);
+            for (const owner of owners) {
+                if (!withinRadius(owner.p, p, radius))
+                    fail('displacement');
+                if (!pointEq(owner.p, p))
+                    moved++;
+                maxDistance = Math.max(maxDistance, Math.sqrt(toNumber(squaredDistance(owner.p, p))));
+            }
+        }
+        return { graph: result, space: projected.space, bindings: projected.bindings, changed: true, mapping,
+            touched: { nodes: result.nodes.map(n => n.id), edges: result.edges.map(targetRef), rooms: result.rooms.map(r => r.room), hosts: Object.keys(mapping.hosts) },
+            diagnostics: [], migrationReport: { moved, joined, maxDisplacementCm: maxDistance * 240 * (options.cellCm ?? Number(space.cell_cm || 5)), bends } };
+    };
+    try {
+        return run(true);
+    }
+    catch (error) {
+        if (error instanceof PlanGraphError && ['zero-length', 'self-intersection', 'room-area', 'third-owner', 'open-cycle', 'dependency-value', 'dependency-cycle', 'thickness-conflict'].includes(error.code))
+            return run(false);
+        throw error;
+    }
+}
 
 /**
  * Persisted identity for contour-wall atoms (ADR 282, Stage 1).
@@ -3668,8 +5188,7 @@ const GRID_STEP_N = 1 / GRID_N;
  * catalogue and regenerates that projection.  It is deliberately DOM-free so
  * the frontend and migration contracts can be exercised as pure tests.
  */
-const WALL_SEGMENT_MODEL_VERSION = 10;
-const EPS = 1e-9;
+const WALL_SEGMENT_MODEL_VERSION = 11;
 class WallSegmentModelError extends Error {
     constructor(reason, detail = '') {
         super(detail ? `${reason}: ${detail}` : reason);
@@ -3678,35 +5197,9 @@ class WallSegmentModelError extends Error {
     }
 }
 const clone = (value) => JSON.parse(JSON.stringify(value));
-const finitePoint = (value) => (Array.isArray(value) && value.length >= 2
-    && Number.isFinite(Number(value[0])) && Number.isFinite(Number(value[1])));
 const point = (value) => [Number(value[0]), Number(value[1])];
 const pointKey = (value) => (`${Number(value[0]).toFixed(12)},${Number(value[1]).toFixed(12)}`);
-const atomKey = (a, b) => {
-    const ka = pointKey(a), kb = pointKey(b);
-    return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-};
 const canonicalSpan = (a, b) => (pointKey(a) <= pointKey(b) ? [point(a), point(b)] : [point(b), point(a)]);
-const lengthOf = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]);
-const projectT = (p, a, b) => {
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const den = dx * dx + dy * dy;
-    return den > EPS * EPS ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / den : 0;
-};
-const distanceToSegment = (p, a, b) => {
-    const t = Math.max(0, Math.min(1, projectT(p, a, b)));
-    return Math.hypot(p[0] - (a[0] + (b[0] - a[0]) * t), p[1] - (a[1] + (b[1] - a[1]) * t));
-};
-const collinearOverlap = (a, b, c, d, epsilon = EPS) => {
-    const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
-    if (len <= epsilon)
-        return 0;
-    const cross = (p) => Math.abs((p[0] - a[0]) * dy - (p[1] - a[1]) * dx) / len;
-    if (cross(c) > epsilon || cross(d) > epsilon)
-        return 0;
-    const tc = projectT(c, a, b), td = projectT(d, a, b);
-    return Math.max(0, Math.min(1, Math.max(tc, td)) - Math.max(0, Math.min(tc, td))) * len;
-};
 /* Small synchronous SHA-256: structural commits are synchronous gestures, so
  * WebCrypto's Promise API cannot be the source of migration identity. */
 const sha256 = (text) => {
@@ -3799,473 +5292,6 @@ const deterministicWallSegmentId = (spaceId, a, b, ownerIds, salt = '') => {
     const seed = `${spaceId}|${pointKey(ca)}|${pointKey(cb)}|${[...ownerIds].sort(compareCodePoints).join(',')}${salt}`;
     return `wall-${base32(sha256(seed)).slice(0, 20)}`;
 };
-let fallbackIdSequence = 0;
-/** IDs created after v8 materialisation must never be derived from geometry. */
-const freshWallSegmentId = (used) => {
-    for (let attempt = 0; attempt < 1000; attempt++) {
-        const uuid = globalThis.crypto?.randomUUID?.();
-        const entropy = uuid || base32(sha256(`${Date.now()}|${fallbackIdSequence++}|${Math.random()}`)).slice(0, 26);
-        const id = `wall-${entropy}`;
-        if (!used.has(id))
-            return id;
-    }
-    throw new WallSegmentModelError('duplicate-id', 'id factory exhausted');
-};
-const nonCatalogIds = (space) => {
-    const result = new Set();
-    for (const collection of [
-        space.rooms, space.openings, space.decor, space.room_drafts,
-        space.partitions, space.wall_columns, space.stairs,
-    ]) {
-        for (const item of Array.isArray(collection) ? collection : []) {
-            if (typeof item?.id === 'string' && item.id)
-                result.add(item.id);
-        }
-    }
-    for (const draft of Array.isArray(space.room_drafts) ? space.room_drafts : []) {
-        for (const segment of Array.isArray(draft?.segments) ? draft.segments : []) {
-            if (typeof segment?.id === 'string' && segment.id)
-                result.add(segment.id);
-        }
-    }
-    return result;
-};
-const oldSegmentMap = (space) => {
-    const result = new Map();
-    for (const segment of Array.isArray(space?.wall_segments) ? space.wall_segments : []) {
-        if (!segment || typeof segment.id !== 'string' || !finitePoint(segment.a) || !finitePoint(segment.b))
-            continue;
-        if (result.has(segment.id))
-            throw new WallSegmentModelError('duplicate-id', segment.id);
-        result.set(segment.id, segment);
-    }
-    return result;
-};
-const translatedSegmentDelta = (a, b, previous) => {
-    const matches = (pa, pb) => {
-        const dx = a[0] - pa[0], dy = a[1] - pa[1];
-        return Math.abs((b[0] - pb[0]) - dx) <= EPS
-            && Math.abs((b[1] - pb[1]) - dy) <= EPS ? [dx, dy] : null;
-    };
-    return matches(previous.a, previous.b) || matches(previous.b, previous.a);
-};
-const openingHostCounts = (openings) => {
-    const result = new Map();
-    for (const opening of openings) {
-        if (opening.host?.kind !== 'wall')
-            continue;
-        result.set(opening.host.id, (result.get(opening.host.id) || 0) + 1);
-    }
-    return result;
-};
-const buildAtoms = (space, old) => {
-    const rooms = Array.isArray(space.rooms) ? space.rooms : [];
-    const explicitLegacyCuts = sanitizeOpenSpans(space.open_spans).map((entry) => [
-        entry.a[0], entry.a[1], entry.b[0], entry.b[1],
-    ]);
-    const legacyCuts = explicitLegacyCuts.length ? explicitLegacyCuts : resolveOpenCuts(rooms, null, 1, GRID_STEP_N * 0.04, true);
-    // Since v9 every bodyless contour atom is authoritative in wall_segments.
-    // Feed its CURRENT carrier back into atomisation on every structural write:
-    // a partial zero run must survive after the deprecated open_spans/open_to
-    // projection has been removed, while Resize must not leave its old endpoint
-    // behind as a phantom breakpoint.
-    const canonicalZeroCuts = [];
-    for (const room of rooms) {
-        const poly = roomPoly(room);
-        const ids = Array.isArray(room?.wall_ids) ? room.wall_ids : [];
-        if (!poly || ids.length !== poly.length)
-            continue;
-        for (let index = 0; index < ids.length; index++) {
-            const previous = typeof ids[index] === 'string' ? old.get(ids[index]) : null;
-            if (Number(previous?.cm) !== 0)
-                continue;
-            canonicalZeroCuts.push([
-                poly[index][0], poly[index][1],
-                poly[(index + 1) % poly.length][0], poly[(index + 1) % poly.length][1],
-            ]);
-        }
-    }
-    const cuts = [...canonicalZeroCuts, ...legacyCuts];
-    // #316 §3.1: a legacy open_spans/open_to cut never zeroes the atom that
-    // carries an existing contour opening — if a door stands inside a former
-    // "border", the wall under it was real and stays real. The zero run
-    // continues on both sides, so the opening's edges become atom boundaries.
-    const legacyEraOpenings = legacyCuts.length
-        ? (Array.isArray(space.openings) ? space.openings : [])
-            .filter((opening) => opening.host?.kind !== 'partition'
-            && [Number(opening.x), Number(opening.y)].every(Number.isFinite)
-            && Number.isFinite(Number(opening.angle))
-            && Number(opening.length) > 0
-            // Only an opening that actually stands on a legacy cut changes the
-            // atomization; unrelated openings must not churn the catalogue.
-            && legacyCuts.some((cut) => distanceToSegment([Number(opening.x), Number(opening.y)], [cut[0], cut[1]], [cut[2], cut[3]]) <= GRID_STEP_N * 0.04))
-        : [];
-    const openingEdgeBreaks = legacyEraOpenings.map((opening) => {
-        const rad = (Number(opening.angle) * Math.PI) / 180;
-        const dir = [Math.cos(rad), Math.sin(rad)];
-        const half = Number(opening.length) / 2;
-        const centre = [Number(opening.x), Number(opening.y)];
-        return {
-            a: [centre[0] - dir[0] * half, centre[1] - dir[1] * half],
-            b: [centre[0] + dir[0] * half, centre[1] + dir[1] * half],
-        };
-    });
-    const atomCarriesOpening = (a, b) => (legacyEraOpenings.some((opening) => {
-        const centre = [Number(opening.x), Number(opening.y)];
-        if (!wallAngleMatches(a, b, Number(opening.angle)))
-            return false;
-        if (distanceToSegment(centre, a, b) > GRID_STEP_N * 0.02)
-            return false;
-        const span = lengthOf(a, b);
-        const tc = projectT(centre, a, b) * span;
-        const half = Number(opening.length) / 2;
-        return tc + half >= -EPS && tc - half <= span + EPS;
-    }));
-    const byKey = new Map();
-    const nextRooms = [];
-    for (const rawRoom of rooms) {
-        const id = String(rawRoom?.id || '');
-        const original = roomPoly(rawRoom);
-        if (!id || !original || original.length < 3)
-            throw new WallSegmentModelError('invalid-room', id);
-        const atomic = atomicPolyForRoom(rooms, id, cuts, GRID_STEP_N, 1, [...(space.walls || []), ...openingEdgeBreaks]);
-        if (!atomic || atomic.poly.length < 3)
-            throw new WallSegmentModelError('invalid-room', id);
-        // Derived cuts must cross the storage boundary BEFORE atom identity is
-        // assigned. Rounding two almost-equal atoms only at the final write could
-        // persist identical spans under different IDs and break the next edit.
-        atomic.poly = atomic.poly.map(p => [
-            Number(canonicalizeLatticeCoordinate(p[0])), Number(canonicalizeLatticeCoordinate(p[1])),
-        ]);
-        const oldIds = Array.isArray(rawRoom.wall_ids) ? rawRoom.wall_ids : [];
-        const indexedLineageIsValid = oldIds.length === original.length;
-        let rigidDelta = null;
-        let rigidIndexedLineage = indexedLineageIsValid;
-        if (rigidIndexedLineage) {
-            for (let index = 0; index < original.length; index++) {
-                const previous = old.get(oldIds[index]);
-                const delta = previous
-                    ? translatedSegmentDelta(original[index], original[(index + 1) % original.length], previous)
-                    : null;
-                if (!delta || (rigidDelta && (Math.abs(delta[0] - rigidDelta[0]) > EPS
-                    || Math.abs(delta[1] - rigidDelta[1]) > EPS))) {
-                    rigidIndexedLineage = false;
-                    break;
-                }
-                rigidDelta = delta;
-            }
-        }
-        const wallIds = [];
-        for (let index = 0; index < atomic.poly.length; index++) {
-            const a = atomic.poly[index], b = atomic.poly[(index + 1) % atomic.poly.length];
-            if (lengthOf(a, b) <= EPS)
-                throw new WallSegmentModelError('zero-length', id);
-            const key = atomKey(a, b);
-            let atom = byKey.get(key);
-            if (!atom) {
-                const [ca, cb] = canonicalSpan(a, b);
-                atom = {
-                    key, a: ca, b: cb, owners: new Set(), preferredIds: new Set(),
-                    positionalIds: new Set(),
-                    preferredCarriers: new Map(), parentKeys: new Set(), zeroWall: false,
-                };
-                byKey.set(key, atom);
-            }
-            atom.owners.add(id);
-            if (atom.owners.size > 2)
-                throw new WallSegmentModelError('third-owner', key);
-            const preferred = indexedLineageIsValid ? oldIds[atomic.parent[index]] : undefined;
-            if (typeof preferred === 'string' && preferred) {
-                const previous = old.get(preferred);
-                // An index is a strong hint only while it still names the same
-                // physical carrier. During a room split an edge can keep its ordinal
-                // but become the new divider; a promoted draft ID on that divider must
-                // outrank the stale ordinal. Pure rigid moves retain the ordinal as a
-                // fallback because none of their old carriers overlap new geometry.
-                if (rigidIndexedLineage || !previous
-                    || collinearOverlap(a, b, previous.a, previous.b) > EPS)
-                    atom.preferredIds.add(preferred);
-                else
-                    atom.positionalIds.add(preferred);
-                atom.preferredCarriers.set(preferred, {
-                    a: point(original[atomic.parent[index]]),
-                    b: point(original[(atomic.parent[index] + 1) % original.length]),
-                });
-            }
-            const parent = atomic.parent[index];
-            atom.parentKeys.add(wallKey(original[parent], original[(parent + 1) % original.length], GRID_STEP_N));
-            const midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-            const coveredBy = (list) => list.some((cut) => distanceToSegment(midpoint, [cut[0], cut[1]], [cut[2], cut[3]]) <= GRID_STEP_N * 0.04);
-            // Canonical cm:0 atoms stay zero; a LEGACY cut spares the atom that
-            // carries an opening (#316 §3.1).
-            atom.zeroWall ||= coveredBy(canonicalZeroCuts)
-                || (coveredBy(legacyCuts) && !atomCarriesOpening(a, b));
-            wallIds.push(key); // replaced with stable ids after lineage resolution
-        }
-        // Re-add the owned field last on every pass.  Several legacy maintenance
-        // helpers legitimately rebuild `open_to`; without this normalization the
-        // semantic object is identical but JSON key order oscillates forever and
-        // Optimize can never become byte-idempotent.
-        const nextRoom = { ...rawRoom };
-        delete nextRoom.wall_ids;
-        nextRooms.push({
-            ...nextRoom,
-            poly: atomic.poly.map((p) => [p[0], p[1]]),
-            wall_ids: wallIds,
-        });
-    }
-    return { atoms: [...byKey.values()].sort((a, b) => compareCodePoints(a.key, b.key)), rooms: nextRooms };
-};
-const assignLineage = (space, atoms, old, initialMigration, lineageHints) => {
-    const oldByKey = new Map([...old.values()].map((segment) => [atomKey(segment.a, segment.b), segment]));
-    const hostCounts = openingHostCounts(space.openings || []);
-    const proposed = new Map();
-    for (const atom of atoms) {
-        const hintedId = lineageHints?.get(atom.key);
-        if (hintedId) {
-            const hinted = old.get(hintedId);
-            if (!hinted)
-                throw new WallSegmentModelError('duplicate-id', hintedId);
-            proposed.set(atom, hinted);
-            continue;
-        }
-        if (atom.preferredIds.size > 1) {
-            throw new WallSegmentModelError('duplicate-id', [...atom.preferredIds].sort(compareCodePoints).join(','));
-        }
-        const preferredId = [...atom.preferredIds][0];
-        const preferred = preferredId ? old.get(preferredId) : undefined;
-        if (preferred) {
-            proposed.set(atom, preferred);
-            continue;
-        }
-        // Promotion from a persisted draft/partition supplies an ID which is not
-        // in the old contour catalogue yet. Treat its old carrier exactly like a
-        // contour split so only one child inherits it.
-        const carrier = preferredId ? atom.preferredCarriers.get(preferredId) : undefined;
-        if (preferredId && carrier) {
-            proposed.set(atom, { id: preferredId, a: carrier.a, b: carrier.b, cm: 0 });
-            continue;
-        }
-        const exact = oldByKey.get(atom.key);
-        if (exact) {
-            proposed.set(atom, exact);
-            continue;
-        }
-        const overlaps = [...old.values()].filter((segment) => (collinearOverlap(atom.a, atom.b, segment.a, segment.b) > EPS));
-        // Geometry proves split/merge lineage more strongly than a stale edge
-        // index.  Positional preference is the rigid-move fallback only when the
-        // edited segment no longer overlaps its previous coordinates at all.
-        const candidates = [...new Map(overlaps
-                .map((item) => [item.id, item])).values()];
-        candidates.sort((left, right) => ((hostCounts.get(right.id) || 0) - (hostCounts.get(left.id) || 0)
-            || lengthOf(right.a, right.b) - lengthOf(left.a, left.b)
-            || compareCodePoints(left.id, right.id)));
-        if (candidates[0])
-            proposed.set(atom, candidates[0]);
-        else if (atom.positionalIds.size === 1) {
-            const positional = old.get([...atom.positionalIds][0]);
-            if (positional)
-                proposed.set(atom, positional);
-        }
-    }
-    const byId = new Map();
-    for (const [atom, segment] of proposed) {
-        const list = byId.get(segment.id) || [];
-        list.push(atom);
-        byId.set(segment.id, list);
-    }
-    for (const [id, candidates] of byId) {
-        const oldSegment = old.get(id) || proposed.get(candidates[0]);
-        if (!oldSegment)
-            throw new WallSegmentModelError('duplicate-id', id);
-        const midpoint = [
-            (oldSegment.a[0] + oldSegment.b[0]) / 2,
-            (oldSegment.a[1] + oldSegment.b[1]) / 2,
-        ];
-        candidates.sort((left, right) => {
-            const midpointLeft = distanceToSegment(midpoint, left.a, left.b) <= EPS ? 0 : 1;
-            const midpointRight = distanceToSegment(midpoint, right.a, right.b) <= EPS ? 0 : 1;
-            if (midpointLeft !== midpointRight)
-                return midpointLeft - midpointRight;
-            const oldALeft = distanceToSegment(oldSegment.a, left.a, left.b) <= EPS ? 0 : 1;
-            const oldARight = distanceToSegment(oldSegment.a, right.a, right.b) <= EPS ? 0 : 1;
-            return oldALeft - oldARight || compareCodePoints(left.key, right.key);
-        });
-        candidates[0].id = id;
-    }
-    const used = nonCatalogIds(space);
-    for (const atom of atoms) {
-        if (!atom.id)
-            continue;
-        if (used.has(atom.id))
-            throw new WallSegmentModelError('duplicate-id', atom.id);
-        used.add(atom.id);
-    }
-    const unassigned = atoms.filter((atom) => !atom.id);
-    if (initialMigration) {
-        // A truncated-digest collision is resolved by full-digest order, then the
-        // documented -2/-3 suffix. This is deterministic even if room order is not.
-        const seeds = unassigned.map((atom) => {
-            const [ca, cb] = canonicalSpan(atom.a, atom.b);
-            const seed = `${String(space.id || '')}|${pointKey(ca)}|${pointKey(cb)}|${[...atom.owners].sort(compareCodePoints).join(',')}`;
-            const digest = base32(sha256(seed));
-            return { atom, seed, digest, base: `wall-${digest.slice(0, 20)}` };
-        }).sort((left, right) => compareCodePoints(left.digest, right.digest)
-            || compareCodePoints(left.atom.key, right.atom.key));
-        const fullDigests = new Map();
-        for (const entry of seeds) {
-            const previousSeed = fullDigests.get(entry.digest);
-            if (previousSeed && previousSeed !== entry.seed)
-                throw new WallSegmentModelError('duplicate-id', entry.digest);
-            fullDigests.set(entry.digest, entry.seed);
-            let suffix = 1;
-            let id = entry.base;
-            while (used.has(id))
-                id = `${entry.base}-${++suffix}`;
-            entry.atom.id = id;
-            used.add(id);
-        }
-    }
-    else {
-        for (const atom of unassigned) {
-            atom.id = freshWallSegmentId(used);
-            used.add(atom.id);
-        }
-    }
-};
-/** #316: an in-place carrier — body, centre on it, same angle, room to fit. */
-const wallCarrierEligible = (segment, opening) => {
-    const centre = [Number(opening.x), Number(opening.y)];
-    if (!centre.every(Number.isFinite) || !(Number(segment.cm) > 0))
-        return false;
-    const t = projectT(centre, segment.a, segment.b);
-    const span = lengthOf(segment.a, segment.b);
-    const half = Number(opening.length) / 2;
-    return t >= -EPS && t <= 1 + EPS
-        && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
-        && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
-        && Number.isFinite(half) && half >= 0
-        && t * span - half >= -EPS && t * span + half <= span + EPS;
-};
-/** Resolve one contour-opening owner using the same fail-closed rule as the
- * structural writer. UI gestures use this before entering the v9 barrier, so
- * the live candidate never contains a stale/missing host during a valid move. */
-const resolveRoomOpeningHost = (opening, segments) => {
-    if (opening.host?.kind === 'partition')
-        return null;
-    const centre = [Number(opening.x), Number(opening.y)];
-    if (!centre.every(Number.isFinite))
-        return null;
-    const eligible = (segment) => wallCarrierEligible(segment, opening);
-    const current = opening.host?.kind === 'wall'
-        ? segments.find((segment) => segment.id === opening.host.id)
-        : null;
-    const candidates = current && eligible(current) ? [current] : segments.filter(eligible);
-    if (candidates.length !== 1)
-        return null;
-    const host = candidates[0];
-    return {
-        kind: 'wall', id: host.id,
-        t: Math.max(0, Math.min(1, projectT(centre, host.a, host.b))),
-    };
-};
-/** #316 §3.2/§3.3: deterministic migration-time host resolution. Returns null
- * only when the space has no usable carrier at all — the opening then persists
- * unhosted (§3.3) instead of blocking the migration. */
-const migrateRoomOpeningHost = (opening, segments, accept = () => true) => {
-    const centre = [Number(opening.x), Number(opening.y)];
-    if (!centre.every(Number.isFinite))
-        return null;
-    const eligible = segments.filter((segment) => wallCarrierEligible(segment, opening)).filter(accept);
-    // §3.2 tie-break: current host → distance → thicker cm → smaller id.
-    const pick = (candidates) => {
-        if (!candidates.length)
-            return null;
-        const current = opening.host?.kind === 'wall'
-            ? candidates.find((segment) => segment.id === opening.host.id) : null;
-        if (current)
-            return current;
-        return [...candidates].sort((x, y) => (distanceToSegment(centre, x.a, x.b) - distanceToSegment(centre, y.a, y.b)
-            || Number(y.cm) - Number(x.cm)
-            || compareCodePoints(x.id, y.id)))[0];
-    };
-    // §3.3 (CODE-REVIEW-316-r1 H1): no distant fallback pool. A host away from
-    // the opening's own x/y would violate the backend geometry-match invariant
-    // («wall opening geometry must match its host») and wedge the write on the
-    // schema layer — the very failure mode #316 removes. An opening without an
-    // in-place carrier goes straight to the unhosted degraded state.
-    const host = pick(eligible);
-    if (!host)
-        return null;
-    return {
-        kind: 'wall', id: host.id,
-        t: Math.max(0, Math.min(1, projectT(centre, host.a, host.b))),
-    };
-};
-/** #1033: no opening that stays on `carrier` overlaps this one there. An
- * opening counts when it is hosted on the carrier and still qualifies for it;
- * one whose host no longer holds it is leaving and frees its interval. */
-const wallIntervalFree = (openings, opening, carrier) => {
-    const centre = [Number(opening.x), Number(opening.y)];
-    const half = Number(opening.length) / 2;
-    const span = lengthOf(carrier.a, carrier.b);
-    const along = Math.max(0, Math.min(1, projectT(centre, carrier.a, carrier.b))) * span;
-    for (const other of openings) {
-        const host = other?.host;
-        if (other === opening || host?.kind !== 'wall' || host.id !== carrier.id)
-            continue;
-        if (!wallCarrierEligible(carrier, other))
-            continue;
-        const otherAlong = Number(host.t) * span;
-        const otherHalf = Number(other.length) / 2;
-        if (!Number.isFinite(otherAlong) || !Number.isFinite(otherHalf))
-            continue;
-        if (Math.max(along - half, otherAlong - otherHalf)
-            < Math.min(along + half, otherAlong + otherHalf) - 1e-9)
-            return false;
-    }
-    return true;
-};
-const hostRoomOpenings = (space, segments, initialMigration) => {
-    const openings = Array.isArray(space.openings) ? space.openings : [];
-    for (const opening of openings) {
-        if (opening.host?.kind === 'partition')
-            continue;
-        // #1033: an opening never moves onto a wall interval that another
-        // opening staying on that wall occupies — not by a self-heal, not by the
-        // initial migration, not by re-hosting a lost carrier. That would fail the
-        // backend overlap check and wedge every later write; staying unhosted (or
-        // the fail-closed refusal below) does not.
-        const currentId = opening.host?.kind === 'wall' ? opening.host.id : null;
-        const accept = (segment) => (segment.id === currentId || wallIntervalFree(openings, opening, segment));
-        const acceptHost = (host) => {
-            const segment = host ? segments.find((item) => item.id === host.id) : undefined;
-            return host && segment && accept(segment) ? host : null;
-        };
-        // #316 §3.3: an unhosted opening is a valid degraded v9 state — inert in
-        // the physics, rendered by its own x/y. A later write keeps it and may
-        // self-heal it when a unique carrier appears; it never blocks the write.
-        if (!opening.host && !initialMigration) {
-            const healed = acceptHost(resolveRoomOpeningHost(opening, segments));
-            if (healed)
-                opening.host = healed;
-            continue;
-        }
-        const host = acceptHost(resolveRoomOpeningHost(opening, segments))
-            ?? (initialMigration ? migrateRoomOpeningHost(opening, segments, accept) : null);
-        if (host) {
-            opening.host = host;
-            continue;
-        }
-        // #316 §3.4: the initial migration never throws over an opening; a
-        // post-v9 write that LOST a carrier keeps the fail-closed refusal.
-        if (initialMigration) {
-            delete opening.host;
-            continue;
-        }
-        throw new WallSegmentModelError('opening-host', opening.id);
-    }
-};
 const LEGACY_DRAFT_POINT_EPSILON = 0.001;
 const LEGACY_NUMBER = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
 const legacyFiniteNumber = (value) => {
@@ -4345,79 +5371,73 @@ const migrateRoomDraftsToPartitions = (space) => {
     delete space.room_drafts;
     return { drafts: drafts.length, segments: converted };
 };
-const resolvedThicknessCm = (space, atom, previous) => {
-    if (atom.zeroWall)
-        return 0;
-    const walls = Array.isArray(space.walls) ? space.walls : [];
-    const ownKey = wallKey(atom.a, atom.b, GRID_STEP_N);
-    const candidates = walls.filter((wall) => {
-        if (!(Number(wall.cm) > 0))
-            return false;
-        if (wall.key === ownKey || atom.parentKeys.has(wall.key))
-            return true;
-        if (!finitePoint(wall.a) || !finitePoint(wall.b))
-            return false;
-        return collinearOverlap(atom.a, atom.b, wall.a, wall.b) >= lengthOf(atom.a, atom.b) - EPS;
-    }).map((wall) => Math.max(1, Math.min(100, Number(wall.cm))));
-    const unique = new Set(candidates.map((cm) => cm.toFixed(9)));
-    if (unique.size > 1)
-        throw new WallSegmentModelError('thickness-conflict', atom.key);
-    if (candidates.length)
-        return candidates[0];
-    const resolved = thicknessCmAt(walls, atom.a, atom.b, GRID_STEP_N, 1);
-    if (resolved > 0)
-        return resolved;
-    return Number(previous?.cm) > 0 ? Number(previous.cm) : 0;
-};
-const migrateSpace = (space, initialMigration, lineageHints) => {
-    const draftMigration = migrateRoomDraftsToPartitions(space);
-    const old = oldSegmentMap(space);
-    const { atoms, rooms } = buildAtoms(space, old);
-    assignLineage(space, atoms, old, initialMigration, lineageHints);
-    const segments = atoms.map((atom) => {
-        const previous = atom.id ? old.get(atom.id) : undefined;
-        const cm = resolvedThicknessCm(space, atom, previous);
-        return {
-            ...(previous || {}), id: atom.id, a: [...atom.a], b: [...atom.b], cm,
-        };
-    });
-    const idByKey = new Map(atoms.map((atom) => [atom.key, atom.id]));
-    for (const room of rooms)
-        room.wall_ids = room.wall_ids.map((key) => idByKey.get(key));
-    space.rooms = rooms;
-    space.wall_segments = segments;
-    space.walls = segments.filter((segment) => segment.cm > 0).map((segment) => ({
-        key: wallKey(segment.a, segment.b, GRID_STEP_N),
-        cm: segment.cm, a: [...segment.a], b: [...segment.b],
-    }));
-    if (!space.walls.length)
-        delete space.walls;
-    delete space.open_spans;
-    for (const room of space.rooms)
-        delete room.open_to;
-    hostRoomOpenings(space, segments, initialMigration);
-    return {
-        wallSegments: segments.reduce((count, segment) => count + (old.has(segment.id) ? 0 : 1), 0),
-        drafts: draftMigration.drafts,
-        draftSegments: draftMigration.segments,
-    };
-};
+/**
+ * Narrow legacy adapter used before Optimize geometry repair. Unlike the full
+ * v10 identity barrier it does not require room contours to be valid yet.
+ */
+const migrateLegacyRoomDraftsToPartitionsInPlace = (space) => migrateRoomDraftsToPartitions(space);
 /** Pure, atomic structural candidate. Read paths must never call this helper. */
 function commitWallSegmentModel(input, options = {}) {
     const before = JSON.stringify(input);
     const config = clone(input);
-    canonicalizeConfigGeometryInPlace(config);
     let migratedSegments = 0;
     let migratedDrafts = 0;
     let migratedDraftSegments = 0;
-    const initialMigration = Number(config?.model_version || 0) < WALL_SEGMENT_MODEL_VERSION;
-    for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
-        const hints = options.lineageSpaceId === String(space?.id || '')
-            ? options.lineageHints : undefined;
-        const migrated = migrateSpace(space, initialMigration, hints);
-        migratedSegments += migrated.wallSegments;
-        migratedDrafts += migrated.drafts;
-        migratedDraftSegments += migrated.draftSegments;
+    const version = Number(config?.model_version || 0);
+    if (version > WALL_SEGMENT_MODEL_VERSION)
+        throw new WallSegmentModelError('invalid-room', 'future-model');
+    for (let i = 0; i < (Array.isArray(config?.spaces) ? config.spaces.length : 0); i++) {
+        const space = config.spaces[i];
+        try {
+            let graph;
+            if (version < WALL_SEGMENT_MODEL_VERSION) {
+                if (space.plan_graph)
+                    throw new Error('mixed-graph-model');
+                // Capture raw source before any legacy axis/decimal canonicalization.
+                // Draft conversion preserves its authored points; the exact graph owns
+                // the one bounded normalization and all new shared-node identities.
+                const drafts = migrateLegacyRoomDraftsToPartitionsInPlace(space);
+                migratedDrafts += drafts.drafts;
+                migratedDraftSegments += drafts.segments;
+                const previousIds = new Set((space.wall_segments || []).map((s) => s.id));
+                const migrated = migrateGraphSpace(space, {
+                    cellCm: Number(space.cell_cm) || 5, sourceModelVersion: version,
+                });
+                graph = migrated.graph;
+                migratedSegments += graph.edges.filter(e => e.kind === 'wall' && !previousIds.has(e.id)).length;
+                config.spaces[i] = migrated.space;
+            }
+            else {
+                if (!space.plan_graph || !validateGraph(space.plan_graph).ok)
+                    throw new Error('invalid-graph');
+                graph = space.plan_graph;
+                const operation = options.graphOperations?.get(String(space.id));
+                if (operation) {
+                    const result = applyGraphOperation(graph, operation, { hosts: space.openings || [] });
+                    graph = result.graph;
+                    for (const opening of space.openings || [])
+                        if (opening.id in result.mapping.hosts) {
+                            const host = result.mapping.hosts[opening.id];
+                            if (host)
+                                opening.host = host;
+                            else
+                                delete opening.host;
+                        }
+                }
+                const projected = projectGraphSpace(space, graph).space;
+                if (!operation)
+                    for (const key of ['rooms', 'wall_segments', 'walls', 'partitions']) {
+                        if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || []))
+                            throw new Error('projection-only-write');
+                    }
+                config.spaces[i] = projected;
+            }
+        }
+        catch (error) {
+            if (error instanceof WallSegmentModelError)
+                throw error;
+            throw new WallSegmentModelError('invalid-room', String(error.message || 'plan-graph'));
+        }
     }
     config.model_version = WALL_SEGMENT_MODEL_VERSION;
     canonicalizeConfigGeometryInPlace(config);

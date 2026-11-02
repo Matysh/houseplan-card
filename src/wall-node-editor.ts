@@ -14,6 +14,7 @@ import { nodeDragRefusalKey } from './wall-node-refusal';
 import { VISUAL_MITRE_LIMIT } from './wall-thickness';
 import type { NodeDeleteIntent } from './wall-node-delete';
 import { WallNodeDeleteMenu, type NodeDeleteMenuPort } from './wall-node-delete-menu';
+import { encodePoint, readSourcePoint, decodePoint, pointToNumbers } from './plan-exact';
 
 /** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
 export interface NodeMoveHistory { kind?: 'move'; beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
@@ -259,7 +260,9 @@ export class WallNodeEditor {
     s.moved = !sameNodePoint(s.target, s.plan.node.point);
     s.invalid = candidate.ok ? null : candidate.reason;
     s.candidate = candidate.ok && candidate.changed ? candidate.space : null;
-    if (s.candidate) canonicalizeConfigGeometryInPlace({ spaces: [s.candidate] });
+    if (s.candidate) canonicalizeConfigGeometryInPlace({
+      model_version: s.candidate.plan_graph ? 11 : 10, spaces: [s.candidate],
+    });
     s.affected = candidate.ok ? candidate.affected : [];
     if (s.candidate && !this.port.validate(s.candidate, s.plan.source, false)) s.invalid = 'invalid';
     // Invalid is the LAST resolved candidate, never the previous valid one.
@@ -281,8 +284,12 @@ export class WallNodeEditor {
       if (s.invalid) this.port.toast(this.port.text(`node_move_${s.invalid}`), `node_move_${s.invalid}`);
       this.cancel(); return;
     }
+    const exactTarget = s.candidate.plan_graph?.nodes.find(node => node.id === s.plan.node.nodeId)?.p;
     const history: NodeMoveHistory = { beforeSpace: s.plan.source,
-      intent: { point: [...s.plan.node.point], target: [...s.target], axis: s.axis, split_ids: s.plan.splitIds }, direction: 'apply' };
+      intent: { point: [...s.plan.node.point], target: exactTarget ? pointToNumbers(decodePoint(exactTarget)) : [...s.target],
+        axis: s.axis, split_ids: s.plan.splitIds,
+        ...(s.plan.node.nodeId ? { node_id: s.plan.node.nodeId, target_p: exactTarget || encodePoint(readSourcePoint(s.target)) } : {}),
+      }, direction: 'apply' };
     this.busy = true;
     try {
       const config = await this.port.write(history, s.basis);

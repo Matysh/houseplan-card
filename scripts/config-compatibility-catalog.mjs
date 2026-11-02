@@ -32,7 +32,7 @@ const contractProofs = {
   'unused-vacuum-options': ['tests_backend/test_validation.py', 'test/config-audit.test.mjs'],
 };
 const extraSelectors = {
-  'wall-model-chain': [{ path: ['model_version'], test: 'absent-or-below', value: 10 }],
+  'wall-model-chain': [{ path: ['model_version'], test: 'absent-or-below', value: 11 }],
   'space-font-scale': [{ path: ['spaces', '*', 'settings', 'card_font_scale'], test: 'present' }],
   'vacuum-map-calibration': [{ path: ['markers', '*', 'vacuum', 'calibration'], test: 'present' }],
   'marker-cover-action': [{ path: ['markers', '*', 'tap_action'], equals: 'cover' }],
@@ -106,7 +106,7 @@ export const COMPATIBILITY_BRANCHES = Object.freeze([
     stable('a66fb7ef53906bed33c6f92369b14e8e398be3bd', 'v1.68.0'),
     'Existing explicit structural write/Optimize and canonical import model chain; not silently forced on every read',
     'The model9 contract intentionally changes degraded opening/light behavior and may need host proof. A lossless transparent migration for every tolerated old geometry is not proven; old backend and read-only degraded plans remain supported.'),
-  record('wall-model-chain', [], 'catalogue-less rooms, old drafts, midpoint-only thickness/host evidence', 'models8→9→10 catalogue, partitions and proven hosts',
+  record('wall-model-chain', [], 'catalogue-less rooms, old drafts, midpoint-only thickness/host evidence', 'model11 exact graph with derived catalogue and proven hosts',
     [source('src/wall-segment-model.ts', 'commitWallSegmentModelInPlace'), source('src/wall-thickness.ts', 'exactCoveringWall'),
       source('custom_components/houseplan/wall_segment_model.py', 'commit_wall_segment_model'), source('custom_components/houseplan/validation.py', 'validate_wall_model_transition')],
     unknown('Multiple independent structural migrations; model number is not a scalar-field sunset date.'),

@@ -111,8 +111,8 @@ export function modernDocument(space, options = {}) {
       continue;
     }
     current.openings.push({ ...opening,
-      x: canonical(host.x), y: canonical(host.y), angle: canonical(host.angle),
-      host: { kind: host.kind, id: host.id, t: canonical(host.t) } });
+      x: host.x, y: host.y, angle: canonical(host.angle),
+      host: { kind: host.kind, id: host.id, t: host.t } });
   }
   if (!current.openings.length) delete current.openings;
   config = commitWallSegmentModel(config).config;

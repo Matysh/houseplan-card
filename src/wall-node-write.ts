@@ -1,6 +1,7 @@
 /** #803: serialize with existing writers without optimistic geometry adoption.
  * #843: the expected revision is read after this tab's own write queue. */
 import type { ConfigAdoption } from './config-adoption';
+import { sendHouseplanWrite } from './large-write-transport';
 import type { ServerConfig } from './types';
 import type { NodeCommandHistory } from './wall-node-editor';
 import { contentFingerprint } from './visual-continuity';
@@ -81,11 +82,12 @@ export async function writeWallNode(
     if (!nodeBasisHolds(host, basis)) throw new Error('stale-node-snapshot');
     if (guard && !guard.send()) throw new Error('stale-node-snapshot');
     const revision = host._cfgRev, identity = live();
-    const response = await host.hass.callWS<{ config: ServerConfig; rev: number }>({
+    const writeHass = host.hass;
+    const response = await sendHouseplanWrite<{ config: ServerConfig; rev: number }>(writeHass, {
       type: history.kind === 'delete' ? 'houseplan/wall/node_delete' : 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
       expected_rev: revision, intent: history.intent, direction: history.direction,
       ...(history.direction === 'undo' ? { before_space: history.beforeSpace } : {}),
-    });
+    }, { isCurrent: () => host.hass === writeHass && (!guard || guard.accept()) });
     if (guard && !guard.accept()) throw new Error('stale-node-snapshot');
     if (!response.config || !Number.isSafeInteger(response.rev)) throw new Error('invalid-node-response');
     // A newer adoption always wins. Our own echo is safe but an unrelated local

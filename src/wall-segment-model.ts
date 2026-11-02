@@ -18,8 +18,12 @@ import {
   atomicPolyForRoom, thicknessCmAt, wallAngleMatches, wallKey, type WallEntry,
 } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, WallOpeningHost, WallSegmentEntry } from './types';
+import {
+  migrateGraphSpace, projectGraphSpace, applyGraphOperation, validateGraph,
+  type PlanGraph, type GraphOperation,
+} from './plan-graph';
 
-export const WALL_SEGMENT_MODEL_VERSION = 10;
+export const WALL_SEGMENT_MODEL_VERSION = 11;
 const EPS = 1e-9;
 
 export type WallSegmentModelBlocker =
@@ -51,6 +55,8 @@ export interface WallSegmentCommitOptions {
   /** Atom-key → existing ID, supplied only by a proven local topology edit. */
   lineageHints?: ReadonlyMap<string, string>;
   lineageSpaceId?: string;
+  /** Current geometry is changed by explicit graph operations, never a poly diff. */
+  graphOperations?: ReadonlyMap<string, GraphOperation>;
 }
 
 type Point = [number, number];
@@ -907,18 +913,52 @@ export function commitWallSegmentModel<T>(
 ): WallSegmentCommitResult<T> {
   const before = JSON.stringify(input);
   const config: any = clone(input);
-  canonicalizeConfigGeometryInPlace(config);
   let migratedSegments = 0;
   let migratedDrafts = 0;
   let migratedDraftSegments = 0;
-  const initialMigration = Number(config?.model_version || 0) < WALL_SEGMENT_MODEL_VERSION;
-  for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
-    const hints = options.lineageSpaceId === String(space?.id || '')
-      ? options.lineageHints : undefined;
-    const migrated = migrateSpace(space, initialMigration, hints);
-    migratedSegments += migrated.wallSegments;
-    migratedDrafts += migrated.drafts;
-    migratedDraftSegments += migrated.draftSegments;
+  const version = Number(config?.model_version || 0);
+  if (version > WALL_SEGMENT_MODEL_VERSION) throw new WallSegmentModelError('invalid-room', 'future-model');
+  for (let i = 0; i < (Array.isArray(config?.spaces) ? config.spaces.length : 0); i++) {
+    const space = config.spaces[i];
+    try {
+      let graph: PlanGraph;
+      if (version < WALL_SEGMENT_MODEL_VERSION) {
+        if (space.plan_graph) throw new Error('mixed-graph-model');
+        // Capture raw source before any legacy axis/decimal canonicalization.
+        // Draft conversion preserves its authored points; the exact graph owns
+        // the one bounded normalization and all new shared-node identities.
+        const drafts = migrateLegacyRoomDraftsToPartitionsInPlace(space);
+        migratedDrafts += drafts.drafts; migratedDraftSegments += drafts.segments;
+        const previousIds = new Set((space.wall_segments || []).map((s: any) => s.id));
+        const migrated = migrateGraphSpace(space, {
+          cellCm: Number(space.cell_cm) || 5, sourceModelVersion: version,
+        });
+        graph = migrated.graph;
+        migratedSegments += graph.edges.filter(e => e.kind === 'wall' && !previousIds.has(e.id)).length;
+        config.spaces[i] = migrated.space;
+      } else {
+        if (!space.plan_graph || !validateGraph(space.plan_graph).ok) throw new Error('invalid-graph');
+        graph = space.plan_graph;
+        const operation = options.graphOperations?.get(String(space.id));
+        if (operation) {
+          const result = applyGraphOperation(graph, operation, { hosts: space.openings || [] });
+          graph = result.graph;
+          for (const opening of space.openings || []) if (opening.id in result.mapping.hosts) {
+            const host = result.mapping.hosts[opening.id];
+            if (host) opening.host = host; else delete opening.host;
+          }
+        }
+        const projected = projectGraphSpace(space, graph).space;
+        if (!operation) for (const key of ['rooms', 'wall_segments', 'walls', 'partitions']) {
+          if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || []))
+            throw new Error('projection-only-write');
+        }
+        config.spaces[i] = projected;
+      }
+    } catch (error) {
+      if (error instanceof WallSegmentModelError) throw error;
+      throw new WallSegmentModelError('invalid-room', String((error as Error).message || 'plan-graph'));
+    }
   }
   config.model_version = WALL_SEGMENT_MODEL_VERSION;
   canonicalizeConfigGeometryInPlace(config);
