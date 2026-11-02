@@ -119,7 +119,8 @@ async def prepare_graph_pair(runtime, pending, rollback):
             await load_source(runtime.hass, layout_data[BACKUP_KEY])
             reference = copy.deepcopy(layout_data[BACKUP_KEY])
         else:
-            reference = await save_source(runtime.hass, logical_source(config_data, layout_data))
+            source = await runtime.hass.async_add_executor_job(logical_source, config_data, layout_data)
+            reference = await save_source(runtime.hass, source)
         metadata[BACKUP_KEY] = reference
         metadata[PASSPORT_KEY] = {"version": 1, "source_sha256": reference["sha256"], "source_model": current_model, "target_model": 11}
 
