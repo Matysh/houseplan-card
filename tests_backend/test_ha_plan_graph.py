@@ -110,3 +110,41 @@ async def test_source_precedes_pair_intent_and_authority_is_rechecked(
     assert saves == {"config": 0, "layout": 0}
     assert await owner.pair() == before
     assert await runtime.store.async_load() == stored_before
+
+
+@pytest.mark.asyncio
+async def test_first_graph_change_rebases_on_backend_source_and_returns_exact_truth(
+    hass, hass_client, hass_access_token,
+):
+    from custom_components.houseplan.graph_write import normalize_graph_config
+    from custom_components.houseplan.plan_graph import apply_graph_patch, project_graph_space
+    from custom_components.houseplan.plan_graph_exact import decode_point, read_source_point
+    _, socket, _ = await _setup(hass, hass_client, hass_access_token)
+    runtime = get_data(hass)
+    raw = legacy()
+    await runtime.config_store.async_save({"config": raw, "rev": 9})
+    await runtime.store.async_save({"layout": {}, "rev": 3})
+    baseline = normalize_graph_config(raw)
+    before = baseline["spaces"][0]
+    leaf = next(node for node in before["plan_graph"]["nodes"] if decode_point(node["p"]) == read_source_point([.5, .5]))
+    moved = {**leaf, "p": ["l", "120", "180"]}
+    patch = {name: {"set": [], "remove": []} for name in ("nodes", "edges", "rooms", "dependencies")}
+    patch["nodes"]["set"] = [moved]
+    graph = apply_graph_patch(before["plan_graph"], patch)["graph"]
+    candidate = copy.deepcopy(baseline)
+    candidate["spaces"][0] = project_graph_space(before, graph)["space"]
+    diagnostic = copy.deepcopy(before["plan_graph"])
+    untouched = next(node for node in diagnostic["nodes"] if node["id"] != leaf["id"])
+    untouched["p"] = ["l", "999", "999"]
+    reply = await socket.send({"type": TYPE, "expected_rev": 9, "config": candidate,
+        "graph_change": {"version": 1, "spaces": [{"space_id": before["id"], "base": diagnostic, "patch": patch}]}})
+    assert reply["success"], reply
+    actual = await socket.pair()
+    assert actual[0]["config"] == reply["result"]["config"]
+    for field in ("plan_graph", "partitions", "walls", "wall_segments", "rooms"):
+        assert actual[0]["config"]["spaces"][0][field] == candidate["spaces"][0][field]
+    stored = await runtime.store.async_load()
+    assert (await load_source(hass, stored[BACKUP_KEY]))["config"] == raw
+    stale = await socket.send({"type": TYPE, "expected_rev": actual[0]["rev"], "config": raw})
+    assert not stale["success"] and stale["error"]["code"] == "wall_model_client_outdated"
+    assert await socket.pair() == actual
