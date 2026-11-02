@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 948,
+  "revision": 949,
   "nextTicket": 74,
   "nextFence": 74,
   "tasks": {
@@ -126,7 +126,7 @@
       "ownerDecision": null,
       "ticket": 73,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793632670334,
       "reviewEntry": 1,
       "patchId": "45fd19dacc56692a7158facf55437228be49e324",
@@ -154,6 +154,16 @@
         "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
         "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
         "patchId": "45fd19dacc56692a7158facf55437228be49e324"
+      },
+      "reason": "review-findings",
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793632875998,
+        "entry": 1,
+        "requestId": "review:1158:1:45fd19dacc56692a7158facf55437228be49e324:b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a"
       }
     },
     "1165": {
@@ -1301,19 +1311,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1158,
-    "worker": "finish",
-    "token": "73:finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:1:admit",
-    "fence": 73,
-    "materialSha": "266a5ad22fe5df45957fe0dc38180345d1a4e360",
-    "expectedBase": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-    "phase": "review",
-    "admittedAt": 1793632674117,
-    "expiresAt": 1793636334255,
-    "patchId": "45fd19dacc56692a7158facf55437228be49e324",
-    "reviewRequest": "review:1158:1:45fd19dacc56692a7158facf55437228be49e324:b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a"
-  },
+  "active": null,
   "events": {
     "finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:2:synchronized": {
       "digest": "b0d5cb9c040f3fd5f5dc3df65a97e7c38598dc45c113a4cb313e54476f84e1a3",
@@ -1345,6 +1343,10 @@
     },
     "finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:6:review-presentation": {
       "digest": "fb9f4c8055df9fec45b51e7e7fbc600ab6ba29bbfa8b02bfc6b09ef4e0cb3b91",
+      "issue": 1158
+    },
+    "finish:540a1f4b-524d-4856-918e-285ff186ffa7:finish:6:return": {
+      "digest": "52896d0582184ec56093500858f9ec177abfe063e212a129ade82d257a5984c8",
       "issue": 1158
     },
     "finish:540a1f4b-524d-4856-918e-285ff186ffa7": {
