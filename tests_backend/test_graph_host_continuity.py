@@ -69,3 +69,55 @@ def test_overlapping_openings_on_different_children_share_one_interval_ledger():
                                 "host": {"kind": "partition", "id": "two", "t": 0, "tq": ["0", "1"]}})
     with pytest.raises(vol.Invalid, match="must not overlap"):
         CONFIG_SCHEMA({"model_version": 11, "spaces": [current], "markers": [], "settings": {}})
+
+
+def _config(current):
+    return {"model_version": 11, "spaces": [current], "markers": [], "settings": {}}
+
+
+def _rehost(current, identity="two", tq=("1", "2")):
+    changed = copy.deepcopy(current)
+    opening = changed["openings"][0]
+    opening["host"] = {"kind": "partition", "id": identity, "t": int(tq[0])/int(tq[1]), "tq": list(tq)}
+    return project_graph_space(changed, changed["plan_graph"])["space"]
+
+
+def test_opening_move_across_unchanged_atomic_host_seam_is_same_carrier():
+    before = _rehost(space(), "one", ("1", "2"))
+    after = _rehost(before)
+    assert after["openings"][0]["x"] == .75
+    assert CONFIG_SCHEMA(_config(after)) == _config(after)
+    validate_partition_opening_hosts(_config(after), _config(before))
+
+
+@pytest.mark.parametrize("boundary", ["detached", "thickness", "props", "newly-joined"])
+def test_anchor_change_does_not_authorize_a_foreign_or_newly_joined_carrier(boundary):
+    from custom_components.houseplan.validation import PartitionOpeningHostError
+    before = _rehost(space(), "one", ("1", "2"))
+    graph = copy.deepcopy(before["plan_graph"])
+    if boundary in {"detached", "newly-joined"}:
+        graph["nodes"].append({"id": "d", "p": ["l", "120", "0"]})
+        graph["edges"][1]["from"] = "d"
+    elif boundary == "thickness":
+        graph["edges"][1]["cm"] = 20
+    else:
+        graph["edges"][1]["props"] = {"material": "foreign"}
+    before = project_graph_space(before, graph)["space"]
+    after = _rehost(before)
+    if boundary == "newly-joined":
+        graph = copy.deepcopy(after["plan_graph"])
+        graph["edges"][1]["from"] = "b"
+        after = project_graph_space(after, graph)["space"]
+    assert CONFIG_SCHEMA(_config(after)) == _config(after)
+    with pytest.raises(PartitionOpeningHostError):
+        validate_partition_opening_hosts(_config(after), _config(before))
+
+
+def test_same_run_rehost_still_reserves_physical_end_jambs():
+    from custom_components.houseplan.validation import PartitionOpeningJambMarginError
+    before = _rehost(space(), "one", ("1", "2"))
+    after = _rehost(before, "two", ("4", "5"))
+    # Its occupied interval fits exactly, but leaves no physical jamb margin.
+    assert CONFIG_SCHEMA(_config(after)) == _config(after)
+    with pytest.raises(PartitionOpeningJambMarginError):
+        validate_partition_opening_hosts(_config(after), _config(before))

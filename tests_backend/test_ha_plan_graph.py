@@ -148,3 +148,27 @@ async def test_first_graph_change_rebases_on_backend_source_and_returns_exact_tr
     stale = await socket.send({"type": TYPE, "expected_rev": actual[0]["rev"], "config": raw})
     assert not stale["success"] and stale["error"]["code"] == "wall_model_client_outdated"
     assert await socket.pair() == actual
+
+
+@pytest.mark.asyncio
+async def test_current_opening_crosses_atomic_host_seam_and_undo_via_real_config_writer(
+    hass, hass_client, hass_access_token,
+):
+    from tests_backend.test_graph_host_continuity import space, _rehost, _config
+    _, socket, _ = await _setup(hass, hass_client, hass_access_token)
+    runtime = get_data(hass)
+    from custom_components.houseplan.room_appearance import normalize_room_appearance
+    before = normalize_room_appearance(_config(_rehost(space(), "one", ("1", "2"))))
+    await runtime.config_store.async_save({"config": before, "rev": 40, "model_version": 11})
+    await runtime.store.async_save({"layout": {}, "rev": 7})
+    after = copy.deepcopy(before)
+    after["spaces"][0] = _rehost(before["spaces"][0])
+    saved = await socket.send({"type": TYPE, "config": after, "expected_rev": 40})
+    assert saved["success"], saved
+    accepted = await socket.pair()
+    assert saved["result"]["config"] == accepted[0]["config"] == after
+    assert accepted[0]["rev"] == 41 and accepted[1]["rev"] == 7
+    assert after["spaces"][0]["openings"][0]["host"]["id"] == "two"
+    undone = await socket.send({"type": TYPE, "config": before, "expected_rev": 41})
+    assert undone["success"], undone
+    assert (await socket.pair())[0]["config"] == before
