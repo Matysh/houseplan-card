@@ -360,6 +360,14 @@ def migrate_graph_space(space, options=None):
                         cut_point(s, end)
             opening_intervals[_key(s)] = opening_runs
 
+        # Host choices precede dependent contacts. Reprojecting onto endpoints
+        # moved by earlier contacts feeds exact denominators back into the next
+        # projection, despite every original source being a small decimal.
+        # Key by source edge: contact merges may replace node identities.
+        frozen_host_endpoints = {
+            _key(source): tuple(decode_point(nodes[end[1]]["p"]) for end in cuts[_key(source)][:2])
+            for source in sources
+        }
         for owner in owners:
             identity, p0 = source_node[owner["ref"]], owner["p"]
             nearby = tree.query(P(p0.x-radius, p0.y-radius), P(p0.x+radius, p0.y+radius)) if tree else []
@@ -372,7 +380,7 @@ def migrate_graph_space(space, options=None):
                 if not optional and not (_stored_wall_contact(to_numbers(p0), to_numbers(host["a"]), to_numbers(host["b"])) or 0 < old_t < 1 and squared_distance(p0, point_at(host["a"], host["b"], old_t)) <= Q(1, 5_000_000)**2):
                     continue
                 ends = cuts[_key(host)]
-                a, b = (decode_point(nodes[e[1]]["p"]) for e in ends[:2])
+                a, b = frozen_host_endpoints[_key(host)]
                 t = project_parameter(p0, a, b)
                 if not 0 <= t <= 1:
                     continue
