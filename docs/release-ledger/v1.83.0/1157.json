@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1157,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Clarifies existing Zigbee route diagnostics and missing links without changing routing behavior.",
+  "summary": {
+    "ru": "В настройках Zigbee объяснено, почему связи могут отличаться от карты интеграции.",
+    "en": "Zigbee settings explain why links may differ from the integration map."
+  }
+}

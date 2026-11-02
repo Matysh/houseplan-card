@@ -1,4 +1,5 @@
 {
+  "map_explanation": "Die Karten von Zigbee2MQTT und ZHA können Nachbarverbindungen anzeigen, während Houseplan nur Routen anzeigt, die durch Integrationsdaten bestätigt sind. Unterschiede zwischen den Karten sind daher normal. Reichen die Daten zur Bestimmung einer Route nicht aus, wird die Verbindung möglicherweise nicht angezeigt. Das allein bedeutet nicht, dass das Gerät nicht verfügbar ist oder das Netzwerk nicht richtig funktioniert.",
   "title": "Zigbee-Verbindungen",
   "toggle": "Zigbee-Verbindungen beim Darüberfahren über ein Gerät anzeigen",
   "hint": "Zeigt Eltern und nächste Hops laut Integration. Beim Darüberfahren werden keine Daten abgerufen.",

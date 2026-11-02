@@ -437,7 +437,8 @@ export class HpZigbeeTopologySettings extends LitElement {
         <span class="hpf-toggle-title hpf-balanced"><span>${this._t('toggle')}</span>${this._help()}</span>
         <input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin || this._actionsBusy} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
-      </label>${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}`,
+      </label><p class="hpf-hint">${this._t('map_explanation')}</p>
+      ${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}`,
       this._topicInput(true),
       enabled ? html`
         ${!this.savedEnabled ? html`<div class="hpf-callout"><p>${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</p></div>` : nothing}

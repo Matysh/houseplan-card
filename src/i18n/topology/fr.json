@@ -1,4 +1,5 @@
 {
+  "map_explanation": "Les cartes Zigbee2MQTT et ZHA peuvent afficher des liaisons de voisinage, tandis que Houseplan affiche uniquement les routes confirmées par les données de l’intégration. Les différences entre les cartes sont donc normales. Si les données ne suffisent pas à déterminer une route, la liaison peut ne pas être affichée. Cela ne signifie pas, à lui seul, que l’appareil est indisponible ou que le réseau fonctionne mal.",
   "title": "Liens Zigbee",
   "toggle": "Afficher les liens Zigbee au survol d’un appareil",
   "hint": "Affiche les parents et prochains sauts signalés par l’intégration. Le survol ne lance aucune requête.",
