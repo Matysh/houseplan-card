@@ -5,11 +5,14 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync,
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BETA_E2E, selectExact } from '../catalog/selections.mjs';
+import { CONVERTER_CASES } from '../converters/cases.mjs';
+import { prepareConverterSuite } from '../converters/prepare.mjs';
 
 const SUITES = {
   journeys: { projects: ['admin', 'viewer', 'mobile'], variant: 'house' },
   'first-run': { projects: ['first-run-viewer', 'first-run-admin'], variant: 'empty' },
   upgrade: { projects: ['upgrade'], variant: 'house' },
+  converters: { projects: ['converters'], variant: 'house' },
 };
 const ROOT_FILES = ['scripts', 'tests', 'seed', 'contract', 'fixtures', 'package.json', 'package-lock.json', 'playwright.config.mjs'];
 const SETUPS = new Set(['setup', 'plan-model']);
@@ -40,6 +43,9 @@ export function listedTests(report) {
 export function chooseE2ETests(candidates, { suite, selection = 'beta' }) {
   if (!SUITES[suite] || !['beta', 'remainder'].includes(selection)) throw Error('Unknown E2E suite/selection');
   const business = candidates.filter(t => SUITES[suite].projects.includes(t.project));
+  if (suite === 'converters') return selectExact(business, CONVERTER_CASES.map(row => ({
+    project: 'converters', file: 'tests/process-next-converters.spec.mjs', title: row.title,
+  })));
   const beta = selectExact(business, BETA_E2E.filter(t => t.suite === suite));
   return selection === 'beta' ? beta : business.filter(t => !beta.some(b => key(b) === key(t)));
 }
@@ -68,7 +74,7 @@ export function makeE2ESteps({ e2eRoot, selection = 'beta', version, targetRef =
   if (!haVersion || !/^\d+\.\d+\.\d+(?:b\d+)?$/.test(haVersion)) missing.push('--ha-version pinned numeric HA version');
   if (!workRoot) missing.push('--e2e-work-root for private disposable labs/artifacts');
   const steps = [];
-  for (const suite of Object.keys(SUITES)) {
+  for (const suite of ['journeys', 'first-run', 'upgrade']) {
     const extraMissing = suite === 'upgrade' && !immutableRef(upgradeFrom) ? ['exact --upgrade-from previous stable tag/SHA'] : [];
     const reasons = [...missing, ...extraMissing];
     const args = [fileURLToPath(import.meta.url), `--suite=${suite}`, `--selection=${selection}`];
@@ -153,10 +159,11 @@ function privateEnvironment(base, workspace, container, options) {
   return env;
 }
 
-function selectedConfig(selected) {
+function selectedConfig(selected, baseConfig = './playwright.config.mjs') {
   // Dependency projects bypass CLI filters in Playwright. Limit them too, while preserving login/plan preparation.
   const groups = Object.fromEntries([...new Set(selected.map(t => t.project))].map(name => [name, selected.filter(t => t.project === name)]));
-  return `import original from './playwright.config.mjs';\nconst selected = ${JSON.stringify(groups)};\nconst setups = new Set(['setup', 'plan-model']);\nconst escape = ${literal.toString()};\nexport default { ...original, retries: 0, workers: 1, fullyParallel: false,\n projects: original.projects.filter(p => setups.has(p.name) || selected[p.name]).map(p => ({ ...p, retries: 0,\n ...(selected[p.name] ? { testMatch: selected[p.name].map(t => new RegExp(escape(t.file) + '$')), grep: new RegExp('(?:^| )(' + selected[p.name].map(t => escape(t.title)).join('|') + ')$') } : {}),\n dependencies: (p.dependencies || []).filter(n => setups.has(n) || selected[n]) })) };\n`;
+  const setups = Object.keys(groups).every(name => name === 'converters') ? ['setup'] : [...SETUPS];
+  return `import original from '${baseConfig}';\nconst selected = ${JSON.stringify(groups)};\nconst setups = new Set(${JSON.stringify(setups)});\nconst escape = ${literal.toString()};\nexport default { ...original, retries: 0, workers: 1, fullyParallel: false,\n projects: original.projects.filter(p => setups.has(p.name) || selected[p.name]).map(p => ({ ...p, retries: 0,\n ...(selected[p.name] ? { testMatch: selected[p.name].map(t => new RegExp(escape(t.file) + '$')), grep: new RegExp('(?:^| )(' + selected[p.name].map(t => escape(t.title)).join('|') + ')$') } : {}),\n dependencies: (p.dependencies || []).filter(n => setups.has(n) || selected[n]) })) };\n`;
 }
 
 /** Actual execution is opt-in. No HA_URL input: this owns its generated seed, container and copied checkout. */
@@ -168,7 +175,9 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
   const artifacts = path.join(workspace, 'artifacts'); mkdirSync(artifacts, { mode: 0o700 });
   for (const entry of ROOT_FILES) if (existsSync(path.join(opts.source, entry))) cpSync(path.join(opts.source, entry), path.join(workspace, entry), { recursive: true });
   symlinkSync(path.join(opts.source, 'node_modules'), path.join(workspace, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
+  const baseConfig = opts.suite === 'converters' ? prepareConverterSuite(workspace) : './playwright.config.mjs';
   const env = privateEnvironment(environment, workspace, container, opts);
+  if (opts.suite === 'converters') env.HP_CONVERTER_REPORT_DIR = path.join(artifacts, 'converters');
   const cli = path.join(workspace, 'node_modules/playwright/cli.js');
   const projects = SUITES[opts.suite].projects.map(p => `--project=${p}`);
   const call = async (command, extraEnv = {}, allowFailure = false, cleanup = false) => {
@@ -202,7 +211,7 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
   try {
     onProgress({ phase: 'discover', suite: opts.suite });
     const discoveryFile = path.join(artifacts, 'discovery.json');
-    await call(['node', cli, 'test', '--list', '--reporter=json', ...projects], { PLAYWRIGHT_JSON_OUTPUT_FILE: discoveryFile });
+    await call(['node', cli, 'test', `--config=${baseConfig}`, '--list', '--reporter=json', ...projects], { PLAYWRIGHT_JSON_OUTPUT_FILE: discoveryFile });
     const candidates = listedTests(json(discoveryFile));
     const selected = chooseE2ETests(candidates, opts);
     if (!selected.length) {
@@ -212,7 +221,7 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
     }
     const listFile = path.join(workspace, 'selected-tests.txt');
     writeFileSync(listFile, testListText(selected));
-    writeFileSync(path.join(workspace, 'process-next.config.mjs'), selectedConfig(selected));
+    writeFileSync(path.join(workspace, 'process-next.config.mjs'), selectedConfig(selected, baseConfig));
     const testArgs = ['node', cli, 'test', '--config=process-next.config.mjs', `--test-list=${listFile}`, '--workers=1', '--retries=0', ...projects.filter(p => selected.some(t => p === `--project=${t.project}`))];
     const selectedFile = path.join(artifacts, 'selected.json');
     await call([...testArgs, '--list', '--reporter=json'], { PLAYWRIGHT_JSON_OUTPUT_FILE: selectedFile });
@@ -272,6 +281,9 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
     result.counts = { tests: result.tests, passed: result.passed, skipped: result.skipped, failed: result.tests - result.passed - result.skipped };
     save(path.join(artifacts, 'summary.json'), result);
     return result;
+  } catch (error) {
+    error.workspace = workspace;
+    throw error;
   } finally {
     if (containerStarted) await cleanupContainer(true);
     // Keep only our generated workspace as evidence. Never recursively delete caller paths or the source checkout.

@@ -33,10 +33,13 @@ export function normalizeFallbackRequest(input, { workspace, candidate }) {
   const releaseEvent = ['beta', 'stable'].includes(request.event);
   const docsOnly = ['docs', 'documentation'].includes(request.layer) && !releaseEvent;
   if (docsOnly) throw Error('Pure documentation has no fallback execution, dependencies or validation run');
-  const needsE2E = releaseEvent;
+  const needsE2E = releaseEvent || request.event === 'converters';
   const needsMetrics = releaseEvent;
-  if (needsE2E && !fullSha(request.e2eCommit)) throw Error('beta/stable require e2eCommit: full pinned SHA of Matysh/houseplan-e2e');
+  if (needsE2E && !fullSha(request.e2eCommit)) throw Error('beta/stable/converters require e2eCommit: full pinned SHA of Matysh/houseplan-e2e');
   if (request.measurementsCommit !== undefined && !fullSha(request.measurementsCommit)) throw Error('measurementsCommit must be a full SHA of Matysh/houseplan-card');
+  if (needsE2E) {
+    if (!/^\d+\.\d+\.\d+(?:b\d+)?$/.test(request.haVersion ?? '')) throw Error('Pin haVersion, for example 2026.10.4');
+  }
   if (releaseEvent) {
     if (request.metricsRequest !== undefined) relativeFile(request.metricsRequest, 'metricsRequest');
     if (!/^\d+\.\d+\.\d+(?:b\d+)?$/.test(request.haVersion ?? '')) throw Error('Pin haVersion, for example 2026.10.4');
@@ -53,6 +56,10 @@ export function normalizeFallbackRequest(input, { workspace, candidate }) {
   delete request.e2eWorkRoot;
   delete request.port; // The private CI container gets a Docker-allocated loopback port.
   delete request.targetRef; // release-package supplies the tested bytes of this fixed checkout.
+  if (request.event === 'converters') {
+    delete request.candidateRoot;
+    request.targetRef = candidate; // Addressed diagnostic installs this exact source candidate in its own lab.
+  }
   return { request, candidate, needsE2E, needsMetrics, needsBrowser, needsBackend, needsPython,
     e2eCommit: needsE2E ? request.e2eCommit : '', measurementsCommit: needsMetrics ? request.measurementsCommit ?? '' : '' };
 }

@@ -158,7 +158,7 @@ test('stable retains beta identities for reuse and separates converter failure f
     assert.deepEqual(stable.steps.find(item => item.id === id), beta.steps.find(item => item.id === id));
   }
   const diagnostic = stable.steps.find(item => item.id === 'converters-stable');
-  assert.equal(diagnostic.command, null); assert.equal(diagnostic.diagnostic, true); assert.match(diagnostic.unavailable, /1179/);
+  assert.equal(diagnostic.command, null); assert.equal(diagnostic.diagnostic, true); assert.match(diagnostic.unavailable, /prerequisites/);
   assert.ok(stable.steps.some(item => item.id === 'backend-coverage-threshold'));
   assert.ok(!stable.steps.some(item => item.id.startsWith('mutation') || item.id === 'infra-behavior'));
 });

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a diagnostic stable-only journey for the three published plan converters: download the converted file and import it through a disposable Home Assistant UI, retaining artifact identities and separate failures without blocking Houseplan. [#1179](https://github.com/Matysh/houseplan-card/issues/1179)
+
 - Apply the approved beta.2 UI through shared controls: unified header help, thickness fields, choice states, room hints and plan-relative toasts. Preserve physical camera scale/centre across frame growth and editor navigation; animate the real header, Properties and scene without per-frame full renders. Sensor-open doors accent only their arc. Sections cards omit the title, inherit theme corners and remove the extra header offset. [#1207](https://github.com/Matysh/houseplan-card/issues/1207)
 
 - Read large review diffs with a separate 32 MiB internal Git buffer while preserving bounded reviewer output and path permissions; expose empty-stderr transport failures such as ENOBUFS. [#1208](https://github.com/Matysh/houseplan-card/issues/1208)

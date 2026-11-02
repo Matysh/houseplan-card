@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BETA_E2E } from '../catalog/selections.mjs';
+import { CONVERTER_CASES } from '../converters/cases.mjs';
 import { chooseE2ETests, listedTests, makeE2ESteps, reserveLoopbackPort, runE2E, testListText, verifyE2ESelection } from '../lib/e2e.mjs';
 
 const project = t => t.suite === 'upgrade' ? 'upgrade' : t.suite === 'first-run'
@@ -62,7 +63,8 @@ test('plan has exact prerequisites and no broad-suite fallback', () => {
 
 function fakeExecutor(opts, { failure = false, skip = false, extra = false } = {}) {
   const calls = []; let owner, published;
-  const selected = cases(opts.suite);
+  const selected = opts.suite === 'converters' ? CONVERTER_CASES.map(row => ({ project: 'converters',
+    file: 'tests/process-next-converters.spec.mjs', title: row.title, titlePath: [row.title] })) : cases(opts.suite);
   const execute = async (command, context) => {
     calls.push({ command, context });
     const env = context.env;
@@ -81,6 +83,21 @@ function fakeExecutor(opts, { failure = false, skip = false, extra = false } = {
   };
   return { execute, calls };
 }
+
+test('converter journeys use three exact cases, own HA and setup only, without changing the companion checkout', async t => {
+  const { opts, e2eRoot } = fixture(t);
+  opts.suite = 'converters'; opts.selection = 'remainder';
+  put(path.join(e2eRoot, 'scripts/users.mjs'), "export const USERS={admin:{storageState:'.auth/admin.json'}};");
+  const { execute, calls } = fakeExecutor(opts);
+  const before = readdirSync(e2eRoot).sort();
+  const result = await runE2E(opts, { execute });
+  assert.equal(result.status, 'passed'); assert.equal(result.tests, 3);
+  const config = (await import(pathToFileURL(path.join(result.workspace, 'process-next.config.mjs')))).default;
+  assert.deepEqual(config.projects.find(project => project.name === 'converters').dependencies, ['setup']);
+  assert.ok(!config.projects.some(project => project.name === 'admin' || project.name === 'plan-model'));
+  assert.deepEqual(readdirSync(e2eRoot).sort(), before);
+  assert.ok(calls.find(call => call.command[1] === 'scripts/prepare-seed.mjs').command.includes('--variant=house'));
+});
 
 test('execution owns only its copied seed/container; foreign HA and auth settings are discarded', async t => {
   const { opts, e2eRoot, workRoot } = fixture(t);

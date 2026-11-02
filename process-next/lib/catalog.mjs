@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
+import { makeConverterStep } from './converters.mjs';
 import { walk } from './storage.mjs';
 import { demoIconSourceFiles } from '../../demo/helpers/icon-sources.mjs';
 
@@ -161,12 +162,6 @@ function smokeStep(smoke) {
     ['node', smoke.file, ...smoke.args], browserInputs, ['demo-assets', 'test-build'], { timeoutMs: 600000,
       ...(smoke.file.endsWith('smoke_editor_draft_exit.mjs') ? { env: { HP_SMOKE_WIDTH: '1100' } } : {}) });
 }
-function converterStep() {
-  return unavailable('converters-stable', 'Конвертеры перед stable: 3 формата → импорт в HA',
-    'houseplan-card#1179: browser file → convert → download → real HA import adapter is not implemented. Required diagnostic report; never core release blocker.', true,
-    { issue: 'https://github.com/Matysh/houseplan-card/issues/1179' });
-}
-
 /** Pure planning: never installs dependencies, starts HA, builds, or executes a test. */
 export async function planProfile({ root, event = 'task', issue, track = 'show', layer = 'product', areaTests = [], changedFiles = [], version, e2eRoot, phase, mutationShard,
   metricsRequest, candidateRoot, expectedVersion, upgradeFrom, haVersion, e2eWorkRoot, workRoot = e2eWorkRoot, targetRef } = {}) {
@@ -185,7 +180,10 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     inventorySourceCommit: inventory.sourceCommit, caseCount: null, countUnit: 'steps; runtime case counts reported separately' };
   const result = { name, event, issue: issue ?? null, layer, steps, scope, limitations: [], prerequisites: [] };
   if (docs && !release) { scope.reason = 'Чистая документация: только ревью, проверки не требуются'; return result; }
-  if (event === 'converters') { steps.push(converterStep()); return result; }
+  if (event === 'converters') {
+    steps.push(makeConverterStep({ e2eRoot, workRoot, haVersion, candidateRoot, targetRef, expectedVersion }));
+    return finalize(root, result);
+  }
   if (event === 'mutation') {
     const shard = typeof mutationShard === 'string' ? mutationShard.match(/^(\d+)\/(\d+)$/) : null;
     if (!shard || Number(shard[1]) < 1 || Number(shard[1]) > Number(shard[2])) {
@@ -285,7 +283,9 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
       { outputs: ['artifacts/process-next/golden-rest/golden-report.json'], reusableReports: ['artifacts/process-next/golden-rest/golden-report.json'], timeoutMs: 7200000 }));
     steps.push(step('backend-coverage-threshold', 'Порог backend coverage перед stable', ['python3', 'process-next/catalog/coverage-threshold.py'], ['scripts/backend-coverage-baseline.txt', 'process-next/catalog/coverage-threshold.py'], ['product-backend']));
     addE2E('remainder');
-    steps.push(converterStep());
+    const converters = makeConverterStep({ ...e2eOptions, targetRef: sourceSha, requires: ['release-package'] });
+    converters.after = [steps.filter(item => item.id.startsWith('e2e-')).at(-1).id];
+    steps.push(converters);
   }
   scope.nodeFiles = retained('product').length; scope.backendFiles = retained('backend').length;
   scope.betaSmokeFiles = BETA_SMOKES.length; scope.betaGoldenFrames = BETA_GOLDEN.length; scope.betaE2EJourneys = BETA_E2E.length;

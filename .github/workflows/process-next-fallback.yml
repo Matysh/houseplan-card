@@ -30,6 +30,7 @@ concurrency:
 permissions:
   contents: read
   actions: read
+  issues: write
 jobs:
   selected-set:
     if: ${{ vars.PROCESS_NEXT_ENABLED == 'true' && (contains(fromJSON('["beta","stable"]'), fromJSON(inputs.request).event) || !contains(fromJSON('["docs","documentation"]'), fromJSON(inputs.request).layer)) }}
@@ -101,6 +102,8 @@ jobs:
         if: inputs.previous_run != ''
         run: node process-next/templates/prepare-fallback.mjs restore
       - name: Выполнить выбранный общий набор
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node process-next/cli.mjs run --request process-next/.state/fallback-request.json --state-dir process-next/.state
       - name: Сохранить применимые результаты для продолжения
         if: always()
