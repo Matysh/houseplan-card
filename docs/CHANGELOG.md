@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Synchronize the installable review workflow with the deployed ship-batch workflow; check all installed template/target pairs to prevent reinstalling stale workflows. [#1218](https://github.com/Matysh/houseplan-card/issues/1218)
+
 - Point the CI badge directly to the actual source test run for the current stable, preserving its dynamic status and the separate CodeQL badge. [#1219](https://github.com/Matysh/houseplan-card/issues/1219)
 
 - Restore separate CI and CodeQL badges in the README. CI reflects recorded test results for the released product in `main`, links to its evidence, and never reruns tests; missing evidence is not reported as success. [#1217](https://github.com/Matysh/houseplan-card/issues/1217)
