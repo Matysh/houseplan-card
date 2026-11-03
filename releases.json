@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 94,
+  "revision": 95,
   "active": "v1.84.0-beta.3-20261104-nodes",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -3025,7 +3025,7 @@
       "sha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
       "runner": null,
       "running": {
-        "id": "41726660162",
+        "id": null,
         "sha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335"
       },
       "status": "testing",
@@ -3895,7 +3895,14 @@
           "status": "pending"
         }
       ],
-      "diagnostics": [],
+      "diagnostics": [
+        {
+          "id": "repair-beta1843-nodes-run-registration",
+          "kind": "run-registration-correction",
+          "workflowRun": "41726660162",
+          "reason": "The Actions workflow ID was mistakenly supplied as the runner report ID. Unset only this correlation; the actual completed report will provide its own ID. Material, checks and readiness are unchanged."
+        }
+      ],
       "shipReview": {
         "sha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
         "requestId": "ship-review:eee733de5ed562e83ddd5e01c00d1e8ef6229fecff2346d7cd75f19fe33204ca",
@@ -4028,7 +4035,8 @@
     "create-beta1843-nodes-20261104": "55595cbc82ea8ce1726639ad9209bfcd1baf08898ee78081424dcb0c4bcd0588",
     "prepare-beta1843-nodes-20261104": "b6e3ad25d79ad42f36b97f877e40e9893aeee311a8b550ed7739c0fa8804c0fb",
     "run-beta1843-nodes-20261104": "3dcf82cd3c96797e781ea103d779c03eede955264da60fb850fce0721b198915",
-    "ship-review:prepare:392cf018-bdaf-4fb3-a30e-e4fc4d5e0e52": "de87f801300e371d95659953c5413a002dd3aaeb4926b5c169c3f08bfcbe4785"
+    "ship-review:prepare:392cf018-bdaf-4fb3-a30e-e4fc4d5e0e52": "de87f801300e371d95659953c5413a002dd3aaeb4926b5c169c3f08bfcbe4785",
+    "repair-beta1843-nodes-run-registration": "a1290b828fbc40641d1a04ea45110b13379ad5bd9889202f96949abca69cb2fc"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
