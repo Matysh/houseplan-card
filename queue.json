@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1979,
-  "nextTicket": 125,
+  "revision": 1980,
+  "nextTicket": 126,
   "nextFence": 125,
   "tasks": {
     "1126": {
@@ -2494,15 +2494,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1246-toast-action-ownership",
-      "materialSha": "58d458895ce130b360851a4efa50cbcb43579238",
+      "materialSha": "c4779c99782afec7016e38ef302371738c25536c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 123,
-      "queued": false,
+      "ticket": 125,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793729056864,
-      "reviewEntry": 1,
-      "reason": "rebase-conflict",
+      "readyAt": 1793730555484,
+      "reviewEntry": 2,
       "notice": {
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
@@ -2710,7 +2709,9 @@
       "runId": 41692081808
     }
   },
-  "waiting": [],
+  "waiting": [
+    1246
+  ],
   "active": null,
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
@@ -2949,6 +2950,19 @@
           "detail": "Синтаксис и типы изменённых инструментов: failed",
           "eventId": "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:4:return:return:1225"
         }
+      }
+    },
+    "finish:74f42b8f-f233-478f-91b2-b50448b6e147": {
+      "digest": "e51ed99a2623e5d1c491dee90e32aa07c8f29a404879d5e95996bf63b7cc3972",
+      "issue": 1246,
+      "message": {
+        "kind": "queued",
+        "issue": 1246,
+        "at": 1793730555484,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c4779c99782afec7016e38ef302371738c25536c"
       }
     }
   },
