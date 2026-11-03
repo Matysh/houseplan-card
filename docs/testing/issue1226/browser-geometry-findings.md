@@ -69,7 +69,7 @@ In `innerContourForRoom`, the historical branch guards subtraction and has a
 bounded contour fallback; the `graphSource` branch calls the same subtraction
 without catching its exception. #1226 does not change either product branch.
 
-## GEO-CAMERA-REMOUNT: readiness failure needs separate diagnosis
+## GEO-CAMERA-REMOUNT: late changed snapshot restores a View camera under Plan
 
 After its four native scenarios, 100 accepted/cancelled cycles and ten lifecycle
 terminals pass, `smoke_wall_node_topology` changes the host width to 740 px and
@@ -77,9 +77,31 @@ remounts the explicitly legacy fixture. Its real camera readiness guard observes
 stage `740 × 704`, `_lastValidStageSize=[740,793]`, and a coherent stored/painted
 view whose aspect still matches the former height. No refit is pending and the
 guard times out. Do not bypass the guard or repair the camera in the fixture.
-This is retained for diagnosis rather than asserted to be a fully isolated
-product root cause. Evidence: original geometry log and the native current
-run's `diagnostic wall-node-camera` output.
+This is now isolated without changing the host width or running any geometry
+gesture. Run `node docs/testing/issue1226/repros/warm-camera.mjs`: mount one
+current model11 diagonal wall in Plan, then remount the same card/floor while
+the server returns a different current model11 horizontal wall after900ms.
+Both reads and writes use one real `createFixtureStore`; there is no split
+fixture authority or fabricated camera state. The result is reproducibly
+stage780×704 under Plan, `_lastValidStageSize=[780,793]`, with no pending refit.
+The manual reproducer keeps the camera-ready assertion red and exits1.
+
+Two controls pass: `--same` delivers the same snapshot after900ms; `--fast`
+delivers the changed snapshot immediately. Independent original/padding0,
+740px resize, ACL and 2.5D-history controls do not reproduce the problem alone.
+Thus740px/padding is not the broken fixture prerequisite.
+
+A delegating observation trace of the original failing smoke identifies the
+missed transition. The observer first records the cached Plan stage740×704.
+After the delayed response, `_applyView` runs while the restored owner is still
+View and measures740×793 (`warmModeRequest=2`). DOM then becomes Plan704,
+but no subsequent `_refitView` runs. The last observed/final DOM size is704,
+so the intermediate793 state can escape ResizeObserver delivery while its
+camera and cached size survive. The suspected source is the warm editor
+restoration/atomic mode boundary, not a need to force-refit the fixture.
+
+Evidence: `output/issue1226/geometry/camera-full-trace-start.log`,
+`camera-minimal-noresize.log`, and the independent manual reproducer above.
 
 ## Other retained oracles
 
