@@ -303,6 +303,8 @@ try {
         const anchor = card.constructor.elementStyles[dialogAnchorSlot - 1]?.styleSheet;
         return menus.length === 1 && sheets.indexOf(menus[0]) === sheets.indexOf(anchor) + 1;
       })(),
+      sharedMenuCount: [...card.renderRoot.adoptedStyleSheets]
+        .filter(sheet => window.__hp805.kindOf(sheet) === 'shared-menu').length,
       laterKinds: [...card.renderRoot.adoptedStyleSheets]
         .filter(sheet => window.__hp805.kindOf(sheet) !== 'shared-menu').slice(card.constructor.elementStyles.length)
         .map(sheet => window.__hp805.kindOf(sheet)),
@@ -314,7 +316,18 @@ try {
   out.coldViewLoadsTheInitialGraph = manifest.initialViewFiles.every((path) => desktop.loaded.map(jsName).includes(path));
   out.coldRootsHaveNoEditorSheet = [cold.card, cold.kiosk, cold.space]
     .every((inventory) => inventory.kinds.every((kind) => !kind.startsWith('editor-')));
-  out.sharedMenuIsSingleAfterDialogs = cold.sharedMenuOnceAfterDialogs;
+  out.coldSharedMenuStaysLazy = cold.sharedMenuCount === 0;
+  // The View menu is now a first-use runtime. Its sheet must still adopt once
+  // immediately after dialogs when requested, without loading any editor.
+  await page.locator('houseplan-card [data-hp="device"]').first().click({ button: 'right' });
+  await page.locator('houseplan-card .hpf-context-menu').waitFor();
+  out.sharedMenuIsSingleAfterDialogs = await page.evaluate(slot => {
+    const card = window.__card, sheets = [...card.renderRoot.adoptedStyleSheets];
+    const menus = sheets.filter(sheet => window.__hp805.kindOf(sheet) === 'shared-menu');
+    const anchor = card.constructor.elementStyles[slot - 1]?.styleSheet;
+    return !card._editorRuntime && menus.length === 1 && sheets.indexOf(menus[0]) === sheets.indexOf(anchor) + 1;
+  }, dialogSlot);
+  await page.keyboard.press('Escape');
   out.coldHostsHaveNoTrayTokens = cold.trayVar.every((value) => value === '');
 
   // AC3 settings family on the cold tab: the first frame of the dialog has its styles.

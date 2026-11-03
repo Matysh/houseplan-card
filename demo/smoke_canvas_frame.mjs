@@ -22,14 +22,10 @@ const raf = () => page.evaluate(() => new Promise((r) => requestAnimationFrame((
 // static card (which fetches its own copy) sees exactly the same house.
 const load = (cfg, layout, space) => page.evaluate(async ([c2, l2, sp]) => {
   const c = window.__card;
-  const srvCfg = (await c.hass.callWS({ type: 'houseplan/config/get' })).config;
-  const srvLay = (await c.hass.callWS({ type: 'houseplan/layout/get' })).layout;
-  for (const k of Object.keys(srvCfg)) delete srvCfg[k];
-  Object.assign(srvCfg, JSON.parse(JSON.stringify(c2)));
-  for (const k of Object.keys(srvLay)) delete srvLay[k];
-  Object.assign(srvLay, JSON.parse(JSON.stringify(l2)));
-  c._serverCfg = srvCfg;
-  c._layout = JSON.parse(JSON.stringify(l2));
+  // config/get and layout/get return detached snapshots. Publish through the
+  // fixture store so the static card reads the same authority as the main one.
+  await window.__hpTest.setServerConfig(JSON.parse(JSON.stringify(c2)));
+  await window.__hpTest.setLayout(JSON.parse(JSON.stringify(l2)));
   c._modelCache = null;
   c._frame = null;
   c._showFar = false;

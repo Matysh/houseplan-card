@@ -316,6 +316,7 @@ await page.evaluate(async () => {
   }];
   c._serverCfg.spaces = [sp];
   c._serverCfg.model_version = 9;
+  delete sp.plan_graph; // explicitly authored v9 room/window fixture, not stale graph authority
   c._modelCache = null;
   c._cfgEpoch++;
   c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
@@ -406,7 +407,8 @@ const clipped = await page.evaluate(async () => {
   const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
   const before = c._geometrySnapshot();
   sp.rooms.find((r) => r.id === 'r3').poly = [[0.90, 0.46], [0.96, 0.46], [0.96, 0.86], [0.90, 0.86]];
-  c._commitPhysicalGeometry('sun smoke room edit', before);
+  c._editorRuntime._commitPhysicalGeometry('sun smoke room edit', before, [], true,
+    { kind: 'resize', rooms: ['r3'] });
   c.requestUpdate(); await c.updateComplete;
   return true;
 });

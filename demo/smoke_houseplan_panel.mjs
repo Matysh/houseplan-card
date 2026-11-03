@@ -447,7 +447,7 @@ await page.waitForFunction(() => {
   const gear = root.querySelector('[data-hp="header-menu"]');
   const rotation = root.querySelector('[data-hp="rotate-left"]');
   const menu = root.querySelector('[data-hp="panel-menu"]');
-  return picker?.getBoundingClientRect().width > 0 && gear?.getBoundingClientRect().width === 0
+  return picker?.getBoundingClientRect().width > 0 && (!gear || gear.getBoundingClientRect().width === 0)
     && rotation?.getBoundingClientRect().top >= menu?.getBoundingClientRect().bottom;
 });
 const resized = await page.evaluate(async () => {

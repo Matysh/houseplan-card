@@ -8,15 +8,27 @@
 // are checked against the geometry: cell = 5 cm, grid pitch = 1000/240, so
 // cm = units * 1.2 and r1's top wall (510 u) is 6.12 m.
 import { launch, check, finish } from './serve.mjs';
+import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 const { page, browser } = await launch();
+await page.exposeFunction('__openingMeasureFixture', (config, spaceId, opening) => {
+  // Independent authored setup between ruler scenarios, not a runtime writer.
+  config.model_version = 10;
+  for (const space of config.spaces) delete space.plan_graph;
+  config.spaces.find(space => space.id === spaceId).openings = [opening];
+  return currentGraphFixture(config);
+});
 
-await page.evaluate(() => {
+await page.evaluate(async () => {
   const c = window.__card;
   window.__physicalizeOpeningFixture = (sp) => {
     // Exercise the real pre-v9 -> v9 edit barrier instead of fabricating a
     // catalogue: partially shared room edges must be atomised before IDs are
     // assigned, which a naive edge-by-edge fixture cannot reproduce.
     c._serverCfg.model_version = 7;
+    // These are explicitly authored legacy room projections. A previous
+    // phase may already have migrated every floor; never retain those graphs
+    // under a forged older root version.
+    for (const floor of c._serverCfg.spaces) delete floor.plan_graph;
     delete sp.open_spans;
     delete sp.walls;
     delete sp.wall_segments;
@@ -31,12 +43,16 @@ await page.evaluate(() => {
       };
       c._wallThickApply(true);
     }
-    c._geometryHistory.length = 0;
+    c._geometryHistory.clear();
+    return c._curSpaceCfg; // migration atomically replaces the selected space
   };
-  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
-  window.__physicalizeOpeningFixture(sp);
+  let sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  sp = window.__physicalizeOpeningFixture(sp);
   // 80-unit door on r1's top wall (y = 0.14), off-center
-  sp.openings = [{ id: 'op1', type: 'door', x: 0.2, y: 0.14, angle: 0, length: 0.08 }];
+  // Finish the real migration writer before publishing the next authored seed.
+  await window.__hpTest.waitForWrites();
+  await window.__hpTest.setServerConfig(await window.__openingMeasureFixture(structuredClone(c._serverCfg), sp.id,
+    { id: 'op1', type: 'door', x: 0.2, y: 0.14, angle: 0, length: 0.08 }));
   c._setMode('plan'); c._tool = 'opening';
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
@@ -50,11 +66,9 @@ await settle();
 
 const screenPt = (x, y) => page.evaluate(([x, y]) => {
   const c = window.__card;
-  const stage = c.renderRoot.querySelector('.stage');
-  const r = stage.getBoundingClientRect();
-  const svg = stage.querySelector('svg');
-  const [vx, vy, vw, vh] = svg.getAttribute('viewBox').split(' ').map(Number);
-  return [r.left + ((x - vx) / vw) * r.width, r.top + ((y - vy) / vh) * r.height];
+  const svg = c.renderRoot.querySelector('.stage svg');
+  const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
+  return [p.x, p.y];
 }, [x, y]);
 const badges = () => page.evaluate(() =>
   [...window.__card.renderRoot.querySelectorAll('.measurelabel.opshoulder')].map((el) => el.textContent.trim()).sort());
@@ -126,7 +140,7 @@ check('magnet_snaps_center', near(await paintedCoordinate('x', 'magnet_center'),
 // both shoulders equal after the snap: (510 - 80) / 2 = 215 u -> 2.58 m
 check('badges_equal_at_center', await badges(), ['2.58 m', '2.58 m']);
 // the tick is perpendicular to the wall (horizontal wall -> a vertical dash)
-const geom = await page.evaluate(() => {
+const geom = await page.evaluate(async () => {
   const el = window.__card.renderRoot.querySelector('.opcentertick');
   if (!el) return null;
   const dashed = getComputedStyle(el).strokeDasharray;
@@ -175,16 +189,19 @@ check('badges_gone_final', (await badges()).length, 0);
 // r1's edge (nearest, first in roomEdges order on the tie), so the shoulders
 // and the center come from 140..460 — the old build measured the merged
 // 140..580 union
-await page.evaluate(() => {
+await page.evaluate(async () => {
   const c = window.__card;
-  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  let sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
   sp.rooms = [
     { id: 'r1', name: 'Living room', poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.46], [0.04, 0.46]] },
     { id: 'r2', name: 'Kitchen', poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.58], [0.55, 0.58]] },
   ];
   sp.openings = [];
-  window.__physicalizeOpeningFixture(sp);
-  sp.openings = [{ id: 'op1', type: 'door', x: 0.55, y: 0.3, angle: 90, length: 0.08 }];
+  sp = window.__physicalizeOpeningFixture(sp);
+  // Finish the real migration writer before publishing the next authored seed.
+  await window.__hpTest.waitForWrites();
+  await window.__hpTest.setServerConfig(await window.__openingMeasureFixture(structuredClone(c._serverCfg), sp.id,
+    { id: 'op1', type: 'door', x: 0.55, y: 0.3, angle: 90, length: 0.08 }));
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
 });
@@ -225,15 +242,15 @@ await settle();
 // perpendicular tick + magnet at the wall centre, Shift opting out — and the
 // whole lot vanishing the moment the opening is placed. Default length is
 // 90 cm = 75 units, so the shoulders are measured from the edges c +- 37.5.
-await page.evaluate(() => {
+await page.evaluate(async () => {
   const c = window.__card;
-  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  let sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
   sp.rooms = [
     { id: 'r1', name: 'Living room', poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]] },
     { id: 'r2', name: 'Kitchen', poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.46], [0.55, 0.46]] },
   ];
   sp.openings = [];
-  window.__physicalizeOpeningFixture(sp);
+  sp = window.__physicalizeOpeningFixture(sp);
   c._setMode('plan'); c._activateOpeningPlacement('door');
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
@@ -276,7 +293,7 @@ const previews = () => page.evaluate(() =>
   check('place_tick_at_center', await tick(), 1);
   // Equal physical-face shoulders: 217.5 - 6.25 = 211.25 u -> 2.53 m.
   check('place_badges_equal_at_center', await badges(), ['2.53 m', '2.53 m']);
-  const g = await page.evaluate(() => {
+  const g = await page.evaluate(async () => {
     const el = window.__card.renderRoot.querySelector('.opcentertick');
     return el && { x1: +el.getAttribute('x1'), x2: +el.getAttribute('x2'),
       y1: +el.getAttribute('y1'), y2: +el.getAttribute('y2') };
@@ -284,7 +301,7 @@ const previews = () => page.evaluate(() =>
   check('place_tick_perpendicular', !!g && near(g.x1, 295, 1e-6) && near(g.x2, 295, 1e-6)
     && near(g.y2 - g.y1, 30, 1e-6));
   // the architectural preview itself already sits on the magnetised centre
-  const gh = await page.evaluate(() => {
+  const gh = await page.evaluate(async () => {
     const el = window.__card.renderRoot.querySelector('.opening-preview');
     const match = /translate\(\s*([-+\d.eE]+)/.exec(el?.getAttribute('transform') || '');
     return match ? Number(match[1]) : null;
@@ -300,7 +317,7 @@ const previews = () => page.evaluate(() =>
   await settle();
   check('place_tick_with_shift', await tick(), 1);
   check('place_badges_with_shift', (await badges()).length, 2);
-  const gh = await page.evaluate(() => {
+  const gh = await page.evaluate(async () => {
     const el = window.__card.renderRoot.querySelector('.opening-preview');
     const match = /translate\(\s*([-+\d.eE]+)/.exec(el?.getAttribute('transform') || '');
     return match ? Number(match[1]) : null;
@@ -322,7 +339,7 @@ const previews = () => page.evaluate(() =>
   check('place_tick_gone', await tick(), 0);
   check('place_preview_gone', await previews(), 0);
   // …and confirming the dialog writes the opening at the magnetised point
-  await page.evaluate(() => { const c = window.__card; c._saveOpening(); return c.updateComplete && true; });
+  await page.evaluate(async () => { const c = window.__card; c._saveOpening(); return c.updateComplete && true; });
   await settle();
   check('place_committed_x_center', near(await page.evaluate(() =>
     window.__card._serverCfg.spaces.find((s) => s.id === 'f1').openings[0]?.x ?? Number.NaN), 0.295, 1e-6));

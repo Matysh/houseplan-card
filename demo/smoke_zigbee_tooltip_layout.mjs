@@ -352,7 +352,9 @@ for (const provider of ['z2m', 'zha']) {
         ?.shadowRoot?.querySelector('.route-status')?.textContent || ''));
       await settle();
       const changed = await witness('runtimeErrorStaleNoPointerMove', 'd_kettle');
-      out.runtimeIncludesPartialStaleError = changed.badges.some((badge) => /Incomplete data/.test(badge.text)
+      // #1158: an unknown outgoing route has one route diagnostic, not the
+      // redundant 'No route data' plus 'Incomplete data' pair.
+      out.runtimeIncludesSingleRouteProblemStaleError = changed.badges.some((badge) => /No route data/.test(badge.text) && !/Incomplete data/.test(badge.text)
         && /Stale data/i.test(badge.text) && /could not be loaded/i.test(badge.text));
       await deliver();
       await setVolumetricView(false);
