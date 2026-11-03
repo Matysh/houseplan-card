@@ -78,8 +78,10 @@ def _host(opening: Any, *, canonical_view: bool = False) -> dict[str, Any] | Non
             exact = decode_rational(host["tq"])
         except GraphError:
             return None  # Malformed exact intent remains a strict schema refusal.
+        if not 0 <= exact <= 1:
+            return None
         projections = (float(exact), canonicalize_number(float(exact))) if canonical_view else (float(exact),)
-        if not 0 <= exact <= 1 or host["t"] not in projections:
+        if host["t"] not in projections:
             return None
     return host
 

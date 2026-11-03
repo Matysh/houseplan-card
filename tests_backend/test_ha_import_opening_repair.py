@@ -138,7 +138,7 @@ def test_opening_repair_does_not_hide_corrupt_current_graph_projections(tmp_path
     assert rejected.value.code == "invalid_config"
 
 
-@pytest.mark.parametrize("parameter", [["2", "4"], ["1", "0"], ["1", "2"]])
+@pytest.mark.parametrize("parameter", [["2", "4"], ["1", "0"], ["1", "2"], ["1" + "0" * 1000, "1"]])
 def test_malformed_or_inconsistent_exact_host_parameter_is_not_silently_repaired(tmp_path, parameter):
     document = _document(tmp_path)
     _door(document).update(x=.95, y=.95)
