@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2107,
-  "nextTicket": 133,
+  "revision": 2108,
+  "nextTicket": 134,
   "nextFence": 133,
   "tasks": {
     "1126": {
@@ -1735,15 +1735,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1225-1226-revalidation-20261103",
-      "materialSha": "b1c227e98883d05c38ac8ccec41b19de09a97804",
+      "materialSha": "e6fe4e04616111f3bf658d7d432ac84539c091b8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 130,
-      "queued": false,
+      "ticket": 133,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793732959978,
-      "reviewEntry": 1,
-      "reason": "rebase-conflict",
+      "readyAt": 1793733785811,
+      "reviewEntry": 2,
       "notice": {
         "key": "1:rebase-conflict",
         "reason": "rebase-conflict",
@@ -2667,7 +2666,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1226
+  ],
   "active": {
     "issue": 1246,
     "worker": "toast-reuse-host",
@@ -3036,6 +3037,19 @@
         "layer": "product",
         "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
         "phase": "sync"
+      }
+    },
+    "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1": {
+      "digest": "dc3d73865d491bf0eebef31b6000eae4590e0c3deb3f34083a578e7237d522fd",
+      "issue": 1226,
+      "message": {
+        "kind": "queued",
+        "issue": 1226,
+        "at": 1793733785811,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e6fe4e04616111f3bf658d7d432ac84539c091b8"
       }
     }
   },
