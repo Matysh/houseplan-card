@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1417,
+  "revision": 1418,
   "nextTicket": 98,
   "nextFence": 98,
   "tasks": {
@@ -1707,7 +1707,7 @@
       "ownerDecision": null,
       "ticket": 97,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793706403168,
       "reviewEntry": 3,
       "patchId": "67cdba25da7efe8406095cf37a6f15e5d15e3078",
@@ -1739,12 +1739,12 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261103T113512405-65357103",
+        "id": "20261103T114656266-de25bc25",
         "name": "Тесты для задачи #1227 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T113512405-65357103/report.json",
-        "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T114656266-de25bc25/report.json",
+        "materialSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
         "status": "passed",
-        "finishedAt": "2026-11-03T11:35:42.902Z",
+        "finishedAt": "2026-11-03T11:47:18.009Z",
         "failures": []
       },
       "reviewRound": null
@@ -1860,9 +1860,9 @@
     "fence": 97,
     "materialSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
     "expectedBase": "96ffe544474c6a0ffd40f005caa977afff308d26",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793706406893,
-    "expiresAt": 1793706712807,
+    "expiresAt": 1793710039262,
     "patchId": "67cdba25da7efe8406095cf37a6f15e5d15e3078"
   },
   "events": {
@@ -2137,6 +2137,29 @@
           "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf",
           "status": "passed",
           "finishedAt": "2026-11-03T11:35:42.902Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:d4c673b2-2f3c-461e-8660-b134d372b736:finish:3:s6-complete": {
+      "digest": "bba0d2116f3d1eb46d318461e729477e04e5fedfd62a6ae3245c13a8137022e3",
+      "issue": 1227,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1227,
+        "at": 1793706439262,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T114656266-de25bc25",
+          "name": "Тесты для задачи #1227 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T114656266-de25bc25/report.json",
+          "materialSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
+          "status": "passed",
+          "finishedAt": "2026-11-03T11:47:18.009Z",
           "failures": []
         }
       }
