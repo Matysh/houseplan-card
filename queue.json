@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2133,
-  "nextTicket": 134,
+  "revision": 2134,
+  "nextTicket": 135,
   "nextFence": 134,
   "tasks": {
     "1126": {
@@ -2653,14 +2653,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1246-toast-s6-reuse",
-      "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
+      "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 132,
-      "queued": false,
+      "ticket": 134,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793733756972,
-      "reviewEntry": 5,
+      "readyAt": 1793735515982,
+      "reviewEntry": 6,
       "notice": {
         "key": "5:review-findings",
         "reason": "review-findings",
@@ -2727,13 +2727,6 @@
         "execution": "github"
       },
       "reviewRound": null,
-      "reviewRequest": "review:1246:5:3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf:082f99ccf9c9667cb17edae74f529e9e7695872a",
-      "reviewMaterial": {
-        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-        "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-        "patchId": "3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1246:5:3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf:082f99ccf9c9667cb17edae74f529e9e7695872a",
         "at": 1793734784561
@@ -2969,7 +2962,9 @@
       "runId": 41705603244
     }
   },
-  "waiting": [],
+  "waiting": [
+    1246
+  ],
   "active": null,
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
@@ -3506,6 +3501,29 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e": {
+      "digest": "5e659ee728074df9af28b9aa13eb564ed54699026af8b03c60751a5534e55796",
+      "issue": 1246,
+      "message": {
+        "kind": "queued",
+        "issue": 1246,
+        "at": 1793735515982,
+        "entry": 6,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
+        "evidence": {
+          "id": "20261103T192450682-1b9ff2d9",
+          "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
+          "runId": 41702741150,
+          "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
+          "status": "passed",
+          "finishedAt": "2026-11-03T19:25:52.962Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
+          "execution": "github"
+        }
       }
     }
   },
