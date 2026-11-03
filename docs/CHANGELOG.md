@@ -29,6 +29,7 @@
 - Restore Summary Retry after a temporary chunk failure by preserving the production module's named exports; check the raw-URL ABI of all optional View roots during the existing build step. [#1235](https://github.com/Matysh/houseplan-card/issues/1235)
 - Derive model11 room inner floors from exact masonry domains without feeding rounded boundaries back into polyclip; valid legacy rooms no longer crash rendering after migration. [#1232](https://github.com/Matysh/houseplan-card/issues/1232)
 - Port test fixtures and observers to model11, graph API 2 and current accessible UI controls. Classify all796 unsuccessful original stable-audit entries; retain real defects and unapproved visual differences without weakening baselines or thresholds. [#1226](https://github.com/Matysh/houseplan-card/issues/1226)
+- Port test fixtures and observers to model11, graph API 2 and current accessible UI controls. Classify all 796 unsuccessful original stable-audit entries; retain real defects and unapproved visual differences without weakening baselines or thresholds. Count the complete final pytest summary, including failures/errors, without losing red outcomes. [#1226](https://github.com/Matysh/houseplan-card/issues/1226)
 
 - Make the native Draw/Resize regression check reject targets covered by editor controls and expose the original graph segments through the public zoom control. Preserve graph, metadata and history assertions; no product geometry change. [#1221](https://github.com/Matysh/houseplan-card/issues/1221)
 
