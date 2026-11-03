@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { optimizePlans, PLAN_MODEL_VERSION } from '../test-build/plan-optimizer.js';
-import { migrateGraphSpace, projectGraphSpace, validateGraph, graphIndex } from '../test-build/plan-graph.js';
-import { encodePoint, exact, parseDecimal, pointAt, encodeRational, decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
+import { migrateGraphSpace, projectGraphSpace, validateGraph, verifyGraphProjection, graphIndex } from '../test-build/plan-graph.js';
+import { cmp, encodePoint, exact, parseDecimal, pointAt, encodeRational, decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 
 const clone = v => JSON.parse(JSON.stringify(v));
 const p = (x, y) => encodePoint([parseDecimal(x), parseDecimal(y)]);
@@ -22,6 +23,65 @@ const noOp = result => {
   for (const name of ['moved', 'migrated', 'partitionsMerged', 'partitionsReconciled',
     'wallsMerged', 'openingsRehosted', 'maxShift', 'maxShiftCm']) assert.equal(again.report[name], 0, name);
 };
+
+test('#1224 near-axis repair reaches the graph fixed point before returning its first candidate', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/279-near-orthogonal-junction.json', import.meta.url)));
+  for (const model of ['legacy', 'current']) {
+    const source = base({ ...clone(fixture), extension: { keep: ['space', model] } });
+    let migrated = current(source);
+    if (model === 'current') {
+      const index = graphIndex(migrated.plan_graph);
+      const host = migrated.plan_graph.edges.find(e => e.cm === 20
+        && cmp(index.points.get(e.from)[0], index.points.get(e.to)[0]) === 0);
+      assert.ok(host);
+      migrated = projectGraphSpace({ ...migrated, openings: [{ id: 'door', type: 'door', length: .1,
+        x: 0, y: 0, angle: 90, host: { kind: 'wall', id: host.id, t: .5 },
+        contact: 'binary_sensor.synthetic', invert: true, extension: { keep: 'opening' } }] }, migrated.plan_graph).space;
+    }
+    const input = model === 'legacy' ? legacy(source) : config(migrated);
+    const original = clone(input);
+    const beforeGraph = migrated.plan_graph;
+    const first = optimizePlans(input, {});
+    const space = first.config.spaces[0];
+    assert.equal(first.changed, true, model);
+    assert.equal(first.report.wallsStraightened, 1, model);
+    assert.ok(Math.abs(first.report.maxStraightenShiftCm - 1) < 1e-6, model);
+    valid(space);
+    verifyGraphProjection(space, space.plan_graph);
+    assert.deepEqual(input, original, `${model}: source is immutable`);
+    assert.deepEqual(space.extension, source.extension);
+    assert.deepEqual(space.rooms.map(r => r.id).sort(), source.rooms.map(r => r.id).sort());
+    const oldNodes = new Set(beforeGraph.nodes.map(n => n.id));
+    assert.ok(space.plan_graph.nodes.every(n => oldNodes.has(n.id)), `${model}: existing node identity`);
+    if (model === 'current') {
+      assert.equal(space.openings[0].host.id, migrated.openings[0].host.id);
+      assert.equal(space.openings[0].length, .1);
+      assert.equal(space.openings[0].contact, 'binary_sensor.synthetic');
+      assert.equal(space.openings[0].invert, true);
+      assert.deepEqual(space.openings[0].extension, { keep: 'opening' });
+    }
+    noOp(first);
+    noOp({ ...first, config: clone(first.config), layout: clone(first.layout) });
+  }
+});
+
+test('#1224 representative imported plans stay at their first graph fixed point after JSON round-trip', () => {
+  const names = ['real-plan-first-floor.json', 'real-plan-second-floor.json',
+    ...['c1-short-edges', 'c2-t-junction-thicknesses', 'c3-x-junction', 'c4-opening-at-vertex']
+      .map(name => `560-corpus/${name}.json`)];
+  for (const name of names) {
+    const raw = JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url)));
+    const input = raw.config ?? (raw.spaces ? raw : { spaces: [raw.space] });
+    const layout = raw.layout ?? {}, original = clone(input);
+    const first = optimizePlans(input, layout);
+    for (const space of first.config.spaces) {
+      valid(space);
+      verifyGraphProjection(space, space.plan_graph);
+    }
+    assert.deepEqual(input, original, name);
+    noOp({ ...first, config: clone(first.config), layout: clone(first.layout) });
+  }
+});
 
 test('legacy is decoded from untouched raw coordinates once, then Optimize uses stable graph IDs', () => {
   const input = legacy(base({ rooms: [room('r', [[.001, .001], [.999, .001], [.999, .999], [.001, .999]])] }));

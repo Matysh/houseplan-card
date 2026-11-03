@@ -498,9 +498,16 @@ function optimizePlanDraft(
   // Openings are wall-bound. Once a room endpoint has been straightened, run
   // the same production alignment once more so their centres/angles follow
   // the final host instead of the pre-repair edge.
+  // In a graph draft the repair changed room targets, while its segment
+  // catalogue still projects the old graph. Re-project the explicit moves
+  // before alignment reads both carriers: stale segments would look like
+  // extra incident axes, freeze the component and restore decimal tails.
+  const realignmentSpaces = graphDraft && wallsStraightened
+    ? straightenedSpaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true).space)
+    : straightenedSpaces;
   const finalAligned = wallsStraightened
-    ? alignAllToGrid(straightenedSpaces, aligned.layout, exactContacts)
-    : { ...aligned, spaces: straightenedSpaces };
+    ? alignAllToGrid(realignmentSpaces, aligned.layout, exactContacts)
+    : { ...aligned, spaces: realignmentSpaces };
   config.spaces = graphDraft
     ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true).space)
     : finalAligned.spaces;

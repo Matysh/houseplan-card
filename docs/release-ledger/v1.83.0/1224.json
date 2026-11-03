@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1224,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Fix the model11 Optimize target pipeline introduced by #1167 on the current 1.84 line: reproject repaired graph targets before the final contact alignment, avoiding stale segment axes and a second micro-correction. Published 1.83 behavior is unaffected.",
+  "summary": {
+    "ru": "Optimize почти осевого стыка достигает окончательного состояния за один проход.",
+    "en": "Near-axis Optimize reaches its exact-graph fixed point in one pass."
+  }
+}
