@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1769,
+  "revision": 1770,
   "nextTicket": 114,
   "nextFence": 114,
   "tasks": {
@@ -2177,7 +2177,18 @@
         "src/i18n/registry.ts",
         "src/space-card.ts",
         "test/card-picker-registration.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793722635689,
+        "entry": 1,
+        "detail": "Браузер: card picker locale: failed",
+        "eventId": "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240"
+      }
     }
   },
   "ownerDecisions": {},
@@ -2283,18 +2294,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1240,
-    "worker": "finish",
-    "token": "113:finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:1:admit",
-    "fence": 113,
-    "materialSha": "ed648d5b2f0607620a6c58ff52470a3787106206",
-    "expectedBase": "0c030e70016f34ee103ce9a0e15a312915edb09f",
-    "phase": "testing",
-    "admittedAt": 1793722564207,
-    "expiresAt": 1793722922824,
-    "patchId": "1853e303bb4f2e378b2ae14af01809eb66ad8e30"
-  },
+  "active": null,
   "events": {
     "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:2:synchronized": {
       "digest": "b032dab8d86bd204094ee9d23b106f164598fc7cb7ba93fd8bef92c2dbea6393",
@@ -2302,6 +2302,10 @@
     },
     "finish:741ceddd-16f4-4cfc-afeb-75b5e94f2122": {
       "digest": "e988565c3fad974b3fbe9d0e3c01e522ad86cea3f9a8a53e38266a696e2b33c0",
+      "issue": 1240
+    },
+    "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return": {
+      "digest": "e8cfb5f6d4447bdd25fe8dccf2e093a129c831026669a9ed633978b128b387d8",
       "issue": 1240
     },
     "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3": {
@@ -2329,6 +2333,26 @@
         "layer": "product",
         "materialSha": "ed648d5b2f0607620a6c58ff52470a3787106206",
         "phase": "sync"
+      }
+    },
+    "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240": {
+      "digest": "e8cfb5f6d4447bdd25fe8dccf2e093a129c831026669a9ed633978b128b387d8",
+      "issue": 1240,
+      "message": {
+        "kind": "return",
+        "issue": 1240,
+        "at": 1793722635689,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793722635689,
+          "entry": 1,
+          "detail": "Браузер: card picker locale: failed",
+          "eventId": "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240"
+        }
       }
     }
   },
