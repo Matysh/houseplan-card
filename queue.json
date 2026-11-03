@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1832,
+  "revision": 1833,
   "nextTicket": 118,
   "nextFence": 117,
   "tasks": {
@@ -2239,7 +2239,17 @@
         "docs/release-ledger/v1.83.0/1243.json",
         "src/hp-summary-weather.ts",
         "src/summary-panel-runtime-loaded.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793726853292,
+        "entry": 1,
+        "eventId": "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:4:return:return:1243"
+      }
     },
     "1248": {
       "issue": 1248,
@@ -2361,18 +2371,7 @@
   "waiting": [
     1248
   ],
-  "active": {
-    "issue": 1243,
-    "worker": "finish",
-    "token": "116:finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:1:admit",
-    "fence": 116,
-    "materialSha": "32d8c663a9c87c2eedc5d5beba21e1c55b08eefa",
-    "expectedBase": "2ad5f43ce2dea9ee33fff5fe98ee82f520578494",
-    "phase": "testing",
-    "admittedAt": 1793726503617,
-    "expiresAt": 1793727101357,
-    "patchId": "e7f965225e22600a6bb1d263a5791913556571b0"
-  },
+  "active": null,
   "events": {
     "github:41683293980:1:completions:message:f26cadb0cf007f2105533ea07945abe91134b3e54bc17e2b5f9cfd4377145f37": {
       "digest": "4a80167dba4c4b0a933670f3aa42f2be0f0ae4c29a16615cbc691e8ea1703ff1",
@@ -2418,6 +2417,10 @@
       "digest": "5e0144313a2fd3301ec2c005f7bca40abde9c18a817964ce11330a868697f3a3",
       "issue": 1243
     },
+    "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:4:return": {
+      "digest": "b5380256195bf8dda1e03d73a6b10800e01947afd0832a9627eb1273ec5f494b",
+      "issue": 1243
+    },
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0": {
       "digest": "06f36608ae4d803782fc4497f57ae88add3307ca474ff8491c21ae94358971c1",
       "issue": 1243,
@@ -2459,6 +2462,25 @@
         "layer": "product",
         "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751",
         "delivered": true
+      }
+    },
+    "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:4:return:return:1243": {
+      "digest": "b5380256195bf8dda1e03d73a6b10800e01947afd0832a9627eb1273ec5f494b",
+      "issue": 1243,
+      "message": {
+        "kind": "return",
+        "issue": 1243,
+        "at": 1793726853292,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793726853292,
+          "entry": 1,
+          "eventId": "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:4:return:return:1243"
+        }
       }
     }
   },
