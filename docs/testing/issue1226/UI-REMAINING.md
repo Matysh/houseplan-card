@@ -19,7 +19,7 @@ Targeted result:36 full-smoke PASS;9 still failed after native setup;33 untouche
 
 ## Remaining evidence, not accepted as green
 
-- `smoke_mobile_view_header`: Sections intentionally omits title (#1207); ordinary Masonry title remains ambiguous against USER-GUIDE. The all-layout assertion is retained. Owner question: https://github.com/Matysh/houseplan-card/issues/1226#issuecomment-6602844517.
+- `smoke_mobile_view_header`: resolved by accepted #1207 UI-018, which omits the heading of every full dashboard card and retains its PDF setting. Full addressed smoke now passes with native PDF verification; the static card title remains valid. See `header-title-contract.md`. The old owner question was withdrawn with the canonical-contract explanation.
 - Shared decor-history exact redo failures are linked to #1222. This task was subsequently accepted on dev; the current local product base predates it.
 - Device-contact cancellation/restoration and furniture next-click assertions remain red after reaching native desktop input. They are not weakened or yet claimed to be confirmed product defects.
 - More Info's narrow translated layout: hp-help intercepts the intended field centre click. Keep native input and collect actual hit geometry; no force click or removed layout oracle.

@@ -1021,9 +1021,9 @@
     {
       "id": "smoke:smoke_mobile_view_header",
       "file": "demo/smoke_mobile_view_header.mjs",
-      "category": "owner-decision-required",
-      "status": "failed",
-      "reason": "Sections intentionally omits title (#1207), but the ordinary Masonry title contract conflicts with current render and USER-GUIDE. The original all-layout title assertion stays red pending the question published in #1226.",
+      "category": "accepted-full-card-title-contract",
+      "status": "passed",
+      "reason": "Accepted #1207 UI-018 removes the heading from every full Lovelace card, including Masonry. UI-019 separately concerns Sections shell geometry. All widths, long-title/en/ru/read-only absence checks pass. Config title remains intact and the real native PDF dialog receives it unchanged; original layout/controls/roles/touch/kiosk checks remain. Guide3148/3160 concerns static houseplan-space-card and is unchanged.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1034,10 +1034,28 @@
         "originalTail": "OK\nfile:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_mobile_view_header.mjs:43\n    assert.ok(!row.legacy && !row.haMenu && row.title.includes('House Plan'), JSON.stringify(row));\n                                                      ^\n\nTypeError: Cannot read properties of undefined (reading 'includes')\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_mobile_view_header.mjs:43:55\n\nNode.js v22.23.4\n",
         "targetedRerun": {
           "id": "smoke:smoke_mobile_view_header",
-          "exit": 1,
-          "seconds": 2,
-          "log": "output/issue1226-ui/mobile_view_header.log",
-          "failureTail": "OK\nfile:///home/matysh/hp-batch2-infra910-20261015/demo/smoke_mobile_view_header.mjs:43\n    assert.ok(!row.legacy && !row.haMenu && row.title.includes('House Plan'), JSON.stringify(row));\n                                                      ^\n\nTypeError: Cannot read properties of undefined (reading 'includes')\n    at file:///home/matysh/hp-batch2-infra910-20261015/demo/smoke_mobile_view_header.mjs:43:55\n\nNode.js v22.23.2\n"
+          "exit": 0,
+          "log": "output/issue1226/header-title-addressed-r2.log",
+          "sha256": "a12b7cb43c9d9134b5bb1b35e9096b66775d9e92e7611d1cc92b02edd6782a87",
+          "base": "04be8ffeae4f9c95a136c5f57c39f2b8c4f40543",
+          "sourceFingerprint": "9a98f81ace1c07009cf04e016d37cd0b937259f5d067f7f63c28d9f0c6f5c594",
+          "diagnosticAttempt": "output/issue1226/header-title-addressed.log",
+          "diagnosticReason": "New PDF cancel observer matched footer and close; scoped to native footer, then reran changed smoke once."
+        },
+        "targetedRerunHistory": [
+          {
+            "id": "smoke:smoke_mobile_view_header",
+            "exit": 1,
+            "seconds": 2,
+            "log": "output/issue1226-ui/mobile_view_header.log",
+            "failureTail": "OK\nfile:///home/matysh/hp-batch2-infra910-20261015/demo/smoke_mobile_view_header.mjs:43\n    assert.ok(!row.legacy && !row.haMenu && row.title.includes('House Plan'), JSON.stringify(row));\n                                                      ^\n\nTypeError: Cannot read properties of undefined (reading 'includes')\n    at file:///home/matysh/hp-batch2-infra910-20261015/demo/smoke_mobile_view_header.mjs:43:55\n\nNode.js v22.23.2\n"
+          }
+        ],
+        "contract": {
+          "issue": "https://github.com/Matysh/houseplan-card/issues/1207",
+          "accepted": "e0b0889c95420f8c05fc3f95762f0e03f390885b",
+          "pinnedDesign": "5529ab77c479c6d373fcd3e605574871e5093b3e",
+          "clause": "UI-018 and accepted UI-017/018 clarification"
         }
       }
     },
@@ -1864,8 +1882,8 @@
     }
   ],
   "targetedSummary": {
-    "passed": 56,
-    "failed": 22,
+    "passed": 57,
+    "failed": 21,
     "not-rerun": 0
   },
   "notRerunPolicy": "Every one of the 33 previously not-rerun UI rows now has addressed local execution evidence. The preceding 45 classifications are unchanged; full integrated stable/HA audit remains the parent task."
