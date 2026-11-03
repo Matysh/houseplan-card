@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1666,
-  "nextTicket": 112,
+  "revision": 1667,
+  "nextTicket": 113,
   "nextFence": 110,
   "tasks": {
     "1126": {
@@ -2100,14 +2100,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1238-import-opening-repair",
-      "materialSha": "9cc44f3f06b2e77a17bb61b465bd52c42e6321d8",
+      "materialSha": "82add54e4f645e7b32d5fc1fe9f1511a5302d0b8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 106,
-      "queued": false,
+      "ticket": 112,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793714561571,
-      "reviewEntry": 1,
+      "readyAt": 1793716420638,
+      "reviewEntry": 2,
       "patchId": "f91449033c7ccd946fe58275b51ec9d8f8852835",
       "changedFiles": [
         "custom_components/houseplan/opening_repair.py",
@@ -2128,13 +2128,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1238:1:f91449033c7ccd946fe58275b51ec9d8f8852835:0009156acd78c58cfaca7ce756fa8388d90adb75",
-      "reviewMaterial": {
-        "materialSha": "9cc44f3f06b2e77a17bb61b465bd52c42e6321d8",
-        "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "patchId": "f91449033c7ccd946fe58275b51ec9d8f8852835"
-      },
-      "reason": "review-findings",
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -2264,7 +2257,8 @@
   },
   "waiting": [
     1236,
-    1237
+    1237,
+    1238
   ],
   "active": {
     "issue": 1234,
@@ -2640,6 +2634,28 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03"
+      }
+    },
+    "finish:51e821db-f42f-4878-a8b1-7398cf87a34f": {
+      "digest": "931d6859f9d0f1b1e3b5bdf4310adf379246c2214879dfd3992a945d17e4a036",
+      "issue": 1238,
+      "message": {
+        "kind": "queued",
+        "issue": 1238,
+        "at": 1793716420638,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "82add54e4f645e7b32d5fc1fe9f1511a5302d0b8",
+        "evidence": {
+          "id": "20261103T142029606-2d618fd5",
+          "name": "Тесты для задачи #1238 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261103T142029606-2d618fd5/report.json",
+          "materialSha": "9cc44f3f06b2e77a17bb61b465bd52c42e6321d8",
+          "status": "passed",
+          "finishedAt": "2026-11-03T14:21:04.052Z",
+          "failures": []
+        }
       }
     }
   },
