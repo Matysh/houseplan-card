@@ -115,7 +115,7 @@ function writeHarness() {
   const host = { _saveConfigDebounced: { pending: () => true, flush: () => flush() },
     _writeChain: Promise.resolve(), _cfgRev: 7, _layoutRev: 9,
     hass: { callWS: async (message) => { messages.push(message); return { config_rev: 8, layout_rev: 10, can_undo: true }; } },
-    _adoption: { acceptPairWrite: (...args) => adoptions.push(args) },
+    _adoption: { snapshot: () => ({ config: cfg }), acceptPairWrite: (...args) => adoptions.push(args) },
     _geometryHistory: { clear() {} }, _devicePositionHistory: { clear() {} }, _cancelDeviceDrag() {},
     _dirtyPos: new Set(), _sentPos: new Map(), _maybeRebuildDevices() {}, _cacheSnapshot() {}, requestUpdate() {},
   };
@@ -155,7 +155,7 @@ test('#892 AC8: an old-connection reply is never adopted into a new HA', async (
   const pending = commitPlanOptimization(h.host, h.cfg, h.layout, h.guard);
   await Promise.resolve(); h.current.connection = {};
   resolve({ config_rev: 8, layout_rev: 10 });
-  await assert.rejects(pending, { code: 'optimize_preview_changed' });
+  await assert.rejects(pending, { code: 'context-changed' });
   assert.equal(h.adoptions.length, 0);
 });
 
@@ -174,6 +174,6 @@ test('#892 AC8: the original authority claim fences both queued work and a same-
   const pending = commitPlanOptimization(reply.host, reply.cfg, reply.layout, reply.guard);
   await Promise.resolve(); replyCurrent = false;
   release({ config_rev: 8, layout_rev: 10, can_undo: true });
-  await assert.rejects(pending, { code: 'optimize_preview_changed' });
+  await assert.rejects(pending, { code: 'context-changed' });
   assert.equal(reply.adoptions.length, 0, 'a fresh current source cannot renew the old claim');
 });

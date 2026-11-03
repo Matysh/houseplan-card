@@ -5,6 +5,7 @@ import {commitWallSegmentModel} from '../../test-build/wall-segment-model.js';
 import {floorGeometryKeyReader} from '../../test-build/floor-geometry-key.js';
 import {CommandStack} from '../../test-build/command-stack.js';
 import {PhysicalWriteHistory} from '../../test-build/physical-write-history.js';
+import {authoredChange} from './geometry-commit-harness.mjs';
 globalThis.window ??= {customCards:[]};
 globalThis.location ??= {pathname:'/'};
 const {HouseplanCard}=await import('../../test-build/houseplan-card.js');
@@ -55,6 +56,9 @@ export function historyHarness(config=historyFixture(),{diagnostics=true}={}){
   decorLine:{snapshot:null,reset(){},restore(){}},_clearGeometryGesture(){},_showGeometrySpace(id){host._space=id;}});
  const warm=id=>{host._space=id;return host._wallUnionGeometry();};
  const command=(name,change)=>{
+  // An ordinary first graph write records a normalized model11 baseline, so
+  // Undo cancels the authored gesture instead of undoing automatic migration.
+  if(Number(host._serverCfg.model_version||0)<11)host._serverCfg=commitWallSegmentModel(host._serverCfg).config;
   const before=runtime._geometrySnapshot('a');change(host._serverCfg.spaces[0]);
   host._serverCfg=commitWallSegmentModel(host._serverCfg).config;host._cfgEpoch++;
   runtime._recordGeometry(name,before);
@@ -65,7 +69,7 @@ export function historyHarness(config=historyFixture(),{diagnostics=true}={}){
  return{host,runtime,counts,checks,toasts,wallArguments,wallResults,warm,command};
 }
 export const historyChanges={
- thickness(space){for(const w of space.wall_segments||[])w.cm=20;for(const w of space.walls||[])w.cm=20;},
+ thickness(space){authoredChange(space,{kind:'thickness',rooms:space.rooms.map(room=>room.id),cm:20},()=>{});},
  transform(space){space.plan_x=.2;space.plan_scale=1.25;},
  stairs(space){space.stairs[0].x+=.05;space.stairs[0].y+=.02;},
 };

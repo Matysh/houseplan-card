@@ -27,26 +27,34 @@ import {historyCharacterization,historyCases,historyCaseHarness} from './helpers
 import {commitEditedSpaceModel} from '../test-build/physical-candidate-proof.js';
 import {spacePhysicalGeometryFingerprint} from '../test-build/plan-geometry-preflight.js';
 const corpus=JSON.parse(readFileSync(new URL('./fixtures/1100-history-characterization.json',import.meta.url),'utf8'));
-for(const [id,config] of Object.entries(corpus.documents))assert.equal(createHash('sha256').update(JSON.stringify(config)).digest('hex'),id,'baseline document passport');
+assert.equal(corpus.schema,2,'model11 passports hash complete serialized documents without dropping graph/identity/metadata');
+const documentHash=config=>createHash('sha256').update(JSON.stringify(config)).digest('hex');
 for(const name of historyCases)test('#1100 unchanged exact history outcome: '+name,()=>{
  const expected=corpus.results[name],actual=historyCharacterization(name);
- assert.equal(JSON.stringify(actual.afterEdit),JSON.stringify(corpus.documents[expected.afterEdit]));
+ assert.equal(documentHash(actual.afterEdit),expected.afterEdit);
  assert.equal(actual.steps.length,expected.steps.length);
  actual.steps.forEach((step,index)=>{
   const {document,...metadata}=expected.steps[index],{config,...actualMetadata}=step;
-  assert.deepEqual(actualMetadata,metadata);assert.equal(JSON.stringify(config),JSON.stringify(corpus.documents[document]));
+  assert.deepEqual(actualMetadata,metadata);assert.equal(documentHash(config),document);
  });
 });
 
 const physicalIdentity=(config,id)=>({fingerprint:spacePhysicalGeometryFingerprint(config.spaces.find(s=>s.id===id)),modelVersion:Number(config.model_version||0)});
+function distinctHistoryCase() {
+ const result=historyCaseHarness('thickness');
+ // A nonstructural column tail exercises both physical proofs without forging
+ // a model9 document that still contains current graph authority.
+ result.command.before.wall_columns=[{id:'tail',shape:'square',center:[.0250000000001,.025],cm:5,angle:0}];
+ return result;
+}
 // Replaying the same UUID input makes an independent legacy canonicalization comparable.
 function canonicalEntropy(operation){
  const original=crypto.randomUUID;let serial=0;crypto.randomUUID=()=>`00000000-0000-4000-8000-${String(++serial).padStart(12,'0')}`;
  try{return operation();}finally{crypto.randomUUID=original;}
 }
-for(const name of historyCases.filter(name=>!['stairs','transform'].includes(name)))
+for(const name of [...historyCases,'canonical-tail'].filter(name=>!['stairs','transform'].includes(name)))
  test('#1100 exact raw/canonical union quota: '+name,t=>{
-  const {h,command}=historyCaseHarness(name);
+  const {h,command}=name==='canonical-tail'?distinctHistoryCase():historyCaseHarness(name);
   for(const direction of ['undo','redo']){
    const target=direction==='undo'?command.before:command.after;
    const raw=structuredClone(h.host._serverCfg);h.runtime._restoreGeometryStateInConfig(raw,target);
@@ -58,7 +66,8 @@ for(const name of historyCases.filter(name=>!['stairs','transform'].includes(nam
    assert.equal(h.counts.union-start.union,expected,'union producer quota includes the mandatory raw guard');
    const observed=h.checks.slice(checks).map(config=>physicalIdentity(config,target.spaceId));
    assert.deepEqual(observed,equal?[rawKey]:[rawKey,canonicalKey],'raw precedes canonical and no check is replaced by a cached rendered floor');
-   if(name==='pre-v9'&&direction==='undo')assert.equal(equal,false,'ordinary legacy input must exercise the two-union branch');
+   if(name==='canonical-tail'&&direction==='undo')assert.equal(equal,false,'column tail exercises both physical safety barriers');
+   if(name==='pre-v9'&&direction==='undo')assert.equal(equal,true,'first Undo baseline is already normalized model11');
    t.diagnostic(JSON.stringify({name,direction,rawKey,canonicalKey,equal,unions:h.counts.union-start.union}));
   }
  });
@@ -74,8 +83,8 @@ test('#1100 the allowed equal boundary verdict is negative and attempt-local',()
  }
 });
 
-test('#1100 a different repairable legacy candidate still receives both negative verdicts',()=>{
- const {h}=historyCaseHarness('pre-v9'),native=h.host._checkSpacePhysicalGeometry;
+test('#1100 a different repairable column candidate still receives both negative verdicts',()=>{
+ const {h}=distinctHistoryCase(),native=h.host._checkSpacePhysicalGeometry;
  h.host._checkSpacePhysicalGeometry=(...args)=>({...native(...args),ok:false,status:'failed',reason:'wall-degraded-extra'});
  assert.equal(h.runtime._stepGeometryHistory('undo'),true);assert.equal(h.counts.preflight,2);
  assert.notEqual(physicalIdentity(h.checks[0],'a').fingerprint,physicalIdentity(h.checks[1],'a').fingerprint);
@@ -84,7 +93,7 @@ test('#1100 a different repairable legacy candidate still receives both negative
 
 for(const phase of ['raw','canonical'])for(const failure of ['negative','exception'])
  test('#1100 '+phase+' '+failure+' never becomes a successful proof (unit verdict boundary)',()=>{
-  const {h,command}=historyCaseHarness('pre-v9'),native=h.host._checkSpacePhysicalGeometry;
+  const {h,command}=distinctHistoryCase(),native=h.host._checkSpacePhysicalGeometry;
   const before=JSON.stringify(h.host._serverCfg),pending=structuredClone([...h.host._pendingPhysicalWrites]);let calls=0;
   h.host._checkSpacePhysicalGeometry=(...args)=>{
    calls++;
@@ -101,11 +110,11 @@ for(const phase of ['raw','canonical'])for(const failure of ['negative','excepti
   assert.equal(h.host._geometryHistory.peekUndo(),failure==='exception'?command:null);
  });
 
-test('#1100 a model-version boundary always checks the canonical candidate separately (unit-only legacy input)',()=>{
+test('#1100 a forged model-version downgrade with a current graph is rejected without a write',()=>{
  const {h,command}=historyCaseHarness('thickness');h.host._serverCfg.model_version=9;
- assert.equal(h.runtime._applyGeometryState(command.before),true);
- assert.equal(h.counts.preflight,2);
- assert.deepEqual(h.checks.map(config=>config.model_version),[9,10]);
+ const before=JSON.stringify(h.host._serverCfg);
+ assert.equal(h.runtime._applyGeometryState(command.before),'geometry');
+ assert.equal(JSON.stringify(h.host._serverCfg),before);assert.equal(h.counts.save,0);
 });
 
 test('#1100 current physical history never visits foreign room carriers',()=>{
@@ -115,12 +124,21 @@ test('#1100 current physical history never visits foreign room carriers',()=>{
  assert.equal(h.host._serverCfg.spaces[1],foreign);
 });
 
-test('#1100 a legacy root keeps atomic foreign-floor migration (unit-only legacy input)',()=>{
+test('#1100 a forged mixed legacy/current root cannot migrate foreign floors during history restore',()=>{
  const {h,command}=historyCaseHarness('thickness'),foreign=h.host._serverCfg.spaces[1];
  h.host._serverCfg.model_version=9;delete foreign.wall_segments;for(const room of foreign.rooms)delete room.wall_ids;
- assert.equal(h.runtime._applyGeometryState(command.before),true);assert.equal(h.host._serverCfg.model_version,10);
- assert.ok(h.host._serverCfg.spaces.every(space=>Array.isArray(space.wall_segments)&&space.rooms.every(room=>Array.isArray(room.wall_ids))));
- assert.equal(h.counts.preflight,2);
+ const before=JSON.stringify(h.host._serverCfg);
+ assert.equal(h.runtime._applyGeometryState(command.before),'geometry');
+ assert.equal(JSON.stringify(h.host._serverCfg),before);assert.equal(h.counts.save,0);
+});
+
+test('#1100 first legacy history command normalizes every floor before recording the Undo baseline',()=>{
+ for(const name of ['pre-v9','v9']){
+  const {h,command}=historyCaseHarness(name);
+  assert.equal(h.host._serverCfg.model_version,11);assert.ok(command.before.plan_graph);
+  assert.ok(h.host._serverCfg.spaces.every(space=>space.plan_graph&&Array.isArray(space.wall_segments)));
+  assert.equal(h.runtime._stepGeometryHistory('undo'),true);assert.equal(h.host._serverCfg.model_version,11);
+ }
 });
 
 for(const guarded of ['wallChainSeedIds','roomReferences'])test('#1100 '+guarded+' keeps nonphysical history on the strict lane',()=>{

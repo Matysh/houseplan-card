@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildNodePreview, nodePreviewJunctionGeometry } from '../test-build/wall-node-preview.js';
 import { junctionLimitViolations } from '../test-build/junction-limits.js';
-import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+// This is the retained legacy Boolean proof/reuse contract. Its deliberate
+// projection mutations must be decoded as legacy, not sent to a graph writer.
+import { decodeLegacyWallSegmentModel as commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes, structuralNodeWalls } from '../test-build/wall-node-move.js';
 import { canonicalizeConfigGeometryInPlace } from '../test-build/coordinate-canonicalization.js';
 import { innerContourForRoom, wallBodiesGeometry } from '../test-build/wall-thickness.js';
