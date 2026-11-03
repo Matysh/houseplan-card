@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1930,
+  "revision": 1931,
   "nextTicket": 123,
   "nextFence": 122,
   "tasks": {
@@ -2279,7 +2279,7 @@
       "ownerDecision": null,
       "ticket": 121,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793728650296,
       "reviewEntry": 1,
       "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
@@ -2290,7 +2290,17 @@
         "docs/release-ledger/v1.83.0/1244.json",
         "src/houseplan-card.ts",
         "src/styles/plan.styles.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T180158689-1722fea1",
+        "requestId": "s6:1244:2571de84db26f4bc07f76e7af70f1557",
+        "runId": 41689698638,
+        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+        "status": "passed",
+        "finishedAt": "2026-11-03T18:03:28.644Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41689698638",
+        "execution": "github"
+      }
     },
     "1247": {
       "issue": 1247,
@@ -2479,9 +2489,9 @@
     "fence": 121,
     "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
     "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793728798151,
-    "expiresAt": 1793729313017,
+    "expiresAt": 1793732633784,
     "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9"
   },
   "events": {
@@ -2557,6 +2567,35 @@
         "layer": "product",
         "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4",
         "phase": "sync"
+      }
+    },
+    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:2:s6-complete": {
+      "digest": "035b0a50cb845e2cbbcf9f3a4cd9ef0445714e418a2ac81478ff8758c91c1c99",
+      "issue": 1244,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1244,
+        "at": 1793729033784,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T180158689-1722fea1",
+          "requestId": "s6:1244:2571de84db26f4bc07f76e7af70f1557",
+          "runId": 41689698638,
+          "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+          "status": "passed",
+          "finishedAt": "2026-11-03T18:03:28.644Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41689698638",
+          "execution": "github"
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина воспроизведена на актуальном dev 6aa950309 через настоящие кнопки шапки и model11 `commitWallSegmentModel(makeStaticWallOpeningsFixture())`, обе комнаты с тёмной непрозрачной заливкой #111111/#222222. До исправления в первых кадрах Flat→Plan при planWeight=0 пол ещё #111111, а tunnel уже отсутствует; Plan→Flat сразу возвращает tunnel с opacity=1 при малом текущем весе пола. Это не анимация створки и не смена датчика.\n\n`_renderOpeningTunnelFills` удалял весь слой при `_markup`, хотя комнаты уже используют premultiplied color-mix общего `--hp-mode-plan-weight`. Минимальное решение удерживает существующий tunnel во время `_modeTransitionBusy`, а CSS умножает его архитектурную прозрачность на `(1 - planWeight)`. После завершения Plan слой по-прежнему отсутствует, поэтому не остаётся цветной patch при редактировании. Не меняются публичные data-hp, геометрия, hard-stop на центре стены и 600ms transform/stroke-dashoffset створки. Альтернативы — новая модель floor/tunnel, постоянные невидимые tunnel в Plan или отключение transitions — не нужны.\n\nАдресная диагностика: новый `demo/smoke_opening_mode_fill.mjs` делает native clicks, снимает computed paint каждый rAF для всех трёх редакторов, Flat/2.5D и reduced motion, проверяет отсутствие stale patch и сохранение настоящей анимации контакта. При 2.5D до midpoint намеренно удерживается прежняя source scene; её отсутствие live tunnel в исходном settled Plan не выдаётся за дефект. Целевой target fill проверяется после projection commit, а общий fade — отдельно. Baseline не принимается. Полный S6 будет выполнен только в слоте finish; это подготовительный debug, не результат S6.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
