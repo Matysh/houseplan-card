@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1613,
+  "revision": 1614,
   "nextTicket": 110,
   "nextFence": 106,
   "tasks": {
@@ -1858,6 +1858,111 @@
         "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
         "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
         "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1230,
+        "requestId": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+        "kind": "code",
+        "base": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+        "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+        "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1230,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1230",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "До исправления новый адресный набор воспроизвёл 26 отказов: физический commit, прямая graph-подготовка и model9/11 миграция принимали нечисловые поля колонн. Два контроля валидных square/circle прошли. Общая небольшая проверка известных числовых полей вызывается до JSON-клонирования в graph intent/структурной подготовке и до ветвления обычного/готового preview в физическом commit. Неизвестные metadata не обходятся и не нормализуются. При ошибке сохранён существующий rollback/сообщение; записи и истории нет. Не меняются tolerances, rounding, topology или серверные ACL. Обычная альтернатива — structuredClone — только сохраняла бы NaN для последующей нестрогой числовой проекции и не доказывает безопасного отказа. Обязательный S6 и адресный набор выполнит finish; результаты публикует координатор.\n\nРедакция после r1: `commitWallSegmentModel` сохраняет прежний тип отказа `WallSegmentModelError`; добавлен контроль читающего `WallNodeEditor.nodes()` (нет исключения/мутации). Проверка не блокирует числовые строки и отсутствующие/null defaults размера/угла из контракта #842: их конвертирует прежняя нормализация. Координаты null/пустая строка, NaN/±Infinity и sparse arrays остаются запрещены до JSON. Ещё два регрессионных случая покрывают sparse center обычного и prepared preview. Первый S6 относился к прошлой редакции; новая проходит собственный S6 и следующее код-ревью."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Редакция после r1 устраняет блокер прошлого раунда и сохраняет правильную основу исправления #1230. Числовые поля колонны проверяются до JSON-клонирования, поэтому `NaN`/`±Infinity`, `null` или пустая строка в координатах и разреженный `center` больше не становятся допустимой координатой и не попадают в граф, сохранение или Undo. Отказ в `commitWallSegmentModel` теперь приходит как `WallSegmentModelError`, и hover/Select, Undo/Redo и канонизация истории обрабатывают его штатно. Строгость проверки согласована с контрактом #842: числовые строки и отсутствующие или `null` значения `cm`/`angle` проходят и нормализуются по-прежнему. Блокеров нет. Остался необязательный вопрос UX: в документе старой модели колонна с невалидным центром на любом этаже приводит к отказу «миграция заблокирована» до того, как пользователю будет предложен диалог K3 «удалить и сохранить». Данные при этом не теряются.",
+          "understanding": "Проблема. Физический commit клонирует кандидата через JSON, и `NaN` превращается в `null`. Нестрогие числовые проекции затем читают его как 0, поэтому колонна с нечисловой координатой принималась и попадала в историю.\n\nПосле исправления общий `assertFiniteColumnInputs` (src/column-input.ts) требует, чтобы `wall_columns` был либо `undefined`, либо массивом. Для каждой колонны: объект; `center` — массив длины 2; оба элемента явно прочитаны (поэтому разреженный массив не проходит) и являются конечным числом или непустой строкой, `Number` от которой конечен; `cm` и `angle` либо `null`/`undefined`, либо такие же числовые значения. Вызовы:\n1) `_commitPhysicalGeometry`, внутри существующего try и до ветвления на `prepared`. Отказ уходит в прежний rollback: `_clearGeometryGesture`, `_restoreGeometryStateLocal`, сообщение о блокировке.\n2) `commitGraphEditResult` для прямых вызывающих.\n3) `commitWallSegmentModel` по всем `spaces`. Любой сбой проверки переводится в `WallSegmentModelError('invalid-room','invalid-column-geometry')`.\n\nРазобранные пути:\n- `WallNodeEditor.nodes()` (wall-node-editor.ts:100–121): `WallSegmentModelError` переводит в «нет ручек», исключения нет.\n- Вызывающие `commitGraphEdit`: keyboard-nudge.ts:96 и Resize (runtime 3283–3287). Оба ловят ошибку любого типа, поэтому `TypeError` из `commitGraphEditResult` безопасен.\n- `legacyGraphWriteChange` (graph-write-change.ts:48) и `_sendConfigCandidate` (houseplan-card.ts:8585–8594).\n- Конвейер `_writeConfig` (runtime 1759–1771): K3 `findGeometryRemoval` и `normalizeLegacyGeometryInPlace`.\n- Сам `geometry-cleanup.ts`: `finitePoint`, `canonicalColumn`.\n- `canonicalizeConfigGeometryInPlace` для колонн (coordinate-canonicalization.ts:410–413).\n- Серверная `WALL_COLUMN_SCHEMA` (validation.py:2005–2020).",
+          "analysis": [
+            {
+              "topic": "Закрытие блокера r1: контракт ошибок `commitWallSegmentModel`",
+              "assessment": "Устранено. Проверка обёрнута в try и бросает `WallSegmentModelError`. Теперь все вызывающие, различающие тип ошибки, работают штатно. `nodes()` кэширует `null` и не падает в обработчике ввода. Undo/Redo и `_canonicalWallChainHistoryState` получают ожидаемый тип отказа. Комментарий в catch объясняет неочевидную причину обёртки, его стоит сохранить. Попутно в тот же тип переводится и `TypeError` при неитерируемом `spaces`. Это согласуется с остальным телом функции, где любой сбой тоже переводится в `WallSegmentModelError`.",
+              "evidence": "src/wall-segment-model.ts:951–956 против 1003–1006; src/wall-node-editor.ts:109–117; test/column-input.test.mjs: тест «rejected column omits node hover handles» (реальный `WallNodeEditor.nodes()` → `null`, конфиг не изменён) и проверка `assert.throws(..., WallSegmentModelError)` для model9/11."
+            },
+            {
+              "topic": "Строгость проверки и совместимость с #842",
+              "assessment": "Согласовано, как предлагалось в r1. `finiteNumeric` пропускает числовые строки, а `cm`/`angle` со значением `null`/`undefined` оставляет прежней нормализации (`canonicalColumn`: `Number(cm) || 15`, `canonicalColumnAngle`). Для координат сделано осознанное различие: `null` и `''` отвергаются, хотя `finitePoint` из #842 считал их допустимыми через `Number(null) === 0`. Именно эту лазейку закрывает задача, и комментарий в column-input.ts это фиксирует. Строки вроде `'1e400'` и `'NaN'` отвергаются, потому что `Number` от них даёт не конечное значение. Явное чтение `center[0]` и `center[1]` вместо `every` закрывает разреженный массив. Решение простое и локальное. Пороги, округление и топология не меняются.",
+              "evidence": "src/column-input.ts:2–3, 9–15; src/geometry-cleanup.ts:60–61, 143–154; test/column-input.test.mjs: «repairable legacy column numbers retain the existing #842 normalization» (`['0.5',0.2]`, `angle:null`, без `cm` → `[0.5,0.2]`, `cm:15`, `angle:0`, `custom` сохранён) и два теста sparse center для обычного и prepared commit."
+            },
+            {
+              "topic": "Область проверки: все этажи и принятый конфиг",
+              "assessment": "Это оставшееся слабое место, но не дефект задачи. `commitWallSegmentModel` проверяет все этажи, а `_commitPhysicalGeometry` для старой модели вызывает его на `baselineSource` всего документа. Значит, в документе модели <11 колонна с невалидным центром (например, без `center` — запись из множества R по #842) на любом этаже теперь приводит к отказу структурного жеста с сообщением «migration blocked». Раньше жест, вероятно, доходил до `_writeConfig`, и там K3 предлагал «удалить и сохранить». В обоих случаях запись отклоняется и данные не теряются. Разница в понятности: K3 называет записи и предлагает выход, а новое сообщение показывает общий `wall_model.reason.invalid-room`. Выйти можно через любую неструктурную запись, где K3 сработает. Встречаются ли такие записи в реальных хранилищах, по коду не установить: текущий сервер требует `center: POINT` и конечный `cm`, а #842 лишь утверждает, что старые хранилища могут содержать такие записи. Поэтому это предмет улучшения, а не блокер.",
+              "evidence": "src/houseplan-editor-runtime.ts:2159–2161 (миграция всего `baselineSource`), 1766–1769 (K3 в `_writeConfig`), 2007–2010 (метка причины по `error.reason`); src/geometry-cleanup.ts:8–9, 99–101; src/graph-write-change.ts:48; custom_components/houseplan/validation.py:2005–2020."
+            },
+            {
+              "topic": "Основной путь физического commit",
+              "assessment": "Без изменений относительно r1, решение верное. Проверка стоит до `structuredClone` и до ветвления на `prepared`: эта ветка обходит `commitGraphEditResult` и без такой проверки осталась бы незащищённой. Отказ проходит существующий catch, поэтому не появляется новых веток и частичных записей в `_pendingPhysicalWrites`. Контроль валидных square/circle с непрозрачными метаданными подтверждает, что нормальный ввод проходит байт в байт.",
+              "evidence": "src/houseplan-editor-runtime.ts:2151–2194; test/column-input.test.mjs: параметризованный отказ по x/y/cm/angle (`_serverCfg` не изменён, `history` пуст, `_pendingPhysicalWrites.size === 0`, `saves === 0`) и тесты valid square/circle."
+            },
+            {
+              "topic": "Тесты",
+              "assessment": "Набор адресный и покрывает обе стороны: отказ на настоящем commit, оба уровня модели в структурной подготовке, прямой вызов graph-edit с сохранением `NaN` в исходнике, hover через `WallNodeEditor`, совместимость с #842, разреженный центр в обеих ветках и валидные контроли. Не покрыто: Undo/Redo с такой колонной и сценарий старого документа с невалидной колонной на другом этаже (см. тему выше). Для принятия это не обязательно.",
+              "evidence": "test/column-input.test.mjs целиком."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Ограничить проверку в `commitWallSegmentModel` этажами, которые реально мигрируют или редактируются. Другой вариант — при отказе из-за колонны направлять пользователя в существующий K3 (#842), а не показывать общий отказ миграции. Выгода: колонна с невалидным центром на постороннем этаже старого документа не блокирует все структурные жесты, и пользователь получает понятное «удалить и сохранить». Цена: более сложная граница ответственности; проверка всего документа проще для рассуждения. Имеет смысл, только если такие записи реально встречаются в старых хранилищах.",
+            "Ввести отдельную причину отказа, например `WallSegmentModelError('invalid-column', ...)` с i18n-ключом `wall_model.reason.invalid-column`. Сейчас `_wallModelBlockerLabel` показывает метку `invalid-room`, и пользователь не узнаёт, что мешает именно колонна. Цена: один ключ перевода; вызывающие по-прежнему проверяют только тип ошибки.",
+            "Добавить к вызову в `commitGraphEditResult` короткий комментарий, что он нужен для прямых вызывающих (keyboard-nudge, Resize), а runtime уже проверил колонны раньше. Иначе вызов выглядит как случайный дубль, и его могут удалить."
+          ],
+          "boundaries": "Ревью выполнено чтением исходников на head 0009156a и сравнением с base и прошлым отчётом. Сборку и тесты не запускал. Использован результат S6 «Тесты для задачи #1230 (перед ревью)» для этой редакции (materialSha 0009156a, passed, без отказов). Состав набора по снимку не виден. Тест `characterize('unsafe')` из #1226 в head не найден (поиск по `test/commit-physical-geometry.test.mjs` ничего не дал), поэтому его поведение не подтверждено напрямую. Неизвестно, встречаются ли в реальных старых хранилищах колонны без валидного центра. Последствия для таких документов (отказ миграции вместо K3) установлены по коду как вероятный путь и не проверены прогоном. Поведение `latticePoint` для отсутствующего центра до изменения подробно не изучалось. Серверная часть не менялась и не перепроверялась.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 42,
+          "cache_creation_input_tokens": 78144,
+          "cache_read_input_tokens": 1102540,
+          "output_tokens": 12702,
+          "output_tokens_details": {
+            "thinking_tokens": 4321
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 78144,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 4,
+              "output_tokens": 912,
+              "cache_read_input_tokens": 82319,
+              "cache_creation_input_tokens": 29,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 29
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРедакция после r1 устраняет блокер прошлого раунда и сохраняет правильную основу исправления #1230. Числовые поля колонны проверяются до JSON-клонирования, поэтому `NaN`/`±Infinity`, `null` или пустая строка в координатах и разреженный `center` больше не становятся допустимой координатой и не попадают в граф, сохранение или Undo. Отказ в `commitWallSegmentModel` теперь приходит как `WallSegmentModelError`, и hover/Select, Undo/Redo и канонизация истории обрабатывают его штатно. Строгость проверки согласована с контрактом #842: числовые строки и отсутствующие или `null` значения `cm`/`angle` проходят и нормализуются по-прежнему. Блокеров нет. Остался необязательный вопрос UX: в документе старой модели колонна с невалидным центром на любом этаже приводит к отказу «миграция заблокирована» до того, как пользователю будет предложен диалог K3 «удалить и сохранить». Данные при этом не теряются.\n\n## Понимание решения\n\nПроблема. Физический commit клонирует кандидата через JSON, и `NaN` превращается в `null`. Нестрогие числовые проекции затем читают его как 0, поэтому колонна с нечисловой координатой принималась и попадала в историю.\n\nПосле исправления общий `assertFiniteColumnInputs` (src/column-input.ts) требует, чтобы `wall_columns` был либо `undefined`, либо массивом. Для каждой колонны: объект; `center` — массив длины 2; оба элемента явно прочитаны (поэтому разреженный массив не проходит) и являются конечным числом или непустой строкой, `Number` от которой конечен; `cm` и `angle` либо `null`/`undefined`, либо такие же числовые значения. Вызовы:\n1) `_commitPhysicalGeometry`, внутри существующего try и до ветвления на `prepared`. Отказ уходит в прежний rollback: `_clearGeometryGesture`, `_restoreGeometryStateLocal`, сообщение о блокировке.\n2) `commitGraphEditResult` для прямых вызывающих.\n3) `commitWallSegmentModel` по всем `spaces`. Любой сбой проверки переводится в `WallSegmentModelError('invalid-room','invalid-column-geometry')`.\n\nРазобранные пути:\n- `WallNodeEditor.nodes()` (wall-node-editor.ts:100–121): `WallSegmentModelError` переводит в «нет ручек», исключения нет.\n- Вызывающие `commitGraphEdit`: keyboard-nudge.ts:96 и Resize (runtime 3283–3287). Оба ловят ошибку любого типа, поэтому `TypeError` из `commitGraphEditResult` безопасен.\n- `legacyGraphWriteChange` (graph-write-change.ts:48) и `_sendConfigCandidate` (houseplan-card.ts:8585–8594).\n- Конвейер `_writeConfig` (runtime 1759–1771): K3 `findGeometryRemoval` и `normalizeLegacyGeometryInPlace`.\n- Сам `geometry-cleanup.ts`: `finitePoint`, `canonicalColumn`.\n- `canonicalizeConfigGeometryInPlace` для колонн (coordinate-canonicalization.ts:410–413).\n- Серверная `WALL_COLUMN_SCHEMA` (validation.py:2005–2020).\n\n## Разбор решения\n\n### Закрытие блокера r1: контракт ошибок `commitWallSegmentModel`\n\nУстранено. Проверка обёрнута в try и бросает `WallSegmentModelError`. Теперь все вызывающие, различающие тип ошибки, работают штатно. `nodes()` кэширует `null` и не падает в обработчике ввода. Undo/Redo и `_canonicalWallChainHistoryState` получают ожидаемый тип отказа. Комментарий в catch объясняет неочевидную причину обёртки, его стоит сохранить. Попутно в тот же тип переводится и `TypeError` при неитерируемом `spaces`. Это согласуется с остальным телом функции, где любой сбой тоже переводится в `WallSegmentModelError`.\n\nОснование: src/wall-segment-model.ts:951–956 против 1003–1006; src/wall-node-editor.ts:109–117; test/column-input.test.mjs: тест «rejected column omits node hover handles» (реальный `WallNodeEditor.nodes()` → `null`, конфиг не изменён) и проверка `assert.throws(..., WallSegmentModelError)` для model9/11.\n\n### Строгость проверки и совместимость с #842\n\nСогласовано, как предлагалось в r1. `finiteNumeric` пропускает числовые строки, а `cm`/`angle` со значением `null`/`undefined` оставляет прежней нормализации (`canonicalColumn`: `Number(cm) || 15`, `canonicalColumnAngle`). Для координат сделано осознанное различие: `null` и `''` отвергаются, хотя `finitePoint` из #842 считал их допустимыми через `Number(null) === 0`. Именно эту лазейку закрывает задача, и комментарий в column-input.ts это фиксирует. Строки вроде `'1e400'` и `'NaN'` отвергаются, потому что `Number` от них даёт не конечное значение. Явное чтение `center[0]` и `center[1]` вместо `every` закрывает разреженный массив. Решение простое и локальное. Пороги, округление и топология не меняются.\n\nОснование: src/column-input.ts:2–3, 9–15; src/geometry-cleanup.ts:60–61, 143–154; test/column-input.test.mjs: «repairable legacy column numbers retain the existing #842 normalization» (`['0.5',0.2]`, `angle:null`, без `cm` → `[0.5,0.2]`, `cm:15`, `angle:0`, `custom` сохранён) и два теста sparse center для обычного и prepared commit.\n\n### Область проверки: все этажи и принятый конфиг\n\nЭто оставшееся слабое место, но не дефект задачи. `commitWallSegmentModel` проверяет все этажи, а `_commitPhysicalGeometry` для старой модели вызывает его на `baselineSource` всего документа. Значит, в документе модели <11 колонна с невалидным центром (например, без `center` — запись из множества R по #842) на любом этаже теперь приводит к отказу структурного жеста с сообщением «migration blocked». Раньше жест, вероятно, доходил до `_writeConfig`, и там K3 предлагал «удалить и сохранить». В обоих случаях запись отклоняется и данные не теряются. Разница в понятности: K3 называет записи и предлагает выход, а новое сообщение показывает общий `wall_model.reason.invalid-room`. Выйти можно через любую неструктурную запись, где K3 сработает. Встречаются ли такие записи в реальных хранилищах, по коду не установить: текущий сервер требует `center: POINT` и конечный `cm`, а #842 лишь утверждает, что старые хранилища могут содержать такие записи. Поэтому это предмет улучшения, а не блокер.\n\nОснование: src/houseplan-editor-runtime.ts:2159–2161 (миграция всего `baselineSource`), 1766–1769 (K3 в `_writeConfig`), 2007–2010 (метка причины по `error.reason`); src/geometry-cleanup.ts:8–9, 99–101; src/graph-write-change.ts:48; custom_components/houseplan/validation.py:2005–2020.\n\n### Основной путь физического commit\n\nБез изменений относительно r1, решение верное. Проверка стоит до `structuredClone` и до ветвления на `prepared`: эта ветка обходит `commitGraphEditResult` и без такой проверки осталась бы незащищённой. Отказ проходит существующий catch, поэтому не появляется новых веток и частичных записей в `_pendingPhysicalWrites`. Контроль валидных square/circle с непрозрачными метаданными подтверждает, что нормальный ввод проходит байт в байт.\n\nОснование: src/houseplan-editor-runtime.ts:2151–2194; test/column-input.test.mjs: параметризованный отказ по x/y/cm/angle (`_serverCfg` не изменён, `history` пуст, `_pendingPhysicalWrites.size === 0`, `saves === 0`) и тесты valid square/circle.\n\n### Тесты\n\nНабор адресный и покрывает обе стороны: отказ на настоящем commit, оба уровня модели в структурной подготовке, прямой вызов graph-edit с сохранением `NaN` в исходнике, hover через `WallNodeEditor`, совместимость с #842, разреженный центр в обеих ветках и валидные контроли. Не покрыто: Undo/Redo с такой колонной и сценарий старого документа с невалидной колонной на другом этаже (см. тему выше). Для принятия это не обязательно.\n\nОснование: test/column-input.test.mjs целиком.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Ограничить проверку в `commitWallSegmentModel` этажами, которые реально мигрируют или редактируются. Другой вариант — при отказе из-за колонны направлять пользователя в существующий K3 (#842), а не показывать общий отказ миграции. Выгода: колонна с невалидным центром на постороннем этаже старого документа не блокирует все структурные жесты, и пользователь получает понятное «удалить и сохранить». Цена: более сложная граница ответственности; проверка всего документа проще для рассуждения. Имеет смысл, только если такие записи реально встречаются в старых хранилищах.\n- Ввести отдельную причину отказа, например `WallSegmentModelError('invalid-column', ...)` с i18n-ключом `wall_model.reason.invalid-column`. Сейчас `_wallModelBlockerLabel` показывает метку `invalid-room`, и пользователь не узнаёт, что мешает именно колонна. Цена: один ключ перевода; вызывающие по-прежнему проверяют только тип ошибки.\n- Добавить к вызову в `commitGraphEditResult` короткий комментарий, что он нужен для прямых вызывающих (keyboard-nudge, Resize), а runtime уже проверил колонны раньше. Иначе вызов выглядит как случайный дубль, и его могут удалить.\n\n## Границы анализа\n\nРевью выполнено чтением исходников на head 0009156a и сравнением с base и прошлым отчётом. Сборку и тесты не запускал. Использован результат S6 «Тесты для задачи #1230 (перед ревью)» для этой редакции (materialSha 0009156a, passed, без отказов). Состав набора по снимку не виден. Тест `characterize('unsafe')` из #1226 в head не найден (поиск по `test/commit-physical-geometry.test.mjs` ничего не дал), поэтому его поведение не подтверждено напрямую. Неизвестно, встречаются ли в реальных старых хранилищах колонны без валидного центра. Последствия для таких документов (отказ миграции вместо K3) установлены по коду как вероятный путь и не проверены прогоном. Поведение `latticePoint` для отсутствующего центра до изменения подробно не изучалось. Серверная часть не менялась и не перепроверялась.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: cfda99f135870cec7d99ee3a23fbf4d5edacb712 → 0009156acd78c58cfaca7ce756fa8388d90adb75\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1230, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nДо исправления новый адресный набор воспроизвёл 26 отказов: физический commit, прямая graph-подготовка и model9/11 миграция принимали нечисловые поля колонн. Два контроля валидных square/circle прошли. Общая небольшая проверка известных числовых полей вызывается до JSON-клонирования в graph intent/структурной подготовке и до ветвления обычного/готового preview в физическом commit. Неизвестные metadata не обходятся и не нормализуются. При ошибке сохранён существующий rollback/сообщение; записи и истории нет. Не меняются tolerances, rounding, topology или серверные ACL. Обычная альтернатива — structuredClone — только сохраняла бы NaN для последующей нестрогой числовой проекции и не доказывает безопасного отказа. Обязательный S6 и адресный набор выполнит finish; результаты публикует координатор.\n\nРедакция после r1: `commitWallSegmentModel` сохраняет прежний тип отказа `WallSegmentModelError`; добавлен контроль читающего `WallNodeEditor.nodes()` (нет исключения/мутации). Проверка не блокирует числовые строки и отсутствующие/null defaults размера/угла из контракта #842: их конвертирует прежняя нормализация. Координаты null/пустая строка, NaN/±Infinity и sparse arrays остаются запрещены до JSON. Ещё два регрессионных случая покрывают sparse center обычного и prepared preview. Первый S6 относился к прошлой редакции; новая проходит собственный S6 и следующее код-ревью.\n```\n\n</details>\n",
+        "createdAt": "2026-11-03T14:18:47.333Z",
+        "artifactId": 13238022490,
+        "runId": 41651943471,
+        "runAttempt": 1,
+        "completedAt": "2026-11-03T14:18:51Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41651943471",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712"
       }
     },
     "1231": {
@@ -2195,9 +2300,9 @@
     "fence": 105,
     "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
     "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793715238615,
-    "expiresAt": 1793718933245,
+    "expiresAt": 1793719147613,
     "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
     "reviewRequest": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712"
   },
@@ -2324,6 +2429,10 @@
     },
     "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:6:review-presentation": {
       "digest": "4ece970abadcbde9288d6c284b128e98b043196cf114cc1a0f3deb7c577ad365",
+      "issue": 1230
+    },
+    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:6:review-complete": {
+      "digest": "f35004183f12368eacb02d62fe042942be1a3e4dcf598a51ccc540a35b7681b4",
       "issue": 1230
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
