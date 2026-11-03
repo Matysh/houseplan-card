@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1234,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Fix the warm-mode refit ownership path already present in v1.83.0: a changed camera released its hold before the final editor layout. Retain the current camera and settle against the actual editor stage without changing geometry schemas or retry policy.",
+  "summary": {
+    "ru": "Камера после поздней загрузки геометрии соответствует рабочей области восстановленного редактора.",
+    "en": "The camera follows the restored editor stage after a delayed geometry refresh."
+  }
+}

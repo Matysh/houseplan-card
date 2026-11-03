@@ -47,8 +47,9 @@ export function finishWarmModeAdoption(host: WarmModeHost, request: number): voi
  * camera to the header measured BEFORE the editor chrome rendered. While the
  * pending window still shows the adopted memo camera, that camera is put
  * back and held exactly as an immediate adoption holds it. A camera that has
- * already moved on (a View refit, the user's own pan, another space) is left
- * to the ordinary refit. A mode that did not commit eats the draft (§3 p. 4).
+ * already moved on (a View refit, the user's own pan, new geometry) is kept
+ * current, then reconciled only against the rendered editor stage. A mode
+ * that did not commit eats the draft (§3 p. 4).
  */
 export function resumeWarmMode(host: WarmModeHost, mode: HouseplanMode, commit: () => void): void {
   const view = host._view;
@@ -58,13 +59,20 @@ export function resumeWarmMode(host: WarmModeHost, mode: HouseplanMode, commit: 
   // Temporary View displays the old editor camera, not a new View session.
   // _setMode must not replace the original return address with that camera.
   if (host._warmVp && host._mode === mode) host._viewModeSnap = viewModeSnap;
-  if (host._mode !== mode || !kept) {
+  if (host._mode !== mode) {
     host._warmReviveDialog(true);
     host._releaseWarmRefit(host._editorModeRequest);
     return;
   }
   const request = ++host._editorModeRequest;
   host._holdWarmRefit(request);
-  host._view = view; host._liveVp();
+  if (kept) {
+    host._view = view; host._liveVp();
+  } else {
+    // A late new baseline or a newer camera must not be overwritten by the
+    // memo. Still release only after the editor renders: ResizeObserver can
+    // coalesce View -> editor back to the size it already observed (#1234).
+    host._warmReviveDialog(true);
+  }
   finishWarmModeAdoption(host, request);
 }

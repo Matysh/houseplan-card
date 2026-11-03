@@ -892,7 +892,9 @@ export class HouseplanCard extends LitElement {
   ): Promise<void> {
     if (!adopt) this._cancelPendingWarmMode();
     const request = ++this._editorModeRequest;
-    if (adopt && warmCameraUnchanged(this._view, this._warmVp)) this._holdWarmRefit(request);
+    // Even changed geometry must wait for the restored editor's layout. The
+    // camera equality decides what to preserve, not who owns the final refit.
+    if (adopt) this._holdWarmRefit(request);
     const ready = mode === 'view' || await this._ensureEditorRuntime();
     const current = ready && request === this._editorModeRequest && this.isConnected
       && (mode === 'view' || this._canEdit && !this._kiosk);
