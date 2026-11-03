@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1937,
+  "revision": 1938,
   "nextTicket": 124,
   "nextFence": 122,
   "tasks": {
@@ -2571,6 +2571,10 @@
       "digest": "35948be4216c03d5b25435b5e84b997aa64607b5d637c7184da22903d7493fdf",
       "issue": 1244
     },
+    "github:41689661570:1:completions:message:9452aa1d645f0599fbbcd0bb2ef5237de3a6d367467d58894a663e50a5a59b5f": {
+      "digest": "12da3809307b853a1ec5375268c3dfa1e2d958b68d67d4c932800c1d4bb12cda",
+      "issue": 1244
+    },
     "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
       "digest": "24e1edf7aed6946369b9de71ffcd021fc2d7471c2da828ba1aefa7c0e63b2fa5",
       "issue": 1244,
@@ -2641,7 +2645,8 @@
         "reviewChanges": "Причина воспроизведена на актуальном dev 6aa950309 через настоящие кнопки шапки и model11 `commitWallSegmentModel(makeStaticWallOpeningsFixture())`, обе комнаты с тёмной непрозрачной заливкой #111111/#222222. До исправления в первых кадрах Flat→Plan при planWeight=0 пол ещё #111111, а tunnel уже отсутствует; Plan→Flat сразу возвращает tunnel с opacity=1 при малом текущем весе пола. Это не анимация створки и не смена датчика.\n\n`_renderOpeningTunnelFills` удалял весь слой при `_markup`, хотя комнаты уже используют premultiplied color-mix общего `--hp-mode-plan-weight`. Минимальное решение удерживает существующий tunnel во время `_modeTransitionBusy`, а CSS умножает его архитектурную прозрачность на `(1 - planWeight)`. После завершения Plan слой по-прежнему отсутствует, поэтому не остаётся цветной patch при редактировании. Не меняются публичные data-hp, геометрия, hard-stop на центре стены и 600ms transform/stroke-dashoffset створки. Альтернативы — новая модель floor/tunnel, постоянные невидимые tunnel в Plan или отключение transitions — не нужны.\n\nАдресная диагностика: новый `demo/smoke_opening_mode_fill.mjs` делает native clicks, снимает computed paint каждый rAF для всех трёх редакторов, Flat/2.5D и reduced motion, проверяет отсутствие stale patch и сохранение настоящей анимации контакта. При 2.5D до midpoint намеренно удерживается прежняя source scene; её отсутствие live tunnel в исходном settled Plan не выдаётся за дефект. Целевой target fill проверяется после projection commit, а общий fade — отдельно. Baseline не принимается. Полный S6 будет выполнен только в слоте finish; это подготовительный debug, не результат S6.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
