@@ -2,7 +2,7 @@
 
 [![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
-[![CI](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMatysh%2Fhouseplan-card%2Fprocess-release-state%2Fci.json)](https://github.com/Matysh/houseplan-card/blob/process-release-state/CI.md)
+[![CI](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMatysh%2Fhouseplan-card%2Fprocess-release-state%2Fci.json)](https://github.com/Matysh/houseplan-card/actions/runs/41204595040)
 [![CodeQL](https://github.com/Matysh/houseplan-card/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/Matysh/houseplan-card/actions/workflows/github-code-scanning/codeql)
 [![Live demo](https://img.shields.io/badge/демо-попробовать-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-чат-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
