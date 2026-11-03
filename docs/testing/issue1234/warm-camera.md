@@ -21,8 +21,8 @@ to a Plan size it had already seen. No later observer callback repaired it.
 
 Every warm adoption now owns the existing refit hold until the editor render
 barrier. The unchanged applicable camera is restored as before. A changed
-camera stays current, its obsolete draft is retired, and the same render
-barrier releases the hold so `_releaseWarmRefit` reconciles its aspect with the
+camera stays current, draft revival settles under its existing eligibility
+checks, and the same render barrier releases the hold so `_releaseWarmRefit` reconciles its aspect with the
 actual final stage. Rejected/superseded mode requests retain ownership checks.
 No timer was added; the existing update-complete/two-frame layout barrier was
 reused. No geometry, history, transport guard, or camera fit formula changed.

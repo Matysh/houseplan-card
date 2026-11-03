@@ -20,7 +20,7 @@ function fixture(t, changed = false) {
     _releaseWarmRefit(request) {
       if (this.held === request && this._editorModeRequest === request) released.push(request);
     },
-    _warmReviveDialog(discard = false) { revived.push(discard); this._warmRevivePending = false; },
+    _warmReviveDialog(settle = false) { revived.push(settle); this._warmRevivePending = false; },
     _liveVp() {}, requestUpdate() {},
   };
   const commit = () => { host._mode = 'plan'; host._view = committed; host._viewModeSnap = null; };
