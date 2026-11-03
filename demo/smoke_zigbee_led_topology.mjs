@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1004: real mouse input and public config/provider fixtures. No product patch.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -7,7 +8,8 @@ import { fixtureWallKey } from './fixtures/wall-key.mjs';
 requirePinnedBrowser('smoke_zigbee_led_topology');
 const artifacts = new URL('../artifacts/zigbee-led-1004/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
-const { page, browser } = await launch({ width: 1100, height: 900 });
+const { page, browser } = await launch({ width: 2000, height: 900 });
+await prepareDesktopControls(page);
 const root = page.locator('#host > houseplan-card');
 const samples = [];
 try {

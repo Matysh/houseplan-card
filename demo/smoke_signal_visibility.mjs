@@ -25,7 +25,7 @@ const out = await page.evaluate(async () => {
   await hp.setMode('devices');
   const openGeneral = async () => {
     root().querySelector('[data-hp="settings"]').click();
-    await wait(() => dialog('settings')?.querySelector('#gs-show-lqi'), 'general form opens');
+    await wait(() => dialog('settings')?.querySelector('select[name="gs-show-lqi"]'), 'general form opens');
     return dialog('settings');
   };
   const save = async kind => {
@@ -36,16 +36,16 @@ const out = await page.evaluate(async () => {
     await hp.waitForWrites();
   };
   let general = await openGeneral();
-  const globalInput = general.querySelector('#gs-show-lqi');
-  results.globalDefaultOn = globalInput.checked;
+  const globalInput = general.querySelector('select[name="gs-show-lqi"]');
+  results.globalDefaultOn = globalInput.value === 'on';
   const battery = general.querySelector('[name="gs-device-battery"]');
   // Shared form sections wrap individual rows; keep proving immediate semantic order.
   const signalSection = globalInput.closest('.hpf-section');
   const batterySection = battery?.closest('.hpf-section');
   results.globalImmediatelyAfterBattery = !!battery
-    && !!(battery.closest('.hpf-field').compareDocumentPosition(globalInput.closest('.hpf-toggle')) & Node.DOCUMENT_POSITION_FOLLOWING)
+    && !!(battery.closest('.hpf-field').compareDocumentPosition(globalInput.closest('.hpf-field')) & Node.DOCUMENT_POSITION_FOLLOWING)
     && !!signalSection && !!batterySection && signalSection.previousElementSibling === batterySection;
-  results.globalLocalized = globalInput.closest('.hpf-toggle').textContent.includes('Show Zigbee signal');
+  results.globalLocalized = globalInput.closest('.hpf-field').textContent.includes('Show Zigbee signal');
   await hp.close(general, { via: 'cancel' });
   await hp.setMode('view');
   const before = shown(card);
@@ -65,7 +65,7 @@ const out = await page.evaluate(async () => {
 
   await hp.setMode('devices');
   general = await openGeneral();
-  general.querySelector('#gs-show-lqi').click();
+  { const select=general.querySelector('select[name="gs-show-lqi"]'); select.value=select.value==='off'?'on':'off'; select.dispatchEvent(new Event('change',{bubbles:true})); }
   await hp.settled();
   await save('settings');
   await hp.setMode('view');
@@ -103,8 +103,8 @@ const out = await page.evaluate(async () => {
   let spaceForm = await hp.openSpaceDialog('edit', 'f1');
   const lqi = () => spaceForm.querySelector('select[name$="-show-lqi"]');
   const chooseLqi = async value => { lqi().value = value; lqi().dispatchEvent(new Event('change', {bubbles:true})); await hp.settled(); };
-  results.localThreeModes = lqi().options.length === 3 && lqi().value === 'inherit';
-  results.inheritedCaptionOff = lqi().options[0].textContent.includes('Off');
+  results.localFourModes = JSON.stringify([...lqi().options].map(o=>o.value)) === JSON.stringify(['inherit','on','low','off']) && lqi().value === 'inherit';
+  results.inheritedCaptionOff = lqi().options[0].textContent.includes([...lqi().options].find(o=>o.value==='off').textContent);
   await chooseLqi('on');
   await hp.settled();
   await save('space');
@@ -157,7 +157,7 @@ const out = await page.evaluate(async () => {
 
   const originalWS = card.hass.callWS;
   general = await openGeneral();
-  general.querySelector('#gs-show-lqi').click();
+  { const select=general.querySelector('select[name="gs-show-lqi"]'); select.value=select.value==='off'?'on':'off'; select.dispatchEvent(new Event('change',{bubbles:true})); }
   await hp.settled();
   card.hass = { ...card.hass, callWS: async message => {
     if (message.type === 'houseplan/config/set') throw new Error('synthetic offline');

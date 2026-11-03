@@ -1,3 +1,4 @@
+import { fitVisibleView } from './helpers/view-controls.mjs';
 // #1003: mounted production renderer, synthetic data only. No product patches.
 import {launch,check,checkAll,finish} from './serve.mjs';
 import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
@@ -106,7 +107,7 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
         [`${name}:${zoom}:no-measure`]:after.work.measurements===cameraBase.work.measurements,
         [`${name}:${zoom}:no-rebuild`]:after.work.rebuilds===cameraBase.work.rebuilds});
     }
-    await page.locator('houseplan-card').locator('[data-hp="zoom-fit"]').click();await settle();
+    await fitVisibleView(page);await settle();
     if(name==='mobile'){
       await page.waitForFunction(()=>!window.__card._cameraTransition.active);
       const input=await page.context().newCDPSession(page);

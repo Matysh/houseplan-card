@@ -1,10 +1,12 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1073: native menu, persisted fixture pair and mixed optimistic/confirmed UI.
 // The fixture supplies controlled wire responses; real HA tests prove the
 // server delta/ACL/file/paired-commit behavior independently.
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 requirePinnedBrowser();
-const { page, browser } = await launch({width:1440,height:1000},1,[],{},undefined,undefined,'/demo.html?device-history=1');
+const { page, browser } = await launch({width:2000,height:1000},1,[],{},undefined,undefined,'/demo.html?device-history=1');
+await prepareDesktopControls(page);
 mkdirSync('artifacts/1073',{recursive:true});
 const card=page.locator('houseplan-card');
 const settle=()=>page.waitForFunction(()=>!window.__card._devicePositionBusy&&!window.__card._modeTransitionBusy&&!window.__card._modeTransitionPreparing);
@@ -91,6 +93,7 @@ await history('redo');
 check('mixed-optimistic-redo-restores-moved-position',(await snapshot()).layout[marker.id],moved.layout[marker.id]);
 // Open the existing device dialog and its Delete confirmation.
 await copiedNode.click();
+await card.locator('[data-field="properties-settings"]').click();
 await card.locator('[data-action="marker-delete"]').click();
 await card.locator('hp-confirm [data-hp="dialog-confirm"]').click();await settle();
 const deleted=await snapshot();check('delete-keeps-independent-history',deleted.undo,3);
@@ -151,6 +154,10 @@ for(const entry of ['properties','dialog','catalog']) {
     await card.locator('.device-inbox-batch-delete').click();
   } else {
     await card.locator(`[data-hp="device"][data-id="${unknownCopy.id}"]`).click();
+    if(entry==='dialog') {
+      await settle();
+      if(!await card.locator('hp-dialog[data-kind="marker"]').isVisible()) await card.locator('[data-field="properties-settings"]').click();
+    }
     await card.locator(`[data-action="${entry==='dialog'?'marker':'properties'}-delete"]`).click();
   }
   await page.evaluate(()=>window.__structureLose=2);

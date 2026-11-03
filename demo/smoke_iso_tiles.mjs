@@ -270,6 +270,7 @@ await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
 
 // ---- editors are Flat; switching off restores Flat --------------------------
 await page.evaluate(() => window.__hpTest.setMode('plan'));
+await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._modeTransitionPreparing);
 const editor = await read([WHITE, TINTED]);
 res.editorFlat = !editor.iso && !editor.layer;
 await page.evaluate(() => window.__hpTest.setMode('view'));

@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 /** #789: real input → temporary LED-only24 → exact full48. Not a benchmark. */
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { installLedZoomOracle } from './helpers/led-zoom-oracle.mjs';
@@ -5,7 +6,8 @@ import { observeClampedWheelLease, clampedWheelVerdict } from './helpers/clamped
 import { observeLedStateDelivery, ledDeliveryVerdict } from './helpers/led-state-delivery.mjs';
 
 requirePinnedBrowser('#863 LED active/settled state evidence');
-const { page, browser } = await launch({ width: 1000, height: 820 }, 1, [], { hasTouch: true });
+const { page, browser } = await launch({ width: 2000, height: 820 }, 1, [], { hasTouch: true });
+await prepareDesktopControls(page);
 await page.evaluate(installLedZoomOracle);
 const cdp = await page.context().newCDPSession(page);
 const results = [];

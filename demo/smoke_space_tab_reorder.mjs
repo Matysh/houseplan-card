@@ -3,9 +3,9 @@
 // pointer capture is the mechanism under test and owns event delivery.
 import { launch, checkAll, finish } from './serve.mjs';
 
-const { page, browser } = await launch({ width: 1100, height: 900 }, 1);
+const { page, browser } = await launch({ width: 2000, height: 900 }, 1);
 // #997: reordering belongs to the wide tab presentation, above 1024px of header.
-await page.addStyleTag({ content: '#host{width:1060px!important;max-width:none!important;padding:0!important}' });
+await page.addStyleTag({ content: '#host{width:1960px!important;max-width:none!important;padding:0!important}' });
 await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('[data-hp="space-tab"]').length > 0);
 const out = {};
 

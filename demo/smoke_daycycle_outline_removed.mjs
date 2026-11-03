@@ -1,8 +1,10 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 /** #1092: actual full Flat/2.5D and static-card output, not renderer source text. */
 import { mkdir } from 'node:fs/promises';
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 requirePinnedBrowser('#1092 removed decorative outline');
-const { page, browser } = await launch({width:1291,height:952},2);
+const { page, browser } = await launch({width:2000,height:952},2);
+await prepareDesktopControls(page);
 const out={};
 const read=()=>page.evaluate(()=>{
   const root=window.__card.renderRoot,stage=root.querySelector('.stage');

@@ -239,6 +239,7 @@ const res = await page.evaluate(async () => {
 });
 // AC5 touch: a genuine browser tap, not a synthetic click or private method.
 const touch = await launch({ width: 390, height: 844 }, 1, [], { hasTouch: true, isMobile: true });
+await touch.page.locator('#host').evaluate(host=>host.style.width='calc(100vw - 16px)');
 const other = await touch.page.evaluate(async () => {
   const source = window.__card;
   const config = { ...source._config };
@@ -261,8 +262,13 @@ const other = await touch.page.evaluate(async () => {
   if (c._pendingNavMode !== 'devices') throw new Error('touch fixture did not adopt a pending editor');
   return c._model.find((space) => space.id !== c._space).id;
 });
-await touch.page.locator('houseplan-card [data-hp="space-select"] [data-hp="select-trigger"]').tap();
-await touch.page.locator(`houseplan-card [data-hp="select-option"][data-id="${other}"]`).tap();
+const touchSpaceSelect=touch.page.locator('houseplan-card [data-hp="space-select"] [data-hp="select-trigger"]');
+// Pending permissions can omit edit controls and leave enough intrinsic room
+// for tabs even on a phone. Use the actual visible navigation presentation.
+if(await touchSpaceSelect.isVisible()) {
+ await touchSpaceSelect.tap();
+ await touch.page.locator(`houseplan-card [data-hp="select-option"][data-id="${other}"]`).tap();
+} else await touch.page.locator(`houseplan-card [data-hp="space-tab"][data-id="${other}"]`).tap();
 await touch.page.evaluate(() => window.releaseWarmPermission());
 await touch.page.waitForFunction(() => window.__card._loadOk);
 await touch.page.waitForTimeout(350);

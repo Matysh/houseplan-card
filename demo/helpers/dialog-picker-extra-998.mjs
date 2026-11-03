@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './desktop-controls.mjs';
 import assert from 'node:assert/strict';
 import { expect } from 'playwright/test';
 
@@ -10,7 +11,8 @@ export async function runExtraPickerSweep(page, rows) {
   const assetUrl = `/api/houseplan/content/assets/_/${assetId}.svg`;
   await page.route(`**${assetUrl}`, route => route.fulfill({ contentType: 'image/svg+xml',
     body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 30"><path fill="#718B82" d="M0 0H40V30H0Z"/></svg>' }));
-  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.setViewportSize({ width: 2000, height: 1000 });
+  await prepareDesktopControls(page);
   await page.evaluate(async ({ assetId, assetUrl }) => {
     await window.__addRegistryEntity('sensor.picker_998', null, '22.4', 'demo', {},
       { friendly_name: 'Picker sweep temperature', unit_of_measurement: '°C', device_class: 'temperature' });
@@ -106,7 +108,8 @@ export async function runExtraPickerSweep(page, rows) {
     }
     await dialog.locator('[slot=footer] [data-hp=dialog-cancel]').last().click();
     await expect(dialog).toHaveCount(0);
-    await page.setViewportSize({ width: 1280, height: 1000 }); await settle();
+    await page.setViewportSize({ width: 2000, height: 1000 });
+  await prepareDesktopControls(page); await settle();
   };
 
   await card.locator('[data-hp=wall-column][data-id=picker-column]').dblclick();

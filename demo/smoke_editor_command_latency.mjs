@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1075: native palette placement and ordinary toolbar/keyboard history. The
 // fake HA owns storage; counters are read-only observations of real caches.
 import assert from 'node:assert/strict';
@@ -6,7 +7,8 @@ import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
 
 requirePinnedBrowser();
-const { page, browser } = await launch({ width: 1600, height: 1100 });
+const { page, browser } = await launch({ width: 2000, height: 1100 });
+await prepareDesktopControls(page);
 const card = page.locator('houseplan-card');
 const wait = () => page.evaluate(() => window.__hpTest.waitForWrites());
 const stored = () => page.evaluate(async () => (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config);

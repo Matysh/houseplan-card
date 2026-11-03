@@ -1,3 +1,4 @@
+import {currentGraphFixture} from '../test/helpers/graph-fixture.mjs';
 /** #1156: native copy choices in the real panel; synthetic storage is delegated unchanged. */
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {isDeepStrictEqual as equal} from 'node:util';
@@ -6,11 +7,11 @@ import {applyUiKitTheme} from './helpers/ui-kit-theme.mjs';
 import {waitForUiKitPaint} from './helpers/ui-kit-paint.mjs';
 requirePinnedBrowser('#1156 space copy choices');
 const folder='artifacts/1156-copy-categories';mkdirSync(folder,{recursive:true});
-const fixture={model_version:10,spaces:[{id:'f1',title:'Copy choices',view_box:[0,0,1,1],cell_cm:1,rooms:[],wall_segments:[],decor:[
+const fixture=currentGraphFixture({model_version:10,spaces:[{id:'f1',title:'Copy choices',view_box:[0,0,1,1],cell_cm:1,rooms:[],wall_segments:[],decor:[
  {id:'chair',kind:'furniture',symbol:'chair',x:.1,y:.1,w:.2,h:.2,flip_h:true},
  {id:'line',kind:'line',x1:.1,y1:.5,x2:.4,y2:.5,width_cm:2,color:'#123456'},
  {id:'label',kind:'text',x:.6,y:.6,text:'Original decor',size_cm:20},
-]}],markers:[],settings:{}};
+]}],markers:[],settings:{}});
 const {page,browser}=await launchPanelCold({width:1280,height:900});
 page.setDefaultTimeout(12000);
 const card=page.locator('houseplan-panel houseplan-card');

@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1015: actual card config/get adoption, SVG text/geometry and native action.
 // Real HA Store/import tests independently prove this exact shared response;
 // the browser transport is synthetic, not a private HA/GPU environment.
@@ -5,7 +6,8 @@ import { readFileSync, mkdirSync } from 'node:fs';
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 requirePinnedBrowser();
 const fixture = JSON.parse(readFileSync('test/fixtures/config-lifecycle/migration-v1.json', 'utf8'));
-const { page, browser } = await launch({ width: 1200, height: 900 }, 1);
+const { page, browser } = await launch({ width: 2000, height: 900 }, 1);
+await prepareDesktopControls(page);
 await page.evaluate(() => {
   const card = window.__card, original = card.hass.callWS;
   window.__lifecycleReads = [];

@@ -20,7 +20,7 @@ try {
   assert.equal(await page.locator('[data-hp="support"]').evaluate(element => element.classList.contains('hp-dialog-return-focus')), false);
 
   await page.locator('[data-hp="settings"]').click();
-  const settings = shell('settings'), signal = settings.locator('#gs-show-lqi');
+  const settings = shell('settings'), signal = settings.locator('#gs-room-tooltip');
   await signal.click();
   await settings.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();
   const question = shell('confirm');
@@ -31,7 +31,7 @@ try {
     retained: element.inert,
     modal: element.shadowRoot.querySelector('dialog').matches(':modal'),
     focused: element.getRootNode().activeElement?.id,
-  })), {retained:true, modal:false, focused:'gs-show-lqi'});
+  })), {retained:true, modal:false, focused:'gs-room-tooltip'});
   await expect(question).toHaveCount(0);
   await expect(signal).toBeFocused();
   await signal.click();

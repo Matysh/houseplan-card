@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 import assert from 'node:assert/strict';
 import { mkdirSync,writeFileSync } from 'node:fs';
 import { launch,finish,requirePinnedBrowser } from './serve.mjs';
@@ -6,7 +7,8 @@ import { makeInteriorWindowFixture } from './fixtures/interior-window-light.mjs'
 requirePinnedBrowser('smoke_interior_window_light');
 const dir=new URL('../artifacts/interior-window-light/',import.meta.url);
 mkdirSync(dir,{recursive:true});
-const {page,browser}=await launch({width:1100,height:1000});
+const {page,browser}=await launch({width:2000,height:1000});
+await prepareDesktopControls(page);
 const evidence={checks:[]};
 try {
   const settle=async()=>{await page.evaluate(()=>window.__hpTest.settled());await page.waitForTimeout(650);};

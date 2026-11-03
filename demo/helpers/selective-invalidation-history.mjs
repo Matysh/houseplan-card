@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './desktop-controls.mjs';
 // #1093 group B: trusted native input and browser-side request/ACK/paint clocks.
 // Only the declared fixture delay is subtracted; persisted reads run after paint.
 import assert from 'node:assert/strict';
@@ -5,6 +6,8 @@ import assert from 'node:assert/strict';
 export async function runHistoryTiming({ page, card, delay, iterations, onSample = () => {} }) {
   assert.ok(Number.isInteger(iterations) && iterations > 0);
   assert.ok(Number.isFinite(delay) && delay >= 0);
+  await page.setViewportSize({ ...page.viewportSize(), width:2000 });
+  await prepareDesktopControls(page);
   const samples = [];
   const persisted = () => page.evaluate(async () => {
     const c = window.__card;

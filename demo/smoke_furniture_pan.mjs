@@ -1,7 +1,9 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1081/UI-037: real mouse input; persisted decor/history remain unchanged on pan/cancel.
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 requirePinnedBrowser();
-const { page, browser } = await launch({ width: 1400, height: 1000 }, 1, [], { reducedMotion: 'reduce' });
+const { page, browser } = await launch({ width: 2000, height: 1000 }, 1, [], { reducedMotion: 'reduce' });
+await prepareDesktopControls(page);
 const card = page.locator('houseplan-card');
 const state = () => page.evaluate(() => ({ count: window.__card._decorList.length, history: window.__card._geometryHistory.size,
   tool: window.__card._decorTool, armed: !!window.__card._furnPalette, cursor: getComputedStyle(window.__card.renderRoot.querySelector('.stage')).cursor }));

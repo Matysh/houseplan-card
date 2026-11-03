@@ -55,6 +55,8 @@ try {
     await window.__hpTest.setLayout(() => ({ v_menu: { s: 'ui', x: .4, y: .45 } }));
     await window.__hpTest.setMode('devices');
   });
+  await page.setViewportSize({width:2000,height:1000});
+  await headerWidth(1984, false);
   await card.locator('[data-hp="zoom-fit"]').click(); await settle();
   const device = card.locator('[data-hp="device"][data-id="v_menu"]');
   const openMenu = async () => { await device.click({ button: 'right' }); await card.locator('[data-hp="device-context-menu"]').waitFor(); };
@@ -78,7 +80,7 @@ try {
   await page.evaluate(async () => { await window.__hpTest.setTool('device-inbox'); });
   check('catalog.duplicate_hidden_control_removed', await card.locator('[data-field="device-catalog-show-all"]').count(), 0);
   await close();
-  await headerWidth(1200, false);
+  await headerWidth(1984, false);
   await page.waitForFunction(() => window.__card.renderRoot.querySelector('.hdr').getBoundingClientRect().width > 1024
     && window.__card.renderRoot.querySelectorAll('[data-hp="space-tab"]').length === 2);
   for (const mode of ['plan', 'devices', 'decor', 'view']) {
@@ -101,7 +103,7 @@ try {
   check('space.blocker_does_not_delete', (await saved()).spaces.length, 2);
   await close();
   await page.evaluate(() => window.__hpTest.setServerConfig(config => ({ ...config, spaces: config.spaces.slice(0, 1) })));
-  await headerWidth(1200, false);
+  await headerWidth(1984, false);
   for (const mode of ['plan', 'devices', 'decor', 'view']) {
     await page.evaluate(mode => window.__hpTest.setMode(mode), mode);
     check(`${mode}.single_space_cursor`, await card.locator('[data-hp="space-tab"]').first().evaluate(element => getComputedStyle(element).cursor), 'pointer');

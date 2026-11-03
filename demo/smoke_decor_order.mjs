@@ -1,9 +1,12 @@
+import { fitVisibleView } from './helpers/view-controls.mjs';
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1035: real menu/panel commands against the persisted demo writer.
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 requirePinnedBrowser();
-const { page, browser } = await launch({ width: 1500, height: 1000 });
+const { page, browser } = await launch({ width: 2000, height: 1000 });
+await prepareDesktopControls(page);
 const card = page.locator('houseplan-card');
 const panel = card.locator('[data-hp="properties-panel"]');
 // #1051 UI-031 permits retained inert exit paint; command ownership is immediate.
@@ -247,7 +250,7 @@ try {
   stale=await menu.locator('[data-action="decor-copy"]').elementHandle();
   await page.evaluate(async()=>window.__hpTest.setMode('view'));
   check('order.view_has_no_menu',await menu.count(),0);
-  check('order.view_has_no_panel',await panel.count(),0);
+  check('order.view_has_no_panel',await card.locator('[data-hp="properties-panel"]:not([inert])').count(),0);
   revoked=await state();await stale.evaluate(el=>el.click());await settle();
   check('order.view_revokes_callback',await state(),revoked);
   const p=await point('blue',.8,.8);await page.mouse.click(p.x,p.y,{button:'right'});
@@ -266,8 +269,10 @@ try {
   });
   check('order.saved_roundtrip',(await state()).decor,persisted);
   await page.setViewportSize({width:390,height:900});
+  await page.evaluate(async()=>window.__hpTest.setMode('view'));
+  await fitVisibleView(page);
   await page.evaluate(async()=>window.__hpTest.setMode('decor'));
-  await card.locator('[data-hp="zoom-fit"]').click();
+  await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._modeTransitionPreparing&&!window.__card._cameraTransition.active);
   await open('blue',.8,.8);
   const box=await menu.boundingBox();
   check('order.narrow_menu_inside_viewport',box.x>=0&&box.y>=0&&box.x+box.width<=390&&box.y+box.height<=900);

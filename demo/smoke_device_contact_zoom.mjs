@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #951: real painted path registration and free-shell thickness during native zoom.
 import { launch, requirePinnedBrowser, check, checkAll, finish } from './serve.mjs';
 import { makeDeviceContactsFixture } from './golden/device-contacts.mjs';
@@ -9,7 +10,8 @@ const dir = process.env.HP_CONTACT_ZOOM_ARTIFACTS || 'artifacts/951/zoom';
 mkdirSync(dir, { recursive: true });
 const results = [];
 for (const dpr of [1, 2]) {
-  const { page, browser } = await launch({ width: 1200, height: 1000 }, dpr, [], { hasTouch: true });
+  const { page, browser } = await launch({ width: 2000, height: 1000 }, dpr, [], { hasTouch: true });
+await prepareDesktopControls(page);
   const card = page.locator('houseplan-card'), input = await page.context().newCDPSession(page);
   const fixture = makeDeviceContactsFixture();
   await page.evaluate(async fixture => {
