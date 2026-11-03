@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1614,
+  "revision": 1615,
   "nextTicket": 110,
   "nextFence": 106,
   "tasks": {
@@ -1811,158 +1811,25 @@
     },
     "1230": {
       "issue": 1230,
+      "branch": "codex/1230-finite-column-input",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1230-finite-column-input",
-      "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 104,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793714336896,
-      "reviewEntry": 2,
-      "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1230.json",
-        "src/column-input.ts",
-        "src/graph-edit-intent.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/wall-segment-model.ts",
-        "test/column-input.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T141448489-56579c6a",
-        "name": "Тесты для задачи #1230 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261103T141448489-56579c6a/report.json",
-        "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:15:32.047Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
-        "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793714277342,
-        "entry": 1,
-        "requestId": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
-        "eventId": "author-finite-sparse-1230-1793714275635:return:1230"
-      },
+      "status": "S8-merged",
+      "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+      "mergedSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+      "mergedAt": 1793715553198,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-      "reviewMaterial": {
-        "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1230,
-        "requestId": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "kind": "code",
-        "base": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1230,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1230",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "До исправления новый адресный набор воспроизвёл 26 отказов: физический commit, прямая graph-подготовка и model9/11 миграция принимали нечисловые поля колонн. Два контроля валидных square/circle прошли. Общая небольшая проверка известных числовых полей вызывается до JSON-клонирования в graph intent/структурной подготовке и до ветвления обычного/готового preview в физическом commit. Неизвестные metadata не обходятся и не нормализуются. При ошибке сохранён существующий rollback/сообщение; записи и истории нет. Не меняются tolerances, rounding, topology или серверные ACL. Обычная альтернатива — structuredClone — только сохраняла бы NaN для последующей нестрогой числовой проекции и не доказывает безопасного отказа. Обязательный S6 и адресный набор выполнит finish; результаты публикует координатор.\n\nРедакция после r1: `commitWallSegmentModel` сохраняет прежний тип отказа `WallSegmentModelError`; добавлен контроль читающего `WallNodeEditor.nodes()` (нет исключения/мутации). Проверка не блокирует числовые строки и отсутствующие/null defaults размера/угла из контракта #842: их конвертирует прежняя нормализация. Координаты null/пустая строка, NaN/±Infinity и sparse arrays остаются запрещены до JSON. Ещё два регрессионных случая покрывают sparse center обычного и prepared preview. Первый S6 относился к прошлой редакции; новая проходит собственный S6 и следующее код-ревью."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Редакция после r1 устраняет блокер прошлого раунда и сохраняет правильную основу исправления #1230. Числовые поля колонны проверяются до JSON-клонирования, поэтому `NaN`/`±Infinity`, `null` или пустая строка в координатах и разреженный `center` больше не становятся допустимой координатой и не попадают в граф, сохранение или Undo. Отказ в `commitWallSegmentModel` теперь приходит как `WallSegmentModelError`, и hover/Select, Undo/Redo и канонизация истории обрабатывают его штатно. Строгость проверки согласована с контрактом #842: числовые строки и отсутствующие или `null` значения `cm`/`angle` проходят и нормализуются по-прежнему. Блокеров нет. Остался необязательный вопрос UX: в документе старой модели колонна с невалидным центром на любом этаже приводит к отказу «миграция заблокирована» до того, как пользователю будет предложен диалог K3 «удалить и сохранить». Данные при этом не теряются.",
-          "understanding": "Проблема. Физический commit клонирует кандидата через JSON, и `NaN` превращается в `null`. Нестрогие числовые проекции затем читают его как 0, поэтому колонна с нечисловой координатой принималась и попадала в историю.\n\nПосле исправления общий `assertFiniteColumnInputs` (src/column-input.ts) требует, чтобы `wall_columns` был либо `undefined`, либо массивом. Для каждой колонны: объект; `center` — массив длины 2; оба элемента явно прочитаны (поэтому разреженный массив не проходит) и являются конечным числом или непустой строкой, `Number` от которой конечен; `cm` и `angle` либо `null`/`undefined`, либо такие же числовые значения. Вызовы:\n1) `_commitPhysicalGeometry`, внутри существующего try и до ветвления на `prepared`. Отказ уходит в прежний rollback: `_clearGeometryGesture`, `_restoreGeometryStateLocal`, сообщение о блокировке.\n2) `commitGraphEditResult` для прямых вызывающих.\n3) `commitWallSegmentModel` по всем `spaces`. Любой сбой проверки переводится в `WallSegmentModelError('invalid-room','invalid-column-geometry')`.\n\nРазобранные пути:\n- `WallNodeEditor.nodes()` (wall-node-editor.ts:100–121): `WallSegmentModelError` переводит в «нет ручек», исключения нет.\n- Вызывающие `commitGraphEdit`: keyboard-nudge.ts:96 и Resize (runtime 3283–3287). Оба ловят ошибку любого типа, поэтому `TypeError` из `commitGraphEditResult` безопасен.\n- `legacyGraphWriteChange` (graph-write-change.ts:48) и `_sendConfigCandidate` (houseplan-card.ts:8585–8594).\n- Конвейер `_writeConfig` (runtime 1759–1771): K3 `findGeometryRemoval` и `normalizeLegacyGeometryInPlace`.\n- Сам `geometry-cleanup.ts`: `finitePoint`, `canonicalColumn`.\n- `canonicalizeConfigGeometryInPlace` для колонн (coordinate-canonicalization.ts:410–413).\n- Серверная `WALL_COLUMN_SCHEMA` (validation.py:2005–2020).",
-          "analysis": [
-            {
-              "topic": "Закрытие блокера r1: контракт ошибок `commitWallSegmentModel`",
-              "assessment": "Устранено. Проверка обёрнута в try и бросает `WallSegmentModelError`. Теперь все вызывающие, различающие тип ошибки, работают штатно. `nodes()` кэширует `null` и не падает в обработчике ввода. Undo/Redo и `_canonicalWallChainHistoryState` получают ожидаемый тип отказа. Комментарий в catch объясняет неочевидную причину обёртки, его стоит сохранить. Попутно в тот же тип переводится и `TypeError` при неитерируемом `spaces`. Это согласуется с остальным телом функции, где любой сбой тоже переводится в `WallSegmentModelError`.",
-              "evidence": "src/wall-segment-model.ts:951–956 против 1003–1006; src/wall-node-editor.ts:109–117; test/column-input.test.mjs: тест «rejected column omits node hover handles» (реальный `WallNodeEditor.nodes()` → `null`, конфиг не изменён) и проверка `assert.throws(..., WallSegmentModelError)` для model9/11."
-            },
-            {
-              "topic": "Строгость проверки и совместимость с #842",
-              "assessment": "Согласовано, как предлагалось в r1. `finiteNumeric` пропускает числовые строки, а `cm`/`angle` со значением `null`/`undefined` оставляет прежней нормализации (`canonicalColumn`: `Number(cm) || 15`, `canonicalColumnAngle`). Для координат сделано осознанное различие: `null` и `''` отвергаются, хотя `finitePoint` из #842 считал их допустимыми через `Number(null) === 0`. Именно эту лазейку закрывает задача, и комментарий в column-input.ts это фиксирует. Строки вроде `'1e400'` и `'NaN'` отвергаются, потому что `Number` от них даёт не конечное значение. Явное чтение `center[0]` и `center[1]` вместо `every` закрывает разреженный массив. Решение простое и локальное. Пороги, округление и топология не меняются.",
-              "evidence": "src/column-input.ts:2–3, 9–15; src/geometry-cleanup.ts:60–61, 143–154; test/column-input.test.mjs: «repairable legacy column numbers retain the existing #842 normalization» (`['0.5',0.2]`, `angle:null`, без `cm` → `[0.5,0.2]`, `cm:15`, `angle:0`, `custom` сохранён) и два теста sparse center для обычного и prepared commit."
-            },
-            {
-              "topic": "Область проверки: все этажи и принятый конфиг",
-              "assessment": "Это оставшееся слабое место, но не дефект задачи. `commitWallSegmentModel` проверяет все этажи, а `_commitPhysicalGeometry` для старой модели вызывает его на `baselineSource` всего документа. Значит, в документе модели <11 колонна с невалидным центром (например, без `center` — запись из множества R по #842) на любом этаже теперь приводит к отказу структурного жеста с сообщением «migration blocked». Раньше жест, вероятно, доходил до `_writeConfig`, и там K3 предлагал «удалить и сохранить». В обоих случаях запись отклоняется и данные не теряются. Разница в понятности: K3 называет записи и предлагает выход, а новое сообщение показывает общий `wall_model.reason.invalid-room`. Выйти можно через любую неструктурную запись, где K3 сработает. Встречаются ли такие записи в реальных хранилищах, по коду не установить: текущий сервер требует `center: POINT` и конечный `cm`, а #842 лишь утверждает, что старые хранилища могут содержать такие записи. Поэтому это предмет улучшения, а не блокер.",
-              "evidence": "src/houseplan-editor-runtime.ts:2159–2161 (миграция всего `baselineSource`), 1766–1769 (K3 в `_writeConfig`), 2007–2010 (метка причины по `error.reason`); src/geometry-cleanup.ts:8–9, 99–101; src/graph-write-change.ts:48; custom_components/houseplan/validation.py:2005–2020."
-            },
-            {
-              "topic": "Основной путь физического commit",
-              "assessment": "Без изменений относительно r1, решение верное. Проверка стоит до `structuredClone` и до ветвления на `prepared`: эта ветка обходит `commitGraphEditResult` и без такой проверки осталась бы незащищённой. Отказ проходит существующий catch, поэтому не появляется новых веток и частичных записей в `_pendingPhysicalWrites`. Контроль валидных square/circle с непрозрачными метаданными подтверждает, что нормальный ввод проходит байт в байт.",
-              "evidence": "src/houseplan-editor-runtime.ts:2151–2194; test/column-input.test.mjs: параметризованный отказ по x/y/cm/angle (`_serverCfg` не изменён, `history` пуст, `_pendingPhysicalWrites.size === 0`, `saves === 0`) и тесты valid square/circle."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Набор адресный и покрывает обе стороны: отказ на настоящем commit, оба уровня модели в структурной подготовке, прямой вызов graph-edit с сохранением `NaN` в исходнике, hover через `WallNodeEditor`, совместимость с #842, разреженный центр в обеих ветках и валидные контроли. Не покрыто: Undo/Redo с такой колонной и сценарий старого документа с невалидной колонной на другом этаже (см. тему выше). Для принятия это не обязательно.",
-              "evidence": "test/column-input.test.mjs целиком."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Ограничить проверку в `commitWallSegmentModel` этажами, которые реально мигрируют или редактируются. Другой вариант — при отказе из-за колонны направлять пользователя в существующий K3 (#842), а не показывать общий отказ миграции. Выгода: колонна с невалидным центром на постороннем этаже старого документа не блокирует все структурные жесты, и пользователь получает понятное «удалить и сохранить». Цена: более сложная граница ответственности; проверка всего документа проще для рассуждения. Имеет смысл, только если такие записи реально встречаются в старых хранилищах.",
-            "Ввести отдельную причину отказа, например `WallSegmentModelError('invalid-column', ...)` с i18n-ключом `wall_model.reason.invalid-column`. Сейчас `_wallModelBlockerLabel` показывает метку `invalid-room`, и пользователь не узнаёт, что мешает именно колонна. Цена: один ключ перевода; вызывающие по-прежнему проверяют только тип ошибки.",
-            "Добавить к вызову в `commitGraphEditResult` короткий комментарий, что он нужен для прямых вызывающих (keyboard-nudge, Resize), а runtime уже проверил колонны раньше. Иначе вызов выглядит как случайный дубль, и его могут удалить."
-          ],
-          "boundaries": "Ревью выполнено чтением исходников на head 0009156a и сравнением с base и прошлым отчётом. Сборку и тесты не запускал. Использован результат S6 «Тесты для задачи #1230 (перед ревью)» для этой редакции (materialSha 0009156a, passed, без отказов). Состав набора по снимку не виден. Тест `characterize('unsafe')` из #1226 в head не найден (поиск по `test/commit-physical-geometry.test.mjs` ничего не дал), поэтому его поведение не подтверждено напрямую. Неизвестно, встречаются ли в реальных старых хранилищах колонны без валидного центра. Последствия для таких документов (отказ миграции вместо K3) установлены по коду как вероятный путь и не проверены прогоном. Поведение `latticePoint` для отсутствующего центра до изменения подробно не изучалось. Серверная часть не менялась и не перепроверялась.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 42,
-          "cache_creation_input_tokens": 78144,
-          "cache_read_input_tokens": 1102540,
-          "output_tokens": 12702,
-          "output_tokens_details": {
-            "thinking_tokens": 4321
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 78144,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 4,
-              "output_tokens": 912,
-              "cache_read_input_tokens": 82319,
-              "cache_creation_input_tokens": 29,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 29
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРедакция после r1 устраняет блокер прошлого раунда и сохраняет правильную основу исправления #1230. Числовые поля колонны проверяются до JSON-клонирования, поэтому `NaN`/`±Infinity`, `null` или пустая строка в координатах и разреженный `center` больше не становятся допустимой координатой и не попадают в граф, сохранение или Undo. Отказ в `commitWallSegmentModel` теперь приходит как `WallSegmentModelError`, и hover/Select, Undo/Redo и канонизация истории обрабатывают его штатно. Строгость проверки согласована с контрактом #842: числовые строки и отсутствующие или `null` значения `cm`/`angle` проходят и нормализуются по-прежнему. Блокеров нет. Остался необязательный вопрос UX: в документе старой модели колонна с невалидным центром на любом этаже приводит к отказу «миграция заблокирована» до того, как пользователю будет предложен диалог K3 «удалить и сохранить». Данные при этом не теряются.\n\n## Понимание решения\n\nПроблема. Физический commit клонирует кандидата через JSON, и `NaN` превращается в `null`. Нестрогие числовые проекции затем читают его как 0, поэтому колонна с нечисловой координатой принималась и попадала в историю.\n\nПосле исправления общий `assertFiniteColumnInputs` (src/column-input.ts) требует, чтобы `wall_columns` был либо `undefined`, либо массивом. Для каждой колонны: объект; `center` — массив длины 2; оба элемента явно прочитаны (поэтому разреженный массив не проходит) и являются конечным числом или непустой строкой, `Number` от которой конечен; `cm` и `angle` либо `null`/`undefined`, либо такие же числовые значения. Вызовы:\n1) `_commitPhysicalGeometry`, внутри существующего try и до ветвления на `prepared`. Отказ уходит в прежний rollback: `_clearGeometryGesture`, `_restoreGeometryStateLocal`, сообщение о блокировке.\n2) `commitGraphEditResult` для прямых вызывающих.\n3) `commitWallSegmentModel` по всем `spaces`. Любой сбой проверки переводится в `WallSegmentModelError('invalid-room','invalid-column-geometry')`.\n\nРазобранные пути:\n- `WallNodeEditor.nodes()` (wall-node-editor.ts:100–121): `WallSegmentModelError` переводит в «нет ручек», исключения нет.\n- Вызывающие `commitGraphEdit`: keyboard-nudge.ts:96 и Resize (runtime 3283–3287). Оба ловят ошибку любого типа, поэтому `TypeError` из `commitGraphEditResult` безопасен.\n- `legacyGraphWriteChange` (graph-write-change.ts:48) и `_sendConfigCandidate` (houseplan-card.ts:8585–8594).\n- Конвейер `_writeConfig` (runtime 1759–1771): K3 `findGeometryRemoval` и `normalizeLegacyGeometryInPlace`.\n- Сам `geometry-cleanup.ts`: `finitePoint`, `canonicalColumn`.\n- `canonicalizeConfigGeometryInPlace` для колонн (coordinate-canonicalization.ts:410–413).\n- Серверная `WALL_COLUMN_SCHEMA` (validation.py:2005–2020).\n\n## Разбор решения\n\n### Закрытие блокера r1: контракт ошибок `commitWallSegmentModel`\n\nУстранено. Проверка обёрнута в try и бросает `WallSegmentModelError`. Теперь все вызывающие, различающие тип ошибки, работают штатно. `nodes()` кэширует `null` и не падает в обработчике ввода. Undo/Redo и `_canonicalWallChainHistoryState` получают ожидаемый тип отказа. Комментарий в catch объясняет неочевидную причину обёртки, его стоит сохранить. Попутно в тот же тип переводится и `TypeError` при неитерируемом `spaces`. Это согласуется с остальным телом функции, где любой сбой тоже переводится в `WallSegmentModelError`.\n\nОснование: src/wall-segment-model.ts:951–956 против 1003–1006; src/wall-node-editor.ts:109–117; test/column-input.test.mjs: тест «rejected column omits node hover handles» (реальный `WallNodeEditor.nodes()` → `null`, конфиг не изменён) и проверка `assert.throws(..., WallSegmentModelError)` для model9/11.\n\n### Строгость проверки и совместимость с #842\n\nСогласовано, как предлагалось в r1. `finiteNumeric` пропускает числовые строки, а `cm`/`angle` со значением `null`/`undefined` оставляет прежней нормализации (`canonicalColumn`: `Number(cm) || 15`, `canonicalColumnAngle`). Для координат сделано осознанное различие: `null` и `''` отвергаются, хотя `finitePoint` из #842 считал их допустимыми через `Number(null) === 0`. Именно эту лазейку закрывает задача, и комментарий в column-input.ts это фиксирует. Строки вроде `'1e400'` и `'NaN'` отвергаются, потому что `Number` от них даёт не конечное значение. Явное чтение `center[0]` и `center[1]` вместо `every` закрывает разреженный массив. Решение простое и локальное. Пороги, округление и топология не меняются.\n\nОснование: src/column-input.ts:2–3, 9–15; src/geometry-cleanup.ts:60–61, 143–154; test/column-input.test.mjs: «repairable legacy column numbers retain the existing #842 normalization» (`['0.5',0.2]`, `angle:null`, без `cm` → `[0.5,0.2]`, `cm:15`, `angle:0`, `custom` сохранён) и два теста sparse center для обычного и prepared commit.\n\n### Область проверки: все этажи и принятый конфиг\n\nЭто оставшееся слабое место, но не дефект задачи. `commitWallSegmentModel` проверяет все этажи, а `_commitPhysicalGeometry` для старой модели вызывает его на `baselineSource` всего документа. Значит, в документе модели <11 колонна с невалидным центром (например, без `center` — запись из множества R по #842) на любом этаже теперь приводит к отказу структурного жеста с сообщением «migration blocked». Раньше жест, вероятно, доходил до `_writeConfig`, и там K3 предлагал «удалить и сохранить». В обоих случаях запись отклоняется и данные не теряются. Разница в понятности: K3 называет записи и предлагает выход, а новое сообщение показывает общий `wall_model.reason.invalid-room`. Выйти можно через любую неструктурную запись, где K3 сработает. Встречаются ли такие записи в реальных хранилищах, по коду не установить: текущий сервер требует `center: POINT` и конечный `cm`, а #842 лишь утверждает, что старые хранилища могут содержать такие записи. Поэтому это предмет улучшения, а не блокер.\n\nОснование: src/houseplan-editor-runtime.ts:2159–2161 (миграция всего `baselineSource`), 1766–1769 (K3 в `_writeConfig`), 2007–2010 (метка причины по `error.reason`); src/geometry-cleanup.ts:8–9, 99–101; src/graph-write-change.ts:48; custom_components/houseplan/validation.py:2005–2020.\n\n### Основной путь физического commit\n\nБез изменений относительно r1, решение верное. Проверка стоит до `structuredClone` и до ветвления на `prepared`: эта ветка обходит `commitGraphEditResult` и без такой проверки осталась бы незащищённой. Отказ проходит существующий catch, поэтому не появляется новых веток и частичных записей в `_pendingPhysicalWrites`. Контроль валидных square/circle с непрозрачными метаданными подтверждает, что нормальный ввод проходит байт в байт.\n\nОснование: src/houseplan-editor-runtime.ts:2151–2194; test/column-input.test.mjs: параметризованный отказ по x/y/cm/angle (`_serverCfg` не изменён, `history` пуст, `_pendingPhysicalWrites.size === 0`, `saves === 0`) и тесты valid square/circle.\n\n### Тесты\n\nНабор адресный и покрывает обе стороны: отказ на настоящем commit, оба уровня модели в структурной подготовке, прямой вызов graph-edit с сохранением `NaN` в исходнике, hover через `WallNodeEditor`, совместимость с #842, разреженный центр в обеих ветках и валидные контроли. Не покрыто: Undo/Redo с такой колонной и сценарий старого документа с невалидной колонной на другом этаже (см. тему выше). Для принятия это не обязательно.\n\nОснование: test/column-input.test.mjs целиком.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Ограничить проверку в `commitWallSegmentModel` этажами, которые реально мигрируют или редактируются. Другой вариант — при отказе из-за колонны направлять пользователя в существующий K3 (#842), а не показывать общий отказ миграции. Выгода: колонна с невалидным центром на постороннем этаже старого документа не блокирует все структурные жесты, и пользователь получает понятное «удалить и сохранить». Цена: более сложная граница ответственности; проверка всего документа проще для рассуждения. Имеет смысл, только если такие записи реально встречаются в старых хранилищах.\n- Ввести отдельную причину отказа, например `WallSegmentModelError('invalid-column', ...)` с i18n-ключом `wall_model.reason.invalid-column`. Сейчас `_wallModelBlockerLabel` показывает метку `invalid-room`, и пользователь не узнаёт, что мешает именно колонна. Цена: один ключ перевода; вызывающие по-прежнему проверяют только тип ошибки.\n- Добавить к вызову в `commitGraphEditResult` короткий комментарий, что он нужен для прямых вызывающих (keyboard-nudge, Resize), а runtime уже проверил колонны раньше. Иначе вызов выглядит как случайный дубль, и его могут удалить.\n\n## Границы анализа\n\nРевью выполнено чтением исходников на head 0009156a и сравнением с base и прошлым отчётом. Сборку и тесты не запускал. Использован результат S6 «Тесты для задачи #1230 (перед ревью)» для этой редакции (materialSha 0009156a, passed, без отказов). Состав набора по снимку не виден. Тест `characterize('unsafe')` из #1226 в head не найден (поиск по `test/commit-physical-geometry.test.mjs` ничего не дал), поэтому его поведение не подтверждено напрямую. Неизвестно, встречаются ли в реальных старых хранилищах колонны без валидного центра. Последствия для таких документов (отказ миграции вместо K3) установлены по коду как вероятный путь и не проверены прогоном. Поведение `latticePoint` для отсутствующего центра до изменения подробно не изучалось. Серверная часть не менялась и не перепроверялась.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: cfda99f135870cec7d99ee3a23fbf4d5edacb712 → 0009156acd78c58cfaca7ce756fa8388d90adb75\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1230, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nДо исправления новый адресный набор воспроизвёл 26 отказов: физический commit, прямая graph-подготовка и model9/11 миграция принимали нечисловые поля колонн. Два контроля валидных square/circle прошли. Общая небольшая проверка известных числовых полей вызывается до JSON-клонирования в graph intent/структурной подготовке и до ветвления обычного/готового preview в физическом commit. Неизвестные metadata не обходятся и не нормализуются. При ошибке сохранён существующий rollback/сообщение; записи и истории нет. Не меняются tolerances, rounding, topology или серверные ACL. Обычная альтернатива — structuredClone — только сохраняла бы NaN для последующей нестрогой числовой проекции и не доказывает безопасного отказа. Обязательный S6 и адресный набор выполнит finish; результаты публикует координатор.\n\nРедакция после r1: `commitWallSegmentModel` сохраняет прежний тип отказа `WallSegmentModelError`; добавлен контроль читающего `WallNodeEditor.nodes()` (нет исключения/мутации). Проверка не блокирует числовые строки и отсутствующие/null defaults размера/угла из контракта #842: их конвертирует прежняя нормализация. Координаты null/пустая строка, NaN/±Infinity и sparse arrays остаются запрещены до JSON. Ещё два регрессионных случая покрывают sparse center обычного и prepared preview. Первый S6 относился к прошлой редакции; новая проходит собственный S6 и следующее код-ревью.\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T14:18:47.333Z",
-        "artifactId": 13238022490,
-        "runId": 41651943471,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T14:18:51Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41651943471",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1231": {
@@ -2293,248 +2160,8 @@
     1236,
     1234
   ],
-  "active": {
-    "issue": 1230,
-    "worker": "github-coordinator",
-    "token": "105:github:41651513005:1:tick:2:admit",
-    "fence": 105,
-    "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-    "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793715238615,
-    "expiresAt": 1793719147613,
-    "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
-    "reviewRequest": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712"
-  },
+  "active": null,
   "events": {
-    "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
-      "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
-      "issue": 1230
-    },
-    "github:41648108341:1:completions:message:0e235022b2eb54765a7c35d71f4380a12d92a440224cc74b3a21142fca3fa161": {
-      "digest": "4f6f3a963cd9eb9a9be1ab6b136039da4ab7895f0764c90a0fecfb5ccf691f36",
-      "issue": 1230
-    },
-    "github:41648108341:1:completions:message:f33aae088b7b88acbbbb74393d716e2d9fe5b8359c938b3d80bb0e41adfd39b4": {
-      "digest": "a16a9327d0664cb855b052a010d0b40190c5f5d878e44db56a0a57c770be9a1e",
-      "issue": 1230
-    },
-    "github:41648108341:1:completions:message:4e0b7e38f415fe049736f9f460f775157568a4fdb317e629d85eb99d81115a0e": {
-      "digest": "2ddbb1d1d5ceb6a68f34ead25649ede928625d830cc5260966617de91ee799a7",
-      "issue": 1230
-    },
-    "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c:finish:1:synchronized": {
-      "digest": "8c826e89f550957ede9375f7c91206150120951f51a5be1a12367f6a3540cf85",
-      "issue": 1230
-    },
-    "finish:fb01553a-b9e3-4eb9-9e12-2f54e33a14ba": {
-      "digest": "fd8bc5f7234b2d6b72d4149d54911762a305b8573dc813e195bfb6117c6ddd63",
-      "issue": 1230
-    },
-    "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c:finish:2:s6-label": {
-      "digest": "c3e6dbc201376c33b0f1df9b76f42f8d7535124e4558b0ec12f7c67e067e21d2",
-      "issue": 1230
-    },
-    "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c:finish:3:review-requested": {
-      "digest": "db192caf0e87b753f95e2278e43ee3b0be45d41d644ccbc116f32cf0fa763bad",
-      "issue": 1230
-    },
-    "dev-build:41648108341:1:webhook": {
-      "digest": "330ed7434fabd84c4921514563627402408334009df3519a924090aa4ff86dea",
-      "issue": 1230
-    },
-    "dev-build:41648108341:1:webhook:a0444d0b-0870-4353-bfe5-6f92c7730afc:delivered": {
-      "digest": "0fad2471ee49281826c3e2067f6ffe6cf1cc01ebd9b65c362cefa5de8e3d1c8e",
-      "issue": 1230
-    },
-    "github:41648435670:1:completions:message:3411e1162869439fae1521f864b7037af84132e44b22ee0bfeb4a6d3c76103b6": {
-      "digest": "89047b1263c1503c4a39a305ed35a3c8ca9e875e6c20fe1b03fb772e718aadfc",
-      "issue": 1230
-    },
-    "github:41648435670:1:completions:message:fbb4a68fccaafb1001c9570066e3262f3e6398749f97b9a76a4ebcfa187c230e": {
-      "digest": "f6f3e14406312ca298fd71fc0348d7700a83547aa15a51d486385959c8624064",
-      "issue": 1230
-    },
-    "github:41648591605:1:completions:message:34dd217fdba17d7081386365502636a171e75f56c91aa92951e3d4e56b48203e": {
-      "digest": "3bd27f1a622524e938b506768cfd14017cebe00518eea6240b7e813edc180e72",
-      "issue": 1230
-    },
-    "github:41648919463:1:completions:message:3076ac5ae76b5387f4cc5a945202f7c7b2cf7d7566fd8354b64c887d57ec027e": {
-      "digest": "d5954ac6d127c54c19c560441b10eef3b808cf25408af7843a12f52301380863",
-      "issue": 1230
-    },
-    "github:41648919463:1:completions:message:711fea54ee60fc49472f3155ff29f06fad7bd66b2c72b46651dd66f042310c01": {
-      "digest": "355384261eb6587e680d68c12d7ca5c20893ec9af30be539ebacb3131e509820",
-      "issue": 1230
-    },
-    "author-finite-sparse-1230-1793714275635": {
-      "digest": "4dc3ebd2287bf154319fb4b646746b5aaf7ff3ad4a6085810b7b08dd614373ef",
-      "issue": 1230
-    },
-    "github:41649224383:1:completions:report:b598a953a439b57593a9bfc48f01581812ffdb1ab9902335cac90d1662e140c0": {
-      "digest": "3b8c55055667abb7023ad11a3eff02302fc048681bc81cfe2d7ba4fc00cf7964",
-      "issue": 1230
-    },
-    "github:41649224383:1:completions:notice:00c9254e10485c35adcab7c3cd0d0a308fcf0f31c6d2fa5688502f719a1a60c4": {
-      "digest": "7304de378b9c11d2ff1cb49201929631c47e45ff17ecc87ff07e445bf051d3ce",
-      "issue": 1230
-    },
-    "github:41651513005:1:completions:message:074dc1ff3361ea3385aebe3e3f6d5b43f92c244293fe44b2f46fed4ca9cfd3cb": {
-      "digest": "94e814ab94ab0bbbf494d45aafb105dafc3313ba8ad5e9ac1b3cc9be96bd8568",
-      "issue": 1230
-    },
-    "github:41651513005:1:completions:message:559deb484d6fd702bec5ecf6e9f86b9b7265aa0cb6259d8300c8d0a8bd32ad0f": {
-      "digest": "da486a62ee700b5a221047e32f783714a754a19dcb082a7b200133572a0527f9",
-      "issue": 1230
-    },
-    "github:41651513005:1:completions:message:9b53cee1ef2fa5e928781cdbf085d5e57224e9d387ffdd81f36e327c868af375": {
-      "digest": "55a6ff5ffc19f3ee01afe0f3d75d5caa1f0b8de149d0deb681dd3bd98b02921f",
-      "issue": 1230
-    },
-    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:1:synchronized": {
-      "digest": "832508111636f520e87f4462ca5eba4c8e7384408c422089018ed60e6e04c072",
-      "issue": 1230
-    },
-    "finish:61398660-1997-495c-9a91-b5f4688cb30c": {
-      "digest": "762763e57adbc56b95fd2b97337980792a472016408e0f6f0351b3f3b382ab7b",
-      "issue": 1230
-    },
-    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:2:s6-label": {
-      "digest": "c3f73b99ab9cb74640365a7a0ff7425016a7c018617ed8d2ef381408cf80d29a",
-      "issue": 1230
-    },
-    "github:41651649831:1:tick:0:review-requested": {
-      "digest": "41f6402c3f750d796a045cf012312ad20025e245e69265d27857be25c4407643",
-      "issue": 1230
-    },
-    "github:41651649831:1:completions:message:0e14e7a00ed30068e9411a1f377c26878964679da4077aab8ba531aca158f014": {
-      "digest": "26f3f4992b59f20d248f384c75e367963adea782c15b8f0ba14f9b70d9131321",
-      "issue": 1230
-    },
-    "github:41651649831:1:completions:message:88fc345e908b950c44a772480653e14db72bb91f8ab9725b496a55017b6ce792": {
-      "digest": "1d2b5333464ff21dfbe8c3184baa2ebc4b677fd1b2481753f277f11c0ca88f12",
-      "issue": 1230
-    },
-    "dev-build:41651513005:1:webhook": {
-      "digest": "3a64d1450578ae5c74de006b57dde268f2055bc51f01cae59a23bdaa5a12f7bf",
-      "issue": 1230
-    },
-    "dev-build:41651513005:1:webhook:8b489313-fe72-4426-aad7-c1834e59af3b:delivered": {
-      "digest": "6027a3df66cb7553ad5ad16951f02e409d58401f82de6740209080269393a0e7",
-      "issue": 1230
-    },
-    "github:41651932953:1:completions:message:12e72880fd98dc65ad5cbf73e2ee7b67231691ba31d108a3299aa36a31b43c4f": {
-      "digest": "4a62ee8b902a9788c2e58e56d3969128b74b7bfb37e41c9384570d866158139c",
-      "issue": 1230
-    },
-    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:6:review-presentation": {
-      "digest": "4ece970abadcbde9288d6c284b128e98b043196cf114cc1a0f3deb7c577ad365",
-      "issue": 1230
-    },
-    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:6:review-complete": {
-      "digest": "f35004183f12368eacb02d62fe042942be1a3e4dcf598a51ccc540a35b7681b4",
-      "issue": 1230
-    },
-    "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
-      "digest": "851c6e1c8aa1c378ab4435b7494a3f1a4d4383057f9431bc1b2cbfe152a75d17",
-      "issue": 1230,
-      "message": {
-        "kind": "queued",
-        "issue": 1230,
-        "at": 1793713893625,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "265a2c019614292d1a7cee8963a95ea677ed4ae9",
-        "delivered": true
-      }
-    },
-    "github:41648108341:1:tick:1:admit": {
-      "digest": "db3a950ea992e9627d47fb30d2b5a557da4649300c97bad6ae3d5176a7387232",
-      "issue": 1230,
-      "message": {
-        "kind": "admitted",
-        "issue": 1230,
-        "at": 1793713923377,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "265a2c019614292d1a7cee8963a95ea677ed4ae9",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c:finish:2:s6-complete": {
-      "digest": "d94dbc678fb3e982b0453bf5663cb5c676a8f3a743f83e00c8888366344f7057",
-      "issue": 1230,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1230,
-        "at": 1793714014524,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T135249481-ae45ebf7",
-          "name": "Тесты для задачи #1230 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261103T135249481-ae45ebf7/report.json",
-          "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
-          "status": "passed",
-          "finishedAt": "2026-11-03T13:53:33.230Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "author-finite-sparse-1230-1793714275635:return:1230": {
-      "digest": "4dc3ebd2287bf154319fb4b646746b5aaf7ff3ad4a6085810b7b08dd614373ef",
-      "issue": 1230,
-      "message": {
-        "kind": "return",
-        "issue": 1230,
-        "at": 1793714277342,
-        "entry": 1,
-        "notice": {
-          "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
-          "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
-          "status": "pending",
-          "fromStatus": "S7-code-review",
-          "at": 1793714277342,
-          "entry": 1,
-          "requestId": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
-          "eventId": "author-finite-sparse-1230-1793714275635:return:1230"
-        },
-        "delivered": true
-      }
-    },
-    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52": {
-      "digest": "c59d0a9f70eb63d231da54b3126814bb561f0d920c369a44a254e804ab9ccdd5",
-      "issue": 1230,
-      "message": {
-        "kind": "queued",
-        "issue": 1230,
-        "at": 1793714336896,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c04e7b168f89c13f1fafd6191a43136099b26c51",
-        "evidence": {
-          "id": "20261103T135249481-ae45ebf7",
-          "name": "Тесты для задачи #1230 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261103T135249481-ae45ebf7/report.json",
-          "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
-          "status": "passed",
-          "finishedAt": "2026-11-03T13:53:33.230Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
       "issue": 1238,
@@ -2574,57 +2201,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "2743744820a7e0c2362169007dad433ebc7abb19",
-        "delivered": true
-      }
-    },
-    "github:41651513005:1:tick:2:admit": {
-      "digest": "35a7b5ce74702b331d04242698ab8198b69ae29a103eab2670ffa2f676dff0ee",
-      "issue": 1230,
-      "message": {
-        "kind": "admitted",
-        "issue": 1230,
-        "at": 1793715238615,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c04e7b168f89c13f1fafd6191a43136099b26c51",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261103T135249481-ae45ebf7",
-          "name": "Тесты для задачи #1230 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261103T135249481-ae45ebf7/report.json",
-          "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
-          "status": "passed",
-          "finishedAt": "2026-11-03T13:53:33.230Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:2:s6-complete": {
-      "digest": "b478346883d56aa6690ba34b423ce8a1005773b6b7c18e90e5bff2888775d5e4",
-      "issue": 1230,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1230,
-        "at": 1793715333245,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T141448489-56579c6a",
-          "name": "Тесты для задачи #1230 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261103T141448489-56579c6a/report.json",
-          "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:15:32.047Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
