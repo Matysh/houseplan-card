@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1722,
+  "revision": 1723,
   "nextTicket": 113,
   "nextFence": 112,
   "tasks": {
@@ -2074,161 +2074,25 @@
     },
     "1237": {
       "issue": 1237,
+      "branch": "codex/1237-native-grid-provenance",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1237-native-grid-provenance",
-      "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 111,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793716265561,
-      "reviewEntry": 2,
-      "patchId": "9a9c0f509c760b03750fd5a825312ab3e4df6c60",
-      "changedFiles": [
-        "demo/smoke_native_grid_draw.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1237.json",
-        "src/graph-draw-binding.ts",
-        "src/houseplan-editor-runtime.ts",
-        "test/native-grid-draw.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793716025327,
-        "entry": 1,
-        "detail": "Браузер: native grid draw: failed",
-        "eventId": "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237"
-      },
-      "s6": {
-        "id": "20261103T144244620-79065380",
-        "name": "Тесты для задачи #1237 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1098-editor-gesture-20261028/.git/process-next/runs/20261103T144244620-79065380/report.json",
-        "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:43:20.900Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+      "mergedSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
+      "mergedAt": 1793717361936,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1237:2:9a9c0f509c760b03750fd5a825312ab3e4df6c60:d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-      "reviewMaterial": {
-        "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-        "expectedBase": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "patchId": "9a9c0f509c760b03750fd5a825312ab3e4df6c60"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1237,
-        "requestId": "review:1237:2:9a9c0f509c760b03750fd5a825312ab3e4df6c60:d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "kind": "code",
-        "base": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-        "patchId": "9a9c0f509c760b03750fd5a825312ab3e4df6c60",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1237,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1237",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Передача явного target использует уже существующий `independent {node,p}` intent, без нового wire/schema или глобального округления. Только результат нативного grid producer получает целочисленные индексы; endpoint/line snap сохраняет прежние именованные refs. Near-axis доводка заимствует точную координату известного якоря (в том числе rational), прочая off-grid координата остаётся исходной. Воспроизводитель на прежнем test-build: native54/95 не имел exact происхождения (FAIL), контроль authored off-grid сохранил точный q (PASS). Добавлены адресные runtime/kernel проверки и настоящий browser Draw L-цепочки с записью наблюдаемого wire, Undo/Redo и reload. Синтетический wire не выдаётся за долговечность реального HA; реальный first-space/export journey нужен перед бетой (#1225). S6 на допущенном/rebased SHA выполняет finish; результаты публикует координатор. Риски: происхождение после near-axis и временное хранение начала цепочки, отсутствие округления неавторских rational и стабильные ID истории. Альтернатива глобального tolerance в authoredPoint отвергнута: она меняла бы imported/off-grid данные без доказательства выбора сетки."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление решает именно ту ошибку, что описана в #1237, и делает это узко. Когда Draw выбирает точку только по сетке, без привязки к узлу или ребру, координаты больше не проходят через float-деление на 1000 с последующим распознаванием lattice через точное совпадение IEEE. Индекс восстанавливается из выхода `_snapDrawPoint` и передаётся в уже существующий intent `independent {node,p}`. Поэтому зафиксированный случай `(225.00000000000003, 395.83333333333337)` теперь сохраняется как `[\"l\",\"54\",\"95\"]`. Импортированные и произвольные off-grid точки по-прежнему идут через прежний `authoredPoint`, поэтому глобального округления нет. Привязки к узлу, ребру и пересечению оставляют свои именованные refs. Near-axis доводка берёт точную координату якоря цепочки. Блокеров не нашёл. Остались две необязательные доработки:\n1. Индекс сетки принимается только при равенстве `index*pitch===snapped`. Но `snapToGrid` сам возвращает исходное `v`, если оно ближе `pitch*1e-9` к узлу. Такой выбор сетки снова сохранится как q.\n2. Если у последнего сегмента цепочки нет `toPoint`, якорем становится начало цепочки, хотя должен быть последний узел. По моему разбору это состояние сейчас практически недостижимо.\nДля реального HA journey (#1225) нужен отдельный прогон: автор честно указал, что синтетический wire в smoke его не заменяет.",
-          "understanding": "Проблема. Нативная точка сетки появляется в `_snapDrawPoint` → `_snap` → `snapToGrid` как `k*(1000/240)` в render-координатах, например 225.00000000000003. Затем `_markupClick` делит её на `NORM_W`, и `graph-edit-intent.authoredPoint` признаёт lattice только тогда, когда `toNumber(k/240)` побитово равно входу. Но 0.22500000000000003 ≠ 0.225, поэтому узел сохранялся как float-derived q.\n\nПосле изменения:\n1. `_resolvePlanDrawPoint` (`houseplan-editor-runtime.ts:1692-1705`) вычисляет `authoredPoint`. Это делается, только если нет живого кандидата привязки (`effectiveCandidate`). Сеточный `snapped` передаётся, лишь если кандидата не было совсем (`!candidate`). Если кандидата сняла near-axis доводка, разрешено только заимствовать координату якоря.\n2. `graphDrawGridPoint` (`graph-draw-binding.ts:39-53`) проходит по осям. Если ось осталась равна выходу сетки и `index*pitch` побитово восстанавливает `snapped`, ставится `exact(index,240)`. Если ось совпала с координатой якоря в render-пространстве, берётся точная координата якоря, в том числе rational. Иначе остаётся прежний `authoredPoint`. Результат возвращается, только если хотя бы одна ось действительно сохранила происхождение.\n3. `_markupClick` (`2645-2649`) создаёт `independent`-target со случайным ID узла. Это происходит, только если `_drawTarget` ничего не вернул и Ctrl-замыкание не подменило точку.\n4. Якорь хранится без поиска по графу: `_chainStartPoint` задаётся при первом клике через `graphDrawTargetPoint` для existing-node, on-edge и intersection, с учётом legacy baseline; у каждого созданного ребра в `_drawEdgeNodes` хранится `toPoint`.\n5. В `partitionPlan` (`graph-edit-intent.ts:264`) explicit independent превращается в `addNode` с точным p. Новой схемы и wire нет.\n\nРазобранные пути: первый клик цепочки; второй и последующие (`from` = `existing-node previous.to`); замыкание через `first.from`; Ctrl-замыкание; Undo/Redo внутри цепочки (`_undoActiveWallPoint`, `_redoGeometry`: записи `_drawEdgeNodes` не удаляются, поэтому redo находит `toPoint`); hover через `_markupMove`; legacy-коммит (`_commitPhysicalGeometry` и `legacyPartitionTargets` пропускают endpointRefs для нового id); применение `create-node` в ядре (`plan-graph.ts:381-384`, без слияния по позиции).",
-          "analysis": [
-            {
-              "topic": "Происхождение выбора сетки вместо глобального допуска",
-              "assessment": "Подход верный. Решение о lattice принимается в единственном месте, где известно, что точку выбрала сетка: нет кандидата и `snapped` взят из `_snapDrawPoint`. Импортированные и off-grid данные этот путь не проходят, поэтому exact oracle не ослаблен. Отказ от tolerance в `authoredPoint` обоснован: иначе молча менялись бы произвольные rational-точки. Защиты `pitch!==1000/240`, `Number.isSafeInteger` и `index*pitch===snapped` консервативны. Например, при упоре в `clampCanvasR` точка просто вернётся к прежнему пути.",
-              "evidence": "`graph-draw-binding.ts:39-53`; `houseplan-editor-runtime.ts:1677,1700-1701`; `_gridPitch` — константа `NORM_W/GRID_N` (`houseplan-card.ts:8283-8287`); тест `#1237 grid provenance does not round an arbitrary authored off-grid endpoint` фиксирует прежний q для произвольной точки."
-            },
-            {
-              "topic": "Остаточная дыра: ветка тождества в snapToGrid",
-              "assessment": "`snapToGrid` (`logic.ts:19-23`) намеренно возвращает исходное `v`, если `|q-v| <= pitch*1e-9`. Тогда `snapped` — законный выбор сетки, но не равен `index*pitch`. Возьмём raw = 225.00000000000006: `snapped` = raw, а `54*pitch` = 225.00000000000003 ≠ raw. Сеточная ветка не срабатывает, и `authoredPoint(0.22500000000000006)` даёт q. Проблема исходной задачи воспроизводится для этого класса входов. Вероятность невелика: координата указателя должна совпасть с узлом с точностью до ~4e-9 render-единиц, а целочисленные CSS px при обычном масштабе так почти не попадают. Возможна она в «ровных» видах с погрешностью округления в `_screenToVb`. Зафиксированный случай и smoke это не затрагивают, поэтому это не блокер.",
-              "evidence": "`logic.ts:21-22` против условия `index*pitch===snapped[axis]` в `graph-draw-binding.ts:46`. Smoke дал точные 54/95, 102/95 и 102/144: это совместимо с тем, что raw был дальше 4e-9 от узла."
-            },
-            {
-              "topic": "Заимствование точной координаты якоря при near-axis",
-              "assessment": "Механизм корректен. Near-axis копирует render-координату `_path` последнего узла, а `_path` после коммита заменяется проекцией узла `to` (`2719-2721`) из того же снимка, откуда взят `toPoint`. Поэтому из равенства по оси следует, что надо взять точную координату именно этого узла, и сегмент остаётся точно осевым даже для rational-якоря. В первом сегменте `_path[0]` равен сырому `pt` (225.00000000000003), а не проекции (225). Тогда срабатывает сеточная ветка, и результат тот же. Слабое место — порядок fallback `lastEdge?.toPoint || this._chainStartPoint`. Если у последнего сегмента нет `toPoint`, якорем станет начало цепочки, а не текущая вершина. Можно сохранить неверную координату, хотя предпросмотр был верным. По разбору ядра (`create-node` не сливает узлы, `create-edge` всегда есть в operations для нового id) это состояние сейчас недостижимо.",
-              "evidence": "`houseplan-editor-runtime.ts:1692-1701`, `2709-2721`; `plan-graph.ts:381-384,441-442`; тест `#1237 near-axis retirement of an endpoint snap retains the exact chain anchor` и юнит с q-якорем `['q','1','7','2','7']`."
-            },
-            {
-              "topic": "Привязки и замыкание не изменены",
-              "assessment": "`_drawTarget` вызывается первым, и independent-target создаётся только при его отсутствии. При живом кандидате `authoredPoint` не вычисляется вообще. Кандидат, снятый near-axis, не выдаётся за выбор сетки: `snapped` не передаётся. При Ctrl-замыкании `pt` отличается от `resolved.point`, поэтому guard не даёт применить чужую точку, а target и так равен `first.from`.",
-              "evidence": "`houseplan-editor-runtime.ts:1700`, `2645-2649`, `2683-2685`."
-            },
-            {
-              "topic": "ID, история, reload",
-              "assessment": "Узел получает случайный UUID через `allocated('node',undefined)`. Раньше ID тоже зависел от случайного id перегородки, так что стабильность не ухудшилась. Undo/Redo восстанавливают снимки, а не переигрывают intent. Это подтверждает smoke: после redo граф побайтово совпадает с исходным. Если первый сегмент откатили, повторное использование `_chainStartTarget` безопасно: `addNode` создаёт тот же ID заново или переиспользует его при совпадении точки.",
-              "evidence": "`graph-draw-binding.ts:6-15,54-56`; `graph-edit-intent.ts:81-85,264`; `demo/smoke_native_grid_draw.mjs` (`redoExactIdsAndPoints`, `reloadExact`, `serializedPreparationExact`)."
-            },
-            {
-              "topic": "Проверки",
-              "assessment": "Набор адекватен изменению. Юнит-тесты покрывают witness 54/95, отрицательные и большие индексы, near-axis со снятым кандидатом, q-якорь и неизменность off-grid. Browser smoke проходит настоящий Draw с hit-test без force, проверяет lattice в каждой записи wire, Undo, Redo, reload и сериализацию. Первый провал S6 был в самом smoke (mode-transition, селекторы), продукт тогда не менялся. Объяснение правдоподобно и совпадает с текущим кодом smoke.",
-              "evidence": "`test/native-grid-draw.test.mjs`; `demo/smoke_native_grid_draw.mjs:38-56`; квитанция S6 `20261103T144244620-79065380` (passed, материал d3db9729)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Получать индекс от самого источника сетки, а не восстанавливать его по float. Вариант 1: `_snapDrawPoint`/`_snap` возвращает индексы вместе с точкой. Вариант 2: в `graphDrawGridPoint` принимать `Math.abs(index*pitch - snapped) <= pitch*1e-9` — тот же допуск, что у `snapToGrid`. Это допуск самого источника сетки, а не глобальный: импортированные точки этот путь не проходят. Так закрывается случай, когда `snapToGrid` вернул исходное `v` около узла (см. analysis). Цена: точка сохранится на расстоянии ≤4e-9 от предпросмотра, но `_path` и так заменяется проекцией узла после коммита. Полезен юнит-тест: raw = `54*pitch` ± 1 ulp.",
-            "Брать `_chainStartPoint` как якорь только для пустой цепочки: `chainIds.length ? lastEdge?.toPoint : this._chainStartPoint ?? …`. Если у непустой цепочки нет `toPoint`, честнее остаться без якоря и вернуться к прежнему `authoredPoint`, чем заимствовать координату чужой вершины. Изменение в одну строку, а молчаливо неверный узел станет невозможен, даже если ядро или коммит позже начнут сливать узлы.",
-            "Мелочь: в обоих CHANGELOG новая строка вставлена до пустой строки внутри секции «Unreleased» и делит её на две группы. Стоит выровнять по соседним записям."
-          ],
-          "boundaries": "Ревью проведено по исходникам на head d3db9729: `graph-draw-binding.ts` целиком; `_resolvePlanDrawPoint`, `_snapDrawPoint`/`_snap`, `_markupClick`, `_commitPhysicalGeometry`, `_undoGeometry`/`_redoGeometry`, `_markupMove` в runtime; `_undoActiveWallPoint` в `houseplan-card.ts`; `snapToGrid`, `snapNearAxisEndpoint`; `partitionPlan`/`legacyPartitionTargets`/`addNode` в `graph-edit-intent.ts`; применение `create-node`/`create-edge` в `plan-graph.ts`. Тесты, smoke и сборку не запускал. Использовал квитанцию S6 `20261103T144244620-79065380` (passed) и описание адресных прогонов в комментариях задачи (критические 151/151, Node 43/43, native smoke 7/7); сами логи не видел. Реальный HA first-space/export journey (#1225) и фактический wire HA websocket не проверялись ни автором, ни мной. Утверждение о сохранности в реальном HA остаётся непроверенным до прогона #1225. Достижимость дыры в ветке тождества `snapToGrid` при реальном вводе указателя оценена рассуждением, а не измерением."
-        },
-        "usage": {
-          "input_tokens": 52,
-          "cache_creation_input_tokens": 119087,
-          "cache_read_input_tokens": 1777444,
-          "output_tokens": 24701,
-          "output_tokens_details": {
-            "thinking_tokens": 16143
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 119087,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 881,
-              "cache_read_input_tokens": 104968,
-              "cache_creation_input_tokens": 18323,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 18323
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает именно ту ошибку, что описана в #1237, и делает это узко. Когда Draw выбирает точку только по сетке, без привязки к узлу или ребру, координаты больше не проходят через float-деление на 1000 с последующим распознаванием lattice через точное совпадение IEEE. Индекс восстанавливается из выхода `_snapDrawPoint` и передаётся в уже существующий intent `independent {node,p}`. Поэтому зафиксированный случай `(225.00000000000003, 395.83333333333337)` теперь сохраняется как `[\"l\",\"54\",\"95\"]`. Импортированные и произвольные off-grid точки по-прежнему идут через прежний `authoredPoint`, поэтому глобального округления нет. Привязки к узлу, ребру и пересечению оставляют свои именованные refs. Near-axis доводка берёт точную координату якоря цепочки. Блокеров не нашёл. Остались две необязательные доработки:\n1. Индекс сетки принимается только при равенстве `index*pitch===snapped`. Но `snapToGrid` сам возвращает исходное `v`, если оно ближе `pitch*1e-9` к узлу. Такой выбор сетки снова сохранится как q.\n2. Если у последнего сегмента цепочки нет `toPoint`, якорем становится начало цепочки, хотя должен быть последний узел. По моему разбору это состояние сейчас практически недостижимо.\nДля реального HA journey (#1225) нужен отдельный прогон: автор честно указал, что синтетический wire в smoke его не заменяет.\n\n## Понимание решения\n\nПроблема. Нативная точка сетки появляется в `_snapDrawPoint` → `_snap` → `snapToGrid` как `k*(1000/240)` в render-координатах, например 225.00000000000003. Затем `_markupClick` делит её на `NORM_W`, и `graph-edit-intent.authoredPoint` признаёт lattice только тогда, когда `toNumber(k/240)` побитово равно входу. Но 0.22500000000000003 ≠ 0.225, поэтому узел сохранялся как float-derived q.\n\nПосле изменения:\n1. `_resolvePlanDrawPoint` (`houseplan-editor-runtime.ts:1692-1705`) вычисляет `authoredPoint`. Это делается, только если нет живого кандидата привязки (`effectiveCandidate`). Сеточный `snapped` передаётся, лишь если кандидата не было совсем (`!candidate`). Если кандидата сняла near-axis доводка, разрешено только заимствовать координату якоря.\n2. `graphDrawGridPoint` (`graph-draw-binding.ts:39-53`) проходит по осям. Если ось осталась равна выходу сетки и `index*pitch` побитово восстанавливает `snapped`, ставится `exact(index,240)`. Если ось совпала с координатой якоря в render-пространстве, берётся точная координата якоря, в том числе rational. Иначе остаётся прежний `authoredPoint`. Результат возвращается, только если хотя бы одна ось действительно сохранила происхождение.\n3. `_markupClick` (`2645-2649`) создаёт `independent`-target со случайным ID узла. Это происходит, только если `_drawTarget` ничего не вернул и Ctrl-замыкание не подменило точку.\n4. Якорь хранится без поиска по графу: `_chainStartPoint` задаётся при первом клике через `graphDrawTargetPoint` для existing-node, on-edge и intersection, с учётом legacy baseline; у каждого созданного ребра в `_drawEdgeNodes` хранится `toPoint`.\n5. В `partitionPlan` (`graph-edit-intent.ts:264`) explicit independent превращается в `addNode` с точным p. Новой схемы и wire нет.\n\nРазобранные пути: первый клик цепочки; второй и последующие (`from` = `existing-node previous.to`); замыкание через `first.from`; Ctrl-замыкание; Undo/Redo внутри цепочки (`_undoActiveWallPoint`, `_redoGeometry`: записи `_drawEdgeNodes` не удаляются, поэтому redo находит `toPoint`); hover через `_markupMove`; legacy-коммит (`_commitPhysicalGeometry` и `legacyPartitionTargets` пропускают endpointRefs для нового id); применение `create-node` в ядре (`plan-graph.ts:381-384`, без слияния по позиции).\n\n## Разбор решения\n\n### Происхождение выбора сетки вместо глобального допуска\n\nПодход верный. Решение о lattice принимается в единственном месте, где известно, что точку выбрала сетка: нет кандидата и `snapped` взят из `_snapDrawPoint`. Импортированные и off-grid данные этот путь не проходят, поэтому exact oracle не ослаблен. Отказ от tolerance в `authoredPoint` обоснован: иначе молча менялись бы произвольные rational-точки. Защиты `pitch!==1000/240`, `Number.isSafeInteger` и `index*pitch===snapped` консервативны. Например, при упоре в `clampCanvasR` точка просто вернётся к прежнему пути.\n\nОснование: `graph-draw-binding.ts:39-53`; `houseplan-editor-runtime.ts:1677,1700-1701`; `_gridPitch` — константа `NORM_W/GRID_N` (`houseplan-card.ts:8283-8287`); тест `#1237 grid provenance does not round an arbitrary authored off-grid endpoint` фиксирует прежний q для произвольной точки.\n\n### Остаточная дыра: ветка тождества в snapToGrid\n\n`snapToGrid` (`logic.ts:19-23`) намеренно возвращает исходное `v`, если `|q-v| <= pitch*1e-9`. Тогда `snapped` — законный выбор сетки, но не равен `index*pitch`. Возьмём raw = 225.00000000000006: `snapped` = raw, а `54*pitch` = 225.00000000000003 ≠ raw. Сеточная ветка не срабатывает, и `authoredPoint(0.22500000000000006)` даёт q. Проблема исходной задачи воспроизводится для этого класса входов. Вероятность невелика: координата указателя должна совпасть с узлом с точностью до ~4e-9 render-единиц, а целочисленные CSS px при обычном масштабе так почти не попадают. Возможна она в «ровных» видах с погрешностью округления в `_screenToVb`. Зафиксированный случай и smoke это не затрагивают, поэтому это не блокер.\n\nОснование: `logic.ts:21-22` против условия `index*pitch===snapped[axis]` в `graph-draw-binding.ts:46`. Smoke дал точные 54/95, 102/95 и 102/144: это совместимо с тем, что raw был дальше 4e-9 от узла.\n\n### Заимствование точной координаты якоря при near-axis\n\nМеханизм корректен. Near-axis копирует render-координату `_path` последнего узла, а `_path` после коммита заменяется проекцией узла `to` (`2719-2721`) из того же снимка, откуда взят `toPoint`. Поэтому из равенства по оси следует, что надо взять точную координату именно этого узла, и сегмент остаётся точно осевым даже для rational-якоря. В первом сегменте `_path[0]` равен сырому `pt` (225.00000000000003), а не проекции (225). Тогда срабатывает сеточная ветка, и результат тот же. Слабое место — порядок fallback `lastEdge?.toPoint || this._chainStartPoint`. Если у последнего сегмента нет `toPoint`, якорем станет начало цепочки, а не текущая вершина. Можно сохранить неверную координату, хотя предпросмотр был верным. По разбору ядра (`create-node` не сливает узлы, `create-edge` всегда есть в operations для нового id) это состояние сейчас недостижимо.\n\nОснование: `houseplan-editor-runtime.ts:1692-1701`, `2709-2721`; `plan-graph.ts:381-384,441-442`; тест `#1237 near-axis retirement of an endpoint snap retains the exact chain anchor` и юнит с q-якорем `['q','1','7','2','7']`.\n\n### Привязки и замыкание не изменены\n\n`_drawTarget` вызывается первым, и independent-target создаётся только при его отсутствии. При живом кандидате `authoredPoint` не вычисляется вообще. Кандидат, снятый near-axis, не выдаётся за выбор сетки: `snapped` не передаётся. При Ctrl-замыкании `pt` отличается от `resolved.point`, поэтому guard не даёт применить чужую точку, а target и так равен `first.from`.\n\nОснование: `houseplan-editor-runtime.ts:1700`, `2645-2649`, `2683-2685`.\n\n### ID, история, reload\n\nУзел получает случайный UUID через `allocated('node',undefined)`. Раньше ID тоже зависел от случайного id перегородки, так что стабильность не ухудшилась. Undo/Redo восстанавливают снимки, а не переигрывают intent. Это подтверждает smoke: после redo граф побайтово совпадает с исходным. Если первый сегмент откатили, повторное использование `_chainStartTarget` безопасно: `addNode` создаёт тот же ID заново или переиспользует его при совпадении точки.\n\nОснование: `graph-draw-binding.ts:6-15,54-56`; `graph-edit-intent.ts:81-85,264`; `demo/smoke_native_grid_draw.mjs` (`redoExactIdsAndPoints`, `reloadExact`, `serializedPreparationExact`).\n\n### Проверки\n\nНабор адекватен изменению. Юнит-тесты покрывают witness 54/95, отрицательные и большие индексы, near-axis со снятым кандидатом, q-якорь и неизменность off-grid. Browser smoke проходит настоящий Draw с hit-test без force, проверяет lattice в каждой записи wire, Undo, Redo, reload и сериализацию. Первый провал S6 был в самом smoke (mode-transition, селекторы), продукт тогда не менялся. Объяснение правдоподобно и совпадает с текущим кодом smoke.\n\nОснование: `test/native-grid-draw.test.mjs`; `demo/smoke_native_grid_draw.mjs:38-56`; квитанция S6 `20261103T144244620-79065380` (passed, материал d3db9729).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Получать индекс от самого источника сетки, а не восстанавливать его по float. Вариант 1: `_snapDrawPoint`/`_snap` возвращает индексы вместе с точкой. Вариант 2: в `graphDrawGridPoint` принимать `Math.abs(index*pitch - snapped) <= pitch*1e-9` — тот же допуск, что у `snapToGrid`. Это допуск самого источника сетки, а не глобальный: импортированные точки этот путь не проходят. Так закрывается случай, когда `snapToGrid` вернул исходное `v` около узла (см. analysis). Цена: точка сохранится на расстоянии ≤4e-9 от предпросмотра, но `_path` и так заменяется проекцией узла после коммита. Полезен юнит-тест: raw = `54*pitch` ± 1 ulp.\n- Брать `_chainStartPoint` как якорь только для пустой цепочки: `chainIds.length ? lastEdge?.toPoint : this._chainStartPoint ?? …`. Если у непустой цепочки нет `toPoint`, честнее остаться без якоря и вернуться к прежнему `authoredPoint`, чем заимствовать координату чужой вершины. Изменение в одну строку, а молчаливо неверный узел станет невозможен, даже если ядро или коммит позже начнут сливать узлы.\n- Мелочь: в обоих CHANGELOG новая строка вставлена до пустой строки внутри секции «Unreleased» и делит её на две группы. Стоит выровнять по соседним записям.\n\n## Границы анализа\n\nРевью проведено по исходникам на head d3db9729: `graph-draw-binding.ts` целиком; `_resolvePlanDrawPoint`, `_snapDrawPoint`/`_snap`, `_markupClick`, `_commitPhysicalGeometry`, `_undoGeometry`/`_redoGeometry`, `_markupMove` в runtime; `_undoActiveWallPoint` в `houseplan-card.ts`; `snapToGrid`, `snapNearAxisEndpoint`; `partitionPlan`/`legacyPartitionTargets`/`addNode` в `graph-edit-intent.ts`; применение `create-node`/`create-edge` в `plan-graph.ts`. Тесты, smoke и сборку не запускал. Использовал квитанцию S6 `20261103T144244620-79065380` (passed) и описание адресных прогонов в комментариях задачи (критические 151/151, Node 43/43, native smoke 7/7); сами логи не видел. Реальный HA first-space/export journey (#1225) и фактический wire HA websocket не проверялись ни автором, ни мной. Утверждение о сохранности в реальном HA остаётся непроверенным до прогона #1225. Достижимость дыры в ветке тождества `snapToGrid` при реальном вводе указателя оценена рассуждением, а не измерением.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: d92890e9d0ff2f48a44f19a10097c886a712e9b7 → d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1237, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПередача явного target использует уже существующий `independent {node,p}` intent, без нового wire/schema или глобального округления. Только результат нативного grid producer получает целочисленные индексы; endpoint/line snap сохраняет прежние именованные refs. Near-axis доводка заимствует точную координату известного якоря (в том числе rational), прочая off-grid координата остаётся исходной. Воспроизводитель на прежнем test-build: native54/95 не имел exact происхождения (FAIL), контроль authored off-grid сохранил точный q (PASS). Добавлены адресные runtime/kernel проверки и настоящий browser Draw L-цепочки с записью наблюдаемого wire, Undo/Redo и reload. Синтетический wire не выдаётся за долговечность реального HA; реальный first-space/export journey нужен перед бетой (#1225). S6 на допущенном/rebased SHA выполняет finish; результаты публикует координатор. Риски: происхождение после near-axis и временное хранение начала цепочки, отсутствие округления неавторских rational и стабильные ID истории. Альтернатива глобального tolerance в authoredPoint отвергнута: она меняла бы imported/off-grid данные без доказательства выбора сетки.\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T14:48:59.932Z",
-        "artifactId": 13240187393,
-        "runId": 41656528239,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T14:43:45Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41656528239",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "d92890e9d0ff2f48a44f19a10097c886a712e9b7"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1238": {
@@ -2395,19 +2259,7 @@
   "waiting": [
     1238
   ],
-  "active": {
-    "issue": 1237,
-    "worker": "finish",
-    "token": "111:finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:2:admit",
-    "fence": 111,
-    "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-    "expectedBase": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793716948823,
-    "expiresAt": 1793720953898,
-    "patchId": "9a9c0f509c760b03750fd5a825312ab3e4df6c60",
-    "reviewRequest": "review:1237:2:9a9c0f509c760b03750fd5a825312ab3e4df6c60:d92890e9d0ff2f48a44f19a10097c886a712e9b7"
-  },
+  "active": null,
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
       "digest": "b770af57ca91d84c4e9ed1e8d894f3dbb2a5fd935a2df8aa81fc86383045eb97",
@@ -2457,73 +2309,13 @@
       "digest": "b66bb19aba5cc063b10bbab54a0721f7f32b9338c6c68a220948bb4bd0500670",
       "issue": 1238
     },
-    "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:1:synchronized": {
-      "digest": "34843347f8156214cde4c3080b3ea0a6ab00513bc5d04006ccd7dc743dddf592",
-      "issue": 1237
-    },
     "github:41653597516:1:completions:report:970efd762e3adc51623ae7a63460de6803f8d1a0ea6a52297eca0c3e12f9235e": {
       "digest": "c4c03fe494824fc068f48afdb483fa0699523937e60c2fa458a56131bb882ddb",
       "issue": 1238
     },
-    "github:41653597516:1:completions:message:039be4b084c3b57051d7c14fbbc1a484dfb294917ab1858267ac0f651d9f2be3": {
-      "digest": "16195cc6db2d7b18d6adcc94402da8a53d0c91041b99cd35713eda11acebc170",
-      "issue": 1237
-    },
     "github:41653597516:1:completions:metadata:8ddd8228-2f51-47c7-a778-f956a40f410b:task-notice:1238::": {
       "digest": "4e2dbcf939af5d98eafa0659f564b6589eb4038852834b86bb1c9fa8d4428a2b",
       "issue": 1238
-    },
-    "finish:44eb71ae-f2ba-4e87-9d93-320fa94ec642": {
-      "digest": "df5a23b50b69bc5dafe05cda2921471331b9358bbef7e3b645147ab03a737a78",
-      "issue": 1237
-    },
-    "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return": {
-      "digest": "256a5accb9977e4d1fa5ceb6b728fde45e9574f97567f47a34c6312050d2da13",
-      "issue": 1237
-    },
-    "github:41653599639:1:completions:notice:bb00588bb4ef72dcd44c1fd46209a3b117c84248df138ea13f67ee6ccad633e8": {
-      "digest": "24b5097c8984a2971b0396590f79b819db0532ee552bff92d4856e610f97d705",
-      "issue": 1237
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:3:synchronized": {
-      "digest": "7d192162d8e5106ec33ad97cbbd9ee5e384f6dd2723eb784d1d231520ea103db",
-      "issue": 1237
-    },
-    "github:41656268211:1:completions:message:2516e2c59fea28a74f2156abc008bb97f190605b5cb6125eeb0833d2830ff32a": {
-      "digest": "52fe45dd9602e4464a98d7fbf3865738cad7666f95425bfcafa647c56337dd03",
-      "issue": 1237
-    },
-    "finish:d05723c6-d6dd-4271-9dde-8a343cec0762": {
-      "digest": "185bf56eb461778a8a391bfcdb4b0e4cb59c9446d0aabb84c018c7005332968d",
-      "issue": 1237
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:4:s6-label": {
-      "digest": "4d58e73d2cc00ba2c12bce811b1d62371eb9db2bc6a280283886cca1b9be2356",
-      "issue": 1237
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:5:review-requested": {
-      "digest": "7d65d9658fabc6eb0053710a41373cf22d87b7f75f4adbfbbad892dfd40a69e8",
-      "issue": 1237
-    },
-    "github:41656270652:1:completions:message:dea460f7df437d7960036e1b885457a9bc6e98c640434d7a0a394c17433eae6f": {
-      "digest": "ed4165caf71e95bde86ebb843121d841e0be541454adb81678c410120fb74262",
-      "issue": 1237
-    },
-    "dev-build:41656268211:1:webhook": {
-      "digest": "f00748432d7d0596a75b1431d2aba83647eb5b6cf62cadfe1bbebe82524af744",
-      "issue": 1237
-    },
-    "dev-build:41656268211:1:webhook:6ae491e4-272d-4e0e-bdc6-b536c90a4699:delivered": {
-      "digest": "8b10cfdf83def0b2ab957b4a52c211b02b90133c6b11d58c1494c92c5728de53",
-      "issue": 1237
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:10:review-presentation": {
-      "digest": "d55981fc02152a0bcec6a2a21929060a86b653807e0dae8690fafe85342f8513",
-      "issue": 1237
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:10:review-complete": {
-      "digest": "9f31394203d599702ae360c39a7497e1d3e91b32e455b53182913d0263ab599b",
-      "issue": 1237
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
@@ -2536,20 +2328,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
-        "delivered": true
-      }
-    },
-    "finish:64e90297-ded8-47d7-a66f-82f934c27465": {
-      "digest": "cc5eaf2f57692c79e8f22f08308f7be00c368d2cc776c1ddac7eccebd9ef2f22",
-      "issue": 1237,
-      "message": {
-        "kind": "queued",
-        "issue": 1237,
-        "at": 1793714995417,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
         "delivered": true
       }
     },
@@ -2595,56 +2373,6 @@
         "delivered": true
       }
     },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:1:admit": {
-      "digest": "b7d1b597e3f5da90df597065b270165d9a18a4e5a9634e9b9d0626360aae64ee",
-      "issue": 1237,
-      "message": {
-        "kind": "admitted",
-        "issue": 1237,
-        "at": 1793715959393,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237": {
-      "digest": "256a5accb9977e4d1fa5ceb6b728fde45e9574f97567f47a34c6312050d2da13",
-      "issue": 1237,
-      "message": {
-        "kind": "return",
-        "issue": 1237,
-        "at": 1793716025327,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793716025327,
-          "entry": 1,
-          "detail": "Браузер: native grid draw: failed",
-          "eventId": "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237"
-        },
-        "delivered": true
-      }
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc": {
-      "digest": "42151cb7dcb8bfc0a92c77b45d31b7c5959c36ac60c2885056af1770c2a08363",
-      "issue": 1237,
-      "message": {
-        "kind": "queued",
-        "issue": 1237,
-        "at": 1793716265561,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03",
-        "delivered": true
-      }
-    },
     "finish:51e821db-f42f-4878-a8b1-7398cf87a34f": {
       "digest": "931d6859f9d0f1b1e3b5bdf4310adf379246c2214879dfd3992a945d17e4a036",
       "issue": 1238,
@@ -2665,48 +2393,6 @@
           "finishedAt": "2026-11-03T14:21:04.052Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:2:admit": {
-      "digest": "8115c1e0cbdf4426ddb61132cb98b07956e902cb60e1b6407630140df8a9c074",
-      "issue": 1237,
-      "message": {
-        "kind": "admitted",
-        "issue": 1237,
-        "at": 1793716948823,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:4:s6-complete": {
-      "digest": "a500eba358f288d5863ec6ab786abb1deef5f4381315258149671a03dd9dbc33",
-      "issue": 1237,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1237,
-        "at": 1793717003031,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T144244620-79065380",
-          "name": "Тесты для задачи #1237 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1098-editor-gesture-20261028/.git/process-next/runs/20261103T144244620-79065380/report.json",
-          "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:43:20.900Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
