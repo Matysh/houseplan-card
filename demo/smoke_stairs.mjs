@@ -269,19 +269,22 @@ const out = await page.evaluate(async () => {
   pointer(stage(), 'pointermove', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   pointer(stage(), 'pointerup', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   await settled();
-  const moved = stairs().find((stair) => stair.id === straight.id);
+  await writesIdle();
+  const moved = structuredClone(stairs().find((stair) => stair.id === straight.id));
   result.moveUsesContinuousTransform = !!moved
     && (!closeTo(moved.x, start.x) || !closeTo(moved.y, start.y));
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
-  const undone = stairs().find((stair) => stair.id === straight.id);
+  await writesIdle();
+  const undone = structuredClone(stairs().find((stair) => stair.id === straight.id));
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
-  const redone = stairs().find((stair) => stair.id === straight.id);
+  await writesIdle();
+  const redone = structuredClone(stairs().find((stair) => stair.id === straight.id));
   result.moveUndoRedo = !!undone && !!redone
     && closeTo(undone.x, start.x) && closeTo(undone.y, start.y)
     && closeTo(redone.x, moved.x) && closeTo(redone.y, moved.y);
@@ -708,6 +711,9 @@ const focusProbe = await page.evaluate(async () => {
   await hp.setVolumetricView(false);
   await hp.switchSpace('f1');
   await hp.setMode('view');
+  // The keyboard pixel witness starts after the native JS camera transition.
+  for(let guard=0;card._cameraTransition?.active&&guard<120;guard++)await new Promise(resolve=>requestAnimationFrame(resolve));
+  if(card._cameraTransition?.active)throw Error('Stair focus witness camera did not settle');
   await hp.settled();
   const node = card.renderRoot.querySelector('[data-hp="stair"][data-target-state="active"]');
   const rect = node?.getBoundingClientRect();

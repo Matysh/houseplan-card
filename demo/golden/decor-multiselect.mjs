@@ -16,7 +16,16 @@ export async function prepareDecorMultiselect(page,scenario) {
     if(index)await page.keyboard.down('Control');
     if(scenario?.decorGroupStyle){
       const point=await target.evaluate(el=>{
-        const p=el.getPointAtLength(el.getTotalLength()*.25).matrixTransform(el.getScreenCTM());return {x:p.x,y:p.y};
+        const root=el.getRootNode(),stage=root.querySelector('.stage').getBoundingClientRect();
+        // The Properties panel can cover a path's historical quarter point.
+        // Choose a genuinely exposed SVG hit; never click through the panel.
+        for(let index=0;index<64;index++){
+          const p=el.getPointAtLength(el.getTotalLength()*(index+.5)/64).matrixTransform(el.getScreenCTM());
+          if(p.x<stage.left||p.x>=stage.right||p.y<stage.top||p.y>=stage.bottom)continue;
+          const hit=root.elementsFromPoint(p.x,p.y)[0];
+          if(hit===el||hit?.closest('[data-hp="decor"]')?.getAttribute('data-id')===el.getAttribute('data-id'))return {x:p.x,y:p.y};
+        }
+        throw Error('No exposed furniture hit target for '+el.getAttribute('data-id'));
       });
       await page.mouse.click(point.x,point.y);
     }else await target.click();
@@ -36,6 +45,14 @@ export async function prepareDecorMultiselect(page,scenario) {
         &&paths.length===2&&paths.every(p=>p.getAttribute('stroke')==='#ca24ef')
         &&paths[0].getAttribute('stroke-opacity')==='0.3'&&paths[1].getAttribute('stroke-opacity')==='0.8'
         &&!c._writesPending&&!c._editorRuntime.properties.fields.draft;
+    }).catch(async error => {
+      const diagnostic=await page.evaluate(async()=>{
+        const c=window.__goldenCard,config=(await c.hass.callWS({type:'houseplan/config/get'})).config;
+        return {decor:config.spaces.find(s=>s.id===c._space)?.decor,
+          paths:[...c.renderRoot.querySelectorAll('.decorlayer path.dshape[data-kind="furniture"][stroke]')].map(p=>({stroke:p.getAttribute('stroke'),opacity:p.getAttribute('stroke-opacity')})),
+          writesPending:c._writesPending,draft:c._editorRuntime.properties.fields.draft};
+      });
+      error.message+='; decor group style readback: '+JSON.stringify(diagnostic);throw error;
     });
   }
   await page.mouse.move(4,4);
