@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1440,
-  "nextTicket": 98,
+  "revision": 1441,
+  "nextTicket": 99,
   "nextFence": 98,
   "tasks": {
     "1126": {
@@ -1734,6 +1734,20 @@
         "status": "published",
         "sourceSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e"
       }
+    },
+    "1229": {
+      "issue": 1229,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1229-optimize-diagnostics",
+      "materialSha": "938aaded6e44786cd821456d1113916d9bf35bb6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 98,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793713683162,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1838,9 +1852,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1229
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:141cb551-82bd-4b7d-86c3-93b020d2a1f9": {
+      "digest": "8dc0b9423fc57c98afa06b9572e8c68645521bd5df495b04ff9977026fc95304",
+      "issue": 1229,
+      "message": {
+        "kind": "queued",
+        "issue": 1229,
+        "at": 1793713683162,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "938aaded6e44786cd821456d1113916d9bf35bb6"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
     "status": "delivered",
