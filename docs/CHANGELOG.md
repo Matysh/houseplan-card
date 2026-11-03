@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep issue timelines focused on substantive verdicts and handoffs without routine queue or waiting notices. Publish corrections with resubmission and include the complete accepted code review in the merge result, preserving history, detail and actionable failures. [#1241](https://github.com/Matysh/houseplan-card/issues/1241)
+- Use one localized Weather heading when weather is the summary panel's only visible content, preserving its saved custom title. [#1243](https://github.com/Matysh/houseplan-card/issues/1243)
 
 - Localize both card-picker entries from the current HA profile, including cold registration and later language changes, using synchronous metadata without loading full lazy locales. [#1240](https://github.com/Matysh/houseplan-card/issues/1240)
 

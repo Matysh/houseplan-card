@@ -7,7 +7,8 @@ import { weatherText, weatherWindText, weatherConditionText } from './summary-we
 
 /** A separate update owner: forecasts never repaint the plan or its geometry. */
 export class HpSummaryWeather extends LitElement {
-  static properties = { hass: { attribute: false }, config: { attribute: false }, active: { type: Boolean }, language: { type: String } };
+  static properties = { hass: { attribute: false }, config: { attribute: false }, active: { type: Boolean }, language: { type: String }, showHeading: { attribute: false } };
+  showHeading = true;
   declare hass?: SummaryHass;
   declare config?: WeatherConfig;
   active = false;
@@ -57,7 +58,7 @@ export class HpSummaryWeather extends LitElement {
     const open = () => this.dispatchEvent(new CustomEvent('hass-more-info', { bubbles: true, composed: true, detail: { entityId: stateId } }));
     // An absent source has no valid HA more-info target; only existing states are clickable.
     if (status) return html`<section class="summary-block hpf-reading-block summary-weather" data-hp="weather-widget">
-      <h3 class="hpf-heading hpf-heading-section">${t('title')}</h3>
+      ${this.showHeading ? html`<h3 class="hpf-heading hpf-heading-section">${t('title')}</h3>` : nothing}
       ${state ? html`<button type="button" class="hpf-reading-action" @click=${open}>${status}</button>`
         : html`<p class="hpf-reading-empty">${status}</p>`}</section>`;
     if (!state) return nothing;
@@ -72,7 +73,7 @@ export class HpSummaryWeather extends LitElement {
     const days = weatherDays(this.forecast.forecast, new Date(), this.weatherTimeZone);
     const pair = (label: string, value: string | null) => html`<span class="hpf-reading-pair hpf-reading-pair-compact"><span>${label}</span>${value === null ? nothing : html`<strong>${value}</strong>`}</span>`;
     return html`<section class="summary-block hpf-reading-block summary-weather" data-hp="weather-widget" data-entity=${stateId}>
-      <h3 class="hpf-heading hpf-heading-section">${t('title')}</h3>
+      ${this.showHeading ? html`<h3 class="hpf-heading hpf-heading-section">${t('title')}</h3>` : nothing}
       <button type="button" class="hpf-reading-action" @click=${open} title=${`${t('more')}: ${a.friendly_name || stateId}`}>
         <span class="summary-weather-now"><ha-icon .icon=${weatherIcon(condition)} aria-hidden="true"></ha-icon>${temp === null ? nothing : html`<strong>${temp}</strong>`}<span>${label}</span></span>
         <span class="summary-weather-meta">

@@ -48,6 +48,34 @@ try {
     };
   }, { 'mdi:weather-cloudy': mdiWeatherCloudy, 'mdi:weather-partly-cloudy': mdiWeatherPartlyCloudy, 'mdi:weather-rainy': mdiWeatherRainy });
   await page.waitForFunction(() => window.__weather1174.widget()?.textContent.includes('+8°'));
+  check('#1243: one localized heading follows visible content without rewriting the saved title', await page.evaluate(async () => {
+    const f = window.__weather1174, card = f.card;
+    const refresh = async () => { card._summary.updated(); card.requestUpdate(); await f.settle(); };
+    const hidden = { id: 'other', title: 'Other', visible: true, scope: { type: 'space', space_id: 'another-space' }, values: [] };
+    for (const [lang, title] of [['ru', 'Погода'], ['en', 'Weather'], ['de', 'Wetter'], ['fr', 'Météo']]) {
+      card._config = { ...card._config, language: lang };
+      for (const narrow of [false, true]) {
+        card.narrow = narrow;
+        card._settings.summary_panel.blocks = [hidden];
+        await refresh();
+        const panel = () => f.root().querySelector('[data-hp="summary-panel"]');
+        if (panel()?.querySelector('h2')?.textContent !== title || panel()?.getAttribute('aria-label') !== title
+          || f.widget()?.querySelector('h3') || f.root().querySelector('.summary-measure h2')?.textContent !== title) return false;
+        await f.set({ 'weather.lab_home': { ...f.weather, state: 'unavailable' } });
+        if (f.widget()?.querySelector('h3') || !f.widget()?.textContent) return false;
+        await f.set({ 'weather.lab_home': undefined });
+        if (f.widget()?.querySelector('h3') || !f.widget()?.textContent) return false;
+        await f.set({ 'weather.lab_home': f.weather });
+        card._settings.summary_panel.blocks = [{ ...hidden, scope: { type: 'all' } }];
+        await refresh();
+        if (panel()?.querySelector('h2')?.textContent !== 'Обзор дома' || f.widget()?.querySelector('h3')?.textContent !== title) return false;
+        if (card._settings.summary_panel.title !== 'Обзор дома') return false;
+      }
+    }
+    card._config = { ...card._config, language: 'ru' }; card.narrow = false;
+    card._settings.summary_panel.blocks = []; await refresh();
+    return true;
+  }));
   check('weather works as the only panel content', await page.evaluate(() => {
     const f = window.__weather1174;
     return !f.root().querySelector('.summary-empty') && f.subscriptions.length === 1

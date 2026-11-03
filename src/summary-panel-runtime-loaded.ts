@@ -31,6 +31,7 @@ import { cleanFloorFingerprint, floorRecordKeyMemo } from './floor-geometry-key'
 import type { FrameRect } from './view-frame';
 import './hp-summary-weather';
 import type { HpSummaryWeather } from './hp-summary-weather';
+import { weatherText } from './summary-weather-i18n';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -302,8 +303,15 @@ export class LoadedSummaryPanelRuntime {
     });
   }
 
+  private heading(config: SummaryPanelConfig): { title: string; weatherOnly: boolean } {
+    const weatherOnly = config.weather?.enabled === true && visibleSummaryBlocks(config, this.host._space).length === 0;
+    return { weatherOnly, title: weatherOnly
+      ? weatherText(langOf(this.host.hass, this.host._config?.language), 'title') : config.title };
+  }
+
   public renderMeasure(): TemplateResult | typeof nothing {
-    const title = this.config().config?.title;
+    const config = this.config().config;
+    const title = config ? this.heading(config).title : undefined;
     if (!title || this.host._mode !== 'view') return nothing;
     return html`<div class="summary-measure hpf-reading-surface" aria-hidden="true" inert>
       <h2 class="hpf-heading hpf-heading-pane">${title}</h2><div class="summary-scroll hpf-reading-scroll"><section class="summary-block hpf-reading-block"><h3 class="hpf-heading hpf-heading-section">${this.t('summary.measure_block')}</h3>
@@ -321,14 +329,15 @@ export class LoadedSummaryPanelRuntime {
     if (!this.presentation.mounted) return nothing;
     this.ensureMetrics();
     const blocks = visibleSummaryBlocks(config, this.host._space);
+    const heading = this.heading(config);
     const stop = (event: Event) => event.stopPropagation();
-    return html`<aside class="summary-overlay hpf-reading-surface ${layout.side}" data-hp="summary-panel" aria-label=${config.title}
+    return html`<aside class="summary-overlay hpf-reading-surface ${layout.side}" data-hp="summary-panel" aria-label=${heading.title}
         data-phase=${this.presentation.phase} ?inert=${!this.presentation.interactive}
         aria-hidden=${this.presentation.interactive ? 'false' : 'true'}
         style="--summary-height-cap:${Math.floor(layout.heightCap)}px;--summary-width-cap:${Math.floor(layout.availableWidth)}px;--summary-top:${layout.top}px;--summary-bottom:${layout.bottom}px"
         @click=${stop} @dblclick=${stop} @pointerdown=${stop} @pointerup=${stop}
         @pointermove=${stop} @wheel=${stop}>
-      <h2 class="hpf-heading hpf-heading-pane">${config.title}</h2>
+      <h2 class="hpf-heading hpf-heading-pane">${heading.title}</h2>
       <div class="summary-scroll hpf-reading-scroll">
         ${blocks.length ? blocks.map((block) => html`<section class="summary-block hpf-reading-block">
           <h3 class="hpf-heading hpf-heading-section">${block.title}</h3>
@@ -345,6 +354,7 @@ export class LoadedSummaryPanelRuntime {
           }) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_block')}</div>`}
         </section>`) : config.weather?.enabled ? nothing : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_space')}</div>`}
         ${config.weather?.enabled ? html`<hp-summary-weather .hass=${this.host.hass} .config=${config.weather}
+          .showHeading=${!heading.weatherOnly}
           .language=${langOf(this.host.hass, this.host._config?.language)}
           .active=${this.presentation.interactive}></hp-summary-weather>` : nothing}
       </div>

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1243,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Remove duplicate headings for weather-only summary panels while preserving saved titles and mixed-content panels.",
+  "summary": {
+    "ru": "В сводной панели только с погодой отображается один заголовок «Погода».",
+    "en": "Weather-only summary panels display one Weather heading."
+  }
+}
