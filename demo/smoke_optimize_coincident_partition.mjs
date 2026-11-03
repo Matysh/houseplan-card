@@ -81,7 +81,7 @@ const out = await page.evaluate(async () => {
     && preview.report.partitionsReconciled === 1
     && preview.report.openingsRehosted === 1
     && preview.config.model_version === 11
-    && previewSpace.partitions == null
+    && Array.isArray(previewSpace.partitions) && previewSpace.partitions.length === 0
     && wallHostResolves(previewSpace, previewSpace.openings[0]);
   result.previewDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
@@ -90,7 +90,7 @@ const out = await page.evaluate(async () => {
   await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   const applied = card._serverCfg.spaces[0];
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
-  result.applyKeepsOpeningFields = applied.partitions == null
+  result.applyKeepsOpeningFields = Array.isArray(applied.partitions) && applied.partitions.length === 0
     && wallHostResolves(applied, applied.openings[0])
     && applied.openings[0].id === 'door'
     && applied.openings[0].contact === 'binary_sensor.test_door'
@@ -101,7 +101,7 @@ const out = await page.evaluate(async () => {
   result.applyEnablesUndo = card._canOptimizeUndo === true;
 
   await card._loadFromServer(); await card.updateComplete;
-  result.reloadKeepsCanonicalBody = card._serverCfg.spaces[0].partitions == null
+  result.reloadKeepsCanonicalBody = Array.isArray(card._serverCfg.spaces[0].partitions) && card._serverCfg.spaces[0].partitions.length === 0
     && wallHostResolves(card._serverCfg.spaces[0], card._serverCfg.spaces[0].openings[0]);
 
   await card._undoPlanOptimization(); await card.updateComplete;
@@ -124,7 +124,7 @@ const out = await page.evaluate(async () => {
   await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   result.secondApplyWasAccepted = sent.filter((type) => type === 'houseplan/plan/optimize').length === 2;
   const beforeThickness = card._serverCfg.spaces[0];
-  result.thicknessStartsOnCanonicalBody = beforeThickness.partitions == null
+  result.thicknessStartsOnCanonicalBody = Array.isArray(beforeThickness.partitions) && beforeThickness.partitions.length === 0
     && wallHostResolves(beforeThickness, beforeThickness.openings[0]);
   card._setMode('plan'); card._markup = true;
   card._modelCache = null; card.requestUpdate(); await card.updateComplete;
@@ -135,10 +135,11 @@ const out = await page.evaluate(async () => {
   card._wallThickApply(false); await card.updateComplete;
   await window.__hpTest.waitForWrites();
   const finalSpace = card._serverCfg.spaces[0];
-  result.thicknessChangesSingleBody = finalSpace.partitions == null
+  result.thicknessChangesSingleBody = Array.isArray(finalSpace.partitions) && finalSpace.partitions.length === 0
     && finalSpace.walls.length === 1 && finalSpace.walls[0].cm === 10
     && wallHostResolves(finalSpace, finalSpace.openings[0]);
   return result;
 });
 
 await finish(browser, checkAll(out));
+

@@ -83,12 +83,25 @@ const res = await page.evaluate(async () => {
   const y0 = Math.min(...poly.map((p) => p[1]));
   const y1 = Math.max(...poly.map((p) => p[1]));
   const w = 6 * g;
-  c._path = [
+  const nextPath = [
     [x1, y0], [x1 + w, y0], [x1 + w, y1], [x1, y1], [x1, y0],
   ];
-  await upd();
+  // Current Draw persists named partition edges before face promotion. A raw
+  // _path assignment bypasses those graph identities and their captured cm.
+  c._path = [];
+  await window.__hpTest.waitForWrites();
+  for (const [x, y] of nextPath) {
+    const stage = sr().querySelector('.stage'), rect = stage.getBoundingClientRect();
+    const view = c._viewOr(c._baseVb());
+    c._markupClick(new MouseEvent('click', {
+      clientX: rect.left + (x - view.x) / view.w * rect.width,
+      clientY: rect.top + (y - view.y) / view.h * rect.height,
+      bubbles: true,
+    }));
+    await c.updateComplete; await window.__hpTest.waitForWrites();
+  }
   c._nameSel = 'Neighbour';
-  c._commitRoom();
+  c._saveRoom();
   await upd();
 
   space = sp();
@@ -114,3 +127,4 @@ const res = await page.evaluate(async () => {
 
 checkAll(res);
 await finish(browser, res);
+

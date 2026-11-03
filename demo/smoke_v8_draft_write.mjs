@@ -80,7 +80,8 @@ const result = await page.evaluate(async () => {
   await reset(legacy);
   await click(500, 500); await click(700, 500); await settle();
   const migrated = card._serverCfg.spaces[0];
-  // Keep the first native writer on raw v9: inspect both its live and wire result.
+  // This stays a real v9 Draw write. Do not pre-migrate this seed: the absence
+  // of legacy room_drafts must be proved in the actual live AND wire bodies.
   out.legacyDraftMigratesOnce = card._serverCfg.model_version === 11
     && !('room_drafts' in migrated)
     && writes.length === 1 && writes[0].model_version === 11
