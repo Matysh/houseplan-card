@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1834,
+  "revision": 1835,
   "nextTicket": 118,
   "nextFence": 118,
   "tasks": {
@@ -2256,14 +2256,24 @@
       "track": "ship",
       "layer": "product",
       "branch": "issue/1248-editor-focus",
-      "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751",
+      "materialSha": "bbe484989f7869d7e8c78d3cc4c09603821cf664",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 117,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793726704754,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "1d5768eb1f93b81e6252a02bd9a48a20b24866d5",
+      "changedFiles": [
+        "demo/smoke_editor_return_focus_1248.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1248.json",
+        "src/houseplan-editor-runtime.ts",
+        "src/styles/icon-action.styles.ts",
+        "src/styles/navigation.styles.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2374,11 +2384,12 @@
     "worker": "finish",
     "token": "117:finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:1:admit",
     "fence": 117,
-    "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "bbe484989f7869d7e8c78d3cc4c09603821cf664",
+    "expectedBase": "2ad5f43ce2dea9ee33fff5fe98ee82f520578494",
+    "phase": "testing",
     "admittedAt": 1793726892098,
-    "expiresAt": 1793727192098
+    "expiresAt": 1793727203342,
+    "patchId": "1d5768eb1f93b81e6252a02bd9a48a20b24866d5"
   },
   "events": {
     "github:41683293980:1:completions:message:f26cadb0cf007f2105533ea07945abe91134b3e54bc17e2b5f9cfd4377145f37": {
@@ -2428,6 +2439,10 @@
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:4:return": {
       "digest": "b5380256195bf8dda1e03d73a6b10800e01947afd0832a9627eb1273ec5f494b",
       "issue": 1243
+    },
+    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:2:synchronized": {
+      "digest": "b44cb82ff9b3d159795bcc4fbc4f96ede62d2234e5c9f712f83957ae40672e07",
+      "issue": 1248
     },
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0": {
       "digest": "06f36608ae4d803782fc4497f57ae88add3307ca474ff8491c21ae94358971c1",
