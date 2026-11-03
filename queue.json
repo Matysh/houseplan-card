@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1287,
+  "revision": 1288,
   "nextTicket": 93,
   "nextFence": 92,
   "tasks": {
@@ -1516,14 +1516,23 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1222-decor-redo",
-      "materialSha": "934ddf7c09e322308ee491fbbcbec42c0550c906",
+      "materialSha": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 90,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793703486129,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "68bd80e8823548e2cace781c0523ee537b24b291",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DECOR-EDITOR.md",
+        "docs/release-ledger/v1.83.0/1222.json",
+        "src/decor-history-restore.ts",
+        "test/decor-history-restore.test.mjs"
+      ]
     },
     "1223": {
       "issue": 1223,
@@ -1685,11 +1694,12 @@
     "worker": "github-coordinator",
     "token": "91:github:41623750730:1:tick:0:admit",
     "fence": 91,
-    "materialSha": "934ddf7c09e322308ee491fbbcbec42c0550c906",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
+    "expectedBase": "a2ab12d74261ff9b337332ff4e872483c668eb86",
+    "phase": "testing",
     "admittedAt": 1793703581891,
-    "expiresAt": 1793703881891
+    "expiresAt": 1793703925053,
+    "patchId": "68bd80e8823548e2cace781c0523ee537b24b291"
   },
   "events": {
     "github:41623750730:1:completions:message:66d1a642b5ddc311dd05005b286a358cb9f15028e4ea0c5780eeec0477f2100a": {
@@ -1698,6 +1708,10 @@
     },
     "github:41623750730:1:completions:message:33c59d6e1aca567c057ddd225fe1a4c88f34c3e8eea32e200c94629c694c5dc9": {
       "digest": "b15c0bb2a4665fd12f19c5727358b4add43a5b50faff5ea930dbc7efa10bd7b4",
+      "issue": 1222
+    },
+    "finish:b7308850-4c7a-47b6-9407-aed77629a9c7:finish:2:synchronized": {
+      "digest": "9823a2c93c51e16e26e4d5f9ff6e46690c93aebea440f0d724751720d5d8955f",
       "issue": 1222
     },
     "finish:b7308850-4c7a-47b6-9407-aed77629a9c7": {
