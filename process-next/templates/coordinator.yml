@@ -30,6 +30,11 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
+          # Keep ancestry; limit file contents to the coordinator and its imports.
+          sparse-checkout: |
+            process-next
+            scripts
+            demo/helpers
           token: ${{ secrets.HP_PROCESS_TOKEN }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
@@ -56,6 +61,11 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
+          # Keep ancestry; limit file contents to the coordinator and its imports.
+          sparse-checkout: |
+            process-next
+            scripts
+            demo/helpers
           token: ${{ secrets.HP_PROCESS_TOKEN }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
