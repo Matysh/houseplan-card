@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1558,
+  "revision": 1559,
   "nextTicket": 107,
   "nextFence": 105,
   "tasks": {
@@ -1881,14 +1881,26 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1232-inner-contour",
-      "materialSha": "4125fd0798da1dd2aacfb68d5557f34086b5b2f7",
+      "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 103,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714237867,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "92871cee59cc4cfb6916f2ad64c2efbbec954dfa",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/release-ledger/v1.83.0/1232.json",
+        "src/direct-wall-geometry.ts",
+        "src/wall-arrangement.ts",
+        "src/wall-thickness.ts",
+        "test/direct-wall-geometry.test.mjs",
+        "test/inner-contour-graph.test.mjs"
+      ]
     },
     "1233": {
       "issue": 1233,
@@ -2090,11 +2102,12 @@
     "worker": "finish",
     "token": "104:finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:1:admit",
     "fence": 104,
-    "materialSha": "4125fd0798da1dd2aacfb68d5557f34086b5b2f7",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+    "expectedBase": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+    "phase": "testing",
     "admittedAt": 1793714916295,
-    "expiresAt": 1793715216295
+    "expiresAt": 1793715227639,
+    "patchId": "92871cee59cc4cfb6916f2ad64c2efbbec954dfa"
   },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
@@ -2168,6 +2181,10 @@
     "github:41649224383:1:completions:notice:00c9254e10485c35adcab7c3cd0d0a308fcf0f31c6d2fa5688502f719a1a60c4": {
       "digest": "7304de378b9c11d2ff1cb49201929631c47e45ff17ecc87ff07e445bf051d3ce",
       "issue": 1230
+    },
+    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:2:synchronized": {
+      "digest": "af1e653080eaff7f4e9f11daa7e4f58a3b87f311bd64b635ac5bd4c1797a9f86",
+      "issue": 1232
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
       "digest": "851c6e1c8aa1c378ab4435b7494a3f1a4d4383057f9431bc1b2cbfe152a75d17",
