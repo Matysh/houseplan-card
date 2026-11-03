@@ -1,0 +1,8 @@
+{
+  "schema": 1, "issue": 1233, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "The first model11 physical edit reintroduced a retired room_drafts carrier from its raw live draft after successful baseline conversion.",
+  "summary": {
+    "ru": "Первая запись Draw не возвращает уже перенесённый room_drafts в текущий документ.",
+    "en": "Do not reintroduce the already migrated room_drafts carrier on the first Draw write."
+  }
+}

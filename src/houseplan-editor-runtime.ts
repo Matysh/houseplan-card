@@ -2174,6 +2174,10 @@ public _commitPhysicalGeometry(
             graphMapping: migration?.graphMappings?.get(before.spaceId) } : undefined);
         editedSpace = graphEdit.space;
       }
+      // The accepted legacy baseline already materialized every draft edge.
+      // The live gesture still carries its raw source key; do not reintroduce it
+      // when projecting that gesture onto the migrated graph.
+      if (legacy) delete editedSpace.room_drafts;
       committedCandidate = { ...baseline, ...liveCandidate, model_version: WALL_SEGMENT_MODEL_VERSION,
         spaces: baseline.spaces.map(space => space.id === before.spaceId ? editedSpace : space) };
       candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,

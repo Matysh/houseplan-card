@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove the retired room draft carrier after the first Draw migration, keeping its accepted wall IDs and thicknesses exactly once. [#1233](https://github.com/Matysh/houseplan-card/issues/1233)
+
 - Preserve Optimize diagnostics and safe cleanup/recheck actions when the plan itself needs no changes. [#1229](https://github.com/Matysh/houseplan-card/issues/1229)
 - Keep the unique-carrier import repair rule for saved model10 plans after the model11 upgrade; ambiguous openings stay detached, preserving their width and settings. Older initial-migration selection remains unchanged. [#1228](https://github.com/Matysh/houseplan-card/issues/1228)
 
