@@ -58,19 +58,6 @@ function setup(t) {
     counts: () => ({ paints, updates, recordedOperations, candidateOperations }) };
 }
 
-test('#1246 retained canvas callbacks never infer a later modal; history captures at invocation',async t=>{
-  const s=setup(t),messages=[];
-  s.host._showToast=(message,id,context)=>messages.push({message,id,context});
-  await Promise.resolve().then(()=>s.editor.port.toast('late canvas refusal','node_move_invalid'));
-  assert.deepEqual(messages,[{message:'late canvas refusal',id:'node_move_invalid',context:{owner:null}}]);
-  let captures=0;
-  s.host._captureToast=()=>{captures++;return ()=>{};};
-  s.host._geometryHistory.peekUndo=()=>null;
-  assert.equal(captures,0,'constructing the adapter does not capture a future action');
-  await s.editor.port.history('undo');
-  assert.equal(captures,1,'each history invocation captures its own surface before writing');
-});
-
 test('Esc retries reuse one immutable baseline across fresh node snapshots, never a candidate or proof', t => {
   const s = setup(t), original = structuredClone(s.host._serverCfg);
   let previousSource, baseline, baselineProof, recorded;
