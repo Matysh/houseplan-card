@@ -16,7 +16,7 @@ source-corpus discovery cannot turn a diagnostic output into another input.
 - `two-refusals-comparison.json.txt`: the two preserved archived sources and
   current refusal reasons. `478-representability.json.txt` proves a legal
   independent-ID current representation, not an expected migration output.
-- `manifest.json.txt`: snapshot byte lengths and SHA256 hashes.
+- `manifest.json.txt`: Git-normalized UTF-8/LF snapshot byte lengths and SHA256 hashes.
 
 The investigators' original filenames are retained inside their reports; the
 list above maps those references to the inert snapshots in this directory.

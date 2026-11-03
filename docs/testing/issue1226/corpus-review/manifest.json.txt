@@ -1,37 +1,40 @@
-[
-  {
-    "file": "semantic31.md",
-    "sha256": "e5cbb0d55b5df148030bf0c5cd7b2d331a7c2d106b3b495ff2e3c94f7e184576",
-    "bytes": 7239
-  },
-  {
-    "file": "semantic31-classification.json.txt",
-    "sha256": "8632dfdb66f5645bc79ceb635ee5847079185b4458c120e9297693e6b4c2edbe",
-    "bytes": 78989
-  },
-  {
-    "file": "ownership-proofs.json.txt",
-    "sha256": "9f3aa1dba2cc1106a527d595709944c230359cf12c567892dd6161bec2bc7ea7",
-    "bytes": 1126
-  },
-  {
-    "file": "ownership-inputs-and-results.json.txt",
-    "sha256": "b2518f47c9aa47a4bb402bc8f7687b1c6cb428cbf1fb94fb7e1368fded865f36",
-    "bytes": 43840
-  },
-  {
-    "file": "two-refusals.md",
-    "sha256": "20dbaff0444dd3df6f0f2b2613f096a1f87ac2d9ed3b237def236ae888f910b8",
-    "bytes": 8410
-  },
-  {
-    "file": "two-refusals-comparison.json.txt",
-    "sha256": "91b34dee36b4fdfadb0255fb1fc7c35c9baf637f5e04a624695dc6eac2013dff",
-    "bytes": 10282
-  },
-  {
-    "file": "478-representability.json.txt",
-    "sha256": "661308fe936ee85286e4f410f8d934fec874d21864444fa3cbf791e2db94bb09",
-    "bytes": 2722
-  }
-]
+{
+  "basis": "UTF-8 text snapshots with LF line endings, as stored in Git",
+  "files": [
+    {
+      "file": "semantic31.md",
+      "sha256": "e5cbb0d55b5df148030bf0c5cd7b2d331a7c2d106b3b495ff2e3c94f7e184576",
+      "bytes": 7239
+    },
+    {
+      "file": "semantic31-classification.json.txt",
+      "sha256": "8632dfdb66f5645bc79ceb635ee5847079185b4458c120e9297693e6b4c2edbe",
+      "bytes": 78989
+    },
+    {
+      "file": "ownership-proofs.json.txt",
+      "sha256": "9f3aa1dba2cc1106a527d595709944c230359cf12c567892dd6161bec2bc7ea7",
+      "bytes": 1126
+    },
+    {
+      "file": "ownership-inputs-and-results.json.txt",
+      "sha256": "b2518f47c9aa47a4bb402bc8f7687b1c6cb428cbf1fb94fb7e1368fded865f36",
+      "bytes": 43840
+    },
+    {
+      "file": "two-refusals.md",
+      "sha256": "b9633ed09ac19def70fda848ea48ffd4151ec84d8d4fd8a0070f5893ba469092",
+      "bytes": 8409
+    },
+    {
+      "file": "two-refusals-comparison.json.txt",
+      "sha256": "91b34dee36b4fdfadb0255fb1fc7c35c9baf637f5e04a624695dc6eac2013dff",
+      "bytes": 10282
+    },
+    {
+      "file": "478-representability.json.txt",
+      "sha256": "661308fe936ee85286e4f410f8d934fec874d21864444fa3cbf791e2db94bb09",
+      "bytes": 2722
+    }
+  ]
+}
