@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1386,
+  "revision": 1387,
   "nextTicket": 96,
   "nextFence": 96,
   "tasks": {
@@ -1712,7 +1712,7 @@
       "reviewEntry": 1,
       "automationError": "automation-error",
       "automationSince": 1793704809402,
-      "automationDetail": "Git rebase failed (exit 128)"
+      "automationDetail": "Commit tracked task changes before finish"
     }
   },
   "ownerDecisions": {},
@@ -1848,6 +1848,10 @@
     },
     "finish:2b76ed81-4411-4801-a3af-68f7313ad72b": {
       "digest": "0760626185096fb7ad3f0e917e5842fb277411badd176b583d99d1e1bca3ccde",
+      "issue": 1227
+    },
+    "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:2:automation-pending": {
+      "digest": "f52b3db8d592afdc5d2252f6812235f2423e7082f55d9a2bb98f8745e863c664",
       "issue": 1227
     },
     "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb": {
