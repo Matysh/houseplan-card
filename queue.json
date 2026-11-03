@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1981,
+  "revision": 1982,
   "nextTicket": 126,
   "nextFence": 126,
   "tasks": {
@@ -2510,7 +2510,10 @@
         "at": 1793730459537,
         "entry": 1,
         "eventId": "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return:return:1246"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793730567371,
+      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
     },
     "1247": {
       "issue": 1247,
@@ -2793,6 +2796,10 @@
     "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:4:return": {
       "digest": "afae009eea1207e1841b350cdec649c2ac73a7965eba9bb6b5481ceb7bc4b3bc",
       "issue": 1225
+    },
+    "finish:74f42b8f-f233-478f-91b2-b50448b6e147:finish:2:automation-pending": {
+      "digest": "7fd04b4d0123f7105be09e59773c46be00c9a0c391b06fed9a6bc25471ccb56d",
+      "issue": 1246
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
       "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
