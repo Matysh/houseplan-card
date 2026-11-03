@@ -135,3 +135,30 @@ contact topology. Do not pick max(cm), discard the zero carrier or rewrite the
 original input. Product fix/clarification and TS/Python parity remain required.
 Full bounded evidence: `corpus-review/two-refusals.md` and inert snapshots beside
 it. No new issue/product fix was made; this case remains RED.
+
+## Confirmed infrastructure finding: overly broad test-input identities
+
+The reused fallback41679296259 restored the prior cache successfully but reused
+zero of its539 plan steps (504PASS/33FAIL/two not-required;74m13.695s). A read-only
+comparison of both actual plans/reports, the native matcher and catalog source
+confirms unchanged execution-environment keys and byte-identical build/test-build
+outputs. Those preparations deliberately run again because builds/ZIPs are not
+restored by the process contract; their repeated execution is not a cache defect.
+
+The unnecessary invalidation breadth is concrete:
+
+- Changing `demo/smoke_device_more_info.mjs` matches516 steps: all512 browser
+  checks, both golden groups, measurements and demo-assets. `browserInputs`
+  declares `demo/**/*.mjs`, and icon scanning also includes all demo sources.
+- Adding `test/fixtures/optimize-storage-roundtrip-current.json` matches all11
+  Node groups because each initially declares the entire `test/fixtures/**`.
+- The changed Python test invalidates its one combined backend group.
+
+Thus an unrelated test-file edit invalidates hundreds of independently authored
+browser checks even with unchanged product bytes. This is a conservative input
+scope issue, not a broken restore or an environment change. Exact counts,
+fingerprints and the three read-only probes are in
+`reuse-scope-diagnosis.json`. A future process change can narrow declared test
+closures while retaining actual shared helpers, dynamic-reader and icon-source
+dependencies. No pipeline/cache code, workflow, filter or CI run is changed here;
+no new issue is created for this finding.

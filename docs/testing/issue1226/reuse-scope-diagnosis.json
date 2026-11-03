@@ -1,0 +1,95 @@
+{
+  "oldRun": 41662157218,
+  "newRun": 41679296259,
+  "sourcePins": [
+    "0bda944e3244a142449c30c5f802c14833af8c66",
+    "1f3a0f343f881ef59446c664baace3df8e72a635"
+  ],
+  "environmentChangedKeys": [],
+  "scopes": [
+    {
+      "file": "demo/smoke_device_more_info.mjs",
+      "affectedSteps": 516,
+      "byKind": {
+        "demo-assets": 1,
+        "release-measurements": 1,
+        "browser": 512,
+        "golden": 2
+      },
+      "exampleStepIds": [
+        "demo-assets",
+        "release-measurements",
+        "smoke:smoke_readonly_cold_start",
+        "smoke:smoke_cold_view_toggle",
+        "smoke:smoke_view_edit_permissions",
+        "smoke:smoke_toggle_confirmation",
+        "smoke:smoke_editor_gestures"
+      ]
+    },
+    {
+      "file": "test/fixtures/optimize-storage-roundtrip-current.json",
+      "affectedSteps": 11,
+      "byKind": {
+        "node": 11
+      },
+      "exampleStepIds": [
+        "product-node:devices",
+        "product-node:geometry",
+        "product-node:view",
+        "product-node:data",
+        "product-node:core",
+        "product-node:editor",
+        "product-node:ui"
+      ]
+    },
+    {
+      "file": "tests_backend/test_coordinate_canonicalization.py",
+      "affectedSteps": 1,
+      "byKind": {
+        "product-backend": 1
+      },
+      "exampleStepIds": [
+        "product-backend"
+      ]
+    }
+  ],
+  "preparations": [
+    {
+      "id": "product-build",
+      "oldFingerprint": "11106ebd2b0117e2f41f76453ddc499e42f9c891c55f36eea756461433bbdb40",
+      "newFingerprint": "11106ebd2b0117e2f41f76453ddc499e42f9c891c55f36eea756461433bbdb40",
+      "sameFingerprint": true,
+      "sameOutputHash": true,
+      "oldSeconds": 50.635,
+      "newSeconds": 60.551,
+      "outputsRestoredByContract": false
+    },
+    {
+      "id": "test-build",
+      "oldFingerprint": "7d4a2495cc2a40d6537daed45cf305d25789c8d6e316e78a424e788fc46efcb6",
+      "newFingerprint": "7d4a2495cc2a40d6537daed45cf305d25789c8d6e316e78a424e788fc46efcb6",
+      "sameFingerprint": true,
+      "sameOutputHash": true,
+      "oldSeconds": 12.577,
+      "newSeconds": 15.165,
+      "outputsRestoredByContract": false
+    },
+    {
+      "id": "demo-assets",
+      "oldFingerprint": "3e8a75f732e71e4471ea5f6d30b39a06cea5dfbfc3acf7e06b15d4479bf6a6ed",
+      "newFingerprint": "add53db2cd459ff3f2e176887565671456b83942181c54570534df4ac19bc981",
+      "sameFingerprint": false,
+      "sameOutputHash": true,
+      "oldSeconds": 0.26,
+      "newSeconds": 0.337,
+      "outputsRestoredByContract": false
+    }
+  ],
+  "stepCounts": {
+    "passed": 504,
+    "failed": 33,
+    "not-required": 2
+  },
+  "newDurationMs": 4453695,
+  "limits": "Read-only existing plans/reports and matcher. No tests, profile, cache override, pipeline change or output normalization."
+}
