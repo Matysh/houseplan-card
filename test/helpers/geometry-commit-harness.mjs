@@ -31,7 +31,7 @@ export function largeFixture(){
 }
 export const largeScenarios={
  thickness(sp){const ids=new Set(sp.rooms[0].wall_ids);for(const w of sp.wall_segments)if(ids.has(w.id))w.cm=20;for(const w of sp.walls||[])if(sp.rooms[0].poly.some(p=>p[0]===w.a[0]&&p[1]===w.a[1]))w.cm=20;},
- split(sp){sp.rooms.splice(0,1,{id:'split-a',poly:[[0,0],[1,0],[1,2],[0,2]]},{id:'split-b',poly:[[1,0],[2,0],[2,2],[1,2]]});},
+ split(sp){const i=sp.rooms.findIndex(room=>room.id==='left-r');if(i<0)throw Error('missing split parent left-r');sp.rooms.splice(i,1,{...sp.rooms[i],poly:[[0,0],[1,0],[1,2],[0,2]]},{id:'split-b',poly:[[1,0],[2,0],[2,2],[1,2]]});},
  merge(sp){sp.rooms.splice(0,2,{id:'merged',poly:[[0,0],[4,0],[4,2],[0,2]]});},
  column:scenarios.column,
 };
