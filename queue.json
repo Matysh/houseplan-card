@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1924,
+  "revision": 1925,
   "nextTicket": 123,
   "nextFence": 122,
   "tasks": {
@@ -2334,10 +2334,24 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 11,
+          "cycleMilestone": 11
+        },
+        "commentCurrent": true,
+        "commentDigest": "a297fdedf383f8af3187",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 11
+        }
       },
       "devBuild": {
         "status": "pending"
