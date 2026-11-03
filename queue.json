@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1391,
+  "revision": 1392,
   "nextTicket": 96,
   "nextFence": 96,
   "tasks": {
@@ -1702,7 +1702,7 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1227-space-copy",
-      "materialSha": "a5c34fff5dcf0af837367dfe5f7acf912fcb1b6a",
+      "materialSha": "efa074d70f30b1c2d26b5e53b657797109dab7fb",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 94,
@@ -1710,9 +1710,24 @@
       "status": "S6-in-progress",
       "readyAt": 1793704370977,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793704809402,
-      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
+      "patchId": "ee78a8cbbe841a458773ebdf982ea33f321e7646",
+      "changedFiles": [
+        "custom_components/houseplan/space_copy.py",
+        "custom_components/houseplan/websocket_api.py",
+        "demo/smoke_space_copy.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.83.0/1227.json",
+        "src/houseplan-editor-runtime.ts",
+        "src/space-copy-runtime.ts",
+        "src/space-copy.ts",
+        "test/space-copy-runtime.test.mjs",
+        "test/space-copy.test.mjs",
+        "tests_backend/test_ha_space_copy.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -1823,11 +1838,12 @@
     "worker": "github-coordinator",
     "token": "95:github:41626530748:1:tick:0:admit",
     "fence": 95,
-    "materialSha": "a5c34fff5dcf0af837367dfe5f7acf912fcb1b6a",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "efa074d70f30b1c2d26b5e53b657797109dab7fb",
+    "expectedBase": "96ffe544474c6a0ffd40f005caa977afff308d26",
+    "phase": "testing",
     "admittedAt": 1793704779588,
-    "expiresAt": 1793705334070
+    "expiresAt": 1793705376802,
+    "patchId": "ee78a8cbbe841a458773ebdf982ea33f321e7646"
   },
   "events": {
     "github:41626530748:1:completions:message:7971239504d39e4dd3c929a21e11b35b75fe7301554e4e780bdf008436172112": {
@@ -1868,6 +1884,10 @@
     },
     "finish:6a6564a7-7b5b-4621-be7e-0e6951c36ff9": {
       "digest": "e0707b29c1ac23ce6ad2d095f561ea73e71abf707cbe60af106a66c0aaf66dbc",
+      "issue": 1227
+    },
+    "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:5:synchronized": {
+      "digest": "66c5d4be2f04ed8fbd88ef7ff007ab6b77dde31757f1080d85f913f1c9ca8834",
       "issue": 1227
     },
     "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb": {
