@@ -73,6 +73,17 @@ test('#1246 delayed callbacks retain the starting card/modal context, including 
  setToastOwner(root,a,false);fromA('same','another.error');flush();assert.equal(root.portal.children[0].textContent,'same');assert.equal(b.portal().children.length,0);
  p.disconnect();
 });
+test('#1246 accepted retirement never revives a context when the same shell starts a new lifetime',()=>{
+ const {root,p}=setup(),a=owner(root);setToastOwner(root,a,true);
+ const old=p.captureContext();p.show('old','toast.error','message',old);flush();
+ const notice=a.portal().children[0];
+ setToastOwner(root,a,false);
+ const reopened={host:a.host,portal:a.portal};setToastOwner(root,reopened,true);
+ assert.equal(root.portal.children[0],notice);assert.equal(p.isOwnerActive(old),false);
+ p.show('late','toast.error','message',old);flush();
+ assert.equal(root.portal.children[0],notice);assert.equal(a.portal().children.length,0);
+ assert.equal(p.isOwnerActive(p.captureContext()),true);p.disconnect();
+});
 test('replacement and clear/disconnect retire pending frames, no resurrection or cross-card routing',()=>{
  const a=setup(),b=setup(),modal=owner(b.root);setToastOwner(b.root,modal,true);
  a.p.show('old');a.p.show('latest');flush();assert.equal(a.root.portal.children[0].textContent,'latest');assert.equal(modal.portal().children.length,0);
