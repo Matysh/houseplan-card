@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1553,
+  "revision": 1554,
   "nextTicket": 107,
   "nextFence": 104,
   "tasks": {
@@ -1859,14 +1859,21 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1231-shared-wall-split",
-      "materialSha": "714f20de41ec28af167c9b42b28dbf524521b943",
+      "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 105,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714474016,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "b177a0539f976fb0ee0c27e5ed62b86a245999ee",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "test/helpers/geometry-commit-harness.mjs",
+        "test/shared-wall-split.test.mjs"
+      ]
     },
     "1232": {
       "issue": 1232,
@@ -2083,11 +2090,12 @@
     "worker": "finish",
     "token": "103:finish:77e533ec-2487-47ce-8588-91720bf59172:finish:1:admit",
     "fence": 103,
-    "materialSha": "714f20de41ec28af167c9b42b28dbf524521b943",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+    "expectedBase": "a52e6cb44514c55826400c7f3b12623fe76081bf",
+    "phase": "testing",
     "admittedAt": 1793714810839,
-    "expiresAt": 1793715110839
+    "expiresAt": 1793715157059,
+    "patchId": "b177a0539f976fb0ee0c27e5ed62b86a245999ee"
   },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
@@ -2164,6 +2172,10 @@
     },
     "github:41650461162:1:completions:message:3272dc559522679c3eeceb91ac7ca1dbe473e212abafa9bccb344adf5f7dd732": {
       "digest": "91f117b0906fb82205ead095ea3167faa820d2605c27e8235d36841f5696c1cb",
+      "issue": 1231
+    },
+    "finish:29271098-0fc9-4ccb-b71d-be101786d33f:finish:1:synchronized": {
+      "digest": "4b418f94fa21626c2e7af6ddbd650ff506950f7ffd0a997b9a9e3bf04c41dd10",
       "issue": 1231
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
