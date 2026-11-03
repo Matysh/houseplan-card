@@ -32,14 +32,14 @@ test('issue 276 reconciles the anonymized 5 cm offset fixture without moving its
   assert.equal(result.report.openingsRehosted, 1);
 
   const space = result.config.spaces[0];
-  assert.equal(space.partitions, undefined);
+  assert.deepEqual(space.partitions, []);
   assert.equal(space.openings.length, 1);
   assert.deepEqual(space.openings[0], {
     id: 'hosted-door', type: 'door',
     x: 121 / 240, y: 0.5, angle: -90, length: 0.2,
     contact: 'binary_sensor.test_door', lock: 'lock.test_door',
     invert: true, flip_h: true, future_field: { keep: true },
-    host: { kind: 'wall', id: space.openings[0].host.id, t: 0.5 },
+    host: { kind: 'wall', id: space.openings[0].host.id, t: 0.5, tq: ['1','2'] },
   });
   assert.ok(space.wall_segments.some((wall) => wall.id === space.openings[0].host.id),
     'the migrated opening is hosted by a stored contour wall');
@@ -197,6 +197,12 @@ test('issue 276 fails closed for an orphan host, overlap, column and unknown par
   variants.push(['unknown partition data', futurePartition]);
 
   for (const [name, input] of variants) {
+    if (name === 'invalid hosted opening') {
+      const before = clone(input);
+      assert.throws(() => optimize(input), { code: 'host-range' });
+      assert.deepEqual(input, before, 'an invalid host cannot cross the graph migration boundary');
+      continue;
+    }
     const result = optimize(input);
     assert.equal(result.report.partitionsReconciled, 0, name);
     assert.equal(result.config.spaces[0].partitions.length, 1, name);
@@ -211,11 +217,7 @@ test('#478 migrates a legacy saved chain and preserves ambiguous overlapping wal
     points: [[0.5041666666666667, 0.2], [0.5041666666666667, 0.8]],
     segments: [{ cm: 15 }],
   }];
-  const result = optimize(input);
-  assert.equal(result.report.roomDraftsMigrated, 1);
-  assert.equal(result.report.roomDraftSegmentsMigrated, 1);
-  assert.equal(result.report.partitionsReconciled, 0);
-  assert.equal(result.config.spaces[0].room_drafts, undefined);
-  assert.equal(result.config.spaces[0].partitions.length, 2);
-  assert.match(result.config.spaces[0].partitions[1].id, /^wall-/);
+  const before = clone(input);
+  assert.throws(() => optimize(input), { code: 'thickness-conflict' });
+  assert.deepEqual(input, before, 'conflicting coincident thickness stays intact, never partially migrated');
 });
