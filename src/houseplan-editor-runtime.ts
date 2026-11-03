@@ -1689,7 +1689,8 @@ public _resolvePlanDrawPoint(
     // moves the actually persisted point away from it. Preview and click must
     // describe the exact same geometry (#290).
     const effectiveCandidate = candidate && samePoint(point, candidate.point) ? candidate : null;
-    const lastEdge=this._drawEdgeNodes?.get(this.host._activeWallChainPartitionIds?.at(-1) || '');
+    const chainIds=this.host._activeWallChainPartitionIds||[];
+    const lastEdge=this._drawEdgeNodes?.get(chainIds[chainIds.length-1] || '');
     // The active gesture already owns its exact endpoint. Pointer movement
     // must not scan the entire graph just to recover that same anchor.
     const anchorPoint=lastEdge?.toPoint||this._chainStartPoint
