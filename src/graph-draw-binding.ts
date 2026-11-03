@@ -36,14 +36,14 @@ export function graphDrawTargetPoint(graph:PlanGraph|undefined|null,target:Targe
   const hit=a&&b&&Q.intersection(a[0],a[1],b[0],b[1]);return hit?Q.encodePoint(hit.p):undefined;
 }
 /** Only the native grid producer may supply `snapped`; imported points never use this path. */
-export function graphDrawGridPoint(point:readonly number[],snapped:readonly number[],pitch:number,
+export function graphDrawGridPoint(point:readonly number[],snapped:readonly number[]|undefined,pitch:number,
   anchor?:{point:readonly number[];p:Q.GraphPoint}):Q.GraphPoint|undefined{
-  if(pitch!==1000/240||!point.every(Number.isFinite)||!snapped.every(Number.isFinite))return undefined;
+  if(pitch!==1000/240||!point.every(Number.isFinite)||snapped&&!snapped.every(Number.isFinite))return undefined;
   const p=[...authoredPoint(point.map(n=>n/1000))]as [Q.Exact,Q.Exact];
   const anchorPoint=anchor&&Q.decodePoint(anchor.p);let retained=false;
   for(const axis of [0,1]as const){
-    const index=Math.round(snapped[axis]/pitch);
-    if(point[axis]===snapped[axis]&&Number.isSafeInteger(index)&&index*pitch===snapped[axis]){
+    const index=snapped?Math.round(snapped[axis]/pitch):NaN;
+    if(snapped&&point[axis]===snapped[axis]&&Number.isSafeInteger(index)&&index*pitch===snapped[axis]){
       p[axis]=Q.exact(BigInt(index),240n);retained=true;
     }else if(anchor&&anchorPoint&&point[axis]===anchor.point[axis]){
       p[axis]=anchorPoint[axis];retained=true;

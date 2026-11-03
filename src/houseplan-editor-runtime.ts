@@ -1695,7 +1695,9 @@ public _resolvePlanDrawPoint(
     // must not scan the entire graph just to recover that same anchor.
     const anchorPoint=lastEdge?.toPoint||this._chainStartPoint
       ||(this._chainStartTarget?.kind==='independent'?this._chainStartTarget.p:undefined);
-    const authoredPoint=!candidate?graphDrawGridPoint(end,snapped,this.host._gridPitch,
+    // Near-axis authoring may retire a topology snap. Retain its exact anchor,
+    // but do not pretend the retired candidate was produced by the native grid.
+    const authoredPoint=!effectiveCandidate?graphDrawGridPoint(end,!candidate?snapped:undefined,this.host._gridPitch,
       anchor&&anchorPoint?{point:anchor,p:anchorPoint}:undefined):undefined;
     return {
       point: end,

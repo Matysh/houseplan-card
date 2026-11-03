@@ -36,6 +36,18 @@ test('#1237 grid provenance does not round an arbitrary authored off-grid endpoi
     ['q','22500000000000003','100000000000000000','39583333333333337','100000000000000000']);
 });
 
+test('#1237 near-axis retirement of an endpoint snap retains the exact chain anchor',()=>{
+  const rt=runtime(),sp=G.migrateGraphSpace({id:'f',rooms:[],partitions:[
+    {id:'near',a:[.425,.396],b:[.7,.396],cm:15},
+  ]}).space;
+  rt.host._spaceModel=()=>sp;rt.host._curSpaceCfg=sp;
+  rt.host._path=[[225,395.8333333333333]];
+  rt._chainStartTarget={kind:'independent',node:'anchor',p:['l','54','95']};
+  const result=rt._resolvePlanDrawPoint([425,396],false);
+  assert.equal(result.candidate,null,'near-axis must retire the displaced endpoint reference');
+  assert.deepEqual(result.authoredPoint,['l','102','95']);
+});
+
 test('#1237 native grid indices cover negative, large and fractional pitch projections exactly',()=>{
   for(const [x,y]of [[54,95],[-54,-95],[91,137],[239,240],[-1200000,1200000]]){
     const p=[x*pitch,y*pitch];assert.deepEqual(D.graphDrawGridPoint(p,p,pitch),['l',String(x),String(y)]);
