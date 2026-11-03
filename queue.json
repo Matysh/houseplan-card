@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1774,
+  "revision": 1775,
   "nextTicket": 115,
   "nextFence": 115,
   "tasks": {
@@ -2150,52 +2150,24 @@
     },
     "1240": {
       "issue": 1240,
+      "branch": "issue/1240-card-picker-i18n",
       "track": "ship",
       "layer": "product",
-      "branch": "issue/1240-card-picker-i18n",
-      "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 114,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793722681670,
-      "reviewEntry": 2,
-      "patchId": "dd4ba48467679b3d1a243accd4d26909f6cc76c5",
-      "changedFiles": [
-        "CONTRIBUTING.md",
-        "demo/smoke_card_picker_locale.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1240.json",
-        "src/card-picker-registration.ts",
-        "src/houseplan-card.ts",
-        "src/i18n/card-picker/de.json",
-        "src/i18n/card-picker/en.json",
-        "src/i18n/card-picker/fr.json",
-        "src/i18n/card-picker/ru.json",
-        "src/i18n/registry.ts",
-        "src/space-card.ts",
-        "test/card-picker-registration.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
+      "status": "S8-merged",
+      "expectedBase": "0c030e70016f34ee103ce9a0e15a312915edb09f",
+      "mergedSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
+      "mergedAt": 1793722707525,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
         "status": "pending",
-        "fromStatus": "S6-in-progress",
-        "at": 1793722635689,
-        "entry": 1,
-        "detail": "Браузер: card picker locale: failed",
-        "eventId": "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240"
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261103T161816322-e23b7e87",
-        "name": "Тесты для задачи #1240 (перед слиянием)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T161816322-e23b7e87/report.json",
-        "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
-        "status": "passed",
-        "finishedAt": "2026-11-03T16:18:20.466Z",
-        "failures": []
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -2302,35 +2274,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1240,
-    "worker": "finish",
-    "token": "114:finish:6a43ad66-db1a-498c-a80a-80a4b8a98115:finish:1:admit",
-    "fence": 114,
-    "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
-    "expectedBase": "0c030e70016f34ee103ce9a0e15a312915edb09f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793722685777,
-    "expiresAt": 1793726301578,
-    "patchId": "dd4ba48467679b3d1a243accd4d26909f6cc76c5"
-  },
+  "active": null,
   "events": {
-    "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:2:synchronized": {
-      "digest": "b032dab8d86bd204094ee9d23b106f164598fc7cb7ba93fd8bef92c2dbea6393",
-      "issue": 1240
-    },
-    "finish:741ceddd-16f4-4cfc-afeb-75b5e94f2122": {
-      "digest": "e988565c3fad974b3fbe9d0e3c01e522ad86cea3f9a8a53e38266a696e2b33c0",
-      "issue": 1240
-    },
-    "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return": {
-      "digest": "e8cfb5f6d4447bdd25fe8dccf2e093a129c831026669a9ed633978b128b387d8",
-      "issue": 1240
-    },
-    "finish:6a43ad66-db1a-498c-a80a-80a4b8a98115:finish:2:synchronized": {
-      "digest": "f89d2fcf5b66bd5d66a48a027b3b873a27534d04a18588f92c2bfdf28be66147",
-      "issue": 1240
-    },
     "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3": {
       "digest": "2227cbc28557c8d50df3f0ac5a9dcf1cd2df9b088973a8b688d1dc2f766fdba6",
       "issue": 1240,
