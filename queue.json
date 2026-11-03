@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1212,
+  "revision": 1213,
   "nextTicket": 88,
   "nextFence": 88,
   "tasks": {
@@ -1547,7 +1547,8 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/DEVELOPMENT.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -1660,9 +1661,9 @@
     "fence": 87,
     "materialSha": "19dcd4faf1b9c8216c978eddcaa8cfc947a16b74",
     "expectedBase": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793688822917,
-    "expiresAt": 1793689133968,
+    "expiresAt": 1793692438289,
     "patchId": "3ee77443cfcfa5f092c98020d6ef2ad09395aad1"
   },
   "events": {
@@ -1839,6 +1840,20 @@
         "layer": "docs",
         "materialSha": "19dcd4faf1b9c8216c978eddcaa8cfc947a16b74",
         "phase": "sync"
+      }
+    },
+    "finish:d8b935e2-5f35-46f1-977c-9a68880bb540:finish:3:s6-complete": {
+      "digest": "f7a0a084dbd950659b830e5e766036f12fdb00e9c76278506bb82f2ada7f2c68",
+      "issue": 1219,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1219,
+        "at": 1793688838289,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "19dcd4faf1b9c8216c978eddcaa8cfc947a16b74",
+        "phase": "ready-to-merge"
       }
     }
   },
