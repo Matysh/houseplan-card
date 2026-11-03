@@ -11,6 +11,7 @@ import {pathToFileURL} from 'node:url';
 import {cpus} from 'node:os';
 import {createHash} from 'node:crypto';
 import {makeSelectiveInvalidationFixture} from './fixtures/selective-invalidation.mjs';
+import {directWallJunctionLoad} from './fixtures/direct-wall-junction-load.mjs';
 import {launch,requirePinnedBrowser,reportPageErrors} from './serve.mjs';
 const arg=name=>process.argv.find(a=>a.startsWith('--'+name+'='))?.slice(name.length+3);
 const root=resolve(arg('root')||process.cwd()),output=resolve(arg('output')||'artifacts/1216/measurement.json');
@@ -24,7 +25,8 @@ const {structuralWallNodes,prepareNodeMove,applyNodeMove}=await moduleAt('wall-n
 const {spaceModels}=await moduleAt('space-geometry');
 const {prepareSpacePhysicalGeometryInputs}=await moduleAt('plan-geometry-preflight');
 const {wallBodiesGeometry}=await moduleAt('wall-thickness');
-const fixture=makeSelectiveInvalidationFixture(true);fixture.config=commitWallSegmentModel(fixture.config).config;
+const junction=arg('scene')==='junction';
+const fixture=junction?directWallJunctionLoad():makeSelectiveInvalidationFixture(true);fixture.config=commitWallSegmentModel(fixture.config).config;
 const optimized=optimizePlans(fixture.config,fixture.layout).config,rows=[];
 mkdirSync(dirname(output),{recursive:true});
 const operations={optimize:()=>optimizePlans(fixture.config,fixture.layout),
@@ -48,7 +50,7 @@ let accepted,revision,lastIntent,writeCount;
 let loadedFingerprint;
 const saveReport=complete=>{
  const report={schema:1,issue:1216,complete,runnerSHA256,rootFingerprint:loadedFingerprint,node:process.version,cpu:cpus()[0].model,browser:browser.version(),viewport:[1440,1000],series:seriesCount,warmups,samples,
-  fixture:'makeSelectiveInvalidationFixture(true) -> model11',fixtureSHA256:createHash('sha256').update(JSON.stringify(fixture)).digest('hex'),
+  fixture:junction?'directWallJunctionLoad() -> model11':'makeSelectiveInvalidationFixture(true) -> model11',fixtureSHA256:createHash('sha256').update(JSON.stringify(fixture)).digest('hex'),
   transport:'deterministic synthetic authority using production exact node reducer; no HA/network latency claim',
   coldReadiness:'static warm-boot placement cache reset; load/data complete, actual masonry, boot/fade/settle/soft ended, continuity steady and interactive',
   heapSampling:'maximum usedJSHeapSize sampled on every animation frame from cold card creation through accepted node frame; retained heap after CDP forced GC once per series; allocations born and collected within one synchronous task are not observable',rows};
@@ -131,6 +133,27 @@ try{
   await page.waitForFunction(()=>window.__card._cfgRev>1,undefined,{timeout:15000});
   const nodeMs=await page.evaluate(async start=>{await window.__card.updateComplete;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return performance.now()-start;},start);
   assert.equal(writeCount,1);assert.ok(lastIntent?.node_id||lastIntent?.point);
+  if(junction){
+   // Separate native pointermove -> completed live frame samples. Excludes the
+   // final Save ACK and makes no claim about HA or network latency.
+   const origin=await page.evaluate(()=>{const op=window.__card._openingsR.find(o=>o.id==='f1-junction-door');return[op.rx,op.ry];});
+   const at=async step=>page.evaluate(({step,origin})=>{
+    const card=window.__card,op=card._openingsR.find(o=>o.id==='f1-junction-door');
+    if(!op)throw Error('junction opening missing');
+    const svg=card.renderRoot.querySelector('.stage svg'),p=new DOMPoint(origin[0]+step,origin[1]).matrixTransform(svg.getScreenCTM());
+    return{x:p.x,y:p.y};
+   },{step,origin});
+   const p=await at(0);await page.mouse.move(p.x,p.y);await page.mouse.down();
+   assert.ok(await page.evaluate(()=>window.__card._opDrag),'native opening owns pointer');
+   for(let step=1;step<=5;step++){
+    const target=await at(step*15),begin=performance.now();await page.mouse.move(target.x,target.y);
+    await page.evaluate(async()=>{await window.__hpTest.settled();await new Promise(r=>requestAnimationFrame(r));});
+    const ms=performance.now()-begin;
+    assert.equal(await page.evaluate(()=>!!window.__card._opDrag?.moved),true);
+    if(sample>=0)rows.push({series,sample,step,name:'opening-drag-frame',ms});
+   }
+   await page.mouse.up();
+  }
   assert.equal(measured.work.after.wallUnion-measured.work.before.wallUnion,1,'only the newly requested floor builds geometry');
   assert.ok(measured.work.before.wallUnion<=1,'cold View does not build hidden floors');
   if(sample>=0){

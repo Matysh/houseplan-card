@@ -6,7 +6,7 @@ import * as R from '../test-build/render-exact.js';
 import {directWallGeometry,directRecut} from '../test-build/direct-wall-geometry.js';
 import {spaceModels} from '../test-build/space-geometry.js';
 import {wallBodiesGeometry,polyclipToPathD} from '../test-build/wall-thickness.js';
-import {migrateGraphSpace} from '../test-build/plan-graph.js';
+import {migrateGraphSpace,prepareGraph} from '../test-build/plan-graph.js';
 import {directWallScenes} from '../demo/fixtures/direct-wall-geometry.mjs';
 const area=geom=>geom.reduce((sum,p)=>sum+p.reduce((v,r,i)=>v+(i?-1:1)*Math.abs(r.reduce((a,x,j)=>{const y=r[(j+1)%r.length];return a+x[0]*y[1]-x[1]*y[0];},0)/2),0),0);
 const poly=points=>A.polygon(points);
@@ -44,6 +44,23 @@ test('predicate-only signs agree with independently reduced rational determinant
  const tiny=R.exact(1n,1n<<5000n);
  assert.equal(R.orientationSign([R.ZERO,R.ZERO],[R.ONE,tiny],[R.ONE,R.ZERO]),-1);
 });
+test('derived reduced arithmetic and homogeneous intersections agree with the independent stored rational oracle',()=>{
+ for(let i=1n;i<=127n;i++){
+  const a=Q.exact(i-65n,i+1n),b=Q.exact(i*i-97n,i+3n);
+  for(const name of ['add','sub','mul','div'])assert.deepEqual(R[name](a,b),Q[name](a,b),name+' '+i);
+  const points=[[a,b],[Q.add(a,Q.ONE),Q.add(b,Q.exact(i,7n))],
+   [Q.exact(-i,19n),Q.exact(i,23n)],[Q.exact(i+4n,29n),Q.exact(-i*i,31n)]];
+  assert.deepEqual(R.midpoint(points[0],points[1]),Q.pointAt(points[0],points[1],Q.exact(1n,2n)));
+  const direction=R.integerDirection(points[0],points[1]),delta=Q.pointSub(points[1],points[0]);
+  assert.equal(R.crossSign(direction,delta),0);assert.equal(direction[0].n>0n,true);
+  assert.deepEqual(R.lineIntersection(...points),Q.intersection(...points)?.p||null,'intersection '+i);
+ }
+ assert.equal(R.lineIntersection(...[[0,0],[1,1],[0,1],[1,2]].map(A.numericPoint)),null);
+ assert.throws(()=>R.div(R.ONE,R.ZERO),/zero-denominator/);
+ const tiny=R.exact(1n,1n<<5000n);
+ assert.deepEqual(R.lineIntersection([R.ZERO,R.ZERO],[R.ONE,tiny],[R.ONE,R.ZERO],[R.ZERO,tiny]),[R.exact(1n,2n),R.exact(1n,1n<<5001n)]);
+});
+
 test('shared and distinct equal-coordinate IDs join identically; no graph mutation',()=>{
  const shared=graph([[0,0],[10,0],[0,10]],[[0,1],[0,2]]),separate=graph([[0,0],[10,0],[0,0],[0,10]],[[0,1],[2,3]]);
  const before=JSON.stringify(separate),a=build(shared),b=build(separate);
@@ -51,6 +68,18 @@ test('shared and distinct equal-coordinate IDs join identically; no graph mutati
  const near=graph([[0,0],[10,0],[1e-10,1e-10],[0,10]],[[0,1],[2,3]]);
  assert.ok(area(build(near).geom)<39.00000001);
 });
+test('mixed-thickness right-angle L has the independently constructed mitre polygon',()=>{
+ const result=build(graph([[0,0],[10,0],[0,10]],[[0,1,2],[0,2,4]]));
+ const expected=[[-2,-1],[10,-1],[10,1],[2,1],[2,10],[-2,10]];
+ const inside=(ring,x,y)=>ring.reduce((value,a,i)=>{
+  const b=ring[(i+1)%ring.length];
+  return (a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0] ? !value : value;
+ },false);
+ assert.equal(area(result.geom),60);
+ for(const x of [-2.1,-1.9,-.1,.1,1.9,2.1,9.9,10.1])for(const y of [-1.1,-.9,.1,.9,1.1,9.9,10.1])
+  assert.equal(result.geom.some(p=>inside(p[0],x,y)&&!p.slice(1).some(r=>inside(r,x,y))),inside(expected,x,y),`${x},${y}`);
+});
+
 test('virtual unsplit T equals explicit render spans and preserves source IDs',()=>{
  const unsplit=graph([[-10,0],[10,0],[0,0],[0,10]],[[0,1],[2,3]]),split=graph([[-10,0],[10,0],[0,0],[0,10]],[[0,2],[2,1],[2,3]]);
  const before=JSON.stringify(unsplit),a=build(unsplit),b=build(split);
@@ -74,6 +103,30 @@ test('host-owned opening does not cut crossing foreign material; recut uses same
  function polygon(r){return r.slice(0,-1).map(A.numericPoint);}
  assert.ok(inside(0,0),'foreign vertical body remains opaque');assert.ok(!inside(1.5,0),'own collinear run is cut across its split');
  const recut=directRecut(result.roomGeom,[opening],[]);assert.ok(recut);assert.deepEqual(recut.geom,result.geom);
+});
+
+test('a door in a collinear partition leaves the distinct room wall opaque, including light recut',()=>{
+ const input=graph([[0,0],[10,0],[10,10],[0,10],[2,0],[8,0]],[[0,1],[1,2],[2,3],[3,0]],[[[0],[1],[2],[3]]]);
+ input.edges.push({kind:'partition',id:'p',from:'n4',to:'n5',cm:4});
+ const g=prepareGraph(input).graph;
+ // Independent even/odd membership, away from boundaries (not arrangement predicates).
+ const inRing=(ring,x,y)=>ring.reduce((inside,p,i)=>{
+  const q=ring[(i+1)%ring.length];
+  return (p[1]>y)!==(q[1]>y)&&x<(q[0]-p[0])*(y-p[1])/(q[1]-p[1])+p[0] ? !inside : inside;
+ },false);
+ const inside=(geom,x,y)=>geom.some(p=>inRing(p[0],x,y)&&!p.slice(1).some(r=>inRing(r,x,y)));
+ for(const scale of [1,1000]){
+  const source={graph:g,scale},opening={x:5*scale,y:0,angle:0,length:2*scale,host:{kind:'partition',id:'p'}};
+  const before=directWallGeometry(source,1,scale,[],[]);
+  const after=directWallGeometry(source,1,scale,[opening],[]);
+  const recut=directRecut(before.roomGeom,[opening],[]);assert.ok(recut);
+  assert.equal(inside(before.geom,5*scale,1.5*scale),true,'partition material exists before cutting');
+  for(const result of [after,recut]){
+   assert.equal(inside(result.geom,5*scale,0),true,'foreign collinear room wall blocks light');
+   assert.equal(inside(result.geom,5*scale,1.5*scale),false,'door cuts its own partition');
+  }
+  assert.deepEqual(recut.geom,after.geom);
+ }
 });
 
 test('an independent ray at a room corner cannot enlarge the floor slab',()=>{

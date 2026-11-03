@@ -17,6 +17,8 @@ Baseline: `aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c`. Все данные син
 | ISO | `iso-scene-render` → общий результат; адресный scene test и настоящая сцена карточки |
 | PDF | `pdf/pdf-scene` → `physicalBodyParts` + `wallBodiesGeometry`; адресные PDF scene tests |
 | Preview узла | Сохраняется ограниченный граф с исходными ID; `wall-node-preview` больше не выбрасывает authority |
+| Live Resize | `resizeLiveCandidateSpace` сохраняет accepted graph closure; physical proof возвращает direct geometry, её узлы и coordinateScale идут в preview/P5 без повторного legacy расчёта; `graph-live-read.test.mjs` |
+| Draw / finish | model11 идёт через explicit graph intent и общий `_commitPhysicalGeometry`; старый bounded append — только codec10. Read-only `wallChainLiveCandidateSpace` также сохраняет graph closure; fault injection в `graph-live-read.test.mjs` |
 | Preview проёма | Старый локальный crop не знает владельцев графа; model11 использует общий canonical pass с сохранённой структурой |
 | Метрики / clean floor | `summary-panel-metrics` и `innerContourForRoom` используют общий room material; независимые floor/decor booleans остаются |
 | Контакт / LED | `device-contact-floor` и `led-strip-editor` используют общий material; raw partition quads сохраняют индексацию по record |
@@ -30,6 +32,18 @@ wall segment/partition операции имеют `segments`/`partitions`, то
 соответствующий явный intent. У column_add и не-partition ветвей physical
 properties/delete остаётся metadata. Переданный metadata structural edit
 отклоняется, edge props явно переносятся перед projection.
+
+`_structuralDraftModel` используется только внутри explicit topology transaction
+для численного планирования thickness intervals и поглощения совпадающих
+partition carriers при создании room face. Он не строит material domains и
+не выносит physical verdict. Его промежуточная проекция не является read model;
+физический барьер получает уже подготовленный граф, не этот planning carrier.
+
+Решение владельца от 2026-11-03: дверь/окно режет только свой host/run.
+Distinct коллинеарная стена комнаты остаётся непрозрачной даже под перегородкой
+с дверью. Прежнее composite-исключение относится к legacy reader. Регрессия
+проверяет отдельно исчезновение собственного partition material и сохранение
+чужой стены в полной геометрии и light recut, при scale1 и1000.
 
 Порядок комнат уже был canonical ID order в model11. Рендер повторяет этот
 порядок, metrics/cards/transfer именуют комнаты по ID. Strict room lookup
@@ -121,7 +135,7 @@ Predicate-only orientation/cross signs очищают положительные
 знаменатель. Точные коллинеарные промежуточные события не передаются далее как
 углы итоговой границы. Это не epsilon-cleanup и не удаление настоящих отверстий.
 
-## Окончательный результат S6
+## Осевой профиль первого раунда S6
 
 Все десять timing/memory checks — PASS, `comparison.json`. Временные raw reports:
 `baseline.json`, `candidate.json` (по 543 записи); точная память —

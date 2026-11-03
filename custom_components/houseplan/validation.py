@@ -336,7 +336,7 @@ def validate_wall_model_transition(
                 if touched is None or space.get("id") in touched:
                     verify_projection(space)
         except GraphError as error:
-            if error.code == "plan_graph_projection_mismatch":
+            if error.reason == "room_projection_mismatch":
                 raise
             raise WallModelClientOutdatedError(error.reason) from error
         return

@@ -230,7 +230,11 @@ async def test_real_v2_first_write_adopts_server_pair_even_with_diagnostic_misma
     assert next(n for n in accepted[0]["config"]["spaces"][0]["plan_graph"]["nodes"] if n["id"]==node["id"])["p"]==node["p"]
 
 
-async def test_real_projection_room_count_refusal_is_atomic_and_public(hass,hass_client,hass_access_token):
+@pytest.mark.parametrize("field,expected_code", [
+    ("rooms", "plan_graph_projection_mismatch"),
+    ("wall_segments", "wall_model_client_outdated"),
+])
+async def test_real_projection_refusal_is_atomic_and_preserves_stale_client_guidance(hass,hass_client,hass_access_token,field,expected_code):
     from custom_components.houseplan.graph_write import normalize_graph_config
     _,socket,_=await _setup(hass,hass_client,hass_access_token)
     runtime=get_data(hass);source=legacy()
@@ -238,7 +242,7 @@ async def test_real_projection_room_count_refusal_is_atomic_and_public(hass,hass
     current=normalize_graph_config(source)
     await runtime.config_store.async_save({"config":current,"rev":50})
     before=await socket.pair();candidate=copy.deepcopy(before[0]["config"])
-    candidate["spaces"][0]["rooms"]=[]
+    candidate["spaces"][0][field]=[]
     refused=await socket.send({"type":TYPE,"config":candidate,"expected_rev":50})
-    assert not refused["success"] and refused["error"]["code"]=="plan_graph_projection_mismatch",refused
+    assert not refused["success"] and refused["error"]["code"]==expected_code,refused
     assert await socket.pair()==before

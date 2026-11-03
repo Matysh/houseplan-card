@@ -33,6 +33,7 @@ def test_projection_room_mismatch_is_a_graph_error_before_zip(change):
     with pytest.raises(GraphError) as caught:
         verify_projection(space)
     assert caught.value.code == "plan_graph_projection_mismatch"
+    assert caught.value.reason == "room_projection_mismatch"
 
 
 def test_exact_crossing_and_correct_binary64_projection_survive_100_round_trips():

@@ -9,7 +9,11 @@ visual 1.5H, full two-ray points (#310), inherited sharp room apices (#329/#339)
 finite support and host-owned openings still apply. Coincident distinct IDs
 and exact unsplit T contacts join only in render topology. One shared result
 supplies all scenes and physical consumers, with an explicit coordinate scale
-at normalized guards. Legacy-only read compatibility retains the historical
+at normalized guards. Owner decision 2026-11-03: a model11 opening cuts only its
+own host/run. A distinct wall or partition remains opaque even when exactly
+collinear with that host; no composite cut is propagated to it. A door in an
+overlaid partition cannot transmit light through the room wall behind it.
+Legacy-only read compatibility retains the historical
 sections below. [PLAN-GRAPH.md](PLAN-GRAPH.md) defines the current algorithm,
 tolerance, source authority, failure and cache contracts.
 
@@ -414,7 +418,8 @@ O(N²) `physicalBodySet()` node search.
 
 Static's room masonry also consumes `geometryRoomOpeningInputs` (#1171),
 including door/window/gate cuts as well as passages. Partition cuts still reach
-room masonry only under the shared exact composite-wall rule. The structural
+room masonry under the composite-wall rule in the historical legacy reader;
+model11 follows the owner-only rule above. The structural
 cache fingerprints actual cut geometry, so moving, resizing, rehosting or
 deleting an opening cannot retain its old aperture. A retained wall-face index
 serves symbols and tunnel association; contact ticks leave this structure warm.
@@ -847,7 +852,8 @@ separately verifies preservation of two individually valid components.
 An opening with explicit `host:{kind:'partition',id,t}` is resolved from that
 partition alone and subtracted full-depth from its raw body before the joined
 presentation union. A precisely collinear room wall covering the same interval
-is cut as a composite; a crossing/nearby body is not. Host move keeps `t`,
+is cut as a composite in the historical legacy reader only. In model11 that
+distinct wall remains opaque, like any crossing/nearby body. Host move keeps `t`,
 delete requires cascade confirmation, and malformed/orphan hosts remain opaque.
 Opening cuts change physical masonry, not the structural wall axes used for
 room-face detection (#185).

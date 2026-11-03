@@ -1,4 +1,6 @@
 import { GRID_STEP_N } from './space-geometry';
+import { localGraphRead } from './local-graph-read';
+import type { PlanGraph } from './plan-graph';
 
 type DataRecord = Record<string, unknown>;
 
@@ -186,7 +188,8 @@ export function resizeLiveCandidateSpace(
   });
   return {
     ...space,
-    plan_graph: undefined,
+    plan_graph: localGraphRead(space.plan_graph as PlanGraph | undefined, ids,
+      new Set(wallSegments.map(item => String(item.id || ''))), partitionIds),
     rooms,
     walls,
     wall_segments: wallSegments,

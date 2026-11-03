@@ -3316,7 +3316,8 @@ public _rszProjectPreview(
       NORM_W, s.walls || []).length) return { ok: false, reason: 'wall-metadata' };
     const liveRoomIds = resizeLiveJunctionRoomIds(sp.rooms || [], changedRoomIds);
     const liveSpace = resizeLiveCandidateSpace(sp, liveRoomIds);
-    if (!liveSpace || !this._rszSpaceCandidateGeometry(this.host._space, liveSpace).ok)
+    const liveGeometry = liveSpace && this._rszSpaceCandidateGeometry(this.host._space, liveSpace);
+    if (!liveGeometry?.ok)
       return { ok: false, reason: 'physical-geometry' };
     // #329 AC7a: a step that would ADD a junction-limit violation is never
     // projected, so the drag stops at the last allowed position instead of
@@ -3327,16 +3328,14 @@ public _rszProjectPreview(
         (space) => (space?.id === this.host._space ? sp : space),
       ),
     };
-    try { this._resizePreviewNodes = multiWallNodesForGeometry(
-        liveSpace.rooms, liveSpace.walls as unknown as WallEntry[], [], GRID_STEP_N,
-        this.host._cellCm, this.host._gridPitch, NORM_W,
-      );
-    } catch { this._resizePreviewNodes = null; }
+    // Reuse the exact, render-scale nodes produced by the physical proof.
+    // Raw compatibility room arrays carry neither graph authority nor scale.
+    this._resizePreviewNodes = liveGeometry.wallGeometry?.multiWallNodes || null;
     let limited: JunctionLimitViolation[];
     try {
       const affected = new Set(changedRoomIds);
       const next = this.host._junctionLimitViolations(limitCandidate, this.host._space,
-        { status: 'lightweight', multiWallNodes: this._resizePreviewNodes }, affected);
+        liveGeometry.wallGeometry, affected);
       const baseline = this._resizeBaselineLimits.filter(
         (item) => item.rule !== 'clearance' || affected.has(item.subject));
       limited = increasedViolations(next, baseline);

@@ -1,4 +1,6 @@
 import { GRID_STEP_N } from './space-geometry';
+import { localGraphRead } from './local-graph-read';
+import type { PlanGraph } from './plan-graph';
 
 type DataRecord = Record<string, unknown>;
 type Point = [number, number];
@@ -299,7 +301,8 @@ export function wallChainLiveCandidateSpace(
   return {
     space: {
       ...space,
-      plan_graph: undefined,
+      plan_graph: localGraphRead(space.plan_graph as PlanGraph | undefined,
+        selectedRoomIds, wallIds, partitionIds),
       rooms: selectedRooms,
       walls,
       wall_segments: wallSegments,

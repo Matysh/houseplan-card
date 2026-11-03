@@ -257,14 +257,14 @@ def verify_projection(space: dict, graph: dict | None = None) -> None:
         actual_rooms = space.get("rooms", [])
         if all(isinstance(r, dict) and isinstance(r.get("room"), str) for r in graph_rooms):
             if not isinstance(actual_rooms, list) or [r.get("id") if isinstance(r, dict) else None for r in actual_rooms] != [r["room"] for r in graph_rooms]:
-                raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
+                raise GraphError("room_projection_mismatch", code="plan_graph_projection_mismatch")
     expected = project_graph_space(space, graph)["space"]
     for field in ("wall_segments", "walls", "partitions"):
         if space.get(field, []) != expected.get(field, []):
             raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
     rooms, projected_rooms = space.get("rooms", []), expected.get("rooms", [])
     if len(rooms) != len(projected_rooms):
-        raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
+        raise GraphError("room_projection_mismatch", code="plan_graph_projection_mismatch")
     for actual, derived in zip(rooms, projected_rooms, strict=True):
         if actual.get("id") != derived["id"] or actual.get("poly") != derived["poly"] or actual.get("wall_ids") != derived["wall_ids"]:
             raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")

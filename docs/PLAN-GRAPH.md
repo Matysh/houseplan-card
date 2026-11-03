@@ -147,7 +147,8 @@ Exterior runs come from the exact room-centre subdivision, with shared internal
 half-edges removed, so a different room cannot supply a concave facade wedge.
 Thick support stops at its actual endpoint. Local trims and hosted cuts
 use half-plane formulas before material combination. Foreign material remains
-opaque. The same retained domains support alternate light apertures.
+opaque, including a distinct exactly collinear wall behind a partition door
+(owner decision 2026-11-03). The same retained domains support alternate light apertures.
 The floor slab uses room-owned incidence only: an independent partition at a
 facade corner cannot enlarge it. Room centres plus their complete masonry form
 the paper underlay, with actual courtyard holes and no orphan triangular holes

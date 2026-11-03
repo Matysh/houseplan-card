@@ -68,20 +68,38 @@ export function contains(poly:Polygon,p:Point,d:Point=[Q.ZERO,Q.ZERO]):boolean {
   for(let i=0;i<poly.length;i++){
     const a=poly[i],b=poly[(i+1)%poly.length];
     const ay=Q.cmp(a[1],p[1])||-sign(d[1]),by=Q.cmp(b[1],p[1])||-sign(d[1]);
-    const side=Q.orientationSign(a,b,p)||Q.crossSign(Q.pointSub(b,a),d);
+    if(!((ay<=0&&by>0)||(by<=0&&ay>0)))continue;
+    const side=Q.orientationSign(a,b,p)||Q.crossSign(Q.integerDirection(a,b),d);
     if(ay<=0&&by>0&&side>0)winding++;
     if(by<=0&&ay>0&&side<0)winding--;
   }
   return winding!==0;
 }
+/** Classify both sides of one boundary with shared exact predicates. */
+function containsSides(poly:Polygon,p:Point,d:Point):[boolean,boolean] {
+  let left=0,right=0;const dy=sign(d[1]);
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i],b=poly[(i+1)%poly.length],ay=Q.cmp(a[1],p[1]),by=Q.cmp(b[1],p[1]);
+    const la=ay||-dy,lb=by||-dy,ra=ay||dy,rb=by||dy;
+    if(!((la<=0&&lb>0)||(lb<=0&&la>0)||(ra<=0&&rb>0)||(rb<=0&&ra>0)))continue;
+    const side=Q.orientationSign(a,b,p),offset=side?0:Q.crossSign(Q.integerDirection(a,b),d);
+    const ls=side||offset,rs=side||-offset;
+    if(la<=0&&lb>0&&ls>0)left++;if(lb<=0&&la>0&&ls<0)left--;
+    if(ra<=0&&rb>0&&rs>0)right++;if(rb<=0&&ra>0&&rs<0)right--;
+  }
+  return[left!==0,right!==0];
+}
 /** Exact convex half-plane clipping; used for local caps and owner cuts only. */
 export function clip(poly:Polygon,a:Point,b:Point,inside:boolean):Polygon {
+  const signs=poly.map(p=>Q.orientationSign(a,b,p));
+  const accepted=signs.map(sign=>inside?sign>=0:sign<=0);
+  if(accepted.every(Boolean))return poly;
+  if(!accepted.some(Boolean))return [];
   const out:Polygon=[];
   for(let i=0;i<poly.length;i++){
-    const p=poly[i],q=poly[(i+1)%poly.length],sp=Q.orientation(a,b,p),sq=Q.orientation(a,b,q);
-    const ip=inside?sp.n>=0n:sp.n<=0n,iq=inside?sq.n>=0n:sq.n<=0n;
+    const p=poly[i],q=poly[(i+1)%poly.length],ip=accepted[i],iq=accepted[(i+1)%poly.length];
     if(ip)out.push(p);
-    if(ip!==iq)out.push(Q.pointAt(p,q,Q.div(sp,Q.sub(sp,sq))));
+    if(ip!==iq){const hit=Q.lineIntersection(a,b,p,q);if(!hit)throw new Error('wall-arrangement:parallel-clip');out.push(hit);}
   }
   return clean(out);
 }
@@ -101,11 +119,12 @@ export function angleCompare(a:Point,b:Point):number {
   return half(a)-half(b)||-Q.crossSign(a,b);
 }
 interface Segment {a:Point;b:Point;box:Box;cuts:Map<string,Point>;index:number}
-const between=(t:Q.Exact)=>Q.cmp(t,Q.ZERO)>=0&&Q.cmp(t,Q.ONE)<=0;
 /** Union membership of analytic domains; intersections node boundary segments,
  * not offset polygons passed through a repair/union/difference pipeline. */
 export function arrangeExact(input:Polygon[]):Polygon[][] {
   const polys=input.filter(p=>p.length>=3),segments:Segment[]=[];
+  const keys=new WeakMap<Point,string>();
+  const keyOf=(point:Point):string=>{let key=keys.get(point);if(key===undefined){key=pointKey(point);keys.set(point,key);}return key;};
   const groups=new Map<string,Map<string,{point:Point;delta:number}>>();
   // Collinear boundaries share an exact line and interval sweep. This removes
   // duplicates before broad-phase intersections, including room-owner repeats.
@@ -114,11 +133,12 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
     if(Q.pointCmp(a,b)>0)[a,b]=[b,a];
     const dx=Q.sub(b[0],a[0]),dy=Q.sub(b[1],a[1]);
     const slope=dx.n?Q.div(dy,dx):null;
-    const line=slope?'s:'+slope.n+'/'+slope.d+':'+Q.sub(a[1],Q.mul(slope,a[0])).n+'/'+Q.sub(a[1],Q.mul(slope,a[0])).d:'x:'+a[0].n+'/'+a[0].d;
+    const intercept=slope?Q.sub(a[1],Q.mul(slope,a[0])):null;
+    const line=slope?'s:'+slope.n+'/'+slope.d+':'+intercept!.n+'/'+intercept!.d:'x:'+a[0].n+'/'+a[0].d;
     // Keep disjoint intervals disjoint; line endpoints alone must not bridge gaps.
     const group=groups.get(line)||new Map<string,{point:Point;delta:number}>();
     for(const[point,delta]of [[a,1],[b,-1]] as const){
-      const key=pointKey(point),event=group.get(key)||{point,delta:0};event.delta+=delta;group.set(key,event);
+      const key=keyOf(point),event=group.get(key)||{point,delta:0};event.delta+=delta;group.set(key,event);
     }
     groups.set(line,group);
   }
@@ -127,31 +147,45 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
     for(let i=0;i+1<events.length;i++){
       active+=events[i].delta;if(!active)continue;
       const a=events[i].point,b=events[i+1].point;
-      segments.push({a,b,box:bounds([a,b]),cuts:new Map([[pointKey(a),a],[pointKey(b),b]]),index:segments.length});
+      segments.push({a,b,box:bounds([a,b]),cuts:new Map([[keyOf(a),a],[keyOf(b),b]]),index:segments.length});
     }
   }
   const segmentTree=tree(segments,s=>s.box);
   for(const a of segments)for(const b of query(segmentTree,a.box)){
     if(b.index<=a.index||!overlaps(a.box,b.box))continue;
-    const hit=Q.intersection(a.a,a.b,b.a,b.b);
-    if(hit&&between(hit.t)&&between(hit.u)){a.cuts.set(pointKey(hit.p),hit.p);b.cuts.set(pointKey(hit.p),hit.p);}
+    if(Q.pointEq(a.a,b.a)||Q.pointEq(a.a,b.b)||Q.pointEq(a.b,b.a)||Q.pointEq(a.b,b.b))continue;
+    const ca=Q.orientationSign(a.a,a.b,b.a),cb=Q.orientationSign(a.a,a.b,b.b);
+    if(ca&&ca===cb)continue;
+    const ac=Q.orientationSign(b.a,b.b,a.a),ad=Q.orientationSign(b.a,b.b,a.b);
+    if(ac&&ac===ad)continue;
+    // Shared endpoints are already noded. Collinear spans were split by the
+    // line sweep; neither case needs an intersection or fraction reduction.
+    if(!ca&&!cb)continue;
+    const hit=!ca?b.a:!cb?b.b:!ac?a.a:!ad?a.b:Q.lineIntersection(a.a,a.b,b.a,b.b);
+    if(hit&&Q.pointCmp(hit,a.a)>=0&&Q.pointCmp(hit,a.b)<=0&&Q.pointCmp(hit,b.a)>=0&&Q.pointCmp(hit,b.b)<=0){
+      a.cuts.set(keyOf(hit),hit);b.cuts.set(keyOf(hit),hit);
+    }
   }
   const boxes=new Map(polys.map(p=>[p,bounds(p)]));
   const polyTree=tree(polys,p=>boxes.get(p)!),atomic=new Map<string,[Point,Point]>();
   for(const segment of segments){
     const points=[...segment.cuts.values()].sort(Q.pointCmp);
-    for(let i=0;i+1<points.length;i++)atomic.set(pointKey(points[i])+'|'+pointKey(points[i+1]),[points[i],points[i+1]]);
+    for(let i=0;i+1<points.length;i++)atomic.set(keyOf(points[i])+'|'+keyOf(points[i+1]),[points[i],points[i+1]]);
   }
   const edges:Array<{a:Point;b:Point;used:boolean}>=[];
   for(const[a,b]of atomic.values()){
-    const mid=Q.pointAt(a,b,Q.exact(1n,2n)),delta=Q.pointSub(b,a),left:Point=[Q.neg(delta[1]),delta[0]];
-    const pointBox=bounds([mid]),candidates=query(polyTree,pointBox).filter(p=>overlaps(boxes.get(p)!,pointBox));
-    const l=candidates.some(p=>contains(p,mid,left)),r=candidates.some(p=>contains(p,mid,[Q.neg(left[0]),Q.neg(left[1])]));
+    const mid=Q.midpoint(a,b),delta=Q.integerDirection(a,b),left:Point=[Q.neg(delta[1]),delta[0]];
+    // A conservative segment box contains its exact midpoint. Reusing the
+    // endpoint projections avoids arbitrary-precision rounding of every new
+    // midpoint; all membership decisions below remain exact.
+    const pointBox=bounds([a,b]),candidates=query(polyTree,pointBox).filter(p=>overlaps(boxes.get(p)!,pointBox));
+    let l=false,r=false;
+    for(const poly of candidates){const sides=containsSides(poly,mid,left);l||=sides[0];r||=sides[1];if(l&&r)break;}
     if(l!==r)edges.push({a:l?a:b,b:l?b:a,used:false});
   }
   const outgoing=new Map<string,typeof edges>();
-  for(const e of edges){const key=pointKey(e.a),list=outgoing.get(key)||[];list.push(e);outgoing.set(key,list);}
-  for(const list of outgoing.values())list.sort((a,b)=>angleCompare(Q.pointSub(a.b,a.a),Q.pointSub(b.b,b.a)));
+  for(const e of edges){const key=keyOf(e.a),list=outgoing.get(key)||[];list.push(e);outgoing.set(key,list);}
+  for(const list of outgoing.values())list.sort((a,b)=>angleCompare(Q.integerDirection(a.a,a.b),Q.integerDirection(b.a,b.b)));
   const rings:Polygon[]=[];
   for(const start of edges){
     if(start.used)continue;
@@ -159,21 +193,22 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
     do{
       if(edge.used)throw new Error('wall-arrangement:open-cycle');
       edge.used=true;ring.push(edge.a);
-      const choices=outgoing.get(pointKey(edge.b));
+      const choices=outgoing.get(keyOf(edge.b));
       if(!choices?.length)throw new Error('wall-arrangement:open-boundary');
-      const reverse=Q.pointSub(edge.a,edge.b);
-      let index=choices.findIndex(e=>angleCompare(Q.pointSub(e.b,e.a),reverse)>=0)-1;
+      const reverse=Q.integerDirection(edge.b,edge.a);
+      let index=choices.findIndex(e=>angleCompare(Q.integerDirection(e.a,e.b),reverse)>=0)-1;
       if(index<0)index=choices.length-1;
       edge=choices[index];
     }while(edge!==start);
     const cleaned=clean(ring);if(cleaned.length)rings.push(cleaned);
   }
-  const outer=rings.filter(r=>area(r).n>0n),holes=rings.filter(r=>area(r).n<0n);
+  const areas=new Map(rings.map(r=>[r,area(r)]));
+  const outer=rings.filter(r=>areas.get(r)!.n>0n),holes=rings.filter(r=>areas.get(r)!.n<0n);
   const polygons=outer.map(r=>[r]);
   for(const hole of holes){
-    const p=Q.pointAt(hole[0],hole[1],Q.exact(1n,2n)),v=Q.pointSub(hole[1],hole[0]),right:Point=[v[1],Q.neg(v[0])];
+    const p=Q.midpoint(hole[0],hole[1]),v=Q.integerDirection(hole[0],hole[1]),right:Point=[v[1],Q.neg(v[0])];
     const owner=outer.map((ring,i)=>({ring,i})).filter(({ring})=>contains(ring,p,right))
-      .sort((a,b)=>Q.cmp(area(a.ring),area(b.ring)))[0];
+      .sort((a,b)=>Q.cmp(areas.get(a.ring)!,areas.get(b.ring)!))[0];
     if(!owner)throw new Error('wall-arrangement:orphan-hole');
     polygons[owner.i].push(hole);
   }

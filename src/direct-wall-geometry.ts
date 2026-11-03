@@ -224,7 +224,7 @@ function materialPieces(structure:Structure,openings:DirectOpening[],extra:Extra
   for(const opening of openings){
     if(!(opening.length>0))continue;
     const rad=opening.angle*Math.PI/180,dx=Math.cos(rad)*opening.length/2,dy=Math.sin(rad)*opening.length/2;
-    const poly=slot([opening.x-dx,opening.y-dy],[opening.x+dx,opening.y+dy],Math.max(structure.depth,1)*1.25);
+    const poly=slot([opening.x-dx,opening.y-dy],[opening.x+dx,opening.y+dy],Math.max(structure.depth,structure.nodes.epsilon)*1.25);
     if(opening.host)for(const id of opening.hostIds||structure.runs.get(edgeKey(opening.host))||[opening.host.id])add(opening.host.kind+':'+id,poly);
     else{
       // Compatibility openings may be intentionally unbound. Associate only
