@@ -179,7 +179,8 @@ async def test_area_entity_scope_and_diagnostic_disabled_do_not_expand_to_neighb
     entity = er.async_get(hass).async_get_or_create("sensor", "mqtt", "owned", config_entry=mqtt_entry, device_id=parent.id)
     diagnostic = er.async_get(hass).async_get_or_create("sensor", "mqtt", "diagnostic", config_entry=mqtt_entry,
         device_id=in_room.id, disabled_by=er.RegistryEntryDisabler.INTEGRATION)
-    config["spaces"] = [{"id": "f", "rooms": [{"id": "r", "area": area.id}]}]
+    config["spaces"] = [{"id": "f", "rooms": [{"id": "r", "area": area.id,
+        "poly": [[0, 0], [1, 0], [1, 1], [0, 1]]}]}]
     config["markers"] = [{"id": "entity", "binding": f"entity:{entity.entity_id}"}]
     await save(entry, config)
     transport.emit("zigbee2mqtt/bridge/devices", [*inventory(1, "room"), *inventory(2, "entity"), *inventory(3, "foreign")])

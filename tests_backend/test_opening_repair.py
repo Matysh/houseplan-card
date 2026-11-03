@@ -19,13 +19,19 @@ from custom_components.houseplan.wall_segment_model import (
     GRID_STEP_N,
     _wall_key,
     commit_wall_segment_model,
+    decode_legacy_wall_segment_model,
 )
 
 A, B, C, D = [0.2, 0.2], [0.6, 0.2], [0.6, 0.5], [0.2, 0.5]
 
 
 def _house(*openings: dict, left_cm: float = 15) -> dict:
-    """One room with four walls, one partition, committed to the current model."""
+    """Raw model10 import with four walls and a partition, before graph migration.
+
+    These tests exercise the legacy import repair, which precedes the model11
+    migration. Using the current writer here would already add exact hosts and
+    no longer represent the raw legacy document this repair is meant to read.
+    """
     edges = ((A, B, 15), (B, C, 15), (C, D, 15), (D, A, left_cm))
     legacy = {
         "model_version": 9,
@@ -39,7 +45,7 @@ def _house(*openings: dict, left_cm: float = 15) -> dict:
         }],
         "markers": [], "settings": {},
     }
-    config, _ = commit_wall_segment_model(legacy)
+    config, _ = decode_legacy_wall_segment_model(legacy)
     return config
 
 
@@ -117,8 +123,15 @@ def test_a_door_slightly_off_its_wall_is_put_back_on_it():
     assert abs(door["x"] - (0.3 + shift)) <= GRID_STEP_N * 0.02
     assert door["host"]["t"] == pytest.approx((door["x"] - 0.2) / 0.4, abs=1e-9)
     validated = _schema(config)
-    assert commit_wall_segment_model(validated)[0]["spaces"][0]["openings"] == \
-        validated["spaces"][0]["openings"]
+    migrated = commit_wall_segment_model(validated)[0]
+    exact = _opening(migrated, "d1")
+    assert {key: value for key, value in exact.items() if key != "host"} == \
+        {key: value for key, value in door.items() if key != "host"}
+    assert exact["host"]["kind"] == door["host"]["kind"]
+    assert exact["host"]["id"] == door["host"]["id"]
+    assert exact["host"]["t"] == pytest.approx(door["host"]["t"], abs=1e-9)
+    assert "tq" in exact["host"]
+    assert commit_wall_segment_model(migrated)[0] == migrated
 
 
 def test_of_two_overlapping_doors_the_later_one_loses_its_host():
@@ -286,7 +299,7 @@ def test_between_two_eligible_walls_the_next_write_decides(model, result):
     lower = [[0.2, 0.2 + gap], [0.6, 0.2 + gap], [0.6, 0.4], [0.2, 0.4]]
     walls = [{"key": _wall_key(p[i], p[(i + 1) % 4]), "a": p[i], "b": p[(i + 1) % 4], "cm": 15}
              for p in (upper, lower) for i in range(4)]
-    config, _ = commit_wall_segment_model({"model_version": 9, "spaces": [{
+    config, _ = decode_legacy_wall_segment_model({"model_version": 9, "spaces": [{
         "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
         "rooms": [{"id": "r1", "name": "R1", "poly": upper}, {"id": "r2", "name": "R2", "poly": lower}],
         "walls": walls, "openings": [],
@@ -300,4 +313,6 @@ def test_between_two_eligible_walls_the_next_write_decides(model, result):
     config["model_version"] = model
     validated = _schema(config)
     committed, _ = commit_wall_segment_model(validated)
-    assert _opening(committed, "d1").get("host") == _opening(config, "d1").get("host")
+    host = _opening(committed, "d1").get("host")
+    assert ({k: v for k, v in host.items() if k != "tq"} if host else host) == _opening(config, "d1").get("host")
+    assert commit_wall_segment_model(committed)[0] == committed

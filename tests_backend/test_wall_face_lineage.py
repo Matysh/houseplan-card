@@ -18,6 +18,7 @@ from custom_components.houseplan.wall_segment_model import (
     WallSegmentMigrationError,
     commit_wall_segment_model,
 )
+from custom_components.houseplan.plan_graph_exact import GraphError
 
 
 _CASES = json.loads((
@@ -28,8 +29,10 @@ _CASES = json.loads((
 
 @pytest.mark.parametrize("case", _CASES, ids=lambda case: case["name"])
 def test_frontend_room_face_candidate_and_partition_host_policy(case: dict) -> None:
-    before = copy.deepcopy(case["before"])
-    after = copy.deepcopy(case["after"])
+    # The capture predates model11. Decode both captured states once; the
+    # subsequent current writer must remain a strict, lossless no-op.
+    before = commit_wall_segment_model(copy.deepcopy(case["before"]))[0]
+    after = commit_wall_segment_model(copy.deepcopy(case["after"]))[0]
     original_before, original_after = copy.deepcopy(before), copy.deepcopy(after)
 
     # This material is emitted by the frontend production-function pipeline,
@@ -59,6 +62,6 @@ def test_real_duplicate_catalogue_ids_are_still_rejected_without_mutation() -> N
     assert len(space["wall_segments"]) >= 2
     space["wall_segments"][1]["id"] = space["wall_segments"][0]["id"]
     original = copy.deepcopy(source)
-    with pytest.raises(WallSegmentMigrationError, match="duplicate-id"):
+    with pytest.raises((WallSegmentMigrationError, GraphError), match="duplicate"):
         commit_wall_segment_model(source)
     assert source == original

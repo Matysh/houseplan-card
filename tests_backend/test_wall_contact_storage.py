@@ -1,6 +1,7 @@
 """#1166: canonical derived cuts are one wall identity before publication."""
 import copy
 import json
+from fractions import Fraction
 from pathlib import Path
 import pytest
 
@@ -11,12 +12,53 @@ from custom_components.houseplan.validation import (
     PartitionOpeningHostError, WallModelClientOutdatedError,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+from custom_components.houseplan.plan_graph import project_graph_space, validate_graph
+from custom_components.houseplan.plan_graph_exact import (
+    ExactPoint, GraphError, encode_point, encode_rational, parse_decimal, point_at,
+)
 
 
 def test_shared_derived_cut_has_one_storage_identity_and_survives_next_write():
     fixture = json.loads((Path(__file__).parents[1] / "test/fixtures/1166-shared-cut.json").read_text())
-    candidate = copy.deepcopy(fixture["source"])
-    candidate["spaces"][0]["rooms"].append(copy.deepcopy(fixture["room"]))
+    candidate = commit_wall_segment_model(fixture["source"])[0]
+    space = candidate["spaces"][0]
+    graph = copy.deepcopy(space["plan_graph"])
+    index = validate_graph(graph)
+    south = next(edge for edge in graph["edges"] if edge["id"] == "south")
+    original = copy.deepcopy(south)
+    cut = point_at(index.points[south["from"]], index.points[south["to"]], Fraction(1, 3))
+    cut_id, east_id, west_id = "test:cut", "test:east", "test:west"
+    graph["nodes"].extend([
+        {"id": cut_id, "p": encode_point(cut)},
+        {"id": east_id, "p": encode_point(ExactPoint(index.points[south["to"]].x, parse_decimal(1.3)))},
+        {"id": west_id, "p": encode_point(ExactPoint(cut.x, parse_decimal(1.3)))},
+    ])
+    south["to"] = cut_id
+    graph["edges"].extend([
+        {**original, "id": "south:shared", "from": cut_id},
+        {"kind": "wall", "id": "new:e", "from": original["to"], "to": east_id, "cm": 15},
+        {"kind": "wall", "id": "new:s", "from": east_id, "to": west_id, "cm": 15},
+        {"kind": "wall", "id": "new:w", "from": west_id, "to": cut_id, "cm": 15},
+    ])
+    for room in graph["rooms"]:
+        steps = []
+        for step in room["edges"]:
+            if step["id"] != "south":
+                steps.append(step)
+                continue
+            pieces = [{**step, "id": "south"}, {**step, "id": "south:shared"}]
+            steps.extend(reversed(pieces) if step["reverse"] else pieces)
+        room["edges"] = steps
+    graph["rooms"].append({"room": fixture["room"]["id"], "edges": [
+        {"kind": "wall", "id": edge, "reverse": False} for edge in ("south:shared", "new:e", "new:s", "new:w")]})
+    graph["dependencies"].append({"node": cut_id, "kind": "on-edge",
+        "refs": [{"from": original["from"], "to": original["to"]}], "parameters": [encode_rational(Fraction(1, 3))]})
+    graph["nodes"].sort(key=lambda row: row["id"])
+    graph["edges"].sort(key=lambda row: f"{row['kind']}:{row['id']}")
+    graph["rooms"].sort(key=lambda row: row["room"])
+    graph["dependencies"].sort(key=lambda row: row["node"])
+    space["rooms"].append(copy.deepcopy(fixture["room"]))
+    candidate["spaces"][0] = project_graph_space(space, graph)["space"]
     first, _ = commit_wall_segment_model(candidate)
     space = first["spaces"][0]
     spans = [json.dumps([wall["a"], wall["b"]]) for wall in space["wall_segments"]]
@@ -54,7 +96,8 @@ def test_stored_subray_proof_preserves_real_angle_and_independent_origin_negativ
 def _promotion_case():
     cases = json.loads((Path(__file__).parents[1] / "test/fixtures/1166-room-candidates.json").read_text())
     case = next(row for row in cases if row["scenario"] == "hosted-split" and row["reverse"] and not row["optimize"])
-    return copy.deepcopy(case["candidates"][0]), copy.deepcopy(case["candidates"][1])
+    # The model11 capture promotes the hosted carrier during the first room.
+    return copy.deepcopy(case["source"]), copy.deepcopy(case["candidates"][0])
 
 
 @pytest.mark.parametrize("corruption", [None, "surviving-source", "gap", "thickness", "moved-opening", "length", "metadata"])
@@ -109,7 +152,8 @@ def test_room_ownership_of_existing_catalogue_is_not_a_stale_geometry_edit(corru
     elif corruption == "replaced-room":
         del rooms[0]
     if corruption:
-        with pytest.raises(WallModelClientOutdatedError):
+        error = GraphError if corruption == "replaced-room" else WallModelClientOutdatedError
+        with pytest.raises(error):
             validate_wall_model_transition(after, before)
     else:
         validate_wall_model_transition(after, before)

@@ -16,11 +16,11 @@ import voluptuous as vol
 from pure_imports import load_pure
 
 _HOUSEPLAN = Path(__file__).resolve().parent.parent / "custom_components" / "houseplan"
-v = load_pure("hp_validation_led", _HOUSEPLAN / "validation.py")
+v = load_pure("custom_components.houseplan.validation", _HOUSEPLAN / "validation.py")
 led = load_pure("custom_components.houseplan.led_strips", _HOUSEPLAN / "led_strips.py")
 support = load_pure("custom_components.houseplan.support_package", _HOUSEPLAN / "support_package.py")
 wsm = load_pure("custom_components.houseplan.wall_segment_model", _HOUSEPLAN / "wall_segment_model.py")
-PLAN_MODEL_VERSION = 10
+PLAN_MODEL_VERSION = wsm.WALL_SEGMENT_MODEL_VERSION
 
 
 def _space(space_id: str, title: str) -> dict:
@@ -31,7 +31,7 @@ def _space(space_id: str, title: str) -> dict:
 
 
 def _config(strips=None, markers=None, *, space_id: str = "ground", extra_spaces=()) -> dict:
-    """A current (v10) document: built from a v9 one by the real migration."""
+    """A current document built from a legacy one by the real migration."""
     legacy = {
         "model_version": PLAN_MODEL_VERSION - 1,
         "spaces": [_space(space_id, "Ground"), *(_space(s, s.title()) for s in extra_spaces)],

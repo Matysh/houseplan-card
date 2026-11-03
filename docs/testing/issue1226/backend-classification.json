@@ -1,0 +1,2657 @@
+[
+  {
+    "file": "tests_backend/test_config_migrations.py",
+    "name": "test_unknown_model_is_not_treated_as_current[11]",
+    "category": "outdated-version-oracle",
+    "status": "passed",
+    "reason": "Model11 is now supported. The unsupported numeric version case addresses12, retaining boolean/string/negative rejection.",
+    "originalError": "Failed: DID NOT RAISE <class 'ValueError'>",
+    "currentTest": "tests_backend/test_config_migrations.py::test_unknown_model_is_not_treated_as_current[12]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_config_schema_manifest.py",
+    "name": "test_issue_33_manifest_is_fresh_and_deterministic",
+    "category": "outdated-schema-manifest",
+    "status": "pending-integration",
+    "reason": "Manifest regeneration is owned by the Node/schema area of #1226; working validation already accepts low.",
+    "originalError": "AssertionError: scripts/config-schema.json is stale — the schema changed; run python3 scripts/dump-config-schema.py and commit the diff",
+    "currentTest": "tests_backend/test_config_schema_manifest.py::test_issue_33_manifest_is_fresh_and_deterministic",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": null
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_coordinate_canonicalization.py",
+    "name": "test_optimize_roundtrip_fixture_has_one_backend_canonical_target",
+    "category": "outdated-cross-runtime-fixture",
+    "status": "pending-integration",
+    "reason": "The shared optimize-roundtrip expected config is model10. Keep Python against the same captured frontend target; shared-fixture update is owned by the Node area.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [... grid', ...}]}",
+    "currentTest": "tests_backend/test_coordinate_canonicalization.py::test_optimize_roundtrip_fixture_has_one_backend_canonical_target",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": null
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_ordinary_history_and_recreation_are_durable[door-reverse-False]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: assert {'markers': [...s': [], ...}]} == {'markers': [... ...}], ...}]}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_ordinary_history_and_recreation_are_durable[door-reverse-False]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_ordinary_history_and_recreation_are_durable[door-reverse-True]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: assert {'markers': [...s': [], ...}]} == {'markers': [... ...}], ...}]}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_ordinary_history_and_recreation_are_durable[door-reverse-True]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_ordinary_history_and_recreation_are_durable[window-reverse-False]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: assert {'markers': [...s': [], ...}]} == {'markers': [... ...}], ...}]}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_ordinary_history_and_recreation_are_durable[window-reverse-False]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_ordinary_history_and_recreation_are_durable[window-reverse-True]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: assert {'markers': [...s': [], ...}]} == {'markers': [... ...}], ...}]}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_ordinary_history_and_recreation_are_durable[window-reverse-True]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_unsafe_promotion_never_changes_store_or_revision[contact]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: {'error': {'code': 'wall_model_client_outdated', 'message': 'stale_plan_graph_writer'}, 'id': 2, 'success': False, 'type': 'result'}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_unsafe_promotion_never_changes_store_or_revision[contact]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_unsafe_promotion_never_changes_store_or_revision[length]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: {'error': {'code': 'wall_model_client_outdated', 'message': 'stale_plan_graph_writer'}, 'id': 2, 'success': False, 'type': 'result'}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_unsafe_promotion_never_changes_store_or_revision[length]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_unsafe_promotion_never_changes_store_or_revision[thin]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: {'error': {'code': 'wall_model_client_outdated', 'message': 'stale_plan_graph_writer'}, 'id': 2, 'success': False, 'type': 'result'}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_unsafe_promotion_never_changes_store_or_revision[thin]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_unsafe_promotion_never_changes_store_or_revision[shift]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: {'error': {'code': 'wall_model_client_outdated', 'message': 'stale_plan_graph_writer'}, 'id': 2, 'success': False, 'type': 'result'}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_unsafe_promotion_never_changes_store_or_revision[shift]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_unsafe_promotion_never_changes_store_or_revision[wrong-carrier]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: {'error': {'code': 'wall_model_client_outdated', 'message': 'stale_plan_graph_writer'}, 'id': 2, 'success': False, 'type': 'result'}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_unsafe_promotion_never_changes_store_or_revision[wrong-carrier]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_room_opening_host.py",
+    "name": "test_issue_996_unsafe_promotion_never_changes_store_or_revision[future-type]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Send model11 snapshots and graph-authoritative thickness/carrier changes instead of downgraded model10 writes. Durable server equality, Undo/recreation sequence, CAS, read-only and invalid-host refusal remain checked.",
+    "originalError": "AssertionError: {'error': {'code': 'wall_model_client_outdated', 'message': 'stale_plan_graph_writer'}, 'id': 2, 'success': False, 'type': 'result'}",
+    "currentTest": "tests_backend/test_ha_room_opening_host.py::test_issue_996_unsafe_promotion_never_changes_store_or_revision[future-type]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_ha_zigbee_lqi.py",
+    "name": "test_area_entity_scope_and_diagnostic_disabled_do_not_expand_to_neighbours",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Give the area-bound room an actual polygon; it remains the same HA registry scope test and never expands to foreign neighbours.",
+    "originalError": "KeyError: 'x'",
+    "currentTest": "tests_backend/test_ha_zigbee_lqi.py::test_area_entity_scope_and_diagnostic_disabled_do_not_expand_to_neighbours",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_open_and_closed_strips_are_stored_exactly",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_open_and_closed_strips_are_stored_exactly",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_absent_field_equals_no_strips_and_needs_no_version_bump",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_absent_field_equals_no_strips_and_needs_no_version_bump",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_invalid_geometry_rejects_the_whole_write[points1-zero length]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_invalid_geometry_rejects_the_whole_write[points1-zero length]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_invalid_geometry_rejects_the_whole_write[points2-zero length, repeated]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_invalid_geometry_rejects_the_whole_write[points2-zero length, repeated]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_invalid_geometry_rejects_the_whole_write[points3-closed with two distinct vertices]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_invalid_geometry_rejects_the_whole_write[points3-closed with two distinct vertices]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_point_and_strip_limits_are_50_inclusive",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_point_and_strip_limits_are_50_inclusive",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_duplicate_strip_id_within_a_space_rejects",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_duplicate_strip_id_within_a_space_rejects",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_hidden_shape_must_belong_to_a_marker",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_hidden_shape_must_belong_to_a_marker",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_one_marker_cannot_be_bound_to_two_strips_even_hidden",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_one_marker_cannot_be_bound_to_two_strips_even_hidden",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_two_links_to_the_same_missing_marker_are_still_a_conflict",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_two_links_to_the_same_missing_marker_are_still_a_conflict",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_duplicates_across_spaces_are_judged_globally",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_duplicates_across_spaces_are_judged_globally",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_marker_of_another_space_rejects",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_marker_of_another_space_rejects",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_deleted_marker_leaves_an_unbound_strip_with_its_geometry[True]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_deleted_marker_leaves_an_unbound_strip_with_its_geometry[True]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_deleted_marker_leaves_an_unbound_strip_with_its_geometry[False]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_deleted_marker_leaves_an_unbound_strip_with_its_geometry[False]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_old_writer_omitting_the_field_keeps_the_stored_shapes[True]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_old_writer_omitting_the_field_keeps_the_stored_shapes[True]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_old_writer_omitting_the_field_keeps_the_stored_shapes[False]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_old_writer_omitting_the_field_keeps_the_stored_shapes[False]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_old_writer_deleting_the_marker_unbinds_the_kept_shape",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_old_writer_deleting_the_marker_unbinds_the_kept_shape",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_explicit_empty_list_deletes_and_a_removed_space_takes_its_shapes",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_explicit_empty_list_deletes_and_a_removed_space_takes_its_shapes",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_tombstoned_marker_is_not_live",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_tombstoned_marker_is_not_live",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_empty_marker_space_adopts_the_strip_space[absent]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_empty_marker_space_adopts_the_strip_space[absent]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_empty_marker_space_adopts_the_strip_space[None]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_empty_marker_space_adopts_the_strip_space[None]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_empty_marker_space_adopts_the_strip_space[]",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_empty_marker_space_adopts_the_strip_space[]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_normalisation_is_idempotent",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_normalisation_is_idempotent",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_unavailable_entity_is_not_a_missing_marker",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_unavailable_entity_is_not_a_missing_marker",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_led_strips.py",
+    "name": "test_points_carry_only_json_noise_cleanup_not_a_lattice_snap",
+    "category": "outdated-module-loader",
+    "status": "passed",
+    "reason": "Load validation under its package-qualified identity so its production relative graph imports resolve without leaking a fake HA package. Decode the current version through the real writer.",
+    "originalError": "ImportError: attempted relative import with no known parent package",
+    "currentTest": "tests_backend/test_led_strips.py::test_points_carry_only_json_noise_cleanup_not_a_lattice_snap",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_door_far_off_its_wall_is_kept_without_a_host",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "AssertionError: Regex pattern did not match.",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_door_far_off_its_wall_is_kept_without_a_host",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_door_slightly_off_its_wall_is_put_back_on_it",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "AssertionError: Regex pattern did not match.",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_door_slightly_off_its_wall_is_put_back_on_it",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_of_two_overlapping_doors_the_later_one_loses_its_host",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "AssertionError: Regex pattern did not match.",
+    "currentTest": "tests_backend/test_opening_repair.py::test_of_two_overlapping_doors_the_later_one_loses_its_host",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_door_that_already_holds_its_wall_is_never_displaced_by_a_repaired_one",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0, 0) == (0, 1)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_door_that_already_holds_its_wall_is_never_displaced_by_a_repaired_one",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_host_id_that_is_gone_is_replaced_by_the_wall_under_the_door",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0, 0) == (1, 0)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_host_id_that_is_gone_is_replaced_by_the_wall_under_the_door",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_door_that_does_not_fit_or_turned_is_kept_without_a_host[<lambda>-fit inside its host]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0, 0) == (0, 1)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_door_that_does_not_fit_or_turned_is_kept_without_a_host[<lambda>-fit inside its host]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_door_that_does_not_fit_or_turned_is_kept_without_a_host[<lambda>-angle must match]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0, 0) == (0, 1)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_door_that_does_not_fit_or_turned_is_kept_without_a_host[<lambda>-angle must match]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_door_on_a_wall_without_a_body_is_kept_without_a_host",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "AssertionError: Regex pattern did not match.",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_door_on_a_wall_without_a_body_is_kept_without_a_host",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_partition_door_that_does_not_fit_or_lost_its_partition_is_kept_without_a_host[<lambda>-partition opening must fit]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0, 0) == (0, 1)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_partition_door_that_does_not_fit_or_lost_its_partition_is_kept_without_a_host[<lambda>-partition opening must fit]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_a_partition_door_that_does_not_fit_or_lost_its_partition_is_kept_without_a_host[<lambda>-partition opening host must exist]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "AssertionError: Regex pattern did not match.",
+    "currentTest": "tests_backend/test_opening_repair.py::test_a_partition_door_that_does_not_fit_or_lost_its_partition_is_kept_without_a_host[<lambda>-partition opening host must exist]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_older_wall_models_pick_like_their_initial_migration",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0, 0) == (1, 0)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_older_wall_models_pick_like_their_initial_migration",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_before_the_wall_model_only_a_broken_partition_host_is_dropped_and_not_counted",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "AssertionError: assert 'host' not in {'angle': 90, 'host': {'id': 'p1', 'kind': 'partition', 't': 0.5, 'tq': ['1', '2']}, 'id': 'pd', 'length': 0.3, ...}",
+    "currentTest": "tests_backend/test_opening_repair.py::test_before_the_wall_model_only_a_broken_partition_host_is_dropped_and_not_counted",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_the_repair_is_idempotent_and_the_examples_are_bounded",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "assert (0 == 30)",
+    "currentTest": "tests_backend/test_opening_repair.py::test_the_repair_is_idempotent_and_the_examples_are_bounded",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_between_two_eligible_walls_the_next_write_decides[10-detached]",
+    "category": "product-defect",
+    "status": "failed",
+    "reason": "After restoring a real raw model10 fixture, _place_on_wall still rehosts among two eligible carriers because the unique-carrier threshold moved from10 to WALL_SEGMENT_MODEL_VERSION=11. The existing model10 fail-closed contract and production docstring require detachment. Preserve the red test; finding BE-REPAIR-10.",
+    "originalError": "assert 0 == 1",
+    "currentTest": "tests_backend/test_opening_repair.py::test_between_two_eligible_walls_the_next_write_decides[10-detached]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_opening_repair.py",
+    "name": "test_between_two_eligible_walls_the_next_write_decides[9-rehosted]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Keep this suite as a raw model10 import-repair contract, using the dedicated legacy decoder before graph migration. After graph migration verify unchanged geometry/metadata and canonical exact host plus idempotence.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: mixed_plan_models",
+    "currentTest": "tests_backend/test_opening_repair.py::test_between_two_eligible_walls_the_next_write_decides[9-rehosted]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_plan_graph_support.py",
+    "name": "test_closed_schema_relay_twin_is_exact",
+    "category": "product-defect",
+    "status": "failed",
+    "reason": "The relay schema twin differs from the integration schema. Do not weaken the privacy/schema parity oracle; product fix is #1223.",
+    "originalError": "assert b'\"\"\"Closed s..._rejected\")\\n' == b'\"\"\"Closed s..._rejected\")\\n'",
+    "currentTest": "tests_backend/test_plan_graph_support.py::test_closed_schema_relay_twin_is_exact",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": null
+    },
+    "relatedIssue": 1223
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_shared_derived_cut_has_one_storage_identity_and_survives_next_write",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: thickness_conflict",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_shared_derived_cut_has_one_storage_identity_and_survives_next_write",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[None]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[None]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[surviving-source]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[surviving-source]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[gap]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[gap]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[thickness]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[thickness]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[moved-opening]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[moved-opening]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[length]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[length]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_full_carrier_promotion_accepts_only_exact_lossless_chain[metadata]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "StopIteration",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_full_carrier_promotion_accepts_only_exact_lossless_chain[metadata]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_contact_storage.py",
+    "name": "test_room_ownership_of_existing_catalogue_is_not_a_stale_geometry_edit[replaced-room]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Use the current captured source-to-first-room promotion, explicit exact graph split/dependency for a new shared room, and the current graph projection error for removed room ownership.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: room_projection_mismatch",
+    "currentTest": "tests_backend/test_wall_contact_storage.py::test_room_ownership_of_existing_catalogue_is_not_a_stale_geometry_edit[replaced-room]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[two residuals, mixed thickness]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[two residuals, mixed thickness]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[one trailing residual]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[one trailing residual]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[one leading residual]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[one leading residual]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[fully consumed carrier]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[fully consumed carrier]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[reversed source]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[reversed source]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[uniform positive thickness]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[uniform positive thickness]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[zero carrier]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[zero carrier]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[fully consumed zero carrier]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[fully consumed zero carrier]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[same-id-residual-host]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[same-id-residual-host]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[other-residual-host]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[other-residual-host]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_frontend_room_face_candidate_and_partition_host_policy[consumed-partition-host]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [...lated', ...}]}",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_frontend_room_face_candidate_and_partition_host_policy[consumed-partition-host]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_face_lineage.py",
+    "name": "test_real_duplicate_catalogue_ids_are_still_rejected_without_mutation",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode both captured model10 states once, then require strict current-writer idempotence, host policy and immutability. The current duplicate-edge refusal remains explicit.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: duplicate_edge",
+    "currentTest": "tests_backend/test_wall_face_lineage.py::test_real_duplicate_catalogue_ids_are_still_rejected_without_mutation",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[1]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[1]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[2]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[2]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[3]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[3]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[4]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[4]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[5]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[5]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[6]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[6]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[7]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[7]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[8]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[8]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[9]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[9]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[10]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[10]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[11]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[11]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[12]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[12]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[13]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[13]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[14]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[14]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[15]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[15]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[16]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[16]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[17]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[17]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[18]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[18]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[19]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[19]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[20]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[20]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[21]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[21]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[22]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[22]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[23]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[23]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[24]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[24]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[25]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[25]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[26]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[26]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[27]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[27]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[28]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[28]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[29]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[29]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[30]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[30]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[31]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[31]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[32]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[32]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[33]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[33]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[34]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[34]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[35]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[35]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[36]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[36]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[37]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[37]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[38]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[38]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[39]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[39]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[40]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[40]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[41]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[41]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[42]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[42]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[43]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[43]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[44]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[44]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[45]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[45]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[46]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[46]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[47]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[47]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[48]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[48]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[49]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[49]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[50]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[50]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[51]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[51]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[52]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[52]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[53]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[53]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[54]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[54]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[55]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[55]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[56]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[56]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[57]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[57]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[58]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[58]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[59]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[59]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[60]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[60]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[61]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[61]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[62]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[62]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[63]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[63]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[64]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[64]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[65]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[65]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[66]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[66]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[67]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[67]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[68]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[68]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[69]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[69]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[70]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[70]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[71]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[71]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[72]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[72]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[73]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[73]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[74]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[74]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[75]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[75]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[76]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[76]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[77]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[77]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[78]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[78]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[79]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[79]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[80]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[80]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[81]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[81]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[82]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[82]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[83]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[83]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[84]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[84]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[85]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[85]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[86]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[86]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[87]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[87]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[88]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[88]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[89]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[89]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[90]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[90]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[91]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[91]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[92]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[92]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[93]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[93]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[94]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[94]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[95]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[95]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[96]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[96]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[97]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[97]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[98]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[98]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[99]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[99]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_safe_neighbours_and_exact_inverse[100]",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_safe_neighbours_and_exact_inverse[100]",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  },
+  {
+    "file": "tests_backend/test_wall_node_connected.py",
+    "name": "test_834_connected_floor_collapsed_last_target_is_still_refused",
+    "category": "outdated-fixture",
+    "status": "passed",
+    "reason": "Decode the captured legacy document once, then address the known node by node_id and exact target_p. Preserve inverse, immutable source, opening width and collapsed-target refusal.",
+    "originalError": "custom_components.houseplan.plan_graph_exact.GraphError: ambiguous_legacy_node",
+    "currentTest": "tests_backend/test_wall_node_connected.py::test_834_connected_floor_collapsed_last_target_is_still_refused",
+    "evidence": {
+      "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
+      "originalLog": "product-backend.log",
+      "addressedReport": "output/issue1226/backend-addressed.xml"
+    },
+    "relatedIssue": null
+  }
+]
