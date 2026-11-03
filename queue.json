@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1823,
+  "revision": 1824,
   "nextTicket": 117,
   "nextFence": 117,
   "tasks": {
@@ -2223,7 +2223,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "issue/1243-weather-heading",
-      "materialSha": "e81b2136c49581a9506e7586e9e0f4277838633e",
+      "materialSha": "32d8c663a9c87c2eedc5d5beba21e1c55b08eefa",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 116,
@@ -2231,9 +2231,15 @@
       "status": "S6-in-progress",
       "readyAt": 1793726498811,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793726534484,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "e7f965225e22600a6bb1d263a5791913556571b0",
+      "changedFiles": [
+        "demo/smoke_summary_weather.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1243.json",
+        "src/hp-summary-weather.ts",
+        "src/summary-panel-runtime-loaded.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2344,11 +2350,12 @@
     "worker": "finish",
     "token": "116:finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:1:admit",
     "fence": 116,
-    "materialSha": "e81b2136c49581a9506e7586e9e0f4277838633e",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "32d8c663a9c87c2eedc5d5beba21e1c55b08eefa",
+    "expectedBase": "2ad5f43ce2dea9ee33fff5fe98ee82f520578494",
+    "phase": "testing",
     "admittedAt": 1793726503617,
-    "expiresAt": 1793726861346
+    "expiresAt": 1793726902406,
+    "patchId": "e7f965225e22600a6bb1d263a5791913556571b0"
   },
   "events": {
     "github:41683293980:1:completions:message:f26cadb0cf007f2105533ea07945abe91134b3e54bc17e2b5f9cfd4377145f37": {
@@ -2361,6 +2368,10 @@
     },
     "finish:0fc30cec-b2da-4c9c-9cd8-f41aa46f5777": {
       "digest": "59b9f36318746a963c3799b5ff8e064c174a89d78d3ab8ef9116c45b6fe9461a",
+      "issue": 1243
+    },
+    "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:3:synchronized": {
+      "digest": "c8cebda857d53f8c88221e9f5659231b0e29d8d8368838950c991f6ff8666c1d",
       "issue": 1243
     },
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0": {
