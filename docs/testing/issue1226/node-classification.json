@@ -1065,10 +1065,10 @@
   {
     "file": "test/optimize-hidden-obstacles.test.mjs",
     "name": "#478 legacy unfinished work is preserved losslessly as ordinary partitions",
-    "category": "unresolved",
-    "status": "retained-red",
-    "reason": "Graph migration/Optimize report or projection arrangement differs before later semantic checks. Physical preservation and report counters need independent graph-era proof; no arbitrary new count/order baseline accepted.",
-    "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml",
+    "category": "current-graph-atomization-with-independent-coverage",
+    "status": "fixed",
+    "reason": "Expected canonical split/fold of identical legacy coverage is explicit. Independently prove no gaps for every original draft, actual30cm consumed wall thickness, unchanged migration counts and stable current partition IDs; structural-breakpoint/column failures remain red.",
+    "evidence": "output/issue1226/hidden-final.xml (only2other retained failures)",
     "relatedIssue": null,
     "originalFailure": "Expected values to be strictly deep-equal:+ actual - expected... Skipped lines  [    [      [+       -0.1,        0,+     ],+     [        0,+       0      ],+     15+   ],+   [      [-       1,        0,+       0      ],+     [+       0.5,+       0+     ],      15    ],    [      [        0,...      [+       0.5,-       -0.1,        0      ],      [+       1,-       0.5,        0      ],      15    ]  ]",
     "currentFailure": " [Error [ERR_TEST_FAILURE]: Expected values to be strictly deep-equal: + actual - expected ... Skipped lines [ [ [ + -0.1, 0, + ], + [ 0, + 0 ], + 15 + ], + [ [ - 1, 0, + 0 ], + [ + 0.5, + 0 + ], 15 ], [ [ 0, ... [ + 0.5, - -0.1, 0 ], [ + 1, - 0.5, 0 ], 15 ] ] ] { code: 'ERR_TEST_FAILURE', failureType: 'testCodeFailure', cause: AssertionError [ERR_"
@@ -2309,10 +2309,10 @@
   {
     "file": "test/writer-fixed-point.test.mjs",
     "name": "#477 a missing writer seed cannot reconcile unrelated coincident partitions",
-    "category": "unresolved",
-    "status": "retained-red",
-    "reason": "Fixture appends raw legacy partition/opening projections to a previously canonical graph, yielding host validation before finalizer. Needs explicit fixture producer port with independently retained seed scope/unsafe preservation; neither skip nor projection-write bypass used.",
-    "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml",
+    "category": "explicit-current-producer-and-node-identity",
+    "status": "fixed",
+    "reason": "Carrier fixtures use named graph partition intent and explicit existing shared-node references; no-seed scope, positive fixed point, full opaque/column refusal and stored legacy orphan byte preservation remain. Current out-of-range authoring rejects host-parameter without mutating authority.",
+    "evidence": "output/issue1226/writer-final.xml (8/8PASS, fresh test-build96ffe5444)",
     "relatedIssue": null,
     "originalFailure": "plan-graph:host:hosted-door",
     "currentFailure": " [Error [ERR_TEST_FAILURE]: plan-graph:host:hosted-door] { code: 'ERR_TEST_FAILURE', failureType: 'testCodeFailure', cause: Error [PlanGraphError]: plan-graph:host:hosted-door at fail (file:///home/matysh/hp-batch2-infra905-20261015/test-build/plan-graph.js:20:43) at projectGraphSpace (file:///home/matysh/hp-batch2-infra905-20261015/test-build/plan"
@@ -2320,10 +2320,10 @@
   {
     "file": "test/writer-fixed-point.test.mjs",
     "name": "#477 finishes a positive coincident wall with opening rehost at the Optimize fixed point",
-    "category": "unresolved",
-    "status": "retained-red",
-    "reason": "Fixture appends raw legacy partition/opening projections to a previously canonical graph, yielding host validation before finalizer. Needs explicit fixture producer port with independently retained seed scope/unsafe preservation; neither skip nor projection-write bypass used.",
-    "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml",
+    "category": "explicit-current-producer-and-node-identity",
+    "status": "fixed",
+    "reason": "Carrier fixtures use named graph partition intent and explicit existing shared-node references; no-seed scope, positive fixed point, full opaque/column refusal and stored legacy orphan byte preservation remain. Current out-of-range authoring rejects host-parameter without mutating authority.",
+    "evidence": "output/issue1226/writer-final.xml (8/8PASS, fresh test-build96ffe5444)",
     "relatedIssue": null,
     "originalFailure": "plan-graph:host:hosted-door",
     "currentFailure": " [Error [ERR_TEST_FAILURE]: plan-graph:host:hosted-door] { code: 'ERR_TEST_FAILURE', failureType: 'testCodeFailure', cause: Error [PlanGraphError]: plan-graph:host:hosted-door at fail (file:///home/matysh/hp-batch2-infra905-20261015/test-build/plan-graph.js:20:43) at projectGraphSpace (file:///home/matysh/hp-batch2-infra905-20261015/test-build/plan"
@@ -2331,10 +2331,10 @@
   {
     "file": "test/writer-fixed-point.test.mjs",
     "name": "#477 unsafe coincidence is fail-closed and byte-equivalent",
-    "category": "unresolved",
-    "status": "retained-red",
-    "reason": "Fixture appends raw legacy partition/opening projections to a previously canonical graph, yielding host validation before finalizer. Needs explicit fixture producer port with independently retained seed scope/unsafe preservation; neither skip nor projection-write bypass used.",
-    "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml",
+    "category": "explicit-current-producer-and-node-identity",
+    "status": "fixed",
+    "reason": "Carrier fixtures use named graph partition intent and explicit existing shared-node references; no-seed scope, positive fixed point, full opaque/column refusal and stored legacy orphan byte preservation remain. Current out-of-range authoring rejects host-parameter without mutating authority.",
+    "evidence": "output/issue1226/writer-final.xml (8/8PASS, fresh test-build96ffe5444)",
     "relatedIssue": null,
     "originalFailure": "plan-graph:host:hosted-door",
     "currentFailure": " [Error [ERR_TEST_FAILURE]: plan-graph:host:hosted-door] { code: 'ERR_TEST_FAILURE', failureType: 'testCodeFailure', cause: Error [PlanGraphError]: plan-graph:host:hosted-door at fail (file:///home/matysh/hp-batch2-infra905-20261015/test-build/plan-graph.js:20:43) at projectGraphSpace (file:///home/matysh/hp-batch2-infra905-20261015/test-build/plan"

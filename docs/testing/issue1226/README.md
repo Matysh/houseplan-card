@@ -2,7 +2,7 @@
 
 The796original unsuccessful entries from audit41598951489 are individually classified:230Node,177backend,122browser launches,267golden frames. These files are evidence and an explicit remaining-work inventory, not a green stable result.
 
-- node-classification.json:196fixed,34red/pending after current dev96ffe5444.
+- node-classification.json:200fixed,30red/pending after current dev96ffe5444.
 - backend-classification.json:175fixed,1real ambiguous-opening defect#1228,1historical cross-language model10/current graph receipt still unresolved.
 - browser-all-classification.json joins root12, geometry32 and UI78 with exact original IDs:59addressed full-script successes;30retained failures;33not rerun, with original evidence and a specific pending cause. Status spelling is preserved from each sub-report.
 - golden-classification.json: all9no-frame preparation errors repaired;258visual differences remain unapproved (139crop dimensions,119same-size pixels). Capture success never counts as baseline acceptance.
