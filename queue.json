@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1884,
+  "revision": 1885,
   "nextTicket": 121,
   "nextFence": 120,
   "tasks": {
@@ -2440,7 +2440,8 @@
       "presentation": {
         "round": 1,
         "occurredAt": "2026-11-03T17:44:38.562Z"
-      }
+      },
+      "runId": 41687185614
     }
   },
   "waiting": [
@@ -2538,6 +2539,10 @@
     },
     "dev-build:41687167847:1:webhook:beb64ef7-2ef4-40b4-854e-9695ebeab247:delivered": {
       "digest": "0da92939e4b4b6752c0138c559208ac46593deafdb532f2303ecf65959201215",
+      "issue": 1247
+    },
+    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:13:review-presentation": {
+      "digest": "3a91cfa0858c96983ddf851fb58f8cd6fbb182edfe54466b2a7f3928d02961fe",
       "issue": 1247
     },
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624": {
