@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1494,
-  "nextTicket": 101,
+  "revision": 1495,
+  "nextTicket": 102,
   "nextFence": 101,
   "tasks": {
     "1126": {
@@ -1849,6 +1849,20 @@
         "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
         "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51"
       }
+    },
+    "1233": {
+      "issue": 1233,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1233-retire-room-drafts",
+      "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 101,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793714082036,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1966,7 +1980,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1233
+  ],
   "active": {
     "issue": 1230,
     "worker": "github-coordinator",
@@ -2083,6 +2099,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:1ac23713-d492-426e-a9eb-130e6f4aa9db": {
+      "digest": "0399a010dcfb5324064b435cc257ceabfd712fef1e8ed46dccdda575f13d766d",
+      "issue": 1233,
+      "message": {
+        "kind": "queued",
+        "issue": 1233,
+        "at": 1793714082036,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc"
       }
     }
   },
