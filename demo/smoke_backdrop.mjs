@@ -351,14 +351,20 @@ await tool('select');
 await settle();
 {
   const before = (await viewBox()).split(' ').map(Number);
+  const imageScreen = () => page.locator('[data-hp="backdrop"]').evaluate(node => {const r=node.getBoundingClientRect();return {x:r.x,y:r.y};});
+  const beforeScreen = await imageScreen();
   const [x, y] = await screenPt(500, 500);
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x + 60, y + 50, { steps: 3 });
   await settle();
-  const after = (await viewBox()).split(' ').map(Number);
+  // Retained live pan need not rewrite SVG viewBox until release. Observe the
+  // painted image while held, then the committed camera after pointerup.
+  const heldScreen = await imageScreen();
+  check('select_pan_paints_while_held', Math.abs(heldScreen.x-beforeScreen.x)>1 && Math.abs(heldScreen.y-beforeScreen.y)>1, true);
   await page.mouse.up();
   await settle();
+  const after = (await viewBox()).split(' ').map(Number);
   check('select_tool_still_pans_over_the_picture',
     Math.abs(after[0] - before[0]) > 1 && (await spaceCfg()).x == null, true);
 }

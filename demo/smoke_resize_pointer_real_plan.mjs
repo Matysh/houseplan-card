@@ -32,7 +32,7 @@ await page.evaluate(async (sourceConfig) => {
   window.__resizeWrites = [];
   hass.callWS = async (message) => {
     if (message.type === 'houseplan/config/get') {
-      return { config: structuredClone(serverConfig), rev: revision, can_write: true };
+      return { config: structuredClone(serverConfig), rev: revision, can_write: true, plan_graph_api: 1, graph_change_api: 2 };
     }
     if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
     if (message.type === 'houseplan/config/set') {

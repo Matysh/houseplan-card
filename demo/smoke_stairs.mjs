@@ -160,6 +160,7 @@ const out = await page.evaluate(async () => {
   });
   await hp.switchSpace('f1');
   await hp.setMode('plan');
+  await settleCamera();
 
   result.straightToolExists = await chooseStair('straight');
   // A default stair centred at 680 has its upper side at 638.3: 20 units below
@@ -207,6 +208,7 @@ const out = await page.evaluate(async () => {
   });
   await hp.switchSpace('f1');
   await hp.setMode('plan');
+  await settleCamera();
   const legacyRead = stairs().find((stair) => stair.id === spiral.id);
   result.legacyReadDoesNotMaterializeStyle = !Object.hasOwn(legacyRead, 'color')
     && stairNode(spiral.id)?.style.getPropertyValue('--hp-stair-line') === card._decorStyle.color;
@@ -258,6 +260,7 @@ const out = await page.evaluate(async () => {
   });
   await hp.switchSpace('f1');
   await hp.setMode('plan');
+  await settleCamera();
   await chooseStair('straight');
 
   // Select and move the straight stair through its actual hit target.
@@ -659,6 +662,7 @@ const out = await page.evaluate(async () => {
     && broken?.getAttribute('data-target-state') === 'deleted'
     && broken?.getAttribute('role') === 'img';
   await hp.setMode('plan');
+  await settleCamera();
   dialog = await openStairDialog(straight.id);
   result.brokenTargetHasRepairWarning = !!dialog?.querySelector('.hpf-hint.hpf-note-warning')
     && [...dialog.querySelectorAll('option')].every((option) => option.value !== '__deleted__');
@@ -734,7 +738,9 @@ if (focusProbe) {
   await page.keyboard.press('Shift');
   const focused = await page.evaluate(async (id) => {
     const node = window.__card.renderRoot.querySelector(`[data-hp="stair"][data-id="${id}"]`);
-    node?.focus();
+    // Isolate focus paint from the browser scrolling the large SVG ancestor.
+    // Keyboard modality, focus-visible and Enter navigation remain real.
+    node?.focus({ preventScroll: true });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     return {
       active: window.__card.renderRoot.activeElement === node,

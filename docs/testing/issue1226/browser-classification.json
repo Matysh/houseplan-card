@@ -1,6 +1,42 @@
 [
-  {"file":"demo/smoke_optimize_coincident_partition.mjs","category":"stale-current-collection-oracle","status":"fixed","checks":12,"passed":12,"reason":"Graph projection serializes empty partitions as []; preview, complete opening metadata, one atomic write, reload, Undo and real Thickness owner checks retained.","evidence":"root output/issue1226/coincident-node-final.log on fresh dev96ffe5444 bundle","relatedIssue":1226},
-  {"file":"demo/smoke_resize_outer_reconciliation.mjs","category":"stale-current-collection-oracle","status":"fixed","checks":8,"passed":8,"reason":"Exact current [] collection; full opening fields and production shared Resize pointer gesture remain checked.","evidence":"root output/issue1226/outer-node-final.log on fresh dev96ffe5444 bundle","relatedIssue":1226},
-  {"file":"demo/smoke_v8_draft_write.mjs","category":"confirmed-product-regression","status":"retained-red","checks":8,"passed":7,"reason":"Real v9 Draw migration emits model11 graph and correct old partition IDs/cm, but leaves room_drafts in both live and actual wire config. Strengthened wire/no-legacy and idempotent prepare assertions; raw v9 seed not pre-migrated.","evidence":"root output/issue1226/v8-node-final.log; output/issue1226/v8-legacy-current-state.json","relatedIssue":null},
-  {"file":"demo/smoke_draw_wall_thickness.mjs","category":"current-producer-port-with-unresolved-product-refusal","status":"retained-red","checks":13,"passed":11,"reason":"Second room uses actual Draw markupClick, persisted named edges and saveRoom. Adjacent room is refused geometry_unsafe even at normal dimensions; strict old shared cm/ID expectations remain. Possible #1231 relationship unproven.","evidence":"root output/issue1226/thickness-node-final.log; output/issue1226/thickness-current-state.json; thickness-large-r6.log","relatedIssue":null}
+  {
+    "file": "demo/smoke_optimize_coincident_partition.mjs",
+    "category": "stale-current-collection-oracle",
+    "status": "fixed",
+    "checks": 12,
+    "passed": 12,
+    "reason": "Graph projection serializes empty partitions as []; preview, complete opening metadata, one atomic write, reload, Undo and real Thickness owner checks retained.",
+    "evidence": "root output/issue1226/coincident-node-final.log on fresh dev96ffe5444 bundle",
+    "relatedIssue": 1226
+  },
+  {
+    "file": "demo/smoke_resize_outer_reconciliation.mjs",
+    "category": "stale-current-collection-oracle",
+    "status": "fixed",
+    "checks": 8,
+    "passed": 8,
+    "reason": "Exact current [] collection; full opening fields and production shared Resize pointer gesture remain checked.",
+    "evidence": "root output/issue1226/outer-node-final.log on fresh dev96ffe5444 bundle",
+    "relatedIssue": 1226
+  },
+  {
+    "file": "demo/smoke_v8_draft_write.mjs",
+    "category": "confirmed-product-regression",
+    "status": "retained-red",
+    "checks": 8,
+    "passed": 7,
+    "reason": "Real v9 Draw migration emits model11 graph and correct old partition IDs/cm, but leaves room_drafts in both live and actual wire config. Strengthened wire/no-legacy and idempotent prepare assertions; raw v9 seed not pre-migrated.",
+    "evidence": "root output/issue1226/v8-node-final.log; output/issue1226/v8-legacy-current-state.json",
+    "relatedIssue": 1233
+  },
+  {
+    "file": "demo/smoke_draw_wall_thickness.mjs",
+    "category": "current-producer-port-with-unresolved-product-refusal",
+    "status": "retained-red",
+    "checks": 13,
+    "passed": 11,
+    "reason": "Second room uses actual Draw markupClick, persisted named edges and saveRoom. Adjacent room is refused geometry_unsafe even at normal dimensions; strict old shared cm/ID expectations remain. Possible #1231 relationship unproven.",
+    "evidence": "root output/issue1226/thickness-node-final.log; output/issue1226/thickness-current-state.json; thickness-large-r6.log",
+    "relatedIssue": null
+  }
 ]
