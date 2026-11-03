@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1770,
-  "nextTicket": 114,
+  "revision": 1771,
+  "nextTicket": 115,
   "nextFence": 114,
   "tasks": {
     "1126": {
@@ -2153,14 +2153,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "issue/1240-card-picker-i18n",
-      "materialSha": "ed648d5b2f0607620a6c58ff52470a3787106206",
+      "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 113,
-      "queued": false,
+      "ticket": 114,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793722559692,
-      "reviewEntry": 1,
+      "readyAt": 1793722681670,
+      "reviewEntry": 2,
       "patchId": "1853e303bb4f2e378b2ae14af01809eb66ad8e30",
       "changedFiles": [
         "CONTRIBUTING.md",
@@ -2178,7 +2178,6 @@
         "src/space-card.ts",
         "test/card-picker-registration.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2293,7 +2292,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1240
+  ],
   "active": null,
   "events": {
     "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:2:synchronized": {
@@ -2353,6 +2354,19 @@
           "detail": "Браузер: card picker locale: failed",
           "eventId": "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240"
         }
+      }
+    },
+    "finish:6a43ad66-db1a-498c-a80a-80a4b8a98115": {
+      "digest": "b6fc828d298127b7df553257bd29f07bfb548b6ec64c669b6740d0d1fa4a7123",
+      "issue": 1240,
+      "message": {
+        "kind": "queued",
+        "issue": 1240,
+        "at": 1793722681670,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef"
       }
     }
   },
