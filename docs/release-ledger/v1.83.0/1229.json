@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1229,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Restore observation fields lost by the model11 Optimize no-op report reset on the current 1.84 line. Persisted effect counters remain zero.",
+  "summary": {
+    "ru": "Optimize сохраняет предупреждения и безопасные действия очистки при отсутствии изменений плана.",
+    "en": "Keep Optimize warnings and safe cleanup actions when the plan has no changes."
+  }
+}

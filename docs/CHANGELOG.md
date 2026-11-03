@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve Optimize diagnostics and safe cleanup/recheck actions when the plan itself needs no changes. [#1229](https://github.com/Matysh/houseplan-card/issues/1229)
+
 - Make the native Draw/Resize regression check reject targets covered by editor controls and expose the original graph segments through the public zoom control. Preserve graph, metadata and history assertions; no product geometry change. [#1221](https://github.com/Matysh/houseplan-card/issues/1221)
 
 - Accept valid Low-only Zigbee settings in support-report packages at the relay, with matching closed integration/relay validators. Deploy the accepted relay schema separately before releasing this mode. [#1223](https://github.com/Matysh/houseplan-card/issues/1223)

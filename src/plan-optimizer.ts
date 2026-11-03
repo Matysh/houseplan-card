@@ -826,7 +826,14 @@ export function optimizePlans(
   report.wallsMerged = Math.max(report.wallsMerged, stats.wallsMerged);
   Object.assign(report, references.report);
   if (!changed) {
-    const observed = new Set(['modelFrom', 'modelTo', 'total', 'currentPositions', 'archivedPositions', 'wallsStraightenSkipped']);
+    // No persisted change cancels effect counters, not observations or the
+    // evidence needed to offer cleanup/recheck of records we deliberately kept.
+    const observed = new Set([
+      'modelFrom', 'modelTo', 'total', 'currentPositions', 'archivedPositions', 'wallsStraightenSkipped',
+      'positionsUnresolved', 'nestedRefsUnresolved', 'deadSpaceIds',
+      'liveMissingPositions', 'unverifiedPositions', 'registryAuthoritative',
+      'invalidPositionsEligible', 'invalidPositionsRetained',
+    ]);
     for (const key of Object.keys(report)) {
       if (observed.has(key)) continue;
       const value = (report as any)[key];
