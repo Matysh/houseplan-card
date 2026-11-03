@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1209,
-  "nextTicket": 87,
+  "revision": 1210,
+  "nextTicket": 88,
   "nextFence": 87,
   "tasks": {
     "1126": {
@@ -1526,6 +1526,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1219": {
+      "issue": 1219,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/ci-badge-run-link",
+      "materialSha": "19dcd4faf1b9c8216c978eddcaa8cfc947a16b74",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 87,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793688819122,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1630,7 +1644,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1219
+  ],
   "active": null,
   "events": {
     "github:41504682134:1:label:spec-request": {
@@ -1775,6 +1791,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d8b935e2-5f35-46f1-977c-9a68880bb540": {
+      "digest": "e08b69011ad348d7bdcf53ff556c0a7857d2c28d3c0df2ea13ac1d0bdb215454",
+      "issue": 1219,
+      "message": {
+        "kind": "queued",
+        "issue": 1219,
+        "at": 1793688819122,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "19dcd4faf1b9c8216c978eddcaa8cfc947a16b74"
       }
     }
   },
