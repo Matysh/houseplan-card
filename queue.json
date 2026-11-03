@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1956,
-  "nextTicket": 124,
+  "revision": 1957,
+  "nextTicket": 125,
   "nextFence": 123,
   "tasks": {
     "1126": {
@@ -1697,6 +1697,20 @@
         "sourceSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e"
       }
     },
+    "1225": {
+      "issue": 1225,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/1225",
+      "materialSha": "251b625727351478a70781925df6ae1798316ca3",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 124,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793729932575,
+      "reviewEntry": 1
+    },
     "1227": {
       "issue": 1227,
       "branch": "issue/1227-space-copy",
@@ -2552,7 +2566,8 @@
     }
   },
   "waiting": [
-    1246
+    1246,
+    1225
   ],
   "active": {
     "issue": 1242,
@@ -2680,6 +2695,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650": {
+      "digest": "61f527f3a071434dc9470081889b3e95b018a7239d80d748c398db7fa96756b3",
+      "issue": 1225,
+      "message": {
+        "kind": "queued",
+        "issue": 1225,
+        "at": 1793729932575,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "251b625727351478a70781925df6ae1798316ca3"
       }
     }
   },
