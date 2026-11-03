@@ -26,3 +26,29 @@ Original crop delta histogram (width×height pixels):
 Original files are in the process-next-result artifact of https://github.com/Matysh/houseplan-card/actions/runs/41598951489 . See the row-specific actual/baseline SHA256 and report paths; CI absolute paths are preserved as original evidence, not claimed to be current local paths.
 
 Final full stable validation waits for confirmed product blockers and agreed visual intent. Regenerated captures are review material only.
+
+## Read-only review package from resumed audit 41662157218
+
+A local comparison gallery is prepared at
+`output/issue1226/golden-review-41662157218/index.html` in the author's Windows
+workspace. It contains all **267 differing current scenes**, with complete
+baseline/actual PNGs copied alongside it. SHA256 verification matched all
+534 source images against the saved report. `manifest.json` retains each scene,
+source path, host, dimensions, pixel figures and both hashes. No capture/test,
+threshold change or baseline acceptance was performed to create this package.
+
+This current set contains 245 Lovelace and 22 panel scenes; 141 pairs change
+image dimensions. These are current-run observations, separate from the
+original 139 dimension changes and nine no-frame failures above.
+
+A manually viewed counterexample to a blanket header-only explanation is
+`panel-wide-plan-editor-dark-en`: both images are 1280×800 with the same header
+and editor chrome. The actual image shows 108% camera scale, a larger floor
+projection and a partly clipped lower outer notch; the baseline shows the
+complete lower outline. This is an observed image difference, not a proved
+product diagnosis: capture setup, settled camera intent and the accepted fit
+contract still need to explain it. The saved runtime reports stage920×682.
+Do not accept all 267 scenes merely because the generic header changed.
+
+PROCESS.md requires explicit owner acceptance of listed frames after review.
+The gallery is review material only, and no such acceptance has been inferred.
