@@ -1087,7 +1087,8 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "relatedIssue": 1236
     },
     {
       "id": "smoke:smoke_opening_measure",
@@ -1687,7 +1688,8 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "relatedIssue": 1235
     },
     {
       "id": "smoke:smoke_volumetric_setting",
