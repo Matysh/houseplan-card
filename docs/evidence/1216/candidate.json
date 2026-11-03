@@ -3,7 +3,7 @@
   "issue": 1216,
   "complete": true,
   "runnerSHA256": "0dcd714d030d86a6378c07f7cf682f28ecfa2d72d194bf46a9621677e2e4ac61",
-  "rootFingerprint": "7fcaaebbbf9bdaa4948f106ed337438725cac2737a0ed4b7b85630fb9d76841e",
+  "rootFingerprint": "844d4ecb4c6af8a5c81c234203ebab642705fc87ee165df8fc34775e0a4121b9",
   "node": "v22.23.2",
   "cpu": "Intel(R) Core(TM) Ultra 7 155H",
   "browser": "151.0.7922.34",
@@ -24,1471 +24,1471 @@
       "series": 0,
       "sample": 0,
       "name": "optimize",
-      "ms": 93.91193399999975
+      "ms": 95.39132699999982
     },
     {
       "series": 0,
       "sample": 0,
       "name": "optimize-noop",
-      "ms": 89.8702360000002
+      "ms": 89.71851500000002
     },
     {
       "series": 0,
       "sample": 0,
       "name": "whole-physical-preflight",
-      "ms": 8.14829200000031
+      "ms": 7.488718000000063
     },
     {
       "series": 0,
       "sample": 0,
       "name": "cold-core",
-      "ms": 49.83969999999999
+      "ms": 30.01655599999981
     },
     {
       "series": 0,
       "sample": 1,
       "name": "optimize",
-      "ms": 111.1845470000003
+      "ms": 118.25083600000016
     },
     {
       "series": 0,
       "sample": 1,
       "name": "optimize-noop",
-      "ms": 87.3003749999998
+      "ms": 84.39653499999986
     },
     {
       "series": 0,
       "sample": 1,
       "name": "whole-physical-preflight",
-      "ms": 9.318287999999939
+      "ms": 6.8707140000001345
     },
     {
       "series": 0,
       "sample": 1,
       "name": "cold-core",
-      "ms": 50.886953000000176
+      "ms": 30.315361999999823
     },
     {
       "series": 0,
       "sample": 2,
       "name": "optimize",
-      "ms": 97.75863000000027
+      "ms": 94.55083599999989
     },
     {
       "series": 0,
       "sample": 2,
       "name": "optimize-noop",
-      "ms": 84.46139600000015
+      "ms": 85.41967899999963
     },
     {
       "series": 0,
       "sample": 2,
       "name": "whole-physical-preflight",
-      "ms": 9.065542000000278
+      "ms": 7.392412000000149
     },
     {
       "series": 0,
       "sample": 2,
       "name": "cold-core",
-      "ms": 53.261081000000104
+      "ms": 27.710563999999977
     },
     {
       "series": 0,
       "sample": 3,
       "name": "optimize",
-      "ms": 99.04044599999997
+      "ms": 91.858475
     },
     {
       "series": 0,
       "sample": 3,
       "name": "optimize-noop",
-      "ms": 85.61924499999986
+      "ms": 80.76407399999971
     },
     {
       "series": 0,
       "sample": 3,
       "name": "whole-physical-preflight",
-      "ms": 9.116279000000304
+      "ms": 7.307902000000013
     },
     {
       "series": 0,
       "sample": 3,
       "name": "cold-core",
-      "ms": 50.6402750000002
+      "ms": 28.498993000000155
     },
     {
       "series": 0,
       "sample": 4,
       "name": "optimize",
-      "ms": 96.01438700000017
+      "ms": 91.12843000000021
     },
     {
       "series": 0,
       "sample": 4,
       "name": "optimize-noop",
-      "ms": 86.15036200000031
+      "ms": 79.31694799999968
     },
     {
       "series": 0,
       "sample": 4,
       "name": "whole-physical-preflight",
-      "ms": 9.556540999999925
+      "ms": 6.221497999999883
     },
     {
       "series": 0,
       "sample": 4,
       "name": "cold-core",
-      "ms": 53.13274700000011
+      "ms": 26.60900400000037
     },
     {
       "series": 0,
       "sample": 5,
       "name": "optimize",
-      "ms": 96.89602800000011
+      "ms": 87.78241200000002
     },
     {
       "series": 0,
       "sample": 5,
       "name": "optimize-noop",
-      "ms": 99.90474800000038
+      "ms": 80.1386150000003
     },
     {
       "series": 0,
       "sample": 5,
       "name": "whole-physical-preflight",
-      "ms": 8.858072999999877
+      "ms": 8.40342499999997
     },
     {
       "series": 0,
       "sample": 5,
       "name": "cold-core",
-      "ms": 52.84504599999991
+      "ms": 29.55868700000019
     },
     {
       "series": 0,
       "sample": 6,
       "name": "optimize",
-      "ms": 101.7074260000004
+      "ms": 93.55394500000011
     },
     {
       "series": 0,
       "sample": 6,
       "name": "optimize-noop",
-      "ms": 84.41520100000025
+      "ms": 85.48601700000017
     },
     {
       "series": 0,
       "sample": 6,
       "name": "whole-physical-preflight",
-      "ms": 8.603583000000071
+      "ms": 5.016228999999839
     },
     {
       "series": 0,
       "sample": 6,
       "name": "cold-core",
-      "ms": 47.33306900000025
+      "ms": 25.72429800000009
     },
     {
       "series": 0,
       "sample": 7,
       "name": "optimize",
-      "ms": 94.68221799999992
+      "ms": 91.0356740000002
     },
     {
       "series": 0,
       "sample": 7,
       "name": "optimize-noop",
-      "ms": 86.43192700000009
+      "ms": 78.6275270000001
     },
     {
       "series": 0,
       "sample": 7,
       "name": "whole-physical-preflight",
-      "ms": 8.479673999999704
+      "ms": 4.8166620000001785
     },
     {
       "series": 0,
       "sample": 7,
       "name": "cold-core",
-      "ms": 49.15828899999997
+      "ms": 26.071289999999863
     },
     {
       "series": 0,
       "sample": 8,
       "name": "optimize",
-      "ms": 92.12457399999948
+      "ms": 86.93611099999998
     },
     {
       "series": 0,
       "sample": 8,
       "name": "optimize-noop",
-      "ms": 86.09355199999936
+      "ms": 78.2298880000003
     },
     {
       "series": 0,
       "sample": 8,
       "name": "whole-physical-preflight",
-      "ms": 9.015654000000723
+      "ms": 5.178640000000087
     },
     {
       "series": 0,
       "sample": 8,
       "name": "cold-core",
-      "ms": 48.3639720000001
+      "ms": 30.854821999999785
     },
     {
       "series": 0,
       "sample": 9,
       "name": "optimize",
-      "ms": 94.29626600000029
+      "ms": 88.89579000000003
     },
     {
       "series": 0,
       "sample": 9,
       "name": "optimize-noop",
-      "ms": 86.11859700000059
+      "ms": 103.79043299999967
     },
     {
       "series": 0,
       "sample": 9,
       "name": "whole-physical-preflight",
-      "ms": 7.951851999999235
+      "ms": 7.110572000000047
     },
     {
       "series": 0,
       "sample": 9,
       "name": "cold-core",
-      "ms": 53.682826000000205
+      "ms": 31.82349000000022
     },
     {
       "series": 0,
       "sample": 10,
       "name": "optimize",
-      "ms": 95.64597499999945
+      "ms": 96.66374200000018
     },
     {
       "series": 0,
       "sample": 10,
       "name": "optimize-noop",
-      "ms": 87.06807200000003
+      "ms": 85.22379300000011
     },
     {
       "series": 0,
       "sample": 10,
       "name": "whole-physical-preflight",
-      "ms": 8.384218999999575
+      "ms": 6.287981999999829
     },
     {
       "series": 0,
       "sample": 10,
       "name": "cold-core",
-      "ms": 54.07090200000039
+      "ms": 29.186435999999958
     },
     {
       "series": 0,
       "sample": 11,
       "name": "optimize",
-      "ms": 95.0639629999996
+      "ms": 86.69960499999979
     },
     {
       "series": 0,
       "sample": 11,
       "name": "optimize-noop",
-      "ms": 83.8117830000001
+      "ms": 76.00854199999958
     },
     {
       "series": 0,
       "sample": 11,
       "name": "whole-physical-preflight",
-      "ms": 8.666228000000046
+      "ms": 6.680521999999655
     },
     {
       "series": 0,
       "sample": 11,
       "name": "cold-core",
-      "ms": 50.91598200000044
+      "ms": 27.310953000000154
     },
     {
       "series": 0,
       "sample": 12,
       "name": "optimize",
-      "ms": 96.48669400000017
+      "ms": 89.4846749999997
     },
     {
       "series": 0,
       "sample": 12,
       "name": "optimize-noop",
-      "ms": 83.5455009999996
+      "ms": 75.96835899999951
     },
     {
       "series": 0,
       "sample": 12,
       "name": "whole-physical-preflight",
-      "ms": 8.746374000000287
+      "ms": 5.038905000000341
     },
     {
       "series": 0,
       "sample": 12,
       "name": "cold-core",
-      "ms": 48.98345299999983
+      "ms": 27.046073000000433
     },
     {
       "series": 0,
       "sample": 13,
       "name": "optimize",
-      "ms": 91.89474599999994
+      "ms": 86.11111600000004
     },
     {
       "series": 0,
       "sample": 13,
       "name": "optimize-noop",
-      "ms": 81.20753200000036
+      "ms": 77.63250400000015
     },
     {
       "series": 0,
       "sample": 13,
       "name": "whole-physical-preflight",
-      "ms": 8.47597499999938
+      "ms": 5.3642119999994975
     },
     {
       "series": 0,
       "sample": 13,
       "name": "cold-core",
-      "ms": 50.301196000000346
+      "ms": 26.422598999999536
     },
     {
       "series": 0,
       "sample": 14,
       "name": "optimize",
-      "ms": 92.23962099999972
+      "ms": 84.87124999999924
     },
     {
       "series": 0,
       "sample": 14,
       "name": "optimize-noop",
-      "ms": 85.28938599999947
+      "ms": 77.8240850000002
     },
     {
       "series": 0,
       "sample": 14,
       "name": "whole-physical-preflight",
-      "ms": 8.897576999999728
+      "ms": 4.843482000000222
     },
     {
       "series": 0,
       "sample": 14,
       "name": "cold-core",
-      "ms": 48.84483099999943
+      "ms": 25.773509999999987
     },
     {
       "series": 0,
       "sample": 15,
       "name": "optimize",
-      "ms": 94.67077400000016
+      "ms": 85.34907800000019
     },
     {
       "series": 0,
       "sample": 15,
       "name": "optimize-noop",
-      "ms": 92.04395999999997
+      "ms": 77.4434510000001
     },
     {
       "series": 0,
       "sample": 15,
       "name": "whole-physical-preflight",
-      "ms": 11.16871699999956
+      "ms": 5.560058000000026
     },
     {
       "series": 0,
       "sample": 15,
       "name": "cold-core",
-      "ms": 59.58646099999987
+      "ms": 25.577392999999574
     },
     {
       "series": 0,
       "sample": 16,
       "name": "optimize",
-      "ms": 103.31774499999938
+      "ms": 85.85988699999962
     },
     {
       "series": 0,
       "sample": 16,
       "name": "optimize-noop",
-      "ms": 86.83290099999977
+      "ms": 76.17392300000029
     },
     {
       "series": 0,
       "sample": 16,
       "name": "whole-physical-preflight",
-      "ms": 7.630537000000004
+      "ms": 5.505912999999964
     },
     {
       "series": 0,
       "sample": 16,
       "name": "cold-core",
-      "ms": 50.67430999999942
+      "ms": 24.988016000000243
     },
     {
       "series": 0,
       "sample": 17,
       "name": "optimize",
-      "ms": 95.71368299999995
+      "ms": 84.41363499999989
     },
     {
       "series": 0,
       "sample": 17,
       "name": "optimize-noop",
-      "ms": 85.66763900000024
+      "ms": 80.4672270000001
     },
     {
       "series": 0,
       "sample": 17,
       "name": "whole-physical-preflight",
-      "ms": 9.272412999999688
+      "ms": 5.521045999999842
     },
     {
       "series": 0,
       "sample": 17,
       "name": "cold-core",
-      "ms": 55.51810299999943
+      "ms": 27.085839000000306
     },
     {
       "series": 0,
       "sample": 18,
       "name": "optimize",
-      "ms": 101.83327000000008
+      "ms": 86.59733999999935
     },
     {
       "series": 0,
       "sample": 18,
       "name": "optimize-noop",
-      "ms": 88.64905499999986
+      "ms": 82.87840099999994
     },
     {
       "series": 0,
       "sample": 18,
       "name": "whole-physical-preflight",
-      "ms": 8.687415000000328
+      "ms": 5.161401000000296
     },
     {
       "series": 0,
       "sample": 18,
       "name": "cold-core",
-      "ms": 48.7749759999997
+      "ms": 25.25380099999984
     },
     {
       "series": 0,
       "sample": 19,
       "name": "optimize",
-      "ms": 100.07627500000035
+      "ms": 88.69036400000005
     },
     {
       "series": 0,
       "sample": 19,
       "name": "optimize-noop",
-      "ms": 86.28454299999976
+      "ms": 78.48248499999954
     },
     {
       "series": 0,
       "sample": 19,
       "name": "whole-physical-preflight",
-      "ms": 8.762128999999732
+      "ms": 4.778696000000309
     },
     {
       "series": 0,
       "sample": 19,
       "name": "cold-core",
-      "ms": 50.7851040000005
+      "ms": 26.501971000000594
     },
     {
       "series": 1,
       "sample": 0,
       "name": "optimize",
-      "ms": 97.32737799999995
+      "ms": 94.86129600000004
     },
     {
       "series": 1,
       "sample": 0,
       "name": "optimize-noop",
-      "ms": 88.74946500000078
+      "ms": 80.25869000000057
     },
     {
       "series": 1,
       "sample": 0,
       "name": "whole-physical-preflight",
-      "ms": 7.675729000000501
+      "ms": 4.985500000000684
     },
     {
       "series": 1,
       "sample": 0,
       "name": "cold-core",
-      "ms": 54.64703499999996
+      "ms": 26.346709999999803
     },
     {
       "series": 1,
       "sample": 1,
       "name": "optimize",
-      "ms": 96.63944200000151
+      "ms": 90.25194499999998
     },
     {
       "series": 1,
       "sample": 1,
       "name": "optimize-noop",
-      "ms": 90.11924999999974
+      "ms": 79.42609699999957
     },
     {
       "series": 1,
       "sample": 1,
       "name": "whole-physical-preflight",
-      "ms": 8.923972000000504
+      "ms": 6.453222000000096
     },
     {
       "series": 1,
       "sample": 1,
       "name": "cold-core",
-      "ms": 50.42920700000104
+      "ms": 25.234236999999666
     },
     {
       "series": 1,
       "sample": 2,
       "name": "optimize",
-      "ms": 98.13569699999971
+      "ms": 89.17888700000003
     },
     {
       "series": 1,
       "sample": 2,
       "name": "optimize-noop",
-      "ms": 87.08863500000007
+      "ms": 108.07324900000003
     },
     {
       "series": 1,
       "sample": 2,
       "name": "whole-physical-preflight",
-      "ms": 9.274734000000535
+      "ms": 9.427654000000075
     },
     {
       "series": 1,
       "sample": 2,
       "name": "cold-core",
-      "ms": 53.03120300000046
+      "ms": 33.7620850000003
     },
     {
       "series": 1,
       "sample": 3,
       "name": "optimize",
-      "ms": 98.16177199999947
+      "ms": 115.80559499999981
     },
     {
       "series": 1,
       "sample": 3,
       "name": "optimize-noop",
-      "ms": 89.62723399999959
+      "ms": 144.32203899999968
     },
     {
       "series": 1,
       "sample": 3,
       "name": "whole-physical-preflight",
-      "ms": 10.006554999999935
+      "ms": 8.367231000000174
     },
     {
       "series": 1,
       "sample": 3,
       "name": "cold-core",
-      "ms": 51.511171000000104
+      "ms": 35.55382399999962
     },
     {
       "series": 1,
       "sample": 4,
       "name": "optimize",
-      "ms": 98.7986609999989
+      "ms": 98.2568339999998
     },
     {
       "series": 1,
       "sample": 4,
       "name": "optimize-noop",
-      "ms": 92.3541210000003
+      "ms": 82.95897299999979
     },
     {
       "series": 1,
       "sample": 4,
       "name": "whole-physical-preflight",
-      "ms": 9.23848199999884
+      "ms": 4.708352999999988
     },
     {
       "series": 1,
       "sample": 4,
       "name": "cold-core",
-      "ms": 54.46004200000061
+      "ms": 27.11528400000043
     },
     {
       "series": 1,
       "sample": 5,
       "name": "optimize",
-      "ms": 122.74502699999903
+      "ms": 94.27504399999998
     },
     {
       "series": 1,
       "sample": 5,
       "name": "optimize-noop",
-      "ms": 88.82648599999993
+      "ms": 91.30940299999929
     },
     {
       "series": 1,
       "sample": 5,
       "name": "whole-physical-preflight",
-      "ms": 10.257685999999012
+      "ms": 6.6491990000013175
     },
     {
       "series": 1,
       "sample": 5,
       "name": "cold-core",
-      "ms": 51.41674500000045
+      "ms": 27.858022000000346
     },
     {
       "series": 1,
       "sample": 6,
       "name": "optimize",
-      "ms": 97.51395199999934
+      "ms": 94.45480600000155
     },
     {
       "series": 1,
       "sample": 6,
       "name": "optimize-noop",
-      "ms": 95.18235500000083
+      "ms": 80.11392100000012
     },
     {
       "series": 1,
       "sample": 6,
       "name": "whole-physical-preflight",
-      "ms": 10.63795299999947
+      "ms": 6.1270820000008825
     },
     {
       "series": 1,
       "sample": 6,
       "name": "cold-core",
-      "ms": 60.972985000000335
+      "ms": 26.480257999999594
     },
     {
       "series": 1,
       "sample": 7,
       "name": "optimize",
-      "ms": 101.99531300000126
+      "ms": 89.66852599999947
     },
     {
       "series": 1,
       "sample": 7,
       "name": "optimize-noop",
-      "ms": 93.385753999999
+      "ms": 78.93057699999918
     },
     {
       "series": 1,
       "sample": 7,
       "name": "whole-physical-preflight",
-      "ms": 9.320418999999674
+      "ms": 6.216719000000012
     },
     {
       "series": 1,
       "sample": 7,
       "name": "cold-core",
-      "ms": 53.859140999999
+      "ms": 26.523968000001332
     },
     {
       "series": 1,
       "sample": 8,
       "name": "optimize",
-      "ms": 101.01134499999898
+      "ms": 89.47466200000054
     },
     {
       "series": 1,
       "sample": 8,
       "name": "optimize-noop",
-      "ms": 92.96504100000129
+      "ms": 86.18897800000013
     },
     {
       "series": 1,
       "sample": 8,
       "name": "whole-physical-preflight",
-      "ms": 9.727081999999427
+      "ms": 7.084171999998944
     },
     {
       "series": 1,
       "sample": 8,
       "name": "cold-core",
-      "ms": 58.24824200000148
+      "ms": 29.01571100000001
     },
     {
       "series": 1,
       "sample": 9,
       "name": "optimize",
-      "ms": 111.23431299999902
+      "ms": 110.50191099999938
     },
     {
       "series": 1,
       "sample": 9,
       "name": "optimize-noop",
-      "ms": 95.85100299999976
+      "ms": 82.16797999999835
     },
     {
       "series": 1,
       "sample": 9,
       "name": "whole-physical-preflight",
-      "ms": 9.362449000000197
+      "ms": 6.6555869999992865
     },
     {
       "series": 1,
       "sample": 9,
       "name": "cold-core",
-      "ms": 51.84167600000001
+      "ms": 27.556915000001027
     },
     {
       "series": 1,
       "sample": 10,
       "name": "optimize",
-      "ms": 96.89984900000127
+      "ms": 89.23253699999987
     },
     {
       "series": 1,
       "sample": 10,
       "name": "optimize-noop",
-      "ms": 89.56543199999942
+      "ms": 79.07038400000056
     },
     {
       "series": 1,
       "sample": 10,
       "name": "whole-physical-preflight",
-      "ms": 8.66560600000048
+      "ms": 5.536340000000564
     },
     {
       "series": 1,
       "sample": 10,
       "name": "cold-core",
-      "ms": 49.48488499999985
+      "ms": 26.15346099999988
     },
     {
       "series": 1,
       "sample": 11,
       "name": "optimize",
-      "ms": 95.06079900000077
+      "ms": 91.39417800000047
     },
     {
       "series": 1,
       "sample": 11,
       "name": "optimize-noop",
-      "ms": 90.52351699999963
+      "ms": 80.54144599999927
     },
     {
       "series": 1,
       "sample": 11,
       "name": "whole-physical-preflight",
-      "ms": 8.934550999998464
+      "ms": 6.102705999999671
     },
     {
       "series": 1,
       "sample": 11,
       "name": "cold-core",
-      "ms": 50.25171799999953
+      "ms": 24.708647999999812
     },
     {
       "series": 1,
       "sample": 12,
       "name": "optimize",
-      "ms": 97.6215830000001
+      "ms": 93.661924
     },
     {
       "series": 1,
       "sample": 12,
       "name": "optimize-noop",
-      "ms": 86.80039700000088
+      "ms": 79.54535300000134
     },
     {
       "series": 1,
       "sample": 12,
       "name": "whole-physical-preflight",
-      "ms": 8.923923000000286
+      "ms": 5.8897649999998976
     },
     {
       "series": 1,
       "sample": 12,
       "name": "cold-core",
-      "ms": 53.203905000000304
+      "ms": 24.53105400000095
     },
     {
       "series": 1,
       "sample": 13,
       "name": "optimize",
-      "ms": 119.68246700000054
+      "ms": 89.7118389999996
     },
     {
       "series": 1,
       "sample": 13,
       "name": "optimize-noop",
-      "ms": 79.26196700000037
+      "ms": 82.8857339999995
     },
     {
       "series": 1,
       "sample": 13,
       "name": "whole-physical-preflight",
-      "ms": 8.127862999999707
+      "ms": 6.4354999999995925
     },
     {
       "series": 1,
       "sample": 13,
       "name": "cold-core",
-      "ms": 48.94597099999919
+      "ms": 26.113910000000033
     },
     {
       "series": 1,
       "sample": 14,
       "name": "optimize",
-      "ms": 91.48894599999949
+      "ms": 89.71031699999912
     },
     {
       "series": 1,
       "sample": 14,
       "name": "optimize-noop",
-      "ms": 84.90682399999969
+      "ms": 78.38126300000113
     },
     {
       "series": 1,
       "sample": 14,
       "name": "whole-physical-preflight",
-      "ms": 8.801734000000579
+      "ms": 5.95034300000043
     },
     {
       "series": 1,
       "sample": 14,
       "name": "cold-core",
-      "ms": 49.36767400000099
+      "ms": 25.925132000000303
     },
     {
       "series": 1,
       "sample": 15,
       "name": "optimize",
-      "ms": 91.09767800000009
+      "ms": 87.54346900000019
     },
     {
       "series": 1,
       "sample": 15,
       "name": "optimize-noop",
-      "ms": 85.03537200000028
+      "ms": 75.85545699999966
     },
     {
       "series": 1,
       "sample": 15,
       "name": "whole-physical-preflight",
-      "ms": 8.417675999999119
+      "ms": 4.959810000000289
     },
     {
       "series": 1,
       "sample": 15,
       "name": "cold-core",
-      "ms": 49.14844400000038
+      "ms": 26.50599300000067
     },
     {
       "series": 1,
       "sample": 16,
       "name": "optimize",
-      "ms": 92.10640199999943
+      "ms": 88.75580199999968
     },
     {
       "series": 1,
       "sample": 16,
       "name": "optimize-noop",
-      "ms": 88.15530300000137
+      "ms": 79.27938600000016
     },
     {
       "series": 1,
       "sample": 16,
       "name": "whole-physical-preflight",
-      "ms": 8.383622000001196
+      "ms": 5.944555000000037
     },
     {
       "series": 1,
       "sample": 16,
       "name": "cold-core",
-      "ms": 49.50452200000109
+      "ms": 25.379166999999143
     },
     {
       "series": 1,
       "sample": 17,
       "name": "optimize",
-      "ms": 93.4884200000015
+      "ms": 87.92734199999904
     },
     {
       "series": 1,
       "sample": 17,
       "name": "optimize-noop",
-      "ms": 87.80406000000039
+      "ms": 79.29454400000031
     },
     {
       "series": 1,
       "sample": 17,
       "name": "whole-physical-preflight",
-      "ms": 9.356458999998722
+      "ms": 6.048747000000731
     },
     {
       "series": 1,
       "sample": 17,
       "name": "cold-core",
-      "ms": 48.53622800000085
+      "ms": 25.59506500000134
     },
     {
       "series": 1,
       "sample": 18,
       "name": "optimize",
-      "ms": 91.89141199999904
+      "ms": 87.61816199999885
     },
     {
       "series": 1,
       "sample": 18,
       "name": "optimize-noop",
-      "ms": 82.63090900000134
+      "ms": 79.24283300000025
     },
     {
       "series": 1,
       "sample": 18,
       "name": "whole-physical-preflight",
-      "ms": 8.661872000000585
+      "ms": 6.034527999998318
     },
     {
       "series": 1,
       "sample": 18,
       "name": "cold-core",
-      "ms": 56.056109999999535
+      "ms": 26.159931999998662
     },
     {
       "series": 1,
       "sample": 19,
       "name": "optimize",
-      "ms": 94.86840499999926
+      "ms": 85.30538100000012
     },
     {
       "series": 1,
       "sample": 19,
       "name": "optimize-noop",
-      "ms": 84.26516100000117
+      "ms": 83.84413300000051
     },
     {
       "series": 1,
       "sample": 19,
       "name": "whole-physical-preflight",
-      "ms": 8.746885999998995
+      "ms": 6.240105000000767
     },
     {
       "series": 1,
       "sample": 19,
       "name": "cold-core",
-      "ms": 48.632321999999476
+      "ms": 25.052182000001267
     },
     {
       "series": 2,
       "sample": 0,
       "name": "optimize",
-      "ms": 98.84081700000024
+      "ms": 86.7852039999998
     },
     {
       "series": 2,
       "sample": 0,
       "name": "optimize-noop",
-      "ms": 85.8887109999996
+      "ms": 79.64702099999886
     },
     {
       "series": 2,
       "sample": 0,
       "name": "whole-physical-preflight",
-      "ms": 8.766832000001159
+      "ms": 5.343613000000914
     },
     {
       "series": 2,
       "sample": 0,
       "name": "cold-core",
-      "ms": 49.99401899999975
+      "ms": 27.02027999999882
     },
     {
       "series": 2,
       "sample": 1,
       "name": "optimize",
-      "ms": 93.91695300000174
+      "ms": 94.5033710000007
     },
     {
       "series": 2,
       "sample": 1,
       "name": "optimize-noop",
-      "ms": 87.94163799999842
+      "ms": 81.89799700000003
     },
     {
       "series": 2,
       "sample": 1,
       "name": "whole-physical-preflight",
-      "ms": 9.707644000000073
+      "ms": 7.72342000000026
     },
     {
       "series": 2,
       "sample": 1,
       "name": "cold-core",
-      "ms": 47.57418500000131
+      "ms": 26.174634999999398
     },
     {
       "series": 2,
       "sample": 2,
       "name": "optimize",
-      "ms": 94.29823099999885
+      "ms": 92.93564999999944
     },
     {
       "series": 2,
       "sample": 2,
       "name": "optimize-noop",
-      "ms": 84.37558399999944
+      "ms": 81.45874399999957
     },
     {
       "series": 2,
       "sample": 2,
       "name": "whole-physical-preflight",
-      "ms": 9.019053999998505
+      "ms": 7.357433999999557
     },
     {
       "series": 2,
       "sample": 2,
       "name": "cold-core",
-      "ms": 53.93239600000015
+      "ms": 26.832721000000674
     },
     {
       "series": 2,
       "sample": 3,
       "name": "optimize",
-      "ms": 94.67432399999961
+      "ms": 90.74805299999935
     },
     {
       "series": 2,
       "sample": 3,
       "name": "optimize-noop",
-      "ms": 80.8222910000004
+      "ms": 78.87613299999975
     },
     {
       "series": 2,
       "sample": 3,
       "name": "whole-physical-preflight",
-      "ms": 8.525072000000364
+      "ms": 6.187241999999969
     },
     {
       "series": 2,
       "sample": 3,
       "name": "cold-core",
-      "ms": 51.97260800000004
+      "ms": 27.48264999999992
     },
     {
       "series": 2,
       "sample": 4,
       "name": "optimize",
-      "ms": 92.93838099999994
+      "ms": 88.48191399999996
     },
     {
       "series": 2,
       "sample": 4,
       "name": "optimize-noop",
-      "ms": 83.53682300000037
+      "ms": 81.14042100000006
     },
     {
       "series": 2,
       "sample": 4,
       "name": "whole-physical-preflight",
-      "ms": 8.643856000000596
+      "ms": 5.064958000000843
     },
     {
       "series": 2,
       "sample": 4,
       "name": "cold-core",
-      "ms": 48.92799500000001
+      "ms": 27.961923000000752
     },
     {
       "series": 2,
       "sample": 5,
       "name": "optimize",
-      "ms": 93.18987900000138
+      "ms": 88.48588199999904
     },
     {
       "series": 2,
       "sample": 5,
       "name": "optimize-noop",
-      "ms": 85.2756100000006
+      "ms": 78.86033599999973
     },
     {
       "series": 2,
       "sample": 5,
       "name": "whole-physical-preflight",
-      "ms": 9.151362000000518
+      "ms": 4.74933400000009
     },
     {
       "series": 2,
       "sample": 5,
       "name": "cold-core",
-      "ms": 48.895032999998875
+      "ms": 26.424189000001206
     },
     {
       "series": 2,
       "sample": 6,
       "name": "optimize",
-      "ms": 91.32692099999986
+      "ms": 90.96029799999997
     },
     {
       "series": 2,
       "sample": 6,
       "name": "optimize-noop",
-      "ms": 84.46960399999989
+      "ms": 90.25904699999955
     },
     {
       "series": 2,
       "sample": 6,
       "name": "whole-physical-preflight",
-      "ms": 8.882235999999466
+      "ms": 6.471624000001611
     },
     {
       "series": 2,
       "sample": 6,
       "name": "cold-core",
-      "ms": 49.48494899999969
+      "ms": 27.23671699999977
     },
     {
       "series": 2,
       "sample": 7,
       "name": "optimize",
-      "ms": 100.93751900000098
+      "ms": 104.11974200000077
     },
     {
       "series": 2,
       "sample": 7,
       "name": "optimize-noop",
-      "ms": 95.37823300000127
+      "ms": 96.32299400000011
     },
     {
       "series": 2,
       "sample": 7,
       "name": "whole-physical-preflight",
-      "ms": 9.757895000000644
+      "ms": 8.037263000000166
     },
     {
       "series": 2,
       "sample": 7,
       "name": "cold-core",
-      "ms": 56.52890500000103
+      "ms": 27.935707000000548
     },
     {
       "series": 2,
       "sample": 8,
       "name": "optimize",
-      "ms": 93.32520400000067
+      "ms": 90.91740100000061
     },
     {
       "series": 2,
       "sample": 8,
       "name": "optimize-noop",
-      "ms": 82.60599999999977
+      "ms": 79.94309499999872
     },
     {
       "series": 2,
       "sample": 8,
       "name": "whole-physical-preflight",
-      "ms": 8.689072999997734
+      "ms": 4.987945999999283
     },
     {
       "series": 2,
       "sample": 8,
       "name": "cold-core",
-      "ms": 48.75654099999883
+      "ms": 26.783886999999595
     },
     {
       "series": 2,
       "sample": 9,
       "name": "optimize",
-      "ms": 91.55415399999765
+      "ms": 87.33901500000138
     },
     {
       "series": 2,
       "sample": 9,
       "name": "optimize-noop",
-      "ms": 85.22962600000028
+      "ms": 78.60007500000029
     },
     {
       "series": 2,
       "sample": 9,
       "name": "whole-physical-preflight",
-      "ms": 8.322055000000546
+      "ms": 5.967814999999973
     },
     {
       "series": 2,
       "sample": 9,
       "name": "cold-core",
-      "ms": 49.79447699999946
+      "ms": 28.077407000000676
     },
     {
       "series": 2,
       "sample": 10,
       "name": "optimize",
-      "ms": 91.27665599999818
+      "ms": 95.96082300000126
     },
     {
       "series": 2,
       "sample": 10,
       "name": "optimize-noop",
-      "ms": 83.3507729999983
+      "ms": 85.10089100000005
     },
     {
       "series": 2,
       "sample": 10,
       "name": "whole-physical-preflight",
-      "ms": 9.395336999998108
+      "ms": 6.4779859999998735
     },
     {
       "series": 2,
       "sample": 10,
       "name": "cold-core",
-      "ms": 50.167208999999275
+      "ms": 27.913361999999324
     },
     {
       "series": 2,
       "sample": 11,
       "name": "optimize",
-      "ms": 93.88137600000118
+      "ms": 90.36465199999839
     },
     {
       "series": 2,
       "sample": 11,
       "name": "optimize-noop",
-      "ms": 83.77191099999982
+      "ms": 78.884231
     },
     {
       "series": 2,
       "sample": 11,
       "name": "whole-physical-preflight",
-      "ms": 9.074474000000919
+      "ms": 6.231984999998531
     },
     {
       "series": 2,
       "sample": 11,
       "name": "cold-core",
-      "ms": 55.37212499999805
+      "ms": 27.17674799999986
     },
     {
       "series": 2,
       "sample": 12,
       "name": "optimize",
-      "ms": 93.7107419999993
+      "ms": 90.40134600000056
     },
     {
       "series": 2,
       "sample": 12,
       "name": "optimize-noop",
-      "ms": 83.61364400000093
+      "ms": 81.04378100000031
     },
     {
       "series": 2,
       "sample": 12,
       "name": "whole-physical-preflight",
-      "ms": 8.504186000001937
+      "ms": 5.089459000000716
     },
     {
       "series": 2,
       "sample": 12,
       "name": "cold-core",
-      "ms": 48.75457800000004
+      "ms": 27.75077500000043
     },
     {
       "series": 2,
       "sample": 13,
       "name": "optimize",
-      "ms": 91.23884999999791
+      "ms": 89.13981999999851
     },
     {
       "series": 2,
       "sample": 13,
       "name": "optimize-noop",
-      "ms": 88.23236099999849
+      "ms": 81.34874300000047
     },
     {
       "series": 2,
       "sample": 13,
       "name": "whole-physical-preflight",
-      "ms": 9.093301000000793
+      "ms": 4.998249999998734
     },
     {
       "series": 2,
       "sample": 13,
       "name": "cold-core",
-      "ms": 49.311736999999994
+      "ms": 28.7123389999997
     },
     {
       "series": 2,
       "sample": 14,
       "name": "optimize",
-      "ms": 97.06089499999871
+      "ms": 89.22397999999885
     },
     {
       "series": 2,
       "sample": 14,
       "name": "optimize-noop",
-      "ms": 83.80445699999837
+      "ms": 81.898142
     },
     {
       "series": 2,
       "sample": 14,
       "name": "whole-physical-preflight",
-      "ms": 9.001146999999037
+      "ms": 6.034783000000971
     },
     {
       "series": 2,
       "sample": 14,
       "name": "cold-core",
-      "ms": 49.40492799999993
+      "ms": 29.577877000001536
     },
     {
       "series": 2,
       "sample": 15,
       "name": "optimize",
-      "ms": 93.15425699999832
+      "ms": 93.95806999999877
     },
     {
       "series": 2,
       "sample": 15,
       "name": "optimize-noop",
-      "ms": 84.60708199999863
+      "ms": 82.95562500000051
     },
     {
       "series": 2,
       "sample": 15,
       "name": "whole-physical-preflight",
-      "ms": 9.17546399999992
+      "ms": 6.52346899999975
     },
     {
       "series": 2,
       "sample": 15,
       "name": "cold-core",
-      "ms": 53.15422600000238
+      "ms": 29.6574870000004
     },
     {
       "series": 2,
       "sample": 16,
       "name": "optimize",
-      "ms": 93.47741799999858
+      "ms": 89.72130000000107
     },
     {
       "series": 2,
       "sample": 16,
       "name": "optimize-noop",
-      "ms": 86.5760229999978
+      "ms": 78.8472499999989
     },
     {
       "series": 2,
       "sample": 16,
       "name": "whole-physical-preflight",
-      "ms": 8.808069000002433
+      "ms": 6.258391999999731
     },
     {
       "series": 2,
       "sample": 16,
       "name": "cold-core",
-      "ms": 50.74012800000128
+      "ms": 29.037811000000147
     },
     {
       "series": 2,
       "sample": 17,
       "name": "optimize",
-      "ms": 92.95568500000081
+      "ms": 91.06656300000031
     },
     {
       "series": 2,
       "sample": 17,
       "name": "optimize-noop",
-      "ms": 87.66890499999863
+      "ms": 80.26347200000055
     },
     {
       "series": 2,
       "sample": 17,
       "name": "whole-physical-preflight",
-      "ms": 8.968615000001591
+      "ms": 5.6554009999999835
     },
     {
       "series": 2,
       "sample": 17,
       "name": "cold-core",
-      "ms": 48.529804999998305
+      "ms": 24.909809999999197
     },
     {
       "series": 2,
       "sample": 18,
       "name": "optimize",
-      "ms": 93.15280900000289
+      "ms": 85.33253200000036
     },
     {
       "series": 2,
       "sample": 18,
       "name": "optimize-noop",
-      "ms": 86.73721799999839
+      "ms": 78.94736899999953
     },
     {
       "series": 2,
       "sample": 18,
       "name": "whole-physical-preflight",
-      "ms": 9.286180999999488
+      "ms": 4.766562000000704
     },
     {
       "series": 2,
       "sample": 18,
       "name": "cold-core",
-      "ms": 50.4648930000003
+      "ms": 26.82761400000163
     },
     {
       "series": 2,
       "sample": 19,
       "name": "optimize",
-      "ms": 106.28156300000046
+      "ms": 87.0497720000003
     },
     {
       "series": 2,
       "sample": 19,
       "name": "optimize-noop",
-      "ms": 89.51507299999867
+      "ms": 77.55134799999905
     },
     {
       "series": 2,
       "sample": 19,
       "name": "whole-physical-preflight",
-      "ms": 10.236100000001898
+      "ms": 5.682044999999562
     },
     {
       "series": 2,
       "sample": 19,
       "name": "cold-core",
-      "ms": 52.29812099999981
+      "ms": 25.98676400000113
     },
     {
       "series": 0,
       "sample": 0,
       "name": "cold-open",
-      "ms": 2346.5
+      "ms": 2357.5
     },
     {
       "series": 0,
       "sample": 0,
       "name": "cold-floor-switch",
-      "ms": 252.10000000009313
+      "ms": 233.30000000004657
     },
     {
       "series": 0,
       "sample": 0,
       "name": "warm-floor-switch",
-      "ms": 183.3000000002794
+      "ms": 183.4000000001397
     },
     {
       "series": 0,
       "sample": 0,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 777
+      "ms": 584.5999999998603
     },
     {
       "series": 0,
       "sample": 0,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -1522,89 +1522,89 @@
       "series": 0,
       "sample": 1,
       "name": "cold-open",
-      "ms": 2346.600000000093
+      "ms": 2345.899999999907
     },
     {
       "series": 0,
       "sample": 1,
       "name": "cold-floor-switch",
-      "ms": 254
+      "ms": 233.5
     },
     {
       "series": 0,
       "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.5999999998603
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 578.6999999999534
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2346.0999999998603
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 233.30000000004657
+    },
+    {
+      "series": 0,
+      "sample": 2,
       "name": "warm-floor-switch",
       "ms": 183.39999999990687
     },
     {
       "series": 0,
-      "sample": 1,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 767.6000000000931
-    },
-    {
-      "series": 0,
-      "sample": 1,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 2,
-      "name": "cold-open",
-      "ms": 2346.1999999997206
-    },
-    {
-      "series": 0,
-      "sample": 2,
-      "name": "cold-floor-switch",
-      "ms": 251.70000000018626
-    },
-    {
-      "series": 0,
-      "sample": 2,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 0,
       "sample": 2,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 738.0999999996275
+      "ms": 551.6999999999534
     },
     {
       "series": 0,
       "sample": 2,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -1638,31 +1638,31 @@
       "series": 0,
       "sample": 3,
       "name": "cold-open",
-      "ms": 2346.5
+      "ms": 2329.5999999998603
     },
     {
       "series": 0,
       "sample": 3,
       "name": "cold-floor-switch",
-      "ms": 253.59999999962747
+      "ms": 233.4000000001397
     },
     {
       "series": 0,
       "sample": 3,
       "name": "warm-floor-switch",
-      "ms": 183.60000000009313
+      "ms": 183.4000000001397
     },
     {
       "series": 0,
       "sample": 3,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 764.7000000001863
+      "ms": 589.2999999998137
     },
     {
       "series": 0,
       "sample": 3,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -1696,205 +1696,205 @@
       "series": 0,
       "sample": 4,
       "name": "cold-open",
-      "ms": 2346.399999999907
+      "ms": 2329.5
     },
     {
       "series": 0,
       "sample": 4,
       "name": "cold-floor-switch",
-      "ms": 252.90000000037253
+      "ms": 233.30000000004657
     },
     {
       "series": 0,
       "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 526.5
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2329.0999999998603
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 233.5
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 521.5
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2346
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 233.30000000004657
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.19999999995343
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 558.2000000001863
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2346
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 233.69999999995343
+    },
+    {
+      "series": 0,
+      "sample": 7,
       "name": "warm-floor-switch",
       "ms": 183.20000000018626
     },
     {
       "series": 0,
-      "sample": 4,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 752.6999999997206
-    },
-    {
-      "series": 0,
-      "sample": 4,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 5,
-      "name": "cold-open",
-      "ms": 2363.100000000093
-    },
-    {
-      "series": 0,
-      "sample": 5,
-      "name": "cold-floor-switch",
-      "ms": 252.5
-    },
-    {
-      "series": 0,
-      "sample": 5,
-      "name": "warm-floor-switch",
-      "ms": 200
-    },
-    {
-      "series": 0,
-      "sample": 5,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 744.7000000001863
-    },
-    {
-      "series": 0,
-      "sample": 5,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 6,
-      "name": "cold-open",
-      "ms": 2363.0999999996275
-    },
-    {
-      "series": 0,
-      "sample": 6,
-      "name": "cold-floor-switch",
-      "ms": 251.10000000009313
-    },
-    {
-      "series": 0,
-      "sample": 6,
-      "name": "warm-floor-switch",
-      "ms": 183.1999999997206
-    },
-    {
-      "series": 0,
-      "sample": 6,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 767.7999999998137
-    },
-    {
-      "series": 0,
-      "sample": 6,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 7,
-      "name": "cold-open",
-      "ms": 2346.7000000001863
-    },
-    {
-      "series": 0,
-      "sample": 7,
-      "name": "cold-floor-switch",
-      "ms": 251.90000000037253
-    },
-    {
-      "series": 0,
-      "sample": 7,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 0,
       "sample": 7,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 741.8000000002794
+      "ms": 549.1000000000931
     },
     {
       "series": 0,
       "sample": 7,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -1928,31 +1928,31 @@
       "series": 0,
       "sample": 8,
       "name": "cold-open",
-      "ms": 2378.600000000093
+      "ms": 2362.399999999907
     },
     {
       "series": 0,
       "sample": 8,
       "name": "cold-floor-switch",
-      "ms": 252.10000000009313
+      "ms": 233.4000000001397
     },
     {
       "series": 0,
       "sample": 8,
       "name": "warm-floor-switch",
-      "ms": 183.29999999981374
+      "ms": 183.30000000004657
     },
     {
       "series": 0,
       "sample": 8,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 786
+      "ms": 583.9000000001397
     },
     {
       "series": 0,
       "sample": 8,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -1986,31 +1986,31 @@
       "series": 0,
       "sample": 9,
       "name": "cold-open",
-      "ms": 2346.600000000093
+      "ms": 2351
     },
     {
       "series": 0,
       "sample": 9,
       "name": "cold-floor-switch",
-      "ms": 252.3000000002794
+      "ms": 228.30000000004657
     },
     {
       "series": 0,
       "sample": 9,
       "name": "warm-floor-switch",
-      "ms": 183.39999999990687
+      "ms": 183.30000000004657
     },
     {
       "series": 0,
       "sample": 9,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 720
+      "ms": 548.3999999999069
     },
     {
       "series": 0,
       "sample": 9,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2044,31 +2044,31 @@
       "series": 0,
       "sample": 10,
       "name": "cold-open",
-      "ms": 2346.600000000093
+      "ms": 2345.9000000001397
     },
     {
       "series": 0,
       "sample": 10,
       "name": "cold-floor-switch",
-      "ms": 251.5
+      "ms": 233.39999999990687
     },
     {
       "series": 0,
       "sample": 10,
       "name": "warm-floor-switch",
-      "ms": 183.29999999981374
+      "ms": 183.5
     },
     {
       "series": 0,
       "sample": 10,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 721.3000000002794
+      "ms": 541.3999999999069
     },
     {
       "series": 0,
       "sample": 10,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2102,31 +2102,31 @@
       "series": 0,
       "sample": 11,
       "name": "cold-open",
-      "ms": 2279.7999999998137
+      "ms": 2329.5
     },
     {
       "series": 0,
       "sample": 11,
       "name": "cold-floor-switch",
-      "ms": 253.10000000009313
+      "ms": 233.39999999990687
     },
     {
       "series": 0,
       "sample": 11,
       "name": "warm-floor-switch",
-      "ms": 183.39999999990687
+      "ms": 183.19999999995343
     },
     {
       "series": 0,
       "sample": 11,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 725.1000000000931
+      "ms": 556.2000000001863
     },
     {
       "series": 0,
       "sample": 11,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2160,31 +2160,31 @@
       "series": 0,
       "sample": 12,
       "name": "cold-open",
-      "ms": 2346.5
+      "ms": 2363
     },
     {
       "series": 0,
       "sample": 12,
       "name": "cold-floor-switch",
-      "ms": 253.1999999997206
+      "ms": 233.39999999990687
     },
     {
       "series": 0,
       "sample": 12,
       "name": "warm-floor-switch",
-      "ms": 183.60000000009313
+      "ms": 183.5
     },
     {
       "series": 0,
       "sample": 12,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 804.5
+      "ms": 547.6999999999534
     },
     {
       "series": 0,
       "sample": 12,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2218,13 +2218,13 @@
       "series": 0,
       "sample": 13,
       "name": "cold-open",
-      "ms": 2346.3000000002794
+      "ms": 2346.3000000000466
     },
     {
       "series": 0,
       "sample": 13,
       "name": "cold-floor-switch",
-      "ms": 252.10000000009313
+      "ms": 233.29999999981374
     },
     {
       "series": 0,
@@ -2236,13 +2236,13 @@
       "series": 0,
       "sample": 13,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 755.1000000000931
+      "ms": 522.3000000000466
     },
     {
       "series": 0,
       "sample": 13,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2275,322 +2275,322 @@
     {
       "series": 0,
       "sample": 14,
+      "name": "cold-open",
+      "ms": 2345.899999999907
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 233.5
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 529.4000000001397
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2346.2999999998137
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 233.5
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 537.5
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2329.399999999907
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 233.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 548.6000000000931
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2362.899999999907
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 233.5
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 550.5
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2329.4000000001397
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 233.5999999998603
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.19999999995343
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 578.7999999998137
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 19,
       "name": "cold-open",
       "ms": 2346.399999999907
     },
     {
       "series": 0,
-      "sample": 14,
-      "name": "cold-floor-switch",
-      "ms": 233.40000000037253
-    },
-    {
-      "series": 0,
-      "sample": 14,
-      "name": "warm-floor-switch",
-      "ms": 183.29999999981374
-    },
-    {
-      "series": 0,
-      "sample": 14,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 762.2000000001863
-    },
-    {
-      "series": 0,
-      "sample": 14,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 15,
-      "name": "cold-open",
-      "ms": 2363.2000000001863
-    },
-    {
-      "series": 0,
-      "sample": 15,
-      "name": "cold-floor-switch",
-      "ms": 233.1999999997206
-    },
-    {
-      "series": 0,
-      "sample": 15,
-      "name": "warm-floor-switch",
-      "ms": 183.5
-    },
-    {
-      "series": 0,
-      "sample": 15,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 734.1000000000931
-    },
-    {
-      "series": 0,
-      "sample": 15,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 16,
-      "name": "cold-open",
-      "ms": 2363.600000000093
-    },
-    {
-      "series": 0,
-      "sample": 16,
-      "name": "cold-floor-switch",
-      "ms": 252
-    },
-    {
-      "series": 0,
-      "sample": 16,
-      "name": "warm-floor-switch",
-      "ms": 183.39999999990687
-    },
-    {
-      "series": 0,
-      "sample": 16,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 763.9000000003725
-    },
-    {
-      "series": 0,
-      "sample": 16,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 17,
-      "name": "cold-open",
-      "ms": 2346.600000000093
-    },
-    {
-      "series": 0,
-      "sample": 17,
-      "name": "cold-floor-switch",
-      "ms": 233.3000000002794
-    },
-    {
-      "series": 0,
-      "sample": 17,
-      "name": "warm-floor-switch",
-      "ms": 183.5
-    },
-    {
-      "series": 0,
-      "sample": 17,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 728.6000000000931
-    },
-    {
-      "series": 0,
-      "sample": 17,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 18,
-      "name": "cold-open",
-      "ms": 2346.5
-    },
-    {
-      "series": 0,
-      "sample": 18,
-      "name": "cold-floor-switch",
-      "ms": 233.20000000018626
-    },
-    {
-      "series": 0,
-      "sample": 18,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 0,
-      "sample": 18,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 778.2000000001863
-    },
-    {
-      "series": 0,
-      "sample": 18,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 0,
-      "sample": 19,
-      "name": "cold-open",
-      "ms": 2313
-    },
-    {
-      "series": 0,
       "sample": 19,
       "name": "cold-floor-switch",
-      "ms": 251.70000000018626
+      "ms": 233.4000000001397
     },
     {
       "series": 0,
       "sample": 19,
       "name": "warm-floor-switch",
-      "ms": 183.20000000018626
+      "ms": 183.30000000004657
     },
     {
       "series": 0,
       "sample": 19,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 770.7000000001863
+      "ms": 538
     },
     {
       "series": 0,
       "sample": 19,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2624,37 +2624,37 @@
       "series": 0,
       "sample": 19,
       "name": "retained-heap",
-      "bytes": 105900980
+      "bytes": 97022056
     },
     {
       "series": 1,
       "sample": 0,
       "name": "cold-open",
-      "ms": 2346.1999999997206
+      "ms": 2362.6999999999534
     },
     {
       "series": 1,
       "sample": 0,
       "name": "cold-floor-switch",
-      "ms": 266.5
+      "ms": 233.39999999990687
     },
     {
       "series": 1,
       "sample": 0,
       "name": "warm-floor-switch",
-      "ms": 183.5
+      "ms": 183.30000000004657
     },
     {
       "series": 1,
       "sample": 0,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 738.3999999999069
+      "ms": 541.3000000000466
     },
     {
       "series": 1,
       "sample": 0,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2688,31 +2688,31 @@
       "series": 1,
       "sample": 1,
       "name": "cold-open",
-      "ms": 2362.7999999998137
+      "ms": 2346.3000000000466
     },
     {
       "series": 1,
       "sample": 1,
       "name": "cold-floor-switch",
-      "ms": 252.20000000018626
+      "ms": 233.30000000004657
     },
     {
       "series": 1,
       "sample": 1,
       "name": "warm-floor-switch",
-      "ms": 183.3000000002794
+      "ms": 183.30000000004657
     },
     {
       "series": 1,
       "sample": 1,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 755.2000000001863
+      "ms": 547.6000000000931
     },
     {
       "series": 1,
       "sample": 1,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2745,90 +2745,90 @@
     {
       "series": 1,
       "sample": 2,
+      "name": "cold-open",
+      "ms": 2362.6999999999534
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 233
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 592.0999999998603
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 3,
       "name": "cold-open",
       "ms": 2379.899999999907
     },
     {
       "series": 1,
-      "sample": 2,
-      "name": "cold-floor-switch",
-      "ms": 252
-    },
-    {
-      "series": 1,
-      "sample": 2,
-      "name": "warm-floor-switch",
-      "ms": 183.39999999990687
-    },
-    {
-      "series": 1,
-      "sample": 2,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 758
-    },
-    {
-      "series": 1,
-      "sample": 2,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 3,
-      "name": "cold-open",
-      "ms": 2279.7000000001863
-    },
-    {
-      "series": 1,
       "sample": 3,
       "name": "cold-floor-switch",
-      "ms": 283.1999999997206
+      "ms": 233.30000000004657
     },
     {
       "series": 1,
       "sample": 3,
       "name": "warm-floor-switch",
-      "ms": 183.39999999990687
+      "ms": 183.30000000004657
     },
     {
       "series": 1,
       "sample": 3,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 760.1000000000931
+      "ms": 545.9000000001397
     },
     {
       "series": 1,
       "sample": 3,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2862,13 +2862,13 @@
       "series": 1,
       "sample": 4,
       "name": "cold-open",
-      "ms": 2346.399999999907
+      "ms": 2329.3000000000466
     },
     {
       "series": 1,
       "sample": 4,
       "name": "cold-floor-switch",
-      "ms": 252.6999999997206
+      "ms": 233.5
     },
     {
       "series": 1,
@@ -2880,13 +2880,13 @@
       "series": 1,
       "sample": 4,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 724.7999999998137
+      "ms": 535.8000000000466
     },
     {
       "series": 1,
       "sample": 4,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -2920,147 +2920,31 @@
       "series": 1,
       "sample": 5,
       "name": "cold-open",
-      "ms": 2346.3000000002794
+      "ms": 2346
     },
     {
       "series": 1,
       "sample": 5,
       "name": "cold-floor-switch",
-      "ms": 253.60000000009313
+      "ms": 233.5
     },
     {
       "series": 1,
       "sample": 5,
-      "name": "warm-floor-switch",
-      "ms": 183.39999999990687
-    },
-    {
-      "series": 1,
-      "sample": 5,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 787.8999999999069
-    },
-    {
-      "series": 1,
-      "sample": 5,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 6,
-      "name": "cold-open",
-      "ms": 2513
-    },
-    {
-      "series": 1,
-      "sample": 6,
-      "name": "cold-floor-switch",
-      "ms": 252.60000000009313
-    },
-    {
-      "series": 1,
-      "sample": 6,
-      "name": "warm-floor-switch",
-      "ms": 183.40000000037253
-    },
-    {
-      "series": 1,
-      "sample": 6,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 763.3999999999069
-    },
-    {
-      "series": 1,
-      "sample": 6,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 7,
-      "name": "cold-open",
-      "ms": 2363.0999999996275
-    },
-    {
-      "series": 1,
-      "sample": 7,
-      "name": "cold-floor-switch",
-      "ms": 252.20000000018626
-    },
-    {
-      "series": 1,
-      "sample": 7,
       "name": "warm-floor-switch",
       "ms": 183.5
     },
     {
       "series": 1,
-      "sample": 7,
+      "sample": 5,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 776.2999999998137
+      "ms": 578.7999999998137
     },
     {
       "series": 1,
-      "sample": 7,
+      "sample": 5,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3092,265 +2976,33 @@
     },
     {
       "series": 1,
-      "sample": 8,
+      "sample": 6,
       "name": "cold-open",
-      "ms": 2313.100000000093
+      "ms": 2346.1999999999534
     },
     {
       "series": 1,
-      "sample": 8,
+      "sample": 6,
       "name": "cold-floor-switch",
-      "ms": 251
+      "ms": 233.4000000001397
     },
     {
       "series": 1,
-      "sample": 8,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 1,
-      "sample": 8,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 846.7000000001863
-    },
-    {
-      "series": 1,
-      "sample": 8,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 9,
-      "name": "cold-open",
-      "ms": 2362.899999999907
-    },
-    {
-      "series": 1,
-      "sample": 9,
-      "name": "cold-floor-switch",
-      "ms": 251.70000000018626
-    },
-    {
-      "series": 1,
-      "sample": 9,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 1,
-      "sample": 9,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 735.6999999997206
-    },
-    {
-      "series": 1,
-      "sample": 9,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 10,
-      "name": "cold-open",
-      "ms": 2313.5
-    },
-    {
-      "series": 1,
-      "sample": 10,
-      "name": "cold-floor-switch",
-      "ms": 251.5
-    },
-    {
-      "series": 1,
-      "sample": 10,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 1,
-      "sample": 10,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 730.1000000000931
-    },
-    {
-      "series": 1,
-      "sample": 10,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 11,
-      "name": "cold-open",
-      "ms": 2363.100000000093
-    },
-    {
-      "series": 1,
-      "sample": 11,
-      "name": "cold-floor-switch",
-      "ms": 252
-    },
-    {
-      "series": 1,
-      "sample": 11,
-      "name": "warm-floor-switch",
-      "ms": 183.1999999997206
-    },
-    {
-      "series": 1,
-      "sample": 11,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 795.1999999997206
-    },
-    {
-      "series": 1,
-      "sample": 11,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 1,
-      "sample": 12,
-      "name": "cold-open",
-      "ms": 2346.600000000093
-    },
-    {
-      "series": 1,
-      "sample": 12,
-      "name": "cold-floor-switch",
-      "ms": 251.79999999981374
-    },
-    {
-      "series": 1,
-      "sample": 12,
+      "sample": 6,
       "name": "warm-floor-switch",
       "ms": 183.5
     },
     {
       "series": 1,
-      "sample": 12,
+      "sample": 6,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 780.2000000001863
+      "ms": 540.0999999998603
     },
     {
       "series": 1,
-      "sample": 12,
+      "sample": 6,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3382,33 +3034,33 @@
     },
     {
       "series": 1,
-      "sample": 13,
+      "sample": 7,
       "name": "cold-open",
-      "ms": 2346.2999999998137
+      "ms": 2329.3000000000466
     },
     {
       "series": 1,
-      "sample": 13,
+      "sample": 7,
       "name": "cold-floor-switch",
-      "ms": 254.60000000009313
+      "ms": 233.4000000001397
     },
     {
       "series": 1,
-      "sample": 13,
+      "sample": 7,
       "name": "warm-floor-switch",
       "ms": 183.39999999990687
     },
     {
       "series": 1,
-      "sample": 13,
+      "sample": 7,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 752.8999999999069
+      "ms": 546
     },
     {
       "series": 1,
-      "sample": 13,
+      "sample": 7,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3440,33 +3092,33 @@
     },
     {
       "series": 1,
-      "sample": 14,
+      "sample": 8,
       "name": "cold-open",
-      "ms": 2346.100000000093
+      "ms": 2346.5
     },
     {
       "series": 1,
-      "sample": 14,
+      "sample": 8,
       "name": "cold-floor-switch",
-      "ms": 252.29999999981374
+      "ms": 233.39999999990687
     },
     {
       "series": 1,
-      "sample": 14,
+      "sample": 8,
       "name": "warm-floor-switch",
       "ms": 183.5
     },
     {
       "series": 1,
-      "sample": 14,
+      "sample": 8,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 759.1000000000931
+      "ms": 563.5999999998603
     },
     {
       "series": 1,
-      "sample": 14,
+      "sample": 8,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3498,33 +3150,33 @@
     },
     {
       "series": 1,
-      "sample": 15,
+      "sample": 9,
       "name": "cold-open",
-      "ms": 2280.100000000093
+      "ms": 2329.5
     },
     {
       "series": 1,
-      "sample": 15,
+      "sample": 9,
       "name": "cold-floor-switch",
-      "ms": 270.70000000018626
+      "ms": 233.19999999995343
     },
     {
       "series": 1,
-      "sample": 15,
+      "sample": 9,
       "name": "warm-floor-switch",
-      "ms": 182.70000000018626
+      "ms": 183.39999999990687
     },
     {
       "series": 1,
-      "sample": 15,
+      "sample": 9,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 927.5
+      "ms": 525.1999999999534
     },
     {
       "series": 1,
-      "sample": 15,
+      "sample": 9,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3556,33 +3208,33 @@
     },
     {
       "series": 1,
-      "sample": 16,
+      "sample": 10,
       "name": "cold-open",
-      "ms": 2296.2000000001863
+      "ms": 2346.3000000000466
     },
     {
       "series": 1,
-      "sample": 16,
+      "sample": 10,
       "name": "cold-floor-switch",
-      "ms": 252
+      "ms": 233.5
     },
     {
       "series": 1,
-      "sample": 16,
+      "sample": 10,
       "name": "warm-floor-switch",
-      "ms": 183.60000000009313
+      "ms": 183.39999999990687
     },
     {
       "series": 1,
-      "sample": 16,
+      "sample": 10,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 793.7000000001863
+      "ms": 533.8999999999069
     },
     {
       "series": 1,
-      "sample": 16,
+      "sample": 10,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3614,33 +3266,381 @@
     },
     {
       "series": 1,
-      "sample": 17,
+      "sample": 11,
       "name": "cold-open",
       "ms": 2346.899999999907
     },
     {
       "series": 1,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 233
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 590.6000000000931
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2346.5
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 233.10000000009313
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 539.4000000001397
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2345.3000000000466
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 233.5
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.0999999998603
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 560.8000000000466
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2363.0999999998603
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 233.4000000001397
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 538.6999999999534
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2362.6999999999534
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 233.4000000001397
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.60000000009313
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 539.5
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2329.3000000000466
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 233.39999999990687
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 560.8999999999069
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2329.5
+    },
+    {
+      "series": 1,
       "sample": 17,
       "name": "cold-floor-switch",
-      "ms": 251.29999999981374
+      "ms": 233.30000000004657
     },
     {
       "series": 1,
       "sample": 17,
       "name": "warm-floor-switch",
-      "ms": 183
+      "ms": 183.69999999995343
     },
     {
       "series": 1,
       "sample": 17,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 733.3999999999069
+      "ms": 540.4000000001397
     },
     {
       "series": 1,
       "sample": 17,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3674,31 +3674,31 @@
       "series": 1,
       "sample": 18,
       "name": "cold-open",
-      "ms": 2346.2999999998137
+      "ms": 2329.6999999999534
     },
     {
       "series": 1,
       "sample": 18,
       "name": "cold-floor-switch",
-      "ms": 251.8000000002794
+      "ms": 233.19999999995343
     },
     {
       "series": 1,
       "sample": 18,
       "name": "warm-floor-switch",
-      "ms": 183.29999999981374
+      "ms": 183.30000000004657
     },
     {
       "series": 1,
       "sample": 18,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 728.7999999998137
+      "ms": 532.8999999999069
     },
     {
       "series": 1,
       "sample": 18,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3732,31 +3732,31 @@
       "series": 1,
       "sample": 19,
       "name": "cold-open",
-      "ms": 2362.8000000002794
+      "ms": 2329.399999999907
     },
     {
       "series": 1,
       "sample": 19,
       "name": "cold-floor-switch",
-      "ms": 252.10000000009313
+      "ms": 233.5
     },
     {
       "series": 1,
       "sample": 19,
       "name": "warm-floor-switch",
-      "ms": 183.29999999981374
+      "ms": 183.39999999990687
     },
     {
       "series": 1,
       "sample": 19,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 782
+      "ms": 550.0999999998603
     },
     {
       "series": 1,
       "sample": 19,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3790,37 +3790,37 @@
       "series": 1,
       "sample": 19,
       "name": "retained-heap",
-      "bytes": 193458224
+      "bytes": 175702504
     },
     {
       "series": 2,
       "sample": 0,
       "name": "cold-open",
-      "ms": 2346.3000000002794
+      "ms": 2362.600000000093
     },
     {
       "series": 2,
       "sample": 0,
       "name": "cold-floor-switch",
-      "ms": 251.89999999990687
+      "ms": 233.19999999995343
     },
     {
       "series": 2,
       "sample": 0,
       "name": "warm-floor-switch",
-      "ms": 183.29999999981374
+      "ms": 183.39999999990687
     },
     {
       "series": 2,
       "sample": 0,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 758.1000000000931
+      "ms": 525.8000000000466
     },
     {
       "series": 2,
       "sample": 0,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3854,31 +3854,31 @@
       "series": 2,
       "sample": 1,
       "name": "cold-open",
-      "ms": 2363.5
+      "ms": 2346.3000000000466
     },
     {
       "series": 2,
       "sample": 1,
       "name": "cold-floor-switch",
-      "ms": 251.5
+      "ms": 233.39999999990687
     },
     {
       "series": 2,
       "sample": 1,
       "name": "warm-floor-switch",
-      "ms": 183.29999999981374
+      "ms": 183.39999999990687
     },
     {
       "series": 2,
       "sample": 1,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 986.8000000002794
+      "ms": 628.3000000000466
     },
     {
       "series": 2,
       "sample": 1,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -3912,553 +3912,553 @@
       "series": 2,
       "sample": 2,
       "name": "cold-open",
-      "ms": 2363.5
+      "ms": 2346.6999999999534
     },
     {
       "series": 2,
       "sample": 2,
       "name": "cold-floor-switch",
-      "ms": 251.89999999990687
+      "ms": 233.30000000004657
     },
     {
       "series": 2,
       "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 534.8999999999069
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2346.100000000093
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 233.19999999995343
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.69999999995343
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 548.6999999999534
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2346.3000000000466
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 233.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999981374
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 542.5
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2362.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 233.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 547.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2362.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 233.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 541.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2362.899999999907
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 233.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 542.5
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2346.1999999999534
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 233.19999999995343
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.4000000001397
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 560.3000000000466
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2362.6999999999534
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 233.60000000009313
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.4000000001397
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 628.8999999999069
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2346.1999999999534
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 233.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 560.6000000000931
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2362.5
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 233.69999999995343
+    },
+    {
+      "series": 2,
+      "sample": 11,
       "name": "warm-floor-switch",
       "ms": 183.60000000009313
     },
     {
       "series": 2,
-      "sample": 2,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 725.4000000003725
-    },
-    {
-      "series": 2,
-      "sample": 2,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 3,
-      "name": "cold-open",
-      "ms": 2363.5
-    },
-    {
-      "series": 2,
-      "sample": 3,
-      "name": "cold-floor-switch",
-      "ms": 251.6999999997206
-    },
-    {
-      "series": 2,
-      "sample": 3,
-      "name": "warm-floor-switch",
-      "ms": 183.5
-    },
-    {
-      "series": 2,
-      "sample": 3,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 742.3999999999069
-    },
-    {
-      "series": 2,
-      "sample": 3,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 4,
-      "name": "cold-open",
-      "ms": 2363.4000000003725
-    },
-    {
-      "series": 2,
-      "sample": 4,
-      "name": "cold-floor-switch",
-      "ms": 252
-    },
-    {
-      "series": 2,
-      "sample": 4,
-      "name": "warm-floor-switch",
-      "ms": 183.5
-    },
-    {
-      "series": 2,
-      "sample": 4,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 784.6000000000931
-    },
-    {
-      "series": 2,
-      "sample": 4,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 5,
-      "name": "cold-open",
-      "ms": 2363
-    },
-    {
-      "series": 2,
-      "sample": 5,
-      "name": "cold-floor-switch",
-      "ms": 252.10000000009313
-    },
-    {
-      "series": 2,
-      "sample": 5,
-      "name": "warm-floor-switch",
-      "ms": 183.1999999997206
-    },
-    {
-      "series": 2,
-      "sample": 5,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 745.8000000002794
-    },
-    {
-      "series": 2,
-      "sample": 5,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 6,
-      "name": "cold-open",
-      "ms": 2346.5
-    },
-    {
-      "series": 2,
-      "sample": 6,
-      "name": "cold-floor-switch",
-      "ms": 251.89999999990687
-    },
-    {
-      "series": 2,
-      "sample": 6,
-      "name": "warm-floor-switch",
-      "ms": 183.1999999997206
-    },
-    {
-      "series": 2,
-      "sample": 6,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 783.1000000000931
-    },
-    {
-      "series": 2,
-      "sample": 6,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 7,
-      "name": "cold-open",
-      "ms": 2379.7999999998137
-    },
-    {
-      "series": 2,
-      "sample": 7,
-      "name": "cold-floor-switch",
-      "ms": 252.29999999981374
-    },
-    {
-      "series": 2,
-      "sample": 7,
-      "name": "warm-floor-switch",
-      "ms": 183.39999999990687
-    },
-    {
-      "series": 2,
-      "sample": 7,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 751.5
-    },
-    {
-      "series": 2,
-      "sample": 7,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 8,
-      "name": "cold-open",
-      "ms": 2380
-    },
-    {
-      "series": 2,
-      "sample": 8,
-      "name": "cold-floor-switch",
-      "ms": 251.40000000037253
-    },
-    {
-      "series": 2,
-      "sample": 8,
-      "name": "warm-floor-switch",
-      "ms": 183.39999999990687
-    },
-    {
-      "series": 2,
-      "sample": 8,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 761.3999999999069
-    },
-    {
-      "series": 2,
-      "sample": 8,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 9,
-      "name": "cold-open",
-      "ms": 2346.5
-    },
-    {
-      "series": 2,
-      "sample": 9,
-      "name": "cold-floor-switch",
-      "ms": 251.89999999990687
-    },
-    {
-      "series": 2,
-      "sample": 9,
-      "name": "warm-floor-switch",
-      "ms": 183.20000000018626
-    },
-    {
-      "series": 2,
-      "sample": 9,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 789.3000000002794
-    },
-    {
-      "series": 2,
-      "sample": 9,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 10,
-      "name": "cold-open",
-      "ms": 2464.399999999907
-    },
-    {
-      "series": 2,
-      "sample": 10,
-      "name": "cold-floor-switch",
-      "ms": 253.10000000009313
-    },
-    {
-      "series": 2,
-      "sample": 10,
-      "name": "warm-floor-switch",
-      "ms": 183.39999999990687
-    },
-    {
-      "series": 2,
-      "sample": 10,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 761.5
-    },
-    {
-      "series": 2,
-      "sample": 10,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 11,
-      "name": "cold-open",
-      "ms": 2346.600000000093
-    },
-    {
-      "series": 2,
-      "sample": 11,
-      "name": "cold-floor-switch",
-      "ms": 252
-    },
-    {
-      "series": 2,
-      "sample": 11,
-      "name": "warm-floor-switch",
-      "ms": 183.5
-    },
-    {
-      "series": 2,
       "sample": 11,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 764.2000000001863
+      "ms": 533
     },
     {
       "series": 2,
       "sample": 11,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4492,13 +4492,13 @@
       "series": 2,
       "sample": 12,
       "name": "cold-open",
-      "ms": 2346.0999999996275
+      "ms": 2362.600000000093
     },
     {
       "series": 2,
       "sample": 12,
       "name": "cold-floor-switch",
-      "ms": 252.8000000002794
+      "ms": 233.39999999990687
     },
     {
       "series": 2,
@@ -4510,13 +4510,13 @@
       "series": 2,
       "sample": 12,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 791.1999999997206
+      "ms": 548.6999999999534
     },
     {
       "series": 2,
       "sample": 12,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4550,31 +4550,31 @@
       "series": 2,
       "sample": 13,
       "name": "cold-open",
-      "ms": 2346.5999999996275
+      "ms": 2362.6999999999534
     },
     {
       "series": 2,
       "sample": 13,
       "name": "cold-floor-switch",
-      "ms": 252.20000000018626
+      "ms": 233.39999999990687
     },
     {
       "series": 2,
       "sample": 13,
       "name": "warm-floor-switch",
-      "ms": 183.39999999990687
+      "ms": 183.19999999995343
     },
     {
       "series": 2,
       "sample": 13,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 826.8999999999069
+      "ms": 543.6000000000931
     },
     {
       "series": 2,
       "sample": 13,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4608,147 +4608,147 @@
       "series": 2,
       "sample": 14,
       "name": "cold-open",
-      "ms": 2279.600000000093
+      "ms": 2346.2999999998137
     },
     {
       "series": 2,
       "sample": 14,
       "name": "cold-floor-switch",
-      "ms": 251.79999999981374
+      "ms": 233.20000000018626
     },
     {
       "series": 2,
       "sample": 14,
-      "name": "warm-floor-switch",
-      "ms": 183.3000000002794
-    },
-    {
-      "series": 2,
-      "sample": 14,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 741.7999999998137
-    },
-    {
-      "series": 2,
-      "sample": 14,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 15,
-      "name": "cold-open",
-      "ms": 2363.1999999997206
-    },
-    {
-      "series": 2,
-      "sample": 15,
-      "name": "cold-floor-switch",
-      "ms": 253.3000000002794
-    },
-    {
-      "series": 2,
-      "sample": 15,
-      "name": "warm-floor-switch",
-      "ms": 183.29999999981374
-    },
-    {
-      "series": 2,
-      "sample": 15,
-      "name": "node-gesture-to-accepted-frame",
-      "ms": 765.7000000001863
-    },
-    {
-      "series": 2,
-      "sample": 15,
-      "name": "heap",
-      "bytes": 19300000,
-      "work": {
-        "before": {
-          "wallUnion": 1,
-          "innerContour": 20,
-          "cleanFloor": 20,
-          "openingWallIndex": 1,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 1,
-          "openingTunnel": 1,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        },
-        "after": {
-          "wallUnion": 2,
-          "innerContour": 40,
-          "cleanFloor": 40,
-          "openingWallIndex": 2,
-          "lightBarrier": 0,
-          "glowClip": 0,
-          "physicalBodies": 2,
-          "openingTunnel": 2,
-          "lightPhysicalBodies": 0,
-          "sunRays": 0,
-          "isoSun": 0
-        }
-      }
-    },
-    {
-      "series": 2,
-      "sample": 16,
-      "name": "cold-open",
-      "ms": 2363.2000000001863
-    },
-    {
-      "series": 2,
-      "sample": 16,
-      "name": "cold-floor-switch",
-      "ms": 252.39999999990687
-    },
-    {
-      "series": 2,
-      "sample": 16,
       "name": "warm-floor-switch",
       "ms": 183.5
     },
     {
       "series": 2,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 536.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2362.9000000001397
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 233.5
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 577.5
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 15200000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 20,
+          "cleanFloor": 20,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 40,
+          "cleanFloor": 40,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2362.2999999998137
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 233.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.4000000001397
+    },
+    {
+      "series": 2,
       "sample": 16,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 777.8999999999069
+      "ms": 551.7999999998137
     },
     {
       "series": 2,
       "sample": 16,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4782,31 +4782,31 @@
       "series": 2,
       "sample": 17,
       "name": "cold-open",
-      "ms": 2329.9000000003725
+      "ms": 2346
     },
     {
       "series": 2,
       "sample": 17,
       "name": "cold-floor-switch",
-      "ms": 251.79999999981374
+      "ms": 233.19999999995343
     },
     {
       "series": 2,
       "sample": 17,
       "name": "warm-floor-switch",
-      "ms": 183.5
+      "ms": 183.4000000001397
     },
     {
       "series": 2,
       "sample": 17,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 779.1999999997206
+      "ms": 560.1000000000931
     },
     {
       "series": 2,
       "sample": 17,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4840,31 +4840,31 @@
       "series": 2,
       "sample": 18,
       "name": "cold-open",
-      "ms": 2363.399999999907
+      "ms": 2346.3000000000466
     },
     {
       "series": 2,
       "sample": 18,
       "name": "cold-floor-switch",
-      "ms": 251.89999999990687
+      "ms": 233.30000000004657
     },
     {
       "series": 2,
       "sample": 18,
       "name": "warm-floor-switch",
-      "ms": 183.3000000002794
+      "ms": 200
     },
     {
       "series": 2,
       "sample": 18,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 755.0999999996275
+      "ms": 542.1999999999534
     },
     {
       "series": 2,
       "sample": 18,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4898,31 +4898,31 @@
       "series": 2,
       "sample": 19,
       "name": "cold-open",
-      "ms": 2380.2000000001863
+      "ms": 2345.899999999907
     },
     {
       "series": 2,
       "sample": 19,
       "name": "cold-floor-switch",
-      "ms": 251.29999999981374
+      "ms": 233.4000000001397
     },
     {
       "series": 2,
       "sample": 19,
       "name": "warm-floor-switch",
-      "ms": 183.39999999990687
+      "ms": 183.5999999998603
     },
     {
       "series": 2,
       "sample": 19,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 1077
+      "ms": 557.1999999999534
     },
     {
       "series": 2,
       "sample": 19,
       "name": "heap",
-      "bytes": 19300000,
+      "bytes": 15200000,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -4956,7 +4956,7 @@
       "series": 2,
       "sample": 19,
       "name": "retained-heap",
-      "bytes": 283043520
+      "bytes": 254505276
     }
   ]
 }

@@ -1,0 +1,134 @@
+{
+  "issue": 1216,
+  "baselineFingerprint": "4e57094eade04201ec28de9e444d2efcf25cfc3ca3c9052857d37703c49910f6",
+  "candidateFingerprint": "844d4ecb4c6af8a5c81c234203ebab642705fc87ee165df8fc34775e0a4121b9",
+  "runnerSHA256": "7a8c45627edc0f073466adc2ec2dd8ffb17b0a6a87728e37ea04031447a858d1",
+  "fixtureSHA256": "5c35d7189b710e4b955d2367a2aad9f87413fab55b9d21c6f73923f16f3fc713",
+  "checks": [
+    {
+      "name": "optimize",
+      "samples": 60,
+      "baselineMedian": 25.874908500000174,
+      "candidateMedian": 25.788486999999577,
+      "baselineP95": 30.05089299999986,
+      "candidateP95": 30.91918799999985,
+      "medianRatio": 0.9966600268364003,
+      "p95Ratio": 1.0288941496680313,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "optimize-noop",
+      "samples": 60,
+      "baselineMedian": 23.191515999999865,
+      "candidateMedian": 22.94055600000013,
+      "baselineP95": 24.928680999999415,
+      "candidateP95": 26.749091999999564,
+      "medianRatio": 0.9891788014203238,
+      "p95Ratio": 1.0730247621203943,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "whole-physical-preflight",
+      "samples": 60,
+      "baselineMedian": 56.08681499999989,
+      "candidateMedian": 1.4620104999999057,
+      "baselineP95": 63.719732999999906,
+      "candidateP95": 2.1749519999998483,
+      "medianRatio": 0.02606691964947392,
+      "p95Ratio": 0.0341330997102554,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "cold-core",
+      "samples": 60,
+      "baselineMedian": 20.71645149999995,
+      "candidateMedian": 16.831830499999796,
+      "baselineP95": 22.80729599999995,
+      "candidateP95": 19.75246000000061,
+      "medianRatio": 0.8124861779537793,
+      "p95Ratio": 0.8660588260879611,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "opening-drag-frame",
+      "samples": 300,
+      "baselineMedian": 80.60502350000024,
+      "candidateMedian": 80.7093034999998,
+      "baselineP95": 90.42292099999031,
+      "candidateP95": 81.27293999999529,
+      "medianRatio": 1.0012937158935207,
+      "p95Ratio": 0.8988090530718864,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "cold-open",
+      "samples": 60,
+      "baselineMedian": 2280.9500000000116,
+      "candidateMedian": 2264.8499999999767,
+      "baselineP95": 2297.2999999999884,
+      "candidateP95": 2289.5,
+      "medianRatio": 0.9929415375172472,
+      "p95Ratio": 0.9966047098768169,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "cold-floor-switch",
+      "samples": 60,
+      "baselineMedian": 200,
+      "candidateMedian": 183.5,
+      "baselineP95": 200.29999999993015,
+      "candidateP95": 200.10000000009313,
+      "medianRatio": 0.9175,
+      "p95Ratio": 0.9990014977541832,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "warm-floor-switch",
+      "samples": 60,
+      "baselineMedian": 183.29999999998836,
+      "candidateMedian": 183.30000000004657,
+      "baselineP95": 183.5,
+      "candidateP95": 183.60000000009313,
+      "medianRatio": 1.0000000000003175,
+      "p95Ratio": 1.0005449591285729,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "node-gesture-to-accepted-frame",
+      "samples": 60,
+      "baselineMedian": 213.2499999999709,
+      "candidateMedian": 212.05000000004657,
+      "baselineP95": 238.70000000001164,
+      "candidateP95": 237,
+      "medianRatio": 0.9943728018760868,
+      "p95Ratio": 0.9928780896522348,
+      "criterion": "median<=1.10; p95<=1.15",
+      "pass": true
+    },
+    {
+      "name": "heap",
+      "baseline": 58270167,
+      "candidate": 63874263,
+      "ratio": 1.0961743596856346,
+      "criterion": "<=1.15",
+      "pass": true
+    },
+    {
+      "name": "retained-heap",
+      "baseline": 24748572,
+      "candidate": 26989084,
+      "ratio": 1.0905309607358356,
+      "criterion": "<=1.15",
+      "pass": true
+    }
+  ],
+  "pass": true
+}

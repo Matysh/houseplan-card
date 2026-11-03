@@ -1,0 +1,7062 @@
+{
+  "schema": 1,
+  "issue": 1216,
+  "complete": true,
+  "runnerSHA256": "7a8c45627edc0f073466adc2ec2dd8ffb17b0a6a87728e37ea04031447a858d1",
+  "rootFingerprint": "4e57094eade04201ec28de9e444d2efcf25cfc3ca3c9052857d37703c49910f6",
+  "node": "v22.23.2",
+  "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+  "browser": "151.0.7922.34",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "series": 3,
+  "warmups": 5,
+  "samples": 20,
+  "fixture": "directWallJunctionLoad() -> model11",
+  "fixtureSHA256": "5c35d7189b710e4b955d2367a2aad9f87413fab55b9d21c6f73923f16f3fc713",
+  "transport": "deterministic synthetic authority using production exact node reducer; no HA/network latency claim",
+  "coldReadiness": "static warm-boot placement cache reset; load/data complete, actual masonry, boot/fade/settle/soft ended, continuity steady and interactive",
+  "heapSampling": "maximum usedJSHeapSize sampled on every animation frame from cold card creation through accepted node frame; retained heap after CDP forced GC once per series; allocations born and collected within one synchronous task are not observable",
+  "rows": [
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 32.71666399999981
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 23.45231899999999
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 56.10401400000001
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 21.208071000000018
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "optimize",
+      "ms": 25.378596000000016
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "optimize-noop",
+      "ms": 22.710354000000052
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "whole-physical-preflight",
+      "ms": 55.45929699999988
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "cold-core",
+      "ms": 20.723731000000043
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "optimize",
+      "ms": 26.13765199999989
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "optimize-noop",
+      "ms": 23.888243999999986
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "whole-physical-preflight",
+      "ms": 56.97127999999998
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-core",
+      "ms": 20.330692
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "optimize",
+      "ms": 25.57334199999991
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "optimize-noop",
+      "ms": 23.409895000000006
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "whole-physical-preflight",
+      "ms": 54.372278999999935
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "cold-core",
+      "ms": 20.74251100000015
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "optimize",
+      "ms": 30.05089299999986
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "optimize-noop",
+      "ms": 24.646218999999974
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "whole-physical-preflight",
+      "ms": 55.640611000000035
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "cold-core",
+      "ms": 20.126149999999825
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "optimize",
+      "ms": 26.822488999999905
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "optimize-noop",
+      "ms": 24.35828700000002
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "whole-physical-preflight",
+      "ms": 54.51860599999986
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-core",
+      "ms": 20.91337199999998
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "optimize",
+      "ms": 25.29384099999993
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "optimize-noop",
+      "ms": 22.010402999999997
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "whole-physical-preflight",
+      "ms": 54.739102
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-core",
+      "ms": 20.60546199999999
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "optimize",
+      "ms": 25.310913999999684
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "optimize-noop",
+      "ms": 22.621212999999898
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "whole-physical-preflight",
+      "ms": 64.79657499999985
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-core",
+      "ms": 23.801128999999946
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "optimize",
+      "ms": 31.074345999999878
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "optimize-noop",
+      "ms": 29.29980999999998
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "whole-physical-preflight",
+      "ms": 77.29242699999986
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "cold-core",
+      "ms": 22.80729599999995
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "optimize",
+      "ms": 26.109338000000207
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "optimize-noop",
+      "ms": 24.144761000000017
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "whole-physical-preflight",
+      "ms": 63.719732999999906
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "cold-core",
+      "ms": 23.905872000000272
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "optimize",
+      "ms": 25.755691000000297
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "optimize-noop",
+      "ms": 23.496173999999883
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "whole-physical-preflight",
+      "ms": 55.973531000000094
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "cold-core",
+      "ms": 21.278332999999748
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "optimize",
+      "ms": 26.327711999999792
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "optimize-noop",
+      "ms": 30.299301999999898
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "whole-physical-preflight",
+      "ms": 54.491193000000294
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "cold-core",
+      "ms": 20.24270200000001
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "optimize",
+      "ms": 26.321849999999813
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "optimize-noop",
+      "ms": 23.931952999999794
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "whole-physical-preflight",
+      "ms": 54.922937000000275
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "cold-core",
+      "ms": 20.73875799999996
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "optimize",
+      "ms": 25.918771000000106
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "optimize-noop",
+      "ms": 21.834098000000267
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "whole-physical-preflight",
+      "ms": 57.00629500000014
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "cold-core",
+      "ms": 21.196114999999736
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "optimize",
+      "ms": 26.365095999999994
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "optimize-noop",
+      "ms": 21.918683999999757
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "whole-physical-preflight",
+      "ms": 54.63139299999966
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-core",
+      "ms": 20.319633000000067
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "optimize",
+      "ms": 24.670176999999967
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "optimize-noop",
+      "ms": 22.440650000000005
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "whole-physical-preflight",
+      "ms": 56.00047699999959
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-core",
+      "ms": 21.328508000000056
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "optimize",
+      "ms": 24.681736999999885
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "optimize-noop",
+      "ms": 22.42968400000018
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "whole-physical-preflight",
+      "ms": 56.53499499999998
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-core",
+      "ms": 21.342707000000246
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "optimize",
+      "ms": 26.020183999999972
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "optimize-noop",
+      "ms": 22.390635000000202
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "whole-physical-preflight",
+      "ms": 57.8166369999999
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-core",
+      "ms": 21.81334700000025
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "optimize",
+      "ms": 27.089872999999898
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "optimize-noop",
+      "ms": 22.092927000000145
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "whole-physical-preflight",
+      "ms": 54.678691999999955
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-core",
+      "ms": 20.850318999999672
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "optimize",
+      "ms": 28.429933999999776
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "optimize-noop",
+      "ms": 23.3849909999999
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "whole-physical-preflight",
+      "ms": 55.122081999999864
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "cold-core",
+      "ms": 19.948585999999978
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 24.533488000000034
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 22.071210000000065
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 56.93209099999967
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 20.528597000000445
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "optimize",
+      "ms": 26.257276999999704
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "optimize-noop",
+      "ms": 23.89122099999986
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "whole-physical-preflight",
+      "ms": 64.53663099999994
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "cold-core",
+      "ms": 22.11035399999946
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "optimize",
+      "ms": 32.80071700000008
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "optimize-noop",
+      "ms": 26.436445000000276
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "whole-physical-preflight",
+      "ms": 59.40614699999969
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-core",
+      "ms": 21.784953000000314
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "optimize",
+      "ms": 27.2245010000006
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "optimize-noop",
+      "ms": 22.619133000000147
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "whole-physical-preflight",
+      "ms": 54.586670000000595
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "cold-core",
+      "ms": 19.832706999999573
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "optimize",
+      "ms": 24.977962999999363
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "optimize-noop",
+      "ms": 22.256293999999798
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "whole-physical-preflight",
+      "ms": 59.21511199999986
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "cold-core",
+      "ms": 20.272158999999192
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "optimize",
+      "ms": 27.631695000000036
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "optimize-noop",
+      "ms": 24.57866699999977
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "whole-physical-preflight",
+      "ms": 55.46079900000041
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "cold-core",
+      "ms": 20.608634999999595
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "optimize",
+      "ms": 24.92712399999982
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "optimize-noop",
+      "ms": 23.5803590000005
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "whole-physical-preflight",
+      "ms": 55.882872000000134
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "cold-core",
+      "ms": 20.91127300000062
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "optimize",
+      "ms": 24.63208399999985
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "optimize-noop",
+      "ms": 22.5300500000003
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "whole-physical-preflight",
+      "ms": 54.8574609999996
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "cold-core",
+      "ms": 20.373905000000377
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "optimize",
+      "ms": 25.831046000000242
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "optimize-noop",
+      "ms": 22.167397000000165
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "whole-physical-preflight",
+      "ms": 59.52543299999979
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "cold-core",
+      "ms": 20.38857100000041
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "optimize",
+      "ms": 25.709697999999662
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "optimize-noop",
+      "ms": 24.05745300000035
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "whole-physical-preflight",
+      "ms": 55.49953800000003
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "cold-core",
+      "ms": 20.618822000000364
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "optimize",
+      "ms": 25.722474999999577
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "optimize-noop",
+      "ms": 22.23818399999982
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "whole-physical-preflight",
+      "ms": 55.244134999999915
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "cold-core",
+      "ms": 21.717680000000655
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "optimize",
+      "ms": 29.554192000000512
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "optimize-noop",
+      "ms": 23.18482700000004
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "whole-physical-preflight",
+      "ms": 56.1168889999999
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "cold-core",
+      "ms": 20.85472000000027
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "optimize",
+      "ms": 24.63162999999986
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "optimize-noop",
+      "ms": 21.87528100000054
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "whole-physical-preflight",
+      "ms": 56.06961599999977
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-core",
+      "ms": 19.8957019999998
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "optimize",
+      "ms": 25.97201800000039
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "optimize-noop",
+      "ms": 24.141002999999728
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "whole-physical-preflight",
+      "ms": 55.96208200000001
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-core",
+      "ms": 20.63882999999987
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "optimize",
+      "ms": 25.052232000000004
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "optimize-noop",
+      "ms": 21.838580000000547
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "whole-physical-preflight",
+      "ms": 57.35440800000015
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-core",
+      "ms": 20.028433000000405
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "optimize",
+      "ms": 25.323175999999876
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "optimize-noop",
+      "ms": 22.59399200000007
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "whole-physical-preflight",
+      "ms": 54.24157600000035
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-core",
+      "ms": 19.847571999999673
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "optimize",
+      "ms": 24.797765000000254
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "optimize-noop",
+      "ms": 23.104645999999775
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "whole-physical-preflight",
+      "ms": 56.73399900000004
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-core",
+      "ms": 20.538682999999764
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "optimize",
+      "ms": 25.147750000000087
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "optimize-noop",
+      "ms": 22.55752499999926
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "whole-physical-preflight",
+      "ms": 56.773441000000275
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-core",
+      "ms": 20.776874000000134
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "optimize",
+      "ms": 27.847858999999517
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "optimize-noop",
+      "ms": 23.19820499999969
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "whole-physical-preflight",
+      "ms": 56.11931699999968
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "cold-core",
+      "ms": 20.001272999999856
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "optimize",
+      "ms": 25.53166500000043
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "optimize-noop",
+      "ms": 22.788008999999875
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "whole-physical-preflight",
+      "ms": 60.603931999999986
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "cold-core",
+      "ms": 20.679000999999516
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "optimize",
+      "ms": 26.21968300000026
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "optimize-noop",
+      "ms": 23.654349999999795
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "whole-physical-preflight",
+      "ms": 55.901818999999705
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-core",
+      "ms": 20.807121999999254
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "optimize",
+      "ms": 25.166873000000123
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "optimize-noop",
+      "ms": 23.68137999999999
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "whole-physical-preflight",
+      "ms": 55.10237200000029
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "cold-core",
+      "ms": 20.44450699999925
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "optimize",
+      "ms": 25.76741299999958
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "optimize-noop",
+      "ms": 23.226040000000467
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "whole-physical-preflight",
+      "ms": 56.52902300000005
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "cold-core",
+      "ms": 20.716825000000426
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "optimize",
+      "ms": 26.405682999999954
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "optimize-noop",
+      "ms": 21.2820099999999
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "whole-physical-preflight",
+      "ms": 55.63427999999931
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-core",
+      "ms": 20.011271999999735
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "optimize",
+      "ms": 26.188498999999865
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "optimize-noop",
+      "ms": 22.89912600000025
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "whole-physical-preflight",
+      "ms": 57.79445300000043
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-core",
+      "ms": 21.03642199999922
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "optimize",
+      "ms": 25.597569000001386
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "optimize-noop",
+      "ms": 21.878161000000546
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "whole-physical-preflight",
+      "ms": 56.29349699999875
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-core",
+      "ms": 21.852146000001085
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "optimize",
+      "ms": 26.106412000001
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "optimize-noop",
+      "ms": 22.4159209999998
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "whole-physical-preflight",
+      "ms": 55.19245199999932
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-core",
+      "ms": 20.395399000000907
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "optimize",
+      "ms": 27.59630599999946
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "optimize-noop",
+      "ms": 23.55900400000064
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "whole-physical-preflight",
+      "ms": 56.57336299999952
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-core",
+      "ms": 21.06465500000013
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "optimize",
+      "ms": 26.179433999999674
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "optimize-noop",
+      "ms": 23.40619699999843
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "whole-physical-preflight",
+      "ms": 56.51072500000009
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-core",
+      "ms": 20.71607799999947
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "optimize",
+      "ms": 24.992802000000665
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "optimize-noop",
+      "ms": 23.282241000000795
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "whole-physical-preflight",
+      "ms": 55.13413000000037
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-core",
+      "ms": 21.32781100000102
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "optimize",
+      "ms": 26.111125999999786
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "optimize-noop",
+      "ms": 23.8975530000007
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "whole-physical-preflight",
+      "ms": 54.61885500000062
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-core",
+      "ms": 20.70073500000035
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "optimize",
+      "ms": 25.325325000001612
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "optimize-noop",
+      "ms": 23.2590909999999
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "whole-physical-preflight",
+      "ms": 57.18224799999916
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-core",
+      "ms": 21.26856299999963
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "optimize",
+      "ms": 25.667061000000103
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "optimize-noop",
+      "ms": 23.52383000000009
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "whole-physical-preflight",
+      "ms": 55.78971399999864
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "cold-core",
+      "ms": 20.97856899999897
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "optimize",
+      "ms": 25.73327900000004
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "optimize-noop",
+      "ms": 22.708896999998615
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "whole-physical-preflight",
+      "ms": 56.98040000000037
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "cold-core",
+      "ms": 20.12025900000117
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "optimize",
+      "ms": 25.800302999999985
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "optimize-noop",
+      "ms": 22.97016000000076
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "whole-physical-preflight",
+      "ms": 57.23108400000092
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "cold-core",
+      "ms": 20.009280000000217
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "optimize",
+      "ms": 25.786721999998917
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "optimize-noop",
+      "ms": 24.928680999999415
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "whole-physical-preflight",
+      "ms": 56.879745999998704
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-core",
+      "ms": 20.128278000000137
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "optimize",
+      "ms": 27.078526999999667
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "optimize-noop",
+      "ms": 23.48184399999991
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "whole-physical-preflight",
+      "ms": 55.48389199999838
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-core",
+      "ms": 20.37485799999922
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "optimize",
+      "ms": 26.430586999998923
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "optimize-noop",
+      "ms": 22.750366000000213
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "whole-physical-preflight",
+      "ms": 57.30597300000045
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "cold-core",
+      "ms": 23.012265999999727
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "optimize",
+      "ms": 26.53760599999987
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "optimize-noop",
+      "ms": 22.344821999999112
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "whole-physical-preflight",
+      "ms": 54.83439100000032
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "cold-core",
+      "ms": 20.159233000000313
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "optimize",
+      "ms": 25.217781999999715
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "optimize-noop",
+      "ms": 23.906552000000374
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "whole-physical-preflight",
+      "ms": 56.21915799999988
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "cold-core",
+      "ms": 21.486337999998796
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.51228899999842
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.58213199999591
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 81.27722299999732
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.15373099999852
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.74883399999817
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2297
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212
+    },
+    {
+      "series": 0,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.04986199999985
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.1065430000017
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 81.09491599999456
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.56340199999977
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.82102399999712
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "cold-open",
+      "ms": 2264.5
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000002328
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212
+    },
+    {
+      "series": 0,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 87.73387200000434
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.34999699999753
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.44412300000113
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.80736900000193
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.28713399999833
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2281.100000000035
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 227.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 82.07450699999754
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.23815699999977
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.64126199999737
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.78813400000217
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.35479199999827
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2264.2000000000116
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 200.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000001164
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 220.69999999995343
+    },
+    {
+      "series": 0,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.78186399999686
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.56899600000179
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.30892999999924
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.80731199999718
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.99923099999432
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2281.2000000000116
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.5
+    },
+    {
+      "series": 0,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.52707300000475
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.94131299999572
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.49317000000156
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.78735099999903
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.60720199999923
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2264.7000000000116
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.79999999998836
+    },
+    {
+      "series": 0,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 101.94262999999773
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.61386399999901
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.84705899999972
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.6089839999986
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.92590599999676
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2265.4000000000233
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 199.59999999997672
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999996508
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 272.5999999999767
+    },
+    {
+      "series": 0,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.62499499999831
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.99541699999827
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 81.05185899999924
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.91130600000179
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.04855999999563
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2264.4000000000233
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 206.90000000002328
+    },
+    {
+      "series": 0,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.66923400000087
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.59418899999582
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.60284500000125
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.18183499999577
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.99785600000178
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2264.7999999999884
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999996508
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 238.70000000001164
+    },
+    {
+      "series": 0,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.08652899999288
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.93072599999141
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.25053900000057
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.09683999999834
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.76080399999046
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2281
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212.79999999998836
+    },
+    {
+      "series": 0,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.26309500000207
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.10942600000999
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.8665949999995
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.27963900000032
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.38031700000283
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2305.7999999999884
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.19999999995343
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.79999999998836
+    },
+    {
+      "series": 0,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.58006600000954
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.68925099998887
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.64102199999616
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.41959900000074
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.59733699999924
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2281.0999999999767
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 209.90000000002328
+    },
+    {
+      "series": 0,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.19862500000454
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 81.16951300000073
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.54543700000795
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.58131700000376
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.3716240000067
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2281
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 200.20000000001164
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 210
+    },
+    {
+      "series": 0,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.48546699999133
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.67465800000355
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.47790699999314
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 79.72611900001357
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.56358800000453
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2296
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.40000000002328
+    },
+    {
+      "series": 0,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.24826600000961
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.58875599999737
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.53215199999977
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.00198499999533
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.58595500000229
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2281.399999999965
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999996508
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 221.40000000002328
+    },
+    {
+      "series": 0,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.06806400000642
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.06148200000462
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.75048299999617
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.6526770000055
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 94.41449500000454
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2280.399999999965
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000002328
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 214.40000000002328
+    },
+    {
+      "series": 0,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 88.29963900000439
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 78.66234700000496
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.20077100000344
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 79.8988859999954
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.10159299999941
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2280.7000000000116
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 200.10000000003492
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 182.89999999996508
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 210.5
+    },
+    {
+      "series": 0,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 89.56814499999746
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.3617840000079
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.80108800000744
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.47893200001272
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.67110200000752
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2280.7999999999884
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999996508
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 221.70000000001164
+    },
+    {
+      "series": 0,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 89.92756999999983
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.07206900000165
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.8024049999949
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.37694800000463
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.73766100000648
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2296.2000000000116
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 225.10000000003492
+    },
+    {
+      "series": 0,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 88.34520900000643
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 77.02634400001261
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.98975700000301
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.77763900000718
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 78.86076199999661
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "cold-open",
+      "ms": 2296.6999999999534
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "cold-floor-switch",
+      "ms": 200.20000000001164
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.39999999996508
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 0,
+      "sample": 19,
+      "name": "retained-heap",
+      "bytes": 28672196
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.17063300000154
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.65473700000439
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.96625299999141
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.48723699999391
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.00986299998476
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2277.7999999999884
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 214.20000000001164
+    },
+    {
+      "series": 1,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 72.69344199998886
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.99591399999917
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.51405699999304
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.38139899997623
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.295214999991
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "cold-open",
+      "ms": 2278.5
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000001164
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 223.90000000002328
+    },
+    {
+      "series": 1,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.00201200001175
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.3118850000028
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.79535999998916
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.20186000000103
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.95341600000393
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2280.600000000035
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000002328
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.01720999999088
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.60177900001872
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.64480700000422
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 97.23605999999563
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.43163199999253
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2297
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 200.40000000002328
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 214.70000000001164
+    },
+    {
+      "series": 1,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.01200300001074
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.67125799998757
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.5233709999884
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.33755799999926
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.69665800000075
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2280.9000000000233
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000002328
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 225.19999999995343
+    },
+    {
+      "series": 1,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 69.63510600000154
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.41381699999329
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.27932500001043
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.45447100000456
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.66089500000817
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2280.9000000000233
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000001164
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 216.39999999996508
+    },
+    {
+      "series": 1,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.42292099999031
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.0845369999879
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.5575480000116
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.81430999998702
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.05506900002365
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2274.9000000000233
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 207.80000000004657
+    },
+    {
+      "series": 1,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 89.17390299998806
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.70034999999916
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.3412889999745
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.7215889999934
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.31768000000739
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2281.0999999999767
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 199.80000000004657
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999996508
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 210.5
+    },
+    {
+      "series": 1,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.20656999998027
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.88270799999009
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.42334500001743
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.80017600001884
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.1230280000018
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2277.5
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.40000000002328
+    },
+    {
+      "series": 1,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.82758199999807
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.7234490000119
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.40561900002649
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.99835999999777
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.79628500001854
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2279.100000000035
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 199.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.29863400000613
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.43184199999087
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 81.0087389999826
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.88959999999497
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.6450579999946
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2280.9000000000233
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 199.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000001164
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.08354699998745
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.10128900001291
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.69857599999523
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.22686500000418
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.39054900000338
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2281.7999999999884
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 199.70000000001164
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000001164
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212.10000000003492
+    },
+    {
+      "series": 1,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.91353499999968
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.82161400001496
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.03481900002225
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.69798299999093
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.336478000012
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2297.2999999999884
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 209.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.732966999989
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.99564499998814
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.89057200000389
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.83755500000552
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 79.99608000001172
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2281.4000000000233
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 209.70000000001164
+    },
+    {
+      "series": 1,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.19232199998805
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.47933699999703
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.61642899998697
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.80970400001388
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.75827400002163
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2285.4000000000233
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.833787999989
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.6531959999993
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.69412100000773
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.1009699999995
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.16288099999656
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2281
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.39999999996508
+    },
+    {
+      "series": 1,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 92.07243599998765
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.51433100001304
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.76509300002363
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.90850800002227
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.49707599999965
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2281
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.09999999997672
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 214.09999999997672
+    },
+    {
+      "series": 1,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.64949299997534
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.22872099999222
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.7299500000081
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.67260299998452
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.7437959999952
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2296.9000000000233
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 199.69999999995343
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.70000000001164
+    },
+    {
+      "series": 1,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.1907840000058
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.48458799999207
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.42039099999238
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.76965599998948
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.22791400001734
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2281.100000000035
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 199.89999999996508
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 229
+    },
+    {
+      "series": 1,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.23134599998593
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.76209999999264
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.78684399998747
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.66129400001955
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.24895599999581
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "cold-open",
+      "ms": 2277.7999999999884
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "cold-floor-switch",
+      "ms": 199.90000000002328
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999998836
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.79999999998836
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 1,
+      "sample": 19,
+      "name": "retained-heap",
+      "bytes": 41918076
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.80817800000659
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.11281299998518
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 81.23236299998825
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.94919900002424
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.63390100002289
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-open",
+      "ms": 2287.9000000000233
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999993015
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 225.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 0,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.53426999997464
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.05806100001791
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.9824479999952
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.70975099998759
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.51237599999877
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "cold-open",
+      "ms": 2276.20000000007
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000002328
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212
+    },
+    {
+      "series": 2,
+      "sample": 1,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 73.80707199999597
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.94761299999664
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.33908600002178
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.32315800001379
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.7253910000145
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "cold-open",
+      "ms": 2280.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "warm-floor-switch",
+      "ms": 183.40000000002328
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 238.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 2,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.13495199999306
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.24750299999141
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.68612799997209
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.93046099998173
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.7770029999956
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-open",
+      "ms": 2281.20000000007
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "cold-floor-switch",
+      "ms": 199.79999999993015
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000006985
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 3,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.09105099999579
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.71807800000533
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.23588600000949
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 97.76998700000695
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.92751000000862
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-open",
+      "ms": 2280.9000000000233
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "cold-floor-switch",
+      "ms": 200.29999999993015
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "warm-floor-switch",
+      "ms": 183.19999999995343
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.90000000002328
+    },
+    {
+      "series": 2,
+      "sample": 4,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.31201200000942
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.49992400000338
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.79498800000874
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.62872199999401
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.0483719999902
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-open",
+      "ms": 2281.20000000007
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "warm-floor-switch",
+      "ms": 183.5
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 276.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 5,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.18523600001936
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.61144599999534
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.55309699999634
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.5062340000004
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.46536400000332
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-open",
+      "ms": 2281.3000000000466
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "cold-floor-switch",
+      "ms": 200.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000006985
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 6,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 73.94048300001305
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.80371299997205
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.27224200003548
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.06343100004597
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.50654999999097
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-open",
+      "ms": 2278.6999999999534
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999993015
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212.20000000006985
+    },
+    {
+      "series": 2,
+      "sample": 7,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.95361500000581
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 78.80651399999624
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.7061569999787
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.26395599998068
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.79949200002011
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-open",
+      "ms": 2277.29999999993
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000006985
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.70000000006985
+    },
+    {
+      "series": 2,
+      "sample": 8,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.25444099999731
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.96665899996879
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.53315799997654
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.55720999999903
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.47186699998565
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-open",
+      "ms": 2276.1999999999534
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "warm-floor-switch",
+      "ms": 183.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 9,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.60078999999678
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.46898800000781
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.89249800000107
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.93872799997916
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.92762199998833
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-open",
+      "ms": 2276.8000000000466
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "warm-floor-switch",
+      "ms": 183.30000000004657
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 212.19999999995343
+    },
+    {
+      "series": 2,
+      "sample": 10,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 91.33673699997598
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.06367099995259
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.90617099998053
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.34900300001027
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 96.99468199996045
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-open",
+      "ms": 2279.5999999999767
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999993015
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.10000000009313
+    },
+    {
+      "series": 2,
+      "sample": 11,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 90.17975499999011
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 79.99736999999732
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.83888200001093
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.47566800005734
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.59923999995226
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "cold-open",
+      "ms": 2320.3000000000466
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "warm-floor-switch",
+      "ms": 183.20000000006985
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 210.5
+    },
+    {
+      "series": 2,
+      "sample": 12,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.84012800001074
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.38293600000907
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.63351199997123
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.68899300001794
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.97551899997052
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "cold-open",
+      "ms": 2281.399999999907
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "cold-floor-switch",
+      "ms": 199.80000000004657
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "warm-floor-switch",
+      "ms": 183.39999999990687
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211
+    },
+    {
+      "series": 2,
+      "sample": 13,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.6574510000064
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.48707899998408
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.67147100000875
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.87203799997224
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.75656499998877
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "cold-open",
+      "ms": 2281.3000000000466
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "warm-floor-switch",
+      "ms": 183.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 208.5
+    },
+    {
+      "series": 2,
+      "sample": 14,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 75.08913799998118
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 81.02029300003778
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.83422900002915
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.73144900001353
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.4046860000235
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-open",
+      "ms": 2297.5
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "cold-floor-switch",
+      "ms": 216.69999999995343
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "warm-floor-switch",
+      "ms": 183.10000000009313
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 210.5
+    },
+    {
+      "series": 2,
+      "sample": 15,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 76.03165699995589
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.83259900001576
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.52810499997577
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.94632700004149
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.26850599999307
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-open",
+      "ms": 2281.5999999999767
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "warm-floor-switch",
+      "ms": 183.69999999995343
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 258.69999999995343
+    },
+    {
+      "series": 2,
+      "sample": 16,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 73.46548499999335
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.10269300005166
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 81.18322399997851
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 81.27337700000498
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.21691099996679
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "cold-open",
+      "ms": 2264.5999999999767
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "cold-floor-switch",
+      "ms": 199.80000000004657
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "warm-floor-switch",
+      "ms": 183.29999999993015
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.70000000006985
+    },
+    {
+      "series": 2,
+      "sample": 17,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.64011199999368
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.52404799999204
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 80.47238699998707
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.63077600003453
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 80.91999100003159
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "cold-open",
+      "ms": 2279.0999999999767
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "cold-floor-switch",
+      "ms": 200
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "warm-floor-switch",
+      "ms": 183.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 213.79999999993015
+    },
+    {
+      "series": 2,
+      "sample": 18,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "step": 1,
+      "name": "opening-drag-frame",
+      "ms": 74.00767099997029
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "step": 2,
+      "name": "opening-drag-frame",
+      "ms": 80.98621599999024
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "step": 3,
+      "name": "opening-drag-frame",
+      "ms": 79.75299100001575
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "step": 4,
+      "name": "opening-drag-frame",
+      "ms": 80.64216899999883
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "step": 5,
+      "name": "opening-drag-frame",
+      "ms": 81.13040900003398
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "cold-open",
+      "ms": 2264.79999999993
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "cold-floor-switch",
+      "ms": 200.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "warm-floor-switch",
+      "ms": 183.09999999997672
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "node-gesture-to-accepted-frame",
+      "ms": 211.80000000004657
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "heap",
+      "bytes": 14300000,
+      "work": {
+        "before": {
+          "wallUnion": 1,
+          "innerContour": 2,
+          "cleanFloor": 2,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 1,
+          "openingTunnel": 1,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "after": {
+          "wallUnion": 2,
+          "innerContour": 4,
+          "cleanFloor": 4,
+          "openingWallIndex": 2,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 2,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        }
+      }
+    },
+    {
+      "series": 2,
+      "sample": 19,
+      "name": "retained-heap",
+      "bytes": 54229228
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "issue": 1216,
   "complete": true,
   "runnerSHA256": "0dcd714d030d86a6378c07f7cf682f28ecfa2d72d194bf46a9621677e2e4ac61",
-  "rootFingerprint": "7fcaaebbbf9bdaa4948f106ed337438725cac2737a0ed4b7b85630fb9d76841e",
+  "rootFingerprint": "844d4ecb4c6af8a5c81c234203ebab642705fc87ee165df8fc34775e0a4121b9",
   "node": "v22.23.2",
   "cpu": "Intel(R) Core(TM) Ultra 7 155H",
   "browser": "151.0.7922.34",
@@ -24,103 +24,103 @@
       "series": 0,
       "sample": 0,
       "name": "optimize",
-      "ms": 109.6672739999999
+      "ms": 87.74490200000014
     },
     {
       "series": 0,
       "sample": 0,
       "name": "optimize-noop",
-      "ms": 103.60677799999985
+      "ms": 82.42255899999986
     },
     {
       "series": 0,
       "sample": 0,
       "name": "whole-physical-preflight",
-      "ms": 12.44244499999968
+      "ms": 6.47226999999998
     },
     {
       "series": 0,
       "sample": 0,
       "name": "cold-core",
-      "ms": 54.53389500000003
+      "ms": 27.589461999999912
     },
     {
       "series": 1,
       "sample": 0,
       "name": "optimize",
-      "ms": 105.88440700000001
+      "ms": 97.11764200000016
     },
     {
       "series": 1,
       "sample": 0,
       "name": "optimize-noop",
-      "ms": 91.1208789999996
+      "ms": 79.06855700000006
     },
     {
       "series": 1,
       "sample": 0,
       "name": "whole-physical-preflight",
-      "ms": 9.43275199999971
+      "ms": 6.307687999999871
     },
     {
       "series": 1,
       "sample": 0,
       "name": "cold-core",
-      "ms": 58.9437310000003
+      "ms": 25.964650999999776
     },
     {
       "series": 2,
       "sample": 0,
       "name": "optimize",
-      "ms": 94.30042999999932
+      "ms": 91.69210599999951
     },
     {
       "series": 2,
       "sample": 0,
       "name": "optimize-noop",
-      "ms": 85.10739999999987
+      "ms": 77.180343
     },
     {
       "series": 2,
       "sample": 0,
       "name": "whole-physical-preflight",
-      "ms": 9.017421999999897
+      "ms": 6.352328999999372
     },
     {
       "series": 2,
       "sample": 0,
       "name": "cold-core",
-      "ms": 53.42869400000018
+      "ms": 28.366672000000108
     },
     {
       "series": 0,
       "sample": 0,
       "name": "cold-open",
-      "ms": 2346.4000000000015
+      "ms": 2345.9000000001397
     },
     {
       "series": 0,
       "sample": 0,
       "name": "cold-floor-switch",
-      "ms": 251.59999999999854
+      "ms": 233.5
     },
     {
       "series": 0,
       "sample": 0,
       "name": "warm-floor-switch",
-      "ms": 183.29999999999563
+      "ms": 183.30000000004657
     },
     {
       "series": 0,
       "sample": 0,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 739.0999999999985
+      "ms": 606
     },
     {
       "series": 0,
       "sample": 0,
       "name": "heap",
-      "bytes": 107010302,
+      "bytes": 110978282,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -154,37 +154,37 @@
       "series": 0,
       "sample": 0,
       "name": "retained-heap",
-      "bytes": 37983896
+      "bytes": 35924224
     },
     {
       "series": 1,
       "sample": 0,
       "name": "cold-open",
-      "ms": 2346.2999999999956
+      "ms": 2329.600000000093
     },
     {
       "series": 1,
       "sample": 0,
       "name": "cold-floor-switch",
-      "ms": 266.3000000000029
+      "ms": 233.29999999981374
     },
     {
       "series": 1,
       "sample": 0,
       "name": "warm-floor-switch",
-      "ms": 183.40000000000146
+      "ms": 183.5
     },
     {
       "series": 1,
       "sample": 0,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 736.2999999999956
+      "ms": 547.0999999998603
     },
     {
       "series": 1,
       "sample": 0,
       "name": "heap",
-      "bytes": 126799517,
+      "bytes": 133094709,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -218,37 +218,37 @@
       "series": 1,
       "sample": 0,
       "name": "retained-heap",
-      "bytes": 59997264
+      "bytes": 55765616
     },
     {
       "series": 2,
       "sample": 0,
       "name": "cold-open",
-      "ms": 2310.899999999994
+      "ms": 2329.1999999999534
     },
     {
       "series": 2,
       "sample": 0,
       "name": "cold-floor-switch",
-      "ms": 252.1999999999971
+      "ms": 233.39999999990687
     },
     {
       "series": 2,
       "sample": 0,
       "name": "warm-floor-switch",
-      "ms": 183.29999999998836
+      "ms": 183.39999999990687
     },
     {
       "series": 2,
       "sample": 0,
       "name": "node-gesture-to-accepted-frame",
-      "ms": 741
+      "ms": 540.5999999998603
     },
     {
       "series": 2,
       "sample": 0,
       "name": "heap",
-      "bytes": 146316247,
+      "bytes": 144049418,
       "work": {
         "before": {
           "wallUnion": 1,
@@ -282,7 +282,7 @@
       "series": 2,
       "sample": 0,
       "name": "retained-heap",
-      "bytes": 80866212
+      "bytes": 74897844
     }
   ],
   "preciseMemoryFlag": true,

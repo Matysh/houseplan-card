@@ -135,33 +135,90 @@ Predicate-only orientation/cross signs очищают положительные
 знаменатель. Точные коллинеарные промежуточные события не передаются далее как
 углы итоговой границы. Это не epsilon-cleanup и не удаление настоящих отверстий.
 
-## Осевой профиль первого раунда S6
+## Итог S6 после первого код-ревью
 
-Все десять timing/memory checks — PASS, `comparison.json`. Временные raw reports:
-`baseline.json`, `candidate.json` (по 543 записи); точная память —
-`baseline-memory.json`, `candidate-memory.json`. CPU: Intel Core Ultra 7 155H,
-WSL, Node22.23.2, Chromium151.0.7922.34, viewport1440×1000/DPR1.
+Все **21 timing/memory checks — PASS** без изменения бюджетов: median≤1.10,
+p95≤1.15, peak/retained heap≤1.15. Продуктовый источник:
+`865ece616231652b42602a9f5c74615acdbe27f1`, build fingerprint
+`844d4ecb4c6af8a5c81c234203ebab642705fc87ee165df8fc34775e0a4121b9`.
+CPU: Intel Core Ultra 7 155H, WSL, Node22.23.2, Chromium151.0.7922.34,
+viewport1440×1000/DPR1. Сборки и другие product runs с замерами не совмещались.
+
+### Large-house / selective-invalidation
+
+Один осевой fixture: 3×20 комнат, 200 активных markers. `baseline.json`,
+`candidate.json` — по543 raw records; `baseline-memory.json`,
+`candidate-memory.json` — отдельная точная память. `comparison.json`: 10 PASS.
+Сохранённый baseline переиспользован с **тем же байтовым runner из c90041db**
+(SHA256 `0dcd714d030d86a6378c07f7cf682f28ecfa2d72d194bf46a9621677e2e4ac61`),
+который повторно запущен на окончательных продуктовых исходниках. Его относительные
+импорты требуют расположения в `demo/`; идентичная копия под другим именем
+в этой папке также сохраняет runner hash. После замера текущий runner восстановлен.
+У product source/build входы не подменялись.
 
 | Операция | Median до → после, мс | p95 до → после, мс |
 |---|---:|---:|
-| Optimize | 91.74 → 95.06 | 101.34 → 111.18 |
-| No-op Optimize | 83.57 → 86.36 | 93.66 → 95.18 |
-| Полный physical preflight | 401.93 → 8.92 | 422.31 → 10.24 |
-| Холодный core | 139.57 → 50.55 | 149.02 → 56.53 |
-| Холодный устойчивый View | 2329.80 → 2346.60 | 2346.60 → 2380.00 |
-| Холодная смена этажа | 316.70 → 252.00 | 317.00 → 254.60 |
+| Optimize | 91.74 → 89.71 | 101.34 → 104.12 |
+| No-op Optimize | 83.57 → 80.20 | 93.66 → 96.32 |
+| Полный physical preflight | 401.93 → 6.04 | 422.31 → 8.04 |
+| Холодный core | 139.57 → 26.93 | 149.02 → 30.85 |
+| Холодный устойчивый View | 2329.80 → 2346.30 | 2346.60 → 2362.90 |
+| Холодная смена этажа | 316.70 → 233.40 | 317.00 → 233.60 |
 | Тёплая смена этажа | 183.40 → 183.40 | 183.60 → 183.60 |
-| Native node → accepted frame | 714.00 → 761.85 | 764.30 → 846.70 |
+| Native node → accepted frame | 714.00 → 547.75 | 764.30 → 590.60 |
 
-Точный покадровый peak heap: 146366841 → 146316247 bytes; retained после GC:
-73912100 → 80866212 (+9.41%, бюджет15%). Тайминги внутри15/10% без ослабления.
-`sizes.json`, `zip-sizes.json`: JS gzip1200205 → 1208388 bytes,
-ZIP2007069 → 2018728 bytes, first-write graph_change74909(v1) → 1052(v2) bytes.
-Лимиты размеров ради PASS не менялись.
+Максимум покадрового heap по трём сериям: 146366841 → 144049418 bytes;
+максимум retained после GC: 73912100 → 74897844 (+1.33%).
 
-Сборка с типами — PASS. 217 адресных Node cases — PASS (`node-tests.xml`);
-94 адресных backend cases — PASS, включая настоящий HA Store/HTTP/WS.
+### Small / junction и кадр проёма
+
+`directWallJunctionLoad`: диагональная комната, восьмилучевой узел с разной
+толщиной, отдельный стык ≈20°, перегородки, колонка и дверь рядом с узлом.
+`junction-baseline.json`, `junction-candidate.json` — по843 records, включая
+60 whole journeys и300 отдельных native opening frames. Три серии ×
+(5 warmups+20 samples); пять pointermove на проём в каждом journey.
+Кадр измеряется от native move до завершения live paint, с IPC и RAF;
+Save ACK не входит в эту метрику. Heap sampler продолжает работать и на фазе
+проёма. `junction-*-memory.json`: три серии ×(5 warmups+1 sampled journey),
+тот же precise flag; maxima, не медианы. `junction-comparison.json`: 11 PASS.
+
+| Операция | Median до → после, мс | p95 до → после, мс |
+|---|---:|---:|
+| Optimize | 25.87 → 25.79 | 30.05 → 30.92 |
+| No-op Optimize | 23.19 → 22.94 | 24.93 → 26.75 |
+| Полный physical preflight | 56.09 → 1.46 | 63.72 → 2.17 |
+| Холодный core | 20.72 → 16.83 | 22.81 → 19.75 |
+| Холодный устойчивый View | 2280.95 → 2264.85 | 2297.30 → 2289.50 |
+| Холодная смена этажа | 200.00 → 183.50 | 200.30 → 200.10 |
+| Тёплая смена этажа | 183.30 → 183.30 | 183.50 → 183.60 |
+| Native node → accepted frame | 213.25 → 212.05 | 238.70 → 237.00 |
+| Native opening frame | 80.61 → 80.71 | 90.42 → 81.27 |
+
+Peak heap: 58270167 → 63874263 bytes (+9.62%); retained:
+24748572 → 26989084 (+9.05%). Команды сравнения:
+`node docs/evidence/1216/compare-profiles.mjs` и та же команда с `--axial`.
+
+Новый junction-профиль сначала выявил реальные CPU/heap регрессии. Они не
+объявлены PASS: промежуточные замеры остаются диагностикой. Устранены лишние gcd
+в рациональной арифметике, пересечения вычисляются целочисленными homogeneous
+determinants с сокращением только итоговых координат; predicate и clipping
+сохраняют точность. Новый oracle сравнивает арифметику с независимым persisted
+rational codec, включая 5000-битный derived знаменатель.
+Bounded512 memo неизменяемых dyadic coordinates уменьшает аллокации.
+Opening continuity переиспользуется по graph/kind/scale; масштабируется уже
+готовая normalized projection, без повторного решения графа. Carrier mutation
+и replacement graph покрыты отдельной регрессией. Component cache принадлежит
+immutable structure и переиспользует результат только при тождественном составе
+полигонов; изменившиеся/объединившиеся компоненты пересчитываются, failures не
+кешируются. Проём не заставляет перестраивать независимые неизменные компоненты.
+
+Сборка с типами — PASS. 240 адресных Node cases — PASS (`node-tests.xml`);
+95 адресных backend cases — PASS, включая настоящий HA Store/HTTP/WS.
 `browser.json` — настоящая карточка и work-count invariants;
-`coverage.json`/`coverage.png` — девять геометрических сравнений.
-Обязательный критичный минимум и финальный addressed set выполняются общим
-`finish` в очереди; его результат сохраняется процессом в задаче.
+`coverage.json`/`coverage.png` — повтор девяти геометрических сравнений;
+bitmap SHA256 совпадает с просмотренным первым раундом.
+`sizes.json`, `zip-sizes.json`: JS gzip1200205 → 1209272 bytes,
+ZIP2007069 → 2019587 bytes, first-write graph_change74909(v1) → 1052(v2) bytes.
+Это сравнительный ZIP в памяти, не выпуск версии. Лимиты ради PASS не менялись.
+Критичный минимум и финальный addressed set выполняются общим `finish` в очереди;
+его результат сохраняется процессом в задаче.
