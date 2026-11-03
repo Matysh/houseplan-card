@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1184,
-  "nextTicket": 86,
+  "revision": 1185,
+  "nextTicket": 87,
   "nextFence": 86,
   "tasks": {
     "1126": {
@@ -1499,14 +1499,14 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/ci-main-badge",
-      "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
+      "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 85,
-      "queued": false,
+      "ticket": 86,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793687734219,
-      "reviewEntry": 1,
+      "readyAt": 1793687974273,
+      "reviewEntry": 2,
       "patchId": "684ad6837980c84e4ed02473b892ca447ab732ec",
       "changedFiles": [
         ".github/workflows/process-next-coordinator.yml",
@@ -1526,7 +1526,6 @@
         "process-next/test/release.test.mjs",
         "process-next/test/remote.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -1641,7 +1640,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1217
+  ],
   "active": null,
   "events": {
     "github:41504682134:1:label:spec-request": {
@@ -1845,6 +1846,19 @@
           "detail": "Синтаксис и типы изменённых инструментов: cancelled; Поведение затронутого механизма: cancelled",
           "eventId": "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217"
         }
+      }
+    },
+    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7": {
+      "digest": "67c5e0b1499a7b85d7d75ff7b991f98b14037d0a1972c61d29d3147aa523d0e5",
+      "issue": 1217,
+      "message": {
+        "kind": "queued",
+        "issue": 1217,
+        "at": 1793687974273,
+        "entry": 2,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c"
       }
     }
   },
