@@ -8691,11 +8691,8 @@ public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = nu
 public _saveSpaceCopy(): Promise<void> {
     return saveSpaceCopy(this.host, {
       clearGeometryGesture: () => this._clearGeometryGesture(),
-      optimizeReferenceContext: () => this._optimizeReferenceContext(false),
-      reportPreflightFailure: (result, config) => this.optimizePlans.reportPreflightFailure(result, config),
       saveConfigNow: (attempt) => this._saveConfigNow(attempt),
       setMode: () => this._setMode('plan'),
-      showWallModelMigrationBlocked: (error) => this._showWallModelMigrationBlocked(error),
     });
   }
 

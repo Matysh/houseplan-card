@@ -2211,6 +2211,13 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             msg["config"].clear()
             msg["config"].update(checked)
+            # #1227: a roomless copy preserves accepted geometry even though
+            # walls become partitions and all identities are new. Prove the
+            # entire delta against the stored source, after structural schema
+            # validation; arbitrary additions/edits retain the strict policy.
+            from .space_copy import is_saved_space_copy
+            copied = is_saved_space_copy(msg["config"], stored_config)
+            geometry_previous = msg["config"] if copied else stored_config
             validate_active_marker_ids(msg["config"], stored_config)
             validate_marker_controls(msg["config"], stored_config)
             validate_marker_light_entities(msg["config"], stored_config)
@@ -2221,12 +2228,12 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             validate_marker_vacuum_routes(msg["config"], stored_config)
             validate_opening_passages(msg["config"], stored_config)
             validate_partition_opening_hosts(
-                msg["config"], stored_config, allow_room_wall_promotion=True,
+                msg["config"], geometry_previous, allow_room_wall_promotion=True,
             )
             return validate_junction_limits(
-                msg["config"], stored_config,
-                baseline_counts=baseline_counts,
-                touched_spaces=touched if baseline_counts is not None else None,
+                msg["config"], geometry_previous,
+                baseline_counts=None if copied else baseline_counts,
+                touched_spaces=touched if baseline_counts is not None and not copied else None,
             )
         try:
             candidate_counts = await hass.async_add_executor_job(_validate_config_cpu)

@@ -214,6 +214,11 @@ export function createSpaceCopyCandidate(
       dependencies: graph.dependencies.map(dependency => ({ ...clone(dependency), node: nodeId(dependency.node),
         refs: dependency.refs.map(ref => ({ from: nodeId(ref.from), to: nodeId(ref.to) })) })),
     };
+    // Remapped base36 identities do not retain lexicographic source order.
+    // The server's structural graph contract requires canonical collections.
+    copiedGraph.nodes.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    copiedGraph.edges.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    copiedGraph.dependencies.sort((a, b) => a.node < b.node ? -1 : a.node > b.node ? 1 : 0);
     Object.assign(copiedSpace, projectGraphSpace(copiedSpace, copiedGraph).space);
   }
 

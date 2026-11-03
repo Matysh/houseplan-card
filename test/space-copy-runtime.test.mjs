@@ -146,121 +146,6 @@ test('#456 a manually entered duplicate title is accepted but an empty title is 
   assert.equal(empty.host._serverCfg.spaces.length, 1);
 });
 
-test('#456 required Optimize is explicitly confirmed and Cancel performs zero writes', async () => {
-  const { host, services, events } = runtimeHarness({
-    _confirmDanger: async () => { events.push('confirm'); return false; },
-  });
-  services.optimize = (currentConfig, currentLayout) => ({
-    config: structuredClone(currentConfig), layout: structuredClone(currentLayout),
-    changed: true, report: {},
-  });
-  await saveSpaceCopy(host, services);
-
-  assert.deepEqual(events.filter((event) => event === 'houseplan/plan/optimize' || event === 'config-write'), []);
-  assert.equal(host._spaceDialog.copy.title, 'Floor (2)');
-  assert.equal(host._spaceDialog.copy.busy, false);
-  assert.equal(host._spaceDialog.busy, false);
-});
-
-test('#456 a concurrent plan change invalidates an open Optimize confirmation', async () => {
-  const harness = runtimeHarness();
-  harness.services.optimize = (currentConfig, currentLayout) => ({
-    config: structuredClone(currentConfig), layout: structuredClone(currentLayout),
-    changed: true, report: {},
-  });
-  harness.host._confirmDanger = async () => {
-    harness.events.push('confirm');
-    // another client's write landed while the confirmation was open
-    harness.host._adoption.acceptConfigWrite(harness.host._serverCfg, { rev: harness.host._cfgRev + 1 });
-    return true;
-  };
-  await saveSpaceCopy(harness.host, harness.services);
-
-  assert.equal(harness.events.includes('houseplan/plan/optimize'), false);
-  assert.equal(harness.events.includes('config-write'), false);
-  assert.equal(harness.host._spaceDialog.copy.busy, false);
-  assert.equal(harness.toasts.at(-1), 'space.copy_error_changed');
-});
-
-test('#456 accepted Optimize is durable before the copy candidate is written', async () => {
-  const { host, services, events } = runtimeHarness();
-  services.optimize = (currentConfig, currentLayout) => {
-    const optimized = structuredClone(currentConfig);
-    optimized.spaces[0].partitions = [{ id: 'optimized-wall', a: [0, 0], b: [1, 0], cm: 10 }];
-    return { config: optimized, layout: structuredClone(currentLayout), changed: true, report: {} };
-  };
-  await saveSpaceCopy(host, services);
-
-  assert.ok(events.indexOf('confirm') < events.indexOf('houseplan/plan/optimize'));
-  assert.ok(events.indexOf('houseplan/plan/optimize') < events.indexOf('config-write'));
-  assert.equal(host._serverCfg.spaces[1].partitions.length, 1);
-  assert.notEqual(host._serverCfg.spaces[1].partitions[0].id, 'optimized-wall');
-  assert.equal(host._canOptimizeUndo, false, 'the following config write consumes Optimize undo');
-});
-
-test('#456 unsafe Optimize reports the existing diagnostic and performs zero writes', async () => {
-  const { host, services, events, toasts } = runtimeHarness({
-    _checkOptimizeGeometry: () => ({
-      fingerprint: 'unsafe', spaces: [], failures: [{ status: 'failed' }], ok: false,
-    }),
-  });
-  services.optimize = (currentConfig, currentLayout) => ({
-    config: structuredClone(currentConfig), layout: structuredClone(currentLayout),
-    changed: true, report: {},
-  });
-  await saveSpaceCopy(host, services);
-
-  assert.ok(events.includes('report-preflight'));
-  assert.equal(events.includes('confirm'), false);
-  assert.equal(events.includes('houseplan/plan/optimize'), false);
-  assert.equal(events.includes('config-write'), false);
-  assert.equal(toasts.at(-1), 'space.copy_error_optimize_geometry');
-});
-
-test('#456 a rejected copy rolls back only the copy and keeps accepted Optimize', async () => {
-  const optimized = configFixture();
-  optimized.spaces[0].settings = { optimized: true };
-  const { host, services, events } = runtimeHarness({
-    _reloadConfigOnly: async () => {
-      events.push('reload-config');
-      host._adoption.stageConfigCandidate(structuredClone(optimized));
-    },
-  });
-  services.optimize = (_currentConfig, currentLayout) => ({
-    config: structuredClone(optimized), layout: structuredClone(currentLayout),
-    changed: true, report: {},
-  });
-  services.saveConfigNow = async () => {
-    events.push('config-write');
-    throw new Error('offline');
-  };
-  await saveSpaceCopy(host, services);
-
-  assert.deepEqual(host._serverCfg, optimized);
-  assert.equal(host._serverCfg.spaces.length, 1, 'no partial copy remains');
-  assert.equal(host._canOptimizeUndo, true, 'accepted Optimize remains undoable after a failed copy');
-  assert.equal(host._space, 'source');
-  assert.equal(host._spaceDialog.copy.busy, false);
-  assert.ok(events.includes('reload-config'));
-});
-
-test('#866 lazy Optimize import rechecks its actual config/layout material before copying',async()=>{
-  const {host,services,events,toasts}=runtimeHarness();delete services.optimize;
-  const pending=saveSpaceCopy(host,services);
-  queueMicrotask(()=>host._adoption.acceptConfigWrite({...host._serverCfg,settings:{changedWhileLoading:true}},{rev:host._cfgRev+1}));
-  await pending;
-  assert.equal(events.includes('config-write'),false);assert.equal(events.includes('houseplan/plan/optimize'),false);
-  assert.equal(host._serverCfg.spaces.length,1);assert.equal(toasts.at(-1),'space.copy_error_changed');
-});
-
-test('#866 retiring the dialog while the real lazy optimizer loads stays silent and performs no write',async()=>{
-  const {host,services,events,toasts}=runtimeHarness();delete services.optimize;
-  const pending=saveSpaceCopy(host,services);queueMicrotask(()=>{host._spaceDialog=null;});await pending;
-  assert.equal(events.includes('config-write'),false);assert.equal(events.includes('houseplan/plan/optimize'),false);
-  assert.equal(host._serverCfg.spaces.length,1);assert.deepEqual(toasts,[]);
-});
-
-
 test('#1156 category choices are captured before awaiting writes and copy busy prevents duplicate submission', async () => {
   const { host, services, events } = runtimeHarness();
   host._serverCfg.spaces[0].decor = [
@@ -282,13 +167,48 @@ test('#1156 category choices are captured before awaiting writes and copy busy p
   assert.equal(events.filter(event => event === 'config-write').length, 1);
 });
 
-test('#1156 refusing Optimize retains both choices for the same operation', async () => {
-  const { host, services } = runtimeHarness({ _confirmDanger: async () => false });
+test('#1227 copies unchanged accepted geometry without Optimize or geometry preflight', async () => {
+  const { host, services, events } = runtimeHarness({
+    _checkSpacePhysicalGeometry: () => { throw new Error('copy must not preflight geometry'); },
+    _junctionLimitViolations: () => { throw new Error('copy must not judge junctions'); },
+    _checkOptimizeGeometry: () => { throw new Error('copy must not optimize'); },
+  });
+  services.optimize = () => { throw new Error('copy must not import or run Optimize'); };
+  host._serverCfg.spaces[0].partitions = [{ id: 'near-end', a: [0, 0], b: [1, 0], cm: 40 }];
+  host._serverCfg.spaces[0].openings = [{ id: 'door', type: 'door', length: .2,
+    x: .11, y: 0, angle: 0, host: { kind: 'partition', id: 'near-end', t: .11 } }];
+  const original = structuredClone(host._serverCfg.spaces[0]);
+  await saveSpaceCopy(host, services);
+  assert.equal(events.filter(event => event === 'config-write').length, 1);
+  assert.equal(events.includes('confirm'), false);
+  assert.deepEqual(host._serverCfg.spaces[0], original);
+  assert.equal(host._serverCfg.spaces[1].openings[0].host.t, .11);
+  assert.equal(host._serverCfg.spaces[1].openings[0].length, .2);
+});
+
+test('#1227 rejected copy restores its source and retains the dialog choices', async () => {
+  const { host, services, events } = runtimeHarness();
+  const original = structuredClone(host._serverCfg);
   host._spaceDialog.copy.furniture = true;
   host._spaceDialog.copy.decor = true;
-  services.optimize = (config, layout) => ({ config, layout, changed: true, report: {} });
+  services.saveConfigNow = async () => { throw new Error('offline'); };
   await saveSpaceCopy(host, services);
+  assert.deepEqual(host._serverCfg, original);
+  assert.equal(host._spaceDialog.copy.busy, false);
   assert.equal(host._spaceDialog.copy.furniture, true);
   assert.equal(host._spaceDialog.copy.decor, true);
-  assert.equal(host._spaceDialog.copy.busy, false);
+  assert.equal(host._space, 'source');
+  assert.equal(events.includes('reload-config'), true);
+});
+
+test('#1227 a retired dialog while queued performs no copy', async () => {
+  const { host, services, events } = runtimeHarness();
+  let release;
+  host._writeChain = new Promise(resolve => { release = resolve; });
+  const pending = saveSpaceCopy(host, services);
+  host._spaceDialog = null;
+  release();
+  await pending;
+  assert.equal(events.includes('config-write'), false);
+  assert.equal(host._serverCfg.spaces.length, 1);
 });

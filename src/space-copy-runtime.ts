@@ -2,26 +2,17 @@ import { html, type TemplateResult } from 'lit';
 import { isGeometryCleanupRefusal } from './config-adoption';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { I18nKey } from './i18n';
-import type { optimizePlans } from './plan-optimizer';
-import { commitPlanOptimization } from './plan-optimize-write';
 import {
   createSpaceCopyCandidate, newSpaceCopySeed, nextSpaceCopyTitle,
   SpaceCopyError, type SpaceCopyErrorCode,
 } from './space-copy';
-import type { OptimizeGeometryPreflightResult } from './plan-geometry-preflight';
-import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import type { ServerConfig } from './types';
-import { contentFingerprint } from './visual-continuity';
 
 export interface SpaceCopyRuntimeServices {
   clearGeometryGesture(): void;
-  optimizeReferenceContext(): SpaceReferenceRepairContext;
-  reportPreflightFailure(result: OptimizeGeometryPreflightResult, config: ServerConfig): void;
   saveConfigNow(attempt: OptimisticAttempt<ServerConfig>): Promise<void>;
   setMode(mode: 'plan'): void;
-  showWallModelMigrationBlocked(error: unknown): void;
-  optimize?: typeof optimizePlans;
   newSeed?: () => string;
 }
 
@@ -154,7 +145,7 @@ function showCopyError(host: HouseplanEditorHostPort, error: unknown): void {
   if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
 }
 
-/** Submit one guarded two-step operation: optional Optimize, then config Copy. */
+/** Copy accepted geometry as-is. The server proves its stored source (#1227). */
 export async function saveSpaceCopy(
   host: HouseplanEditorHostPort,
   services: SpaceCopyRuntimeServices,
@@ -171,77 +162,15 @@ export async function saveSpaceCopy(
     busy: true,
     copy: { ...initial.copy, title, busy: true, token },
   };
-  let optimizeAccepted = false;
   try {
     if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
     await host._writeChain;
     if (!setBusy(host, token, true) || !host._serverCfg) return;
 
-    const configRevision = host._cfgRev;
-    const layoutRevision = host._layoutRev;
-    const configFingerprint = contentFingerprint(host._serverCfg);
-    const layoutFingerprint = contentFingerprint(host._layout);
-    let optimized;
-    try {
-      const optimize = services.optimize ?? (await import('./plan-optimizer')).optimizePlans;
-      // Import latency must not optimise a different config/layout than the
-      // revision/fingerprint bound above. The ordinary changed guard stays.
-      if (!setBusy(host, token, true)) return;
-      if (host._cfgRev !== configRevision || host._layoutRev !== layoutRevision
-        || contentFingerprint(host._serverCfg) !== configFingerprint || contentFingerprint(host._layout) !== layoutFingerprint) {
-        setBusy(host, token, false); host._showToast(host._t('space.copy_error_changed'), 'space.copy_error_changed'); return;
-      }
-      optimized = optimize(
-        host._serverCfg, host._layout, services.optimizeReferenceContext(),
-      );
-    } catch (error) {
-      setBusy(host, token, false);
-      services.showWallModelMigrationBlocked(error);
-      return;
-    }
-
-    if (optimized.changed) {
-      const preflight = host._checkOptimizeGeometry(optimized.config);
-      services.reportPreflightFailure(preflight, optimized.config);
-      if (!preflight.ok) {
-        setBusy(host, token, false);
-        host._showToast(host._t('space.copy_error_optimize_geometry'), 'space.copy_error_optimize_geometry');
-        return;
-      }
-      const accepted = await host._confirmDanger({
-        key: `copy-space:${sourceId}`,
-        kind: 'warning',
-        title: host._t('space.copy_optimize_title'),
-        message: host._t('space.copy_optimize_body', { name: title }),
-        objectName: title,
-        confirmLabel: host._t('space.copy_optimize_confirm'),
-        cancelLabel: host._t('btn.cancel'),
-        icon: 'mdi:broom',
-      });
-      if (!setBusy(host, token, accepted)) return;
-      if (!accepted) return;
-      if (host._cfgRev !== configRevision || host._layoutRev !== layoutRevision
-          || !host._serverCfg || contentFingerprint(host._serverCfg) !== configFingerprint
-          || contentFingerprint(host._layout) !== layoutFingerprint) {
-        setBusy(host, token, false);
-        host._showToast(host._t('space.copy_error_changed'), 'space.copy_error_changed');
-        return;
-      }
-      services.clearGeometryGesture();
-      await commitPlanOptimization(host, optimized.config, optimized.layout);
-      optimizeAccepted = true;
-    }
-
-    if (!setBusy(host, token, true) || !host._serverCfg) return;
     const previous = host._serverCfg;
     const result = createSpaceCopyCandidate(
       previous, sourceId, title, services.newSeed?.() ?? newSpaceCopySeed(), options,
     );
-    let safe = false;
-    try { safe = host._checkSpacePhysicalGeometry(result.config, result.space.id).ok; } catch { safe = false; }
-    if (!safe || host._junctionLimitViolations(result.config, result.space.id).length) {
-      throw new SpaceCopyError('geometry_unsafe');
-    }
     const attempt = host._adoption.beginOptimistic(previous, result.config);
     host._adoption.stageLocalConfig(result.config);
     invalidateConfig(host);
@@ -278,6 +207,5 @@ export async function saveSpaceCopy(
     }
     setBusy(host, token, false);
     showCopyError(host, error);
-    if (optimizeAccepted) host.requestUpdate();
   }
 }

@@ -1460,8 +1460,7 @@ revisions and contents, owner evidence and the existing `ConfigWriteContext`
 claim, including same-connection user changes; the shared paired
 writer checks that anchor after pending writes have finished, before sending
 the frozen revisions. A changed source rebuilds the preview without consent;
-a retired-authority reply is not adopted. The unguarded Copy space caller
-retains its existing contract. Current Houseplan write permission, not a new
+a retired-authority reply is not adopted. Copy space no longer calls Optimize (#1227). Current Houseplan write permission, not a new
 HA-admin gate, authorizes Optimize and its paired Undo outside kiosk.
 
 `space-reference-repair.ts` classifies proven-unused missing-space records
@@ -2535,3 +2534,17 @@ cannot rewrite the cached revision. The value is not reused from stage or a prio
 object identity: another acceptance of the same mutated object computes again.
 Other helper callers retain recomputation after their replacement callbacks.
 The format, canonicalization, CAS/rollback, revisions and history remain unchanged.
+
+### Source-proved space copying (#1227)
+
+space-copy-runtime.ts submits one ordinary optimistic config write, with no
+Optimize/physical/junction preflight. The immutable space-copy.ts builder
+retains coordinates and remaps identities; graph collections are canonically
+ordered after remapping. The server space_copy.py recognises this complete
+projection against stored authority after structural validation, including
+legacy-to-graph migration and appearance materialisation. It rejects any
+additional change as an ordinary write, rather than trusting an exemption
+flag. A proved copy uses its own accepted geometry as the jamb/junction
+baseline; the resulting real counts are cached for subsequent delta checks.
+Other semantic validations, CAS, authority and persistence use config/set
+unchanged. New IDs never become a general geometry-validation bypass.

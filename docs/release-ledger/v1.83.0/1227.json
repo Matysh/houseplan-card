@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1227,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Restore copying of accepted room-wall and legacy near-end geometry through a stored-source proof; remove pre-copy optimization and geometry preflight without changing placement rules or stored schemas.",
+  "summary": {
+    "ru": "Копирование пространства сохраняет принятую геометрию без новых ограничений для проёмов.",
+    "en": "Copy spaces with accepted geometry without new opening restrictions."
+  }
+}

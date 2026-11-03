@@ -1891,3 +1891,21 @@ Introduced2026-10-28 by#1113; no reader removal or compatibility deadline is int
 readable but inert in kiosks. Reading/cancelling never converts stored profiles.
 New profiles and explicitly confirmed nested edits write controls:false; unknown
 fields, revisions, outer Save and Cancel retain their previous contracts.
+
+## Saved-space copying (#1227)
+
+Copy preserves accepted geometry without running Optimize or a new geometry
+preflight. Rooms remain omitted, their walls become independent partitions,
+opening contact/lock bindings are cleared, and the furniture/decor choices
+retain their existing meaning. A room-wall opening or legacy near-end opening
+does not acquire a new D/2 requirement merely because its carrier and ID change.
+
+The ordinary config/set writer proves the entire copy against the stored
+source, including the normal first-write graph migration, generated identities,
+category selection and unchanged remaining configuration. Only that exact
+projection inherits its own geometry baseline. Schema, host fit/references,
+ACL, expected revision, resource limits and atomic storage remain enforced;
+there is no client validation-waiver flag or persistent exemption. A later
+direct geometry edit uses the existing D/2 and junction-delta rules. No stored
+model or wire format changes. An older backend may still reject a near-end
+copy; the existing write refusal/rollback remains safe.
