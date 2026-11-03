@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1654,
+  "revision": 1655,
   "nextTicket": 110,
   "nextFence": 110,
   "tasks": {
@@ -1963,14 +1963,26 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1234-warm-geometry-camera",
-      "materialSha": "3bb7d874df1913f880e80544b0badb9790298de1",
+      "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 109,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793715343052,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af",
+      "changedFiles": [
+        "demo/smoke_warm_geometry_camera.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/WARM-REMOUNT.md",
+        "docs/release-ledger/v1.83.0/1234.json",
+        "docs/testing/issue1234/warm-camera.md",
+        "src/houseplan-card.ts",
+        "src/warm-mode-adoption.ts",
+        "test/warm-mode-adoption.test.mjs"
+      ]
     },
     "1235": {
       "issue": 1235,
@@ -2229,11 +2241,12 @@
     "worker": "finish",
     "token": "109:finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:2:admit",
     "fence": 109,
-    "materialSha": "3bb7d874df1913f880e80544b0badb9790298de1",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+    "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+    "phase": "testing",
     "admittedAt": 1793716086240,
-    "expiresAt": 1793716386240
+    "expiresAt": 1793716396525,
+    "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af"
   },
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
@@ -2323,6 +2336,10 @@
     "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:2:return": {
       "digest": "e81e38a01963037f20742d93d0bec93918f603a78636f482acf18af8f1f26862",
       "issue": 1236
+    },
+    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:3:synchronized": {
+      "digest": "3b8211d76d1902986f8aca62e5e49b881fd796c606c3018dbb52cb75d66cd9e2",
+      "issue": 1234
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
