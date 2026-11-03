@@ -11,6 +11,7 @@ import {
   canonicalizeConfigGeometryInPlace, canonicalizeLatticeCoordinate, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
 import { compareCodePoints } from './codepoint-order';
+import { assertFiniteColumnInputs } from './column-input';
 import { roomPoly, samePoint } from './logic';
 import { resolveOpenCuts, sanitizeOpenSpans } from './open-spans';
 import { GRID_STEP_N } from './space-geometry';
@@ -947,6 +948,7 @@ export function decodeLegacyWallSegmentModel<T>(
 export function commitWallSegmentModel<T>(
   input: T, options: WallSegmentCommitOptions = {},
 ): WallSegmentCommitResult<T> {
+  for (const space of (input as any)?.spaces || []) assertFiniteColumnInputs(space);
   const before = JSON.stringify(input);
   const config: any = clone(input);
   const graphMappings = new Map<string, GraphMapping>();

@@ -8,6 +8,7 @@ import * as Q from './plan-exact';
 import { wallKey, thicknessCmAt } from './wall-thickness';
 import { compareCodePoints } from './codepoint-order';
 import { contentFingerprint } from './visual-continuity';
+import { assertFiniteColumnInputs } from './column-input';
 export type GraphEditIntent =
   | { kind: 'metadata' }
   | { kind: 'openings'; ids: readonly string[] }
@@ -644,6 +645,7 @@ function mergeEdgeMetadata(graph:PlanGraph,before:any,draft:any):PlanGraph {
 }
 export function commitGraphEditResult<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
   sourceBefore?:Record<string,any>):GraphEditResult<T>{
+  assertFiniteColumnInputs(draftSpace);
   const prepared=prepareGraph(beforeNormalizedSpace.plan_graph as PlanGraph),graph=prepared.graph,index=prepared.index;
   const before:any=projectGraphSpace(beforeNormalizedSpace,graph).space,draft:any=clone(draftSpace);
   const allocation=new Allocation(graph),plan=newPlan(graph);

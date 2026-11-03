@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1230,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Reject unsafe column inputs before JSON cloning in current-line structural candidate preparation and graph edits, including prepared previews.",
+  "summary": {
+    "ru": "Небезопасные числовые поля колонн не попадают в сохранение или Undo.",
+    "en": "Reject unsafe column numeric inputs before they enter persistence or Undo."
+  }
+}

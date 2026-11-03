@@ -1,4 +1,5 @@
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
+import { assertFiniteColumnInputs } from './column-input';
 import { commitGraphEdit, commitGraphEditResult, type GraphEditIntent, type GraphEditResult } from './graph-edit-intent';
 import { projectGraphSpace, validateGraph, type PlanGraph, type TargetPointRef } from './plan-graph';
 import { graphDrawTargetRef } from './graph-draw-binding';
@@ -2148,6 +2149,8 @@ public _commitPhysicalGeometry(
     const resizeProof = this._resizePhysicalProof;
     this._resizePhysicalProof = null;
     try {
+      // Prepared graph previews also retain independent column geometry.
+      assertFiniteColumnInputs(liveSpace);
       // The baseline precedes the gesture. First legacy normalization must not
       // consume the edited carrier or lose the gesture during server adoption.
       const baselineSource = structuredClone(liveCandidate);
