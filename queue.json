@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1860,
-  "nextTicket": 120,
+  "revision": 1861,
+  "nextTicket": 121,
   "nextFence": 120,
   "tasks": {
     "1126": {
@@ -2267,14 +2267,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "issue/1248-editor-focus",
-      "materialSha": "bbe484989f7869d7e8c78d3cc4c09603821cf664",
+      "materialSha": "c8266cfb23ec718eaa33707681532e4a2604c646",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 117,
-      "queued": false,
+      "ticket": 120,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793726704754,
-      "reviewEntry": 1,
+      "readyAt": 1793727698404,
+      "reviewEntry": 2,
       "patchId": "1d5768eb1f93b81e6252a02bd9a48a20b24866d5",
       "changedFiles": [
         "demo/smoke_editor_return_focus_1248.mjs",
@@ -2285,7 +2285,6 @@
         "src/styles/icon-action.styles.ts",
         "src/styles/navigation.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2399,7 +2398,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1248
+  ],
   "active": {
     "issue": 1247,
     "worker": "finish",
@@ -2523,6 +2524,19 @@
         "layer": "product",
         "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc",
         "phase": "sync"
+      }
+    },
+    "finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11": {
+      "digest": "746dbd006b6732565c31e88eec8190805d0490e00b698da494a0bcf90f296ebc",
+      "issue": 1248,
+      "message": {
+        "kind": "queued",
+        "issue": 1248,
+        "at": 1793727698404,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c8266cfb23ec718eaa33707681532e4a2604c646"
       }
     }
   },
