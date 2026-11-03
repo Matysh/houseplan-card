@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 88,
+  "revision": 89,
   "active": "v1.84.0-beta.3-20261103",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -1812,12 +1812,350 @@
       "branch": "release/v1.84.0-beta.3-20261103",
       "sourceSha": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
       "sha": "c0c1a7795a280f3690d073647f50d130630964d6",
-      "runner": null,
-      "running": {
-        "id": null,
-        "sha": "c0c1a7795a280f3690d073647f50d130630964d6"
+      "runner": {
+        "id": "20261103T205120061-3c138411",
+        "sha": "c0c1a7795a280f3690d073647f50d130630964d6",
+        "event": "beta",
+        "status": "failed",
+        "path": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T205120061-3c138411/report.json",
+        "digest": "22f817f67d346f734acc9403af2d2537a7de2357c5fdc9d1eb840fc2e36c3f18",
+        "finishedAt": "2026-11-03T21:06:45.576Z",
+        "materialClean": true,
+        "ready": false,
+        "required": 33,
+        "failed": [
+          "product-node:geometry",
+          "product-backend",
+          "golden-beta"
+        ],
+        "reused": 0,
+        "checks": [
+          {
+            "id": "product-build",
+            "name": "Сборка и типы продукта",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "test-build",
+            "name": "Подготовка модулей для тестов",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "demo-assets",
+            "name": "Подготовка карточки для браузера",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "product-node:devices",
+            "name": "Поведение: Устройства и действия",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1076,
+              "passed": 1076,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:geometry",
+            "name": "Поведение: Геометрия и стены",
+            "status": "failed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1297,
+              "passed": 1274,
+              "failed": 22,
+              "skipped": 1,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:view",
+            "name": "Поведение: Отрисовка View",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 381,
+              "passed": 381,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:data",
+            "name": "Поведение: Данные и сохранение",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 369,
+              "passed": 369,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:core",
+            "name": "Поведение: Общие функции",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 244,
+              "passed": 244,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:editor",
+            "name": "Поведение: Редактор и история",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 338,
+              "passed": 338,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:new-product",
+            "name": "Поведение: Новые продуктовые проверки",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 262,
+              "passed": 262,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:ui",
+            "name": "Поведение: Интерфейс и ввод",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 153,
+              "passed": 153,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:lighting",
+            "name": "Поведение: Свет и солнце",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 208,
+              "passed": 208,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:text",
+            "name": "Поведение: Текст и локализация",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 41,
+              "passed": 41,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:export",
+            "name": "Поведение: Экспорт и PDF",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 71,
+              "passed": 71,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-backend",
+            "name": "Backend и сбор покрытия",
+            "status": "failed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 2915,
+              "passed": 2913,
+              "failed": 1,
+              "skipped": 1
+            }
+          },
+          {
+            "id": "release-package",
+            "name": "Подготовка проверяемого ZIP и кандидата",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "release-measurements",
+            "name": "Размеры и время относительно последнего stable",
+            "status": "passed",
+            "diagnostic": true
+          },
+          {
+            "id": "smoke:smoke_readonly_cold_start",
+            "name": "Браузер: Сохранённый план при первом открытии без прав редактирования",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cold_view_toggle",
+            "name": "Браузер: Команда устройству сразу после холодного открытия View",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_edit_permissions",
+            "name": "Браузер: Поздний ответ и смена прав пользователя",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_toggle_confirmation",
+            "name": "Браузер: Подтверждение команды устройству",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_gestures",
+            "name": "Браузер: Жесты редактора без случайного клика или команды",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_canvas_surface_gestures",
+            "name": "Браузер: Жесты на поверхности плана",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_draft_exit",
+            "name": "Браузер: Выход из редактора и несохранённые изменения",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_geometry_history_refusal",
+            "name": "Браузер: Отказ операции и целостность истории геометрии",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_creation_selection",
+            "name": "Браузер: Создание декора и выбор созданного объекта",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_switch_transitions",
+            "name": "Браузер: Переключение между этажами",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_live_text",
+            "name": "Браузер: Обновление живого текста",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_isometric_live_touch",
+            "name": "Браузер: Живое состояние и касания в изометрии",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_recovery",
+            "name": "Браузер: Восстановление View после задержки или сбоя",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "golden-beta",
+            "name": "75 визуальных кадров: панель 61, Lovelace 13, Static 1",
+            "status": "failed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 75,
+              "passed": 44,
+              "failed": 31,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-journeys",
+            "name": "HA E2E beta: journeys",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 10,
+              "passed": 10,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-first-run",
+            "name": "HA E2E beta: first-run",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 2,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-upgrade",
+            "name": "HA E2E beta: upgrade",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1,
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0
+            }
+          }
+        ]
       },
-      "status": "testing",
+      "running": null,
+      "status": "results",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -2797,7 +3135,8 @@
     "beta1843-prepare-20261103": "2eaefe046b0742e229cfb03145ba6ce73d85bee9b30020e3e6231aa2d5b1f607",
     "beta1843-run-a-20261103": "3ec0fcd51127f8fd708bc7ca9d38f9dc4a58a40c4309fc455c417ab8eb6dac1a",
     "ship-review:prepare:a163fb1c-9253-4270-ad58-a8a58d7fca05": "2bebd46bbe1dcad574c088bdad4febb24b2dfd32285b7be12e0743656fa18e58",
-    "ship-review:result:64a0eba6-d6ce-4145-9703-5885300a1b86": "8f48ef0b440abc73f918599489c811c00d2741f1df1726afed78461a5c80c8fd"
+    "ship-review:result:64a0eba6-d6ce-4145-9703-5885300a1b86": "8f48ef0b440abc73f918599489c811c00d2741f1df1726afed78461a5c80c8fd",
+    "beta1843-actual-results-before-owner-stop-20261104": "fb57174ee94067859cea78e1903594b4e1dae57dcf867ef8e075f95af971df44"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
