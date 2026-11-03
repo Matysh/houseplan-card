@@ -1,0 +1,29 @@
+[
+  {
+    "label": "test/fixtures/1045-wall-node-delete.json/5/space",
+    "legacyOracleMatchesOriginal": true,
+    "inputUntouched": true,
+    "completeSourceBCoverage": true,
+    "compatibleOverlapOwnedBy": "a",
+    "residualOwnedBy": "b~1",
+    "zeroThicknessPreserved": true,
+    "hasRoomsOrHosts": false,
+    "configAndSpaceNonstructuralMetadataExact": true
+  },
+  {
+    "label": "test/fixtures/804-wall-face-lineage-backend.json/9/before",
+    "legacyOracleMatchesOriginal": true,
+    "inputUntouched": true,
+    "explicitWallRecordsExactByID": true,
+    "roomPolygonsAndWallIDCyclesExactByID": true,
+    "completeSourcePartitionCoverage": true,
+    "sourceParameterExactlyPreserved": "727272727/1000000000",
+    "hostChild": "long-source~2",
+    "openingBindingsOpaqueWidthAndOrientationExact": true,
+    "oldRawY": 0.7083333333333334,
+    "newProjectedY": 0.7083333332083334,
+    "coordinateDrift": 1.2500001034254637e-10,
+    "explanation": "new numeric projection follows unchanged source host t, which differed slightly from the old independent y scalar",
+    "configAndSpaceNonstructuralMetadataExact": true
+  }
+]

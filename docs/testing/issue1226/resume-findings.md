@@ -113,3 +113,25 @@ full import, not a captured empty trail/get response. The vacuum drawing and
 live-history assertions remain required. A safe test arrangement must give the
 trail journey its initial seed before destructive full-import journeys, or an
 independently seeded lab; it must not skip/relax drawing or restore .storage.
+
+## Confirmed: valid legacy0/22cm drafts are forced into one carrier on migration
+
+The unchanged historical source
+`478-room-draft-migration-vectors.json/accepted/input` has fingerprint
+`f916903d1b0385267195278c6fcb33adfb698d537ac3bb6fd8dbbf3935082bc4`.
+Frozen legacy decoding preserves four positive-length, separately identified
+partitions. Two overlap exactly on [.25,0]–[.5,0] with opposite directions and
+legal distinct thicknesses0/22. There are no room/host/self-crossing/resource
+problems in this input. Current migration refuses `plan-graph:thickness-conflict`
+because its geometric node-pair grouping elects to merge those carriers.
+
+Accepted #478 preserves valid drafts one-for-one with their own cm; #1167 allows
+independent exact node identities when an optional join is incompatible; #1216
+supports coincident independent carriers and does not equate cm0 with absent
+material. A separate current graph witness retains all four original carrier
+IDs/endpoints/cm under independent node IDs and passes graph validation. It is
+not substituted for the failed migration's output or prescribed as the final
+contact topology. Do not pick max(cm), discard the zero carrier or rewrite the
+original input. Product fix/clarification and TS/Python parity remain required.
+Full bounded evidence: `corpus-review/two-refusals.md` and inert snapshots beside
+it. No new issue/product fix was made; this case remains RED.

@@ -1,0 +1,2298 @@
+{
+  "sourceProduct": "0c030e700 (compiled combined0bda944e3)",
+  "scope": "31 semantic rows only; excludes72 ordering-only and2 refusal rows",
+  "summary": {
+    "G2-partition-arrangement": 7,
+    "G1-generated-legacy-catalogue": 13,
+    "G3-explicit-model10-arrangement": 9,
+    "G4-legacy-coordinate-arrangement": 2
+  },
+  "rows": [
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/5/space",
+      "fingerprint": "046e25b518aff9d0f01e6f5f70bed882c5598c82098825d192e20b38f299c676",
+      "group": "G2-partition-arrangement",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 2,
+      "lostExplicitIDs": [
+        "b"
+      ],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "verified representative: explainable model11 arrangement, no demonstrated ownership/metadata loss; passport not accepted",
+      "evidence": "two-representative-independent-proofs.json; two-representatives-current0c.json",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "f",
+          "field": "partitions",
+          "removed": [
+            "b"
+          ],
+          "added": [
+            "b~1"
+          ]
+        }
+      ],
+      "ownershipWitness": {
+        "label": "test/fixtures/1045-wall-node-delete.json/5/space",
+        "legacyOracleMatchesOriginal": true,
+        "inputUntouched": true,
+        "completeSourceBCoverage": true,
+        "compatibleOverlapOwnedBy": "a",
+        "residualOwnedBy": "b~1",
+        "zeroThicknessPreserved": true,
+        "hasRoomsOrHosts": false,
+        "configAndSpaceNonstructuralMetadataExact": true
+      }
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/7/space",
+      "fingerprint": "4d97d68049db10c7e213e928692eaeb8c41b6e1e841dadabc1b6ada4dd1e110b",
+      "group": "G2-partition-arrangement",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 2,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "source cuts/compatible overlap allocation; complete old-edge ledger required before accepting IDs",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "f",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "a~1",
+            "b~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/0/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "group": "G2-partition-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 12,
+      "lostExplicitIDs": [
+        "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+      ],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "source cuts/compatible overlap allocation; complete old-edge ledger required before accepting IDs",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "smvw6633p",
+          "field": "partitions",
+          "removed": [
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+          ],
+          "added": [
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc~2",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9~1",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676~2",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/1/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "group": "G2-partition-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 12,
+      "lostExplicitIDs": [
+        "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+      ],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "source cuts/compatible overlap allocation; complete old-edge ledger required before accepting IDs",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "smvw6633p",
+          "field": "partitions",
+          "removed": [
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+          ],
+          "added": [
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc~2",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9~1",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676~2",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/2/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "group": "G2-partition-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 12,
+      "lostExplicitIDs": [
+        "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+      ],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "source cuts/compatible overlap allocation; complete old-edge ledger required before accepting IDs",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "smvw6633p",
+          "field": "partitions",
+          "removed": [
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+          ],
+          "added": [
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc~2",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9~1",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676~2",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/3/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "group": "G2-partition-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 12,
+      "lostExplicitIDs": [
+        "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+      ],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "source cuts/compatible overlap allocation; complete old-edge ledger required before accepting IDs",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "smvw6633p",
+          "field": "partitions",
+          "removed": [
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+          ],
+          "added": [
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc~2",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9~1",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676~2",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-two-contours.json/payload/config",
+      "fingerprint": "b1aa15a90272607e2758039cdded9fbe2a6970fea32d8bb13b2c163affb14a70",
+      "group": "G2-partition-arrangement",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 12,
+      "lostExplicitIDs": [
+        "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+      ],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "source cuts/compatible overlap allocation; complete old-edge ledger required before accepting IDs",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "smvw6633p",
+          "field": "partitions",
+          "removed": [
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e"
+          ],
+          "added": [
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc~2",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9~1",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676~2",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/197-junction-patch.json",
+      "fingerprint": "fdf624253287cb664e10d7a60493e7d23e4f4bcee50ec2f33446d3fb16f57f0b",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "space_repro",
+          "field": "catalogue",
+          "removed": [
+            "wall-66nniacmz66moqllgrcm",
+            "wall-aclan5vz7bunqfz2wadd",
+            "wall-ah3djvxtqj6a2ygdnoma",
+            "wall-axikc6c7rwz6h7prcmjl",
+            "wall-bgwekvodngom5wphck2i",
+            "wall-i3ucdelafcpvgnahe7rv",
+            "wall-ie5awewiazfy2lmq4k3n",
+            "wall-ik7qv7v5jtpvmo3qwpdj",
+            "wall-k3bixipodzwzph6wkfft",
+            "wall-q6tu2gak33rqqxp4ngmj",
+            "wall-qdw7iytb3ymlruitu5yk",
+            "wall-qe5upt4tbpitjzp23vz4",
+            "wall-r332mnkbai4hdfmogitt",
+            "wall-rkm5iv7yqvfjptcxykas",
+            "wall-swl32ntzurc57w7or55y",
+            "wall-tiworq5lilzdc3hzq772",
+            "wall-w7a33ib5encaaslb2mav",
+            "wall-xnrwp2z7fz47j3h63ud2"
+          ],
+          "added": [
+            "wall-5whptqxfngbzqlr5mrbt",
+            "wall-5whptqxfngbzqlr5mrbt~1",
+            "wall-6pnwvmh7dgyqg2jfj3oh",
+            "wall-ccoeons3wwkaanioncnh",
+            "wall-ccoeons3wwkaanioncnh~1",
+            "wall-esat7fgfmcbdrud2hswx",
+            "wall-j7xmzbg34k4t3icdujnc",
+            "wall-k2qfxnerdojtmyadcfuq",
+            "wall-k2qfxnerdojtmyadcfuq~1",
+            "wall-mbo4jzbldhtr6qaoard7",
+            "wall-pkfhqirduiyjabebgibg",
+            "wall-pt2l5unvli3yi5vj4jel~1",
+            "wall-pt2l5unvli3yi5vj4jel~2",
+            "wall-qg35yoijjzf5mp3yd5mr",
+            "wall-saxqlmcchk2jbwufcfpr~1",
+            "wall-szm6kkeyu6cgj6vgmdnj",
+            "wall-szm6kkeyu6cgj6vgmdnj~1",
+            "wall-upmksdrdwjqtfxz7khd7"
+          ]
+        },
+        {
+          "space": "space_repro",
+          "room": "room_1",
+          "walls": [
+            "wall-jcd4heifluqipn77fxa3",
+            "wall-tfjpxnatm2w5puzyhbne",
+            "wall-wwf7bleu7v6jargrfxyc",
+            "wall-w7a33ib5encaaslb2mav",
+            "wall-rkm5iv7yqvfjptcxykas",
+            "wall-qe5upt4tbpitjzp23vz4",
+            "wall-bgwekvodngom5wphck2i",
+            "wall-aclan5vz7bunqfz2wadd",
+            "wall-xzivubhrh7ucj6bvale6",
+            "wall-xnrwp2z7fz47j3h63ud2",
+            "wall-r332mnkbai4hdfmogitt",
+            "wall-i3ucdelafcpvgnahe7rv"
+          ],
+          "new": [
+            "wall-jcd4heifluqipn77fxa3",
+            "wall-tfjpxnatm2w5puzyhbne",
+            "wall-wwf7bleu7v6jargrfxyc",
+            "wall-6pnwvmh7dgyqg2jfj3oh",
+            "wall-szm6kkeyu6cgj6vgmdnj",
+            "wall-szm6kkeyu6cgj6vgmdnj~1",
+            "wall-ccoeons3wwkaanioncnh",
+            "wall-5whptqxfngbzqlr5mrbt",
+            "wall-xzivubhrh7ucj6bvale6",
+            "wall-pkfhqirduiyjabebgibg",
+            "wall-esat7fgfmcbdrud2hswx",
+            "wall-j7xmzbg34k4t3icdujnc"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_2",
+          "walls": [
+            "wall-rk5irgctsw5lijs4ohyn",
+            "wall-r332mnkbai4hdfmogitt",
+            "wall-xnrwp2z7fz47j3h63ud2",
+            "wall-tiworq5lilzdc3hzq772",
+            "wall-axikc6c7rwz6h7prcmjl",
+            "wall-66nniacmz66moqllgrcm"
+          ],
+          "new": [
+            "wall-rk5irgctsw5lijs4ohyn",
+            "wall-esat7fgfmcbdrud2hswx",
+            "wall-pkfhqirduiyjabebgibg",
+            "wall-k2qfxnerdojtmyadcfuq",
+            "wall-mbo4jzbldhtr6qaoard7",
+            "wall-qg35yoijjzf5mp3yd5mr"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_3",
+          "walls": [
+            "wall-qshdrkzmpqgb4qk5urea",
+            "wall-axikc6c7rwz6h7prcmjl",
+            "wall-ik7qv7v5jtpvmo3qwpdj",
+            "wall-362q6wdr33wtyu4qiii2"
+          ],
+          "new": [
+            "wall-qshdrkzmpqgb4qk5urea",
+            "wall-mbo4jzbldhtr6qaoard7",
+            "wall-k2qfxnerdojtmyadcfuq~1",
+            "wall-362q6wdr33wtyu4qiii2"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_4",
+          "walls": [
+            "wall-bwf6xsdqceq5ob4qkkvb",
+            "wall-k3bixipodzwzph6wkfft",
+            "wall-66nniacmz66moqllgrcm",
+            "wall-qshdrkzmpqgb4qk5urea",
+            "wall-lt4ikgf2niiygl7kfrcy"
+          ],
+          "new": [
+            "wall-bwf6xsdqceq5ob4qkkvb",
+            "wall-upmksdrdwjqtfxz7khd7",
+            "wall-qg35yoijjzf5mp3yd5mr",
+            "wall-qshdrkzmpqgb4qk5urea",
+            "wall-lt4ikgf2niiygl7kfrcy"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_5",
+          "walls": [
+            "wall-ik7qv7v5jtpvmo3qwpdj",
+            "wall-tiworq5lilzdc3hzq772",
+            "wall-xzivubhrh7ucj6bvale6",
+            "wall-aclan5vz7bunqfz2wadd",
+            "wall-q6tu2gak33rqqxp4ngmj",
+            "wall-ad3nri45odtsnmiijrjr"
+          ],
+          "new": [
+            "wall-k2qfxnerdojtmyadcfuq~1",
+            "wall-k2qfxnerdojtmyadcfuq",
+            "wall-xzivubhrh7ucj6bvale6",
+            "wall-5whptqxfngbzqlr5mrbt",
+            "wall-5whptqxfngbzqlr5mrbt~1",
+            "wall-ad3nri45odtsnmiijrjr"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_6",
+          "walls": [
+            "wall-q6tu2gak33rqqxp4ngmj",
+            "wall-bgwekvodngom5wphck2i",
+            "wall-ie5awewiazfy2lmq4k3n",
+            "wall-7yrnikhafso76micmitz",
+            "wall-yhn6yzxth6scu6mbtt3h"
+          ],
+          "new": [
+            "wall-5whptqxfngbzqlr5mrbt~1",
+            "wall-ccoeons3wwkaanioncnh",
+            "wall-ccoeons3wwkaanioncnh~1",
+            "wall-7yrnikhafso76micmitz",
+            "wall-yhn6yzxth6scu6mbtt3h"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_7",
+          "walls": [
+            "wall-3q4dbkk3ri3x72smq2jz",
+            "wall-i3ucdelafcpvgnahe7rv",
+            "wall-rk5irgctsw5lijs4ohyn",
+            "wall-k3bixipodzwzph6wkfft"
+          ],
+          "new": [
+            "wall-3q4dbkk3ri3x72smq2jz",
+            "wall-j7xmzbg34k4t3icdujnc",
+            "wall-rk5irgctsw5lijs4ohyn",
+            "wall-upmksdrdwjqtfxz7khd7"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "space_repro",
+          "room": "room_8",
+          "walls": [
+            "wall-w7a33ib5encaaslb2mav",
+            "wall-qdw7iytb3ymlruitu5yk",
+            "wall-ah3djvxtqj6a2ygdnoma",
+            "wall-s64ihybgffc2khqi4mpf",
+            "wall-swl32ntzurc57w7or55y",
+            "wall-ie5awewiazfy2lmq4k3n",
+            "wall-qe5upt4tbpitjzp23vz4",
+            "wall-rkm5iv7yqvfjptcxykas"
+          ],
+          "new": [
+            "wall-6pnwvmh7dgyqg2jfj3oh",
+            "wall-pt2l5unvli3yi5vj4jel~1",
+            "wall-pt2l5unvli3yi5vj4jel~2",
+            "wall-s64ihybgffc2khqi4mpf",
+            "wall-saxqlmcchk2jbwufcfpr~1",
+            "wall-ccoeons3wwkaanioncnh~1",
+            "wall-szm6kkeyu6cgj6vgmdnj~1",
+            "wall-szm6kkeyu6cgj6vgmdnj"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/258-wall-key-roundtrip.json/space",
+      "fingerprint": "aa8ad6ac540e273663a2ddeadd66f349bb2f5ae421be91d06772da623e14230b",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "wall-key-roundtrip",
+          "field": "catalogue",
+          "removed": [
+            "wall-4mulrbm4wu6ypmdjtb33",
+            "wall-4rxihusqzp2jcymdxdcv",
+            "wall-g7x7c7wynx24a2n3vnsj",
+            "wall-iwpks2j3nizm7umry2eb",
+            "wall-ltgtcndpk26dupnpgjpm",
+            "wall-tz3dndaev7eu7j2b47ag"
+          ],
+          "added": [
+            "wall-7tt6tp4svtzgvccc7e6v",
+            "wall-h3tk72i2s4hlgmnkievy",
+            "wall-h3tk72i2s4hlgmnkievy~1",
+            "wall-sjnq7j2mq6dds3asrdxl",
+            "wall-y3it2umhozd5qfyhzy2l",
+            "wall-zzhqpuollmmzn3svuhym"
+          ]
+        },
+        {
+          "space": "wall-key-roundtrip",
+          "room": "lower",
+          "walls": [
+            "wall-xo46odgh3rbe75kbypan",
+            "wall-4rxihusqzp2jcymdxdcv",
+            "wall-tz3dndaev7eu7j2b47ag",
+            "wall-4mulrbm4wu6ypmdjtb33"
+          ],
+          "new": [
+            "wall-xo46odgh3rbe75kbypan",
+            "wall-y3it2umhozd5qfyhzy2l",
+            "wall-h3tk72i2s4hlgmnkievy",
+            "wall-sjnq7j2mq6dds3asrdxl"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "wall-key-roundtrip",
+          "room": "upper",
+          "walls": [
+            "wall-tz3dndaev7eu7j2b47ag",
+            "wall-iwpks2j3nizm7umry2eb",
+            "wall-g7x7c7wynx24a2n3vnsj",
+            "wall-a2agjkngexv5ekwmqkch",
+            "wall-ltgtcndpk26dupnpgjpm"
+          ],
+          "new": [
+            "wall-h3tk72i2s4hlgmnkievy",
+            "wall-h3tk72i2s4hlgmnkievy~1",
+            "wall-zzhqpuollmmzn3svuhym",
+            "wall-a2agjkngexv5ekwmqkch",
+            "wall-7tt6tp4svtzgvccc7e6v"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/275-orthogonal-strip-containment.json/cases/0",
+      "fingerprint": "3738911145665445cc1813248e9a1b5198cf5543e1ad30f005102a62cab32e8b",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "cell-5-mixed-depth-t",
+          "field": "catalogue",
+          "removed": [
+            "wall-32enoudjn3setctjru5z",
+            "wall-36tdatiojpv6hdwu77id",
+            "wall-65ozecwq2wysqx3mqecq",
+            "wall-76qtqar7glaqek6xg7bt",
+            "wall-cv2g7mi533ynhxmw5dul",
+            "wall-jljf3p6wg64jytwbc2l4",
+            "wall-kynjdemhmr22gfzvohbn",
+            "wall-nh4ex3kwuv2bjuy5cr7y",
+            "wall-rvzx3r6c4qk4f6jvi3zj",
+            "wall-t6jqx6cfobpuluiur4tu",
+            "wall-tpthxcj5vxflso2drzt4"
+          ],
+          "added": [
+            "wall-536ibyi574hdqwdbz36w",
+            "wall-7ro35e76m5clqzufonz7",
+            "wall-bs2boblli4l6kpzxyt6l",
+            "wall-hj3sxbb42cdvv77ct27p",
+            "wall-hj3sxbb42cdvv77ct27p~1",
+            "wall-lohwtpy7uzvddpeego2v",
+            "wall-qmw2e72meejfk457j3h2",
+            "wall-qoosepdsgydecrmzotrq",
+            "wall-sy6xnz3edn7e4yzzgsn3",
+            "wall-uunswwttrzetbyhgoq25",
+            "wall-xq4pk5rruudz5imknshc"
+          ]
+        },
+        {
+          "space": "cell-5-mixed-depth-t",
+          "room": "a",
+          "walls": [
+            "wall-76qtqar7glaqek6xg7bt",
+            "wall-36tdatiojpv6hdwu77id",
+            "wall-rvzx3r6c4qk4f6jvi3zj",
+            "wall-tpthxcj5vxflso2drzt4",
+            "wall-cv2g7mi533ynhxmw5dul"
+          ],
+          "new": [
+            "wall-7ro35e76m5clqzufonz7",
+            "wall-bs2boblli4l6kpzxyt6l",
+            "wall-lohwtpy7uzvddpeego2v",
+            "wall-hj3sxbb42cdvv77ct27p~1",
+            "wall-hj3sxbb42cdvv77ct27p"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "cell-5-mixed-depth-t",
+          "room": "b",
+          "walls": [
+            "wall-65ozecwq2wysqx3mqecq",
+            "wall-kynjdemhmr22gfzvohbn",
+            "wall-cv2g7mi533ynhxmw5dul",
+            "wall-jljf3p6wg64jytwbc2l4",
+            "wall-nh4ex3kwuv2bjuy5cr7y"
+          ],
+          "new": [
+            "wall-uunswwttrzetbyhgoq25",
+            "wall-qoosepdsgydecrmzotrq",
+            "wall-hj3sxbb42cdvv77ct27p",
+            "wall-qmw2e72meejfk457j3h2",
+            "wall-536ibyi574hdqwdbz36w"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "cell-5-mixed-depth-t",
+          "room": "c",
+          "walls": [
+            "wall-32enoudjn3setctjru5z",
+            "wall-t6jqx6cfobpuluiur4tu",
+            "wall-76qtqar7glaqek6xg7bt",
+            "wall-kynjdemhmr22gfzvohbn"
+          ],
+          "new": [
+            "wall-sy6xnz3edn7e4yzzgsn3",
+            "wall-xq4pk5rruudz5imknshc",
+            "wall-7ro35e76m5clqzufonz7",
+            "wall-qoosepdsgydecrmzotrq"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/275-orthogonal-strip-containment.json/cases/1",
+      "fingerprint": "a590275b1ec0949a22ea64e5f81c967a5c69007da2a0a08cd34d7f07099120d2",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "cell-1-thick-crossbar-t",
+          "field": "catalogue",
+          "removed": [
+            "wall-2iqpvioxqw4y6fmpinwh",
+            "wall-2jc6rt5edratukrw7r4v",
+            "wall-4gm3qn6rfpg3lb2jamti",
+            "wall-a33rzjwacrgshqrl7awk",
+            "wall-cgkcvhbqcdnpk3ibzpzw",
+            "wall-cw6rxqzcgz4mg265hbkv",
+            "wall-dxvqkywvdxmxu7i24syp",
+            "wall-gldkmqnyjgwrrict4ia3",
+            "wall-kkiggytl7bcoykzs3fja",
+            "wall-nbcgonskqps6gunxpmqk",
+            "wall-ozklmf7ezqhrnscns2il",
+            "wall-ps6cstz5teufd6z5lcqn",
+            "wall-q4psnn7hqpgajmx4wkc6",
+            "wall-r4v37df6obcbk24airxa",
+            "wall-vzsqejgipk6e2rtpi3lh",
+            "wall-y7sjxfxcj52rzpwegweb",
+            "wall-ysp7fkzceztsmbo72w2e"
+          ],
+          "added": [
+            "wall-375pdyorucgjm33a63kb",
+            "wall-3un4igrhvvdnhn4225xw",
+            "wall-47xu7v2wodwj2suboy5w",
+            "wall-4ohvyg5onrcf3qgwet6j",
+            "wall-4qn7juifguonalzmjyvb",
+            "wall-6pinolh7gaz4gobtl455",
+            "wall-btfwnyo6vzvxpbvf4kkv",
+            "wall-g2of4guqqurph63fnqew",
+            "wall-gdw2omrqmfspuqoadwcm",
+            "wall-kahuqo5nj75ccvkagaim",
+            "wall-maukuqc7qwd2nnbq72zv",
+            "wall-mx5ybb3zhkv2f3uk7gpt",
+            "wall-o52b76xr7bda6napqrpe",
+            "wall-s3elf3lp455hkmdwidnj~1",
+            "wall-wbpc6fq34hmgqicyfv3l",
+            "wall-yby3neehjpz62tvltv5f",
+            "wall-ycbpdyuaic7l7x6zk3pv"
+          ]
+        },
+        {
+          "space": "cell-1-thick-crossbar-t",
+          "room": "a",
+          "walls": [
+            "wall-ozklmf7ezqhrnscns2il",
+            "wall-2iqpvioxqw4y6fmpinwh",
+            "wall-q4psnn7hqpgajmx4wkc6",
+            "wall-gldkmqnyjgwrrict4ia3",
+            "wall-4gm3qn6rfpg3lb2jamti"
+          ],
+          "new": [
+            "wall-o52b76xr7bda6napqrpe",
+            "wall-btfwnyo6vzvxpbvf4kkv",
+            "wall-g2of4guqqurph63fnqew",
+            "wall-s3elf3lp455hkmdwidnj~1",
+            "wall-47xu7v2wodwj2suboy5w"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "cell-1-thick-crossbar-t",
+          "room": "b",
+          "walls": [
+            "wall-y7sjxfxcj52rzpwegweb",
+            "wall-kkiggytl7bcoykzs3fja",
+            "wall-dxvqkywvdxmxu7i24syp",
+            "wall-2iqpvioxqw4y6fmpinwh"
+          ],
+          "new": [
+            "wall-yby3neehjpz62tvltv5f",
+            "wall-mx5ybb3zhkv2f3uk7gpt",
+            "wall-kahuqo5nj75ccvkagaim",
+            "wall-btfwnyo6vzvxpbvf4kkv"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "cell-1-thick-crossbar-t",
+          "room": "c",
+          "walls": [
+            "wall-dxvqkywvdxmxu7i24syp",
+            "wall-r4v37df6obcbk24airxa",
+            "wall-2jc6rt5edratukrw7r4v",
+            "wall-ysp7fkzceztsmbo72w2e",
+            "wall-cgkcvhbqcdnpk3ibzpzw",
+            "wall-nbcgonskqps6gunxpmqk",
+            "wall-a33rzjwacrgshqrl7awk",
+            "wall-ps6cstz5teufd6z5lcqn",
+            "wall-cw6rxqzcgz4mg265hbkv",
+            "wall-vzsqejgipk6e2rtpi3lh",
+            "wall-q4psnn7hqpgajmx4wkc6"
+          ],
+          "new": [
+            "wall-kahuqo5nj75ccvkagaim",
+            "wall-gdw2omrqmfspuqoadwcm",
+            "wall-3un4igrhvvdnhn4225xw",
+            "wall-6pinolh7gaz4gobtl455",
+            "wall-4qn7juifguonalzmjyvb",
+            "wall-ycbpdyuaic7l7x6zk3pv",
+            "wall-maukuqc7qwd2nnbq72zv",
+            "wall-wbpc6fq34hmgqicyfv3l",
+            "wall-375pdyorucgjm33a63kb",
+            "wall-4ohvyg5onrcf3qgwet6j",
+            "wall-g2of4guqqurph63fnqew"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/278-wall-union-isolation.json/config",
+      "fingerprint": "d68bbcdce3824f7f18f3203c37aeb40db8ac511b4296f5fdb23b6dbf7562af5c",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": 7,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "wall-union-regression",
+          "field": "catalogue",
+          "removed": [
+            "wall-65taxaa2htwpwcvds5bf",
+            "wall-7wh4dc4zsb6sgctua4ua",
+            "wall-bkgyqvigm4ctebljhaog",
+            "wall-msbtojn7hftl3tfmewcs",
+            "wall-ozzpwewfhsoutixadjz7",
+            "wall-tdgzqjm5r32knquxv7k2",
+            "wall-wxmxv34267wzsz7zshkf"
+          ],
+          "added": [
+            "wall-6tmsnie5f3a5b5lqeq2v",
+            "wall-a6wlow42fubhxv567wl6",
+            "wall-arzp7upcgmtszy7mwbk3",
+            "wall-bpe6zodjeuaon3jajurs",
+            "wall-czwq67a6tooxfmtwqyje",
+            "wall-hk4f2ocpkrpxm6csuqj4",
+            "wall-tgedilnx2wuuvjwvygyr"
+          ]
+        },
+        {
+          "space": "wall-union-regression",
+          "room": "r1",
+          "walls": [
+            "wall-msbtojn7hftl3tfmewcs",
+            "wall-bkgyqvigm4ctebljhaog",
+            "wall-65taxaa2htwpwcvds5bf",
+            "wall-7wh4dc4zsb6sgctua4ua"
+          ],
+          "new": [
+            "wall-a6wlow42fubhxv567wl6",
+            "wall-bpe6zodjeuaon3jajurs",
+            "wall-hk4f2ocpkrpxm6csuqj4",
+            "wall-tgedilnx2wuuvjwvygyr"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "wall-union-regression",
+          "room": "r2",
+          "walls": [
+            "wall-tdgzqjm5r32knquxv7k2",
+            "wall-ozzpwewfhsoutixadjz7",
+            "wall-65taxaa2htwpwcvds5bf",
+            "wall-wxmxv34267wzsz7zshkf"
+          ],
+          "new": [
+            "wall-arzp7upcgmtszy7mwbk3",
+            "wall-czwq67a6tooxfmtwqyje",
+            "wall-hk4f2ocpkrpxm6csuqj4",
+            "wall-6tmsnie5f3a5b5lqeq2v"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/282-wall-identity-parity.json/input",
+      "fingerprint": "e4d06daf48d5f5d7a2d0abe1c672fb011ef414c40a3ff7e5b1093e3cbfc962bf",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "catalogue",
+          "removed": [
+            "wall-g33xjvyd5marxwkowoqm",
+            "wall-tqy5sdtydjrx7syybupl",
+            "wall-vgpy3fkbbprvy2cofyq3"
+          ],
+          "added": [
+            "wall-hweqcap3zjwtodmzejrx",
+            "wall-qvla5egzdzhub47amwmt",
+            "wall-qvla5egzdzhub47amwmt~2"
+          ]
+        },
+        {
+          "space": "floor",
+          "room": "large",
+          "walls": [
+            "wall-7cu6gpb7e44ucopgzjm2",
+            "wall-vgpy3fkbbprvy2cofyq3",
+            "wall-g33xjvyd5marxwkowoqm",
+            "wall-tqy5sdtydjrx7syybupl",
+            "wall-j2ti4ktyymgw4e2r5ns5",
+            "wall-oq2aqjdsktorqgxatdwh"
+          ],
+          "new": [
+            "wall-7cu6gpb7e44ucopgzjm2",
+            "wall-qvla5egzdzhub47amwmt",
+            "wall-hweqcap3zjwtodmzejrx",
+            "wall-qvla5egzdzhub47amwmt~2",
+            "wall-j2ti4ktyymgw4e2r5ns5",
+            "wall-oq2aqjdsktorqgxatdwh"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "floor",
+          "room": "small",
+          "walls": [
+            "wall-d2hfqa5fvueqwrwo2da7",
+            "wall-ybr4j2bztfx2wkbwvbwd",
+            "wall-qancsrbiwkhhy5hos7io",
+            "wall-g33xjvyd5marxwkowoqm"
+          ],
+          "new": [
+            "wall-d2hfqa5fvueqwrwo2da7",
+            "wall-ybr4j2bztfx2wkbwvbwd",
+            "wall-qancsrbiwkhhy5hos7io",
+            "wall-hweqcap3zjwtodmzejrx"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/316-span-over-door-migrated.json/stored",
+      "fingerprint": "56319c9ecf32dfe4258f86b817c634f4faafb4e2c4c47a65e022151e58ab316a",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": 8,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "golden-span-over-door",
+          "field": "catalogue",
+          "removed": [
+            "wall-odwfy5lyxkwsum2jewma",
+            "wall-qmhko777ctlb3hey6c3v",
+            "wall-s2g2iw3nbbxkym6sodv4"
+          ],
+          "added": [
+            "wall-vv3fkysged3g3m2nvfmi",
+            "wall-vv3fkysged3g3m2nvfmi~1",
+            "wall-vv3fkysged3g3m2nvfmi~2"
+          ]
+        },
+        {
+          "space": "golden-span-over-door",
+          "room": "sod-room",
+          "walls": [
+            "wall-s2g2iw3nbbxkym6sodv4",
+            "wall-qmhko777ctlb3hey6c3v",
+            "wall-odwfy5lyxkwsum2jewma",
+            "wall-l3r6mytgo2l4so24dljp",
+            "wall-mzbb6mwcqxj67rhw7mc5",
+            "wall-uyhvjlqcorfj3orzvhhj"
+          ],
+          "new": [
+            "wall-vv3fkysged3g3m2nvfmi",
+            "wall-vv3fkysged3g3m2nvfmi~1",
+            "wall-vv3fkysged3g3m2nvfmi~2",
+            "wall-l3r6mytgo2l4so24dljp",
+            "wall-mzbb6mwcqxj67rhw7mc5",
+            "wall-uyhvjlqcorfj3orzvhhj"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "golden-span-over-door",
+          "opening": {
+            "id": "sod-door",
+            "host": {
+              "kind": "wall",
+              "id": "wall-qmhko777ctlb3hey6c3v"
+            }
+          },
+          "new": {
+            "id": "sod-door",
+            "host": {
+              "kind": "wall",
+              "id": "wall-vv3fkysged3g3m2nvfmi~1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/0/before",
+      "fingerprint": "4db0873bef68e945bb4eff9539f7902acbdbd10af3806e60003d50ff7db7c593",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/1/before",
+      "fingerprint": "17150a27fd3377b3ddc20dad56d9ab4fe02332145fe08923ed4f3259a42c7f13",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/2/before",
+      "fingerprint": "a23762a1b5019de68d9ae450f8c104097531a4d19ddf21a32ed9fe0f0af0e3e7",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/4/before",
+      "fingerprint": "e4e710d1c0f76553ec98545fc3e9acc351f671946d875932e27be57c4969ff4b",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/5/before",
+      "fingerprint": "e58b861ef3a3be8cf7e7762de66c31d6c5da0ad619fcb702b6ef00dcc9c6b524",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/6/before",
+      "fingerprint": "debeeacfa5901685330249ba5dd38af5eeae546fb4fef7fd514aff1b3f8ea857",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/8/before",
+      "fingerprint": "475240a9feffeb34aa3fd1b527fc0be127de98f855e799512bdd6378734a8a1d",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/9/before",
+      "fingerprint": "eb59fd0002a2b975bd903d8100375de938eae18c5fee3873b827bc1eaa25afce",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [
+        {
+          "id": "hosted-opening",
+          "host": {
+            "kind": "partition",
+            "id": "long-source",
+            "t": 0.727272727
+          }
+        }
+      ],
+      "disposition": "verified representative: explainable model11 arrangement, no demonstrated ownership/metadata loss; passport not accepted",
+      "evidence": "two-representative-independent-proofs.json; two-representatives-current0c.json",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        },
+        {
+          "space": "floor",
+          "opening": {
+            "id": "hosted-opening",
+            "host": {
+              "kind": "partition",
+              "id": "long-source"
+            }
+          },
+          "new": {
+            "id": "hosted-opening",
+            "host": {
+              "kind": "partition",
+              "id": "long-source~2"
+            }
+          }
+        }
+      ],
+      "ownershipWitness": {
+        "label": "test/fixtures/804-wall-face-lineage-backend.json/9/before",
+        "legacyOracleMatchesOriginal": true,
+        "inputUntouched": true,
+        "explicitWallRecordsExactByID": true,
+        "roomPolygonsAndWallIDCyclesExactByID": true,
+        "completeSourcePartitionCoverage": true,
+        "sourceParameterExactlyPreserved": "727272727/1000000000",
+        "hostChild": "long-source~2",
+        "openingBindingsOpaqueWidthAndOrientationExact": true,
+        "oldRawY": 0.7083333333333334,
+        "newProjectedY": 0.7083333332083334,
+        "coordinateDrift": 1.2500001034254637e-10,
+        "explanation": "new numeric projection follows unchanged source host t, which differed slightly from the old independent y scalar",
+        "configAndSpaceNonstructuralMetadataExact": true
+      }
+    },
+    {
+      "label": "test/fixtures/804-wall-face-lineage-backend.json/10/before",
+      "fingerprint": "0c9a022edcad210d2b4028b71b278b0a7e21f4b03442de73037c8010e68ab0f1",
+      "group": "G3-explicit-model10-arrangement",
+      "inputModel": 10,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 4,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [
+        {
+          "id": "hosted-opening",
+          "host": {
+            "kind": "partition",
+            "id": "long-source",
+            "t": 0.290909091
+          }
+        }
+      ],
+      "disposition": "exact-source-wall-ids-retained-in-capture; partition cuts/host mapping need reviewed full witness",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "long-source~1",
+            "long-source~2"
+          ]
+        },
+        {
+          "space": "floor",
+          "opening": {
+            "id": "hosted-opening",
+            "host": {
+              "kind": "partition",
+              "id": "long-source"
+            }
+          },
+          "new": {
+            "id": "hosted-opening",
+            "host": {
+              "kind": "partition",
+              "id": "long-source~1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/coordinate-canonicalization.json/configInput",
+      "fingerprint": "2a04ef1fa1160f6628a22349b7390327ea42284f0e359a4bd8ad93da7e2ddb45",
+      "group": "G4-legacy-coordinate-arrangement",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 1,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [
+        {
+          "id": "opening",
+          "host": {
+            "kind": "partition",
+            "id": "partition",
+            "t": 0.5000000004
+          }
+        }
+      ],
+      "disposition": "raw vs canonical inputs differ; generated IDs/extra atoms must be reviewed per original input, not substituted",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "catalogue",
+          "removed": [
+            "wall-6klz3zy3rwe2ri7lk7x3",
+            "wall-gxr3gn34bhejc4bohe2e",
+            "wall-i4pkr4c72mgpgazfxyvm",
+            "wall-my2cf3t3762pknzllaxl",
+            "wall-rvuxp2stkh7pxsavg53r",
+            "wall-xleal2ja7js272dufr3l",
+            "wall-yx76keqywqbm3ba5cvxv"
+          ],
+          "added": [
+            "wall-bphhobiq3j5w54bcbhbv",
+            "wall-fhbmp4h5c5unnwd64y7i",
+            "wall-fsymdcbjsx2qiu4bec6c",
+            "wall-g45wjgy6eu5xrzo4afjk~1",
+            "wall-jrc6yh4droevlfkwjlji~1",
+            "wall-lufsqev4umldcp2zcvt4",
+            "wall-tyr3iq6l3ryikqmwnfse"
+          ]
+        },
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [
+            "wall-bjlgxrgwvhujerdfplhs",
+            "wall-riyf55vrwhceoui3d2mu"
+          ],
+          "added": [
+            "partition~1",
+            "wall-jm6delofeivb4pe2rzlp",
+            "wall-kp2wpyvicqymwyotjo5t"
+          ]
+        },
+        {
+          "space": "floor",
+          "room": "poly",
+          "walls": [
+            "wall-yx76keqywqbm3ba5cvxv",
+            "wall-6klz3zy3rwe2ri7lk7x3",
+            "wall-my2cf3t3762pknzllaxl"
+          ],
+          "new": [
+            "wall-g45wjgy6eu5xrzo4afjk~1",
+            "wall-bphhobiq3j5w54bcbhbv",
+            "wall-jrc6yh4droevlfkwjlji~1"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "floor",
+          "room": "rect",
+          "walls": [
+            "wall-i4pkr4c72mgpgazfxyvm",
+            "wall-gxr3gn34bhejc4bohe2e",
+            "wall-rvuxp2stkh7pxsavg53r",
+            "wall-xleal2ja7js272dufr3l"
+          ],
+          "new": [
+            "wall-lufsqev4umldcp2zcvt4",
+            "wall-fhbmp4h5c5unnwd64y7i",
+            "wall-fsymdcbjsx2qiu4bec6c",
+            "wall-tyr3iq6l3ryikqmwnfse"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "floor",
+          "opening": {
+            "id": "opening",
+            "host": {
+              "kind": "partition",
+              "id": "partition"
+            }
+          },
+          "new": {
+            "id": "opening",
+            "host": {
+              "kind": "partition",
+              "id": "partition~1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/coordinate-canonicalization.json/configExpected",
+      "fingerprint": "b70fcda6df4f1a37751934c749a1ed5bc9591022c589eb3e0fce4585331fe568",
+      "group": "G4-legacy-coordinate-arrangement",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 1,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [
+        {
+          "id": "opening",
+          "host": {
+            "kind": "partition",
+            "id": "partition",
+            "t": 0.5
+          }
+        }
+      ],
+      "disposition": "raw vs canonical inputs differ; generated IDs/extra atoms must be reviewed per original input, not substituted",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "partition~1"
+          ]
+        },
+        {
+          "space": "floor",
+          "opening": {
+            "id": "opening",
+            "host": {
+              "kind": "partition",
+              "id": "partition"
+            }
+          },
+          "new": {
+            "id": "opening",
+            "host": {
+              "kind": "partition",
+              "id": "partition~1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/optimize-storage-roundtrip.json/input/config",
+      "fingerprint": "2836d29ab282ad26a0465d5f13a9dd52daaa1300231d0b63a763da709b1f47d4",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": 7,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "fine",
+          "field": "catalogue",
+          "removed": [
+            "wall-2p5v3xgwtvsbainkhyk4",
+            "wall-eivcyotdqeqxur4vnhtm",
+            "wall-vazlh4lrawmx44cgu4gq",
+            "wall-wjksr7kt5pqii5mdfjlm"
+          ],
+          "added": [
+            "wall-4aynx5ho42xjmcir2ssg",
+            "wall-e7etdmx7xg3mahu4avma",
+            "wall-o7jeq4zbgcylrx4nbesz",
+            "wall-z5phvtyh5tgfg6vrsa4o"
+          ]
+        },
+        {
+          "space": "fine",
+          "room": "fine-room",
+          "walls": [
+            "wall-wjksr7kt5pqii5mdfjlm",
+            "wall-eivcyotdqeqxur4vnhtm",
+            "wall-vazlh4lrawmx44cgu4gq",
+            "wall-2p5v3xgwtvsbainkhyk4"
+          ],
+          "new": [
+            "wall-o7jeq4zbgcylrx4nbesz",
+            "wall-e7etdmx7xg3mahu4avma",
+            "wall-4aynx5ho42xjmcir2ssg",
+            "wall-z5phvtyh5tgfg6vrsa4o"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "regular",
+          "field": "catalogue",
+          "removed": [
+            "wall-47i5wxqm2645m5tsrnvu",
+            "wall-5yfzignil3ysguqdo4df",
+            "wall-kzjn7273gogxtjkjtbs6",
+            "wall-oyjp2s67gzz4m6vwvfiq"
+          ],
+          "added": [
+            "wall-5cpegapcqzk7z5qvqfwx",
+            "wall-6ydgelnzulo4kyloww6i",
+            "wall-min22n7bdn65nharmwrq",
+            "wall-wkjdgvxkdvycd7r7vch3"
+          ]
+        },
+        {
+          "space": "regular",
+          "room": "regular-room",
+          "walls": [
+            "wall-5yfzignil3ysguqdo4df",
+            "wall-oyjp2s67gzz4m6vwvfiq",
+            "wall-47i5wxqm2645m5tsrnvu",
+            "wall-kzjn7273gogxtjkjtbs6"
+          ],
+          "new": [
+            "wall-wkjdgvxkdvycd7r7vch3",
+            "wall-5cpegapcqzk7z5qvqfwx",
+            "wall-min22n7bdn65nharmwrq",
+            "wall-6ydgelnzulo4kyloww6i"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/real-plan-first-floor.json/space",
+      "fingerprint": "57afbf64214781f4c607a2346b04014d4ea9c4eacd9b64b9e941b401555e1def",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 1,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "real-first-floor",
+          "field": "catalogue",
+          "removed": [
+            "wall-265w35nzqhqc2pko36g5",
+            "wall-33yh7lyalgfpjuvqxl6m",
+            "wall-5guhj52sxynfmhhtwlfy",
+            "wall-5jju6dsf3clx6mj2op5q",
+            "wall-67fnvwlvenv4pub3t4si",
+            "wall-7pwjlxvazlpvtuzthnsr",
+            "wall-c3xtbqhcei67dycij3aw",
+            "wall-cmeederahksvriukc4ox",
+            "wall-cvp6ouerpf3yca4hr2xh",
+            "wall-euhnirsrx65qmc7aellm",
+            "wall-gwwskx2wqs2ymgxu2u42",
+            "wall-gybrzhmc3opwp4r7yea3",
+            "wall-h3wpwqvfmzkk234hrjoh",
+            "wall-hnnkk3tncmd27my6sn6e",
+            "wall-hslhtlvx2okhrprpdc6k",
+            "wall-inu5zwi4256u7gaq2r6t",
+            "wall-jhett4imbzh5taptgx3i",
+            "wall-kfsq6revg7dm6gyzxqsr",
+            "wall-kwvnb6ewqc3vdcyzkp2a",
+            "wall-l4hhvrlay4d4tmhs2yks",
+            "wall-paxatybupyt45ort62j4",
+            "wall-pcyejnh7jabw77ujsmzs",
+            "wall-q3atsejqfgdk6od34van",
+            "wall-rgfanppidgu5gu4m6l5l",
+            "wall-szzd54b2e76vkx4glodi",
+            "wall-tohieerugwfkjwj4sc4r",
+            "wall-ugsz7hso2bg4meuft7sb",
+            "wall-wain2vcde4tvc567anjr",
+            "wall-wirlhj552w4sf3oyy6d5",
+            "wall-wqhls4kmvkujlvwkn4kc",
+            "wall-x73dnofmuow6n2me2lov",
+            "wall-xu6fk6sfhu7xzsrrqbsk",
+            "wall-ymfxohtgh65mnyhopa3v"
+          ],
+          "added": [
+            "wall-4vldev6mspeejw4p6bvw",
+            "wall-6topay25c7zibnl3ji4t",
+            "wall-6topay25c7zibnl3ji4t~1",
+            "wall-6vwnco3id2v2orivgn3e",
+            "wall-6vwnco3id2v2orivgn3e~1",
+            "wall-axdyj5vu42mwqrblcgb4",
+            "wall-c374pbwzqdjwnv5c4cvu~1",
+            "wall-chb4rhvgl6czjoqljyza",
+            "wall-d3ek32n3jboqq7ju5our",
+            "wall-f67vky6labtzacomlpwq",
+            "wall-f67vky6labtzacomlpwq~1",
+            "wall-f67vky6labtzacomlpwq~2",
+            "wall-fdmkwxktcru2speoixee",
+            "wall-fdmkwxktcru2speoixee~1",
+            "wall-fdmkwxktcru2speoixee~2",
+            "wall-fecbvtrrr6gqzoo3tlqd",
+            "wall-fioubhgad45yrxz4jueb",
+            "wall-g2gx2i6h5lib3ymhzsxk",
+            "wall-hcw76yeofia5sd5d2mwx",
+            "wall-hieakvsyy25tspait7dj",
+            "wall-hnkwo77zxwuau34z4gmu",
+            "wall-hwfhuu4kmii2lpjaz5in",
+            "wall-i3g7eq3fqh7hslrirhtd",
+            "wall-jowqi2xi2j7msqbapvh2",
+            "wall-kc2v3pniz3d7gwnwqcfe",
+            "wall-kwc7hxui3wticmk476oa",
+            "wall-mr4zr2qjyj7mvkwtop6k",
+            "wall-oban27osrdsml5qmwmha",
+            "wall-qk25qpzamiasp3m4a2uc",
+            "wall-rdh6idthbwbwnby74vlh",
+            "wall-vbjdgmhb4mh5mm46jede",
+            "wall-vbjdgmhb4mh5mm46jede~1",
+            "wall-xwdjp4m3no6uweg4cueq~1"
+          ]
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-a",
+          "walls": [
+            "wall-5jju6dsf3clx6mj2op5q",
+            "wall-wain2vcde4tvc567anjr",
+            "wall-h3wpwqvfmzkk234hrjoh",
+            "wall-jhett4imbzh5taptgx3i",
+            "wall-c3xtbqhcei67dycij3aw",
+            "wall-265w35nzqhqc2pko36g5",
+            "wall-tohieerugwfkjwj4sc4r",
+            "wall-hnnkk3tncmd27my6sn6e",
+            "wall-wirlhj552w4sf3oyy6d5",
+            "wall-67fnvwlvenv4pub3t4si",
+            "wall-l4hhvrlay4d4tmhs2yks",
+            "wall-33yh7lyalgfpjuvqxl6m",
+            "wall-rgfanppidgu5gu4m6l5l"
+          ],
+          "new": [
+            "wall-hieakvsyy25tspait7dj",
+            "wall-kwc7hxui3wticmk476oa",
+            "wall-axdyj5vu42mwqrblcgb4",
+            "wall-fdmkwxktcru2speoixee",
+            "wall-6vwnco3id2v2orivgn3e",
+            "wall-6vwnco3id2v2orivgn3e~1",
+            "wall-vbjdgmhb4mh5mm46jede",
+            "wall-f67vky6labtzacomlpwq~1",
+            "wall-f67vky6labtzacomlpwq",
+            "wall-fecbvtrrr6gqzoo3tlqd",
+            "wall-chb4rhvgl6czjoqljyza",
+            "wall-g2gx2i6h5lib3ymhzsxk",
+            "wall-fioubhgad45yrxz4jueb"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-b",
+          "walls": [
+            "wall-wqhls4kmvkujlvwkn4kc",
+            "wall-33yh7lyalgfpjuvqxl6m",
+            "wall-ugsz7hso2bg4meuft7sb",
+            "wall-paxatybupyt45ort62j4",
+            "wall-kwvnb6ewqc3vdcyzkp2a"
+          ],
+          "new": [
+            "wall-hwfhuu4kmii2lpjaz5in",
+            "wall-g2gx2i6h5lib3ymhzsxk",
+            "wall-mr4zr2qjyj7mvkwtop6k",
+            "wall-c374pbwzqdjwnv5c4cvu~1",
+            "wall-6topay25c7zibnl3ji4t~1"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-c",
+          "walls": [
+            "wall-euhnirsrx65qmc7aellm",
+            "wall-paxatybupyt45ort62j4",
+            "wall-x73dnofmuow6n2me2lov",
+            "wall-7pwjlxvazlpvtuzthnsr"
+          ],
+          "new": [
+            "wall-jowqi2xi2j7msqbapvh2",
+            "wall-c374pbwzqdjwnv5c4cvu~1",
+            "wall-4vldev6mspeejw4p6bvw",
+            "wall-d3ek32n3jboqq7ju5our"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-d",
+          "walls": [
+            "wall-hslhtlvx2okhrprpdc6k",
+            "wall-ymfxohtgh65mnyhopa3v",
+            "wall-kwvnb6ewqc3vdcyzkp2a",
+            "wall-euhnirsrx65qmc7aellm",
+            "wall-q3atsejqfgdk6od34van"
+          ],
+          "new": [
+            "wall-hcw76yeofia5sd5d2mwx",
+            "wall-6topay25c7zibnl3ji4t",
+            "wall-6topay25c7zibnl3ji4t~1",
+            "wall-jowqi2xi2j7msqbapvh2",
+            "wall-hnkwo77zxwuau34z4gmu"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-e",
+          "walls": [
+            "wall-x73dnofmuow6n2me2lov",
+            "wall-ugsz7hso2bg4meuft7sb",
+            "wall-l4hhvrlay4d4tmhs2yks",
+            "wall-67fnvwlvenv4pub3t4si",
+            "wall-wirlhj552w4sf3oyy6d5",
+            "wall-hnnkk3tncmd27my6sn6e",
+            "wall-5guhj52sxynfmhhtwlfy",
+            "wall-szzd54b2e76vkx4glodi"
+          ],
+          "new": [
+            "wall-4vldev6mspeejw4p6bvw",
+            "wall-mr4zr2qjyj7mvkwtop6k",
+            "wall-chb4rhvgl6czjoqljyza",
+            "wall-fecbvtrrr6gqzoo3tlqd",
+            "wall-f67vky6labtzacomlpwq",
+            "wall-f67vky6labtzacomlpwq~1",
+            "wall-f67vky6labtzacomlpwq~2",
+            "wall-i3g7eq3fqh7hslrirhtd"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-f",
+          "walls": [
+            "wall-5guhj52sxynfmhhtwlfy",
+            "wall-tohieerugwfkjwj4sc4r",
+            "wall-kfsq6revg7dm6gyzxqsr",
+            "wall-cmeederahksvriukc4ox",
+            "wall-gwwskx2wqs2ymgxu2u42"
+          ],
+          "new": [
+            "wall-f67vky6labtzacomlpwq~2",
+            "wall-vbjdgmhb4mh5mm46jede",
+            "wall-vbjdgmhb4mh5mm46jede~1",
+            "wall-rdh6idthbwbwnby74vlh",
+            "wall-oban27osrdsml5qmwmha"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-g",
+          "walls": [
+            "wall-gybrzhmc3opwp4r7yea3",
+            "wall-rgfanppidgu5gu4m6l5l",
+            "wall-wqhls4kmvkujlvwkn4kc",
+            "wall-ymfxohtgh65mnyhopa3v"
+          ],
+          "new": [
+            "wall-kc2v3pniz3d7gwnwqcfe",
+            "wall-fioubhgad45yrxz4jueb",
+            "wall-hwfhuu4kmii2lpjaz5in",
+            "wall-6topay25c7zibnl3ji4t"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-first-floor",
+          "room": "room-h",
+          "walls": [
+            "wall-jhett4imbzh5taptgx3i",
+            "wall-xu6fk6sfhu7xzsrrqbsk",
+            "wall-inu5zwi4256u7gaq2r6t",
+            "wall-cvp6ouerpf3yca4hr2xh",
+            "wall-pcyejnh7jabw77ujsmzs",
+            "wall-kfsq6revg7dm6gyzxqsr",
+            "wall-265w35nzqhqc2pko36g5",
+            "wall-c3xtbqhcei67dycij3aw"
+          ],
+          "new": [
+            "wall-fdmkwxktcru2speoixee",
+            "wall-fdmkwxktcru2speoixee~1",
+            "wall-fdmkwxktcru2speoixee~2",
+            "wall-qk25qpzamiasp3m4a2uc",
+            "wall-xwdjp4m3no6uweg4cueq~1",
+            "wall-vbjdgmhb4mh5mm46jede~1",
+            "wall-6vwnco3id2v2orivgn3e~1",
+            "wall-6vwnco3id2v2orivgn3e"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/real-plan-second-floor.json/space",
+      "fingerprint": "46fa7e3eae391e629faeab25ccb4106300b8be147cfcd58bb7473684fc9eb266",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 1,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "real-second-floor",
+          "field": "catalogue",
+          "removed": [
+            "wall-4ecjt6d6is4oqnycvhr7",
+            "wall-4h6747b6v2j6e4ctgoh3",
+            "wall-5d2m5pa3v7n5dzo6qphu",
+            "wall-5o5ihsfvljb7wl4mb2jp",
+            "wall-6ksb3nbrrlg7m47zpimm",
+            "wall-777icns7b4zwmjygpy5b",
+            "wall-af6mapc5dobhjqxd6yag",
+            "wall-bs4lkzhoj7367zfcazy3",
+            "wall-cmntsjqga56jhe25ea6j",
+            "wall-fs77yr36beqjmjny6ske",
+            "wall-fymr2ymrqnq2cltonio4",
+            "wall-hwjhv75sxdmrrnikzxt3",
+            "wall-jahu5dbrjs2tganahql5",
+            "wall-jliobj4h6kzybu4rxilm",
+            "wall-jocu65rqbvgpqzi3bvdi",
+            "wall-jqgezseqj5jgsi7yecv3",
+            "wall-jy5p6kmp5w2dkp3pz2y2",
+            "wall-kez5ey7ohy4nchlj5msp",
+            "wall-ldxr2jomsz7xgiibhrms",
+            "wall-n7vcpnps2zhowakjaamb",
+            "wall-nl6pglthmq6ekl54haqt",
+            "wall-oc4nzduhqrnpjjzj3uuk",
+            "wall-pmmwmzajfs6tu3ink7gb",
+            "wall-pojmvvm6wauwzlhf5jym",
+            "wall-semy5kksv5cvltvoksqk",
+            "wall-u6y4dneptk7qvbdoa7ov",
+            "wall-uutt35vpum2y6gdshceg",
+            "wall-xnslhd44vwnff4lirbrm",
+            "wall-xtbkk6gkb3lth6iuypno"
+          ],
+          "added": [
+            "wall-2bo2f5ulcpraxp4kmqfa",
+            "wall-3img2s37itraw3kcw66u",
+            "wall-42q72wylywdckrdvkmkc",
+            "wall-4fdy54lykvzwtz7yq44w",
+            "wall-52ppdqfkvf7vvosov4zm",
+            "wall-52ppdqfkvf7vvosov4zm~1",
+            "wall-5yf255pmtf5b6nnltxh3",
+            "wall-6nbatpptq55kr6xfqtr2",
+            "wall-6yj2nbbwdybzax64ar42",
+            "wall-7nkrfzprpae4atcl2qro",
+            "wall-7ptayy2ogjytcl4r6zaw",
+            "wall-7vscfyszv6owkruw5duh",
+            "wall-cqhrsnqnjmhyhyd426lj",
+            "wall-d4taeojxooj3yoyxn3n2",
+            "wall-d4taeojxooj3yoyxn3n2~1",
+            "wall-ea2srzz22qtbpcwlxpf4",
+            "wall-etqdns57qvtd6ec5gupi",
+            "wall-fotw7p5tizfi2hjinh2x",
+            "wall-hlbfea6drx7bjf6dz7wg",
+            "wall-hqf6iceq4mi442cssfeh",
+            "wall-ma6lqhqrkmvqdfaxgfcv~1",
+            "wall-nsq5dt25q5rnsx5bwaka",
+            "wall-nsq5dt25q5rnsx5bwaka~1",
+            "wall-ousx57amurms6pjrf6m2",
+            "wall-pij3h7aod4urcjeggfv4",
+            "wall-s7k37q762bpz4iiahnfs",
+            "wall-x2wdwninjzs2f6eesfsz",
+            "wall-xco7ngj63doq5rxxvgmo",
+            "wall-xplav5hbpv7l26y43bsw"
+          ]
+        },
+        {
+          "space": "real-second-floor",
+          "field": "partitions",
+          "removed": [],
+          "added": [
+            "partition-mt2on9ou-0~1",
+            "partition-mt2on9ou-0~2"
+          ]
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-a",
+          "walls": [
+            "wall-6ksb3nbrrlg7m47zpimm",
+            "wall-pmmwmzajfs6tu3ink7gb",
+            "wall-semy5kksv5cvltvoksqk",
+            "wall-n7vcpnps2zhowakjaamb",
+            "wall-fymr2ymrqnq2cltonio4"
+          ],
+          "new": [
+            "wall-fotw7p5tizfi2hjinh2x",
+            "wall-etqdns57qvtd6ec5gupi",
+            "wall-5yf255pmtf5b6nnltxh3",
+            "wall-d4taeojxooj3yoyxn3n2",
+            "wall-x2wdwninjzs2f6eesfsz"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-b",
+          "walls": [
+            "wall-jahu5dbrjs2tganahql5",
+            "wall-u6y4dneptk7qvbdoa7ov",
+            "wall-cmntsjqga56jhe25ea6j",
+            "wall-semy5kksv5cvltvoksqk",
+            "wall-bs4lkzhoj7367zfcazy3"
+          ],
+          "new": [
+            "wall-52ppdqfkvf7vvosov4zm",
+            "wall-52ppdqfkvf7vvosov4zm~1",
+            "wall-d4taeojxooj3yoyxn3n2~1",
+            "wall-5yf255pmtf5b6nnltxh3",
+            "wall-hlbfea6drx7bjf6dz7wg"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-c",
+          "walls": [
+            "wall-xtbkk6gkb3lth6iuypno",
+            "wall-fs77yr36beqjmjny6ske",
+            "wall-xnslhd44vwnff4lirbrm",
+            "wall-pojmvvm6wauwzlhf5jym"
+          ],
+          "new": [
+            "wall-2bo2f5ulcpraxp4kmqfa",
+            "wall-cqhrsnqnjmhyhyd426lj",
+            "wall-xplav5hbpv7l26y43bsw",
+            "wall-7vscfyszv6owkruw5duh"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-d",
+          "walls": [
+            "wall-5d2m5pa3v7n5dzo6qphu",
+            "wall-jy5p6kmp5w2dkp3pz2y2",
+            "wall-jqgezseqj5jgsi7yecv3",
+            "wall-uutt35vpum2y6gdshceg",
+            "wall-fs77yr36beqjmjny6ske"
+          ],
+          "new": [
+            "wall-6nbatpptq55kr6xfqtr2",
+            "wall-42q72wylywdckrdvkmkc",
+            "wall-ma6lqhqrkmvqdfaxgfcv~1",
+            "wall-7nkrfzprpae4atcl2qro",
+            "wall-cqhrsnqnjmhyhyd426lj"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-e",
+          "walls": [
+            "wall-af6mapc5dobhjqxd6yag",
+            "wall-fymr2ymrqnq2cltonio4",
+            "wall-jocu65rqbvgpqzi3bvdi",
+            "wall-jy5p6kmp5w2dkp3pz2y2"
+          ],
+          "new": [
+            "wall-3img2s37itraw3kcw66u",
+            "wall-x2wdwninjzs2f6eesfsz",
+            "wall-6yj2nbbwdybzax64ar42",
+            "wall-42q72wylywdckrdvkmkc"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-f",
+          "walls": [
+            "wall-uutt35vpum2y6gdshceg",
+            "wall-hwjhv75sxdmrrnikzxt3",
+            "wall-4ecjt6d6is4oqnycvhr7",
+            "wall-4h6747b6v2j6e4ctgoh3",
+            "wall-xnslhd44vwnff4lirbrm"
+          ],
+          "new": [
+            "wall-7nkrfzprpae4atcl2qro",
+            "wall-4fdy54lykvzwtz7yq44w",
+            "wall-xco7ngj63doq5rxxvgmo",
+            "wall-ea2srzz22qtbpcwlxpf4",
+            "wall-xplav5hbpv7l26y43bsw"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-g",
+          "walls": [
+            "wall-4ecjt6d6is4oqnycvhr7",
+            "wall-jliobj4h6kzybu4rxilm",
+            "wall-nl6pglthmq6ekl54haqt",
+            "wall-777icns7b4zwmjygpy5b",
+            "wall-5o5ihsfvljb7wl4mb2jp"
+          ],
+          "new": [
+            "wall-xco7ngj63doq5rxxvgmo",
+            "wall-pij3h7aod4urcjeggfv4",
+            "wall-nsq5dt25q5rnsx5bwaka",
+            "wall-nsq5dt25q5rnsx5bwaka~1",
+            "wall-7ptayy2ogjytcl4r6zaw"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "real-second-floor",
+          "room": "room-h",
+          "walls": [
+            "wall-n7vcpnps2zhowakjaamb",
+            "wall-cmntsjqga56jhe25ea6j",
+            "wall-u6y4dneptk7qvbdoa7ov",
+            "wall-oc4nzduhqrnpjjzj3uuk",
+            "wall-ldxr2jomsz7xgiibhrms",
+            "wall-kez5ey7ohy4nchlj5msp",
+            "wall-nl6pglthmq6ekl54haqt",
+            "wall-jliobj4h6kzybu4rxilm",
+            "wall-hwjhv75sxdmrrnikzxt3",
+            "wall-jqgezseqj5jgsi7yecv3",
+            "wall-jocu65rqbvgpqzi3bvdi"
+          ],
+          "new": [
+            "wall-d4taeojxooj3yoyxn3n2",
+            "wall-d4taeojxooj3yoyxn3n2~1",
+            "wall-52ppdqfkvf7vvosov4zm~1",
+            "wall-hqf6iceq4mi442cssfeh",
+            "wall-s7k37q762bpz4iiahnfs",
+            "wall-ousx57amurms6pjrf6m2",
+            "wall-nsq5dt25q5rnsx5bwaka",
+            "wall-pij3h7aod4urcjeggfv4",
+            "wall-4fdy54lykvzwtz7yq44w",
+            "wall-ma6lqhqrkmvqdfaxgfcv~1",
+            "wall-6yj2nbbwdybzax64ar42"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/marker-alerts.mjs:makeMarkerAlertsFixture/config",
+      "fingerprint": "941f7846238322fc29f1ecf3d2d7bfd7e36517b384e0ca423fce6f48fb23ec81",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "golden-geometry",
+          "field": "catalogue",
+          "removed": [
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-y3aen57adebtt6s2slvu",
+            "wall-yylsmsx5pmmwkz7irprk"
+          ],
+          "added": [
+            "wall-6m5kcnumbriurqopbww4",
+            "wall-6m5kcnumbriurqopbww4~1",
+            "wall-6m5kcnumbriurqopbww4~2"
+          ]
+        },
+        {
+          "space": "golden-geometry",
+          "room": "geo-nw",
+          "walls": [
+            "wall-4xqim4uuxt2hyi4fhrko",
+            "wall-y3aen57adebtt6s2slvu",
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-yylsmsx5pmmwkz7irprk",
+            "wall-ho2pudi6xixfy4arlrfr",
+            "wall-234wojzxcmub2itpixmi"
+          ],
+          "new": [
+            "wall-4xqim4uuxt2hyi4fhrko",
+            "wall-6m5kcnumbriurqopbww4",
+            "wall-6m5kcnumbriurqopbww4~1",
+            "wall-6m5kcnumbriurqopbww4~2",
+            "wall-ho2pudi6xixfy4arlrfr",
+            "wall-234wojzxcmub2itpixmi"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "golden-geometry",
+          "room": "geo-ne",
+          "walls": [
+            "wall-izxhkrx3naqu33unzfb4",
+            "wall-6keyaycibpqabuvyzqsi",
+            "wall-gberlzbc5ksacvvuznpd",
+            "wall-yylsmsx5pmmwkz7irprk",
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-y3aen57adebtt6s2slvu"
+          ],
+          "new": [
+            "wall-izxhkrx3naqu33unzfb4",
+            "wall-6keyaycibpqabuvyzqsi",
+            "wall-gberlzbc5ksacvvuznpd",
+            "wall-6m5kcnumbriurqopbww4~2",
+            "wall-6m5kcnumbriurqopbww4~1",
+            "wall-6m5kcnumbriurqopbww4"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "golden-geometry",
+          "opening": {
+            "id": "geo-door",
+            "host": {
+              "kind": "wall",
+              "id": "wall-yylsmsx5pmmwkz7irprk"
+            }
+          },
+          "new": {
+            "id": "geo-door",
+            "host": {
+              "kind": "wall",
+              "id": "wall-6m5kcnumbriurqopbww4~2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/visual-matrix.mjs:makeVisualMatrixFixture/config",
+      "fingerprint": "29960088992786b51afd1b46bbe9f5f3cd6cc27e2db4da8cc3e1cc17e4fc873e",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 3,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "golden-geometry",
+          "field": "catalogue",
+          "removed": [
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-y3aen57adebtt6s2slvu",
+            "wall-yylsmsx5pmmwkz7irprk"
+          ],
+          "added": [
+            "wall-6m5kcnumbriurqopbww4",
+            "wall-6m5kcnumbriurqopbww4~1",
+            "wall-6m5kcnumbriurqopbww4~2"
+          ]
+        },
+        {
+          "space": "golden-geometry",
+          "room": "geo-nw",
+          "walls": [
+            "wall-4xqim4uuxt2hyi4fhrko",
+            "wall-y3aen57adebtt6s2slvu",
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-yylsmsx5pmmwkz7irprk",
+            "wall-ho2pudi6xixfy4arlrfr",
+            "wall-234wojzxcmub2itpixmi"
+          ],
+          "new": [
+            "wall-4xqim4uuxt2hyi4fhrko",
+            "wall-6m5kcnumbriurqopbww4",
+            "wall-6m5kcnumbriurqopbww4~1",
+            "wall-6m5kcnumbriurqopbww4~2",
+            "wall-ho2pudi6xixfy4arlrfr",
+            "wall-234wojzxcmub2itpixmi"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "golden-geometry",
+          "room": "geo-ne",
+          "walls": [
+            "wall-izxhkrx3naqu33unzfb4",
+            "wall-6keyaycibpqabuvyzqsi",
+            "wall-gberlzbc5ksacvvuznpd",
+            "wall-yylsmsx5pmmwkz7irprk",
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-y3aen57adebtt6s2slvu"
+          ],
+          "new": [
+            "wall-izxhkrx3naqu33unzfb4",
+            "wall-6keyaycibpqabuvyzqsi",
+            "wall-gberlzbc5ksacvvuznpd",
+            "wall-6m5kcnumbriurqopbww4~2",
+            "wall-6m5kcnumbriurqopbww4~1",
+            "wall-6m5kcnumbriurqopbww4"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "golden-geometry",
+          "opening": {
+            "id": "geo-door",
+            "host": {
+              "kind": "wall",
+              "id": "wall-yylsmsx5pmmwkz7irprk"
+            }
+          },
+          "new": {
+            "id": "geo-door",
+            "host": {
+              "kind": "wall",
+              "id": "wall-6m5kcnumbriurqopbww4~2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "demo/srv/demo.html:CFG",
+      "fingerprint": "08a2265c231c34ae51c8ab5c5c66988c23c7705763e5af91797d903caba70e71",
+      "group": "G1-generated-legacy-catalogue",
+      "inputModel": null,
+      "inputHasCurrentGraph": false,
+      "explicitWallCount": 0,
+      "explicitPartitionCount": 0,
+      "lostExplicitIDs": [],
+      "changedExplicitOpeningHosts": [],
+      "disposition": "no persisted catalogue IDs in input; initial allocation changes do not establish saved-ID loss, but full geometry/room ownership proof is still required",
+      "evidence": "identity-diffs.json; semantic-source-summary.json; immutable229 archive",
+      "acceptedExpected": false,
+      "identityDelta": [
+        {
+          "space": "f1",
+          "field": "catalogue",
+          "removed": [
+            "wall-6j7em53qf5g6pbevrohn",
+            "wall-mfz3wezwj2ra7v4qqsxj",
+            "wall-yep6whtnzai3tstewpsv"
+          ],
+          "added": [
+            "wall-5vpehkb7fgwqlqo3xrir",
+            "wall-cectvuk2bsvps6jhhemq",
+            "wall-nyfpuswdua3irf3redpd"
+          ]
+        },
+        {
+          "space": "f1",
+          "room": "r1",
+          "walls": [
+            "wall-ebqckrgyknzoyxour6ma",
+            "wall-mfz3wezwj2ra7v4qqsxj",
+            "wall-6j7em53qf5g6pbevrohn",
+            "wall-6cwdkbjitb4pr5lil2y3",
+            "wall-j4tinowhn5qvi3ptjaqx"
+          ],
+          "new": [
+            "wall-ebqckrgyknzoyxour6ma",
+            "wall-cectvuk2bsvps6jhhemq",
+            "wall-nyfpuswdua3irf3redpd",
+            "wall-6cwdkbjitb4pr5lil2y3",
+            "wall-j4tinowhn5qvi3ptjaqx"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "f1",
+          "room": "r2",
+          "walls": [
+            "wall-n6u5fc3266ipbktgry2u",
+            "wall-2i4ff7lh3vpberuw33vt",
+            "wall-l4firgj7zvk55kk5kzdo",
+            "wall-mfz3wezwj2ra7v4qqsxj"
+          ],
+          "new": [
+            "wall-n6u5fc3266ipbktgry2u",
+            "wall-2i4ff7lh3vpberuw33vt",
+            "wall-l4firgj7zvk55kk5kzdo",
+            "wall-cectvuk2bsvps6jhhemq"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "f1",
+          "room": "r3",
+          "walls": [
+            "wall-l4firgj7zvk55kk5kzdo",
+            "wall-aodmsai7s76qn24auky6",
+            "wall-hi3ppxtjhntloy672z7i",
+            "wall-yep6whtnzai3tstewpsv",
+            "wall-6j7em53qf5g6pbevrohn"
+          ],
+          "new": [
+            "wall-l4firgj7zvk55kk5kzdo",
+            "wall-aodmsai7s76qn24auky6",
+            "wall-hi3ppxtjhntloy672z7i",
+            "wall-5vpehkb7fgwqlqo3xrir",
+            "wall-nyfpuswdua3irf3redpd"
+          ],
+          "rotationOnly": false
+        },
+        {
+          "space": "f1",
+          "room": "r4",
+          "walls": [
+            "wall-6cwdkbjitb4pr5lil2y3",
+            "wall-yep6whtnzai3tstewpsv",
+            "wall-iggbhtpjyhpg2h4vo4ly",
+            "wall-hknz3lxmafwqadrlxdgv"
+          ],
+          "new": [
+            "wall-6cwdkbjitb4pr5lil2y3",
+            "wall-5vpehkb7fgwqlqo3xrir",
+            "wall-iggbhtpjyhpg2h4vo4ly",
+            "wall-hknz3lxmafwqadrlxdgv"
+          ],
+          "rotationOnly": false
+        }
+      ]
+    }
+  ]
+}

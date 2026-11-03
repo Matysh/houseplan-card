@@ -68,3 +68,24 @@ fingerprints, rather than fetch Git history during CI.
 The test loader now reads this tracked archive directly, checks the compressed bytes, original manifest SHA, all 229 per-input fingerprints and unchanged original expected rows. The complete guard consumes the historical/current union: historical labels keep their original full input; a changed current input receives a separate `@current:<fingerprint>` label. Identical label/fingerprint pairs share provenance only. The active union is **572 full documents** from **90 current files**, with **36 zero-config files** retained and **98 archive-only historical sources** restored (the 31 former receipts plus 67 changed inputs).
 
 Addressed integrity tests independently read the archive and compare every original full input and source commit; every current full source remains selected. Opaque metadata stays inside the fingerprint and complete input. The negative catalogue-order/ID/room/opening guard is unchanged. The aggregate identity passport remains RED against the unchanged original expected file: this source recovery is not automatic acceptance of current model11 identity or room cycles. The 31 semantic changes and two refused old positives still require explicit proof/review.
+
+## Bounded semantic review after the resumed shared audit
+
+The preserved inputs are now separated more precisely in
+[corpus-review/README.md](corpus-review/README.md), with complete inert evidence:
+31 semantic rows = 13 generated-catalogue cases without persisted wall catalogue
+IDs + seven partition arrangements + nine explicit model10 arrangements + two
+coordinate fixtures. An absent generated ID is not by itself lost persisted
+authority. Two representatives have exact complete source-interval ownership,
+room-ID/cycle and opaque-data proofs; the remaining29 do not inherit acceptance.
+All31 keep `acceptedExpected=false`; the old manifest and aggregate RED remain.
+
+The two historical positives that now refuse also have distinct outcomes:
+#842/before deliberately contains an exact zero-length hosted partition and an
+out-of-bounds column. Compatibility reading did not prove it safe for an ordinary
+graph write; current refusal is justified while cleanup consent/read/no-write
+contracts remain. #478/accepted contains legal independently identified0/22cm
+drafts: forced current merging rejects it despite valid separate graph
+representability. It remains a confirmed migration finding in
+[resume-findings.md](resume-findings.md). Neither diagnosis changes the historical
+input, old expected rows or original230-case counts.

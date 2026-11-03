@@ -1,0 +1,362 @@
+{
+  "productBase": "0c030e700",
+  "compiledBase": "0bda944e3244a142449c30c5f802c14833af8c66",
+  "archiveSha256": "166699b562311b4f742f2ad563f081e0356239b89afe5168a30273a8fe078115",
+  "scope": "exactly two historical inputs; comparison only, no expected acceptance",
+  "result": [
+    {
+      "label": "test/fixtures/478-room-draft-migration-vectors.json/accepted/input",
+      "source": {
+        "commit": "06406aa98ba72cd40a021ebbae0bb03d8aa71d3e",
+        "kind": "current source reproduces exact historical fingerprint",
+        "label": "test/fixtures/478-room-draft-migration-vectors.json/accepted/input"
+      },
+      "fingerprint": "f916903d1b0385267195278c6fcb33adfb698d537ac3bb6fd8dbbf3935082bc4",
+      "originalExpected": {
+        "label": "test/fixtures/478-room-draft-migration-vectors.json/accepted/input",
+        "fingerprint": "f916903d1b0385267195278c6fcb33adfb698d537ac3bb6fd8dbbf3935082bc4",
+        "ok": true,
+        "identity": [
+          {
+            "space": "floor",
+            "catalogue": [],
+            "rooms": [],
+            "openings": [],
+            "partitions": [
+              "wall-d2ypm2qxakxh3ptdvgvl",
+              "wall-gsjue66gcixcalb47qwf",
+              "wall-d2ypm2qxakxh3ptdvgvl-2",
+              "wall-xejmlatjgvgeaamf63jw"
+            ]
+          }
+        ]
+      },
+      "comparisons": {
+        "frozenLegacy10": {
+          "ok": true,
+          "model": 10,
+          "migratedDrafts": 3,
+          "spaces": [
+            {
+              "id": "floor",
+              "rooms": [],
+              "partitions": [
+                {
+                  "id": "wall-d2ypm2qxakxh3ptdvgvl",
+                  "a": [
+                    2,
+                    0
+                  ],
+                  "b": [
+                    3,
+                    0
+                  ],
+                  "cm": 10
+                },
+                {
+                  "id": "wall-gsjue66gcixcalb47qwf",
+                  "a": [
+                    0,
+                    0
+                  ],
+                  "b": [
+                    0.25,
+                    0
+                  ],
+                  "cm": 15
+                },
+                {
+                  "id": "wall-d2ypm2qxakxh3ptdvgvl-2",
+                  "a": [
+                    0.25,
+                    0
+                  ],
+                  "b": [
+                    0.5,
+                    0
+                  ],
+                  "cm": 0
+                },
+                {
+                  "id": "wall-xejmlatjgvgeaamf63jw",
+                  "a": [
+                    0.5,
+                    0
+                  ],
+                  "b": [
+                    0.25,
+                    0
+                  ],
+                  "cm": 22
+                }
+              ]
+            }
+          ]
+        },
+        "currentGraph11": {
+          "ok": false,
+          "name": "WallSegmentModelError",
+          "reason": "invalid-room",
+          "message": "invalid-room: plan-graph:thickness-conflict"
+        }
+      },
+      "inputUnchanged": true
+    },
+    {
+      "label": "test/fixtures/842-geometry-cleanup.json/before",
+      "source": {
+        "commit": "06406aa98ba72cd40a021ebbae0bb03d8aa71d3e",
+        "kind": "current source reproduces exact historical fingerprint",
+        "label": "test/fixtures/842-geometry-cleanup.json/before"
+      },
+      "fingerprint": "4eb5e4223a68a989384ab07fb99dd47961d14eca31461137a517e10fd7230807",
+      "originalExpected": {
+        "label": "test/fixtures/842-geometry-cleanup.json/before",
+        "fingerprint": "4eb5e4223a68a989384ab07fb99dd47961d14eca31461137a517e10fd7230807",
+        "ok": true,
+        "identity": [
+          {
+            "space": "f1",
+            "catalogue": [
+              "wall-o47y3344mz2hxgnz2fxk",
+              "wall-53ro4e74mkizuqq75ku3",
+              "wall-qd7cvqjw3lacrnhzdkkm",
+              "wall-mpx744afyapbvsh3sgh2",
+              "wall-vdte5x7b2nwbezejgibs",
+              "wall-ovcg57fgda6qnjjy6rhk",
+              "wall-xk6ghb2xc46jt5ba7pvb"
+            ],
+            "rooms": [
+              {
+                "id": "r-hall",
+                "walls": [
+                  "wall-53ro4e74mkizuqq75ku3",
+                  "wall-mpx744afyapbvsh3sgh2",
+                  "wall-qd7cvqjw3lacrnhzdkkm",
+                  "wall-o47y3344mz2hxgnz2fxk"
+                ]
+              },
+              {
+                "id": "r-kitchen",
+                "walls": [
+                  "wall-vdte5x7b2nwbezejgibs",
+                  "wall-xk6ghb2xc46jt5ba7pvb",
+                  "wall-ovcg57fgda6qnjjy6rhk",
+                  "wall-mpx744afyapbvsh3sgh2"
+                ]
+              }
+            ],
+            "openings": [
+              {
+                "id": "o-room",
+                "host": null
+              },
+              {
+                "id": "o-partition",
+                "host": {
+                  "kind": "partition",
+                  "id": "p-host"
+                }
+              },
+              {
+                "id": "o-lost",
+                "host": {
+                  "kind": "partition",
+                  "id": "p-lost"
+                }
+              }
+            ],
+            "partitions": [
+              "p-host",
+              "p-free",
+              "p-lost"
+            ]
+          }
+        ]
+      },
+      "comparisons": {
+        "frozenLegacy10": {
+          "ok": true,
+          "model": 10,
+          "migratedDrafts": 0,
+          "spaces": [
+            {
+              "id": "f1",
+              "rooms": [
+                {
+                  "id": "r-hall",
+                  "poly": [
+                    [
+                      0.1,
+                      0.1
+                    ],
+                    [
+                      0.5,
+                      0.1
+                    ],
+                    [
+                      0.5,
+                      0.5
+                    ],
+                    [
+                      0.1,
+                      0.5
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-53ro4e74mkizuqq75ku3",
+                    "wall-mpx744afyapbvsh3sgh2",
+                    "wall-qd7cvqjw3lacrnhzdkkm",
+                    "wall-o47y3344mz2hxgnz2fxk"
+                  ]
+                },
+                {
+                  "id": "r-kitchen",
+                  "poly": [
+                    [
+                      0.5,
+                      0.1
+                    ],
+                    [
+                      0.9,
+                      0.1
+                    ],
+                    [
+                      0.9,
+                      0.5
+                    ],
+                    [
+                      0.5,
+                      0.5
+                    ]
+                  ],
+                  "wall_ids": [
+                    "wall-vdte5x7b2nwbezejgibs",
+                    "wall-xk6ghb2xc46jt5ba7pvb",
+                    "wall-ovcg57fgda6qnjjy6rhk",
+                    "wall-mpx744afyapbvsh3sgh2"
+                  ]
+                }
+              ],
+              "partitions": [
+                {
+                  "id": "p-host",
+                  "a": [
+                    0.2,
+                    0.7
+                  ],
+                  "b": [
+                    0.4,
+                    0.7
+                  ],
+                  "cm": 15
+                },
+                {
+                  "id": "p-free",
+                  "a": [
+                    0.6,
+                    0.7
+                  ],
+                  "b": [
+                    0.8,
+                    0.7
+                  ],
+                  "cm": 10,
+                  "note": "kept by the backend"
+                },
+                {
+                  "id": "p-lost",
+                  "a": [
+                    0.6,
+                    0.3
+                  ],
+                  "b": [
+                    0.6,
+                    0.3
+                  ],
+                  "cm": 15
+                }
+              ],
+              "wall_columns": [
+                {
+                  "id": "c-square",
+                  "shape": "square",
+                  "center": [
+                    0.7,
+                    0.85
+                  ],
+                  "cm": 30,
+                  "angle": 0,
+                  "finish": "brick"
+                },
+                {
+                  "id": "c-round",
+                  "shape": "circle",
+                  "center": [
+                    0.3,
+                    0.85
+                  ],
+                  "cm": 20,
+                  "label": "pillar"
+                },
+                {
+                  "id": "c-far",
+                  "shape": "square",
+                  "center": [
+                    6000,
+                    0.5
+                  ],
+                  "cm": 20,
+                  "angle": 0
+                }
+              ],
+              "openings": [
+                {
+                  "id": "o-room",
+                  "type": "door",
+                  "x": 0.3,
+                  "y": 0.1,
+                  "angle": 0,
+                  "length": 0.1
+                },
+                {
+                  "id": "o-partition",
+                  "type": "door",
+                  "x": 0.3,
+                  "y": 0.7,
+                  "angle": 0,
+                  "length": 0.1,
+                  "host": {
+                    "kind": "partition",
+                    "id": "p-host",
+                    "t": 0.5
+                  }
+                },
+                {
+                  "id": "o-lost",
+                  "type": "door",
+                  "x": 0.6,
+                  "y": 0.3,
+                  "angle": 0,
+                  "length": 0.05,
+                  "host": {
+                    "kind": "partition",
+                    "id": "p-lost",
+                    "t": 0.5
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "currentGraph11": {
+          "ok": false,
+          "name": "WallSegmentModelError",
+          "reason": "invalid-room",
+          "message": "invalid-room: plan-graph:zero-length"
+        }
+      },
+      "inputUnchanged": true
+    }
+  ]
+}

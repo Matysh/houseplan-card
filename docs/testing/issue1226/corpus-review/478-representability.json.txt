@@ -1,0 +1,160 @@
+{
+  "source": "test/fixtures/478-room-draft-migration-vectors.json/accepted/input",
+  "fingerprint": "f916903d1b0385267195278c6fcb33adfb698d537ac3bb6fd8dbbf3935082bc4",
+  "purpose": "valid current graph exists preserving every original draft-converted partition separately; not accepted migration output",
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "source-0-a",
+        "p": [
+          "l",
+          "480",
+          "0"
+        ]
+      },
+      {
+        "id": "source-0-b",
+        "p": [
+          "l",
+          "720",
+          "0"
+        ]
+      },
+      {
+        "id": "source-1-a",
+        "p": [
+          "l",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "id": "source-1-b",
+        "p": [
+          "l",
+          "60",
+          "0"
+        ]
+      },
+      {
+        "id": "source-2-a",
+        "p": [
+          "l",
+          "60",
+          "0"
+        ]
+      },
+      {
+        "id": "source-2-b",
+        "p": [
+          "l",
+          "120",
+          "0"
+        ]
+      },
+      {
+        "id": "source-3-a",
+        "p": [
+          "l",
+          "120",
+          "0"
+        ]
+      },
+      {
+        "id": "source-3-b",
+        "p": [
+          "l",
+          "60",
+          "0"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "kind": "partition",
+        "id": "wall-d2ypm2qxakxh3ptdvgvl",
+        "from": "source-0-a",
+        "to": "source-0-b",
+        "cm": 10
+      },
+      {
+        "kind": "partition",
+        "id": "wall-gsjue66gcixcalb47qwf",
+        "from": "source-1-a",
+        "to": "source-1-b",
+        "cm": 15
+      },
+      {
+        "kind": "partition",
+        "id": "wall-d2ypm2qxakxh3ptdvgvl-2",
+        "from": "source-2-a",
+        "to": "source-2-b",
+        "cm": 0
+      },
+      {
+        "kind": "partition",
+        "id": "wall-xejmlatjgvgeaamf63jw",
+        "from": "source-3-a",
+        "to": "source-3-b",
+        "cm": 22
+      }
+    ],
+    "rooms": [],
+    "dependencies": []
+  },
+  "validation": {
+    "ok": true,
+    "issues": []
+  },
+  "unchangedFields": [
+    {
+      "id": "wall-d2ypm2qxakxh3ptdvgvl",
+      "a": [
+        2,
+        0
+      ],
+      "b": [
+        3,
+        0
+      ],
+      "cm": 10
+    },
+    {
+      "id": "wall-gsjue66gcixcalb47qwf",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0.25,
+        0
+      ],
+      "cm": 15
+    },
+    {
+      "id": "wall-d2ypm2qxakxh3ptdvgvl-2",
+      "a": [
+        0.25,
+        0
+      ],
+      "b": [
+        0.5,
+        0
+      ],
+      "cm": 0
+    },
+    {
+      "id": "wall-xejmlatjgvgeaamf63jw",
+      "a": [
+        0.5,
+        0
+      ],
+      "b": [
+        0.25,
+        0
+      ],
+      "cm": 22
+    }
+  ]
+}
