@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1857,
-  "nextTicket": 119,
+  "revision": 1858,
+  "nextTicket": 120,
   "nextFence": 119,
   "tasks": {
     "1126": {
@@ -2240,6 +2240,20 @@
         "status": "pending"
       }
     },
+    "1247": {
+      "issue": 1247,
+      "track": "show",
+      "layer": "product",
+      "branch": "issue/1247-wall-preview",
+      "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 119,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793727667034,
+      "reviewEntry": 1
+    },
     "1248": {
       "issue": 1248,
       "track": "ship",
@@ -2377,7 +2391,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1247
+  ],
   "active": null,
   "events": {
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:2:synchronized": {
@@ -2459,6 +2475,19 @@
           "eventId": "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return:return:1248"
         },
         "delivered": true
+      }
+    },
+    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b": {
+      "digest": "765ee3bbbdd7498680c23ace1d76c19a071e3c3ec8a13766f7a5d759bafa2d46",
+      "issue": 1247,
+      "message": {
+        "kind": "queued",
+        "issue": 1247,
+        "at": 1793727667034,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc"
       }
     }
   },
