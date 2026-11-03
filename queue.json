@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1684,
+  "revision": 1685,
   "nextTicket": 113,
   "nextFence": 111,
   "tasks": {
@@ -2024,7 +2024,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1236-local-opening-preview",
-      "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666",
+      "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 110,
@@ -2040,7 +2040,21 @@
         "at": 1793716061066,
         "entry": 1,
         "eventId": "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:2:return:return:1236"
-      }
+      },
+      "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50",
+      "changedFiles": [
+        "demo/performance/opening-drag-coverage.mjs",
+        "demo/smoke_opening_drag_graph.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1236.json",
+        "src/direct-wall-geometry.ts",
+        "src/opening-drag-preview.ts",
+        "test/direct-wall-geometry.test.mjs",
+        "test/opening-drag-coverage.test.mjs",
+        "test/opening-drag.test.mjs"
+      ]
     },
     "1237": {
       "issue": 1237,
@@ -2232,11 +2246,12 @@
     "worker": "finish",
     "token": "110:finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:1:admit",
     "fence": 110,
-    "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+    "expectedBase": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+    "phase": "testing",
     "admittedAt": 1793716454328,
-    "expiresAt": 1793716754328
+    "expiresAt": 1793716808723,
+    "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50"
   },
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
@@ -2341,6 +2356,10 @@
     },
     "github:41654945236:1:completions:message:7aca413ecc4017d08544ad99378fc808b25615b5b52648cb19dafb6d9e36ad95": {
       "digest": "54d5faf25a2d936f829e0764cb010d30d9d5f29efd743b5e5e4cdfe328a632da",
+      "issue": 1236
+    },
+    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:1:synchronized": {
+      "digest": "5f7e6f81c83decb2f083b531a40a478625b8f50a8264a3f75814f7c5ebb84e12",
       "issue": 1236
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
