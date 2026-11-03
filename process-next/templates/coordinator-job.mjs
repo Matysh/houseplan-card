@@ -8,6 +8,13 @@ const config = JSON.parse(readFileSync('process-next/config.json', 'utf8'));
 const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
 const delivery = `github:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT ?? 1}`;
 const call = (command, event) => executeRemoteCommand({ command, config, event, execute: true });
+// Refresh existing release evidence only. A main push must not advance the task
+// queue or trigger a dev build; the regular tick also retries failed delivery.
+if (['push', 'schedule', 'workflow_dispatch'].includes(process.env.GITHUB_EVENT_NAME)) {
+  try { console.log(JSON.stringify(await call('ci-status', { id: `${delivery}:ci-status` }))); }
+  catch (error) { console.error(`Public CI metadata remains pending: ${error.message}; retry on the next tick`); }
+}
+if (process.env.GITHUB_EVENT_NAME === 'push') process.exit(0);
 if (process.env.GITHUB_EVENT_NAME === 'issues') {
   const label = payload.label?.name;
   if (['labeled', 'unlabeled'].includes(payload.action) && !/^(?:S[4-8]-|track:|blocked$)/.test(label ?? '')) process.exit(0);

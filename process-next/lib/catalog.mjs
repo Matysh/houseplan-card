@@ -16,6 +16,11 @@ const productInputs = ['src/**', 'assets/**', 'package.json', 'package-lock.json
 const buildInputs = [...productInputs, 'demo/fixtures/**/*.mjs', 'demo/golden/**/*.mjs', 'demo/fixtures/sun-transparent.json',
   'demo/helpers/vacuum-history.mjs', 'test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json', 'demo/docs/browser-args.mjs',
   'scripts/source-fingerprint.mjs', 'scripts/css-template-minifier.mjs', 'scripts/bundle-manifest.mjs', 'scripts/coverage-maps.mjs'];
+// Public CI describes the tested product, not the current test/process sources.
+// Keep its identity tied to these build/package inputs; package.json is compared
+// by build/dependency fields so renamed test commands do not erase prior facts.
+export const PUBLIC_PRODUCT_INPUTS = [...buildInputs.filter(path => path !== 'package.json'),
+  'custom_components/houseplan/**', 'docs/data-hp-contract.json', '.nvmrc', '.python-version'];
 const browserInputs = [...buildInputs, 'demo/**/*.mjs', 'demo/fixtures/**/*.json', 'demo/srv/demo.html', 'demo/srv/assets/*.svg',
   'scripts/browser-attestation.mjs', 'scripts/toolchain-pins.mjs', 'scripts/capture-environment.mjs'];
 const pythonInputs = ['custom_components/houseplan/**/*.py', 'custom_components/houseplan/manifest.json', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];

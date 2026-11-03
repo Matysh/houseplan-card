@@ -21,6 +21,7 @@ import { announceStableRelease } from './lib/notifications.mjs';
 import { returnPublishedHistory } from './lib/return-worker.mjs';
 import { ensureShipReview } from './lib/ship-review-host.mjs';
 import { prepareShipReviewArtifacts } from './lib/ship-review-artifacts.mjs';
+import { publishCiStatus } from './lib/ci-status.mjs';
 
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
 const component = encodeURIComponent;
@@ -44,7 +45,7 @@ export async function readReleaseMetrics({ root, sha: materialSha, path }) {
 }
 const commands = new Set(['initialize-queue', 'initialize-release', 'owner-decision', 'label', 'ready', 'enqueue',
   'admit', 'heartbeat', 'synchronized', 's6-complete', 'return', 'expire', 'review-complete', 'reconcile', 'merge',
-  'reconcile-merged', 'reconcile-completions', 'dev-webhook', 'release-event', 'review-release', 'publish-prepared', 'complete-release', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline']);
+  'reconcile-merged', 'reconcile-completions', 'dev-webhook', 'release-event', 'review-release', 'publish-prepared', 'complete-release', 'verify-delivery', 'close-included', 'status', 'finish', 'dev-build-complete', 'return-to-dev', 'measurement-baseline', 'ci-status']);
 
 export const help = `Houseplan process-next remote (disabled by default)
 node process-next/remote.mjs COMMAND --config config.json --event event.json [--plan | --execute]
@@ -52,7 +53,7 @@ node process-next/remote.mjs COMMAND --config config.json --event event.json [--
 Queue: initialize-queue, owner-decision, label, ready (alias enqueue), admit,
        heartbeat, synchronized, s6-complete, return, expire, reconcile,
        review-complete, merge, reconcile-merged
-Release: initialize-release, release-event, review-release, publish-prepared, complete-release, verify-delivery, close-included
+Release: initialize-release, release-event, review-release, publish-prepared, complete-release, verify-delivery, close-included, ci-status
 Bookkeeping: reconcile-completions, dev-webhook (no tests or model calls)
 
 Default --plan is OFFLINE: no API, Git, environment probes or remote writes.
@@ -76,6 +77,7 @@ published/delivery-verified are accepted only through actual publication/observa
 publish-prepared: {id,candidate,tag,reportPath?,packagePath?,expectedMain?}; uses authored candidate notes and completes delivery.
 review-release: {id,candidate}; reviews pending ship changes of a beta without tests or publication.
 complete-release: {id,candidate}; resumes bookkeeping without publishing or testing again.
+ci-status: {id}; refreshes public CI evidence for the latest published stable, without running tests.
 verify-delivery: {id,candidate,assetName}; close-included: {id,candidate}.
 `;
 
@@ -463,7 +465,12 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   const releaseStore = dependencies.releaseStore ?? new GitHubQueueStore(api, {
     branch: config.release?.branch ?? 'process-release-state', path: config.release?.path ?? 'releases.json', initial: initialReleaseState });
   const review = dependencies.review ?? new WorkflowReviewAdapter({ api, ...config.review });
+  const refreshCiStatus = async () => (dependencies.publishCiStatus ?? publishCiStatus)({ api, git,
+    published: (await releaseStore.read()).state.published.stable,
+    branch: config.release?.branch ?? 'process-release-state',
+    legacyEvidence: JSON.parse(await readFile(new URL('./evidence/ci-v1.83.1.json', import.meta.url), 'utf8')) });
   const owner = config.ownerLogin ?? config.owner;
+  if (command === 'ci-status') return refreshCiStatus();
   if (command === 'status') { const state = (await queue.store.read()).state; return { summary: queueSummary(state), task: event.issue ? state.tasks[event.issue] ?? null : undefined }; }
   if (command === 'finish') return finishTask({ config, event, queue, api, git, review, dependencies, signal, onProgress });
   if (command === 'reconcile-completions') return finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue, publishReviews: true });
@@ -594,7 +601,12 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
           token: env[tokenEnv], chat: env[chatEnv], persist, retryAmbiguous: event.retryAmbiguousAnnouncement === true,
           fetchImpl: dependencies.fetchImpl });
       }) });
-    return { published: true, completion, state: (await releaseStore.read()).state };
+    let ciStatus;
+    if (['stable', 'hotfix'].includes(item.kind)) {
+      try { ciStatus = await refreshCiStatus(); }
+      catch (error) { ciStatus = { status: 'unavailable', diagnostic: true, reason: String(error?.message ?? error).slice(0, 1200) }; }
+    }
+    return { published: true, completion, ...(ciStatus ? { ciStatus } : {}), state: (await releaseStore.read()).state };
   };
   if (command === 'complete-release' || command === 'close-included'
     || command === 'publish-prepared' && candidate.status === 'published') return complete(candidate);

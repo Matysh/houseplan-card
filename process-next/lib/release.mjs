@@ -20,6 +20,18 @@ export function normalizeMetricsDecision(value) {
   return { decisionId: value.decisionId, source: value.source, sourceRef: value.sourceRef, decisionText: value.decisionText,
     ...(value.recordedBy ? { recordedBy: String(value.recordedBy).slice(0, 120) } : {}) };
 }
+function publicRunnerCheck(row) {
+  const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,200}$/.test(value);
+  const id = identifier(row.id) ? row.id : 'unknown';
+  const counts = Object.fromEntries(['tests', 'passed', 'failed', 'skipped', 'cancelled', 'todo']
+    .filter(key => Number.isSafeInteger(row.counts?.[key]) && row.counts[key] >= 0).map(key => [key, row.counts[key]]));
+  // Publish only result facts. Commands, logs, paths, environment and errors stay
+  // in the local runner report, which continues to decide release readiness.
+  return { id, name: typeof row.name === 'string' && row.name.trim() ? row.name.replace(/[\x00-\x1f]/g, ' ').slice(0, 500) : id,
+    status: ['passed', 'reused', 'not-required', 'failed', 'cancelled', 'timed-out', 'unavailable', 'invalidated', 'blocked', 'error'].includes(row.status) ? row.status : 'unknown',
+    diagnostic: Boolean(row.diagnostic), ...(Object.keys(counts).length ? { counts } : {}),
+    ...(identifier(row.sourceRun) ? { sourceRun: row.sourceRun } : {}) };
+}
 function runnerReceipt(report, candidate) {
   if (!report?.id || report.schema !== 1 || report.materialSha !== candidate.sha || typeof report.materialClean !== 'boolean' || report.event !== candidate.kind
     || !report.finishedAt || !report.reportPath || !Array.isArray(report.results) || report.status === 'running')
@@ -31,7 +43,8 @@ function runnerReceipt(report, candidate) {
     path: report.reportPath, digest: sha256(JSON.stringify(report)), finishedAt: report.finishedAt,
     materialClean: report.materialClean, ...(report.materialClean ? {} : { reason: 'dirty-material' }),
     ready: report.materialClean && report.status === 'passed' && required.length > 0 && failed.length === 0,
-    required: required.length, failed, reused: required.filter(row => row.status === 'reused').length };
+    required: required.length, failed, reused: required.filter(row => row.status === 'reused').length,
+    checks: report.results.map(publicRunnerCheck) };
 }
 export function releaseReadiness(candidate) {
   // Resume an already-started publication without adding the ship review introduced later.
@@ -49,7 +62,7 @@ export function releaseReadiness(candidate) {
   return { ready: !reasons.length, reasons, report: candidate.runner ?? null };
 }
 
-/** Runner owns case selection, reuse and outcomes. Release state stores only its report reference. */
+/** Runner owns case selection, reuse and outcomes. State retains its receipt and public result summary. */
 export function reduceRelease(previous, event) {
   if (previous.schema !== 1 || typeof event?.id !== 'string' || !event.id) throw Error('Invalid release event');
   const signature = sha256(JSON.stringify(event));

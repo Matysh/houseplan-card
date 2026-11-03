@@ -1,7 +1,9 @@
 # Canonical workflow source; deployed as .github/workflows/process-next-coordinator.yml.
 name: Очередь завершения задач
-run-name: Очередь завершения задач · ${{ github.event_name }}
+run-name: ${{ github.event_name == 'push' && 'Плашка CI — результат проверок продукта в main' || format('Очередь завершения задач · {0}', github.event_name) }}
 on:
+  push:
+    branches: [main]
   issues:
     types: [labeled, unlabeled, closed, reopened]
   workflow_run:

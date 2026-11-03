@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "tag": "v1.83.1",
+  "sha": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+  "profile": "hotfix",
+  "runId": 41204595040,
+  "runHeadSha": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+  "runAttempt": 1,
+  "runStatus": "completed",
+  "runConclusion": "success",
+  "finishedAt": "2026-10-31T13:52:24Z",
+  "runUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41204595040",
+  "releaseUrl": "https://github.com/Matysh/houseplan-card/releases/tag/v1.83.1",
+  "publicationRunUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41208039778",
+  "description": "Historical evidence addresses, not a current passing assertion. Verify the exact tag, run, successful jobs and critical steps against GitHub before reusing this result for an unchanged released product.",
+  "equivalentProductSha": "9b34ff9cbd480677f0adceece245a06f4de0eee5",
+  "equivalence": {
+    "explanation": "#1105 перенесла инструменты визуальных проверок; код продукта, готовая интеграция и зависимости сохранились. Различия ограничены четырьмя указанными версиями вспомогательных файлов. Это однократное сопоставление; дальнейшие изменения автоматически не засчитываются.",
+    "allowedChanges": [
+      {
+        "path": "demo/golden/accept.mjs",
+        "before": "ca15d11ea331c2ced895f0dee6fd7be85947fedf",
+        "after": null
+      },
+      {
+        "path": "demo/golden/run.mjs",
+        "before": "d56a316b3ec98c0db381d1323d5633af7049dcd9",
+        "after": null
+      },
+      {
+        "path": "demo/golden/policy.mjs",
+        "before": "d324da7da9d5914f5524e9022cfa3d54deccc579",
+        "after": "637bc91920ed78d2d7bbadf695773f31ef55c440"
+      },
+      {
+        "path": "scripts/source-fingerprint.mjs",
+        "before": "810f56c4ff1e4d9a53bf2e66ffd53191bfee17c4",
+        "after": "30d9bf686a74b4a83c581402cc75566a6e379cf4"
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "id": 124547852666,
+      "name": "Фронтенд: типы, юниты, мутанты, синхрон бандла",
+      "steps": ["Build", "Pure product units on fresh emitted modules"]
+    },
+    {
+      "id": 124547852697,
+      "name": "Бэкенд: pytest в Home Assistant",
+      "steps": ["Backend unit tests (pure + HA harness, coverage)"]
+    },
+    {
+      "id": 124547852707,
+      "name": "Геометрия: TS/Python parity исполнена",
+      "steps": ["Компилировать TS-зеркала стыков и идентичности/переноса стен", "Сравнить настоящие TS/Python validators (fail closed)"]
+    },
+    {
+      "id": 124548605330,
+      "name": "Смоки в браузере (шард 1 из 3)",
+      "steps": ["Smoke suite (шард 1 из 3)"]
+    },
+    {
+      "id": 124548605358,
+      "name": "Смоки в браузере (шард 2 из 3)",
+      "steps": ["Smoke suite (шард 2 из 3)"]
+    },
+    {
+      "id": 124548605334,
+      "name": "Смоки в браузере (шард 3 из 3)",
+      "steps": ["Smoke suite (шард 3 из 3)"]
+    },
+    {
+      "id": 124548605335,
+      "name": "Golden-кадры против принятых эталонов",
+      "steps": ["Capture or verify golden matrix"]
+    }
+  ]
+}

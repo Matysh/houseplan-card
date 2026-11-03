@@ -170,6 +170,29 @@ test('fix asks for the new runner report and review; the runner owns case reuse'
   h.event({ type: 'runner-report', report: report(B, 'beta', { results: [{ id: 'core', status: 'reused' }, { id: 'area', status: 'passed' }] }) });
   assert.equal(h.candidate.runner.reused, 1); assert.equal(h.candidate.runner.ready, true);
 });
+
+test('runner receipt retains only public check facts without adding readiness requirements', () => {
+  const h = harness(); create(h);
+  h.event({ type: 'runner-report', report: report(A, 'beta', { environment: { TOKEN: 'private-value' }, results: [
+    { id: 'core', name: 'Ключевая логика', status: 'passed', diagnostic: false,
+      counts: { tests: 5, passed: 4, failed: 0, skipped: 1, cancelled: -1, todo: Infinity, TOKEN: 'private-value' },
+      logPath: '/home/private/check.log', command: ['secret-command'], environment: { TOKEN: 'private-value' } },
+    { id: 'area', name: 'Связанный набор', status: 'reused', sourceRun: '20261103T0000-abcd1234', counts: { passed: 2, failed: NaN },
+      reportPath: 'C:\\Users\\private\\report.json', error: 'private-value' },
+    { id: 'converter', status: 'failed', diagnostic: true, sourceRun: '/private/run', output: 'private-value' },
+  ] }) });
+  const expected = [
+    { id: 'core', name: 'Ключевая логика', status: 'passed', diagnostic: false, counts: { tests: 5, passed: 4, failed: 0, skipped: 1 } },
+    { id: 'area', name: 'Связанный набор', status: 'reused', diagnostic: false, counts: { passed: 2 }, sourceRun: '20261103T0000-abcd1234' },
+    { id: 'converter', name: 'converter', status: 'failed', diagnostic: true },
+  ];
+  assert.deepEqual(h.candidate.runner.checks, expected);
+  assert.doesNotMatch(JSON.stringify(h.candidate.runner.checks), /private|TOKEN|command|environment|Path/);
+  assert.equal(h.candidate.runner.ready, true); assert.equal(h.candidate.runner.required, 2); assert.equal(h.candidate.runner.reused, 1);
+  h.event({ type: 'metrics', sha: A, report: { requiresDecision: false } }); noShipTasks(h);
+  assert.equal(releaseReadiness(h.candidate).ready, true);
+  publish(h); assert.deepEqual(h.state.published.beta.runner.checks, expected);
+});
 test('stable uses published beta and accepts its runner cache reuse without a second case ledger', () => {
   const h = harness(); create(h); passed(h); publish(h);
   assert.throws(() => h.event({ type: 'create', candidate: 'stable', kind: 'stable', sourceSha: C, branch: 'release/stable' }), /published beta/);

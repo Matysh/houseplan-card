@@ -3,6 +3,8 @@
 [![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
 [![Live demo](https://img.shields.io/badge/демо-попробовать-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
+[![CodeQL](https://github.com/Matysh/houseplan-card/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/Matysh/houseplan-card/actions/workflows/github-code-scanning/codeql)
+[![CI](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMatysh%2Fhouseplan-card%2Fprocess-release-state%2Fci.json)](https://github.com/Matysh/houseplan-card/blob/process-release-state/CI.md)
 [![Telegram chat](https://img.shields.io/badge/Telegram-чат-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 [![Поддержать проект](https://img.shields.io/badge/Boosty-%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B0%D1%82%D1%8C_%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
 

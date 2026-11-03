@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore separate CI and CodeQL badges in the README. CI reflects recorded test results for the released product in `main`, links to its evidence, and never reruns tests; missing evidence is not reported as success. [#1217](https://github.com/Matysh/houseplan-card/issues/1217)
+
 - Add Low only to Zigbee signal visibility: system LQI numbers stay on the plan only at ≤50. Spaces can override the mode, while existing settings retain their meaning. [#1130](https://github.com/Matysh/houseplan-card/issues/1130)
 - Add an optional weather widget at the bottom of the summary panel, with current conditions, three daily forecasts and a saved Home Assistant weather source. Forecast updates do not repaint the plan. [#1174](https://github.com/Matysh/houseplan-card/issues/1174)
 

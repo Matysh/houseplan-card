@@ -40,6 +40,53 @@ test('execution needs both explicit activations and credentials come only from e
   await assert.rejects(executeRemoteCommand({ command: 'admit', config, env, event: { id: 'a' }, execute: true }), /Missing credential/);
 });
 
+test('ci-status uses the latest stable evidence without requiring a candidate or running a test plan', async () => {
+  const stable = { id: 'published-stable', sha: B, tag: 'v1.99.0', runner: { id: 'real-run' } };
+  const releaseStore = new MemoryQueueStore(initialReleaseState({ stable })), api = {}, git = {};
+  let received;
+  const result = await executeRemoteCommand({ command: 'ci-status', config: { ...config, release: { branch: 'public-release-state' } },
+    event: { id: 'ci-refresh' }, env, execute: true,
+    dependencies: { api, git, releaseStore,
+      queue: { store: { read: () => { throw Error('CI status does not need the task queue'); } } },
+      runPlan: () => { throw Error('CI status must not run tests'); },
+      publishCiStatus: async value => { received = value; return { status: 'published', tag: value.published.tag }; } } });
+  assert.deepEqual(result, { status: 'published', tag: 'v1.99.0' });
+  assert.deepEqual(received.published, stable); assert.equal(received.api, api); assert.equal(received.git, git);
+  assert.equal(received.branch, 'public-release-state');
+  assert.match(JSON.stringify(received.legacyEvidence), /v1\.83\.1/);
+  await assert.rejects(executeRemoteCommand({ command: 'ci-status', config, event: { id: 'ci-failed' }, env, execute: true,
+    dependencies: { api, git, releaseStore, publishCiStatus: async () => { throw Error('Metadata transport failed'); } } }), /Metadata transport failed/);
+});
+
+test('stable and hotfix completion stay completed when public CI metadata cannot be refreshed', async () => {
+  for (const kind of ['stable', 'hotfix']) {
+    const initial = readyRelease(), item = initial.candidates.beta1;
+    item.kind = kind; item.runner.event = kind; item.status = 'published'; item.tag = 'v1.99.0';
+    item.membership = { schema: 1, candidate: B, base: A, issues: [] };
+    item.publication = { sha: B, tag: item.tag, artifactDigest: D };
+    item.delivery = { hacsAvailable: true, tag: item.tag, artifactDigest: D };
+    item.completion = { issues: { status: 'completed' }, 'retire-beta': { status: 'not-required' },
+      'return-to-dev': { status: 'completed', devSha: C } };
+    initial.active = null;
+    // Resuming older bookkeeping must advertise the latest published stable.
+    initial.published.stable = { id: 'newer', tag: 'v1.99.1', sha: C, runner: { id: 'latest-run' } };
+    const releaseStore = new MemoryQueueStore(initial); let refreshes = 0;
+    const result = await executeRemoteCommand({ command: 'complete-release', config, env, execute: true,
+      event: { id: `finish-${kind}`, candidate: 'beta1' }, dependencies: { api: {}, git: {}, releaseStore,
+        announce: async () => ({ status: 'not-required' }),
+        runPlan: () => { throw Error('No tests during metadata refresh'); },
+        publishCiStatus: async ({ published }) => {
+          refreshes++; assert.equal(published.sha, C); assert.equal(published.runner.id, 'latest-run');
+          throw Error('Public status temporarily unavailable');
+        } } });
+    assert.equal(refreshes, 1); assert.equal(result.published, true); assert.equal(result.completion.status, 'completed');
+    assert.deepEqual(result.completion.pending, []);
+    assert.deepEqual(result.ciStatus, { status: 'unavailable', diagnostic: true, reason: 'Public status temporarily unavailable' });
+    assert.equal(result.state.candidates.beta1.status, 'published'); assert.equal(result.state.candidates.beta1.runner.ready, true);
+    assert.deepEqual(result.state.candidates.beta1.diagnostics, initial.candidates.beta1.diagnostics);
+  }
+});
+
 test('durable exact-material artifact is read without writes and prevents another model run', async () => {
   const artifact = { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B, verdict: 'accepted', report: { summary: 'accepted' } };
   const runs = [{ id: 11, display_title: `Code ${context.requestId}`, status: 'completed', conclusion: 'failure' }];
@@ -657,7 +704,7 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
   item.kind = 'stable'; item.runner.event = 'stable';
   const issue = { number: 1, state: 'open', labels: ['S8-merged', 'track:show', 'personal'] };
   const { api, comments } = issueTransport(issue, { failClose: true });
-  const store = new MemoryQueueStore(initial); let publishes = 0, observations = 0, returns = 0, sends = 0, preparations = 0;
+  const store = new MemoryQueueStore(initial); let publishes = 0, observations = 0, returns = 0, sends = 0, preparations = 0, ciRefreshes = 0;
   const data = { ...authoredRelease(), membership: { schema: 1, candidate: B, base: A, tag: 'v1.0.0', issues: [{ number: 1, commits: [B] }] },
     includedIssues: [1], userChangelog: { ru: '<!-- release: v1.0.0 -->\n<!-- base: v0.9.0 -->\n## Релиз Houseplan 1.0.0\n\nПользовательское изменение.\n', en: 'User change' } };
   const dependencies = { api, git: { remoteHead: async () => A }, releaseStore: store,
@@ -666,6 +713,11 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
       evidence: { sha: B, tag: 'v1.0.0', artifactDigest: D } }; } },
     verifier: { verify: async () => { observations++; return { hacsAvailable: true, tag: 'v1.0.0', artifactDigest: D }; } },
     returnToDev: async () => { returns++; return { status: 'completed', devSha: C }; },
+    publishCiStatus: async ({ published }) => {
+      ciRefreshes++; assert.equal(published.tag, 'v1.0.0'); assert.equal(published.sha, B);
+      if (ciRefreshes === 1) throw Error('CI metadata temporarily unavailable');
+      return { status: 'published', tag: published.tag };
+    },
     fetchImpl: async (_url, options) => { sends++; assert.match(options.body, /Пользовательское изменение/);
       return { ok: true, status: 200, json: async () => ({ ok: true, result: { message_id: 42 } }) }; },
   };
@@ -673,12 +725,15 @@ test('published stable completes only missing bookkeeping and Telegram on retry,
     env: { ...env, TELEGRAM_BOT_TOKEN: '12345:test-token', TELEGRAM_CHAT_ID: 'test-chat' }, execute: true, dependencies,
     event: { id: 'publish-complete', candidate: 'beta1', tag: 'v1.0.0', ...event } });
   const first = await call('publish-prepared', { artifacts: [] });
+  assert.equal(first.published, true); assert.equal(first.ciStatus.diagnostic, true);
   assert.equal(first.completion.status, 'pending'); assert.equal(issue.state, 'open');
   assert.deepEqual(issue.labels, ['track:show', 'personal']); assert.equal(comments.length, 1);
   const second = await call('publish-prepared', { reportPath: 'deleted/report.json', packagePath: 'deleted/package.json' });
   assert.equal(second.completion.status, 'completed', JSON.stringify(second.completion.pending)); assert.equal(issue.state, 'closed');
+  assert.equal(second.ciStatus.status, 'published');
   await call('complete-release');
   assert.deepEqual({ publishes, preparations, observations, returns, sends }, { publishes: 1, preparations: 1, observations: 1, returns: 1, sends: 1 });
+  assert.equal(ciRefreshes, 3);
   assert.equal(comments.length, 2); // failure notice followed by confirmed closure, neither rewritten
   assert.equal(second.state.candidates.beta1.announcement.status, 'sent');
 });
