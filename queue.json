@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1933,
-  "nextTicket": 123,
+  "revision": 1934,
+  "nextTicket": 124,
   "nextFence": 122,
   "tasks": {
     "1126": {
@@ -2309,6 +2309,20 @@
         "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9"
       }
     },
+    "1246": {
+      "issue": 1246,
+      "track": "show",
+      "layer": "product",
+      "branch": "issue/1246-toast-action-ownership",
+      "materialSha": "58d458895ce130b360851a4efa50cbcb43579238",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 123,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793729056864,
+      "reviewEntry": 1
+    },
     "1247": {
       "issue": 1247,
       "branch": "issue/1247-wall-preview",
@@ -2500,7 +2514,8 @@
     }
   },
   "waiting": [
-    1242
+    1242,
+    1246
   ],
   "active": {
     "issue": 1244,
@@ -2626,6 +2641,19 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
+      "digest": "3ccf71ffef7244f371a9bd1f581458f83aa074400a4fe562fabbe693d112ee18",
+      "issue": 1246,
+      "message": {
+        "kind": "queued",
+        "issue": 1246,
+        "at": 1793729056864,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "58d458895ce130b360851a4efa50cbcb43579238"
       }
     }
   },
