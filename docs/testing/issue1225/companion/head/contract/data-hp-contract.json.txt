@@ -1,0 +1,1139 @@
+{
+  "schemaVersion": 1,
+  "attribute": "data-hp",
+  "stability": {
+    "removalPolicy": "changelog-and-one-stable-version-transition",
+    "additionsAreCompatible": true
+  },
+  "hooks": {
+    "external-screen-create": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-add": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-edit": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-delete": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-copy": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-ok": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "space-select": { "elements": ["hp-settings-select"], "since": "1.83.0", "audience": ["test"] },
+    "space-select-value": { "elements": ["select"], "since": "1.83.0", "audience": ["test"] },
+    "select-trigger": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "select-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "select-option": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "rotate-left": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "rotate-right": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history": { "elements": ["section"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history-show": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history-hide": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history-retry": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history-shown": { "elements": ["p"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history-reason": { "elements": ["p"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-history-banner": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "vacuum-map-preview": { "elements": ["image"], "since": "1.82.0", "audience": ["test"] },
+    "ecovacs-source-hint": { "elements": ["div"], "since": "1.82.0", "audience": ["test"] },
+    "properties-panel": { "elements": ["aside"], "since": "1.82.0", "audience": ["styling", "test"] },
+    "device-context-menu": { "elements": ["div"], "since": "1.82.0", "audience": ["test"] },
+    "decor-context-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "catalog-context-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "node-context-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "device-copy": { "elements": ["button"], "since": "1.82.0", "audience": ["test"] },
+    "device-structure-pending": { "elements": ["span"], "since": "1.83.0", "audience": ["test"] },
+    "device-structure-reconcile": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "led-device-select": { "elements": ["path"], "since": "1.82.0", "audience": ["test"] },
+    "room-area-link": {
+      "elements": ["button"],
+      "since": "1.81.0",
+      "audience": ["test"]
+    },
+    "restore-retry": {
+      "elements": ["button"],
+      "since": "1.81.0",
+      "audience": ["test"]
+    },
+    "view-runtime-notice": { "elements": ["aside"], "since": "1.81.0", "audience": ["test"] },
+    "view-runtime-retry": { "elements": ["button"], "since": "1.81.0", "audience": ["test"] },
+    "view-runtime-reload": { "elements": ["button"], "since": "1.81.0", "audience": ["test"] },
+    "import-backup": {
+      "elements": ["button"],
+      "since": "1.81.0",
+      "audience": ["test"]
+    },
+    "create-space": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "decor": {
+      "elements": [
+        "ellipse",
+        "image",
+        "line",
+        "path",
+        "rect",
+        "text"
+      ],
+      "since": "1.59.0-beta.3",
+      "audience": [
+        "styling",
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "text",
+          "rect",
+          "ellipse",
+          "line",
+          "image",
+          "furniture",
+          "path"
+        ]
+      }
+    },
+    "device": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.59.0-beta.3",
+      "audience": [
+        "styling",
+        "test"
+      ],
+      "attributes": {
+        "data-selected": [
+          "true",
+          "false"
+        ]
+      },
+      "attributeMetadata": {
+        "data-hp-device-contact": {
+          "since": "1.83.0",
+          "value": "presence",
+          "meaning": "Contact contour, including contact with a wall; alone does not imply a device group.",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-hp-device-component": {
+          "since": "1.83.0",
+          "value": "marker-id",
+          "meaning": "Owner marker id only while at least two devices form a contact group.",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-selected": {
+          "since": "1.83.0",
+          "value": "true|false",
+          "meaning": "Existing editor selection",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "dialog": {
+      "elements": ["hp-dialog"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "attributes": {
+        "data-kind": [
+          "alarm-constructor",
+          "backup",
+          "confirm",
+          "decor",
+          "device-inbox",
+          "external-screen-constructor",
+          "import",
+          "info",
+          "kiosk",
+          "led-picker",
+          "marker",
+          "marker-restore",
+          "onboarding",
+          "opening",
+          "pdf",
+          "physical",
+          "properties-variable",
+          "room",
+          "rules",
+          "settings",
+          "space",
+          "stairs",
+          "summary",
+          "support",
+          "vacuum"
+        ]
+      }
+    },
+    "dialog-cancel": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "dialog-confirm": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "editor-close": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "empty": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "hidden-devices": {
+      "elements": ["button"],
+      "since": "1.82.0",
+      "audience": ["styling", "test"]
+    },
+    "mode-tab": {
+      "elements": ["button"],
+      "since": "1.78.0-beta.2",
+      "audience": ["test"],
+      "attributes": { "data-mode": ["plan", "devices", "decor"] }
+    },
+    "opening": {
+      "elements": ["g"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "opening-tunnel": {
+      "elements": ["g", "path"],
+      "since": "1.60.2",
+      "audience": ["styling", "test"]
+    },
+    "panel-menu": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "partition": {
+      "elements": ["path"],
+      "since": "1.60.2-beta.1",
+      "audience": ["styling", "test"]
+    },
+    "pdf": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "room": {
+      "elements": ["path", "polygon", "rect"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "room-label": {
+      "elements": ["div"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "room-settings": {
+      "elements": ["button"],
+      "since": "1.67.0-rc.2",
+      "audience": ["styling", "test"]
+    },
+    "settings": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "space-add": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "space-settings": {
+      "elements": ["ha-icon", "button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "space-tab": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.59.0-beta.3",
+      "audience": [
+        "styling",
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-space": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "space id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "stair": {
+      "elements": ["g"],
+      "since": "1.78.0-beta.5",
+      "audience": ["styling", "test"]
+    },
+    "stair-frame": {
+      "elements": ["g"],
+      "since": "1.78.0-beta.6",
+      "audience": ["styling", "test"]
+    },
+    "support": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "toast": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.73.0-beta.7",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "message"
+        ]
+      },
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "i18n key or message for composed/unkeyed text",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "toast-portal": {
+      "elements": ["div"],
+      "since": "1.82.0",
+      "audience": ["test"]
+    },
+    "tool": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.73.0-beta.7",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-tool": [
+          "add-device",
+          "backdrop",
+          "column",
+          "delete-room",
+          "device-inbox",
+          "device-magnets",
+          "door",
+          "draw",
+          "ellipse",
+          "erase",
+          "furniture",
+          "gate",
+          "icon-rules",
+          "image",
+          "led-strip",
+          "line",
+          "merge",
+          "opening",
+          "passage",
+          "rect",
+          "resize",
+          "rooms",
+          "select",
+          "shapes",
+          "spiral",
+          "split",
+          "stairs",
+          "straight",
+          "text",
+          "wall-thickness",
+          "window"
+        ]
+      }
+    },
+    "toolbar": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "attributes": {
+        "data-kind": ["decor", "device", "plan"]
+      }
+    },
+    "tray": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "wall": {
+      "elements": ["path"],
+      "since": "1.59.0-beta.4",
+      "audience": ["styling", "test"]
+    },
+    "wall-column": {
+      "elements": ["path"],
+      "since": "1.60.2-beta.1",
+      "audience": ["styling", "test"]
+    },
+    "zigbee-scan-background": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-cancel": {
+      "elements": ["button"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-cancel-hint": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-elapsed": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-long-wait": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-stage": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zoom-fit": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "zoom-in": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "zoom-out": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "action": {
+      "elements": [
+        "button",
+        "summary"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-action": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "stable semantic command id",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-value": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "subject id/key for repeated actions",
+          "audience": [
+            "test"
+          ]
+        }
+      },
+      "attributes": {
+        "data-action": [
+          "backdrop-reset",
+          "backdrop-server-plans",
+          "backdrop-upload-open",
+          "backup-export-open",
+          "backup-import-details",
+          "backup-import-open",
+          "backup-openings-details",
+          "chip-remove",
+          "colour-confirm",
+          "colour-reset",
+          "decor-delete",
+          "decor-properties",
+          "device-catalog-add",
+          "device-catalog-add-virtual",
+          "device-catalog-disable",
+          "device-catalog-edit",
+          "device-catalog-find",
+          "device-catalog-hide",
+          "device-catalog-menu",
+          "device-catalog-more",
+          "device-catalog-open-ha",
+          "device-catalog-show",
+          "device-discovery-exclusion-remove",
+          "device-discovery-exclusions-reset",
+          "device-discovery-save",
+          "device-discovery-settings",
+          "furniture-palette-back",
+          "furniture-palette-close",
+          "geometry-redo",
+          "geometry-undo",
+          "gs-bg-reset",
+          "gs-reset",
+          "icon-rule-add",
+          "icon-rule-delete",
+          "icon-rule-down",
+          "icon-rule-up",
+          "icon-rules-reset",
+          "image-palette-close",
+          "image-palette-delete",
+          "image-palette-select",
+          "import-create-space",
+          "import-manual",
+          "import-skip",
+          "led-bind",
+          "led-cancel",
+          "led-delete",
+          "led-finish",
+          "led-icon",
+          "led-later",
+          "led-new-device",
+          "led-settings",
+          "led-show-icon",
+          "led-show-strip",
+          "led-unbind",
+          "marker-attachment-add",
+          "marker-attachment-remove",
+          "marker-control-remove",
+          "marker-delete",
+          "marker-visibility",
+          "opening-delete",
+          "opening-entity-open",
+          "opening-rebind",
+          "open-general-settings",
+          "open-in-ha",
+          "physical-delete",
+          "physical-properties",
+          "plan-optimization-undo",
+          "plan-optimize",
+          "plan-saved-delete",
+          "plan-saved-use",
+          "properties-copy",
+          "properties-delete",
+          "properties-display_device",
+          "properties-insert-variable",
+          "properties-replace",
+          "radar-configure",
+          "radar-inspect",
+          "radar-installation-change",
+          "radar-legacy-open",
+          "radar-legacy-restore",
+          "radar-range-add",
+          "radar-range-remove",
+          "radar-remove",
+          "radar-target-add",
+          "radar-target-remove",
+          "review-fields",
+          "room-range-reset",
+          "space-copy",
+          "space-delete-devices",
+          "support-copy-id",
+          "support-copy-message",
+          "support-download",
+          "support-preview",
+          "support-refresh",
+          "vacuum-auto-calibrate",
+          "vacuum-details",
+          "vacuum-manual-calibrate",
+          "vacuum-route-add-current",
+          "vacuum-route-add-source",
+          "vacuum-route-calibrate",
+          "vacuum-route-cancel",
+          "vacuum-route-confirm",
+          "vacuum-route-delete",
+          "vacuum-source-open",
+          "wall-chain-reset",
+          "wall-thickness-apply",
+          "wall-thickness-apply-room",
+          "zigbee-incomplete-reasons",
+          "zigbee-read-zha",
+          "zigbee-refresh-z2m"
+        ]
+      }
+    },
+    "image-upload": {
+      "elements": [
+        "input"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "backdrop",
+          "decor"
+        ]
+      }
+    },
+    "furniture-item": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "canonical furniture symbol id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "furniture-category": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "canonical furniture category id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "field": {
+      "elements": [
+        "button",
+        "div",
+        "ha-icon-picker",
+        "ha-slider",
+        "ha-switch",
+        "hp-color-opacity",
+        "input",
+        "select",
+        "textarea"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-field": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "stable control id, name or capability key for the bound quantity; wall-thickness is cm/in, column-size is side/diameter, opening-length is cm, opening-{contact|lock}-entity-filter searches that picker, device-discovery-{group-lights|exclusion} controls discovery; see STYLING-HOOKS §7.8",
+            "retiredValues": {
+              "gs-wall-fill": {
+                "since": "1.83.0",
+                "ownerDialogKind": "settings",
+                "replacementDialogKind": "space",
+                "replacementField": "space-wall-fill",
+                "issue": 1037,
+                "reason": "Wall fill moved to each space; this is not a change-all-floors control. Never published in stable.",
+                "retainThrough": "At least one following stable after the first stable containing #1037; no automatic deletion."
+              }
+            },
+          "audience": [
+            "test"
+          ]
+        },
+        "data-value": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "radio option value; range/number for colour-opacity",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-slot": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "semantic radar target slot, when repeated",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "device-contact-contour": {
+      "elements": [
+        "path"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-grouped": [
+          "true",
+          "false"
+        ]
+      },
+      "attributeMetadata": {
+        "data-component": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "owner marker id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "device-catalog-select-all": {
+      "elements": [
+        "input"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "device-catalog-select": {
+      "elements": [
+        "input"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "same row key",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "field-option": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-field": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "owner field id",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-value": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "option entity/id or empty Auto",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "settings-section": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "general",
+          "space",
+          "room",
+          "marker"
+        ]
+      },
+      "attributeMetadata": {
+        "data-section": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "existing settings section id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "space-delete": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "vacuum-calibration-step": {
+      "elements": [
+        "svg"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-step": [
+          "manual"
+        ]
+      }
+    },
+    "glow-layer": {
+      "elements": [
+        "g"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "glow-pool": {
+      "elements": [
+        "g"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-entity": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "source entity id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "stage": {
+      "elements": [
+        "svg"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-grid-step": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "positive finite number in SVG viewBox units",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "backdrop": {
+      "elements": [
+        "image"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "vacuum-calibration": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "vacuum-calibration-action": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-action": [
+          "rotate",
+          "mirror",
+          "save",
+          "cancel"
+        ]
+      }
+    },
+    "vacuum-trail-segment": {
+      "elements": [
+        "g",
+        "line",
+        "path"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-kind": [
+          "current",
+          "previous",
+          "history",
+          "tip"
+        ]
+      },
+      "attributeMetadata": {
+        "data-entity": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "vacuum entity id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "vacuum-puck": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-entity": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "vacuum entity id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "vacuum-trail": {
+      "elements": [
+        "svg"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "room-resize": {
+      "elements": [
+        "circle"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-room": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "room id",
+          "audience": [
+            "test"
+          ]
+        },
+        "data-edge": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "zero-based current polygon edge",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "device-history": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-action": [
+          "undo",
+          "redo"
+        ]
+      }
+    },
+    "device-catalog-row": {
+      "elements": [
+        "article"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "HA inbox row key or virtual marker id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "summary-panel": {
+      "elements": [
+        "aside"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "summary-metric": {
+      "elements": [
+        "div"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-id": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "configured summary value id",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    },
+    "summary-settings": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "summary-toggle": {
+      "elements": [
+        "button"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ]
+    },
+    "wall-node-layer": {
+      "elements": [
+        "g"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributes": {
+        "data-state": [
+          "idle",
+          "captured",
+          "preview",
+          "invalid"
+        ]
+      }
+    },
+    "wall-node": {
+      "elements": [
+        "circle"
+      ],
+      "since": "1.83.0",
+      "audience": [
+        "test"
+      ],
+      "attributeMetadata": {
+        "data-node": {
+          "since": "1.83.0",
+          "value": "string",
+          "meaning": "existing geometry node key",
+          "audience": [
+            "test"
+          ]
+        }
+      }
+    }
+  },
+  "rootAttributes": {
+    "data-hp-mode": {
+      "element": "ha-card",
+      "values": ["view", "plan", "devices", "decor"],
+      "since": "1.73.0-beta.7"
+    },
+    "data-hp-state": {
+      "element": "ha-card",
+      "values": ["booting", "ready"],
+      "since": "1.73.0-beta.7"
+    }
+  },
+  "retiredHooks": {
+    "header-menu": {"elements": ["button"], "since": "1.78.0-beta.3", "audience": ["styling", "test"], "retired": "1.84.0", "issue": 1184, "reason": "Owner-approved shared panel/Lovelace header replaces the phone menu with direct actions; no hidden compatibility DOM. Use mode-tab, space-settings, space-add, settings, pdf, support, hidden-devices, summary-settings and summary-toggle."},
+    "header-menu-item": {"elements": ["button"], "since": "1.78.0-beta.3", "audience": ["styling", "test"], "attributes": {"data-id": ["mode-plan", "mode-devices", "mode-decor", "space-settings", "space-add", "settings", "pdf", "support", "hidden-devices", "summary-settings", "summary-toggle"]}, "retired": "1.84.0", "issue": 1184, "reason": "Owner-approved shared panel/Lovelace header replaces the phone menu with direct actions; no hidden compatibility DOM. Use mode-tab, space-settings, space-add, settings, pdf, support, hidden-devices, summary-settings and summary-toggle."},
+    "header-menu-scrim": {"elements": ["div"], "since": "1.78.0-beta.3", "audience": ["test"], "retired": "1.84.0", "issue": 1184, "reason": "Owner-approved shared panel/Lovelace header replaces the phone menu with direct actions; no hidden compatibility DOM. Use mode-tab, space-settings, space-add, settings, pdf, support, hidden-devices, summary-settings and summary-toggle."},
+    "panel-title": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "retired": "1.83.0-beta.4",
+      "issue": 1120,
+      "reason": "Owner-approved #1120 removes the outer main-panel title/header entirely. The retained panel-menu hook moves into the ordinary card header; kiosk hides both header and menu, with no hidden title replacement."
+    },
+    "room-draft": {
+      "elements": ["line"],
+      "since": "1.60.2-beta.1",
+      "retired": "1.73.0-beta.1",
+      "reason": "Unfinished room contours were replaced by ordinary partitions in issue #478."
+    }
+  },
+  "internalPrefixes": [
+    "hidden-wall-",
+    "iso-",
+    "plan-snap-",
+    "resize-",
+    "zigbee-topology-"
+  ],
+  "internalExactValues": [
+    "alarm-add",
+    "alarm-edit",
+    "alarm-remove",
+    "alarm-create",
+    "alarm-cancel",
+    "alarm-ok",
+    "archive-summary",
+    "backup-recovery",
+    "opening-orphan",
+    "vacuum-route-missing-group"
+  ]
+}

@@ -1,0 +1,583 @@
+{
+  "schema": 1,
+  "provenance": "Literal legacy10 fixtures authored from documented room/wall/host format; not relabelled model11 exports.",
+  "bowtie": {
+    "format": "houseplan-export",
+    "export_version": 2,
+    "kind": "full",
+    "created_at": "2026-10-22T00:00:00.000000Z",
+    "source_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "card_version": "1.82.0",
+    "integration_version": "1.82.0",
+    "model_version": 10,
+    "payload": {
+      "config": {
+        "spaces": [
+          {
+            "id": "e2e-legacy-floor",
+            "title": "Legacy floor",
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "cell_cm": 5,
+            "rooms": [
+              {
+                "id": "legacy-room",
+                "name": "Legacy room",
+                "poly": [
+                  [
+                    0.6,
+                    0.1
+                  ],
+                  [
+                    0.8,
+                    0.3
+                  ],
+                  [
+                    0.8,
+                    0.1
+                  ],
+                  [
+                    0.6,
+                    0.3
+                  ]
+                ],
+                "wall_ids": [
+                  "legacy-top",
+                  "legacy-right",
+                  "legacy-bottom",
+                  "legacy-left"
+                ]
+              }
+            ],
+            "wall_segments": [
+              {
+                "id": "legacy-top",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.8,
+                  0.3
+                ],
+                "cm": 15
+              },
+              {
+                "id": "legacy-right",
+                "a": [
+                  0.8,
+                  0.3
+                ],
+                "b": [
+                  0.8,
+                  0.1
+                ],
+                "cm": 15
+              },
+              {
+                "id": "legacy-bottom",
+                "a": [
+                  0.8,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.3
+                ],
+                "cm": 15
+              },
+              {
+                "id": "legacy-left",
+                "a": [
+                  0.6,
+                  0.3
+                ],
+                "b": [
+                  0.6,
+                  0.1
+                ],
+                "cm": 15
+              }
+            ],
+            "partitions": [],
+            "openings": [],
+            "decor": [],
+            "walls": [
+              {
+                "key": "0.700000,0.200000@0.7856",
+                "a": [
+                  0.6,
+                  0.1
+                ],
+                "b": [
+                  0.8,
+                  0.3
+                ],
+                "cm": 15
+              },
+              {
+                "key": "0.800000,0.200000@1.5706",
+                "a": [
+                  0.8,
+                  0.3
+                ],
+                "b": [
+                  0.8,
+                  0.1
+                ],
+                "cm": 15
+              },
+              {
+                "key": "0.700000,0.200000@2.3561",
+                "a": [
+                  0.8,
+                  0.1
+                ],
+                "b": [
+                  0.6,
+                  0.3
+                ],
+                "cm": 15
+              },
+              {
+                "key": "0.600000,0.200000@1.5706",
+                "a": [
+                  0.6,
+                  0.3
+                ],
+                "b": [
+                  0.6,
+                  0.1
+                ],
+                "cm": 15
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "layout": {}
+    },
+    "placement_manifest": [],
+    "content_manifest": []
+  },
+  "openingRepair": {
+    "format": "houseplan-export",
+    "export_version": 2,
+    "kind": "full",
+    "created_at": "2026-10-22T00:00:00.000000Z",
+    "source_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "card_version": "1.82.0",
+    "integration_version": "1.82.0",
+    "model_version": 10,
+    "payload": {
+      "config": {
+        "spaces": [
+          {
+            "id": "e2e-legacy-floor",
+            "title": "Legacy floor",
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "cell_cm": 5,
+            "rooms": [
+              {
+                "id": "legacy-room",
+                "name": "Legacy room",
+                "poly": [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.9,
+                    0.1
+                  ],
+                  [
+                    0.9,
+                    0.8
+                  ],
+                  [
+                    0.1,
+                    0.8
+                  ]
+                ],
+                "wall_ids": [
+                  "legacy-top",
+                  "legacy-right",
+                  "legacy-bottom",
+                  "legacy-left"
+                ]
+              }
+            ],
+            "wall_segments": [
+              {
+                "id": "legacy-top",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.9,
+                  0.1
+                ],
+                "cm": 15
+              },
+              {
+                "id": "legacy-right",
+                "a": [
+                  0.9,
+                  0.1
+                ],
+                "b": [
+                  0.9,
+                  0.8
+                ],
+                "cm": 15
+              },
+              {
+                "id": "legacy-bottom",
+                "a": [
+                  0.9,
+                  0.8
+                ],
+                "b": [
+                  0.1,
+                  0.8
+                ],
+                "cm": 15
+              },
+              {
+                "id": "legacy-left",
+                "a": [
+                  0.1,
+                  0.8
+                ],
+                "b": [
+                  0.1,
+                  0.1
+                ],
+                "cm": 15
+              }
+            ],
+            "partitions": [],
+            "openings": [
+              {
+                "id": "legacy-off-wall",
+                "type": "door",
+                "x": 0.95,
+                "y": 0.95,
+                "angle": 0,
+                "length": 0.1,
+                "host": {
+                  "kind": "wall",
+                  "id": "legacy-top",
+                  "t": 0.5
+                },
+                "flip_h": true,
+                "future_field": {
+                  "keep": "legacy1033"
+                }
+              }
+            ],
+            "decor": [],
+            "walls": [
+              {
+                "key": "0.500000,0.100000@0.0000",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.9,
+                  0.1
+                ],
+                "cm": 15
+              },
+              {
+                "key": "0.900000,0.450000@1.5706",
+                "a": [
+                  0.9,
+                  0.1
+                ],
+                "b": [
+                  0.9,
+                  0.8
+                ],
+                "cm": 15
+              },
+              {
+                "key": "0.500000,0.800000@0.0000",
+                "a": [
+                  0.9,
+                  0.8
+                ],
+                "b": [
+                  0.1,
+                  0.8
+                ],
+                "cm": 15
+              },
+              {
+                "key": "0.100000,0.450000@1.5706",
+                "a": [
+                  0.1,
+                  0.8
+                ],
+                "b": [
+                  0.1,
+                  0.1
+                ],
+                "cm": 15
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "layout": {}
+    },
+    "placement_manifest": [],
+    "content_manifest": []
+  },
+  "expectedOpeningRepairGeometry": {
+    "rooms": [
+      {
+        "id": "legacy-room",
+        "poly": [
+          [
+            0.1,
+            0.1
+          ],
+          [
+            0.9,
+            0.1
+          ],
+          [
+            0.9,
+            0.8
+          ],
+          [
+            0.1,
+            0.8
+          ]
+        ],
+        "wall_ids": [
+          "legacy-top",
+          "legacy-right",
+          "legacy-bottom",
+          "legacy-left"
+        ]
+      }
+    ],
+    "wall_segments": [
+      {
+        "id": "legacy-bottom",
+        "a": [
+          0.1,
+          0.8
+        ],
+        "b": [
+          0.9,
+          0.8
+        ],
+        "cm": 15
+      },
+      {
+        "id": "legacy-left",
+        "a": [
+          0.1,
+          0.1
+        ],
+        "b": [
+          0.1,
+          0.8
+        ],
+        "cm": 15
+      },
+      {
+        "id": "legacy-right",
+        "a": [
+          0.9,
+          0.1
+        ],
+        "b": [
+          0.9,
+          0.8
+        ],
+        "cm": 15
+      },
+      {
+        "id": "legacy-top",
+        "a": [
+          0.1,
+          0.1
+        ],
+        "b": [
+          0.9,
+          0.1
+        ],
+        "cm": 15
+      }
+    ],
+    "partitions": [],
+    "walls": [
+      {
+        "a": [
+          0.1,
+          0.8
+        ],
+        "b": [
+          0.9,
+          0.8
+        ],
+        "cm": 15,
+        "key": "0.500000,0.800000@0.0000"
+      },
+      {
+        "a": [
+          0.1,
+          0.1
+        ],
+        "b": [
+          0.1,
+          0.8
+        ],
+        "cm": 15,
+        "key": "0.100000,0.450000@1.5706"
+      },
+      {
+        "a": [
+          0.9,
+          0.1
+        ],
+        "b": [
+          0.9,
+          0.8
+        ],
+        "cm": 15,
+        "key": "0.900000,0.450000@1.5706"
+      },
+      {
+        "a": [
+          0.1,
+          0.1
+        ],
+        "b": [
+          0.9,
+          0.1
+        ],
+        "cm": 15,
+        "key": "0.500000,0.100000@0.0000"
+      }
+    ],
+    "plan_graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%22216%5C%22%2C%5C%22192%5C%22%5D%22%5D",
+          "p": [
+            "l",
+            "216",
+            "192"
+          ]
+        },
+        {
+          "id": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%22216%5C%22%2C%5C%2224%5C%22%5D%22%5D",
+          "p": [
+            "l",
+            "216",
+            "24"
+          ]
+        },
+        {
+          "id": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%2224%5C%22%2C%5C%22192%5C%22%5D%22%5D",
+          "p": [
+            "l",
+            "24",
+            "192"
+          ]
+        },
+        {
+          "id": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%2224%5C%22%2C%5C%2224%5C%22%5D%22%5D",
+          "p": [
+            "l",
+            "24",
+            "24"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "legacy-bottom",
+          "from": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%2224%5C%22%2C%5C%22192%5C%22%5D%22%5D",
+          "to": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%22216%5C%22%2C%5C%22192%5C%22%5D%22%5D",
+          "kind": "wall",
+          "cm": 15
+        },
+        {
+          "id": "legacy-left",
+          "from": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%2224%5C%22%2C%5C%2224%5C%22%5D%22%5D",
+          "to": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%2224%5C%22%2C%5C%22192%5C%22%5D%22%5D",
+          "kind": "wall",
+          "cm": 15
+        },
+        {
+          "id": "legacy-right",
+          "from": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%22216%5C%22%2C%5C%2224%5C%22%5D%22%5D",
+          "to": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%22216%5C%22%2C%5C%22192%5C%22%5D%22%5D",
+          "kind": "wall",
+          "cm": 15
+        },
+        {
+          "id": "legacy-top",
+          "from": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%2224%5C%22%2C%5C%2224%5C%22%5D%22%5D",
+          "to": "n:%5B%22room%22%2C%22legacy-room%22%2C%22%5B%5C%22l%5C%22%2C%5C%22216%5C%22%2C%5C%2224%5C%22%5D%22%5D",
+          "kind": "wall",
+          "cm": 15
+        }
+      ],
+      "rooms": [
+        {
+          "room": "legacy-room",
+          "edges": [
+            {
+              "kind": "wall",
+              "id": "legacy-top",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "legacy-right",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "legacy-bottom",
+              "reverse": true
+            },
+            {
+              "kind": "wall",
+              "id": "legacy-left",
+              "reverse": true
+            }
+          ]
+        }
+      ],
+      "dependencies": []
+    }
+  },
+  "expectedGeometryProvenance": {
+    "producer": "commitWallSegmentModel on literal legacy10 geometry without any openings",
+    "note": "Frozen independent geometry target only. Never normalize expected after HA writes."
+  }
+}

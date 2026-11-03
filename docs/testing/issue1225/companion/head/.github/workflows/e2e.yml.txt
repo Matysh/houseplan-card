@@ -1,0 +1,236 @@
+# Honest end-to-end run: a real Home Assistant in Docker, House Plan installed
+# from the exact release asset HACS ships, two real users, a real browser.
+#
+# Three suites, each with its own Home Assistant:
+#   journeys  — the seeded house: sidebar page, dashboards, roles, phone, PDF, HA restart,
+#               every editor and settings dialog, backups (houseplan-card#1010)
+#   first-run — the same HA without any plan: the administrator's first contact
+#   upgrade   — an older House Plan open in a browser, then the update + restart
+#   journeys-dev — the journeys suite against the dev branch snapshot (frontend built from it)
+#
+# Every scenario leaves evidence frames; each job diffs them against the frames
+# of the last stable release (evidence/stable/<tag>, committed by the
+# evidence-baseline job after a green stable gate). Material to look at, not a
+# gate: the diff never fails a job and never notifies.
+name: E2E на реальном Home Assistant
+
+on:
+  push:
+    branches: [main]
+    # the stable baseline commit of the evidence-baseline job is not a change to test
+    paths-ignore: ['evidence/**']
+  workflow_dispatch:
+    inputs:
+      houseplan_ref:
+        description: "House Plan под тестом: latest (беты включительно) | stable | тег | ветка"
+        required: false
+        default: latest
+      upgrade_from:
+        description: "Откуда обновляемся: stable (предыдущий, если совпал с целью) | явный тег"
+        required: false
+        default: stable
+      ha_version:
+        description: "Тег образа ghcr.io/home-assistant/home-assistant"
+        required: false
+        default: stable
+  schedule:
+    - cron: "0 3 * * *"   # ночью: свежая бета House Plan на stable и beta HA
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  # The matrix is planned in a tiny job because a job-level `if` cannot read
+  # `matrix.*`: journeys-dev (the dev snapshot) belongs to the nightly only —
+  # a red dev must not withhold a stable release dispatched on a tag (#514).
+  plan:
+    name: Матрица прогона
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      stable_tag: ${{ steps.plan.outputs.stable_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # the unit suite reads PNGs and ZIPs (pngjs, pixelmatch)
+      - run: npm ci
+      - name: Проверки выбора версий и матрицы
+        run: node --test test/*.test.mjs
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          HP_REF: ${{ inputs.houseplan_ref || 'latest' }}
+          UPGRADE_FROM: ${{ inputs.upgrade_from || 'stable' }}
+          HA_VERSION: ${{ inputs.ha_version || 'stable' }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/plan-run.mjs
+  e2e:
+    needs: plan
+    # The job name is a contract: houseplan-card's stable release gate (#514)
+    # recognises the run it dispatched by ` · HP <tag> · ` in these names.
+    name: "${{ matrix.suite }} · HP ${{ matrix.ref }} · HA ${{ matrix.ha }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      HOUSEPLAN_REF: ${{ matrix.target_ref }}
+      HOUSEPLAN_EXPECTED_VERSION: ${{ matrix.target_version }}
+      HA_VERSION: ${{ matrix.ha }}
+      HA_URL: http://127.0.0.1:8123
+      E2E_RUN_DIR: ${{ github.workspace }}/run
+      E2E_EVIDENCE_DIR: ${{ github.workspace }}/evidence-out
+      GITHUB_TOKEN: ${{ github.token }}
+      TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+      TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Зависимости и браузер
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Контракт data-hp — все селекторы объявлены
+        run: node scripts/contract.mjs lint
+
+      - name: "Конфиг HA из seed (${{ matrix.variant }})"
+        run: node scripts/prepare-seed.mjs --out=run --variant="${{ matrix.variant }}"
+
+      - name: "House Plan ${{ matrix.install_ref }} в конфиг (как ставит HACS)"
+        env:
+          INSTALL_REF: ${{ matrix.install_ref }}
+          INSTALL_VERSION: ${{ matrix.install_version }}
+        run: node scripts/install-houseplan.mjs --ref="$INSTALL_REF" --expect-version="$INSTALL_VERSION" --out=run
+
+      - name: Home Assistant в docker
+        run: |
+          docker pull -q "ghcr.io/home-assistant/home-assistant:${HA_VERSION}"
+          node scripts/ha.mjs up --version="$HA_VERSION" --dir="$PWD/run"
+          node scripts/ha.mjs wait --timeout=480
+
+      - name: Фактическая версия HA и установленный frontend
+        run: node scripts/ha-public-version.mjs
+
+      - name: "Сценарии: ${{ matrix.suite }}"
+        run: npx playwright test ${{ matrix.projects }}
+
+      - name: Логи HA
+        if: always()
+        run: |
+          mkdir -p artifacts
+          node scripts/ha.mjs logs > artifacts/docker.log 2>&1 || true
+          sudo cp run/home-assistant.log artifacts/home-assistant.log 2>/dev/null || true
+          cp run/.e2e-houseplan.json artifacts/ 2>/dev/null || true
+          {
+            echo "### ${{ matrix.suite }} · HA ${HA_VERSION}"
+            echo '```json'; cat run/.e2e-houseplan.json; echo; echo '```'
+            echo "Образ: $(docker inspect --format='{{index .Config.Image}}' hp-e2e 2>/dev/null)"
+            echo
+            echo "Журнал HA (houseplan|custom_components|frontend, error/warning):"
+            echo '```'; grep -iE "error|warning" artifacts/home-assistant.log 2>/dev/null | grep -iE "houseplan|custom_comp|frontend" | tail -n 30; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Кадры-улики и диффы к последнему стабильному (не гейт)
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p evidence-artifact
+          cp -r evidence-out evidence-artifact/raw 2>/dev/null || true
+          node scripts/evidence-diff.mjs --current=evidence-out --stable=evidence/stable \
+            --out=evidence-artifact/diff --title="${{ matrix.suite }} · HA ${{ matrix.ha }}" \
+            --artifact="evidence-${{ github.run_number }}-${{ matrix.suite }}-ha-${{ matrix.ha }}" \
+            --link="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
+
+      - name: Артефакты (отчёт, трейсы, скриншоты, логи)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ github.run_number }}-${{ matrix.suite }}-ha-${{ matrix.ha }}
+          path: |
+            playwright-report
+            test-results
+            artifacts
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # frames and diffs live longer than the report: raw/ is what the stable
+      # baseline is made of, diff/index.html is the gallery to open
+      - name: Артефакт кадров (90 дней)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-${{ github.run_number }}-${{ matrix.suite }}-ha-${{ matrix.ha }}
+          path: evidence-artifact
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Telegram при падении
+        if: failure() && env.TG_BOT_TOKEN != '' && env.TG_CHAT_ID != ''
+        run: |
+          text="❌ E2E House Plan · ${{ matrix.suite }} · HP ${{ matrix.ref }} · HA ${HA_VERSION}: красный. ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -s -o /dev/null -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT_ID}" --data-urlencode "text=${text}"
+
+      - name: Остановить HA
+        if: always()
+        run: node scripts/ha.mjs down
+
+  # A green stable gate (houseplan-card#1010): its frames become the new "last
+  # stable" baseline in this repository. Only when every suite passed, the
+  # planner found the stable tag of the dispatched candidate, and the run is of
+  # main itself — a run dispatched on an issue branch never writes main.
+  evidence-baseline:
+    name: Эталон кадров последнего стабильного
+    needs: [plan, e2e]
+    if: github.ref == 'refs/heads/main' && needs.plan.outputs.stable_tag != '' && needs.e2e.result == 'success'
+    # not a gate: houseplan-card's release gate reads the run's conclusion, and
+    # a failed baseline commit must not withhold a release
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: evidence-${{ github.run_number }}-*-ha-stable
+          path: downloaded
+          merge-multiple: true
+      - name: evidence/stable/${{ needs.plan.outputs.stable_tag }}
+        env:
+          TAG: ${{ needs.plan.outputs.stable_tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node scripts/evidence-baseline.mjs --tag="$TAG" --from=downloaded/raw
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A evidence/stable
+          if git diff --cached --quiet; then echo "baseline unchanged"; exit 0; fi
+          git commit -q -m "evidence: stable baseline $TAG" -m "Frames of the green stable gate $RUN_URL (houseplan-card#1010)."
+          echo "### Stable baseline: \`evidence/stable/$TAG\` ($(git show --stat --format= HEAD | tail -n 1))" >> "$GITHUB_STEP_SUMMARY"
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase -q origin main
+          done
+          exit 1

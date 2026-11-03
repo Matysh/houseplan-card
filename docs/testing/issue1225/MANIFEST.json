@@ -1,0 +1,805 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/Matysh/houseplan-e2e",
+  "pullRequest": "https://github.com/Matysh/houseplan-e2e/pull/18",
+  "base": "115ae6f985f084696cde3f419d88d7751c4de972",
+  "head": "a5ba81afb2b624e6b84d9b3605c63e97322efb25",
+  "fullDiff": {
+    "path": "companion-full.patch",
+    "bytes": 303051,
+    "sha256": "67fc6b68e4146a1ce3c95209252b91677ad3e25f676f373650d55973d5b74519"
+  },
+  "changedFiles": [
+    "fixtures/backups/README.md",
+    "fixtures/backups/current-dirty-geometry.json",
+    "fixtures/backups/legacy10-transfer-cases.json",
+    "task-impact/houseplan-card-1216.md",
+    "task-impact/houseplan-card-1225-ha-results.json",
+    "task-impact/houseplan-card-1225.md",
+    "test/profile-fixtures.test.mjs",
+    "test/visible-plan-target.test.mjs",
+    "tests/editor-decor.admin.spec.mjs",
+    "tests/editor-plan.admin.spec.mjs",
+    "tests/first-run/first-space.admin.spec.mjs",
+    "tests/ha-bootstrap.admin.spec.mjs",
+    "tests/lib/backup-fixtures.mjs",
+    "tests/lib/exact-graph-first-space.mjs",
+    "tests/lib/panel-profiles.mjs",
+    "tests/lib/profile-fixtures.mjs",
+    "tests/lib/visible-plan-target.mjs",
+    "tests/panel-kiosk.admin.spec.mjs",
+    "tests/panel-profiles.admin.spec.mjs",
+    "tests/panel-profiles.viewer.spec.mjs",
+    "tests/plan-model.setup.mjs",
+    "tests/space-copy-lifecycle.admin.spec.mjs",
+    "tests/transfer-export.admin.spec.mjs",
+    "tests/transfer-import.admin.spec.mjs"
+  ],
+  "entries": [
+    {
+      "side": "base",
+      "source": "fixtures/backups/README.md",
+      "role": "changed-source before",
+      "snapshot": "companion/base/fixtures/backups/README.md.txt",
+      "bytes": 6736,
+      "sha256": "4116dd62e89a7d0f91f0a90c27021d12846785065c2711e9941e9e56f22a52ab",
+      "gitBlob": "c7f8ee33c389af367cf3dc5e0cba35e3b6200dae"
+    },
+    {
+      "side": "head",
+      "source": "fixtures/backups/README.md",
+      "role": "changed-source after",
+      "snapshot": "companion/head/fixtures/backups/README.md.txt",
+      "bytes": 9684,
+      "sha256": "f5377b71e7a649bcc6ef53b15a5be60bff63a5833c34f079f0a2429060f78ff4",
+      "gitBlob": "dcf9d8f8204800af708fc6a65df0ea721fcff237"
+    },
+    {
+      "side": "head",
+      "source": "fixtures/backups/current-dirty-geometry.json",
+      "role": "changed-source after",
+      "snapshot": "companion/head/fixtures/backups/current-dirty-geometry.json.txt",
+      "bytes": 110483,
+      "sha256": "357e04a891e4e41600412f4d0da90283cfc5d54fc5dde2c5a5a139f9b7647f23",
+      "gitBlob": "5659d4b3b14ade6ca1891a060685e3d8e9598a86"
+    },
+    {
+      "side": "head",
+      "source": "fixtures/backups/legacy10-transfer-cases.json",
+      "role": "changed-source after",
+      "snapshot": "companion/head/fixtures/backups/legacy10-transfer-cases.json.txt",
+      "bytes": 13650,
+      "sha256": "8d51553a5e6228af76bf3a368ce246e937400059828d6ddaf42fa812ff56a006",
+      "gitBlob": "a6c2620d55951c450b562b0d97b32583c517679d"
+    },
+    {
+      "side": "head",
+      "source": "task-impact/houseplan-card-1216.md",
+      "role": "changed-source after",
+      "snapshot": "companion/head/task-impact/houseplan-card-1216.md.txt",
+      "bytes": 1845,
+      "sha256": "3e019efea6a72c1d27e998d72d1327909fcd52797b36bfdd7aa799793fce646a",
+      "gitBlob": "b1e2262842e2a982fb196b554b0f288e7ce9ffb3"
+    },
+    {
+      "side": "head",
+      "source": "task-impact/houseplan-card-1225-ha-results.json",
+      "role": "changed-source after",
+      "snapshot": "companion/head/task-impact/houseplan-card-1225-ha-results.json.txt",
+      "bytes": 64533,
+      "sha256": "55119d8f97d2e471cbda34f674938441c2504b4995f329c6f0d747a6503f371c",
+      "gitBlob": "3c4a57ab5299ccd028cab9e10cd405ed1fe22235"
+    },
+    {
+      "side": "head",
+      "source": "task-impact/houseplan-card-1225.md",
+      "role": "changed-source after",
+      "snapshot": "companion/head/task-impact/houseplan-card-1225.md.txt",
+      "bytes": 10107,
+      "sha256": "a849378393efe20917c8dd2296cc180c8f39e239f71bef5830bd8df3a88e0c27",
+      "gitBlob": "de0744379856e371ea8a85cf83486a5b133065cc"
+    },
+    {
+      "side": "head",
+      "source": "test/profile-fixtures.test.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/test/profile-fixtures.test.mjs.txt",
+      "bytes": 1247,
+      "sha256": "ba1c27caf53036df03225f79fe8825791f406c15f7c54c1adec77ae765128741",
+      "gitBlob": "9c8f3f73c7e303fc5f08abfb086a66af7e18809c"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/profile-fixtures.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/profile-fixtures.mjs.txt",
+      "bytes": 1246,
+      "sha256": "df14b97523e8cb6922fbcff11181d3f56785894e6e82d07f3833d25b12a1c2fe",
+      "gitBlob": "42a0a5d02e1391ea4e1cf60a6affb236b2c12981"
+    },
+    {
+      "side": "head",
+      "source": "test/visible-plan-target.test.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/test/visible-plan-target.test.mjs.txt",
+      "bytes": 4131,
+      "sha256": "963d40d3f931cb65f9dc425fcca9ef22819c04a8dc7c9a694b081ce69d49cef5",
+      "gitBlob": "91e1a1f5d23659ce428048e1228eba88d68bbd49"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/visible-plan-target.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/visible-plan-target.mjs.txt",
+      "bytes": 4053,
+      "sha256": "11c774cf05214b4fce443220ab87dbe7696d2a1b20f2a0b90d2a8f7dbd47b52c",
+      "gitBlob": "23e58b846bd96ed31c199b4d167805ae5a2b4487"
+    },
+    {
+      "side": "base",
+      "source": "tests/editor-decor.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/editor-decor.admin.spec.mjs.txt",
+      "bytes": 8954,
+      "sha256": "2dcc9b4de4f70d229ef645db3fbd2dd92522c471dc3036e9a53766372434dda4",
+      "gitBlob": "bd37388d1392ec600c112182507b68ba7d5dfc26"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/contract.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/contract.mjs.txt",
+      "bytes": 9025,
+      "sha256": "a624db6dabcc402e471f23b028aa65de15fd76682312012efcc6ad1699f4ffde",
+      "gitBlob": "5f577ea3e3d84efb641a13f62e946a4b8bdd9fc0"
+    },
+    {
+      "side": "base",
+      "source": "scripts/tags.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/scripts/tags.mjs.txt",
+      "bytes": 743,
+      "sha256": "5a38e6c196d6d7b3aee1c687d2439db98165f639873e423b176428b6f2911f49",
+      "gitBlob": "531c7807dc2c1efd13887922da1f8a87ebb53e0e"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/ha-page.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/ha-page.mjs.txt",
+      "bytes": 7294,
+      "sha256": "6f7273fbbdfe0c30eabb78193ea3aa55ab63f332ac6e96aac2bfa2cef644ccbe",
+      "gitBlob": "bd5007ce019b88d309cb8675eb1fe130192989b6"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/hooks.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/hooks.mjs.txt",
+      "bytes": 1833,
+      "sha256": "bbe53ed72ed9099b6837959fa7fdae5e8fe4ba215731a49e671ea126a6968fd0",
+      "gitBlob": "df15a12d1959081647e5ae4093d7c33649596c76"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/ha-ws.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/ha-ws.mjs.txt",
+      "bytes": 6356,
+      "sha256": "840bce8a4eeebe5f83d2ed0063028472443bab3fd94fc25be4ed199278133678",
+      "gitBlob": "9a0a3fbddb80b66e9636f0315cdd52743f8f00dd"
+    },
+    {
+      "side": "base",
+      "source": "scripts/users.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/scripts/users.mjs.txt",
+      "bytes": 722,
+      "sha256": "a5998746c31adb34bb38b09d8b587bafbb6da19dcedd6900af209b9a0543d65c",
+      "gitBlob": "8a0657ab83f83aa5fc65034b237c8b979549f21f"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/ha-api.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/ha-api.mjs.txt",
+      "bytes": 2701,
+      "sha256": "0b51c042d6fa60cc7d378826fb47e6d2ef994e19010775b1b4c00ee46c2d0071",
+      "gitBlob": "6e64e105d6683bf283b6aad743f408b05eadaa07"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/plan.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/plan.mjs.txt",
+      "bytes": 8277,
+      "sha256": "9f52948a90814ff64f3bde76bf62d2e86084f496da4ecaff19e3270946a34d9f",
+      "gitBlob": "c69fe046875b791acc37ca7964dae0883ee32a2a"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/panel-release-contract.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/panel-release-contract.mjs.txt",
+      "bytes": 1222,
+      "sha256": "06aecce180f9b06df751f8e1542fb4f5f151b144db8284daaba75d5e71ebe8c7",
+      "gitBlob": "e22ec3114d750a1ea2d1ef1729255695ab5f4429"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/seed-guard.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/seed-guard.mjs.txt",
+      "bytes": 557,
+      "sha256": "5106a2ecbdcd9faf1dda1d8396a441462ccecf4a95b072aec17c5db7e5657365",
+      "gitBlob": "d3636feb3e51875972f77c5a17a5abb423d0705b"
+    },
+    {
+      "side": "head",
+      "source": "tests/editor-decor.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/editor-decor.admin.spec.mjs.txt",
+      "bytes": 9431,
+      "sha256": "383febce822fe40267e0236c162b408c29c3c594d48eb52a254cf69726229686",
+      "gitBlob": "96437c5779bd33b289b30fbac19eeaba36e956e8"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/contract.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/contract.mjs.txt",
+      "bytes": 9025,
+      "sha256": "a624db6dabcc402e471f23b028aa65de15fd76682312012efcc6ad1699f4ffde",
+      "gitBlob": "5f577ea3e3d84efb641a13f62e946a4b8bdd9fc0"
+    },
+    {
+      "side": "head",
+      "source": "scripts/tags.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/scripts/tags.mjs.txt",
+      "bytes": 743,
+      "sha256": "5a38e6c196d6d7b3aee1c687d2439db98165f639873e423b176428b6f2911f49",
+      "gitBlob": "531c7807dc2c1efd13887922da1f8a87ebb53e0e"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-page.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-page.mjs.txt",
+      "bytes": 7294,
+      "sha256": "6f7273fbbdfe0c30eabb78193ea3aa55ab63f332ac6e96aac2bfa2cef644ccbe",
+      "gitBlob": "bd5007ce019b88d309cb8675eb1fe130192989b6"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/hooks.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/hooks.mjs.txt",
+      "bytes": 1833,
+      "sha256": "bbe53ed72ed9099b6837959fa7fdae5e8fe4ba215731a49e671ea126a6968fd0",
+      "gitBlob": "df15a12d1959081647e5ae4093d7c33649596c76"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-ws.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-ws.mjs.txt",
+      "bytes": 6356,
+      "sha256": "840bce8a4eeebe5f83d2ed0063028472443bab3fd94fc25be4ed199278133678",
+      "gitBlob": "9a0a3fbddb80b66e9636f0315cdd52743f8f00dd"
+    },
+    {
+      "side": "head",
+      "source": "scripts/users.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/scripts/users.mjs.txt",
+      "bytes": 722,
+      "sha256": "a5998746c31adb34bb38b09d8b587bafbb6da19dcedd6900af209b9a0543d65c",
+      "gitBlob": "8a0657ab83f83aa5fc65034b237c8b979549f21f"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-api.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-api.mjs.txt",
+      "bytes": 2701,
+      "sha256": "0b51c042d6fa60cc7d378826fb47e6d2ef994e19010775b1b4c00ee46c2d0071",
+      "gitBlob": "6e64e105d6683bf283b6aad743f408b05eadaa07"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/plan.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/plan.mjs.txt",
+      "bytes": 8277,
+      "sha256": "9f52948a90814ff64f3bde76bf62d2e86084f496da4ecaff19e3270946a34d9f",
+      "gitBlob": "c69fe046875b791acc37ca7964dae0883ee32a2a"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/panel-release-contract.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/panel-release-contract.mjs.txt",
+      "bytes": 1222,
+      "sha256": "06aecce180f9b06df751f8e1542fb4f5f151b144db8284daaba75d5e71ebe8c7",
+      "gitBlob": "e22ec3114d750a1ea2d1ef1729255695ab5f4429"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/seed-guard.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/seed-guard.mjs.txt",
+      "bytes": 557,
+      "sha256": "5106a2ecbdcd9faf1dda1d8396a441462ccecf4a95b072aec17c5db7e5657365",
+      "gitBlob": "d3636feb3e51875972f77c5a17a5abb423d0705b"
+    },
+    {
+      "side": "base",
+      "source": "tests/editor-plan.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/editor-plan.admin.spec.mjs.txt",
+      "bytes": 13066,
+      "sha256": "20c23e5b5ed5a954bc452e4f8446072a444014defd25df7bc6085f7815b233c5",
+      "gitBlob": "8b5ee7c534afa757848e1169ec330819330428ae"
+    },
+    {
+      "side": "head",
+      "source": "tests/editor-plan.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/editor-plan.admin.spec.mjs.txt",
+      "bytes": 15983,
+      "sha256": "e9f53822d39120980e6ea02d038dee0cca6f8de223975126ef88ba33cb1e72df",
+      "gitBlob": "57986c62fa547a5bfa1639ed6faa13a8ac0c2d8b"
+    },
+    {
+      "side": "base",
+      "source": "tests/first-run/first-space.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/first-run/first-space.admin.spec.mjs.txt",
+      "bytes": 2624,
+      "sha256": "8fb2a16d85be45d8f4ac17cd59281693095584ac91bc5a363ee776fa8ed7391e",
+      "gitBlob": "59123449d990e712357b96c76bd256ce90c3a29c"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/ha-ctl.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/ha-ctl.mjs.txt",
+      "bytes": 2238,
+      "sha256": "dc7c14577a386f14387894fd353a20a168c1cebbf8366439c61ce621223a42ce",
+      "gitBlob": "5719a4372d724fed1dedd7ce0db99f3c52ecd555"
+    },
+    {
+      "side": "head",
+      "source": "tests/first-run/first-space.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/first-run/first-space.admin.spec.mjs.txt",
+      "bytes": 3332,
+      "sha256": "81367cacc50e1894ebf2adb283f9e03124bd56c6de13acbc3e770258635d419e",
+      "gitBlob": "bc898d5db269b3174bedbd39799381ee36215ba9"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-ctl.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-ctl.mjs.txt",
+      "bytes": 2238,
+      "sha256": "dc7c14577a386f14387894fd353a20a168c1cebbf8366439c61ce621223a42ce",
+      "gitBlob": "5719a4372d724fed1dedd7ce0db99f3c52ecd555"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/exact-graph-first-space.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/exact-graph-first-space.mjs.txt",
+      "bytes": 4318,
+      "sha256": "bdeeade5472df2018185c7d5cd473e9a6d811d2267de1b80428fa8709d62fc81",
+      "gitBlob": "38c7527bac219dd33fbee9c78043343d55bec866"
+    },
+    {
+      "side": "base",
+      "source": "tests/ha-bootstrap.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/ha-bootstrap.admin.spec.mjs.txt",
+      "bytes": 2899,
+      "sha256": "5f02a822445a61e705ec53120346b685beeaeb69ceb2602f92a1b7c127555018",
+      "gitBlob": "fadb373d56ff61c69430ca7c265d13ff7aa6a377"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/backup-fixtures.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/backup-fixtures.mjs.txt",
+      "bytes": 14929,
+      "sha256": "72fb7875e9cc60696b871761532f73193e4f8f984dc0203208bf1a472617d0f5",
+      "gitBlob": "269a43bd7ce6aed0aa19d77f2a85390c94ff8b58"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/zip.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/zip.mjs.txt",
+      "bytes": 4075,
+      "sha256": "0b1eda9000a11222b8eb8ae9196e1cf40b6694cd6e87a4dca1351239ee4e5847",
+      "gitBlob": "2bba6136762702c3be31a26ac044702b78997d6d"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/backup.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/backup.mjs.txt",
+      "bytes": 5468,
+      "sha256": "79b1fa909e8a1d1d98ca351ebd61be94205899d514a1377a665c658ad1c0bcfc",
+      "gitBlob": "cd84d183b3df473a67d2af9c5058536ff23fe97a"
+    },
+    {
+      "side": "head",
+      "source": "tests/ha-bootstrap.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/ha-bootstrap.admin.spec.mjs.txt",
+      "bytes": 3531,
+      "sha256": "79c408ab77792f99ad21febab5137f7d4137827eb2b2fee68a2dc797780e421c",
+      "gitBlob": "eb9dcfacc7210252773a88a24e95d87806839716"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/backup-fixtures.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/backup-fixtures.mjs.txt",
+      "bytes": 18051,
+      "sha256": "69299d6f743870f9c205d65143760ebe7f85739a0490f82cb60799848d4e5559",
+      "gitBlob": "bd0f9e5fd2b5d0135dadb7322a4461ac29df0289"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/zip.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/zip.mjs.txt",
+      "bytes": 4075,
+      "sha256": "0b1eda9000a11222b8eb8ae9196e1cf40b6694cd6e87a4dca1351239ee4e5847",
+      "gitBlob": "2bba6136762702c3be31a26ac044702b78997d6d"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/backup.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/backup.mjs.txt",
+      "bytes": 5468,
+      "sha256": "79b1fa909e8a1d1d98ca351ebd61be94205899d514a1377a665c658ad1c0bcfc",
+      "gitBlob": "cd84d183b3df473a67d2af9c5058536ff23fe97a"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/panel-profiles.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/lib/panel-profiles.mjs.txt",
+      "bytes": 17091,
+      "sha256": "04039776137c47b81b7b2ce5d65ebf4bb10f0079133df3f7569460d8f9bfa7a7",
+      "gitBlob": "8c622ad95ccb4a5e24868c3ed85ac35e9849e265"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/panel-profiles.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/lib/panel-profiles.mjs.txt",
+      "bytes": 17857,
+      "sha256": "1fd8fe07648a07fcdd4e5673f4f06b8bcef467252bdf6a4f8f3bb7d15532a5d7",
+      "gitBlob": "56d383456ef506684aec635a341730608505a53c"
+    },
+    {
+      "side": "base",
+      "source": "tests/panel-kiosk.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/panel-kiosk.admin.spec.mjs.txt",
+      "bytes": 12560,
+      "sha256": "0bfed6a3a9663b2f287863b9b7052f3692f6cc20fea88a59bcece61c50a0f3a4",
+      "gitBlob": "fdaa9c6a2645e1eb80e1c7afed9e03d06c80fe50"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/held-config-reply.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/held-config-reply.mjs.txt",
+      "bytes": 2831,
+      "sha256": "428808c9ad0b6ede80d7c3a9e498aef2f10d827667fad3e80aac1420a7f3cf46",
+      "gitBlob": "d01ec829416f11df285bfea32b11a55ca26a092d"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/panel-kiosk-journeys.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/panel-kiosk-journeys.mjs.txt",
+      "bytes": 7550,
+      "sha256": "08f4c861404a9b0aa5d4b1c8105c48744d0f09f2dad365098680546fbb4e9e6a",
+      "gitBlob": "a329ae5c259abdaa082731ed852d8ae593b11ffc"
+    },
+    {
+      "side": "base",
+      "source": "tests/lib/panel-shell.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/base/tests/lib/panel-shell.mjs.txt",
+      "bytes": 1576,
+      "sha256": "6548c70b67415451bbc08abb9d6880337767af3fe829b94e7b06296ba8162ae3",
+      "gitBlob": "db74b86bc6aa2f15278752f16af2a2500dabe64e"
+    },
+    {
+      "side": "head",
+      "source": "tests/panel-kiosk.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/panel-kiosk.admin.spec.mjs.txt",
+      "bytes": 12994,
+      "sha256": "ad98bb8aa3c2b1d4e230f6d6a7314bd6a11a5e41bab93054b56a086650790ba9",
+      "gitBlob": "ae8f9ab9c9f1c637d47d2348874e3a7e8453037d"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/held-config-reply.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/held-config-reply.mjs.txt",
+      "bytes": 2831,
+      "sha256": "428808c9ad0b6ede80d7c3a9e498aef2f10d827667fad3e80aac1420a7f3cf46",
+      "gitBlob": "d01ec829416f11df285bfea32b11a55ca26a092d"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/panel-kiosk-journeys.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/panel-kiosk-journeys.mjs.txt",
+      "bytes": 7550,
+      "sha256": "08f4c861404a9b0aa5d4b1c8105c48744d0f09f2dad365098680546fbb4e9e6a",
+      "gitBlob": "a329ae5c259abdaa082731ed852d8ae593b11ffc"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/panel-shell.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/panel-shell.mjs.txt",
+      "bytes": 1576,
+      "sha256": "6548c70b67415451bbc08abb9d6880337767af3fe829b94e7b06296ba8162ae3",
+      "gitBlob": "db74b86bc6aa2f15278752f16af2a2500dabe64e"
+    },
+    {
+      "side": "base",
+      "source": "tests/panel-profiles.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/panel-profiles.admin.spec.mjs.txt",
+      "bytes": 11520,
+      "sha256": "ac793a90d4b91e6e325df8089f2ba9512f8d2f39eceab31673f3f643c141c353",
+      "gitBlob": "954a2a2f2ea64088915324b839a81ccfcad59f9c"
+    },
+    {
+      "side": "head",
+      "source": "tests/panel-profiles.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/panel-profiles.admin.spec.mjs.txt",
+      "bytes": 15519,
+      "sha256": "17feb7f10e6c0816b0bb512324af23658b0696b61f6ee1f59b52bcdb6bce69c6",
+      "gitBlob": "eea0b8783db2db399c449e9f4bb11e6d7dbdfa47"
+    },
+    {
+      "side": "base",
+      "source": "tests/panel-profiles.viewer.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/panel-profiles.viewer.spec.mjs.txt",
+      "bytes": 7173,
+      "sha256": "a1be8a96f27f109e27c4ad68edf9c4c1d8fb134d3dbf39a5c966e2dc4e636cfc",
+      "gitBlob": "a9efdc105b3f423df58dec5daa492cf0cca1e6cf"
+    },
+    {
+      "side": "head",
+      "source": "tests/panel-profiles.viewer.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/panel-profiles.viewer.spec.mjs.txt",
+      "bytes": 7248,
+      "sha256": "f0d7641678025f701f3911db3a5ffe76b70ab736cd882cc526239c9b506bcea2",
+      "gitBlob": "c07c30fbe4032daf625814adc6796657ce8226a8"
+    },
+    {
+      "side": "base",
+      "source": "tests/plan-model.setup.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/plan-model.setup.mjs.txt",
+      "bytes": 2379,
+      "sha256": "f13d2129d2f7e22b21224a93d105b9a43df491cf9813fdfb2594f9b8a66327b8",
+      "gitBlob": "aedcc087045e5096ea06cd40f2f0cec04f4cf3ae"
+    },
+    {
+      "side": "head",
+      "source": "tests/plan-model.setup.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/plan-model.setup.mjs.txt",
+      "bytes": 3089,
+      "sha256": "3877a6968bcdbfe4bbbf65cb614a351e44250e01cd701c4ef99f27512dca3384",
+      "gitBlob": "6e4e93c2ef68dba13d6f6d43892489f6d97d339b"
+    },
+    {
+      "side": "base",
+      "source": "tests/space-copy-lifecycle.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/space-copy-lifecycle.admin.spec.mjs.txt",
+      "bytes": 8968,
+      "sha256": "5400b3ac0804ce0b8da3b007087355a498bcd5413cced7c7d5c7fd058e8952ea",
+      "gitBlob": "ad32ae4a9645c04a44272f1faea7622f2aa980ee"
+    },
+    {
+      "side": "head",
+      "source": "tests/space-copy-lifecycle.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/space-copy-lifecycle.admin.spec.mjs.txt",
+      "bytes": 8709,
+      "sha256": "92be05d44af0029318674bdaedda1a102237d449c07247219083728e898b47b9",
+      "gitBlob": "011db372c87a20aa9838829bf3eca6aa3c503f7e"
+    },
+    {
+      "side": "base",
+      "source": "tests/transfer-export.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/transfer-export.admin.spec.mjs.txt",
+      "bytes": 9949,
+      "sha256": "bd46d54f83ad740a759ddfd2f00f6ab6475662332a9bc14dd07f9da55df3b938",
+      "gitBlob": "871d5774c01be6cbe250b4c0e2c3e250fbca73c2"
+    },
+    {
+      "side": "head",
+      "source": "tests/transfer-export.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/transfer-export.admin.spec.mjs.txt",
+      "bytes": 10320,
+      "sha256": "3abe5cd4090e86c8bd21e482a9077229c96c28a8ef348361e2eb423cbef9cff8",
+      "gitBlob": "0c92cdc0f0f0a47e8acee9d6eecf9215a5dfd1d8"
+    },
+    {
+      "side": "base",
+      "source": "tests/transfer-import.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/transfer-import.admin.spec.mjs.txt",
+      "bytes": 17271,
+      "sha256": "52a0f56d3146c94adbb1da7cfff66b8785d2e645db53b73e95bcb07fb0c09146",
+      "gitBlob": "8fc2f982283377f317362942f8ca2e460af8461c"
+    },
+    {
+      "side": "head",
+      "source": "tests/transfer-import.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/transfer-import.admin.spec.mjs.txt",
+      "bytes": 21415,
+      "sha256": "d22f2fb754b8b77142a03bb92580ed1d2fc0f59f9953d30e9a61095bc97d8763",
+      "gitBlob": "15c89c24065c22fcebb94778ea61b69a027d2f93"
+    },
+    {
+      "side": "head",
+      "source": "README.md",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/README.md.txt",
+      "bytes": 17894,
+      "sha256": "5f9e116a6f3cd74b267910745de8585e8bf30d70c0e2f6644102f964e990f7a5",
+      "gitBlob": "ba91610d2db4c842112e802af7afc839759e8c20"
+    },
+    {
+      "side": "head",
+      "source": "package.json",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/package.json.txt",
+      "bytes": 831,
+      "sha256": "65108deaf5ffab26090348a1e8696ddb2b5c19d539ba8da6305ea7bdd2d075e7",
+      "gitBlob": "aaa8294774ca89bce8bf340c26d661f2bb366e1c"
+    },
+    {
+      "side": "head",
+      "source": "package-lock.json",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/package-lock.json.txt",
+      "bytes": 2925,
+      "sha256": "61c133156dddc8f0021e00c1217707c954c27f263fb811613ea2a54e08337d1b",
+      "gitBlob": "471ac9805cc43cfa83f8cb8dafb77f6375d5656c"
+    },
+    {
+      "side": "head",
+      "source": "playwright.config.mjs",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/playwright.config.mjs.txt",
+      "bytes": 2907,
+      "sha256": "052be080ba7b073b2252753dcc916d727f79843fd07a16dfca9c6497c841edd2",
+      "gitBlob": "eb86979d08402805feb2081b97f6249961c7aa0e"
+    },
+    {
+      "side": "head",
+      "source": ".github/workflows/e2e.yml",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/.github/workflows/e2e.yml.txt",
+      "bytes": 10542,
+      "sha256": "2e36810314585bcd3f28a11643a94f6551de5070b67d9d1b555fdfbf86ce1bc3",
+      "gitBlob": "11898f3ca57c337948f57dbf1d9c500a6c76d24c"
+    },
+    {
+      "side": "head",
+      "source": "scripts/ha.mjs",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/scripts/ha.mjs.txt",
+      "bytes": 3967,
+      "sha256": "6ab027c03de36ddac80bca0c2a3f3677814ace5fbe39266c852534717919dec5",
+      "gitBlob": "a8ece0a9617805ab5f873bbc9aa76c771d806578"
+    },
+    {
+      "side": "head",
+      "source": "scripts/install-houseplan.mjs",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/scripts/install-houseplan.mjs.txt",
+      "bytes": 7724,
+      "sha256": "06cbbf5cc8bfdea19c7c715676deb3acb0058f29f34d49eb6eaaa1da083376a7",
+      "gitBlob": "0a579a5666e24996ab730a7bf917fab016219799"
+    },
+    {
+      "side": "head",
+      "source": "scripts/release-plan.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/scripts/release-plan.mjs.txt",
+      "bytes": 7205,
+      "sha256": "0dad30bcc1729514ec53cdcf6b7429e791918b3d9d193f5826d9baa10b94959e",
+      "gitBlob": "171306ed84eb3d19cb10b0f8c664ffe3495da410"
+    },
+    {
+      "side": "head",
+      "source": "scripts/tree-digest.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/scripts/tree-digest.mjs.txt",
+      "bytes": 1027,
+      "sha256": "286c0a8a1ef9b54ac70389be5e0a7dc539d1d382724f91696e725478cb5c7d0f",
+      "gitBlob": "4f27e2903c391145d10a83f1672a4909c4db989d"
+    },
+    {
+      "side": "head",
+      "source": "scripts/prepare-seed.mjs",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/scripts/prepare-seed.mjs.txt",
+      "bytes": 2810,
+      "sha256": "9e33105ee37cd709c469bfc1a376e5ec0d912529f9a8473ae4fa758ab000959a",
+      "gitBlob": "72ee7031885b6fd77551e852312ab6ff6155d9b1"
+    },
+    {
+      "side": "head",
+      "source": "scripts/plan-run.mjs",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/scripts/plan-run.mjs.txt",
+      "bytes": 1007,
+      "sha256": "72311123d827bc5715a797c9ed7f046d9420a4323303a01f64ac6f9323ee97d4",
+      "gitBlob": "fe541cfe95be6e06208f45bbc55c10257af4500d"
+    },
+    {
+      "side": "head",
+      "source": "seed/.storage/houseplan.config",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/seed/.storage/houseplan.config.txt",
+      "bytes": 63540,
+      "sha256": "b5224e192865848ff43fbd4c204caa2b67b782b293eaf93d506881f108598f2f",
+      "gitBlob": "3b2c679b5a429a4b481a98ebe511e10a404229a7"
+    },
+    {
+      "side": "head",
+      "source": "seed/.storage/houseplan.layout",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/seed/.storage/houseplan.layout.txt",
+      "bytes": 11134,
+      "sha256": "db59be0055a2497c18915be0abe268094aa1efc4b5fa0ea58708535e88f59828",
+      "gitBlob": "7453c143d1cbe4083f25d55c9f27d7be752683be"
+    },
+    {
+      "side": "head",
+      "source": "seed/houseplan/plans/first-floor.svg",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/seed/houseplan/plans/first-floor.svg.txt",
+      "bytes": 5658,
+      "sha256": "53ed4687021d08b17083d269416f8c875d3433145939a00fc0729948a613a5c5",
+      "gitBlob": "bfe1311dee8db2d2a3f34cd7d74ea446603d1658"
+    },
+    {
+      "side": "head",
+      "source": "contract/data-hp-contract.json",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/contract/data-hp-contract.json.txt",
+      "bytes": 29293,
+      "sha256": "67526d34c1e823a01e837dc069d876e2c848cff4b2800b0d5a14caa484ac3779",
+      "gitBlob": "823d4918851e850b74451b76d83cc6f04d0264c0"
+    }
+  ]
+}

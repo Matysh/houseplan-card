@@ -1,0 +1,2234 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "houseplan.config",
+  "data": {
+    "config": {
+      "spaces": [
+        {
+          "id": "f1",
+          "title": "Ground Floor",
+          "plan_url": null,
+          "view_box": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "rooms": [
+            {
+              "id": "rmr643kht",
+              "name": "Kitchen & Living",
+              "area": "kitchen_living",
+              "poly": [
+                [
+                  0.1125,
+                  0.525
+                ],
+                [
+                  0.1125,
+                  0.20416666666666666
+                ],
+                [
+                  0.7875,
+                  0.20416666666666666
+                ],
+                [
+                  0.7875,
+                  0.44166666666666665
+                ],
+                [
+                  0.6625,
+                  0.44166666666666665
+                ],
+                [
+                  0.6625,
+                  0.6166666666666667
+                ],
+                [
+                  0.5666666666666668,
+                  0.6166666666666667
+                ],
+                [
+                  0.5666666666666668,
+                  0.525
+                ]
+              ],
+              "open_to": [
+                "rmr646qnu",
+                "rmrw02lri"
+              ]
+            },
+            {
+              "id": "rmr644g7a",
+              "name": "Guest WC",
+              "area": "guest_wc",
+              "poly": [
+                [
+                  0.24583333333333335,
+                  0.525
+                ],
+                [
+                  0.24583333333333335,
+                  0.6875
+                ],
+                [
+                  0.4,
+                  0.6875
+                ],
+                [
+                  0.4,
+                  0.525
+                ]
+              ]
+            },
+            {
+              "id": "rmr645ohu",
+              "name": "Boiler Room",
+              "area": "boiler_room",
+              "poly": [
+                [
+                  0.4,
+                  0.6875
+                ],
+                [
+                  0.4,
+                  0.8708333333333333
+                ],
+                [
+                  0.24166666666666667,
+                  0.8708333333333333
+                ],
+                [
+                  0.24166666666666667,
+                  0.6875
+                ]
+              ]
+            },
+            {
+              "id": "rmr6468lt",
+              "name": "Outdoor Storage",
+              "area": "outdoor_storage",
+              "poly": [
+                [
+                  0.24166666666666667,
+                  0.6875
+                ],
+                [
+                  0.1125,
+                  0.6875
+                ],
+                [
+                  0.1125,
+                  0.8708333333333333
+                ],
+                [
+                  0.24166666666666667,
+                  0.8708333333333333
+                ]
+              ]
+            },
+            {
+              "id": "rmr646qnu",
+              "name": "Hallway",
+              "area": "hallway",
+              "poly": [
+                [
+                  0.4,
+                  0.525
+                ],
+                [
+                  0.5666666666666668,
+                  0.525
+                ],
+                [
+                  0.5666666666666668,
+                  0.8708333333333333
+                ],
+                [
+                  0.4,
+                  0.8708333333333333
+                ]
+              ],
+              "open_to": [
+                "rmr643kht"
+              ]
+            },
+            {
+              "id": "rmr647dtw",
+              "name": "Guest Bedroom",
+              "area": "guest_bedroom",
+              "poly": [
+                [
+                  0.7875,
+                  0.6166666666666667
+                ],
+                [
+                  0.7875,
+                  0.8708333333333333
+                ],
+                [
+                  0.5666666666666668,
+                  0.8708333333333333
+                ],
+                [
+                  0.5666666666666668,
+                  0.6166666666666667
+                ]
+              ]
+            },
+            {
+              "id": "rmr649led",
+              "name": "Sauna",
+              "area": "sauna",
+              "poly": [
+                [
+                  0.1125,
+                  0.525
+                ],
+                [
+                  0.1125,
+                  0.6875
+                ],
+                [
+                  0.24583333333333335,
+                  0.6875
+                ],
+                [
+                  0.24583333333333335,
+                  0.525
+                ]
+              ]
+            },
+            {
+              "id": "rmrw02lri",
+              "name": "Under-Stairs Closet",
+              "area": "under_stairs_closet",
+              "poly": [
+                [
+                  0.8666666666666667,
+                  0.44166666666666665
+                ],
+                [
+                  0.8666666666666667,
+                  0.6166666666666667
+                ],
+                [
+                  0.6625,
+                  0.6166666666666667
+                ],
+                [
+                  0.6625,
+                  0.44166666666666665
+                ]
+              ],
+              "open_to": [
+                "rmr643kht"
+              ]
+            }
+          ],
+          "settings": {
+            "show_borders": true,
+            "show_names": true,
+            "room_color": "#383838",
+            "room_opacity": 0.72,
+            "fill_mode": "glow",
+            "temp_min": 24.0,
+            "temp_max": 26.0,
+            "show_lqi": false,
+            "label_temp": true,
+            "label_hum": true,
+            "label_lqi": true,
+            "label_light": true,
+            "bg_color": "#d9d9d9",
+            "bg_mode": "static"
+          },
+          "openings": [
+            {
+              "id": "omrofprif",
+              "type": "door",
+              "x": 0.39999999999999997,
+              "y": 0.20416666666666666,
+              "angle": 0.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": "lock.terrace_door"
+            },
+            {
+              "id": "omrofq42q",
+              "type": "window",
+              "x": 0.22916666666666669,
+              "y": 0.20416666666666666,
+              "angle": 0.0,
+              "length": 0.08155784250916676,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrofq8m9",
+              "type": "window",
+              "x": 0.525,
+              "y": 0.20416666666666666,
+              "angle": 0.0,
+              "length": 0.08155784250916676,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrofqdpd",
+              "type": "window",
+              "x": 0.6666666666666667,
+              "y": 0.20416666666666666,
+              "angle": 0.0,
+              "length": 0.08155784250916676,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrofqizl",
+              "type": "window",
+              "x": 0.1125,
+              "y": 0.3125,
+              "angle": -90.0,
+              "length": 0.08155784250916676,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrofquah",
+              "type": "door",
+              "x": 0.4875000000000001,
+              "y": 0.8708333333333333,
+              "angle": 0.0,
+              "length": 0.06666666666666667,
+              "contact": null,
+              "lock": "lock.front_door",
+              "flip_v": true
+            },
+            {
+              "id": "omrofrhyk",
+              "type": "door",
+              "x": 0.17708333333333331,
+              "y": 0.8708333333333333,
+              "angle": 0.0,
+              "length": 0.06666666666666667,
+              "contact": null,
+              "lock": "lock.terrace_door",
+              "flip_v": true
+            },
+            {
+              "id": "omrofs52o",
+              "type": "window",
+              "x": 0.6875,
+              "y": 0.8708333333333333,
+              "angle": 0.0,
+              "length": 0.1,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrofsg07",
+              "type": "door",
+              "x": 0.6208333333333333,
+              "y": 0.6166666666666667,
+              "angle": 0.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrofssrd",
+              "type": "door",
+              "x": 0.4,
+              "y": 0.8,
+              "angle": -90.0,
+              "length": 0.04757540813034727,
+              "contact": null,
+              "lock": null,
+              "flip_h": true
+            },
+            {
+              "id": "omroft73v",
+              "type": "door",
+              "x": 0.4,
+              "y": 0.575,
+              "angle": -90.0,
+              "length": 0.04757540813034727,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omroftner",
+              "type": "door",
+              "x": 0.24583333333333335,
+              "y": 0.5750000000000001,
+              "angle": -90.0,
+              "length": 0.04750000000000001,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrw03nmd",
+              "type": "door",
+              "x": 0.6625,
+              "y": 0.48333333333333334,
+              "angle": -90.0,
+              "length": 0.04757540813034727,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omscygqa6",
+              "type": "window",
+              "x": 0.325,
+              "y": 0.8708333333333333,
+              "angle": 0.0,
+              "length": 0.075,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omsdjwbjb",
+              "type": "window",
+              "x": 0.8666666666666667,
+              "y": 0.5291666666666667,
+              "angle": -90.0,
+              "length": 0.075,
+              "contact": null,
+              "lock": null
+            }
+          ],
+          "cell_cm": 5.0,
+          "decor": [
+            {
+              "id": "dcmsekwm318bw",
+              "kind": "text",
+              "x": 0.3625,
+              "y": 0.9333333333333333,
+              "text": "Porch",
+              "color": "#607d8b",
+              "size_cm": 36.0
+            },
+            {
+              "id": "dcmsgclgpy84g",
+              "kind": "text",
+              "x": 0.5499999999999999,
+              "y": 0.10833333333333335,
+              "text": "Terrace",
+              "color": "#2e2e2e",
+              "size_cm": 61.488
+            },
+            {
+              "id": "dcmshulzdeks9",
+              "kind": "rect",
+              "x": 0.3125,
+              "y": 0.020833333333333336,
+              "w": 0.47499999999999987,
+              "h": 0.18333333333333335,
+              "color": "#607d8b",
+              "fill": true,
+              "width_cm": 15.0,
+              "fill_color": "#607d8b",
+              "fill_opacity": 0.25,
+              "opacity": 1.0
+            },
+            {
+              "id": "dcmsjfocqhrt2",
+              "kind": "rect",
+              "x": 0.11250000000000002,
+              "y": 0.8708333333333333,
+              "w": 0.5000000000000002,
+              "h": 0.12916666666666665,
+              "color": "#607d8b",
+              "opacity": 1.0,
+              "width_cm": 15.0,
+              "fill": true,
+              "fill_color": "#522100",
+              "fill_opacity": 0.33
+            },
+            {
+              "id": "dcv2dashterrace",
+              "kind": "line",
+              "x1": 0.3125,
+              "y1": 0.0125,
+              "x2": 0.7875,
+              "y2": 0.0125,
+              "color": "#607d8b",
+              "width_cm": 5.0,
+              "line_style": "dashed"
+            },
+            {
+              "id": "dcv2boilertemp",
+              "kind": "text",
+              "x": 0.262,
+              "y": 0.706,
+              "text": "Boiler {}",
+              "entity": "sensor.boiler_flow_temperature",
+              "color": "#607d8b",
+              "size_cm": 16.0
+            },
+            {
+              "id": "dcv2watertank",
+              "kind": "text",
+              "x": 0.262,
+              "y": 0.782,
+              "text": "Water tank {}",
+              "entity": "sensor.water_tank_level",
+              "color": "#607d8b",
+              "size_cm": 16.0
+            }
+          ],
+          "plan_aspect": null,
+          "walls": [
+            {
+              "key": "0.450000,0.204167@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.1125,
+                0.20416666666666666
+              ],
+              "b": [
+                0.7875,
+                0.20416666666666666
+              ]
+            },
+            {
+              "key": "0.400000,0.700000@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.4,
+                0.8708333333333333
+              ],
+              "b": [
+                0.4,
+                0.525
+              ]
+            },
+            {
+              "key": "0.112500,0.366667@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.1125,
+                0.525
+              ],
+              "b": [
+                0.1125,
+                0.20416666666666666
+              ]
+            },
+            {
+              "key": "0.566667,0.745833@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.5666666666666668,
+                0.6166666666666667
+              ],
+              "b": [
+                0.5666666666666668,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.787500,0.745833@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.7875,
+                0.6166666666666667
+              ],
+              "b": [
+                0.7875,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.787500,0.320833@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.7875,
+                0.20416666666666666
+              ],
+              "b": [
+                0.7875,
+                0.44166666666666665
+              ]
+            },
+            {
+              "key": "0.679167,0.616667@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.5666666666666668,
+                0.6166666666666667
+              ],
+              "b": [
+                0.7875,
+                0.6166666666666667
+              ]
+            },
+            {
+              "key": "0.679167,0.870833@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.7875,
+                0.8708333333333333
+              ],
+              "b": [
+                0.5666666666666668,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.766667,0.441667@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.6625,
+                0.44166666666666665
+              ],
+              "b": [
+                0.8666666666666667,
+                0.44166666666666665
+              ]
+            },
+            {
+              "key": "0.766667,0.616667@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.8666666666666667,
+                0.6166666666666667
+              ],
+              "b": [
+                0.6625,
+                0.6166666666666667
+              ]
+            },
+            {
+              "key": "0.112500,0.779167@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.1125,
+                0.6875
+              ],
+              "b": [
+                0.1125,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.241667,0.779167@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.24166666666666667,
+                0.8708333333333333
+              ],
+              "b": [
+                0.24166666666666667,
+                0.6875
+              ]
+            },
+            {
+              "key": "0.866667,0.529167@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.8666666666666667,
+                0.44166666666666665
+              ],
+              "b": [
+                0.8666666666666667,
+                0.6166666666666667
+              ]
+            },
+            {
+              "key": "0.483333,0.870833@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.5666666666666668,
+                0.8708333333333333
+              ],
+              "b": [
+                0.4,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.112500,0.608333@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.1125,
+                0.525
+              ],
+              "b": [
+                0.1125,
+                0.6875
+              ]
+            },
+            {
+              "key": "0.245833,0.608333@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.24583333333333335,
+                0.525
+              ],
+              "b": [
+                0.24583333333333335,
+                0.6875
+              ]
+            },
+            {
+              "key": "0.320833,0.687500@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.24166666666666667,
+                0.6875
+              ],
+              "b": [
+                0.4,
+                0.6875
+              ]
+            },
+            {
+              "key": "0.320833,0.870833@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.4,
+                0.8708333333333333
+              ],
+              "b": [
+                0.24166666666666667,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.325000,0.525000@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.4,
+                0.525
+              ],
+              "b": [
+                0.24583333333333335,
+                0.525
+              ]
+            },
+            {
+              "key": "0.179167,0.525000@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.24583333333333335,
+                0.525
+              ],
+              "b": [
+                0.1125,
+                0.525
+              ]
+            },
+            {
+              "key": "0.179167,0.687500@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.24166666666666667,
+                0.6875
+              ],
+              "b": [
+                0.1125,
+                0.6875
+              ]
+            },
+            {
+              "key": "0.179167,0.870833@0.0000",
+              "cm": 15.0,
+              "a": [
+                0.1125,
+                0.8708333333333333
+              ],
+              "b": [
+                0.24166666666666667,
+                0.8708333333333333
+              ]
+            },
+            {
+              "key": "0.662500,0.483333@1.5706",
+              "cm": 15.0,
+              "a": [
+                0.6625,
+                0.44166666666666665
+              ],
+              "b": [
+                0.6625,
+                0.525
+              ]
+            }
+          ],
+          "open_spans": [
+            {
+              "a": [
+                0.4000000000000001,
+                0.525
+              ],
+              "b": [
+                0.5666666666666668,
+                0.525
+              ]
+            },
+            {
+              "a": [
+                0.5666666666666668,
+                0.525
+              ],
+              "b": [
+                0.5666666666666668,
+                0.6166666666666666
+              ]
+            },
+            {
+              "a": [
+                0.6625,
+                0.525
+              ],
+              "b": [
+                0.6625,
+                0.6166666666666667
+              ]
+            }
+          ],
+          "partitions": [
+            {
+              "id": "partition-msjey5sh",
+              "a": [
+                0.6625,
+                0.4416666666666667
+              ],
+              "b": [
+                0.5666666666666668,
+                0.4416666666666667
+              ],
+              "cm": 15.0
+            }
+          ],
+          "wall_columns": [
+            {
+              "id": "column-msjeztk0",
+              "shape": "square",
+              "center": [
+                0.4,
+                0.4416666666666667
+              ],
+              "cm": 15.0,
+              "angle": 0.0
+            }
+          ]
+        },
+        {
+          "id": "f2",
+          "title": "First Floor",
+          "plan_url": "/api/houseplan/content/plans/_/first-floor.svg",
+          "view_box": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "rooms": [
+            {
+              "id": "rmr64d3i9",
+              "name": "Kids Room A",
+              "area": "kids_room_a",
+              "poly": [
+                [
+                  0.45000000000000007,
+                  0.12916666666666665
+                ],
+                [
+                  0.45000000000000007,
+                  0.3875
+                ],
+                [
+                  0.025,
+                  0.3875
+                ],
+                [
+                  0.025,
+                  0.12916666666666665
+                ]
+              ]
+            },
+            {
+              "id": "rmr64dhq8",
+              "name": "Kids Room B",
+              "area": "kids_room_b",
+              "poly": [
+                [
+                  0.45000000000000007,
+                  0.12916666666666665
+                ],
+                [
+                  0.8666666666666667,
+                  0.12916666666666665
+                ],
+                [
+                  0.8666666666666667,
+                  0.3875
+                ],
+                [
+                  0.45000000000000007,
+                  0.3875
+                ]
+              ]
+            },
+            {
+              "id": "rmr64e2t9",
+              "name": "Upstairs Hall",
+              "area": "upstairs_hall",
+              "poly": [
+                [
+                  0.9416666666666668,
+                  0.3875
+                ],
+                [
+                  0.9416666666666668,
+                  0.5791666666666666
+                ],
+                [
+                  0.2916666666666667,
+                  0.5791666666666666
+                ],
+                [
+                  0.2916666666666667,
+                  0.3875
+                ]
+              ]
+            },
+            {
+              "id": "rmr64elxq",
+              "name": "Kids Bathroom",
+              "area": "kids_bathroom",
+              "poly": [
+                [
+                  0.025,
+                  0.3875
+                ],
+                [
+                  0.025,
+                  0.5208333333333334
+                ],
+                [
+                  0.2916666666666667,
+                  0.5208333333333334
+                ],
+                [
+                  0.2916666666666667,
+                  0.3875
+                ]
+              ]
+            },
+            {
+              "id": "rmr64f2xk",
+              "name": "Master Bathroom",
+              "area": "master_bathroom",
+              "poly": [
+                [
+                  0.025,
+                  0.5208333333333334
+                ],
+                [
+                  0.025,
+                  0.6791666666666667
+                ],
+                [
+                  0.2916666666666667,
+                  0.6791666666666667
+                ],
+                [
+                  0.2916666666666667,
+                  0.5208333333333334
+                ]
+              ]
+            },
+            {
+              "id": "rmr64fu7k",
+              "name": "Bedroom",
+              "area": "bedroom",
+              "poly": [
+                [
+                  0.025,
+                  0.6791666666666667
+                ],
+                [
+                  0.025,
+                  0.8458333333333333
+                ],
+                [
+                  0.2916666666666667,
+                  0.8458333333333333
+                ],
+                [
+                  0.5916666666666668,
+                  0.8458333333333333
+                ],
+                [
+                  0.5916666666666668,
+                  0.5791666666666666
+                ],
+                [
+                  0.2916666666666667,
+                  0.5791666666666666
+                ],
+                [
+                  0.2916666666666667,
+                  0.6791666666666667
+                ]
+              ]
+            },
+            {
+              "id": "rmr64g6rk",
+              "name": "Study",
+              "area": "study",
+              "poly": [
+                [
+                  0.5916666666666668,
+                  0.5791666666666666
+                ],
+                [
+                  0.5916666666666668,
+                  0.8458333333333333
+                ],
+                [
+                  0.8666666666666667,
+                  0.8458333333333333
+                ],
+                [
+                  0.8666666666666667,
+                  0.5791666666666666
+                ]
+              ]
+            }
+          ],
+          "settings": {
+            "show_borders": true,
+            "show_names": true,
+            "room_color": "#303030",
+            "room_opacity": 0.76,
+            "fill_mode": "glow",
+            "temp_min": 26.0,
+            "temp_max": 27.5,
+            "show_lqi": true,
+            "label_temp": false,
+            "label_hum": false,
+            "label_lqi": false,
+            "label_light": false,
+            "bg_mode": "static"
+          },
+          "cell_cm": 5.0,
+          "openings": [
+            {
+              "id": "omrq5plnt",
+              "type": "door",
+              "x": 0.3708333333333334,
+              "y": 0.3875,
+              "angle": 0.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrq5pp85",
+              "type": "door",
+              "x": 0.5458333333333334,
+              "y": 0.3875,
+              "angle": 0.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrq5psh8",
+              "type": "door",
+              "x": 0.6416666666666668,
+              "y": 0.5791666666666666,
+              "angle": 0.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrq5pv2z",
+              "type": "door",
+              "x": 0.3583333333333334,
+              "y": 0.5791666666666666,
+              "angle": 0.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrq5pze7",
+              "type": "door",
+              "x": 0.2916666666666667,
+              "y": 0.4416666666666667,
+              "angle": -90.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrq5q1gz",
+              "type": "door",
+              "x": 0.2916666666666667,
+              "y": 0.625,
+              "angle": -90.0,
+              "length": 0.058333333333333334,
+              "contact": null,
+              "lock": null,
+              "flip_v": true
+            },
+            {
+              "id": "omrxmqah9",
+              "type": "window",
+              "x": 0.23750000000000002,
+              "y": 0.12916666666666665,
+              "angle": 0.0,
+              "length": 0.15,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrxpdc4p",
+              "type": "window",
+              "x": 0.44166666666666676,
+              "y": 0.8458333333333333,
+              "angle": 0.0,
+              "length": 0.12500000000000003,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrxpk2wq",
+              "type": "window",
+              "x": 0.7291666666666667,
+              "y": 0.8458333333333333,
+              "angle": 0.0,
+              "length": 0.12500000000000003,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omrxpzyb6",
+              "type": "window",
+              "x": 0.6583333333333334,
+              "y": 0.12916666666666665,
+              "angle": 0.0,
+              "length": 0.15,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omscyaaaf",
+              "type": "window",
+              "x": 0.025,
+              "y": 0.4541666666666667,
+              "angle": -90.0,
+              "length": 0.075,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omscyagb0",
+              "type": "window",
+              "x": 0.025,
+              "y": 0.6000000000000001,
+              "angle": -90.0,
+              "length": 0.075,
+              "contact": null,
+              "lock": null
+            },
+            {
+              "id": "omsdmsca9",
+              "type": "window",
+              "x": 0.9416666666666668,
+              "y": 0.4833333333333333,
+              "angle": -90.0,
+              "length": 0.1,
+              "contact": null,
+              "lock": null
+            }
+          ],
+          "decor": [
+            {
+              "id": "dcmrwiwekt9a6",
+              "kind": "line",
+              "x1": 0.2916666666666667,
+              "y1": 0.6791666666666667,
+              "x2": 0.2916666666666667,
+              "y2": 0.8458333333333333,
+              "color": "#607d8b",
+              "width_cm": 3.6
+            }
+          ],
+          "plan_aspect": 1.2657218777679362,
+          "plan_x": 0.004167,
+          "plan_y": 0.003365,
+          "plan_scale_x": 0.958333,
+          "plan_scale_y": 0.958333
+        },
+        {
+          "id": "smrwhw9la",
+          "title": "Yard",
+          "plan_url": null,
+          "view_box": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "rooms": [
+            {
+              "id": "rmrwhxasn",
+              "name": "Yard",
+              "area": "yard",
+              "poly": [
+                [
+                  0.23333333333333334,
+                  0.029166666666666667
+                ],
+                [
+                  0.525,
+                  0.029166666666666667
+                ],
+                [
+                  0.525,
+                  0.7666666666666666
+                ],
+                [
+                  0.23333333333333334,
+                  0.7666666666666666
+                ]
+              ]
+            }
+          ],
+          "settings": {
+            "show_borders": true,
+            "show_names": true,
+            "room_color": "#4f4f4f",
+            "room_opacity": 0.55,
+            "fill_mode": "none",
+            "temp_min": 20.0,
+            "temp_max": 25.0,
+            "show_lqi": true,
+            "label_temp": false,
+            "label_hum": false,
+            "label_lqi": false,
+            "label_light": false
+          },
+          "cell_cm": 28.2885,
+          "decor": [
+            {
+              "id": "dcmrwi2jfkg92",
+              "kind": "rect",
+              "x": 0.29583333333333334,
+              "y": 0.3375,
+              "w": 0.175,
+              "h": 0.17916666666666659,
+              "color": "#607d8b",
+              "fill": false,
+              "width_cm": 20.36772
+            },
+            {
+              "id": "dcv2outdoortemp",
+              "kind": "text",
+              "x": 0.335,
+              "y": 0.095,
+              "text": "Outdoor {}",
+              "entity": "sensor.outdoor_temperature",
+              "color": "#2e2e2e",
+              "size_cm": 40.0
+            }
+          ]
+        }
+      ],
+      "markers": [
+        {
+          "id": "lg_sensor.ground_floor_temperature",
+          "binding": "entity:sensor.ground_floor_temperature",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Thermostat",
+          "icon": "mdi:thermostat"
+        },
+        {
+          "id": "v_demo_tv",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "TV",
+          "icon": "mdi:television"
+        },
+        {
+          "id": "v_demo_boiler",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Boiler",
+          "icon": "mdi:water-boiler"
+        },
+        {
+          "id": "v_demo_heatctl",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Heating Controller",
+          "icon": "mdi:dip-switch"
+        },
+        {
+          "id": "v_demo_server",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "outdoor_storage",
+          "name": "Home Server",
+          "icon": "mdi:server"
+        },
+        {
+          "id": "v_demo_router",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "outdoor_storage",
+          "name": "Wi-Fi Router",
+          "icon": "mdi:router-wireless"
+        },
+        {
+          "id": "e_binary_sensor_lte_router",
+          "binding": "entity:binary_sensor.lte_router",
+          "space": "f1",
+          "area": "outdoor_storage",
+          "name": "LTE Router",
+          "icon": "mdi:router-wireless"
+        },
+        {
+          "id": "ed3f4d585ec4e9322bdef3c89f0e354e",
+          "binding": "device:ed3f4d585ec4e9322bdef3c89f0e354e",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Washing Machine",
+          "icon": "mdi:washing-machine"
+        },
+        {
+          "id": "210909b1b266457b9c5a7cb3aa9c8374",
+          "binding": "device:210909b1b266457b9c5a7cb3aa9c8374",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Dryer",
+          "icon": "mdi:tumble-dryer"
+        },
+        {
+          "id": "v_demo_streambox",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Streaming Box",
+          "icon": "mdi:television-classic",
+          "tap_action": "info"
+        },
+        {
+          "id": "fd749ca6af66be0be6b09077659de1ec",
+          "binding": "device:fd749ca6af66be0be6b09077659de1ec",
+          "hidden": true
+        },
+        {
+          "id": "aef79c4fc273f969b9574362afc3214c",
+          "binding": "device:aef79c4fc273f969b9574362afc3214c",
+          "hidden": true
+        },
+        {
+          "id": "e3e2dc08b14a9254dab938bbba58b687",
+          "binding": "device:e3e2dc08b14a9254dab938bbba58b687",
+          "hidden": true
+        },
+        {
+          "id": "v_demo_oven",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Oven",
+          "icon": "mdi:stove"
+        },
+        {
+          "id": "v_demo_dishwasher",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Dishwasher",
+          "icon": "mdi:dishwasher"
+        },
+        {
+          "id": "v_demo_hood",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Cooker Hood",
+          "icon": "mdi:fan"
+        },
+        {
+          "id": "v_demo_cooktop",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Induction Cooktop",
+          "icon": "mdi:stove"
+        },
+        {
+          "id": "v_demo_coffee",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Coffee Machine",
+          "icon": "mdi:coffee-maker"
+        },
+        {
+          "id": "b11cc9e0ecf0b57975179a6c7623b234",
+          "binding": "device:b11cc9e0ecf0b57975179a6c7623b234",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Fridge",
+          "icon": "mdi:fridge"
+        },
+        {
+          "id": "e0e66ace08db85b45c78063edc40a420",
+          "binding": "device:e0e66ace08db85b45c78063edc40a420",
+          "space": "f1",
+          "area": "sauna",
+          "name": "Sauna Heater",
+          "icon": "mdi:radiator",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "v_demo_microwave",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Microwave",
+          "icon": "mdi:microwave"
+        },
+        {
+          "id": "e_media_player_kitchen_speaker",
+          "binding": "entity:media_player.kitchen_speaker",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Kitchen Speaker",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "v_demo_bevfridge",
+          "binding": "virtual",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Beverage Fridge",
+          "icon": "mdi:fridge-outline"
+        },
+        {
+          "id": "e_media_player_kids_room_a_speaker",
+          "binding": "entity:media_player.kids_room_a_speaker",
+          "space": "f2",
+          "area": "kids_room_a",
+          "name": "Kids Speaker A",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "e_media_player_kids_room_b_speaker",
+          "binding": "entity:media_player.kids_room_b_speaker",
+          "space": "f2",
+          "area": "kids_room_b",
+          "name": "Kids Speaker B",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "e_media_player_kids_bathroom_speaker",
+          "binding": "entity:media_player.kids_bathroom_speaker",
+          "space": "f2",
+          "area": "kids_bathroom",
+          "name": "Bathroom Speaker",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "e_media_player_master_bathroom_speaker",
+          "binding": "entity:media_player.master_bathroom_speaker",
+          "space": "f2",
+          "area": "master_bathroom",
+          "name": "Bathroom Speaker",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "e_media_player_study_speaker",
+          "binding": "entity:media_player.study_speaker",
+          "space": "f2",
+          "area": "study",
+          "name": "Study Speaker",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "v_demo_laptop",
+          "binding": "virtual",
+          "space": "f2",
+          "area": "study",
+          "name": "Laptop",
+          "icon": "mdi:laptop"
+        },
+        {
+          "id": "e_media_player_soundbar",
+          "binding": "entity:media_player.soundbar",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Soundbar",
+          "icon": "mdi:soundbar"
+        },
+        {
+          "id": "e_media_player_outdoor_speaker",
+          "binding": "entity:media_player.outdoor_speaker",
+          "space": "smrwhw9la",
+          "area": "yard",
+          "name": "Outdoor Speaker",
+          "icon": "mdi:speaker-wireless"
+        },
+        {
+          "id": "lg_light.hallway_lights",
+          "binding": "entity:light.hallway_lights",
+          "hidden": true
+        },
+        {
+          "id": "lg_light.wall_lights",
+          "binding": "entity:light.wall_lights",
+          "hidden": true
+        },
+        {
+          "id": "0b6dc489b40a771e3b66558d48540f13",
+          "binding": "device:0b6dc489b40a771e3b66558d48540f13",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Wall Switch Kitchen",
+          "tap_action": "toggle",
+          "controls": [
+            "light.wall_lights"
+          ]
+        },
+        {
+          "id": "8494fb6363b53c38f5cedbb9f5ab5df8",
+          "binding": "device:8494fb6363b53c38f5cedbb9f5ab5df8",
+          "space": "f1",
+          "area": "hallway",
+          "name": "Wall Switch Hallway",
+          "tap_action": "toggle",
+          "controls": [
+            "light.hallway_lights"
+          ]
+        },
+        {
+          "id": "lg_light.kids_room_b_lights",
+          "binding": "entity:light.kids_room_b_lights",
+          "space": "f2",
+          "area": "kids_room_b",
+          "name": "Kids Room B Lights",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "lg_light.kids_room_a_lights",
+          "binding": "entity:light.kids_room_a_lights",
+          "space": "f2",
+          "area": "kids_room_a",
+          "name": "Kids Room A Lights",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "653f13110b5f2dacf5f6f5ff0f8fab93",
+          "binding": "device:653f13110b5f2dacf5f6f5ff0f8fab93",
+          "space": "f2",
+          "area": "kids_room_a",
+          "name": "Wall Switch Kids A",
+          "tap_action": "toggle",
+          "controls": [
+            "light.kids_room_a_lights"
+          ],
+          "glow_radius_cm": 500.0
+        },
+        {
+          "id": "e_light_wall_lamp_1",
+          "binding": "entity:light.wall_lamp_1",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Wall Lamp 1",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_wall_lamp_4",
+          "binding": "entity:light.wall_lamp_4",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Wall Lamp 4",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_wall_lamp_3",
+          "binding": "entity:light.wall_lamp_3",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Wall Lamp 3",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_wall_lamp_2",
+          "binding": "entity:light.wall_lamp_2",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Wall Lamp 2",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "1d726e607c912c6611a031c363b29e18",
+          "binding": "device:1d726e607c912c6611a031c363b29e18",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Kettle",
+          "icon": "mdi:kettle",
+          "tap_action": "toggle",
+          "controls": [
+            "light.kettle_night_light"
+          ],
+          "glow_radius_cm": 30.0
+        },
+        {
+          "id": "4f55a8f85b5a314f3200a0efbfa5c49f",
+          "binding": "device:4f55a8f85b5a314f3200a0efbfa5c49f",
+          "space": "f2",
+          "area": "bedroom",
+          "name": "Air Monitor 2",
+          "icon": "mdi:air-filter"
+        },
+        {
+          "id": "e_media_player_hall_speaker",
+          "binding": "entity:media_player.hall_speaker",
+          "space": "f2",
+          "area": "upstairs_hall",
+          "name": "Hall Speaker",
+          "icon": "mdi:speaker"
+        },
+        {
+          "id": "e_media_player_guest_soundbar",
+          "binding": "entity:media_player.guest_soundbar",
+          "space": "f1",
+          "area": "guest_bedroom",
+          "name": "Guest Soundbar",
+          "icon": "mdi:soundbar"
+        },
+        {
+          "id": "e_light_study_dimmer",
+          "binding": "entity:light.study_dimmer",
+          "space": "f2",
+          "area": "study",
+          "name": "Dimmer",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_1",
+          "binding": "entity:light.kids_room_b_lamp_1",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_2",
+          "binding": "entity:light.kids_room_b_lamp_2",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_3",
+          "binding": "entity:light.kids_room_b_lamp_3",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_4",
+          "binding": "entity:light.kids_room_b_lamp_4",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_5",
+          "binding": "entity:light.kids_room_b_lamp_5",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_6",
+          "binding": "entity:light.kids_room_b_lamp_6",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_7",
+          "binding": "entity:light.kids_room_b_lamp_7",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_b_lamp_8",
+          "binding": "entity:light.kids_room_b_lamp_8",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_1",
+          "binding": "entity:light.kids_room_a_lamp_1",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_2",
+          "binding": "entity:light.kids_room_a_lamp_2",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_3",
+          "binding": "entity:light.kids_room_a_lamp_3",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_4",
+          "binding": "entity:light.kids_room_a_lamp_4",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_5",
+          "binding": "entity:light.kids_room_a_lamp_5",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_6",
+          "binding": "entity:light.kids_room_a_lamp_6",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_7",
+          "binding": "entity:light.kids_room_a_lamp_7",
+          "hidden": true
+        },
+        {
+          "id": "e_light_kids_room_a_lamp_8",
+          "binding": "entity:light.kids_room_a_lamp_8",
+          "hidden": true
+        },
+        {
+          "id": "lg_sensor.ground_floor_humidity",
+          "binding": "entity:sensor.ground_floor_humidity",
+          "space": "f1",
+          "area": "kitchen_living",
+          "hidden": false,
+          "name": "Humidity",
+          "icon": "mdi:water-percent",
+          "display": "value"
+        },
+        {
+          "id": "fb2f7d30e6f193e8d22c1c3b34018fc8",
+          "binding": "device:fb2f7d30e6f193e8d22c1c3b34018fc8",
+          "space": "f1",
+          "area": "kitchen_living",
+          "hidden": false,
+          "name": "Climate Sensor Living",
+          "display": "value"
+        },
+        {
+          "id": "4847e37bd5760758915703f2afd47ea0",
+          "binding": "device:4847e37bd5760758915703f2afd47ea0",
+          "space": "f1",
+          "area": "guest_bedroom",
+          "hidden": false,
+          "name": "Climate Sensor Guest",
+          "display": "value"
+        },
+        {
+          "id": "lg_sensor.guest_room_humidity",
+          "binding": "entity:sensor.temp_guest_humidity",
+          "space": "f1",
+          "area": "guest_bedroom",
+          "hidden": false,
+          "name": "Guest Humidity",
+          "icon": "mdi:water-percent",
+          "display": "value"
+        },
+        {
+          "id": "bf13c13c35b59b46548cf05e37d7b35d",
+          "binding": "device:bf13c13c35b59b46548cf05e37d7b35d",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Motion Sensor",
+          "size": 2.0
+        },
+        {
+          "id": "e_media_player_guest_tv",
+          "binding": "entity:media_player.guest_tv",
+          "space": "f1",
+          "area": "guest_bedroom",
+          "hidden": false,
+          "name": "Guest TV",
+          "icon": "mdi:television"
+        },
+        {
+          "id": "0d4b56c6fc6009f9d84815f055999dd2",
+          "binding": "device:0d4b56c6fc6009f9d84815f055999dd2",
+          "space": "f2",
+          "area": "bedroom",
+          "hidden": false,
+          "name": "Climate Sensor Bedroom",
+          "display": "value"
+        },
+        {
+          "id": "5b8aa77ccf06288e1ffa64e0581174f5",
+          "binding": "device:5b8aa77ccf06288e1ffa64e0581174f5",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Air Monitor",
+          "icon": "mdi:air-filter"
+        },
+        {
+          "id": "95b0160f5ecccf0a01c31c9172f39de7",
+          "binding": "device:95b0160f5ecccf0a01c31c9172f39de7",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Curtain Left",
+          "tap_action": "cover"
+        },
+        {
+          "id": "d620f0f4da154b57eb01702fef2f420f",
+          "binding": "device:d620f0f4da154b57eb01702fef2f420f",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Curtain Right",
+          "tap_action": "cover",
+          "display": "icon_ripple"
+        },
+        {
+          "id": "d24bb6c6cb9311ecb6e21f8cce4957b3",
+          "binding": "device:d24bb6c6cb9311ecb6e21f8cce4957b3",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Presence Sensor"
+        },
+        {
+          "id": "3e6c91b83213ac32074a6a2fe4c56b51",
+          "binding": "device:3e6c91b83213ac32074a6a2fe4c56b51",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Smart Plug",
+          "tap_action": "toggle",
+          "tap_confirm": true
+        },
+        {
+          "id": "e_light_hallway_lamp_5",
+          "binding": "entity:light.hallway_lamp_5",
+          "space": "f1",
+          "area": "hallway",
+          "hidden": false,
+          "name": "Hallway Lamp 5",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_hallway_lamp_4",
+          "binding": "entity:light.hallway_lamp_4",
+          "space": "f1",
+          "area": "hallway",
+          "hidden": false,
+          "name": "Hallway Lamp 4",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_hallway_lamp_3",
+          "binding": "entity:light.hallway_lamp_3",
+          "space": "f1",
+          "area": "hallway",
+          "hidden": false,
+          "name": "Hallway Lamp 3",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_hallway_lamp_2",
+          "binding": "entity:light.hallway_lamp_2",
+          "space": "f1",
+          "area": "hallway",
+          "hidden": false,
+          "name": "Hallway Lamp 2",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e_light_hallway_lamp_1",
+          "binding": "entity:light.hallway_lamp_1",
+          "space": "f1",
+          "area": "hallway",
+          "hidden": false,
+          "name": "Hallway Lamp 1",
+          "tap_action": "toggle",
+          "glow_radius_cm": 150.0
+        },
+        {
+          "id": "e7bbe118b5929954cc8ad2583f32172f",
+          "binding": "device:e7bbe118b5929954cc8ad2583f32172f",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Light Sensor",
+          "display": "value"
+        },
+        {
+          "id": "e_vacuum_demo_robot",
+          "binding": "entity:vacuum.demo_robot",
+          "space": "f1",
+          "area": "under_stairs_closet",
+          "hidden": false,
+          "name": "Robot Vacuum",
+          "icon": "mdi:robot-vacuum",
+          "vacuum": {
+            "live": true,
+            "trail_mode": "always",
+            "source": "sensor.demo_robot_map",
+            "calibration": {
+              "1": [
+                0.125,
+                0.0,
+                0.0,
+                0.0,
+                -0.125,
+                1000.0
+              ]
+            }
+          }
+        },
+        {
+          "id": "v_demo_mesh",
+          "binding": "virtual",
+          "space": "f2",
+          "area": "study",
+          "hidden": false,
+          "name": "Mesh Router",
+          "icon": "mdi:router-wireless"
+        },
+        {
+          "id": "e_switch_water_valve_main",
+          "binding": "entity:switch.water_valve_main",
+          "space": "f1",
+          "area": "boiler_room",
+          "hidden": false,
+          "name": "Water Valve (main)",
+          "icon": "mdi:valve",
+          "tap_action": "toggle",
+          "tap_confirm": true
+        },
+        {
+          "id": "e_switch_water_valve_heating",
+          "binding": "entity:switch.water_valve_heating",
+          "space": "f1",
+          "area": "boiler_room",
+          "hidden": false,
+          "name": "Water Valve (heating)",
+          "icon": "mdi:valve",
+          "tap_action": "toggle",
+          "tap_confirm": true
+        },
+        {
+          "id": "e_binary_sensor_smoke_kitchen",
+          "binding": "entity:binary_sensor.smoke_kitchen",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Smoke Detector",
+          "icon": "mdi:smoke-detector"
+        },
+        {
+          "id": "e_binary_sensor_smoke_boiler",
+          "binding": "entity:binary_sensor.smoke_boiler",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Smoke Detector",
+          "icon": "mdi:smoke-detector"
+        },
+        {
+          "id": "e_binary_sensor_leak_guest_wc",
+          "binding": "entity:binary_sensor.leak_guest_wc",
+          "space": "f1",
+          "area": "guest_wc",
+          "name": "Leak Sensor",
+          "icon": "mdi:water-alert"
+        },
+        {
+          "id": "e_binary_sensor_leak_boiler",
+          "binding": "entity:binary_sensor.leak_boiler",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Leak Sensor",
+          "icon": "mdi:water-alert"
+        },
+        {
+          "id": "e_climate_bedroom_ac",
+          "binding": "entity:climate.ecobee",
+          "space": "f2",
+          "area": "bedroom",
+          "name": "Air Conditioner",
+          "icon": "mdi:air-conditioner",
+          "use_climate_temp": true
+        },
+        {
+          "id": "e_fan_kitchen_hood",
+          "binding": "entity:fan.kitchen_hood",
+          "space": "f1",
+          "area": "kitchen_living",
+          "name": "Kitchen Hood Fan",
+          "icon": "mdi:fan",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "e_cover_garage_door",
+          "binding": "entity:cover.garage_door",
+          "space": "smrwhw9la",
+          "area": "yard",
+          "name": "Garage Door",
+          "icon": "mdi:garage",
+          "tap_action": "cover"
+        },
+        {
+          "id": "397892de2988c3e07f946469ece297fe",
+          "binding": "device:397892de2988c3e07f946469ece297fe",
+          "space": "f1",
+          "area": "outdoor_storage",
+          "name": "Pantry Light",
+          "icon": "mdi:lightbulb",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "5c0a4dfdd9f4a5a2a4d10ca996c0454c",
+          "binding": "device:5c0a4dfdd9f4a5a2a4d10ca996c0454c",
+          "space": "f1",
+          "area": "guest_bedroom",
+          "name": "Smart Plug 2",
+          "tap_action": "toggle"
+        },
+        {
+          "id": "e_sensor_washing_machine_status",
+          "binding": "entity:sensor.washing_machine_status",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Washer Status",
+          "display": "value"
+        },
+        {
+          "id": "e_sensor_smart_plug_energy",
+          "binding": "entity:sensor.smart_plug_energy",
+          "space": "f2",
+          "area": "study",
+          "name": "Plug Energy",
+          "display": "value"
+        },
+        {
+          "id": "e_sensor_water_tank_level",
+          "binding": "entity:sensor.water_tank_level",
+          "space": "f1",
+          "area": "boiler_room",
+          "name": "Water Tank",
+          "icon": "mdi:water-boiler",
+          "display": "value"
+        }
+      ],
+      "settings": {
+        "exclude_integrations": [
+          "sun",
+          "backup",
+          "hassio",
+          "google_translate",
+          "shopping_list",
+          "met"
+        ],
+        "group_lights": true,
+        "filter_seeded": true,
+        "fill_colors": {
+          "light_on": {
+            "c": "#ffd45c",
+            "a": 0.3
+          },
+          "light_off": {
+            "c": "#383838",
+            "a": 0.75
+          },
+          "light_none": {
+            "c": "#383838",
+            "a": 0.2
+          },
+          "temp_cold": {
+            "c": "#4fc3f7",
+            "a": 0.18
+          },
+          "temp_ok": {
+            "c": "#66d17a",
+            "a": 0.18
+          },
+          "temp_hot": {
+            "c": "#ffd45c",
+            "a": 0.18
+          },
+          "lqi_low": {
+            "c": "#f25a4a",
+            "a": 0.18
+          },
+          "lqi_high": {
+            "c": "#4bd28f",
+            "a": 0.18
+          },
+          "glow_base": {
+            "c": "#0d1b2a",
+            "a": 0.5
+          },
+          "glow_light": {
+            "c": "#ffd9a0",
+            "a": 0.85
+          },
+          "wall_fill": {
+            "c": "#a8a8a8",
+            "a": 1.0
+          }
+        },
+        "known_devices": [
+          "00101098468f90292e7faf82d124d696",
+          "0531826c7c7c4aa21171ff806096bd98",
+          "069efc3b32b05a131e15947e6f7266cd",
+          "09ea3a7c57cd0d0b289c65c94f3d1764",
+          "0b6dc489b40a771e3b66558d48540f13",
+          "0d4b56c6fc6009f9d84815f055999dd2",
+          "0f60c7915913ce9be64818ef5b547906",
+          "131f9fb2ad22be403b1a0e3e70915356",
+          "1382ab7388573e0417aefcf1c96065e3",
+          "15dc5ded1c549fdff9de684ca1faeabf",
+          "17a92844be52d02b3ce180e501b31dd1",
+          "1bbc5e62462fdefd70a8d903190c2e1d",
+          "1d726e607c912c6611a031c363b29e18",
+          "1eea27f839eabb155e56718d85a04f74",
+          "210909b1b266457b9c5a7cb3aa9c8374",
+          "22acbe1b9c8af083b2b65f2b12b1b808",
+          "242e0341821da7d0eb39d9c5aa6bdcd6",
+          "24cf86709f3295b3f34b7535516d9ff8",
+          "26102cf0b0db7e6b3445b010ab387037",
+          "32c56df5c4a1ab83e3d008d9282a6edb",
+          "397892de2988c3e07f946469ece297fe",
+          "3e6c91b83213ac32074a6a2fe4c56b51",
+          "4847e37bd5760758915703f2afd47ea0",
+          "485423884d0674324ad54eaa29025de5",
+          "4f55a8f85b5a314f3200a0efbfa5c49f",
+          "5813d195368f3b47d5f1007c466dc35f",
+          "5b8aa77ccf06288e1ffa64e0581174f5",
+          "5c0a4dfdd9f4a5a2a4d10ca996c0454c",
+          "5f1b675f579a5c34b43ff518df7e653a",
+          "5f77542ffafa0f98fc62c053321c71dc",
+          "5fe067dfe086242c05b475bd3cbfebae",
+          "6335a742145c831795723e624ca5f029",
+          "653f13110b5f2dacf5f6f5ff0f8fab93",
+          "6c9cd9c25c2158de85ddafe74c3f76de",
+          "76bb52e5f2ee4f1f4aeaaa45b2333c56",
+          "7cbe9dc0e668c2e6bff14fa55b351b33",
+          "7eac04a91510abea4f9c5b5648159aa6",
+          "83365dfacfc28570217d19dd093b8db8",
+          "8481eda82473b53251aa7fd837c3b4d5",
+          "8494fb6363b53c38f5cedbb9f5ab5df8",
+          "853d627c0a261368a1eb85274bafdf94",
+          "85edb37b17a1913137a83075d5307f0f",
+          "8fafd070c986e04e7d042e1f01b77981",
+          "95b0160f5ecccf0a01c31c9172f39de7",
+          "97b15890a686b847ceaa03d5877777a5",
+          "a0014c0cad1d7f7307c6bea31c568101",
+          "a2e312cec65533c3c1e8650d42f13c4a",
+          "a6668ef9ed05f64f6d0ff5eb20da67a3",
+          "a8d7c64d66635d0d797a6dc65e6c39fa",
+          "aef79c4fc273f969b9574362afc3214c",
+          "b11cc9e0ecf0b57975179a6c7623b234",
+          "b18da82baad3b73a5081f79f3f0ed50f",
+          "b744c0e9d7e99bb486a916a5560fe19c",
+          "be226e8b27c86ec3b34430305f911adc",
+          "bf13c13c35b59b46548cf05e37d7b35d",
+          "bffcb4f65ff959e2af7b2e43d2b874b5",
+          "c185f744218240c9a66dd2aa80fbc905",
+          "c3b930a599bc0dd83de441aac0ede7da",
+          "c416c1d85c7444b41b2cd90d39e51c33",
+          "c67679854aeedf931a4865aa954050e0",
+          "c7d30926f331958c6f58e2de00988838",
+          "c96a864d043cfa4df379b640c65e6b23",
+          "c9ade09042535affd4dd2c4529fa9047",
+          "cf2936a88bc03e6dd1fb9d61f2a5714d",
+          "d24bb6c6cb9311ecb6e21f8cce4957b3",
+          "d52e90f422df4c7ab44f88b47803d10a",
+          "d620f0f4da154b57eb01702fef2f420f",
+          "d65a9a340a38ce09b77a03a8f26d0114",
+          "d9041029dac61a20ac8552044b7b4191",
+          "e01e32fd1c9d5854648242e52425c6d7",
+          "e0e66ace08db85b45c78063edc40a420",
+          "e28b6d37ec6ed60b301c44369a9e203b",
+          "e3e2dc08b14a9254dab938bbba58b687",
+          "e7bbe118b5929954cc8ad2583f32172f",
+          "e86eaa7562370b10d3fa386b2ce05b8e",
+          "e9b11d662e4950b4824ea85cc29a913d",
+          "ea21b77e2ea882685b7798fab77ac9d4",
+          "ecd1b66ba13b620089aa9310be624db9",
+          "ed3f4d585ec4e9322bdef3c89f0e354e",
+          "f2d48505923e0d54904f8b3616188740",
+          "f666c586dec367cd3b21f69ccead8fce",
+          "f6db09ae105cd03182151fb388a4f0da",
+          "fb2f7d30e6f193e8d22c1c3b34018fc8",
+          "fd749ca6af66be0be6b09077659de1ec",
+          "fde386a650aa223b504ff26f3176f7ab"
+        ],
+        "new_device_ids": [],
+        "north_deg": 165,
+        "sun_rays": false,
+        "bg_color": "#610000",
+        "bg_mode": "static",
+        "weather_entity": "weather.demo_weather_south",
+        "summary_panel": {
+          "version": 1,
+          "title": "Summary",
+          "show_on_mobile": true,
+          "blocks": [
+            {
+              "id": "summary-default",
+              "title": "General",
+              "visible": true,
+              "scope": {
+                "type": "all"
+              },
+              "values": [
+                {
+                  "id": "summary-device-count",
+                  "label": "Device count",
+                  "source": {
+                    "type": "system",
+                    "key": "device_count"
+                  }
+                },
+                {
+                  "id": "summary-total-area",
+                  "label": "Total room area",
+                  "source": {
+                    "type": "system",
+                    "key": "total_area"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "device_overrides": {},
+      "virtual_devices": [],
+      "model_version": 5
+    },
+    "rev": 1
+  }
+}

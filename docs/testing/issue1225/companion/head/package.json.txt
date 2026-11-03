@@ -1,0 +1,26 @@
+{
+  "name": "houseplan-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end browser tests for House Plan on a real Home Assistant",
+  "type": "module",
+  "scripts": {
+    "seed": "node scripts/prepare-seed.mjs",
+    "houseplan": "node scripts/install-houseplan.mjs",
+    "ha:up": "node scripts/ha.mjs up",
+    "ha:wait": "node scripts/ha.mjs wait",
+    "ha:down": "node scripts/ha.mjs down",
+    "ha:logs": "node scripts/ha.mjs logs",
+    "contract:sync": "node scripts/contract.mjs sync",
+    "contract:lint": "node scripts/contract.mjs lint",
+    "test": "playwright test",
+    "test:unit": "node --test test/*.test.mjs",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.0",
+    "bcryptjs": "^3.0.2",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0"
+  }
+}
