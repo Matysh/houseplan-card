@@ -278,10 +278,10 @@
     "id": "smoke:smoke_wall_node_topology",
     "file": "demo/smoke_wall_node_topology.mjs",
     "name": "smoke_wall_node_topology",
-    "category": "needs-diagnosis",
+    "category": "product-camera",
     "status": "failed",
-    "reason": "Projection cm mutation and missing capability corrected; four topology scenarios,100cycles,10terminals pass; real resized remount fails coherent camera-ready aspect guard (GEO-CAMERA-REMOUNT).",
-    "evidence": "output/issue1226/geometry/smoke_wall_node_topology-current-dev.log",
+    "reason": "Minimal two-current-snapshot warm remount reproduces stale View camera under Plan after delayed changed geometry; no host resize or gesture needed. Same delayed snapshot and fast changed snapshot controls pass. Native readiness guard retained.",
+    "evidence": "docs/testing/issue1226/repros/warm-camera.mjs",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_node_topology.log",
     "relatedIssue": null
   },
