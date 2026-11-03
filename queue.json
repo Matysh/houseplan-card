@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1886,
+  "revision": 1887,
   "nextTicket": 121,
   "nextFence": 120,
   "tasks": {
@@ -2257,149 +2257,25 @@
     },
     "1247": {
       "issue": 1247,
+      "branch": "issue/1247-wall-preview",
       "track": "show",
       "layer": "product",
-      "branch": "issue/1247-wall-preview",
-      "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 119,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793727667034,
-      "reviewEntry": 1,
-      "patchId": "c5229bcffc7e2d706fd1f62a86eb23839e79c461",
-      "changedFiles": [
-        "demo/smoke_wall_preview_handoff_1247.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1247.json",
-        "src/live-editor.ts"
-      ],
-      "s6": {
-        "id": "20261103T174251297-f9ac5009",
-        "requestId": "s6:1247:535ad7de31e3f9903b3ba7abbe568c6d",
-        "runId": 41686664151,
-        "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-        "status": "passed",
-        "finishedAt": "2026-11-03T17:43:35.322Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41686664151",
-        "execution": "github"
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "6aa9503096daac765d314d3ae8f39af44544fedd",
+      "mergedSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
+      "mergedAt": 1793728475642,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1247:1:c5229bcffc7e2d706fd1f62a86eb23839e79c461:6aa9503096daac765d314d3ae8f39af44544fedd",
-      "reviewMaterial": {
-        "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-        "expectedBase": "6aa9503096daac765d314d3ae8f39af44544fedd",
-        "patchId": "c5229bcffc7e2d706fd1f62a86eb23839e79c461"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1247,
-        "requestId": "review:1247:1:c5229bcffc7e2d706fd1f62a86eb23839e79c461:6aa9503096daac765d314d3ae8f39af44544fedd",
-        "kind": "code",
-        "base": "6aa9503096daac765d314d3ae8f39af44544fedd",
-        "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-        "patchId": "c5229bcffc7e2d706fd1f62a86eb23839e79c461",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1247,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1247",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Реализована передача владения transient Draw-элементами в существующем paintHouseplanEditor: основной SVG скрывает только прежние preview/fill/оси/вершины текущего рисования на время live-кадра. Commit восстанавливает их существующим restore; стены, grid и hit targets остаются. Новый путь геометрии/хранения и полный render на pointermove не добавлялись. Риски: случайное скрытие постоянных объектов и очистка после Esc; проверить вместе с существующим механизмом decor ownership. Адресная локальная проба на model11 с нативными click/move, явным host-render, толщиной 15/0 и движением туда-обратно прошла; конфиг после Esc неизменён. Окончательный S6 будет выполнен в общей очереди с test/live-editor.test.mjs, новым browser-case и существующим wall-draw-click."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Рекомендую принять изменение. Оно устраняет описанный в #1247 дефект с двумя владельцами превью: при live-кадре в режиме Plan основной SVG прячет свою копию превью рисуемой стены, оставшуюся после host-render. Прячутся заливка, контур, превью нулевой толщины, линия цепочки, вершины, активная ось и активная вершина. Live-слой рисует то же самое заново. Следующий host-render через существующий `commitHouseplanEditor` → `restore` возвращает видимость, поэтому сохранённые стены, сетка, узлы и hit-цели не затрагиваются. Решение повторяет уже проверенную схему guides (#521) и decor (#1080) и не добавляет нового пути геометрии или полного render на pointermove. Блокеров не нашёл. Остались два вопроса. Первый: адресная проверка не покрывает часть критерия 2, а именно Undo, завершение цепочки и путь `_path.length ≥ 2`. Второй: по исходникам видно, что точно так же могут дублироваться соседние превью других инструментов Plan, которые к этой задаче не относятся.",
-          "understanding": "Проблема. Во время рисования стены каждое pointermove меняет `_cursorPt`. `routeHouseplanEditorUpdate` направляет это изменение в live-кадр (`paintHouseplanEditor`), и тот рисует `planTemplate` в `[data-hp-live-editor]`, включая `_renderMarkupLayer` и `_renderActiveChainInk`. Если в это время происходит полный host-render (HA tick, другой UI), `updated()` → `_commitLiveEditor()` → `commitHouseplanEditor` очищает live-root. Основной SVG при этом рисует то же превью в `.hp-plan-only-layer` (`houseplan-card.ts:12003` и `:12033`). До исправления следующий live-кадр снова рисовал превью в live-root, а копия в основном слое оставалась видимой. Получались два превью, старое из них отставало на шаг.\n\nПосле исправления. В `paintHouseplanEditor` для `_mode === 'plan'` до render live-шаблона вызывается `hide(... '.hp-plan-only-layer :is(.drawwall-preview-fill,.drawwall-preview,.drawwall-zero-preview,.pathline,.vertex,.active-axis,.active-vertex)')` (`live-editor.ts:402`). `hide` пропускает элементы внутри live-root, ставит `visibility:hidden` и запоминает их в `state.hidden`. В начале каждого paint и в `commitHouseplanEditor` вызывается `restore`, поэтому скрытие действует ровно до следующего settled-render, и тот же цикл повторяется.\n\nРазобранные пути: маршрутизация `_cursorPt` (`live-editor.ts:87-152`); `updated()` → `_commitLiveEditor` → `commitHouseplanEditor` (`houseplan-card.ts:4828`, `houseplan-editor-runtime.ts:1182`); состав `_renderMarkupLayer` и `_renderActiveChainInk` (`houseplan-editor-runtime.ts:11055-11161`); `_renderPlanSnapOverlay` (классы `plan-snap-*` под селектор не попадают); ветки `planTemplate` для stairs и resize; Esc и любое обнуление `_cursorPt` (не маршрутизируется в live, даёт полный render и commit); обработка кликов в Draw (`_markupClick`, координатная); хэндлы узлов (`wall-node-card-adapter.ts:65`, включены только в select); новый smoke.",
-          "analysis": [
-            {
-              "topic": "Корректность передачи владения",
-              "assessment": "Всё, что скрывается в основном слое, live-кадр в ветке Draw рисует заново: и `_renderMarkupLayer`, и `_renderActiveChainInk` входят в `planTemplate`. Поэтому видимой остаётся ровно одна копия. Скрытие запускается безусловно, даже когда новое превью пустое, и это правильно: так закрывается случай, когда старый кадр оставил превью, а новый уже ничего не рисует. Пробовать `target.querySelector` по образцу decor здесь было бы ошибкой. Восстановление идёт по существующему циклу `restore` в начале paint и в commit, отдельного жизненного цикла нет.",
-              "evidence": "`src/live-editor.ts:381` (restore), `:402` (hide), `:421` (render), `:504` (restore в commit); `planTemplate` `:279-293`; `houseplan-editor-runtime.ts:11114-11125, 11148-11159`."
-            },
-            {
-              "topic": "Риск скрыть постоянные объекты",
-              "assessment": "Селектор ограничен потомками `.hp-plan-only-layer`, а классы в нём уникальны для временных элементов. `.pathline` и `.vertex` встречаются только у активной цепочки и у выделения инструмента split. Выделение split тоже перерисовывается live через `_renderMarkupLayer`. Стены (`.wallbodies`), `.seg`, сетка `data-hp-live-grid`, узлы (`hp-node-handle`) и snap-оверлей (`plan-snap-*`) под селектор не попадают. Ветки stairs/resize в `planTemplate` не рисуют разметку заново, но при них активной цепочки нет: смена инструмента завершает цепочку. Скрытие там ничего не находит.",
-              "evidence": "Поиск `pathline`/`vertex`/`drawwall-preview` по `src`: найдены только `houseplan-editor-runtime.ts:11115-11159` и стили `plan.styles.ts:1311-1384`; `_renderPlanSnapOverlay` `:10950-10979`."
-            },
-            {
-              "topic": "visibility:hidden вместо opacity:0 и hit-testing",
-              "assessment": "`.vertex` по умолчанию принимает события указателя, поэтому после скрытия клик проходит к нижележащим элементам. Для Draw это безопасно. `_markupClick` в этом инструменте работает по координатам `_svgPoint`, а не по цели события. `physical-hit` вне select имеет `pointer-events:none`, хэндлы узлов включены только в select. Влияния на замыкание контура кликом по первой вершине по исходникам не видно.",
-              "evidence": "`houseplan-editor-runtime.ts:2549-2608`; `plan.styles.ts:1532-1538`; `wall-node-card-adapter.ts:65`."
-            },
-            {
-              "topic": "Esc, Undo, завершение и стабильные кадры",
-              "assessment": "Esc обнуляет `_path` и `_cursorPt`. Обнулённый `_cursorPt` не маршрутизируется в live (`live-editor.ts:145-146`), поэтому выполняется полный render, а commit отменяет RAF, делает `restore` и очищает live-root. Undo и клик, завершающий или продолжающий цепочку, тоже меняют немаршрутизируемое состояние и проходят через тот же commit. Дополнительный клик для очистки не нужен. Отложенный RAF после commit отбрасывается проверкой `state.raf !== frame`.",
-              "evidence": "`live-editor.ts:439-453, 494-517`; `houseplan-card.ts:4828`."
-            },
-            {
-              "topic": "Адресный smoke",
-              "assessment": "Smoke проверяет то, что важно для пользователя: вычисленную `visibility` старых элементов, а не число узлов DOM. Покрыты обе толщины (15 и 0), движение туда и обратно, явный host-render между движениями, видимость `.wallbodies` и неизменный конфиг после Esc. Пробелы относительно критерия 2: нет Undo, нет завершения цепочки, нет сценария с `_path.length ≥ 2`, где скрывалась бы `.pathline`. `.drawwall-preview-fill` и `.vertex` скрываются, но в утверждении не проверяются. По исходникам эти пути идут через тот же commit/restore, поэтому блокером пробел не считаю.",
-              "evidence": "`demo/smoke_wall_preview_handoff_1247.mjs:23-41`."
-            },
-            {
-              "topic": "Документация и ledger",
-              "assessment": "Записи в CHANGELOG (en/ru) и в ledger `v1.83.0/1247.json` с категорией `stable-fix` согласуются с соседними записями и с характером исправления.",
-              "evidence": "`docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`, `docs/release-ledger/v1.83.0/`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Тот же механизм по исходникам оставляет без защиты соседние превью, которые зависят от курсора, в том же `_renderMarkupLayer`: `<path class=\"physical-drag\">` инструмента column (`houseplan-editor-runtime.ts:11107-11113`) и пунктирную `<line class=\"preview\">` инструмента split (`:11136-11138`). Оба превью рисуются и в основном слое, и в live-root, а скрытия для них нет. Возможно, то же относится к `_renderOpeningPlacementPreview` в отдельном `.hp-plan-only-layer`. В браузере это не воспроизводилось. Дешёвый вариант: добавить `.physical-drag` и `.preview` в тот же селектор. Цена близка к нулю, риск задеть постоянные объекты тот же, что у текущих классов. Более общий вариант: скрывать целиком основные группы markup и chain, которые live-кадр всегда рисует заново (по аналогии с `.hp-editor-only-layer`). Этот вариант надёжнее против будущих новых классов превью, но требует проверить порядок отрисовки сетки и `.seg` относительно стен. Если в эту задачу не включать, стоит завести отдельную.",
-            "Дополнить smoke сценарием, где цепочка уже содержит хотя бы один зафиксированный клик (`_path.length ≥ 2`, есть `.pathline`). В нём нужны host-render, движение, затем Undo и завершение цепочки. В утверждение стоит добавить `.drawwall-preview-fill` и `.vertex`. Тогда smoke закроет критерий 2 буквально, а не через рассуждение о едином пути commit."
-          ],
-          "boundaries": "Анализ выполнен только по исходникам на `f2436671`. Сборку, тесты и браузер я не запускал. Использован результат S6: run 41686664151, статус passed, материал совпадает с head. Какие именно проверки вошли в этот прогон (новый smoke, `test/live-editor.test.mjs`, `smoke_wall_draw_click`), по доступным материалам подтвердить не могу. В каталогах и реестрах новый smoke не упоминается, механическую проверку реестров я не проводил. Локальная проба автора на model11 и PNG из `artifacts/research-seven` мне недоступны. Естественный триггер host-render на установке владельца в issue не локализован, поэтому исправление проверено только на явном `requestUpdate`. Выводы о column, split и opening-preview получены по исходникам, в браузере они не воспроизводились."
-        },
-        "usage": {
-          "input_tokens": 74,
-          "cache_creation_input_tokens": 97906,
-          "cache_read_input_tokens": 2199962,
-          "output_tokens": 18717,
-          "output_tokens_details": {
-            "thinking_tokens": 10072
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 97906,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 814,
-              "cache_read_input_tokens": 88691,
-              "cache_creation_input_tokens": 13419,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 13419
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРекомендую принять изменение. Оно устраняет описанный в #1247 дефект с двумя владельцами превью: при live-кадре в режиме Plan основной SVG прячет свою копию превью рисуемой стены, оставшуюся после host-render. Прячутся заливка, контур, превью нулевой толщины, линия цепочки, вершины, активная ось и активная вершина. Live-слой рисует то же самое заново. Следующий host-render через существующий `commitHouseplanEditor` → `restore` возвращает видимость, поэтому сохранённые стены, сетка, узлы и hit-цели не затрагиваются. Решение повторяет уже проверенную схему guides (#521) и decor (#1080) и не добавляет нового пути геометрии или полного render на pointermove. Блокеров не нашёл. Остались два вопроса. Первый: адресная проверка не покрывает часть критерия 2, а именно Undo, завершение цепочки и путь `_path.length ≥ 2`. Второй: по исходникам видно, что точно так же могут дублироваться соседние превью других инструментов Plan, которые к этой задаче не относятся.\n\n## Понимание решения\n\nПроблема. Во время рисования стены каждое pointermove меняет `_cursorPt`. `routeHouseplanEditorUpdate` направляет это изменение в live-кадр (`paintHouseplanEditor`), и тот рисует `planTemplate` в `[data-hp-live-editor]`, включая `_renderMarkupLayer` и `_renderActiveChainInk`. Если в это время происходит полный host-render (HA tick, другой UI), `updated()` → `_commitLiveEditor()` → `commitHouseplanEditor` очищает live-root. Основной SVG при этом рисует то же превью в `.hp-plan-only-layer` (`houseplan-card.ts:12003` и `:12033`). До исправления следующий live-кадр снова рисовал превью в live-root, а копия в основном слое оставалась видимой. Получались два превью, старое из них отставало на шаг.\n\nПосле исправления. В `paintHouseplanEditor` для `_mode === 'plan'` до render live-шаблона вызывается `hide(... '.hp-plan-only-layer :is(.drawwall-preview-fill,.drawwall-preview,.drawwall-zero-preview,.pathline,.vertex,.active-axis,.active-vertex)')` (`live-editor.ts:402`). `hide` пропускает элементы внутри live-root, ставит `visibility:hidden` и запоминает их в `state.hidden`. В начале каждого paint и в `commitHouseplanEditor` вызывается `restore`, поэтому скрытие действует ровно до следующего settled-render, и тот же цикл повторяется.\n\nРазобранные пути: маршрутизация `_cursorPt` (`live-editor.ts:87-152`); `updated()` → `_commitLiveEditor` → `commitHouseplanEditor` (`houseplan-card.ts:4828`, `houseplan-editor-runtime.ts:1182`); состав `_renderMarkupLayer` и `_renderActiveChainInk` (`houseplan-editor-runtime.ts:11055-11161`); `_renderPlanSnapOverlay` (классы `plan-snap-*` под селектор не попадают); ветки `planTemplate` для stairs и resize; Esc и любое обнуление `_cursorPt` (не маршрутизируется в live, даёт полный render и commit); обработка кликов в Draw (`_markupClick`, координатная); хэндлы узлов (`wall-node-card-adapter.ts:65`, включены только в select); новый smoke.\n\n## Разбор решения\n\n### Корректность передачи владения\n\nВсё, что скрывается в основном слое, live-кадр в ветке Draw рисует заново: и `_renderMarkupLayer`, и `_renderActiveChainInk` входят в `planTemplate`. Поэтому видимой остаётся ровно одна копия. Скрытие запускается безусловно, даже когда новое превью пустое, и это правильно: так закрывается случай, когда старый кадр оставил превью, а новый уже ничего не рисует. Пробовать `target.querySelector` по образцу decor здесь было бы ошибкой. Восстановление идёт по существующему циклу `restore` в начале paint и в commit, отдельного жизненного цикла нет.\n\nОснование: `src/live-editor.ts:381` (restore), `:402` (hide), `:421` (render), `:504` (restore в commit); `planTemplate` `:279-293`; `houseplan-editor-runtime.ts:11114-11125, 11148-11159`.\n\n### Риск скрыть постоянные объекты\n\nСелектор ограничен потомками `.hp-plan-only-layer`, а классы в нём уникальны для временных элементов. `.pathline` и `.vertex` встречаются только у активной цепочки и у выделения инструмента split. Выделение split тоже перерисовывается live через `_renderMarkupLayer`. Стены (`.wallbodies`), `.seg`, сетка `data-hp-live-grid`, узлы (`hp-node-handle`) и snap-оверлей (`plan-snap-*`) под селектор не попадают. Ветки stairs/resize в `planTemplate` не рисуют разметку заново, но при них активной цепочки нет: смена инструмента завершает цепочку. Скрытие там ничего не находит.\n\nОснование: Поиск `pathline`/`vertex`/`drawwall-preview` по `src`: найдены только `houseplan-editor-runtime.ts:11115-11159` и стили `plan.styles.ts:1311-1384`; `_renderPlanSnapOverlay` `:10950-10979`.\n\n### visibility:hidden вместо opacity:0 и hit-testing\n\n`.vertex` по умолчанию принимает события указателя, поэтому после скрытия клик проходит к нижележащим элементам. Для Draw это безопасно. `_markupClick` в этом инструменте работает по координатам `_svgPoint`, а не по цели события. `physical-hit` вне select имеет `pointer-events:none`, хэндлы узлов включены только в select. Влияния на замыкание контура кликом по первой вершине по исходникам не видно.\n\nОснование: `houseplan-editor-runtime.ts:2549-2608`; `plan.styles.ts:1532-1538`; `wall-node-card-adapter.ts:65`.\n\n### Esc, Undo, завершение и стабильные кадры\n\nEsc обнуляет `_path` и `_cursorPt`. Обнулённый `_cursorPt` не маршрутизируется в live (`live-editor.ts:145-146`), поэтому выполняется полный render, а commit отменяет RAF, делает `restore` и очищает live-root. Undo и клик, завершающий или продолжающий цепочку, тоже меняют немаршрутизируемое состояние и проходят через тот же commit. Дополнительный клик для очистки не нужен. Отложенный RAF после commit отбрасывается проверкой `state.raf !== frame`.\n\nОснование: `live-editor.ts:439-453, 494-517`; `houseplan-card.ts:4828`.\n\n### Адресный smoke\n\nSmoke проверяет то, что важно для пользователя: вычисленную `visibility` старых элементов, а не число узлов DOM. Покрыты обе толщины (15 и 0), движение туда и обратно, явный host-render между движениями, видимость `.wallbodies` и неизменный конфиг после Esc. Пробелы относительно критерия 2: нет Undo, нет завершения цепочки, нет сценария с `_path.length ≥ 2`, где скрывалась бы `.pathline`. `.drawwall-preview-fill` и `.vertex` скрываются, но в утверждении не проверяются. По исходникам эти пути идут через тот же commit/restore, поэтому блокером пробел не считаю.\n\nОснование: `demo/smoke_wall_preview_handoff_1247.mjs:23-41`.\n\n### Документация и ledger\n\nЗаписи в CHANGELOG (en/ru) и в ledger `v1.83.0/1247.json` с категорией `stable-fix` согласуются с соседними записями и с характером исправления.\n\nОснование: `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`, `docs/release-ledger/v1.83.0/`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Тот же механизм по исходникам оставляет без защиты соседние превью, которые зависят от курсора, в том же `_renderMarkupLayer`: `<path class=\"physical-drag\">` инструмента column (`houseplan-editor-runtime.ts:11107-11113`) и пунктирную `<line class=\"preview\">` инструмента split (`:11136-11138`). Оба превью рисуются и в основном слое, и в live-root, а скрытия для них нет. Возможно, то же относится к `_renderOpeningPlacementPreview` в отдельном `.hp-plan-only-layer`. В браузере это не воспроизводилось. Дешёвый вариант: добавить `.physical-drag` и `.preview` в тот же селектор. Цена близка к нулю, риск задеть постоянные объекты тот же, что у текущих классов. Более общий вариант: скрывать целиком основные группы markup и chain, которые live-кадр всегда рисует заново (по аналогии с `.hp-editor-only-layer`). Этот вариант надёжнее против будущих новых классов превью, но требует проверить порядок отрисовки сетки и `.seg` относительно стен. Если в эту задачу не включать, стоит завести отдельную.\n- Дополнить smoke сценарием, где цепочка уже содержит хотя бы один зафиксированный клик (`_path.length ≥ 2`, есть `.pathline`). В нём нужны host-render, движение, затем Undo и завершение цепочки. В утверждение стоит добавить `.drawwall-preview-fill` и `.vertex`. Тогда smoke закроет критерий 2 буквально, а не через рассуждение о едином пути commit.\n\n## Границы анализа\n\nАнализ выполнен только по исходникам на `f2436671`. Сборку, тесты и браузер я не запускал. Использован результат S6: run 41686664151, статус passed, материал совпадает с head. Какие именно проверки вошли в этот прогон (новый smoke, `test/live-editor.test.mjs`, `smoke_wall_draw_click`), по доступным материалам подтвердить не могу. В каталогах и реестрах новый smoke не упоминается, механическую проверку реестров я не проводил. Локальная проба автора на model11 и PNG из `artifacts/research-seven` мне недоступны. Естественный триггер host-render на установке владельца в issue не локализован, поэтому исправление проверено только на явном `requestUpdate`. Выводы о column, split и opening-preview получены по исходникам, в браузере они не воспроизводились.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 6aa9503096daac765d314d3ae8f39af44544fedd → f2436671e6a48a64ed785f89cf014b467a123cbb\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1247, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nРеализована передача владения transient Draw-элементами в существующем paintHouseplanEditor: основной SVG скрывает только прежние preview/fill/оси/вершины текущего рисования на время live-кадра. Commit восстанавливает их существующим restore; стены, grid и hit targets остаются. Новый путь геометрии/хранения и полный render на pointermove не добавлялись. Риски: случайное скрытие постоянных объектов и очистка после Esc; проверить вместе с существующим механизмом decor ownership. Адресная локальная проба на model11 с нативными click/move, явным host-render, толщиной 15/0 и движением туда-обратно прошла; конфиг после Esc неизменён. Окончательный S6 будет выполнен в общей очереди с test/live-editor.test.mjs, новым browser-case и существующим wall-draw-click.\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T17:53:28.115Z",
-        "artifactId": 13257001149,
-        "runId": 41687185614,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T17:53:33Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41687185614",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "6aa9503096daac765d314d3ae8f39af44544fedd"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1248": {
@@ -2555,19 +2431,7 @@
   "waiting": [
     1248
   ],
-  "active": {
-    "issue": 1247,
-    "worker": "finish",
-    "token": "119:finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:1:admit",
-    "fence": 119,
-    "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-    "expectedBase": "6aa9503096daac765d314d3ae8f39af44544fedd",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793727670991,
-    "expiresAt": 1793732070607,
-    "patchId": "c5229bcffc7e2d706fd1f62a86eb23839e79c461",
-    "reviewRequest": "review:1247:1:c5229bcffc7e2d706fd1f62a86eb23839e79c461:6aa9503096daac765d314d3ae8f39af44544fedd"
-  },
+  "active": null,
   "events": {
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:2:synchronized": {
       "digest": "b44cb82ff9b3d159795bcc4fbc4f96ede62d2234e5c9f712f83957ae40672e07",
@@ -2600,62 +2464,6 @@
     "github:41686336528:1:completions:notice:13bec2017c50b7047c8218d6ad78276b80ed20f17881d40885b6789f91a75934": {
       "digest": "3f362d2435cec5c7bb77b52d01d82a960f984279e8f7772928f6be88d55bb268",
       "issue": 1248
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:2:synchronized": {
-      "digest": "3d18998901520fbb9514cfd0e68dc3833b8cc0a44714c34b387efb8fc1d26842",
-      "issue": 1247
-    },
-    "finish:10d9bda1-9429-40cc-9e02-508b64f05071": {
-      "digest": "bfb4413256df2e1500448481ac703e6c6778399f0172e1d4fe81dd73dcffa662",
-      "issue": 1247
-    },
-    "finish:33ae3dc0-4731-43fa-a074-2217c3c2f1be": {
-      "digest": "3d78a222d7d6d9e872fd54a64101fdfe4492ceb3af3b6191ff39394b03b0c81e",
-      "issue": 1247
-    },
-    "finish:ab4f00d2-3b4e-469a-8d24-0579af8dbbc7": {
-      "digest": "7a8d48c1c8f5ff1469995093f0bb949c70a5557f7455aab149e7c877b9874412",
-      "issue": 1247
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:3:s6-label": {
-      "digest": "f431f4eb9c013f2f5bbd92a8879aab30fa826f4fb3e0edec610d866a4cd4b578",
-      "issue": 1247
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:4:review-requested": {
-      "digest": "24859780750d8662ee10097606ef4bc80ec2039b35eac89f0eb6837be872a524",
-      "issue": 1247
-    },
-    "github:41687167847:1:completions:message:506d519956b391f0042b979d65600374ab597945017b026c57003863e34d1f95": {
-      "digest": "e7698ac044d9375a4ccc7a45d579e73c32d17a80b5dccdc932df8555e245e4d9",
-      "issue": 1247
-    },
-    "github:41687167847:1:completions:message:25183523f71fcd34f74eeb6a45bec274f58186a8c641865a145386182859f99d": {
-      "digest": "b32574c65d1d45402919cfe1e61c280aee5c0e06bb5cd0457fc69b99d13faa4c",
-      "issue": 1247
-    },
-    "github:41687167847:1:completions:message:630838edf50d5684d529434011ec589862b805f69a62a09330f1154060cb808c": {
-      "digest": "2dc6bd6261c4d47bf92397a7c91f42428e98c3c8020d527f411d6c95c0e386b2",
-      "issue": 1247
-    },
-    "github:41687167847:1:completions:message:9c3b8b8fb5a1263d5e2a49ba8150ed3fd858c9132f421a60b22120baa2c0963d": {
-      "digest": "24143d9679bbe8ee19777e1388b2e08fee413adacc1e0b9655417b4de0eaddf0",
-      "issue": 1247
-    },
-    "dev-build:41687167847:1:webhook": {
-      "digest": "405e9d290d4de6ad4d0d3bf02e839a25e2565e0e715ee4287f9807e0e5542506",
-      "issue": 1247
-    },
-    "dev-build:41687167847:1:webhook:beb64ef7-2ef4-40b4-854e-9695ebeab247:delivered": {
-      "digest": "0da92939e4b4b6752c0138c559208ac46593deafdb532f2303ecf65959201215",
-      "issue": 1247
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:13:review-presentation": {
-      "digest": "3a91cfa0858c96983ddf851fb58f8cd6fbb182edfe54466b2a7f3928d02961fe",
-      "issue": 1247
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:13:review-complete": {
-      "digest": "3cacf5dbedde48954fff0e913eab710a7dcbae4a333465ce38c1c5741baee232",
-      "issue": 1247
     },
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624": {
       "digest": "89417b2c25eb780012fd053b9857da71ec44e7b7072e12b5b89fcdc10d4c08c7",
@@ -2706,35 +2514,6 @@
         "delivered": true
       }
     },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b": {
-      "digest": "765ee3bbbdd7498680c23ace1d76c19a071e3c3ec8a13766f7a5d759bafa2d46",
-      "issue": 1247,
-      "message": {
-        "kind": "queued",
-        "issue": 1247,
-        "at": 1793727667034,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc",
-        "delivered": true
-      }
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:1:admit": {
-      "digest": "d4eeabaeef43af389d450bed6c2361583992e43d15b213915e4a056fc2260dc1",
-      "issue": 1247,
-      "message": {
-        "kind": "admitted",
-        "issue": 1247,
-        "at": 1793727670991,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11": {
       "digest": "746dbd006b6732565c31e88eec8190805d0490e00b698da494a0bcf90f296ebc",
       "issue": 1248,
@@ -2746,34 +2525,6 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "c8266cfb23ec718eaa33707681532e4a2604c646",
-        "delivered": true
-      }
-    },
-    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:3:s6-complete": {
-      "digest": "94108f794688d920511766b00eb442db9caef555f22bb45f9887e3e86b04cdc1",
-      "issue": 1247,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1247,
-        "at": 1793727871103,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T174251297-f9ac5009",
-          "requestId": "s6:1247:535ad7de31e3f9903b3ba7abbe568c6d",
-          "runId": 41686664151,
-          "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-          "status": "passed",
-          "finishedAt": "2026-11-03T17:43:35.322Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41686664151",
-          "execution": "github"
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
