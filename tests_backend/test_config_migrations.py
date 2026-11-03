@@ -106,7 +106,7 @@ def test_unknown_or_corrupt_migration_passport_refuses_without_touching_source(p
     assert source == before
 
 
-@pytest.mark.parametrize("version", [11, True, "10", -1])
+@pytest.mark.parametrize("version", [12, True, "11", -1])
 def test_unknown_model_is_not_treated_as_current(version):
     with pytest.raises(ValueError):
         m.migrate_pair({"model_version": version, "spaces": []}, {})
