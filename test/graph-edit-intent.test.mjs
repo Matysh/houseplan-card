@@ -198,3 +198,23 @@ test('selected intersection scope preserves deterministic exact splits with unre
   assert.equal(G.validateGraph(result.graph).ok,true);
   for(const x of ['60','180'])assert.ok(result.graph.nodes.some(n=>n.p[0]==='l'&&n.p[1]===x&&n.p[2]==='120'));
 });
+
+test('#1226 current graph deletion and face promotion retain the opening carrier identity',()=>{
+  const source=migrate({id:'current-host',rooms:[],partitions:[
+    {id:'a',a:[0,0],b:[1,0],cm:15},{id:'b',a:[1,0],b:[1,1],cm:15},
+    {id:'c',a:[1,1],b:[0,1],cm:15},{id:'d',a:[0,1],b:[0,0],cm:15}],
+    openings:[{id:'o',type:'door',x:.5,y:0,length:.1,angle:0,
+      host:{kind:'partition',id:'a',t:.5},future:{retained:true}}]});
+  const promote=(before,id)=>commitGraphEdit(before,{...copy(before),rooms:[rectangle(id)]},
+    {kind:'faces',rooms:[id],consumedPartitionIds:before.partitions.map(p=>p.id),sourceEdges:before.plan_graph.edges});
+  const first=promote(source,'room');
+  const kept=commitGraphEdit(first,{...copy(first),rooms:[]},{kind:'delete-room',room:'room',keepWalls:true});
+  const recreated=promote(kept,'recreated');
+  for(const [space,kind]of[[first,'wall'],[kept,'partition'],[recreated,'wall']]){
+    assert.equal(G.validateGraph(space.plan_graph).ok,true);
+    assert.deepEqual(space.openings[0].host,{kind,id:'a',t:.5,tq:['1','2']});
+    assert.deepEqual(space.openings[0].future,{retained:true});
+    assert.equal(space.plan_graph.edges.find(e=>e.id==='a').cm,15);
+  }
+  assert.deepEqual(source.rooms,[],'all producers leave the source authority unchanged');
+});

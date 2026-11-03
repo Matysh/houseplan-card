@@ -106,7 +106,7 @@
     "marker-merge-safe-refusal": {
       "ok": false,
       "toasts": [
-        "toast.geometry_unsafe"
+        "toast.wall_model_migration_blocked"
       ],
       "config": "fa83eeeb33f214e44ccea0d8c8a76ade13ae3a5765c8420f1ae7d2251162103d",
       "history": []
@@ -133,7 +133,7 @@
     "marker-delete-safe-refusal": {
       "ok": false,
       "toasts": [
-        "toast.geometry_unsafe"
+        "toast.wall_model_migration_blocked"
       ],
       "config": "fa83eeeb33f214e44ccea0d8c8a76ade13ae3a5765c8420f1ae7d2251162103d",
       "history": []
@@ -149,7 +149,7 @@
     "marker-pre-v9-merge-safe-refusal": {
       "ok": false,
       "toasts": [
-        "toast.geometry_unsafe"
+        "toast.wall_model_migration_blocked"
       ],
       "config": "ea5e126ebef269a8b23dc89d4224107559e45a5a0d20bbb062c78c84a9bb769c",
       "history": []
@@ -165,7 +165,7 @@
     "marker-pre-v9-delete-safe-refusal": {
       "ok": false,
       "toasts": [
-        "toast.geometry_unsafe"
+        "toast.wall_model_migration_blocked"
       ],
       "config": "ea5e126ebef269a8b23dc89d4224107559e45a5a0d20bbb062c78c84a9bb769c",
       "history": []

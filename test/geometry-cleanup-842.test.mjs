@@ -171,7 +171,8 @@ test('#842 AC6: an explicit partition+opening delete is the operation’s own re
   const space = h.host._serverCfg.spaces[0];
   space.partitions = space.partitions.filter((partition) => partition.id !== 'p-host');
   space.openings = space.openings.filter((opening) => opening.host?.id !== 'p-host');
-  assert.equal(h.runtime._commitPhysicalGeometry('history.physical_delete', before), true);
+  assert.equal(h.runtime._commitPhysicalGeometry('history.physical_delete', before, [], true,
+    { kind: 'partitions', ids: ['p-host'] }), true);
   t.mock.timers.tick(500);
   await settle();
   assert.equal(h.server.sets.length, 1);

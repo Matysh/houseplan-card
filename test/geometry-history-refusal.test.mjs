@@ -28,6 +28,7 @@ const { virtualLightSnapshot } = await import('../test-build/virtual-light-state
 const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
 const { LiveRuntime } = await import('../test-build/live-interaction-runtime.js');
 const { cardInteractionIdleSnapshot } = await import('../test-build/version-recovery-card.js');
+const { authoredChange } = await import('./helpers/geometry-commit-harness.mjs');
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const square = id => {
@@ -124,7 +125,12 @@ function setup({ floors = ['f', 'g'], configInput } = {}) {
   /** One ordinary command through the production recorder and the deferred writer. */
   const edit = async (spaceId, name, change) => {
     const before = runtime._geometrySnapshot(spaceId);
-    change(spaceOf(spaceId));
+    const space = spaceOf(spaceId), draft = structuredClone(space);
+    change(draft);
+    const old = new Map((space.partitions || []).map(p => [p.id, JSON.stringify(p)]));
+    const next = new Map((draft.partitions || []).map(p => [p.id, JSON.stringify(p)]));
+    const ids = [...new Set([...old.keys(), ...next.keys()])].filter(id => old.get(id) !== next.get(id));
+    authoredChange(space, ids.length ? { kind: 'partitions', ids } : { kind: 'metadata' }, value => { for (const key of Object.keys(value)) delete value[key]; Object.assign(value, draft); });
     runtime._recordGeometry(name, before);
     runtime._saveConfig(); deferred.flush(); await settle();
     return geometryHistory.peekUndo();
@@ -246,6 +252,7 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
 
 test('#1166 both public contours cross real room commit/write/history owners in either order', async () => {
   const {readFileSync,writeFileSync}=await import('node:fs');
+  const {createHash}=await import('node:crypto');
   const {stableRoomReceiptIds}=await import('./helpers/room-contact-grid.mjs');
   const {spaceModels,GRID_PITCH,GRID_STEP_N,NORM_W}=await import('../test-build/space-geometry.js');
   const {normalizeWallIntervals,degradeWalls}=await import('../test-build/wall-thickness.js');
@@ -293,9 +300,17 @@ test('#1166 both public contours cross real room commit/write/history owners in 
     assert.equal(s.toasts.some(message=>message.includes('geometry_unsafe')),false);
     receipts.push({scenario:scenario.name,optimize,reverse,original:raw,source,candidates});
   }
-  if(process.env.HP_1166_ROOM_RECEIPT)writeFileSync(process.env.HP_1166_ROOM_RECEIPT,JSON.stringify(stableRoomReceiptIds(receipts,{preserveSourceIdentities:true}),null,2)+'\n');
-  else assert.deepEqual(stableRoomReceiptIds(receipts,{preserveSourceIdentities:true}),JSON.parse(readFileSync(
-    new URL('./fixtures/1166-room-candidates.json',import.meta.url),'utf8')));
+  const actual=stableRoomReceiptIds(receipts,{preserveSourceIdentities:true});
+  const legacy=JSON.parse(readFileSync(new URL('./fixtures/1166-room-candidates.json',import.meta.url),'utf8'));
+  assert.deepEqual(actual.map(({scenario,optimize,reverse,original})=>({scenario,optimize,reverse,original})),
+    legacy.map(({scenario,optimize,reverse,original})=>({scenario,optimize,reverse,original})),
+    'the same complete raw inputs, orders and Optimize modes remain passported');
+  if(process.env.HP_1166_ROOM_RECEIPT)writeFileSync(process.env.HP_1166_ROOM_RECEIPT,JSON.stringify(actual,null,2)+'\n');
+  else {
+    const passport=JSON.parse(readFileSync(new URL('./fixtures/1166-room-graph-passports.json',import.meta.url),'utf8'));
+    assert.deepEqual(actual.map(row=>createHash('sha256').update(JSON.stringify(row)).digest('hex')),passport.rows,
+      'full source, graph identities, host references, write candidates and graph_change remain exact');
+  }
 });
 
 test('#1061 a genuinely new derived off-grid scalar still refuses atomically', async () => {
@@ -308,7 +323,9 @@ test('#1061 a genuinely new derived off-grid scalar still refuses atomically', a
   assert.deepEqual(s.host._serverCfg, original);
   assert.deepEqual(await s.writes(), { armed: false, sets: 0 });
   assert.equal(s.geometryHistory.size, 0);
-  assert.ok(s.toasts.includes('toast.geometry_unsafe'));
+  // The current metadata-authority guard rejects this unscoped projection
+  // before physical geometry proof; refusal, rollback and no-write are unchanged.
+  assert.deepEqual(s.toasts, ['toast.wall_model_migration_blocked' + JSON.stringify({ reason: 'wall_model.reason.invalid-room' })]);
 });
 
 test('#891 AC2 strict pre-send refusal removes only owned physical commands and rebases independent Background snapshots', async () => {
@@ -316,7 +333,7 @@ test('#891 AC2 strict pre-send refusal removes only owned physical commands and 
   const older = await s.addWall('g'), background = await s.addLine('f');
   const before = s.runtime._geometrySnapshot('f');
   s.spaceOf('f').partitions = [{ id: 'refused', a: [.25, .25], b: [1, .25], cm: 10 }];
-  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before), true);
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before, [], true, { kind: 'partitions', ids: s.spaceOf('f').partitions.map(p => p.id) }), true);
   const refused = s.geometryHistory.peekUndo();
   const backdropBefore = s.runtime._geometrySnapshot('f');
   s.spaceOf('f').plan_x = .125;
@@ -344,7 +361,7 @@ test('#891 AC2 delayed non-conflict physical refusal preserves newer same-floor 
   const s = setup(); const older = await s.addWall('g');
   const before = s.runtime._geometrySnapshot('f');
   s.spaceOf('f').partitions = [{ id: 'refused', a: [.25, .25], b: [1, .25], cm: 10 }];
-  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before), true);
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before, [], true, { kind: 'partitions', ids: s.spaceOf('f').partitions.map(p => p.id) }), true);
   let reject;
   s.host._sendConfigCandidate = () => new Promise((resolve, fail) => { reject = fail; });
   const write = s.runtime._writeConfig(); await settle();
@@ -443,7 +460,7 @@ test('#891 AC2 accepting an older send promotes the rollback baseline for newer 
   const s = setup();
   const before = s.runtime._geometrySnapshot('f');
   s.spaceOf('f').partitions = [{ id: 'accepted-first', a: [.25, .25], b: [1, .25], cm: 10 }];
-  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before), true);
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, before, [], true, { kind: 'partitions', ids: s.spaceOf('f').partitions.map(p => p.id) }), true);
   const accepted = s.geometryHistory.peekUndo();
   let accept;
   // Recording transport preserves newer staged edits on acceptance, isolating
@@ -460,7 +477,7 @@ test('#891 AC2 accepting an older send promotes the rollback baseline for newer 
   const firstWrite = s.runtime._writeConfig(); await settle();
   const nextBefore = s.runtime._geometrySnapshot('f');
   s.spaceOf('f').partitions.push({ id: 'refused-second', a: [.25, .5], b: [1, .5], cm: 10 });
-  assert.equal(s.runtime._commitPhysicalGeometry(WALL, nextBefore), true);
+  assert.equal(s.runtime._commitPhysicalGeometry(WALL, nextBefore, [], true, { kind: 'partitions', ids: ['refused-second'] }), true);
   const refused = s.geometryHistory.peekUndo();
   accept(); await firstWrite;
   assert.deepEqual(s.ids('f'), ['accepted-first', 'refused-second']);
@@ -833,3 +850,7 @@ test('#861 actual mode/cancel/clear consumers retain their different physical re
     assert.equal(s.geometryHistory.size, 1, 'reset-only consumers never create a command');
   }
 });
+
+
+
+

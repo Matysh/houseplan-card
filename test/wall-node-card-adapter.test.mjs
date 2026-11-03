@@ -64,11 +64,11 @@ test('Esc retries reuse one immutable baseline across fresh node snapshots, neve
   for (let gesture = 0; gesture < 3; gesture++) {
     const before = s.down(); assert.notEqual(before, previousSource);
     const { next } = s.validate(before), latest = s.proofs.at(-1);
-    if (!gesture) { baseline = latest[1]; baselineProof = latest[4]; recorded = s.counts().recordedOperations; assert.ok(recorded > 0); }
+    if (!gesture) { baseline = latest[1]; baselineProof = latest[4]; recorded = s.counts().recordedOperations; assert.equal(recorded, 0, 'exact graph preview needs no legacy Boolean materialization'); assert.ok(baseline.spaces[0].plan_graph); }
     else { assert.equal(latest[1], baseline); assert.equal(latest[4], baselineProof);
       assert.equal(s.counts().recordedOperations, recorded, 'no repeated baseline build'); }
     assert.equal(s.proofs.length, gesture + 1, 'every independent candidate is still proved');
-    assert.ok(s.counts().candidateOperations > 0);
+    assert.equal(s.counts().candidateOperations, 0, 'exact graph candidates do not rebuild legacy Boolean strips');
     const proofCount = s.proofs.length;
     assert.equal(s.editor.port.validate(next, before, true), true);
     assert.equal(s.proofs.length, proofCount, 'only the same already-proved candidate has the identity fast path');
@@ -110,11 +110,11 @@ test('switching local components replaces the single retained baseline instead o
   assert.equal(s.editor.port.validate(moved.space, before, false), true);
   const second = s.proofs.at(-1)[1], secondCount = s.counts().recordedOperations;
   assert.deepEqual(second.spaces[0].rooms.map(room => room.id), ['remote']);
-  assert.notEqual(second, first); assert.ok(secondCount > firstCount);
+  assert.notEqual(second, first); assert.equal(secondCount, firstCount, 'exact graph replacement has no legacy Boolean work');
   s.editor.port.changed(); s.validate();
   assert.notEqual(s.proofs.at(-1)[1], first, 'the replaced first component is not retained elsewhere');
   assert.notEqual(s.proofs.at(-1)[1], second);
-  assert.ok(s.counts().recordedOperations > secondCount);
+  assert.equal(s.counts().recordedOperations, secondCount);
 });
 
 for (const [label, mutate] of [
@@ -131,7 +131,7 @@ for (const [label, mutate] of [
   const s = setup(t); s.validate(); const previous = s.proofs.at(-1)[1], count = s.counts().recordedOperations;
   s.editor.port.changed(); mutate(s); s.validate();
   assert.notEqual(s.proofs.at(-1)[1], previous);
-  assert.ok(s.counts().recordedOperations > count);
+  assert.equal(s.counts().recordedOperations, count, 'fresh graph proof still needs no legacy Boolean materialization');
 });
 
 test('in-place proof-input changes invalidate even the final candidate identity fast path', t => {
@@ -167,19 +167,16 @@ test('write or history attempt retires retained baseline even if no new config i
 });
 
 test('failed baseline build is not retained for another independent retry', t => {
-  const s = setup(t), originalApply = WallBooleanBaseline.prototype.apply;
-  let refuse = true;
-  t.mock.method(WallBooleanBaseline.prototype, 'apply', function (operation, operands, record) {
-    if (record && refuse) throw new Error('intentional baseline boolean failure');
-    return originalApply.call(this, operation, operands, record);
-  });
-  const before = s.source(), next = s.candidate(before);
-  s.editor.port.validate(next, before, false);
-  const recorded = s.counts().recordedOperations;
-  refuse = false; s.editor.port.changed(); s.validate();
-  assert.ok(s.counts().recordedOperations > recorded, 'healthy retry builds a new baseline');
+  const s = setup(t), before = s.source(), next = s.candidate(before);
+  const edge = before.plan_graph.edges[0], original = edge.to;
+  edge.to = 'missing-node';
+  assert.equal(s.editor.port.validate(next, before, false), false, 'a broken exact graph cannot be proved');
+  assert.equal(s.proofs.length, 0);
+  edge.to = original;
+  assert.equal(s.editor.port.validate(next, before, false), true, 'healthy retry must rebuild the failed baseline');
+  assert.equal(s.proofs.length, 1);
+  assert.notEqual(s.proofs[0][1].spaces[0], before, 'baseline remains an immutable private snapshot');
 });
-
 test('#843 node history: any Plan/Background tool of a writer applies it; capture stays Plan/Select-only', async t => {
   const s = setup(t), sent = [], toasts = [];
   s.host.hass.callWS = async message => { sent.push(message); return { config: structuredClone(s.host._serverCfg), rev: s.host._cfgRev + 1 }; };
@@ -208,3 +205,4 @@ test('#843 node history: any Plan/Background tool of a writer applies it; captur
   }
   assert.equal(toasts.filter(text => text.startsWith('history.undone')).length, 3);
 });
+

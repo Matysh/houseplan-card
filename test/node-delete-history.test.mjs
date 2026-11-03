@@ -121,7 +121,7 @@ test('#1045 a reply from a replaced HA cannot enter config or reload the new aut
   s.host._reloadRejectedPhysicalWrite = async () => { reloads++; };
   const basis = { epoch: 0, space: 'f', floor: nodeFloorFingerprint(s.host._serverCfg.spaces[0]) };
   const writing = writeWallNode(s.host, s.command.before.nodeMove, basis, { send: authority, accept: authority });
-  const refusal = assert.rejects(writing, /stale-node-snapshot/);
+  const refusal = assert.rejects(writing, { code: 'context-changed' });
   for (let i = 0; i < 10; i++) await Promise.resolve();
   assert.equal(s.messages.length, 1);
   s.host.hass = { ...s.host.hass, connection: { connected: true } }; context.observe(s.host.hass);

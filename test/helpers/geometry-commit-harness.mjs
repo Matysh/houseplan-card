@@ -48,7 +48,8 @@ export function largeFixture(){
 }
 export const largeScenarios={
  thickness(sp){authoredChange(sp,{kind:'thickness',rooms:[sp.rooms[0].id],cm:20},()=>{});},
- split(sp){authoredChange(sp,{kind:'faces',rooms:['split-a','split-b'],removeRooms:[sp.rooms[0].id]},draft=>{draft.rooms.splice(0,1,{id:'split-a',poly:[[0,0],[1,0],[1,2],[0,2]]},{id:'split-b',poly:[[1,0],[2,0],[2,2],[1,2]]});});},
+ // The UI composite split retains the parent room identity and adds a child.
+ split(sp){const parent=sp.rooms[0].id;authoredChange(sp,{kind:'faces',rooms:[parent,'split-b']},draft=>{draft.rooms.splice(0,1,{...draft.rooms[0],poly:[[0,0],[1,0],[1,2],[0,2]]},{id:'split-b',poly:[[1,0],[2,0],[2,2],[1,2]]});});},
  merge(sp){authoredChange(sp,{kind:'merge-rooms',keep:sp.rooms[0].id,drop:sp.rooms[1].id},draft=>{const keep=draft.rooms[0];draft.rooms.splice(0,2,{...keep,poly:[[0,0],[4,0],[4,2],[0,2]]});});},
  column:scenarios.column,
 };

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { classifyWallFaceRoom, classifyWallFaceCandidates, selectWallFacePromotionIds } from '../test-build/wall-face-room-split.js';
 import { polygonArea } from '../test-build/logic.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { commitGraphEditResult } from '../test-build/graph-edit-intent.js';
 import { setWallThickness } from '../test-build/wall-thickness.js';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/874-room-closure.json', import.meta.url), 'utf8'));
@@ -24,7 +25,8 @@ test('#874 exact exported face refuses an additive third owner but a composite s
   const before = structuredClone(config);
   const wrong = structuredClone(config);
   wrong.spaces[0].rooms.push({ id: 'child', poly: fixture.face });
-  assert.throws(() => commitWallSegmentModel(wrong), e => e.reason === 'third-owner');
+  assert.throws(() => commitGraphEditResult(config.spaces[0], wrong.spaces[0],
+    { kind: 'faces', rooms: ['child'] }), /third-owner/);
   const result = classifyWallFaceRoom(fixture.face, rooms, epsilon);
   assert.equal(result.kind, 'split');
   assert.equal(result.split.roomId, 'parent');
@@ -34,10 +36,12 @@ test('#874 exact exported face refuses an additive third owner but a composite s
   const next = structuredClone(config);
   next.spaces[0].rooms[0].poly = result.split.mainPoly;
   next.spaces[0].rooms.push({ id: 'child', poly: result.split.newPoly });
-  const committed = commitWallSegmentModel(next).config;
+  const committed = { ...next, spaces: [commitGraphEditResult(config.spaces[0], next.spaces[0],
+    { kind: 'faces', rooms: ['parent', 'child'] }).space] };
   assert.equal(committed.spaces[0].rooms.length, 3);
-  assert.equal(committed.spaces[0].rooms[0].area, 'synthetic-parent');
-  assert.deepEqual(committed.spaces[0].rooms[0].settings, before.spaces[0].rooms[0].settings);
+  const parent = committed.spaces[0].rooms.find(room => room.id === 'parent');
+  assert.equal(parent.area, 'synthetic-parent');
+  assert.deepEqual(parent.settings, before.spaces[0].rooms.find(room => room.id === 'parent').settings);
   assert.deepEqual(config, before, 'classification does not mutate the input');
   const owners = new Map();
   for (const r of committed.spaces[0].rooms) for (const id of r.wall_ids) owners.set(id, (owners.get(id) || 0) + 1);

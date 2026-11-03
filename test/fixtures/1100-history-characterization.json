@@ -2,6 +2,7 @@
   "schema": 2,
   "base": "cb1431ea model11 explicit graph fixture port; original outcomes retained",
   "entropy": "Fixed monotonic UUID input; full original raw capture retained externally.",
+  "previousBaselineSha256": "6efc62a94b2ada95feedd54f1501882b049c0d3e8c9e2320116bb5c1390d870e",
   "results": {
     "thickness": {
       "afterEdit": "3e41bdd6d6cf3ba7c422ba8244bd06c6fd21908aa2bf0cb8b8caa69a1e07d9e6",
@@ -466,6 +467,5 @@
       ]
     }
   },
-  "previousBaselineSha256": "6efc62a94b2ada95feedd54f1501882b049c0d3e8c9e2320116bb5c1390d870e",
   "encoding": "afterEdit and steps.document: SHA256 of UTF-8 JSON.stringify(complete config), preserving every field and order"
 }
