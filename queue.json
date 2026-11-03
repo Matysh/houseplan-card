@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1950,
+  "revision": 1951,
   "nextTicket": 124,
   "nextFence": 123,
   "tasks": {
@@ -2228,7 +2228,7 @@
       "ownerDecision": null,
       "ticket": 122,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793728670029,
       "reviewEntry": 1,
       "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951",
@@ -2253,7 +2253,17 @@
         "src/summary-panel-runtime-loaded.ts",
         "src/types.ts",
         "tests_backend/test_summary_camera_settings.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T181344781-b36a1b9a",
+        "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
+        "runId": 41691380285,
+        "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+        "status": "passed",
+        "finishedAt": "2026-11-03T18:14:36.609Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
+        "execution": "github"
+      }
     },
     "1243": {
       "issue": 1243,
@@ -2531,9 +2541,9 @@
     "fence": 122,
     "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
     "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793729464816,
-    "expiresAt": 1793730003204,
+    "expiresAt": 1793733326601,
     "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951"
   },
   "events": {
@@ -2609,6 +2619,35 @@
         "layer": "product",
         "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
         "phase": "sync"
+      }
+    },
+    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:3:s6-complete": {
+      "digest": "8aef61245685fe347d3c5204669d614bd1c5a295eb6ed06df62d7897892320aa",
+      "issue": 1242,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1242,
+        "at": 1793729726601,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T181344781-b36a1b9a",
+          "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
+          "runId": 41691380285,
+          "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+          "status": "passed",
+          "finishedAt": "2026-11-03T18:14:36.609Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
+          "execution": "github"
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nРеализована опция `settings.center_summary` в Общие настройки → Оформление и фон непосредственно после 2.5D, default-off. Это обычный View, не включение kiosk/профиля. Save хранит только true, выключение удаляет ключ; Cancel остаётся общим механизмом черновика. Backend принимает только boolean, отсутствие не материализуется. RU/EN changelog и ledger текущего цикла v1.83.0: major (новая opt-in функция).\n\n### Решение и альтернативы\n\nИспользован существующий `screenFreeArea/screenCameraTarget`, а не новая формула или обход геометрии. `_usesScreenCamera` расширяет прежнего владельца камеры на обычный View; `_centerSummary` явно отдаёт приоритет true/false существующего профиля. Bare kiosk не использует общую настройку. Размеры панели — прежние epoch-кеш и ResizeObserver; наблюдение теперь включается и при общей опции, без нового покадрового DOM measurement. При скрытии/непомещении панели свободна вся сцена; state-only HA ticks сохраняют reference и камеру.\n\nСохранён обычный canonical zoom при восстановлении между этажами/перезагрузкой. Ручная камера не становится новым fit по изменению панели; тёплое восстановление и View/editor handoff удерживают ракурс. Бейдж масштаба в ordinary summary-aware View показывает 100% относительно свободной области. Рассмотрен простой перенос только центра: отклонён, поскольку не решает Fit all и дублирует действующую математику экранов.\n\n### Риски и места для внимания\n\nОсобенно полезно проверить переходы cold restore → первый reference, сохранённый scalar против профильного multiplier, editor handoff и warm remount; отдельные проверки ниже защищают их. Профиль с явным false при общем true проверяется действующим profile smoke. Редакторы не получают новый camera owner; touch editor best effort, новый control — обычная shared General settings форма.\n\nОбезличенный support report пока намеренно не экспортирует эту косметическую опцию: расширение закрытого wire-контракта потребовало бы синхронного внешнего relay deploy, не порученного этой задачей. Полный backup/config JSON roundtrip сохраняет ключ; существующие backup export не фильтруют общий settings. Пользовательский HA, frontend snapshot и визуальные baseline не менялись. Независимых обнаруженных дефектов вне scope нет.\n\n### Проверки и ограничения\n\nДополнительная адресная delay-проба до финального S6 обнаружила раскрытие обычного View до готовности reference при задержке summary chunk на 2500 мс (74 sampled frames после boot cap без reference). Защита существующего bootveil расширена с профиля на общий screen-camera owner. Новый `demo/smoke_summary_camera_cold.mjs` проверяет и поздний успех, и контролируемый 503: неверная камера не раскрывается; после готовности reference veil снимается, а при штатном `summary.unavailable` используется full-stage fallback без зависания. Debug PASS, 14 assertions. Загрузчик и его тайминги не менялись.\n\nПредварительный debug вне финального S6: `npm run build` PASS (типы + Rollup); `demo/smoke_summary_camera.mjs` PASS, 18 assertions на обычной панели: default off, Save/Cancel, правая/нижняя панель, Flat/2.5D и повороты, скрытая/непоместившаяся панель, state ticks, saved zoom, ручной ракурс, editor handoff, warm remount. `demo/smoke_screen_camera_1165.mjs` PASS, 14 assertions с добавленным profile false/global true. Ubuntu WSL, Node22.23.2, Playwright1.62.0, Chromium151.0.7922.34. `tests_backend/test_summary_camera_settings.py`: 8/8 PASS через подготовленный Python venv: отсутствие, true/false JSON/schema roundtrip, невалидные типы. `python3` вне venv не содержит pytest; это не выдаётся за PASS.\n\nФинальный S6 выполняется через общий queue slot командой finish, GitHub-резервом из-за Windows Git worktree metadata, не через retired gate. В запрос входят три browser smoke (ordinary, cold delay/refusal, profile), screen-camera unit и адресный backend файл; успешный финальный результат публикует координатор. Полный product/backend, golden, HA E2E и performance на этой задаче не запускались и не заявлены. HA E2E: надо дополнить существующий settings/summary journey перед следующей бетой, [Matysh/houseplan-e2e#22](https://github.com/Matysh/houseplan-e2e/issues/22).",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
