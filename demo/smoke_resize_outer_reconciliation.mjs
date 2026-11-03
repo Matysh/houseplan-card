@@ -87,13 +87,13 @@ const out = await page.evaluate(async (fixture) => {
     && card._alignDialog?.report?.partitionsReconciled === 3
     && card._alignDialog?.report?.openingsRehosted === 2
     && card._alignDialog?.config?.model_version === 11
-    && previewSpace?.partitions == null
+    && Array.isArray(previewSpace?.partitions) && previewSpace.partitions.length === 0
     && previewSpace?.openings?.every((opening) => wallHostResolves(previewSpace, opening));
   await card._editorRuntime.optimizePlans.run();
   await card.updateComplete;
   result.optimizeUsesOneWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   const optimized = card._serverCfg.spaces[0];
-  result.optimizePreservesOpeningFields = optimized.partitions == null
+  result.optimizePreservesOpeningFields = Array.isArray(optimized.partitions) && optimized.partitions.length === 0
     && optimized.openings.every((opening) => wallHostResolves(optimized, opening))
     && optimized.openings[0].cover === 'cover.left'
     && optimized.openings[0].future_field?.keep === 'left'
@@ -123,3 +123,4 @@ const out = await page.evaluate(async (fixture) => {
 }, clone(source));
 
 await finish(browser, checkAll(out));
+

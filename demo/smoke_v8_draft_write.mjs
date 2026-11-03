@@ -80,14 +80,20 @@ const result = await page.evaluate(async () => {
   await reset(legacy);
   await click(500, 500); await click(700, 500); await settle();
   const migrated = card._serverCfg.spaces[0];
+  // This stays a real v9 Draw write. Do not pre-migrate this seed: the absence
+  // of legacy room_drafts must be proved in the actual live AND wire bodies.
   out.legacyDraftMigratesOnce = card._serverCfg.model_version === 11
     && !('room_drafts' in migrated)
+    && writes.length === 1 && writes[0].model_version === 11
+    && !('room_drafts' in writes[0].spaces[0])
+    && migrated.plan_graph?.edges.length === 3
     && migrated.partitions.some((item) => item.id === 'legacy-edge-a' && item.cm === 21)
     && migrated.partitions.some((item) => item.id === 'legacy-edge-b' && item.cm === 22)
     && migrated.partitions.length === 3;
   const once = JSON.stringify(card._serverCfg);
-  card._editorRuntimeOrThrow()._prepareConfigCandidate(card._serverCfg);
-  out.currentMigrationIsIdempotent = JSON.stringify(card._serverCfg) === once;
+  const preparedAgain = card._editorRuntimeOrThrow()._prepareConfigCandidate(card._serverCfg);
+  out.currentMigrationIsIdempotent = JSON.stringify(card._serverCfg) === once
+    && JSON.stringify(preparedAgain) === once;
 
   await reset();
   await click(100, 100); await click(300, 100); await settle();
