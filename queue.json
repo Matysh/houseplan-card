@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2018,
+  "revision": 2019,
   "nextTicket": 130,
   "nextFence": 128,
   "tasks": {
@@ -2246,7 +2246,7 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1242-summary-camera",
-      "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
+      "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 127,
@@ -2254,12 +2254,13 @@
       "status": "S6-in-progress",
       "readyAt": 1793730712780,
       "reviewEntry": 2,
-      "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951",
+      "patchId": "ef4cc89951ca22c7228dfd48cd9b3babced804e0",
       "changedFiles": [
         "custom_components/houseplan/validation.py",
         "demo/smoke_screen_camera_1165.mjs",
         "demo/smoke_summary_camera.mjs",
         "demo/smoke_summary_camera_cold.mjs",
+        "demo/smoke_summary_camera_restore.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CANVAS.md",
         "docs/CHANGELOG.md",
@@ -2616,11 +2617,12 @@
     "worker": "finish",
     "token": "127:finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:2:admit",
     "fence": 127,
-    "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
+    "expectedBase": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
+    "phase": "testing",
     "admittedAt": 1793731636076,
-    "expiresAt": 1793731936076
+    "expiresAt": 1793731948903,
+    "patchId": "ef4cc89951ca22c7228dfd48cd9b3babced804e0"
   },
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
@@ -2717,6 +2719,10 @@
     },
     "github:41694597150:1:completions:metadata:72822c9a-2410-4257-8dea-b8e2ea7e1c26:task-notice:1242::": {
       "digest": "9a2f04f589c06014edb8e6d087b173276acade271a10ea2aa019166afeac1c3d",
+      "issue": 1242
+    },
+    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:3:synchronized": {
+      "digest": "46878737ff6148139c9b363271061646d792c47d4f3cbd2150453b466675cea3",
       "issue": 1242
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
