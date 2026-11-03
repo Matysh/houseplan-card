@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2168,
+  "revision": 2169,
   "nextTicket": 136,
   "nextFence": 136,
   "tasks": {
@@ -1735,7 +1735,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1225-1226-revalidation-20261103",
-      "materialSha": "7ee323cc10d2d0234318b58555b03a3e2b36b466",
+      "materialSha": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 135,
@@ -1753,7 +1753,7 @@
         "requestId": "review:1226:2:dd2483d0e29eda12ec5cfde91a8f14eeee09277d:082f99ccf9c9667cb17edae74f529e9e7695872a",
         "transitionConfirmed": true
       },
-      "patchId": "dd2483d0e29eda12ec5cfde91a8f14eeee09277d",
+      "patchId": "a1bbee5b993ff2a5121ae77034003ca279c2505e",
       "changedFiles": [
         "demo/golden/decor-multiselect.mjs",
         "demo/golden/harness.mjs",
@@ -1925,6 +1925,7 @@
         "docs/testing/issue1226/resume-findings.md",
         "docs/testing/issue1226/resumed-controls.md",
         "docs/testing/issue1226/reuse-scope-diagnosis.json",
+        "docs/testing/issue1226/review-m1-response.md",
         "docs/testing/issue1226/root-remaining.md",
         "docs/testing/issue1226/ui-five-classification-delta.json",
         "docs/testing/issue1226/ui-five-delta.json",
@@ -2005,10 +2006,7 @@
       "reviewCorrection": {
         "requestId": "review:1226:2:dd2483d0e29eda12ec5cfde91a8f14eeee09277d:082f99ccf9c9667cb17edae74f529e9e7695872a",
         "at": 1793735481480
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793736363142,
-      "automationDetail": "Commit tracked task changes before finish"
+      }
     },
     "1227": {
       "issue": 1227,
@@ -2898,11 +2896,12 @@
     "worker": "finish",
     "token": "135:finish:9a2d920e-477e-4b8e-a136-6fb6baa7f113:finish:1:admit",
     "fence": 135,
-    "materialSha": "7ee323cc10d2d0234318b58555b03a3e2b36b466",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
+    "expectedBase": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
+    "phase": "testing",
     "admittedAt": 1793736357691,
-    "expiresAt": 1793736762527
+    "expiresAt": 1793736802690,
+    "patchId": "a1bbee5b993ff2a5121ae77034003ca279c2505e"
   },
   "events": {
     "github:41702077815:1:completions:message:2d07f9d74116bae6e0db4c1c35020671eb5ea5035555f78e4663e8547a0690f5": {
@@ -2975,6 +2974,10 @@
     },
     "finish:358734d4-f352-47bb-ab04-b1f4e738fb0d": {
       "digest": "2ad2d94a0e8b65c005fd084c2662bda6353863af41b21bf8bbd5e8d0a8b0db55",
+      "issue": 1226
+    },
+    "finish:9a2d920e-477e-4b8e-a136-6fb6baa7f113:finish:4:synchronized": {
+      "digest": "05a18c9268f9d8cfe77115288431c3cb11ae6ae99e3747b3fab2530f9a34756d",
       "issue": 1226
     },
     "finish:8df2eedb-ab7b-46f4-b8f0-097791c33abb": {
