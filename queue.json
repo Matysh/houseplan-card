@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1990,
+  "revision": 1991,
   "nextTicket": 129,
   "nextFence": 127,
   "tasks": {
@@ -2711,10 +2711,11 @@
     "token": "126:finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:1:admit",
     "fence": 126,
     "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+    "phase": "testing",
     "admittedAt": 1793730839519,
-    "expiresAt": 1793731139519
+    "expiresAt": 1793731146826,
+    "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5"
   },
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
@@ -2808,6 +2809,10 @@
     "return:1246:125:rebase-conflict-recovery": {
       "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
       "issue": 1246
+    },
+    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:2:synchronized": {
+      "digest": "2ff13dff57e0986a556c36e5846f0bc09edb1cc95e1b9f84988f54724f057f5c",
+      "issue": 1225
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
       "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
