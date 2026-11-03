@@ -190,10 +190,15 @@ def _repair_space(
         if host is None or _host(view, canonical_view=True) is None:
             continue
         try:
-            if host["kind"] == "partition":
+            # Reject an off-graph position before reserving its old interval:
+            # a broken earlier opening cannot displace a later intact one.
+            if (graph_index is not None and (host["kind"], host["id"]) in graph_index.edges
+                    and project_graph_opening(view, graph_index) != view):
+                fault: str | None = "opening projection must match its graph host"
+            elif host["kind"] == "partition":
                 partition = partitions.get(host["id"])
                 if model >= 8 and partition is not None and float(partition["cm"]) <= 0:
-                    fault: str | None = "opening host must have positive thickness"
+                    fault = "opening host must have positive thickness"
                 else:
                     fault = partition_opening_host_fault(
                         opening, partition, partition_taken.setdefault(host["id"], []))
@@ -204,8 +209,6 @@ def _repair_space(
                 # Before the wall-segment model a wall host is the migration's
                 # business; it re-hosts or unhosts and never refuses (#316).
                 fault = None
-            if not fault and graph_index is not None and project_graph_opening(view, graph_index) != view:
-                fault = "opening projection must match its graph host"
         except _UNREADABLE:
             continue
         if fault:

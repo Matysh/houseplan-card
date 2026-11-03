@@ -192,7 +192,8 @@ def test_ambiguous_exact_opening_detaches_instead_of_guessing_a_carrier(tmp_path
         assert candidate["target_config"]["spaces"][0]["plan_graph"] == graph
 
 
-def test_current_partition_opening_off_its_graph_host_is_preserved_detached(tmp_path):
+@pytest.mark.parametrize("with_intact_neighbor", [False, True])
+def test_current_partition_opening_off_its_graph_host_is_preserved_detached(tmp_path, with_intact_neighbor):
     document = _document(tmp_path)
     # Use a real current wall edge as a partition in an independent graph.
     graph = {"version": 1, "nodes": [
@@ -203,12 +204,16 @@ def test_current_partition_opening_off_its_graph_host_is_preserved_detached(tmp_
     opening["host"] = {"kind": "partition", "id": "part", "t": .5, "tq": ["1", "2"]}
     space = project_graph_space({"id": "floor", "title": "Floor", "view_box": [0, 0, 1, 1],
         "rooms": [], "openings": [opening]}, graph)["space"]
+    if with_intact_neighbor:
+        space["openings"].append({**deepcopy(space["openings"][0]), "id": "intact"})
     space["openings"][0].update(x=.95, y=.95)
     document["payload"]["config"]["spaces"] = [space]
     response, candidate, _, _ = _preview(tmp_path, document)
     assert response["preview"]["opening_repairs"]["detached"] == 1
     assert "host" not in candidate["target_config"]["spaces"][0]["openings"][0]
     assert candidate["target_config"]["spaces"][0]["plan_graph"] == graph
+    if with_intact_neighbor:
+        assert candidate["target_config"]["spaces"][0]["openings"][1] == space["openings"][1]
 
 
 @pytest.mark.parametrize("model", [10, 11])
