@@ -32,6 +32,7 @@
 - Accept saved space, wall and device changes across ordinary Home Assistant state snapshots without a false context-change error, while retaining connection/user and operation-generation fences. [#1220](https://github.com/Matysh/houseplan-card/issues/1220)
 - Copy saved space geometry as-is without Optimize or new opening/junction restrictions. Prove the copy against server-stored authority while retaining structural checks and strict direct edits. [#1227](https://github.com/Matysh/houseplan-card/issues/1227)
 
+- Report HA setup failures separately from skipped or unexecuted business journeys, preserving exact selected case counts instead of turning dependency skips into product failures. [#1225](https://github.com/Matysh/houseplan-card/issues/1225)
 
 - Synchronize the installable review workflow with the deployed ship-batch workflow; check all installed template/target pairs to prevent reinstalling stale workflows. [#1218](https://github.com/Matysh/houseplan-card/issues/1218)
 

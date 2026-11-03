@@ -57,6 +57,28 @@ export function verifyE2ESelection(actual, selected) {
   return business;
 }
 
+/** A dependency failure leaves business cases skipped, not failed. Keep the
+ * business selection count stable, with setup outcomes reported separately. */
+export function summarizeE2EResults(actual, selected, exitCode) {
+  const tally = rows => {
+    const counts = { tests: rows.length, passed: 0, failed: 0, skipped: 0, unexecuted: 0 };
+    for (const row of rows) {
+      const status = row.results.at(-1)?.status ?? row.status;
+      if (status === 'passed') counts.passed++;
+      else if (status === 'failed' || status === 'timedOut') counts.failed++;
+      else if (status === 'skipped') counts.skipped++;
+      else counts.unexecuted++;
+    }
+    return counts;
+  };
+  const business = tally(verifyE2ESelection(actual, selected));
+  const setup = tally(actual.filter(row => SETUPS.has(row.project)));
+  const passed = exitCode === 0 && business.passed === selected.length && setup.passed === setup.tests;
+  return { status: passed ? 'passed' : 'failed', ...business, setup, exitCode,
+    counts: { ...business, setupTests: setup.tests, setupPassed: setup.passed,
+      setupFailed: setup.failed, setupSkipped: setup.skipped, setupUnexecuted: setup.unexecuted } };
+}
+
 export function testListText(tests) {
   return tests.map(t => {
     const file = t.listFile ?? t.file;
@@ -272,13 +294,8 @@ export async function runE2E(options, { execute = executeE2ECommand, environment
     const execution = await call([...testArgs, '--reporter=list,json', `--output=${path.join(artifacts, 'test-results')}`], { PLAYWRIGHT_JSON_OUTPUT_FILE: reportFile }, true);
     if (!existsSync(reportFile)) throw Error('E2E did not produce a complete test report');
     const actual = listedTests(json(reportFile));
-    const business = verifyE2ESelection(actual, selected);
-    const executed = business.filter(t => t.results.at(-1)?.status === 'passed').length;
-    const passed = execution.code === 0 && executed === selected.length && actual.every(t => t.results.at(-1)?.status === 'passed');
-    const result = { status: passed ? 'passed' : 'failed', suite: opts.suite, selection: opts.selection,
-      tests: selected.length, passed: executed, skipped: business.filter(t => t.results.at(-1)?.status === 'skipped').length,
+    const result = { ...summarizeE2EResults(actual, selected, execution.code), suite: opts.suite, selection: opts.selection,
       reportFile, workspace, targetRef: opts.targetRef ?? null, preparedCandidate: !!opts.candidateRoot, haVersion: opts.haVersion };
-    result.counts = { tests: result.tests, passed: result.passed, skipped: result.skipped, failed: result.tests - result.passed - result.skipped };
     save(path.join(artifacts, 'summary.json'), result);
     return result;
   } catch (error) {
