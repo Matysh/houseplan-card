@@ -123,4 +123,3 @@ const out = await page.evaluate(async (fixture) => {
 }, clone(source));
 
 await finish(browser, checkAll(out));
-
