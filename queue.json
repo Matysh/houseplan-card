@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1926,
+  "revision": 1927,
   "nextTicket": 123,
   "nextFence": 122,
   "tasks": {
@@ -2274,14 +2274,23 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1244-opening-floor-fade",
-      "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4",
+      "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 121,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793728650296,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
+      "changedFiles": [
+        "demo/smoke_opening_mode_fill.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1244.json",
+        "src/houseplan-card.ts",
+        "src/styles/plan.styles.ts"
+      ]
     },
     "1247": {
       "issue": 1247,
@@ -2468,15 +2477,20 @@
     "worker": "finish",
     "token": "121:finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48:finish:1:admit",
     "fence": 121,
-    "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+    "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+    "phase": "testing",
     "admittedAt": 1793728798151,
-    "expiresAt": 1793729098151
+    "expiresAt": 1793729143316,
+    "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9"
   },
   "events": {
     "github:41689040323:1:dev-webhook:61b7ad05-d8b8-4cf0-8054-1068541ed6a2:delivered": {
       "digest": "4e0b238c3ffe9f9125ac1706aa93f51f7ecbfbf92a2fb7142ee56f8ffe73ee64",
+      "issue": 1244
+    },
+    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:1:synchronized": {
+      "digest": "148aa1b79f9d3412bd7fc2b487ebf44803c4ede89ef6f7bf72753cbe1fe82196",
       "issue": 1244
     },
     "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
