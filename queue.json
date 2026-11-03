@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1215,
+  "revision": 1216,
   "nextTicket": 88,
   "nextFence": 88,
   "tasks": {
@@ -1797,20 +1797,6 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "finish:d8b935e2-5f35-46f1-977c-9a68880bb540:finish:1:admit": {
-      "digest": "2d3af48586c63aac3f74dccda2da5bfad3b66b412270a274daa770d21b6638a6",
-      "issue": 1219,
-      "message": {
-        "kind": "admitted",
-        "issue": 1219,
-        "at": 1793688822917,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "19dcd4faf1b9c8216c978eddcaa8cfc947a16b74",
-        "phase": "sync"
       }
     },
     "finish:d8b935e2-5f35-46f1-977c-9a68880bb540:finish:3:s6-complete": {
