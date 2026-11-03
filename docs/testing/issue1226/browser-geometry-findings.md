@@ -66,6 +66,16 @@ run's `diagnostic wall-node-camera` output.
 
 ## Other retained oracles
 
+`smoke_zero_divider_taper` has now been diagnosed beyond its rollback symptom:
+the live naming form contains a valid pending cut from `[600,400]` to
+`[900,404.1666666666667]`. Commit reaches the junction guard and refuses with
+`Walls and nodes are too close: 5 cm, minimum 5 cm.` This is the exact one-grid
+step vertical separation at `cell_cm=5`. The current failure is therefore a
+threshold/geometry refusal, not permission or missing edit intent. The strict
+angled zero-depth divider and renderer parity checks remain red. The bounded
+`output/issue1226/probe-divider.mjs` diagnostic delegates the real error handler
+and records the toast/pending coordinates; it is not part of the smoke.
+
 `browser-geometry-classification.json` names every original failed smoke and
 distinguishes confirmed fixture ports from failures still needing an isolated
 cause. In particular, a true room/host, single-guide, or exact-identity failure

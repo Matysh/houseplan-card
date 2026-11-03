@@ -28,7 +28,7 @@
     "category": "product-report",
     "status": "failed",
     "reason": "No-op Optimize erases eligible/retained/unverified report arrays; current control is intentionally absent because its input was zeroed.",
-    "evidence": "output/issue1226/geometry/smoke_optimize_cleanup.log",
+    "evidence": "output/issue1226/geometry/smoke_optimize_cleanup-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_optimize_cleanup.log",
     "relatedIssue": 1229
   },
@@ -39,7 +39,7 @@
     "category": "product-report",
     "status": "failed",
     "reason": "Same GEO-OPT-REPORT: cleanup action never exists despite unchanged archived records; context assertions retained.",
-    "evidence": "output/issue1226/geometry/smoke_optimize_context.log",
+    "evidence": "output/issue1226/geometry/smoke_optimize_context-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_optimize_context.log",
     "relatedIssue": 1229
   },
@@ -61,7 +61,7 @@
     "category": "product-geometry",
     "status": "failed",
     "reason": "GEO-OPT-ROLE: three22cm role-aware runs retained but boundaryx0.845833333 is not203/240; strict coordinate oracle retained.",
-    "evidence": "output/issue1226/geometry/micro-current-dev.log",
+    "evidence": "output/issue1226/geometry/smoke_optimize_micro_interval-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_optimize_micro_interval.log",
     "relatedIssue": null
   },
@@ -72,7 +72,7 @@
     "category": "product-report",
     "status": "failed",
     "reason": "Same GEO-OPT-REPORT: computed unverified records and registry-authoritative boolean are erased on unchanged candidate; retry/read-only controls must remain tested.",
-    "evidence": "output/issue1226/geometry/smoke_optimize_unverified.log",
+    "evidence": "output/issue1226/geometry/smoke_optimize_unverified-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_optimize_unverified.log",
     "relatedIssue": 1229
   },
@@ -83,7 +83,7 @@
     "category": "needs-fixture-port",
     "status": "failed",
     "reason": "Fixture mutates a materialized host.t while leaving exact tq, appends/removes a short partition by projection, and caches old objects across adoption; remaining native host move/cascade guarantees are not waived.",
-    "evidence": "output/issue1226/geometry/smoke_partition_openings.log",
+    "evidence": "output/issue1226/geometry/smoke_partition_openings-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_partition_openings.log",
     "relatedIssue": null
   },
@@ -105,7 +105,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Explicit authored hidden partition, real SVG screen transform and settled modes retire null DOM crash; eight original snap/chain/topology assertions still fail and remain strict.",
-    "evidence": "output/issue1226/geometry/snap-current-dev.log",
+    "evidence": "output/issue1226/geometry/smoke_plan_snap_overlay-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_plan_snap_overlay.log",
     "relatedIssue": null
   },
@@ -160,7 +160,7 @@
     "category": "needs-fixture-port",
     "status": "failed",
     "reason": "Two old null _spaceModel injections no longer target the authoritative structural proof boundary; partial foreign-overlap invariant also remains red and cannot be discarded.",
-    "evidence": "output/issue1226/geometry/smoke_unified_wall_tool.log",
+    "evidence": "output/issue1226/geometry/smoke_unified_wall_tool-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_unified_wall_tool.log",
     "relatedIssue": null
   },
@@ -171,7 +171,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Truthful acknowledged server store and capability added, but native first resize still refuses invalid-room-contour and history stays0; preserve full other-floor reference/alias oracle.",
-    "evidence": "output/issue1226/geometry/alias-current-dev.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_adoption_alias-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_adoption_alias.log",
     "relatedIssue": null
   },
@@ -193,7 +193,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Capability repair allows native rectangle and node move to save; one visible-rubber-band oracle still sees two effectively visible active-axis ends instead ofone.",
-    "evidence": "output/issue1226/geometry/end-align-current.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_end_align-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_end_align.log",
     "relatedIssue": null
   },
@@ -204,7 +204,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Existing-face selection uses Select, valid seeds normalized and current wire capability restored; Garderoba/foreignfloor/Undo/reload pass, but multi-face batch and absorbed-opening/host guarantees remain red.",
-    "evidence": "output/issue1226/geometry/lineage-current.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_face_lineage-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_face_lineage.log",
     "relatedIssue": null
   },
@@ -215,7 +215,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Original partial-overlap face decomposition/union/uncommitted-room guarantees still fail; no geometry oracle weakened.",
-    "evidence": "output/issue1226/geometry/smoke_wall_face_overlap.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_face_overlap-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_face_overlap.log",
     "relatedIssue": null
   },
@@ -226,7 +226,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Current wire capability and Select for pre-closed existing composite added; native initial saved geometry and further carrier role/host/refusal assertions remain red.",
-    "evidence": "output/issue1226/geometry/face-split-current.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_face_room_split-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_face_room_split.log",
     "relatedIssue": 1231
   },
@@ -270,7 +270,7 @@
     "category": "fixture-authority",
     "status": "passed",
     "reason": "Shared-corner thickness authored through real GraphEditResult; eight raster modes and exact cancel/no-write checks pass.",
-    "evidence": "output/issue1226/geometry/../browser-geometry-progress.md",
+    "evidence": "docs/testing/issue1226/browser-geometry-progress.md",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_node_reliability.log",
     "relatedIssue": null
   },
@@ -281,7 +281,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "Projection cm mutation and missing capability corrected; four topology scenarios,100cycles,10terminals pass; real resized remount fails coherent camera-ready aspect guard (GEO-CAMERA-REMOUNT).",
-    "evidence": "output/issue1226/geometry/smoke_wall_node_topology.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_node_topology-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_node_topology.log",
     "relatedIssue": null
   },
@@ -292,7 +292,7 @@
     "category": "needs-fixture-port",
     "status": "failed",
     "reason": "Gate/partition and parity thickness fixtures still change derived projections after authority exists; four original flip/degrade/full/static thin-wall assertions remain unweakened.",
-    "evidence": "output/issue1226/geometry/smoke_wall_thickness.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_thickness-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_thickness.log",
     "relatedIssue": null
   },
@@ -303,7 +303,7 @@
     "category": "needs-diagnosis",
     "status": "failed",
     "reason": "All rendered Plan/View/static/2.5D/light parity checks pass but savedIntervals exact thickness lookup remains false; storage oracle retained.",
-    "evidence": "output/issue1226/geometry/smoke_wall_thickness_transition.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_thickness_transition-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_thickness_transition.log",
     "relatedIssue": null
   },
@@ -314,7 +314,7 @@
     "category": "product-geometry",
     "status": "failed",
     "reason": "GEO-LEGACY-RENDER: unchanged historical plan throws polygon clipping error inside _innerRoomContour before repaired union checks.",
-    "evidence": "output/issue1226/geometry/union-current-dev.log",
+    "evidence": "output/issue1226/geometry/smoke_wall_union_isolation-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_union_isolation.log",
     "relatedIssue": null
   },
@@ -333,10 +333,10 @@
     "id": "smoke:smoke_zero_divider_taper",
     "file": "demo/smoke_zero_divider_taper.mjs",
     "name": "smoke_zero_divider_taper",
-    "category": "needs-diagnosis",
+    "category": "product-geometry",
     "status": "failed",
-    "reason": "Real Split reaches naming dialog but commit rolls back; zero-depth/angled divider and all renderer guarantees remain strict.",
-    "evidence": "output/issue1226/geometry/smoke_zero_divider_taper.log",
+    "reason": "Native Split reaches naming, then exact one-grid-step endpoint [900,404.1666666666667] is refused by junction limits: Walls and nodes are too close: 5 cm, minimum 5 cm. Strict angled zero-depth geometry checks retained.",
+    "evidence": "output/issue1226/geometry/smoke_zero_divider_taper-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zero_divider_taper.log",
     "relatedIssue": null
   },
