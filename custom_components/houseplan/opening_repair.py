@@ -37,6 +37,8 @@ from .coordinate_canonicalization import (
     canonicalize_number,
 )
 from .validation import partition_opening_host_fault, wall_opening_host_fault
+from .plan_graph import GraphIndex, project_graph_opening, validate_graph
+from .plan_graph_exact import GraphError, decode_rational, encode_rational, project_parameter, read_source_point
 from .wall_segment_model import (
     LEGACY_WALL_SEGMENT_MODEL_VERSION,
     opening_frame,
@@ -59,18 +61,26 @@ def _number(value: Any) -> bool:
             and math.isfinite(value))
 
 
-def _host(opening: Any) -> dict[str, Any] | None:
+def _host(opening: Any, *, canonical_view: bool = False) -> dict[str, Any] | None:
     """A host record of the schema's exact shape, or None (left to the schema)."""
     if not isinstance(opening, dict):
         return None
     host = opening.get("host")
-    if (not isinstance(host, dict) or set(host) != {"kind", "id", "t"}
+    if (not isinstance(host, dict) or set(host) not in ({"kind", "id", "t"}, {"kind", "id", "t", "tq"})
             or host["kind"] not in ("wall", "partition")
             or not isinstance(host["id"], str) or not 1 <= len(host["id"]) <= 64
             or not _number(host["t"]) or not 0 <= host["t"] <= 1):
         return None
     if not all(_number(opening.get(key)) for key in ("x", "y", "angle", "length")):
         return None
+    if "tq" in host:
+        try:
+            exact = decode_rational(host["tq"])
+        except GraphError:
+            return None  # Malformed exact intent remains a strict schema refusal.
+        projections = (float(exact), canonicalize_number(float(exact))) if canonical_view else (float(exact),)
+        if not 0 <= exact <= 1 or host["t"] not in projections:
+            return None
     return host
 
 
@@ -91,7 +101,7 @@ def _intervals(openings: list[Any], carrier: dict[str, Any], skip: Any) -> list[
 
 def _place_on_wall(
     view_space: dict[str, Any], view: dict[str, Any], segments: list[dict[str, Any]],
-    model: int,
+    model: int, graph_index: GraphIndex | None = None,
 ) -> dict[str, Any] | None:
     """The placement the next plan write would give an unhosted opening, checked.
 
@@ -123,6 +133,14 @@ def _place_on_wall(
             float(carrier["a"][1]) + (float(carrier["b"][1]) - float(carrier["a"][1])) * t),
         "host": {"kind": "wall", "id": carrier["id"], "t": canonicalize_number(t)},
     }
+    if graph_index is not None:
+        # Only this repaired opening gets exact host coordinates/tq. Never
+        # regenerate graph/room/wall projections to make a corrupt file pass.
+        edge = graph_index.edges[("wall", carrier["id"])]
+        exact_t = project_parameter(read_source_point(centre),
+            graph_index.points[edge["from"]], graph_index.points[edge["to"]])
+        placed["host"].update(tq=encode_rational(exact_t), t=float(exact_t))
+        placed = project_graph_opening(placed, graph_index)
     if wall_opening_host_fault(placed, carrier, _intervals(view_space["openings"], carrier, view)):
         return None
     if not wall_carrier_eligible(carrier, [placed["x"], placed["y"]], angle, half):
@@ -152,6 +170,9 @@ def _repair_space(
     segments = [item for item in raw_segments if isinstance(item, dict)] \
         if isinstance(raw_segments, list) else []
     by_id = {item.get("id"): item for item in segments}
+    graph_index = validate_graph(view_space.get("plan_graph"), {
+        "room_ids": {room["id"] for room in view_space.get("rooms", [])},
+    }) if model >= 11 else None
     wall_taken: dict[str, list[tuple[float, float]]] = {}
     partition_taken: dict[str, list[tuple[float, float]]] = {}
     broken: list[int] = []
@@ -159,7 +180,9 @@ def _repair_space(
     #    overlapping openings keeps its host.
     for index, (opening, view) in enumerate(zip(openings, views, strict=True)):
         host = _host(opening)
-        if host is None or _host(view) is None:
+        # Legacy coordinate canonicalisation rounds the numeric projection of
+        # tq; the untouched raw host above must still agree with tq exactly.
+        if host is None or _host(view, canonical_view=True) is None:
             continue
         try:
             if host["kind"] == "partition":
@@ -176,6 +199,8 @@ def _repair_space(
                 # Before the wall-segment model a wall host is the migration's
                 # business; it re-hosts or unhosts and never refuses (#316).
                 fault = None
+            if not fault and graph_index is not None and project_graph_opening(view, graph_index) != view:
+                fault = "opening projection must match its graph host"
         except _UNREADABLE:
             continue
         if fault:
@@ -193,7 +218,7 @@ def _repair_space(
         placed = None
         if segments:
             try:
-                placed = _place_on_wall(view_space, view, segments, model)
+                placed = _place_on_wall(view_space, view, segments, model, graph_index)
             except _UNREADABLE:
                 placed = None
         if placed is not None:

@@ -903,13 +903,22 @@ Import repairs, instead of refusing, an opening whose host the schema would
 refuse (#1033). The repair runs on the raw document before the schema and asks
 the schema's own host predicates on the same numbers. Openings that pass keep
 their host in document order. Every other opening loses `host` and gets the
-placement its next write would give it: a v10 document heals onto a unique
+placement its next write would give it: a v10 or later document heals onto a unique
 free qualifying wall, a v8–v9 document takes the initial-migration tie-break
 among free walls. A placed opening's centre moves onto the wall (at most 1/50
 of a grid step). The preview reports `opening_repairs`; keeping an opening off
 its wall requires the content confirmation. Pre-v8 documents only lose broken
 partition hosts; what their migration leaves unhosted is reported as
 `legacy_detached` without a confirmation.
+
+The transfer-only repair also understands a canonical exact `tq` on current11
+and explicitly legacy10 hosts (#1238). Its numeric `t` must agree with that
+rational; malformed or inconsistent intent remains a schema refusal. Scalar
+and coordinate-frame decoding still precede this repair. Current graph hosts
+are checked against their exact projection; a nearby repair computes a fresh
+exact parameter and projects only that opening. The accepted graph and every
+room/wall/partition projection remain subject to the unchanged strict schema:
+repair never drops the graph or rebuilds its projections to hide corruption.
 
 There is deliberately no provenance flag. Existing v8 `cm:0` and atoms derived
 from legacy virtual spans are identical. Consequently some old plans may change

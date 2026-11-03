@@ -207,6 +207,24 @@ def validate_graph(graph: Any, context: dict | None = None) -> GraphIndex:
     return GraphIndex(nodes, points, edges, rooms, incident, dependencies, _dependency_order(dependencies, nodes))
 
 
+def project_graph_opening(opening: dict, index: GraphIndex) -> dict:
+    """Project only an opening; graph identity and the other projections stay put."""
+    out = copy.deepcopy(opening)
+    host = out.get("host")
+    if not host:
+        return out
+    edge = index.edges.get(edge_key(host))
+    if edge is None:
+        raise GraphError("opening_host_missing")
+    t = decode_rational(host["tq"]) if "tq" in host else parse_decimal(host.get("t"))
+    if not 0 <= t <= 1:
+        raise GraphError("opening_parameter_range")
+    point = point_at(index.points[edge["from"]], index.points[edge["to"]], t)
+    out["x"], out["y"] = to_numbers(point)
+    host["tq"], host["t"] = [str(t.numerator), str(t.denominator)], float(t)
+    return out
+
+
 def project_graph_space(base_space: dict, graph: dict, context: dict | None = None) -> dict:
     from .wall_segment_model import _wall_key
 
@@ -231,19 +249,8 @@ def project_graph_space(base_space: dict, graph: dict, context: dict | None = No
         room["wall_ids"] = [step["id"] for step in cycle]
         for field in ("x", "y", "w", "h", "open_to"):
             room.pop(field, None)
-    for opening in out.get("openings", []):
-        host = opening.get("host")
-        if not host:
-            continue
-        edge = index.edges.get(edge_key(host))
-        if edge is None:
-            raise GraphError("opening_host_missing")
-        t = decode_rational(host["tq"]) if "tq" in host else parse_decimal(host.get("t"))
-        if not 0 <= t <= 1:
-            raise GraphError("opening_parameter_range")
-        point = point_at(index.points[edge["from"]], index.points[edge["to"]], t)
-        opening["x"], opening["y"] = to_numbers(point)
-        host["tq"], host["t"] = [str(t.numerator), str(t.denominator)], float(t)
+    if "openings" in out:
+        out["openings"] = [project_graph_opening(opening, index) for opening in out["openings"]]
     out.pop("open_spans", None)
     return {"space": out, "bindings": index}
 

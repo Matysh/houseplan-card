@@ -9,6 +9,7 @@
 - Select the named parent in the large-plan Split regression after canonical room ordering; preserve real third-owner rejection and exact history checks. Product Split behavior is unchanged. [#1231](https://github.com/Matysh/houseplan-card/issues/1231)
 - Refuse nonfinite column coordinates and dimensions before structural candidate cloning, preserving the original plan and history on failure. [#1230](https://github.com/Matysh/houseplan-card/issues/1230)
 - Restore local host-owned exact masonry cuts during model11 opening drags without per-frame full-floor fallback; preserve foreign material, Cancel and exact Undo. [#1236](https://github.com/Matysh/houseplan-card/issues/1236)
+- Repair imported opening bindings with exact host parameters before strict validation, preserving detached openings until confirmed. Keep current graph authority, reject malformed parameters and corrupt projections, and retain preview, reload and Undo behavior. [#1238](https://github.com/Matysh/houseplan-card/issues/1238)
 
 - Preserve Optimize diagnostics and safe cleanup/recheck actions when the plan itself needs no changes. [#1229](https://github.com/Matysh/houseplan-card/issues/1229)
 - Keep the unique-carrier import repair rule for saved model10 plans after the model11 upgrade; ambiguous openings stay detached, preserving their width and settings. Older initial-migration selection remains unchanged. [#1228](https://github.com/Matysh/houseplan-card/issues/1228)

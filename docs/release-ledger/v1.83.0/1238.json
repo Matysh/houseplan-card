@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1238,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Adapt the existing transfer-only opening repair to exact tq hosts introduced by model11 on the 1.84 line, retaining strict graph authority. Published 1.83 hosts without tq retain their existing repair contract.",
+  "summary": {
+    "ru": "Импорт восстанавливает повреждённую привязку проёма с точным параметром до строгой проверки.",
+    "en": "Import repairs a damaged exact opening host before strict validation."
+  }
+}
