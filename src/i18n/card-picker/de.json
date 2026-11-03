@@ -1,0 +1,10 @@
+{
+  "houseplan-card": {
+    "name": "House Plan — Hausplan",
+    "description": "Interaktiver Hausplan: Bereiche, Räume und Geräte mit aktuellen Zuständen und Anordnung per Drag-and-drop."
+  },
+  "houseplan-space-card": {
+    "name": "House Plan — Bereich (nur Anzeige)",
+    "description": "Plan eines einzelnen Bereichs mit aktuellen Zuständen, ohne Bearbeitung. Eine Schaltfläche öffnet den Bereich in House Plan."
+  }
+}

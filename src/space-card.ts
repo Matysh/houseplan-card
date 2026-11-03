@@ -20,6 +20,7 @@ import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from
 import { CardReadLifecycle } from './card-read-lifecycle';
 import { configReloadContext } from './config-reload-authority';
 import { t, langOf, type Lang } from './i18n';
+import { registerPickerCard } from './card-picker-registration';
 import { LANGUAGE_RUNTIME } from './i18n/registry';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { ContentSigner } from './signing';
@@ -1119,15 +1120,9 @@ if (!customElements.get('houseplan-space-card')) {
   customElements.define('houseplan-space-card', HouseplanSpaceCard);
 }
 
-(window as any).customCards = (window as any).customCards || [];
-if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-space-card')) {
-  (window as any).customCards.push({
-    type: 'houseplan-space-card',
-    name: 'House Plan — Space (static)',
-    description: 'Read-only live schematic of a single houseplan space, with a deep-link button.',
-    preview: false,
-    documentation: 'https://github.com/Matysh/houseplan-card',
-  });
-}
+registerPickerCard('houseplan-space-card', {
+  preview: false,
+  documentation: 'https://github.com/Matysh/houseplan-card',
+});
 
 export { HouseplanSpaceCard };

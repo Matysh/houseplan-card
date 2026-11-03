@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Localize both card-picker entries from the current HA profile, including cold registration and later language changes, using synchronous metadata without loading full lazy locales. [#1240](https://github.com/Matysh/houseplan-card/issues/1240)
+
 - Reconcile a warm editor's camera against its final layout after a delayed geometry refresh, preserving an applicable user camera and native node hit-testing. [#1234](https://github.com/Matysh/houseplan-card/issues/1234)
 - Carry native Draw grid indices into exact graph targets, retaining lattice points through L-shaped chains, history and reload without rounding imported off-grid points. [#1237](https://github.com/Matysh/houseplan-card/issues/1237)
 

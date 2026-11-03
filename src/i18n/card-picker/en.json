@@ -1,0 +1,10 @@
+{
+  "houseplan-card": {
+    "name": "House Plan Card",
+    "description": "Interactive house plan: spaces, rooms and devices with live states and drag layout."
+  },
+  "houseplan-space-card": {
+    "name": "House Plan — Space (static)",
+    "description": "Read-only live schematic of a single houseplan space, with a deep-link button."
+  }
+}

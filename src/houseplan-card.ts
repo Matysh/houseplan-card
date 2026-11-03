@@ -213,6 +213,7 @@ import {
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import type { CalibrationProposal, VacuumFit } from './vacuum-calibration-write';
 import { langOf, t, type I18nKey } from './i18n';
+import { registerPickerCard } from './card-picker-registration';
 import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
 import {
   languageLoadingTemplate, languageRenderGate, type LanguageRenderGate,
@@ -13968,14 +13969,7 @@ if (!customElements.get('houseplan-card')) {
   customElements.define('houseplan-card', HouseplanCard);
 }
 
-(window as any).customCards = (window as any).customCards || [];
-if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-card')) {
-  (window as any).customCards.push({
-    type: 'houseplan-card',
-    name: 'House Plan Card',
-    description: 'Interactive house plan: spaces, rooms and devices with live states and drag layout.',
-  });
-}
+registerPickerCard('houseplan-card');
 
 // eslint-disable-next-line no-console
 // #836: a dev build names its channel and SHA from the entry URL it was loaded by.

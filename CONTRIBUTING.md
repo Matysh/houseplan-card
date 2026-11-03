@@ -90,6 +90,12 @@ manifest, file/key/placeholder parity and
 regional-locale tests together; never bypass the registry by importing a locale
 directly in a component.
 
+Card-picker metadata lives in `src/i18n/card-picker/<code>.json`, attached to
+its language's `cardPicker` entry in the same registry. These four short strings
+are synchronous for every language: HA reads them before constructing any card,
+so they cannot wait for a full lazy locale. `card-picker-registration.ts` exposes
+current-profile getters; it does not cache the language at bundle load time.
+
 Administrator-only copy lives in three lazy namespace dictionaries —
 `src/i18n/settings/`, `src/i18n/support/` and `src/i18n/topology/` (#627). Their
 English file is static (the synchronous fallback); every other language is one

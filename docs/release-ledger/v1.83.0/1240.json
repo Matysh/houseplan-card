@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1240,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Localize existing HA card-picker metadata from the profile language without changing card types, settings, storage or full locale loading.",
+  "summary": {
+    "ru": "Названия и описания Houseplan в списке добавления карточек учитывают язык профиля HA.",
+    "en": "Houseplan names and descriptions in the HA card picker follow the profile language."
+  }
+}

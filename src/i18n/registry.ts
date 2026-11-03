@@ -1,5 +1,9 @@
 import en from './en.json' with { type: 'json' };
 import ru from './ru.json' with { type: 'json' };
+import pickerEn from './card-picker/en.json' with { type: 'json' };
+import pickerRu from './card-picker/ru.json' with { type: 'json' };
+import pickerDe from './card-picker/de.json' with { type: 'json' };
+import pickerFr from './card-picker/fr.json' with { type: 'json' };
 import {
   LanguageRuntime,
   type LanguageRuntimeContract,
@@ -11,9 +15,14 @@ import { ENTRY_BUILD_FINGERPRINT as BUILD_FINGERPRINT } from '../editor-runtime-
 const GERMAN_RETRY_ASSET = '__HOUSEPLAN_DE_RETRY_ASSET__';
 const FRENCH_RETRY_ASSET = '__HOUSEPLAN_FR_RETRY_ASSET__';
 
+export type PickerCardType = keyof typeof pickerEn;
+
 export interface LanguageEntry {
   code: string;
   nativeLabel: string;
+  // The HA picker reads metadata before creating any card or loading a lazy
+  // locale. These four short strings are synchronous in every language.
+  cardPicker?: typeof pickerEn;
   dictionary?: LocaleDictionary;
   loadDictionary?: (attempt: 0 | 1) => Promise<LazyLanguageModule>;
 }
@@ -39,10 +48,10 @@ async function loadFrench(attempt: 0 | 1): Promise<LazyLanguageModule> {
  * adding its frontend/backend JSON files and one static entry in this module.
  */
 export const LANGUAGE_REGISTRY = [
-  { code: 'en', nativeLabel: 'English', dictionary: en },
-  { code: 'ru', nativeLabel: 'Русский', dictionary: ru },
-  { code: 'de', nativeLabel: 'Deutsch', loadDictionary: loadGerman },
-  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadFrench },
+  { code: 'en', nativeLabel: 'English', cardPicker: pickerEn, dictionary: en },
+  { code: 'ru', nativeLabel: 'Русский', cardPicker: pickerRu, dictionary: ru },
+  { code: 'de', nativeLabel: 'Deutsch', cardPicker: pickerDe, loadDictionary: loadGerman },
+  { code: 'fr', nativeLabel: 'Français', cardPicker: pickerFr, loadDictionary: loadFrench },
 ] as const satisfies readonly LanguageEntry[];
 
 export type Lang = (typeof LANGUAGE_REGISTRY)[number]['code'];
@@ -166,4 +175,10 @@ export function languageOptions(
     options.push({ value: raw, label: languageEntry(raw)?.nativeLabel ?? raw });
   }
   return options;
+}
+
+/** Synchronous, page-level card-picker copy; never loads a full lazy locale. */
+export function cardPickerText(value: unknown, type: PickerCardType): { name: string; description: string } {
+  const entry: LanguageEntry | undefined = languageEntry(value);
+  return entry?.cardPicker?.[type] ?? pickerEn[type];
 }

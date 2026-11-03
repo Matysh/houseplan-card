@@ -1,0 +1,10 @@
+{
+  "houseplan-card": {
+    "name": "House Plan — Plan de la maison",
+    "description": "Plan interactif de la maison : espaces, pièces et appareils avec leurs états actuels et placement par glisser-déposer."
+  },
+  "houseplan-space-card": {
+    "name": "House Plan — Espace (consultation)",
+    "description": "Plan d’un espace avec les états actuels, sans modification. Un bouton ouvre l’espace dans House Plan."
+  }
+}
