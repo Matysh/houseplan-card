@@ -1,5 +1,6 @@
 import type { ConfigAdoption } from './config-adoption';
 import { sendHouseplanWrite } from './large-write-transport';
+import { captureWriteAuthority } from './config-write-context';
 import type { DeviceLayout } from './device-position-history';
 import type { ServerConfig } from './types';
 import { OptimizePreviewChangedError, sameOptimizeSource, type OptimizeWriteGuard } from './optimize-source';
@@ -9,6 +10,7 @@ interface Flushable { pending(): boolean; flush(): void }
 
 export interface PlanOptimizeWriteHost {
   hass: { callWS<T>(message: Record<string, unknown>): Promise<T> };
+  _configWriteGuard?: () => () => boolean;
   _saveConfigDebounced: Flushable;
   _writeChain: Promise<void>;
   readonly _cfgRev: number;
@@ -47,7 +49,7 @@ export async function commitPlanOptimization(
   if (guard && (!guard.canWrite() || !sameOptimizeSource(guard.source, guard.current()))) {
     throw new OptimizePreviewChangedError();
   }
-  const writeHass = host.hass;
+  const writeHass = host.hass, authorityCurrent = captureWriteAuthority(host);
   const expectedConfigRev = guard?.source.configRev ?? host._cfgRev;
   const expectedLayoutRev = guard?.source.layoutRev ?? host._layoutRev;
   const accepted = host._adoption.snapshot(null)?.config;
@@ -60,7 +62,7 @@ export async function commitPlanOptimization(
     expected_config_rev: expectedConfigRev,
     expected_layout_rev: expectedLayoutRev,
     ...(graph_change ? {graph_change} : {}),
-  }, { isCurrent: () => host.hass === writeHass
+  }, { isCurrent: () => authorityCurrent()
     && (!guard || guard.source.authorityCurrent?.() !== false
       && guard.current().connection === guard.source.connection),
     canDispatch: () => !guard || guard.canWrite() && sameOptimizeSource(guard.source, guard.current()),

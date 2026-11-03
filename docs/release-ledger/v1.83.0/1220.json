@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1220,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Repair snapshot-identity guards introduced on the current 1.84 transport line. Ordinary HA state replacement retains the existing connection/user authority and operation generation; genuinely retired authorities remain fenced.",
+  "summary": {
+    "ru": "Устранена ложная ошибка смены контекста после успешного сохранения при обновлении состояний HA.",
+    "en": "Avoid false context-change errors after successful writes during ordinary HA state updates."
+  }
+}

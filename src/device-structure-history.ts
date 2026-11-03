@@ -122,7 +122,7 @@ export class DeviceStructureHistory {
   private send(request: Record<string, unknown>): Promise<DeviceStructureReply> {
     const host = this.host, hass = host.hass, claim = host._configWriteContext.claim();
     return sendHouseplanWrite(hass, request as HouseplanWriteMessage, {
-      isCurrent: () => host.isConnected && host.hass === hass && host._configWriteContext.current(claim,host.hass),
+      isCurrent: () => host.isConnected && host._configWriteContext.current(claim,host.hass),
       canDispatch: () => host._canEdit && !host._kiosk && host._mode === 'devices',
     });
   }

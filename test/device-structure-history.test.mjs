@@ -33,6 +33,21 @@ function fixture() {
   return {h,history,calls,toasts,adopted,reply,record};
 }
 
+for (const type of ['houseplan/marker/copy', 'houseplan/marker/history'])
+test(`#1220 ${type} accepts its receipt after an ordinary hass state snapshot`, async () => {
+  const f = fixture(); let accepted = 0;
+  f.h.transport = () => {
+    f.h.hass = { ...f.h.hass, states: { tick: { state: 'new' } } };
+    assert.equal(f.h._configWriteContext.observe(f.h.hass), false);
+    return f.reply;
+  };
+  await f.history.request({ type, ...f.history.fields(), marker: { id: 'new' } }, () => accepted++);
+  assert.equal(accepted, 1);
+  assert.equal(f.calls.filter(c => c.type === type).length, 1);
+  assert.equal(f.history.needsResolution, false);
+  f.history.retire();
+});
+
 test('#1073 structural Undo keeps cursor until ACK; repeat action is ignored and success moves one cursor',async()=>{
   const f=fixture();f.record();const command=f.h._devicePositionHistory.peekUndo(),reply=deferred();
   f.h.transport=()=>reply.promise;

@@ -113,7 +113,7 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     try {
       const writeHass=host.hass;
       response=record(await sendHouseplanWrite(writeHass,{type:'houseplan/layout/set',layout,expected_rev:snapshot.rev,
-        expected_config_rev:configRevision},{isCurrent:()=>host.hass===writeHass&&current(),
+        expected_config_rev:configRevision},{isCurrent:current,
           canDispatch:()=>host._cfgRev===configRevision&&(!guard||guard.current(snapshot.rev as number))}));
     } catch(error) {
       // A transport failure is not proof that the server rejected the write.

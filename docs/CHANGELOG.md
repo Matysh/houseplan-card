@@ -5,6 +5,7 @@
 - Accept valid Low-only Zigbee settings in support-report packages at the relay, with matching closed integration/relay validators. Deploy the accepted relay schema separately before releasing this mode. [#1223](https://github.com/Matysh/houseplan-card/issues/1223)
 - Keep decor Undo/Redo on its unchanged legacy wall carrier instead of migrating the plan during Undo; restore active line-chain cursors without turning their history into a structural write. [#1222](https://github.com/Matysh/houseplan-card/issues/1222)
 - Finish near-axis Optimize against coherent exact-graph projections so its first candidate is already a fixed point, including after storage round-trip. [#1224](https://github.com/Matysh/houseplan-card/issues/1224)
+- Accept saved space, wall and device changes across ordinary Home Assistant state snapshots without a false context-change error, while retaining connection/user and operation-generation fences. [#1220](https://github.com/Matysh/houseplan-card/issues/1220)
 
 - Synchronize the installable review workflow with the deployed ship-batch workflow; check all installed template/target pairs to prevent reinstalling stale workflows. [#1218](https://github.com/Matysh/houseplan-card/issues/1218)
 

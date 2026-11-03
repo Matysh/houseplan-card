@@ -6143,7 +6143,7 @@ export class HouseplanCard extends LitElement {
           const writeHass = this.hass;
           response = await sendHouseplanWrite(writeHass, {
             type: 'houseplan/layout/update', device_id: deviceId, pos,
-          }, { isCurrent: () => isCurrent() && this.hass === writeHass });
+          }, { isCurrent });
         }
         if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
         this._adoption.acceptLayoutPosition(deviceId, pending, (response as { rev?: unknown } | null)?.rev);
@@ -8600,7 +8600,7 @@ export class HouseplanCard extends LitElement {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
         ...(graph_change ? {graph_change} : {}),
         ...(contactLayout?{contact_layout:contactLayout,expected_layout_rev:this._layoutRev}:{}),
-      }, { isCurrent: () => isCurrent() && this.hass === writeHass
+      }, { isCurrent: () => isCurrent()
         && (!acknowledgementCurrent || acknowledgementCurrent()) });
       if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       this._adoption.acceptConfigWrite(canonicalCandidate, response);

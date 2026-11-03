@@ -5,6 +5,24 @@ interface WriteHass {
   user?: { id?: string };
 }
 
+/** Capture the existing authority generation, never a replaceable HA state snapshot.
+ * Small standalone writer ports may omit the card's generation owner; their
+ * fallback still fences the captured connection/user (or connection-less WS).
+ */
+export function captureWriteAuthority(host: {
+  readonly hass: WriteHass;
+  _configWriteGuard?: () => () => boolean;
+}): () => boolean {
+  const generationCurrent = host._configWriteGuard?.();
+  const authority = host.hass?.connection ?? host.hass?.callWS;
+  const user = host.hass?.user?.id;
+  return () => {
+    const hass = host.hass;
+    return generationCurrent?.() !== false && !!hass && typeof hass.callWS === 'function'
+      && (hass.connection ?? hass.callWS) === authority && hass.user?.id === user;
+  };
+}
+
 /** Save context differs from export/import; all other errors keep their own mapping. */
 export function configWriteErrorKey(error: unknown): 'err.config_write_unauthorized'
   | 'err.config_context_changed' | 'backup.error.storage_clear' | 'backup.error.storage_read' | null {

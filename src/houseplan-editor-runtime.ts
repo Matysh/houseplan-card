@@ -8276,7 +8276,7 @@ public async _saveMarker(): Promise<void> {
         const writeHass = this.host.hass, current = this.host._configWriteGuard();
         this.host._noteLayoutRev(await sendHouseplanWrite(writeHass, {
           type: 'houseplan/layout/update', device_id: id, pos,
-        }, {isCurrent:()=>this.host.hass===writeHass&&current()}));
+        }, {isCurrent:current}));
       }
       const obsoleteIds = new Set(replacedRemovedIds);
       if (oldId && oldId !== id) obsoleteIds.add(oldId);
