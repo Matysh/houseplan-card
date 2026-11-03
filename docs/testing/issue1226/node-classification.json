@@ -2,10 +2,10 @@
   {
     "file": "test/coincident-partitions.test.mjs",
     "name": "issue 276 reconciles the anonymized 5 cm offset fixture without moving its door",
-    "category": "unresolved",
-    "status": "retained-red",
-    "reason": "Full captured legacy/Python document oracle differs from current graph model and stable carrier identity allocation. A graph-specific full passport/independent cross-language oracle is still required; geometric-only or ID-stripped comparison was not accepted.",
-    "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml; after product fixes: output/issue1226/post-product-1220-24.xml (origin/dev 96ffe5444, fresh test-build)",
+    "category": "current-full-packet-with-independent-backend-proof",
+    "status": "fixed",
+    "reason": "Preserve original model10 Python capture; add a separate current full config+API2graph_change receipt. Match actual read appearance projection, then prove exact frontend output against the literal and exact independent Python WS storage/Undo; no IDs or opaque fields stripped.",
+    "evidence": "output/issue1226/coincident-current-passport.xml (2other safety/fixed-point failures retained); output/issue1226/current-rehost-backend.xml (3/3PASS including original legacy captures)",
     "relatedIssue": null,
     "originalFailure": "Expected values to be strictly equal:[] !== undefined",
     "currentFailure": " [Error [ERR_TEST_FAILURE]: the frontend result must stay identical to the candidate proved by Python + actual - expected ... Skipped lines { markers: [], + model_version: 11, - model_version: 10, settings: {}, spaces: [ { cell_cm: 5, id: 'offset-shared-wall', ... t: 0.5, + tq: [ + '1', + '2' + ] }, id: 'hosted-door', invert: true, length: 0.2, loc"

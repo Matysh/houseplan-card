@@ -1,0 +1,587 @@
+{
+  "config": {
+    "model_version": 11,
+    "spaces": [
+      {
+        "id": "offset-shared-wall",
+        "title": "Offset shared wall",
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "cell_cm": 5,
+        "rooms": [
+          {
+            "id": "left",
+            "name": "Left",
+            "area": null,
+            "poly": [
+              [
+                0,
+                0
+              ],
+              [
+                0.5,
+                0
+              ],
+              [
+                0.5,
+                0.004166666666666667
+              ],
+              [
+                0.5041666666666667,
+                0.004166666666666667
+              ],
+              [
+                0.5041666666666667,
+                0.9958333333333333
+              ],
+              [
+                0.5,
+                0.9958333333333333
+              ],
+              [
+                0.5,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "wall_ids": [
+              "wall-jqm76ztdnzk4hxxq4f2v",
+              "wall-lpihsklwsegsow7swcot",
+              "wall-rsillbgj56qyurceosfa",
+              "wall-r3tuoz4rgdawcgnhkcha",
+              "wall-6zxvpkmnrthjifm2mnzt",
+              "wall-vq6hgauic4zxd5r7zlet",
+              "wall-mkjekzxnixddfnfewsg7",
+              "wall-l4hjd3v6q2ih4lmhyebi"
+            ]
+          },
+          {
+            "id": "right",
+            "name": "Right",
+            "area": null,
+            "poly": [
+              [
+                0.5041666666666667,
+                0.004166666666666667
+              ],
+              [
+                1,
+                0.004166666666666667
+              ],
+              [
+                1,
+                0.9958333333333333
+              ],
+              [
+                0.5041666666666667,
+                0.9958333333333333
+              ]
+            ],
+            "wall_ids": [
+              "wall-phv7rbxb7jl4tbhwnlkk",
+              "wall-kl2kghjvpn3k72ogi7nk",
+              "wall-2fff2kin2gzrvrkxytbz",
+              "wall-r3tuoz4rgdawcgnhkcha"
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "a": [
+              0.5041666666666667,
+              0.004166666666666667
+            ],
+            "b": [
+              0.5041666666666667,
+              0.9958333333333333
+            ],
+            "cm": 20,
+            "key": "0.504167,0.500000@1.5706"
+          }
+        ],
+        "openings": [
+          {
+            "id": "hosted-door",
+            "type": "door",
+            "x": 0.5041666666666667,
+            "y": 0.5,
+            "angle": -90,
+            "length": 0.2,
+            "contact": "binary_sensor.test_door",
+            "lock": "lock.test_door",
+            "invert": true,
+            "flip_h": true,
+            "future_field": {
+              "keep": true
+            },
+            "host": {
+              "kind": "wall",
+              "id": "wall-r3tuoz4rgdawcgnhkcha",
+              "t": 0.5,
+              "tq": [
+                "1",
+                "2"
+              ]
+            }
+          }
+        ],
+        "settings": {
+          "name_color": {
+            "c": "#55606c",
+            "a": 0.8
+          },
+          "wall_fill": {
+            "c": "#ffffff",
+            "a": 1
+          }
+        },
+        "wall_segments": [
+          {
+            "id": "wall-2fff2kin2gzrvrkxytbz",
+            "a": [
+              0.5041666666666667,
+              0.9958333333333333
+            ],
+            "b": [
+              1,
+              0.9958333333333333
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-6zxvpkmnrthjifm2mnzt",
+            "a": [
+              0.5,
+              0.9958333333333333
+            ],
+            "b": [
+              0.5041666666666667,
+              0.9958333333333333
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-jqm76ztdnzk4hxxq4f2v",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              0.5,
+              0
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-kl2kghjvpn3k72ogi7nk",
+            "a": [
+              1,
+              0.004166666666666667
+            ],
+            "b": [
+              1,
+              0.9958333333333333
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-l4hjd3v6q2ih4lmhyebi",
+            "a": [
+              0,
+              0
+            ],
+            "b": [
+              0,
+              1
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-lpihsklwsegsow7swcot",
+            "a": [
+              0.5,
+              0
+            ],
+            "b": [
+              0.5,
+              0.004166666666666667
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-mkjekzxnixddfnfewsg7",
+            "a": [
+              0,
+              1
+            ],
+            "b": [
+              0.5,
+              1
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-phv7rbxb7jl4tbhwnlkk",
+            "a": [
+              0.5041666666666667,
+              0.004166666666666667
+            ],
+            "b": [
+              1,
+              0.004166666666666667
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-r3tuoz4rgdawcgnhkcha",
+            "a": [
+              0.5041666666666667,
+              0.004166666666666667
+            ],
+            "b": [
+              0.5041666666666667,
+              0.9958333333333333
+            ],
+            "cm": 20
+          },
+          {
+            "id": "wall-rsillbgj56qyurceosfa",
+            "a": [
+              0.5,
+              0.004166666666666667
+            ],
+            "b": [
+              0.5041666666666667,
+              0.004166666666666667
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-vq6hgauic4zxd5r7zlet",
+            "a": [
+              0.5,
+              0.9958333333333333
+            ],
+            "b": [
+              0.5,
+              1
+            ],
+            "cm": 0
+          }
+        ],
+        "plan_graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "n:%5B%22partition%22%2C%22redundant%22%2C0%5D",
+              "p": [
+                "l",
+                "121",
+                "1"
+              ]
+            },
+            {
+              "id": "n:%5B%22partition%22%2C%22redundant%22%2C1%5D",
+              "p": [
+                "l",
+                "121",
+                "239"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "0",
+                "0"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "0",
+                "240"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%22120%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "120",
+                "0"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%22120%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "120",
+                "240"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%222%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "120",
+                "1"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%222%5C%22%2C%5C%229958333333333333%5C%22%2C%5C%2210000000000000000%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "120",
+                "239"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "240",
+                "1"
+              ]
+            },
+            {
+              "id": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%229958333333333333%5C%22%2C%5C%2210000000000000000%5C%22%5D%22%5D",
+              "p": [
+                "l",
+                "240",
+                "239"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "id": "wall-2fff2kin2gzrvrkxytbz",
+              "from": "n:%5B%22partition%22%2C%22redundant%22%2C1%5D",
+              "to": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%229958333333333333%5C%22%2C%5C%2210000000000000000%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-6zxvpkmnrthjifm2mnzt",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%222%5C%22%2C%5C%229958333333333333%5C%22%2C%5C%2210000000000000000%5C%22%5D%22%5D",
+              "to": "n:%5B%22partition%22%2C%22redundant%22%2C1%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-jqm76ztdnzk4hxxq4f2v",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%22120%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-kl2kghjvpn3k72ogi7nk",
+              "from": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%229958333333333333%5C%22%2C%5C%2210000000000000000%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-l4hjd3v6q2ih4lmhyebi",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-lpihsklwsegsow7swcot",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%22120%5C%22%2C%5C%220%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%222%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-mkjekzxnixddfnfewsg7",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%220%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%22120%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-phv7rbxb7jl4tbhwnlkk",
+              "from": "n:%5B%22partition%22%2C%22redundant%22%2C0%5D",
+              "to": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-r3tuoz4rgdawcgnhkcha",
+              "from": "n:%5B%22partition%22%2C%22redundant%22%2C0%5D",
+              "to": "n:%5B%22partition%22%2C%22redundant%22%2C1%5D",
+              "kind": "wall",
+              "cm": 20
+            },
+            {
+              "id": "wall-rsillbgj56qyurceosfa",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%222%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+              "to": "n:%5B%22partition%22%2C%22redundant%22%2C0%5D",
+              "kind": "wall",
+              "cm": 0
+            },
+            {
+              "id": "wall-vq6hgauic4zxd5r7zlet",
+              "from": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%222%5C%22%2C%5C%229958333333333333%5C%22%2C%5C%2210000000000000000%5C%22%5D%22%5D",
+              "to": "n:%5B%22room%22%2C%22left%22%2C%22%5B%5C%22l%5C%22%2C%5C%22120%5C%22%2C%5C%22240%5C%22%5D%22%5D",
+              "kind": "wall",
+              "cm": 0
+            }
+          ],
+          "rooms": [
+            {
+              "room": "left",
+              "edges": [
+                {
+                  "kind": "wall",
+                  "id": "wall-jqm76ztdnzk4hxxq4f2v",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-lpihsklwsegsow7swcot",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-rsillbgj56qyurceosfa",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-r3tuoz4rgdawcgnhkcha",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-6zxvpkmnrthjifm2mnzt",
+                  "reverse": true
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-vq6hgauic4zxd5r7zlet",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-mkjekzxnixddfnfewsg7",
+                  "reverse": true
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-l4hjd3v6q2ih4lmhyebi",
+                  "reverse": true
+                }
+              ]
+            },
+            {
+              "room": "right",
+              "edges": [
+                {
+                  "kind": "wall",
+                  "id": "wall-phv7rbxb7jl4tbhwnlkk",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-kl2kghjvpn3k72ogi7nk",
+                  "reverse": false
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-2fff2kin2gzrvrkxytbz",
+                  "reverse": true
+                },
+                {
+                  "kind": "wall",
+                  "id": "wall-r3tuoz4rgdawcgnhkcha",
+                  "reverse": true
+                }
+              ]
+            }
+          ],
+          "dependencies": []
+        },
+        "partitions": []
+      }
+    ],
+    "markers": [],
+    "settings": {}
+  },
+  "graph_change": {
+    "version": 2,
+    "spaces": [
+      {
+        "space_id": "offset-shared-wall",
+        "base_digest": "1693ace512a0d3435305cb6256240312215ce29c196f56b9d3862e8784b70d85",
+        "patch": {
+          "nodes": {
+            "set": [
+              {
+                "id": "n:%5B%22partition%22%2C%22redundant%22%2C0%5D",
+                "p": [
+                  "l",
+                  "121",
+                  "1"
+                ]
+              },
+              {
+                "id": "n:%5B%22partition%22%2C%22redundant%22%2C1%5D",
+                "p": [
+                  "l",
+                  "121",
+                  "239"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22right%22%2C%22%5B%5C%22q%5C%22%2C%5C%221%5C%22%2C%5C%221%5C%22%2C%5C%224166666666666667%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "240",
+                  "1"
+                ]
+              }
+            ],
+            "remove": []
+          },
+          "edges": {
+            "set": [
+              {
+                "id": "wall-r3tuoz4rgdawcgnhkcha",
+                "from": "n:%5B%22partition%22%2C%22redundant%22%2C0%5D",
+                "to": "n:%5B%22partition%22%2C%22redundant%22%2C1%5D",
+                "kind": "wall",
+                "cm": 20
+              }
+            ],
+            "remove": [
+              {
+                "kind": "partition",
+                "id": "redundant"
+              }
+            ]
+          },
+          "rooms": {
+            "set": [],
+            "remove": []
+          },
+          "dependencies": {
+            "set": [],
+            "remove": []
+          }
+        }
+      }
+    ]
+  }
+}
