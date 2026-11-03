@@ -4,6 +4,8 @@ from __future__ import annotations
 import copy
 import re
 
+import voluptuous as vol
+
 
 COPY_KEYS = (
     "settings", "zero_wall_style", "cell_cm", "view_box", "plan_url", "plan_aspect",
@@ -147,5 +149,6 @@ def is_saved_space_copy(candidate: dict, previous: dict | None) -> bool:
             if candidate == normalize_room_appearance(checked):
                 return True
         return False
-    except (KeyError, ValueError, TypeError, StopIteration):
+    except (KeyError, ValueError, TypeError, StopIteration, vol.Invalid):
+        # Failure of this optional proof must never reject an ordinary write.
         return False

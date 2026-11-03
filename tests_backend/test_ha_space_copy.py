@@ -11,6 +11,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan.const import DOMAIN
 from custom_components.houseplan.graph_write import normalize_graph_config
+from custom_components.houseplan.space_copy import is_saved_space_copy
 from custom_components.houseplan.store import get_data
 from custom_components.houseplan.validation import CONFIG_SCHEMA
 from custom_components.houseplan.wall_segment_model import _wall_key
@@ -193,3 +194,34 @@ async def test_copy_category_selection_is_proved_without_losing_geometry(hass,ha
     assert [item['kind'] for item in saved['config']['spaces'][1].get('decor',[])] == (
         (['furniture'] if furniture else []) + (['text'] if decor else []))
     assert saved['config']['spaces'][1]['openings'][0]['length']==.2
+
+
+@pytest.mark.parametrize("model", [10, 11])
+async def test_ordinary_space_creation_survives_an_uncopyable_source(hass, hass_ws_client, model):
+    source = await setup_source(hass, "wall", 10)
+    source["spaces"][0]["partitions"].extend(
+        {"id": f"extra{i}", "a": [0, 2 + i / 50], "b": [1, 2 + i / 50], "cm": 40}
+        for i in range(1996)
+    )
+    if model == 11:
+        source = CONFIG_SCHEMA(normalize_graph_config(source))
+    # This saved space is valid, but its 2001 combined carriers cannot all
+    # become partitions in a copy (limit 2000). New empty spaces still work.
+    assert len(source["spaces"][0]["partitions"]) == 1997
+    await get_data(hass).config_store.async_save({"rev": 7, "config": source})
+    client = await hass_ws_client(hass)
+    candidate = copy.deepcopy(source)
+    empty = {"id": "snew", "title": "New space", "view_box": [0, 0, 1, 1],
+             "rooms": [], "wall_segments": []}
+    if model == 11:
+        empty["plan_graph"] = {"version": 1, "nodes": [], "edges": [], "rooms": [], "dependencies": []}
+    candidate["spaces"].append(empty)
+    # A failed optional proof must fall back to ordinary validation, including
+    # when a legacy copy would fail schema rather than graph resource limits.
+    assert not is_saved_space_copy(candidate, source)
+    reply = await write(client, candidate, 7)
+    assert reply["success"], reply
+    saved = await read(client)
+    assert saved["rev"] == 8
+    assert saved["config"]["spaces"][1]["id"] == "snew"
+    assert len(saved["config"]["spaces"][0]["partitions"]) == 1997
