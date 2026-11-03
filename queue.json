@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1822,
+  "revision": 1823,
   "nextTicket": 117,
   "nextFence": 117,
   "tasks": {
@@ -2348,7 +2348,7 @@
     "expectedBase": null,
     "phase": "sync",
     "admittedAt": 1793726503617,
-    "expiresAt": 1793726803617
+    "expiresAt": 1793726861346
   },
   "events": {
     "github:41683293980:1:completions:message:f26cadb0cf007f2105533ea07945abe91134b3e54bc17e2b5f9cfd4377145f37": {
@@ -2357,6 +2357,10 @@
     },
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:2:automation-pending": {
       "digest": "bfec24217fea1a6ec39d55af20abc3834aaa9e3f68c3c76921c53e17e23a040d",
+      "issue": 1243
+    },
+    "finish:0fc30cec-b2da-4c9c-9cd8-f41aa46f5777": {
+      "digest": "59b9f36318746a963c3799b5ff8e064c174a89d78d3ab8ef9116c45b6fe9461a",
       "issue": 1243
     },
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0": {
