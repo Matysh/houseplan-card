@@ -5,17 +5,21 @@ import { readFileSync } from 'node:fs';
 
 import {
   adoptWallSegmentModelCandidateInPlace,
-  commitWallSegmentModel,
+  decodeLegacyWallSegmentModel as commitWallSegmentModel,
   deterministicWallSegmentId,
   fixedTopologyWallLineageHints,
   resolveRoomOpeningHost,
   wallModelOffGridValueCount,
   WallSegmentModelError,
-  WALL_SEGMENT_MODEL_VERSION,
 } from '../test-build/wall-segment-model.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
+
+// These byte passports specify the retained v0-v10 decoder, not the model11
+// graph writer. Current graph migration/intent/identity is covered separately
+// by plan-graph*.test.mjs and graph-edit-intent.test.mjs.
+const WALL_SEGMENT_MODEL_VERSION = 10;
 
 const rectangle = (id, x1 = 0, y1 = 0, x2 = 1, y2 = 1) => ({
   id,
@@ -477,8 +481,10 @@ test('every frontend structural transaction crosses the wall identity barrier', 
   };
   const commitMethod = methodSource('_commitPhysicalGeometry');
   const restoreMethod = methodSource('_applyGeometryState');
-  assert.match(commitMethod, /commitEditedSpaceModel\(liveCandidate, before.spaceId\)/,
-    'ordinary structural commits must cross the identity barrier');
+  assert.match(commitMethod, /commitGraphEditResult\(baseSpace, liveSpace, intent,/,
+    'ordinary structural commits must use an explicit graph intent');
+  assert.match(commitMethod, /projectGraphSpace\(liveSpace, liveSpace.plan_graph!\)/,
+    'prepared graph previews cross the graph projection/validation barrier');
   assert.match(restoreMethod, /commitEditedSpaceModel\(restoredCandidate, target.spaceId\)/,
     'Undo/Redo restoration must cross the identity barrier');
   assert.match(optimizer, /commitWallSegmentModelInPlace\(config\)/,

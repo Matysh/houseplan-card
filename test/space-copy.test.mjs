@@ -96,7 +96,10 @@ test('#456 copies the complete allowed physical surface without room or device o
     { id: 'cwseed1', a: [1, 0], b: [1, 1], cm: 0 },
     { id: 'cpseed2', a: [0.5, 0], b: [0.5, 1], cm: 10 },
   ]);
-  assert.equal(Object.hasOwn(copy.partitions[2], 'style'), false, 'unknown wall metadata is not copied');
+  assert.deepEqual(copy.partitions[2].style, before.spaces[1].partitions[0].style,
+    '#1167 preserves opaque edge metadata while remapping structural identity');
+  copy.partitions[2].style.keep = false;
+  assert.equal(input.spaces[1].partitions[0].style.keep, true, 'opaque edge props are deep-copied');
   assert.deepEqual(copy.openings.map((opening) => ({
     id: opening.id, host: opening.host, contact: opening.contact, lock: opening.lock,
   })), [

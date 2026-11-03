@@ -19,10 +19,11 @@ function* templates(part) {
 }
 function option(part, id = eid) {
   return [...templates(part)].find(p => p.strings.join('').includes('role="option"')
-    && typeof p.values.at(-1) === 'string' && p.values.at(-1).startsWith(`${id} · `));
+    && p.strings.some((text, index) => /data-value=$/.test(text) && p.values[index] === id));
 }
 function optionState(part, id = eid) {
-  return option(part, id)?.values.at(-1).slice(id.length + 3);
+  const row = option(part, id);
+  return row?.values.find(value => typeof value === 'string' && value.startsWith(`${id} · `))?.slice(id.length + 3);
 }
 function render(d, registry, states) {
   let writes = 0;
@@ -129,7 +130,7 @@ test('#979 automatic clears only the condition and entity change clears the prev
   assert.deepEqual(changed.stateSource.active_states, []);
   option(view, 'sensor.anchor').values.find(v => typeof v === 'function')();
   assert.deepEqual(changed.stateSource, { entity_id: 'sensor.anchor' });
-  const auto = [...templates(view)].find(p => p.strings.join('').includes('role="option"') && p.values.at(-2) === 'marker.state_source_auto');
+  const auto = option(view, '');
   auto.values.find(v => typeof v === 'function')();
   assert.equal(changed.stateSource, null);
 });
@@ -145,7 +146,7 @@ test('#991 search is inside the open picker, filters names/IDs and always retain
   const noMatch = [...templates(render({ ...draft(), stateSourceFilter: 'x'.repeat(255) }, registry, states))];
   const options = noMatch.filter(p => p.strings.join('').includes('role="option"'));
   assert.equal(options.length, 1);
-  assert.equal(options[0].values.at(-2), 'marker.state_source_auto');
+  assert.ok(options[0].values.includes('marker.state_source_auto'));
   const closed = [...templates(render({ ...draft(), stateSourceOpen: false }, registry, states))];
   assert.equal(closed.some(p => p.strings.join('').includes('hpf-toolbar')), false);
   assert.equal(closed.some(p => p.strings.join('').includes('role="option"')), false);

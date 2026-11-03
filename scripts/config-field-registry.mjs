@@ -21,12 +21,22 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'settings.external_screens.version=1', selector: { path: ['settings', 'external_screens', 'version'], equals: 1 },
+    schema: 'allow-extra', // Bounded v1/v2 namespace is validated by an opaque callable in the schema manifest.
     enforcedBy: 'externalScreensForEdit + validation.py EXTERNAL_SCREENS_V1_SCHEMA',
     storage: 'House Plan server config', type: 'literal 1', default: 'absent', level: 'external screen namespace',
     ui: 'effective detached v2 draft', runtime: 'flat presentation inherited through default_view; retired hidden/controls overrides inert',
     introduced: '#1113', status: 'deprecated-read',
     migration: 'explicit outer Save publishes detached v2; stable profile IDs and unknown fields retained',
     compatibility: 'retain old backend/export reader; explicit authoritative import can still replace the namespace',
+  },
+  {
+    id: 'settings.external_screens.version=2', selector: { path: ['settings', 'external_screens', 'version'], equals: 2 },
+    schema: 'allow-extra',
+    enforcedBy: 'external-screens.ts + validation.py EXTERNAL_SCREENS_V2_SCHEMA',
+    storage: 'House Plan server config', type: 'literal 2', default: 'absent', level: 'external screen namespace',
+    ui: 'per-space view profiles', runtime: 'default_view and space_views; external_screens_api=2',
+    introduced: '#1165', status: 'current', migration: 'explicit outer Save of a detached draft',
+    compatibility: 'v1 read projection remains supported; older clients cannot downgrade a v2 namespace',
   },
   {
     id: 'spaces[].plan_graph', selector: { path: ['spaces', '*', 'plan_graph'] },

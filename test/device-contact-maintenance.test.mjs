@@ -11,13 +11,15 @@ import { DeviceContactMagnet } from '../test-build/device-contact-snap.js';
 import {makeContactBasis} from '../test-build/device-contact-basis.js';
 import { spaceModels } from '../test-build/space-geometry.js';
 import { wallKey } from '../test-build/wall-thickness.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { editGraphFixture } from './helpers/graph-fixture.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/866-device-contacts.json',import.meta.url),'utf8'));
 const box = {left:-.634375,right:.634375,top:-.634375,bottom:.634375};
 const faces = ['a','b','unrelated'].map(id=>({id,space:'floor',diameterRatio:.08,box}));
 const space = {id:'floor',title:'Floor',view_box:[0,0,1,1],rooms:[]};
-const config = () => ({model_version:PLAN_MODEL_VERSION, spaces:[structuredClone(space)], settings:{},
-  markers:faces.map(f=>({id:f.id,binding:'virtual',space:'floor',name:f.id}))});
+const config = () => commitWallSegmentModel({spaces:[structuredClone(space)], settings:{},
+  markers:faces.map(f=>({id:f.id,binding:'virtual',space:'floor',name:f.id}))}).config;
 
 test('#1003 Optimize proves materialised reference contacts despite a wider live face',()=>{
   const cfg=config(),layout=structuredClone(fixture.layout);
@@ -50,13 +52,14 @@ test('#866 Optimize protects proved contacts only, including exact future siblin
 });
 
 test('#866 valid physical wall contacts survive Optimize; removed/moved hosts do not get exemptions', () => {
-  const cfg = config(); cfg.spaces[0].partitions=[{id:'wall',a:[.1,.1],b:[.9,.1],cm:20}];
+  const cfg = config();
+  editGraphFixture(cfg,'floor',{kind:'partitions',ids:['wall']}, space => {space.partitions=[{id:'wall',a:[.1,.1],b:[.9,.1],cm:20}];});
   const layout={a:{s:'floor',x:.4,y:+((100+20/5*(1000/240)/2+80*.64375)/1000).toFixed(9)}};
   assert.equal(contactPositionExceptions(cfg.spaces,layout,faces).has('a'),true);
   assert.deepEqual(optimizePlans(cfg,layout,{deviceContactFaces:faces}).layout.a,layout.a);
-  cfg.spaces[0].partitions=[];
+  editGraphFixture(cfg,'floor',{kind:'partitions',ids:['wall']}, space => {space.partitions=[];});
   assert.equal(contactPositionExceptions(cfg.spaces,layout,faces).size,0);
-  cfg.spaces[0].partitions=[{id:'wall',a:[.1,.2],b:[.9,.2],cm:20}];
+  editGraphFixture(cfg,'floor',{kind:'partitions',ids:['wall']}, space => {space.partitions=[{id:'wall',a:[.1,.2],b:[.9,.2],cm:20}];});
   assert.equal(contactPositionExceptions(cfg.spaces,layout,faces).size,0);
 });
 

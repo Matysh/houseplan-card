@@ -63,19 +63,29 @@ test('#594 the form kit adds selectors instead of overriding existing ones', () 
     + 'would then silently change accepted frames');
 });
 
-test('issue 266 surface files do not share a single selector', () => {
+test('issue 266 surface files do not compete for selector declarations', () => {
   const sets = FILES.map((name) => ({ name, set: selectorsOf(sourceOf(name)) }));
   const clashes = [];
   for (let i = 0; i < sets.length; i++) {
     for (let j = i + 1; j < sets.length; j++) {
       for (const sel of sets[i].set) {
-        if (sets[j].set.has(sel)) clashes.push(`${sel} (${sets[i].name} ∩ ${sets[j].name})`);
+        if (!sets[j].set.has(sel)) continue;
+        // #1216's room-paint defaults and the base palette intentionally share
+        // :host. Independent custom-property definitions do not override paint;
+        // a repeated property or any ordinary property still violates ownership.
+        const declarations = name => parseRules(cssOfSource(sourceOf(name)))
+          .filter(rule => rule.kind === 'rule' && rule.selectors.includes(sel) && !rule.scope.length)
+          .flatMap(rule => rule.declarations.map(value => value.slice(0, value.indexOf(':')).trim()));
+        if (sel === ':host') {
+          const a = declarations(sets[i].name), b = declarations(sets[j].name);
+          if (a.length && b.length && [...a, ...b].every(key => key.startsWith('--'))
+              && !a.some(key => b.includes(key))) continue;
+        }
+        clashes.push(`${sel} (${sets[i].name} ∩ ${sets[j].name})`);
       }
     }
   }
-  // Spec §1.3.2: the exception list is empty — a leading :host(...) gate is
-  // not ownership, so gated device groups live with their surface and no
-  // selector is shared between files.
+  // A leading :host(...) gate is not permission to override another surface.
   assert.deepEqual(clashes, []);
 });
 
