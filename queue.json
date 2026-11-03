@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1969,
+  "revision": 1970,
   "nextTicket": 125,
   "nextFence": 123,
   "tasks": {
@@ -2357,7 +2357,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab"
       }
     },
     "1246": {
@@ -2712,6 +2713,18 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "251b625727351478a70781925df6ae1798316ca3"
+      }
+    },
+    "dev-build:41691140555:1:1244": {
+      "digest": "dcce8bed2188ab50a675c7fb4cf51b86f2ac5cc30909fdaf5f7de312abd186bc",
+      "issue": 1244,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1244,
+        "at": 1793730279076,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab"
       }
     }
   },
