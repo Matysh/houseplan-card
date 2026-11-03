@@ -50,8 +50,28 @@ export function parseCounts(text) {
   for (const [key, pattern] of Object.entries({ tests: /^# tests (\d+)$/gm, passed: /^# pass (\d+)$/gm, failed: /^# fail (\d+)$/gm, skipped: /^# skipped (\d+)$/gm, cancelled: /^# cancelled (\d+)$/gm, todo: /^# todo (\d+)$/gm })) {
     const hits = [...text.matchAll(pattern)]; if (hits.length) result[key] = Number(hits.at(-1)[1]);
   }
-  const pytest = text.match(/(?:^|\n).*?(\d+) passed(?:, (\d+) skipped)?[^\n]* in [\d.]+s/m);
-  if (!Object.keys(result).length && pytest) { result.passed = Number(pytest[1]); result.skipped = Number(pytest[2] ?? 0); }
+  if (!Object.keys(result).length) {
+    // Pytest reports one comma-separated final summary, possibly repeated by
+    // a wrapper. Read the last whole summary once, not FAILED/error excerpts.
+    const plain = text.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '');
+    const outcome = '\\d+ (?:passed|failed|skipped|xfailed|xpassed|errors?|deselected|warnings?|reruns?)';
+    const summaries = [...plain.matchAll(new RegExp(
+      '^(?:=+[ \\t]*)?(no tests ran|' + outcome + '(?:,[ \\t]*' + outcome + ')*)'
+      + '[ \\t]+in \\d+(?:\\.\\d+)?s(?:[ \\t]+\\([\\d:]+\\))?[ \\t]*(?:=+)?[ \\t]*\\r?$', 'gm'))];
+    const summary = summaries.at(-1)?.[1];
+    if (summary) {
+      Object.assign(result, { tests: 0, passed: 0, failed: 0, skipped: 0 });
+      for (const [, amount, status] of summary.matchAll(/(\d+) ([a-z]+)/g)) {
+        // Collection/setup errors are failures. Expected failures are skips;
+        // non-strict XPASS succeeds in pytest (strict XPASS says "failed").
+        const key = ['failed', 'error', 'errors'].includes(status) ? 'failed'
+          : ['passed', 'xpassed'].includes(status) ? 'passed'
+          : ['skipped', 'xfailed'].includes(status) ? 'skipped' : null;
+        if (key) result[key] += Number(amount);
+      }
+      result.tests = result.passed + result.failed + result.skipped;
+    }
+  }
   return result;
 }
 export async function executeStep(step, { cwd, logPath, signal, onOutput = () => {}, environment = {} }) {

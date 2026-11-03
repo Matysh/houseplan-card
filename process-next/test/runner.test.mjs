@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
-import { runPlan, validatePlan, executeStep } from '../lib/runner.mjs';
+import { runPlan, validatePlan, executeStep, parseCounts } from '../lib/runner.mjs';
 import { defaultStateDir, inputIdentity, outputIdentity, within } from '../lib/storage.mjs';
 
 function fixture(t) { const root = mkdtempSync(join(tmpdir(), 'hp-next-runner-')); t.after(() => rmSync(root, { recursive: true, force: true })); writeFileSync(join(root, 'source'), 'one'); return root; }
@@ -187,4 +187,57 @@ test('metadata-only packaging update does not repeat tests of identical delivere
 test('silent zero-exit Node invocation is not a completed required test selection', async t => {
   const root = fixture(t), r = await executeStep(step('silent', { command:['node','-e',''], expectedNonempty:true }), { cwd:root, logPath:join(root,'silent.log') });
   assert.equal(r.status,'failed');
+});
+
+// #1226: count only the final pytest outcome summary, including red runs.
+test('pytest counts the audit failure summary instead of dropping failed outcomes', () => {
+  assert.deepEqual(parseCounts('FAILED tests/graph.py::case\n================ 2 failed, 2844 passed, 1 skipped in 153.33s (0:02:33) ================\n'),
+    { tests: 2847, passed: 2844, failed: 2, skipped: 1 });
+});
+
+test('pytest maps error and expected outcomes without counting warnings or deselection', () => {
+  for (const [summary, expected] of [
+    ['2 failed in 0.01s', { tests: 2, passed: 0, failed: 2, skipped: 0 }],
+    ['1 error in 0.02s', { tests: 1, passed: 0, failed: 1, skipped: 0 }],
+    ['2 errors, 1 passed, 3 skipped in 0.03s', { tests: 6, passed: 1, failed: 2, skipped: 3 }],
+    ['1 passed, 2 xfailed, 3 xpassed, 4 deselected, 5 warnings in 0.04s',
+      { tests: 6, passed: 4, failed: 0, skipped: 2 }],
+    ['7 deselected in 0.05s', { tests: 0, passed: 0, failed: 0, skipped: 0 }],
+    ['no tests ran in 0.01s', { tests: 0, passed: 0, failed: 0, skipped: 0 }],
+  ]) assert.deepEqual(parseCounts(summary), expected, summary);
+});
+
+test('pytest uses the last whole summary once and rejects failure excerpts', () => {
+  const text = '2 passed in 0.01s\nE AssertionError: 99 failed, 5 passed in 2.00s\n'
+    + 'FAILED tests/example.py::case - 20 failed in 3.00s\n'
+    + '\u001b[31m=== 1 failed, 3 passed, 2 skipped in 0.04s ===\u001b[0m\n'
+    + '=== 1 failed, 3 passed, 2 skipped in 0.04s ===\n';
+  assert.deepEqual(parseCounts(text), { tests: 6, passed: 3, failed: 1, skipped: 2 });
+  assert.deepEqual(parseCounts('E AssertionError: 1 failed in 0.01s\nFAILED tests/x.py - 2 passed in 0.02s\n'), {});
+});
+
+test('pytest parsing preserves TAP precedence and structured result authority', async t => {
+  assert.deepEqual(parseCounts('# tests 2\n# pass 1\n# fail 1\n# skipped 0\n9 passed in 0.03s\n'),
+    { tests: 2, passed: 1, failed: 1, skipped: 0 });
+  const root = fixture(t), counts = { tests: 1, passed: 1, failed: 0, skipped: 0 };
+  const text = '9 passed in 0.03s\nPROCESS_NEXT_RESULT ' + JSON.stringify({ status: 'passed', counts });
+  const result = await executeStep(step('structured', { command: ['node', '-e', `console.log(${JSON.stringify(text)})`], expectedNonempty: true }),
+    { cwd: root, logPath: join(root, 'structured-pytest.log') });
+  assert.equal(result.status, 'passed'); assert.deepEqual(result.counts, counts);
+});
+
+test('pytest failures and empty selections cannot pass on exit zero; nonzero exits remain failed', async t => {
+  const root = fixture(t);
+  for (const [id, text, code, expected] of [
+    ['failed', '2 failed, 2844 passed, 1 skipped in 153.33s', 0, 'failed'],
+    ['error', '1 error in 0.01s', 0, 'failed'],
+    ['empty', 'no tests ran in 0.01s', 0, 'failed'],
+    ['nonzero', '1 passed in 0.01s', 1, 'failed'],
+    // Non-strict XPASS is successful in pytest; strict XPASS is already failed.
+    ['xpass', '1 xpassed in 0.01s', 0, 'passed'],
+  ]) {
+    const result = await executeStep(step(id, { command: ['node', '-e', `console.log(${JSON.stringify(text)});process.exitCode=${code}`], expectedNonempty: true }),
+      { cwd: root, logPath: join(root, id + '-pytest.log') });
+    assert.equal(result.status, expected, id);
+  }
 });
