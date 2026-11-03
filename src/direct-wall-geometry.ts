@@ -12,7 +12,7 @@ import { compareCodePoints } from './codepoint-order';
 import { graphOpeningRun, annotateGraphOpeningRuns } from './graph-opening-run';
 interface Material {poly:A.Polygon;owners:string[];room:boolean}
 interface Ray {d:Q.ExactPoint;u:[number,number];h:number;length:number;thickLength:number;owners:string[];left:number[];right:number[];materials:number[]}
-interface Structure {materials:Material[];paper:A.Polygon[];paperMaterials:A.Polygon[];nodes:MultiWallNodeMap;depth:number;runs:Map<string,readonly string[]>;segments:Array<{kind:string;id:string;a:number[];b:number[]}>;roomGeom?:any;paperGeom?:any;geometryCache:Map<string,any>}
+interface Structure {materials:Material[];paper:A.Polygon[];paperMaterials:A.Polygon[];nodes:MultiWallNodeMap;depth:number;runs:Map<string,readonly string[]>;segments:Array<{kind:string;id:string;a:number[];b:number[]}>;roomGeom?:any;paperGeom?:any;geometryCache:Map<string,any>;componentCache:A.ComponentCache}
 interface ExtraInput {columns:number[][][];partitionCuts:readonly PartitionOpeningCut[]}
 export interface DirectOpening {x:number;y:number;angle:number;length:number;host?:{kind:string;id:string};hostIds?:readonly string[]}
 const extras=new WeakMap<object,ExtraInput>();
@@ -205,7 +205,7 @@ function buildStructure(source:WallGraphSource,cellCm:number,gridPitch:number):S
   const paperMaterials=records.some(r=>!ownedWalls.has(edgeKey(r.edge)))
     ? buildStructure({...source,graph:{...graph,edges:graph.edges.filter(e=>ownedWalls.has(edgeKey(e)))}},cellCm,gridPitch).materials.map(m=>m.poly)
     : trimmed.filter(m=>m.room).map(m=>m.poly);
-  return{materials:trimmed,paper,paperMaterials,nodes:{epsilon,coordinateScale:source.scale,nodes:nodeMetadata,index},depth,runs,segments:carriers,geometryCache:new Map()};
+  return{materials:trimmed,paper,paperMaterials,nodes:{epsilon,coordinateScale:source.scale,nodes:nodeMetadata,index},depth,runs,segments:carriers,geometryCache:new Map(),componentCache:new WeakMap()};
 }
 export function directStructure(source:WallGraphSource,cellCm:number,gridPitch:number):Structure {
   let entries=cache.get(source.graph);if(!entries){entries=new Map();cache.set(source.graph,entries);}
@@ -264,14 +264,14 @@ export function directWallGeometry(source:WallGraphSource,cellCm:number,gridPitc
   const columns=extra.columns.flatMap(body=>{try{const p=A.polygon(body);if(p.length)return[p];}catch{}failedExtras++;return[];});
   let geom=structure.geometryCache.get(key);
   if(!geom){
-    const arranged=A.arrangeComponents([...materialPieces(structure,openings,extra),...columns]);
+    const arranged=A.arrangeComponents([...materialPieces(structure,openings,extra),...columns],structure.componentCache);
     geom=arranged.geom;failedComponents+=arranged.failures;
     if(!failedComponents&&!failedExtras)structure.geometryCache.set(key,geom);
     if(structure.geometryCache.size>8)structure.geometryCache.delete(structure.geometryCache.keys().next().value!);
   }
   const roomPolys=structure.materials.filter(m=>m.room).map(m=>m.poly);
-  const roomResult=structure.roomGeom?{geom:structure.roomGeom,failures:0}:A.arrangeComponents(roomPolys);
-  const paperResult=structure.paperGeom?{geom:structure.paperGeom,failures:0}:A.arrangeComponents([...structure.paper,...structure.paperMaterials]);
+  const roomResult=structure.roomGeom?{geom:structure.roomGeom,failures:0}:A.arrangeComponents(roomPolys,structure.componentCache);
+  const paperResult=structure.paperGeom?{geom:structure.paperGeom,failures:0}:A.arrangeComponents([...structure.paper,...structure.paperMaterials],structure.componentCache);
   const roomGeom=roomResult.geom,paperGeom=paperResult.geom;
   if(!roomResult.failures)structure.roomGeom=roomGeom;if(!paperResult.failures)structure.paperGeom=paperGeom;
   failedComponents+=roomResult.failures+paperResult.failures;
@@ -285,7 +285,7 @@ export function directRecut(roomGeom:object,openings:DirectOpening[],extraBodies
   try{
     let invalid=0;
     const columns=extra.columns.flatMap(body=>{try{const p=A.polygon(body);if(p.length)return[p];}catch{}invalid++;return[];});
-    const result=A.arrangeComponents([...materialPieces(base.structure,openings,extra),...columns]);
+    const result=A.arrangeComponents([...materialPieces(base.structure,openings,extra),...columns],base.structure.componentCache);
     return{status:result.failures||invalid?'degraded-extra':'ok',geom:result.geom,components:result.geom.length?[{id:'primary',geom:result.geom}]:[]};
   }catch{return{status:'degraded-extra',geom:[],components:[]};}
 }

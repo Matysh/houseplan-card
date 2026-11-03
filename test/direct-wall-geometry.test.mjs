@@ -25,6 +25,17 @@ test('arrangement nodes crossings, coincident spans, touch and legitimate holes'
  assert.equal(narrow[0].length,2,'exact narrow hole retained');
  assert.equal((polyclipToPathD(narrow).match(/M /g)||[]).length,2,'SVG keeps the proved narrow hole');
 });
+test('component reuse preserves untouched geometry and invalidates when components join',()=>{
+ const left=rectangle(0,0,4,4),right=rectangle(10,0,4,4),cache=new WeakMap();
+ const before=A.arrangeComponents([left,right],cache);assert.equal(area(before.geom),32);
+ const cut=A.subtractConvex(left,rectangle(1,-1,1,3));
+ const after=A.arrangeComponents([...cut,right],cache);assert.equal(area(after.geom),30);
+ assert.strictEqual(after.geom.at(-1),before.geom.at(-1),'unrelated component has no new boundary allocation');
+ const joined=A.arrangeComponents([left,right,rectangle(3,0,8,4)],cache);
+ assert.equal(joined.geom.length,1);assert.equal(area(joined.geom),56,'same first polygon cannot hide a changed component');
+ const separate=A.arrangeComponents([left,right],cache);assert.equal(area(separate.geom),32);assert.equal(separate.geom.length,2);
+});
+
 test('exact predicates retain a real dyadic gap and irrational diagonal intersections',()=>{
  const gap=2**-40;assert.equal(A.arrange([rectangle(0,0,1,1),rectangle(1+gap,0,1,1)]).length,2);
  const triangle=poly([[0,0],[Math.sqrt(2),0],[0,Math.sqrt(2)]]);

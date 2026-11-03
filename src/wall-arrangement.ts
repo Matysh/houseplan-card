@@ -231,7 +231,8 @@ export function arrange(input:Polygon[]):number[][][][] {
  * Bbox connectivity is a conservative superset; coupled material is never
  * guessed apart. A partial result is explicitly unfit for a physical write.
  */
-export function arrangeComponents(polys:Polygon[]):{geom:number[][][][];failures:number}{
+export type ComponentCache=WeakMap<Polygon,{polys:Polygon[];geom:number[][][][]}>;
+export function arrangeComponents(polys:Polygon[],cache?:ComponentCache):{geom:number[][][][];failures:number}{
   const boxes=polys.map(bounds),parents=polys.map((_,i)=>i),items=polys.map((_,i)=>i);
   const find=(i:number):number=>{while(parents[i]!==i){parents[i]=parents[parents[i]];i=parents[i];}return i;};
   const index=tree(items,i=>boxes[i]);
@@ -239,6 +240,12 @@ export function arrangeComponents(polys:Polygon[]):{geom:number[][][][];failures
   const groups=new Map<number,Polygon[]>();
   for(const i of items){const id=find(i),list=groups.get(id)||[];list.push(polys[i]);groups.set(id,list);}
   const geom:number[][][][]=[];let failures=0;
-  for(const group of groups.values())try{geom.push(...arrange(group));}catch{failures++;}
+  for(const group of groups.values())try{
+    const previous=cache?.get(group[0]);
+    if(previous&&previous.polys.length===group.length&&previous.polys.every((poly,i)=>poly===group[i]))geom.push(...previous.geom);
+    else{
+      const result=arrange(group);geom.push(...result);cache?.set(group[0],{polys:group,geom:result});
+    }
+  }catch{failures++;}
   return{geom,failures};
 }
