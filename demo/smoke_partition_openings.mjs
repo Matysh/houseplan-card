@@ -16,6 +16,15 @@ const out = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  // Fixture setup crosses the same explicit current writer as the UI. Never
+  // edit a derived carrier or numeric t while retaining a contradictory graph/tq.
+  const authored = async (intent, change) => {
+    const before = card._geometrySnapshot();
+    change(card._curSpaceCfg);
+    if (!card._editorRuntime._commitPhysicalGeometry('Authored opening fixture', before, [], false, intent))
+      throw new Error(`fixture intent ${intent.kind} refused: ${JSON.stringify(card._toast)}`);
+    await update();
+  };
   const physicalInput = async (from, to) => {
     await update();
     let previous = '', stable = 0;
@@ -136,13 +145,14 @@ const out = await page.evaluate(async () => {
     && card._geometryHistory.size === historyBeforeRejectedDialog;
   card._openingDialog = null;
 
-  saved.host.t = 0.5;
-  saved.x = 0.5;
-  saved.y = 0.5;
-  card._saveConfig();
-  space.partitions.push({ id: 'short', a: [0.2, 0.7], b: [0.27, 0.7], cm: 15 });
-  card._cfgEpoch++;
-  card._modelCache = null;
+  await authored({ kind: 'openings', ids: [draggedId] }, space => {
+    const opening = space.openings.find(opening => opening.id === draggedId);
+    opening.host = { ...opening.host, t: .5, tq: ['1', '2'] };
+    opening.x = .5; opening.y = .5;
+  });
+  await authored({ kind: 'partitions', ids: ['short'] }, space => {
+    space.partitions.push({ id: 'short', a: [0.2, 0.7], b: [0.27, 0.7], cm: 15 });
+  });
   card._openingPlacementIntervalsCache = null;
   const previousToast = card._showToast;
   let jambToast = '';
@@ -153,9 +163,9 @@ const out = await page.evaluate(async () => {
   card._showToast = previousToast;
   result.tooShortPartitionHasNoPreviewAndExplainsWhy = shortCandidate === null
     && (jambToast.includes('Leave at least') || jambToast.includes('Оставьте'));
-  space.partitions = space.partitions.filter((partition) => partition.id !== 'short');
-  card._cfgEpoch++;
-  card._modelCache = null;
+  await authored({ kind: 'partitions', ids: ['short'] }, space => {
+    space.partitions = space.partitions.filter(partition => partition.id !== 'short');
+  });
   card._openingPlacementIntervalsCache = null;
 
   card._physicalBodiesCache = null;
@@ -188,7 +198,8 @@ const out = await page.evaluate(async () => {
   card._deletePhysicalSelection();
   card._confirmPartitionDelete();
   await update();
-  result.deleteConfirmCascadesHostAndOpening = !space.partitions && !space.openings;
+  space = card._curSpaceCfg;
+  result.deleteConfirmCascadesHostAndOpening = !(space.partitions?.length) && !(space.openings?.length);
   card._undoGeometry();
   await update();
   space = card._curSpaceCfg;
@@ -197,8 +208,12 @@ const out = await page.evaluate(async () => {
   card._redoGeometry();
   await update();
   space = card._curSpaceCfg;
-  result.deleteRedoCascadesAgain = !space.partitions && !space.openings;
+  result.deleteRedoCascadesAgain = !(space.partitions?.length) && !(space.openings?.length);
 
+  // This separate witness starts with a genuinely stored, degraded legacy
+  // host. It is not a malformed edit to an accepted current graph.
+  card._serverCfg.model_version = 10;
+  for (const stored of card._serverCfg.spaces) delete stored.plan_graph;
   space.partitions = [{ id: 'replacement', a: [0.3, 0.6], b: [0.7, 0.6], cm: 15 }];
   space.openings = [{
     id: 'orphan', type: 'door', x: 0.5, y: 0.6, angle: 0, length: 0.1,
@@ -212,12 +227,17 @@ const out = await page.evaluate(async () => {
   card._openingClick([500, 600]);
   card._saveOpening();
   await update();
+  space = card._curSpaceCfg;
   result.orphanRebindReplacesHostWithoutDuplicate = space.openings.length === 1
     && space.openings[0].id === 'orphan'
     && space.openings[0].host?.id === 'replacement';
 
   // Production-bundle regression for #185: a legacy room-wall opening does
   // not cut the structural segment consumed by #173 room-face detection.
+  card._serverCfg.model_version = 7;
+  delete space.plan_graph;
+  delete space.wall_segments;
+  delete space.walls;
   space.rooms = [{
     id: 'room', name: 'Room', area: null,
     poly: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]],

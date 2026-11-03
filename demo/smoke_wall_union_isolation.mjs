@@ -107,7 +107,11 @@ const result = await page.evaluate(async (fixtureConfig) => {
   out.degradedPhysicalEditRejected = committed === false
     && JSON.stringify(card._geometrySnapshot()) === beforeJson;
   out.rejectedEditHasNoHistoryOrWrite = card._geometryHistory.size === 0 && writes === 0;
-  out.rejectedEditHasLocalizedToast = card._toast === card._t('toast.geometry_unsafe');
+  // Current preparation refuses the raw nonfinite carrier before body build;
+  // retain exact localized guidance rather than the retired boolean-only toast.
+  out.rejectedEditHasLocalizedToast = card._toast === card._t('toast.wall_model_migration_blocked', {
+    reason: card._t('wall_model.reason.invalid-room'),
+  });
 
   let strictChecks = 0;
   const strictCheck = card._checkSpacePhysicalGeometry.bind(card);
