@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1584,
+  "revision": 1585,
   "nextTicket": 109,
   "nextFence": 105,
   "tasks": {
@@ -1892,158 +1892,25 @@
     },
     "1232": {
       "issue": 1232,
+      "branch": "codex/1232-inner-contour",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1232-inner-contour",
-      "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 103,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793714237867,
-      "reviewEntry": 1,
-      "patchId": "92871cee59cc4cfb6916f2ad64c2efbbec954dfa",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/PLAN-GRAPH.md",
-        "docs/release-ledger/v1.83.0/1232.json",
-        "src/direct-wall-geometry.ts",
-        "src/wall-arrangement.ts",
-        "src/wall-thickness.ts",
-        "test/direct-wall-geometry.test.mjs",
-        "test/inner-contour-graph.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T140851808-5125c352",
-        "name": "Тесты для задачи #1232 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261103T140851808-5125c352/report.json",
-        "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:09:26.173Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+      "mergedSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+      "mergedAt": 1793715230290,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1232:1:92871cee59cc4cfb6916f2ad64c2efbbec954dfa:f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-      "reviewMaterial": {
-        "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "expectedBase": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-        "patchId": "92871cee59cc4cfb6916f2ad64c2efbbec954dfa"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1232,
-        "requestId": "review:1232:1:92871cee59cc4cfb6916f2ad64c2efbbec954dfa:f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-        "kind": "code",
-        "base": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-        "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "patchId": "92871cee59cc4cfb6916f2ad64c2efbbec954dfa",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1232,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1232",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "<details>\n<summary>#1232: численная причина, точное исправление и фактические проверки</summary>\n\nИсходный RED воспроизведён на d3ad645ca с исходными ID `wall-union-regression/r1` и данными из `codex/1226@84b3b3847`: uncut masonry имеет status=ok, но polyclip difference выдаёт `Unable to complete output ring`. После exact direct arrangement округлённые boundary points снова попадали в другой численный boolean; почти совпадающие длинные границы ломали его output ring.\n\n`wall-arrangement` теперь может классифицировать точный subject отдельно от точных исключаемых material domains. Noding, symbolic side predicates и tracing остаются теми же; membership пола — `room && !roomMasonry`. `directRoomFloor` получает исходные exact domains из той же cached Structure, а `innerContourForRoom` использует его для обычного model11. Explicit proof subtraction port сохранён с прежним контрактом единиц. Legacy ветка, видимая кладка, граф, openings и persisted данные не меняются. Нет catch, epsilon-подклейки, удаления тонких областей или успешного fallback на невычтенный пол.\n\nАдресная выборка inner-contour-graph/direct-wall-geometry/wall-thickness: **152/152 PASS**, включая исходный ID-случай до/после JSON round-trip, ожидаемые четыре границы и площадь пола (15см внутренняя половина 30см стены), неизменность исходника и общей кладки. Exact membership проверяет overlapping masks, отверстие, настоящее положительное dyadic-расстояние, касание и честный полностью пустой пол. Build/typecheck PASS. Штатный S6 повторит свою выборку после допуска в очередь.\n\nДополнительная диагностика не скрыта: wall-node-proof даёт 5 существующих отказов `projection-only-write` при конструировании fixture до innerContour; это не проход данной проверки. Полный `smoke_wall_union_isolation` подтверждает все 8 rendering/source/light/Plan/View/Static/ISO утверждений без pageerror, но остаётся RED на 4 старых strict-edit/nongeometry утверждениях в конце. Их ожидания, golden и performance-пороги не изменены; связанные переносы/guards относятся к соседним задачам пачки и #1226. Этот smoke не объявляется целиком прошедшим.\n\nПросьба проверить membership двух групп, сохранение holes/empty и отсутствие повторного округлённого polyclip на обычном current floor. E2E-impact передаётся координатору отдельно: synthetic rendering regression не заменяет HA E2E.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление решает саму численную проблему, а не прячет её. Обычный внутренний контур model11 теперь строится в той же точной арифметике, что и кладка: пол = `room && !roomMasonry`. Округлённые кольца кладки больше не попадают в polyclip, в коде нет catch, epsilon и подстановки невычтенного пола. Состав групп, сохранение отверстий и пустой результат, о которых просил автор, в `arrangeExact` реализованы правильно. Явный proof-порт оставлен на прежнем контракте. Блокеров не нашёл. Остаются две необязательные, но заметные доработки. Первая: новый путь заново строит арранжировку по всей кладке плана для каждой комнаты. Прежний `subtractLocalWallGeometry` отбрасывал далёкие компоненты по bbox, здесь такого отбора нет, а проверки производительности для этого пути нет. Вторая: тест, сравнивающий контур proof-порта (polyclip) с обычным (теперь точным), фактически не выполнялся.",
-          "understanding": "Проблема. Корректная legacy-комната после `commitWallSegmentModel` в model11 получает кладку со status=ok. Но `innerContourForRoom` в ветке graphSource передавал округлённые до binary64 кольца `roomGeom` в polyclip `difference` через `subtractLocalWallGeometry`. На почти совпадающих длинных границах polyclip бросал `Unable to complete output ring`, и исключение обрушивало отрисовку: в ветке graphSource, в отличие от legacy-ветки, catch нет.\n\nДо: graphSource → `sharedRoomWallGeometry` (или `directWallGeometry(...).roomGeom`) → `subtractRoomMasonry(closedRing(poly), geometry)` → `largestOuterContour`.\nПосле: если явно передан proof-порт (`subtractRoomMasonry !== subtractLocalWallGeometry`, сейчас это `subtractNodeRoomMasonry` из wall-node-preview через junction-limits), поведение прежнее. Во всех остальных случаях вызывается `directRoomFloor(graphSource, cellCm, gridPitch, poly)`. Он берёт из кэша ту же `Structure` (`directStructure`, ключ — объект graph и масштабы) и вызывает `A.arrange([A.polygon(room)], materials.filter(m=>m.room).map(m=>m.poly))`.\n\n`arrangeExact` получил второй список `excluded`. Его границы участвуют в разбиении на атомарные отрезки (noding) так же, как остальные. При классификации атомарного отрезка стороны от subject и от масок накапливаются отдельно, после чего `l&&=!ml; r&&=!mr`. Сравнение с вариантом без масок: `masks` пуст → `ml=mr=false`, ранний выход при `l&&r` сохранён, то есть прежнее поведение `arrange(input)` бит-в-бит то же.\n\nРазобранные пути: все вызовы `innerContourForRoom` — space-render, houseplan-card `_innerRoomContour` (LRU по содержимому этажа), editor-runtime (Resize, `null`), pdf-scene, summary-panel-metrics, junction-limits (`lightweight ? null : …` и проброс `subtractRoomMasonry`), wall-node-preview (сцена и proof). Также `wallGraphSource`: масштаб регистрируется вместе с массивом rooms, поэтому `poly` и `Structure` находятся в одних единицах.",
-          "analysis": [
-            {
-              "topic": "Состав групп и предикаты в arrangeExact",
-              "assessment": "Решение корректно и минимально. Кладка задаётся тем же нечётко-ненулевым правилом намотки (nonzero winding) через `containsSides`, что и в объединении. Граница комнаты внутри кладки получает `ml&&mr` и не порождает ребро. Граница маски внутри комнаты даёт ребро с правильной ориентацией: пол слева. Касание без перекрытия ничего не вычитает, потому что сторона маски вне комнаты. Ранний выход `(ml&&mr)` безопасен: такой отрезок в любом случае не попадает в результат. `(!masks.size&&l&&r)` сохраняет прежнюю оптимизацию только для режима без масок. Отверстия по-прежнему назначаются через `contains` на внешних кольцах, полностью закрытый пол даёт честный `[]`. Сохранить так, как есть.",
-              "evidence": "src/wall-arrangement.ts:130-132, 189-196, 217-226; тест test/direct-wall-geometry.test.mjs:185-192 (перекрывающиеся маски = 72, отверстие 64 с двумя кольцами, зазор 2^-40, полное покрытие → [], касание → 100)."
-            },
-            {
-              "topic": "Нет повторного округлённого polyclip на обычном пути",
-              "assessment": "Подтверждаю. В default-ветке graphSource осталась одна точная операция, polyclip не вызывается. `registerExactPaintRing` внутри `arrange` для пола безвреден: `largestOuterContour` копирует точки в новые массивы. Входные данные согласованы с прежними: `roomGeom` в `directWallGeometry` строится из того же `structure.materials.filter(m=>m.room)`, значит множество пола математически совпадает с прежним `room − roomGeom`. Отличие одно: теперь границы не округляются между шагами.",
-              "evidence": "src/wall-thickness.ts:2830-2837; src/direct-wall-geometry.ts:272-274 и 284-287."
-            },
-            {
-              "topic": "`sharedRoomWallGeometry` больше не используется в обычном пути",
-              "assessment": "Это изменение контракта, но безопасное. Все вызывающие места передают геометрию той же проекции, что и `rooms`. Новый путь берёт `Structure` из того же графа, что зарегистрирован на `rooms`, с масштабом `source.scale`. Это даже устраняет потенциальное расхождение единиц: например, junction-limits масштабирует `roomGeom` на `geometryScale`, а теперь это для обычного пути не нужно. Документацию параметра в JSDoc стоило бы уточнить: для graphSource без proof-порта он игнорируется.",
-              "evidence": "src/wall-thickness.ts:2820-2825, 2833; src/wall-graph-source.ts:5-8; src/junction-limits.ts:103-126; src/wall-node-preview.ts:154-156."
-            },
-            {
-              "topic": "Стоимость: глобальная арранжировка на каждую комнату",
-              "assessment": "Слабое место решения. Прежний `subtractLocalWallGeometry` специально отбрасывал компоненты кладки, bbox которых не касается комнаты: «Distant disconnected rooms cannot affect a local patch; do not send them through the sweep repeatedly». `directRoomFloor` передаёт в `arrangeExact` все room-материалы плана. Разбиение и BigInt-предикаты выполняются над всеми отрезками, классификация — над всеми атомарными отрезками, хотя за пределами bbox комнаты рёбер быть не может. Для N комнат это O(N·M) точной арифметики при каждом пересчёте: View при смене этажа, PDF, сводка, junction-limits на каждом кандидате записи. Существующая проверка 200 мс в pdf-scene работает на model_version 9 и считает контуры вне замеряемого интервала, поэтому новый путь не покрывает. Дефектом это не называю: величина не измерена.",
-              "evidence": "src/wall-local-boolean.ts:1-3, 37-47 (прежний отбор); src/direct-wall-geometry.ts:286 (отбора нет); test/pdf-scene.test.mjs:821-863."
-            },
-            {
-              "topic": "Согласованность proof-порта и обычного контура",
-              "assessment": "Теперь сцена (точный путь) и proof (`subtractNodeRoomMasonry`, polyclip) вычисляют пол разными алгоритмами. Математически это одно множество, и при успехе polyclip расхождение ограничено округлением. Но именно проверка этого инварианта (`captured` против `original`, допуск 1e-5) в wall-node-proof, по словам автора, не доходит до сравнения из-за 5 отказов `projection-only-write` при построении fixture. Значит, совпадение двух путей после изменения не подтверждено ни одним выполненным тестом.",
-              "evidence": "test/wall-node-proof.test.mjs:32-41; authorContext: «wall-node-proof даёт 5 существующих отказов projection-only-write … это не проход данной проверки»."
-            },
-            {
-              "topic": "Регрессионный тест исходного случая",
-              "assessment": "Тест хороший: сохранены исходные ID и координаты, проверены оба пути — сразу после миграции и после JSON round-trip, — повторяемость, неизменность общей кладки и исходника. Ожидаемая нижняя граница −145.833 = −208.333 + 62.5 (h = 30/1·(1000/240)/2) действительно соответствует внутренней половине 30-сантиметровой стены, а не подогнана.",
-              "evidence": "test/inner-contour-graph.test.mjs:5-37."
-            },
-            {
-              "topic": "Ошибки и отказ",
-              "assessment": "Новый путь, как и раньше, исключения не перехватывает. Это соответствует требованию «не проглатывать». Исключения `open-boundary`/`orphan-hole` в точной арифметике возможны только при логической ошибке, а не из-за численного шума. Пустой или вырожденный пол даёт `null`, и вызывающие места подставляют исходный `poly`. Это прежнее поведение, не введённое данной задачей.",
-              "evidence": "src/wall-arrangement.ts:206-224; src/space-render.ts:887-894; src/houseplan-editor-runtime.ts:3672-3677."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Перед вызовом `A.arrange` в `directRoomFloor` отбирать маски по пересечению bbox с bbox комнаты, например `structure.materials.filter(m=>m.room&&overlaps(A.bounds(m.poly),roomBox))`, где `overlaps` включает касание. Результат от этого не меняется: маска без пересечения bbox не может породить ребро пола. Зато возвращается локальность прежнего `subtractLocalWallGeometry`, и стоимость на комнату перестаёт расти с размером плана. Bbox материалов можно кэшировать в `Structure`. Цена — несколько строк. Как альтернатива — измерить новый путь на large-house fixture в model11 для всех комнат и зафиксировать бюджет.",
-            "Восстановить выполнимость сравнения proof ↔ scene в test/wall-node-proof.test.mjs:32-41 или добавить небольшой тест: для model11-плана `innerContourForRoom` с `subtractNodeRoomMasonry` и без него даёт контуры, совпадающие с допуском 1e-5. Сейчас это единственный механизм, который ловит расхождение двух алгоритмов, и после изменения он не выполнялся.",
-            "Уточнить JSDoc `sharedRoomWallGeometry` в `innerContourForRoom`: для model11 без proof-порта параметр игнорируется, пол берётся из точной `Structure` того же графа. Иначе следующий сопровождающий может решить, что переданный кэш влияет на результат."
-          ],
-          "boundaries": "Тесты и сборку сам не запускал. Использована квитанция S6 `20261103T140851808-5125c352` (passed, материал cfda99f) и описание автора: 152/152 PASS в выборке inner-contour-graph/direct-wall-geometry/wall-thickness. Состав выборки S6 не видел, поэтому не знаю, входили ли туда wall-node-proof и проверки производительности. По словам автора, wall-node-proof даёт 5 отказов при построении fixture, а полный smoke_wall_union_isolation остаётся RED на 4 утверждениях вне этой задачи. Были ли эти отказы и на base, не проверял. По исходникам изучены: `arrangeExact`/`arrange`/`containsSides`/`polygon`, `directStructure`/`buildStructure`/`directWallGeometry`, `subtractLocalWallGeometry`, `wallGraphSource`, все вызовы `innerContourForRoom` в src. Влияние на производительность оценено только аналитически. HA E2E не рассматривал: автор передаёт его координатору отдельно."
-        },
-        "usage": {
-          "input_tokens": 36,
-          "cache_creation_input_tokens": 79711,
-          "cache_read_input_tokens": 815109,
-          "output_tokens": 15840,
-          "output_tokens_details": {
-            "thinking_tokens": 8256
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 79711,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1163,
-              "cache_read_input_tokens": 65450,
-              "cache_creation_input_tokens": 18465,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 18465
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает саму численную проблему, а не прячет её. Обычный внутренний контур model11 теперь строится в той же точной арифметике, что и кладка: пол = `room && !roomMasonry`. Округлённые кольца кладки больше не попадают в polyclip, в коде нет catch, epsilon и подстановки невычтенного пола. Состав групп, сохранение отверстий и пустой результат, о которых просил автор, в `arrangeExact` реализованы правильно. Явный proof-порт оставлен на прежнем контракте. Блокеров не нашёл. Остаются две необязательные, но заметные доработки. Первая: новый путь заново строит арранжировку по всей кладке плана для каждой комнаты. Прежний `subtractLocalWallGeometry` отбрасывал далёкие компоненты по bbox, здесь такого отбора нет, а проверки производительности для этого пути нет. Вторая: тест, сравнивающий контур proof-порта (polyclip) с обычным (теперь точным), фактически не выполнялся.\n\n## Понимание решения\n\nПроблема. Корректная legacy-комната после `commitWallSegmentModel` в model11 получает кладку со status=ok. Но `innerContourForRoom` в ветке graphSource передавал округлённые до binary64 кольца `roomGeom` в polyclip `difference` через `subtractLocalWallGeometry`. На почти совпадающих длинных границах polyclip бросал `Unable to complete output ring`, и исключение обрушивало отрисовку: в ветке graphSource, в отличие от legacy-ветки, catch нет.\n\nДо: graphSource → `sharedRoomWallGeometry` (или `directWallGeometry(...).roomGeom`) → `subtractRoomMasonry(closedRing(poly), geometry)` → `largestOuterContour`.\nПосле: если явно передан proof-порт (`subtractRoomMasonry !== subtractLocalWallGeometry`, сейчас это `subtractNodeRoomMasonry` из wall-node-preview через junction-limits), поведение прежнее. Во всех остальных случаях вызывается `directRoomFloor(graphSource, cellCm, gridPitch, poly)`. Он берёт из кэша ту же `Structure` (`directStructure`, ключ — объект graph и масштабы) и вызывает `A.arrange([A.polygon(room)], materials.filter(m=>m.room).map(m=>m.poly))`.\n\n`arrangeExact` получил второй список `excluded`. Его границы участвуют в разбиении на атомарные отрезки (noding) так же, как остальные. При классификации атомарного отрезка стороны от subject и от масок накапливаются отдельно, после чего `l&&=!ml; r&&=!mr`. Сравнение с вариантом без масок: `masks` пуст → `ml=mr=false`, ранний выход при `l&&r` сохранён, то есть прежнее поведение `arrange(input)` бит-в-бит то же.\n\nРазобранные пути: все вызовы `innerContourForRoom` — space-render, houseplan-card `_innerRoomContour` (LRU по содержимому этажа), editor-runtime (Resize, `null`), pdf-scene, summary-panel-metrics, junction-limits (`lightweight ? null : …` и проброс `subtractRoomMasonry`), wall-node-preview (сцена и proof). Также `wallGraphSource`: масштаб регистрируется вместе с массивом rooms, поэтому `poly` и `Structure` находятся в одних единицах.\n\n## Разбор решения\n\n### Состав групп и предикаты в arrangeExact\n\nРешение корректно и минимально. Кладка задаётся тем же нечётко-ненулевым правилом намотки (nonzero winding) через `containsSides`, что и в объединении. Граница комнаты внутри кладки получает `ml&&mr` и не порождает ребро. Граница маски внутри комнаты даёт ребро с правильной ориентацией: пол слева. Касание без перекрытия ничего не вычитает, потому что сторона маски вне комнаты. Ранний выход `(ml&&mr)` безопасен: такой отрезок в любом случае не попадает в результат. `(!masks.size&&l&&r)` сохраняет прежнюю оптимизацию только для режима без масок. Отверстия по-прежнему назначаются через `contains` на внешних кольцах, полностью закрытый пол даёт честный `[]`. Сохранить так, как есть.\n\nОснование: src/wall-arrangement.ts:130-132, 189-196, 217-226; тест test/direct-wall-geometry.test.mjs:185-192 (перекрывающиеся маски = 72, отверстие 64 с двумя кольцами, зазор 2^-40, полное покрытие → [], касание → 100).\n\n### Нет повторного округлённого polyclip на обычном пути\n\nПодтверждаю. В default-ветке graphSource осталась одна точная операция, polyclip не вызывается. `registerExactPaintRing` внутри `arrange` для пола безвреден: `largestOuterContour` копирует точки в новые массивы. Входные данные согласованы с прежними: `roomGeom` в `directWallGeometry` строится из того же `structure.materials.filter(m=>m.room)`, значит множество пола математически совпадает с прежним `room − roomGeom`. Отличие одно: теперь границы не округляются между шагами.\n\nОснование: src/wall-thickness.ts:2830-2837; src/direct-wall-geometry.ts:272-274 и 284-287.\n\n### `sharedRoomWallGeometry` больше не используется в обычном пути\n\nЭто изменение контракта, но безопасное. Все вызывающие места передают геометрию той же проекции, что и `rooms`. Новый путь берёт `Structure` из того же графа, что зарегистрирован на `rooms`, с масштабом `source.scale`. Это даже устраняет потенциальное расхождение единиц: например, junction-limits масштабирует `roomGeom` на `geometryScale`, а теперь это для обычного пути не нужно. Документацию параметра в JSDoc стоило бы уточнить: для graphSource без proof-порта он игнорируется.\n\nОснование: src/wall-thickness.ts:2820-2825, 2833; src/wall-graph-source.ts:5-8; src/junction-limits.ts:103-126; src/wall-node-preview.ts:154-156.\n\n### Стоимость: глобальная арранжировка на каждую комнату\n\nСлабое место решения. Прежний `subtractLocalWallGeometry` специально отбрасывал компоненты кладки, bbox которых не касается комнаты: «Distant disconnected rooms cannot affect a local patch; do not send them through the sweep repeatedly». `directRoomFloor` передаёт в `arrangeExact` все room-материалы плана. Разбиение и BigInt-предикаты выполняются над всеми отрезками, классификация — над всеми атомарными отрезками, хотя за пределами bbox комнаты рёбер быть не может. Для N комнат это O(N·M) точной арифметики при каждом пересчёте: View при смене этажа, PDF, сводка, junction-limits на каждом кандидате записи. Существующая проверка 200 мс в pdf-scene работает на model_version 9 и считает контуры вне замеряемого интервала, поэтому новый путь не покрывает. Дефектом это не называю: величина не измерена.\n\nОснование: src/wall-local-boolean.ts:1-3, 37-47 (прежний отбор); src/direct-wall-geometry.ts:286 (отбора нет); test/pdf-scene.test.mjs:821-863.\n\n### Согласованность proof-порта и обычного контура\n\nТеперь сцена (точный путь) и proof (`subtractNodeRoomMasonry`, polyclip) вычисляют пол разными алгоритмами. Математически это одно множество, и при успехе polyclip расхождение ограничено округлением. Но именно проверка этого инварианта (`captured` против `original`, допуск 1e-5) в wall-node-proof, по словам автора, не доходит до сравнения из-за 5 отказов `projection-only-write` при построении fixture. Значит, совпадение двух путей после изменения не подтверждено ни одним выполненным тестом.\n\nОснование: test/wall-node-proof.test.mjs:32-41; authorContext: «wall-node-proof даёт 5 существующих отказов projection-only-write … это не проход данной проверки».\n\n### Регрессионный тест исходного случая\n\nТест хороший: сохранены исходные ID и координаты, проверены оба пути — сразу после миграции и после JSON round-trip, — повторяемость, неизменность общей кладки и исходника. Ожидаемая нижняя граница −145.833 = −208.333 + 62.5 (h = 30/1·(1000/240)/2) действительно соответствует внутренней половине 30-сантиметровой стены, а не подогнана.\n\nОснование: test/inner-contour-graph.test.mjs:5-37.\n\n### Ошибки и отказ\n\nНовый путь, как и раньше, исключения не перехватывает. Это соответствует требованию «не проглатывать». Исключения `open-boundary`/`orphan-hole` в точной арифметике возможны только при логической ошибке, а не из-за численного шума. Пустой или вырожденный пол даёт `null`, и вызывающие места подставляют исходный `poly`. Это прежнее поведение, не введённое данной задачей.\n\nОснование: src/wall-arrangement.ts:206-224; src/space-render.ts:887-894; src/houseplan-editor-runtime.ts:3672-3677.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Перед вызовом `A.arrange` в `directRoomFloor` отбирать маски по пересечению bbox с bbox комнаты, например `structure.materials.filter(m=>m.room&&overlaps(A.bounds(m.poly),roomBox))`, где `overlaps` включает касание. Результат от этого не меняется: маска без пересечения bbox не может породить ребро пола. Зато возвращается локальность прежнего `subtractLocalWallGeometry`, и стоимость на комнату перестаёт расти с размером плана. Bbox материалов можно кэшировать в `Structure`. Цена — несколько строк. Как альтернатива — измерить новый путь на large-house fixture в model11 для всех комнат и зафиксировать бюджет.\n- Восстановить выполнимость сравнения proof ↔ scene в test/wall-node-proof.test.mjs:32-41 или добавить небольшой тест: для model11-плана `innerContourForRoom` с `subtractNodeRoomMasonry` и без него даёт контуры, совпадающие с допуском 1e-5. Сейчас это единственный механизм, который ловит расхождение двух алгоритмов, и после изменения он не выполнялся.\n- Уточнить JSDoc `sharedRoomWallGeometry` в `innerContourForRoom`: для model11 без proof-порта параметр игнорируется, пол берётся из точной `Structure` того же графа. Иначе следующий сопровождающий может решить, что переданный кэш влияет на результат.\n\n## Границы анализа\n\nТесты и сборку сам не запускал. Использована квитанция S6 `20261103T140851808-5125c352` (passed, материал cfda99f) и описание автора: 152/152 PASS в выборке inner-contour-graph/direct-wall-geometry/wall-thickness. Состав выборки S6 не видел, поэтому не знаю, входили ли туда wall-node-proof и проверки производительности. По словам автора, wall-node-proof даёт 5 отказов при построении fixture, а полный smoke_wall_union_isolation остаётся RED на 4 утверждениях вне этой задачи. Были ли эти отказы и на base, не проверял. По исходникам изучены: `arrangeExact`/`arrange`/`containsSides`/`polygon`, `directStructure`/`buildStructure`/`directWallGeometry`, `subtractLocalWallGeometry`, `wallGraphSource`, все вызовы `innerContourForRoom` в src. Влияние на производительность оценено только аналитически. HA E2E не рассматривал: автор передаёт его координатору отдельно.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8 → cfda99f135870cec7d99ee3a23fbf4d5edacb712\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1232, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>#1232: численная причина, точное исправление и фактические проверки</summary>\n\nИсходный RED воспроизведён на d3ad645ca с исходными ID `wall-union-regression/r1` и данными из `codex/1226@84b3b3847`: uncut masonry имеет status=ok, но polyclip difference выдаёт `Unable to complete output ring`. После exact direct arrangement округлённые boundary points снова попадали в другой численный boolean; почти совпадающие длинные границы ломали его output ring.\n\n`wall-arrangement` теперь может классифицировать точный subject отдельно от точных исключаемых material domains. Noding, symbolic side predicates и tracing остаются теми же; membership пола — `room && !roomMasonry`. `directRoomFloor` получает исходные exact domains из той же cached Structure, а `innerContourForRoom` использует его для обычного model11. Explicit proof subtraction port сохранён с прежним контрактом единиц. Legacy ветка, видимая кладка, граф, openings и persisted данные не меняются. Нет catch, epsilon-подклейки, удаления тонких областей или успешного fallback на невычтенный пол.\n\nАдресная выборка inner-contour-graph/direct-wall-geometry/wall-thickness: **152/152 PASS**, включая исходный ID-случай до/после JSON round-trip, ожидаемые четыре границы и площадь пола (15см внутренняя половина 30см стены), неизменность исходника и общей кладки. Exact membership проверяет overlapping masks, отверстие, настоящее положительное dyadic-расстояние, касание и честный полностью пустой пол. Build/typecheck PASS. Штатный S6 повторит свою выборку после допуска в очередь.\n\nДополнительная диагностика не скрыта: wall-node-proof даёт 5 существующих отказов `projection-only-write` при конструировании fixture до innerContour; это не проход данной проверки. Полный `smoke_wall_union_isolation` подтверждает все 8 rendering/source/light/Plan/View/Static/ISO утверждений без pageerror, но остаётся RED на 4 старых strict-edit/nongeometry утверждениях в конце. Их ожидания, golden и performance-пороги не изменены; связанные переносы/guards относятся к соседним задачам пачки и #1226. Этот smoke не объявляется целиком прошедшим.\n\nПросьба проверить membership двух групп, сохранение holes/empty и отсутствие повторного округлённого polyclip на обычном current floor. E2E-impact передаётся координатору отдельно: synthetic rendering regression не заменяет HA E2E.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T14:13:21.541Z",
-        "artifactId": 13238425132,
-        "runId": 41650960785,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T14:13:25Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41650960785",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1233": {
@@ -2286,19 +2153,7 @@
     1237,
     1236
   ],
-  "active": {
-    "issue": 1232,
-    "worker": "finish",
-    "token": "104:finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:1:admit",
-    "fence": 104,
-    "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-    "expectedBase": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793714916295,
-    "expiresAt": 1793718826808,
-    "patchId": "92871cee59cc4cfb6916f2ad64c2efbbec954dfa",
-    "reviewRequest": "review:1232:1:92871cee59cc4cfb6916f2ad64c2efbbec954dfa:f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8"
-  },
+  "active": null,
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
       "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
@@ -2372,54 +2227,6 @@
       "digest": "7304de378b9c11d2ff1cb49201929631c47e45ff17ecc87ff07e445bf051d3ce",
       "issue": 1230
     },
-    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:2:synchronized": {
-      "digest": "af1e653080eaff7f4e9f11daa7e4f58a3b87f311bd64b635ac5bd4c1797a9f86",
-      "issue": 1232
-    },
-    "github:41650780379:1:completions:message:6ebcf6cd34dd4b5b3d4173572ffa83e278c5f246a7d5c7f722f8f0c0c6596387": {
-      "digest": "2564664d03639dfef09c69ebdd9480918d5223e1373bb40c5bc1c44b728126bf",
-      "issue": 1232
-    },
-    "github:41650780379:1:completions:message:7abc3c3bfdbcffbb0316b4446e433dceda263390ba3d806c9308d53f0b15a860": {
-      "digest": "ee1cf134c2ec5e3fc1baf9c1d77aaca8270fe3493eee3592501e7625705a2277",
-      "issue": 1232
-    },
-    "finish:d89fb948-e5dd-408f-a9b4-b62aea8ccf96": {
-      "digest": "9c180ff5118c63d94ca38db23fcd8a9d288d0cc2f2e570ade08d917fcc245e6b",
-      "issue": 1232
-    },
-    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:3:s6-label": {
-      "digest": "4bc7812564c9dd682e3e0860d77c9e6fdc3cfd920075dd92f3b21bfbf6705642",
-      "issue": 1232
-    },
-    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:4:review-requested": {
-      "digest": "5a393550e68345153370907d8925707c9ffde50aed249c9949ea5cc15c56cfeb",
-      "issue": 1232
-    },
-    "github:41650783732:1:completions:message:782fa5c90b9fa3afcb4063ac7ca6f41a0f7d5ce5596fbd9ccdf9c691f403a4ee": {
-      "digest": "d729693e0c7e602958e114c940c3754576d3fceabac90111116dbdcd45ae6bd8",
-      "issue": 1232
-    },
-    "github:41650783732:1:completions:message:9bab7780d0d4db76748d8aa035dd182b38bbc5a389dca162066ae3d025d8c9b3": {
-      "digest": "713f563c03bfb3a48883800e95b0035e5625ae41d5448f04677ff0df648e982d",
-      "issue": 1232
-    },
-    "dev-build:41650780379:1:webhook": {
-      "digest": "e1a58c0c56f58f6ffd8028828275466a19eed5efdc3b723fdcc64c385acf908f",
-      "issue": 1232
-    },
-    "dev-build:41650780379:1:webhook:42e78f7f-1cbc-480a-8ba9-7fceb5848f8f:delivered": {
-      "digest": "9b7ee76205cdcbfd6ac99dbd0554c232016812a495948eb83033703936d5df34",
-      "issue": 1232
-    },
-    "github:41651513005:1:tick:0:review-presentation": {
-      "digest": "b94077b45f5db9915e2e89d1ead5308af1c783ce99a5a38959881ddb6619139b",
-      "issue": 1232
-    },
-    "github:41651513005:1:tick:0:review-complete": {
-      "digest": "b61e6d1f9fc27aa0a7e8db5883867bea224446a1e09eea8add86b4c005e3ac27",
-      "issue": 1232
-    },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
       "digest": "851c6e1c8aa1c378ab4435b7494a3f1a4d4383057f9431bc1b2cbfe152a75d17",
       "issue": 1230,
@@ -2473,20 +2280,6 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f": {
-      "digest": "5995f0aa9519d17c8566d79efa3ae0a7dbe59ed841bc9a5150c026ea9c6889ff",
-      "issue": 1232,
-      "message": {
-        "kind": "queued",
-        "issue": 1232,
-        "at": 1793714237867,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4125fd0798da1dd2aacfb68d5557f34086b5b2f7",
         "delivered": true
       }
     },
@@ -2545,48 +2338,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
-        "delivered": true
-      }
-    },
-    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:1:admit": {
-      "digest": "3764b6e157400216ecc549d67414d28ba968c494ccfc9a6456e7ab95cf20d84a",
-      "issue": 1232,
-      "message": {
-        "kind": "admitted",
-        "issue": 1232,
-        "at": 1793714916295,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4125fd0798da1dd2aacfb68d5557f34086b5b2f7",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:3:s6-complete": {
-      "digest": "a76b5966c2e0695de8516c5d004729d4d1f972cb2c5dc9dbdebedbafcc8edc95",
-      "issue": 1232,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1232,
-        "at": 1793714971267,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T140851808-5125c352",
-          "name": "Тесты для задачи #1232 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261103T140851808-5125c352/report.json",
-          "materialSha": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:09:26.173Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
