@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1393,
+  "revision": 1394,
   "nextTicket": 96,
   "nextFence": 96,
   "tasks": {
@@ -1727,7 +1727,18 @@
         "test/space-copy-runtime.test.mjs",
         "test/space-copy.test.mjs",
         "tests_backend/test_ha_space_copy.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793705114790,
+        "entry": 1,
+        "detail": "Браузер: space copy: failed",
+        "eventId": "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:6:return:return:1227"
+      }
     }
   },
   "ownerDecisions": {},
@@ -1833,18 +1844,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1227,
-    "worker": "github-coordinator",
-    "token": "95:github:41626530748:1:tick:0:admit",
-    "fence": 95,
-    "materialSha": "efa074d70f30b1c2d26b5e53b657797109dab7fb",
-    "expectedBase": "96ffe544474c6a0ffd40f005caa977afff308d26",
-    "phase": "testing",
-    "admittedAt": 1793704779588,
-    "expiresAt": 1793705394043,
-    "patchId": "ee78a8cbbe841a458773ebdf982ea33f321e7646"
-  },
+  "active": null,
   "events": {
     "github:41626530748:1:completions:message:7971239504d39e4dd3c929a21e11b35b75fe7301554e4e780bdf008436172112": {
       "digest": "06c4b3924929c5f24969f861d0c95cb366ec51872212caa656b67c1f0619ce69",
@@ -1894,6 +1894,10 @@
       "digest": "e45f4842fc428b0f96357d3933bbc3bd35cfc232796dbc44683d5037c24a3876",
       "issue": 1227
     },
+    "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:6:return": {
+      "digest": "7431a1544c8c4b5bf7ba10a7f3db9407eb89bda682864427da4bd82f6081fd3c",
+      "issue": 1227
+    },
     "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb": {
       "digest": "1e61753fdc132d2703cdff07afce9d98e4a9f700d5d2e9893f14b90ea1d477fb",
       "issue": 1227,
@@ -1933,6 +1937,26 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "96ffe544474c6a0ffd40f005caa977afff308d26"
+      }
+    },
+    "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:6:return:return:1227": {
+      "digest": "7431a1544c8c4b5bf7ba10a7f3db9407eb89bda682864427da4bd82f6081fd3c",
+      "issue": 1227,
+      "message": {
+        "kind": "return",
+        "issue": 1227,
+        "at": 1793705114790,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793705114790,
+          "entry": 1,
+          "detail": "Браузер: space copy: failed",
+          "eventId": "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:6:return:return:1227"
+        }
       }
     }
   },
