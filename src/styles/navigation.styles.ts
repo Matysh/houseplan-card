@@ -33,6 +33,7 @@ export const navigationStyles = unsafeCSS(css`
     color:var(--hp-accent); background:var(--hpf-tint, color-mix(in srgb, var(--hp-accent) 12%, transparent));
   }
   .hpf-navigation > .hpf-nav-item:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
+  .hpf-navigation > .hpf-nav-item.hp-dialog-return-focus:focus-visible { outline:none; }
   .hpf-nav-item > .tabtitle { line-height:42px; }
   .hpf-nav-item:has(> .tabedit) { padding:0; gap:0; }
   .hpf-nav-item:has(> .tabedit) > .tabtitle { padding-inline:12px; }

@@ -1,0 +1,1 @@
+{"schema":1,"issue":1248,"baseStable":"v1.83.0","category":"stable-fix","rationale":"Use the existing automatic return-focus policy on header controls without suppressing keyboard navigation.","summary":{"ru":"Убрана лишняя внешняя обводка после выхода из редактора.","en":"Remove duplicate outer focus rings after leaving an editor."}}

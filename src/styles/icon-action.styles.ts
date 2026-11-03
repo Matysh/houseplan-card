@@ -15,6 +15,7 @@ export const iconActionStyles = unsafeCSS(css`
   button.hpf-icon-action:not(:disabled) { cursor:pointer; }
   button.hpf-icon-action.on { background:transparent; color:var(--primary-text-color); border-color:var(--primary-color); z-index:1; }
   button.hpf-icon-action:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; z-index:2; }
+  button.hpf-icon-action.hp-dialog-return-focus:focus-visible { outline:none; }
   button.hpf-icon-action:not(:disabled):active { background:color-mix(in srgb,var(--primary-color) 16%,transparent); }
   button.hpf-icon-action:disabled { opacity:.5; cursor:not-allowed; }
   button.hpf-icon-action[hidden],.hpf-icon-group[hidden] { display:none!important; }

@@ -1,3 +1,4 @@
+import { prepareDialogReturnFocus } from './dialog-return-focus';
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
 import { assertFiniteColumnInputs } from './column-input';
 import { commitGraphEdit, commitGraphEditResult, type GraphEditIntent, type GraphEditResult } from './graph-edit-intent';
@@ -1317,6 +1318,12 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     // retarget. The new frame/available stage only changes its relative zoom.
     const targetZoom = this.host._zoom;
     this.host._mode = mode;
+    if (mode === 'view' && previousMode !== 'view') {
+      const active = this.host.renderRoot instanceof ShadowRoot ? this.host.renderRoot.activeElement : null;
+      if (active instanceof HTMLElement && active.matches('.hpf-nav-item,.hpf-icon-action')) {
+        prepareDialogReturnFocus(active);
+      }
+    }
     if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
     if (previousMode === 'devices' && mode !== 'devices') {
       this.host._deviceInbox = null;
