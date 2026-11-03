@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { QueueController, MemoryQueueStore } from '../lib/queue.mjs';
 import { reconcileTaskCompletions, notifyDevWebhook } from '../lib/task-completion.mjs';
+import { publishReviewReceipt } from '../lib/review-publication.mjs';
 import { runDevBuildDelivery } from '../templates/coordinator-dev-build.mjs';
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40);
@@ -354,4 +355,84 @@ test('partial attempt and final report of one request receive independent public
     publishReview: async value => { published.push(value.resultKey ?? 'final'); return { published: true }; } });
   assert.deepEqual(published, ['attempt-1', 'final']);
   assert.deepEqual((await f.queue.store.read()).state.reviewPublications, {});
+});
+
+async function acceptedFixture() {
+  const f = await fixture(), snapshot = await f.queue.store.read();
+  const requestId = 'review:9:accepted';
+  Object.assign(snapshot.state.tasks[9], { track: 'show', reviewRequest: requestId, mergedFromStatus: 'S7-code-review' });
+  snapshot.state.reviewPublications = { accepted: { issue: 9, kind: 'code', requestId, materialSha: B, status: 'pending' } };
+  await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+  f.issue.labels = ['track:show', 'S7-code-review', 'to_release'];
+  f.api.root = '/repos/owner/repo';
+  const rows = () => [...f.comments.entries()].map(([marker, body], index) => ({ id: index + 1,
+    body: body.startsWith(marker) ? body : `${marker}\n${body}`, user: { login: 'github-actions[bot]' } }));
+  f.api.request = async (method, path) => {
+    assert.equal(method, 'GET'); assert.match(path, /\/comments\?/); return rows();
+  };
+  const append = f.api.upsertComment;
+  f.api.upsertComment = async (...args) => { await append(...args); return rows().find(row => row.body.startsWith(args[1].marker)); };
+  const receipt = { requestId, issue: 9, kind: 'code', materialSha: B, verdict: 'accepted',
+    markdown: 'Полный принятый разбор.\n\nПроверены логика, границы и предложенные альтернативы.' };
+  let calls = 0;
+  const publish = async (record, options = {}) => {
+    calls++; assert.equal(record.requestId, requestId);
+    return publishReviewReceipt({ api: f.api, receipt, ...options });
+  };
+  return { ...f, receipt, publish, calls: () => calls };
+}
+
+test('current accepted report is published once inside actual merge and acknowledged after the full text', async () => {
+  const f = await acceptedFixture();
+  const complete = eventId => reconcileTaskCompletions({ ...f, issue: 9, eventId, activated: true, publishReview: f.publish });
+  const result = await complete('accepted-merge');
+  assert.equal(result.completed.length, 1); assert.equal(f.calls(), 1); assert.equal(f.comments.size, 1);
+  const body = [...f.comments.values()][0];
+  assert.match(body, /Задача #9 слита в dev/); assert.match(body, /S7 → S8/);
+  assert.match(body, /Код-ревью.*принято/); assert.ok(body.includes(f.receipt.markdown));
+  assert.deepEqual((await f.queue.store.read()).state.reviewPublications, {});
+  const writes = { ...f.writes }; await complete('completed-replay');
+  assert.deepEqual(f.writes, writes); assert.equal(f.calls(), 1);
+});
+
+test('lost combined comment response retries only delivery and preserves its original metadata snapshot', async () => {
+  const f = await acceptedFixture(); f.loseCommentResponse();
+  const complete = eventId => reconcileTaskCompletions({ ...f, issue: 9, eventId, activated: true, publishMergedReview: f.publish });
+  const first = await complete('combined-lost-response');
+  assert.equal(first.pending.length, 1); assert.equal(f.comments.size, 1);
+  assert.equal(Object.values((await f.queue.store.read()).state.reviewPublications).length, 1);
+  const original = [...f.comments.values()][0], writes = { ...f.writes };
+  assert.equal((await complete('combined-retry')).completed.length, 1);
+  assert.equal([...f.comments.values()][0], original); assert.deepEqual(f.writes, writes);
+  assert.deepEqual((await f.queue.store.read()).state.reviewPublications, {});
+  assert.equal((await f.queue.store.read()).state.active, null);
+});
+
+test('existing standalone accepted report stays unchanged and receives only the actual merge summary', async () => {
+  const f = await acceptedFixture(); await publishReviewReceipt({ api: f.api, receipt: f.receipt });
+  const original = [...f.comments.values()][0];
+  const result = await reconcileTaskCompletions({ ...f, issue: 9, eventId: 'legacy-accepted', activated: true, publishMergedReview: f.publish });
+  assert.equal(result.completed.length, 1); assert.equal(f.comments.size, 2);
+  assert.equal([...f.comments.values()][0], original);
+  assert.match([...f.comments.values()][1], /Задача #9 слита в dev/);
+  assert.equal([...f.comments.values()].filter(body => body.includes(f.receipt.markdown)).length, 1);
+});
+
+test('external timeline can skip superseded missing reports while publishing the current merged report', async () => {
+  const f = await acceptedFixture(), snapshot = await f.queue.store.read();
+  snapshot.state.reviewPublications.old = { issue: 9, kind: 'code', requestId: 'review:9:old', status: 'pending' };
+  await f.queue.store.compareAndSwap(snapshot.version, snapshot.state);
+  const result = await reconcileTaskCompletions({ ...f, issue: 9, eventId: 'superseded-and-current', activated: true, publishMergedReview: f.publish });
+  assert.equal(result.completed.length, 1); assert.equal(f.calls(), 1); assert.equal(f.comments.size, 1);
+  assert.deepEqual(Object.values((await f.queue.store.read()).state.reviewPublications).map(record => record.requestId), ['review:9:old']);
+});
+
+test('failed older publication defers the combined report without preventing S8 bookkeeping', async () => {
+  const f = await acceptedFixture();
+  const blocked = await reconcileTaskCompletions({ ...f, issue: 9, eventId: 'older-pending', activated: true,
+    publishMergedReview: f.publish, deferredIssues: [9] });
+  assert.equal(blocked.pending.length, 1); assert.equal(f.calls(), 0); assert.equal(f.comments.size, 0);
+  assert.ok(f.issue.labels.includes('S8-merged')); assert.equal(f.issue.milestone.number, 7);
+  const result = await reconcileTaskCompletions({ ...f, issue: 9, eventId: 'older-delivered', activated: true, publishMergedReview: f.publish });
+  assert.equal(result.completed.length, 1); assert.equal(f.comments.size, 1);
 });

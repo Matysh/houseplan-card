@@ -54,6 +54,48 @@ test('report discovery survives replacement of the current specification before 
   assert.equal(h.state.specReviews[55].requestId, 'spec:55:second');
 });
 
+test('spec resubmission records one immutable corrections snapshot only after a negative review', () => {
+  const h = harness();
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:first', base: A }, reviewChanges: 'Initial approach' });
+  assert.equal(Object.values(h.state.events).filter(record => record.message?.kind === 'spec-resubmitted').length, 0);
+  h.event({ type: 'spec-complete', issue: 55, requestId: 'spec:55:first', verdict: 'changes_requested' });
+  h.event({ type: 'transition-observed', issue: 55, kind: 'spec', requestId: 'spec:55:first', fromStatus: 'S4-spec-review', toStatus: 'S3-spec' });
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:second', base: A }, reviewChanges: 'AC2 clarified; cancellation retained.' });
+  let messages = Object.values(h.state.events).map(record => record.message).filter(message => message?.kind === 'spec-resubmitted');
+  assert.equal(messages.length, 1); assert.equal(messages[0].reviewChanges, 'AC2 clarified; cancellation retained.');
+  assert.equal(messages[0].transitionConfirmed, true); assert.equal(messages[0].fromStatus, 'S3-spec'); assert.equal(messages[0].toStatus, 'S4-spec-review');
+  h.event({ type: 'spec-retry', issue: 55, requestId: 'spec:55:second', runId: 42 });
+  h.event({ type: 'spec-requested', issue: 55, request: { requestId: 'spec:55:third', base: B }, reviewChanges: 'Later material' });
+  messages = Object.values(h.state.events).map(record => record.message).filter(message => message?.kind === 'spec-resubmitted');
+  assert.equal(messages.length, 1); assert.equal(messages[0].reviewChanges, 'AC2 clarified; cancellation retained.');
+});
+
+test('only fresh substantive code-review submissions create S6 messages; technical continuation does not impersonate corrections', () => {
+  const h = harness(); let token = prepared(h);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed', reviewChanges: 'Initial approach' });
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'review:1:first' });
+  h.event({ type: 'resynchronize', issue: 1, token });
+  h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B });
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed', reviewChanges: 'Same pending review' });
+  let submissions = Object.values(h.state.events).map(record => record.message).filter(message => message?.kind === 's6-complete');
+  assert.equal(submissions.length, 1); assert.equal(submissions[0].resubmission, false);
+  h.event({ type: 'return', issue: 1, token, reason: 'review-findings' });
+  h.event({ type: 'enqueue', task: task(1) }); h.event({ type: 'admit' }); token = h.state.active.token;
+  h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B });
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed', reviewChanges: 'Fixed cancellation and retry' });
+  submissions = Object.values(h.state.events).map(record => record.message).filter(message => message?.kind === 's6-complete');
+  assert.equal(submissions.length, 2); assert.equal(submissions[1].resubmission, true);
+  assert.equal(submissions[1].reviewChanges, 'Fixed cancellation and retry'); assert.equal(submissions[0].reviewChanges, 'Initial approach');
+  assert.equal(h.state.tasks[1].reviewCorrection, undefined);
+  h.event({ type: 'review-requested', issue: 1, token, materialSha: B, requestId: 'review:1:second' });
+  h.event({ type: 'resynchronize', issue: 1, token });
+  h.event({ type: 'synchronized', issue: 1, token, expectedBase: A, materialSha: B, patchId: 'changed-own-patch' });
+  assert.equal(h.state.active.reviewRequest, undefined);
+  h.event({ type: 's6-complete', issue: 1, token, materialSha: B, outcome: 'passed', reviewChanges: 'Own patch changed during synchronization' });
+  submissions = Object.values(h.state.events).map(record => record.message).filter(message => message?.kind === 's6-complete');
+  assert.equal(submissions.length, 3); assert.equal(submissions[2].resubmission, false);
+});
+
 test('service-event metadata survives JSON storage without undefined fields changing the state', () => {
   const h = harness();
   h.event({ type: 'enqueue', task: task(1, 'ship') });

@@ -29,7 +29,8 @@ const timeText = value => {
   return Number.isFinite(date.getTime()) ? date.toISOString().replace('T', ' ').replace('.000Z', ' UTC') : null;
 };
 const DETAILS_LAYOUT = '<!-- process-next-review-layout:details-v1 -->';
-const escapeHtml = text => text.replace(/[&<>]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[char]);
+const MERGED_LAYOUT = '<!-- process-next-review-layout:merge-details-v1 -->';
+export const escapeHtml = text => text.replace(/[&<>]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[char]);
 
 function plainChunks(markdown) {
   const chunks = []; let text = '', size = 0;
@@ -44,7 +45,7 @@ function plainChunks(markdown) {
   return chunks;
 }
 
-function reviewChunks(markdown) {
+export function reviewChunks(markdown) {
   const boundaries = []; let offset = 0, fence = null, details = 0;
   for (const line of markdown.match(/[^\n]*\n|[^\n]+$/g) ?? []) {
     const token = line.match(/^ {0,3}(`{3,}|~{3,})([^\n]*)/);
@@ -102,8 +103,8 @@ function presentationText(receipt) {
   const status = p.currentStatus ?? (p.transition?.confirmed ? p.transition.to : null);
   let next = p.next;
   if (!next && verdict === 'changes_requested') {
-    if (status === 'S3-spec' && receipt.kind === 'spec') next = 'Исполнитель исправляет ТЗ на S3, отдельным комментарием описывает исправления и передаёт новую редакцию на ревью.';
-    if (status === 'S6-in-progress' && receipt.kind === 'code') next = 'Исполнитель исправляет код на S6, выполняет адресные проверки и отдельным комментарием описывает правки перед следующим ревью.';
+    if (status === 'S3-spec' && receipt.kind === 'spec') next = 'Исполнитель исправляет ТЗ на S3; описание «замечание → исправление» публикуется вместе с повторной передачей новой редакции на ревью.';
+    if (status === 'S6-in-progress' && receipt.kind === 'code') next = 'Исполнитель исправляет код на S6 и выполняет адресные проверки; описание «замечание → исправление» публикуется вместе с повторной передачей на код-ревью.';
   }
   if (!next && verdict === 'accepted') {
     if (status === 'S5-ready' && receipt.kind === 'spec') next = 'Исполнитель начинает реализацию на S6.';
@@ -139,7 +140,7 @@ async function appendOnce(api, issue, marker, body, comments) {
 /** Issue comments are the durable human report. Multipart preserves the complete text.
  * Repeating publication reads markers, never calls the model, and never edits product code.
  */
-export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.reportUrl }) {
+export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.reportUrl, merge }) {
   if (!receipt || !Number.isSafeInteger(receipt.issue) || receipt.issue < 1
     || !/^[A-Za-z0-9:_.-]{1,200}$/.test(receipt.requestId ?? '') || !receipt.markdown?.trim()) throw Error('Saved review receipt required');
   const identity = { requestId: receipt.requestId, materialSha: receipt.materialSha, base: receipt.base,
@@ -150,12 +151,61 @@ export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.
   const trusted = comment => ['github-actions[bot]', owner].includes(author(comment));
   const legacy = comments.find(comment => trusted(comment) && comment.body?.startsWith(markerFor(receipt, 0, true)) && legacyResultMatches(comment, receipt));
   const existingFirst = comments.find(comment => trusted(comment) && comment.body?.startsWith(markerFor(receipt, 0))) ?? legacy;
+  // Register separate defects before rendering their links in this same verdict.
+  // A retry recognizes their source markers without making another issue.
+  let outsideIssues = [], outsideError;
+  try { outsideIssues = await publishOutsideFindings({ api, receipt }); }
+  catch (error) { outsideError = error; }
+  const repository = api.root.replace(/^\/repos\//, '');
+  const outsideText = outsideIssues.length ? '\n\n**Отдельные дефекты вне объёма задачи:**\n\n'
+    + outsideIssues.map(number => `- [Задача №${number}](https://github.com/${repository}/issues/${number})`).join('\n')
+    + '\n\nИх регистрация сама по себе не блокирует текущую задачу и не расширяет её объём.' : '';
+  const mergedIdentity = `${markerFor(receipt, 0)}\n${MERGED_LAYOUT}`;
+  const existingMerged = comments.find(comment => trusted(comment) && comment.body?.includes(mergedIdentity));
+  const finish = async (merged, ids) => {
+    // The paid report remains visible even when filing a separate finding fails.
+    // Only that optional bookkeeping is retried; published text stays unchanged.
+    if (outsideError) return { published: false, pending: true, merged, comments: ids, outsideIssues, reason: outsideError.message };
+    if (outsideIssues.length && !outsideIssues.every(number => comments.some(comment => trusted(comment)
+      && ids.includes(comment.id) && comment.body?.includes(`/issues/${number})`)))) {
+      const marker = `<!-- process-next-review-outside:${receipt.requestId}:${resultIdentity(receipt)} -->`;
+      const body = `${marker}\n\nСсылки к ранее опубликованному ${receipt.kind === 'spec' ? 'ревью ТЗ' : 'код-ревью'} задачи №${receipt.issue}.${outsideText}`;
+      await appendOnce(api, receipt.issue, marker, body, comments.filter(trusted));
+    }
+    return { published: true, merged, comments: ids, outsideIssues };
+  };
+  if (existingMerged) return finish(true, [existingMerged.id]);
   // Resume an old multipart report at its original offsets; a formatting change
   // must not create gaps or duplicates after an already delivered first part.
   const oldLayout = existingFirst && !existingFirst.body.startsWith(`${markerFor(receipt, 0)}\n${DETAILS_LAYOUT}`);
   const chunks = oldLayout ? legacyChunks(receipt.markdown) : reviewChunks(receipt.markdown);
   const p = receipt.presentation ?? {}, title = `${receipt.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью'} задачи №${receipt.issue} — ${verdictText(receipt.verdict)}`
     + (p.round ? `, раунд ${p.round}` : '') + (p.attempt > 1 ? `, техническая попытка ${p.attempt}` : '');
+  const metadata = `\n\n<details>\n<summary>Материал и идентификаторы ревью</summary>\n\n\`\`\`json\n${JSON.stringify(identity)}\n\`\`\`\n\n</details>`;
+  const reportLink = reportUrl ? `\n\n[Запуск ревью](${reportUrl}). Полный текст сохранён в комментариях этой задачи.` : '';
+  const collapsed = chunk => `<details>\n<summary>Подробный разбор${chunk.plain ? ' — исходный Markdown' : ''}</summary>\n\n`
+    + `${chunk.plain ? `<pre>${escapeHtml(chunk.text)}</pre>` : chunk.text}\n\n</details>`;
+  // Only a new accepted report joins the actual merge. A previously published
+  // standalone/multipart report finishes in place; its history is never rewritten.
+  if (merge && !existingFirst && !comments.some(comment => trusted(comment) && comment.body?.startsWith(merge.marker))) {
+    if (receipt.kind !== 'code' || normalizedVerdict(receipt.verdict) !== 'accepted'
+      || !merge.marker?.startsWith('<!-- process-next-task-merged:') || !merge.body?.trim()) throw Error('Actual merge and accepted code review required');
+    const partLinks = [];
+    for (const [index, chunk] of chunks.entries()) {
+      const last = index === chunks.length - 1;
+      const marker = last ? merge.marker : `<!-- process-next-review:${receipt.requestId}:result:${resultIdentity(receipt)}:merged-part:${index + 1} -->`;
+      const heading = `## ${title}${chunks.length > 1 ? ` — часть ${index + 1} из ${chunks.length}` : ''}`;
+      const body = last
+        ? `${marker}\n${mergedIdentity}\n\n${merge.body}\n\n${heading}\n\n`
+          + (partLinks.length ? `${partLinks.join(' · ')}\n\n` : '') + collapsed(chunk) + metadata + outsideText + reportLink
+        : `${marker}\n${DETAILS_LAYOUT}\n\n${heading}\n\n${collapsed(chunk)}`;
+      const row = await appendOnce(api, receipt.issue, marker, body, comments.filter(trusted));
+      if (row && !comments.some(comment => comment.id === row.id)) comments.push(row);
+      published.push(row?.id ?? null);
+      if (!last && row?.id) partLinks.push(`[Часть ${index + 1}](https://github.com/${repository}/issues/${receipt.issue}#issuecomment-${row.id})`);
+    }
+    return finish(true, published);
+  }
   for (const [index, chunk] of chunks.entries()) {
     const marker = markerFor(receipt, index);
     const legacyPart = legacy && comments.find(comment => trusted(comment) && comment.body?.startsWith(markerFor(receipt, index, true)));
@@ -163,29 +213,16 @@ export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.
     const firstUrl = first?.html_url ?? first?.url ?? (first?.id ? `https://github.com/${api.owner ?? owner}/${api.repo ?? api.root.split('/')[3]}/issues/${receipt.issue}#issuecomment-${first.id}` : null);
     const heading = `## ${title}${chunks.length > 1 ? ` — часть ${index + 1} из ${chunks.length}` : ''}`;
     const context = index === 0 ? presentationText(receipt) : firstUrl ? `[Первая часть отчёта](${firstUrl}).` : '';
-    const metadata = index === 0 ? `\n\n<details>\n<summary>Материал и идентификаторы ревью</summary>\n\n\`\`\`json\n${JSON.stringify(identity)}\n\`\`\`\n\n</details>` : '';
-    const detail = chunk.plain ? `<pre>${escapeHtml(chunk.text)}</pre>` : chunk.text;
-    const detailLabel = `Подробный разбор${chunk.plain ? ' — исходный Markdown' : ''}`;
     // A partially delivered old report retains its original raw layout as well
     // as offsets; only newly started reports use independently closed spoilers.
-    const collapsed = oldLayout ? chunk.text : `<details>\n<summary>${detailLabel}</summary>\n\n${detail}\n\n</details>`;
-    const body = `${marker}${oldLayout ? '' : '\n' + DETAILS_LAYOUT}\n\n${heading}\n\n${context ? context + '\n\n' : ''}${collapsed}${metadata}`
-      + (index === chunks.length - 1 && reportUrl ? `\n\n[Запуск ревью](${reportUrl}). Полный текст сохранён в комментариях этой задачи.` : '');
+    const body = `${marker}${oldLayout ? '' : '\n' + DETAILS_LAYOUT}\n\n${heading}\n\n${context ? context + '\n\n' : ''}${oldLayout ? chunk.text : collapsed(chunk)}`
+      + (index === 0 ? metadata : '') + (index === chunks.length - 1 ? outsideText + reportLink : '');
     // An old event stays unchanged even if wording or current status differs.
     const result = legacyPart ?? await appendOnce(api, receipt.issue, marker, body, comments.filter(trusted));
     if (result && !comments.some(comment => comment.id === result.id)) comments.push(result);
     published.push(result?.id ?? null);
   }
-  const outsideIssues = await publishOutsideFindings({ api, receipt });
-  if (outsideIssues.length) {
-    const marker = `<!-- process-next-review-outside:${receipt.requestId}:${resultIdentity(receipt)} -->`;
-    const repository = api.root.replace(/^\/repos\//, '');
-    const body = `${marker}\n\n**Отдельные дефекты из ${receipt.kind === 'spec' ? 'ревью ТЗ' : 'код-ревью'} задачи №${receipt.issue}**\n\n`
-      + outsideIssues.map(number => `- [Задача №${number}](https://github.com/${repository}/issues/${number})`).join('\n')
-      + '\n\nЭто самостоятельные дефекты вне объёма текущей задачи. Их регистрация сама по себе не блокирует её и не расширяет её скоуп.';
-    await appendOnce(api, receipt.issue, marker, body, comments.filter(trusted));
-  }
-  return { published: true, comments: published, outsideIssues };
+  return finish(false, published);
 }
 
 /** Only explicitly separated, evidenced defects are filed. Improvements are never filed implicitly. */

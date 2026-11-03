@@ -33,9 +33,14 @@ function milestoneText(result, current) {
     : 'Задача не включается в пользовательский milestone этого цикла.';
 }
 
+// The merged state is produced only after the accepted current review and an
+// actual merge. Earlier rounds and incomplete attempts keep their own reports.
+export const canEmbedAcceptedReview = (record, task) => record.kind === 'code' && !record.resultKey
+  && task?.status === 'S8-merged' && task.track !== 'ship' && record.requestId === task.reviewRequest;
+
 /** Post-merge bookkeeping only. Missing facts/API access never undo a merge or hold its slot. */
 export async function reconcileTaskCompletions({ queue, api, git, eventId, issue, activated = false,
-  publishReview, readMilestone = readTaskReleaseMilestone, limit = 20, deferredIssues = [] } = {}) {
+  publishReview, publishMergedReview = publishReview, readMilestone = readTaskReleaseMilestone, limit = 20, deferredIssues = [] } = {}) {
   const { state } = await queue.store.read();
   if (!activated) return { planned: true, completed: [], pending: [] };
   const deferred = new Set(deferredIssues);
@@ -57,7 +62,8 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
   // Retried presentation reads the already-paid result. It does not move task/spec statuses.
   // Only the serialized coordinator supplies the publisher; ordinary finish is read-only here.
   const pendingPresentations = pendingReviewPublications(state);
-  const requested = publishReview ? pendingPresentations.filter(record => selected(record.issue) && !deferred.has(record.issue)) : [];
+  const requested = publishReview ? pendingPresentations.filter(record => selected(record.issue) && !deferred.has(record.issue)
+    && !canEmbedAcceptedReview(record, state.tasks[record.issue])) : [];
   const groups = batch([...new Set(requested.map(record => record.issue))]);
   const quota = Math.max(1, Math.floor(limit / (groups.length || 1)));
   const order = record => Date.parse(record.presentation?.occurredAt ?? record.occurredAt ?? '') || Number(record.runId) || 0;
@@ -129,8 +135,10 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
       outcomes.notices.push({ issue: Number(number), kind: 'spec', status: 'delivered' });
     } catch (error) { outcomes.notices.push({ issue: Number(number), kind: 'spec', status: 'pending', reason: error.message }); }
   }
-  const tasks = batch(all.filter(task => task.status === 'S8-merged' && task.completion?.status !== 'complete'));
+  const tasks = batch(all.filter(task => task.status === 'S8-merged' && (task.completion?.status !== 'complete'
+    || pendingPresentations.some(record => canEmbedAcceptedReview(record, task)))));
   for (const task of tasks) {
+    const mergedReview = pendingPresentations.find(record => canEmbedAcceptedReview(record, task));
     const result = { labels: false, milestone: false, comment: false, ...task.completion,
       status: 'pending', errors: { ...task.completion?.errors } };
     delete result.lastAttemptAt;
@@ -142,7 +150,7 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
     if (!result.milestone && result.classificationAt) try {
       classificationUnchanged = result.classificationAt === await devHead();
     } catch { /* A failed head read is retryable; it must not pin missing input forever. */ }
-    if (classificationUnchanged && result.labels && result.comment && result.commentCurrent && !result.pendingComment) {
+    if (classificationUnchanged && result.labels && result.comment && result.commentCurrent && !result.pendingComment && !mergedReview) {
       outcomes.pending.push({ issue: task.issue, ...result }); continue;
     }
     let current;
@@ -192,8 +200,9 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
       result.commentCurrent = !!result.comment && result.commentDigest === commentDigest;
       // Publication order affects comments only. Labels/milestone above are
       // repaired even when an earlier report or service message is unavailable.
-      const publicationDeferred = deferred.has(task.issue) || !!publishReview && pendingPresentations.some(record =>
-        record.issue === task.issue && !deliveredReviews.has(reviewKey(record)));
+      const publicationDeferred = deferred.has(task.issue) || mergedReview && !publishMergedReview
+        || !!publishReview && pendingPresentations.some(record => record !== mergedReview
+          && record.issue === task.issue && !deliveredReviews.has(reviewKey(record)));
       if (!publicationDeferred) try {
         const repoUrl = `https://github.com/${api.owner}/${api.repo}`;
         // A failed response keeps the exact pending payload. A later recovery gets
@@ -215,8 +224,18 @@ export async function reconcileTaskCompletions({ queue, api, git, eventId, issue
             body, digest: commentDigest, facts,
           };
         }
+        let mergedReportPublished = false;
+        if (mergedReview) {
+          const delivery = await publishMergedReview(mergedReview,
+            !result.comment && result.pendingComment ? { merge: result.pendingComment } : {});
+          if (!delivery?.published) throw Error('Review presentation is still pending');
+          await save({ type: 'review-presentation', issue: task.issue, kind: mergedReview.kind,
+            requestId: mergedReview.requestId, status: 'delivered' });
+          mergedReportPublished = delivery.merged === true;
+          outcomes.reviews.push({ issue: task.issue, kind: mergedReview.kind, status: 'delivered', merged: mergedReportPublished });
+        }
         if (result.pendingComment) {
-          await api.upsertComment(task.issue, result.pendingComment);
+          if (!mergedReportPublished) await api.upsertComment(task.issue, result.pendingComment);
           result.comment = true; result.commentDigest = result.pendingComment.digest;
           result.commentFacts = result.pendingComment.facts; delete result.pendingComment;
         }

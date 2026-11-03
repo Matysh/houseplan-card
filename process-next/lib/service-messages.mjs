@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { reviewChunks, escapeHtml } from './review-publication.mjs';
 
 const statusNames = {
   'S1-new': 'Новая', 'S2-analysis': 'Анализ', 'S3-spec': 'Подготовка ТЗ',
@@ -10,6 +11,9 @@ const statusText = value => statusNames[value] ? `${value.slice(0, 2)} «${statu
 const currentStatus = issue => (issue.labels ?? []).map(label => typeof label === 'string' ? label : label.name)
   .find(label => Object.hasOwn(statusNames, label));
 const timeText = at => Number.isFinite(at) ? new Date(at).toISOString() : 'время не сохранено';
+const hiddenMessage = message => ['queued', 'admitted', 'resynchronize', 'spec-skipped', 'spec-requested', 'spec-replaced',
+  'review-requested', 'review-started', 'spec-started', 'model-started'].includes(message.kind)
+  || message.kind === 's6-complete' && (message.phase !== 'review' || message.track === 'ship' || message.newReview === false);
 const link = value => {
   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href.replaceAll(')', '%29') : null; }
   catch { return null; }
@@ -48,17 +52,15 @@ function evidenceText(message) {
 function renderMessage(message, issue, state) {
   if (message.kind === 'return' && message.notice) message = { ...message, ...message.notice, toStatus: 'S6-in-progress' };
   if (message.kind === 'spec-attention' && message.notice) message = { ...message, ...message.notice, toStatus: 'S4-spec-review' };
-  const specNotice = ['spec-attention', 'spec-replaced', 'spec-skipped'].includes(message.kind);
+  const specNotice = ['spec-attention', 'spec-resubmitted'].includes(message.kind);
   const actual = currentStatus(issue), task = specNotice ? state.specReviews?.[message.issue] : state.tasks?.[message.issue];
   const active = state.active?.issue === message.issue ? state.active : null;
   const expected = message.toStatus ?? (specNotice ? 'S4-spec-review' : message.kind === 'dev-build' ? 'S8-merged'
-    : ['admitted', 's6-complete'].includes(message.kind) && message.phase === 'review' ? 'S7-code-review'
-      : message.kind === 'admitted' && message.phase === 'ready-to-merge' ? task?.status ?? actual : 'S6-in-progress');
+    : message.kind === 's6-complete' ? 'S7-code-review' : 'S6-in-progress');
   const laterEntry = message.kind === 'spec-attention' ? !!task?.requestId && task.requestId !== message.key
-    : message.kind === 'spec-replaced' ? Number.isSafeInteger(task?.round) && task.round !== message.round
+    : message.kind === 'spec-resubmitted' ? !!task?.requestId && task.requestId !== message.requestId
     : task?.reviewEntry !== undefined && message.entry !== undefined && task.reviewEntry !== message.entry;
-  const laterPhase = !specNotice && !!task && (message.kind === 'queued' ? !state.waiting?.includes(message.issue)
-    : message.kind === 'return' ? !!task.queued || !!active
+  const laterPhase = !specNotice && !!task && (message.kind === 'return' ? !!task.queued || !!active
       : message.kind !== 'dev-build' && (!active || message.phase && message.phase !== active.phase));
   const delayed = issue.state === 'closed' || !!actual && actual !== expected || laterEntry || laterPhase;
   const status = issue.state === 'closed' ? 'Задача уже закрыта; текущий статус не изменён.'
@@ -69,45 +71,17 @@ function renderMessage(message, issue, state) {
   const entry = message.entry === undefined ? '' : ` — вход ${message.entry}`;
   let title, detail, next;
   switch (message.kind) {
-    case 'spec-skipped':
-      title = `Задача №${message.issue} готова к реализации`;
-      detail = `Для установленного трека ${code(message.track)} отдельное ревью ТЗ не предусмотрено. Этап пропущен, а не объявлен успешно выполненным.`;
-      next = 'начать реализацию на S6';
-      break;
-    case 'queued':
-      title = `Задача №${message.issue} поставлена в очередь завершения${entry}`;
-      detail = 'Работа передана на финальную актуализацию относительно dev и подготовку S6.';
-      next = message.track === 'ship' ? 'после допуска завершить короткий S6 и выполнить слияние; индивидуальное ревью для ship не предусмотрено'
-        : 'после допуска завершить S6 и передать материал на код-ревью';
-      if (message.layer === 'docs') detail += ' Изменены только документы; прогонов нет.';
-      break;
-    case 'admitted':
-      title = `Получен слот очереди для задачи №${message.issue}${entry}`;
-      if (message.phase === 'review') {
-        detail = 'Возобновлено получение результата уже запрошенного код-ревью. Актуализация и проверки S6 заново не запускаются.';
-        next = 'дождаться результата этого ревью; после принятия — слияние';
-      } else if (message.phase === 'ready-to-merge') {
-        detail = 'Возобновлено слияние уже подготовленной задачи. Применимые результаты S6 сохранены. '
-          + (message.track === 'ship' ? 'Индивидуальное ревью для ship не предусмотрено.' : 'Принятое ревью сохранено.');
-        next = 'выполнить слияние; повторные проверки и вызов модели не требуются';
-      } else {
-        detail = 'Начат финальный участок завершения: ветка актуализируется относительно dev при необходимости.';
-        next = message.layer === 'docs' ? 'завершить подготовку без тестов, сборки и линтеров'
-          : 'выполнить выбранные адресные проверки S6; подробный прогресс остаётся в окне запуска и логе';
-      }
-      break;
     case 's6-complete':
-      title = message.layer === 'docs' ? `Подготовка задачи №${message.issue} завершена — прогонов нет`
-        : `Проверки S6 задачи №${message.issue} завершены`;
+      title = message.resubmission ? `Внесены правки по код-ревью; повторно передано — задача №${message.issue}`
+        : `Передано на код-ревью — задача №${message.issue}`;
       detail = evidenceText(message);
-      next = message.phase === 'review' ? 'ожидаем ревьюера; затем выполняется только содержательное код-ревью'
-        : message.track === 'ship' ? 'слияние в dev; индивидуальное ревью для ship не предусмотрено'
-          : 'слияние в dev; ранее принятое применимое ревью зачтено, новый вызов модели не требуется';
+      next = 'ожидаем ревьюера; затем выполняется только содержательное код-ревью';
       break;
-    case 'resynchronize':
-      title = `Задаче №${message.issue} требуется повторная актуализация относительно dev${entry}`;
-      detail = 'Основание ветки изменилось перед слиянием. Сохранённые результаты не отменены автоматически.';
-      next = 'актуализировать ветку, определить применимость прежних результатов и проверить только необходимое; при изменении собственного кода потребуется новый раунд ревью';
+    case 'spec-resubmitted':
+      title = `Внесены правки по ревью ТЗ; повторно передано — задача №${message.issue}`;
+      detail = `После замечаний к ТЗ${message.previousRound ? ` в раунде ${message.previousRound}` : ''} передана новая редакция${message.round ? ` на раунд ${message.round}` : ''}. `
+        + 'Требования и ответы исполнителя зафиксированы при передаче; прежний отрицательный вердикт остаётся в истории.';
+      next = 'получить содержательное ревью исправленного ТЗ';
       break;
     case 'return': {
       if (message.reason === 'review-findings') throw Error('Review findings belong in the complete review report');
@@ -132,12 +106,6 @@ function renderMessage(message, issue, state) {
       next = 'разобрать служебный сбой и восстановить запуск; если результат уже сохранён, повторить только его публикацию, без нового вызова модели';
       break;
     }
-    case 'spec-replaced':
-      title = `Материал ТЗ задачи №${message.issue} изменён${message.round ? ` — раунд ${message.round}` : ''}`;
-      detail = `Тело задачи изменено во время S4: вместо предыдущей редакции${message.previousRound ? ` (раунд ${message.previousRound})` : ''} передана новая редакция${message.round ? ` для раунда ${message.round}` : '; номер старого раунда не был сохранён'}. `
-        + 'Это новый материал, а не технический повтор. Предыдущий запрос сохранён; его результат публикуется отдельно, когда становится доступен.';
-      next = 'получить содержательное ревью новой редакции; прежний отчёт остаётся в истории и не заменяется новым вердиктом';
-      break;
     case 'dev-build':
       title = `Изменение задачи №${message.issue} доставлено в dev-build`;
       detail = 'Публикация сборки на ветке dev-build подтверждена. Это не подтверждает, что браузер стенда уже загрузил обновление.';
@@ -152,6 +120,19 @@ function renderMessage(message, issue, state) {
   return lines.join('\n\n');
 }
 
+function messageParts(message, issue, state) {
+  const body = renderMessage(message, issue, state);
+  if (!['s6-complete', 'spec-resubmitted'].includes(message.kind)) return [body];
+  const changes = typeof message.reviewChanges === 'string' ? message.reviewChanges.trim() : '';
+  if (!changes) return [body + (message.resubmission || message.kind === 'spec-resubmitted'
+    ? '\n\nОтдельное описание исправлений исполнитель не приложил. В комментарии не предполагается, какие именно замечания исправлены.' : '')];
+  const label = message.resubmission || message.kind === 'spec-resubmitted' ? 'Исправления и ответы исполнителя' : 'Контекст исполнителя';
+  const chunks = reviewChunks(changes);
+  return chunks.map((chunk, index) => `${index ? `**${label} — задача №${message.issue}, продолжение ${index + 1} из ${chunks.length}**` : body}\n\n`
+    + `<details>\n<summary>${label}${chunks.length > 1 ? ` — часть ${index + 1} из ${chunks.length}` : ''}</summary>\n\n`
+    + `${chunk.plain ? `<pre>${escapeHtml(chunk.text)}</pre>` : chunk.text}\n\n</details>`);
+}
+
 /** Publish pending messages from the existing delivery records; never alter task readiness. */
 export async function publishServiceMessages({ queue, api, eventId, onlyMessageIds }) {
   const outcomes = { published: [], pending: [] };
@@ -162,16 +143,23 @@ export async function publishServiceMessages({ queue, api, eventId, onlyMessageI
   const blockedIssues = new Set();
   for (const [messageId, record] of Object.entries(state.events ?? {})) {
     const message = record?.message;
-    if (!message || message.delivered || selected && !selected.has(messageId)) continue;
+    if (!message || message.delivered) continue;
+    const digest = createHash('sha256').update(messageId).digest('hex');
+    if (hiddenMessage(message)) {
+      // Consume both new and already pending quiet events without touching old
+      // comments. An acknowledgement outage must not hold later visible history.
+      try { await queue.dispatch({ id: `${eventId}:message:${digest}`, type: 'message-delivered', messageId }); } catch { /* Retry on the next metadata tick. */ }
+      continue;
+    }
+    if (selected && !selected.has(messageId)) continue;
     const identity = { issue: message.issue, messageId };
     if (blockedIssues.has(message.issue)) {
       outcomes.pending.push({ ...identity, reason: 'Сначала ожидает публикации предыдущее событие этой задачи.' }); continue;
     }
     try {
       const issue = await api.getIssue(message.issue);
-      const digest = createHash('sha256').update(messageId).digest('hex');
-      await api.upsertComment(message.issue, {
-        marker: `<!-- process-next-event:${digest} -->`, body: renderMessage(message, issue, state),
+      for (const [index, body] of messageParts(message, issue, state).entries()) await api.upsertComment(message.issue, {
+        marker: `<!-- process-next-event:${digest}${index ? `:part:${index + 1}` : ''} -->`, body,
       });
       if (message.kind === 'return' && message.notice?.key) await queue.dispatch({
         id: `${eventId}:notice:${digest}`, type: 'task-notice', issue: message.issue, key: message.notice.key, status: 'delivered',

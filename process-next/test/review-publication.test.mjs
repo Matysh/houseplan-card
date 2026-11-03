@@ -103,13 +103,13 @@ test('partial multipart publication resumes missing parts without changing the d
 test('outside defects create separate source-marked issues, improvements do not, and retry repairs publication only', async () => {
   const f = fixture(); f.receipt.report.outsideFindings = [{ title: 'Existing lost write', problem: 'Concurrent save loses data', evidence: 'store.mjs:42 before this change', suggestedFix: 'Use the existing serialization path' }];
   f.failOnce(); await assert.rejects(publishReviewReceipt(f), /comment unavailable/);
-  assert.equal(f.issues.length, 0);
+  assert.equal(f.issues.length, 1, 'register once before embedding its link in the verdict');
   const first = await publishReviewReceipt(f);
   assert.deepEqual(first.outsideIssues, [100]); assert.equal(f.issues.length, 1);
   assert.match(f.issues[0].body, /process-next-outside:/); assert.match(f.issues[0].body, /issues\/12/);
   assert.deepEqual(f.issues[0].labels, ['bug', 'P2', 'S1-new']);
-  await publishReviewReceipt(f); assert.equal(f.issues.length, 1); assert.equal(f.comments.length, 2);
-  assert.match(f.comments[1].body, /issues\/100/);
+  await publishReviewReceipt(f); assert.equal(f.issues.length, 1); assert.equal(f.comments.length, 1);
+  assert.match(f.comments[0].body, /issues\/100/);
 });
 
 test('local owner-token replay recognizes its own report comments without a second copy', async () => {
@@ -185,7 +185,7 @@ test('a current rejection explains the author action without caller-supplied wor
   f.receipt.presentation = { currentStatus: 'S6-in-progress', transition: { from: 'S7-code-review', to: 'S6-in-progress', confirmed: true } };
   await publishReviewReceipt(f);
   assert.match(f.comments[0].body, /Следующий шаг:.*исправляет код на S6/);
-  assert.match(f.comments[0].body, /отдельным комментарием/);
+  assert.match(f.comments[0].body, /вместе с повторной передачей/);
 });
 
 test('accepted review followed by the ordinary merge reports completion, not delayed delivery', async () => {
@@ -193,4 +193,97 @@ test('accepted review followed by the ordinary merge reports completion, not del
   await publishReviewReceipt(f);
   assert.match(f.comments[0].body, /уже слито в dev/);
   assert.doesNotMatch(f.comments[0].body, /доставлен с задержкой|Следующий шаг/);
+});
+
+test('accepted code report and outside links are included in one actual merge comment', async () => {
+  const f = fixture(), merge = { marker: '<!-- process-next-task-merged:12:abc -->',
+    body: '## Задача #12 слита в dev\n\nПереведена **S7 → S8**; рабочая ветка удалена.' };
+  f.receipt.markdown = '## Проверенное решение\n\nПолный разбор принятого кода.\n\nАльтернатива и её ограничения.';
+  f.receipt.report.outsideFindings = [{ title: 'Separate defect', problem: 'Unrelated incorrect state', evidence: 'old.mjs:10', suggestedFix: 'Restore existing state' }];
+  const result = await publishReviewReceipt({ ...f, merge });
+  assert.equal(result.merged, true); assert.equal(f.comments.length, 1);
+  assert.ok(f.comments[0].body.startsWith(merge.marker));
+  assert.match(f.comments[0].body, /S7 → S8/);
+  assert.match(f.comments[0].body, /Код-ревью.*принято/);
+  assert.ok(f.comments[0].body.includes(`<summary>Подробный разбор</summary>\n\n${f.receipt.markdown}\n\n</details>`));
+  assert.match(f.comments[0].body, /issues\/100/);
+  const before = structuredClone(f.comments);
+  await publishReviewReceipt({ ...f, merge: { ...merge, body: 'Later changed status' } });
+  await publishReviewReceipt(f);
+  assert.deepEqual(f.comments, before, 'delivery retry or an old caller cannot duplicate the embedded report');
+  assert.equal(f.issues.length, 1);
+});
+
+test('multipart accepted report resumes safely and the actual merge is the last comment', async () => {
+  const f = fixture(), merge = { marker: '<!-- process-next-task-merged:12:def -->', body: '## Задача #12 слита в dev' };
+  f.receipt.markdown = '```html\n' + '<&>😀'.repeat(15_000) + '\n```\n';
+  const publish = f.api.comment; let calls = 0;
+  f.api.comment = async (...args) => { if (++calls === 2) throw Error('second part unavailable'); return publish(...args); };
+  await assert.rejects(publishReviewReceipt({ ...f, merge }), /second part unavailable/);
+  const first = structuredClone(f.comments[0]);
+  assert.doesNotMatch(first.body, /Задача #12 слита в dev/);
+  await publishReviewReceipt({ ...f, merge });
+  assert.deepEqual(f.comments[0], first);
+  const content = f.comments.map(comment => {
+    assert.ok(comment.body.length < 65_536);
+    const match = comment.body.match(/<pre>([^]*?)<\/pre>/);
+    assert.ok(match);
+    return match[1].replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+  }).join('');
+  assert.equal(content, f.receipt.markdown);
+  assert.ok(f.comments.at(-1).body.startsWith(merge.marker));
+  assert.match(f.comments.at(-1).body, /Часть 1/);
+  const before = structuredClone(f.comments);
+  await publishReviewReceipt({ ...f, merge }); assert.deepEqual(f.comments, before);
+});
+
+test('an already started standalone accepted report finishes unchanged before an ordinary merge', async () => {
+  const f = fixture(); f.receipt.markdown = 'A'.repeat(110_000);
+  const publish = f.api.comment; let calls = 0;
+  f.api.comment = async (...args) => { if (++calls === 2) throw Error('part unavailable'); return publish(...args); };
+  await assert.rejects(publishReviewReceipt(f), /part unavailable/);
+  const first = structuredClone(f.comments[0]);
+  const result = await publishReviewReceipt({ ...f, merge: { marker: '<!-- process-next-task-merged:12:abc -->', body: 'Merged' } });
+  assert.equal(result.merged, false); assert.equal(f.comments.length, 3);
+  assert.deepEqual(f.comments[0], first);
+  assert.ok(f.comments.every(comment => !comment.body.includes('process-next-task-merged:')));
+});
+
+test('legacy outside links can be repaired without rewriting an already published verdict', async () => {
+  const f = fixture(); await publishReviewReceipt(f);
+  const original = structuredClone(f.comments[0]);
+  f.receipt.report.outsideFindings = [{ title: 'Legacy defect', problem: 'Outside problem', evidence: 'file:1', suggestedFix: 'Local fix' }];
+  await publishReviewReceipt(f); await publishReviewReceipt(f);
+  assert.equal(f.comments.length, 2); assert.deepEqual(f.comments[0], original);
+  assert.match(f.comments[1].body, /Ссылки к ранее опубликованному/);
+  assert.equal(f.issues.length, 1);
+});
+
+test('outside issue failure never hides the complete verdict or merged report and recovery adds links once', async () => {
+  for (const combined of [false, true]) {
+    const f = fixture();
+    f.receipt.markdown = 'Полный отчёт должен быть доступен сразу, включая выводы и подробное обоснование.';
+    f.receipt.report.outsideFindings = [{ title: 'Separate defect', problem: 'Outside problem', evidence: 'file:1', suggestedFix: 'Local fix' }];
+    const request = f.api.request; let failOutside = true;
+    f.api.request = async (method, path, body) => {
+      if (method === 'POST' && path.endsWith('/issues') && failOutside) throw Error('outside issue endpoint unavailable');
+      return request(method, path, body);
+    };
+    const args = { ...f, ...(combined ? { merge: { marker: '<!-- process-next-task-merged:12:outside-recovery -->',
+      body: '## Задача #12 слита в dev\n\nПереведена **S7 → S8**.' } } : {}) };
+    const failed = await publishReviewReceipt(args);
+    assert.equal(failed.published, false); assert.equal(failed.pending, true); assert.equal(failed.merged, combined);
+    assert.equal(f.comments.length, 1); assert.equal(f.issues.length, 0);
+    assert.ok(f.comments[0].body.includes(f.receipt.markdown));
+    const original = structuredClone(f.comments[0]);
+    await publishReviewReceipt(args);
+    assert.equal(f.comments.length, 1, 'an unchanged outside failure does not repeat the report');
+    failOutside = false;
+    assert.equal((await publishReviewReceipt(args)).published, true);
+    assert.equal(f.comments.length, 2); assert.equal(f.issues.length, 1);
+    assert.deepEqual(f.comments[0], original); assert.match(f.comments[1].body, /issues\/100/);
+    await publishReviewReceipt(args);
+    assert.equal(f.comments.length, 2); assert.equal(f.issues.length, 1);
+    assert.equal(f.comments.filter(comment => comment.body.includes(f.receipt.markdown)).length, 1);
+  }
 });

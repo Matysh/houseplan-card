@@ -122,7 +122,7 @@ test('concurrent readers never publish; the completed coordinator publisher crea
   assert.equal(comments.length, 0); assert.equal(issues.length, 0); assert.equal(writes.length, 0);
   run.status = 'completed';
   await Promise.all([adapter.readReviewResult(context), adapter.publishCompletedReview(record), adapter.readReviewResult(context)]);
-  assert.equal(comments.length, 2); assert.equal(issues.length, 1); // report + confirmed links to separately filed defects
+  assert.equal(comments.length, 1); assert.equal(issues.length, 1); // report includes confirmed links to separately filed defects
   const firstBodies = comments.map(comment => comment.body);
   await adapter.publishCompletedReview(record);
   assert.deepEqual(comments.map(comment => comment.body), firstBodies); assert.equal(issues.length, 1);
@@ -458,7 +458,7 @@ function issueTransport(issue, { failClose = false, failComment = false } = {}) 
       if (method === 'GET') return structuredClone(comments);
       if (method === 'POST') {
         if (failComment) { failComment = false; throw Error('Comment transport unavailable'); }
-        const result = { id: comments.length + 1, body: body.body }; comments.push(result); return result;
+        const result = { id: comments.length + 1, body: body.body, user: { login: 'github-actions[bot]' } }; comments.push(result); return result;
       }
       const id = Number(path.split('/').at(-1)); Object.assign(comments.find(row => row.id === id), body); return body;
     }
@@ -517,7 +517,7 @@ test('finish leaves paid reports for the single coordinator publisher', async ()
   assert.equal(publications, 1); assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 0);
 });
 
-test('hosted publication interleaves old review, next entry and next review; a failed delivery preserves that order', async () => {
+test('hosted publication keeps review order and silently consumes queue entries after a failed delivery', async () => {
   const h = queueHarness(), delivered = [];
   h.issue.labels = ['S6-in-progress', 'track:ask'];
   const transport = issueTransport(h.issue);
@@ -543,9 +543,9 @@ test('hosted publication interleaves old review, next entry and next review; a f
   assert.deepEqual(delivered, []);
   fail = false;
   await h.command('reconcile-completions');
-  assert.deepEqual(delivered, ['spec:1:old', 'entry', 'spec:1:new']);
+  assert.deepEqual(delivered, ['spec:1:old', 'spec:1:new']);
   await h.command('reconcile-completions');
-  assert.deepEqual(delivered, ['spec:1:old', 'entry', 'spec:1:new']);
+  assert.deepEqual(delivered, ['spec:1:old', 'spec:1:new']);
 });
 
 test('a completed old specification report is published after the body changed without moving current labels', async () => {
@@ -568,6 +568,75 @@ test('a completed old specification report is published after the body changed w
   assert.equal(comments.length, 1); assert.match(comments[0].body, /доставлен с задержкой/);
   assert.match(comments[0].body, /Подробное замечание первого раунда/);
   assert.deepEqual(current.labels, ['S5-ready']);
+});
+
+test('one specification and code return produce eight substantive comments, with full accept inside actual merge', async () => {
+  const h = queueHarness(), transport = issueTransport(h.issue), receipts = new Map();
+  const adapter = new WorkflowReviewAdapter({ api: transport.api });
+  h.dependencies.api = transport.api; h.dependencies.review = adapter;
+  h.dependencies.inspectMaterial = async (_git, expectedBase, materialSha) => ({ expectedBase, materialSha,
+    patchId: 'infra-patch', layer: 'infra', changedFiles: ['process-next/lib/service-messages.mjs'] });
+  h.issue.labels = ['S4-spec-review', 'track:ask']; h.issue.body = 'Исходное ТЗ';
+  let verdict = 'changes_requested', text = 'Полный отрицательный отчёт ТЗ: уточнить отмену.';
+  adapter.requestReview = async () => ({ requested: true });
+  adapter.readReviewResult = async ({ kind = 'code', requestId, active }) => {
+    if (!receipts.has(requestId)) receipts.set(requestId, { issue: 1, kind, requestId,
+      materialSha: active.materialSha, base: active.expectedBase, verdict, markdown: text,
+      runStatus: 'completed', publicationPending: true });
+    return receipts.get(requestId);
+  };
+  const publish = () => h.command('reconcile-completions');
+  await h.command('label'); await publish();
+  assert.equal(transport.comments.length, 1);
+  h.issue.body += '\n\n## Контекст исполнителя для ревью\n### Исправления по предыдущему ревью\nУточнена отмена и сохранение данных.';
+  h.issue.labels = ['S4-spec-review', 'track:ask'];
+  verdict = 'accepted'; text = 'Полный положительный отчёт ТЗ: проверены отмена и сохранение.';
+  await h.command('label'); await publish();
+  assert.equal(transport.comments.length, 3);
+  await transport.api.comment(1, 'Взял в работу. S5 → S6. План и область реализации.');
+  await transport.api.moveStatus(1, 'S6-in-progress', h.issue.labels);
+  const prepare = async correction => {
+    await h.command('ready', { branch: 'issue/1', materialSha: B, layer: 'infra' });
+    await h.command('admit'); const token = h.store.state.active.token;
+    await h.command('synchronized', { token, expectedBase: A, materialSha: B });
+    await h.command('s6-complete', { token, materialSha: B, outcome: 'passed',
+      reviewChanges: correction, evidence: { sha: B, result: 'passed' } });
+    await h.command('reconcile'); await publish();
+    return token;
+  };
+  verdict = 'changes_requested'; text = 'Полный отрицательный отчёт кода: потеря данных при отмене.';
+  await prepare('Реализована отмена.');
+  assert.equal(transport.comments.length, 5);
+  await h.command('reconcile'); await publish();
+  assert.equal(transport.comments.length, 6);
+  verdict = 'accepted'; text = 'Полный положительный отчёт кода: проверены все ветви отмены и альтернативы.';
+  const token = await prepare('Исправлена потеря данных, добавлен адресный сценарий отмены.');
+  assert.equal(transport.comments.length, 7);
+  await h.command('reconcile'); await publish();
+  assert.equal(transport.comments.length, 7, 'accept waits for actual merge without another routine comment');
+  assert.equal(h.store.state.active.phase, 'ready-to-merge');
+  await h.command('merge', { token });
+  // GitHub may commit a comment and then lose its response. Recover its marker,
+  // retaining the whole report without another model request or actual merge.
+  const comment = transport.api.comment.bind(transport.api); let loseResponse = true;
+  transport.api.comment = async (...args) => {
+    const result = await comment(...args);
+    if (loseResponse) { loseResponse = false; throw Error('Lost POST response'); }
+    return result;
+  };
+  await publish(); await publish(); await publish();
+  assert.equal(transport.comments.length, 8);
+  const bodies = transport.comments.map(row => row.body);
+  assert.match(bodies[0], /Полный отрицательный отчёт ТЗ/);
+  assert.match(bodies[1], /Уточнена отмена и сохранение данных/);
+  assert.match(bodies[2], /Полный положительный отчёт ТЗ/);
+  assert.match(bodies[5], /Полный отрицательный отчёт кода/);
+  assert.match(bodies[6], /Исправлена потеря данных/);
+  assert.match(bodies[7], /слита в dev/);
+  assert.match(bodies[7], /<details>[\s\S]*Полный положительный отчёт кода/);
+  assert.equal(h.actions.filter(action => action === 'merge').length, 1);
+  assert.equal(h.store.state.tasks[1].completion.status, 'complete');
+  assert.ok(transport.writes.every(write => !/\/issues\/comments\//.test(write.path)), 'old comments are never edited');
 });
 
 test('current specification report waits for its verdict and label repair, then publishes one S4 to S3 report', async () => {
@@ -670,6 +739,25 @@ test('accepted code already merged in the same round is distinguished from a sup
       assert.doesNotMatch(comments[0].body, /доставлен с задержкой|Следующий шаг/);
     }
   }
+});
+
+test('accepted review remains visible when merge failed and returned the task to S6', async () => {
+  const h = queueHarness(), transport = issueTransport(h.issue);
+  const adapter = new WorkflowReviewAdapter({ api: transport.api });
+  h.dependencies.api = transport.api; h.dependencies.review = adapter;
+  const requestId = 'review:1:merge-failed';
+  h.store.state.tasks[1] = { issue: 1, track: 'show', status: 'S6-in-progress', reviewRequest: requestId,
+    review: { verdict: 'accepted' } };
+  await h.queue.dispatch({ id: 'accepted-before-failure', type: 'review-presentation', issue: 1, kind: 'code',
+    record: { issue: 1, kind: 'code', requestId, materialSha: B, expectedBase: A } });
+  adapter.readReviewResult = async () => ({ issue: 1, kind: 'code', requestId, materialSha: B, base: A,
+    verdict: 'accepted', runStatus: 'completed', markdown: 'Полный принятый отчёт, хотя merge ещё не состоялся.' });
+  await h.command('reconcile-completions'); await h.command('reconcile-completions');
+  assert.equal(transport.comments.length, 1);
+  assert.match(transport.comments[0].body, /Полный принятый отчёт/);
+  assert.doesNotMatch(transport.comments[0].body, /process-next-task-merged:|слита в dev/);
+  assert.deepEqual(h.issue.labels, ['S6-in-progress', 'track:show']);
+  assert.deepEqual(h.actions, []);
 });
 
 test('superseded empty requests do not block later history and expire with an explicit unavailable report', async () => {

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { LeaseLost, StateConflict, ownerDecisionRecord, queueSummary, REVIEW_RETRY_VISIBILITY_MS } from './queue.mjs';
+import { extractAuthorContext } from './review.mjs';
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const names = issue => (issue.labels ?? []).map(label => typeof label === 'string' ? label : label.name);
 export const issueStatus = issue => names(issue).find(name => /^S[1-8]-/.test(name));
@@ -99,7 +100,7 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
     ...(saved?.requestId === requestId && saved.retry ? { reviewRetry: { ...saved.retry, requestId } } : {}) };
   const context = { kind: 'spec', requestId, active: { issue: issue.number, materialSha: base, expectedBase: base, patchId: contextDigest }, task };
   if (saved?.requestId !== requestId) await queue.dispatch({ id: `${eventId}:spec-request`, type: 'spec-requested', issue: issue.number,
-    request: { requestId, contextDigest, base } });
+    request: { requestId, contextDigest, base }, reviewChanges: extractAuthorContext(issue).text });
   const result = await readReviewResult(context);
   const savePresentation = async () => {
     const presentation = pendingPresentation(result, { issue: issue.number, kind: 'spec', requestId,
@@ -204,10 +205,11 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
       if (result.outcome === 'failed') return returned('checks-failed', result.detail ?? result.evidence?.failures?.join('; '));
       if (result.terminal) return returned(result.reason || 'checks-unavailable', result.detail);
       if (!['passed', 'not-required'].includes(result.outcome)) return pending('checks-unavailable');
-      const state = await dispatch('s6-complete', { materialSha: active.materialSha, ...result });
+      const state = await dispatch('s6-complete', { materialSha: active.materialSha, ...result,
+        reviewChanges: extractAuthorContext(issue).text });
       const warnings = [];
       if (state.tasks[active.issue].status === 'S7-code-review') try {
-        const fromStatus = issueStatus(issue);
+        const fromStatus = 'S6-in-progress'; // S6 was observed or reconciled above before its successful completion.
         await api.moveStatus(active.issue, 'S7-code-review', issue.labels);
         await observeTransition(queue, { id: `${eventId}:s6-label`, issue: active.issue, messageId: `${eventId}:s6-complete`,
           fromStatus, toStatus: 'S7-code-review' });

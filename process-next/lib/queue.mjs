@@ -60,6 +60,7 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
   const returnTask = (task, reason) => {
     const fromStatus = event.fromStatus ?? task.status;
     task.status = 'S6-in-progress'; task.reason = reason; task.queued = false;
+    if (reason === 'review-findings') task.reviewCorrection = { requestId: task.reviewRequest ?? null, at: now };
     if (!['owner-stopped', 'status-changed'].includes(reason)) task.notice = {
       key: `${task.reviewEntry ?? 0}:${reason}`, reason, status: 'pending',
       fromStatus, at: now, entry: task.reviewEntry ?? 0, ...(task.reviewRequest ? { requestId: task.reviewRequest } : {}),
@@ -174,7 +175,9 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       active.expectedBase = event.expectedBase; active.materialSha = event.materialSha; active.phase = 'testing'; active.expiresAt = now + duration(active.phase);
       const task = state.tasks[active.issue];
       active.patchId = event.patchId ?? event.materialSha;
-      if (task.patchId && task.patchId !== active.patchId) { delete task.review; delete task.reviewRequest; delete task.reviewMaterial; delete task.reviewRetry; }
+      if (task.patchId && task.patchId !== active.patchId) {
+        delete task.review; delete task.reviewRequest; delete task.reviewMaterial; delete task.reviewRetry; delete active.reviewRequest;
+      }
       task.patchId = active.patchId; task.materialSha = event.materialSha;
       if (event.review?.source === 'published-release' && event.review.patchId === active.patchId)
         task.review = { ...copy(event.review), verdict: 'accepted' };
@@ -243,7 +246,15 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       if (prior?.requestId && prior.requestId !== event.request.requestId && prior.status === 'pending') {
         state.events[`${event.id}:spec-replaced:${event.issue}`] = { digest: eventDigest, issue: event.issue, message: {
           kind: 'spec-replaced', issue: event.issue, at: now, previousRound: prior.round ?? null, round,
+          reviewChanges: typeof event.reviewChanges === 'string' ? event.reviewChanges : '',
         } };
+      }
+      if (prior?.requestId && prior.requestId !== event.request.requestId && prior.status === 'changes_requested') {
+        historyMessages.push([`${event.id}:spec-resubmitted:${event.issue}`, { digest: eventDigest, issue: event.issue, message: {
+          kind: 'spec-resubmitted', issue: event.issue, at: now, previousRound: prior.round ?? null, round,
+          requestId: event.request.requestId, reviewChanges: typeof event.reviewChanges === 'string' ? event.reviewChanges : '',
+          fromStatus: 'S3-spec', toStatus: 'S4-spec-review', transitionConfirmed: prior.transition?.to === 'S3-spec',
+        } }]);
       }
       const record = { issue: event.issue, kind: 'spec', requestId: event.request.requestId,
         ...(event.request.base ? { materialSha: event.request.base, expectedBase: event.request.base } : {}),
@@ -315,6 +326,8 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
       const key = presentationKey(event), presentation = state.reviewPublications[key];
       if (presentation) presentation.presentation = { ...presentation.presentation,
         transition: { from: event.fromStatus, to: event.toStatus, confirmed: true } };
+      if (event.kind === 'spec' && state.specReviews?.[event.issue]?.requestId === event.requestId)
+        state.specReviews[event.issue].transition = { from: event.fromStatus, to: event.toStatus, confirmed: true };
       if (state.tasks[event.issue]?.notice?.requestId === event.requestId && event.toStatus === 'S6-in-progress') {
         const notice = state.tasks[event.issue].notice;
         notice.transitionConfirmed = true;
@@ -383,7 +396,7 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
   const task = state.tasks[number];
   const kind = event.type === 'enqueue' && !previous.tasks[number]?.queued ? 'queued'
     : event.type === 'admit' && !previous.active && state.active ? 'admitted'
-    : event.type === 's6-complete' ? 's6-complete'
+    : event.type === 's6-complete' && state.active?.phase === 'review' && !state.active.reviewRequest ? 's6-complete'
     : event.type === 'resynchronize' && previous.active?.phase !== 'sync' ? 'resynchronize'
     : event.type === 'dev-build' && event.notify && event.status === 'published' ? 'dev-build' : null;
   for (const [key, record] of historyMessages) state.events[key] = record;
@@ -394,7 +407,11 @@ export function reduceQueue(previous, event, { now = Date.now(), leaseMs = 60 * 
     ...(task?.materialSha || task?.mergedSha ? { materialSha: task.materialSha ?? task.mergedSha } : {}),
     ...(state.active?.issue === number ? { phase: state.active.phase } : {}),
     ...(task?.s6 ? { evidence: copy(task.s6) } : {}),
+    ...(kind === 's6-complete' ? { newReview: true, resubmission: !!task.reviewCorrection,
+      reviewChanges: typeof event.reviewChanges === 'string' ? event.reviewChanges : '',
+      fromStatus: 'S6-in-progress', toStatus: 'S7-code-review' } : {}),
   } } : {}) };
+  if (kind === 's6-complete') delete task.reviewCorrection;
   // Keep undelivered messages in the existing delivery records, including after merge.
   // Delivered records retain the same bounded replay window; no second queue/service.
   const pendingEvents = Object.entries(state.events).filter(([, record]) => record.message && !record.message.delivered);

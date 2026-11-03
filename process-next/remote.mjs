@@ -12,7 +12,7 @@ import { runPlan } from './lib/runner.mjs';
 import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
 import { initialReleaseState, reduceRelease, ReleaseGitAdapter, ReleasePublisher,
   HacsClient, HacsDeliveryVerifier, ReleaseDiscoveryVerifier, readRunnerReport, readPublishedMeasurement } from './lib/release.mjs';
-import { reconcileTaskCompletions, notifyDevWebhook } from './lib/task-completion.mjs';
+import { reconcileTaskCompletions, notifyDevWebhook, canEmbedAcceptedReview } from './lib/task-completion.mjs';
 import { publishReviewReceipt } from './lib/review-publication.mjs';
 import { publishServiceMessages } from './lib/service-messages.mjs';
 import { prepareReleaseData, preparePublicationArtifacts } from './lib/release-preparation.mjs';
@@ -187,7 +187,7 @@ export class WorkflowReviewAdapter {
     return { missing: true, requestId, materialSha: active.materialSha };
   }
   /** Called only by the coordinator's existing serialized metadata sweep. */
-  async publishCompletedReview(record) {
+  async publishCompletedReview(record, { merge } = {}) {
     const requestedAt = Date.parse(record.presentation?.occurredAt ?? '');
     const expired = Number.isFinite(requestedAt) && this.clock() - requestedAt > 60 * 86400_000;
     let result;
@@ -238,7 +238,10 @@ export class WorkflowReviewAdapter {
       ...(result.completedAt ? { occurredAt: result.completedAt } : {}),
       ...(mergedAfterReview ? { mergedAfterReview: true } : {}),
       delayed: delayed || currentStatus === 'S8-merged' && !mergedAfterReview };
-    return publishReviewReceipt({ api: this.api, receipt: { ...result, presentation }, reportUrl: result.reportUrl });
+    return publishReviewReceipt({ api: this.api, receipt: { ...result, presentation }, reportUrl: result.reportUrl,
+      // An expired artifact gets an explicit unavailable-result notice, followed
+      // by the factual merge summary; it must never masquerade as an acceptance.
+      merge: result.verdict === 'accepted' ? merge : undefined });
   }
   async readPreviousReviewResult({ issue, kind = 'code', excludeRequestId }) {
     const identity = new RegExp(`(?:^|[^A-Za-z0-9:-])${kind === 'spec' ? 'spec' : 'review'}:${issue}:`);
@@ -320,6 +323,12 @@ async function finishBookkeeping({ queue, api, git, review, eventId, issue, publ
         const record = item.record;
         const current = record.kind === 'spec' ? snapshot.specReviews?.[record.issue] : snapshot.tasks[record.issue];
         const latest = record.kind === 'spec' ? current?.requestId : current?.reviewRequest;
+        // The current accepted code report belongs to the actual merge summary.
+        // Keep it pending without holding back earlier reports or the merge itself.
+        // A failed merge returned to S6 is an exception: publish its report normally.
+        if (canEmbedAcceptedReview(record, current) || record.kind === 'code' && !record.resultKey
+          && latest === record.requestId && current?.status === 'S7-code-review'
+          && current.review?.verdict === 'accepted') continue;
         const outcomeConsumed = latest !== record.requestId || Boolean(record.resultKey || record.exhausted)
           || (record.kind === 'spec' ? current.status !== 'pending'
             : current.status !== 'S7-code-review' || current.review?.verdict === 'accepted');
@@ -334,6 +343,7 @@ async function finishBookkeeping({ queue, api, git, review, eventId, issue, publ
   }
   try { return await reconcileTaskCompletions({ queue, api, git, activated: true, issue,
     eventId: `${eventId}:metadata:${randomUUID()}`,
+    publishMergedReview: (record, options) => review.publishCompletedReview(record, options),
     deferredIssues: [...deferred] }); }
   catch (error) { return { pending: [{ issue, reason: error.message }], warning: 'Metadata remains pending; a completed merge is not repeated' }; }
 }
