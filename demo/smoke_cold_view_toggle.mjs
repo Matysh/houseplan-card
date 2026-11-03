@@ -14,6 +14,7 @@ let pageErrors = 0;
 page.on('pageerror', (error) => { pageErrors++; console.log('EXC', error.message); });
 
 const out = await page.evaluate(async () => {
+  const { createFixtureStore } = await import('/fixture-state.js');
   const card = window.__card;
   const space = card._model[0];
   const room = space.rooms.find((candidate) => candidate.id && candidate.area);
@@ -65,8 +66,15 @@ const out = await page.evaluate(async () => {
   const serviceCalls = [];
   let toggleCalls = 0;
   const emit = (event, data) => {
-    for (const listener of subscriptions.get(event) || []) listener({ data });
+    for (const listener of [...(subscriptions.get(event) || [])]) listener({ data });
   };
+  // Reads and writes must share one authority. Delegating writes to the base
+  // demo while returning this captured config forever made Area lifecycle
+  // retry rejected/stale acknowledgements in an endless render microtask loop.
+  const server = createFixtureStore(serverConfig, serverLayout, (event, rev) => {
+    if (event === 'houseplan_config_updated') virtual.config_rev = rev;
+    emit(event, { rev });
+  }, { configRevision: card._cfgRev, layoutRevision: card._layoutRev });
   const baseHass = card.hass;
   const baseCallWS = baseHass.callWS.bind(baseHass);
   const connection = {
@@ -97,15 +105,11 @@ const out = await page.evaluate(async () => {
     },
     callWS: async (message) => {
       if (message.type === 'houseplan/config/get') return {
-        config: serverConfig,
-        rev: virtual.config_rev,
-        can_write: true,
+        ...server.handle(message),
         virtual_lights: structuredClone(virtual),
       };
-      if (message.type === 'houseplan/layout/get') return {
-        layout: serverLayout,
-        rev: card._layoutRev,
-      };
+      const stored = server.handle(message);
+      if (stored !== undefined) return stored;
       if (message.type === 'houseplan/virtual_light/toggle') {
         toggleCalls++;
         const off = new Set(virtual.off);

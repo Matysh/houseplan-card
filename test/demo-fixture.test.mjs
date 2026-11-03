@@ -5,6 +5,18 @@ import { transitionOutcome } from '../demo/transition-timeline.mjs';
 
 const fixture = () => createFixtureStore({ spaces: [], markers: [], settings: {}, future: { keep: 1 } },
   { a: { s: 'f', x: .2, y: .3, future: 'a' }, b: { s: 'f', x: .7, y: .8, future: 'b' } });
+
+test('#1226 replacing a fixture transport preserves revisions and makes acknowledged writes readable', () => {
+  const source = { spaces: [], markers: [], settings: {} }, events = [];
+  const store = createFixtureStore(source, {}, (...args) => events.push(args), { configRevision: 7, layoutRevision: 4 });
+  const saved = { ...source, settings: { marker_area_snapshot: { lamp: 'room' } } };
+  assert.equal(store.handle({ type: 'houseplan/config/get' }).rev, 7);
+  assert.deepEqual(store.handle({ type: 'houseplan/config/set', expected_rev: 7, config: saved }), { ok: true, rev: 8 });
+  assert.deepEqual(store.handle({ type: 'houseplan/config/get' }).config, saved);
+  assert.equal(store.handle({ type: 'houseplan/layout/get' }).rev, 4);
+  assert.deepEqual(events, [['houseplan_config_updated', 8]]);
+  assert.throws(() => store.handle({ type: 'houseplan/config/set', expected_rev: 7, config: saved }), { code: 'conflict' });
+});
 test('#896 saved fixture pairs are independent, cloned, and CAS refuses even a stale no-op', () => {
   const s = fixture(), get = () => s.handle({ type: 'houseplan/config/get' });
   const initial = get(); initial.config.future.keep = 999;
