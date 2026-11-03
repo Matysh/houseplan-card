@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2151,
+  "revision": 2152,
   "nextTicket": 136,
   "nextFence": 135,
   "tasks": {
@@ -2643,197 +2643,25 @@
     },
     "1246": {
       "issue": 1246,
+      "branch": "issue/1246-toast-s6-reuse",
       "track": "show",
       "layer": "product",
-      "branch": "issue/1246-toast-s6-reuse",
-      "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 134,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793735515982,
-      "reviewEntry": 6,
-      "notice": {
-        "key": "5:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793734784561,
-        "entry": 5,
-        "requestId": "review:1246:5:3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf:082f99ccf9c9667cb17edae74f529e9e7695872a",
-        "transitionConfirmed": true
-      },
-      "patchId": "925c785a4b330200d4e5e3db8790013b883bb918",
-      "changedFiles": [
-        "demo/smoke_modal_toast_956.mjs",
-        "demo/smoke_toast_ownership_1246.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1246.json",
-        "src/backdrop-pick.ts",
-        "src/backup-archive-client.ts",
-        "src/config-reload-authority.ts",
-        "src/decor-image-editor.ts",
-        "src/device-copy-editor.ts",
-        "src/device-inbox-batch.ts",
-        "src/device-structure-history.ts",
-        "src/editors/keyboard-nudge.ts",
-        "src/editors/properties/editor.ts",
-        "src/editors/room-save.ts",
-        "src/editors/space-delete.ts",
-        "src/editors/vacuum-image-fit.ts",
-        "src/editors/vacuum-maps-section.ts",
-        "src/geometry-cleanup.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/houseplan-onboarding-runtime.ts",
-        "src/hp-dialog.ts",
-        "src/led-strip-card.ts",
-        "src/led-strip-editor.ts",
-        "src/marker-deletion.ts",
-        "src/optimize-plans-dialog.ts",
-        "src/optimize-plans-loader.ts",
-        "src/pdf/hp-pdf-dialog.ts",
-        "src/plan-optimize-undo.ts",
-        "src/space-copy-runtime.ts",
-        "src/summary-panel-runtime-loaded.ts",
-        "src/toast-presentation.ts",
-        "src/vacuum-calibration-write.ts",
-        "src/vacuum-dock-restart-write.ts",
-        "src/wall-node-card-adapter.ts",
-        "test/layout-write-reload.test.mjs",
-        "test/optimize-plans-dialog.test.mjs",
-        "test/room-save-946.test.mjs",
-        "test/toast-node-action.test.mjs",
-        "test/toast-presentation.test.mjs",
-        "test/toast-save-context.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T195327304-2ec9b88f",
-        "requestId": "s6:1246:ba6647bdf66e89961cfc112aefea71b6",
-        "runId": 41707273999,
-        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-        "status": "passed",
-        "finishedAt": "2026-11-03T19:54:41.673Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41707273999",
-        "execution": "github"
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+      "mergedSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
+      "mergedAt": 1793736334920,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1246:6:925c785a4b330200d4e5e3db8790013b883bb918:082f99ccf9c9667cb17edae74f529e9e7695872a",
-      "reviewMaterial": {
-        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-        "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-        "patchId": "925c785a4b330200d4e5e3db8790013b883bb918"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1246,
-        "requestId": "review:1246:6:925c785a4b330200d4e5e3db8790013b883bb918:082f99ccf9c9667cb17edae74f529e9e7695872a",
-        "kind": "code",
-        "base": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-        "patchId": "925c785a4b330200d4e5e3db8790013b883bb918",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1246,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1246",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\n\nТост принадлежит действию, а не последнему открытому окну. Карточное сообщение не переезжает в новый modal; сообщение диалога сохраняет его lifetime-token. Когда дочернее окно закрывается, допустим возврат только к ещё активному владельцу, который уже существовал при захвате контекста (например Space под backdrop guard), иначе на карточку. Диалог, открытый после старта действия, никогда не входит в этот снимок.\n\n### Решение и альтернативы\n\nToastContext сохраняет первичного owner и неизменный список старших owner-token'ов. resolveOwner проверяет только этот снимок; актуальный scope используется лишь для проверки активности, не для выбора новых кандидатов. Все маршруты, включая закрытие transient overlays, используют тот же resolver. Это сохраняет #956 для старого родителя, не возвращая исходный reroute к произвольному «последнему modal».\n\n_captureToast/captureToast захватывают callback до await; deferred config/layout writers — при постановке, не при flush. Save room/space/marker/settings/rules/onboarding передаёт тот же callback во внутренние _saveConfigNow → _writeConfig и recovery reload. Существующие authority/dialogSession guards не заменяются toast-контекстом. Page-wide diagnostics и canvas Move/Delete имеют явную карточную поверхность; NodeHistory захватывает callback на каждое действие.\n\nHpDialog выдаёт новый token после accepted retirement/detach, даже если DialogPresence повторно использует тот же HTMLElement. Вето закрытия без retirement сохраняет token. Старый callback не может присвоить новую lifetime этого shell или закрыть её overlays. Остаётся один notice, replace-not-queue deadline3500ms и одно объявление каждого нового сообщения; routing не перезапускает deadline/paint.\n\nФильтр по space_deleted/тексту и глобальный card fallback отвергнуты. Последний как раз оказался недостаточен для закрывающегося дочернего окна и исправлен по независимому ревью.\n\n### Исправления по предыдущему ревью\n\nПредыдущее содержательное ревью: https://github.com/Matysh/houseplan-card/issues/1246#issuecomment-6613692534 (run41703303355, материал0bdcf608e, changes_requested).\n\n1. Блокер «дочернее окно закрывается, тост уходит под всё ещё открытый parent modal» → ToastContext дополнен снимком предшествовавших owner-token'ов; после отставки child resolver выбирает только живой token из снимка. Новый unit: child → старый parent при активном новом third dialog, поздний callback тоже не выбирает third; отставка parent возвращает notice на карточку. Новый genuine-modal browser case вызывает настоящий reduced backdrop path на некорректном raster в guard над Space dialog, ждёт исчезновения guard и подтверждает glyph paint сообщения в Space footer, один notice и ровно одно новое announcement.\n2. Улучшение «внутренний write/reload после upload может захватить discard-confirm» → передан исходный showToast через _saveConfigNow/_writeConfig, конфликтный и физический recovery, _reloadConfigOnly (включая deferred retry). Добавлен test/toast-save-context.test.mjs: реальные runtime методы сохраняют callback/guards при write failure и обоих recovery путях; reload не подменяет его новым владельцем. Бизнесassertions данных/прав не ослаблялись.\n3. Артефакты механической вставки → восстановлены только отступы затронутых объявлений методов и const showToast относительно базового082f99ccf; общего переформатирования нет.\n4. Каноническая архитектура уточняет допустимый возврат к старому captured parent. E2E21 дополнена child-retirement сценарием.\n\nНовый материал: f3dfb5cb627ce462d959cc4d825e42bd464db1a4, ветка issue/1246-toast-s6-reuse. Ручного merge/force push/изменения queue.json не было.\n\n### Проверки и ограничения\n\nПосле исправлений локально: npm run build PASS (типы + Rollup); адресные toast-presentation/toast-save-context/room-save17/17PASS; канонический CRITICAL_NODE151/151PASS; demo/smoke_toast_ownership_1246.mjs26/26PASS, включая настоящий backdrop guard reduced failure, late View service failure, deferred write, reused shell, same text, glyph paint/AX/announcement/lifetime. Для guard, завершившегося до первой paint сообщения, alert может впервые объявиться уже в родителе; проверяется одно новое announcement, а не обязательный aria-live=off до самого первого объявления. Уже объявленное сообщение при переносе проверяется unit и прежним lifecycle сценарием.\n\nЭто synthetic harness с настоящей официальной HA frontend modal-компонентой и fake-hass, НЕ полноценный HA-server E2E и не проверка серверных ACL/хранения. Установка владельца не менялась. Реальные HA E2E перед бетой нужны: https://github.com/Matysh/houseplan-e2e/issues/21.\n\nПредыдущий фактический S6 run41702741150 на0bdcf608e был PASS: critical151, area126 и startup/browser с валидированным reuse. Он НЕ объявляется S6 нового кода f3dfb5cb6: продуктовые inputs изменены, повтор выбранного набора через finish обязателен. Более ранний run41699400780 остался FAILED (134/17): fakehost layout lifecycle не подключал новый _captureToast; этот test adapter адресно исправлен с делегированием реальному proto без изменения бизнесassertions.\n\nОтдельный baseline FAIL геометрического счётчика не исправлялся в #1246: контроль на чистом task-1247, HEADf2436671e6a48a64ed785f89cf014b467a123cbb без Toast-изменений — тот же recorded>0 FAIL, полный adapter test13PASS/9FAIL. Условия и hashes: https://github.com/Matysh/houseplan-card/issues/1251. Это не PASS и не доказательство «устаревшего теста». Геометрия и его ожидания не менялись; узкая проверка toast-node-action и существующие Move/Delete lifecycle тесты входят в выбранную область.\n\nRU/EN changelog и stable-fix ledger текущего цикла v1.83.0 сохранены."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер прошлого раунда устранён, работу можно принимать. `ToastContext` теперь хранит не только исходного владельца, но и снимок старших владельцев, активных в момент захвата. `resolveOwner` выбирает первого живого из этого снимка, а если таких нет — карточку. Поэтому если дочернее окно (backdrop guard над Space, Optimize над общими настройками, residual-confirm над диалогом устройства) закрывается, сообщение возвращается в ещё открытый родительский modal, а не уходит под его скрим. Диалог, открытый после захвата, в снимок не попадает, так что К1 соблюдается. Закрыто и прошлое улучшение: исходный callback Save теперь пробрасывается через `_saveConfigNow` → `_writeConfig` и recovery reload. Отступы восстановлены. Новых существенных рисков я не нашёл. Остаются только необязательные замечания, например что сообщение остаётся в своём диалоге, когда поверх открыт вложенный confirm. Это прямое следствие решения владельца, а не дефект. S6 на материале f3dfb5cb прошёл (run 41707273999).",
-          "understanding": "Проблема: на base `_route` при каждой смене владельцев переносил единственный узел уведомления в последний активный `hp-dialog`. Из-за этого «Пространство удалено» оказывалось в новом диалоге «Новое пространство», а поздние асинхронные результаты приписывались тому диалогу, который был активен в момент доставки.\n\nПосле изменения:\n1. `show` фиксирует `ToastContext {owner, ancestors}`. Это верхний владелец и остальные активные владельцы, от ближнего к дальнему.\n2. `_route` и закрытие transient overlays в `_showToast` используют один и тот же `resolveOwner`. Текущий scope служит только для проверки, жив ли кандидат; новых кандидатов из него не берут.\n3. В асинхронных путях callback захватывается до await (`_captureToast`/`captureToast`). Отложенные writers (`_debounceToast`) захватывают его при постановке. Save передаёт свой callback во внутренние `_saveConfigNow`/`_writeConfig`/`_reloadConfigOnly`, включая отложенный retry.\n4. Токен владельца в `HpDialog` действует только одну «жизнь» окна. Принятый `beginExit`/detach его гасит, а при повторном использовании того же элемента выдаётся новый.\n\nЧто разобрал в этом раунде:\n- `toast-presentation.ts` целиком: `captureContext`, `resolveOwner`, `_route`, `setToastOwner`;\n- жизненный цикл `hp-dialog`: connected/firstUpdated/beginExit/cancelExit/rejectClose/disconnected и связь с порядком в `scope.owners`;\n- `_saveConfigNow`, `_saveSpaceDialog` с путями успеха, ошибки и reload, а также `_writeConfig` карточки и runtime;\n- `optimize-plans-dialog.run`, `vacuum-calibration-write`, проброс в `reloadConfigOnly`;\n- новые unit-тесты `toast-presentation`, `toast-save-context` и новый smoke-случай с backdrop guard.",
-          "analysis": [
-            {
-              "topic": "Закрытие прежнего блокера: возврат к родителю, захваченному вместе с сообщением",
-              "assessment": "Исправлено точно по существу, без нового гейта. При захвате сохраняется неизменный снимок `ancestors`. При отставке владельца выбирается ближайший живой предок из снимка, а при их отсутствии — карточка. Сценарий backdrop guard работает так: `close()` обнуляет `_backdropGuard`, но `hp-dialog` отставляется только при следующей отрисовке. Поэтому `showToast` сначала кладёт notice в portal guard, а после отставки guard `_route` переносит его в Space. Диалог, открытый после захвата, не входит в снимок, поэтому К1 не нарушается. При переносе выставляется `aria-live=off`, а таймер в `_route` не трогается, так что К3 (без повторного объявления и перезапуска) сохраняется. Optimize и vacuum residual-confirm захватывают callback, пока верхним является дочернее окно, а родитель (`_settingsDialog` / диалог устройства) попадает в ancestors.",
-              "evidence": "src/toast-presentation.ts:107-116 (`captureContext` — `owners.slice(0,-1).reverse()`; `resolveOwner` — `[owner, ...ancestors].find(isConnected && active.includes)`), :80-92 `_route`; test/toast-presentation.test.mjs: «retiring a child returns to its captured parent, never a later dialog» — child→parent при живом later, поздний вызов тоже идёт к parent, отставка parent → карточка; demo/smoke_modal_toast_956.mjs: `retiredBackdropGuardErrorPaintedInCapturedParent`, `backdropRetirementKeepsOneNoticeAndAnnouncement`."
-            },
-            {
-              "topic": "Проброс callback Save во внутренние запись и reload",
-              "assessment": "Прошлое улучшение внесено полностью. `_saveConfigNow` принимает `showToast` и передаёт его в `_writeConfig` (`toast.geometry_unsafe`), `_reloadRejectedPhysicalWrite` и в reload после конфликта. `reloadConfigOnly` передаёт его же в отложенный retry через 400 мс. В `_saveSpaceDialog` callback используется в том числе в `_reloadConfigOnly` на ветке ошибки. По умолчанию параметр захватывает контекст в момент вызова. Для синхронных цепочек это корректно: например, в `saveVacuumMatrix` между захватом и `_saveConfigNow` нет await. Тест `toast-save-context` использует настоящий `HouseplanEditorRuntime.prototype._saveConfigNow` и `reloadConfigOnly` и падает, если какой-либо внутренний вызов захватит контекст повторно. Бизнес-логика guard'ов не изменена.",
-              "evidence": "src/houseplan-editor-runtime.ts:8727-8738, 8631, 8677, 1781-1785, 1790; src/config-reload-authority.ts (`showToast = captureToast(host)`, retry передаёт `showToast`); test/toast-save-context.test.mjs:10-46."
-            },
-            {
-              "topic": "Порядок владельцев в scope как источник «стека»",
-              "assessment": "Модель снимка опирается на то, что порядок `scope.owners` совпадает с визуальной вложенностью. `setToastOwner(active=true)` перемещает владельца в конец массива, и это происходит при connected, firstUpdated, cancelExit и rejectClose. Теоретически `rejectClose` у родителя при открытом ребёнке или одновременная первая отрисовка родителя и ребёнка поменяли бы порядок. Но такое поведение было и на base, где `_route` выбирал последнего; к тому же по родителю под modal ребёнка пользователь закрытие инициировать не может. Новой уязвимости изменение не вносит, поэтому это не блокер.",
-              "evidence": "src/toast-presentation.ts:40-45; src/hp-dialog.ts:426, 493, 696, 707-708."
-            },
-            {
-              "topic": "Lifetime-токен и повторное использование shell",
-              "assessment": "Без изменений относительно прошлого раунда, решение по-прежнему корректно. `disconnectedCallback` → `cancelExit` на мгновение создаёт новый токен, и следующий `_syncToastOwner(false)` его сразу снимает. Промежуточный refresh безвреден, потому что новый токен не входит ни в один снимок.",
-              "evidence": "src/hp-dialog.ts:390-403, 451-455, 640-651, 683-698; unit «accepted retirement never revives a context»; smoke `reusedShellNeverRevivesRetiredToastContext`."
-            },
-            {
-              "topic": "Сообщение под вложенным confirm",
-              "assessment": "Ошибка Save, захваченная в Space или Room, теперь остаётся в своём диалоге, даже если поверх открылся confirm (Esc → discard). Пока confirm открыт, она находится под его скримом. На base узел переходил в confirm. Это осознанное следствие решения владельца («ни при каких вложениях не переносится в новый диалог»). После отставки confirm сообщение снова видно в своём диалоге. Smoke-проверка #956 намеренно переписана под это правило (`childNeverAcquiresParentNotice`).",
-              "evidence": "demo/smoke_modal_toast_956.mjs, diff строк 87-93; описание issue К1/К2."
-            },
-            {
-              "topic": "Сопровождаемость",
-              "assessment": "Артефакты механической вставки устранены: отступы объявлений и `const showToast` в просмотренных файлах согласованы с окружением. Правило отставки зафиксировано в docs/ARCHITECTURE.md и в комментариях рядом с `ToastContext.ancestors` и `_route`, то есть неочевидная договорённость записана там, где она нужна.",
-              "evidence": "docs/ARCHITECTURE.md:1109-1120; src/toast-presentation.ts:7, 86-87; diff backup-archive-client.ts, device-copy-editor.ts, keyboard-nudge.ts."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "`_saveSpaceCopy` (`saveConfigNow: (attempt) => this._saveConfigNow(attempt)`) и `_inboxBatchDeps().saveConfigNow` по-прежнему захватывают контекст в момент записи, а не в начале действия. Сейчас это безопасно, если до записи нет await. Если в этих путях появится асинхронная подготовка, правило «захват до await» нарушится незаметно. Проброс callback в эти порты стоит недорого и сделает поведение таким же, как у основных Save.",
-            "Можно сделать снимок в `captureContext` независимым от порядка `push` в `setToastOwner`. Например, повторная активация уже присутствующего владельца не перемещала бы его в конец массива, или порядок задавался бы при первом connect. Тогда снимок «предков» не зависел бы от повторных `firstUpdated`/`rejectClose`. Цена — небольшое изменение `setToastOwner`, выгода — устойчивость инварианта «последний = верхний». На base такая же зависимость была, поэтому это не обязательно."
-          ],
-          "boundaries": "Ревью выполнено только чтением pinned Git-материала (base 082f99ccf → head f3dfb5cb). Сборку, тесты и smoke я не запускал. Результатом S6 считаю receipt run 41707273999 (passed) на f3dfb5cb. Заявления автора о локальных прогонах (17/17 адресных тестов, CRITICAL_NODE 151/151, smoke 26/26) принимаю как контекст, а не как самостоятельно проверенный факт. В этом раунде подробно разобраны изменения toast-presentation и hp-dialog, проброс callback через _saveConfigNow/_writeConfig/reloadConfigOnly, пути Optimize и vacuum calibration, новые unit-тесты и smoke-случай с backdrop guard. Остальные call-site, разобранные в прошлом раунде (wall-node adapter, confirm → continuation, debounce writers), я заново целиком не перечитывал, потому что в них изменились только отступы. Полный аудит всех ~215 вызовов `_showToast` не проводился. Видимость тоста поверх настоящего HA modal подтверждается только синтетическим стендом автора (fake-hass); проверка на реальном HA-сервере вынесена в houseplan-e2e#21. Baseline FAIL WallBooleanBaseline (#1251) вне объёма задачи и мной не оценивался."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 137146,
-          "cache_read_input_tokens": 1436944,
-          "output_tokens": 9905,
-          "output_tokens_details": {
-            "thinking_tokens": 3325
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 137146,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 961,
-              "cache_read_input_tokens": 126995,
-              "cache_creation_input_tokens": 14355,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14355
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер прошлого раунда устранён, работу можно принимать. `ToastContext` теперь хранит не только исходного владельца, но и снимок старших владельцев, активных в момент захвата. `resolveOwner` выбирает первого живого из этого снимка, а если таких нет — карточку. Поэтому если дочернее окно (backdrop guard над Space, Optimize над общими настройками, residual-confirm над диалогом устройства) закрывается, сообщение возвращается в ещё открытый родительский modal, а не уходит под его скрим. Диалог, открытый после захвата, в снимок не попадает, так что К1 соблюдается. Закрыто и прошлое улучшение: исходный callback Save теперь пробрасывается через `_saveConfigNow` → `_writeConfig` и recovery reload. Отступы восстановлены. Новых существенных рисков я не нашёл. Остаются только необязательные замечания, например что сообщение остаётся в своём диалоге, когда поверх открыт вложенный confirm. Это прямое следствие решения владельца, а не дефект. S6 на материале f3dfb5cb прошёл (run 41707273999).\n\n## Понимание решения\n\nПроблема: на base `_route` при каждой смене владельцев переносил единственный узел уведомления в последний активный `hp-dialog`. Из-за этого «Пространство удалено» оказывалось в новом диалоге «Новое пространство», а поздние асинхронные результаты приписывались тому диалогу, который был активен в момент доставки.\n\nПосле изменения:\n1. `show` фиксирует `ToastContext {owner, ancestors}`. Это верхний владелец и остальные активные владельцы, от ближнего к дальнему.\n2. `_route` и закрытие transient overlays в `_showToast` используют один и тот же `resolveOwner`. Текущий scope служит только для проверки, жив ли кандидат; новых кандидатов из него не берут.\n3. В асинхронных путях callback захватывается до await (`_captureToast`/`captureToast`). Отложенные writers (`_debounceToast`) захватывают его при постановке. Save передаёт свой callback во внутренние `_saveConfigNow`/`_writeConfig`/`_reloadConfigOnly`, включая отложенный retry.\n4. Токен владельца в `HpDialog` действует только одну «жизнь» окна. Принятый `beginExit`/detach его гасит, а при повторном использовании того же элемента выдаётся новый.\n\nЧто разобрал в этом раунде:\n- `toast-presentation.ts` целиком: `captureContext`, `resolveOwner`, `_route`, `setToastOwner`;\n- жизненный цикл `hp-dialog`: connected/firstUpdated/beginExit/cancelExit/rejectClose/disconnected и связь с порядком в `scope.owners`;\n- `_saveConfigNow`, `_saveSpaceDialog` с путями успеха, ошибки и reload, а также `_writeConfig` карточки и runtime;\n- `optimize-plans-dialog.run`, `vacuum-calibration-write`, проброс в `reloadConfigOnly`;\n- новые unit-тесты `toast-presentation`, `toast-save-context` и новый smoke-случай с backdrop guard.\n\n## Разбор решения\n\n### Закрытие прежнего блокера: возврат к родителю, захваченному вместе с сообщением\n\nИсправлено точно по существу, без нового гейта. При захвате сохраняется неизменный снимок `ancestors`. При отставке владельца выбирается ближайший живой предок из снимка, а при их отсутствии — карточка. Сценарий backdrop guard работает так: `close()` обнуляет `_backdropGuard`, но `hp-dialog` отставляется только при следующей отрисовке. Поэтому `showToast` сначала кладёт notice в portal guard, а после отставки guard `_route` переносит его в Space. Диалог, открытый после захвата, не входит в снимок, поэтому К1 не нарушается. При переносе выставляется `aria-live=off`, а таймер в `_route` не трогается, так что К3 (без повторного объявления и перезапуска) сохраняется. Optimize и vacuum residual-confirm захватывают callback, пока верхним является дочернее окно, а родитель (`_settingsDialog` / диалог устройства) попадает в ancestors.\n\nОснование: src/toast-presentation.ts:107-116 (`captureContext` — `owners.slice(0,-1).reverse()`; `resolveOwner` — `[owner, ...ancestors].find(isConnected && active.includes)`), :80-92 `_route`; test/toast-presentation.test.mjs: «retiring a child returns to its captured parent, never a later dialog» — child→parent при живом later, поздний вызов тоже идёт к parent, отставка parent → карточка; demo/smoke_modal_toast_956.mjs: `retiredBackdropGuardErrorPaintedInCapturedParent`, `backdropRetirementKeepsOneNoticeAndAnnouncement`.\n\n### Проброс callback Save во внутренние запись и reload\n\nПрошлое улучшение внесено полностью. `_saveConfigNow` принимает `showToast` и передаёт его в `_writeConfig` (`toast.geometry_unsafe`), `_reloadRejectedPhysicalWrite` и в reload после конфликта. `reloadConfigOnly` передаёт его же в отложенный retry через 400 мс. В `_saveSpaceDialog` callback используется в том числе в `_reloadConfigOnly` на ветке ошибки. По умолчанию параметр захватывает контекст в момент вызова. Для синхронных цепочек это корректно: например, в `saveVacuumMatrix` между захватом и `_saveConfigNow` нет await. Тест `toast-save-context` использует настоящий `HouseplanEditorRuntime.prototype._saveConfigNow` и `reloadConfigOnly` и падает, если какой-либо внутренний вызов захватит контекст повторно. Бизнес-логика guard'ов не изменена.\n\nОснование: src/houseplan-editor-runtime.ts:8727-8738, 8631, 8677, 1781-1785, 1790; src/config-reload-authority.ts (`showToast = captureToast(host)`, retry передаёт `showToast`); test/toast-save-context.test.mjs:10-46.\n\n### Порядок владельцев в scope как источник «стека»\n\nМодель снимка опирается на то, что порядок `scope.owners` совпадает с визуальной вложенностью. `setToastOwner(active=true)` перемещает владельца в конец массива, и это происходит при connected, firstUpdated, cancelExit и rejectClose. Теоретически `rejectClose` у родителя при открытом ребёнке или одновременная первая отрисовка родителя и ребёнка поменяли бы порядок. Но такое поведение было и на base, где `_route` выбирал последнего; к тому же по родителю под modal ребёнка пользователь закрытие инициировать не может. Новой уязвимости изменение не вносит, поэтому это не блокер.\n\nОснование: src/toast-presentation.ts:40-45; src/hp-dialog.ts:426, 493, 696, 707-708.\n\n### Lifetime-токен и повторное использование shell\n\nБез изменений относительно прошлого раунда, решение по-прежнему корректно. `disconnectedCallback` → `cancelExit` на мгновение создаёт новый токен, и следующий `_syncToastOwner(false)` его сразу снимает. Промежуточный refresh безвреден, потому что новый токен не входит ни в один снимок.\n\nОснование: src/hp-dialog.ts:390-403, 451-455, 640-651, 683-698; unit «accepted retirement never revives a context»; smoke `reusedShellNeverRevivesRetiredToastContext`.\n\n### Сообщение под вложенным confirm\n\nОшибка Save, захваченная в Space или Room, теперь остаётся в своём диалоге, даже если поверх открылся confirm (Esc → discard). Пока confirm открыт, она находится под его скримом. На base узел переходил в confirm. Это осознанное следствие решения владельца («ни при каких вложениях не переносится в новый диалог»). После отставки confirm сообщение снова видно в своём диалоге. Smoke-проверка #956 намеренно переписана под это правило (`childNeverAcquiresParentNotice`).\n\nОснование: demo/smoke_modal_toast_956.mjs, diff строк 87-93; описание issue К1/К2.\n\n### Сопровождаемость\n\nАртефакты механической вставки устранены: отступы объявлений и `const showToast` в просмотренных файлах согласованы с окружением. Правило отставки зафиксировано в docs/ARCHITECTURE.md и в комментариях рядом с `ToastContext.ancestors` и `_route`, то есть неочевидная договорённость записана там, где она нужна.\n\nОснование: docs/ARCHITECTURE.md:1109-1120; src/toast-presentation.ts:7, 86-87; diff backup-archive-client.ts, device-copy-editor.ts, keyboard-nudge.ts.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- `_saveSpaceCopy` (`saveConfigNow: (attempt) => this._saveConfigNow(attempt)`) и `_inboxBatchDeps().saveConfigNow` по-прежнему захватывают контекст в момент записи, а не в начале действия. Сейчас это безопасно, если до записи нет await. Если в этих путях появится асинхронная подготовка, правило «захват до await» нарушится незаметно. Проброс callback в эти порты стоит недорого и сделает поведение таким же, как у основных Save.\n- Можно сделать снимок в `captureContext` независимым от порядка `push` в `setToastOwner`. Например, повторная активация уже присутствующего владельца не перемещала бы его в конец массива, или порядок задавался бы при первом connect. Тогда снимок «предков» не зависел бы от повторных `firstUpdated`/`rejectClose`. Цена — небольшое изменение `setToastOwner`, выгода — устойчивость инварианта «последний = верхний». На base такая же зависимость была, поэтому это не обязательно.\n\n## Границы анализа\n\nРевью выполнено только чтением pinned Git-материала (base 082f99ccf → head f3dfb5cb). Сборку, тесты и smoke я не запускал. Результатом S6 считаю receipt run 41707273999 (passed) на f3dfb5cb. Заявления автора о локальных прогонах (17/17 адресных тестов, CRITICAL_NODE 151/151, smoke 26/26) принимаю как контекст, а не как самостоятельно проверенный факт. В этом раунде подробно разобраны изменения toast-presentation и hp-dialog, проброс callback через _saveConfigNow/_writeConfig/reloadConfigOnly, пути Optimize и vacuum calibration, новые unit-тесты и smoke-случай с backdrop guard. Остальные call-site, разобранные в прошлом раунде (wall-node adapter, confirm → continuation, debounce writers), я заново целиком не перечитывал, потому что в них изменились только отступы. Полный аудит всех ~215 вызовов `_showToast` не проводился. Видимость тоста поверх настоящего HA modal подтверждается только синтетическим стендом автора (fake-hass); проверка на реальном HA-сервере вынесена в houseplan-e2e#21. Baseline FAIL WallBooleanBaseline (#1251) вне объёма задачи и мной не оценивался.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 082f99ccf9c9667cb17edae74f529e9e7695872a → f3dfb5cb627ce462d959cc4d825e42bd464db1a4\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1246, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\n\nТост принадлежит действию, а не последнему открытому окну. Карточное сообщение не переезжает в новый modal; сообщение диалога сохраняет его lifetime-token. Когда дочернее окно закрывается, допустим возврат только к ещё активному владельцу, который уже существовал при захвате контекста (например Space под backdrop guard), иначе на карточку. Диалог, открытый после старта действия, никогда не входит в этот снимок.\n\n### Решение и альтернативы\n\nToastContext сохраняет первичного owner и неизменный список старших owner-token'ов. resolveOwner проверяет только этот снимок; актуальный scope используется лишь для проверки активности, не для выбора новых кандидатов. Все маршруты, включая закрытие transient overlays, используют тот же resolver. Это сохраняет #956 для старого родителя, не возвращая исходный reroute к произвольному «последнему modal».\n\n_captureToast/captureToast захватывают callback до await; deferred config/layout writers — при постановке, не при flush. Save room/space/marker/settings/rules/onboarding передаёт тот же callback во внутренние _saveConfigNow → _writeConfig и recovery reload. Существующие authority/dialogSession guards не заменяются toast-контекстом. Page-wide diagnostics и canvas Move/Delete имеют явную карточную поверхность; NodeHistory захватывает callback на каждое действие.\n\nHpDialog выдаёт новый token после accepted retirement/detach, даже если DialogPresence повторно использует тот же HTMLElement. Вето закрытия без retirement сохраняет token. Старый callback не может присвоить новую lifetime этого shell или закрыть её overlays. Остаётся один notice, replace-not-queue deadline3500ms и одно объявление каждого нового сообщения; routing не перезапускает deadline/paint.\n\nФильтр по space_deleted/тексту и глобальный card fallback отвергнуты. Последний как раз оказался недостаточен для закрывающегося дочернего окна и исправлен по независимому ревью.\n\n### Исправления по предыдущему ревью\n\nПредыдущее содержательное ревью: https://github.com/Matysh/houseplan-card/issues/1246#issuecomment-6613692534 (run41703303355, материал0bdcf608e, changes_requested).\n\n1. Блокер «дочернее окно закрывается, тост уходит под всё ещё открытый parent modal» → ToastContext дополнен снимком предшествовавших owner-token'ов; после отставки child resolver выбирает только живой token из снимка. Новый unit: child → старый parent при активном новом third dialog, поздний callback тоже не выбирает third; отставка parent возвращает notice на карточку. Новый genuine-modal browser case вызывает настоящий reduced backdrop path на некорректном raster в guard над Space dialog, ждёт исчезновения guard и подтверждает glyph paint сообщения в Space footer, один notice и ровно одно новое announcement.\n2. Улучшение «внутренний write/reload после upload может захватить discard-confirm» → передан исходный showToast через _saveConfigNow/_writeConfig, конфликтный и физический recovery, _reloadConfigOnly (включая deferred retry). Добавлен test/toast-save-context.test.mjs: реальные runtime методы сохраняют callback/guards при write failure и обоих recovery путях; reload не подменяет его новым владельцем. Бизнесassertions данных/прав не ослаблялись.\n3. Артефакты механической вставки → восстановлены только отступы затронутых объявлений методов и const showToast относительно базового082f99ccf; общего переформатирования нет.\n4. Каноническая архитектура уточняет допустимый возврат к старому captured parent. E2E21 дополнена child-retirement сценарием.\n\nНовый материал: f3dfb5cb627ce462d959cc4d825e42bd464db1a4, ветка issue/1246-toast-s6-reuse. Ручного merge/force push/изменения queue.json не было.\n\n### Проверки и ограничения\n\nПосле исправлений локально: npm run build PASS (типы + Rollup); адресные toast-presentation/toast-save-context/room-save17/17PASS; канонический CRITICAL_NODE151/151PASS; demo/smoke_toast_ownership_1246.mjs26/26PASS, включая настоящий backdrop guard reduced failure, late View service failure, deferred write, reused shell, same text, glyph paint/AX/announcement/lifetime. Для guard, завершившегося до первой paint сообщения, alert может впервые объявиться уже в родителе; проверяется одно новое announcement, а не обязательный aria-live=off до самого первого объявления. Уже объявленное сообщение при переносе проверяется unit и прежним lifecycle сценарием.\n\nЭто synthetic harness с настоящей официальной HA frontend modal-компонентой и fake-hass, НЕ полноценный HA-server E2E и не проверка серверных ACL/хранения. Установка владельца не менялась. Реальные HA E2E перед бетой нужны: https://github.com/Matysh/houseplan-e2e/issues/21.\n\nПредыдущий фактический S6 run41702741150 на0bdcf608e был PASS: critical151, area126 и startup/browser с валидированным reuse. Он НЕ объявляется S6 нового кода f3dfb5cb6: продуктовые inputs изменены, повтор выбранного набора через finish обязателен. Более ранний run41699400780 остался FAILED (134/17): fakehost layout lifecycle не подключал новый _captureToast; этот test adapter адресно исправлен с делегированием реальному proto без изменения бизнесassertions.\n\nОтдельный baseline FAIL геометрического счётчика не исправлялся в #1246: контроль на чистом task-1247, HEADf2436671e6a48a64ed785f89cf014b467a123cbb без Toast-изменений — тот же recorded>0 FAIL, полный adapter test13PASS/9FAIL. Условия и hashes: https://github.com/Matysh/houseplan-card/issues/1251. Это не PASS и не доказательство «устаревшего теста». Геометрия и его ожидания не менялись; узкая проверка toast-node-action и существующие Move/Delete lifecycle тесты входят в выбранную область.\n\nRU/EN changelog и stable-fix ledger текущего цикла v1.83.0 сохранены.\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T20:04:25.963Z",
-        "artifactId": 13266062863,
-        "runId": 41707790997,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T20:04:31Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41707790997",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1247": {
@@ -3064,76 +2892,8 @@
   "waiting": [
     1226
   ],
-  "active": {
-    "issue": 1246,
-    "worker": "finish",
-    "token": "134:finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:1:admit",
-    "fence": 134,
-    "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-    "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793735519935,
-    "expiresAt": 1793739929303,
-    "patchId": "925c785a4b330200d4e5e3db8790013b883bb918",
-    "reviewRequest": "review:1246:6:925c785a4b330200d4e5e3db8790013b883bb918:082f99ccf9c9667cb17edae74f529e9e7695872a"
-  },
+  "active": null,
   "events": {
-    "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
-      "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
-      "issue": 1246
-    },
-    "finish:74f42b8f-f233-478f-91b2-b50448b6e147:finish:2:automation-pending": {
-      "digest": "7fd04b4d0123f7105be09e59773c46be00c9a0c391b06fed9a6bc25471ccb56d",
-      "issue": 1246
-    },
-    "finish:1c0a7fe9-d2bb-46e2-9f24-0a0ddd489775": {
-      "digest": "480903b08aef6ae7fd23ad1b6526bb22d9e3b1f0652995c856b6617743e60159",
-      "issue": 1246
-    },
-    "finish:e33fc3e8-2979-4df4-abb8-c0a39eea15e2": {
-      "digest": "110b0b2a6b7885601a15800618603d99720df2ff9ec4b7cc7b26ee9227e31d35",
-      "issue": 1246
-    },
-    "finish:0d5addc3-ee54-4382-8cb8-864707d2c05a": {
-      "digest": "3819a9400b48ce15a58162dfabe5756dc8f2437a5b59bb8214a6b6287fde2080",
-      "issue": 1246
-    },
-    "return:1246:125:rebase-conflict-recovery": {
-      "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
-      "issue": 1246
-    },
-    "github:41694597150:1:completions:notice:a7b7f3196e22982bec8e0e0bba5b5a4f205003ec6c333f9c4e93b250ee28fd64": {
-      "digest": "bbee027053045674db2ec2c8728424313e0510158668d728dd332754f4d398ec",
-      "issue": 1246
-    },
-    "finish:df291976-35e5-4b0d-be41-42d771b7587d:finish:2:synchronized": {
-      "digest": "35c7b8ab846fcd18a1a0a27208d9c94e60e216e88000d4940ba21be521284f9a",
-      "issue": 1246
-    },
-    "finish:65d410de-4483-408e-9657-621d7a85ebcd": {
-      "digest": "1929734708be3b19bbc9725b126aa8da04aaca0b9ee8af0c46a7f024a156baba",
-      "issue": 1246
-    },
-    "finish:09a2e16d-6af9-44a2-bb33-746821fba789": {
-      "digest": "f85b7fe47c2984f01dff7ab138f656b65da6a1a40b93d1ccf910a14937c2eb59",
-      "issue": 1246
-    },
-    "github:41699245920:1:completions:message:65dbe47813f73ea592f1fb69e83d5c70f0a6f4fc7f51743cb324e3b585c79a9a": {
-      "digest": "79da8bea05dc0b98d7dc3b928d9151671327ab37b227afaf33b510f920ddde54",
-      "issue": 1246
-    },
-    "finish:5c5c5f58-91d9-497b-b720-3bd8b7f77ad8": {
-      "digest": "02b5d2d09c2985257abed95d015f6db7091935e71bee5995b5ac093ee0af568c",
-      "issue": 1246
-    },
-    "finish:df291976-35e5-4b0d-be41-42d771b7587d:finish:3:return": {
-      "digest": "ac370bc2e32e71a291277043ec1c839c3f619115b738d9e9430cfd1cc37f7c18",
-      "issue": 1246
-    },
-    "github:41699247742:1:completions:notice:029b8fa4dcb7994041ef7d2b29de75facd5ec7a627091a02b32e908fa356e40a": {
-      "digest": "ea0b2d18c9bfb5d6cc51e9b0b45487d85a8e380d324d487062137cd5fd473c92",
-      "issue": 1246
-    },
     "github:41702077815:1:completions:message:2d07f9d74116bae6e0db4c1c35020671eb5ea5035555f78e4663e8547a0690f5": {
       "digest": "f8284f491bf073cc26953de5517b8fa9aacd34980a3bbc67c7e82bf29e596a4a",
       "issue": 1226
@@ -3142,81 +2902,13 @@
       "digest": "91d34787066c0a9c1c2b92a7526b2413981e7f330db4570b0bb0d84dceac03d5",
       "issue": 1226
     },
-    "return:1246:131:reuse-base-update": {
-      "digest": "60ec91427038bdda6e990030b287985d9157a7cc28a1b7a97ff76e86cd9c8808",
-      "issue": 1246
-    },
     "github:41702081061:1:completions:notice:c7324edb1a510143ec1dbbfec8e7114dc88ad003f4d4b2e6257a24805575dfaa": {
       "digest": "2c8c3582a97b1339b2ba10f6920865cfc3d51a0f89eb601fdf3224304e159a07",
       "issue": 1226
     },
-    "github:41702081061:1:completions:notice:c04240bf7cb4a213ca8abe2a3cba5e4f3f5f3f591968038b04703e9533f8e152": {
-      "digest": "80198540c5640512bb792a28dd1e84c647c71e1e28eb24736734d905adfff6a6",
-      "issue": 1246
-    },
-    "github:41702081061:1:completions:message:c04240bf7cb4a213ca8abe2a3cba5e4f3f5f3f591968038b04703e9533f8e152": {
-      "digest": "df1205370fde195d36cda8e716f8223d7342fc655cd7e134fc3b747504f65b2f",
-      "issue": 1246
-    },
-    "sync:1246:132:0bdcf608eb29c774c6160fcedb0399bba4e4290b:reuse-critical": {
-      "digest": "480226f152cbce571e82b1fc218dc0e373989f93d1ff69a962b3897a119115fa",
-      "issue": 1246
-    },
-    "github:41702406413:1:completions:message:41fd65a01efa46246783515fa24d0330fe38c1fa451b806d6406b0730fde55fb": {
-      "digest": "82486747a4a500e9c5a4e1353f9c9d4efd597b58f8c2936dd8fa94e57b5ab425",
-      "issue": 1246
-    },
-    "github:41702406413:1:completions:message:d164a678aaaaeafb02a01c83b95b729737e8ec42b1202de698ae99eb6ee0fcf2": {
-      "digest": "a9ef2d40067c1611c1ab16c503913ead799c3ae4e1e9af9c71539d952e98611b",
-      "issue": 1246
-    },
-    "finish:030811c9-db88-4437-b629-f8cf5831bece": {
-      "digest": "bf60991946c6fcc1c03e07f8fee509621bb2a8fc1f86daa3986059a037149e16",
-      "issue": 1246
-    },
-    "finish:c07a2bb2-b21d-4129-b0e9-ec8c4d5aaf47": {
-      "digest": "bc808beb5527c907bdc34caffb5ee2f5a31028a69700729c753c21ed304008d3",
-      "issue": 1246
-    },
-    "finish:002ce5c1-21b8-4ca9-b21f-198269b1e03f": {
-      "digest": "bb4ed7892e40c4ba2f2850bc3238e429fcb96ce217770b0272400bcbdce20fbf",
-      "issue": 1246
-    },
-    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:1:s6-label": {
-      "digest": "e25e11f487bf3fcebb7d7b772a17aa2fc6e22e2bc2da65df5c4060cf0b21ec9b",
-      "issue": 1246
-    },
-    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:2:review-requested": {
-      "digest": "a1b5b6fe25f2285ddb2f4579dbed9182b1d263b257f8e5b0d8d401c50cfb0db7",
-      "issue": 1246
-    },
-    "github:41703278898:1:completions:message:08c2961b85ebbf209b8f6f5deb06527143b93ae40715e9050283c1b76699d719": {
-      "digest": "47a1911b0d0178ee0a2150f2fc8243a4a18cdbc3fea88165467576d280e5d5b5",
-      "issue": 1246
-    },
-    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:14:review-presentation": {
-      "digest": "deb2c538ee36f2a356d36e0b3837d3b9ee0d3843e8aa97344789a2dce126fe8d",
-      "issue": 1246
-    },
-    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:14:return": {
-      "digest": "e76d75cadf4a723361bbb75e2b89499acf930f5e83d9df5b1b4a89723b1bd8b4",
-      "issue": 1246
-    },
-    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:14:return-label": {
-      "digest": "cbfc129166853ef597d8195db6fb56484d758f291c72131a8da696f2447e6236",
-      "issue": 1246
-    },
-    "github:41705347550:1:completions:report:1f95a1963b24e73178b8bdc8ecfb1d881b45cfe8049a75fe9928a1d6a8d18c0b": {
-      "digest": "a4b8d9ad6409d5c0a6a77e598d2a2b4e4789476e9955a47fc0f20e48e5375711",
-      "issue": 1246
-    },
     "github:41705347550:1:completions:message:c19ce4ce66b4440933e9cd7664a4871d7800d53ba620c18b6e1e39a790a48445": {
       "digest": "31b68ef4808e64e086774a322dead21cdcd0b30eedcbd821bb3d893316b40bc0",
       "issue": 1226
-    },
-    "github:41705347550:1:completions:metadata:f797a246-927f-4dc5-aea0-5ed0ea27aca2:task-notice:1246::": {
-      "digest": "4b0ee8378304b28539e59316b852105f55d61e95673e35817886d7c5c2458cb9",
-      "issue": 1246
     },
     "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1:finish:1:synchronized": {
       "digest": "e983d6c3ccfba0a034f783ef748a3c805a59799258c0247cd44566303e5a9a2d",
@@ -3250,208 +2942,13 @@
       "digest": "ab9c9a58b55f6030d17da60304084f42aea9d3e7fdf08884c21a42ebe1c06f0e",
       "issue": 1226
     },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:2:synchronized": {
-      "digest": "c18f685a625360f0be723231e48f376e292ae518cc123dee42a3463d968b07e9",
-      "issue": 1246
-    },
     "github:41707153177:1:completions:report:fabaf3ba92224243c5bc11d8ac61ff59f0d75c9a6ea5628f7daabddaa68d852d": {
       "digest": "b794dfe87f7d453506e75de0fcd72a4a48308cf6a097ca5f9afcfb6df356fd88",
       "issue": 1226
     },
-    "github:41707153177:1:completions:message:f5ff576e4d0558e3a6f48ca8feb28d150a672f41832d759aab6c7b37e9d63a42": {
-      "digest": "7b6fad5d8f47dc850b45d45c4e44fcc72917fdd1d7f9f837501b71555f4a1faa",
-      "issue": 1246
-    },
-    "github:41707153177:1:completions:message:ee2c170431f57073f34a73f6ae97fd1513845428e6002b2bb2ae218050a505b3": {
-      "digest": "e8cb7393b99ee463767319cbc3a2eabc2038012ed76e16f51f8aa071dd46ffb8",
-      "issue": 1246
-    },
     "github:41707153177:1:completions:metadata:9aca6942-6594-46a5-901b-121bc6e81b35:task-notice:1226::": {
       "digest": "871f839f97d2f5262035bdc2f68ed0c64c73aedb163ee4da9546d9cfa4fd5952",
       "issue": 1226
-    },
-    "finish:85fcd735-7b98-45c4-8006-697689d19f5b": {
-      "digest": "4a48924ddae3cd3c69925d3fe9dd479c9991fbd8b1ff29c7fad035c5e18a58bf",
-      "issue": 1246
-    },
-    "finish:16c7b4ad-1fa8-4b00-af74-1d42b154b313": {
-      "digest": "0202106697b3bb7e0f558924c740f91c1f16cb80d5f827268951a333104d35c6",
-      "issue": 1246
-    },
-    "finish:bf6c379f-0da8-4cbd-9351-b6b1e7840469": {
-      "digest": "be580646a539a83d8cfefd1d79f09039207e80afba517617a679b66962d61eb0",
-      "issue": 1246
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:3:s6-label": {
-      "digest": "0e53a4fae4c14f9ed665b15e77ac902569bc6bd97d41c63f8fe23789437699de",
-      "issue": 1246
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:4:review-requested": {
-      "digest": "df861f0e8165381a1dcca2fe214c237af20aa03caecdcc16656810d310177b79",
-      "issue": 1246
-    },
-    "github:41707764848:1:completions:message:09a4a46be0302d1b52eb8554b4e9f9a2fe6e41977780a3ddefadff6a0bc0f318": {
-      "digest": "5fe253a923af5decb1469d63e846b3bdcc614f198da4b6063a2078e8551a13b0",
-      "issue": 1246
-    },
-    "github:41707764848:1:completions:message:1a446a0d4ea212d397d194fefedf9b54b023440ad6000ae6e2bbecd93d801462": {
-      "digest": "55ec50c29a76907da9e5d7dadf9d36269dd1361829377bbdb5d56f55b4191185",
-      "issue": 1246
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:13:review-presentation": {
-      "digest": "453ba143a743c9b5f7fff36b1a125472d7f3fcc101c70948fac93efe7712b2a8",
-      "issue": 1246
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:13:review-complete": {
-      "digest": "4984f49add206ff1c8fcd667caa777c1cb18bbb2881f106c95aa3a81ee98891f",
-      "issue": 1246
-    },
-    "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
-      "digest": "3ccf71ffef7244f371a9bd1f581458f83aa074400a4fe562fabbe693d112ee18",
-      "issue": 1246,
-      "message": {
-        "kind": "queued",
-        "issue": 1246,
-        "at": 1793729056864,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "58d458895ce130b360851a4efa50cbcb43579238",
-        "delivered": true
-      }
-    },
-    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:1:admit": {
-      "digest": "894a8d163f349864497abb49de201e0099957a920ba91193525c116558a7ebd3",
-      "issue": 1246,
-      "message": {
-        "kind": "admitted",
-        "issue": 1246,
-        "at": 1793730431906,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "58d458895ce130b360851a4efa50cbcb43579238",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return:return:1246": {
-      "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
-      "issue": 1246,
-      "message": {
-        "kind": "return",
-        "issue": 1246,
-        "at": 1793730459537,
-        "entry": 1,
-        "notice": {
-          "key": "1:rebase-conflict",
-          "reason": "rebase-conflict",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793730459537,
-          "entry": 1,
-          "eventId": "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return:return:1246"
-        },
-        "delivered": true
-      }
-    },
-    "finish:74f42b8f-f233-478f-91b2-b50448b6e147": {
-      "digest": "e51ed99a2623e5d1c491dee90e32aa07c8f29a404879d5e95996bf63b7cc3972",
-      "issue": 1246,
-      "message": {
-        "kind": "queued",
-        "issue": 1246,
-        "at": 1793730555484,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c4779c99782afec7016e38ef302371738c25536c",
-        "delivered": true
-      }
-    },
-    "finish:74f42b8f-f233-478f-91b2-b50448b6e147:finish:1:admit": {
-      "digest": "61762a256a3b5b01cf4499973afafffbb17e0bb985984f31499adc73efc602fa",
-      "issue": 1246,
-      "message": {
-        "kind": "admitted",
-        "issue": 1246,
-        "at": 1793730559571,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c4779c99782afec7016e38ef302371738c25536c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "return:1246:125:rebase-conflict-recovery:return:1246": {
-      "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
-      "issue": 1246,
-      "message": {
-        "kind": "return",
-        "issue": 1246,
-        "at": 1793730816509,
-        "entry": 2,
-        "notice": {
-          "key": "2:rebase-conflict-recovery",
-          "reason": "rebase-conflict-recovery",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793730816509,
-          "entry": 2,
-          "eventId": "return:1246:125:rebase-conflict-recovery:return:1246"
-        },
-        "delivered": true
-      }
-    },
-    "finish:df291976-35e5-4b0d-be41-42d771b7587d": {
-      "digest": "372b10852380640fc03f990364fcd9cf8d0fd9a08b3f46bd27da99d7c5d23958",
-      "issue": 1246,
-      "message": {
-        "kind": "queued",
-        "issue": 1246,
-        "at": 1793730843511,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "59288b2550e8269193aad2272536c14915f7978e",
-        "delivered": true
-      }
-    },
-    "finish:df291976-35e5-4b0d-be41-42d771b7587d:finish:1:admit": {
-      "digest": "1d9008635b748c1fc9e82ec50c058db6cbe6a78feb656fe96014f23af4be5841",
-      "issue": 1246,
-      "message": {
-        "kind": "admitted",
-        "issue": 1246,
-        "at": 1793732495126,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "59288b2550e8269193aad2272536c14915f7978e",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:df291976-35e5-4b0d-be41-42d771b7587d:finish:3:return:return:1246": {
-      "digest": "ac370bc2e32e71a291277043ec1c839c3f619115b738d9e9430cfd1cc37f7c18",
-      "issue": 1246,
-      "message": {
-        "kind": "return",
-        "issue": 1246,
-        "at": 1793732696248,
-        "entry": 3,
-        "notice": {
-          "key": "3:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793732696248,
-          "entry": 3,
-          "eventId": "finish:df291976-35e5-4b0d-be41-42d771b7587d:finish:3:return:return:1246"
-        },
-        "delivered": true
-      }
     },
     "finish:8df2eedb-ab7b-46f4-b8f0-097791c33abb": {
       "digest": "c9070b32c7930ca6cdb037da6dfc0ecc049b153fa45262a2f28f37221b79f5ed",
@@ -3464,20 +2961,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "b1c227e98883d05c38ac8ccec41b19de09a97804",
-        "delivered": true
-      }
-    },
-    "ready:1246:0e50780e4b5bca85b96519256520ac9f1f92a3ed:reuse-critical": {
-      "digest": "dee279d4d47909c6c9a4b7fea259e68e910491bc80780c4e3cde70c00e56bfe4",
-      "issue": 1246,
-      "message": {
-        "kind": "queued",
-        "issue": 1246,
-        "at": 1793733030754,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
         "delivered": true
       }
     },
@@ -3516,70 +2999,6 @@
         "delivered": true
       }
     },
-    "admit:1246:0e50780e4b5bca85b96519256520ac9f1f92a3ed:reuse-critical": {
-      "digest": "6a23ef7ef28347b46c4caabe48bafd37d744c0c780cd9f2b686049d45f292e8a",
-      "issue": 1246,
-      "message": {
-        "kind": "admitted",
-        "issue": 1246,
-        "at": 1793733675055,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "return:1246:131:reuse-base-update:return:1246": {
-      "digest": "60ec91427038bdda6e990030b287985d9157a7cc28a1b7a97ff76e86cd9c8808",
-      "issue": 1246,
-      "message": {
-        "kind": "return",
-        "issue": 1246,
-        "at": 1793733746936,
-        "entry": 4,
-        "notice": {
-          "key": "4:reuse-base-update",
-          "reason": "reuse-base-update",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793733746936,
-          "entry": 4,
-          "eventId": "return:1246:131:reuse-base-update:return:1246"
-        },
-        "delivered": true
-      }
-    },
-    "ready:1246:0bdcf608eb29c774c6160fcedb0399bba4e4290b:reuse-critical": {
-      "digest": "51ce39c70f1a040ee763e2e5eff8e485e5988c80bbd1dba7009a403fe4aeb75d",
-      "issue": 1246,
-      "message": {
-        "kind": "queued",
-        "issue": 1246,
-        "at": 1793733756972,
-        "entry": 5,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-        "delivered": true
-      }
-    },
-    "admit:1246:0bdcf608eb29c774c6160fcedb0399bba4e4290b:reuse-critical": {
-      "digest": "4ec1a2e06efb8177a72cfad27e32ccddc6532348a2bbc2f3ddc56c02248e669e",
-      "issue": 1246,
-      "message": {
-        "kind": "admitted",
-        "issue": 1246,
-        "at": 1793733767952,
-        "entry": 5,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1": {
       "digest": "dc3d73865d491bf0eebef31b6000eae4590e0c3deb3f34083a578e7237d522fd",
       "issue": 1226,
@@ -3591,37 +3010,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "e6fe4e04616111f3bf658d7d432ac84539c091b8",
-        "delivered": true
-      }
-    },
-    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:1:s6-complete": {
-      "digest": "7a9dce2d275f0b049c72693c1e26649d320e81d729a9b4058cab42832196db9d",
-      "issue": 1246,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1246,
-        "at": 1793733984821,
-        "entry": 5,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T192450682-1b9ff2d9",
-          "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
-          "runId": 41702741150,
-          "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-          "status": "passed",
-          "finishedAt": "2026-11-03T19:25:52.962Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
-          "execution": "github"
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\nВыполнить К1–К3 без исключений по тексту/ID. Уже показанный тост остаётся у исходной поверхности; открытие нового или вложенного диалога его не присваивает. Когда исходный владелец закрывается, сообщение возвращается на карточку, но не в посторонний диалог.\n\n### Решение и альтернативы\nToastPresentation сохраняет ToastContext при show и маршрутизирует только к сохранённому owner. _captureToast/captureToast возвращают callback, захватываемый до await; deferred config/layout writers захватывают контекст при постановке, не при позднем flush. Явно охвачены Save room/space/marker/settings/rules, удаление/копирование, onboarding/import, файлы/архив, vacuum, LED/history, свойства/keyboard, общий reload/write/error и View services. Существующие authority/dialogSession guards не заменяются toast-контекстом. Page-wide lazy/locale/art diagnostics явно принадлежат карточке. Чужие transient overlays не закрываются поздним сообщением старого действия.\nГлобальный вывод всех сообщений под modal отвергнут из-за #956. Фильтр space_deleted/текста отвергнут: принадлежность — действие/поверхность, не содержимое. Один notice и прежний replace-not-queue deadline 3500ms сохранены; owner changes не перезапускают таймер/paint/live announcement.\n\n### Риски и места для внимания\nДополнительный аудит перед допуском: долгоживущий wall-node adapter также имел late-result toast port. Его Move/Delete сообщения явно принадлежат canvas/card, а новый объект NodeHistory port захватывает callback при каждом вызове истории. Это не глобальный card fallback: ошибки собственных modal Save продолжают принадлежать исходному hp-dialog. Guards узлов/истории не изменены; добавлен адресный adapter regression.\n\nToastOwner — lifetime token, не просто HTMLElement: accepted beginExit/detach навсегда завершает токен. При cancelExit/reopen после accepted retirement тот же hp-dialog получает новый token; обычные ready/повторный sync/rejectClose без принятого закрытия сохраняют текущий token. Старый захваченный callback не может ни показать сообщение в новой lifetime того же shell, ни закрыть её transient overlays. Покрыто unit и genuine-modal browser reuse case.\n\nПри первом допуске актуализация до ad46b7902 вернула S6 по единственному rebase-conflict соседних импортов houseplan-editor-runtime. Сохранены оба независимых импорта: prepareDialogReturnFocus из уже принятой задачи и captureToast из #1246. Ручного merge/dev/force push нет; последующий finish актуализирует remote task branch своим штатным механизмом.\n\nШтатный synchronize затем отказал из-за различия patchId контекста импортов (`Local branch changed after ready`). Собственный sync lease fence125 возвращён публичной remote return с проверкой issue/token и reason rebase-conflict-recovery. Чтобы не переписывать remote историю, результат 59288b255 опубликован обычным push в новой task-ветке `issue/1246-toast-context-recovery`; дальнейший finish использует её. Старый remote c4779c997 не перезаписывался, queue.json/dev вручную не менялись. Ни один из этих возвратов не является результатом S6 — выбранный набор и show code review по-прежнему обязательны.\nОбъём call-site правок вызван существующими разными async входами, а не механической заменой всех ~215 _showToast. Синхронные validation/action сообщения сохраняют show-time owner. Даже dialogSession guard не решает nested-confirm: исходный диалог остаётся тем же, но активный footer уже другой, поэтому Save callbacks тоже захватываются до await. Лёгкие standalone/test ports без _captureToast сохраняют прежний adapter callback; настоящий HouseplanCard предоставляет _captureToast.\nОбработка данных/прав и существующие session guards остаются прежними; это не проект общей отмены операций или переписывания всех editor lifecycles. Ревью стоит внимательно разобрать late result callbacks и общие отложенные writers.\n\n### Проверки и ограничения\nПосле ремонта test adapter dev продвинулся до082f99ccf (#1252). В своём sync lease131 выполнен чистый rebase без продуктовых изменений; результат0bdcf608e опубликован ordinary push в `issue/1246-toast-s6-reuse`. Для передачи previous_run используется документированный публичный fallback workflow после actual ready/admit/synchronized, затем обычный finish наблюдает тот же requestId и валидирует фактический report. Это восстановление транспорта reuse, не ручной PASS/правка queue.json.\nФактический первый S6: https://github.com/Matysh/houseplan-card/actions/runs/41699400780 — FAILED, не PASS. Шесть остальных шагов прошли (build/types, подготовка, startup View, area126, browser24); критичный минимум дал134PASS/17FAIL. Все17 имеют одну причину: test/layout-write-reload.test.mjs вызывает настоящие exported card _pointerUp/history на fakehost, которому не был подключён новый _captureToast. Подключён минимальный card-only _toastPresentation.captureContext и реальное proto._captureToast, без изменения17 бизнесassertions прав/данных/ACK/history. Адресный `node --test test/layout-write-reload.test.mjs` после ремонта37/37PASS. Исправление только в test adapter, src/demo не меняются; прежние зелёные шаги применимы по неизменным inputs, критичный набор должен получить собственный успешный S6 receipt через очередь.\nВне toast-области найден baseline FAIL по счётчикам WallBooleanBaseline. Контроль без каких-либо Toast-изменений: чистый task-1247, HEAD f2436671e6a48a64ed785f89cf014b467a123cbb, `node --test --test-name-pattern '^Esc retries' test/wall-node-card-adapter.test.mjs` — тот же FAIL `recorded > 0`; полный исходный adapter test — 13 PASS/9 FAIL. Хеши/условия и вопрос для отдельного разбора: https://github.com/Matysh/houseplan-card/issues/1251. Причина нулевого счётчика не объявляется доказанно «устаревшим тестом»; геометрия/история этими падениями не подтверждены. Этот файл возвращён точно к исходному состоянию и не чинится в #1246. Узкий toast-node-action проверяет adapter/context и настоящий pending node-history refusal; сохранение Move/Delete lifecycle guards проверяется существующими wall-node-editor и wall-node-delete-menu тестами. Эти адресные файлы включены в финальный S6; девять отдельных FAIL не объявляются PASS.\nЛокально: npm run typecheck, npm run build; 53 адресных теста сохранения/прав/тостов прошли, затем добавленный реальный delayed room Save regression тоже PASS. Genuine HA modal synthetic smoke подтвердил glyph paint собственной Save-ошибки, отсутствие переноса во вложенный confirm/новый Space, один DOM notice, повторный одинаковый текст, AX/live announcement и исходный lifetime; финальная S6 выборка перечислена в artifacts/finish-1246.json и будет выполнена finish --s6 github в общей очереди.\nСтенд синтетический: настоящая официальная HA frontend modal-компонента работает с fake-hass, не с полноценным HA-сервером. Это не HA-server E2E; серверные права/хранение этим smoke не подтверждаются. Установка HA владельца не менялась. Реальные HA E2E перед бетой: надо, сценарий записан https://github.com/Matysh/houseplan-e2e/issues/21. RU/EN changelog и stable-fix ledger v1.83.0 добавлены.\n\nФинальная локальная диагностика: `npm run build` PASS; `node --test test/optimize-plans-dialog.test.mjs` — 41/41 PASS, включая late Optimize failure; `node --test test/toast-presentation.test.mjs test/room-save-946.test.mjs test/space-delete-dialog.test.mjs` — 28/28 PASS до добавления отдельного lifetime case, затем toast/node subset 11/11 PASS. `node demo/smoke_toast_ownership_1246.mjs` в WSL — 24/24 именованных проверок PASS, в том числе реальный `_cardToggle` с отложенным fake service failure после открытия Space dialog, config-write, поставленный до открытия, но flushed после, и повторное использование того же genuine-modal shell после accepted retirement. Дополнение узкого Optimize port покрыто его контрактным тестом и behavioral regression. Финальные S6, обязательный startup/critical минимум и независимое ревью выполняет только finish.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
@@ -3664,86 +3052,6 @@
         "newReview": true,
         "resubmission": false,
         "reviewChanges": "Перенос тестов и runner выполнен; продуктовый код эта задача не исправляет. Требуется содержательное независимое ревью с честным сохранением оставшихся RED, а не массовое принятие golden или новый полный прогон ради оформления. Материал автора: e6fe4e04616111f3bf658d7d432ac84539c091b8; финальная синхронизация с dev выполняется только координатором после допуска очередью.\n\n<details>\n<summary>Доказательства AC1–AC3, точные границы и оставшиеся результаты</summary>\n\n- AC1: все796 исходных неуспешных позиций классифицированы по точным исходным именам:230Node (210исправлены/20сохранены RED),177backend (177адресно подтверждены),122browser (95полных успешных сценариев/27сохранены RED),267golden (все9прежних неснятых кадров получены; эталоны не принимались). История результатов и исходные ошибки сохранены в JSON docs/testing/issue1226/.\n- AC2: actual arrays, oriented room cycles, атомарный rollback/history, host/node identity, opaque metadata, source immutability и CAS сохраняются. Подтверждённые продуктовые и ещё неразобранные случаи остаются RED и перечислены в docs/testing/issue1226/resume-findings.md. Бюджеты, skips и baseline не ослаблялись.\n- AC3: фактический полный stable-профиль [41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259) выполнен на1f3a0f343f881ef59446c664baace3df8e72a635 с companion827fb417858e10e2362092e26960f7c8ae4c5ac0.539шагов:504PASS/33FAIL/2not-required/0blocked,74м13.695с,0reuse. Node4427=4405PASS/21FAIL/1skip; backend2907=2906PASS/0FAIL/1skip,coverage90.5%против87.2%,порогPASS. HA77/77business+10/10setupPASS. Browser512 с30FAIL; golden326кадров:59PASS/267непринятых отличий/0ошибок снятия. ЗамерыPASS. Это честный диагностический RED, не сертификат зелёного stable-релиза.\n- Поздние тестовые переносы не приписываются раннему SHA: thickness36/36PASS; Unified Walls17/18PASS с сохранённым foreign-overlapRED; Zigbee44/44PASS; converter6/6PASS (добавленный сценарий, не увеличивает исходный знаменатель122). Полный #281 target отдельно выведен по прежней проекции и исходной graph authority. Последний актуальный browser count95/27 сохраняет три CI performance/measurementFAIL несмотря на прежние localPASS; пороги не менялись, повтор ради зелени не выполнялся.\n- Корпус:573полных входа из91файла, включая все229исторических. Исходные229паспорт/архив побайтово неизменны и проходят отдельную frozen-compatibility проверку. Новый отдельный current-паспорт обоснован независимыми source/ownership/host/width/opaque-ledger проверками и точными full-config SHA для571принятого результата. Сортируется только порядок ключей объектов для хеша; массивы/числа не нормализуются. #842 — обоснованный typed отказ. Корректный #478 по-прежнему положителен в expected и фактически отвергается продуктом; это единственное расхождение aggregate, не скрытое новое ожидание отказа. Null full-config target #478 не позволяет случайному принятию стать ложным PASS без независимого target.\n- Финальный адресный запуск comparator наa192a5783:6тестов/5PASS/1FAIL(#478)/0skip,4.08с. До aggregate-сравнения исполнены573immutable-input,571idempotence/re-read,230atom-IDmultiset,230room-IDmultiset,473ordered-cycle;0ошибок инвариантов. Полный аудит/build/HA для этого изменения не повторялись. Подробности: docs/testing/issue1226/current-corpus-oracle-proof.md и final-addressed-corpus-result.json; bounded proof archiveSHA87e90f1883a4ec91aa9e685d73543839c59bc534f07d705e3c3f018bad806f97.\n- Runner: исправлен разбор последней полной pytest-сводки с failed/errors.22адресных тестаPASS; новые регрессии давали4FAIL на старом parser. Полные продуктовые наборы не являются S6 infra-gate: финальная механическая подготовка штатного finish проверяет изменённые инструменты и собственные адресные тесты, а факты полного stable-профиля выше остаются без подмены.\n- Нулевой reuse объяснён по фактическим fingerprints: одинаковые environment keys, консервативное замыкание browserInputs на512browser+golden/metrics и all11Nodegroups на fixtures. Сборочные outputs по договору не восстанавливаются. Это задокументировано в reuse-scope-diagnosis.json; процесс/cache не менялись.\n- Оба технических changelog обновлены. Пользовательский changelog/milestone для чистой инфраструктуры не требуются. #1225 отдельно завершена в S8, companionPR18 слит; её77/77 не подменяет другие RED. Бета/релиз этой командой не поручены.\n\nИнструкция владельца о побочных находках сохраняется: новые GitHub issue, включая автоматическую публикацию outsideFindings, не создавать; сохранять их в отдельный файл/полный Markdown отчёта. Замечания High/Medium по самой задаче и их влияние на verdict сохраняются полностью. Штатный review route не заменяется, авторский контекст не является вердиктом.\n\n</details>",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e": {
-      "digest": "5e659ee728074df9af28b9aa13eb564ed54699026af8b03c60751a5534e55796",
-      "issue": 1246,
-      "message": {
-        "kind": "queued",
-        "issue": 1246,
-        "at": 1793735515982,
-        "entry": 6,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-        "evidence": {
-          "id": "20261103T192450682-1b9ff2d9",
-          "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
-          "runId": 41702741150,
-          "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-          "status": "passed",
-          "finishedAt": "2026-11-03T19:25:52.962Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
-          "execution": "github"
-        },
-        "delivered": true
-      }
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:1:admit": {
-      "digest": "94828c8c7b6793e52d88d90cf00ef2136079ec1c4139f17332c42b667ff698eb",
-      "issue": 1246,
-      "message": {
-        "kind": "admitted",
-        "issue": 1246,
-        "at": 1793735519935,
-        "entry": 6,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261103T192450682-1b9ff2d9",
-          "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
-          "runId": 41702741150,
-          "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-          "status": "passed",
-          "finishedAt": "2026-11-03T19:25:52.962Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
-          "execution": "github"
-        },
-        "delivered": true
-      }
-    },
-    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:3:s6-complete": {
-      "digest": "07cd0165ea88ffdc918b838f294424994745cddb5261acb54c039d7f5e5f8724",
-      "issue": 1246,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1246,
-        "at": 1793735717799,
-        "entry": 6,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T195327304-2ec9b88f",
-          "requestId": "s6:1246:ba6647bdf66e89961cfc112aefea71b6",
-          "runId": 41707273999,
-          "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-          "status": "passed",
-          "finishedAt": "2026-11-03T19:54:41.673Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41707273999",
-          "execution": "github"
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Цель и результат\n\nТост принадлежит действию, а не последнему открытому окну. Карточное сообщение не переезжает в новый modal; сообщение диалога сохраняет его lifetime-token. Когда дочернее окно закрывается, допустим возврат только к ещё активному владельцу, который уже существовал при захвате контекста (например Space под backdrop guard), иначе на карточку. Диалог, открытый после старта действия, никогда не входит в этот снимок.\n\n### Решение и альтернативы\n\nToastContext сохраняет первичного owner и неизменный список старших owner-token'ов. resolveOwner проверяет только этот снимок; актуальный scope используется лишь для проверки активности, не для выбора новых кандидатов. Все маршруты, включая закрытие transient overlays, используют тот же resolver. Это сохраняет #956 для старого родителя, не возвращая исходный reroute к произвольному «последнему modal».\n\n_captureToast/captureToast захватывают callback до await; deferred config/layout writers — при постановке, не при flush. Save room/space/marker/settings/rules/onboarding передаёт тот же callback во внутренние _saveConfigNow → _writeConfig и recovery reload. Существующие authority/dialogSession guards не заменяются toast-контекстом. Page-wide diagnostics и canvas Move/Delete имеют явную карточную поверхность; NodeHistory захватывает callback на каждое действие.\n\nHpDialog выдаёт новый token после accepted retirement/detach, даже если DialogPresence повторно использует тот же HTMLElement. Вето закрытия без retirement сохраняет token. Старый callback не может присвоить новую lifetime этого shell или закрыть её overlays. Остаётся один notice, replace-not-queue deadline3500ms и одно объявление каждого нового сообщения; routing не перезапускает deadline/paint.\n\nФильтр по space_deleted/тексту и глобальный card fallback отвергнуты. Последний как раз оказался недостаточен для закрывающегося дочернего окна и исправлен по независимому ревью.\n\n### Исправления по предыдущему ревью\n\nПредыдущее содержательное ревью: https://github.com/Matysh/houseplan-card/issues/1246#issuecomment-6613692534 (run41703303355, материал0bdcf608e, changes_requested).\n\n1. Блокер «дочернее окно закрывается, тост уходит под всё ещё открытый parent modal» → ToastContext дополнен снимком предшествовавших owner-token'ов; после отставки child resolver выбирает только живой token из снимка. Новый unit: child → старый parent при активном новом third dialog, поздний callback тоже не выбирает third; отставка parent возвращает notice на карточку. Новый genuine-modal browser case вызывает настоящий reduced backdrop path на некорректном raster в guard над Space dialog, ждёт исчезновения guard и подтверждает glyph paint сообщения в Space footer, один notice и ровно одно новое announcement.\n2. Улучшение «внутренний write/reload после upload может захватить discard-confirm» → передан исходный showToast через _saveConfigNow/_writeConfig, конфликтный и физический recovery, _reloadConfigOnly (включая deferred retry). Добавлен test/toast-save-context.test.mjs: реальные runtime методы сохраняют callback/guards при write failure и обоих recovery путях; reload не подменяет его новым владельцем. Бизнесassertions данных/прав не ослаблялись.\n3. Артефакты механической вставки → восстановлены только отступы затронутых объявлений методов и const showToast относительно базового082f99ccf; общего переформатирования нет.\n4. Каноническая архитектура уточняет допустимый возврат к старому captured parent. E2E21 дополнена child-retirement сценарием.\n\nНовый материал: f3dfb5cb627ce462d959cc4d825e42bd464db1a4, ветка issue/1246-toast-s6-reuse. Ручного merge/force push/изменения queue.json не было.\n\n### Проверки и ограничения\n\nПосле исправлений локально: npm run build PASS (типы + Rollup); адресные toast-presentation/toast-save-context/room-save17/17PASS; канонический CRITICAL_NODE151/151PASS; demo/smoke_toast_ownership_1246.mjs26/26PASS, включая настоящий backdrop guard reduced failure, late View service failure, deferred write, reused shell, same text, glyph paint/AX/announcement/lifetime. Для guard, завершившегося до первой paint сообщения, alert может впервые объявиться уже в родителе; проверяется одно новое announcement, а не обязательный aria-live=off до самого первого объявления. Уже объявленное сообщение при переносе проверяется unit и прежним lifecycle сценарием.\n\nЭто synthetic harness с настоящей официальной HA frontend modal-компонентой и fake-hass, НЕ полноценный HA-server E2E и не проверка серверных ACL/хранения. Установка владельца не менялась. Реальные HA E2E перед бетой нужны: https://github.com/Matysh/houseplan-e2e/issues/21.\n\nПредыдущий фактический S6 run41702741150 на0bdcf608e был PASS: critical151, area126 и startup/browser с валидированным reuse. Он НЕ объявляется S6 нового кода f3dfb5cb6: продуктовые inputs изменены, повтор выбранного набора через finish обязателен. Более ранний run41699400780 остался FAILED (134/17): fakehost layout lifecycle не подключал новый _captureToast; этот test adapter адресно исправлен с делегированием реальному proto без изменения бизнесassertions.\n\nОтдельный baseline FAIL геометрического счётчика не исправлялся в #1246: контроль на чистом task-1247, HEADf2436671e6a48a64ed785f89cf014b467a123cbb без Toast-изменений — тот же recorded>0 FAIL, полный adapter test13PASS/9FAIL. Условия и hashes: https://github.com/Matysh/houseplan-card/issues/1251. Это не PASS и не доказательство «устаревшего теста». Геометрия и его ожидания не менялись; узкая проверка toast-node-action и существующие Move/Delete lifecycle тесты входят в выбранную область.\n\nRU/EN changelog и stable-fix ledger текущего цикла v1.83.0 сохранены.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
