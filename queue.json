@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2127,
+  "revision": 2128,
   "nextTicket": 134,
   "nextFence": 134,
   "tasks": {
@@ -3099,6 +3099,10 @@
       "digest": "53dff2d07b4bdad6e9b5f81eafe8fcaff7a55b0c3e1bb66d91a709c9e2d16059",
       "issue": 1226
     },
+    "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1:finish:2:s6-label": {
+      "digest": "c8aeba5f14e81e4f6d1a6acf7b2b8ab437373f1948554e4636c4472bf03d6893",
+      "issue": 1226
+    },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
       "digest": "3ccf71ffef7244f371a9bd1f581458f83aa074400a4fe562fabbe693d112ee18",
       "issue": 1246,
@@ -3458,7 +3462,8 @@
         "resubmission": false,
         "reviewChanges": "Перенос тестов и runner выполнен; продуктовый код эта задача не исправляет. Требуется содержательное независимое ревью с честным сохранением оставшихся RED, а не массовое принятие golden или новый полный прогон ради оформления. Материал автора: e6fe4e04616111f3bf658d7d432ac84539c091b8; финальная синхронизация с dev выполняется только координатором после допуска очередью.\n\n<details>\n<summary>Доказательства AC1–AC3, точные границы и оставшиеся результаты</summary>\n\n- AC1: все796 исходных неуспешных позиций классифицированы по точным исходным именам:230Node (210исправлены/20сохранены RED),177backend (177адресно подтверждены),122browser (95полных успешных сценариев/27сохранены RED),267golden (все9прежних неснятых кадров получены; эталоны не принимались). История результатов и исходные ошибки сохранены в JSON docs/testing/issue1226/.\n- AC2: actual arrays, oriented room cycles, атомарный rollback/history, host/node identity, opaque metadata, source immutability и CAS сохраняются. Подтверждённые продуктовые и ещё неразобранные случаи остаются RED и перечислены в docs/testing/issue1226/resume-findings.md. Бюджеты, skips и baseline не ослаблялись.\n- AC3: фактический полный stable-профиль [41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259) выполнен на1f3a0f343f881ef59446c664baace3df8e72a635 с companion827fb417858e10e2362092e26960f7c8ae4c5ac0.539шагов:504PASS/33FAIL/2not-required/0blocked,74м13.695с,0reuse. Node4427=4405PASS/21FAIL/1skip; backend2907=2906PASS/0FAIL/1skip,coverage90.5%против87.2%,порогPASS. HA77/77business+10/10setupPASS. Browser512 с30FAIL; golden326кадров:59PASS/267непринятых отличий/0ошибок снятия. ЗамерыPASS. Это честный диагностический RED, не сертификат зелёного stable-релиза.\n- Поздние тестовые переносы не приписываются раннему SHA: thickness36/36PASS; Unified Walls17/18PASS с сохранённым foreign-overlapRED; Zigbee44/44PASS; converter6/6PASS (добавленный сценарий, не увеличивает исходный знаменатель122). Полный #281 target отдельно выведен по прежней проекции и исходной graph authority. Последний актуальный browser count95/27 сохраняет три CI performance/measurementFAIL несмотря на прежние localPASS; пороги не менялись, повтор ради зелени не выполнялся.\n- Корпус:573полных входа из91файла, включая все229исторических. Исходные229паспорт/архив побайтово неизменны и проходят отдельную frozen-compatibility проверку. Новый отдельный current-паспорт обоснован независимыми source/ownership/host/width/opaque-ledger проверками и точными full-config SHA для571принятого результата. Сортируется только порядок ключей объектов для хеша; массивы/числа не нормализуются. #842 — обоснованный typed отказ. Корректный #478 по-прежнему положителен в expected и фактически отвергается продуктом; это единственное расхождение aggregate, не скрытое новое ожидание отказа. Null full-config target #478 не позволяет случайному принятию стать ложным PASS без независимого target.\n- Финальный адресный запуск comparator наa192a5783:6тестов/5PASS/1FAIL(#478)/0skip,4.08с. До aggregate-сравнения исполнены573immutable-input,571idempotence/re-read,230atom-IDmultiset,230room-IDmultiset,473ordered-cycle;0ошибок инвариантов. Полный аудит/build/HA для этого изменения не повторялись. Подробности: docs/testing/issue1226/current-corpus-oracle-proof.md и final-addressed-corpus-result.json; bounded proof archiveSHA87e90f1883a4ec91aa9e685d73543839c59bc534f07d705e3c3f018bad806f97.\n- Runner: исправлен разбор последней полной pytest-сводки с failed/errors.22адресных тестаPASS; новые регрессии давали4FAIL на старом parser. Полные продуктовые наборы не являются S6 infra-gate: финальная механическая подготовка штатного finish проверяет изменённые инструменты и собственные адресные тесты, а факты полного stable-профиля выше остаются без подмены.\n- Нулевой reuse объяснён по фактическим fingerprints: одинаковые environment keys, консервативное замыкание browserInputs на512browser+golden/metrics и all11Nodegroups на fixtures. Сборочные outputs по договору не восстанавливаются. Это задокументировано в reuse-scope-diagnosis.json; процесс/cache не менялись.\n- Оба технических changelog обновлены. Пользовательский changelog/milestone для чистой инфраструктуры не требуются. #1225 отдельно завершена в S8, companionPR18 слит; её77/77 не подменяет другие RED. Бета/релиз этой командой не поручены.\n\nИнструкция владельца о побочных находках сохраняется: новые GitHub issue, включая автоматическую публикацию outsideFindings, не создавать; сохранять их в отдельный файл/полный Markdown отчёта. Замечания High/Medium по самой задаче и их влияние на verdict сохраняются полностью. Штатный review route не заменяется, авторский контекст не является вердиктом.\n\n</details>",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
