@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1340,
+  "revision": 1341,
   "nextTicket": 94,
   "nextFence": 94,
   "tasks": {
@@ -1819,6 +1819,10 @@
       "digest": "d27f01164ffc55149b25b55d98a0e56478ce872fe40cae008535319e1637f282",
       "issue": 1220
     },
+    "github:41625271343:1:completions:message:30831a34e1019976a2b2c686601b2c725820c82ae6d1a49a4342a41ca9979afd": {
+      "digest": "c9aca07c330b11df39dad3a06c691200de9a763facdb04cf150c6c5f60f0e859",
+      "issue": 1220
+    },
     "finish:6e18bb7d-5732-4712-bed3-4fd157ed46dd": {
       "digest": "51fbb82639e8f8652c7cbd662c4c64fd5b044992e76b4c290fbb85d7170a354a",
       "issue": 1220,
@@ -1871,7 +1875,8 @@
         },
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
