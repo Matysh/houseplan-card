@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2062,
+  "revision": 2063,
   "nextTicket": 130,
   "nextFence": 130,
   "tasks": {
@@ -2511,14 +2511,21 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1252-sparse-coordinator",
-      "materialSha": "540ccd7d35598c03fd8b2a2de05df26af4806b8c",
+      "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 129,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793730961957,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a",
+      "changedFiles": [
+        ".github/workflows/process-next-coordinator.yml",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/templates/coordinator.yml"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2629,11 +2636,12 @@
     "worker": "finish",
     "token": "129:finish:8d2a2006-9d42-4f83-8426-077a0714b3ee:finish:2:admit",
     "fence": 129,
-    "materialSha": "540ccd7d35598c03fd8b2a2de05df26af4806b8c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+    "expectedBase": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
+    "phase": "testing",
     "admittedAt": 1793732745679,
-    "expiresAt": 1793733065978
+    "expiresAt": 1793733071761,
+    "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a"
   },
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
@@ -2690,6 +2698,10 @@
     },
     "finish:f53e5fc3-ee8a-4a5f-afd1-4a69853d4bcb": {
       "digest": "6a1c7d14e540513e24fcd956b942d826c911d1862ba2a31444f01743f1a1270a",
+      "issue": 1252
+    },
+    "finish:8d2a2006-9d42-4f83-8426-077a0714b3ee:finish:3:synchronized": {
+      "digest": "aa7301598f56041a75ea8cf0064e6fe899b84a8a6b657d538f3f8e933ff280cb",
       "issue": 1252
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
