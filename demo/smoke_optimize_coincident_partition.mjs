@@ -142,4 +142,3 @@ const out = await page.evaluate(async () => {
 });
 
 await finish(browser, checkAll(out));
-
