@@ -99,11 +99,24 @@ test('#478 legacy unfinished work is preserved losslessly as ordinary partitions
   assert.equal(result.report.roomDraftsMigrated, 4);
   assert.equal(result.report.roomDraftSegmentsMigrated, 4);
   assert.equal(result.config.spaces[0].room_drafts, undefined);
-  assert.deepEqual(result.config.spaces[0].partitions.map((partition) => [
-    partition.a, partition.b, partition.cm,
-  ]), space.room_drafts.filter((draft) => draft.id !== 'thicker').map((draft) => [
-    draft.points[0], draft.points[1], draft.segments[0].cm,
-  ]));
+  const current=result.config.spaces[0],partitions=current.partitions;
+  // Current graph import splits overlapping legacy carriers at named endpoints
+  // and folds the identical covered atom. The full physical coverage, not the
+  // obsolete number of projection records, is the losslessness contract.
+  assert.deepEqual(partitions.map(p=>[p.a,p.b,p.cm]),[
+    [[-.1,0],[0,0],15], [[0,0],[.5,0],15],
+    [[0,.5],[1,.5],15], [[.5,0],[1,0],15],
+  ]);
+  for(const draft of space.room_drafts.filter(d=>d.id!=='thicker')){
+    const [a,b]=draft.points;
+    const runs=partitions.filter(p=>p.a[1]===a[1]&&p.b[1]===b[1]&&p.cm===draft.segments[0].cm)
+      .map(p=>[p.a[0],p.b[0]]).filter(([lo,hi])=>hi>a[0]&&lo<b[0]).sort((x,y)=>x[0]-y[0]);
+    let covered=a[0];for(const[lo,hi]of runs){assert.ok(lo<=covered,'legacy work has no coverage gap');covered=Math.max(covered,hi);}
+    assert.ok(covered>=b[0],'every original unfinished segment survives');
+  }
+  const bottom=wallIntervals(current.rooms,current.walls,[],S,5,GRID_PITCH,1)
+    .filter(w=>w.a[1]===1&&w.b[1]===1);
+  assert.ok(bottom.length>0&&bottom.every(w=>w.cm===30),'consumed thicker work remains the actual room wall thickness');
   assert.ok(result.config.spaces[0].partitions.every((partition) => partition.id.startsWith('wall-')));
 });
 

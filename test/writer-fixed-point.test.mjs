@@ -4,6 +4,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
+import {decodePoint,pointToNumbers} from '../test-build/plan-exact.js';
+import {canonicalizeConfigGeometry} from '../test-build/coordinate-canonicalization.js';
+import {editGraphFixture} from './helpers/graph-fixture.mjs';
 import { finalizeWallChainSpace } from '../test-build/writer-fixed-point.js';
 import {
   captureMarkerRoomReferences, restoreMarkerRoomReferences, rewriteMarkerRoomReferences,
@@ -21,6 +24,21 @@ const configOf = (space, markers = []) => ({
   model_version: 10, // legacy partition finalizer input; finish() crosses the model11 graph boundary
   spaces: [space], markers, settings: {},
 });
+// Add the authored carrier through the current named graph producer. Merely
+// appending projections to a graph fixture cannot create a physical partition.
+const withCoincidentCarrier=(baseline,legacy,change=()=>{})=>{
+  const config=clone(baseline),source=canonicalizeConfigGeometry(legacy).spaces[0];
+  const graph=config.spaces[0].plan_graph;
+  const endpointRefs=Object.fromEntries(source.partitions.map(p=>[p.id,[p.a,p.b].map(point=>{
+    const nodes=graph.nodes.filter(n=>pointToNumbers(decodePoint(n.p)).every((v,i)=>Math.abs(v-point[i])<1e-9));
+    assert.equal(nodes.length,1,'fixture endpoint names one existing shared-wall node');
+    return {kind:'existing-node',node:nodes[0].id};
+  })]));
+  editGraphFixture(config,config.spaces[0].id,{kind:'partitions',ids:source.partitions.map(p=>p.id),endpointRefs},draft=>{
+    draft.partitions=clone(source.partitions);draft.openings=clone(source.openings);change(draft);
+  });
+  return config;
+};
 const finish = (config, seedIds) => {
   const model = spaceModels(config)[0];
   const raw = config.spaces[0];
@@ -85,9 +103,7 @@ test('#477 a missing writer seed cannot reconcile unrelated coincident partition
   const baseline = optimizePlans({ ...legacy, spaces: [{
     ...legacy.spaces[0], partitions: [], openings: [],
   }] }, {}).config;
-  const input = clone(baseline);
-  input.spaces[0].partitions = clone(legacy.spaces[0].partitions);
-  input.spaces[0].openings = clone(legacy.spaces[0].openings);
+  const input = withCoincidentCarrier(baseline,legacy);
   const before = clone(input.spaces[0]);
 
   const result = finish(input, ['writer-seed-that-no-longer-exists']);
@@ -102,15 +118,14 @@ test('#477 finishes a positive coincident wall with opening rehost at the Optimi
   const baseline = optimizePlans({ ...legacy, spaces: [{
     ...legacy.spaces[0], partitions: [], openings: [],
   }] }, {}).config;
-  const raw = baseline.spaces[0];
-  raw.partitions = clone(legacy.spaces[0].partitions);
-  raw.openings = clone(legacy.spaces[0].openings);
+  const input=withCoincidentCarrier(baseline,legacy);
+  const raw = input.spaces[0];
   const beforeOpening = clone(raw.openings[0]);
 
-  const result = finish(baseline, ['redundant']);
+  const result = finish(input, ['redundant']);
   assert.equal(result.report.partitionsReconciled, 1);
   assert.equal(result.report.openingsRehosted, 1);
-  assert.equal(result.config.spaces[0].partitions, undefined);
+  assert.deepEqual(result.config.spaces[0].partitions, []);
   const opening = result.config.spaces[0].openings[0];
   assert.equal(opening.host.kind, 'wall');
   assert.equal(opening.x, 121 / 240);
@@ -130,24 +145,27 @@ test('#477 unsafe coincidence is fail-closed and byte-equivalent', () => {
   const current = optimizePlans({ ...legacy, spaces: [{
     ...legacy.spaces[0], partitions: [], openings: [],
   }] }, {}).config;
-  const withCarrier = () => {
-    const candidate = clone(current);
-    candidate.spaces[0].partitions = clone(legacy.spaces[0].partitions);
-    candidate.spaces[0].openings = clone(legacy.spaces[0].openings);
-    return candidate;
-  };
+  const withCarrier = change => withCoincidentCarrier(current,legacy,change);
   const variants = [];
-  const unknown = withCarrier();
-  unknown.spaces[0].partitions[0].future_semantics = true;
+  const unknown = withCarrier(draft=>{draft.partitions[0].future_semantics = true;});
   variants.push(unknown);
-  const column = withCarrier();
-  column.spaces[0].wall_columns = [{
+  const column = withCarrier(draft=>{draft.wall_columns = [{
     id: 'column', shape: 'circle', center: [121 / 240, 0.5], cm: 20,
-  }];
+  }];});
   variants.push(column);
-  const orphan = withCarrier();
-  orphan.spaces[0].openings[0].host.t = 2;
-  variants.push(orphan);
+  // Current graph authority rejects an out-of-range new host before it can
+  // become a saved carrier. The legacy codec finalizer still owes the original
+  // full-byte no-op for an already stored malformed host.
+  const currentBefore=clone(current);
+  assert.throws(()=>withCarrier(draft=>{draft.openings[0].host.t=2;}),error=>error.code==='host-parameter');
+  assert.deepEqual(current,currentBefore,'refused authored host cannot mutate current authority');
+  const orphan=clone(legacy),raw=orphan.spaces[0];raw.openings[0].host.t=2;
+  const orphanBefore=clone(raw),model=spaceModels(orphan)[0];
+  const refused=finalizeWallChainSpace(raw,model,geometryOpenCuts(raw,model),['redundant'],
+    {pitch:GRID_STEP_N,cellCm:5,gridPitch:GRID_PITCH,coordScale:NORM_W});
+  assert.equal(refused.report.partitionsReconciled,0);
+  assert.deepEqual(refused.space,orphanBefore,'malformed stored legacy host retains complete carrier');
+  assert.deepEqual(raw,orphanBefore,'legacy finalizer cannot mutate its input');
 
   for (const input of variants) {
     const before = clone(input.spaces[0]);
