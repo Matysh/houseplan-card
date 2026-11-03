@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1669,
+  "revision": 1670,
   "nextTicket": 113,
   "nextFence": 110,
   "tasks": {
@@ -1960,152 +1960,25 @@
     },
     "1234": {
       "issue": 1234,
+      "branch": "codex/1234-warm-geometry-camera",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1234-warm-geometry-camera",
-      "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 109,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793715343052,
-      "reviewEntry": 1,
-      "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af",
-      "changedFiles": [
-        "demo/smoke_warm_geometry_camera.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/WARM-REMOUNT.md",
-        "docs/release-ledger/v1.83.0/1234.json",
-        "docs/testing/issue1234/warm-camera.md",
-        "src/houseplan-card.ts",
-        "src/warm-mode-adoption.ts",
-        "test/warm-mode-adoption.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T142821302-c3a1d71f",
-        "name": "Тесты для задачи #1234 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261103T142821302-c3a1d71f/report.json",
-        "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:29:02.559Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+      "mergedSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+      "mergedAt": 1793716431256,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1234:1:6d884dc52a31ffdf41645612de3536a5e3f090af:0009156acd78c58cfaca7ce756fa8388d90adb75",
-      "reviewMaterial": {
-        "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1234,
-        "requestId": "review:1234:1:6d884dc52a31ffdf41645612de3536a5e3f090af:0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "kind": "code",
-        "base": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-        "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1234,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1234",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "<details>\n<summary>Владение refit, сохранение камеры, проверки и границы</summary>\n\nИсходный reproducer из codex/1226 на свежем dev a52e6cb44 красный: Plan780×704, камера/lastSize780×793, нет pending refit. Fast/same проходят. Диагностическая обёртка с чтением размеров может скрыть race, поэтому основной before/after не инструментирован и guard не менялся.\n\nПричина: _requestMode(adopt) удерживал refit только при warmCameraUnchanged, а resumeWarmMode при изменённой камере отпускал его до финального editor render. Late new geometry могла оставить baseline промежуточного View; ResizeObserver объединяет возвращение к уже виденному размеру. Теперь любой warm adopt владеет hold до существующего updateComplete/two-RAF barrier. Применимая старая камера восстанавливается как прежде; изменённая не откатывается из memo, revival завершается по прежним условиям допуска и final release согласует actual stage/aspect. Refused/superseded guards сохранены. Изменения только card request и warm-mode-adoption.ts, без houseplan-editor-runtime/transport/геометрии. Никакого нового timer/fixed delay/refit из теста.\n\nОсобенно проверьте equality как решение о сохранении камеры против владения layout, ownership при явной навигации, failed runtime/permission и late completion. Путь с преждевременным release есть уже в v1.83.0, поэтому ledger stable-fix; воспроизведение этой задачи проверялось на текущем dev, отдельный прогон старого тега не делался.\n\nФакт: fresh build+demo sync; исходный camera repro PASS после; Node warm-mode3/3; новый native smoke_warm_geometry_camera12/12 (late change, late same, fast change, native one-press capture+Escape для exposed changed nodes, nativewheel пользовательский zoom сохранён вsame, no server mutation); warm_remount и nav_persist PASS. Официальный S6 с критическими/startup и адресной выборкой выполнит finish после queue/rebase. Подробности docs/testing/issue1234/warm-camera.md. Только synthetic fixture, real built assets; реальная HA установка не проверена, crop/goldens не принимаются, другие визуальные отличия не объявлены исправленными. Companion E2E impact передан root.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Рекомендую принять работу. Исправление адресное и подходит под корень дефекта. Раньше удержание refit при тёплом восстановлении зависело от того, совпадает ли камера с memo. Если поздняя геометрия меняла камеру, удержание снималось до рендера редактора. `_releaseWarmRefit` фиксировал промежуточный размер View (793) как базовый размер камеры. Затем ResizeObserver объединял возврат к уже виденному размеру Plan (704) и не присылал его повторно, поэтому камеру больше никто не исправлял. Теперь любой тёплый adopt удерживает refit до уже существующего барьера `updateComplete` + два RAF. Совпадение с memo решает только одно: восстанавливать ли старую камеру. Новых таймеров, принудительного refit или ослабления readiness guard нет. Защиты от отказа, вытеснения запроса и явной навигации я проследил по коду, они сохранены. Блокеров нет. S6 по SHA 9aa529f4 прошёл, хотя состав адресной выборки в отчёте не виден.",
-          "understanding": "Проблема. При повторном монтировании карточки тёплый редактор (Plan) сначала показывается во временном View, ожидая can_write и lazy runtime. Поздний `config/get` с изменённой геометрией меняет камеру. Затем `_resumePendingNavMode` вызывает `_requestMode(mode, false, 'resume')`, а тот — `resumeWarmMode`.\n\nДо исправления удержание в `_requestMode` бралось только при `warmCameraUnchanged`. В `resumeWarmMode` ветка `!kept` сразу вызывала `_warmReviveDialog(true)` и `_releaseWarmRefit`. Между тем `_setMode(..., warm=true)` в редакторском runtime выполняет `_bootSoftCancel`, а тот записывает в `_lastValidStageSize` размер View и подгоняет под него камеру. После рендера редактора stage возвращается к 704. ResizeObserver этот размер уже видел, поэтому изменения не сообщает, `_refitView` не вызывается, и камера остаётся рассчитанной на 780×793.\n\nПосле исправления `_requestMode` удерживает refit при любом adopt (`src/houseplan-card.ts:897`). В `resumeWarmMode` (`src/warm-mode-adoption.ts:62-77`) ранний выход остаётся только для режима, который не зафиксировался. При `kept` memo-камера восстанавливается, как раньше. При `!kept` текущая камера сохраняется, черновик доживляется с settle=true (это семантика прежней ветки), и запрос проходит через тот же `finishWarmModeAdoption`. Его отложенный `_releaseWarmRefit` берёт фактический stage и при расхождении пропорций ≥0,5 px вызывает `_applyView` с сохранением zoom и центра.\n\nРазобранные пути:\n- немедленный adopt из `_warmAdoptViewport` (:4055);\n- resume из `_resumePendingNavMode` (:5035);\n- отказ runtime или отсутствие прав в `_requestMode` (:901-905);\n- явная навигация через `_cancelPendingWarmMode` (:914-921) и `_setMode(warm=false)` (:8414);\n- уход с маршрута (`_leaveCardRoute`) и disconnect (:3320);\n- `_refitView` (:7377), `_bootSoftCancel` (:7350), `_applyView` (:7256);\n- редакторский `_setMode` (`houseplan-editor-runtime.ts:1270-1330`);\n- `_warmReviveDialog` (:4182);\n- gating `warmHeaderHeight` (:11670);\n- idle-снимок version recovery (`version-recovery-card.ts:273`).",
-          "analysis": [
-            {
-              "topic": "Владение refit отделено от решения о сохранении камеры",
-              "assessment": "Это главное и верное разделение. Совпадение с memo говорит, какую камеру показывать, но не говорит, на каком layout её закрепить. Прежняя связка этих двух вопросов и была дефектом. Новое поведение переиспользует проверенный барьер kept-пути (`updateComplete` и два RAF), поэтому новой механики синхронизации нет. При `!kept` сохраняются zoom и центр, исправляется только aspect — это та же семантика, что у обычного `_refitView`. Внешне меняется одно: подгонка выполняется по конечному stage, а не по промежуточному.",
-              "evidence": "`src/houseplan-card.ts:894-897`, `:928-942` (`_releaseWarmRefit`: `_lastValidStageSize` = фактический stage, `_applyView(this._zoom, center)` при рассогласовании aspect); `src/warm-mode-adoption.ts:34-40`, `:62-77`; `_refitView` при `!sameSize` тоже вызывает `_applyView(zoom, center)` (`:7436-7440`)."
-            },
-            {
-              "topic": "Отказ, вытеснение и явная навигация",
-              "assessment": "Защиты сохранены. При `!current` (runtime не загрузился, нет прав, kiosk, отключение, новый запрос) удержание снимается в `_requestMode` под той же проверкой номера запроса. Явная команда через `_cancelPendingWarmMode` сначала освобождает текущего владельца, потом увеличивает счётчик, так что отложенный release старого запроса становится no-op. Disconnect обнуляет `_warmModeRequest`. Через `_setMode`, пока идёт удержание, счётчик не меняется, поэтому «осиротевшего» удержания не возникает. Раньше при изменённой камере `_releaseWarmRefit` в этих путях был no-op, теперь он фиксирует фактический stage. Это безопасно и даже точнее.",
-              "evidence": "`src/houseplan-card.ts:899-905`, `:914-921`, `:3320`, `:929` (тройная проверка `request`/`_warmModeRequest`/`_editorModeRequest`); третий Node-тест в `test/warm-mode-adoption.test.mjs:54-65` проверяет отказ режима и устаревшее завершение."
-            },
-            {
-              "topic": "Побочные эффекты более длинного удержания",
-              "assessment": "Для изменённой камеры удержание теперь длится и во время загрузки lazy runtime, а не только два кадра после рендера. Пока оно держится, `_refitView` игнорирует ResizeObserver, а version recovery не считает карточку idle. Всё это ограничено жизненным циклом запроса: release по барьеру, отказ, отмена, disconnect. Release сам согласует фактический stage, так что пропущенные resize не теряются. Для kept-пути то же поведение было и раньше. Вариант со сфокусированной комнатой здесь не возникает: смена режима очищает `_roomFocus` (`:8418`), поэтому то, что release не вызывает `_fitRoom`, на практике не важно.",
-              "evidence": "`src/houseplan-card.ts:7378`, `src/version-recovery-card.ts:273`, `src/houseplan-card.ts:8415-8418`."
-            },
-            {
-              "topic": "Доживление черновика и адрес возврата",
-              "assessment": "При `!kept` семантика не изменилась. `_warmReviveDialog(true)` вызывается, как в прежней ветке, а повторного вызова из `finishWarmModeAdoption` не будет: settle=true всегда снимает `_warmRevivePending`. Сохранение `_viewModeSnap` стоит до ветвления и одинаково для обоих случаев. Подсветка заголовка `warmHeaderHeight` по-прежнему включается только при неизменённой камере, поэтому изменённая камера не получает «старую» высоту шапки.",
-              "evidence": "`src/houseplan-card.ts:4182-4208`, `:11670-11671`; `src/warm-mode-adoption.ts:59-61`, `:71-76`; Node-тесты 1–2."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Node-тест точно фиксирует порядок: до paint и до второго RAF release не происходит, memo не восстанавливается. Браузерный smoke не ослабляет guard. В `ready` требуется и согласованность aspect, и совпадение с отрисованным viewBox, и `!_warmModeRequest`/`!_refitRaf`. Отдельно проверяется, что `_lastValidStageSize` равен фактическому stage. Есть контроли: late-same с нативным wheel-zoom, сохранённым бит в бит, и fast-change. Нативный захват узла с отменой и отсутствие мутаций сервера тоже проверены. Немедленный adopt с изменённой камерой (только при `!sameProjection` в `_warmAdoptViewport`) отдельно не покрыт, но в этом пути код тот же, и риск низкий.",
-              "evidence": "`demo/smoke_warm_geometry_camera.mjs:19-28`, `:70-98`; `test/warm-mode-adoption.test.mjs:31-52`."
-            },
-            {
-              "topic": "Документация и ledger",
-              "assessment": "`docs/WARM-REMOUNT.md` и JSDoc `resumeWarmMode` обновлены по существу: объяснено, почему ResizeObserver не спасает. Комментарии в коде фиксируют неочевидную причину, а не пересказывают строки. Запись ledger stable-fix под `v1.83.0` согласуется с соседними задачами 1233/1235.",
-              "evidence": "`docs/WARM-REMOUNT.md:158-170`, `src/houseplan-card.ts:895-896`, `src/warm-mode-adoption.ts:72-74`, `docs/release-ledger/v1.83.0/1234.json`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Блок `catch` в `demo/smoke_warm_geometry_camera.mjs:99-107` вызывает `page.evaluate` для диагностики без собственной защиты. Если страница упала или `_stageEl` отсутствует, исходная ошибка заменится новой TypeError. Если обернуть диагностику в `try/catch` (или `.catch(() => null)`), упавший сценарий сохранит настоящую причину. Цена — одна строка.",
-            "Можно добавить в Node-тест (или smoke) немедленный adopt с изменённой камерой. Сейчас это путь `_warmAdoptViewport` при `!sameProjection` → `_requestMode(..., true)` → `finishWarmModeAdoption`, где раньше удержания не было вовсе. Тест закрепил бы, что release и там срабатывает по фактическому stage. Польза умеренная: код общий с покрытым путём."
-          ],
-          "boundaries": "Сборку, тесты, smoke и исходный reproducer я не запускал (S7). Использовал зелёный S6-отчёт `20261103T142821302-c3a1d71f` по SHA 9aa529f4. Какие именно адресные Node-тесты и smoke вошли в выборку, из отчёта не видно. Результаты «12/12», «3/3», `smoke_warm_remount` и `smoke_nav_persist` PASS, а также «fail before / pass after» исходного reproducer известны только со слов автора в `docs/testing/issue1234/warm-camera.md`. Сам reproducer из ветки `codex/1226` я не читал. Механизм объединения кадров в ResizeObserver принимаю по trace из issue и по коду `_refitView`, независимо в браузере его не проверял. Реальная HA-установка, сеть, визуальные отличия fit/crop из исходного аудита и golden-эталоны в объём не входят и не проверены. По исходникам изучены `src/warm-mode-adoption.ts` целиком, а также пути в `src/houseplan-card.ts` (`_requestMode`/hold/release, `_cancelPendingWarmMode`, `_warmAdoptViewport`, `_resumePendingNavMode`, `_setMode`, `_leaveCardRoute`, disconnect, `_refitView`, `_bootSoftCancel`, `_applyView`, `_warmReviveDialog`, `warmHeaderHeight`), редакторский `_setMode`/`resumeWarmMode` в `houseplan-editor-runtime.ts`, idle-снимок в `version-recovery-card.ts`, а также порядок выбора smoke-шагов в `process-next/lib/catalog.mjs`."
-        },
-        "usage": {
-          "input_tokens": 50,
-          "cache_creation_input_tokens": 94810,
-          "cache_read_input_tokens": 1133102,
-          "output_tokens": 16240,
-          "output_tokens_details": {
-            "thinking_tokens": 7834
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 94810,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1211,
-              "cache_read_input_tokens": 84681,
-              "cache_creation_input_tokens": 14333,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14333
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРекомендую принять работу. Исправление адресное и подходит под корень дефекта. Раньше удержание refit при тёплом восстановлении зависело от того, совпадает ли камера с memo. Если поздняя геометрия меняла камеру, удержание снималось до рендера редактора. `_releaseWarmRefit` фиксировал промежуточный размер View (793) как базовый размер камеры. Затем ResizeObserver объединял возврат к уже виденному размеру Plan (704) и не присылал его повторно, поэтому камеру больше никто не исправлял. Теперь любой тёплый adopt удерживает refit до уже существующего барьера `updateComplete` + два RAF. Совпадение с memo решает только одно: восстанавливать ли старую камеру. Новых таймеров, принудительного refit или ослабления readiness guard нет. Защиты от отказа, вытеснения запроса и явной навигации я проследил по коду, они сохранены. Блокеров нет. S6 по SHA 9aa529f4 прошёл, хотя состав адресной выборки в отчёте не виден.\n\n## Понимание решения\n\nПроблема. При повторном монтировании карточки тёплый редактор (Plan) сначала показывается во временном View, ожидая can_write и lazy runtime. Поздний `config/get` с изменённой геометрией меняет камеру. Затем `_resumePendingNavMode` вызывает `_requestMode(mode, false, 'resume')`, а тот — `resumeWarmMode`.\n\nДо исправления удержание в `_requestMode` бралось только при `warmCameraUnchanged`. В `resumeWarmMode` ветка `!kept` сразу вызывала `_warmReviveDialog(true)` и `_releaseWarmRefit`. Между тем `_setMode(..., warm=true)` в редакторском runtime выполняет `_bootSoftCancel`, а тот записывает в `_lastValidStageSize` размер View и подгоняет под него камеру. После рендера редактора stage возвращается к 704. ResizeObserver этот размер уже видел, поэтому изменения не сообщает, `_refitView` не вызывается, и камера остаётся рассчитанной на 780×793.\n\nПосле исправления `_requestMode` удерживает refit при любом adopt (`src/houseplan-card.ts:897`). В `resumeWarmMode` (`src/warm-mode-adoption.ts:62-77`) ранний выход остаётся только для режима, который не зафиксировался. При `kept` memo-камера восстанавливается, как раньше. При `!kept` текущая камера сохраняется, черновик доживляется с settle=true (это семантика прежней ветки), и запрос проходит через тот же `finishWarmModeAdoption`. Его отложенный `_releaseWarmRefit` берёт фактический stage и при расхождении пропорций ≥0,5 px вызывает `_applyView` с сохранением zoom и центра.\n\nРазобранные пути:\n- немедленный adopt из `_warmAdoptViewport` (:4055);\n- resume из `_resumePendingNavMode` (:5035);\n- отказ runtime или отсутствие прав в `_requestMode` (:901-905);\n- явная навигация через `_cancelPendingWarmMode` (:914-921) и `_setMode(warm=false)` (:8414);\n- уход с маршрута (`_leaveCardRoute`) и disconnect (:3320);\n- `_refitView` (:7377), `_bootSoftCancel` (:7350), `_applyView` (:7256);\n- редакторский `_setMode` (`houseplan-editor-runtime.ts:1270-1330`);\n- `_warmReviveDialog` (:4182);\n- gating `warmHeaderHeight` (:11670);\n- idle-снимок version recovery (`version-recovery-card.ts:273`).\n\n## Разбор решения\n\n### Владение refit отделено от решения о сохранении камеры\n\nЭто главное и верное разделение. Совпадение с memo говорит, какую камеру показывать, но не говорит, на каком layout её закрепить. Прежняя связка этих двух вопросов и была дефектом. Новое поведение переиспользует проверенный барьер kept-пути (`updateComplete` и два RAF), поэтому новой механики синхронизации нет. При `!kept` сохраняются zoom и центр, исправляется только aspect — это та же семантика, что у обычного `_refitView`. Внешне меняется одно: подгонка выполняется по конечному stage, а не по промежуточному.\n\nОснование: `src/houseplan-card.ts:894-897`, `:928-942` (`_releaseWarmRefit`: `_lastValidStageSize` = фактический stage, `_applyView(this._zoom, center)` при рассогласовании aspect); `src/warm-mode-adoption.ts:34-40`, `:62-77`; `_refitView` при `!sameSize` тоже вызывает `_applyView(zoom, center)` (`:7436-7440`).\n\n### Отказ, вытеснение и явная навигация\n\nЗащиты сохранены. При `!current` (runtime не загрузился, нет прав, kiosk, отключение, новый запрос) удержание снимается в `_requestMode` под той же проверкой номера запроса. Явная команда через `_cancelPendingWarmMode` сначала освобождает текущего владельца, потом увеличивает счётчик, так что отложенный release старого запроса становится no-op. Disconnect обнуляет `_warmModeRequest`. Через `_setMode`, пока идёт удержание, счётчик не меняется, поэтому «осиротевшего» удержания не возникает. Раньше при изменённой камере `_releaseWarmRefit` в этих путях был no-op, теперь он фиксирует фактический stage. Это безопасно и даже точнее.\n\nОснование: `src/houseplan-card.ts:899-905`, `:914-921`, `:3320`, `:929` (тройная проверка `request`/`_warmModeRequest`/`_editorModeRequest`); третий Node-тест в `test/warm-mode-adoption.test.mjs:54-65` проверяет отказ режима и устаревшее завершение.\n\n### Побочные эффекты более длинного удержания\n\nДля изменённой камеры удержание теперь длится и во время загрузки lazy runtime, а не только два кадра после рендера. Пока оно держится, `_refitView` игнорирует ResizeObserver, а version recovery не считает карточку idle. Всё это ограничено жизненным циклом запроса: release по барьеру, отказ, отмена, disconnect. Release сам согласует фактический stage, так что пропущенные resize не теряются. Для kept-пути то же поведение было и раньше. Вариант со сфокусированной комнатой здесь не возникает: смена режима очищает `_roomFocus` (`:8418`), поэтому то, что release не вызывает `_fitRoom`, на практике не важно.\n\nОснование: `src/houseplan-card.ts:7378`, `src/version-recovery-card.ts:273`, `src/houseplan-card.ts:8415-8418`.\n\n### Доживление черновика и адрес возврата\n\nПри `!kept` семантика не изменилась. `_warmReviveDialog(true)` вызывается, как в прежней ветке, а повторного вызова из `finishWarmModeAdoption` не будет: settle=true всегда снимает `_warmRevivePending`. Сохранение `_viewModeSnap` стоит до ветвления и одинаково для обоих случаев. Подсветка заголовка `warmHeaderHeight` по-прежнему включается только при неизменённой камере, поэтому изменённая камера не получает «старую» высоту шапки.\n\nОснование: `src/houseplan-card.ts:4182-4208`, `:11670-11671`; `src/warm-mode-adoption.ts:59-61`, `:71-76`; Node-тесты 1–2.\n\n### Тесты\n\nNode-тест точно фиксирует порядок: до paint и до второго RAF release не происходит, memo не восстанавливается. Браузерный smoke не ослабляет guard. В `ready` требуется и согласованность aspect, и совпадение с отрисованным viewBox, и `!_warmModeRequest`/`!_refitRaf`. Отдельно проверяется, что `_lastValidStageSize` равен фактическому stage. Есть контроли: late-same с нативным wheel-zoom, сохранённым бит в бит, и fast-change. Нативный захват узла с отменой и отсутствие мутаций сервера тоже проверены. Немедленный adopt с изменённой камерой (только при `!sameProjection` в `_warmAdoptViewport`) отдельно не покрыт, но в этом пути код тот же, и риск низкий.\n\nОснование: `demo/smoke_warm_geometry_camera.mjs:19-28`, `:70-98`; `test/warm-mode-adoption.test.mjs:31-52`.\n\n### Документация и ledger\n\n`docs/WARM-REMOUNT.md` и JSDoc `resumeWarmMode` обновлены по существу: объяснено, почему ResizeObserver не спасает. Комментарии в коде фиксируют неочевидную причину, а не пересказывают строки. Запись ledger stable-fix под `v1.83.0` согласуется с соседними задачами 1233/1235.\n\nОснование: `docs/WARM-REMOUNT.md:158-170`, `src/houseplan-card.ts:895-896`, `src/warm-mode-adoption.ts:72-74`, `docs/release-ledger/v1.83.0/1234.json`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Блок `catch` в `demo/smoke_warm_geometry_camera.mjs:99-107` вызывает `page.evaluate` для диагностики без собственной защиты. Если страница упала или `_stageEl` отсутствует, исходная ошибка заменится новой TypeError. Если обернуть диагностику в `try/catch` (или `.catch(() => null)`), упавший сценарий сохранит настоящую причину. Цена — одна строка.\n- Можно добавить в Node-тест (или smoke) немедленный adopt с изменённой камерой. Сейчас это путь `_warmAdoptViewport` при `!sameProjection` → `_requestMode(..., true)` → `finishWarmModeAdoption`, где раньше удержания не было вовсе. Тест закрепил бы, что release и там срабатывает по фактическому stage. Польза умеренная: код общий с покрытым путём.\n\n## Границы анализа\n\nСборку, тесты, smoke и исходный reproducer я не запускал (S7). Использовал зелёный S6-отчёт `20261103T142821302-c3a1d71f` по SHA 9aa529f4. Какие именно адресные Node-тесты и smoke вошли в выборку, из отчёта не видно. Результаты «12/12», «3/3», `smoke_warm_remount` и `smoke_nav_persist` PASS, а также «fail before / pass after» исходного reproducer известны только со слов автора в `docs/testing/issue1234/warm-camera.md`. Сам reproducer из ветки `codex/1226` я не читал. Механизм объединения кадров в ResizeObserver принимаю по trace из issue и по коду `_refitView`, независимо в браузере его не проверял. Реальная HA-установка, сеть, визуальные отличия fit/crop из исходного аудита и golden-эталоны в объём не входят и не проверены. По исходникам изучены `src/warm-mode-adoption.ts` целиком, а также пути в `src/houseplan-card.ts` (`_requestMode`/hold/release, `_cancelPendingWarmMode`, `_warmAdoptViewport`, `_resumePendingNavMode`, `_setMode`, `_leaveCardRoute`, disconnect, `_refitView`, `_bootSoftCancel`, `_applyView`, `_warmReviveDialog`, `warmHeaderHeight`), редакторский `_setMode`/`resumeWarmMode` в `houseplan-editor-runtime.ts`, idle-снимок в `version-recovery-card.ts`, а также порядок выбора smoke-шагов в `process-next/lib/catalog.mjs`.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 0009156acd78c58cfaca7ce756fa8388d90adb75 → 9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1234, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Владение refit, сохранение камеры, проверки и границы</summary>\n\nИсходный reproducer из codex/1226 на свежем dev a52e6cb44 красный: Plan780×704, камера/lastSize780×793, нет pending refit. Fast/same проходят. Диагностическая обёртка с чтением размеров может скрыть race, поэтому основной before/after не инструментирован и guard не менялся.\n\nПричина: _requestMode(adopt) удерживал refit только при warmCameraUnchanged, а resumeWarmMode при изменённой камере отпускал его до финального editor render. Late new geometry могла оставить baseline промежуточного View; ResizeObserver объединяет возвращение к уже виденному размеру. Теперь любой warm adopt владеет hold до существующего updateComplete/two-RAF barrier. Применимая старая камера восстанавливается как прежде; изменённая не откатывается из memo, revival завершается по прежним условиям допуска и final release согласует actual stage/aspect. Refused/superseded guards сохранены. Изменения только card request и warm-mode-adoption.ts, без houseplan-editor-runtime/transport/геометрии. Никакого нового timer/fixed delay/refit из теста.\n\nОсобенно проверьте equality как решение о сохранении камеры против владения layout, ownership при явной навигации, failed runtime/permission и late completion. Путь с преждевременным release есть уже в v1.83.0, поэтому ledger stable-fix; воспроизведение этой задачи проверялось на текущем dev, отдельный прогон старого тега не делался.\n\nФакт: fresh build+demo sync; исходный camera repro PASS после; Node warm-mode3/3; новый native smoke_warm_geometry_camera12/12 (late change, late same, fast change, native one-press capture+Escape для exposed changed nodes, nativewheel пользовательский zoom сохранён вsame, no server mutation); warm_remount и nav_persist PASS. Официальный S6 с критическими/startup и адресной выборкой выполнит finish после queue/rebase. Подробности docs/testing/issue1234/warm-camera.md. Только synthetic fixture, real built assets; реальная HA установка не проверена, crop/goldens не принимаются, другие визуальные отличия не объявлены исправленными. Companion E2E impact передан root.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T14:32:54.427Z",
-        "artifactId": 13239845259,
-        "runId": 41654157489,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T14:32:58Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41654157489",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1235": {
@@ -2369,19 +2242,7 @@
     1237,
     1238
   ],
-  "active": {
-    "issue": 1234,
-    "worker": "finish",
-    "token": "109:finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:2:admit",
-    "fence": 109,
-    "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-    "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793716086240,
-    "expiresAt": 1793720026438,
-    "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af",
-    "reviewRequest": "review:1234:1:6d884dc52a31ffdf41645612de3536a5e3f090af:0009156acd78c58cfaca7ce756fa8388d90adb75"
-  },
+  "active": null,
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
       "digest": "b770af57ca91d84c4e9ed1e8d894f3dbb2a5fd935a2df8aa81fc86383045eb97",
@@ -2471,49 +2332,9 @@
       "digest": "e81e38a01963037f20742d93d0bec93918f603a78636f482acf18af8f1f26862",
       "issue": 1236
     },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:3:synchronized": {
-      "digest": "3b8211d76d1902986f8aca62e5e49b881fd796c606c3018dbb52cb75d66cd9e2",
-      "issue": 1234
-    },
-    "finish:0046396d-01a2-4ba7-9bd7-2b52ff62e0da": {
-      "digest": "0da2c7551a4300def3f982ce3af61b9cf6139e751b1c22270715f1503abe5d69",
-      "issue": 1234
-    },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:4:s6-label": {
-      "digest": "ab2cfbee66c7f7d175c494923e27c76e7c13d54e22c67b15b8cd9e43bf54e512",
-      "issue": 1234
-    },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:5:review-requested": {
-      "digest": "209b9a853051f0971d43949cf9c8d9f279cb185829e9b65c92196f9ae55a717f",
-      "issue": 1234
-    },
     "github:41654131092:1:completions:notice:301fb21ee14e25535b8835814a419b521a494425fdf582233d268cce5982511b": {
       "digest": "aaeb9f6b24c86481b775474660e6a688992f8030c562147f9abdfd89109c5785",
       "issue": 1236
-    },
-    "github:41654131092:1:completions:message:301fb21ee14e25535b8835814a419b521a494425fdf582233d268cce5982511b": {
-      "digest": "88425cced81772e769dc2a1a86f6739fdc661cc4e0d0f2d92a3e9e56a5cba45a",
-      "issue": 1234
-    },
-    "github:41654131092:1:completions:message:a8942f4c175ea88b3981a0665aba0ee26b1885accd2c569f6afb851ebd18ebee": {
-      "digest": "947f3228bcadf255ab775f1aa4580660942effe37c0c599fc400ed9e26ec41dc",
-      "issue": 1234
-    },
-    "github:41654131092:1:completions:message:84a6e75d21da51f95be237ad9f622712f032acdf1669dc373912ee16594206ad": {
-      "digest": "c8d80c1dc4cba703e2a7cc7c0a646234efc4fa857d254478c6ec158166dfdc6a",
-      "issue": 1234
-    },
-    "github:41654131092:1:completions:message:bd6734007cb44585f15babac1a41d8e92ad2dc3ea9780bc4c683b80ac35abe38": {
-      "digest": "22bc5552b256678c2eb86d7202bebcbaf84ea02fc59b93e5b69fd05e453436d7",
-      "issue": 1234
-    },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:9:review-presentation": {
-      "digest": "beaa37efaf4cc86bab86333f8ce8a73baf05b2bccc3bf90295a3310b5b9945cc",
-      "issue": 1234
-    },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:9:review-complete": {
-      "digest": "93526023d8abda1bffbe1bc8bb83933f2a0e46952de46957c713cc8c69e09528",
-      "issue": 1234
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
@@ -2554,20 +2375,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "2743744820a7e0c2362169007dad433ebc7abb19",
-        "delivered": true
-      }
-    },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15": {
-      "digest": "94ac82f375e038e94da22ea80e345985abdfcfbd8e2ed00b692891f1096d9227",
-      "issue": 1234,
-      "message": {
-        "kind": "queued",
-        "issue": 1234,
-        "at": 1793715343052,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3bb7d874df1913f880e80544b0badb9790298de1",
         "delivered": true
       }
     },
@@ -2684,21 +2491,6 @@
         "delivered": true
       }
     },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:2:admit": {
-      "digest": "e017301425d25f2d852af668568af825416ccbbcb812df62f2b8837077c83719",
-      "issue": 1234,
-      "message": {
-        "kind": "admitted",
-        "issue": 1234,
-        "at": 1793716086240,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3bb7d874df1913f880e80544b0badb9790298de1",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61": {
       "digest": "15b0590f2de738ffbaa9e81b3a050ab88a7a155f2398c4a92d436906b59f344a",
       "issue": 1236,
@@ -2710,33 +2502,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666",
-        "delivered": true
-      }
-    },
-    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:4:s6-complete": {
-      "digest": "b8bba720250045215f666de0cd49cb673c457b7fcfd8dde65022fa6784f6cc81",
-      "issue": 1234,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1234,
-        "at": 1793716143829,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T142821302-c3a1d71f",
-          "name": "Тесты для задачи #1234 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261103T142821302-c3a1d71f/report.json",
-          "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:29:02.559Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
