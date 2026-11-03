@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1647,
+  "revision": 1648,
   "nextTicket": 110,
   "nextFence": 108,
   "tasks": {
@@ -2046,7 +2046,18 @@
         "src/graph-draw-binding.ts",
         "src/houseplan-editor-runtime.ts",
         "test/native-grid-draw.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793716025327,
+        "entry": 1,
+        "detail": "Браузер: native grid draw: failed",
+        "eventId": "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237"
+      }
     },
     "1238": {
       "issue": 1238,
@@ -2206,18 +2217,7 @@
     1236,
     1234
   ],
-  "active": {
-    "issue": 1237,
-    "worker": "finish",
-    "token": "107:finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:1:admit",
-    "fence": 107,
-    "materialSha": "782be555e96df025025139eff8c9ff93c29d9607",
-    "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-    "phase": "testing",
-    "admittedAt": 1793715959393,
-    "expiresAt": 1793716318914,
-    "patchId": "9abfdf0500ffa3f24ce0a196c10873d7f2d4c50c"
-  },
+  "active": null,
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
       "digest": "b770af57ca91d84c4e9ed1e8d894f3dbb2a5fd935a2df8aa81fc86383045eb97",
@@ -2285,6 +2285,10 @@
     },
     "finish:44eb71ae-f2ba-4e87-9d93-320fa94ec642": {
       "digest": "df5a23b50b69bc5dafe05cda2921471331b9358bbef7e3b645147ab03a737a78",
+      "issue": 1237
+    },
+    "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return": {
+      "digest": "256a5accb9977e4d1fa5ceb6b728fde45e9574f97567f47a34c6312050d2da13",
       "issue": 1237
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
@@ -2398,6 +2402,26 @@
         "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237": {
+      "digest": "256a5accb9977e4d1fa5ceb6b728fde45e9574f97567f47a34c6312050d2da13",
+      "issue": 1237,
+      "message": {
+        "kind": "return",
+        "issue": 1237,
+        "at": 1793716025327,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793716025327,
+          "entry": 1,
+          "detail": "Браузер: native grid draw: failed",
+          "eventId": "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237"
+        }
       }
     }
   },
