@@ -18,14 +18,15 @@
     "file": "tests_backend/test_config_schema_manifest.py",
     "name": "test_issue_33_manifest_is_fresh_and_deterministic",
     "category": "outdated-schema-manifest",
-    "status": "pending-integration",
-    "reason": "Manifest regeneration is owned by the Node/schema area of #1226; working validation already accepts low.",
+    "status": "passed",
+    "reason": "After integration, the exact manifest freshness / closed relay parity test passes; the original privacy/schema guarantee is unchanged.",
     "originalError": "AssertionError: scripts/config-schema.json is stale — the schema changed; run python3 scripts/dump-config-schema.py and commit the diff",
     "currentTest": "tests_backend/test_config_schema_manifest.py::test_issue_33_manifest_is_fresh_and_deterministic",
     "evidence": {
       "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
       "originalLog": "product-backend.log",
-      "addressedReport": null
+      "addressedReport": null,
+      "addressedIntegrationReport": "output/issue1226/backend-integration.xml"
     },
     "relatedIssue": null
   },
@@ -33,14 +34,15 @@
     "file": "tests_backend/test_coordinate_canonicalization.py",
     "name": "test_optimize_roundtrip_fixture_has_one_backend_canonical_target",
     "category": "outdated-cross-runtime-fixture",
-    "status": "pending-integration",
-    "reason": "The shared optimize-roundtrip expected config is model10. Keep Python against the same captured frontend target; shared-fixture update is owned by the Node area.",
+    "status": "unresolved",
+    "reason": "Confirmed full-document model11 vs historical model10 cross-language target mismatch. Preserve raw historical expected fixture; a separate reviewed current graph passport is still needed.",
     "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [... grid', ...}]}",
     "currentTest": "tests_backend/test_coordinate_canonicalization.py::test_optimize_roundtrip_fixture_has_one_backend_canonical_target",
     "evidence": {
       "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
       "originalLog": "product-backend.log",
-      "addressedReport": null
+      "addressedReport": null,
+      "addressedIntegrationReport": "output/issue1226/backend-integration.xml"
     },
     "relatedIssue": null
   },
@@ -792,7 +794,7 @@
       "originalLog": "product-backend.log",
       "addressedReport": "output/issue1226/backend-addressed.xml"
     },
-    "relatedIssue": null
+    "relatedIssue": 1228
   },
   {
     "file": "tests_backend/test_opening_repair.py",
@@ -813,14 +815,15 @@
     "file": "tests_backend/test_plan_graph_support.py",
     "name": "test_closed_schema_relay_twin_is_exact",
     "category": "product-defect",
-    "status": "failed",
-    "reason": "The relay schema twin differs from the integration schema. Do not weaken the privacy/schema parity oracle; product fix is #1223.",
+    "status": "passed",
+    "reason": "After integration, the exact manifest freshness / closed relay parity test passes; the original privacy/schema guarantee is unchanged.",
     "originalError": "assert b'\"\"\"Closed s..._rejected\")\\n' == b'\"\"\"Closed s..._rejected\")\\n'",
     "currentTest": "tests_backend/test_plan_graph_support.py::test_closed_schema_relay_twin_is_exact",
     "evidence": {
       "originalRun": "https://github.com/Matysh/houseplan-card/actions/runs/41598951489",
       "originalLog": "product-backend.log",
-      "addressedReport": null
+      "addressedReport": null,
+      "addressedIntegrationReport": "output/issue1226/backend-integration.xml"
     },
     "relatedIssue": 1223
   },

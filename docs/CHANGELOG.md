@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Port test fixtures and observers to model11, graph API 2 and current accessible UI controls. Classify all796 unsuccessful original stable-audit entries; retain real defects and unapproved visual differences without weakening baselines or thresholds. [#1226](https://github.com/Matysh/houseplan-card/issues/1226)
+
 - Make the native Draw/Resize regression check reject targets covered by editor controls and expose the original graph segments through the public zoom control. Preserve graph, metadata and history assertions; no product geometry change. [#1221](https://github.com/Matysh/houseplan-card/issues/1221)
 
 - Accept valid Low-only Zigbee settings in support-report packages at the relay, with matching closed integration/relay validators. Deploy the accepted relay schema separately before releasing this mode. [#1223](https://github.com/Matysh/houseplan-card/issues/1223)
