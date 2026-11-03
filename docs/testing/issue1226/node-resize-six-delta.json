@@ -1,0 +1,62 @@
+[
+  {
+    "file": "test/resize-atom-projection.test.mjs",
+    "name": "#832 a true side-wall split retains the fixed neighbours corners and full proof",
+    "category": "product-defect-evidence",
+    "status": "retained-red",
+    "reason": "Current scoped graph resize returns a preflight-valid space but leaves the fixed-neighbour carrier whole and creates an overlapping new edge, without inserting its incident node into the fixed room cycle. Legacy producer is obsolete, but current split ownership guarantee also fails.",
+    "evidence": "docs/testing/issue1226/resize-six-followup.md; output/issue1226/resize-six-current.log; repros/resize-split-current.mjs",
+    "relatedIssue": 1231,
+    "base": "ec9b1bbc1"
+  },
+  {
+    "file": "test/resize-atom-projection.test.mjs",
+    "name": "#832 true split never serializes a remote owner; externally consumed atoms stay byte-identical",
+    "category": "unresolved-contract",
+    "status": "retained-red",
+    "reason": "Old producer is legacy-only, but the current scoped resize also invokes the remote-owner JSON sentinel. Bounded materialization/reference preservation is not proven; do not delete the oracle.",
+    "evidence": "docs/testing/issue1226/resize-six-followup.md; output/issue1226/resize-six-current.log; repros/resize-split-current.mjs",
+    "relatedIssue": null,
+    "base": "ec9b1bbc1"
+  },
+  {
+    "file": "test/resize-atom-projection.test.mjs",
+    "name": "#832 local split inherits custom thickness, keeps zero atoms and remaps an opening host",
+    "category": "product-defect-evidence",
+    "status": "retained-red",
+    "reason": "Explicit current thickness/openings/resize intents preserve coordinates, metadata and zero/custom thickness, but leave the opening on the unsplit original carrier instead of a split child. Old legacy-producer failure cannot be safely replaced by a weaker current oracle.",
+    "evidence": "docs/testing/issue1226/resize-six-followup.md; output/issue1226/resize-six-current.log; repros/resize-split-current.mjs",
+    "relatedIssue": 1231,
+    "base": "ec9b1bbc1"
+  },
+  {
+    "file": "test/resize-availability-audit.test.mjs",
+    "name": "issue 292 measures exact post-Optimize availability on both real plans",
+    "category": "product-defect-evidence",
+    "status": "retained-red",
+    "reason": "True current Optimize gives first-floor 39 total/5 enabled and second-floor 36 total/2 enabled rather than 38/8 and 36/9. Do not accept new full digests before physical diagnosis.",
+    "evidence": "docs/testing/issue1226/resize-six-followup.md; output/issue1226/resize-six-current.log; repros/resize-split-current.mjs",
+    "relatedIssue": null,
+    "base": "ec9b1bbc1"
+  },
+  {
+    "file": "test/resize-availability-audit.test.mjs",
+    "name": "issue 292 known second-floor shared wall has equivalent enabled owner handles",
+    "category": "product-defect-evidence",
+    "status": "retained-red",
+    "reason": "Both current coalesced room-a:2 and room-b:2 still identify the same physical shared carrier, not changed ring indices; both are disabled invalid-geometry. Exact endpoints retained in resize-six-followup.md.",
+    "evidence": "docs/testing/issue1226/resize-six-followup.md; output/issue1226/resize-six-current.log; repros/resize-split-current.mjs",
+    "relatedIssue": null,
+    "base": "ec9b1bbc1"
+  },
+  {
+    "file": "test/resize-availability-audit.test.mjs",
+    "name": "issue 292 Optimize removes the confirmed false near-axis reasons only",
+    "category": "product-defect-evidence",
+    "status": "retained-red",
+    "reason": "True current Optimize leaves second-floor diagonal 2 and side-angle 4 rather than 0 and 0; enabled 2 rather than 9. These are geometry/eligibility failures, not a stale passport ordering.",
+    "evidence": "docs/testing/issue1226/resize-six-followup.md; output/issue1226/resize-six-current.log; repros/resize-split-current.mjs",
+    "relatedIssue": null,
+    "base": "ec9b1bbc1"
+  }
+]
