@@ -80,7 +80,7 @@ const result = await page.evaluate(async () => {
   await reset(legacy);
   await click(500, 500); await click(700, 500); await settle();
   const migrated = card._serverCfg.spaces[0];
-  out.legacyDraftMigratesOnce = card._serverCfg.model_version === 10
+  out.legacyDraftMigratesOnce = card._serverCfg.model_version === 11
     && !('room_drafts' in migrated)
     && migrated.partitions.some((item) => item.id === 'legacy-edge-a' && item.cm === 21)
     && migrated.partitions.some((item) => item.id === 'legacy-edge-b' && item.cm === 22)

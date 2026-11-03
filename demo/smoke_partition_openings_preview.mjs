@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { bundledProducers, callsFor } from './performance/opening-drag-coverage.mjs';
 import { launch, checkAll, finish } from './serve.mjs';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
 const { page, browser } = await launch({ width: 1280, height: 960 });
 const out = {}, trace = [];
@@ -137,10 +138,9 @@ const heldAt = (state, before, down, baseline, dx, dy) => {
 try {
   await coverageSession.send('Profiler.enable');
   await coverageSession.send('Profiler.startPreciseCoverage', {callCount:true,detailed:true});
-  await page.evaluate(async () => {
-    await window.__hpTest.setServerConfig((cfg) => {
-      cfg.model_version = 10;
-      cfg.spaces = [{ id: 'opening-preview', title: 'Hosted opening preview', cell_cm: 5,
+  // This is a steady-state preview/history test, not a first-use migration.
+  // Seed the canonical graph, including exact opening host fractions, before input.
+  const fixture = commitWallSegmentModel({ model_version: 10, markers: [], spaces: [{ id: 'opening-preview', title: 'Hosted opening preview', cell_cm: 5,
         // No columns: omit the optional empty field, as ordinary write cleanup
         // canonicalises it. Keep the full exact Undo equality below unchanged.
         view_box: [0, 0, 1, 1], rooms: [], wall_segments: [],
@@ -159,12 +159,16 @@ try {
             contact: null, invert: true, flip_h: true, flip_v: true,
             host: { kind: 'partition', id: 'p_static', t: .5 } },
         ],
-      }];
+      }] }).config;
+  await page.evaluate(async fixture => {
+    await window.__hpTest.setServerConfig((cfg) => {
+      cfg.model_version = fixture.model_version;
+      cfg.spaces = fixture.spaces;
     });
     await window.__hpTest.switchSpace('opening-preview');
     await window.__hpTest.setMode('plan');
     await window.__hpTest.setTool('select');
-  });
+  }, fixture);
   await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.stage.mode-transition'));
   await writesSettled(); await settle();
   await page.evaluate(async () => {

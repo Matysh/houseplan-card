@@ -30,12 +30,15 @@ export function bundledProducers(root) {
    };visit(file);
   }
  }};walk('');
- if(physical.length!==1)throw Error('ambiguous/missing physicalBodyParts: '+JSON.stringify(physical));
+ // The graph model has an independent producer as well as the legacy one.
+ // Observe every materializing function: choosing one would miss hot-path work.
+ if(!physical.length)throw Error('missing physical body producers');
  if(constructors.length>1)throw Error('ambiguous crop constructor');
- return {physical:physical[0],constructor:constructors[0]??null};
+ return {physical,constructor:constructors[0]??null};
 }
 export function callsFor(coverage,target){
  if(!target)return 0;
+ if(Array.isArray(target))return target.reduce((count,item)=>count+callsFor(coverage,item),0);
  const scripts=coverage.filter(script=>{try{return new URL(script.url).pathname==='/assets/'+target.relative;}catch{return false;}});
  const functions=scripts.flatMap(s=>s.functions).filter(fn=>{
   const start=fn.ranges[0]?.startOffset;return start===target.start||start===target.classStart

@@ -16,8 +16,10 @@
 import { launch, check, finish } from './serve.mjs';
 import { requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 requirePinnedBrowser('#908 backdrop terminal input');
-const { page, browser } = await launch();
+const { page, browser } = await launch({ width:1280, height:900 });
+await prepareDesktopControls(page);
 
 const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
 const restore = () => page.evaluate(async (s) => {
@@ -233,7 +235,7 @@ await page.evaluate(async fixture => {
 await tool('backdrop'); await page.evaluate(() => window.__hpTest.waitForWrites()); await settle();
 check('backdrop_history_fixture_has_current_carriers', await page.evaluate(() => {
   const c = window.__card._serverCfg;
-  return c.model_version === 10 && c.spaces.every(space => Array.isArray(space.wall_segments)
+  return c.model_version === 11 && c.spaces.every(space => Array.isArray(space.wall_segments)
     && space.rooms.every(room => Array.isArray(room.wall_ids) && room.wall_ids.length === room.poly.length));
 }), true);
 const backdropBeforeDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
@@ -319,15 +321,20 @@ await settle();
 }
 
 // ---------- 5) the reset button ------------------------------------------
-check('reset_button_offered_once_moved', await q('.editor-secondary .bdreset'), 1);
+const resetSelector = '[data-hp="properties-panel"] [data-field="properties-reset"], .editor-secondary [data-action="backdrop-reset"]';
+check('reset_button_offered_once_moved', await q(resetSelector), 1);
 check('reset_button_absent_from_primary_bar', await q('.decorbar .bdreset'), 0);
-await page.locator('houseplan-card').locator('.editor-secondary .bdreset').click();
+await page.locator('houseplan-card').locator(resetSelector).click();
 await settle();
 check('reset_puts_the_picture_back', await imageRect(), BASE);
 check('reset_clears_the_fields', await spaceCfg(), {
   x: null, y: null, sx: null, sy: null, legacy: null, angle: null,
 });
-check('reset_button_gone_again', await q('.editor-secondary .bdreset'), 0);
+// The current inspector keeps its Reset action available. Repeating it on the
+// default image must be a no-op, rather than depending on legacy tray visibility.
+const resetDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
+await page.locator('houseplan-card').locator(resetSelector).click(); await settle();
+check('reset_on_default_is_noop', await page.evaluate(() => JSON.stringify(window.__card._serverCfg)), resetDocument);
 
 // ---------- 5b) the SELECT tool still pans right over the picture ---------
 // The body of the picture is most of the screen; claiming it outside its own

@@ -5,9 +5,12 @@
 // Exercise only public DOM hooks and the harness facade for writes; card
 // internals are read-only oracles.
 import { launch, checkAll, finish } from './serve.mjs';
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { fixtureWallKey } from './fixtures/wall-key.mjs';
 
-const { page, browser } = await launch({ width: 1100, height: 850 });
+const { page, browser } = await launch({ width: 2000, height: 850 });
+await prepareDesktopControls(page);
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const hp = window.__hpTest;
@@ -799,7 +802,7 @@ const historyRooms = [
   { id: 'history-right', poly: [[.5,.1],[.9,.1],[.9,.9],[.5,.9]] },
 ];
 const historyFixture = commitWallSegmentModel({spaces:[{id:'history1100',title:'History',cell_cm:5,rooms:historyRooms,
-  walls:historyRooms.flatMap(room=>room.poly.map((a,index)=>({a,b:room.poly[(index+1)%4],cm:10}))),
+  walls:historyRooms.flatMap(room=>room.poly.map((a,index)=>({key:fixtureWallKey(a,room.poly[(index+1)%4]),cm:10}))),
   partitions:[{id:'history-body',a:[.2,.75],b:[.8,.75],cm:15}]}],markers:[],settings:{}}).config;
 historyFixture.spaces[0].stairs=[{id:'history-stair',kind:'straight',x:.4,y:.4,length:.2,width:.1,angle:0,
   direction:'forward',color:'#ffffff',opacity:1,fill_color:'#ffffff',fill_opacity:0}];
@@ -818,7 +821,7 @@ const historyObserve=()=>page.evaluate(()=>{
 });
 const historyBefore=await historyObserve();
 out.history1100CompleteCarrier=await page.evaluate(()=>{
- const c=window.__card._serverCfg;return c.model_version===10&&c.spaces.every(space=>Array.isArray(space.wall_segments)
+ const c=window.__card._serverCfg;return c.model_version===11&&c.spaces.every(space=>Array.isArray(space.wall_segments)
   &&space.rooms.every(room=>Array.isArray(room.wall_ids)&&room.wall_ids.length===room.poly.length));
 });
 await page.locator('houseplan-card').locator('[data-hp="stair"][data-id="history-stair"] .hp-stair-hit').click();

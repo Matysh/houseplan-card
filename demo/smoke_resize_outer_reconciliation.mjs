@@ -86,7 +86,7 @@ const out = await page.evaluate(async (fixture) => {
     && card._alignDialog?.preflight?.ok === true
     && card._alignDialog?.report?.partitionsReconciled === 3
     && card._alignDialog?.report?.openingsRehosted === 2
-    && card._alignDialog?.config?.model_version === 10
+    && card._alignDialog?.config?.model_version === 11
     && previewSpace?.partitions == null
     && previewSpace?.openings?.every((opening) => wallHostResolves(previewSpace, opening));
   await card._editorRuntime.optimizePlans.run();

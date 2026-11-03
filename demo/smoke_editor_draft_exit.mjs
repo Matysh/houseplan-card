@@ -1,6 +1,7 @@
 // #851: real editor controls and form input. Faults are confined to the
 // server/geometry refusal boundary; never fabricate a happy-path draft.
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { currentGraphFixture, editGraphFixture } from '../test/helpers/graph-fixture.mjs';
 requirePinnedBrowser('851-editor-draft-exit');
 const width = Number(process.env.HP_SMOKE_WIDTH || 1100);
 const { page, browser } = await launch({ width, height: 850 }, 1, [], width < 500 ? { hasTouch: true, isMobile: true } : {});
@@ -8,6 +9,21 @@ const { page, browser } = await launch({ width, height: 850 }, 1, [], width < 50
 // not a compatibility click from before detach. Drive that intended Select natively.
 await page.exposeFunction('__hp851SelectAfterRemount', () => page
   .locator('houseplan-card [data-hp="tool"][data-tool="select"]').click({ timeout: 5000 }));
+await page.exposeFunction('__hp851RoomFixture', (config, space) => {
+  editGraphFixture(config, space, { kind: 'faces', rooms: ['room-edit'] }, draft => {
+    draft.rooms.push({ id: 'room-edit', name: 'Room', settings: { fill_mode: 'temp' },
+      poly: [[.6,.2],[.85,.2],[.85,.45],[.6,.45]] });
+  });
+  return config;
+});
+await page.exposeFunction('__hp851EmptySpace', (config, id) => {
+  const index = config.spaces.findIndex(space => space.id === id), previous = config.spaces[index];
+  config.spaces[index] = currentGraphFixture({ model_version: 10, spaces: [{
+    id, title: previous.title, cell_cm: previous.cell_cm, view_box: previous.view_box,
+    rooms: [], partitions: [], openings: [],
+  }], markers: [] }).spaces[0];
+  return config;
+});
 const out = await page.evaluate(async () => {
   const c = window.__card, ui = window.__hpTest, result = {};
   const root = () => c.shadowRoot;
@@ -94,9 +110,9 @@ const out = await page.evaluate(async () => {
     && JSON.stringify(c._curSpaceCfg.partitions) === partitions && writes === roomWrites;
   await window.__hp851SelectAfterRemount(); await settle();
 
-  await ui.setServerConfig(cfg => {
-    cfg.spaces.find(space => space.id === c._space).rooms.push({ id: 'room-edit', name: 'Room', settings: { fill_mode: 'temp' }, poly: [[.6,.2],[.85,.2],[.85,.45],[.6,.45]] });
-  });
+  // This part tests dirty forms and late save ownership, not room creation.
+  // Author a valid external-server fixture with explicit graph authority.
+  await ui.setServerConfig(await window.__hp851RoomFixture(structuredClone(c._serverCfg), c._space));
   owner = await ui.openRoomEdit('room-edit');
   await ui.input(owner.querySelector('#room-temp-min'), '30');
   await ui.input(owner.querySelector('#room-temp-max'), '20');
@@ -167,10 +183,7 @@ const out = await page.evaluate(async () => {
   restore();
   for (const destination of ['reset', 'space', 'editor', 'retry']) {
     if (c._mode !== 'plan') await ui.setMode('plan');
-    await ui.setServerConfig(cfg => {
-      const space = cfg.spaces.find(item => item.id === c._space);
-      space.partitions = []; space.rooms = []; space.walls = [];
-    });
+    await ui.setServerConfig(await window.__hp851EmptySpace(structuredClone(c._serverCfg), c._space));
     await freshChain(); refuse();
     const walls = JSON.stringify(c._curSpaceCfg.partitions), history = c._geometryHistory.size, count = writes;
     if (destination === 'reset') {
