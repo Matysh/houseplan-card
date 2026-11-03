@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1525,
+  "revision": 1526,
   "nextTicket": 106,
   "nextFence": 103,
   "tasks": {
@@ -1923,14 +1923,24 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1235-summary-retry",
-      "materialSha": "86248e1a42616f0917d7229a0a11d348a415d57c",
+      "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 102,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714222586,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "55e3f180f8fa450d886640223aa8737eee8fdde5",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1235.json",
+        "docs/testing/issue1235/recovery.md",
+        "rollup.config.mjs",
+        "scripts/bundle-manifest.mjs",
+        "test/bundle-assets.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2045,11 +2055,12 @@
     "worker": "github-coordinator",
     "token": "102:github:41649224843:1:tick:1:admit",
     "fence": 102,
-    "materialSha": "86248e1a42616f0917d7229a0a11d348a415d57c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
+    "expectedBase": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+    "phase": "testing",
     "admittedAt": 1793714428154,
-    "expiresAt": 1793714728154
+    "expiresAt": 1793714778066,
+    "patchId": "55e3f180f8fa450d886640223aa8737eee8fdde5"
   },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
@@ -2130,6 +2141,10 @@
     },
     "github:41649224843:1:completions:message:53378aae8a38df95a444f90b22ea6f032feb723053d13d8d44e7bcaab6502d0e": {
       "digest": "7d1c0e65ed40303e8d4aa096cd043dd91e28b62c74496c3937b137ec5a5a7b2f",
+      "issue": 1235
+    },
+    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:1:synchronized": {
+      "digest": "2631671442a5c4be8af7a58d077beefcfbfdd428069352b49ed29887da17dce3",
       "issue": 1235
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
