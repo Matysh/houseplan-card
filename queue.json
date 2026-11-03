@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1273,
+  "revision": 1274,
   "nextTicket": 92,
   "nextFence": 91,
   "tasks": {
@@ -1546,7 +1546,16 @@
         "scripts/support-relay/hp_relay/support_wire_schema.py",
         "scripts/support-relay/tests/test_relay_v2.py",
         "tests_backend/test_support_lqi_wire.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T105822013-8fa4cc0e",
+        "name": "Тесты для задачи #1223 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261103T105822013-8fa4cc0e/report.json",
+        "materialSha": "a2ab12d74261ff9b337332ff4e872483c668eb86",
+        "status": "passed",
+        "finishedAt": "2026-11-03T10:59:04.407Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -1661,9 +1670,9 @@
     "fence": 90,
     "materialSha": "a2ab12d74261ff9b337332ff4e872483c668eb86",
     "expectedBase": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793703491359,
-    "expiresAt": 1793703798539,
+    "expiresAt": 1793707145537,
     "patchId": "45aa3f05bd5eae6b366b8bf0570314faddad931c"
   },
   "events": {
@@ -1724,6 +1733,29 @@
         "materialSha": "a2ab12d74261ff9b337332ff4e872483c668eb86",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:bb0dcc32-c67a-41d9-baf9-153a4e6e21fc:finish:3:s6-complete": {
+      "digest": "c678ed9b855ea46c5698c546d831bd84c55599f5384ac5f2677daab92f53cd02",
+      "issue": 1223,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1223,
+        "at": 1793703545537,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "a2ab12d74261ff9b337332ff4e872483c668eb86",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261103T105822013-8fa4cc0e",
+          "name": "Тесты для задачи #1223 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261103T105822013-8fa4cc0e/report.json",
+          "materialSha": "a2ab12d74261ff9b337332ff4e872483c668eb86",
+          "status": "passed",
+          "finishedAt": "2026-11-03T10:59:04.407Z",
+          "failures": []
+        }
       }
     }
   },
