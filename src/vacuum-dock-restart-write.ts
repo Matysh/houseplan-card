@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /** ACK-only, serialized vacuum policy edit. No speculative plan/robot mutation. */
 import type { HouseplanEditorRuntime, HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { Marker, ServerConfig } from './types';
@@ -17,6 +18,7 @@ export function vacuumDockRestartPending(host: Host, markerId: string): boolean 
 }
 
 export async function saveVacuumDockRestart(runtime: Runtime, markerId: string, enabled: boolean): Promise<boolean> {
+    const showToast = captureToast(runtime.host);
   const { host } = runtime;
   const device = host._devices.find(item => item.id === markerId);
   if (!device || !host._isVacDev(device) || !host._serverCfg || vacuumDockRestartPending(host, markerId)) return false;
@@ -72,7 +74,7 @@ export async function saveVacuumDockRestart(runtime: Runtime, markerId: string, 
     await write;
     return current();
   } catch (error) {
-    if (current()) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
+    if (current()) showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
     return false;
   } finally {
     if (ownsPending()) host._writesPending--;

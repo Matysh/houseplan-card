@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /**
  * #39: the shared plan-file pick flow — classification, safe encoding and the
  * reduced-copy path. One module feeds BOTH lazy runtimes (editor space dialog
@@ -85,8 +86,9 @@ export async function encodePlanFile(blob: Blob, ext: string, name: string): Pro
  * above the limit (SVG) is refused right here, before a single byte is sent.
  */
 export async function stagePlanFile(host: BackdropPickHost, file: File): Promise<PlanFilePayload | null> {
+  const showToast = captureToast(host);
   const refuse = (key: I18nKey, vars?: Record<string, string | number>): null => {
-    host._showToast(host._t(key, vars), key);
+    showToast(host._t(key, vars), key);
     return null;
   };
   const classified = await classifyPlanFile(file, MAX_PLAN_BYTES);
@@ -276,6 +278,7 @@ export function renderBackdropGuard(
     close();
   };
   const reduced = async (): Promise<void> => {
+    const showToast = captureToast(host);
     if (host._backdropGuard?.busy) return;
     host._backdropGuard = { ...guard, busy: true };
     host.requestUpdate?.();
@@ -291,7 +294,7 @@ export function renderBackdropGuard(
       if (planLimitBytes !== undefined && out.blob.size > planLimitBytes) {
         if (!stillCurrent()) return;
         close();
-        host._showToast(host._t('toast.plan_too_large', { mb: planLimitBytes / 1048576 }), 'toast.plan_too_large');
+        showToast(host._t('toast.plan_too_large', { mb: planLimitBytes / 1048576 }), 'toast.plan_too_large');
         return;
       }
       const payload = await encodePlanFile(out.blob, out.ext, out.name);
@@ -303,7 +306,7 @@ export function renderBackdropGuard(
       // user just declined — staging stays clean, the toast says what happened.
       if (!stillCurrent()) return;
       close();
-      host._showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');
+      showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');
     }
   };
   return html`<hp-dialog .hass=${hass} data-kind="decor" class="ui-dialog" compact settings-layout

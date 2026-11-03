@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /**
  * #780: the card's side of the Devices-editor LED tool (ТЗ §4, §13.1) — the
  * loader of its lazy chunk, the toolbar button, the device-dialog section and
@@ -85,6 +86,7 @@ export async function ledHistory(
   card: LedCardPort, direction: 'undo' | 'redo',
   command: { name: string; before: unknown; after: unknown },
 ): Promise<void> {
+    const showToast = captureToast(card);
   const [target, from] = (direction === 'undo' ? [command.before, command.after] : [command.after, command.before]) as LedHistoryState[];
   card._devicePositionBusy = true;
   const result = card._ledEditor ? await card._ledEditor.applyHistory(target, from) : 'stale';
@@ -93,7 +95,7 @@ export async function ledHistory(
     if (direction === 'undo') card._devicePositionHistory.redo(); else card._devicePositionHistory.undo();
   } else {
     if (result === 'stale') card._devicePositionHistory.clear();
-    card._showToast(card._t(result === 'stale' ? 'history.device_stale'
+    showToast(card._t(result === 'stale' ? 'history.device_stale'
       : direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }), result === 'stale' ? 'history.device_stale'
       : direction === 'undo' ? 'history.undone' : 'history.redone');
   }

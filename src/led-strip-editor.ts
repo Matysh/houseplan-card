@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /**
  * The LED strip tool of the Devices editor (#780, ТЗ §4, §5) — its own lazy
  * chunk, loaded by the editor runtime only on entry into the tool, when the
@@ -463,10 +464,11 @@ export class LedStripEditor {
       : this.writeNow(name, spaceId, stripId, next, record);
   }
 
-  private async writeNow(
+private async writeNow(
     name: string, spaceId: string, stripId: string,
     next: (current: LedStripModel | null) => LedStripModel | null, record = true,
   ): Promise<boolean> {
+    const showToast = captureToast(this.host);
     const cfg = this.host._serverCfg;
     if (!cfg || this.busy) return false;
     let candidate = clone(cfg);
@@ -478,7 +480,7 @@ export class LedStripEditor {
     const after = next(before ? clone(before) : null);
     if (same(before, after)) return true; // a no-op is no command
     if (after && !before && strips.length >= LED_MAX_STRIPS) {
-      this.host._showToast(this.t('led.limit_strips'), 'led.limit_strips');
+      showToast(this.t('led.limit_strips'), 'led.limit_strips');
       return false;
     }
     if (after && index >= 0) strips[index] = after;
@@ -522,7 +524,7 @@ export class LedStripEditor {
       restoreDeferred(this.host._rollbackOptimistic(attempt));
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      if (!isGeometryCleanupRefusal(error)) this.host._showToast(this.t('led.save_failed', { err: this.host._errText(error) }), 'led.save_failed');
+      if (!isGeometryCleanupRefusal(error)) showToast(this.t('led.save_failed', { err: this.host._errText(error) }), 'led.save_failed');
       return false;
     } finally {
       this.busy = false;
@@ -553,9 +555,10 @@ export class LedStripEditor {
     return markerId ? this.host._devices.find((item) => item.id === markerId) : undefined;
   }
 
-  async bind(stripId: string, markerId: string | null, spaceId = this.host._space): Promise<void> {
+async bind(stripId: string, markerId: string | null, spaceId = this.host._space): Promise<void> {
+    const showToast = captureToast(this.host);
     const owner = markerId ? ownerOf(this.host._serverCfg, markerId) : null;
-    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken'), 'led.taken'); return; }
+    if (owner && owner.strip.id !== stripId) { showToast(this.t('led.taken'), 'led.taken'); return; }
     const ok = await this.write(this.t('led.history_view'), spaceId, stripId,
       (strip) => (strip ? { ...strip, marker: markerId, ...(strip.active === false ? { active: true } : {}) } : null));
     if (ok) this.picker = null;

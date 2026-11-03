@@ -1,3 +1,4 @@
+import { captureToast } from '../toast-presentation';
 import type { HouseplanEditorHostPort, HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import type { RoomCfg, ServerConfig } from '../types';
 import { isGeometryCleanupRefusal, supersedeDeferredWrite } from '../config-adoption';
@@ -12,6 +13,7 @@ export function roomSaveBusy(host: object): boolean {
 
 /** Keep the form until its own accepted response; rollback remains #842's. */
 export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host: HouseplanEditorHostPort = runtime.host;
   if (roomSaveBusy(host)) return;
   const cfg = host._serverCfg;
@@ -21,7 +23,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   const spaceId = host._space, roomId = host._roomEditId;
   const candidate = JSON.parse(JSON.stringify(cfg)) as ServerConfig;
   const room = candidate.spaces.find(space => space.id === spaceId)?.rooms.find(room => room.id === roomId);
-  if (!room) { host._showToast(host._t('toast.conflict'), 'toast.conflict'); return; }
+  if (!room) { showToast(host._t('toast.conflict'), 'toast.conflict'); return; }
   room.name = host._nameSel.trim() || room.name;
   room.area = host._areaSel || null;
   // #581: preserve unknown/future settings and materialize legacy Glow, but
@@ -68,13 +70,13 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
       host._nameSel = '';
       host._areaSel = '';
     }
-    host._showToast(host._t('toast.room_updated'), 'toast.room_updated');
+    showToast(host._t('toast.room_updated'), 'toast.room_updated');
   } catch (error) {
     if (!contextCurrent()) return;
     restoreDeferred(host._rollbackOptimistic(attempt));
     host._regSignature = '';
     host._maybeRebuildDevices();
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (!isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   } finally {
     if (saving.get(host) === owner) saving.delete(host);
     host.requestUpdate();

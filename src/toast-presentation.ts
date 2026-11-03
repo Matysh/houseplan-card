@@ -1,7 +1,17 @@
 import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
 
-/** One notice node per card, owned by its last active, ready modal. */
+/** One notice node per card; a message keeps its originating surface. */
 export type ToastOwner = { host: HTMLElement; portal: () => HTMLElement | null };
+export type ToastContext = { readonly owner: ToastOwner | null };
+export type ToastCallback = (message: string, id?: string) => void;
+
+/** Capture before awaiting work, never when its result happens to arrive. */
+export function captureToast(host: {
+  _showToast?(message: string, id?: string): void;
+  _captureToast?: () => ToastCallback;
+}): ToastCallback {
+  return host._captureToast?.() ?? ((message, id) => host._showToast?.(message, id));
+}
 type Scope = { owners: ToastOwner[]; refresh?: () => void };
 const scopes = new WeakMap<Node, Scope>();
 type Bounds = { left: number; top: number; right: number; bottom: number };
@@ -33,6 +43,7 @@ export function setToastOwner(root: Node, owner: ToastOwner, active: boolean): v
 export class ToastPresentation {
   private _root?: ShadowRoot;
   private _notice?: HTMLDivElement;
+  private _context: ToastContext = { owner: null };
   private _frame = 0;
   private _animation: Animation | null = null;
   private _generation = 0;
@@ -65,13 +76,13 @@ export class ToastPresentation {
   private readonly _route = (): void => {
     const root = this._root, notice = this._notice;
     if (!root || !notice) return;
-    const owners = scopeFor(root).owners.filter(owner => owner.host.isConnected);
-    const target = owners[owners.length - 1]?.portal() || root.querySelector('[data-hp="toast-portal"]');
+    const owner = this._context.owner;
+    const target = (owner?.host.isConnected && scopeFor(root).owners.includes(owner) ? owner.portal() : null)
+      || root.querySelector('[data-hp="toast-portal"]');
     if (!target) return;
     if (target === notice.parentElement) { this._position(); return; }
-    // Moving an already announced message must not create another live-region
-    // event. It remains accessible ordinary text in its new modal, not hidden
-    // duplicate text in the inert card below it.
+    // Closing its owner may return the notice to the card, never to another
+    // dialog. Neither readiness nor retirement re-announces existing text.
     notice.setAttribute('aria-live', 'off');
     notice.removeAttribute('role');
     target.appendChild(notice);
@@ -91,6 +102,11 @@ export class ToastPresentation {
 
   refresh(): void { this._route(); }
 
+  captureContext(): ToastContext {
+    const owners = this._root ? scopeFor(this._root).owners.filter(owner => owner.host.isConnected) : [];
+    return { owner: owners[owners.length - 1] ?? null };
+  }
+
   showHint(message: string, id: string): void {
     if (this._notice && !this._leaving && this._notice.dataset.kind !== 'hint') return;
     if (this._notice?.dataset.kind === 'hint' && this._notice.dataset.id === id && !this._leaving) return;
@@ -105,8 +121,9 @@ export class ToastPresentation {
     if (this._notice?.dataset.kind === 'message') this.clear();
   }
 
-  show(message: string, id = 'message', kind: 'message' | 'hint' = 'message'): void {
+  show(message: string, id = 'message', kind: 'message' | 'hint' = 'message', context = this.captureContext()): void {
     if (!this._root) return;
+    this._context = context;
     cancelAnimationFrame(this._frame);
     const generation = ++this._generation;
     this._animation?.cancel(); this._animation = null; this._leaving = false;

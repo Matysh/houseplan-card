@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1246,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Keep toast action ownership across modal changes and late asynchronous results without hiding genuine modal save errors.",
+  "summary": {
+    "ru": "Новые диалоги больше не наследуют сообщения прежних действий.",
+    "en": "New dialogs no longer inherit messages from previous actions."
+  }
+}

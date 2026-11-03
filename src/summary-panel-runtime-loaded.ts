@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { captureToast } from './toast-presentation';
 import { langOf, type I18nKey } from './i18n';
 import type {
   ServerConfig, SummaryPanelConfig, SummaryPanelSource, SummaryPanelSystemKey,
@@ -563,6 +564,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private async openDialog(): Promise<void> {
+    const showToast = captureToast(this.host);
     const generation = this.lifecycleGeneration;
     this.loadLocal();
     try {
@@ -571,7 +573,7 @@ export class LoadedSummaryPanelRuntime {
     } catch (error) {
       this.editorLoad = null;
       if (!this.current(generation)) return;
-      this.host._showToast?.(`${this.t('summary.load_failed')} ${this.host._errText(error)}`);
+      showToast(`${this.t('summary.load_failed')} ${this.host._errText(error)}`);
       return;
     }
     if (!this.current(generation)) return;

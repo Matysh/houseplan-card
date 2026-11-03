@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /**
  * #618: batch Hide/Show in the Devices catalog.
  *
@@ -111,6 +112,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
   host: InboxBatchHost<D>, deps: InboxBatchDeps,
   rows: readonly DeviceInboxRow[], hidden: boolean, batch: boolean, fromPlan = false,
 ): Promise<void> {
+    const showToast = captureToast(host);
   const dialog = host._deviceInbox;
   const cfg = host._serverCfg;
   if ((!dialog && !fromPlan) || !cfg || dialog?.busy || !rows.length || host._canEdit === false || host._kiosk) return;
@@ -134,7 +136,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
     if (host._deviceInbox) {
       host._deviceInbox = { ...host._deviceInbox, busy: undefined, ...(batch ? { selected: [] } : {}) };
     }
-    host._showToast(batch
+    showToast(batch
       ? host._t(hidden ? 'device_inbox.batch_hidden' : 'device_inbox.batch_shown', { count: String(applied.changed) })
       : host._t('device_inbox.saved'), (batch) ? (hidden ? 'device_inbox.batch_hidden' : 'device_inbox.batch_shown') : ('device_inbox.saved'));
   } catch (error) {
@@ -149,7 +151,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
         : undefined;
       host._deviceInbox = { ...current, busy: undefined, selected };
     }
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (!isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }
 

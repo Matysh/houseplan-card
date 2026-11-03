@@ -1,4 +1,5 @@
 import { html, type TemplateResult } from 'lit';
+import { captureToast } from './toast-presentation';
 import { isGeometryCleanupRefusal } from './config-adoption';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { I18nKey } from './i18n';
@@ -132,17 +133,17 @@ export function renderSpaceCopyDialog(
   </hp-dialog>`;
 }
 
-function showCopyError(host: HouseplanEditorHostPort, error: unknown): void {
+function showCopyError(host: HouseplanEditorHostPort, error: unknown, showToast: (message: string, id?: string) => void): void {
   if (error instanceof SpaceCopyError) {
-    host._showToast(host._t(ERROR_KEYS[error.code]), ERROR_KEYS[error.code]);
+    showToast(host._t(ERROR_KEYS[error.code]), ERROR_KEYS[error.code]);
     return;
   }
   const code = (error as { code?: unknown } | null)?.code;
   if (code === 'wall_model_client_outdated') {
-    host._showToast(host._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
+    showToast(host._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
     return;
   }
-  if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+  if (!isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
 }
 
 /** Copy accepted geometry as-is. The server proves its stored source (#1227). */
@@ -150,6 +151,7 @@ export async function saveSpaceCopy(
   host: HouseplanEditorHostPort,
   services: SpaceCopyRuntimeServices,
 ): Promise<void> {
+  const showToast = captureToast(host);
   const initial = host._spaceDialog;
   if (!initial?.copy || initial.mode !== 'edit' || initial.busy || initial.copy.busy
       || !initial.copy.title.trim() || !initial.spaceId || !host._serverCfg) return;
@@ -200,12 +202,12 @@ export async function saveSpaceCopy(
     host._primeDrawWallField();
     host._saveNav();
     host.requestUpdate();
-    host._showToast(host._t('toast.space_copied', { name: title }), 'toast.space_copied');
+    showToast(host._t('toast.space_copied', { name: title }), 'toast.space_copied');
   } catch (error) {
     if ((error as { code?: unknown } | null)?.code === 'conflict') {
       await Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]);
     }
     setBusy(host, token, false);
-    showCopyError(host, error);
+    showCopyError(host, error, showToast);
   }
 }

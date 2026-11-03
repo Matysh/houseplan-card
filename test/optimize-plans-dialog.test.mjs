@@ -106,6 +106,7 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     cardVersion: () => '9.9.9',
     requestUpdate: () => { calls.requestUpdate += 1; },
     showToast: (message) => { calls.toasts.push(message); },
+    captureToast: () => (message) => { calls.toasts.push(message); },
     errorText: (error) => String(error?.message ?? error),
     checkGeometry: (config) => { calls.checkGeometry.push(config); return okPreflight(config); },
     referenceContext: (removeLive, removeInvalid) => { calls.referenceContext.push(removeLive); return {
@@ -254,6 +255,17 @@ test('#642 toggleLivePositions re-previews with the flag flipped, only when live
 });
 
 // --------------------------------------------------------------------- run
+
+test('#1246 Optimize retains its action toast callback across an awaited failure',async()=>{
+  let active='optimize',reject;const messages=[];
+  const {dialog,state}=fakePort({
+    captureToast:()=>{const owner=active;return message=>messages.push({owner,message});},
+    commit:()=>new Promise((_,fail)=>{reject=fail;}),
+  });
+  state.dialog=dialogOf();
+  const pending=dialog.run();active='nested-confirm';reject(new Error('refused'));await pending;
+  assert.deepEqual(messages,[{owner:'optimize',message:'toast.error{"err":"refused"}'}]);
+});
 
 test('#642 open: preview never writes, and cancel closes without a write', async () => {
   const { dialog, state, calls } = fakePort();
