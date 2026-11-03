@@ -75,3 +75,41 @@ and host mapping deltas are not accepted by count or nearest-edge matching.
   the old body-paint positive and zero full-floor work throughout held input.
 - Cold reload: external desktop fixture styles must be restored before using
   desktop-only zoom controls. This does not change the product camera.
+
+## Confirmed: discovery seeding after a full import invalidates import Undo
+
+In audit 41662157218, the genuine model10 off-wall import was accepted and
+survived reload with its exact expected graph/opening. The server initially
+reported `can_optimize_undo=true`, `undo_kind=import`, config/layout revisions
+98/42. A newly loaded editing card then sent `houseplan/config/set` with
+`expected_rev=98`; the only semantic config change was adding
+`settings.filter_seeded`. The next read returned revisions 99/42 and no Undo.
+
+This is normal discovery seeding (FILTERING.md:45,64–73), but its automatic
+write consumes the full-import snapshot. Real imported plans without a saved
+discovery checkpoint can therefore lose Undo without an intentional user edit.
+The older genuine1.62 main control also automatically adds
+`settings.marker_area_snapshot` after import (config96→97); its journey does
+not assert full Undo. Both automatic-maintenance paths remain findings.
+No product fix is made in #1225/#1226.
+
+The new synthetic literal model10 control had empty settings, while its genuine
+old parent seed already contains the documented discovery checkpoint. A fixture
+port may inherit those existing checkpoint keys from that parent before import;
+it must retain all genuine geometry, opening, metadata and full Undo assertions.
+That port does not prove Undo survives automatic seeding in an unseeded plan.
+
+## Cross-journey test isolation: full import intentionally erases vacuum history
+
+The new model10 control fully imports a plan without the vacuum marker.
+Successful full import invokes orphan-trail cleanup. VACUUM.md:663–669 explicitly
+requires immediate durable deletion of a removed marker's trail; restoring or
+re-adding the marker starts fresh. The test seed guard restores config/layout,
+but cannot restore that erased history. A later vacuum test sees its restored
+marker/calibration and no stored trail.
+
+This is a test-isolation diagnosis from the accepted purge contract and applied
+full import, not a captured empty trail/get response. The vacuum drawing and
+live-history assertions remain required. A safe test arrangement must give the
+trail journey its initial seed before destructive full-import journeys, or an
+independently seeded lab; it must not skip/relax drawing or restore .storage.
