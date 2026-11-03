@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1943,
+  "revision": 1944,
   "nextTicket": 124,
   "nextFence": 122,
   "tasks": {
@@ -2271,144 +2271,25 @@
     },
     "1244": {
       "issue": 1244,
+      "branch": "issue/1244-opening-floor-fade",
       "track": "show",
       "layer": "product",
-      "branch": "issue/1244-opening-floor-fade",
-      "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 121,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793728650296,
-      "reviewEntry": 1,
-      "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
-      "changedFiles": [
-        "demo/smoke_opening_mode_fill.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1244.json",
-        "src/houseplan-card.ts",
-        "src/styles/plan.styles.ts"
-      ],
-      "s6": {
-        "id": "20261103T180158689-1722fea1",
-        "requestId": "s6:1244:2571de84db26f4bc07f76e7af70f1557",
-        "runId": 41689698638,
-        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "status": "passed",
-        "finishedAt": "2026-11-03T18:03:28.644Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41689698638",
-        "execution": "github"
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+      "mergedSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+      "mergedAt": 1793729380949,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-      "reviewMaterial": {
-        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-        "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1244,
-        "requestId": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-        "kind": "code",
-        "base": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1244,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1244",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина воспроизведена на актуальном dev 6aa950309 через настоящие кнопки шапки и model11 `commitWallSegmentModel(makeStaticWallOpeningsFixture())`, обе комнаты с тёмной непрозрачной заливкой #111111/#222222. До исправления в первых кадрах Flat→Plan при planWeight=0 пол ещё #111111, а tunnel уже отсутствует; Plan→Flat сразу возвращает tunnel с opacity=1 при малом текущем весе пола. Это не анимация створки и не смена датчика.\n\n`_renderOpeningTunnelFills` удалял весь слой при `_markup`, хотя комнаты уже используют premultiplied color-mix общего `--hp-mode-plan-weight`. Минимальное решение удерживает существующий tunnel во время `_modeTransitionBusy`, а CSS умножает его архитектурную прозрачность на `(1 - planWeight)`. После завершения Plan слой по-прежнему отсутствует, поэтому не остаётся цветной patch при редактировании. Не меняются публичные data-hp, геометрия, hard-stop на центре стены и 600ms transform/stroke-dashoffset створки. Альтернативы — новая модель floor/tunnel, постоянные невидимые tunnel в Plan или отключение transitions — не нужны.\n\nАдресная диагностика: новый `demo/smoke_opening_mode_fill.mjs` делает native clicks, снимает computed paint каждый rAF для всех трёх редакторов, Flat/2.5D и reduced motion, проверяет отсутствие stale patch и сохранение настоящей анимации контакта. При 2.5D до midpoint намеренно удерживается прежняя source scene; её отсутствие live tunnel в исходном settled Plan не выдаётся за дефект. Целевой target fill проверяется после projection commit, а общий fade — отдельно. Baseline не принимается. Полный S6 будет выполнен только в слоте finish; это подготовительный debug, не результат S6."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление адресное и правильно встроено в существующую модель перехода режимов. Раньше слой заливки tunnel в толстых проёмах сразу менял состояние при смене `_mode`: при входе в Plan он исчезал, хотя пол ещё был тёмным, а при выходе сразу возвращался с opacity=1. Теперь он остаётся в DOM, пока `_modeTransitionBusy`, и затухает по тому же `--hp-mode-plan-weight`, что и premultiplied-заливка комнат. Такое же условие `(!this._markup || this._modeTransitionBusy)` уже действует для комнат. Когда Plan устоялся, слой по-прежнему не рендерится. Анимации створок, геометрия и data-hp не менялись. Блокеров не нашёл. Адресная browser-диагностика добавлена; итог S6 — passed (run 41689698638). Какие именно сценарии вошли в этот прогон, проверить по снимку нельзя.",
-          "understanding": "Проблема из уточнения владельца: в Flat при входе в редактор плана и при выходе из него проёмы на тёмном полу вспыхивают белым. Причина — в `_renderOpeningTunnelFills` (src/houseplan-card.ts:9850). До изменения функция возвращала пустой слой при `this._markup` (то есть `_mode === 'plan'`). `_setMode` в editor runtime (src/houseplan-editor-runtime.ts:1320–1352) синхронно ставит `_mode = mode` и `_modeTransitionPreparing = true` до первого render. Поэтому уже в кадре измерения tunnel исчезал, хотя заливка комнат при `planWeight≈0` ещё была тёмной: комнаты в переходе продолжают получать live-заливку по условию в строке 11875 и смешиваются CSS-правилом `.stage.mode-transition .room`. Через вырез в стене просвечивала белая бумага. При выходе tunnel сразу появлялся с `opacity = --hp-mode-architecture-opacity` (1) в момент, когда пол ещё почти полностью окрашен в голубой wash.\n\nПосле изменения:\n1) Tunnel рендерится, пока `_modeTransitionBusy` (это getter `_modeTransitionPreparing || _modeTransition.active`, строка 1385).\n2) Новое CSS-правило `.stage.mode-transition .opening-tunnels[data-layer=\"data\"]` задаёт `opacity: arch * (1 - planWeight)`. Его специфичность (0,4,0) выше базового `.stage .opening-tunnels` (0,2,0), поэтому множитель Decor применяется один раз.\n3) `_settleModeTransition` (1617–1633) сбрасывает preparing, контроллер становится неактивен, вызывается `requestUpdate` — в устоявшемся Plan слой удаляется. В этот момент его opacity уже 0, поэтому скачка нет. При выходе в View после снятия класса `mode-transition` действует базовое правило с тем же значением arch при `planWeight=0`, переход тоже непрерывен.\n\nРазобранные пути: вход и выход Plan; переходы между редакторами Plan↔Devices/Decor (`_markup` там false, `planWeight` у краевых состояний 0 — поведение прежнее, если Plan не участвует); быстрый разворот через `_cancelModeTransition(false)` и новый `_prepareModeTransition` от отрисованного кадра (busy остаётся true, вес продолжается от текущего значения); projection crossing в 2.5D (исходная сцена удерживается до середины перехода, затем flat-сцена с tunnel под общим fade); значения CSS-переменных в кадре измерения (inline style stage в строке 11789 всегда задаёт `--hp-mode-plan-weight` и `--hp-mode-architecture-opacity` из `modeVisual` или из режима, так что `calc` не становится невалидным).",
-          "analysis": [
-            {
-              "topic": "Соответствие причине и согласованность с заливкой комнат",
-              "assessment": "Решение устраняет именно рассинхрон слоя, а не маскирует симптом. Условие удержания совпадает с уже принятым для комнат, поэтому оба слоя пола живут по одному правилу. Tunnel затухает к белой бумаге, а не к голубому wash. Это верно: в устоявшемся Plan вырез и так белый, а wash принадлежит комнате, конечное состояние совпадает с прежним.",
-              "evidence": "src/houseplan-card.ts:9857 (новое условие) и 11875 (`(!this._markup || this._modeTransitionBusy)` у комнат); src/styles/plan.styles.ts:69–85 — premultiplied color-mix комнаты по `--hp-mode-plan-weight` и новое правило tunnel с тем же весом."
-            },
-            {
-              "topic": "Жизненный цикл и отсутствие устаревшего слоя",
-              "assessment": "`_modeTransitionBusy` — вычисляемый getter, а не реактивное свойство. Но оба пути завершения вызывают render: settle — через `requestUpdate()`, cancel с commit — через контроллер или `_commitViewModeAtomic`. Флаги сбрасываются до render, поэтому в устоявшемся Plan tunnel не остаётся. Во время перехода stage имеет `inert`, а у tunnel `pointer-events=\"none\"`, так что ручки редактора он не перекрывает.",
-              "evidence": "src/houseplan-card.ts:1617–1633 (`_settleModeTransition`: `_modeTransitionPreparing=false` → `requestUpdate`), 1669–1698 (`_cancelModeTransition`), 11788 (`?inert=${this._modeTransitionBusy}`); src/render/opening-tunnels.ts:75 (`pointer-events=\"none\"`)."
-            },
-            {
-              "topic": "Сохранение остальных механизмов",
-              "assessment": "Правило ограничено `data-layer=\"data\"`, поэтому Glow-base tunnel (другой dataLayer или префикс) не затрагивается. Transitions створок (`transform`/`stroke-dashoffset`) не тронуты. Для Devices/Decor результат формулы при `planWeight=0` равен прежнему `arch`. Геометрию и кэш tunnel перестраивать не нужно: при входе в Plan используется та же запись из `_openingTunnelPool`, что и в View.",
-              "evidence": "src/render/opening-tunnels.ts:27–76; src/styles/plan.styles.ts:1094–1104; diff не затрагивает `.opening .op-leaf/.op-arc`."
-            },
-            {
-              "topic": "Диагностика demo/smoke_opening_mode_fill.mjs",
-              "assessment": "Сценарий содержательный: настоящие клики по шапке, отсчёт на каждом rAF, все три редактора, Flat/2.5D, reduced motion, отсутствие устаревшего tunnel в устоявшемся Plan, клавиатурный разворот посреди перехода и сохранение 600-мс transition при реальной смене контакта. Слабое место: основная проверка `opacity ≈ arch*(1-weight)` по сути сверяет computed-значение CSS-формулы. Регрессию ловит в первую очередь условие `present`. Поле `floor` собирается, но ни с чем не сравнивается. Для выявленного дефекта этого достаточно.",
-              "evidence": "demo/smoke_opening_mode_fill.mjs:67–83 (фильтр active/failures, проверка settled Plan), 95–111 (разворот), 113–125 (контакт)."
-            },
-            {
-              "topic": "Комментарии и документация",
-              "assessment": "Комментарии в коде и CSS объясняют неочевидную договорённость: почему слой удерживается только на время перехода и почему множитель архитектуры применяется один раз. Записи CHANGELOG (EN/RU) и release-ledger оформлены по образцу соседних записей v1.83.0.",
-              "evidence": "src/houseplan-card.ts:9854–9856; src/styles/plan.styles.ts:80–82; docs/release-ledger/v1.83.0/1244.json."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "В smoke можно сравнивать `floor` (computed fill комнаты Alpha) с ожидаемым смешением по `weight` или хотя бы проверять, что пол ещё тёмный в кадрах, где tunnel обязан присутствовать. Тогда тест будет связывать два слоя напрямую, а не повторять CSS-формулу, и поймает будущий рассинхрон, если комнаты начнут смешиваться по другой переменной. Цена — несколько строк разбора rgb в сценарии."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам pinned head ad46b790 и base: `_renderOpeningTunnelFills`, renderOpeningTunnelFills, inline-стиль stage, `_setMode` в editor runtime, `_prepareModeTransition`/`_applyModeTransitionFrame`/`_settleModeTransition`/`_cancelModeTransition`, CSS mode-transition и базовые правила архитектурной прозрачности. Сборку, тесты и smoke не запускал. Использован результат S6: receipt 20261103T180158689-1722fea1, run 41689698638, status passed, материал ad46b790. Какие проверки вошли в этот прогон и запускался ли новый demo/smoke_opening_mode_fill.mjs (его имя нигде в репозитории не зарегистрировано), по снимку подтвердить нельзя. Визуальное поведение на реальной установке HA владельца и в 2.5D покадрово не проверял. Сценарий 2.5D оценён только по коду: источник удерживается до середины перехода. HACS-бандл в custom_components содержит прежний код, но по истории он обновляется только релизными коммитами, поэтому это не дефект задачи."
-        },
-        "usage": {
-          "input_tokens": 40,
-          "cache_creation_input_tokens": 73236,
-          "cache_read_input_tokens": 834810,
-          "output_tokens": 11497,
-          "output_tokens_details": {
-            "thinking_tokens": 4517
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 73236,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 841,
-              "cache_read_input_tokens": 67211,
-              "cache_creation_input_tokens": 10229,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10229
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление адресное и правильно встроено в существующую модель перехода режимов. Раньше слой заливки tunnel в толстых проёмах сразу менял состояние при смене `_mode`: при входе в Plan он исчезал, хотя пол ещё был тёмным, а при выходе сразу возвращался с opacity=1. Теперь он остаётся в DOM, пока `_modeTransitionBusy`, и затухает по тому же `--hp-mode-plan-weight`, что и premultiplied-заливка комнат. Такое же условие `(!this._markup || this._modeTransitionBusy)` уже действует для комнат. Когда Plan устоялся, слой по-прежнему не рендерится. Анимации створок, геометрия и data-hp не менялись. Блокеров не нашёл. Адресная browser-диагностика добавлена; итог S6 — passed (run 41689698638). Какие именно сценарии вошли в этот прогон, проверить по снимку нельзя.\n\n## Понимание решения\n\nПроблема из уточнения владельца: в Flat при входе в редактор плана и при выходе из него проёмы на тёмном полу вспыхивают белым. Причина — в `_renderOpeningTunnelFills` (src/houseplan-card.ts:9850). До изменения функция возвращала пустой слой при `this._markup` (то есть `_mode === 'plan'`). `_setMode` в editor runtime (src/houseplan-editor-runtime.ts:1320–1352) синхронно ставит `_mode = mode` и `_modeTransitionPreparing = true` до первого render. Поэтому уже в кадре измерения tunnel исчезал, хотя заливка комнат при `planWeight≈0` ещё была тёмной: комнаты в переходе продолжают получать live-заливку по условию в строке 11875 и смешиваются CSS-правилом `.stage.mode-transition .room`. Через вырез в стене просвечивала белая бумага. При выходе tunnel сразу появлялся с `opacity = --hp-mode-architecture-opacity` (1) в момент, когда пол ещё почти полностью окрашен в голубой wash.\n\nПосле изменения:\n1) Tunnel рендерится, пока `_modeTransitionBusy` (это getter `_modeTransitionPreparing || _modeTransition.active`, строка 1385).\n2) Новое CSS-правило `.stage.mode-transition .opening-tunnels[data-layer=\"data\"]` задаёт `opacity: arch * (1 - planWeight)`. Его специфичность (0,4,0) выше базового `.stage .opening-tunnels` (0,2,0), поэтому множитель Decor применяется один раз.\n3) `_settleModeTransition` (1617–1633) сбрасывает preparing, контроллер становится неактивен, вызывается `requestUpdate` — в устоявшемся Plan слой удаляется. В этот момент его opacity уже 0, поэтому скачка нет. При выходе в View после снятия класса `mode-transition` действует базовое правило с тем же значением arch при `planWeight=0`, переход тоже непрерывен.\n\nРазобранные пути: вход и выход Plan; переходы между редакторами Plan↔Devices/Decor (`_markup` там false, `planWeight` у краевых состояний 0 — поведение прежнее, если Plan не участвует); быстрый разворот через `_cancelModeTransition(false)` и новый `_prepareModeTransition` от отрисованного кадра (busy остаётся true, вес продолжается от текущего значения); projection crossing в 2.5D (исходная сцена удерживается до середины перехода, затем flat-сцена с tunnel под общим fade); значения CSS-переменных в кадре измерения (inline style stage в строке 11789 всегда задаёт `--hp-mode-plan-weight` и `--hp-mode-architecture-opacity` из `modeVisual` или из режима, так что `calc` не становится невалидным).\n\n## Разбор решения\n\n### Соответствие причине и согласованность с заливкой комнат\n\nРешение устраняет именно рассинхрон слоя, а не маскирует симптом. Условие удержания совпадает с уже принятым для комнат, поэтому оба слоя пола живут по одному правилу. Tunnel затухает к белой бумаге, а не к голубому wash. Это верно: в устоявшемся Plan вырез и так белый, а wash принадлежит комнате, конечное состояние совпадает с прежним.\n\nОснование: src/houseplan-card.ts:9857 (новое условие) и 11875 (`(!this._markup || this._modeTransitionBusy)` у комнат); src/styles/plan.styles.ts:69–85 — premultiplied color-mix комнаты по `--hp-mode-plan-weight` и новое правило tunnel с тем же весом.\n\n### Жизненный цикл и отсутствие устаревшего слоя\n\n`_modeTransitionBusy` — вычисляемый getter, а не реактивное свойство. Но оба пути завершения вызывают render: settle — через `requestUpdate()`, cancel с commit — через контроллер или `_commitViewModeAtomic`. Флаги сбрасываются до render, поэтому в устоявшемся Plan tunnel не остаётся. Во время перехода stage имеет `inert`, а у tunnel `pointer-events=\"none\"`, так что ручки редактора он не перекрывает.\n\nОснование: src/houseplan-card.ts:1617–1633 (`_settleModeTransition`: `_modeTransitionPreparing=false` → `requestUpdate`), 1669–1698 (`_cancelModeTransition`), 11788 (`?inert=${this._modeTransitionBusy}`); src/render/opening-tunnels.ts:75 (`pointer-events=\"none\"`).\n\n### Сохранение остальных механизмов\n\nПравило ограничено `data-layer=\"data\"`, поэтому Glow-base tunnel (другой dataLayer или префикс) не затрагивается. Transitions створок (`transform`/`stroke-dashoffset`) не тронуты. Для Devices/Decor результат формулы при `planWeight=0` равен прежнему `arch`. Геометрию и кэш tunnel перестраивать не нужно: при входе в Plan используется та же запись из `_openingTunnelPool`, что и в View.\n\nОснование: src/render/opening-tunnels.ts:27–76; src/styles/plan.styles.ts:1094–1104; diff не затрагивает `.opening .op-leaf/.op-arc`.\n\n### Диагностика demo/smoke_opening_mode_fill.mjs\n\nСценарий содержательный: настоящие клики по шапке, отсчёт на каждом rAF, все три редактора, Flat/2.5D, reduced motion, отсутствие устаревшего tunnel в устоявшемся Plan, клавиатурный разворот посреди перехода и сохранение 600-мс transition при реальной смене контакта. Слабое место: основная проверка `opacity ≈ arch*(1-weight)` по сути сверяет computed-значение CSS-формулы. Регрессию ловит в первую очередь условие `present`. Поле `floor` собирается, но ни с чем не сравнивается. Для выявленного дефекта этого достаточно.\n\nОснование: demo/smoke_opening_mode_fill.mjs:67–83 (фильтр active/failures, проверка settled Plan), 95–111 (разворот), 113–125 (контакт).\n\n### Комментарии и документация\n\nКомментарии в коде и CSS объясняют неочевидную договорённость: почему слой удерживается только на время перехода и почему множитель архитектуры применяется один раз. Записи CHANGELOG (EN/RU) и release-ledger оформлены по образцу соседних записей v1.83.0.\n\nОснование: src/houseplan-card.ts:9854–9856; src/styles/plan.styles.ts:80–82; docs/release-ledger/v1.83.0/1244.json.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В smoke можно сравнивать `floor` (computed fill комнаты Alpha) с ожидаемым смешением по `weight` или хотя бы проверять, что пол ещё тёмный в кадрах, где tunnel обязан присутствовать. Тогда тест будет связывать два слоя напрямую, а не повторять CSS-формулу, и поймает будущий рассинхрон, если комнаты начнут смешиваться по другой переменной. Цена — несколько строк разбора rgb в сценарии.\n\n## Границы анализа\n\nРевью выполнено только по исходникам pinned head ad46b790 и base: `_renderOpeningTunnelFills`, renderOpeningTunnelFills, inline-стиль stage, `_setMode` в editor runtime, `_prepareModeTransition`/`_applyModeTransitionFrame`/`_settleModeTransition`/`_cancelModeTransition`, CSS mode-transition и базовые правила архитектурной прозрачности. Сборку, тесты и smoke не запускал. Использован результат S6: receipt 20261103T180158689-1722fea1, run 41689698638, status passed, материал ad46b790. Какие проверки вошли в этот прогон и запускался ли новый demo/smoke_opening_mode_fill.mjs (его имя нигде в репозитории не зарегистрировано), по снимку подтвердить нельзя. Визуальное поведение на реальной установке HA владельца и в 2.5D покадрово не проверял. Сценарий 2.5D оценён только по коду: источник удерживается до середины перехода. HACS-бандл в custom_components содержит прежний код, но по истории он обновляется только релизными коммитами, поэтому это не дефект задачи.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: a2fff2c1008b72d2d37b9046e332f5c45f64e096 → ad46b790228f0b2e7ae37f7905a63843043cf2ab\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1244, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина воспроизведена на актуальном dev 6aa950309 через настоящие кнопки шапки и model11 `commitWallSegmentModel(makeStaticWallOpeningsFixture())`, обе комнаты с тёмной непрозрачной заливкой #111111/#222222. До исправления в первых кадрах Flat→Plan при planWeight=0 пол ещё #111111, а tunnel уже отсутствует; Plan→Flat сразу возвращает tunnel с opacity=1 при малом текущем весе пола. Это не анимация створки и не смена датчика.\n\n`_renderOpeningTunnelFills` удалял весь слой при `_markup`, хотя комнаты уже используют premultiplied color-mix общего `--hp-mode-plan-weight`. Минимальное решение удерживает существующий tunnel во время `_modeTransitionBusy`, а CSS умножает его архитектурную прозрачность на `(1 - planWeight)`. После завершения Plan слой по-прежнему отсутствует, поэтому не остаётся цветной patch при редактировании. Не меняются публичные data-hp, геометрия, hard-stop на центре стены и 600ms transform/stroke-dashoffset створки. Альтернативы — новая модель floor/tunnel, постоянные невидимые tunnel в Plan или отключение transitions — не нужны.\n\nАдресная диагностика: новый `demo/smoke_opening_mode_fill.mjs` делает native clicks, снимает computed paint каждый rAF для всех трёх редакторов, Flat/2.5D и reduced motion, проверяет отсутствие stale patch и сохранение настоящей анимации контакта. При 2.5D до midpoint намеренно удерживается прежняя source scene; её отсутствие live tunnel в исходном settled Plan не выдаётся за дефект. Целевой target fill проверяется после projection commit, а общий fade — отдельно. Baseline не принимается. Полный S6 будет выполнен только в слоте finish; это подготовительный debug, не результат S6.\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T18:08:42.606Z",
-        "artifactId": 13255968436,
-        "runId": 41690227649,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T18:08:46Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41690227649",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1246": {
@@ -2621,94 +2502,8 @@
     1242,
     1246
   ],
-  "active": {
-    "issue": 1244,
-    "worker": "finish",
-    "token": "121:finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48:finish:1:admit",
-    "fence": 121,
-    "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-    "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793728798151,
-    "expiresAt": 1793732975867,
-    "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
-    "reviewRequest": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096"
-  },
+  "active": null,
   "events": {
-    "github:41689040323:1:dev-webhook:61b7ad05-d8b8-4cf0-8054-1068541ed6a2:delivered": {
-      "digest": "4e0b238c3ffe9f9125ac1706aa93f51f7ecbfbf92a2fb7142ee56f8ffe73ee64",
-      "issue": 1244
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:1:synchronized": {
-      "digest": "148aa1b79f9d3412bd7fc2b487ebf44803c4ede89ef6f7bf72753cbe1fe82196",
-      "issue": 1244
-    },
-    "finish:d2311fa2-ad6a-4649-bd16-0ccdf6bb2ecb": {
-      "digest": "e2913d2db3c23e71f15b2ca59d7500f624905a461343f40a1925b4dd7064cd33",
-      "issue": 1244
-    },
-    "finish:6a71bd62-5c6e-4efe-9f1f-b5be29be6984": {
-      "digest": "043d841d15231335222fc7631cba7d6536eb4ac1c266d38beeba3fb538e0e714",
-      "issue": 1244
-    },
-    "finish:8ed6cafc-a5ba-48a8-945c-0e6e4f03c3b9": {
-      "digest": "a86bedf2cf93f91924ebcfff7ce8c50a513560d421ba288a49749334d9c875b3",
-      "issue": 1244
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:2:s6-label": {
-      "digest": "e6aeb303f9f2a5746353ef3ca03bd029fe0f712d2aafca8c6dd14cb8b9a96cab",
-      "issue": 1244
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:3:review-requested": {
-      "digest": "a2fa0bb4e29f944ecac5979b4c239e13c9f4128234de6b2dfc800a75f9c14521",
-      "issue": 1244
-    },
-    "github:41689661570:1:completions:message:6df3403710a47810de65a237eba5fe1b69423dfa6427762727fe9dbf1e49443b": {
-      "digest": "18e83745751f774203d4a3733d59e673fb13d22e11897c2cd0c96b22d75e3380",
-      "issue": 1244
-    },
-    "github:41689661570:1:completions:message:3570460b171439a89bf8d9f1daa9f8e64bfecba0739dd4247cd8ac6e6c1f42a6": {
-      "digest": "b029881db33c2538646fb30ca9f6bee43b8a225384a33c213fe447e47968d721",
-      "issue": 1244
-    },
-    "github:41689661570:1:completions:message:a13c221d3951e031ed5ade683f267df2e3977a77d4e70f717f8599a4a3a03b51": {
-      "digest": "35948be4216c03d5b25435b5e84b997aa64607b5d637c7184da22903d7493fdf",
-      "issue": 1244
-    },
-    "github:41689661570:1:completions:message:9452aa1d645f0599fbbcd0bb2ef5237de3a6d367467d58894a663e50a5a59b5f": {
-      "digest": "12da3809307b853a1ec5375268c3dfa1e2d958b68d67d4c932800c1d4bb12cda",
-      "issue": 1244
-    },
-    "dev-build:41689040323:1:webhook": {
-      "digest": "5c2a812fc8404827d734ccb05565b67fd9e13403659e75c2fd96df94ca26ee68",
-      "issue": 1244
-    },
-    "dev-build:41689040323:1:webhook:5ce6f92e-3e3b-4bca-8a73-23ffe2c3bf45:delivered": {
-      "digest": "62bd71a83dfa48c3617dfb3dcbeb670571f7b23e8bc309f0c7baa9a906965ecd",
-      "issue": 1244
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:8:review-presentation": {
-      "digest": "21545bef036500b3270357ececed6da82a01577fe97ad86507702e80dbc25d39",
-      "issue": 1244
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:8:review-complete": {
-      "digest": "522ddb8e288793acf52d28e6d024ab08281107a87aeee69fd061efae28816261",
-      "issue": 1244
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
-      "digest": "24e1edf7aed6946369b9de71ffcd021fc2d7471c2da828ba1aefa7c0e63b2fa5",
-      "issue": 1244,
-      "message": {
-        "kind": "queued",
-        "issue": 1244,
-        "at": 1793728650296,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4",
-        "delivered": true
-      }
-    },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
       "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
       "issue": 1242,
@@ -2720,52 +2515,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
-        "delivered": true
-      }
-    },
-    "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48:finish:1:admit": {
-      "digest": "fb0fd168c9741222f7e4d5afb5dc71703c5ed9e5d37b24bf8d50a07f4a8cdfab",
-      "issue": 1244,
-      "message": {
-        "kind": "admitted",
-        "issue": 1244,
-        "at": 1793728798151,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:2:s6-complete": {
-      "digest": "035b0a50cb845e2cbbcf9f3a4cd9ef0445714e418a2ac81478ff8758c91c1c99",
-      "issue": 1244,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1244,
-        "at": 1793729033784,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T180158689-1722fea1",
-          "requestId": "s6:1244:2571de84db26f4bc07f76e7af70f1557",
-          "runId": 41689698638,
-          "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-          "status": "passed",
-          "finishedAt": "2026-11-03T18:03:28.644Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41689698638",
-          "execution": "github"
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина воспроизведена на актуальном dev 6aa950309 через настоящие кнопки шапки и model11 `commitWallSegmentModel(makeStaticWallOpeningsFixture())`, обе комнаты с тёмной непрозрачной заливкой #111111/#222222. До исправления в первых кадрах Flat→Plan при planWeight=0 пол ещё #111111, а tunnel уже отсутствует; Plan→Flat сразу возвращает tunnel с opacity=1 при малом текущем весе пола. Это не анимация створки и не смена датчика.\n\n`_renderOpeningTunnelFills` удалял весь слой при `_markup`, хотя комнаты уже используют premultiplied color-mix общего `--hp-mode-plan-weight`. Минимальное решение удерживает существующий tunnel во время `_modeTransitionBusy`, а CSS умножает его архитектурную прозрачность на `(1 - planWeight)`. После завершения Plan слой по-прежнему отсутствует, поэтому не остаётся цветной patch при редактировании. Не меняются публичные data-hp, геометрия, hard-stop на центре стены и 600ms transform/stroke-dashoffset створки. Альтернативы — новая модель floor/tunnel, постоянные невидимые tunnel в Plan или отключение transitions — не нужны.\n\nАдресная диагностика: новый `demo/smoke_opening_mode_fill.mjs` делает native clicks, снимает computed paint каждый rAF для всех трёх редакторов, Flat/2.5D и reduced motion, проверяет отсутствие stale patch и сохранение настоящей анимации контакта. При 2.5D до midpoint намеренно удерживается прежняя source scene; её отсутствие live tunnel в исходном settled Plan не выдаётся за дефект. Целевой target fill проверяется после projection commit, а общий fade — отдельно. Baseline не принимается. Полный S6 будет выполнен только в слоте finish; это подготовительный debug, не результат S6.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
