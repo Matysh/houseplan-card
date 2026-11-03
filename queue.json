@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1484,
+  "revision": 1485,
   "nextTicket": 101,
   "nextFence": 101,
   "tasks": {
@@ -1813,14 +1813,25 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1230-finite-column-input",
-      "materialSha": "265a2c019614292d1a7cee8963a95ea677ed4ae9",
+      "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 100,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793713893625,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1230.json",
+        "src/column-input.ts",
+        "src/graph-edit-intent.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/wall-segment-model.ts",
+        "test/column-input.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -1931,11 +1942,12 @@
     "worker": "github-coordinator",
     "token": "100:github:41648108341:1:tick:1:admit",
     "fence": 100,
-    "materialSha": "265a2c019614292d1a7cee8963a95ea677ed4ae9",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
+    "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
+    "phase": "testing",
     "admittedAt": 1793713923377,
-    "expiresAt": 1793714223377
+    "expiresAt": 1793714265341,
+    "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51"
   },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
@@ -1952,6 +1964,10 @@
     },
     "github:41648108341:1:completions:message:4e0b7e38f415fe049736f9f460f775157568a4fdb317e629d85eb99d81115a0e": {
       "digest": "2ddbb1d1d5ceb6a68f34ead25649ede928625d830cc5260966617de91ee799a7",
+      "issue": 1230
+    },
+    "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c:finish:1:synchronized": {
+      "digest": "8c826e89f550957ede9375f7c91206150120951f51a5be1a12367f6a3540cf85",
       "issue": 1230
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
