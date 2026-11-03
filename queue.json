@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1650,
+  "revision": 1651,
   "nextTicket": 110,
   "nextFence": 109,
   "tasks": {
@@ -2304,6 +2304,10 @@
       "digest": "24b5097c8984a2971b0396590f79b819db0532ee552bff92d4856e610f97d705",
       "issue": 1237
     },
+    "github:41653599639:1:completions:message:bb00588bb4ef72dcd44c1fd46209a3b117c84248df138ea13f67ee6ccad633e8": {
+      "digest": "fa8f9478cc2ff7bd822f1cd374541a1066ac8e9700f80682a50e7089aa44e2f1",
+      "issue": 1236
+    },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
       "issue": 1238,
@@ -2434,7 +2438,8 @@
           "entry": 1,
           "detail": "Браузер: native grid draw: failed",
           "eventId": "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:2:return:return:1237"
-        }
+        },
+        "delivered": true
       }
     },
     "github:41653599639:1:tick:0:admit": {
