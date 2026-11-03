@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1313,
+  "revision": 1314,
   "nextTicket": 94,
   "nextFence": 93,
   "tasks": {
@@ -1608,7 +1608,7 @@
       "ownerDecision": null,
       "ticket": 92,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793703548865,
       "reviewEntry": 1,
       "patchId": "10093fc2519e360f7fc915ea1547b0d268ea2a0a",
@@ -1618,7 +1618,16 @@
         "docs/release-ledger/v1.83.0/1224.json",
         "src/plan-optimizer.ts",
         "test/plan-graph-optimize.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T110534272-31a22c61",
+        "name": "Тесты для задачи #1224 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261103T110534272-31a22c61/report.json",
+        "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
+        "status": "passed",
+        "finishedAt": "2026-11-03T11:06:10.617Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -1733,9 +1742,9 @@
     "fence": 92,
     "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
     "expectedBase": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793703900835,
-    "expiresAt": 1793704271950,
+    "expiresAt": 1793707574626,
     "patchId": "10093fc2519e360f7fc915ea1547b0d268ea2a0a"
   },
   "events": {
@@ -1796,6 +1805,29 @@
         "materialSha": "525a60865a1cad3adf57bb4d8c03a15dec11ce77",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:0f0115b3-5e0c-462a-ab9f-860c97f057a1:finish:2:s6-complete": {
+      "digest": "54f5904f8673e14ef3c3fb0e71cf262f3291272dd4ff7f5e68895bd18483d50d",
+      "issue": 1224,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1224,
+        "at": 1793703974626,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T110534272-31a22c61",
+          "name": "Тесты для задачи #1224 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261103T110534272-31a22c61/report.json",
+          "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
+          "status": "passed",
+          "finishedAt": "2026-11-03T11:06:10.617Z",
+          "failures": []
+        }
       }
     }
   },
