@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1628,
+  "revision": 1629,
   "nextTicket": 110,
   "nextFence": 107,
   "tasks": {
@@ -2042,14 +2042,24 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1238-import-opening-repair",
-      "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
+      "materialSha": "9cc44f3f06b2e77a17bb61b465bd52c42e6321d8",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 106,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714561571,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "f91449033c7ccd946fe58275b51ec9d8f8852835",
+      "changedFiles": [
+        "custom_components/houseplan/opening_repair.py",
+        "custom_components/houseplan/plan_graph.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/release-ledger/v1.83.0/1238.json",
+        "tests_backend/test_ha_import_opening_repair.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2164,15 +2174,20 @@
     "worker": "finish",
     "token": "106:finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:1:admit",
     "fence": 106,
-    "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "9cc44f3f06b2e77a17bb61b465bd52c42e6321d8",
+    "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+    "phase": "testing",
     "admittedAt": 1793715561323,
-    "expiresAt": 1793715861323
+    "expiresAt": 1793715925428,
+    "patchId": "f91449033c7ccd946fe58275b51ec9d8f8852835"
   },
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
       "digest": "b770af57ca91d84c4e9ed1e8d894f3dbb2a5fd935a2df8aa81fc86383045eb97",
+      "issue": 1238
+    },
+    "finish:77e533ec-2487-47ce-8588-91720bf59172:finish:2:synchronized": {
+      "digest": "aedf8299f2f2878df2b64d9030803d8612ac44bca9627ccf5bdf8f88e84e89ab",
       "issue": 1238
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
