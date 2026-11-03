@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1505,
+  "revision": 1506,
   "nextTicket": 105,
   "nextFence": 102,
   "tasks": {
@@ -1889,7 +1889,16 @@
         "docs/release-ledger/v1.83.0/1233.json",
         "src/houseplan-editor-runtime.ts",
         "test/legacy-draft-commit.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T135857064-db835035",
+        "name": "Тесты для задачи #1233 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1098-editor-gesture-20261028/.git/process-next/runs/20261103T135857064-db835035/report.json",
+        "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+        "status": "passed",
+        "finishedAt": "2026-11-03T13:59:31.224Z",
+        "failures": []
+      }
     },
     "1235": {
       "issue": 1235,
@@ -2033,9 +2042,9 @@
     "fence": 101,
     "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
     "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793714280369,
-    "expiresAt": 1793714633287,
+    "expiresAt": 1793717972595,
     "patchId": "ef1465ed3fa8a9df51c99f0945cc76a3229439fc"
   },
   "events": {
@@ -2262,6 +2271,29 @@
           "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
           "status": "passed",
           "finishedAt": "2026-11-03T13:53:33.230Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:1ac23713-d492-426e-a9eb-130e6f4aa9db:finish:2:s6-complete": {
+      "digest": "7a701e5438f22965a1cf716b2bcf2aca63811b0a114ce414d3540cd1676fb521",
+      "issue": 1233,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1233,
+        "at": 1793714372595,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261103T135857064-db835035",
+          "name": "Тесты для задачи #1233 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-1098-editor-gesture-20261028/.git/process-next/runs/20261103T135857064-db835035/report.json",
+          "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+          "status": "passed",
+          "finishedAt": "2026-11-03T13:59:31.224Z",
           "failures": []
         }
       }
