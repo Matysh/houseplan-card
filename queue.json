@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1765,
-  "nextTicket": 113,
+  "revision": 1766,
+  "nextTicket": 114,
   "nextFence": 113,
   "tasks": {
     "1126": {
@@ -2147,6 +2147,20 @@
         "status": "published",
         "sourceSha": "0c030e70016f34ee103ce9a0e15a312915edb09f"
       }
+    },
+    "1240": {
+      "issue": 1240,
+      "track": "ship",
+      "layer": "product",
+      "branch": "issue/1240-card-picker-i18n",
+      "materialSha": "ed648d5b2f0607620a6c58ff52470a3787106206",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 113,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793722559692,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -2251,9 +2265,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1240
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3": {
+      "digest": "2227cbc28557c8d50df3f0ac5a9dcf1cd2df9b088973a8b688d1dc2f766fdba6",
+      "issue": 1240,
+      "message": {
+        "kind": "queued",
+        "issue": 1240,
+        "at": 1793722559692,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "ed648d5b2f0607620a6c58ff52470a3787106206"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "0c030e70016f34ee103ce9a0e15a312915edb09f",
     "status": "delivered",
