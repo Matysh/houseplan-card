@@ -19,7 +19,9 @@ for(const [name,clicks,action]of [
     await page.evaluate(async ({source,action})=>{
       await window.__hpTest.setServerConfig(source);await window.__hpTest.setLayout({});
       await window.__hpTest.switchSpace('floor');await window.__hpTest.setMode(action==='view'?'view':'plan');
-      if(action!=='view')await window.__hpTest.setTool('draw');
+      // #1176 reserves existing-face creation for Select; Walls continues a
+      // free chain (the Shift scenario below still exercises that contract).
+      if(action!=='view')await window.__hpTest.setTool(action==='shift'?'draw':'select');
       await new Promise(r=>setTimeout(r,500));
       await window.__hpTest.settled();
       const card=window.__card,fallback=card.hass.callWS.bind(card.hass);
@@ -32,7 +34,7 @@ for(const [name,clicks,action]of [
             state.saved=structuredClone(response.config);state.revision=response.rev;
             return response;
           }
-          return {config:structuredClone(state.saved),rev:state.revision,can_write:true};
+          return {config:structuredClone(state.saved),rev:state.revision,can_write:true,plan_graph_api:1};
         }
         if(message.type!=='houseplan/config/set')return fallback(message);
         if(message.expected_rev!==state.revision)throw Object.assign(new Error('conflict'),{code:'conflict'});

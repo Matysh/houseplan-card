@@ -1,9 +1,18 @@
 /** Issue #313/#478: Thickness serves canonical room masonry and partitions. */
 import { launch, checkAll, finish } from './serve.mjs';
 import { wallthickSelectionScenario } from './wallthick-selection-scenario.mjs';
+import { editGraphFixture } from './helpers/graph-fixture.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 800 }, 1);
+// Let the temporary wide native Fit setup use its actual available width.
+await page.addStyleTag({ content: '#host{width:100%;padding:0;margin:0}' });
 await wallthickSelectionScenario(page);
+await page.exposeFunction('wallthickOverlapFixture', config => {
+  editGraphFixture(config, 'wt', { kind: 'partitions', ids: ['overlay'] }, draft => {
+    draft.partitions.push({ id: 'overlay', a: [0.1, 0.1], b: [0.5, 0.1], cm: 30 });
+  });
+  return config;
+});
 
 const out = await page.evaluate(async () => {
   const NORM_W = 1000;
@@ -55,7 +64,7 @@ const out = await page.evaluate(async () => {
   result.zeroSegmentNotCorrupted = sp().partitions.find((item) => item.id === 'former-draft-b')?.cm === 0;
   card._wallDialog = null;
 
-  sp().partitions.push({ id: 'overlay', a: [0.1, 0.1], b: [0.5, 0.1], cm: 30 });
+  card._serverCfg = await window.wallthickOverlapFixture(card._serverCfg);
   card._cfgEpoch++; card._modelCache = null;
   const overlapHit = hit(0.3, 0.1);
   result.overlapPrefersIndependent = overlapHit?.source?.kind === 'partition'

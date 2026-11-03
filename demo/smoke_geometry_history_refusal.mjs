@@ -18,7 +18,7 @@ let server = structuredClone(initial), revision = 1;
 const log = [];
 const { page, browser } = await launch({ width: 1180, height: 920 });
 await page.exposeFunction('historyWire', async message => {
-  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true };
+  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true, plan_graph_api: 1 };
   if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
   if (message.type !== 'houseplan/config/set') return null;
   log.push(message.expected_rev);

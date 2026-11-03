@@ -24,7 +24,24 @@ export async function wallthickSelectionScenario(page) {
     const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM()); return [p.x, p.y];
   }, [x, y]);
   const opening = async (x, y) => {
-    await page.locator('[data-hp="zoom-fit"]').filter({ visible: true }).click(); await settle();
+    const originalViewport = page.viewportSize();
+    const fit = page.locator('[data-hp="zoom-fit"]').filter({ visible: true });
+    // #1184 hides dedicated Fit on narrow panels. Deliver the same native Fit
+    // command on its wide surface, then restore the actual tested viewport.
+    if (!await fit.count()) { await page.setViewportSize({ width: 1920, height: originalViewport.height }); await settle(); }
+    await fit.click(); await settle();
+    if (page.viewportSize().width !== originalViewport.width) {
+      await page.setViewportSize(originalViewport); await settle();
+      await page.waitForFunction(() => {
+        const c = window.__card, s = c._stageEl, v = c._view;
+        const painted = c.renderRoot.querySelector('svg.plan-svg')?.viewBox.baseVal;
+        if (!s?.clientWidth || !v || !painted || c._refitRaf || c._cameraTransition.active) return false;
+        const scale = s.clientWidth / v.w;
+        return Math.abs(v.h - v.w * s.clientHeight / s.clientWidth) * scale < .5
+          && ['x', 'y', 'w', 'h'].every((key, i) => Math.abs(v[key]
+            - [painted.x, painted.y, painted.width, painted.height][i]) * scale < .01);
+      });
+    }
     await page.locator('[data-hp="tool"][data-tool="wall-thickness"]').filter({ visible: true }).click();
     await page.mouse.click(...await point(x, y)); await settle();
   };

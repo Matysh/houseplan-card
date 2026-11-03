@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { launch, finish } from './serve.mjs';
 import { mkdirSync } from 'node:fs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { editGraphFixture } from './helpers/graph-fixture.mjs';
 
 const wall = (id, a, b, cm = 25) => ({ id, a, b, cm });
 const config = (partitions, rooms = [], openings = []) => commitWallSegmentModel({ spaces: [{
@@ -142,7 +143,9 @@ try {
     { id: 'two', poly: [[.5, .1], [.9, .1], [.9, .5], [.5, .5]] },
   ]);
   shared.spaces[0].id = 'shared-reliability'; // separate saved camera, not the preceding single-wall floor
-  for (const w of shared.spaces[0].wall_segments) w.cm = 25;
+  editGraphFixture(shared, 'shared-reliability', { kind: 'thickness', rooms: ['one', 'two'], cm: 25 }, draft => {
+    for (const wall of draft.wall_segments) wall.cm = 25;
+  });
   await mount(commitWallSegmentModel(shared).config); await down([.5, .1]);
   if (!await page.evaluate(() => window.__card._editorRuntime.nodeMove.dragging)) console.log('shared capture diagnostics',
     await screen([.5, .1]), await page.evaluate(() => ({ mode: window.__card._mode, tool: window.__card._tool,
