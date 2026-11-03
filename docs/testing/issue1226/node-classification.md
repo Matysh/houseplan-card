@@ -122,3 +122,9 @@ First room has cm15 and a valid model11 graph. Set toolbar20, click the adjacent
 - root `output/issue1226/thickness-debug-r5.log` and `thickness-large-r6.log` retain detailed diagnostic runs.
 
 This may share a faces/adjacent-owner root with #1231, but no equivalence is claimed without tracing the exact failing operation. The old helper-only producer would instead create cm0 new walls; neither outcome was accepted.
+
+## Root follow-up on current named producers
+
+The three #477writer seed cases are nowPASS: author partition edits through the graph bridge and reuse the known shared-wall endpoint IDs, as native snapping does. Equal coordinates alone never establish node identity. All8writer tests pass, including lossless unknown/column refusal and the legacy orphan full-byte check; invalid current host authoring must reject host-parameter without authority mutation.
+
+The #478unfinished work case now independently proves complete continuous coverage for every legacy segment and30cm room-wall thickness for consumed thicker work. The exact current split/fold projection is checked too; no arbitrary count/geometry baseline accepted. The separate structural-breakpoint and column reconciliation cases remainRED. Node original230-row counts are now200fixed/30remaining.
