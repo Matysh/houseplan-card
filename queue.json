@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1773,
+  "revision": 1774,
   "nextTicket": 115,
   "nextFence": 115,
   "tasks": {
@@ -2187,6 +2187,15 @@
         "entry": 1,
         "detail": "Браузер: card picker locale: failed",
         "eventId": "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240"
+      },
+      "s6": {
+        "id": "20261103T161816322-e23b7e87",
+        "name": "Тесты для задачи #1240 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T161816322-e23b7e87/report.json",
+        "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
+        "status": "passed",
+        "finishedAt": "2026-11-03T16:18:20.466Z",
+        "failures": []
       }
     }
   },
@@ -2300,9 +2309,9 @@
     "fence": 114,
     "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
     "expectedBase": "0c030e70016f34ee103ce9a0e15a312915edb09f",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793722685777,
-    "expiresAt": 1793722992330,
+    "expiresAt": 1793726301578,
     "patchId": "dd4ba48467679b3d1a243accd4d26909f6cc76c5"
   },
   "events": {
@@ -2394,6 +2403,29 @@
         "layer": "product",
         "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
         "phase": "sync"
+      }
+    },
+    "finish:6a43ad66-db1a-498c-a80a-80a4b8a98115:finish:3:s6-complete": {
+      "digest": "e12832ff05dd24821dda4156c9282dd1d7978e2d3e82a46ebac3cec5f7926fce",
+      "issue": 1240,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1240,
+        "at": 1793722701578,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261103T161816322-e23b7e87",
+          "name": "Тесты для задачи #1240 (перед слиянием)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T161816322-e23b7e87/report.json",
+          "materialSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
+          "status": "passed",
+          "finishedAt": "2026-11-03T16:18:20.466Z",
+          "failures": []
+        }
       }
     }
   },
