@@ -1,9 +1,11 @@
+import {directWallGeometry} from '../test-build/direct-wall-geometry.js';
+import * as Q from '../test-build/plan-exact.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { flushHouseplanPointerMove } from '../test-build/pointer-move-queue.js';
 import { wallBodiesUnionPath } from '../test-build/wall-thickness.js';
 import { physicalBodyParts } from '../test-build/physical-geometry.js';
-import { openingDragClip } from '../test-build/opening-drag-preview.js';
+import { OpeningDragWalls, openingDragClip } from '../test-build/opening-drag-preview.js';
 globalThis.window ??= { customCards: [] };
 globalThis.window.customCards ??= [];
 globalThis.window.setTimeout ??= globalThis.setTimeout;
@@ -146,4 +148,23 @@ test('#1097 physical result retains raw joins without changing enumerable or clo
     assert.deepEqual(parts.rawPatches, parts.patches, 'uncut positive has the canonical raw join shapes');
     assert.deepEqual(Object.keys(parts), ['partitions','columns','patches','all']);
     assert.equal(Object.hasOwn(structuredClone(parts), 'rawPatches'), false, 'retained inputs stay out of serialized copies');
+});
+
+test('1236 current drag retains its prepared domains as exact host parameters move',()=>{
+ const graph={version:1,nodes:[[0,0],[100,0]].map((p,i)=>({id:'n'+i,p:Q.encodePoint(Q.readSourcePoint(p))})),edges:[{kind:'wall',id:'w',from:'n0',to:'n1',cm:10}],rooms:[],dependencies:[]};
+ const space={id:'s',plan_graph:graph,rooms:[],partitions:[],wall_columns:[]};
+ const opening={id:'o',type:'window',x:.04,y:0,rx:40,ry:0,angle:0,length:.01,rlen:10,host:{kind:'wall',id:'w',t:.4}};
+ const base=directWallGeometry({graph,scale:1},1,1,[],[]);
+ const inputs=items=>items.map(o=>({x:o.rx,y:o.ry,angle:o.angle,length:o.rlen,host:o.host}));
+ const preview=new OpeningDragWalls(base,space,[opening],'o',inputs,[],1,1);
+ const viewport={a:1,b:0,c:0,d:1,e:0,f:0,dpr:1},display={color:'#789',wallFill:{c:'#abc',a:.5}};
+ assert.ok(preview.render(opening,null,display,1,'test',viewport));const retained=preview.direct;
+ assert.ok(retained);
+ for(let i=1;i<=30;i++){
+  const moved={...opening,rx:40+i,host:{...opening.host,t:(40+i)/100,tq:[String(40+i),'100']}};
+  assert.ok(preview.render(moved,null,display,1,'test',viewport));
+  assert.strictEqual(preview.direct,retained,'numeric t/tq changes do not reprepare all floor owners');
+ }
+ assert.equal(opening.rx,40);assert.equal(opening.host.t,.4);
+ assert.equal(preview.render(opening,null,display,1,'test',{...viewport,b:.2}),null,'unsupported viewport still requests canonical fallback');
 });

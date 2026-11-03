@@ -8,6 +8,7 @@ import { intersection, union, type Geom } from './wall-boolean-cache';
 import { polyclipToPathD, recutWallBodiesGeometry, resolveOpeningWallAssociation, wallBodiesUnionPath, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits, } from './wall-thickness';
 import { cutPartitionBody, geometryOuterRings, type PhysicalBodyParts, type PartitionOpeningCut } from './physical-geometry';
 import { geometryOpenings, geometryPartitionOpeningCuts } from './plan-geometry-preflight';
+import { directOpeningDrag, type DirectOpening } from './direct-wall-geometry';
 import { NORM_W } from './space-geometry';
 type WallUnion = NonNullable<ReturnType<typeof wallBodiesUnionPath>>;
 type RecutBase = Parameters<typeof recutWallBodiesGeometry>[0];
@@ -107,6 +108,7 @@ export class OpeningDragWalls {
     private clip: Geom = [];
     private outer: Geom = [];
     private room: RecutBase | null = null;
+    private direct: ReturnType<typeof directOpeningDrag> = null;
     private staticExtras: Geom[] = [];
     private target: number[][] | null = null;
     private patches: number[][][] = [];
@@ -120,10 +122,20 @@ export class OpeningDragWalls {
         this.parts = retainedParts;
     }
     private prepare(opening: RenderOpening, viewport: OpeningDragViewport): boolean {
-        // Current graphs retain host-owned analytic domains. The legacy local
-        // crop loses those owners; use the cached canonical direct pass.
-        if (this.space.plan_graph)
-            return false;
+        if (this.space.plan_graph) {
+            if (!this.original || opening.orphanReason || !this.original.host || !opening.host)
+                return false;
+            const key = 'graph:' + Object.values(viewport).join(',') + ':' + JSON.stringify([this.original.host,opening.host].map(h=>[h!.kind,h!.id]));
+            if (key === this.key && this.direct) return true;
+            const input = (o: RenderOpening): DirectOpening => ({ x:o.rx, y:o.ry, angle:o.angle, length:o.rlen, host:o.host });
+            const pixel = Math.max(1/Math.hypot(viewport.a,viewport.b),1/Math.hypot(viewport.c,viewport.d))/viewport.dpr;
+            const direct = directOpeningDrag(this.base.roomGeom,input(this.original),input(opening),
+                this.roomInputs(this.openings.filter(o=>o.id!==this.id)),this.partitionCuts,this.extraBodies,Math.max(this.gridPitch,pixel*2));
+            const clip = direct && openingDragClip([direct.bounds],viewport);
+            if (!direct || !clip) return false;
+            this.direct=direct;this.clip=clip;this.key=key;
+            return true;
+        }
         if (!this.original || opening.orphanReason)
             return false;
         if (opening.host?.kind !== 'partition') {
@@ -190,8 +202,15 @@ export class OpeningDragWalls {
     }
     public render(opening: RenderOpening, settled: TemplateResult, display: SpaceDisplay, pixelsPerUnit: number, owner: string, viewport: OpeningDragViewport | null = null): TemplateResult | null {
         try {
-            if (!viewport || !this.prepare(opening, viewport) || !this.room)
-                return null;
+            if (!viewport || !this.prepare(opening, viewport)) return null;
+            let geometry: Geom;
+            if (this.direct) {
+                const cuts = geometryPartitionOpeningCuts(geometryOpenings({openings:[opening]},this.space,this.cellCm,this.gridPitch,NORM_W));
+                const result=this.direct.render(this.roomInputs([opening]),cuts);
+                if (!result) return null;
+                geometry=result as Geom;
+            } else {
+            if (!this.room) return null;
             let extras = [...this.staticExtras];
             if (this.target) {
                 const cuts = geometryPartitionOpeningCuts(geometryOpenings({ openings: [opening] }, this.space, this.cellCm, this.gridPitch, NORM_W));
@@ -201,7 +220,8 @@ export class OpeningDragWalls {
             const recut = recutWallBodiesGeometry(this.room, this.roomInputs([opening]), []);
             if (!recut)
                 return null;
-            const geometry = combine([...recut.components.map(c => c.geom), ...extras]);
+            geometry = combine([...recut.components.map(c => c.geom), ...extras]);
+            }
             const d = polyclipToPathD(geometry), clip = polyclipToPathD(this.clip);
             const clipId = 'hp-opening-drag-clip-' + owner, outsideId = 'hp-opening-drag-outside-' + owner;
             return svg `<g class="hp-opening-drag-walls"><defs>

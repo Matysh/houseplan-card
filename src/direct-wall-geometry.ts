@@ -218,32 +218,39 @@ function slot(a:number[],b:number[],pad:number):A.Polygon {
   const n=[-dy/len*pad,dx/len*pad];
   return A.polygon([[a[0]+n[0],a[1]+n[1]],[b[0]+n[0],b[1]+n[1]],[b[0]-n[0],b[1]-n[1]],[a[0]-n[0],a[1]-n[1]]]);
 }
-function materialPieces(structure:Structure,openings:DirectOpening[],extra:ExtraInput,filter:(m:Material)=>boolean=()=>true):A.Polygon[]{
-  const masks=new Map<string,A.Polygon[]>();
-  const add=(id:string,poly:A.Polygon)=>{if(!poly.length)return;const list=masks.get(id)||[];list.push(poly);masks.set(id,list);};
-  for(const opening of openings){
-    if(!(opening.length>0))continue;
-    const rad=opening.angle*Math.PI/180,dx=Math.cos(rad)*opening.length/2,dy=Math.sin(rad)*opening.length/2;
-    const poly=slot([opening.x-dx,opening.y-dy],[opening.x+dx,opening.y+dy],Math.max(structure.depth,structure.nodes.epsilon)*1.25);
-    if(opening.host)for(const id of opening.hostIds||structure.runs.get(edgeKey(opening.host))||[opening.host.id])add(opening.host.kind+':'+id,poly);
+function openingOwners(structure:Structure,opening:DirectOpening):string[]{
+    if(opening.host)return (opening.hostIds||structure.runs.get(edgeKey(opening.host))||[opening.host.id]).map(id=>opening.host!.kind+':'+id);
     else{
       // Compatibility openings may be intentionally unbound. Associate only
       // this render cut to the nearest collinear wall; never write a host or
       // let a room opening punch an independent partition/column.
-      const u=[Math.cos(rad),Math.sin(rad)],tau=structure.nodes.epsilon;
+      const rad=opening.angle*Math.PI/180,u=[Math.cos(rad),Math.sin(rad)],tau=structure.nodes.epsilon;
       const candidates=structure.segments.filter(s=>s.kind==='wall').map(s=>{
         const dx=s.b[0]-s.a[0],dy=s.b[1]-s.a[1],length=Math.hypot(dx,dy),v=[dx/length,dy/length];
         const along=(opening.x-s.a[0])*v[0]+(opening.y-s.a[1])*v[1];
         return{s,distance:Math.abs((opening.x-s.a[0])*v[1]-(opening.y-s.a[1])*v[0]),parallel:Math.abs(numericCross(v,u))<=Number.EPSILON*64,overlap:along+opening.length/2>=0&&along-opening.length/2<=length};
       }).filter(c=>c.parallel&&c.overlap&&c.distance<=tau).sort((a,b)=>a.distance-b.distance||compareCodePoints(a.s.id,b.s.id));
       const host=candidates[0]?.s;
-      if(host)for(const id of structure.runs.get(edgeKey(host))||[host.id])add('wall:'+id,poly);
+      if(host)return (structure.runs.get(edgeKey(host))||[host.id]).map(id=>'wall:'+id);
     }
+  return [];
+}
+function cutMaterials(structure:Structure,openings:DirectOpening[],extra:ExtraInput,filter:(m:Material)=>boolean=()=>true):Material[]{
+  const masks=new Map<string,A.Polygon[]>();
+  const add=(id:string,poly:A.Polygon)=>{if(!poly.length)return;const list=masks.get(id)||[];list.push(poly);masks.set(id,list);};
+  for(const opening of openings){
+    if(!(opening.length>0))continue;
+    const rad=opening.angle*Math.PI/180,dx=Math.cos(rad)*opening.length/2,dy=Math.sin(rad)*opening.length/2;
+    const poly=slot([opening.x-dx,opening.y-dy],[opening.x+dx,opening.y+dy],Math.max(structure.depth,structure.nodes.epsilon)*1.25);
+    for(const owner of openingOwners(structure,opening))add(owner,poly);
   }
   for(const cut of extra.partitionCuts){const run=graphOpeningRun(cut);for(const id of run?.kind==='partition'?run.members:[cut.hostId])add('partition:'+id,slot(cut.a,cut.b,Math.max(cut.depth,1e-12)*1.25));}
   return structure.materials.filter(filter).flatMap(m=>{
-    let pieces=[m.poly];for(const cut of new Set(m.owners.flatMap(id=>masks.get(id)||[])))pieces=pieces.flatMap(p=>A.subtractConvex(p,cut));return pieces;
+    let pieces=[m.poly];for(const cut of new Set(m.owners.flatMap(id=>masks.get(id)||[])))pieces=pieces.flatMap(p=>A.subtractConvex(p,cut));return pieces.map(poly=>({...m,poly}));
   });
+}
+function materialPieces(structure:Structure,openings:DirectOpening[],extra:ExtraInput,filter:(m:Material)=>boolean=()=>true):A.Polygon[]{
+  return cutMaterials(structure,openings,extra,filter).map(m=>m.poly);
 }
 export function directIndependentParts(source:WallGraphSource,cellCm:number,gridPitch:number,columns:number[][][],partitionCuts:readonly PartitionOpeningCut[],rawPartitions:number[][][]){
   const extra={columns,partitionCuts};
@@ -255,6 +262,25 @@ export function directIndependentParts(source:WallGraphSource,cellCm:number,grid
   const partitionPolys=materialPieces(structure,[],extra,m=>m.owners.some(id=>id.startsWith('partition:')));
   const pieces=partitionPolys.map(p=>p.map(A.pointNumbers)),all=[...pieces,...columns];extras.set(all,extra);
   return Object.defineProperty({partitions:rawPartitions,columns,patches:[],all},'rawPatches',{value:[]});
+}
+/** Retain fixed host-owned domains and nearby foreign material once per drag.
+ * Per-frame cuts visit only those host domains; no all-floor physical rebuild. */
+export function directOpeningDrag(roomGeom:object,original:DirectOpening,current:DirectOpening,others:DirectOpening[],partitionCuts:readonly PartitionOpeningCut[],extraBodies:readonly number[][][],padding:number){
+  const base=retained.get(roomGeom);if(!base)return null;
+  const owners=new Set([...openingOwners(base.structure,original),...openingOwners(base.structure,current)]);
+  const owns=(m:Material)=>m.owners.some(id=>owners.has(id));
+  const dynamic=base.structure.materials.filter(owns);if(!dynamic.length)return null;
+  const boxes=dynamic.map(m=>A.bounds(m.poly));
+  const bounds:[number,number,number,number]=[Math.min(...boxes.map(b=>b[0]))-padding,Math.min(...boxes.map(b=>b[1]))-padding,Math.max(...boxes.map(b=>b[2]))+padding,Math.max(...boxes.map(b=>b[3]))+padding];
+  const near=(poly:A.Polygon)=>{const b=A.bounds(poly);return b[0]<=bounds[2]+padding&&bounds[0]-padding<=b[2]&&b[1]<=bounds[3]+padding&&bounds[1]-padding<=b[3];};
+  const fixedExtra={columns:(extras.get(extraBodies)||{columns:[...extraBodies]}).columns,partitionCuts};
+  const fixed=materialPieces(base.structure,others,fixedExtra,m=>!owns(m)&&near(m.poly));
+  fixed.push(...fixedExtra.columns.map(A.polygon).filter(near));
+  const structure={...base.structure,materials:cutMaterials(base.structure,others,fixedExtra,owns)};
+  return {bounds,render(openings:DirectOpening[],cuts:readonly PartitionOpeningCut[]){
+    const result=A.arrangeComponents([...fixed,...materialPieces(structure,openings,{columns:[],partitionCuts:cuts})],base.structure.componentCache);
+    return result.failures?null:result.geom;
+  }};
 }
 export function directWallGeometry(source:WallGraphSource,cellCm:number,gridPitch:number,openings:DirectOpening[],extraBodies:number[][][]):WallBodiesGeometryResult {
   const structure=directStructure(source,cellCm,gridPitch),extra=extras.get(extraBodies)||{columns:extraBodies,partitionCuts:[]};

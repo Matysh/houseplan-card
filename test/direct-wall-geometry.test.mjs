@@ -1,9 +1,10 @@
+import {intersection,difference} from 'polyclip-ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as A from '../test-build/wall-arrangement.js';
 import * as Q from '../test-build/plan-exact.js';
 import * as R from '../test-build/render-exact.js';
-import {directWallGeometry,directRecut} from '../test-build/direct-wall-geometry.js';
+import {directWallGeometry,directRecut,directOpeningDrag} from '../test-build/direct-wall-geometry.js';
 import {spaceModels} from '../test-build/space-geometry.js';
 import {wallBodiesGeometry,polyclipToPathD} from '../test-build/wall-thickness.js';
 import {migrateGraphSpace,prepareGraph} from '../test-build/plan-graph.js';
@@ -190,4 +191,21 @@ test('exact floor membership subtracts overlapping masks, preserves holes and po
  assert.equal(split.length,1);assert.equal(area(split),gap,'real positive gap is never merged or deleted');
  assert.deepEqual(A.arrange([subject],[rectangle(-1,-1,12,12)]),[],'fully covered floor is honestly empty');
  assert.equal(area(A.arrange([subject],[rectangle(10,0,1,10)])),100,'touching mask cannot remove floor area');
+});
+
+test('1236 retained opening patch matches canonical cuts without importing unrelated floor material',()=>{
+ const g=graph([[0,0],[20,0],[0,1],[20,1],[1000,0],[1020,0]],[[0,1],[2,3],[4,5]]);
+ const source={graph:g,scale:1},columns=[[[8,-2],[9,-2],[9,2],[8,2]]];
+ const original={x:12,y:0,angle:0,length:4,host:{kind:'wall',id:'w0'}},other={...original,x:4,length:2};
+ const base=directWallGeometry(source,1,1,[original,other],columns),saved=JSON.stringify([g,columns,base]);
+ const patch=directOpeningDrag(base.roomGeom,original,original,[other],[],columns,2);
+ assert.ok(patch);assert.ok(patch.bounds[2]<100,'unrelated far floor excluded from preparation bounds');
+ const clip=[[[[patch.bounds[0],patch.bounds[1]],[patch.bounds[2],patch.bounds[1]],[patch.bounds[2],patch.bounds[3]],[patch.bounds[0],patch.bounds[3]],[patch.bounds[0],patch.bounds[1]]]]];
+ for(const x of [12,13,14,15]){
+  const moving={...original,x},actual=patch.render([moving],[]),canonical=directWallGeometry(source,1,1,[moving,other],columns).geom;
+  assert.ok(actual);assert.ok(actual.flat(2).every(p=>p[0]<100),'no far material enters the per-frame result');
+  const a=intersection(actual,clip),b=intersection(canonical,clip);
+  assert.ok(area(difference(a,b))+area(difference(b,a))<1e-10,'exact host/foreign/column material equals the full canonical oracle inside the retained patch');
+ }
+ assert.equal(JSON.stringify([g,columns,base]),saved,'retained source and full-floor artifacts are immutable');
 });
