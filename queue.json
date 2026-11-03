@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1460,
+  "revision": 1461,
   "nextTicket": 100,
   "nextFence": 100,
   "tasks": {
@@ -1740,14 +1740,22 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1228-raw-model-identity",
-      "materialSha": "ab0354fa6f0e2f4c9518046dee20cc7c6fe52871",
+      "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 99,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793713820950,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "9811643c473cc496c8bcefe13e2cd155f5d14ed4",
+      "changedFiles": [
+        "custom_components/houseplan/opening_repair.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1228.json",
+        "tests_backend/test_opening_repair_legacy10.py"
+      ]
     },
     "1229": {
       "issue": 1229,
@@ -1894,13 +1902,18 @@
     "worker": "finish",
     "token": "99:finish:f0c375e0-c8c0-452a-b1ef-d175bc411dd6:finish:1:admit",
     "fence": 99,
-    "materialSha": "ab0354fa6f0e2f4c9518046dee20cc7c6fe52871",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
+    "expectedBase": "938aaded6e44786cd821456d1113916d9bf35bb6",
+    "phase": "testing",
     "admittedAt": 1793713824451,
-    "expiresAt": 1793714124451
+    "expiresAt": 1793714134144,
+    "patchId": "9811643c473cc496c8bcefe13e2cd155f5d14ed4"
   },
   "events": {
+    "finish:f0c375e0-c8c0-452a-b1ef-d175bc411dd6:finish:2:synchronized": {
+      "digest": "35d3750a3ec2a3f11f8b305887a88373dd7a1215b178d47d7e5f34db026003a6",
+      "issue": 1228
+    },
     "finish:f0c375e0-c8c0-452a-b1ef-d175bc411dd6": {
       "digest": "0a13396de62b38c861de534f42c056b02f43a3d296382be0654c76b10e5218e7",
       "issue": 1228,
