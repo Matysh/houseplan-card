@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1507,
+  "revision": 1508,
   "nextTicket": 105,
   "nextFence": 102,
   "tasks": {
@@ -1846,7 +1846,7 @@
       "notice": {
         "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
         "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1793714277342,
         "entry": 1,
@@ -2109,6 +2109,10 @@
     },
     "github:41649224383:1:completions:report:b598a953a439b57593a9bfc48f01581812ffdb1ab9902335cac90d1662e140c0": {
       "digest": "3b8c55055667abb7023ad11a3eff02302fc048681bc81cfe2d7ba4fc00cf7964",
+      "issue": 1230
+    },
+    "github:41649224383:1:completions:notice:00c9254e10485c35adcab7c3cd0d0a308fcf0f31c6d2fa5688502f719a1a60c4": {
+      "digest": "7304de378b9c11d2ff1cb49201929631c47e45ff17ecc87ff07e445bf051d3ce",
       "issue": 1230
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
