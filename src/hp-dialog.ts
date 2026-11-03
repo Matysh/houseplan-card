@@ -386,11 +386,18 @@ export class HpDialog extends LitElement {
   private _exitAnimation?: Animation;
   private _releasedModal = false;
   private _toastRoot: Node | null = null;
-  private readonly _toastOwner: ToastOwner = {
-    host: this, portal: () => this.renderRoot.querySelector('.toast-portal'),
-  };
+  private _toastOwner: ToastOwner | null = null;
   private _syncToastOwner(active = !this._closing): void {
-    if (this._toastRoot) setToastOwner(this._toastRoot, this._toastOwner, active);
+    if (!this._toastRoot) return;
+    if (!active) {
+      if (this._toastOwner) setToastOwner(this._toastRoot, this._toastOwner, false);
+      // Accepted retirement ends this lifetime even if DialogPresence reuses
+      // the same HTMLElement during its exit. A veto never reaches this path.
+      this._toastOwner = null;
+      return;
+    }
+    this._toastOwner ||= { host: this, portal: () => this.renderRoot.querySelector('.toast-portal') };
+    setToastOwner(this._toastRoot, this._toastOwner, true);
   }
   private _lastInputFocus: HTMLElement | null = null;
   private _restoreInputFocus = false;

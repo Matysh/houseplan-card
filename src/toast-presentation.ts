@@ -107,6 +107,10 @@ export class ToastPresentation {
     return { owner: owners[owners.length - 1] ?? null };
   }
 
+  isOwnerActive(context: ToastContext): boolean {
+    return !!(this._root && context.owner?.host.isConnected && scopeFor(this._root).owners.includes(context.owner));
+  }
+
   showHint(message: string, id: string): void {
     if (this._notice && !this._leaving && this._notice.dataset.kind !== 'hint') return;
     if (this._notice?.dataset.kind === 'hint' && this._notice.dataset.id === id && !this._leaving) return;
