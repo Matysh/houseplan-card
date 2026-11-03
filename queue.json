@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1865,
+  "revision": 1866,
   "nextTicket": 121,
   "nextFence": 120,
   "tasks": {
@@ -2472,6 +2472,10 @@
       "digest": "7a8d48c1c8f5ff1469995093f0bb949c70a5557f7455aab149e7c877b9874412",
       "issue": 1247
     },
+    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:3:s6-label": {
+      "digest": "f431f4eb9c013f2f5bbd92a8879aab30fa826f4fb3e0edec610d866a4cd4b578",
+      "issue": 1247
+    },
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624": {
       "digest": "89417b2c25eb780012fd053b9857da71ec44e7b7072e12b5b89fcdc10d4c08c7",
       "issue": 1248,
@@ -2582,7 +2586,10 @@
           "finishedAt": "2026-11-03T17:43:35.322Z",
           "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41686664151",
           "execution": "github"
-        }
+        },
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
