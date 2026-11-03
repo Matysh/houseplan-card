@@ -1,5 +1,6 @@
 import type { ServerConfig } from './types';
 import { projectGraphSpace, type PlanGraph } from './plan-graph';
+import { commitWallSegmentModel } from './wall-segment-model';
 
 export const SPACE_COPY_LIMITS = Object.freeze({
   spaces: 50,
@@ -109,6 +110,12 @@ export function createSpaceCopyCandidate(
   seed: string,
   options: SpaceCopyOptions = {},
 ): SpaceCopyResult {
+  // Old readable plans may predate the wall catalogue. Decode their current
+  // representation on a detached document, without running Optimize (#1227).
+  const oldSource = input.spaces.find(space => space.id === sourceId);
+  if (oldSource && !Array.isArray(oldSource.wall_segments) && Number(input.model_version || 0) < 8) {
+    input = commitWallSegmentModel(input).config;
+  }
   const spaces = input.spaces as SpaceRecord[];
   if (!title.trim()) throw new SpaceCopyError('source_invalid');
   if (spaces.length >= SPACE_COPY_LIMITS.spaces) throw new SpaceCopyError('spaces_limit');

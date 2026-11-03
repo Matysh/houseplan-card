@@ -28,6 +28,11 @@ def space_copy_candidate(config: dict, source_id: str, title: str, seed: str,
     Identity is generated from a bounded seed; all geometry comes from the
     trusted source. Schema/size limits remain the writer's responsibility.
     """
+    source = next(space for space in config["spaces"] if space["id"] == source_id)
+    if not isinstance(source.get("wall_segments"), list) and int(config.get("model_version", 0)) < 8:
+        from .graph_write import normalize_graph_config
+
+        config = normalize_graph_config(config)
     spaces = config["spaces"]
     source_index = next(i for i, space in enumerate(spaces) if space["id"] == source_id)
     source = spaces[source_index]

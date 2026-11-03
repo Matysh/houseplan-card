@@ -17,7 +17,7 @@ const out = await page.evaluate(async () => {
       if (predicate()) return;
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
-    throw new Error(`space-copy smoke timed out: ${label}`);
+    throw new Error(`space-copy smoke timed out: ${label}; ${JSON.stringify({toast:card._toast,model:card._serverCfg?.model_version,copy:card._spaceDialog?.copy})}`);
   };
   const currentDialog = () => root().querySelector('hp-dialog');
   const buttonWithIcon = (dialog, icon) => [...(dialog?.querySelectorAll('button') || [])]
@@ -86,7 +86,16 @@ const out = await page.evaluate(async () => {
   const copied = card._serverCfg.spaces.find(space => space.title === 'Unchanged copy');
   result.copyHasOneWriteWithoutOptimizeOrConfirmation = acceptedCalls.length === 1
     && acceptedCalls[0].type === 'houseplan/config/set' && !confirmUi().component;
-  result.sourceGeometryUnchanged = JSON.stringify(card._serverCfg.spaces.find(space => space.id === 'f1')) === JSON.stringify(source);
+  // First-write legacy decoding inserts collinear vertices at shared wall
+  // junctions. Compare the actual outline, not that representation detail.
+  const outlines = (space) => space.rooms.map(room => room.poly.filter((point, i, poly) => {
+    const a = poly[(i + poly.length - 1) % poly.length];
+    const b = poly[(i + 1) % poly.length];
+    return Math.abs((point[0] - a[0]) * (b[1] - point[1])
+      - (point[1] - a[1]) * (b[0] - point[0])) > 1e-12;
+  }));
+  result.sourceGeometryUnchanged = JSON.stringify(outlines(card._serverCfg.spaces.find(space => space.id === 'f1')))
+    === JSON.stringify(outlines(source));
   result.createsAndEntersRoomlessCopy = !!copied && copied.id === card._space
     && copied.rooms?.length === 0 && copied.wall_segments?.length === 0
     && copied.partitions?.length > 0 && card._mode === 'plan' && card._tool === 'draw';

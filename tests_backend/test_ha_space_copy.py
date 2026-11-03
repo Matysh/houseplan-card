@@ -13,6 +13,7 @@ from custom_components.houseplan.const import DOMAIN
 from custom_components.houseplan.graph_write import normalize_graph_config
 from custom_components.houseplan.store import get_data
 from custom_components.houseplan.validation import CONFIG_SCHEMA
+from custom_components.houseplan.wall_segment_model import _wall_key
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,7 +33,7 @@ def source_fixture(kind="wall"):
              "rooms": [{"id": "room", "name": "Room", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]],
                         "wall_ids": [wall["id"] for wall in walls]}],
              "wall_segments": walls,
-             "walls": [{"key": str(i), "a": wall["a"], "b": wall["b"], "cm": 40} for i, wall in enumerate(walls)],
+             "walls": [{"key": _wall_key(wall["a"], wall["b"]), "a": wall["a"], "b": wall["b"], "cm": 40} for wall in walls],
              "partitions": [{"id": "partition", "a": [2, 0], "b": [3, 0], "cm": 40}],
              "openings": [{"id": "door", "type": "door", "x": .11 if kind == "wall" else 2.11,
                            "y": 0, "angle": 0, "length": .2,
@@ -48,7 +49,8 @@ def frontend_copy(config, seed="proof", source_id="source", **options):
     console.log(JSON.stringify(createSpaceCopyCandidate(config,source_id,'Copy',seed,options).config));"""
     result = subprocess.run(["node", "--input-type=module", "-e", code], cwd=ROOT,
                             input=json.dumps({"config": config, "seed": seed, "source_id": source_id, "options": options}),
-                            capture_output=True, text=True, check=True)
+                            capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
 
@@ -58,6 +60,12 @@ async def setup_source(hass, kind, model, *, many=False):
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     source = source_fixture(kind)
+    if model == 0:
+        source.pop("model_version", None)
+        source["spaces"][0].pop("wall_segments", None)
+        source["spaces"][0]["rooms"][0].pop("wall_ids", None)
+        if kind == "wall":
+            source["spaces"][0]["openings"][0].pop("host", None)
     if many:
         source["spaces"][0]["partitions"].extend(
             {"id": f"extra{i}", "a": [0, 2 + i / 50], "b": [1, 2 + i / 50], "cm": 40} for i in range(20)
@@ -71,8 +79,21 @@ async def setup_source(hass, kind, model, *, many=False):
     return source
 
 
-async def write(client, config, rev):
-    await client.send_json_auto_id({"type": "houseplan/config/set", "config": config, "expected_rev": rev})
+async def write(client, config, rev, previous=None):
+    message = {"type": "houseplan/config/set", "config": config, "expected_rev": rev}
+    if previous is not None:
+        # Match the ordinary frontend transport on the first graph write.
+        code = """import {legacyGraphWriteChange} from './test-build/graph-write-change.js';
+        let text='';for await(const chunk of process.stdin)text+=chunk;
+        const {previous,config}=JSON.parse(text);
+        console.log(JSON.stringify(legacyGraphWriteChange(previous,config,2) ?? null));"""
+        result = subprocess.run(["node", "--input-type=module", "-e", code], cwd=ROOT,
+                                input=json.dumps({"previous": previous, "config": config}),
+                                capture_output=True, text=True, check=True)
+        change = json.loads(result.stdout)
+        if change is not None:
+            message["graph_change"] = change
+    await client.send_json_auto_id(message)
     answer = await client.receive_json()
     return answer
 
@@ -85,12 +106,12 @@ async def read(client):
 
 
 @pytest.mark.parametrize("kind", ["wall", "partition"])
-@pytest.mark.parametrize("model", [10, 11])
+@pytest.mark.parametrize("model", [0, 10, 11])
 async def test_copy_preserves_near_end_geometry_then_regular_writes_remain_strict(hass, hass_ws_client, kind, model):
     source = await setup_source(hass, kind, model)
     client = await hass_ws_client(hass)
     candidate = frontend_copy(source)
-    reply = await write(client, candidate, 7)
+    reply = await write(client, candidate, 7, previous=source)
     assert reply["success"], reply
     saved = await read(client)
     copied = saved["config"]["spaces"][1]
@@ -98,7 +119,7 @@ async def test_copy_preserves_near_end_geometry_then_regular_writes_remain_stric
     assert opening["length"] == .2
     assert opening["host"]["t"] == .11
     assert copied["rooms"] == []
-    assert saved["config"]["spaces"][0]["openings"][0]["host"]["t"] == .11
+    assert saved["config"]["spaces"][0]["openings"][0]["x"] == source["spaces"][0]["openings"][0]["x"]
     # An unrelated subsequent save inherits the accepted copy after reload.
     renamed = copy.deepcopy(saved["config"])
     renamed["spaces"][1]["title"] = "Renamed"
