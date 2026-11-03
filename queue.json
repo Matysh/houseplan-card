@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1906,
-  "nextTicket": 122,
+  "revision": 1907,
+  "nextTicket": 123,
   "nextFence": 121,
   "tasks": {
     "1126": {
@@ -2218,6 +2218,20 @@
         "status": "not-required"
       }
     },
+    "1242": {
+      "issue": 1242,
+      "track": "show",
+      "layer": "product",
+      "branch": "issue/1242-summary-camera",
+      "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 122,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793728670029,
+      "reviewEntry": 1
+    },
     "1243": {
       "issue": 1243,
       "branch": "issue/1243-weather-heading",
@@ -2443,7 +2457,8 @@
     }
   },
   "waiting": [
-    1244
+    1244,
+    1242
   ],
   "active": {
     "issue": 1248,
@@ -2603,6 +2618,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4"
+      }
+    },
+    "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
+      "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
+      "issue": 1242,
+      "message": {
+        "kind": "queued",
+        "issue": 1242,
+        "at": 1793728670029,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a"
       }
     }
   },
