@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1183,
+  "revision": 1184,
   "nextTicket": 86,
   "nextFence": 86,
   "tasks": {
@@ -1525,7 +1525,18 @@
         "process-next/test/ci-status.test.mjs",
         "process-next/test/release.test.mjs",
         "process-next/test/remote.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793687887494,
+        "entry": 1,
+        "detail": "Синтаксис и типы изменённых инструментов: cancelled; Поведение затронутого механизма: cancelled",
+        "eventId": "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217"
+      }
     }
   },
   "ownerDecisions": {},
@@ -1631,18 +1642,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1217,
-    "worker": "finish",
-    "token": "85:finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:1:admit",
-    "fence": 85,
-    "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
-    "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-    "phase": "testing",
-    "admittedAt": 1793687737854,
-    "expiresAt": 1793688133306,
-    "patchId": "684ad6837980c84e4ed02473b892ca447ab732ec"
-  },
+  "active": null,
   "events": {
     "github:41504682134:1:label:spec-request": {
       "digest": "26828a81ae587a9e309a69a5c797ddb53035ec5bede3575f081e74cbea99a473",
@@ -1740,6 +1740,10 @@
       "digest": "b7792a8f8473ac0c74c24027b7aec0c3abead5ca9acdcf35d4990f47d036b6ab",
       "issue": 1217
     },
+    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return": {
+      "digest": "5cdcecf81c43bdac50f39cfafced40daaaa86facc90332ab29a66cf47b0358e3",
+      "issue": 1217
+    },
     "finish:76fee0a2-808b-4b07-b51c-a30b938993cb": {
       "digest": "ee6d764f3a24111019baa79c57fbd4520de5ef2cf4f7e684ac42fb9b8ad4ec83",
       "issue": 1216,
@@ -1821,6 +1825,26 @@
         "layer": "infra",
         "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
         "phase": "sync"
+      }
+    },
+    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217": {
+      "digest": "5cdcecf81c43bdac50f39cfafced40daaaa86facc90332ab29a66cf47b0358e3",
+      "issue": 1217,
+      "message": {
+        "kind": "return",
+        "issue": 1217,
+        "at": 1793687887494,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793687887494,
+          "entry": 1,
+          "detail": "Синтаксис и типы изменённых инструментов: cancelled; Поведение затронутого механизма: cancelled",
+          "eventId": "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217"
+        }
       }
     }
   },
