@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1251,
+  "revision": 1252,
   "nextTicket": 90,
   "nextFence": 90,
   "tasks": {
@@ -1451,7 +1451,7 @@
       "track": "ship",
       "layer": "infra",
       "branch": "codex/1218",
-      "materialSha": "8591887f2bfe6a1dcf78615be89bd5dc25344862",
+      "materialSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 89,
@@ -1459,9 +1459,13 @@
       "status": "S6-in-progress",
       "readyAt": 1793690309025,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793690521162,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "159385e506ceea3cf8b6d2887df66df288f7031b",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/templates/review.yml",
+        "process-next/test/install-templates.test.mjs"
+      ]
     },
     "1219": {
       "issue": 1219,
@@ -1604,11 +1608,12 @@
     "worker": "finish",
     "token": "89:finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:1:admit",
     "fence": 89,
-    "materialSha": "8591887f2bfe6a1dcf78615be89bd5dc25344862",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
+    "expectedBase": "44330439f73c5bd6a70323797d5558102215bcf0",
+    "phase": "testing",
     "admittedAt": 1793690497302,
-    "expiresAt": 1793690852400
+    "expiresAt": 1793690887791,
+    "patchId": "159385e506ceea3cf8b6d2887df66df288f7031b"
   },
   "events": {
     "github:41595740649:1:completions:message:25517c43bdc34866a87dc86e74d486ccef2fad4da96b20b630a96b50fc14380a": {
@@ -1621,6 +1626,10 @@
     },
     "finish:9e978a18-6a6f-4d8e-a00b-818b44c05cb9": {
       "digest": "08f0dd04d47d1324f51722bbf5d86816c0c23d15a30d42d41cba12aaa36faf68",
+      "issue": 1218
+    },
+    "finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:3:synchronized": {
+      "digest": "6677a68e69d18c08c58240c89b661fb119edcfa062daf7eac87f189b25182c62",
       "issue": 1218
     },
     "finish:5e052b89-d094-4246-a95f-25aa83c943cb": {
