@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1322,
+  "revision": 1323,
   "nextTicket": 94,
   "nextFence": 93,
   "tasks": {
@@ -1635,6 +1635,119 @@
         "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
         "expectedBase": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
         "patchId": "10093fc2519e360f7fc915ea1547b0d268ea2a0a"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1224,
+        "requestId": "review:1224:1:10093fc2519e360f7fc915ea1547b0d268ea2a0a:d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
+        "kind": "code",
+        "base": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
+        "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
+        "patchId": "10093fc2519e360f7fc915ea1547b0d268ea2a0a",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1224,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1224",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "<details>\n<summary>Причина, исправление и проверки #1224</summary>\n\nПосле численной near-axis правки `rooms` содержали новые цели, а `wall_segments` продолжали проецировать прежний graph. Повторный contact alignment читал оба носителя, принимал устаревшие сегменты за дополнительные оси и замораживал связный компонент на прежних 9-decimal координатах. Следующий полный Optimize уже видел согласованный каталог, поэтому выполнял дополнительную микрокоррекцию.\n\nПеред финальным realignment только для graph draft с фактической near-axis правкой применяются существующие явные moves через `optimizeGraphTargets(..., true)`. Полученные rooms/segments/hosts проецируют один граф. Это не повторный полный Optimize, не новая epsilon-привязка и не подавление `changed`. Legacy decoding остаётся одноразовым до старых численных проходов; current identity, constraints и opening hosts сохраняются существующей операцией.\n\nДобавлены регрессии legacy/current на исходном fixture279: исходник не мутируется, первый отчёт честно показывает 1 см straightening, graph/projections валидны, текущий hosted opening и opaque-поля сохранены, немедленный повтор и JSON round-trip пусты. Дополнительно проверены оба real-plan и c1–c4 корпуса #560 на first-result fixed point. Исходный RED `true !== false` сохранён локально; новые адресные случаи GREEN. В исходном `near-axis.test.mjs` fixedpoint-кейс исправился, но отдельный старый #290 near-axis profile real-plan по-прежнему даёт 6!=0; это не скрыто и относится к общей актуализации/разбору #1226, не включено в адресную выборку этой задачи.\n\nШтатный S6 выполняет finish после допуска в очередь: сборка/типы, критичные данные/права, стартовый View и выбранные graph-optimize/align-grid/writer-fixed-point-graph/plan-graph-core проверки. Реального HA E2E этот синтетический регрессионный прогон не изображает. Перед бетой нужна соответствующая запись companion; выпуск не разрешён.\n\nПросьба проверить согласованность численных целей/точного графа на промежуточном проходе, сохранность dependency/host identity и то, что отчёт продолжает описывать фактические persisted изменения. Лишних миграций, UI или новых гейтов нет.\n\n</details>"
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Я принимаю исправление. Изменение точечное и устраняет найденную причину. После near-axis правки `rooms` уже содержали новые цели, а `wall_segments`/`partitions` и хосты проёмов всё ещё проецировали старый `plan_graph`. Повторный `alignAllToGrid` видел оба носителя и замораживал компонент на старых координатах, поэтому следующий Optimize делал ещё одну микрокоррекцию. Теперь перед финальным выравниванием явные moves один раз проецируются через уже существующую `optimizeGraphTargets(..., true)`, и выравнивание работает с согласованной проекцией одного графа. Новых гейтов, epsilon-привязок, подавления `changed` и UI нет. Регрессии проверяют legacy и current вход, неизменность исходных данных, честный первый отчёт, сохранность host/opaque-полей, пустой повтор и пустой повтор после JSON round-trip. Блокеров не нашёл. Одно ограничение: старый тест `#290 … real-plan near-axis profile` по-прежнему падает (6!=0). Автор называет это известной проблемой #1226, но сравнения с base в материале нет.",
+          "understanding": "Проблема. `optimizePlans` (src/plan-optimizer.ts:775) переводит пространства в model11 с `plan_graph` и вызывает `optimizePlanDraft(..., graphDraft=true)`. Там сначала идёт `alignAllToGrid`, затем `repairNearAxisRoomWalls` выпрямляет почти осевые рёбра. Эта функция меняет только `rooms[].poly` и `partitions[].a/b` (src/near-axis.ts:179–270), а `wall_segments`, проёмы и `plan_graph` остаются от старого графа. Повторный `alignAllToGrid` получал такую смесь: новые цели в rooms и устаревшие сегменты. По объяснению автора, устаревшие сегменты выглядели как дополнительные инцидентные оси, и компонент сохранял 9-значные хвосты. Финальный `optimizeGraphTargets(beforeSpaces[i], finalAligned, true)` (строка 512) честно переносил эти цели в граф, и только следующий полный Optimize, уже на согласованном каталоге, доводил координаты (~8e-8 см, changed=[true,true,false,false]).\n\nПосле исправления (строки 505–510): если draft графовый и хотя бы одна стена выпрямлена, каждое пространство до второго выравнивания проходит через `optimizeGraphTargets(beforeSpaces[i], space, true)`. В режиме movesOnly (src/graph-optimize.ts:40–145) цели берутся из room-вершин draft через bindings исходной проекции и из `partitions` самого draft (`alignment = draft`). Зависимые узлы пересчитывает ядро, швы толщины идут по точному параметру. Затем применяется batch `move-node` к копии `before.plan_graph`, хосты проёмов восстанавливаются из before и обновляются по `mapping.hosts`, результат — `projectGraphSpace(space, graph)`. Так `alignAllToGrid` получает rooms/segments/openings одного графа. Финальный вызов в строке 512 не изменился и по-прежнему считает всё от `beforeSpaces[i]`, поэтому промежуточный граф не становится источником identity: id узлов и рёбер берутся из исходного графа.\n\nРазобранные пути: `optimizePlans` → проекция/миграция → `optimizePlanDraft` (canonicalize → `beforeSpaces` → align → near-axis repair → новая промежуточная проекция → realign → moves-only в граф) → полный `optimizeGraphTargets(baseline, draft)` (строка 809) → подсчёт `changed` по `contentJson` → обнуление отчёта при `!changed`. Также прочитаны `repairNearAxisRoomWalls` (как выбираются и применяются перемещения), movesOnly-ветка `optimizeGraphTargets`, тестовые хелперы `noOp`/`valid` и старые тесты `near-axis.test.mjs`.",
+          "analysis": [
+            {
+              "topic": "Причина и место исправления",
+              "assessment": "Исправление действует на саму причину, а не на её проявление. Рассогласование появлялось между repair и вторым align, и именно туда вставлена проекция. Используется существующая операция, которой всё равно доверен финальный перенос целей в граф, так что новой семантики не появилось: тот же переход «числовые цели → точный граф → проекция» просто выполняется до выравнивания, а не только после. Решение простое, его стоит сохранить.",
+              "evidence": "src/plan-optimizer.ts:498–513. Сравнение с base: раньше `alignAllToGrid(straightenedSpaces, …)`, теперь `alignAllToGrid(realignmentSpaces, …)`, где `realignmentSpaces` — moves-only проекция."
+            },
+            {
+              "topic": "Identity, зависимости и хосты",
+              "assessment": "Промежуточный вызов не меняет идентичность. Граф каждый раз заново клонируется из `beforeSpaces[i].plan_graph`, и операции ограничены `move-node`. Зависимые узлы пропускаются в `setTarget` и пересчитываются ядром, хосты проёмов берутся из before и переносятся через `result.mapping.hosts`. Финальный вызов в строке 512 тоже начинает с before, поэтому промежуточные id никуда не утекают. Тест для current-модели проверяет host.id, length, contact, invert и extension проёма, а для обеих моделей — что все узлы результата существовали в исходном графе.",
+              "evidence": "src/graph-optimize.ts:43–69, 72–80, 142–145; test/plan-graph-optimize.test.mjs:27–64."
+            },
+            {
+              "topic": "Новые пути отказа",
+              "assessment": "Промежуточный вызов может бросить `optimize-cycle`/`optimize-target-conflict`, но строка 512 уже делала такой же вызов на почти тех же данных, так что новый класс отказов не появился. `repairNearAxisRoomWalls` переносит все совпадающие копии вершины во всех комнатах сразу (`replaceRoomPoints`) и длину poly не меняет. Остаётся теоретический случай: выпрямлен конец partition, совпадающий с вершиной комнаты, — тогда возможен конфликт целей. Но он существовал и до изменения (строка 512 получает те же partitions через align). Этот риск я не подтверждал и в блокеры не выношу.",
+              "evidence": "src/near-axis.ts:103–110, 225–264; src/graph-optimize.ts:77–78, 84."
+            },
+            {
+              "topic": "Охват: все пространства при любом выпрямлении",
+              "assessment": "Условие `graphDraft && wallsStraightened` проверяет глобальный счётчик, поэтому проекцию проходят и пространства без правки. Это безопасно: второй align до изменения тоже выполнялся для всех пространств, а для невыпрямленного пространства moves-only проекция лишь синхронизирует каталог с результатом первого align. Скорее это плюс: второй align не видит рассогласования ни в одном пространстве.",
+              "evidence": "src/plan-optimizer.ts:505–510."
+            },
+            {
+              "topic": "Честность отчёта",
+              "assessment": "Подсчёт `changed` не тронут: он по-прежнему сравнивает `contentJson` результата со входом. `alignReport` складывает moved/maxShift первого и второго align, а второй теперь измеряет сдвиги относительно согласованной проекции, то есть ближе к тому, что реально сохраняется. `wallsStraightened`/`maxStraightenShiftCm` считаются до проекции и не меняются. Тест проверяет на fixture279 ровно одно выпрямление на 1 см и пустой повторный отчёт по ключевым счётчикам.",
+              "evidence": "src/plan-optimizer.ts:515–525, 813–835; test/plan-graph-optimize.test.mjs:18–25, 45–47."
+            },
+            {
+              "topic": "Регрессионные тесты и AC",
+              "assessment": "AC1–AC3 закрыты содержательно. Есть legacy- и current-вход на исходной fixture279 без её мутации, `validateGraph` + `verifyGraphProjection`, повтор на результате и после `clone` (JSON round-trip). Второй тест проверяет фиксированную точку первого результата на обоих real-plan и c1–c4 корпуса #560. Ожидаемое число в snapshot не подгонялось. Одного немедленного повтора достаточно: раз он даёт `changed=false` и deepEqual config/layout, последующие повторы детерминированно дают то же.",
+              "evidence": "test/plan-graph-optimize.test.mjs:27–85; квитанция S6 20261103T110534272-31a22c61, status=passed, материал 9515c5fe."
+            },
+            {
+              "topic": "Остаточный провал #290 real-plan profile",
+              "assessment": "Автор открыто сообщает, что `#290 Optimize reduces the tracked real-plan near-axis profile and stays idempotent` даёт 6!=0, и относит это к #1226. Новый тест требует `changed=false` при повторе на тех же real-plan, поэтому вариант «второй Optimize выпрямляет ещё 6 стен» (строка 134) противоречит GREEN-результату. Вероятнее, расходится сам профиль (строки 132/145): часть near-axis рёбер не выпрямляется в графовом Optimize после #1167. Это не нарушение fixed point, но и не доказано, что падение было до изменения. Сравнения с base d1425dcb в материале нет.",
+              "evidence": "test/near-axis.test.mjs:121–146; контекст исполнителя; история src/plan-optimizer.ts (6f284eb6, a7cf8f88 — #1167)."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "В #1226 или в комментарии S6 стоит зафиксировать, что `test/near-axis.test.mjs` «#290 … real-plan near-axis profile» падает с тем же 6!=0 и на base d1425dcb. Тогда утверждение «по-прежнему» станет проверяемым, и будет снято подозрение, что промежуточная проекция ухудшила профиль. Стоимость — один прогон этого теста на двух SHA.",
+            "Комментарий в src/plan-optimizer.ts:501–504 полезен: он объясняет неочевидную причину (устаревший каталог сегментов замораживает компонент). Его стоит сохранить, при желании добавив, почему финальный вызов в строке 512 по-прежнему считается от `beforeSpaces`: identity берётся только из исходного графа."
+          ],
+          "boundaries": "Тесты, сборку и Validate я не запускал. Изучены исходники и diff: src/plan-optimizer.ts (optimizePlanDraft, optimizePlans), src/graph-optimize.ts (movesOnly-ветка optimizeGraphTargets), src/near-axis.ts (repairNearAxisRoomWalls), test/plan-graph-optimize.test.mjs, test/near-axis.test.mjs. Использован результат S6: квитанция 20261103T110534272-31a22c61 (passed) на 9515c5fe. Подробный состав её набора в материале не раскрыт, поэтому полагаюсь на описание автора: graph-optimize, align-grid, writer-fixed-point-graph, plan-graph-core. Внутренности `alignAllToGrid` и `projectGraphSpace` я не разбирал построчно: их поведение принято по контракту, тестам и объяснению автора. Механизм «устаревшие сегменты замораживают компонент» подтверждён косвенно, через тест fixed point, а не трассировкой align-grid. Провал #290 real-plan profile на base не проверен. Реального HA E2E нет; решение о выпуске вне рамок этого ревью."
+        },
+        "usage": {
+          "input_tokens": 24,
+          "cache_creation_input_tokens": 54691,
+          "cache_read_input_tokens": 343838,
+          "output_tokens": 10424,
+          "output_tokens_details": {
+            "thinking_tokens": 4093
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 54691,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 880,
+              "cache_read_input_tokens": 43877,
+              "cache_creation_input_tokens": 15018,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 15018
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЯ принимаю исправление. Изменение точечное и устраняет найденную причину. После near-axis правки `rooms` уже содержали новые цели, а `wall_segments`/`partitions` и хосты проёмов всё ещё проецировали старый `plan_graph`. Повторный `alignAllToGrid` видел оба носителя и замораживал компонент на старых координатах, поэтому следующий Optimize делал ещё одну микрокоррекцию. Теперь перед финальным выравниванием явные moves один раз проецируются через уже существующую `optimizeGraphTargets(..., true)`, и выравнивание работает с согласованной проекцией одного графа. Новых гейтов, epsilon-привязок, подавления `changed` и UI нет. Регрессии проверяют legacy и current вход, неизменность исходных данных, честный первый отчёт, сохранность host/opaque-полей, пустой повтор и пустой повтор после JSON round-trip. Блокеров не нашёл. Одно ограничение: старый тест `#290 … real-plan near-axis profile` по-прежнему падает (6!=0). Автор называет это известной проблемой #1226, но сравнения с base в материале нет.\n\n## Понимание решения\n\nПроблема. `optimizePlans` (src/plan-optimizer.ts:775) переводит пространства в model11 с `plan_graph` и вызывает `optimizePlanDraft(..., graphDraft=true)`. Там сначала идёт `alignAllToGrid`, затем `repairNearAxisRoomWalls` выпрямляет почти осевые рёбра. Эта функция меняет только `rooms[].poly` и `partitions[].a/b` (src/near-axis.ts:179–270), а `wall_segments`, проёмы и `plan_graph` остаются от старого графа. Повторный `alignAllToGrid` получал такую смесь: новые цели в rooms и устаревшие сегменты. По объяснению автора, устаревшие сегменты выглядели как дополнительные инцидентные оси, и компонент сохранял 9-значные хвосты. Финальный `optimizeGraphTargets(beforeSpaces[i], finalAligned, true)` (строка 512) честно переносил эти цели в граф, и только следующий полный Optimize, уже на согласованном каталоге, доводил координаты (~8e-8 см, changed=[true,true,false,false]).\n\nПосле исправления (строки 505–510): если draft графовый и хотя бы одна стена выпрямлена, каждое пространство до второго выравнивания проходит через `optimizeGraphTargets(beforeSpaces[i], space, true)`. В режиме movesOnly (src/graph-optimize.ts:40–145) цели берутся из room-вершин draft через bindings исходной проекции и из `partitions` самого draft (`alignment = draft`). Зависимые узлы пересчитывает ядро, швы толщины идут по точному параметру. Затем применяется batch `move-node` к копии `before.plan_graph`, хосты проёмов восстанавливаются из before и обновляются по `mapping.hosts`, результат — `projectGraphSpace(space, graph)`. Так `alignAllToGrid` получает rooms/segments/openings одного графа. Финальный вызов в строке 512 не изменился и по-прежнему считает всё от `beforeSpaces[i]`, поэтому промежуточный граф не становится источником identity: id узлов и рёбер берутся из исходного графа.\n\nРазобранные пути: `optimizePlans` → проекция/миграция → `optimizePlanDraft` (canonicalize → `beforeSpaces` → align → near-axis repair → новая промежуточная проекция → realign → moves-only в граф) → полный `optimizeGraphTargets(baseline, draft)` (строка 809) → подсчёт `changed` по `contentJson` → обнуление отчёта при `!changed`. Также прочитаны `repairNearAxisRoomWalls` (как выбираются и применяются перемещения), movesOnly-ветка `optimizeGraphTargets`, тестовые хелперы `noOp`/`valid` и старые тесты `near-axis.test.mjs`.\n\n## Разбор решения\n\n### Причина и место исправления\n\nИсправление действует на саму причину, а не на её проявление. Рассогласование появлялось между repair и вторым align, и именно туда вставлена проекция. Используется существующая операция, которой всё равно доверен финальный перенос целей в граф, так что новой семантики не появилось: тот же переход «числовые цели → точный граф → проекция» просто выполняется до выравнивания, а не только после. Решение простое, его стоит сохранить.\n\nОснование: src/plan-optimizer.ts:498–513. Сравнение с base: раньше `alignAllToGrid(straightenedSpaces, …)`, теперь `alignAllToGrid(realignmentSpaces, …)`, где `realignmentSpaces` — moves-only проекция.\n\n### Identity, зависимости и хосты\n\nПромежуточный вызов не меняет идентичность. Граф каждый раз заново клонируется из `beforeSpaces[i].plan_graph`, и операции ограничены `move-node`. Зависимые узлы пропускаются в `setTarget` и пересчитываются ядром, хосты проёмов берутся из before и переносятся через `result.mapping.hosts`. Финальный вызов в строке 512 тоже начинает с before, поэтому промежуточные id никуда не утекают. Тест для current-модели проверяет host.id, length, contact, invert и extension проёма, а для обеих моделей — что все узлы результата существовали в исходном графе.\n\nОснование: src/graph-optimize.ts:43–69, 72–80, 142–145; test/plan-graph-optimize.test.mjs:27–64.\n\n### Новые пути отказа\n\nПромежуточный вызов может бросить `optimize-cycle`/`optimize-target-conflict`, но строка 512 уже делала такой же вызов на почти тех же данных, так что новый класс отказов не появился. `repairNearAxisRoomWalls` переносит все совпадающие копии вершины во всех комнатах сразу (`replaceRoomPoints`) и длину poly не меняет. Остаётся теоретический случай: выпрямлен конец partition, совпадающий с вершиной комнаты, — тогда возможен конфликт целей. Но он существовал и до изменения (строка 512 получает те же partitions через align). Этот риск я не подтверждал и в блокеры не выношу.\n\nОснование: src/near-axis.ts:103–110, 225–264; src/graph-optimize.ts:77–78, 84.\n\n### Охват: все пространства при любом выпрямлении\n\nУсловие `graphDraft && wallsStraightened` проверяет глобальный счётчик, поэтому проекцию проходят и пространства без правки. Это безопасно: второй align до изменения тоже выполнялся для всех пространств, а для невыпрямленного пространства moves-only проекция лишь синхронизирует каталог с результатом первого align. Скорее это плюс: второй align не видит рассогласования ни в одном пространстве.\n\nОснование: src/plan-optimizer.ts:505–510.\n\n### Честность отчёта\n\nПодсчёт `changed` не тронут: он по-прежнему сравнивает `contentJson` результата со входом. `alignReport` складывает moved/maxShift первого и второго align, а второй теперь измеряет сдвиги относительно согласованной проекции, то есть ближе к тому, что реально сохраняется. `wallsStraightened`/`maxStraightenShiftCm` считаются до проекции и не меняются. Тест проверяет на fixture279 ровно одно выпрямление на 1 см и пустой повторный отчёт по ключевым счётчикам.\n\nОснование: src/plan-optimizer.ts:515–525, 813–835; test/plan-graph-optimize.test.mjs:18–25, 45–47.\n\n### Регрессионные тесты и AC\n\nAC1–AC3 закрыты содержательно. Есть legacy- и current-вход на исходной fixture279 без её мутации, `validateGraph` + `verifyGraphProjection`, повтор на результате и после `clone` (JSON round-trip). Второй тест проверяет фиксированную точку первого результата на обоих real-plan и c1–c4 корпуса #560. Ожидаемое число в snapshot не подгонялось. Одного немедленного повтора достаточно: раз он даёт `changed=false` и deepEqual config/layout, последующие повторы детерминированно дают то же.\n\nОснование: test/plan-graph-optimize.test.mjs:27–85; квитанция S6 20261103T110534272-31a22c61, status=passed, материал 9515c5fe.\n\n### Остаточный провал #290 real-plan profile\n\nАвтор открыто сообщает, что `#290 Optimize reduces the tracked real-plan near-axis profile and stays idempotent` даёт 6!=0, и относит это к #1226. Новый тест требует `changed=false` при повторе на тех же real-plan, поэтому вариант «второй Optimize выпрямляет ещё 6 стен» (строка 134) противоречит GREEN-результату. Вероятнее, расходится сам профиль (строки 132/145): часть near-axis рёбер не выпрямляется в графовом Optimize после #1167. Это не нарушение fixed point, но и не доказано, что падение было до изменения. Сравнения с base d1425dcb в материале нет.\n\nОснование: test/near-axis.test.mjs:121–146; контекст исполнителя; история src/plan-optimizer.ts (6f284eb6, a7cf8f88 — #1167).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В #1226 или в комментарии S6 стоит зафиксировать, что `test/near-axis.test.mjs` «#290 … real-plan near-axis profile» падает с тем же 6!=0 и на base d1425dcb. Тогда утверждение «по-прежнему» станет проверяемым, и будет снято подозрение, что промежуточная проекция ухудшила профиль. Стоимость — один прогон этого теста на двух SHA.\n- Комментарий в src/plan-optimizer.ts:501–504 полезен: он объясняет неочевидную причину (устаревший каталог сегментов замораживает компонент). Его стоит сохранить, при желании добавив, почему финальный вызов в строке 512 по-прежнему считается от `beforeSpaces`: identity берётся только из исходного графа.\n\n## Границы анализа\n\nТесты, сборку и Validate я не запускал. Изучены исходники и diff: src/plan-optimizer.ts (optimizePlanDraft, optimizePlans), src/graph-optimize.ts (movesOnly-ветка optimizeGraphTargets), src/near-axis.ts (repairNearAxisRoomWalls), test/plan-graph-optimize.test.mjs, test/near-axis.test.mjs. Использован результат S6: квитанция 20261103T110534272-31a22c61 (passed) на 9515c5fe. Подробный состав её набора в материале не раскрыт, поэтому полагаюсь на описание автора: graph-optimize, align-grid, writer-fixed-point-graph, plan-graph-core. Внутренности `alignAllToGrid` и `projectGraphSpace` я не разбирал построчно: их поведение принято по контракту, тестам и объяснению автора. Механизм «устаревшие сегменты замораживают компонент» подтверждён косвенно, через тест fixed point, а не трассировкой align-grid. Провал #290 real-plan profile на base не проверен. Реального HA E2E нет; решение о выпуске вне рамок этого ревью.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: d1425dcbcc0989e71c7db9c6648313ccd5bff6c1 → 9515c5fef1b4d15b7351d5a21179f6883572f26e\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1224, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Причина, исправление и проверки #1224</summary>\n\nПосле численной near-axis правки `rooms` содержали новые цели, а `wall_segments` продолжали проецировать прежний graph. Повторный contact alignment читал оба носителя, принимал устаревшие сегменты за дополнительные оси и замораживал связный компонент на прежних 9-decimal координатах. Следующий полный Optimize уже видел согласованный каталог, поэтому выполнял дополнительную микрокоррекцию.\n\nПеред финальным realignment только для graph draft с фактической near-axis правкой применяются существующие явные moves через `optimizeGraphTargets(..., true)`. Полученные rooms/segments/hosts проецируют один граф. Это не повторный полный Optimize, не новая epsilon-привязка и не подавление `changed`. Legacy decoding остаётся одноразовым до старых численных проходов; current identity, constraints и opening hosts сохраняются существующей операцией.\n\nДобавлены регрессии legacy/current на исходном fixture279: исходник не мутируется, первый отчёт честно показывает 1 см straightening, graph/projections валидны, текущий hosted opening и opaque-поля сохранены, немедленный повтор и JSON round-trip пусты. Дополнительно проверены оба real-plan и c1–c4 корпуса #560 на first-result fixed point. Исходный RED `true !== false` сохранён локально; новые адресные случаи GREEN. В исходном `near-axis.test.mjs` fixedpoint-кейс исправился, но отдельный старый #290 near-axis profile real-plan по-прежнему даёт 6!=0; это не скрыто и относится к общей актуализации/разбору #1226, не включено в адресную выборку этой задачи.\n\nШтатный S6 выполняет finish после допуска в очередь: сборка/типы, критичные данные/права, стартовый View и выбранные graph-optimize/align-grid/writer-fixed-point-graph/plan-graph-core проверки. Реального HA E2E этот синтетический регрессионный прогон не изображает. Перед бетой нужна соответствующая запись companion; выпуск не разрешён.\n\nПросьба проверить согласованность численных целей/точного графа на промежуточном проходе, сохранность dependency/host identity и то, что отчёт продолжает описывать фактические persisted изменения. Лишних миграций, UI или новых гейтов нет.\n\n</details>\n```\n\n</details>\n",
+        "createdAt": "2026-11-03T11:09:00.376Z",
+        "artifactId": 13224888418,
+        "runId": 41624772245,
+        "runAttempt": 1,
+        "completedAt": "2026-11-03T11:09:04Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41624772245",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1"
       }
     }
   },
@@ -1764,9 +1877,9 @@
     "fence": 92,
     "materialSha": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
     "expectedBase": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793703900835,
-    "expiresAt": 1793707574626,
+    "expiresAt": 1793707788372,
     "patchId": "10093fc2519e360f7fc915ea1547b0d268ea2a0a",
     "reviewRequest": "review:1224:1:10093fc2519e360f7fc915ea1547b0d268ea2a0a:d1425dcbcc0989e71c7db9c6648313ccd5bff6c1"
   },
@@ -1813,6 +1926,10 @@
     },
     "finish:0f0115b3-5e0c-462a-ab9f-860c97f057a1:finish:6:review-presentation": {
       "digest": "449015f622bde9263cc0cae636a3592160d18b12d1f632e1deb3d68f840b17b8",
+      "issue": 1224
+    },
+    "finish:0f0115b3-5e0c-462a-ab9f-860c97f057a1:finish:6:review-complete": {
+      "digest": "7bcf0b1e64c22fb92d3002a91ed10e74b377608decef12d45419d6fc14f08cfe",
       "issue": 1224
     },
     "finish:0f0115b3-5e0c-462a-ab9f-860c97f057a1": {
