@@ -1,0 +1,19 @@
+{
+  "scope": "Outside original122 failing positions; never added to their denominator",
+  "case": {
+    "id": "smoke:smoke_easy_converter_openings",
+    "file": "demo/smoke_easy_converter_openings.mjs",
+    "originalFailure": false,
+    "category": "stale-cold-panel-mount-lifecycle",
+    "status": "fixed",
+    "reason": "Use documented HA pre-upgrade panel properties and document-rooted actual module entry; replace evaluate-only import promise whose GC aborted setup. Download comparison and all6 door/host/reload/no-orphan checks plus View no-write remain.",
+    "evidence": "output/issue1226/final-two-setup/converter-r2.log; exit0,6unique checks,OK; initial missingyaml prerequisite not countedPASS",
+    "relatedIssue": 1226,
+    "latestCommonAudit": {
+      "run": 41679296259,
+      "status": "failed",
+      "cause": "cold module-import promise collected"
+    },
+    "latestAddressed": "passed6/6,source fixture port,not product change"
+  }
+}

@@ -31,7 +31,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_canvas_surface_gestures.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_canvas_surface_gestures.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_canvas_surface_gestures.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_decor_creation_selection",
@@ -60,7 +68,15 @@
       "dependencyIssue": 1222,
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_creation_selection.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_creation_selection.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_decor_creation_selection.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_canvas_frame",
@@ -88,7 +104,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_canvas_frame.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_canvas_frame.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_canvas_frame.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_config_lifecycle",
@@ -113,7 +137,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_config_lifecycle.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_config_lifecycle.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_config_lifecycle.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_daycycle_outline_removed",
@@ -138,37 +170,62 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_outline_removed.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_outline_removed.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_daycycle_outline_removed.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_daycycle_raster",
       "file": "demo/smoke_daycycle_raster.mjs",
-      "category": "clean-material-performance-verification",
-      "status": "passed",
-      "reason": "No smoke or threshold change. Dirty-material diagnostic correctly refused measurement; the addressed clean a5aa896cd run is valid and passes all raster/paint guarantees: ratio 1.028321378909411 against unchanged ceiling 2.",
-      "evidence": {
-        "originalRun": 41598951489,
-        "originalStatus": "failed",
-        "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_raster.log",
-        "originalErrors": [
-          "FAILED (2):",
-          "  - measurementValid: expected true, got false",
-          "  - rasterRatioWithinBudget: expected true, got false"
-        ],
-        "originalTail": "ect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":773},\"type\":\"WheelEventHandler\"}]},{\"layerId\":\"11\",\"parentLayerId\":\"6\",\"backendNodeId\":160,\"offsetX\":0,\"offsetY\":0,\"width\":780,\"height\":119,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,310,8,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":1,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":119},\"type\":\"TouchEventHandler\"},{\"rect\":{\"x\":325,\"y\":64,\"width\":87,\"height\":44},\"type\":\"WheelEventHandler\"}],\"stickyPositionConstraint\":{\"stickyBoxRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":119},\"containingBlockRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":892}}},{\"layerId\":\"13\",\"parentLayerId\":\"6\",\"backendNodeId\":209,\"offsetX\":0,\"offsetY\":0,\"width\":283,\"height\":166,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,676,497,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":63,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":36,\"y\":29,\"width\":210,\"height\":92},\"type\":\"TouchEventHandler\"}]},{\"layerId\":\"5\",\"parentLayerId\":\"6\",\"offsetX\":0,\"offsetY\":0,\"width\":1400,\"height\":900,\"paintCount\":0,\"drawsContent\":false}]}]},\"clockAlignment\":{\"status\":\"available\",\"source\":\"same page performance.mark and trace user-timing event\",\"marker\":\"hp-daycycle-daynight-2-5\",\"traceTsMicros\":1233885659,\"pageAtMs\":28136.300000000047,\"traceOriginMicros\":1205749359},\"rasterCpuClock\":\"tdur retained where provided\",\"layerNodes\":[{\"role\":\"stage\",\"status\":\"available\",\"backendNodeId\":4},{\"role\":\"paper\",\"status\":\"available\",\"backendNodeId\":31},{\"role\":\"plan\",\"status\":\"available\",\"backendNodeId\":29},{\"role\":\"outline\",\"status\":\"absent\",\"backendNodeId\":null}]}}],\"problems\":[\"measurement inputs differ from committed material\"],\"measurementValid\":false,\"rasterRatioWithinBudget\":false}\n{\n \"dayCycleClassOn\": true,\n \"dayCycleOutlineRemoved\": true,\n \"idlePaperUnfiltered\": true,\n \"staticClassOff\": true,\n \"staticOutlineAbsent\": true,\n \"staticOutlineUnfiltered\": true,\n \"staticOutlineNotPromoted\": true,\n \"cameraKeepsSafePlanLayer\": true,\n \"dayCycleOutlineRemainsAbsent\": true,\n \"dayCycleOutlineNotPromoted\": true,\n \"dayCyclePaperStaysUnfiltered\": true,\n \"safePlanLayerIsExplicit\": true,\n \"rasterTasksObserved\": true,\n \"measurementValid\": false,\n \"rasterRatioWithinBudget\": false\n}\n",
-        "targetedRerun": {
-          "id": "smoke:smoke_daycycle_raster",
-          "exit": 0,
-          "log": "output/issue1226/ui-daycycle-clean.log",
-          "sha256": "0f5eed395438b1d865a695b0ba8fd2785b1cea3ce5a2ef6f920a1b0535974bdc",
-          "productSource": "96ffe5444",
-          "fixturePatch": "a5aa896cd",
-          "report": "artifacts/diagnostics/863/issue1226-clean-a5aa896cd.json"
-        }
-      },
+      "category": "ci-performance-or-measurement-observation-unresolved",
+      "status": "failed",
+      "reason": "The coherent CI run retains all functional paint checks but fails measurementValid and rasterRatioWithinBudget. Its own report records materialClean=false while the scoped overall material is clean; the exact validity cause is unresolved, not silently accepted as a product regression or a passed measurement.",
+      "evidence": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_daycycle_raster.log",
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_raster.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_raster.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_daycycle_raster.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      },
+      "revalidations": [
+        {
+          "kind": "latest-coherent-ci-performance-observation",
+          "priorStatus": "passed",
+          "priorReason": "No smoke or threshold change. Dirty-material diagnostic correctly refused measurement; the addressed clean a5aa896cd run is valid and passes all raster/paint guarantees: ratio 1.028321378909411 against unchanged ceiling 2.",
+          "priorEvidence": {
+            "originalRun": 41598951489,
+            "originalStatus": "failed",
+            "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_raster.log",
+            "originalErrors": [
+              "FAILED (2):",
+              "  - measurementValid: expected true, got false",
+              "  - rasterRatioWithinBudget: expected true, got false"
+            ],
+            "originalTail": "ect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":773},\"type\":\"WheelEventHandler\"}]},{\"layerId\":\"11\",\"parentLayerId\":\"6\",\"backendNodeId\":160,\"offsetX\":0,\"offsetY\":0,\"width\":780,\"height\":119,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,310,8,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":1,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":119},\"type\":\"TouchEventHandler\"},{\"rect\":{\"x\":325,\"y\":64,\"width\":87,\"height\":44},\"type\":\"WheelEventHandler\"}],\"stickyPositionConstraint\":{\"stickyBoxRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":119},\"containingBlockRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":892}}},{\"layerId\":\"13\",\"parentLayerId\":\"6\",\"backendNodeId\":209,\"offsetX\":0,\"offsetY\":0,\"width\":283,\"height\":166,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,676,497,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":63,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":36,\"y\":29,\"width\":210,\"height\":92},\"type\":\"TouchEventHandler\"}]},{\"layerId\":\"5\",\"parentLayerId\":\"6\",\"offsetX\":0,\"offsetY\":0,\"width\":1400,\"height\":900,\"paintCount\":0,\"drawsContent\":false}]}]},\"clockAlignment\":{\"status\":\"available\",\"source\":\"same page performance.mark and trace user-timing event\",\"marker\":\"hp-daycycle-daynight-2-5\",\"traceTsMicros\":1233885659,\"pageAtMs\":28136.300000000047,\"traceOriginMicros\":1205749359},\"rasterCpuClock\":\"tdur retained where provided\",\"layerNodes\":[{\"role\":\"stage\",\"status\":\"available\",\"backendNodeId\":4},{\"role\":\"paper\",\"status\":\"available\",\"backendNodeId\":31},{\"role\":\"plan\",\"status\":\"available\",\"backendNodeId\":29},{\"role\":\"outline\",\"status\":\"absent\",\"backendNodeId\":null}]}}],\"problems\":[\"measurement inputs differ from committed material\"],\"measurementValid\":false,\"rasterRatioWithinBudget\":false}\n{\n \"dayCycleClassOn\": true,\n \"dayCycleOutlineRemoved\": true,\n \"idlePaperUnfiltered\": true,\n \"staticClassOff\": true,\n \"staticOutlineAbsent\": true,\n \"staticOutlineUnfiltered\": true,\n \"staticOutlineNotPromoted\": true,\n \"cameraKeepsSafePlanLayer\": true,\n \"dayCycleOutlineRemainsAbsent\": true,\n \"dayCycleOutlineNotPromoted\": true,\n \"dayCyclePaperStaysUnfiltered\": true,\n \"safePlanLayerIsExplicit\": true,\n \"rasterTasksObserved\": true,\n \"measurementValid\": false,\n \"rasterRatioWithinBudget\": false\n}\n",
+            "targetedRerun": {
+              "id": "smoke:smoke_daycycle_raster",
+              "exit": 0,
+              "log": "output/issue1226/ui-daycycle-clean.log",
+              "sha256": "0f5eed395438b1d865a695b0ba8fd2785b1cea3ce5a2ef6f920a1b0535974bdc",
+              "productSource": "96ffe5444",
+              "fixturePatch": "a5aa896cd",
+              "report": "artifacts/diagnostics/863/issue1226-clean-a5aa896cd.json"
+            }
+          },
+          "run": 41679296259
+        }
+      ]
     },
     {
       "id": "smoke:smoke_decor",
@@ -197,7 +254,15 @@
       "dependencyIssue": 1222,
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_decor.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_decor_group_style_cache",
@@ -222,7 +287,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_group_style_cache.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_group_style_cache.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_decor_group_style_cache.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_decor_line_click",
@@ -253,7 +326,15 @@
       "dependencyIssue": 1222,
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_line_click.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_line_click.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_decor_line_click.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_decor_multiselect",
@@ -282,7 +363,15 @@
       "dependencyIssue": 1222,
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_multiselect.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_multiselect.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_decor_multiselect.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_decor_order",
@@ -307,7 +396,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_order.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_order.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_decor_order.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_device_contact_reflow",
@@ -332,7 +429,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contact_reflow.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contact_reflow.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_device_contact_reflow.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_device_contact_zoom",
@@ -357,7 +462,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contact_zoom.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contact_zoom.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_device_contact_zoom.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_device_contacts",
@@ -407,7 +520,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "relatedIssue": null
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_device_contacts.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_device_copy",
@@ -432,7 +553,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_copy.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_copy.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_device_copy.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_device_more_info",
@@ -482,7 +611,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "relatedIssue": null
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_device_more_info.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_device_structure_history",
@@ -507,7 +644,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_structure_history.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_structure_history.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_device_structure_history.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_dialog_picker_998",
@@ -557,7 +702,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "relatedIssue": null
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_dialog_picker_998.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_discard_dialog_polish",
@@ -582,7 +735,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_discard_dialog_polish.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_discard_dialog_polish.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_discard_dialog_polish.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_e2e_hooks",
@@ -611,7 +772,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_e2e_hooks.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_e2e_hooks.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_e2e_hooks.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_edit_walk",
@@ -671,7 +840,15 @@
             "sha256": "9c5ab1db23e931bb11d765ca1f3c1e670a5a9029b0efa1b8e5808e6b975bf18e"
           }
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_edit_walk.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_editor_command_latency",
@@ -696,7 +873,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_command_latency.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_command_latency.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_editor_command_latency.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_editor_nudge",
@@ -728,7 +913,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_nudge.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_nudge.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_editor_nudge.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_editor_styles_lazy",
@@ -756,7 +949,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_styles_lazy.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_styles_lazy.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_editor_styles_lazy.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_editor_tabs",
@@ -811,7 +1012,15 @@
             "sha256": "ee663347c25f493b00e54a1b5314f49630e4abad5eb7bb7d152c90722194ac9a"
           }
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_editor_tabs.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_floor_cache_reuse",
@@ -866,7 +1075,15 @@
             "newBuild": false
           }
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_floor_cache_reuse.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_furniture_pan",
@@ -916,7 +1133,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "relatedIssue": 1035
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_furniture_pan.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_gear_tabs",
@@ -941,7 +1166,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_gear_tabs.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_gear_tabs.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_gear_tabs.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_general_settings_form",
@@ -967,7 +1200,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_general_settings_form.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_general_settings_form.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_general_settings_form.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_geometry_cleanup_842",
@@ -1009,7 +1250,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_geometry_cleanup_842.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_geometry_corpus",
@@ -1038,7 +1287,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_geometry_corpus.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_geometry_corpus.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_geometry_corpus.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_grid_snap",
@@ -1078,7 +1335,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_grid_snap.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_hidden_device_toggle",
@@ -1103,7 +1368,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_hidden_device_toggle.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_hidden_device_toggle.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_hidden_device_toggle.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_hide_layers",
@@ -1163,7 +1436,15 @@
             "sha256": "a12b7cb43c9d9134b5bb1b35e9096b66775d9e92e7611d1cc92b02edd6782a87"
           }
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_hide_layers.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_houseplan_panel",
@@ -1190,7 +1471,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_houseplan_panel.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_houseplan_panel.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_houseplan_panel.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_interior_window_light",
@@ -1215,7 +1504,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_interior_window_light.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_interior_window_light.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_interior_window_light.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_iso_sun",
@@ -1241,7 +1538,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_iso_sun.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_iso_sun.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_iso_sun.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_iso_tiles",
@@ -1267,7 +1572,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_iso_tiles.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_iso_tiles.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_iso_tiles.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_lattice_write_barrier",
@@ -1299,7 +1612,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_lattice_write_barrier.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_lattice_write_barrier.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_lattice_write_barrier.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_led_strip_glow",
@@ -1354,7 +1675,15 @@
             "sha256": "1c06a9a11c7001f9d889632df04ccdaa2937f7dab54b1e59b8c31a82ffa2aa33"
           }
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_led_strip_glow.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_led_zoom_quality",
@@ -1379,7 +1708,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_led_zoom_quality.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_led_zoom_quality.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_led_zoom_quality.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_marker_shadow_transitions",
@@ -1407,7 +1744,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_marker_shadow_transitions.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_marker_shadow_transitions.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_marker_shadow_transitions.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_mobile_view_header",
@@ -1451,7 +1796,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_mobile_view_header.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_mobile_view_header.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_mobile_view_header.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_modes",
@@ -1478,7 +1831,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_modes.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_modes.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_modes.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_opening_drag",
@@ -1519,7 +1880,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_opening_drag.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_opening_measure",
@@ -1559,7 +1928,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_opening_measure.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_opening_preview",
@@ -1587,7 +1964,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_opening_preview.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_opening_preview.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_opening_preview.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_orphan_space_references",
@@ -1629,7 +2014,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_orphan_space_references.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_plan_rotation",
@@ -1654,7 +2047,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_plan_rotation.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_plan_rotation.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_plan_rotation.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_room_co2",
@@ -1679,7 +2080,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_co2.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_co2.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_room_co2.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_room_device_discovery",
@@ -1722,7 +2131,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_room_device_discovery.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_room_metrics_alignment",
@@ -1747,7 +2164,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_metrics_alignment.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_metrics_alignment.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_room_metrics_alignment.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_room_opening_host",
@@ -1787,7 +2212,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_room_opening_host.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_selective_invalidation_authority",
@@ -1810,30 +2243,55 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_authority.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_authority.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_selective_invalidation_authority.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_selective_invalidation_history0",
       "file": "demo/smoke_selective_invalidation_history0.mjs",
-      "category": "fixture-layout-and-followup",
-      "status": "passed",
-      "reason": "The original first blocker was hidden desktop zoom controls. Native desktop preparation now exposes subsequent independent assertions; retained failures require separate diagnosis.",
-      "evidence": {
-        "originalRun": 41598951489,
-        "originalStatus": "failed",
-        "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history0.log",
-        "originalErrors": [],
-        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n{\"output\":\"artifacts/browser-selected/1093/history0.json\",\"profile\":\"history0\",\"samples\":0,\"failures\":[\"locator.click: Timeout 30000ms exceeded.\\nCall log:\\n  - waiting for locator('houseplan-card').locator('[data-hp=\\\"zoom-fit\\\"]')\\n    - locator resolved to <button data-hp=\\\"zoom-fit\\\" aria-label=\\\"Fit all\\\" data-hp-tooltip=\\\"Fit all\\\" class=\\\"btn zb hpf-icon-action\\\">…</button>\\n  - attempting click action\\n    2 × waiting for element to be visible, enabled and stable\\n      - element is not visible\\n    - retrying click action\\n    - waiting 20ms\\n    2 × waiting for element to be visible, enabled and stable\\n      - element is not visible\\n    - retrying click action\\n      - waiting 100ms\\n    58 × waiting for element to be visible, enabled and stable\\n       - element is not visible\\n     - retrying click action\\n       - waiting 500ms\\n\\n    at runHistoryTiming (/home/runner/work/houseplan-card/houseplan-card/demo/helpers/selective-invalidation-history.mjs:26:46)\\n    at async runScene (/home/runner/work/houseplan-card/houseplan-card/demo/benchmark_selective_invalidation.mjs:67:20)\\n    at async runSelectiveInvalidationGate (/home/runner/work/houseplan-card/houseplan-card/demo/benchmark_selective_invalidation.mjs:83:12)\\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_selective_invalidation_history0.mjs:4:1\"]}\n",
-        "targetedRerun": {
-          "id": "smoke:smoke_selective_invalidation_history0",
-          "exit": 0,
-          "seconds": 33,
-          "log": "output/issue1226-ui/selective_invalidation_history0.log"
-        }
-      },
+      "category": "ci-performance-or-measurement-observation-unresolved",
+      "status": "failed",
+      "reason": "Latest coherent CI fails only the existing large/DPR1 history-copy long-task threshold:203ms versus200ms across80samples. Earlier local full-script PASS remains historical evidence; no limit, source oracle or skip is changed. Comparability/noise/regression is unresolved.",
+      "evidence": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_selective_invalidation_history0.log",
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history0.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history0.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_selective_invalidation_history0.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      },
+      "revalidations": [
+        {
+          "kind": "latest-coherent-ci-performance-observation",
+          "priorStatus": "passed",
+          "priorReason": "The original first blocker was hidden desktop zoom controls. Native desktop preparation now exposes subsequent independent assertions; retained failures require separate diagnosis.",
+          "priorEvidence": {
+            "originalRun": 41598951489,
+            "originalStatus": "failed",
+            "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history0.log",
+            "originalErrors": [],
+            "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n{\"output\":\"artifacts/browser-selected/1093/history0.json\",\"profile\":\"history0\",\"samples\":0,\"failures\":[\"locator.click: Timeout 30000ms exceeded.\\nCall log:\\n  - waiting for locator('houseplan-card').locator('[data-hp=\\\"zoom-fit\\\"]')\\n    - locator resolved to <button data-hp=\\\"zoom-fit\\\" aria-label=\\\"Fit all\\\" data-hp-tooltip=\\\"Fit all\\\" class=\\\"btn zb hpf-icon-action\\\">…</button>\\n  - attempting click action\\n    2 × waiting for element to be visible, enabled and stable\\n      - element is not visible\\n    - retrying click action\\n    - waiting 20ms\\n    2 × waiting for element to be visible, enabled and stable\\n      - element is not visible\\n    - retrying click action\\n      - waiting 100ms\\n    58 × waiting for element to be visible, enabled and stable\\n       - element is not visible\\n     - retrying click action\\n       - waiting 500ms\\n\\n    at runHistoryTiming (/home/runner/work/houseplan-card/houseplan-card/demo/helpers/selective-invalidation-history.mjs:26:46)\\n    at async runScene (/home/runner/work/houseplan-card/houseplan-card/demo/benchmark_selective_invalidation.mjs:67:20)\\n    at async runSelectiveInvalidationGate (/home/runner/work/houseplan-card/houseplan-card/demo/benchmark_selective_invalidation.mjs:83:12)\\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_selective_invalidation_history0.mjs:4:1\"]}\n",
+            "targetedRerun": {
+              "id": "smoke:smoke_selective_invalidation_history0",
+              "exit": 0,
+              "seconds": 33,
+              "log": "output/issue1226-ui/selective_invalidation_history0.log"
+            }
+          },
+          "run": 41679296259
+        }
+      ]
     },
     {
       "id": "smoke:smoke_selective_invalidation_history320",
@@ -1856,7 +2314,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history320.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history320.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_selective_invalidation_history320.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_selective_invalidation_inactive",
@@ -1881,7 +2347,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_inactive.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_inactive.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_selective_invalidation_inactive.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_settings_polish_radar_vacuum_955",
@@ -1909,7 +2383,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_settings_polish_radar_vacuum_955.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_settings_polish_radar_vacuum_955.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_settings_polish_radar_vacuum_955.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_signal_visibility",
@@ -1934,7 +2416,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_signal_visibility.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_signal_visibility.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_signal_visibility.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_space_copy_categories",
@@ -1963,7 +2453,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_space_copy_categories.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_space_copy_categories.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_space_copy_categories.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_space_tab_reorder",
@@ -1988,7 +2486,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_space_tab_reorder.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_space_tab_reorder.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_space_tab_reorder.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_summary_dialog_scroll",
@@ -2016,7 +2522,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_summary_dialog_scroll.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_summary_dialog_scroll.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_summary_dialog_scroll.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_sun",
@@ -2044,7 +2558,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_sun.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_sun.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_sun.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_toolbar_stable_width",
@@ -2069,7 +2591,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_toolbar_stable_width.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_toolbar_stable_width.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_toolbar_stable_width.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_ui_1051",
@@ -2094,7 +2624,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_1051.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_1051.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_ui_1051.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_ui_lab_1081",
@@ -2119,7 +2657,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_lab_1081.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_lab_1081.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_ui_lab_1081.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_ui_lab_grid",
@@ -2144,7 +2690,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_lab_grid.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_lab_grid.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_ui_lab_grid.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_ui_polish_963",
@@ -2194,7 +2748,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "relatedIssue": 1184
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_ui_polish_963.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_ui_polish_963_touch",
@@ -2221,7 +2783,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_963_touch.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_963_touch.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_ui_polish_963_touch.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_ui_polish_976",
@@ -2246,7 +2816,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_976.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_976.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_ui_polish_976.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_view_runtime_recovery",
@@ -2287,7 +2865,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_view_runtime_recovery.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_volumetric_setting",
@@ -2314,7 +2900,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_volumetric_setting.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_volumetric_setting.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_volumetric_setting.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_warm_mode_adoption",
@@ -2353,7 +2947,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_warm_mode_adoption.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_writer_fixed_point",
@@ -2397,34 +2999,49 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_writer_fixed_point.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_zigbee_enable_refresh",
       "file": "demo/smoke_zigbee_enable_refresh.mjs",
-      "category": "unchanged-product-verification",
+      "category": "stale-setup-lifecycle",
       "status": "passed",
-      "reason": "Unmodified native enable/refresh lifecycle assertions pass on the current product base; no wire or route fixture change.",
-      "evidence": {
-        "originalRun": 41598951489,
-        "originalStatus": "failed",
-        "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_enable_refresh.log",
-        "originalErrors": [
-          "page.evaluate: TypeError: Cannot read properties of null (reading 'querySelector')"
-        ],
-        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'querySelector')\n    at eval (eval at evaluate (:311:30), <anonymous>:39:12)\n    at async <anonymous>:337:30\n    at setup (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_zigbee_enable_refresh.mjs:35:14)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_zigbee_enable_refresh.mjs:266:5 {\n  log: []\n}\n\nNode.js v22.23.4\n",
-        "targetedRerun": {
-          "id": "smoke:smoke_zigbee_enable_refresh",
-          "exit": 0,
-          "log": "output/issue1226/ui-addressed/smoke_zigbee_enable_refresh.log",
-          "sha256": "1f7205ffa7755e86d5c519aabcd631625da62df4e92fb463499f9d2a01b34264",
-          "productSource": "96ffe5444",
-          "fixturePatch": "a5aa896cd"
-        }
-      },
+      "reason": "Wait for actual settings dialog/tab/toggle through native public controls after HA locale adoption; generic settled did not guarantee this owner existed. All44 original checks retained.",
+      "evidence": "output/issue1226/final-two-setup/zigbee.log; exit0,44unique checks,OK",
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_enable_refresh.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_enable_refresh.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_zigbee_enable_refresh.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      },
+      "revalidations": [
+        {
+          "kind": "post-audit-current-native-setup-port",
+          "id": "smoke_zigbee_enable_refresh",
+          "file": "demo/smoke_zigbee_enable_refresh.mjs",
+          "originalFailure": true,
+          "category": "stale-setup-lifecycle",
+          "status": "fixed",
+          "reason": "Wait for actual settings dialog/tab/toggle through native public controls after HA locale adoption; generic settled did not guarantee this owner existed. All44 original checks retained.",
+          "evidence": "output/issue1226/final-two-setup/zigbee.log; exit0,44unique checks,OK",
+          "relatedIssue": 1226,
+          "priorStatus": "passed",
+          "material": "accepted product0c / changed test after1f3"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_zigbee_led_topology",
@@ -2449,7 +3066,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_led_topology.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_led_topology.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_zigbee_led_topology.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_zigbee_tooltip_layout",
@@ -2493,7 +3118,15 @@
           "base": "0bda944e3244a142449c30c5f802c14833af8c66",
           "scope": "original retained root/UI case revalidation"
         }
-      ]
+      ],
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "failed",
+        "exitCode": 1,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_zigbee_tooltip_layout.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     },
     {
       "id": "smoke:smoke_zoom_badge_visibility",
@@ -2518,7 +3151,15 @@
       },
       "originalRun": 41598951489,
       "originalStatus": "failed",
-      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zoom_badge_visibility.log"
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zoom_badge_visibility.log",
+      "latestCommonAudit": {
+        "run": 41679296259,
+        "material": "1f3a0f343f881ef59446c664baace3df8e72a635",
+        "status": "passed",
+        "exitCode": 0,
+        "log": "/home/runner/work/houseplan-card/houseplan-card/process-next/.state/runs/20261103T165919933-41abeafd/smoke_smoke_zoom_badge_visibility.log",
+        "scope": "Immutable1f3 profile; later addressed fixture ports are explicitly separate"
+      }
     }
   ],
   "targetedSummary": {
@@ -2528,11 +3169,12 @@
   },
   "notRerunPolicy": "Every one of the 33 previously not-rerun UI rows now has addressed local execution evidence. The preceding 45 classifications are unchanged; full integrated stable/HA audit remains the parent task.",
   "latestResumedSummary": {
-    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
-    "source": "latest addressed proofs, not a completed current stable profile",
+    "base": "accepted product0c030e700",
+    "source": "Actual1f3 full CI plus explicitly later addressed setup ports; per-case proofs, not a new all-green profile",
+    "run": 41679296259,
     "counts": {
-      "passed": 66,
-      "failed": 12
+      "passed": 64,
+      "failed": 14
     }
   }
 }

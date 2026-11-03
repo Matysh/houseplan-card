@@ -4,7 +4,7 @@ The796original unsuccessful entries from audit41598951489 are individually class
 
 - node-classification.json:210fixed,20retained RED in the latest addressed classification.
 - backend-classification.json:177 original cases addressed; the two remaining cases now have a successful ambiguous-host control and separate successful legacy/current cross-runtime target controls.
-- browser-all-classification.json joins root12, geometry32 and UI78 with exact original IDs:98addressed full-script successes;24retained failures;0not rerun. Every UI remainder has addressed evidence; actual failures retain their original guarantees. Status spelling is preserved from each sub-report.
+- browser-all-classification.json joins root12, geometry32 and UI78 with exact original IDs:95addressed full-script successes;27retained failures;0not rerun. Every UI remainder has addressed evidence; actual failures retain their original guarantees. Status spelling is preserved from each sub-report.
 - golden-classification.json: all9no-frame preparation errors repaired;258visual differences remain unapproved (139crop dimensions,119same-size pixels). Capture success never counts as baseline acceptance.
 
 These are per-case latest addressed proofs with their recorded source versions, not a claim that every case passed one new full profile. The resumed integration uses accepted product dev `0c030e700`; no product fix is authored by #1226. Permission/CAS guards, skips, thresholds and visual baselines were not weakened. Complete history/host/identity/privacy oracles remain. Only valid current graph fixtures, official frozen legacy decoders and actual native accessible controls replace obsolete setup assumptions.
@@ -86,6 +86,38 @@ proof in its own source branch predates the separate current storage-target
 fixture; both inventories remain accurately scoped. Current passport semantics
 still require explicit mapping review, not a source-inventory typo correction.
 Original populations remain230/177/122/267. Latest addressed counts are210 Node
-fixed with20classified retained RED,177backend addressed,98full browser successes
-with24retained RED. None of those retained rows is silently labelled a proven
+fixed with20classified retained RED,177backend addressed,95full browser successes
+with27retained RED. None of those retained rows is silently labelled a proven
 product bug or converted into a successful stable outcome.
+## Actual full profile and final setup revalidation
+
+The immutable latest full audit is
+[41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259),
+material1f3a0f343 and companion827fb417:539steps =504passed/33failed/two
+not-required, zero blocked; elapsed74m13.695s and zero reused. Actual Node is
+4427tests =4405PASS/21FAIL/one skipped across11groups. Backend2907 =2906PASS,
+zero failures,one skipped; coverage90.5% versus87.2% base, thresholdPASS.
+HA77/77business and10/10setupPASS, zero skipped/unexecuted. Browser512includes
+30failed. All326golden frames exist:59PASS/267unapproved differences. Measurements
+pass. This is honest RED, not a green stable/release certificate.
+
+Reconciliation against all122original failing browser positions keeps three
+newly observed CI performance/measurement failures visible despite earlier local
+PASS: daycycle invalid paired measurement, history0 long-task203ms versus200ms,
+and the #834 connected-node performance threshold. Limits are unchanged; these
+are not silently declared product regressions or waived as noise. Latest counts
+therefore become95full original successes/27retainedRED. Each original row now
+links its immutable full-run outcome, with later addressed proofs separate.
+
+[Two setup ports](final-two-setup-ports.md) then repair the actual Zigbee
+settings-owner readiness (44/44PASS) and converter cold-panel module lifecycle
+(6/6PASS). The converter failure is outside the original122failed positions and
+is recorded separately; it never inflates their success count. The two scripts
+retain every former negative/no-write/host/reload assertion. Three CI performance
+observations remain RED, without rerunning them or changing budgets.
+
+Later test edits are covered by their addressed results above, not retroactively
+attributed to1f3. The independently retained full-profile receipts and honest
+classification provide the AC3 facts; substantive review evaluates AC1–AC3
+without inventing an all-product-green gate or baseline approval when no baseline
+changes are proposed. Current passport proof work remains explicit.

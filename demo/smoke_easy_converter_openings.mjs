@@ -25,7 +25,7 @@ try {
   await converter.close();
 
   const mount = async () => {
-    await page.evaluate(async document => {
+    await page.evaluate(document => {
       const hass = window.__mkHass(), original = hass.callWS;
       hass.callWS = async message => {
         if (message.type === 'houseplan/config/get') return {
@@ -36,12 +36,18 @@ try {
         if (message.type === 'houseplan/config/set') throw Error('View must not write');
         return original(message);
       };
-      await import('/assets/houseplan-panel.js');
+      // HA assigns properties to the panel before its module upgrades it.
+      // Root module loading in the document, not an evaluate-only import
+      // promise which Chromium can collect before cold definition completes.
       const panel = window.document.createElement('houseplan-panel');
       panel.hass = hass;
       window.document.querySelector('#host').append(panel);
-      window.__card = panel.shadowRoot.querySelector('houseplan-card');
     }, document);
+    await page.addScriptTag({ type: 'module', url: 'http://demo.local/assets/houseplan-panel.js' });
+    await page.waitForFunction(() => document.querySelector('houseplan-panel')?.shadowRoot?.querySelector('houseplan-card'));
+    await page.evaluate(() => {
+      window.__card = document.querySelector('houseplan-panel').shadowRoot.querySelector('houseplan-card');
+    });
     await page.waitForFunction(() => window.__card?._loadOk);
   };
   const space = document.payload.config.spaces[0], opening = space.openings[0];

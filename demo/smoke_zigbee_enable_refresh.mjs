@@ -68,18 +68,24 @@ const setup = async (options = {}) => {
         if (message.type === 'zha/devices') { rpc.zha++; rpc.events.push('read-zha'); return []; }
         return callWS(message);
       } };
-    (card.shadowRoot || card.renderRoot).querySelector('[data-hp="settings"]').click(); await window.__hpTest.settled();
-    const dialog = (card.shadowRoot || card.renderRoot).querySelector('hp-dialog[data-kind="settings"]');
-    dialog.querySelector('[data-section-target="zigbee"]').click(); await window.__hpTest.settled();
-    const topology = dialog.querySelector('hp-zigbee-topology-settings');
-    topology.shadowRoot.querySelector('.hpf-toggle input[type="checkbox"]').click();
+  }, options);
+  // Locale adoption and the lazy dialog owner need not finish in two frames.
+  // Follow the real rendered controls; native locator clicks wait for their
+  // readiness instead of dereferencing an absent/stale dialog after settled().
+  await page.locator('[data-hp="settings"]').click();
+  const dialog = page.locator('hp-dialog[data-kind="settings"]');
+  await dialog.locator('[data-section-target="zigbee"]').click();
+  await dialog.locator('hp-zigbee-topology-settings .hpf-toggle input[type="checkbox"]').click();
+  await page.evaluate(async () => {
+    const topology = (window.__card.shadowRoot || window.__card.renderRoot)
+      .querySelector('hp-dialog[data-kind="settings"] hp-zigbee-topology-settings');
     await window.__hpTest.settled();
     // A provider absent from the synthetic HA is offered through a collapsed manual section.
     for (const details of topology.shadowRoot.querySelectorAll('details')) {
       if (details.querySelector('.scan-row, .hpf-actions') && !details.open) details.querySelector('summary').click();
     }
     await window.__hpTest.settled();
-  }, options);
+  });
 };
 const clickAction = async (provider = 'z2m', double = false) => page.evaluate(async ({ provider, double }) => {
   const topology = (window.__card.shadowRoot || window.__card.renderRoot).querySelector('hp-zigbee-topology-settings');

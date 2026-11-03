@@ -1,0 +1,22 @@
+[
+  {
+    "id":"smoke_zigbee_enable_refresh",
+    "file":"demo/smoke_zigbee_enable_refresh.mjs",
+    "originalFailure":true,
+    "category":"stale-setup-lifecycle",
+    "status":"fixed",
+    "reason":"Wait for actual settings dialog/tab/toggle through native public controls after HA locale adoption; generic settled did not guarantee this owner existed. All44 original checks retained.",
+    "evidence":"output/issue1226/final-two-setup/zigbee.log; exit0,44unique checks,OK",
+    "relatedIssue":1226
+  },
+  {
+    "id":"smoke_easy_converter_openings",
+    "file":"demo/smoke_easy_converter_openings.mjs",
+    "originalFailure":false,
+    "category":"stale-cold-panel-mount-lifecycle",
+    "status":"fixed",
+    "reason":"Use documented HA pre-upgrade panel properties and document-rooted actual module entry; replace evaluate-only import promise whose GC aborted setup. Download comparison and all6 door/host/reload/no-orphan checks plus View no-write remain.",
+    "evidence":"output/issue1226/final-two-setup/converter-r2.log; exit0,6unique checks,OK; initial missingyaml prerequisite not countedPASS",
+    "relatedIssue":1226
+  }
+]
