@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1222,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "The model11 migration introduced in the current 1.84 line made a legacy decor Undo structural and left its Redo snapshot without a graph. Keep exact decor-only history on the unchanged source carrier; all physical and mixed history still crosses the strict boundary.",
+  "summary": {
+    "ru": "Undo/Redo декора сохраняет стены старого плана и точную цепочку линий.",
+    "en": "Decor Undo/Redo preserves legacy wall carriers and the exact line chain."
+  }
+}

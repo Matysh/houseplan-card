@@ -43,6 +43,67 @@ for(const kind of ['legacy','draft','open-to','mixed-catalogue','missing-wall-id
   const frozen=structuredClone(config);assert.equal(restoreDecorOnlyHistory(config,before,target),false);assert.deepEqual(config,frozen);
  });
 
+const legacyFixture = version => {
+ const line=id=>({id,kind:'line',x1:.2,y1:.2,x2:.4,y2:.3,color:'#123456',width_cm:3});
+ const space={id:'a',rooms:[{id:'r',poly:[[0,0],[1,0],[1,1],[0,1]]}],
+  walls:[{a:[0,0],b:[1,0],cm:15}],open_spans:[],decor:[line('first'),line('second')]};
+ const config={...(version===undefined?{}:{model_version:version}),spaces:[space,{id:'foreign',rooms:[]}],markers:[],settings:{}};
+ const before={spaceId:'a',rooms:structuredClone(space.rooms),walls:structuredClone(space.walls),
+  open_spans:[],decor:structuredClone(space.decor),plan_transform:{},
+  decorLineSession:{token:101,anchor:[400,300]}};
+ const target={...structuredClone(before),decor:[structuredClone(space.decor[0])],
+  decorLineSession:{token:101,anchor:[200,200]}};
+ return{config,before,target};
+};
+
+for(const version of [undefined,5,9,10])test(`#1222 legacy ${version} decor Undo/Redo retains the exact source carrier`,()=>{
+ const {config,before,target}=legacyFixture(version),original=structuredClone(config),space=config.spaces[0];
+ const physical=[space.rooms,space.walls,space.open_spans,config.spaces[1]];
+ assert.equal(restoreDecorOnlyHistory(config,before,target),true);
+ assert.deepEqual(space.decor,target.decor);
+ // A live snapshot has no session cursor; it does not turn a decor step physical.
+ const live=structuredClone(target);delete live.decorLineSession;
+ assert.equal(restoreDecorOnlyHistory(config,live,before),true);
+ assert.deepEqual(config,original);
+ [space.rooms,space.walls,space.open_spans,config.spaces[1]].forEach((value,i)=>assert.equal(value,physical[i]));
+ assert.equal(Object.hasOwn(space,'plan_graph'),false);
+ assert.equal(config.model_version,version);
+});
+
+for(const kind of ['physical','references','node','chain','mixed','future','invalid-version'])
+ test(`#1222 ${kind} never gains legacy decor restore authority`,()=>{
+  const {config,before,target}=legacyFixture(10);
+  if(kind==='physical')target.rooms[0].poly[0][0]=.1;
+  if(kind==='references')target.roomReferences=[];
+  if(kind==='node')target.nodeMove={kind:'delete'};
+  if(kind==='chain')target.wallChainSeedIds=[];
+  if(kind==='mixed')config.spaces[1].plan_graph={version:1,nodes:[],edges:[],rooms:[],dependencies:[]};
+  if(kind==='future')config.model_version=12;
+  if(kind==='invalid-version')config.model_version='10';
+  const original=structuredClone(config);
+  assert.equal(restoreDecorOnlyHistory(config,before,target),false);
+  assert.deepEqual(config,original);
+ });
+
+test('#1222 the real history cursor restores legacy decor 2→1→2 without migrating walls',async()=>{
+ const {historyHarness}=await import('./helpers/geometry-history-harness.mjs');
+ const {config}=legacyFixture(10),h=historyHarness(config),space=h.host._serverCfg.spaces[0];
+ space.decor=space.decor.slice(0,1);
+ const before=h.runtime._geometrySnapshot('a');
+ before.decorLineSession={token:102,anchor:[200,200]};
+ space.decor.push({id:'second',kind:'line',x1:.4,y1:.3,x2:.7,y2:.45,width_cm:3});
+ h.runtime._recordGeometry('line',before,{token:102,anchor:[700,450]});
+ const accepted=structuredClone(h.host._serverCfg);
+ assert.equal(h.runtime._stepGeometryHistory('undo'),true);
+ assert.equal(h.host._serverCfg.model_version,10);
+ assert.equal(space.decor.length,1);
+ assert.equal(h.runtime._stepGeometryHistory('redo'),true);
+ assert.deepEqual(h.host._serverCfg,accepted);
+ assert.equal(space.decor.length,2);
+ assert.equal(h.counts.preflight,0);
+ assert.equal(h.host._geometryHistory.peekRedo(),null);
+});
+
 for(const field of ['stairs','transform'])test('#1100 '+field+' restore preserves exact physical identities and foreign fields',()=>{
  const {config,before,target}=fixture(),source=config.spaces[0],original=structuredClone(config);
  const refs=[source.rooms,source.walls,source.wall_segments,config.spaces[1],config.markers,config.settings];
