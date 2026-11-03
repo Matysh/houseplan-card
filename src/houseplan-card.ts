@@ -1412,12 +1412,14 @@ export class HouseplanCard extends LitElement {
   }
 
   private _settleCameraTransition(state: CameraTransitionState): void {
+    const saveZoom = !this._screenCameraAutomatic;
     const target = this._normalizeCameraState(state.to);
     this._zoom = target.zoom;
     this._view = { ...target.viewBox };
     this._cameraTransitionFit = null;
     this._screenCameraTransition = false;
-    if (state.reason !== 'room') this._saveZoom();
+    this._screenCameraAutomatic = false;
+    if (saveZoom && state.reason !== 'room') this._saveZoom();
     this.requestUpdate();
   }
 
@@ -1431,6 +1433,7 @@ export class HouseplanCard extends LitElement {
    *  before #82 the zoom commands persisted it synchronously. Keeping both on
    *  one branch is what lost the interrupted zoom. */
   private _cancelCameraTransition(commitTarget = false, keepPresented = false): void {
+    const saveZoom = !this._screenCameraAutomatic;
     const reason = this._cameraTransition.state?.reason;
     const presentedZoom = keepPresented && this._cameraTransition.active
       ? this._cameraTransition.presented?.zoom
@@ -1439,7 +1442,8 @@ export class HouseplanCard extends LitElement {
     if (!keepPresented) this._zoomScaleActivity.reset();
     this._cameraTransitionFit = null;
     this._screenCameraTransition = false;
-    if (presentedZoom !== undefined && reason !== 'room') this._saveZoom();
+    this._screenCameraAutomatic = false;
+    if (saveZoom && presentedZoom !== undefined && reason !== 'room') this._saveZoom();
   }
 
   /** A discrete camera command may follow a rapid mode click. Finish that
@@ -2675,6 +2679,8 @@ export class HouseplanCard extends LitElement {
   private _screenReferencePending = false;
   private _screenFitRequest: 'fit' | 'home' | 'double-tap' | null = null;
   private _screenCameraTransition = false;
+  /** Reference/layout changes are presentation, not a new saved user zoom. */
+  private _screenCameraAutomatic = false;
   private _screenRecoveredCamera = false;
   private _screenRestoreZoom: number | null = null;
   private get _hasScreenProfile(): boolean { return this._kiosk && this._externalScreen.profile !== undefined; }
@@ -2724,6 +2730,12 @@ export class HouseplanCard extends LitElement {
     const key = JSON.stringify([screen, this._centerSummary, this._space, this._rotation, vb, display, size, geometry.key]);
     if (!explicit && !this._screenReferencePending && key === this._screenReferenceKey) return;
     const previous = this._screenReference, current = this._cameraState();
+    if (!previous && !this._view && !this._hasScreenProfile && this._screenRestoreZoom === null) {
+      // Cached geometry may paint before config/get returns. Preserve HP-1551's
+      // saved scalar on that first camera as well as on authoritative restore.
+      const saved = Number(this._zoomBySpace[this._space]);
+      if (Number.isFinite(saved) && saved > 0) this._screenRestoreZoom = saved;
+    }
     const fullReference = !previous && !this._hasScreenProfile
       ? screenCameraTarget(vb, display, this._rotation, size, screenFreeArea(...size, null), 1) : null;
     const follow = !this._screenRecoveredCamera && (this._screenReferencePending
@@ -2743,7 +2755,10 @@ export class HouseplanCard extends LitElement {
         ? screenCameraTarget(vb, display, this._rotation, size, free, explicit ? 1 : multiplier)! : reference;
       this._cancelCameraTransition(false);
       this._screenCameraTransition = true;
-      if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', explicit ? CAMERA_FIT_MS : 0)) this._screenCameraTransition = false;
+      this._screenCameraAutomatic = !explicit;
+      if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', explicit ? CAMERA_FIT_MS : 0)) {
+        this._screenCameraTransition = false; this._screenCameraAutomatic = false;
+      }
     } else if (previous) {
       const view = current.viewBox;
       const camera = physicalPlanCamera({ centerX: view.x + view.w / 2, centerY: view.y + view.h / 2,
