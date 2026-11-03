@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1904,
-  "nextTicket": 121,
+  "revision": 1905,
+  "nextTicket": 122,
   "nextFence": 121,
   "tasks": {
     "1126": {
@@ -2255,6 +2255,20 @@
         "sourceSha": "6aa9503096daac765d314d3ae8f39af44544fedd"
       }
     },
+    "1244": {
+      "issue": 1244,
+      "track": "show",
+      "layer": "product",
+      "branch": "issue/1244-opening-floor-fade",
+      "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 121,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793728650296,
+      "reviewEntry": 1
+    },
     "1247": {
       "issue": 1247,
       "branch": "issue/1247-wall-preview",
@@ -2428,7 +2442,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1244
+  ],
   "active": {
     "issue": 1248,
     "worker": "finish",
@@ -2570,6 +2586,19 @@
         "materialSha": "c8266cfb23ec718eaa33707681532e4a2604c646",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
+      "digest": "24e1edf7aed6946369b9de71ffcd021fc2d7471c2da828ba1aefa7c0e63b2fa5",
+      "issue": 1244,
+      "message": {
+        "kind": "queued",
+        "issue": 1244,
+        "at": 1793728650296,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d17aaa884ea90fd7b1bb3712022fa148dfbba2b4"
       }
     }
   },
