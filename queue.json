@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1471,
+  "revision": 1472,
   "nextTicket": 101,
   "nextFence": 101,
   "tasks": {
@@ -1924,28 +1924,9 @@
     "expiresAt": 1793714223377
   },
   "events": {
-    "finish:f0c375e0-c8c0-452a-b1ef-d175bc411dd6:finish:3:s6-complete": {
-      "digest": "35a41664cdbe38c0af970b4cced5c62f55683c1e02b65db4447baba772d29b9c",
-      "issue": 1228,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1228,
-        "at": 1793713876533,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261103T135038026-3c2ea254",
-          "name": "Тесты для задачи #1228 (перед слиянием)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261103T135038026-3c2ea254/report.json",
-          "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
-          "status": "passed",
-          "finishedAt": "2026-11-03T13:51:15.354Z",
-          "failures": []
-        }
-      }
+    "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
+      "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
+      "issue": 1230
     },
     "dev-build:41647776421:1:1229": {
       "digest": "2de089bd42a43ab9d5640b11fdcaa2251f7e596e922c5bbadaad409e12f8d4bf",
