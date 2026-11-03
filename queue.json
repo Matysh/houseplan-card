@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1186,
+  "revision": 1187,
   "nextTicket": 87,
   "nextFence": 87,
   "tasks": {
@@ -1507,7 +1507,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793687974273,
       "reviewEntry": 2,
-      "patchId": "684ad6837980c84e4ed02473b892ca447ab732ec",
+      "patchId": "ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e",
       "changedFiles": [
         ".github/workflows/process-next-coordinator.yml",
         "README.md",
@@ -1647,10 +1647,11 @@
     "token": "86:finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:1:admit",
     "fence": 86,
     "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+    "phase": "testing",
     "admittedAt": 1793687977708,
-    "expiresAt": 1793688277708
+    "expiresAt": 1793688288887,
+    "patchId": "ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e"
   },
   "events": {
     "github:41504682134:1:label:spec-request": {
@@ -1751,6 +1752,10 @@
     },
     "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return": {
       "digest": "5cdcecf81c43bdac50f39cfafced40daaaa86facc90332ab29a66cf47b0358e3",
+      "issue": 1217
+    },
+    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:2:synchronized": {
+      "digest": "97ef70bdf6a1244e7b741ff646d354f704835d33491af136d191b4a9a8dd8a76",
       "issue": 1217
     },
     "finish:76fee0a2-808b-4b07-b51c-a30b938993cb": {
