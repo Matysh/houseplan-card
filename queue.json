@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1687,
+  "revision": 1688,
   "nextTicket": 113,
   "nextFence": 111,
   "tasks": {
@@ -2043,7 +2043,7 @@
       "ownerDecision": null,
       "ticket": 110,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793716117830,
       "reviewEntry": 2,
       "notice": {
@@ -2068,7 +2068,16 @@
         "test/direct-wall-geometry.test.mjs",
         "test/opening-drag-coverage.test.mjs",
         "test/opening-drag.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T143512842-cc1759c2",
+        "name": "Тесты для задачи #1236 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1097-opening-drag-20261028/.git/process-next/runs/20261103T143512842-cc1759c2/report.json",
+        "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+        "status": "passed",
+        "finishedAt": "2026-11-03T14:35:58.663Z",
+        "failures": []
+      }
     },
     "1237": {
       "issue": 1237,
@@ -2262,9 +2271,9 @@
     "fence": 110,
     "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
     "expectedBase": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793716454328,
-    "expiresAt": 1793716841226,
+    "expiresAt": 1793720159927,
     "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50"
   },
   "events": {
@@ -2599,6 +2608,29 @@
         "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:2:s6-complete": {
+      "digest": "36d99ab82a447c1f5913b06a9a3cbbd2684dad1d3d6924f6714cfff5469ba015",
+      "issue": 1236,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1236,
+        "at": 1793716559927,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T143512842-cc1759c2",
+          "name": "Тесты для задачи #1236 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1097-opening-drag-20261028/.git/process-next/runs/20261103T143512842-cc1759c2/report.json",
+          "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+          "status": "passed",
+          "finishedAt": "2026-11-03T14:35:58.663Z",
+          "failures": []
+        }
       }
     }
   },
