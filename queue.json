@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1404,
+  "revision": 1405,
   "nextTicket": 97,
   "nextFence": 97,
   "tasks": {
@@ -1969,6 +1969,10 @@
       "digest": "88d8ab855e9ef59a2d4e4bfbc58e6a4dad7e96f1c55a6040abb6ff81cba46920",
       "issue": 1227
     },
+    "github:41628812584:1:completions:message:af09d66ad91c7fcfc62de3b1a5357592d54847dd82ae877311fb86fb595a2783": {
+      "digest": "17f7cce32c2ca18ccbc872cd3ded29e75b49ecd67a4d40bb0ada842b6bd0b950",
+      "issue": 1227
+    },
     "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb": {
       "digest": "1e61753fdc132d2703cdff07afce9d98e4a9f700d5d2e9893f14b90ea1d477fb",
       "issue": 1227,
@@ -2015,7 +2019,8 @@
           "entry": 1,
           "detail": "Браузер: space copy: failed",
           "eventId": "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:6:return:return:1227"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:0d3bad7a-cd68-48aa-b2bd-f049c167c4db": {
