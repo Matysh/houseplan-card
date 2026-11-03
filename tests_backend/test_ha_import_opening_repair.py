@@ -256,3 +256,84 @@ async def test_confirmed_full_import_survives_actual_reload_and_undo(hass, tmp_p
     assert undo.error is None and undo.result["ok"]
     assert (await runtime.config_store.async_load())["config"] == current
     assert (await runtime.store.async_load())["layout"] == {}
+
+
+def _seam_document(tmp_path, carrier_kind="partition", export_kind="full"):
+    from tests_backend.test_graph_host_continuity import space
+    current = space()
+    if carrier_kind == "wall":
+        graph = deepcopy(current["plan_graph"])
+        for edge in graph["edges"]:
+            edge["kind"] = "wall"
+        current["openings"][0]["host"]["kind"] = "wall"
+        current = project_graph_space(current, graph)["space"]
+    config = {"model_version": 11, "spaces": [current], "markers": [], "settings": {}}
+    CONFIG_SCHEMA(deepcopy(config))  # This is a valid existing host, not repair input.
+    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config}, {"layout": {}},
+        kind=export_kind, space_id="s" if export_kind == "space" else None,
+        card_version="review", config_root=tmp_path)
+    return document
+
+
+@pytest.mark.parametrize("carrier_kind", ["wall", "partition"])
+@pytest.mark.parametrize("export_kind", ["full", "space"])
+def test_valid_current_opening_across_atom_seam_needs_no_repair(tmp_path, carrier_kind, export_kind):
+    document = _seam_document(tmp_path, carrier_kind, export_kind)
+    original = deepcopy(_door(document))
+    parsed = parse_document(json.dumps(document).encode())
+    assert _door(parsed) == original
+    response, candidate, _, _ = _preview(tmp_path, document)
+    assert response["preview"]["opening_repairs"]["detached"] == 0
+    assert response["preview"]["opening_repairs"]["rehosted"] == 0
+    assert not response["preview"]["confirmation_required"]
+    assert _door(candidate["document"]) == original
+
+
+@pytest.mark.parametrize("carrier_kind", ["wall", "partition"])
+def test_overlapping_openings_on_different_atoms_share_one_import_interval(tmp_path, carrier_kind):
+    document = _seam_document(tmp_path, carrier_kind)
+    original = deepcopy(_door(document))
+    document["payload"]["config"]["spaces"][0]["openings"].append({
+        **deepcopy(original), "id": "overlap", "host": {
+            "kind": carrier_kind, "id": "two", "t": 0, "tq": ["0", "1"]},
+    })
+    response, candidate, _, _ = _preview(tmp_path, document)
+    assert response["preview"]["opening_repairs"]["detached"] == 1
+    openings = candidate["target_config"]["spaces"][0]["openings"]
+    assert openings[0] == original and "host" not in openings[1]
+
+
+def test_nearby_wall_opening_can_repair_across_an_atom_seam(tmp_path):
+    document = _seam_document(tmp_path, "wall")
+    original = deepcopy(_door(document))
+    _door(document)["y"] += .00001
+    response, candidate, _, _ = _preview(tmp_path, document)
+    assert response["preview"]["opening_repairs"]["rehosted"] == 1
+    assert response["preview"]["opening_repairs"]["detached"] == 0
+    assert not response["preview"]["confirmation_required"]
+    assert candidate["target_config"]["spaces"][0]["openings"][0] == original
+
+
+def test_repair_cannot_overlap_an_intact_opening_hosted_on_a_neighbor_atom(tmp_path):
+    document = _seam_document(tmp_path, "wall")
+    opening = _door(document)
+    opening["host"].update(t=.98, tq=["49", "50"])
+    opening["x"], opening["length"] = .49, .08
+    original = deepcopy(opening)
+    document["payload"]["config"]["spaces"][0]["openings"].append({
+        **deepcopy(original), "id": "broken", "x": .54, "y": .00001,
+        "host": {"kind": "wall", "id": "gone", "t": .5, "tq": ["1", "2"]},
+    })
+    response, candidate, _, _ = _preview(tmp_path, document)
+    assert response["preview"]["opening_repairs"]["detached"] == 1
+    assert response["preview"]["opening_repairs"]["rehosted"] == 0
+    openings = candidate["target_config"]["spaces"][0]["openings"]
+    assert openings[0] == original and "host" not in openings[1]
+
+
+def test_missing_room_id_keeps_the_invalid_config_error_boundary(tmp_path):
+    document = _document(tmp_path)
+    document["payload"]["config"]["spaces"][0]["rooms"][0].pop("id")
+    with pytest.raises(ImportFailure) as rejected:
+        parse_document(json.dumps(document).encode())
+    assert rejected.value.code == "invalid_config"

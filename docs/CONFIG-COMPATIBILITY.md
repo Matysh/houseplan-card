@@ -919,6 +919,12 @@ are checked against their exact projection; a nearby repair computes a fresh
 exact parameter and projects only that opening. The accepted graph and every
 room/wall/partition projection remain subject to the unchanged strict schema:
 repair never drops the graph or rebuilds its projections to hide corruption.
+Current fit and overlap use the same collinear physical runs as the schema,
+including valid openings across atom seams. Atom IDs within one such run do
+not create a second candidate carrier, and every atom shares its interval
+ledger. Distinct identity, thickness, properties or ambiguous branches keep
+their existing continuity boundaries. A current host missing `tq` is repaired
+through the same transfer path; an intact exact host remains unchanged.
 
 There is deliberately no provenance flag. Existing v8 `cm:0` and atoms derived
 from legacy virtual spans are identical. Consequently some old plans may change

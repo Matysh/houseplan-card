@@ -37,9 +37,13 @@ from .coordinate_canonicalization import (
     canonicalize_lattice_coordinate,
     canonicalize_number,
 )
-from .validation import partition_opening_host_fault, wall_opening_host_fault
-from .plan_graph import GraphIndex, project_graph_opening, validate_graph
-from .plan_graph_exact import GraphError, decode_rational, encode_rational, project_parameter, read_source_point
+from .validation import (
+    _angle_delta_mod_180, _reserve_host_interval,
+    partition_opening_host_fault, wall_opening_host_fault,
+)
+from .graph_host_continuity import GraphHostContinuity
+from .plan_graph import project_graph_opening
+from .plan_graph_exact import GraphError, decode_rational, encode_rational, project_parameter, read_source_point, to_numbers
 from .wall_segment_model import (
     LEGACY_WALL_SEGMENT_MODEL_VERSION,
     opening_frame,
@@ -84,7 +88,7 @@ def _host(opening: Any, *, canonical_view: bool = False) -> dict[str, Any] | Non
         projections = (float(exact), canonicalize_number(float(exact))) if canonical_view else (float(exact),)
         if host["t"] not in projections:
             if not canonical_view:
-                raise GraphError("opening_parameter_projection_mismatch")
+                raise GraphError("opening_projection_mismatch")
             return None
     return host
 
@@ -104,9 +108,59 @@ def _intervals(openings: list[Any], carrier: dict[str, Any], skip: Any) -> list[
     return taken
 
 
+def _graph_host_fault(opening: dict, continuity: GraphHostContinuity, occupied: dict) -> str | None:
+    """The schema's current-model fit/angle/overlap rule on a physical run."""
+    host = opening["host"]
+    run = continuity.interval(host)
+    if run is None:
+        return "opening host must have positive thickness"
+    identity, span, along = run
+    if host["kind"] == "wall":
+        edge = continuity.index.edges[("wall", host["id"])]
+        a, b = (to_numbers(continuity.index.points[edge[side]]) for side in ("from", "to"))
+        angle = math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
+        if _angle_delta_mod_180(float(opening["angle"]), angle) > 8:
+            return "wall opening angle must match its host"
+    prefix = "wall" if host["kind"] == "wall" else "partition"
+    return _reserve_host_interval(opening, span, along, occupied.setdefault(identity, []),
+        fit=f"{prefix} opening must fit inside its host", overlap=f"{prefix} openings must not overlap")
+
+
+def _place_on_graph_wall(
+    view: dict, segments: list[dict], continuity: GraphHostContinuity, occupied: dict,
+) -> dict | None:
+    """A unique eligible physical run; atom seams do not create ambiguity."""
+    frame = opening_frame(view)
+    if frame is None:
+        return None
+    centre, angle, _half = frame
+    index = continuity.index
+    candidates = {}
+    for carrier in sorted(segments, key=lambda item: str(item.get("id", ""))):
+        # Test centre proximity/angle on this atom, then width on the whole run.
+        if not wall_carrier_eligible(carrier, centre, angle, 0):
+            continue
+        edge = index.edges[("wall", carrier["id"])]
+        t = project_parameter(read_source_point(centre), index.points[edge["from"]], index.points[edge["to"]])
+        if not 0 <= t <= 1:
+            continue
+        placed = project_graph_opening({**view, "host": {
+            "kind": "wall", "id": carrier["id"], "t": float(t), "tq": encode_rational(t),
+        }}, index)
+        if _graph_host_fault(placed, continuity, {}) is None:
+            identity, _span, _along = continuity.interval(placed["host"])
+            candidates.setdefault(identity, placed)
+    if len(candidates) != 1:
+        return None
+    placed = next(iter(candidates.values()))
+    # Reserve only the accepted placement. Intact openings and earlier repairs
+    # on every atom of this run share the same ledger.
+    return None if _graph_host_fault(placed, continuity, occupied) else placed
+
+
 def _place_on_wall(
     view_space: dict[str, Any], view: dict[str, Any], segments: list[dict[str, Any]],
-    model: int, graph_index: GraphIndex | None = None,
+    model: int, continuity: GraphHostContinuity | None = None, occupied: dict | None = None,
 ) -> dict[str, Any] | None:
     """The placement the next plan write would give an unhosted opening, checked.
 
@@ -115,6 +169,8 @@ def _place_on_wall(
     The placement is canonicalised and judged by the schema predicate and by
     the carrier rule again, so that write keeps it as it is.
     """
+    if continuity is not None:
+        return _place_on_graph_wall(view, segments, continuity, occupied if occupied is not None else {})
     frame = opening_frame(view)
     if frame is None:
         return None
@@ -138,14 +194,6 @@ def _place_on_wall(
             float(carrier["a"][1]) + (float(carrier["b"][1]) - float(carrier["a"][1])) * t),
         "host": {"kind": "wall", "id": carrier["id"], "t": canonicalize_number(t)},
     }
-    if graph_index is not None:
-        # Only this repaired opening gets exact host coordinates/tq. Never
-        # regenerate graph/room/wall projections to make a corrupt file pass.
-        edge = graph_index.edges[("wall", carrier["id"])]
-        exact_t = project_parameter(read_source_point(centre),
-            graph_index.points[edge["from"]], graph_index.points[edge["to"]])
-        placed["host"].update(tq=encode_rational(exact_t), t=float(exact_t))
-        placed = project_graph_opening(placed, graph_index)
     if wall_opening_host_fault(placed, carrier, _intervals(view_space["openings"], carrier, view)):
         return None
     if not wall_carrier_eligible(carrier, [placed["x"], placed["y"]], angle, half):
@@ -175,9 +223,10 @@ def _repair_space(
     segments = [item for item in raw_segments if isinstance(item, dict)] \
         if isinstance(raw_segments, list) else []
     by_id = {item.get("id"): item for item in segments}
-    graph_index = validate_graph(view_space.get("plan_graph"), {
-        "room_ids": {room["id"] for room in view_space.get("rooms", [])},
-    }) if model >= 11 else None
+    # Continuity owns one validated index, reused for exact projection and fit.
+    continuity = GraphHostContinuity(view_space) if model >= 11 else None
+    graph_index = continuity.index if continuity is not None else None
+    graph_taken: dict = {}
     wall_taken: dict[str, list[tuple[float, float]]] = {}
     partition_taken: dict[str, list[tuple[float, float]]] = {}
     broken: list[int] = []
@@ -192,9 +241,13 @@ def _repair_space(
         try:
             # Reject an off-graph position before reserving its old interval:
             # a broken earlier opening cannot displace a later intact one.
-            if (graph_index is not None and (host["kind"], host["id"]) in graph_index.edges
-                    and project_graph_opening(view, graph_index) != view):
-                fault: str | None = "opening projection must match its graph host"
+            if continuity is not None:
+                if (host["kind"], host["id"]) not in graph_index.edges:
+                    fault: str | None = "opening host must exist in the same space"
+                elif project_graph_opening(view, graph_index) != view:
+                    fault = "opening projection must match its graph host"
+                else:
+                    fault = _graph_host_fault(view, continuity, graph_taken)
             elif host["kind"] == "partition":
                 partition = partitions.get(host["id"])
                 if model >= 8 and partition is not None and float(partition["cm"]) <= 0:
@@ -226,7 +279,7 @@ def _repair_space(
         placed = None
         if segments:
             try:
-                placed = _place_on_wall(view_space, view, segments, model, graph_index)
+                placed = _place_on_wall(view_space, view, segments, model, continuity, graph_taken)
             except _UNREADABLE:
                 placed = None
         if placed is not None:
