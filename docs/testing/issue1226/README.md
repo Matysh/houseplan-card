@@ -32,3 +32,32 @@ The later HA-fixture diagnostic [41646456489](https://github.com/Matysh/housepla
 The separate current #280rehost packet is independently proved through real HA WebSocket acceptance, full stored-config equality and Undo (3/3addressed backend cases; original legacy targets retained). This is an added cross-runtime witness, not an increase of the original177-failure count.
 
 The resumed shared audit is [41662157218](https://github.com/Matysh/houseplan-card/actions/runs/41662157218), material `0bda944e3` and companion `a5ba81a`. It is actual HA proof for #1225 and a diagnostic for #1226; later test-only ports on this branch are not retroactively covered by that SHA. Source build/test-build was prepared once and shared into the analysis checkouts. Addressed results and exact boundaries are in [resumed-controls.md](resumed-controls.md) and [ui-five-followup.md](ui-five-followup.md). No final AC3 or pending HA result is declared passed.
+
+## Completed resumed shared audit (41662157218)
+
+The existing common audit completed on clean material
+`0bda944e3244a142449c30c5f802c14833af8c66` with companion
+`a5ba81afb2b624e6b84d9b3605c63e97322efb25`. Runner execution lasted
+70m26s (15:18:31–16:28:57 UTC); the surrounding Actions job also includes
+preparation/upload. Its 539 plan entries are 492 passed, 44 failed, two
+not-required and one blocked; none was reported reused in this run.
+
+Actual HA accounting is **77 executed: 73 passed, three failed, one timed out,
+zero skipped/unexecuted**. All ten setup cases passed. First-space lattice,
+current dirty export/import and native profile cases now pass. The remaining
+four cases are negative-import response-body capture, roomless Copy rendering,
+legacy import Undo, and stored vacuum trail; their primary failures are being
+diagnosed separately. A failed/timed-out case is not accepted as a pass.
+
+Node geometry reports 1268 passed, 23 failed and one skipped. Backend reports
+2904 passed, one failed and one skipped. Golden capture produced all 326 frames:
+59 passed and 267 unapproved differences, with zero missing frames. These
+numbers describe this immutable earlier candidate only. Later addressed fixture
+ports and cross-runtime target controls are recorded separately above; no
+later change is retroactively certified by this audit. The original 796-entry
+classification remains intact, and no visual baseline was accepted.
+
+The downloaded primary result lives in the author's workspace at
+`output/issue1225-audit-41662157218`; it was downloaded once. No new run is
+started by documenting this result. #1226 remains S6 + blocked; neither its
+final AC3 nor a release is claimed.
