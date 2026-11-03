@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1394,
-  "nextTicket": 96,
+  "revision": 1395,
+  "nextTicket": 97,
   "nextFence": 96,
   "tasks": {
     "1126": {
@@ -1702,14 +1702,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1227-space-copy",
-      "materialSha": "efa074d70f30b1c2d26b5e53b657797109dab7fb",
+      "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 94,
-      "queued": false,
+      "ticket": 96,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793704370977,
-      "reviewEntry": 1,
+      "readyAt": 1793705694976,
+      "reviewEntry": 2,
       "patchId": "ee78a8cbbe841a458773ebdf982ea33f321e7646",
       "changedFiles": [
         "custom_components/houseplan/space_copy.py",
@@ -1728,7 +1728,6 @@
         "test/space-copy.test.mjs",
         "tests_backend/test_ha_space_copy.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -1843,7 +1842,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1227
+  ],
   "active": null,
   "events": {
     "github:41626530748:1:completions:message:7971239504d39e4dd3c929a21e11b35b75fe7301554e4e780bdf008436172112": {
@@ -1957,6 +1958,19 @@
           "detail": "Браузер: space copy: failed",
           "eventId": "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:6:return:return:1227"
         }
+      }
+    },
+    "finish:0d3bad7a-cd68-48aa-b2bd-f049c167c4db": {
+      "digest": "26cbf951679a6982c9deec59e901416c6fd548cce5ae64ce7cd5646aa8af28db",
+      "issue": 1227,
+      "message": {
+        "kind": "queued",
+        "issue": 1227,
+        "at": 1793705694976,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf"
       }
     }
   },
