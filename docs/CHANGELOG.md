@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.84.0-beta.3 — 2026-11-04
+
 - Keep node grab cursors, context menus and endpoint movement after accepted Python integration writes by comparing graph projections independently of JSON object-key order; retain strict checks for changed values and array order. Cover consecutive saves, Undo/Redo and reload through the production Python node-write path. [#1256](https://github.com/Matysh/houseplan-card/issues/1256) [#1257](https://github.com/Matysh/houseplan-card/issues/1257)
 
 - Limit coordinator and CI-status checkout to process tools and their imports, preserving Git ancestry and fetching other file contents only when needed. [#1252](https://github.com/Matysh/houseplan-card/issues/1252)
