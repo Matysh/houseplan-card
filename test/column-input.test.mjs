@@ -38,6 +38,17 @@ test('#1230 direct graph edit cannot launder NaN to null', () => {
   assert.ok(Number.isNaN(draft.wall_columns[0].center[0]));
 });
 
+for (const prepared of [false, true]) test(`#1230 refuses a sparse column center (prepared=${prepared})`, () => {
+  const h = harness(), original = structuredClone(h.host._serverCfg);
+  const before = h.runtime._geometrySnapshot('f');
+  const center = [1, 1]; delete center[0];
+  h.host._serverCfg.spaces[0].wall_columns = [{ ...column(), center }];
+  assert.equal(h.runtime._commitPhysicalGeometry('column', before, [], true,
+    prepared ? { kind: 'prepared', base: before.plan_graph } : { kind: 'metadata' }), false);
+  assert.deepEqual(h.host._serverCfg, original);
+  assert.deepEqual(h.history, []);
+});
+
 for (const shape of ['square', 'circle']) test(`#1230 valid ${shape} columns retain exact input and opaque metadata`, () => {
   const h = harness(), before = h.runtime._geometrySnapshot('f');
   const candidate = { ...column(), shape, center: [0.987654321, 1], custom: { label: 'keep', unset: null } };
