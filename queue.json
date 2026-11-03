@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2016,
+  "revision": 2017,
   "nextTicket": 130,
   "nextFence": 127,
   "tasks": {
@@ -1699,265 +1699,25 @@
     },
     "1225": {
       "issue": 1225,
+      "branch": "codex/1225",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/1225",
-      "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 126,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793730651808,
-      "reviewEntry": 2,
-      "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/testing/issue1225/HA-41662157218.json.txt",
-        "docs/testing/issue1225/HA-41679296259.json.txt",
-        "docs/testing/issue1225/MANIFEST.json",
-        "docs/testing/issue1225/README.md",
-        "docs/testing/issue1225/companion-full.patch",
-        "docs/testing/issue1225/companion/base/.github/workflows/e2e.yml.txt",
-        "docs/testing/issue1225/companion/base/fixtures/backups/README.md.txt",
-        "docs/testing/issue1225/companion/base/scripts/tags.mjs.txt",
-        "docs/testing/issue1225/companion/base/scripts/users.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/editor-decor.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/editor-plan.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/first-run/first-space.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/ha-bootstrap.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/backup-fixtures.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/backup.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/contract.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/ha-api.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/ha-ctl.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/ha-page.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/ha-ws.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/held-config-reply.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/hooks.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/panel-kiosk-journeys.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/panel-profiles.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/panel-release-contract.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/panel-shell.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/plan.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/seed-guard.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/lib/zip.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/panel-kiosk.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/panel-profiles.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/panel-profiles.viewer.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/plan-model.setup.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/space-copy-lifecycle.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/transfer-export.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/transfer-import.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/base/tests/vacuum-trail.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/.github/workflows/e2e.yml.txt",
-        "docs/testing/issue1225/companion/head/README.md.txt",
-        "docs/testing/issue1225/companion/head/contract/data-hp-contract.json.txt",
-        "docs/testing/issue1225/companion/head/fixtures/backups/README.md.txt",
-        "docs/testing/issue1225/companion/head/fixtures/backups/current-dirty-geometry.json.txt",
-        "docs/testing/issue1225/companion/head/fixtures/backups/legacy10-transfer-cases.json.txt",
-        "docs/testing/issue1225/companion/head/package-lock.json.txt",
-        "docs/testing/issue1225/companion/head/package.json.txt",
-        "docs/testing/issue1225/companion/head/playwright.config.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/ha.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/install-houseplan.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/plan-run.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/prepare-seed.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/release-plan.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/tags.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/tree-digest.mjs.txt",
-        "docs/testing/issue1225/companion/head/scripts/users.mjs.txt",
-        "docs/testing/issue1225/companion/head/seed/.storage/houseplan.config.txt",
-        "docs/testing/issue1225/companion/head/seed/.storage/houseplan.layout.txt",
-        "docs/testing/issue1225/companion/head/seed/.storage/houseplan.trails.txt",
-        "docs/testing/issue1225/companion/head/seed/houseplan/plans/first-floor.svg.txt",
-        "docs/testing/issue1225/companion/head/task-impact/houseplan-card-1216.md.txt",
-        "docs/testing/issue1225/companion/head/task-impact/houseplan-card-1225-ha-results.json.txt",
-        "docs/testing/issue1225/companion/head/task-impact/houseplan-card-1225.md.txt",
-        "docs/testing/issue1225/companion/head/test/profile-fixtures.test.mjs.txt",
-        "docs/testing/issue1225/companion/head/test/visible-plan-target.test.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/00-vacuum-trail.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/editor-decor.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/editor-plan.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/first-run/first-space.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/ha-bootstrap.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/backup-fixtures.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/backup.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/contract.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/exact-graph-first-space.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/ha-api.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/ha-ctl.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/ha-page.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/ha-ws.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/held-config-reply.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/hooks.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/panel-kiosk-journeys.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/panel-profiles.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/panel-release-contract.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/panel-shell.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/plan.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/preview-observer.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/profile-fixtures.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/seed-guard.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/visible-plan-target.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/lib/zip.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/panel-kiosk.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/panel-profiles.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/panel-profiles.viewer.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/plan-model.setup.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/space-copy-lifecycle.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/transfer-export.admin.spec.mjs.txt",
-        "docs/testing/issue1225/companion/head/tests/transfer-import.admin.spec.mjs.txt",
-        "process-next/lib/e2e.mjs",
-        "process-next/test/e2e.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793730514050,
-        "entry": 1,
-        "detail": "Синтаксис и типы изменённых инструментов: failed",
-        "eventId": "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:4:return:return:1225"
-      },
-      "s6": {
-        "id": "20261103T183410572-78e3f170",
-        "name": "Тесты для задачи #1225 (перед ревью)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261103T183410572-78e3f170/report.json",
-        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "status": "passed",
-        "finishedAt": "2026-11-03T18:34:10.848Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+      "mergedSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
+      "mergedAt": 1793731598593,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-      "reviewMaterial": {
-        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1225,
-        "requestId": "review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "kind": "code",
-        "base": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1225,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1225",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "S6: actual HA доказательства готовы — 77/77 business и10/10setup PASS,0fail/timeout/skip/unexecuted. [Первичный прогон41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259) независимо пересчитан из raw Playwright JSON; published summaries совпадают. Далее штатный finish/show. Релиз не выполняется.\n\n<details>\n<summary>Закреплённые исходники, доказательства и границы готовности</summary>\n\n### Прямая инструкция владельца о побочных находках\n\nНовые побочные находки сохранять только в отдельном файле / полном Markdown отчёте ревью; GitHub issues не создавать, включая автоматическую публикацию outsideFindings. Качество ревью, High/Medium и findings по самой задаче не скрывать: все task-blockers идут в обычные blockers и влияют на вердикт. Если structured outsideFindings автоматически создаёт issue без переключателя, эту autoissue-коллекцию не использовать по прямой инструкции владельца; полное out-of-scope наблюдение с важностью, доказательством и направлением исправления отразить в текстовой analysis/boundaries части полного Markdown, затем исполнитель сохранит его в отдельный файл. Нового request field, override или изменения конвейера не вводить.\n### Материал для обычного show code review\n\nProduct branch `codex/1225`, commit `251b625727351478a70781925df6ae1798316ca3`; runner `process-next/lib/e2e.mjs`, тесты `process-next/test/e2e.test.mjs`. Основной внешний материал: [houseplan-e2e PR18](https://github.com/Matysh/houseplan-e2e/pull/18), base `115ae6f985f084696cde3f419d88d7751c4de972`, head `827fb417858e10e2362092e26960f7c8ae4c5ac0`.\n\nМодель ревью читает product Git без сети. Полный внешний diff и исходники доступны обычным read_file по [docs/testing/issue1225/README.md](https://github.com/Matysh/houseplan-card/blob/251b625727351478a70781925df6ae1798316ca3/docs/testing/issue1225/README.md), `MANIFEST.json`, `companion-full.patch`, `companion/base/**.txt` и `companion/head/**.txt`. MANIFEST содержит точные refs, Git blobs, SHA256 и размеры. Full patch324736bytes SHA256 `019fc04c91be94392137357ce75f2e5ca13885dcb903384f8334b66256deb167`. Включены обе стороны переименованного vacuum-файла, относительные helper imports, workflow/package/contracts и synthetic seed config/layout/trails. Это инертный review artifact, не новый gate/сертификат/выборка; документация дополнительных прогонов не требует.\n\n### Финальная очередь и применимость actual HA доказательств\n\nПервый штатный finish синхронизировал product branch в `a649fc3251d7a115d93eb6f0817024d04ab8b577`: infrastructure behavior21/21PASS, syntax не смог запуститься из-за отсутствующего пакета yaml в старом node_modules. Зависимости восстановлены обычным `npm ci --ignore-scripts` по текущему lockfile; код не изменён, выполняется новый явный finish. Это не отказ поведения и не основание повторять HA.\n\nОбычный read-only diff audited1f3 → synchronizeda649 сохранён в `output/issue1225-final-sync-runtime.diff`: backend/import/graph/trails/ACL, E2E runner и packaging inputs неизменны. Отличаются15srcfiles других уже принятых задач: picker registration/translations, weather-only heading, transient Plan draw-ink cleanup, tunnel fade и return-focus presentation. Native commit/Undo/readback/hooks текущей E2E подготовки не изменены. Здесь переиспользуется адресное HA-доказательство самой#1225; не заявляется полный77-case сертификат всего нового HEAD и не вводится новый gate. Официальное ревью читает фактический синхронизированный material, полный внешний827artifact и результат текущего адресного infrastructureS6.\n### Поведение и сохранённые гарантии\n\n- Setup сохраняет исходный legacy seed и проходит настоящие видимые Draw → accepted commit → Undo, проверяя census и доступность точек через public SVG/CTM/hit-test. Private product state/camera и backend seed replacement не используются.\n- Runner отдельно считает business passed/failed/skipped/unexecuted и setup; selected identity и последний result сохраняются. Пустые first-run/upgrade remainder — not-required. Исходный аудит41598951489 переводится в77=3passed+74skipped и отдельно2failed setup.\n- Profile API2 сохраняет отдельный v1 reader: clean Cancel, dirty Continue/Discard, отсутствие durable config/set/ACK до внешнего Save, ровно один Save/ACK и v2/reload. Старые floor/rotation/size/display проверки сохранены.\n- Exact native lattice/wire/ID/Undo/Redo/export/reload не ослаблены. Граница: дополнительный Low-контракт ±1ulp/zoom-pan не исчерпывается этими L/X journeys.\n- Transfer A–D сохраняет legal distinct-ID coincident и exact off-grid geometry, полный graph/projection/целые rooms с opaque metadata; current mismatch и настоящий zero-area/self-crossing literal10 — отдельные HTTP negatives с отсутствием token/preview и неизменной полной парой config/layout/revisions/Undo. Исходный model5 и genuine literal10 positive off-wall repair/reload/fullUndo сохранены. Нет model11→10 переименования и скрытой нормализации expected.\n- Copy соответствует принятой #1227: accepted source копируется без Optimize/preflight; реальный passthrough observer требует0Optimize. Все четыре composition, source/layout/markers/cancel/reload/image гарантии остаются.\n\n### Первичные actual HA результаты\n\n1. [41632300999](https://github.com/Matysh/houseplan-card/actions/runs/41632300999), producta07f4a10309c7b187ab122cf3227002f04c2e81d/companion6103fce:77=66PASS+11FAIL,10setupPASS.\n2. [41646456489](https://github.com/Matysh/houseplan-card/actions/runs/41646456489), тот же product/companionafa1724:77=72PASS+5FAIL,10setupPASS. 459reused общих шагов; 29m56s вместо69m24s. Полный аудит остаётся RED.\n3. [41662157218](https://github.com/Matysh/houseplan-card/actions/runs/41662157218), product0bda944e3244a142449c30c5f802c14833af8c66/companiona5ba81afb2b624e6b84d9b3605c63e97322efb25:77 реально исполнены=73PASS+3FAIL+1timeout,0skip/unexecuted;10/10setupPASS. Все raw Playwright results независимо пересчитаны, summaries совпадают. Прежние product #1237/#1238 native/dirty cases PASS. Четыре remaining причины ниже относятся к этому факту, не выданы PASS.\n\nPrimary artifacts каждого запуска — process-next-result; локальные `output/issue1225-audit-<run>/HA-1225-ANALYSIS.json` содержат точные пути JSON/traces/screenshots. Копия третьего пересчёта включена в review artifact. Исторические #1220–#1224 и #1228–#1238 уже S8; они не текущая причина блока.\n\n### Четыре изменения после73PASS\n\n1. Огромный negative upload действительно получил HTTP413, но Playwright поздний response.json упал из-за inspector body eviction. Только huge-case теперь читает тот же реальный POST/status/body bounded public CDP Network observer: exactURL+POST+unique requestId, timeout/error refusal, cleanup. Нет interception/mock/re-request; raw32MiB request не сохраняется. Локальный actualHTTP/Chromium proof подтверждает один POST33554560bytes,413/too_large и отказ отсутствующего ответа. Все negative no-token/no-preview/fullpair/revision/Undo guards сохранены.\n2. Copy screenshot содержит корректную roomless копию и четыре настоящих zero-wall линии; generic >0rooms был неверным postcondition. Теперь ready/stage, whole persisted copy, rooms0, четыре partitionscm0/четыре видимые painted SVG lines и точные unordered endpoints; другие assertions сохранены.\n3. Genuine literal10 input наследует только исторические filter_seeded/known_devices/new_device_ids из оригинального parent backup. Geometry/opaque/opening target не меняются; foreign-transfer по-прежнему удаляет known/new lists, filter_seeded остаётсяtrue. Pure actual backend proof прошёл. Наблюдённая настоящая потеря Undo из-за фоновой maintenance-записи в unseeded backups записана отдельно в файл находок и здесь не объявляется исправленной.\n4. Markerless full import по принятому VACUUM.md долговечно удаляет orphan trails, которые config/layout teardown не восстанавливает. Тот же vacuum journey перенесён в00-файл до destructive imports при существующем single-worker порядке. Реальный trail/get seed precondition добавлен; все stored/live/renderer/puck/service/reload assertions сохранены, fake restoration не вводилась.\n\nВ существующий companion workflow добавлен только отсутствовавший pinned Chromium prerequisite перед уже существующими browser-dependent unit; другой host matrixjob его не заменяет. Нового workflow/gate/filter не вводилось.\n\n### Проверки и независимость\n\nИзначальные runner21/companion62/contract51 были stdout без отдельных raw receipts; авторская сводка не заменяет CI. Позднее адресно проверены visible-target Chromium3/3, изменённый MJS syntax, текущий contract lint52files, интегрированная frozen fixture/archive/source precondition, current whole rooms и literal10 positive/negative backend controls, actualHTTP CDP proof, D inherited-checkpoint materialization и YAML parse. Это не HA-PASS последних четырёх изменений.\n\n[Первый independent advisory6103](https://github.com/Matysh/houseplan-e2e/pull/18#issuecomment-6603282137) High0/Medium0/Low1; Low ancestry wording исправлен, patch-equivalent PR16 сохранён. Последующие A–D/profile/Copy/четыре ports прочитаны scoped advisory/root review с оговорённой независимостью; это не официальное S7. Официальное show review обязано прочитать весь финальный внешний код827, доступный в product artifact.\n\n### Завершённый финальный диагностический повтор\n\n[Run41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259), requestId `issue1225-fixture4-1f3a0f343-827fb41-20261103`, job126068335721: product `1f3a0f343f881ef59446c664baace3df8e72a635`, companion `827fb417858e10e2362092e26960f7c8ae4c5ac0`, previous_run41662157218, HA2026.10.4, upgradev1.83.1. Это один штатный fallback после четырёх реальных fixture changes с native reuse, не релиз/финальный AC3#1226. Продуктовые inputs неизменны относительно проверенного0c030e700; поздние #1226 порты относятся к тестам. Actual77=77PASS,setup10=10PASS,0failed/timedOut/skipped/unexecuted. Все published counts совпали с независимым переводом raw JSON и exact selected identities. Итоговые per-case первичные пути сохранены в `docs/testing/issue1225/HA-41679296259.json.txt`; прежние pending/73PASS границы в companion snapshots являются историей и этим фактом заменены. Общий диагностический report20261103T165919933-41abeafd materialCleantrue:539steps=504passed+33failed+2not-required,0reused,duration4453695ms. Build/test-build fingerprint+outputHash совпадают с предыдущим прогоном, но выполнены заново; наблюдение сохранено отдельно, без расширения задачи на исправление кеша/новый прогон. Последующий read-only разбор plan/matchesInputs подтвердил одинаковое окружение и широкие объявленные closure: demo/**/*.mjs затрагивает516browser/golden/metrics/assets шагов, test/fixtures/** —11Node groups, backend testfile — общий backend group. Повтор build/test-build при прежних fingerprints/bytes соответствует политике нереставрируемых build outputs. Это не объявляется сломанным restore; proof `output/issue1226/reuse-scope-diagnosis.json`, дальнейшее улучшение вне#1225.\n\nПосле actual AC — штатный finish/show/очередь с infrastructureS6 `process-next/test/e2e.test.mjs`, затем публикация того же reviewed companion через PR18. Очередной sync/rebase/документация сами по себе не требуют полного HA-повтора: различия runtime/package inputs проверяются обычным read-only diff. Без действительных AC2 — без S8/слиянияPR18. Смежная#1226 с продуктовым/визуальным RED не создаёт искусственной зависимости для независимой#1225.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принимать: блокеров нет. Обе части задачи сделаны правильно. Подготовка первой миграции теперь выбирает видимую и ничем не закрытую точку на canvas, проходит настоящий Draw → commit → Undo и сверяет состав комнат, проёмов и перегородок до и после. Новый подсчёт результатов в раннере разделяет setup и business и не выдаёт пропуски из-за упавшей зависимости за 74 упавших пользовательских сценария. В представленном первичном прогоне 41679296259 (product 1f3a0f343, companion 827fb41) зафиксировано 77/77 business и 10/10 setup PASS. Порты фикстур (profile API2 и отдельный v1-reader, A–D transfer, Copy по #1227, CDP-наблюдатель для запроса на 32 МиБ, перенос vacuum в 00-файл) не ослабляют проверки и не подменяют seed. Есть необязательные замечания: setup-счётчики теряются в публичной сводке, у not-required нет текста причины, в review-пакете остался устаревший абзац, тесты зависят от порядка выполнения. Отдельно отмечены две продуктовые наблюдённые проблемы вне задачи — они описаны в analysis, а не в outsideFindings, по прямой инструкции владельца.",
-          "understanding": "Проблема. В аудите 41598951489 общий `tests/plan-model.setup.mjs` кликал по фиксированным координатам snap(650,650) и snap(750,650). Второй клик попадал в правую панель свойств, отрезок не создавался, и Playwright пропускал 10+64 зависимых business-кейса. Раннер `process-next/lib/e2e.mjs` при этом считал `failed = tests - passed - skipped`, а `skipped` брал только из `results.at(-1)?.status`. У строк, пропущенных из-за упавшей зависимости, `results=[]`, поэтому они попадали в failed. Получалось «74 упавших сценария» вместо «2 упавших setup + 74 пропущенных». Следующий барьер — фикстура профилей, которая требовала API 1.\n\nКак стало. (1) Раннер: новая функция `summarizeE2EResults` (e2e.mjs:62-80) берёт статус последней попытки, а без попыток — `row.status`. Она отдельно считает business и setup (проекты из `SETUPS`) по категориям passed / failed (включая timedOut) / skipped / unexecuted. Итог passed только при exitCode 0, всех пройденных business и всех пройденных setup; это строже прежнего `actual.every`. Не-setup выборка по-прежнему проверяется через `verifyE2ESelection`, пустой remainder остаётся `not-required`. (2) Companion PR18: функция `visiblePlanSegment` подбирает отрезок по сетке. Она проверяет его через `getScreenCTM`, отступ 32 px от края, AABB комнат, стен и устройств с запасом 12 px и `elementFromPoint` с проходом через shadow root. Если цели нет, она падает явно и ничего не меняет. Setup ждёт commit (новый rev), затем Undo (ещё более новый rev) и сверяет census. Те же цели используются в L/X/прямоугольных journeys (`clearInterior` для комнаты). Профили: `ProfileFixture.setup({legacy})` под API 1/2. Первый кейс файла проверяет legacy v1-reader: Cancel, внутренний OK, Continue/Discard без записи, ровно один внешний Save/ACK → v2 → reload. Transfer: зафиксированный current11 dirty-граф, отказ при рассогласовании проекций, настоящий legacy10 bowtie как HTTP-негатив, legacy10 off-wall repair с полным Undo. Copy: проверка по принятому контракту #1227 (комнаты опущены, 4 перегородки с cm 0, 0 Optimize). Ответ 413 на огромный upload читается через ограниченный CDP-наблюдатель. Vacuum перенесён в `00-` до разрушающих импортов. В CI добавлен Chromium для unit-тестов, зависящих от браузера.\n\nЧто я проследил: e2e.mjs целиком; вызывающий путь runner.mjs:87-101 (`Object.assign(counts, result.counts)`, `expectedNonempty`); публикацию через release.mjs `publicRunnerCheck` и ci-status.mjs; тесты e2e.test.mjs. В companion прочитаны head-снимки: plan-model.setup (и base), visible-plan-target (+ Chromium unit), plan.mjs (CTM/clickFloor), panel-profiles.mjs, profile-fixtures.mjs, начало panel-profiles.admin.spec, transfer-import.admin.spec целиком, backup-fixtures.mjs, preview-observer.mjs, space-copy-lifecycle, 00-vacuum-trail, начало editor-plan, e2e.yml. Сверено с CONFIG-COMPATIBILITY.md §#1227 и с per-case JSON обоих последних прогонов.",
-          "analysis": [
-            {
-              "topic": "Раннер: разделение setup/business/skipped (AC3)",
-              "assessment": "Решение простое и верное. Ключевой момент — запасной вариант `row.results.at(-1)?.status ?? row.status`: именно он превращает строки, пропущенные из-за зависимости (`results=[]`, `status='skipped'`), в skipped, а не в failed. Это прямо закрывает исходный дефект. Статус стал строже: ненулевой exit code, любой skip, unexecuted или неуспешный setup дают failed, так что PASS не маскируется. Business-счётчики остаются на верхнем уровне и в `counts`, поэтому runner.mjs продолжает работать без изменений: `counts.failed > 0` по-прежнему переводит шаг в failed, а пропуски дают failed через `result.status`. Проверка `expectedNonempty` не учитывает `unexecuted`, но e2e-шаги её не включают, так что на поведение это не влияет.",
-              "evidence": "process-next/lib/e2e.mjs:62-80, 297-299; runner.mjs:89-97; e2e.test.mjs:52-79 покрывает 10/64 строк без results плюс failed plan-model, а также passed/failed/timedOut/skipped/interrupted/undefined и маскировку ненулевого exit. Регрессия существующих путей runE2E (passed, nonzero/skip→failed, not-required) — в тестах 121-181. По S6: квитанция 20261103T183410572-78e3f170 passed на a649fc3."
-            },
-            {
-              "topic": "Публикация счётчиков",
-              "assessment": "Слабое место — передача в публичный канал. `publicRunnerCheck` и ci-status пропускают только tests/passed/failed/skipped/cancelled/todo. Поэтому `setupFailed`/`setupTests` и `unexecuted` видны только в локальном отчёте и summary.json. Для исходного сценария публичная строка будет «failed; tests 10, passed 0, failed 0, skipped 10». Это уже не ложные «74 упавших», так что AC3 в обязательной части выполнен, но причину (упал setup) из публикации не понять. Это улучшение, а не блокер.",
-              "evidence": "process-next/lib/release.mjs:26-27; process-next/lib/ci-status.mjs:117-118."
-            },
-            {
-              "topic": "Подготовка: видимая цель и нативные commit/Undo (AC1)",
-              "assessment": "Механизм выбран удачно, и его стоит сохранить. Цель вычисляется в той же системе координат, что и клик: оба используют `getScreenCTM` у `stage`, так что расхождения нет. Перекрытие панелью ловит hit-test, а не геометрия контейнера. Это и была корневая причина: svg уходит под `aside`. Если свободной цели нет, тест падает явно, без правки seed, камеры или private props. В setup проверяются commit (rev растёт), Undo (rev растёт снова) и census по id комнат и числу проёмов/перегородок. Ожидание `originalCount+1` заменило захардкоженное `1`. Граница: `model_version >= before` по-прежнему не доказывает, что миграция действительно прошла (так было и в base). Если она не произойдёт, это проявится явным отказом в journeys. Оговорка автора о том, что `clearInterior` — консервативная AABB-проверка под текущую YARD-фикстуру, а не универсальный geometry oracle, корректна.",
-              "evidence": "companion/head/tests/lib/visible-plan-target.mjs.txt:3-58; plan.mjs.txt:124-149; plan-model.setup.mjs.txt:31-50 против base:30-43. Chromium unit visible-plan-target.test.mjs.txt: три размера/zoom с панелью, полностью закрытый canvas → reject, препятствие внутри контура. Setup в 41679296259: plan-model passed в обеих лабораториях journeys."
-            },
-            {
-              "topic": "Profile API2 и legacy v1-reader",
-              "assessment": "Текущие профили больше не блокируются устаревшим требованием `external_screens_api === 1`: фикстура принимает 1/2 и строит v2-строки через `currentProfile`. Проверки legacy вынесены в отдельный путь и не ослаблены. Явно проверяются отсутствие записи при Cancel и при внутреннем OK, что Continue сохраняет черновик (повторный Cancel снова предлагает Discard), что Discard его сбрасывает, а также ровно один config/set и ACK, v2 и reload. Цена — зависимость от порядка: legacy-кейс должен идти первым, пока namespace ещё v1, потому что cleanup сохраняет max(version). При нарушении порядка тест падает явно на `previous.version === 1` и не скрывает ошибку.",
-              "evidence": "panel-profiles.mjs.txt:22-53, 93-115; panel-profiles.admin.spec.mjs.txt:16-18, 52-107."
-            },
-            {
-              "topic": "Transfer A–D и literal10",
-              "assessment": "Положительные и отрицательные кейсы разведены честно. Current11 dirty-граф строится только из зафиксированного источника с точным предусловием: неожиданный экспорт не нормализуется. Рассогласование проекций и настоящий bowtie проверяются как HTTP-негативы с проверкой token, preview, полной пары config/layout, ревизий и Undo. В literal10 off-wall унаследованы только ключи истории обнаружения устройств (`filter_seeded`/`known_devices`/`new_device_ids`) из настоящего parent seed. Это реалистичнее прежнего синтетического документа, геометрия и ожидания не меняются. Следствие: путь «импорт неразмеченного (unseeded) бэкапа → фоновая запись → Undo недоступен» теперь не покрыт E2E. Автор явно назвал его и записал отдельно, поэтому это не скрытый баг, но пробел в покрытии остаётся. Для запроса на 32 МиБ CDP-наблюдатель привязан к единственному requestId, имеет таймаут, отказ при неоднозначности и dispose. Перехвата или повтора запроса нет, URL и status сверяются с ответом Playwright. Тест не утверждает конкретно 413/`too_large` (expectedCode не задан); пользовательский сигнал даёт только текст alert.",
-              "evidence": "backup-fixtures.mjs.txt:34-84; transfer-import.admin.spec.mjs.txt:216-245, 290-344; preview-observer.mjs.txt:5-54. HA 41662157218: timedOut на `plan-optimization-undo` disabled (строка 241) → в 41679296259 passed."
-            },
-            {
-              "topic": "Copy и vacuum",
-              "assessment": "Copy проверяет именно принятый контракт #1227: «Rooms remain omitted, their walls become independent partitions». Прежнее условие `>0 rooms` было неверным для этого контракта. Новые проверки сильнее: 0 комнат в DOM, 4 перегородки с cm 0, 4 реально отрисованные линии с совпадающими (без учёта порядка) концами, сохранение копии целиком после reload, отсутствие Optimize в реальном WS-трафике. Vacuum: переименование в `00-` закрепляет существующий порядок при одном worker. Добавлено явное предусловие `trail/get previous`, и подделки хранилища trails нет. Это честнее восстановления, но изоляция тестов зависит от имён файлов.",
-              "evidence": "space-copy-lifecycle.admin.spec.mjs.txt:80-172; docs/CONFIG-COMPATIBILITY.md:1910-1916; 00-vacuum-trail.admin.spec.mjs.txt:11-14, 58-67."
-            },
-            {
-              "topic": "Применимость HA-доказательства к a649fc3",
-              "assessment": "Первичный прогон был на product 1f3a0f343, а материал ревью — a649fc3. Между ними раннер не менялся: единственный коммит e2e.mjs — 892fa62. Добавлены продуктовые исправления других задач (#1240, #1243, #1244, #1247, #1248). Из них #1247 (wall preview ink) косвенно касается Draw. Для #1225 результат — companion плюс раннер, а продуктовые изменения других задач проверяются в их собственных S6. Повторное использование адресного доказательства разумно, и автор не заявляет полный сертификат нового HEAD.",
-              "evidence": "git_log process-next/lib/e2e.mjs; git_log HEAD (ad46b790…a2fff2c1, f2436671 #1247); HA-41679296259.json.txt: business 77/77, setup 10/10, все `agreesWithPublishedCounts: true`."
-            },
-            {
-              "topic": "Побочные наблюдения вне задачи (по инструкции владельца — только текстом, не в outsideFindings)",
-              "assessment": "(1) Low, установлено по тексту теста. Для отказа по размеру UI показывает «The backup exceeds the 8 MiB limit.», а фактический предел 32 МиБ; тест закрепляет неверную подпись. Исправить строку перевода в продукте и затем ожидание в companion. (2) Low, гипотеза. Для legacy10 bowtie тест ожидает в alert текст `invalid_plan_graph`. Возможно, пользователю показывается непереведённый код ошибки. Подтвердить можно screenshot из 41679296259; при подтверждении добавить локализованное сообщение. (3) Уже записано автором: потеря Undo импорта из-за фоновой maintenance-записи после неразмеченного (unseeded) бэкапа.",
-              "evidence": "transfer-import.admin.spec.mjs.txt:299 (huge.json, 32 MiB padding и текст 8 MiB); backup-fixtures.mjs.txt:62; контекст автора, п.3 «Четыре изменения»."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Добавить в публичный allowlist (`publicRunnerCheck` в release.mjs:26 и ci-status.mjs:117) ключи `setupFailed`/`setupTests` и `unexecuted`. Тогда опубликованная сводка будет сама объяснять «упал setup, business пропущены», без чтения локального отчёта. Цена — две строки и обновление тестов публикации.",
-            "Для `not-required` добавить в e2e.mjs:240 короткое поле `reason` (например: «все кейсы suite входят в beta-выборку, remainder пуст»). AC3 говорит о «понятной причине», а сейчас причину приходится выводить из `tests: 0`.",
-            "В `docs/testing/issue1225/README.md:98-100` остался устаревший абзац «It is running… Do not infer a PASS», который противоречит итоговому разделу ниже. Его лучше удалить. Ещё стоит решить, нужен ли этот пакет примерно на 1,4 МБ (полный patch, копии lockfile, seed и спеков другого репозитория) в dev навсегда. После S7 его можно сократить до MANIFEST, README и HA-JSON, раз PR18 остаётся источником истины.",
-            "В huge-case можно явно проверить `observed.status === 413` и `reply.error === 'too_large'` (задать expectedCode): наблюдатель уже их получает. Так изменение предела или кода не пройдёт незамеченным только по тексту alert.",
-            "Зависимость от порядка (legacy-профиль первым, `00-vacuum` до импортов) стоит закрепить явно: например, `test.describe.configure({ mode: 'serial' })` или комментарием в playwright.config, ссылающимся на `workers: 1` и `fullyParallel: false`. Тогда будущая параллелизация не сломает тесты неочевидно."
-          ],
-          "boundaries": "Сборку, тесты, Playwright и HA я не запускал. Использованы результаты S6: квитанция 20261103T183410572-78e3f170 (passed, material a649fc3) и предоставленные в репозитории переводы первичного Playwright JSON (`HA-41662157218.json.txt`, `HA-41679296259.json.txt`). Сами raw results.json, traces и screenshots недоступны без сети, поэтому сверка «77/77» опирается на эти переводы и согласованность их счётчиков. Код companion прочитан по снимкам `docs/testing/issue1225/companion/head|base/**`. Соответствие снимков коммиту 827fb41 (SHA256/blob в MANIFEST) я проверить не мог и принимаю его как данное. Полный `companion-full.patch` целиком не перечитывался: изменённые файлы прочитаны по head-снимкам выборочно, с упором на setup, цели, профили, transfer, Copy, vacuum, наблюдатель и workflow. editor-decor, transfer-export, panel-kiosk и first-space просмотрены не полностью. Продуктовые изменения после 1f3a0f343 (#1240/#1243/#1244/#1247/#1248) не входят в объём этого ревью. Побочные наблюдения по инструкции владельца приведены только в analysis, outsideFindings не используется."
-        },
-        "usage": {
-          "input_tokens": 84,
-          "cache_creation_input_tokens": 221850,
-          "cache_read_input_tokens": 6238650,
-          "output_tokens": 24092,
-          "output_tokens_details": {
-            "thinking_tokens": 11504
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 221850,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1178,
-              "cache_read_input_tokens": 202080,
-              "cache_creation_input_tokens": 23974,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 23974
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать: блокеров нет. Обе части задачи сделаны правильно. Подготовка первой миграции теперь выбирает видимую и ничем не закрытую точку на canvas, проходит настоящий Draw → commit → Undo и сверяет состав комнат, проёмов и перегородок до и после. Новый подсчёт результатов в раннере разделяет setup и business и не выдаёт пропуски из-за упавшей зависимости за 74 упавших пользовательских сценария. В представленном первичном прогоне 41679296259 (product 1f3a0f343, companion 827fb41) зафиксировано 77/77 business и 10/10 setup PASS. Порты фикстур (profile API2 и отдельный v1-reader, A–D transfer, Copy по #1227, CDP-наблюдатель для запроса на 32 МиБ, перенос vacuum в 00-файл) не ослабляют проверки и не подменяют seed. Есть необязательные замечания: setup-счётчики теряются в публичной сводке, у not-required нет текста причины, в review-пакете остался устаревший абзац, тесты зависят от порядка выполнения. Отдельно отмечены две продуктовые наблюдённые проблемы вне задачи — они описаны в analysis, а не в outsideFindings, по прямой инструкции владельца.\n\n## Понимание решения\n\nПроблема. В аудите 41598951489 общий `tests/plan-model.setup.mjs` кликал по фиксированным координатам snap(650,650) и snap(750,650). Второй клик попадал в правую панель свойств, отрезок не создавался, и Playwright пропускал 10+64 зависимых business-кейса. Раннер `process-next/lib/e2e.mjs` при этом считал `failed = tests - passed - skipped`, а `skipped` брал только из `results.at(-1)?.status`. У строк, пропущенных из-за упавшей зависимости, `results=[]`, поэтому они попадали в failed. Получалось «74 упавших сценария» вместо «2 упавших setup + 74 пропущенных». Следующий барьер — фикстура профилей, которая требовала API 1.\n\nКак стало. (1) Раннер: новая функция `summarizeE2EResults` (e2e.mjs:62-80) берёт статус последней попытки, а без попыток — `row.status`. Она отдельно считает business и setup (проекты из `SETUPS`) по категориям passed / failed (включая timedOut) / skipped / unexecuted. Итог passed только при exitCode 0, всех пройденных business и всех пройденных setup; это строже прежнего `actual.every`. Не-setup выборка по-прежнему проверяется через `verifyE2ESelection`, пустой remainder остаётся `not-required`. (2) Companion PR18: функция `visiblePlanSegment` подбирает отрезок по сетке. Она проверяет его через `getScreenCTM`, отступ 32 px от края, AABB комнат, стен и устройств с запасом 12 px и `elementFromPoint` с проходом через shadow root. Если цели нет, она падает явно и ничего не меняет. Setup ждёт commit (новый rev), затем Undo (ещё более новый rev) и сверяет census. Те же цели используются в L/X/прямоугольных journeys (`clearInterior` для комнаты). Профили: `ProfileFixture.setup({legacy})` под API 1/2. Первый кейс файла проверяет legacy v1-reader: Cancel, внутренний OK, Continue/Discard без записи, ровно один внешний Save/ACK → v2 → reload. Transfer: зафиксированный current11 dirty-граф, отказ при рассогласовании проекций, настоящий legacy10 bowtie как HTTP-негатив, legacy10 off-wall repair с полным Undo. Copy: проверка по принятому контракту #1227 (комнаты опущены, 4 перегородки с cm 0, 0 Optimize). Ответ 413 на огромный upload читается через ограниченный CDP-наблюдатель. Vacuum перенесён в `00-` до разрушающих импортов. В CI добавлен Chromium для unit-тестов, зависящих от браузера.\n\nЧто я проследил: e2e.mjs целиком; вызывающий путь runner.mjs:87-101 (`Object.assign(counts, result.counts)`, `expectedNonempty`); публикацию через release.mjs `publicRunnerCheck` и ci-status.mjs; тесты e2e.test.mjs. В companion прочитаны head-снимки: plan-model.setup (и base), visible-plan-target (+ Chromium unit), plan.mjs (CTM/clickFloor), panel-profiles.mjs, profile-fixtures.mjs, начало panel-profiles.admin.spec, transfer-import.admin.spec целиком, backup-fixtures.mjs, preview-observer.mjs, space-copy-lifecycle, 00-vacuum-trail, начало editor-plan, e2e.yml. Сверено с CONFIG-COMPATIBILITY.md §#1227 и с per-case JSON обоих последних прогонов.\n\n## Разбор решения\n\n### Раннер: разделение setup/business/skipped (AC3)\n\nРешение простое и верное. Ключевой момент — запасной вариант `row.results.at(-1)?.status ?? row.status`: именно он превращает строки, пропущенные из-за зависимости (`results=[]`, `status='skipped'`), в skipped, а не в failed. Это прямо закрывает исходный дефект. Статус стал строже: ненулевой exit code, любой skip, unexecuted или неуспешный setup дают failed, так что PASS не маскируется. Business-счётчики остаются на верхнем уровне и в `counts`, поэтому runner.mjs продолжает работать без изменений: `counts.failed > 0` по-прежнему переводит шаг в failed, а пропуски дают failed через `result.status`. Проверка `expectedNonempty` не учитывает `unexecuted`, но e2e-шаги её не включают, так что на поведение это не влияет.\n\nОснование: process-next/lib/e2e.mjs:62-80, 297-299; runner.mjs:89-97; e2e.test.mjs:52-79 покрывает 10/64 строк без results плюс failed plan-model, а также passed/failed/timedOut/skipped/interrupted/undefined и маскировку ненулевого exit. Регрессия существующих путей runE2E (passed, nonzero/skip→failed, not-required) — в тестах 121-181. По S6: квитанция 20261103T183410572-78e3f170 passed на a649fc3.\n\n### Публикация счётчиков\n\nСлабое место — передача в публичный канал. `publicRunnerCheck` и ci-status пропускают только tests/passed/failed/skipped/cancelled/todo. Поэтому `setupFailed`/`setupTests` и `unexecuted` видны только в локальном отчёте и summary.json. Для исходного сценария публичная строка будет «failed; tests 10, passed 0, failed 0, skipped 10». Это уже не ложные «74 упавших», так что AC3 в обязательной части выполнен, но причину (упал setup) из публикации не понять. Это улучшение, а не блокер.\n\nОснование: process-next/lib/release.mjs:26-27; process-next/lib/ci-status.mjs:117-118.\n\n### Подготовка: видимая цель и нативные commit/Undo (AC1)\n\nМеханизм выбран удачно, и его стоит сохранить. Цель вычисляется в той же системе координат, что и клик: оба используют `getScreenCTM` у `stage`, так что расхождения нет. Перекрытие панелью ловит hit-test, а не геометрия контейнера. Это и была корневая причина: svg уходит под `aside`. Если свободной цели нет, тест падает явно, без правки seed, камеры или private props. В setup проверяются commit (rev растёт), Undo (rev растёт снова) и census по id комнат и числу проёмов/перегородок. Ожидание `originalCount+1` заменило захардкоженное `1`. Граница: `model_version >= before` по-прежнему не доказывает, что миграция действительно прошла (так было и в base). Если она не произойдёт, это проявится явным отказом в journeys. Оговорка автора о том, что `clearInterior` — консервативная AABB-проверка под текущую YARD-фикстуру, а не универсальный geometry oracle, корректна.\n\nОснование: companion/head/tests/lib/visible-plan-target.mjs.txt:3-58; plan.mjs.txt:124-149; plan-model.setup.mjs.txt:31-50 против base:30-43. Chromium unit visible-plan-target.test.mjs.txt: три размера/zoom с панелью, полностью закрытый canvas → reject, препятствие внутри контура. Setup в 41679296259: plan-model passed в обеих лабораториях journeys.\n\n### Profile API2 и legacy v1-reader\n\nТекущие профили больше не блокируются устаревшим требованием `external_screens_api === 1`: фикстура принимает 1/2 и строит v2-строки через `currentProfile`. Проверки legacy вынесены в отдельный путь и не ослаблены. Явно проверяются отсутствие записи при Cancel и при внутреннем OK, что Continue сохраняет черновик (повторный Cancel снова предлагает Discard), что Discard его сбрасывает, а также ровно один config/set и ACK, v2 и reload. Цена — зависимость от порядка: legacy-кейс должен идти первым, пока namespace ещё v1, потому что cleanup сохраняет max(version). При нарушении порядка тест падает явно на `previous.version === 1` и не скрывает ошибку.\n\nОснование: panel-profiles.mjs.txt:22-53, 93-115; panel-profiles.admin.spec.mjs.txt:16-18, 52-107.\n\n### Transfer A–D и literal10\n\nПоложительные и отрицательные кейсы разведены честно. Current11 dirty-граф строится только из зафиксированного источника с точным предусловием: неожиданный экспорт не нормализуется. Рассогласование проекций и настоящий bowtie проверяются как HTTP-негативы с проверкой token, preview, полной пары config/layout, ревизий и Undo. В literal10 off-wall унаследованы только ключи истории обнаружения устройств (`filter_seeded`/`known_devices`/`new_device_ids`) из настоящего parent seed. Это реалистичнее прежнего синтетического документа, геометрия и ожидания не меняются. Следствие: путь «импорт неразмеченного (unseeded) бэкапа → фоновая запись → Undo недоступен» теперь не покрыт E2E. Автор явно назвал его и записал отдельно, поэтому это не скрытый баг, но пробел в покрытии остаётся. Для запроса на 32 МиБ CDP-наблюдатель привязан к единственному requestId, имеет таймаут, отказ при неоднозначности и dispose. Перехвата или повтора запроса нет, URL и status сверяются с ответом Playwright. Тест не утверждает конкретно 413/`too_large` (expectedCode не задан); пользовательский сигнал даёт только текст alert.\n\nОснование: backup-fixtures.mjs.txt:34-84; transfer-import.admin.spec.mjs.txt:216-245, 290-344; preview-observer.mjs.txt:5-54. HA 41662157218: timedOut на `plan-optimization-undo` disabled (строка 241) → в 41679296259 passed.\n\n### Copy и vacuum\n\nCopy проверяет именно принятый контракт #1227: «Rooms remain omitted, their walls become independent partitions». Прежнее условие `>0 rooms` было неверным для этого контракта. Новые проверки сильнее: 0 комнат в DOM, 4 перегородки с cm 0, 4 реально отрисованные линии с совпадающими (без учёта порядка) концами, сохранение копии целиком после reload, отсутствие Optimize в реальном WS-трафике. Vacuum: переименование в `00-` закрепляет существующий порядок при одном worker. Добавлено явное предусловие `trail/get previous`, и подделки хранилища trails нет. Это честнее восстановления, но изоляция тестов зависит от имён файлов.\n\nОснование: space-copy-lifecycle.admin.spec.mjs.txt:80-172; docs/CONFIG-COMPATIBILITY.md:1910-1916; 00-vacuum-trail.admin.spec.mjs.txt:11-14, 58-67.\n\n### Применимость HA-доказательства к a649fc3\n\nПервичный прогон был на product 1f3a0f343, а материал ревью — a649fc3. Между ними раннер не менялся: единственный коммит e2e.mjs — 892fa62. Добавлены продуктовые исправления других задач (#1240, #1243, #1244, #1247, #1248). Из них #1247 (wall preview ink) косвенно касается Draw. Для #1225 результат — companion плюс раннер, а продуктовые изменения других задач проверяются в их собственных S6. Повторное использование адресного доказательства разумно, и автор не заявляет полный сертификат нового HEAD.\n\nОснование: git_log process-next/lib/e2e.mjs; git_log HEAD (ad46b790…a2fff2c1, f2436671 #1247); HA-41679296259.json.txt: business 77/77, setup 10/10, все `agreesWithPublishedCounts: true`.\n\n### Побочные наблюдения вне задачи (по инструкции владельца — только текстом, не в outsideFindings)\n\n(1) Low, установлено по тексту теста. Для отказа по размеру UI показывает «The backup exceeds the 8 MiB limit.», а фактический предел 32 МиБ; тест закрепляет неверную подпись. Исправить строку перевода в продукте и затем ожидание в companion. (2) Low, гипотеза. Для legacy10 bowtie тест ожидает в alert текст `invalid_plan_graph`. Возможно, пользователю показывается непереведённый код ошибки. Подтвердить можно screenshot из 41679296259; при подтверждении добавить локализованное сообщение. (3) Уже записано автором: потеря Undo импорта из-за фоновой maintenance-записи после неразмеченного (unseeded) бэкапа.\n\nОснование: transfer-import.admin.spec.mjs.txt:299 (huge.json, 32 MiB padding и текст 8 MiB); backup-fixtures.mjs.txt:62; контекст автора, п.3 «Четыре изменения».\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить в публичный allowlist (`publicRunnerCheck` в release.mjs:26 и ci-status.mjs:117) ключи `setupFailed`/`setupTests` и `unexecuted`. Тогда опубликованная сводка будет сама объяснять «упал setup, business пропущены», без чтения локального отчёта. Цена — две строки и обновление тестов публикации.\n- Для `not-required` добавить в e2e.mjs:240 короткое поле `reason` (например: «все кейсы suite входят в beta-выборку, remainder пуст»). AC3 говорит о «понятной причине», а сейчас причину приходится выводить из `tests: 0`.\n- В `docs/testing/issue1225/README.md:98-100` остался устаревший абзац «It is running… Do not infer a PASS», который противоречит итоговому разделу ниже. Его лучше удалить. Ещё стоит решить, нужен ли этот пакет примерно на 1,4 МБ (полный patch, копии lockfile, seed и спеков другого репозитория) в dev навсегда. После S7 его можно сократить до MANIFEST, README и HA-JSON, раз PR18 остаётся источником истины.\n- В huge-case можно явно проверить `observed.status === 413` и `reply.error === 'too_large'` (задать expectedCode): наблюдатель уже их получает. Так изменение предела или кода не пройдёт незамеченным только по тексту alert.\n- Зависимость от порядка (legacy-профиль первым, `00-vacuum` до импортов) стоит закрепить явно: например, `test.describe.configure({ mode: 'serial' })` или комментарием в playwright.config, ссылающимся на `workers: 1` и `fullyParallel: false`. Тогда будущая параллелизация не сломает тесты неочевидно.\n\n## Границы анализа\n\nСборку, тесты, Playwright и HA я не запускал. Использованы результаты S6: квитанция 20261103T183410572-78e3f170 (passed, material a649fc3) и предоставленные в репозитории переводы первичного Playwright JSON (`HA-41662157218.json.txt`, `HA-41679296259.json.txt`). Сами raw results.json, traces и screenshots недоступны без сети, поэтому сверка «77/77» опирается на эти переводы и согласованность их счётчиков. Код companion прочитан по снимкам `docs/testing/issue1225/companion/head|base/**`. Соответствие снимков коммиту 827fb41 (SHA256/blob в MANIFEST) я проверить не мог и принимаю его как данное. Полный `companion-full.patch` целиком не перечитывался: изменённые файлы прочитаны по head-снимкам выборочно, с упором на setup, цели, профили, transfer, Copy, vacuum, наблюдатель и workflow. editor-decor, transfer-export, panel-kiosk и first-space просмотрены не полностью. Продуктовые изменения после 1f3a0f343 (#1240/#1243/#1244/#1247/#1248) не входят в объём этого ревью. Побочные наблюдения по инструкции владельца приведены только в analysis, outsideFindings не используется.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: ad46b790228f0b2e7ae37f7905a63843043cf2ab → a649fc3251d7a115d93eb6f0817024d04ab8b577\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1225, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nS6: actual HA доказательства готовы — 77/77 business и10/10setup PASS,0fail/timeout/skip/unexecuted. [Первичный прогон41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259) независимо пересчитан из raw Playwright JSON; published summaries совпадают. Далее штатный finish/show. Релиз не выполняется.\n\n<details>\n<summary>Закреплённые исходники, доказательства и границы готовности</summary>\n\n### Прямая инструкция владельца о побочных находках\n\nНовые побочные находки сохранять только в отдельном файле / полном Markdown отчёте ревью; GitHub issues не создавать, включая автоматическую публикацию outsideFindings. Качество ревью, High/Medium и findings по самой задаче не скрывать: все task-blockers идут в обычные blockers и влияют на вердикт. Если structured outsideFindings автоматически создаёт issue без переключателя, эту autoissue-коллекцию не использовать по прямой инструкции владельца; полное out-of-scope наблюдение с важностью, доказательством и направлением исправления отразить в текстовой analysis/boundaries части полного Markdown, затем исполнитель сохранит его в отдельный файл. Нового request field, override или изменения конвейера не вводить.\n### Материал для обычного show code review\n\nProduct branch `codex/1225`, commit `251b625727351478a70781925df6ae1798316ca3`; runner `process-next/lib/e2e.mjs`, тесты `process-next/test/e2e.test.mjs`. Основной внешний материал: [houseplan-e2e PR18](https://github.com/Matysh/houseplan-e2e/pull/18), base `115ae6f985f084696cde3f419d88d7751c4de972`, head `827fb417858e10e2362092e26960f7c8ae4c5ac0`.\n\nМодель ревью читает product Git без сети. Полный внешний diff и исходники доступны обычным read_file по [docs/testing/issue1225/README.md](https://github.com/Matysh/houseplan-card/blob/251b625727351478a70781925df6ae1798316ca3/docs/testing/issue1225/README.md), `MANIFEST.json`, `companion-full.patch`, `companion/base/**.txt` и `companion/head/**.txt`. MANIFEST содержит точные refs, Git blobs, SHA256 и размеры. Full patch324736bytes SHA256 `019fc04c91be94392137357ce75f2e5ca13885dcb903384f8334b66256deb167`. Включены обе стороны переименованного vacuum-файла, относительные helper imports, workflow/package/contracts и synthetic seed config/layout/trails. Это инертный review artifact, не новый gate/сертификат/выборка; документация дополнительных прогонов не требует.\n\n### Финальная очередь и применимость actual HA доказательств\n\nПервый штатный finish синхронизировал product branch в `a649fc3251d7a115d93eb6f0817024d04ab8b577`: infrastructure behavior21/21PASS, syntax не смог запуститься из-за отсутствующего пакета yaml в старом node_modules. Зависимости восстановлены обычным `npm ci --ignore-scripts` по текущему lockfile; код не изменён, выполняется новый явный finish. Это не отказ поведения и не основание повторять HA.\n\nОбычный read-only diff audited1f3 → synchronizeda649 сохранён в `output/issue1225-final-sync-runtime.diff`: backend/import/graph/trails/ACL, E2E runner и packaging inputs неизменны. Отличаются15srcfiles других уже принятых задач: picker registration/translations, weather-only heading, transient Plan draw-ink cleanup, tunnel fade и return-focus presentation. Native commit/Undo/readback/hooks текущей E2E подготовки не изменены. Здесь переиспользуется адресное HA-доказательство самой#1225; не заявляется полный77-case сертификат всего нового HEAD и не вводится новый gate. Официальное ревью читает фактический синхронизированный material, полный внешний827artifact и результат текущего адресного infrastructureS6.\n### Поведение и сохранённые гарантии\n\n- Setup сохраняет исходный legacy seed и проходит настоящие видимые Draw → accepted commit → Undo, проверяя census и доступность точек через public SVG/CTM/hit-test. Private product state/camera и backend seed replacement не используются.\n- Runner отдельно считает business passed/failed/skipped/unexecuted и setup; selected identity и последний result сохраняются. Пустые first-run/upgrade remainder — not-required. Исходный аудит41598951489 переводится в77=3passed+74skipped и отдельно2failed setup.\n- Profile API2 сохраняет отдельный v1 reader: clean Cancel, dirty Continue/Discard, отсутствие durable config/set/ACK до внешнего Save, ровно один Save/ACK и v2/reload. Старые floor/rotation/size/display проверки сохранены.\n- Exact native lattice/wire/ID/Undo/Redo/export/reload не ослаблены. Граница: дополнительный Low-контракт ±1ulp/zoom-pan не исчерпывается этими L/X journeys.\n- Transfer A–D сохраняет legal distinct-ID coincident и exact off-grid geometry, полный graph/projection/целые rooms с opaque metadata; current mismatch и настоящий zero-area/self-crossing literal10 — отдельные HTTP negatives с отсутствием token/preview и неизменной полной парой config/layout/revisions/Undo. Исходный model5 и genuine literal10 positive off-wall repair/reload/fullUndo сохранены. Нет model11→10 переименования и скрытой нормализации expected.\n- Copy соответствует принятой #1227: accepted source копируется без Optimize/preflight; реальный passthrough observer требует0Optimize. Все четыре composition, source/layout/markers/cancel/reload/image гарантии остаются.\n\n### Первичные actual HA результаты\n\n1. [41632300999](https://github.com/Matysh/houseplan-card/actions/runs/41632300999), producta07f4a10309c7b187ab122cf3227002f04c2e81d/companion6103fce:77=66PASS+11FAIL,10setupPASS.\n2. [41646456489](https://github.com/Matysh/houseplan-card/actions/runs/41646456489), тот же product/companionafa1724:77=72PASS+5FAIL,10setupPASS. 459reused общих шагов; 29m56s вместо69m24s. Полный аудит остаётся RED.\n3. [41662157218](https://github.com/Matysh/houseplan-card/actions/runs/41662157218), product0bda944e3244a142449c30c5f802c14833af8c66/companiona5ba81afb2b624e6b84d9b3605c63e97322efb25:77 реально исполнены=73PASS+3FAIL+1timeout,0skip/unexecuted;10/10setupPASS. Все raw Playwright results независимо пересчитаны, summaries совпадают. Прежние product #1237/#1238 native/dirty cases PASS. Четыре remaining причины ниже относятся к этому факту, не выданы PASS.\n\nPrimary artifacts каждого запуска — process-next-result; локальные `output/issue1225-audit-<run>/HA-1225-ANALYSIS.json` содержат точные пути JSON/traces/screenshots. Копия третьего пересчёта включена в review artifact. Исторические #1220–#1224 и #1228–#1238 уже S8; они не текущая причина блока.\n\n### Четыре изменения после73PASS\n\n1. Огромный negative upload действительно получил HTTP413, но Playwright поздний response.json упал из-за inspector body eviction. Только huge-case теперь читает тот же реальный POST/status/body bounded public CDP Network observer: exactURL+POST+unique requestId, timeout/error refusal, cleanup. Нет interception/mock/re-request; raw32MiB request не сохраняется. Локальный actualHTTP/Chromium proof подтверждает один POST33554560bytes,413/too_large и отказ отсутствующего ответа. Все negative no-token/no-preview/fullpair/revision/Undo guards сохранены.\n2. Copy screenshot содержит корректную roomless копию и четыре настоящих zero-wall линии; generic >0rooms был неверным postcondition. Теперь ready/stage, whole persisted copy, rooms0, четыре partitionscm0/четыре видимые painted SVG lines и точные unordered endpoints; другие assertions сохранены.\n3. Genuine literal10 input наследует только исторические filter_seeded/known_devices/new_device_ids из оригинального parent backup. Geometry/opaque/opening target не меняются; foreign-transfer по-прежнему удаляет known/new lists, filter_seeded остаётсяtrue. Pure actual backend proof прошёл. Наблюдённая настоящая потеря Undo из-за фоновой maintenance-записи в unseeded backups записана отдельно в файл находок и здесь не объявляется исправленной.\n4. Markerless full import по принятому VACUUM.md долговечно удаляет orphan trails, которые config/layout teardown не восстанавливает. Тот же vacuum journey перенесён в00-файл до destructive imports при существующем single-worker порядке. Реальный trail/get seed precondition добавлен; все stored/live/renderer/puck/service/reload assertions сохранены, fake restoration не вводилась.\n\nВ существующий companion workflow добавлен только отсутствовавший pinned Chromium prerequisite перед уже существующими browser-dependent unit; другой host matrixjob его не заменяет. Нового workflow/gate/filter не вводилось.\n\n### Проверки и независимость\n\nИзначальные runner21/companion62/contract51 были stdout без отдельных raw receipts; авторская сводка не заменяет CI. Позднее адресно проверены visible-target Chromium3/3, изменённый MJS syntax, текущий contract lint52files, интегрированная frozen fixture/archive/source precondition, current whole rooms и literal10 positive/negative backend controls, actualHTTP CDP proof, D inherited-checkpoint materialization и YAML parse. Это не HA-PASS последних четырёх изменений.\n\n[Первый independent advisory6103](https://github.com/Matysh/houseplan-e2e/pull/18#issuecomment-6603282137) High0/Medium0/Low1; Low ancestry wording исправлен, patch-equivalent PR16 сохранён. Последующие A–D/profile/Copy/четыре ports прочитаны scoped advisory/root review с оговорённой независимостью; это не официальное S7. Официальное show review обязано прочитать весь финальный внешний код827, доступный в product artifact.\n\n### Завершённый финальный диагностический повтор\n\n[Run41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259), requestId `issue1225-fixture4-1f3a0f343-827fb41-20261103`, job126068335721: product `1f3a0f343f881ef59446c664baace3df8e72a635`, companion `827fb417858e10e2362092e26960f7c8ae4c5ac0`, previous_run41662157218, HA2026.10.4, upgradev1.83.1. Это один штатный fallback после четырёх реальных fixture changes с native reuse, не релиз/финальный AC3#1226. Продуктовые inputs неизменны относительно проверенного0c030e700; поздние #1226 порты относятся к тестам. Actual77=77PASS,setup10=10PASS,0failed/timedOut/skipped/unexecuted. Все published counts совпали с независимым переводом raw JSON и exact selected identities. Итоговые per-case первичные пути сохранены в `docs/testing/issue1225/HA-41679296259.json.txt`; прежние pending/73PASS границы в companion snapshots являются историей и этим фактом заменены. Общий диагностический report20261103T165919933-41abeafd materialCleantrue:539steps=504passed+33failed+2not-required,0reused,duration4453695ms. Build/test-build fingerprint+outputHash совпадают с предыдущим прогоном, но выполнены заново; наблюдение сохранено отдельно, без расширения задачи на исправление кеша/новый прогон. Последующий read-only разбор plan/matchesInputs подтвердил одинаковое окружение и широкие объявленные closure: demo/**/*.mjs затрагивает516browser/golden/metrics/assets шагов, test/fixtures/** —11Node groups, backend testfile — общий backend group. Повтор build/test-build при прежних fingerprints/bytes соответствует политике нереставрируемых build outputs. Это не объявляется сломанным restore; proof `output/issue1226/reuse-scope-diagnosis.json`, дальнейшее улучшение вне#1225.\n\nПосле actual AC — штатный finish/show/очередь с infrastructureS6 `process-next/test/e2e.test.mjs`, затем публикация того же reviewed companion через PR18. Очередной sync/rebase/документация сами по себе не требуют полного HA-повтора: различия runtime/package inputs проверяются обычным read-only diff. Без действительных AC2 — без S8/слиянияPR18. Смежная#1226 с продуктовым/визуальным RED не создаёт искусственной зависимости для независимой#1225.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T18:45:39.410Z",
-        "artifactId": 13260493758,
-        "runId": 41695101120,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T18:45:43Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41695101120",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab"
+      "devBuild": {
+        "status": "not-required"
       }
     },
     "1227": {
@@ -2852,19 +2612,7 @@
     1246,
     1252
   ],
-  "active": {
-    "issue": 1225,
-    "worker": "finish",
-    "token": "126:finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:1:admit",
-    "fence": 126,
-    "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-    "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793730839519,
-    "expiresAt": 1793735193264,
-    "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5",
-    "reviewRequest": "review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab"
-  },
+  "active": null,
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
       "digest": "b74717bbe91c3148655850e19950fd1870a581195fa1ce207e74475c2abb5959",
@@ -2930,14 +2678,6 @@
       "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
       "issue": 1246
     },
-    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:3:synchronized": {
-      "digest": "a35cc51319e8ccd745c22ea8d7c59f2e403831e22ae61aa099f337e5d15dd013",
-      "issue": 1225
-    },
-    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:4:return": {
-      "digest": "afae009eea1207e1841b350cdec649c2ac73a7965eba9bb6b5481ceb7bc4b3bc",
-      "issue": 1225
-    },
     "finish:74f42b8f-f233-478f-91b2-b50448b6e147:finish:2:automation-pending": {
       "digest": "7fd04b4d0123f7105be09e59773c46be00c9a0c391b06fed9a6bc25471ccb56d",
       "issue": 1246
@@ -2958,101 +2698,17 @@
       "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
       "issue": 1246
     },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:2:synchronized": {
-      "digest": "2ff13dff57e0986a556c36e5846f0bc09edb1cc95e1b9f84988f54724f057f5c",
-      "issue": 1225
-    },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:3:s6-label": {
-      "digest": "4fa6a4ac32b00c18587f19c0f79c0b51ee6d803f53823215bba21b97bb202b24",
-      "issue": 1225
-    },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:4:review-requested": {
-      "digest": "031e53d98102aeb64fe5bd90082f2424133d4aeaa060568404de9fc9e378c8c2",
-      "issue": 1225
-    },
     "github:41694597150:1:completions:report:5a4f40aac93788991f2ad47356857880e152e1edd988670b376a2dc888fb8281": {
       "digest": "e26a6e7ba1d384d96ddbb0b5d34c4816957b771c11d2478ea3fc906751f82669",
       "issue": 1242
-    },
-    "github:41694597150:1:completions:message:ab2464a0783ec186a5b18c1722fa09b5238a0f3933032efaa430591e701ffc79": {
-      "digest": "1725053351748f7a3ad024be7bb7993011fbd3807686adfe61bb3c6f5eeb5d52",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:3bd1451d8157609c26f88fbe6262a278a699de397c7237669ec69dbeb7996d4a": {
-      "digest": "10b708cfb570c6c031ccf56f7cc1383f3d1d956a2067b865d7a16d11c133f65f",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:ff8ad01160fc51f94ce6314733ecce63dc5b95359693ba2d7492ad0bab0bf6d7": {
-      "digest": "26a517d12d10cfffd23ffc3954dfd280e6509009f60580f3d9c9d8d3f7c1902f",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:bd9a54baa5242e0500cadc5e2c7900766a1708d5cf2b45f998374f0e318d5a7f": {
-      "digest": "7a989819f3406c0f3321ad302b6c79c3720159888902443afc19d6e80a58d4b3",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:cf6e4024cb936aea32ac7c082551a08b369eb0bde8e5f136187bbc6ef5a03b71": {
-      "digest": "9646e4cbf2a294d7c7b814aab58d07d0642b000f18b0af605041038ff2b81518",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:65a2d34d29fad341d74e5015395dcb73d1999be7eb1883e61486666fed5e8f6c": {
-      "digest": "e41a46385eb761ed5a6e162d9510d5fea9d463fbf6b1ff209589a95934873ac9",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:3a90a745e5a5a3c3fbf21bbc4b1fff88aa0356dd6311cc87a2205cefcd216e3b": {
-      "digest": "97242b0d33c13df6b3db81f5241aaa845526bd7a1550811d235173b615c133c0",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:4ee1276fea6427a6b4dcb629ccc779e6375d753b0ed86a2c0fff737f68274f55": {
-      "digest": "63d3c6496a914e2e525a904f01488baad6cfd6097916e06789c1374c11855d51",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:c94626dbe7a7b91da3dd40d4575fdb7bad636637256356feb116d9c61e9b5b45": {
-      "digest": "333f9a7a6a5a3a2a5467879ed3ab23fa463bcc91ad7d81a36859ce5a6fe550aa",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:407e925b27c1fb55eddfe1d3e2a478bc0da54f1aa60a1978c6c1419b8f3e508f": {
-      "digest": "29741f4a05499458ae90a9ca99683f7ff9a07436758bcf17ff42d07b8e9cfe90",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:e154ac90aa8e0d8c65a5c995ddbdaad641f45c1d22203a61b08af64bb6386619": {
-      "digest": "d1b8a3cf077143e726aa49491ef175b64d0f92726542e42bf345b12170f4bc5b",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:notice:ffcb57d57260a618e9aa940dc87216be782e6a9150f5ad30e4bf2025499ad99d": {
-      "digest": "bebf5a9fee2e5b8ae5a0c0f9b4aa35eb61bab80f01751c78f524e3f5a8433657",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:ffcb57d57260a618e9aa940dc87216be782e6a9150f5ad30e4bf2025499ad99d": {
-      "digest": "6fcdf42d62fa8f4afbee902299975e572fbed1a95a73249cd205d2d8d9055f63",
-      "issue": 1225
     },
     "github:41694597150:1:completions:notice:a7b7f3196e22982bec8e0e0bba5b5a4f205003ec6c333f9c4e93b250ee28fd64": {
       "digest": "bbee027053045674db2ec2c8728424313e0510158668d728dd332754f4d398ec",
       "issue": 1246
     },
-    "github:41694597150:1:completions:message:a7b7f3196e22982bec8e0e0bba5b5a4f205003ec6c333f9c4e93b250ee28fd64": {
-      "digest": "fd41a2e6c07fd144c83b3c479949ff1e8c9e68b02bd3b3b69b1556e3d2f9773e",
-      "issue": 1225
-    },
-    "github:41694597150:1:completions:message:aad29cc6f8a8e6455b93b782615fa3e7dc0bd4aa4fdd4a601236d725623f2709": {
-      "digest": "4d90892a4abc9c12372efed0553d8f1325c290dd4bcae168702ca1347bd3d4c7",
-      "issue": 1225
-    },
     "github:41694597150:1:completions:metadata:72822c9a-2410-4257-8dea-b8e2ea7e1c26:task-notice:1242::": {
       "digest": "9a2f04f589c06014edb8e6d087b173276acade271a10ea2aa019166afeac1c3d",
       "issue": 1242
-    },
-    "github:41695078676:1:completions:message:766219c15425dcddd380cfe41706b875f585330590f405a9b92d1e17be3fc8c2": {
-      "digest": "65327daa449f23df3ae6145a7f052c939b352aaa5458d46815d20256f727de80",
-      "issue": 1225
-    },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:15:review-presentation": {
-      "digest": "af7db994130eb418b27ecc6a35e8d34309270274f2e659527c74349485531604",
-      "issue": 1225
-    },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:15:review-complete": {
-      "digest": "a41a0b04858882a4d04928c69601535f4472e89f3c5fc25886c04663952dc3b4",
-      "issue": 1225
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
       "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
@@ -3128,20 +2784,6 @@
         "delivered": true
       }
     },
-    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650": {
-      "digest": "61f527f3a071434dc9470081889b3e95b018a7239d80d748c398db7fa96756b3",
-      "issue": 1225,
-      "message": {
-        "kind": "queued",
-        "issue": 1225,
-        "at": 1793729932575,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "251b625727351478a70781925df6ae1798316ca3",
-        "delivered": true
-      }
-    },
     "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:1:admit": {
       "digest": "894a8d163f349864497abb49de201e0099957a920ba91193525c116558a7ebd3",
       "issue": 1246,
@@ -3177,42 +2819,6 @@
         "delivered": true
       }
     },
-    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:2:admit": {
-      "digest": "1e21216fa57ea0e20fd1ba3af8804ff9d99d59633afab55bb2355edb3360b15a",
-      "issue": 1225,
-      "message": {
-        "kind": "admitted",
-        "issue": 1225,
-        "at": 1793730497731,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "251b625727351478a70781925df6ae1798316ca3",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:4:return:return:1225": {
-      "digest": "afae009eea1207e1841b350cdec649c2ac73a7965eba9bb6b5481ceb7bc4b3bc",
-      "issue": 1225,
-      "message": {
-        "kind": "return",
-        "issue": 1225,
-        "at": 1793730514050,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793730514050,
-          "entry": 1,
-          "detail": "Синтаксис и типы изменённых инструментов: failed",
-          "eventId": "finish:d0c64017-4d9a-4488-bece-8ca75ad01650:finish:4:return:return:1225"
-        },
-        "delivered": true
-      }
-    },
     "finish:74f42b8f-f233-478f-91b2-b50448b6e147": {
       "digest": "e51ed99a2623e5d1c491dee90e32aa07c8f29a404879d5e95996bf63b7cc3972",
       "issue": 1246,
@@ -3239,20 +2845,6 @@
         "layer": "product",
         "materialSha": "c4779c99782afec7016e38ef302371738c25536c",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a": {
-      "digest": "3ac151c63bc03acf06c9349fd16c2bd0cfe15558c8c018a3c5a5f5f6c59a2bc8",
-      "issue": 1225,
-      "message": {
-        "kind": "queued",
-        "issue": 1225,
-        "at": 1793730651808,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
         "delivered": true
       }
     },
@@ -3300,21 +2892,6 @@
         "delivered": true
       }
     },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:1:admit": {
-      "digest": "1327b8dff49ba322a8502aca009bf9ca4cf74621a814248bb0d1975a6819fa5a",
-      "issue": 1225,
-      "message": {
-        "kind": "admitted",
-        "issue": 1225,
-        "at": 1793730839519,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:df291976-35e5-4b0d-be41-42d771b7587d": {
       "digest": "372b10852380640fc03f990364fcd9cf8d0fd9a08b3f46bd27da99d7c5d23958",
       "issue": 1246,
@@ -3326,36 +2903,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "59288b2550e8269193aad2272536c14915f7978e",
-        "delivered": true
-      }
-    },
-    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:3:s6-complete": {
-      "digest": "a34418be732c9f9fdc259226bcddd4a9b0d942083339a542c2a027a10affe3a4",
-      "issue": 1225,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1225,
-        "at": 1793730851569,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T183410572-78e3f170",
-          "name": "Тесты для задачи #1225 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261103T183410572-78e3f170/report.json",
-          "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-          "status": "passed",
-          "finishedAt": "2026-11-03T18:34:10.848Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "S6: actual HA доказательства готовы — 77/77 business и10/10setup PASS,0fail/timeout/skip/unexecuted. [Первичный прогон41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259) независимо пересчитан из raw Playwright JSON; published summaries совпадают. Далее штатный finish/show. Релиз не выполняется.\n\n<details>\n<summary>Закреплённые исходники, доказательства и границы готовности</summary>\n\n### Прямая инструкция владельца о побочных находках\n\nНовые побочные находки сохранять только в отдельном файле / полном Markdown отчёте ревью; GitHub issues не создавать, включая автоматическую публикацию outsideFindings. Качество ревью, High/Medium и findings по самой задаче не скрывать: все task-blockers идут в обычные blockers и влияют на вердикт. Если structured outsideFindings автоматически создаёт issue без переключателя, эту autoissue-коллекцию не использовать по прямой инструкции владельца; полное out-of-scope наблюдение с важностью, доказательством и направлением исправления отразить в текстовой analysis/boundaries части полного Markdown, затем исполнитель сохранит его в отдельный файл. Нового request field, override или изменения конвейера не вводить.\n### Материал для обычного show code review\n\nProduct branch `codex/1225`, commit `251b625727351478a70781925df6ae1798316ca3`; runner `process-next/lib/e2e.mjs`, тесты `process-next/test/e2e.test.mjs`. Основной внешний материал: [houseplan-e2e PR18](https://github.com/Matysh/houseplan-e2e/pull/18), base `115ae6f985f084696cde3f419d88d7751c4de972`, head `827fb417858e10e2362092e26960f7c8ae4c5ac0`.\n\nМодель ревью читает product Git без сети. Полный внешний diff и исходники доступны обычным read_file по [docs/testing/issue1225/README.md](https://github.com/Matysh/houseplan-card/blob/251b625727351478a70781925df6ae1798316ca3/docs/testing/issue1225/README.md), `MANIFEST.json`, `companion-full.patch`, `companion/base/**.txt` и `companion/head/**.txt`. MANIFEST содержит точные refs, Git blobs, SHA256 и размеры. Full patch324736bytes SHA256 `019fc04c91be94392137357ce75f2e5ca13885dcb903384f8334b66256deb167`. Включены обе стороны переименованного vacuum-файла, относительные helper imports, workflow/package/contracts и synthetic seed config/layout/trails. Это инертный review artifact, не новый gate/сертификат/выборка; документация дополнительных прогонов не требует.\n\n### Финальная очередь и применимость actual HA доказательств\n\nПервый штатный finish синхронизировал product branch в `a649fc3251d7a115d93eb6f0817024d04ab8b577`: infrastructure behavior21/21PASS, syntax не смог запуститься из-за отсутствующего пакета yaml в старом node_modules. Зависимости восстановлены обычным `npm ci --ignore-scripts` по текущему lockfile; код не изменён, выполняется новый явный finish. Это не отказ поведения и не основание повторять HA.\n\nОбычный read-only diff audited1f3 → synchronizeda649 сохранён в `output/issue1225-final-sync-runtime.diff`: backend/import/graph/trails/ACL, E2E runner и packaging inputs неизменны. Отличаются15srcfiles других уже принятых задач: picker registration/translations, weather-only heading, transient Plan draw-ink cleanup, tunnel fade и return-focus presentation. Native commit/Undo/readback/hooks текущей E2E подготовки не изменены. Здесь переиспользуется адресное HA-доказательство самой#1225; не заявляется полный77-case сертификат всего нового HEAD и не вводится новый gate. Официальное ревью читает фактический синхронизированный material, полный внешний827artifact и результат текущего адресного infrastructureS6.\n### Поведение и сохранённые гарантии\n\n- Setup сохраняет исходный legacy seed и проходит настоящие видимые Draw → accepted commit → Undo, проверяя census и доступность точек через public SVG/CTM/hit-test. Private product state/camera и backend seed replacement не используются.\n- Runner отдельно считает business passed/failed/skipped/unexecuted и setup; selected identity и последний result сохраняются. Пустые first-run/upgrade remainder — not-required. Исходный аудит41598951489 переводится в77=3passed+74skipped и отдельно2failed setup.\n- Profile API2 сохраняет отдельный v1 reader: clean Cancel, dirty Continue/Discard, отсутствие durable config/set/ACK до внешнего Save, ровно один Save/ACK и v2/reload. Старые floor/rotation/size/display проверки сохранены.\n- Exact native lattice/wire/ID/Undo/Redo/export/reload не ослаблены. Граница: дополнительный Low-контракт ±1ulp/zoom-pan не исчерпывается этими L/X journeys.\n- Transfer A–D сохраняет legal distinct-ID coincident и exact off-grid geometry, полный graph/projection/целые rooms с opaque metadata; current mismatch и настоящий zero-area/self-crossing literal10 — отдельные HTTP negatives с отсутствием token/preview и неизменной полной парой config/layout/revisions/Undo. Исходный model5 и genuine literal10 positive off-wall repair/reload/fullUndo сохранены. Нет model11→10 переименования и скрытой нормализации expected.\n- Copy соответствует принятой #1227: accepted source копируется без Optimize/preflight; реальный passthrough observer требует0Optimize. Все четыре composition, source/layout/markers/cancel/reload/image гарантии остаются.\n\n### Первичные actual HA результаты\n\n1. [41632300999](https://github.com/Matysh/houseplan-card/actions/runs/41632300999), producta07f4a10309c7b187ab122cf3227002f04c2e81d/companion6103fce:77=66PASS+11FAIL,10setupPASS.\n2. [41646456489](https://github.com/Matysh/houseplan-card/actions/runs/41646456489), тот же product/companionafa1724:77=72PASS+5FAIL,10setupPASS. 459reused общих шагов; 29m56s вместо69m24s. Полный аудит остаётся RED.\n3. [41662157218](https://github.com/Matysh/houseplan-card/actions/runs/41662157218), product0bda944e3244a142449c30c5f802c14833af8c66/companiona5ba81afb2b624e6b84d9b3605c63e97322efb25:77 реально исполнены=73PASS+3FAIL+1timeout,0skip/unexecuted;10/10setupPASS. Все raw Playwright results независимо пересчитаны, summaries совпадают. Прежние product #1237/#1238 native/dirty cases PASS. Четыре remaining причины ниже относятся к этому факту, не выданы PASS.\n\nPrimary artifacts каждого запуска — process-next-result; локальные `output/issue1225-audit-<run>/HA-1225-ANALYSIS.json` содержат точные пути JSON/traces/screenshots. Копия третьего пересчёта включена в review artifact. Исторические #1220–#1224 и #1228–#1238 уже S8; они не текущая причина блока.\n\n### Четыре изменения после73PASS\n\n1. Огромный negative upload действительно получил HTTP413, но Playwright поздний response.json упал из-за inspector body eviction. Только huge-case теперь читает тот же реальный POST/status/body bounded public CDP Network observer: exactURL+POST+unique requestId, timeout/error refusal, cleanup. Нет interception/mock/re-request; raw32MiB request не сохраняется. Локальный actualHTTP/Chromium proof подтверждает один POST33554560bytes,413/too_large и отказ отсутствующего ответа. Все negative no-token/no-preview/fullpair/revision/Undo guards сохранены.\n2. Copy screenshot содержит корректную roomless копию и четыре настоящих zero-wall линии; generic >0rooms был неверным postcondition. Теперь ready/stage, whole persisted copy, rooms0, четыре partitionscm0/четыре видимые painted SVG lines и точные unordered endpoints; другие assertions сохранены.\n3. Genuine literal10 input наследует только исторические filter_seeded/known_devices/new_device_ids из оригинального parent backup. Geometry/opaque/opening target не меняются; foreign-transfer по-прежнему удаляет known/new lists, filter_seeded остаётсяtrue. Pure actual backend proof прошёл. Наблюдённая настоящая потеря Undo из-за фоновой maintenance-записи в unseeded backups записана отдельно в файл находок и здесь не объявляется исправленной.\n4. Markerless full import по принятому VACUUM.md долговечно удаляет orphan trails, которые config/layout teardown не восстанавливает. Тот же vacuum journey перенесён в00-файл до destructive imports при существующем single-worker порядке. Реальный trail/get seed precondition добавлен; все stored/live/renderer/puck/service/reload assertions сохранены, fake restoration не вводилась.\n\nВ существующий companion workflow добавлен только отсутствовавший pinned Chromium prerequisite перед уже существующими browser-dependent unit; другой host matrixjob его не заменяет. Нового workflow/gate/filter не вводилось.\n\n### Проверки и независимость\n\nИзначальные runner21/companion62/contract51 были stdout без отдельных raw receipts; авторская сводка не заменяет CI. Позднее адресно проверены visible-target Chromium3/3, изменённый MJS syntax, текущий contract lint52files, интегрированная frozen fixture/archive/source precondition, current whole rooms и literal10 positive/negative backend controls, actualHTTP CDP proof, D inherited-checkpoint materialization и YAML parse. Это не HA-PASS последних четырёх изменений.\n\n[Первый independent advisory6103](https://github.com/Matysh/houseplan-e2e/pull/18#issuecomment-6603282137) High0/Medium0/Low1; Low ancestry wording исправлен, patch-equivalent PR16 сохранён. Последующие A–D/profile/Copy/четыре ports прочитаны scoped advisory/root review с оговорённой независимостью; это не официальное S7. Официальное show review обязано прочитать весь финальный внешний код827, доступный в product artifact.\n\n### Завершённый финальный диагностический повтор\n\n[Run41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259), requestId `issue1225-fixture4-1f3a0f343-827fb41-20261103`, job126068335721: product `1f3a0f343f881ef59446c664baace3df8e72a635`, companion `827fb417858e10e2362092e26960f7c8ae4c5ac0`, previous_run41662157218, HA2026.10.4, upgradev1.83.1. Это один штатный fallback после четырёх реальных fixture changes с native reuse, не релиз/финальный AC3#1226. Продуктовые inputs неизменны относительно проверенного0c030e700; поздние #1226 порты относятся к тестам. Actual77=77PASS,setup10=10PASS,0failed/timedOut/skipped/unexecuted. Все published counts совпали с независимым переводом raw JSON и exact selected identities. Итоговые per-case первичные пути сохранены в `docs/testing/issue1225/HA-41679296259.json.txt`; прежние pending/73PASS границы в companion snapshots являются историей и этим фактом заменены. Общий диагностический report20261103T165919933-41abeafd materialCleantrue:539steps=504passed+33failed+2not-required,0reused,duration4453695ms. Build/test-build fingerprint+outputHash совпадают с предыдущим прогоном, но выполнены заново; наблюдение сохранено отдельно, без расширения задачи на исправление кеша/новый прогон. Последующий read-only разбор plan/matchesInputs подтвердил одинаковое окружение и широкие объявленные closure: demo/**/*.mjs затрагивает516browser/golden/metrics/assets шагов, test/fixtures/** —11Node groups, backend testfile — общий backend group. Повтор build/test-build при прежних fingerprints/bytes соответствует политике нереставрируемых build outputs. Это не объявляется сломанным restore; proof `output/issue1226/reuse-scope-diagnosis.json`, дальнейшее улучшение вне#1225.\n\nПосле actual AC — штатный finish/show/очередь с infrastructureS6 `process-next/test/e2e.test.mjs`, затем публикация того же reviewed companion через PR18. Очередной sync/rebase/документация сами по себе не требуют полного HA-повтора: различия runtime/package inputs проверяются обычным read-only diff. Без действительных AC2 — без S8/слиянияPR18. Смежная#1226 с продуктовым/визуальным RED не создаёт искусственной зависимости для независимой#1225.\n\n</details>",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
