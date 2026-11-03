@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1737,
+  "revision": 1738,
   "nextTicket": 113,
   "nextFence": 113,
   "tasks": {
@@ -2114,7 +2114,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1238-import-opening-repair",
-      "materialSha": "82add54e4f645e7b32d5fc1fe9f1511a5302d0b8",
+      "materialSha": "0c030e70016f34ee103ce9a0e15a312915edb09f",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 112,
@@ -2122,7 +2122,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793716420638,
       "reviewEntry": 2,
-      "patchId": "f91449033c7ccd946fe58275b51ec9d8f8852835",
+      "patchId": "e980a082ed510df9e71aa3e78f243633d02d8991",
       "changedFiles": [
         "custom_components/houseplan/opening_repair.py",
         "custom_components/houseplan/plan_graph.py",
@@ -2262,11 +2262,12 @@
     "worker": "github-coordinator",
     "token": "112:github:41657510895:1:tick:0:admit",
     "fence": 112,
-    "materialSha": "82add54e4f645e7b32d5fc1fe9f1511a5302d0b8",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "0c030e70016f34ee103ce9a0e15a312915edb09f",
+    "expectedBase": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
+    "phase": "testing",
     "admittedAt": 1793717403942,
-    "expiresAt": 1793717703942
+    "expiresAt": 1793717778906,
+    "patchId": "e980a082ed510df9e71aa3e78f243633d02d8991"
   },
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
@@ -2331,6 +2332,10 @@
     },
     "github:41657510895:1:completions:message:5e0e4babcdd698266808fee84eab7eccf5d5084a97ecda16b24d73ae0f96869f": {
       "digest": "76ed8686b0e4e458dfe0a8593d2d5ce49524fa9cde24b6449533220658a645c5",
+      "issue": 1238
+    },
+    "finish:51e821db-f42f-4878-a8b1-7398cf87a34f:finish:2:synchronized": {
+      "digest": "7420401aa85196bae977d0128657ad094f2a6d8ae7980e5743095cd043cb7028",
       "issue": 1238
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
