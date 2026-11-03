@@ -1525,6 +1525,7 @@ async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
 
 @pytest.mark.parametrize(("source_name", "candidate_name", "partition_id"), [
     ("276-coincident-partition.json", "280-optimize-rehost-candidate.json", "redundant"),
+    ("276-coincident-partition.json", "280-optimize-rehost-current.json", "redundant"),
     ("281-resize-outer-partitions.json", "281-resize-outer-candidate.json", "top-left"),
 ])
 async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
@@ -1544,6 +1545,10 @@ async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
     candidate = json.loads(
         (fixture_dir / candidate_name).read_text(encoding="utf-8")
     )
+    graph_change = None
+    if candidate_name == "280-optimize-rehost-current.json":
+        graph_change = candidate["graph_change"]
+        candidate = candidate["config"]
     await runtime.config_store.async_save({"config": previous, "rev": 1})
     await runtime.store.async_save({"layout": {}, "rev": 1})
 
@@ -1553,10 +1558,13 @@ async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
         "layout": {},
         "expected_config_rev": 1,
         "expected_layout_rev": 1,
+        **({"graph_change": graph_change} if graph_change is not None else {}),
     })
     optimized = await client.receive_json()
-    assert optimized["success"]
+    assert optimized["success"], optimized
     stored = (await runtime.config_store.async_load())["config"]
+    if candidate_name == "280-optimize-rehost-current.json":
+        assert stored == candidate, "entire current frontend candidate survives the independent WS boundary"
     stored_space = stored["spaces"][0]
     assert stored_space.get("partitions") in (None, [])
     wall_ids = {segment["id"] for segment in stored_space["wall_segments"]}

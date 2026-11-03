@@ -341,7 +341,7 @@ try {
     assert.deepEqual(frame.pool, openingDown.pool);
     for (const family of ['wallUnion', 'physicalBodies', 'innerContour', 'cleanFloor', 'lightBarrier'])
       assert.equal(frame.builds[family], openingDown.builds[family], `${family}: no full-floor work per opening frame`);
-    assert.equal(frame.openingDragFallbacks, openingDown.openingDragFallbacks);
+    assert.equal(frame.openingDragFallbacks, openingDown.openingDragFallbacks, `opening drag frame ${index}: no canonical fallback`);
     if (frame.openingDrag.moved) {
       assert.equal(frame.openingCut?.centerEmpty, true, 'the local cut follows across live and normal host paint');
       assert.equal(frame.openingCut.shoulderSolid, true);

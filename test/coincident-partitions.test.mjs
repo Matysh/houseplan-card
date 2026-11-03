@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { normalizeRoomAppearance } from '../test-build/room-appearance.js';
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js';
 import { reconcileCoincidentPartitions } from '../test-build/coincident-partitions.js';
@@ -15,15 +16,16 @@ const fixture = JSON.parse(readFileSync(
   'utf8',
 ));
 const backendCandidate = JSON.parse(readFileSync(
-  new URL('./fixtures/280-optimize-rehost-candidate.json', import.meta.url),
+  new URL('./fixtures/280-optimize-rehost-current.json', import.meta.url),
   'utf8',
-));
+)).config;
 const clone = (value) => structuredClone(value);
 
 const optimize = (config) => optimizePlans(config, {});
 
 test('issue 276 reconciles the anonymized 5 cm offset fixture without moving its door', () => {
-  const input = clone(fixture);
+  // HA config/get already projects the legacy appearance defaults.
+  const input = normalizeRoomAppearance(clone(fixture));
   const before = clone(input);
   const result = optimize(input);
   assert.deepEqual(input, before, 'Optimize preview must not mutate the source');
