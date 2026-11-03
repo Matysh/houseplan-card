@@ -41,7 +41,8 @@ const out = await page.evaluate(async () => {
   const before = card._geometrySnapshotFromConfig(card._serverCfg, 'A');
   const fresh = card._serverCfg.spaces.find((space) => space.id === 'A');
   fresh.partitions = [{ id: 'drawn-wall', a: [0.24, 0.24], b: [0.48, 0.24], cm: 20 }];
-  result.commitSucceeds = card._commitPhysicalGeometry('draw', before) === true;
+  result.commitSucceeds = card._editorRuntime._commitPhysicalGeometry('draw', before, [], true,
+    { kind: 'partitions', ids: ['drawn-wall'] }) === true;
   result.noMigrationToast = !toasts.some((text) => /не преобразовано|not converted/i.test(text));
 
   // The auto-resolution kept the door on a real wall and zeroed the border on

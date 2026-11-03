@@ -1,6 +1,7 @@
 /** #804: partial partition promotion through the real room dialog and config/set. */
 import { launch, check, finish } from './serve.mjs';
 import { isDeepStrictEqual } from 'node:util';
+import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 
 const point = (x, y) => [x / 240, y / 240];
 const partition = (id, x1, y1, x2, y2, cm) => ({
@@ -55,11 +56,11 @@ function garderoba({ opening = null, duplicate = false } = {}) {
     }];
   }
   if (duplicate) space.wall_segments.push(structuredClone(space.wall_segments[0]));
-  return config;
+  return duplicate ? config : currentGraphFixture(config);
 }
 
 function batchConfig() {
-  return {
+  return currentGraphFixture({
     model_version: 10, markers: [], settings: {},
     spaces: [{
       id: 'lineage', title: 'Lineage', cell_cm: 8, view_box: [0.24, 0.34, 0.30, 0.36],
@@ -71,7 +72,7 @@ function batchConfig() {
         partition('batch-bottom', 74, 140, 102, 140, 15),
       ],
     }],
-  };
+  });
 }
 
 const results = {};
@@ -103,7 +104,7 @@ async function scenario(name, config, body) {
       card.hass = { ...card.hass, callWS: async (message) => {
         if (message.type === 'houseplan/config/get') {
           state.reads++;
-          return { config: structuredClone(state.saved), rev: state.revision, can_write: true };
+          return { config: structuredClone(state.saved), rev: state.revision, can_write: true, plan_graph_api: 1 };
         }
         if (message.type !== 'houseplan/config/set') return fallback(message);
         const candidate = structuredClone(message.config);
@@ -145,7 +146,8 @@ async function scenario(name, config, body) {
   }
 }
 
-async function clickPoint(page, x, y) {
+async function clickPoint(page, x, y, face = false) {
+  if (face) await page.evaluate(() => window.__hpTest.setTool('select'));
   const screen = await page.evaluate(([x, y]) => {
     const rect = window.__card.renderRoot.querySelector('.stage').getBoundingClientRect();
     const view = window.__card._view;
@@ -204,7 +206,7 @@ const uniqueIds = (space) => {
 
 await scenario('Garderoba without workaround', garderoba(), async (page) => {
   const before = await snapshot(page);
-  await clickPoint(page, 88, 122);
+  await clickPoint(page, 88, 122, true);
   await decide(page, 'Garderoba');
   await settleWrites(page);
   const after = await snapshot(page);
@@ -301,7 +303,7 @@ for (const ending of ['save', 'keep', 'cancel', 'escape']) {
 
 await scenario('true duplicate rollback', garderoba({ duplicate: true }), async (page) => {
   const before = await snapshot(page);
-  await clickPoint(page, 88, 122);
+  await clickPoint(page, 88, 122, true);
   await decide(page, 'Must not exist');
   await settleWrites(page);
   const after = await snapshot(page);
@@ -315,7 +317,7 @@ await scenario('true duplicate rollback', garderoba({ duplicate: true }), async 
 for (const opening of ['same-residual', 'absorbed', 'new-residual']) {
   await scenario(`opening ${opening}`, garderoba({ opening }), async (page) => {
     const before = await snapshot(page);
-    await clickPoint(page, 88, 122);
+    await clickPoint(page, 88, 122, true);
     await decide(page, 'Opening room');
     await settleWrites(page);
     const after = await snapshot(page);

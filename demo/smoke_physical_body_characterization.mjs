@@ -45,8 +45,10 @@ try {
         view_box: [0, 0, 1, 1], rooms: [], wall_segments: [],
         partitions: [
           { id: 'p_move', a: [.2, .3], b: [.55, .3], cm: 20 },
-          { id: 'p_bottom', a: [.2, .65], b: [.55, .65], cm: 20 },
-          { id: 'p_top', a: [.2, .65], b: [.55, .65], cm: 20 },
+          // Two distinct authored records with coincident ink. Identical
+          // metadata-free legacy duplicates are canonically deduplicated.
+          { id: 'p_bottom', a: [.2, .65], b: [.55, .65], cm: 20, future: { layer: 'bottom' } },
+          { id: 'p_top', a: [.2, .65], b: [.55, .65], cm: 20, future: { layer: 'top' } },
         ],
         wall_columns: [
           { id: 'c_rotate', shape: 'square', center: [.75, .3], cm: 100, angle: 0 },

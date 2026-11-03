@@ -22,7 +22,7 @@ let server = structuredClone(initial), revision = 1;
 const writes = [];
 const { page, browser } = await launch({ width: 1180, height: 920 });
 await page.exposeFunction('alignWire', async message => {
-  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true, wall_node_move_api: 1 };
+  if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true, wall_node_move_api: 1, plan_graph_api: 1 };
   if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
   if (message.type === 'houseplan/config/set') {
     if (message.expected_rev !== revision) return { __error: { code: 'conflict', message: 'conflict' } };

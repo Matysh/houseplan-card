@@ -100,7 +100,10 @@ const out = await page.evaluate(async () => {
   const previewText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.previewOffersInvisibleCleanup = !!preview?.changed
     && preview.report.moved === 0
-    && preview.report.coordsCanonicalized === 0
+    // Graph migration materializes one inherited intersection at
+    // y=1.4831460674157304e-17; the existing grid pass canonicalizes it to 0.
+    // It is counted maintenance, with zero visible move and exact reload below.
+    && preview.report.coordsCanonicalized === 1
     && preview.report.latticeCoordinatesCanonicalized > 0
     && preview.report.maxShift === 0
     && preview.report.maxShiftCm === 0
