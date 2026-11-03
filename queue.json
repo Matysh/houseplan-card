@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1500,
+  "revision": 1501,
   "nextTicket": 104,
   "nextFence": 101,
   "tasks": {
@@ -1819,7 +1819,7 @@
       "ownerDecision": null,
       "ticket": 100,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793713893625,
       "reviewEntry": 1,
       "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51",
@@ -1848,6 +1848,17 @@
         "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
         "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
         "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51"
+      },
+      "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
+      "notice": {
+        "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
+        "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793714277342,
+        "entry": 1,
+        "requestId": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
+        "eventId": "author-finite-sparse-1230-1793714275635:return:1230"
       }
     },
     "1232": {
@@ -2013,19 +2024,7 @@
     1235,
     1232
   ],
-  "active": {
-    "issue": 1230,
-    "worker": "github-coordinator",
-    "token": "100:github:41648108341:1:tick:1:admit",
-    "fence": 100,
-    "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
-    "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
-    "phase": "review",
-    "admittedAt": 1793713923377,
-    "expiresAt": 1793717617936,
-    "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51",
-    "reviewRequest": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe"
-  },
+  "active": null,
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
       "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
@@ -2085,6 +2084,10 @@
     },
     "github:41648919463:1:completions:message:711fea54ee60fc49472f3155ff29f06fad7bd66b2c72b46651dd66f042310c01": {
       "digest": "355384261eb6587e680d68c12d7ca5c20893ec9af30be539ebacb3131e509820",
+      "issue": 1230
+    },
+    "author-finite-sparse-1230-1793714275635": {
+      "digest": "4dc3ebd2287bf154319fb4b646746b5aaf7ff3ad4a6085810b7b08dd614373ef",
       "issue": 1230
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
@@ -2183,6 +2186,26 @@
         "layer": "product",
         "materialSha": "4125fd0798da1dd2aacfb68d5557f34086b5b2f7",
         "delivered": true
+      }
+    },
+    "author-finite-sparse-1230-1793714275635:return:1230": {
+      "digest": "4dc3ebd2287bf154319fb4b646746b5aaf7ff3ad4a6085810b7b08dd614373ef",
+      "issue": 1230,
+      "message": {
+        "kind": "return",
+        "issue": 1230,
+        "at": 1793714277342,
+        "entry": 1,
+        "notice": {
+          "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
+          "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1793714277342,
+          "entry": 1,
+          "requestId": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
+          "eventId": "author-finite-sparse-1230-1793714275635:return:1230"
+        }
       }
     }
   },
