@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1369,
+  "revision": 1370,
   "nextTicket": 96,
   "nextFence": 95,
   "tasks": {
@@ -1576,7 +1576,9 @@
         "status": "passed",
         "finishedAt": "2026-11-03T11:17:22.389Z",
         "failures": []
-      }
+      },
+      "automationError": "queue-metadata-busy",
+      "automationSince": 1793704669721
     },
     "1222": {
       "issue": 1222,
@@ -1841,6 +1843,10 @@
     },
     "dev-build:41626003576:1:webhook:f9bbcd92-82e3-4a01-b76d-fb5febe30c67:delivered": {
       "digest": "974cab4b26d6bb3e039139e3cb7c4a2bb092779034fd7df87bafdeba129ec107",
+      "issue": 1221
+    },
+    "finish:9b399c96-54d8-4257-b973-775133234f4c:finish:3:automation-pending": {
+      "digest": "363cd5fc7477e4540906c14593d9bf9ee9186d63a3182a3686ed66afd4a1f2be",
       "issue": 1221
     },
     "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb": {
