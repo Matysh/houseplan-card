@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1345,
-  "nextTicket": 95,
+  "revision": 1346,
+  "nextTicket": 96,
   "nextFence": 94,
   "tasks": {
     "1126": {
@@ -1557,6 +1557,20 @@
         "patchId": "d13c503dfa5476ed91f101eeb34b46ac0f7afe4d"
       }
     },
+    "1221": {
+      "issue": 1221,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1221-legacy-carrier",
+      "materialSha": "17ea015f085b0e4a2c149ba7469a0e70f3618d1e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 95,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793704387376,
+      "reviewEntry": 1
+    },
     "1222": {
       "issue": 1222,
       "branch": "codex/1222-decor-redo",
@@ -1800,7 +1814,8 @@
     }
   },
   "waiting": [
-    1227
+    1227,
+    1221
   ],
   "active": {
     "issue": 1220,
@@ -1927,6 +1942,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a5c34fff5dcf0af837367dfe5f7acf912fcb1b6a"
+      }
+    },
+    "finish:9b399c96-54d8-4257-b973-775133234f4c": {
+      "digest": "482262e0e990c0c3b0f857d7afa99823eae804711673966140b0927b2d59ea41",
+      "issue": 1221,
+      "message": {
+        "kind": "queued",
+        "issue": 1221,
+        "at": 1793704387376,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "17ea015f085b0e4a2c149ba7469a0e70f3618d1e"
       }
     }
   },
