@@ -35,13 +35,19 @@ try{
   await page.evaluate(()=>window.__hpTest.setMode('plan'));
   await page.evaluate(()=>window.__hpTest.setTool('draw'));
   const host=page.locator('houseplan-card');
+  // Mode motion deliberately shields canvas input until its real terminal.
+  await page.waitForFunction(()=>{
+    const stage=window.__card.renderRoot.querySelector('.stage');
+    return stage&&!stage.classList.contains('mode-transition');
+  });
   const click=async(ix,iy)=>{
     const point=await host.evaluate((card,[ix,iy])=>{
       const svg=card.renderRoot.querySelector('svg.plan-svg'),p=svg.createSVGPoint();
       p.x=ix*1000/240;p.y=iy*1000/240;
       const q=p.matrixTransform(svg.getScreenCTM()),bounds=card.renderRoot.querySelector('.stage').getBoundingClientRect();
       const hit=card.renderRoot.elementFromPoint(q.x,q.y);
-      return {x:q.x,y:q.y,clear:!!hit?.closest('.stage')&&!hit.closest('button,input,.drawwall,.hp-properties'),
+      return {x:q.x,y:q.y,hit:hit&&`${hit.tagName}.${hit.getAttribute('class')||''}`,
+        clear:!!hit?.closest('.stage')&&!hit.closest('button,input,.drawwall,.hp-properties'),
         inside:q.x>bounds.left&&q.x<bounds.right&&q.y>bounds.top&&q.y<bounds.bottom};
     },[ix,iy]);
     assert.ok(point.clear&&point.inside&&point.x<1280&&point.y<900,JSON.stringify(point));
@@ -57,10 +63,10 @@ try{
   out.exactGridWire=['["l","54","95"]','["l","102","95"]','["l","102","144"]'].every(p=>wires.includes(p));
   out.nativeLShapeSaved=graph.edges.length===2&&graph.nodes.length===3;
   out.everyWireUsesLattice=writes.every(m=>m.config.spaces[0].plan_graph.nodes.every(n=>n.p[0]==='l'));
-  await host.locator('[data-hp="geometry-undo"]').click();
+  await host.locator('[data-hp="action"][data-action="geometry-undo"]').click();
   await page.evaluate(()=>window.__hpTest.waitForWrites());
   out.undoOneSegment=server.spaces[0].plan_graph.edges.length===1;
-  await host.locator('[data-hp="geometry-redo"]').click();
+  await host.locator('[data-hp="action"][data-action="geometry-redo"]').click();
   await page.evaluate(()=>window.__hpTest.waitForWrites());
   out.redoExactIdsAndPoints=JSON.stringify(server.spaces[0].plan_graph)===JSON.stringify(graph);
   await page.evaluate(async()=>{await window.__card._reloadConfigOnly(true);await window.__hpTest.settled();});
