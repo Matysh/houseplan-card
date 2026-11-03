@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2131,
+  "revision": 2132,
   "nextTicket": 134,
   "nextFence": 134,
   "tasks": {
@@ -1740,17 +1740,17 @@
       "ownerDecision": null,
       "ticket": 133,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793733785811,
       "reviewEntry": 2,
       "notice": {
-        "key": "1:rebase-conflict",
-        "reason": "rebase-conflict",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793733590172,
-        "entry": 1,
-        "eventId": "finish:8df2eedb-ab7b-46f4-b8f0-097791c33abb:finish:1:return:return:1226"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793735481480,
+        "entry": 2,
+        "requestId": "review:1226:2:dd2483d0e29eda12ec5cfde91a8f14eeee09277d:082f99ccf9c9667cb17edae74f529e9e7695872a"
       },
       "patchId": "dd2483d0e29eda12ec5cfde91a8f14eeee09277d",
       "changedFiles": [
@@ -2006,6 +2006,11 @@
         "materialSha": "e6fe4e04616111f3bf658d7d432ac84539c091b8",
         "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
         "patchId": "dd2483d0e29eda12ec5cfde91a8f14eeee09277d"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1226:2:dd2483d0e29eda12ec5cfde91a8f14eeee09277d:082f99ccf9c9667cb17edae74f529e9e7695872a",
+        "at": 1793735481480
       }
     },
     "1227": {
@@ -2959,19 +2964,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1226,
-    "worker": "github-coordinator",
-    "token": "133:github:41705347550:1:tick:0:admit",
-    "fence": 133,
-    "materialSha": "e6fe4e04616111f3bf658d7d432ac84539c091b8",
-    "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-    "phase": "review",
-    "admittedAt": 1793734804954,
-    "expiresAt": 1793738473371,
-    "patchId": "dd2483d0e29eda12ec5cfde91a8f14eeee09277d",
-    "reviewRequest": "review:1226:2:dd2483d0e29eda12ec5cfde91a8f14eeee09277d:082f99ccf9c9667cb17edae74f529e9e7695872a"
-  },
+  "active": null,
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
       "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
@@ -3135,6 +3128,10 @@
     },
     "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1:finish:12:review-presentation": {
       "digest": "a357dc8b87a3a2d01f087d52cade3fe8b0fd7ebe36b9cc8d22f210f61a73c57f",
+      "issue": 1226
+    },
+    "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1:finish:12:return": {
+      "digest": "40c3362e2bd976a77c1cc7d4c068620a26aac30694cae4a91bd08c4de24bbd77",
       "issue": 1226
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
