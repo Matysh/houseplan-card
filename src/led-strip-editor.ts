@@ -464,7 +464,7 @@ export class LedStripEditor {
       : this.writeNow(name, spaceId, stripId, next, record);
   }
 
-private async writeNow(
+  private async writeNow(
     name: string, spaceId: string, stripId: string,
     next: (current: LedStripModel | null) => LedStripModel | null, record = true,
   ): Promise<boolean> {
@@ -555,7 +555,7 @@ private async writeNow(
     return markerId ? this.host._devices.find((item) => item.id === markerId) : undefined;
   }
 
-async bind(stripId: string, markerId: string | null, spaceId = this.host._space): Promise<void> {
+  async bind(stripId: string, markerId: string | null, spaceId = this.host._space): Promise<void> {
     const showToast = captureToast(this.host);
     const owner = markerId ? ownerOf(this.host._serverCfg, markerId) : null;
     if (owner && owner.strip.id !== stripId) { showToast(this.t('led.taken'), 'led.taken'); return; }

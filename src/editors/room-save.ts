@@ -13,7 +13,7 @@ export function roomSaveBusy(host: object): boolean {
 
 /** Keep the form until its own accepted response; rollback remains #842's. */
 export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host: HouseplanEditorHostPort = runtime.host;
   if (roomSaveBusy(host)) return;
   const cfg = host._serverCfg;
@@ -59,7 +59,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   host.requestUpdate();
   const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
   try {
-    await runtime._saveConfigNow(attempt, contextCurrent, contextCurrent);
+    await runtime._saveConfigNow(attempt, contextCurrent, contextCurrent, showToast);
     if (!contextCurrent()) return;
     if (host.isConnected && host._roomDialog && dialogSession(host, 'room') === owner
       && host._space === spaceId && host._roomEditId === roomId && roomDraftKey(host) === savedDraft) {

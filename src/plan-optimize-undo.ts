@@ -37,7 +37,7 @@ export class PlanOptimizationUndo {
     this.host._undoKind = null;
   }
 
-async run(): Promise<void> {
+  async run(): Promise<void> {
     const showToast = captureToast(this.host);
     const host = this.host;
     if (!host._canOptimizeUndo || host._optimizeUndoBusy) return;

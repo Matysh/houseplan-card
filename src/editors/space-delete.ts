@@ -11,7 +11,7 @@ export async function completeSpaceDeletion(
   dependencies: SpaceDeletionDependencyReport,
   removeMarkers = false,
 ): Promise<void> {
-    const showToast = captureToast(host);
+  const showToast = captureToast(host);
   const currentDialog = host._spaceDialog;
   const currentConfig = host._serverCfg;
   if (!currentDialog || currentDialog.mode !== 'edit'

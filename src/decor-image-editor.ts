@@ -118,7 +118,7 @@ export class DecorImageEditor<Snapshot> {
     </g>`;
   }
 
-public async uploadFromInput(ev: Event, replaceSelection = false): Promise<void> {
+  public async uploadFromInput(ev: Event, replaceSelection = false): Promise<void> {
     const showToast = captureToast(this.host);
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -143,7 +143,7 @@ public async uploadFromInput(ev: Event, replaceSelection = false): Promise<void>
     await this.upload(file, file.name, replaceSelection);
   }
 
-public async upload(file: Blob, name: string, replaceSelection: boolean): Promise<void> {
+  public async upload(file: Blob, name: string, replaceSelection: boolean): Promise<void> {
     const showToast = captureToast(this.host);
     if (this.host._decorAssetBusy) return;
     this.host._decorAssetBusy = true;
@@ -190,7 +190,7 @@ public async upload(file: Blob, name: string, replaceSelection: boolean): Promis
     }
   }
 
-public async delete(asset: DecorAsset): Promise<void> {
+  public async delete(asset: DecorAsset): Promise<void> {
     const showToast = captureToast(this.host);
     if (asset.used_by?.length) {
       showToast(this.host._t('decor.image_in_use'), 'decor.image_in_use');
@@ -221,7 +221,7 @@ public async delete(asset: DecorAsset): Promise<void> {
     }
   }
 
-public async loadCatalog(): Promise<void> {
+  public async loadCatalog(): Promise<void> {
     const showToast = captureToast(this.host);
     try {
       const response = await this.host.hass.callWS({ type: 'houseplan/assets/list' });

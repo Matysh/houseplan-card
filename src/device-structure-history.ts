@@ -127,7 +127,7 @@ export class DeviceStructureHistory {
       canDispatch: () => host._canEdit && !host._kiosk && host._mode === 'devices',
     });
   }
-private async recover(): Promise<void> {
+  private async recover(): Promise<void> {
     const showToast = captureToast(this.host);
     if (!this.needsResolution || !this.context || !this.current(this.context)) return;
     const claim = this.context;

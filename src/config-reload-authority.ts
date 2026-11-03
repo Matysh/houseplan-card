@@ -234,8 +234,8 @@ export async function reloadConfigOnly(
   force = false,
   observedRev?: number,
   afterApplied?: () => void,
+  showToast = captureToast(host),
 ): Promise<void> {
-    const showToast = captureToast(host);
   let reservation: ConfigReloadEventReservation | null = null;
   const owner = host._configReloadAuthority;
   if (!force) {
@@ -250,7 +250,7 @@ export async function reloadConfigOnly(
         if (reservation && !owner.isReservationCurrent(
           reservation, configReloadContext(host), host._cfgRev,
         )) return;
-        void reloadConfigOnly(host, false, undefined, afterApplied);
+        void reloadConfigOnly(host, false, undefined, afterApplied, showToast);
       }, 400);
       return;
     }

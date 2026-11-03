@@ -135,7 +135,7 @@ const targetForId = (runtime: HouseplanEditorRuntime, id: string): MarkerDeletio
 
 /** Panel Delete enters the same durable cleanup command without a fabricated dialog draft. */
 export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: string, binding: string, candidateCurrent?: () => boolean): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   if (host._devicePositionBusy) return;
   const claim = host._configWriteContext.claim();
@@ -158,7 +158,7 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
 }
 
 export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const dialog = host._markerDialog;
   if (!dialog?.devId || dialog.busy || host._devicePositionBusy || !host._canEdit || host._kiosk) return;
@@ -204,7 +204,7 @@ export const inboxDeletionSignature = (rows: readonly DeviceInboxRow[]): string 
 export async function deleteInboxSelection(
   runtime: HouseplanEditorRuntime, selectedRows: () => DeviceInboxRow[], scope: string,
 ): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const dialog = host._deviceInbox;
   if (!dialog || dialog.busy || host._devicePositionBusy || !host._canEdit || host._kiosk) return;

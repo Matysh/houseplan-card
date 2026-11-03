@@ -79,10 +79,23 @@ test('#1246 accepted retirement never revives a context when the same shell star
  const notice=a.portal().children[0];
  setToastOwner(root,a,false);
  const reopened={host:a.host,portal:a.portal};setToastOwner(root,reopened,true);
- assert.equal(root.portal.children[0],notice);assert.equal(p.isOwnerActive(old),false);
+ assert.equal(root.portal.children[0],notice);assert.equal(p.resolveOwner(old),null);
  p.show('late','toast.error','message',old);flush();
  assert.equal(root.portal.children[0],notice);assert.equal(a.portal().children.length,0);
- assert.equal(p.isOwnerActive(p.captureContext()),true);p.disconnect();
+ assert.equal(p.resolveOwner(p.captureContext()),reopened);p.disconnect();
+});
+test('#1246 retiring a child returns to its captured parent, never a later dialog',()=>{
+ const {root,p}=setup(),parent=owner(root),child=owner(root),later=owner(root);
+ setToastOwner(root,parent,true);setToastOwner(root,child,true);
+ const context=p.captureContext();p.show('failed','toast.error','message',context);flush();
+ const notice=child.portal().children[0];setToastOwner(root,later,true);
+ setToastOwner(root,child,false);
+ assert.equal(parent.portal().children[0],notice);assert.equal(later.portal().children.length,0);
+ assert.equal(notice.attributes.get('aria-live'),'off');assert.equal(frames.size,0);
+ p.show('late failure','toast.error','message',context);flush();
+ assert.equal(parent.portal().children[0],notice);assert.equal(p.resolveOwner(context),parent);
+ setToastOwner(root,parent,false);assert.equal(root.portal.children[0],notice);
+ p.disconnect();
 });
 test('replacement and clear/disconnect retire pending frames, no resurrection or cross-card routing',()=>{
  const a=setup(),b=setup(),modal=owner(b.root);setToastOwner(b.root,modal,true);

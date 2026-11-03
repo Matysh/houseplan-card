@@ -5309,8 +5309,8 @@ export class HouseplanCard extends LitElement {
    * top of an unsent edit is exactly how edits disappeared (audit L2).
    * `force` skips the deferral (conflict path: the local edit already lost).
    */
-  private async _reloadConfigOnly(force = false, observedRev?: number, afterApplied?: () => void): Promise<void> {
-    return reloadConfigOnly(this as unknown as ConfigReloadHostPort, force, observedRev, afterApplied);
+  private async _reloadConfigOnly(force = false, observedRev?: number, afterApplied?: () => void, showToast?: ToastCallback): Promise<void> {
+    return reloadConfigOnly(this as unknown as ConfigReloadHostPort, force, observedRev, afterApplied, showToast);
   }
 
   private _reloadRetry?: number;
@@ -5877,7 +5877,7 @@ export class HouseplanCard extends LitElement {
    * stale saved point win between registry paint and server acknowledgement.
    * Layout deletion is deliberately completed before provenance advances.
    */
-private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
+  private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
     const showToast = this._captureToast();
     // A continuity-cache frame is renderable before the authoritative config
     // and layout pair has finished loading. Never let that stale frame drive a
@@ -6213,7 +6213,7 @@ private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
     return properties ? properties.command(() => this._applyDevicePositionHistory(direction)) : this._applyDevicePositionHistory(direction);
   }
 
-private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+  private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
     const showToast = this._captureToast();
     if (this._cancelDeviceDrag() || this._devicePositionBusy) return;
     const isCurrent = this._layoutIO.guard();
@@ -6516,7 +6516,7 @@ private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<v
     this._viewRuntimes.openDeviceMenu({ current, target: ev.currentTarget as Element | null, x: ev.clientX, y: ev.clientY });
   }
 
-private _clickDevice(ev: Event, d: DevItem): void {
+  private _clickDevice(ev: Event, d: DevItem): void {
     const showToast = this._captureToast();
     // Devices are passive landmarks in Plan/Background. Guard before stopping
     // propagation so a Background tool still owns the same canvas point even
@@ -8052,7 +8052,7 @@ private _clickDevice(ev: Event, d: DevItem): void {
     if (contact && drag.spacing) drag.spacing.hint = drag.spacing.hint.filter((t) => Math.hypot(t.x - contact.x, t.y - contact.y) <= 2e-6);
     this._previewDevicePlacement(d.id, contact ? this._devicePlacementForCanvas(d, contact.x, contact.y, true) : fallback);
   }
-private _pointerUp(ev: PointerEvent, d: DevItem): void {
+  private _pointerUp(ev: PointerEvent, d: DevItem): void {
     const showToast = this._captureToast();
     d = this._deviceForPointerEvent(ev, d);
     this._deviceHits.release(ev.pointerId);
@@ -8132,9 +8132,7 @@ private _pointerUp(ev: PointerEvent, d: DevItem): void {
     context ??= this._toastPresentation.captureContext();
     // A toast supersedes transient explanatory surfaces in this card only.
     // Dialogs own their portal/overlay registry, so another card stays intact.
-    if (this._toastPresentation.isOwnerActive(context)) {
-      (context.owner!.host as HpDialog).closeTransientOverlays('toast');
-    }
+    (this._toastPresentation.resolveOwner(context)?.host as HpDialog | undefined)?.closeTransientOverlays('toast');
     this._toast = msg;
     this._toastPresentation.show(this._toast, id, 'message', context);
     clearTimeout(this._toastTimer);
@@ -8633,8 +8631,8 @@ private _pointerUp(ev: PointerEvent, d: DevItem): void {
   }>();
 
   /** Revalidate the synchronous rollback after every write already queued. */
-  private async _reloadRejectedPhysicalWrite(): Promise<void> {
-    return this._editorRuntimeOrThrow()._reloadRejectedPhysicalWrite();
+  private async _reloadRejectedPhysicalWrite(showToast = this._captureToast()): Promise<void> {
+    return this._editorRuntimeOrThrow()._reloadRejectedPhysicalWrite(showToast);
   }
 
   /** A config write is in flight — the card must not adopt a server revision. */
@@ -8840,7 +8838,7 @@ private _pointerUp(ev: PointerEvent, d: DevItem): void {
       } else {
         showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }), 'toast.cfg_save_failed');
       }
-      if (physicalRollback) void this._reloadRejectedPhysicalWrite();
+      if (physicalRollback) void this._reloadRejectedPhysicalWrite(showToast);
     });
   }, 500);
 
@@ -13765,7 +13763,7 @@ private _pointerUp(ev: PointerEvent, d: DevItem): void {
   }
 
   /** The same safe action authority as a marker, with only the selected row as target. */
-private _cardToggle(eid: string): void {
+  private _cardToggle(eid: string): void {
     const showToast = this._captureToast();
     if (this._mode !== 'view' || !this._infoCard) return;
     const context = { spaceId: this._space, id: this._infoCard.id };

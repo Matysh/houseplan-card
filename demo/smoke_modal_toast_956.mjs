@@ -172,6 +172,25 @@ try{
       &&!shell.shadowRoot.querySelector('[data-hp=toast]')&&closed===0;
     shell.closeTransientOverlays=close;shell.remove();return owned&&stayed;
   });
+  await page.evaluate(async()=>{
+    const c=window.__card;await window.__hpTest.settled();await window.__hpTest.openSpaceDialog('edit','f1');
+    c._backdropGuard={file:new File(['invalid raster'],'broken.png',{type:'image/png'}),ext:'png',busy:false,
+      probe:{kind:'unknown',width:null,height:null,alpha:false,decodedBytes:null}};
+    c.requestUpdate();await c.updateComplete;
+  });
+  const parentSpace=page.locator('houseplan-card hp-dialog[data-kind=space]');
+  const backdropGuard=page.locator('houseplan-card hp-dialog[data-kind=decor]');
+  await backdropGuard.waitFor();
+  const beforeGuardAnnouncement=await page.evaluate(()=>window.__toast956Announcements.length);
+  await backdropGuard.locator('[data-hp=dialog-confirm]').last().click();
+  await backdropGuard.waitFor({state:'detached'});
+  await parentSpace.locator('[data-hp=toast][data-id="backdrop.downscale_failed"]').waitFor();
+  out.retiredBackdropGuardErrorPaintedInCapturedParent=(await toastPaint(page,notice,
+    'artifacts/956/backdrop-parent-'+(process.argv.includes('--native')?'native':'ha'))).painted;
+  out.backdropRetirementKeepsOneNoticeAndAnnouncement=await notice.count()===1
+    &&await page.evaluate(count=>window.__toast956Announcements.length===count+1,beforeGuardAnnouncement);
+  await page.evaluate(async()=>{const c=window.__card;c._spaceDialog=null;c.requestUpdate();await c.updateComplete;});
+  await parentSpace.waitFor({state:'detached'});
   console.log('announcement log',await page.evaluate(()=>window.__toast956Announcements));
   await page.evaluate(async()=>{window.__toast956Write.reject=4;await window.__hpTest.setMode('plan');await window.__hpTest.openRoomEdit('r1');});
   await name.fill(draft+' detached');await name.press('Tab');await save.click();await notice.waitFor();

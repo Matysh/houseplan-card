@@ -81,7 +81,7 @@ export async function saveVacuumMatrix(
   matrix: Affine,
   routeId = '',
 ): Promise<boolean> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const previous = host._serverCfg;
   if (!previous) return false;
@@ -125,7 +125,7 @@ export async function saveAutomaticCalibration(
   runtime: VacuumCalibrationWriteRuntime,
   request: Omit<CalibrationProposal, 'error' | 'busy'>,
 ): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   if (automaticWrites.has(runtime)) return;
   automaticWrites.add(runtime);
   const host = runtime.host;
@@ -154,7 +154,7 @@ export async function applyCalibrationProposal(
   runtime: VacuumCalibrationWriteRuntime,
   manual: boolean,
 ): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const proposal = host._vacCalConfirm;
   if (!proposal || proposal.busy) return;
@@ -194,7 +194,7 @@ export async function saveManualCalibration(
   runtime: VacuumCalibrationWriteRuntime,
   matrixOf: (params: FitParams) => Affine,
 ): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const fit = host._vacFit;
   if (!fit || fit.busy) return;

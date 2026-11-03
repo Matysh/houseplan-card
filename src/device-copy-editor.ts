@@ -104,7 +104,7 @@ export class DeviceCopyEditor {
     await this.copy({ id: current.id, space: h._space, context: h._configWriteContext.claim(), cr: h._cfgRev, lr: h._layoutRev,
       cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout), x: 0, y: 0, target: null });
   }
-private async copy(m: Menu): Promise<void> {
+  private async copy(m: Menu): Promise<void> {
     const showToast = captureToast(this.host);
     if (this.busy || !this.unchanged(m)) { this.close(); showToast(this.t('device.copy_changed'), 'device.copy_changed'); return; }
     const h = this.host;

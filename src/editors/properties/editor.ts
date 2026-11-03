@@ -118,7 +118,7 @@ export class PropertiesEditor {
     return this.beforeIntent(() => {}, false, true);
   }
   /** The existing command lane publishes one history step only after the whole move is accepted. */
-finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPress, current: () => boolean): void {
+  finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPress, current: () => boolean): void {
     const showToast = captureToast(this.host);
     const host = this.host, owner = this.identity;
     if (!before || !owner || !current() || !host._serverCfg || press.ids.length < 2) return;
@@ -643,7 +643,7 @@ finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPre
   }
 
   /** The history cursor is restored on a conflict; unrelated marker keys are not history state. */
-async restoreVisual(direction: 'undo' | 'redo', command: NamedCommand<DeviceEditorHistoryState>,
+  async restoreVisual(direction: 'undo' | 'redo', command: NamedCommand<DeviceEditorHistoryState>,
     position: CommandPosition<DeviceEditorHistoryState> | null): Promise<void> {
     const showToast = captureToast(this.host);
     if (!('kind' in command.before) || !('kind' in command.after) || command.before.kind !== 'visual' || command.after.kind !== 'visual') return;

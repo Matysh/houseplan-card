@@ -1112,7 +1112,9 @@ manifest-listed chunks. Build mechanics: [DEVELOPMENT.md](DEVELOPMENT.md).
    The shadow-root-scoped stack selects a new message's owner, never reroutes an
    existing message to a newly active dialog. Async action paths capture their
    toast callback before awaiting results; data/session guards remain independent.
-   Closing the original owner returns its notice to the card, not another dialog.
+   Closing the original owner returns its notice to an older still-active owner
+   captured with it (for example the parent under a backdrop guard), otherwise
+   to the card. A dialog opened after capture is never eligible.
    Connect/ready/close/reject and detach follow the same owner identity; nested
    component roots resolve to the same card.
    The absolute footer notice does not change form geometry or cover actions.

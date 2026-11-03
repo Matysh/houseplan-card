@@ -18,7 +18,7 @@ export function vacuumDockRestartPending(host: Host, markerId: string): boolean 
 }
 
 export async function saveVacuumDockRestart(runtime: Runtime, markerId: string, enabled: boolean): Promise<boolean> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const { host } = runtime;
   const device = host._devices.find(item => item.id === markerId);
   if (!device || !host._isVacDev(device) || !host._serverCfg || vacuumDockRestartPending(host, markerId)) return false;

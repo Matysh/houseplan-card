@@ -100,7 +100,7 @@ export class KeyboardNudge {
     try { return !!h._serverCfg && h._checkSpacePhysicalGeometry({...h._serverCfg,spaces:[space]},space.id).ok; }
     catch { return false; }
   }
-handle(event: KeyboardEvent, dx: number, dy: number): boolean {
+  handle(event: KeyboardEvent, dx: number, dy: number): boolean {
     const showToast = captureToast(this.host);
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey
       || arrowControl(event.composedPath()) || this.focusedControl() || !this.allowed()) return false;

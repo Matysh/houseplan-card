@@ -1,5 +1,5 @@
 import { prepareDialogReturnFocus } from './dialog-return-focus';
-import { captureToast } from './toast-presentation';
+import { captureToast, type ToastCallback } from './toast-presentation';
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
 import { assertFiniteColumnInputs } from './column-input';
 import { commitGraphEdit, commitGraphEditResult, type GraphEditIntent, type GraphEditResult } from './graph-edit-intent';
@@ -771,7 +771,7 @@ export interface HouseplanEditorHostPort {
   _reducedMotion: boolean;
   _rawPhysicalBodiesR: () => number[][][];
   _regSignature: string;
-  _reloadConfigOnly: (force?: boolean, observedRev?: number) => Promise<void>;
+  _reloadConfigOnly: (force?: boolean, observedRev?: number, afterApplied?: () => void, showToast?: ToastCallback) => Promise<void>;
   _reloadLayoutOnly: () => Promise<void>;
   _roomCo2: (room: RoomCfg, draft?: boolean) => number | null;
   _renderCompass: () => TemplateResult;
@@ -885,7 +885,7 @@ export interface HouseplanEditorHostPort {
   _writesPending: number;
   _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean) => Promise<void>;
   _configWriteGuard: (pendingOnly?: boolean) => () => boolean;
-  _writeConfig: () => Promise<void>;
+  _writeConfig: (attempt?: OptimisticAttempt<ServerConfig> | null, showToast?: ToastCallback) => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
   _checkOptimizeGeometry: (config: ServerConfig) => OptimizeGeometryPreflightResult;
   _checkSpacePhysicalGeometry: (
@@ -894,7 +894,7 @@ export interface HouseplanEditorHostPort {
     captureWallGeometry?: (geometry: ReturnType<typeof wallBodiesGeometry>) => void,
   ) => ReturnType<typeof checkSpacePhysicalGeometry>;
   _primeDrawWallField: () => void;
-  _reloadRejectedPhysicalWrite: () => Promise<void>;
+  _reloadRejectedPhysicalWrite: (showToast?: ToastCallback) => Promise<void>;
   _zoom: number;
   _zoomBySpace: Record<string, number>;
   hass: any;
@@ -1778,10 +1778,10 @@ public _rollbackRejectedPhysicalWrites(
     return true;
   }
 
-public async _reloadRejectedPhysicalWrite(): Promise<void> {
+public async _reloadRejectedPhysicalWrite(showToast = captureToast(this.host)): Promise<void> {
     const queued = this.host._writeChain;
     await queued.catch(() => undefined);
-    await this.host._reloadConfigOnly(true);
+    await this.host._reloadConfigOnly(true, undefined, undefined, showToast);
   }
 
 public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigWrite(config); }
@@ -8314,7 +8314,7 @@ public async _saveMarker(): Promise<void> {
       this.host._maybeRebuildDevices();
       this.host.requestUpdate();
       restoreDeferred = supersedeDeferredWrite(this.host._saveConfigDebounced); // #842 K4
-      await this._saveConfigNow(attempt);
+      await this._saveConfigNow(attempt, undefined, undefined, showToast);
       configAccepted = true;
       if (newPos) {
         const pos = canonicalizePosition(newPos);
@@ -8628,7 +8628,7 @@ public async _saveSpaceDialog(): Promise<void> {
       // file inside the same locked transaction that accepted this config
       // (review R3-1). A cleanup driven from the client could not be ordered
       // against another client's commit and deleted its freshly saved plan.
-      await this._saveConfigNow(null, contextCurrent, contextCurrent);
+      await this._saveConfigNow(null, contextCurrent, contextCurrent, showToast);
       if (!contextCurrent()) return;
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
@@ -8674,7 +8674,7 @@ public async _saveSpaceDialog(): Promise<void> {
       // already reloaded by _saveConfigNow; do not issue the same read twice.
       // A lost response is safe too: if the server did commit, config/get
       // returns it.
-      if (e?.code !== 'conflict') await this.host._reloadConfigOnly(true);
+      if (e?.code !== 'conflict') await this.host._reloadConfigOnly(true, undefined, undefined, showToast);
       if (!contextCurrent()) return;
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
@@ -8724,15 +8724,15 @@ public async _deleteSpace(withDevices = false): Promise<void> {
     if (accepted) await completeSpaceDeletion(this.host, spaceId, dependencies, removeMarkers);
   }
 
-public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean): Promise<void> {
+public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean, showToast = captureToast(this.host)): Promise<void> {
     this.host._cfgEpoch++;
     try {
       // same queue as the debounced writer: a dialog saving while a background
       // write is still out must not race it into a self-inflicted conflict
-      await this._writeConfig(attempt, candidateCurrent, acknowledgementCurrent);
+      await this._writeConfig(attempt, candidateCurrent, acknowledgementCurrent, showToast);
     } catch (e: any) {
-      if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite();
-      else if (e?.code === 'conflict') await this.host._reloadConfigOnly();
+      if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite(showToast);
+      else if (e?.code === 'conflict') await this.host._reloadConfigOnly(false, undefined, undefined, showToast);
       throw e;
     }
   }
@@ -9837,7 +9837,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     this._saveConfig();
   }
 
-public async _saveSettingsDialog(options: { keepOpen?: boolean } = {}): Promise<boolean> {
+  public async _saveSettingsDialog(options: { keepOpen?: boolean } = {}): Promise<boolean> {
     const showToast = captureToast(this.host);
     const d = this.host._settingsDialog;
     if (!d || d.busy || !this.host._canEdit || this.host._kiosk) return false;
@@ -9887,7 +9887,7 @@ public async _saveSettingsDialog(options: { keepOpen?: boolean } = {}): Promise<
       const nextConfig = { ...normalizeRoomAppearance(cfg), settings };
       attempt = this.host._adoption.beginOptimistic(cfg, nextConfig);
       this.host._serverCfg = nextConfig;
-      await this._saveConfigNow(attempt, contextCurrent, contextCurrent);
+      await this._saveConfigNow(attempt, contextCurrent, contextCurrent, showToast);
       if (!contextCurrent()) return false;
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       const current = !!this.host._settingsDialog && dialogSession(this.host, 'settings') === owner
@@ -9965,7 +9965,7 @@ public async _saveRules(): Promise<void> {
       if (isDefault) delete settings.icon_rules;
       else settings.icon_rules = cleaned;
       this.host._serverCfg = { ...cfg, settings };
-      await this._saveConfigNow();
+      await this._saveConfigNow(null, undefined, undefined, showToast);
       this.host._rulesDialog = null;
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();

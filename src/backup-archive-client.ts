@@ -149,7 +149,7 @@ export class BackupArchiveClient {
     }
   }
 
-public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {
+  public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {
     const showToast = captureToast(this.host);
     const host = this.host, state = host._backupExportDialog, hass = host.hass;
     if (!state || state.busy || !hass) return;

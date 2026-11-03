@@ -2,7 +2,11 @@ import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-
 
 /** One notice node per card; a message keeps its originating surface. */
 export type ToastOwner = { host: HTMLElement; portal: () => HTMLElement | null };
-export type ToastContext = { readonly owner: ToastOwner | null };
+export type ToastContext = {
+  readonly owner: ToastOwner | null;
+  /** Older surfaces already present at capture, nearest first; never new dialogs. */
+  readonly ancestors?: readonly ToastOwner[];
+};
 export type ToastCallback = (message: string, id?: string) => void;
 
 /** Capture before awaiting work, never when its result happens to arrive. */
@@ -76,13 +80,11 @@ export class ToastPresentation {
   private readonly _route = (): void => {
     const root = this._root, notice = this._notice;
     if (!root || !notice) return;
-    const owner = this._context.owner;
-    const target = (owner?.host.isConnected && scopeFor(root).owners.includes(owner) ? owner.portal() : null)
-      || root.querySelector('[data-hp="toast-portal"]');
+    const target = this.resolveOwner(this._context)?.portal() || root.querySelector('[data-hp="toast-portal"]');
     if (!target) return;
     if (target === notice.parentElement) { this._position(); return; }
-    // Closing its owner may return the notice to the card, never to another
-    // dialog. Neither readiness nor retirement re-announces existing text.
+    // Retirement may reveal an older captured parent, never a new dialog.
+    // Neither readiness nor retirement re-announces existing text.
     notice.setAttribute('aria-live', 'off');
     notice.removeAttribute('role');
     target.appendChild(notice);
@@ -104,11 +106,13 @@ export class ToastPresentation {
 
   captureContext(): ToastContext {
     const owners = this._root ? scopeFor(this._root).owners.filter(owner => owner.host.isConnected) : [];
-    return { owner: owners[owners.length - 1] ?? null };
+    return { owner: owners[owners.length - 1] ?? null, ancestors: owners.slice(0, -1).reverse() };
   }
 
-  isOwnerActive(context: ToastContext): boolean {
-    return !!(this._root && context.owner?.host.isConnected && scopeFor(this._root).owners.includes(context.owner));
+  resolveOwner(context: ToastContext): ToastOwner | null {
+    if (!this._root || !context.owner) return null;
+    const active = scopeFor(this._root).owners;
+    return [context.owner, ...context.ancestors ?? []].find(owner => owner.host.isConnected && active.includes(owner)) ?? null;
   }
 
   showHint(message: string, id: string): void {

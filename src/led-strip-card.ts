@@ -86,7 +86,7 @@ export async function ledHistory(
   card: LedCardPort, direction: 'undo' | 'redo',
   command: { name: string; before: unknown; after: unknown },
 ): Promise<void> {
-    const showToast = captureToast(card);
+  const showToast = captureToast(card);
   const [target, from] = (direction === 'undo' ? [command.before, command.after] : [command.after, command.before]) as LedHistoryState[];
   card._devicePositionBusy = true;
   const result = card._ledEditor ? await card._ledEditor.applyHistory(target, from) : 'stale';

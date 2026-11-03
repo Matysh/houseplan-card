@@ -112,7 +112,7 @@ export async function writeInboxVisibility<D extends InboxBatchDialog>(
   host: InboxBatchHost<D>, deps: InboxBatchDeps,
   rows: readonly DeviceInboxRow[], hidden: boolean, batch: boolean, fromPlan = false,
 ): Promise<void> {
-    const showToast = captureToast(host);
+  const showToast = captureToast(host);
   const dialog = host._deviceInbox;
   const cfg = host._serverCfg;
   if ((!dialog && !fromPlan) || !cfg || dialog?.busy || !rows.length || host._canEdit === false || host._kiosk) return;

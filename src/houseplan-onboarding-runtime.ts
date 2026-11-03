@@ -128,7 +128,7 @@ export class HouseplanOnboardingRuntime {
     return 0;
   }
 
-public async _deleteServerPlan(name: string): Promise<void> {
+  public async _deleteServerPlan(name: string): Promise<void> {
     const showToast = captureToast(this.host);
     const dialog = this.host._spaceDialog;
     const plan = dialog?.saved?.find((candidate) => candidate.name === name);
@@ -191,19 +191,19 @@ public async _deleteServerPlan(name: string): Promise<void> {
     </div>`;
   }
 
-  private async _saveConfigNow(): Promise<void> {
+  private async _saveConfigNow(showToast = captureToast(this.host)): Promise<void> {
     this.host._cfgEpoch++;
     try {
-      await this.host._writeConfig();
+      await this.host._writeConfig(null, showToast);
     } catch (error: unknown) {
       const failure = error as { physicalGeometryRolledBack?: boolean; code?: string };
-      if (failure?.physicalGeometryRolledBack) await this.host._reloadRejectedPhysicalWrite();
-      else if (failure?.code === 'conflict') await this.host._reloadConfigOnly();
+      if (failure?.physicalGeometryRolledBack) await this.host._reloadRejectedPhysicalWrite(showToast);
+      else if (failure?.code === 'conflict') await this.host._reloadConfigOnly(false, undefined, undefined, showToast);
       throw error;
     }
   }
 
-public async _saveSpaceDialog(): Promise<void> {
+  public async _saveSpaceDialog(): Promise<void> {
     const showToast = captureToast(this.host);
     const dialog = this.host._spaceDialog;
     if (!dialog || dialog.busy || !dialog.title.trim()) return;
@@ -262,7 +262,7 @@ public async _saveSpaceDialog(): Promise<void> {
       space.zero_wall_style = dialog.zeroWallStyle;
       space.cell_cm = Number.isFinite(dialog.cellCm) && dialog.cellCm > 0
         ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, dialog.cellCm)) : 5;
-      await this._saveConfigNow();
+      await this._saveConfigNow(showToast);
       this.host._spaceDialog = null;
       if (dialog.mode === 'create') this.host._commitSpace(space.id);
       this.host._regSignature = '';
@@ -298,7 +298,7 @@ public async _saveSpaceDialog(): Promise<void> {
       }
     } catch (error: unknown) {
       const failure = error as { code?: string };
-      if (failure?.code !== 'conflict') await this.host._reloadConfigOnly(true);
+      if (failure?.code !== 'conflict') await this.host._reloadConfigOnly(true, undefined, undefined, showToast);
       if (this.host._spaceDialog) this.host._spaceDialog = {
         ...this.host._spaceDialog, busy: false,
       };
@@ -329,7 +329,7 @@ public async _saveSpaceDialog(): Promise<void> {
     loadSpacePlanList(this.host);
   }
 
-public _skipImport(): void {
+  public _skipImport(): void {
     const showToast = captureToast(this.host);
     this.host._spaceDialog = null;
     if (this.host._importQueue.length) this._openNextImport();

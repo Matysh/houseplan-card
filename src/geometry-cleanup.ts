@@ -220,7 +220,7 @@ export function refuseGeometryWrite(runtime: GeometryCleanupPort, removal: Geome
 }
 
 async function askGeometryCleanup(runtime: GeometryCleanupPort, removal: GeometryRemoval): Promise<void> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host;
   asking.set(host, removal.fingerprint);
   let accepted = false;

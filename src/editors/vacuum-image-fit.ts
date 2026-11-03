@@ -23,7 +23,7 @@ function sameSource(runtime: HouseplanEditorRuntime, marker: string, source: str
 export async function loadVacuumImageFit(
   runtime: HouseplanEditorRuntime, device: DevItem, source: string, mapId: string,
 ): Promise<VacuumMapPreview | null> {
-    const showToast = captureToast(runtime.host);
+  const showToast = captureToast(runtime.host);
   const host = runtime.host, dialog = host._markerDialog, hass = host.hass;
   if (!dialog || dialog.busy) return null;
   const marker = markerIdentity(runtime, device.id);
