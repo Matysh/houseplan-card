@@ -88,10 +88,7 @@ try{
   out.actualAXAlert=ax.nodes.filter(n=>!n.ignored&&n.role?.value==='alert').length===1;
   await name.focus();await page.keyboard.press('Escape');
   const confirm=page.locator('houseplan-card hp-dialog[data-kind=confirm]');await confirm.waitFor();
-  await confirm.locator('[data-hp=toast]').waitFor();
-  out.childOwnsOnlyNotice=await notice.count()===1&&await confirm.locator('[data-hp=toast]').count()===1&&await notice.getAttribute('aria-live')==='off'&&await page.getByRole('alert').count()===0;
-  const childPaint=await toastPaint(page,notice,'artifacts/956/confirm-'+(process.argv.includes('--native')?'native':'ha'));
-  out.childNoticePainted=childPaint.painted;
+  out.childNeverAcquiresParentNotice=await notice.count()===1&&await confirm.locator('[data-hp=toast]').count()===0&&await dialog.locator('[data-hp=toast]').count()===1;
   // #976/#1155: the parent's native modal remains until its owner accepts
   // Discard. The child confirmation owns current input above that modal.
   out.parentRemainsModal=await dialog.locator('dialog').evaluate(element=>element.matches(':modal'));
@@ -120,8 +117,50 @@ try{
   await notice.waitFor({state:'detached',timeout:4500});
   const age=await page.evaluate(()=>Date.now()-window.__toast956Write.times[1]);out.expiryNotRestartedByOwner=age>=3400&&age<4400;
   out.noMoreAnnouncementsOrWrites=await page.evaluate(()=>window.__toast956Announcements.length===3&&window.__toast956Write.count===3);
+  out.oldCardNoticeAndLateResultNeverEnterNewDialog=await page.evaluate(async()=>{
+    const c=window.__card;
+    c._showToast('old card result','toast.space_deleted');
+    await new Promise(requestAnimationFrame);
+    const node=c.shadowRoot.querySelector('[data-hp=toast-portal] > [data-hp=toast]');
+    const late=c._captureToast();
+    await window.__hpTest.openSpaceDialog('create');await c.updateComplete;
+    const d=c.shadowRoot.querySelector('hp-dialog[data-kind=space]');await d.updateComplete;
+    const stayed=node?.parentElement===c.shadowRoot.querySelector('[data-hp=toast-portal]')&&!d.shadowRoot.querySelector('[data-hp=toast]');
+    late('old card result','toast.error');await new Promise(requestAnimationFrame);
+    const lateStayed=node?.parentElement===c.shadowRoot.querySelector('[data-hp=toast-portal]')&&!d.shadowRoot.querySelector('[data-hp=toast]');
+    c._spaceDialog=null;c.requestUpdate();await c.updateComplete;
+    return stayed&&lateStayed;
+  });
+  out.lateRealViewServiceFailureStaysWithCard=await page.evaluate(async()=>{
+    const c=window.__card;await window.__hpTest.settled();await window.__hpTest.setMode('view');
+    const device=c._devices.find(d=>c._cardEntities(d).some(row=>row.kind==='toggle'));
+    if(!device)return false;
+    const row=c._cardEntities(device).find(row=>row.kind==='toggle');
+    const original=c.hass;let reject;
+    c.hass={...original,callService:()=>new Promise((_,fail)=>{reject=fail;})};
+    c._infoCard=device;c._cardToggle(row.eid);c._infoCard=null;
+    if(!reject){c.hass=original;return false;}
+    await window.__hpTest.openSpaceDialog('create');await c.updateComplete;
+    const dialog=c.shadowRoot.querySelector('hp-dialog[data-kind=space]');await dialog.updateComplete;
+    reject(new Error('late-service-1246'));await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
+    const rootNotice=c.shadowRoot.querySelector('[data-hp=toast-portal] > [data-hp=toast]');
+    const stayed=rootNotice?.textContent.includes('late-service-1246')&&!dialog.shadowRoot.querySelector('[data-hp=toast]');
+    c.hass=original;c._spaceDialog=null;c.requestUpdate();await c.updateComplete;return stayed;
+  });
+  out.deferredWriteKeepsSchedulingContext=await page.evaluate(async()=>{
+    const c=window.__card;await window.__hpTest.settled();const original=c.hass;
+    c.hass={...original,callWS:message=>message.type==='houseplan/config/set'
+      ?Promise.reject(new Error('late-deferred-1246')):original.callWS(message)};
+    c._saveConfigDebounced();await window.__hpTest.openSpaceDialog('create');await c.updateComplete;
+    c._saveConfigDebounced.flush();await c._writeChain.catch(()=>{});
+    await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
+    const dialog=c.shadowRoot.querySelector('hp-dialog[data-kind=space]');await dialog.updateComplete;
+    const stayed=c.shadowRoot.querySelector('[data-hp=toast-portal] > [data-hp=toast]')?.textContent.includes('late-deferred-1246')
+      &&!dialog.shadowRoot.querySelector('[data-hp=toast]');
+    c.hass=original;c._spaceDialog=null;c.requestUpdate();await c.updateComplete;return stayed;
+  });
   console.log('announcement log',await page.evaluate(()=>window.__toast956Announcements));
-  await page.evaluate(async()=>{window.__toast956Write.reject=4;await window.__hpTest.openRoomEdit('r1');});
+  await page.evaluate(async()=>{window.__toast956Write.reject=4;await window.__hpTest.setMode('plan');await window.__hpTest.openRoomEdit('r1');});
   await name.fill(draft+' detached');await name.press('Tab');await save.click();await notice.waitFor();
   await page.evaluate(async()=>{const c=window.__card,parent=c.parentNode;c.remove();parent.append(c);await c.updateComplete;});
   out.detachClearsNotice=await notice.count()===0;

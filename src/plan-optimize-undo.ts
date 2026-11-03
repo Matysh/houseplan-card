@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import type { GatedAdoptionInput, GatedAdoptionResult, LayoutResponse } from './config-adoption';
 import type { I18nKey } from './i18n';
 import type { PlanOptimizeWriteHost } from './plan-optimize-write';
@@ -36,7 +37,8 @@ export class PlanOptimizationUndo {
     this.host._undoKind = null;
   }
 
-  async run(): Promise<void> {
+async run(): Promise<void> {
+    const showToast = captureToast(this.host);
     const host = this.host;
     if (!host._canOptimizeUndo || host._optimizeUndoBusy) return;
     const lifecycle = this.lifecycle;
@@ -78,12 +80,12 @@ export class PlanOptimizationUndo {
       host._maybeRebuildDevices();
       host._cacheSnapshot();
       host.requestUpdate();
-      host._showToast(host._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'), undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone');
+      showToast(host._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'), undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone');
     } catch (error) {
       if (!isCurrent()) return;
       host._canOptimizeUndo = false;
       host._undoKind = null;
-      host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+      showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
     } finally {
       // A temporary HA gap may finish its own bookkeeping, never a foreign
       // authority or detached lifecycle's new operation (#890 pending semantics).

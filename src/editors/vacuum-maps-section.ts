@@ -7,6 +7,7 @@
  * than in a core file.
  */
 import { TemplateResult, html, nothing } from 'lit';
+import { captureToast } from '../toast-presentation';
 import { disclosure, callout } from './form-kit';
 import type { HpConfirmRequest } from '../danger-confirm';
 import type { DevItem, Marker, ServerConfig } from '../types';
@@ -92,6 +93,7 @@ export function renderVacuumMapsSection(
 
   /** Persist route changes atomically, restoring the last accepted config on rejection. */
   const persistRoutes = async (nextRoutes: VacuumMapRoute[]): Promise<boolean> => {
+    const showToast = captureToast(host);
     const previous = host._serverCfg;
     if (!previous) return false;
     const nextConfig = JSON.parse(JSON.stringify(previous)) as ServerConfig;
@@ -121,7 +123,7 @@ export function renderVacuumMapsSection(
       host._regSignature = '';
       host._maybeRebuildDevices();
       host.requestUpdate();
-      if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
+      if (!isGeometryCleanupRefusal(error)) showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
       return false;
     }
   };

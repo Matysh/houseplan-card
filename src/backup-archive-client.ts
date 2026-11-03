@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /** Editor-only portable transfer: opaque server candidates, never client-side import parsing. */
 import { callout, disclosure } from './editors/form-kit';
 import { html, nothing, type TemplateResult } from 'lit';
@@ -148,7 +149,8 @@ export class BackupArchiveClient {
     }
   }
 
-  public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {
+public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {
+    const showToast = captureToast(this.host);
     const host = this.host, state = host._backupExportDialog, hass = host.hass;
     if (!state || state.busy || !hass) return;
     const epoch = ++this.exportEpoch;
@@ -202,7 +204,7 @@ export class BackupArchiveClient {
       anchor.style.display = 'none'; document.body.append(anchor); anchor.click(); anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
       host._backupExportDialog = null;
-      host._showToast(host._t('backup.export_done'), 'backup.export_done');
+      showToast(host._t('backup.export_done'), 'backup.export_done');
     } catch (error: unknown) {
       if (owns()) {
         if (this.exportToken) this.discard(this.exportToken);

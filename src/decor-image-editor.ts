@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import { html, nothing, svg, type TemplateResult } from 'lit';
 
 import { classifyPlanFile } from './backdrop-pick';
@@ -117,7 +118,8 @@ export class DecorImageEditor<Snapshot> {
     </g>`;
   }
 
-  public async uploadFromInput(ev: Event, replaceSelection = false): Promise<void> {
+public async uploadFromInput(ev: Event, replaceSelection = false): Promise<void> {
+    const showToast = captureToast(this.host);
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
@@ -126,11 +128,11 @@ export class DecorImageEditor<Snapshot> {
     try {
       classified = await classifyPlanFile(file, 2 * 1024 * 1024);
     } catch {
-      this.host._showToast(this.host._t('backup.error.invalid_image'), 'backup.error.invalid_image');
+      showToast(this.host._t('backup.error.invalid_image'), 'backup.error.invalid_image');
       return;
     }
     if (classified.kind === 'reject') {
-      this.host._showToast(this.host._t('toast.plan_formats'), 'toast.plan_formats');
+      showToast(this.host._t('toast.plan_formats'), 'toast.plan_formats');
       return;
     }
     if (classified.kind === 'guard') {
@@ -141,7 +143,8 @@ export class DecorImageEditor<Snapshot> {
     await this.upload(file, file.name, replaceSelection);
   }
 
-  public async upload(file: Blob, name: string, replaceSelection: boolean): Promise<void> {
+public async upload(file: Blob, name: string, replaceSelection: boolean): Promise<void> {
+    const showToast = captureToast(this.host);
     if (this.host._decorAssetBusy) return;
     this.host._decorAssetBusy = true;
     try {
@@ -179,7 +182,7 @@ export class DecorImageEditor<Snapshot> {
       }
       this.host.requestUpdate();
     } catch (error) {
-      this.host._showToast(this.host._t('decor.image_upload_failed', {
+      showToast(this.host._t('decor.image_upload_failed', {
         err: this.host._errText(error),
       }), 'decor.image_upload_failed');
     } finally {
@@ -187,9 +190,10 @@ export class DecorImageEditor<Snapshot> {
     }
   }
 
-  public async delete(asset: DecorAsset): Promise<void> {
+public async delete(asset: DecorAsset): Promise<void> {
+    const showToast = captureToast(this.host);
     if (asset.used_by?.length) {
-      this.host._showToast(this.host._t('decor.image_in_use'), 'decor.image_in_use');
+      showToast(this.host._t('decor.image_in_use'), 'decor.image_in_use');
       return;
     }
     const accepted = await this.host._confirmDanger({
@@ -212,12 +216,13 @@ export class DecorImageEditor<Snapshot> {
       }
       this.host.requestUpdate();
     } catch (error) {
-      this.host._showToast((error as { code?: string })?.code === 'in_use'
+      showToast((error as { code?: string })?.code === 'in_use'
         ? this.host._t('decor.image_in_use') : this.host._t('backup.error.io_error'), ((error as { code?: string })?.code === 'in_use') ? ('decor.image_in_use') : ('backup.error.io_error'));
     }
   }
 
-  public async loadCatalog(): Promise<void> {
+public async loadCatalog(): Promise<void> {
+    const showToast = captureToast(this.host);
     try {
       const response = await this.host.hass.callWS({ type: 'houseplan/assets/list' });
       const catalog = adoptDecorAssets(response);
@@ -225,7 +230,7 @@ export class DecorImageEditor<Snapshot> {
       this.host._decorAssets = new Map([...this.host._decorAssets, ...catalog]);
       this.host.requestUpdate();
     } catch {
-      this.host._showToast(this.host._t('backup.error.io_error'), 'backup.error.io_error');
+      showToast(this.host._t('backup.error.io_error'), 'backup.error.io_error');
     }
   }
 

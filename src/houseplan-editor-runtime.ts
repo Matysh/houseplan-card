@@ -1,4 +1,5 @@
 import { prepareDialogReturnFocus } from './dialog-return-focus';
+import { captureToast } from './toast-presentation';
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
 import { assertFiniteColumnInputs } from './column-input';
 import { commitGraphEdit, commitGraphEditResult, type GraphEditIntent, type GraphEditResult } from './graph-edit-intent';
@@ -817,6 +818,7 @@ export interface HouseplanEditorHostPort {
   _showHidden: boolean;
   _setShowHidden: (shown: boolean) => void;
   _showToast: (msg: string, id?: string) => void;
+  _captureToast?: () => import('./toast-presentation').ToastCallback;
   _toastPresentation: Pick<import('./toast-presentation').ToastPresentation, 'showHint' | 'clearHint'>;
   _signer: ContentSigner;
   _space: string;
@@ -1112,6 +1114,7 @@ export class HouseplanEditorRuntime {
       cardVersion: () => displayVersion(CARD_VERSION),
       requestUpdate: () => host.requestUpdate(),
       showToast: (message, id) => host._showToast(message, id),
+      captureToast: () => captureToast(host),
       errorText: (error) => host._errText(error),
       checkGeometry: (config) => host._checkOptimizeGeometry(config),
       referenceContext: (removeLive, removeInvalid) => this._optimizeReferenceContext(removeLive, removeInvalid),
@@ -1141,6 +1144,7 @@ export class HouseplanEditorRuntime {
     /** Writer-only Plan tools expose node menus; handles still require Select. */
   private _loadNodeMove(): void {
     if (this.nodeMove || this._nodeMoveLoad) return;
+    const showToast = captureToast(this.host);
     const epoch = this._nodeMoveEpoch;
     this._nodeMoveLoad = import('./wall-node-card-adapter').then(({ createWallNodeEditor }) => {
       if (epoch !== this._nodeMoveEpoch || !this.host.isConnected) return;
@@ -1160,7 +1164,7 @@ export class HouseplanEditorRuntime {
         },
       });
       this.host.requestUpdate();
-    }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe'); })
+    }).catch(() => { showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe'); })
       .finally(() => {
         this._nodeMoveLoad = null;
         // A Select return before the old import settles needs a new render;
@@ -1782,7 +1786,7 @@ public async _reloadRejectedPhysicalWrite(): Promise<void> {
 
 public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigWrite(config); }
 
-public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean): Promise<void> {
+public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean, showToast = captureToast(this.host)): Promise<void> {
     this.host._writesPending++;
     const isCurrent = this.host._configWriteGuard?.() ?? (() => true);
     const ownsPending = this.host._configWriteGuard?.(true) ?? (() => true);
@@ -1807,7 +1811,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
         try { safe = this.host._checkSpacePhysicalGeometry(candidate, spaceId).ok; proof = !safe; } catch { safe = false; }
         if (!safe) {
           this._rollbackRejectedPhysicalWrites([[spaceId, accepted]], proof);
-          this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
+          showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
           throw Object.assign(new Error('unsafe wall geometry'), { code: 'geometry-unsafe' });
         }
         accepted.fingerprint = exactFingerprint;
@@ -7677,6 +7681,7 @@ private _inboxBatchDeps(): InboxBatchDeps {
     return {
       rows: () => this._deviceInboxRows(), saveConfigNow: () => this._saveConfigNow(),
       deleteSelection: async () => {
+        const showToast = captureToast(this.host);
         const owner = this.host._deviceInbox;
         const claim = this.host._configWriteContext.claim();
         try {
@@ -7693,7 +7698,7 @@ private _inboxBatchDeps(): InboxBatchDeps {
           || inboxT(this.host, 'device_inbox.all_spaces'));
         } catch (error) {
           if (this.host._deviceInbox === owner && this.host._configWriteContext.current(claim, this.host.hass))
-            this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
+            showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
         }
       },
     };
@@ -7965,6 +7970,7 @@ public _backupErrorText(e: any): string {
   }
 
 public async _pickMarkerFiles(ev: Event): Promise<void> {
+    const showToast = captureToast(this.host);
     const input = ev.target as HTMLInputElement;
     const files = input.files ? [...input.files] : [];
     input.value = '';
@@ -7997,13 +8003,13 @@ public async _pickMarkerFiles(ev: Event): Promise<void> {
         }
         uploaded.push({ name: json.name || file.name, url: json.url });
       } catch (e: any) {
-        this.host._showToast(this.host._t('toast.file_failed', { name: file.name, err: this.host._errText(e) }), 'toast.file_failed');
+        showToast(this.host._t('toast.file_failed', { name: file.name, err: this.host._errText(e) }), 'toast.file_failed');
       }
     }
     // the dialog might have closed during the upload — add only if it is still open
     if (uploaded.length && this.host._markerDialog) {
       this.host._markerDialog = { ...this.host._markerDialog, pdfs: [...this.host._markerDialog.pdfs, ...uploaded] };
-      this.host._showToast(this.host._t('toast.files_attached', { n: uploaded.length }), 'toast.files_attached');
+      showToast(this.host._t('toast.files_attached', { n: uploaded.length }), 'toast.files_attached');
     }
   }
 
@@ -8063,6 +8069,7 @@ public _markerToggleEntityFields(
   }
 
 public async _saveMarker(): Promise<void> {
+    const showToast = captureToast(this.host);
     const dlg = this.host._markerDialog;
     if (!dlg || dlg.busy) return;
     if (moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass)) return;
@@ -8078,7 +8085,7 @@ public async _saveMarker(): Promise<void> {
         ? this.host._markers.find((marker) => marker.id === dlg.devId) : null;
       const replacingWithInactive = !previous || previous.binding !== dlg.binding;
       if (status.kind !== 'active' && replacingWithInactive) {
-        this.host._showToast(this.host._t(status.kind === 'ha_disabled'
+        showToast(this.host._t(status.kind === 'ha_disabled'
           ? 'toast.ha_disabled_add' : 'toast.ha_binding_unverified'), status.kind === 'ha_disabled'
           ? 'toast.ha_disabled_add' : 'toast.ha_binding_unverified');
         return;
@@ -8087,7 +8094,7 @@ public async _saveMarker(): Promise<void> {
       // blocked Show attempt may never erase an older explicit user hidden.
       if (status.kind === 'ha_disabled' && previous?.hidden === true && !dlg.hideFromPlan) {
         this.host._markerDialog = { ...dlg, hideFromPlan: true };
-        this.host._showToast(this.host._t(status.reason === 'entity'
+        showToast(this.host._t(status.reason === 'entity'
           ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'), status.reason === 'entity'
           ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device');
         return;
@@ -8134,7 +8141,7 @@ public async _saveMarker(): Promise<void> {
       } else if (dlg.radar) {
         const radar = radarConfigFromDraft(dlg.radar, targetSpaceModel.cellCm || 5);
         if (!radar) {
-          this.host._showToast(this.host._t('radar.invalid'), 'radar.invalid');
+          showToast(this.host._t('radar.invalid'), 'radar.invalid');
           return;
         }
         radarField = { radar };
@@ -8230,7 +8237,7 @@ public async _saveMarker(): Promise<void> {
           marker.pdfs = migratePdfUrls(marker.pdfs, fileSrc, id, mapping);
           cleanupOldFiles = Object.keys(mapping).length > 0;
         } catch (e: any) {
-          this.host._showToast(this.host._t('toast.files_migrate_failed', { err: this.host._errText(e) }), 'toast.files_migrate_failed');
+          showToast(this.host._t('toast.files_migrate_failed', { err: this.host._errText(e) }), 'toast.files_migrate_failed');
         }
       }
       // Rebinding changes source identity. Rewrite every marker:* edge in the
@@ -8298,7 +8305,7 @@ public async _saveMarker(): Promise<void> {
       // File copy is async: never install a candidate built from a replaced root.
       if (this.host._serverCfg !== cfg || this.host._cfgRev !== baseRevision || contentFingerprint(cfg) !== baseContent) {
         if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
-        this.host._showToast(this.host._t('toast.conflict'), 'toast.conflict');
+        showToast(this.host._t('toast.conflict'), 'toast.conflict');
         return;
       }
       candidate = this._prepareConfigCandidate(candidate);
@@ -8344,7 +8351,7 @@ public async _saveMarker(): Promise<void> {
       }
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('toast.marker_saved'), 'toast.marker_saved');
+      showToast(this.host._t('toast.marker_saved'), 'toast.marker_saved');
     } catch (e: any) {
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
@@ -8357,11 +8364,12 @@ public async _saveMarker(): Promise<void> {
         this.host.requestUpdate();
       }
       if (this.host._markerDialog === savingDraft) this.host._markerDialog = { ...savingDraft, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
+      if (!isGeometryCleanupRefusal(e)) showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
 public async _deleteMarker(): Promise<void> {
+    const showToast = captureToast(this.host);
     const session = dialogSession(this.host, 'marker');
     const targetId = this.host._markerDialog?.devId;
     const claim = this.host._configWriteContext.claim();
@@ -8373,7 +8381,7 @@ public async _deleteMarker(): Promise<void> {
       await deleteMarker(this);
     } catch (error) {
       if (this.host._configWriteContext.current(claim, this.host.hass))
-        this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
+        showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
     }
   }
 
@@ -8478,6 +8486,7 @@ public async _readPlanAspect(url: string): Promise<number> {
   }
 
 public async _deleteServerPlan(name: string): Promise<void> {
+    const showToast = captureToast(this.host);
     const dialog = this.host._spaceDialog;
     const plan = dialog?.saved?.find((candidate) => candidate.name === name);
     if (!dialog || !plan || plan.used_by.length || plan.url === dialog.planUrl) return;
@@ -8500,7 +8509,7 @@ public async _deleteServerPlan(name: string): Promise<void> {
       const d = this.host._spaceDialog;
       if (d?.saved) this.host._spaceDialog = { ...d, saved: d.saved.filter((p) => p.name !== name) };
     } catch (e: any) {
-      this.host._showToast(this.host._t('toast.plan_delete_failed', { err: this.host._errText(e) }), 'toast.plan_delete_failed');
+      showToast(this.host._t('toast.plan_delete_failed', { err: this.host._errText(e) }), 'toast.plan_delete_failed');
     }
   }
 
@@ -8532,6 +8541,7 @@ public _renderServerPlans(d: NonNullable<typeof this.host._spaceDialog>): Templa
   }
 
 public async _saveSpaceDialog(): Promise<void> {
+    const showToast = captureToast(this.host);
     const d = this.host._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
     const owner = dialogSession(this.host, 'space');
@@ -8539,7 +8549,7 @@ public async _saveSpaceDialog(): Promise<void> {
     const ownsDialog = () => !!this.host._spaceDialog && dialogSession(this.host, 'space') === owner;
     if (spaceDialogProblems(d, 'space-dialog', this.host._imperial).length) return;
     if (d.source === 'file' && !d.planFile && !d.planUrl) {
-      this.host._showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
+      showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
       return;
     }
     const wasFirst = d.mode === 'create' && (this.host._serverCfg?.spaces.length || 0) === 0;
@@ -8638,9 +8648,9 @@ public async _saveSpaceDialog(): Promise<void> {
         this.host._path = [];
         this.host._cursorPt = null;
         this._primeDrawWallField();
-        this.host._showToast(this.host._t(wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done'), wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done');
+        showToast(this.host._t(wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done'), wasFirst && !this.host._importTotal ? 'toast.space_added_onboard' : 'import.done');
       } else {
-        this.host._showToast(d.mode === 'create' ? this.host._t('toast.space_added') : this.host._t('toast.space_saved'), (d.mode === 'create') ? ('toast.space_added') : ('toast.space_saved'));
+        showToast(d.mode === 'create' ? this.host._t('toast.space_added') : this.host._t('toast.space_saved'), (d.mode === 'create') ? ('toast.space_added') : ('toast.space_saved'));
         // A freshly created space is empty — View has nothing to show. Open
         // the plan editor (draw tool) so the user can mark rooms immediately,
         // same as the first-space onboard path above.
@@ -8671,7 +8681,7 @@ public async _saveSpaceDialog(): Promise<void> {
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (ownsDialog()) this.host._spaceDialog = { ...this.host._spaceDialog!, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
+      if (!isGeometryCleanupRefusal(e)) showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
@@ -9043,12 +9053,13 @@ public _downloadSupportPreview(): void {
   }
 
 private async _copySupportText(text: string, successKey: SupportI18nKey): Promise<void> {
+    const showToast = captureToast(this.host);
     const lang = langOf(this.host.hass, this.host._config?.language);
     try {
       await navigator.clipboard.writeText(text);
-      this.host._showToast(supportT(lang, successKey), successKey);
+      showToast(supportT(lang, successKey), successKey);
     } catch {
-      this.host._showToast(supportT(lang, 'support.copy_failed'), 'support.copy_failed');
+      showToast(supportT(lang, 'support.copy_failed'), 'support.copy_failed');
     }
   }
 
@@ -9487,6 +9498,7 @@ public async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void
   }
 
 public async _applyBackupImport(): Promise<void> {
+    const showToast = captureToast(this.host);
     const d = this.host._backupImportDialog;
     const request = this._backupImportRequest;
     if (!this._ownsBackupImport(request) || !this.host._canImportBackup
@@ -9544,7 +9556,7 @@ public async _applyBackupImport(): Promise<void> {
       this.host._cacheSnapshot();
       this.host.requestUpdate();
       const outcomeCounts = result.kind === 'space' ? d.preview.counts : result.counts;
-      this.host._showToast(this.host._t(result.kind === 'space' ? 'backup.space_done' : 'backup.full_done', {
+      showToast(this.host._t(result.kind === 'space' ? 'backup.space_done' : 'backup.full_done', {
         spaces: String(outcomeCounts?.spaces || 0), rooms: String(outcomeCounts?.rooms || 0),
         markers: String(outcomeCounts?.markers || 0),
         refs: String(result.repaired_target_refs || 0),
@@ -9825,7 +9837,8 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     this._saveConfig();
   }
 
-  public async _saveSettingsDialog(options: { keepOpen?: boolean } = {}): Promise<boolean> {
+public async _saveSettingsDialog(options: { keepOpen?: boolean } = {}): Promise<boolean> {
+    const showToast = captureToast(this.host);
     const d = this.host._settingsDialog;
     if (!d || d.busy || !this.host._canEdit || this.host._kiosk) return false;
     if (generalProblems(d).length) return false;
@@ -9889,7 +9902,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
         }
       }
       this.host.requestUpdate();
-      this.host._showToast(this.host._t('gs.saved'), 'gs.saved');
+      showToast(this.host._t('gs.saved'), 'gs.saved');
       return current && this.host._canEdit && !this.host._kiosk;
     } catch (e: any) {
       // Esc may close the dialog in flight; the toast must still fire (audit L3).
@@ -9898,7 +9911,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       if (attempt) this.host._rollbackOptimistic(attempt);
       if (this.host._settingsDialog && dialogSession(this.host, 'settings') === owner)
         this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
+      if (!isGeometryCleanupRefusal(e)) showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
       return false;
     }
   }
@@ -9940,6 +9953,7 @@ public _rulesSet(rules: IconRule[]): void {
   }
 
 public async _saveRules(): Promise<void> {
+    const showToast = captureToast(this.host);
     const dlg = this.host._rulesDialog;
     if (!dlg || dlg.busy) return;
     const cleaned = dlg.rules.filter((r) => r.pattern.trim() && r.icon.trim());
@@ -9955,14 +9969,14 @@ public async _saveRules(): Promise<void> {
       this.host._rulesDialog = null;
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('rules.saved'), 'rules.saved');
+      showToast(this.host._t('rules.saved'), 'rules.saved');
     } catch (e: any) {
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (this.host._rulesDialog) this.host._rulesDialog = { ...this.host._rulesDialog, busy: false };
-      if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
+      if (!isGeometryCleanupRefusal(e)) showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
 
@@ -10065,18 +10079,19 @@ public _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
   }
 
 public async _vacAutoCalibrate(d: DevItem): Promise<void> {
+    const showToast = captureToast(this.host);
     if (this.host._markerDialog?.busy) return;
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
     if (!src || !tele || tele.rooms.length < 3) {
-      this.host._showToast(this.host._t('vac.autocal_no_rooms'), 'vac.autocal_no_rooms');
+      showToast(this.host._t('vac.autocal_no_rooms'), 'vac.autocal_no_rooms');
       return;
     }
     const mapId = this._vacMapId(d, tele);
     const target = calibrationTarget(d.id, d.marker?.vacuum ?? null, d.space, src, mapId);
     const res = autoCalibrate(tele.rooms, this._vacPlanRoomAnchors(target.space));
     if (!res) {
-      this.host._showToast(this.host._t('vac.autocal_no_match'), 'vac.autocal_no_match');
+      showToast(this.host._t('vac.autocal_no_match'), 'vac.autocal_no_match');
       return;
     }
     const rawSpace = this.host._serverCfg?.spaces?.find((space) => space.id === target.space);
@@ -10102,11 +10117,12 @@ public _vacApplyCalibrationProposal(manual: boolean): Promise<void> {
   }
 
 public async _vacStartFit(d: DevItem, routeId = ''): Promise<void> {
+    const showToast = captureToast(this.host);
     if (this.host._markerDialog?.busy) return;
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host._planHass?.states[src]?.attributes) : null;
     if (!src || !tele) {
-      this.host._showToast(this.host._t('vac.cal_need_pos'), 'vac.cal_need_pos');
+      showToast(this.host._t('vac.cal_need_pos'), 'vac.cal_need_pos');
       return;
     }
     const mapId = this._vacMapId(d, tele);
