@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1200,
+  "revision": 1201,
   "nextTicket": 87,
   "nextFence": 87,
   "tasks": {
@@ -1496,184 +1496,25 @@
     },
     "1217": {
       "issue": 1217,
+      "branch": "codex/ci-main-badge",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/ci-main-badge",
-      "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 86,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793687974273,
-      "reviewEntry": 2,
-      "patchId": "ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e",
-      "changedFiles": [
-        ".github/workflows/process-next-coordinator.yml",
-        "README.md",
-        "README.ru.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/DEVELOPMENT.md",
-        "process-next/evidence/ci-v1.83.1.json",
-        "process-next/lib/catalog.mjs",
-        "process-next/lib/ci-status.mjs",
-        "process-next/lib/release.mjs",
-        "process-next/remote.mjs",
-        "process-next/templates/coordinator-job.mjs",
-        "process-next/templates/coordinator.yml",
-        "process-next/test/ci-status.test.mjs",
-        "process-next/test/release.test.mjs",
-        "process-next/test/remote.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793687887494,
-        "entry": 1,
-        "detail": "Синтаксис и типы изменённых инструментов: cancelled; Поведение затронутого механизма: cancelled",
-        "eventId": "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217"
-      },
-      "s6": {
-        "id": "20261103T063952969-16c3247d",
-        "name": "Тесты для задачи #1217 (перед ревью)",
-        "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261103T063952969-16c3247d/report.json",
-        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-        "status": "passed",
-        "finishedAt": "2026-11-03T06:40:42.692Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+      "mergedSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
+      "mergedAt": 1793688376050,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1217:2:ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e:aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-      "reviewMaterial": {
-        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-        "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-        "patchId": "ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1217,
-        "requestId": "review:1217:2:ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e:aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-        "kind": "code",
-        "base": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-        "patchId": "ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1217,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1217",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "<details>\n<summary>Решение, доказательства и границы</summary>\n\nПлашка читает ci.json из существующей process-release-state; ссылка ведёт на CI.md рядом. Исходный факт — published.stable.runner, включая reuse. Отдельных прогонов, условий допуска или второй базы результатов нет. Существующий координатор обновляет метаданные на push main и при очередном расписании; stable/hotfix публикует их также при завершении. Ошибка доставки не блокирует выпуск. На push main координатор заканчивает работу после плашки, не продвигая очередь и не собирая dev-build.\n\nПрименимость — сравнение Git-объектов продукта и входов его сборки. Из package.json учитываются зависимости, версия, окружение и команды сборки; переименование команд тестирования не аннулирует продуктовый факт. Две публичные страницы записываются одним коммитом, с сохранением конкурентных обновлений release-state; повтор без изменений ничего не пишет. Просьба особенно проверить применимость, гонки и отсутствие новых продуктовых прогонов/гейтов.\n\nИмпортированный v1.83.1 не имеет runner receipt новой обвязки. Исторические доказательства: точный SHA e2d2d613a27f9229bb6eb87d4f6e081261efee93 и успешный [Validate 41204595040](https://github.com/Matysh/houseplan-card/actions/runs/41204595040), семь реально успешных продуктовых jobs с конкретными шагами. Они перепроверяются по API. #1105 перенесла инструменты golden, поэтому сохранено однократное сопоставление с main 9b34ff9: полный scoped diff должен совпасть ровно с четырьмя указанными парами blob SHA; исходники, установленный frontend/backend и зависимости не менялись. Это не объявляется новым прогоном и не разрешает игнорировать следующие изменения этих файлов.\n\nRead-only проверка на живом main подтвердила passing; новых продуктовых тестов при этом не было. Адресные проверки механизма войдут в обычный S6. После merge нужно отдельно развернуть только README и триггер существующего координатора на main, сохранив текущие пользовательские правки. Новая версия продукта не выпускается.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Решение подходит для задачи, принимаю его. Плашка CI берёт уже сохранённый результат опубликованного stable/hotfix (`published.stable.runner`), а для импортированного v1.83.1 — исторический Validate-прогон, который заново читается из GitHub API. Применимость к `main` определяется сравнением Git-объектов продукта и входов сборки. Новых прогонов тестов, сборок, вызовов модели и условий допуска к выпуску механизм не добавляет. Сбой обновления плашки при завершении выпуска записывается как диагностика и выпуск не блокирует. По прочитанным путям ложно зелёного статуса я не нашёл: при сдвиге `main` или ошибке результат пересчитывается или становится нейтральным `not tested`. Остались два слабых места, оба не дают ложного passing и устраняются следующим тиком расписания, поэтому необязательны: устаревший `published` внутри цикла повторов и публикация `not tested` при временной ошибке API. Отдельно найден рассинхрон шаблона `templates/review.yml` с развёрнутым workflow (дефект вне задачи).",
-          "understanding": "Проблема: в README не было плашки CI, которая честно показывает результат продуктовых проверок для того, что лежит в `main`. Произвольный прогон на dev или CodeQL этого не показывают. До изменения плашки CI не было, а координатор подписывался на устаревшее имя review-workflow («Содержательное ревью задачи»), хотя после #1215 развёрнутый workflow называется «Содержательное ревью».\n\nПосле изменения:\n- `lib/ci-status.mjs` строит «продуктовый снимок» коммита. Это ls-tree по `PUBLIC_PRODUCT_INPUTS` (buildInputs без package.json плюс `custom_components/houseplan/**`, `docs/data-hp-contract.json`, `.nvmrc`, `.python-version`) и нормализованный package.json: зависимости, version, type, engines, packageManager и только скрипты prebuild/build/postbuild.\n- Нативное доказательство — квитанция runner у `published.stable` (ready, passed, materialClean, совпадение sha, профиль stable/hotfix, нет failed).\n- Историческое доказательство — `evidence/ci-v1.83.1.json`. Run, его attempt, 7 jobs и обязательные шаги заново читаются из API. Однократный «мост» e2d2d61→9b34ff9 допускает ровно четыре пары blob SHA и ничего больше.\n- `publishCiStatus` одним коммитом через Git Data API записывает `ci.json` (endpoint для shields) и `CI.md` в `process-release-state`. Используются `base_tree` (сохраняет `releases.json`) и PATCH с `force:false` как CAS. Перед коммитом и после него сверяется `main`. При конфликте 409/422 или сдвиге `main` делается до 3 повторов; если ничего не изменилось, коммит не создаётся.\n- Вызовы: команда `ci-status` в `remote.mjs`; `complete()` для stable/hotfix (ошибка гасится в diagnostic); отдельная job `public-ci` в координаторе на push main, schedule и workflow_dispatch со своей группой concurrency. Job `progress` на push пропускается, dev-build зависит от `progress` и тоже пропускается.\n- `runnerReceipt` дополнительно сохраняет санитизированный список `checks`; условия готовности выпуска не меняются.\n\nПрочитанные пути: шаблон и развёрнутый coordinator.yml, coordinator-job.mjs, remote.mjs (executeRemoteCommand, complete/publish-prepared, releaseDispatch), release.mjs (runnerReceipt, reduceRelease published/create, resolveSource), github.mjs (GitHubClient.getRef/request, GitHubQueueStore CAS, GitAdapter.git/ensureCommit), storage.mjs matchesInputs, catalog.mjs (inputs), config.json, cutover.json installTemplates, оба файла review workflow, package.json, hacs.json, все новые и изменённые тесты.",
-          "analysis": [
-            {
-              "topic": "Применимость результата к main",
-              "assessment": "Механизм консервативен в правильную сторону. Изменение исходников, установленной интеграции, lock-файла, зависимостей, версии, build-хуков или входов rollup (включая golden/fixtures-модули, которые встраиваются в сборку) даёт `not tested`. Документация, тесты, process-next и переименование test-скриптов результат не аннулируют. Это соответствует AC1. Цена такой консервативности: правки golden-инструментов в `demo/golden/**/*.mjs` будут гасить плашку до следующего stable. Это оправдано тем, что rollup встраивает эти модули, а мост для #1105 явно сделан однократным. Подход «сравнить Git-объекты, а не заново запустить тесты» прост и проверяем — его стоит сохранить.",
-              "evidence": "ci-status.mjs productSnapshot: фильтр `matchesInputs` и normalized-package; catalog.mjs:16-23 buildInputs/PUBLIC_PRODUCT_INPUTS; тест «product identity survives docs, tests and renamed test scripts…» проверяет, что src, dependency и prebuild аннулируют результат."
-            },
-            {
-              "topic": "Историческое доказательство v1.83.1 и мост эквивалентности",
-              "assessment": "Ручного passing здесь нет: run, `run_attempt`, `head_sha`, каждая job и каждый обязательный шаг проверяются по API. Мост требует, чтобы множество изменённых путей совпало с allowlist ровно, а before/after oid — по каждому пути. Это закрывает и лишние изменения, и последующие правки тех же файлов (так прямо сказано в тесте). Legacy-доказательство применяется только при `evidence.sha === published.sha`, поэтому после следующего stable оно отключается автоматически.",
-              "evidence": "ci-status.mjs legacyProof и comparisonIdentity (`changed.length !== allowed.length`, сравнение oid по path); тест «historical equivalence is one exact audited tree bridge…»; фактические значения run 41204595040 и jobs в живом API я не перепроверял (см. boundaries)."
-            },
-            {
-              "topic": "Гонки публикации",
-              "assessment": "Атомарность двух файлов и сохранение конкурентной записи `releases.json` обеспечены: `base_tree` от прочитанного head и PATCH с `force:false`. GitHub отклоняет не-fast-forward, это перехватывается как 409/422 и ведёт к пересборке. `releaseDispatch` при `StateConflict` сам делает до 8 повторов, поэтому лишний коммит плашки в `process-release-state` не ломает запись релизов. Повтор без изменений не пишет, так как в CI.md нет переменных по времени. Ложно зелёного статуса при сдвиге `main` нет: `main` сверяется до создания коммита, перед PATCH и после него. Слабое место: `published` читается один раз в `refreshCiStatus`, вне цикла повторов. Сценарий: job `public-ci` прочитала старый `published.stable` до события `published`, параллельно `complete()` записал passing, после чего `public-ci` при повторе пересчитает с устаревшим `published` и перезапишет passing на `not tested`. Ложного зелёного это не даёт и исправляется ближайшим тиком schedule (≤10 мин).",
-              "evidence": "ci-status.mjs publishCiStatus (проверки `getRef('main')` до и после PATCH, `continue`); remote.mjs:468-471 (`published` вычисляется до вызова), remote.mjs:275-283 releaseDispatch; тесты «public files update atomically…» и «a main change observed before publication…»."
-            },
-            {
-              "topic": "Отсутствие новых прогонов и гейтов",
-              "assessment": "Подтверждается по коду. Ветка `ci-status` в remote.mjs возвращается до кода очереди, планов и runner. В `complete()` обновление выполняется после `completePublishedRelease`, а исключение превращается в diagnostic. `releaseReadiness` не изменён, новое поле `checks` в квитанции на готовность не влияет. Job `public-ci` не ставит зависимостей (нет npm ci) и не собирает продукт. На push `progress` и dev-build пропускаются, а coordinator-job.mjs:18 дополнительно выходит при push.",
-              "evidence": "remote.mjs:473, 604-609; release.mjs:35-63; coordinator.yml:20-48, 71-73; тесты remote.test «ci-status uses the latest stable evidence without… running a test plan» и «stable and hotfix completion stay completed…»."
-            },
-            {
-              "topic": "Обработка ошибок и восстановление доставки",
-              "assessment": "Восстановление работает: schedule каждые 10 минут пересчитывает статус, а job `public-ci` всегда завершается с кодом 0 и пишет причину в лог. Компромисс: любая ошибка внутри `buildCiStatus`, включая временный 5xx на одном из 8 запросов к API или сбой `git fetch`, публикуется как `not tested` с отдельным коммитом. Следующий успешный тик вернёт passing. Плашка может изредка мигать серым, а в `process-release-state` появляются лишние коммиты. Это осознанно безопасная сторона: при сменившемся `main` сохранять старый зелёный нельзя. Тем не менее временный сбой можно отличать от отсутствия доказательства, см. improvements.",
-              "evidence": "ci-status.mjs buildCiStatus: `catch { reason = 'Не удалось подтвердить…' }`; coordinator-job.mjs:13-17."
-            },
-            {
-              "topic": "Workflow и подписка",
-              "assessment": "Разделение на отдельную job и группу concurrency правильное: медленная доставка плашки не занимает слот очереди. При `cancel-in-progress:false` GitHub держит не больше одного ожидающего запуска, поэтому обрабатывается самый свежий `main`. Исправление имени в `workflow_run` соответствует развёрнутому review-workflow после #1215, иначе завершение ревью не будило бы координатор. `fetch-depth: 0` для `public-ci` не обязателен: `ensureCommit` сам догружает нужные коммиты. Репозиторий небольшой (около 6.8 тыс. файлов), так что таймаут 2 минуты, скорее всего, достаточен, но на живом раннере это не проверено.",
-              "evidence": "coordinator.yml:3-48; .github/workflows/process-next-review.yml:2 (`name: Содержательное ревью`); github.mjs:249-253 ensureCommit."
-            },
-            {
-              "topic": "Публичность данных",
-              "assessment": "`publicRunnerCheck` оставляет только id, имя, статус, diagnostic, счётчики и sourceRun по белому списку. В CI.md пути отчёта не выводятся, а `text()` убирает переводы строк, `|` и `<>`. Тест release.test проверяет, что команды, окружение и пути не попадают в state. Сам `runner.path` в `releases.json` был и раньше — это не новое раскрытие.",
-              "evidence": "release.mjs:23-34, 47; ci-status.mjs `text`, формирование lines; тест «runner receipt retains only public check facts…» и проверка `doesNotMatch(/C:|private|secret/)` в ci-status.test."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Читать `published.stable` внутри цикла повторов `publishCiStatus`: передавать функцию чтения состояния вместо готового объекта или перечитывать `releaseStore` на каждой итерации. Это закроет сценарий, в котором `public-ci` с устаревшим `published` после конфликта перезаписывает свежий passing от `complete()` на `not tested`. Стоит один дополнительный запрос на итерацию; поведение без гонки не меняется.",
-            "Отличать временный сбой инфраструктуры (ошибка сети или API, `git fetch`) от доказанного отсутствия результата. Например, в `buildCiStatus` один-два раза повторить запросы `legacyProof` и `ensureCommit`, прежде чем падать в нейтральный статус. Другой вариант: при исключении пробрасывать ошибку, если в текущем CI.md записан тот же SHA `main`, что и сейчас (тогда старый вывод для этого `main` остаётся верным), и публиковать `not tested`, только если `main` изменился. Плюс — нет мигания плашки и лишних коммитов в `process-release-state`. Цена — немного логики. Нынешнее поведение безопасно, но шумно.",
-            "В job `public-ci` можно заменить `fetch-depth: 0` на неглубокий checkout: `ensureCommit` всё равно догружает `published.sha`, мост и `main`. Это снизит нагрузку тика каждые 10 минут и запас до таймаута в 2 минуты. Польза небольшая, делать необязательно."
-          ],
-          "boundaries": "Код изучен только по исходникам на head aec4d85. Сборку, тесты, Validate и запросы к GitHub API я не запускал. Из S6 использована только квитанция 20261103T063952969-16c3247d (status passed, failures []); её report.json лежит локально у исполнителя, поэтому состав прогнанных файлов я не видел и судить о нём могу лишь по названию набора. Не проверено:\n- фактические поля run 41204595040, job id и имена шагов в живом API;\n- что `published.stable` в текущем `process-release-state` указывает на e2d2d61 / v1.83.1;\n- что полный scoped diff e2d2d61→9b34ff9 и далее до текущего `main` действительно ограничен заявленными путями (утверждение автора о read-only проверке на живом `main` я не воспроизводил);\n- фактическое время checkout и выполнения job `public-ci` на раннере;\n- развёртывание workflow на `main`, которое по плану делается отдельно после merge.\n\nПоведение shields endpoint и CodeQL badge URL оценено по формату, рендер не проверялся.",
-          "outsideFindings": [
-            {
-              "title": "Шаблон review.yml отстал от развёрнутого review-workflow после #1215",
-              "kind": "bug",
-              "problem": "Если переустановить workflows из шаблонов по `cutover.json`, `.github/workflows/process-next-review.yml` будет заменён устаревшей версией. Она называется «Содержательное ревью задачи», не знает `kind: ship-batch` и требует `issue`/`base`. Последствия: пропадёт пакетное ship-ревью перед beta, а подписка координатора `workflow_run: [Содержательное ревью]` (исправленная в этой задаче) снова перестанет срабатывать.",
-              "evidence": "`process-next/templates/review.yml:2-14` — name «Содержательное ревью задачи», kind только `[code, spec]`. `.github/workflows/process-next-review.yml:2-15` — name «Содержательное ревью», kind `[code, spec, ship-batch]`, вход `batch`. `process-next/catalog/cutover.json:132-136` устанавливает этот target именно из `templates/review.yml`. Последний коммит развёрнутого файла — ae4629f (#1215), шаблон в нём не менялся (последнее изменение — 7c31207, #1105).",
-              "suggestedFix": "Синхронизировать `process-next/templates/review.yml` с развёрнутым workflow (имя, run-name, входы ship-batch) и добавить простой тест на побайтовое совпадение пар source/target из `installTemplates` (как это уже фактически соблюдается для coordinator.yml)."
-            }
-          ]
-        },
-        "usage": {
-          "input_tokens": 48,
-          "cache_creation_input_tokens": 118971,
-          "cache_read_input_tokens": 1711668,
-          "output_tokens": 21783,
-          "output_tokens_details": {
-            "thinking_tokens": 12846
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 118971,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 838,
-              "cache_read_input_tokens": 97500,
-              "cache_creation_input_tokens": 21471,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 21471
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРешение подходит для задачи, принимаю его. Плашка CI берёт уже сохранённый результат опубликованного stable/hotfix (`published.stable.runner`), а для импортированного v1.83.1 — исторический Validate-прогон, который заново читается из GitHub API. Применимость к `main` определяется сравнением Git-объектов продукта и входов сборки. Новых прогонов тестов, сборок, вызовов модели и условий допуска к выпуску механизм не добавляет. Сбой обновления плашки при завершении выпуска записывается как диагностика и выпуск не блокирует. По прочитанным путям ложно зелёного статуса я не нашёл: при сдвиге `main` или ошибке результат пересчитывается или становится нейтральным `not tested`. Остались два слабых места, оба не дают ложного passing и устраняются следующим тиком расписания, поэтому необязательны: устаревший `published` внутри цикла повторов и публикация `not tested` при временной ошибке API. Отдельно найден рассинхрон шаблона `templates/review.yml` с развёрнутым workflow (дефект вне задачи).\n\n## Понимание решения\n\nПроблема: в README не было плашки CI, которая честно показывает результат продуктовых проверок для того, что лежит в `main`. Произвольный прогон на dev или CodeQL этого не показывают. До изменения плашки CI не было, а координатор подписывался на устаревшее имя review-workflow («Содержательное ревью задачи»), хотя после #1215 развёрнутый workflow называется «Содержательное ревью».\n\nПосле изменения:\n- `lib/ci-status.mjs` строит «продуктовый снимок» коммита. Это ls-tree по `PUBLIC_PRODUCT_INPUTS` (buildInputs без package.json плюс `custom_components/houseplan/**`, `docs/data-hp-contract.json`, `.nvmrc`, `.python-version`) и нормализованный package.json: зависимости, version, type, engines, packageManager и только скрипты prebuild/build/postbuild.\n- Нативное доказательство — квитанция runner у `published.stable` (ready, passed, materialClean, совпадение sha, профиль stable/hotfix, нет failed).\n- Историческое доказательство — `evidence/ci-v1.83.1.json`. Run, его attempt, 7 jobs и обязательные шаги заново читаются из API. Однократный «мост» e2d2d61→9b34ff9 допускает ровно четыре пары blob SHA и ничего больше.\n- `publishCiStatus` одним коммитом через Git Data API записывает `ci.json` (endpoint для shields) и `CI.md` в `process-release-state`. Используются `base_tree` (сохраняет `releases.json`) и PATCH с `force:false` как CAS. Перед коммитом и после него сверяется `main`. При конфликте 409/422 или сдвиге `main` делается до 3 повторов; если ничего не изменилось, коммит не создаётся.\n- Вызовы: команда `ci-status` в `remote.mjs`; `complete()` для stable/hotfix (ошибка гасится в diagnostic); отдельная job `public-ci` в координаторе на push main, schedule и workflow_dispatch со своей группой concurrency. Job `progress` на push пропускается, dev-build зависит от `progress` и тоже пропускается.\n- `runnerReceipt` дополнительно сохраняет санитизированный список `checks`; условия готовности выпуска не меняются.\n\nПрочитанные пути: шаблон и развёрнутый coordinator.yml, coordinator-job.mjs, remote.mjs (executeRemoteCommand, complete/publish-prepared, releaseDispatch), release.mjs (runnerReceipt, reduceRelease published/create, resolveSource), github.mjs (GitHubClient.getRef/request, GitHubQueueStore CAS, GitAdapter.git/ensureCommit), storage.mjs matchesInputs, catalog.mjs (inputs), config.json, cutover.json installTemplates, оба файла review workflow, package.json, hacs.json, все новые и изменённые тесты.\n\n## Разбор решения\n\n### Применимость результата к main\n\nМеханизм консервативен в правильную сторону. Изменение исходников, установленной интеграции, lock-файла, зависимостей, версии, build-хуков или входов rollup (включая golden/fixtures-модули, которые встраиваются в сборку) даёт `not tested`. Документация, тесты, process-next и переименование test-скриптов результат не аннулируют. Это соответствует AC1. Цена такой консервативности: правки golden-инструментов в `demo/golden/**/*.mjs` будут гасить плашку до следующего stable. Это оправдано тем, что rollup встраивает эти модули, а мост для #1105 явно сделан однократным. Подход «сравнить Git-объекты, а не заново запустить тесты» прост и проверяем — его стоит сохранить.\n\nОснование: ci-status.mjs productSnapshot: фильтр `matchesInputs` и normalized-package; catalog.mjs:16-23 buildInputs/PUBLIC_PRODUCT_INPUTS; тест «product identity survives docs, tests and renamed test scripts…» проверяет, что src, dependency и prebuild аннулируют результат.\n\n### Историческое доказательство v1.83.1 и мост эквивалентности\n\nРучного passing здесь нет: run, `run_attempt`, `head_sha`, каждая job и каждый обязательный шаг проверяются по API. Мост требует, чтобы множество изменённых путей совпало с allowlist ровно, а before/after oid — по каждому пути. Это закрывает и лишние изменения, и последующие правки тех же файлов (так прямо сказано в тесте). Legacy-доказательство применяется только при `evidence.sha === published.sha`, поэтому после следующего stable оно отключается автоматически.\n\nОснование: ci-status.mjs legacyProof и comparisonIdentity (`changed.length !== allowed.length`, сравнение oid по path); тест «historical equivalence is one exact audited tree bridge…»; фактические значения run 41204595040 и jobs в живом API я не перепроверял (см. boundaries).\n\n### Гонки публикации\n\nАтомарность двух файлов и сохранение конкурентной записи `releases.json` обеспечены: `base_tree` от прочитанного head и PATCH с `force:false`. GitHub отклоняет не-fast-forward, это перехватывается как 409/422 и ведёт к пересборке. `releaseDispatch` при `StateConflict` сам делает до 8 повторов, поэтому лишний коммит плашки в `process-release-state` не ломает запись релизов. Повтор без изменений не пишет, так как в CI.md нет переменных по времени. Ложно зелёного статуса при сдвиге `main` нет: `main` сверяется до создания коммита, перед PATCH и после него. Слабое место: `published` читается один раз в `refreshCiStatus`, вне цикла повторов. Сценарий: job `public-ci` прочитала старый `published.stable` до события `published`, параллельно `complete()` записал passing, после чего `public-ci` при повторе пересчитает с устаревшим `published` и перезапишет passing на `not tested`. Ложного зелёного это не даёт и исправляется ближайшим тиком schedule (≤10 мин).\n\nОснование: ci-status.mjs publishCiStatus (проверки `getRef('main')` до и после PATCH, `continue`); remote.mjs:468-471 (`published` вычисляется до вызова), remote.mjs:275-283 releaseDispatch; тесты «public files update atomically…» и «a main change observed before publication…».\n\n### Отсутствие новых прогонов и гейтов\n\nПодтверждается по коду. Ветка `ci-status` в remote.mjs возвращается до кода очереди, планов и runner. В `complete()` обновление выполняется после `completePublishedRelease`, а исключение превращается в diagnostic. `releaseReadiness` не изменён, новое поле `checks` в квитанции на готовность не влияет. Job `public-ci` не ставит зависимостей (нет npm ci) и не собирает продукт. На push `progress` и dev-build пропускаются, а coordinator-job.mjs:18 дополнительно выходит при push.\n\nОснование: remote.mjs:473, 604-609; release.mjs:35-63; coordinator.yml:20-48, 71-73; тесты remote.test «ci-status uses the latest stable evidence without… running a test plan» и «stable and hotfix completion stay completed…».\n\n### Обработка ошибок и восстановление доставки\n\nВосстановление работает: schedule каждые 10 минут пересчитывает статус, а job `public-ci` всегда завершается с кодом 0 и пишет причину в лог. Компромисс: любая ошибка внутри `buildCiStatus`, включая временный 5xx на одном из 8 запросов к API или сбой `git fetch`, публикуется как `not tested` с отдельным коммитом. Следующий успешный тик вернёт passing. Плашка может изредка мигать серым, а в `process-release-state` появляются лишние коммиты. Это осознанно безопасная сторона: при сменившемся `main` сохранять старый зелёный нельзя. Тем не менее временный сбой можно отличать от отсутствия доказательства, см. improvements.\n\nОснование: ci-status.mjs buildCiStatus: `catch { reason = 'Не удалось подтвердить…' }`; coordinator-job.mjs:13-17.\n\n### Workflow и подписка\n\nРазделение на отдельную job и группу concurrency правильное: медленная доставка плашки не занимает слот очереди. При `cancel-in-progress:false` GitHub держит не больше одного ожидающего запуска, поэтому обрабатывается самый свежий `main`. Исправление имени в `workflow_run` соответствует развёрнутому review-workflow после #1215, иначе завершение ревью не будило бы координатор. `fetch-depth: 0` для `public-ci` не обязателен: `ensureCommit` сам догружает нужные коммиты. Репозиторий небольшой (около 6.8 тыс. файлов), так что таймаут 2 минуты, скорее всего, достаточен, но на живом раннере это не проверено.\n\nОснование: coordinator.yml:3-48; .github/workflows/process-next-review.yml:2 (`name: Содержательное ревью`); github.mjs:249-253 ensureCommit.\n\n### Публичность данных\n\n`publicRunnerCheck` оставляет только id, имя, статус, diagnostic, счётчики и sourceRun по белому списку. В CI.md пути отчёта не выводятся, а `text()` убирает переводы строк, `|` и `<>`. Тест release.test проверяет, что команды, окружение и пути не попадают в state. Сам `runner.path` в `releases.json` был и раньше — это не новое раскрытие.\n\nОснование: release.mjs:23-34, 47; ci-status.mjs `text`, формирование lines; тест «runner receipt retains only public check facts…» и проверка `doesNotMatch(/C:|private|secret/)` в ci-status.test.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Читать `published.stable` внутри цикла повторов `publishCiStatus`: передавать функцию чтения состояния вместо готового объекта или перечитывать `releaseStore` на каждой итерации. Это закроет сценарий, в котором `public-ci` с устаревшим `published` после конфликта перезаписывает свежий passing от `complete()` на `not tested`. Стоит один дополнительный запрос на итерацию; поведение без гонки не меняется.\n- Отличать временный сбой инфраструктуры (ошибка сети или API, `git fetch`) от доказанного отсутствия результата. Например, в `buildCiStatus` один-два раза повторить запросы `legacyProof` и `ensureCommit`, прежде чем падать в нейтральный статус. Другой вариант: при исключении пробрасывать ошибку, если в текущем CI.md записан тот же SHA `main`, что и сейчас (тогда старый вывод для этого `main` остаётся верным), и публиковать `not tested`, только если `main` изменился. Плюс — нет мигания плашки и лишних коммитов в `process-release-state`. Цена — немного логики. Нынешнее поведение безопасно, но шумно.\n- В job `public-ci` можно заменить `fetch-depth: 0` на неглубокий checkout: `ensureCommit` всё равно догружает `published.sha`, мост и `main`. Это снизит нагрузку тика каждые 10 минут и запас до таймаута в 2 минуты. Польза небольшая, делать необязательно.\n\n## Отдельные дефекты вне задачи\n\n### Шаблон review.yml отстал от развёрнутого review-workflow после #1215\n\nЕсли переустановить workflows из шаблонов по `cutover.json`, `.github/workflows/process-next-review.yml` будет заменён устаревшей версией. Она называется «Содержательное ревью задачи», не знает `kind: ship-batch` и требует `issue`/`base`. Последствия: пропадёт пакетное ship-ревью перед beta, а подписка координатора `workflow_run: [Содержательное ревью]` (исправленная в этой задаче) снова перестанет срабатывать.\n\nОснование: `process-next/templates/review.yml:2-14` — name «Содержательное ревью задачи», kind только `[code, spec]`. `.github/workflows/process-next-review.yml:2-15` — name «Содержательное ревью», kind `[code, spec, ship-batch]`, вход `batch`. `process-next/catalog/cutover.json:132-136` устанавливает этот target именно из `templates/review.yml`. Последний коммит развёрнутого файла — ae4629f (#1215), шаблон в нём не менялся (последнее изменение — 7c31207, #1105).\n\nНаправление исправления: Синхронизировать `process-next/templates/review.yml` с развёрнутым workflow (имя, run-name, входы ship-batch) и добавить простой тест на побайтовое совпадение пар source/target из `installTemplates` (как это уже фактически соблюдается для coordinator.yml).\n\n## Границы анализа\n\nКод изучен только по исходникам на head aec4d85. Сборку, тесты, Validate и запросы к GitHub API я не запускал. Из S6 использована только квитанция 20261103T063952969-16c3247d (status passed, failures []); её report.json лежит локально у исполнителя, поэтому состав прогнанных файлов я не видел и судить о нём могу лишь по названию набора. Не проверено:\n- фактические поля run 41204595040, job id и имена шагов в живом API;\n- что `published.stable` в текущем `process-release-state` указывает на e2d2d61 / v1.83.1;\n- что полный scoped diff e2d2d61→9b34ff9 и далее до текущего `main` действительно ограничен заявленными путями (утверждение автора о read-only проверке на живом `main` я не воспроизводил);\n- фактическое время checkout и выполнения job `public-ci` на раннере;\n- развёртывание workflow на `main`, которое по плану делается отдельно после merge.\n\nПоведение shields endpoint и CodeQL badge URL оценено по формату, рендер не проверялся.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c → aec4d85e336ad7c0151f9047f264ebb532358a5c\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1217, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Решение, доказательства и границы</summary>\n\nПлашка читает ci.json из существующей process-release-state; ссылка ведёт на CI.md рядом. Исходный факт — published.stable.runner, включая reuse. Отдельных прогонов, условий допуска или второй базы результатов нет. Существующий координатор обновляет метаданные на push main и при очередном расписании; stable/hotfix публикует их также при завершении. Ошибка доставки не блокирует выпуск. На push main координатор заканчивает работу после плашки, не продвигая очередь и не собирая dev-build.\n\nПрименимость — сравнение Git-объектов продукта и входов его сборки. Из package.json учитываются зависимости, версия, окружение и команды сборки; переименование команд тестирования не аннулирует продуктовый факт. Две публичные страницы записываются одним коммитом, с сохранением конкурентных обновлений release-state; повтор без изменений ничего не пишет. Просьба особенно проверить применимость, гонки и отсутствие новых продуктовых прогонов/гейтов.\n\nИмпортированный v1.83.1 не имеет runner receipt новой обвязки. Исторические доказательства: точный SHA e2d2d613a27f9229bb6eb87d4f6e081261efee93 и успешный [Validate 41204595040](https://github.com/Matysh/houseplan-card/actions/runs/41204595040), семь реально успешных продуктовых jobs с конкретными шагами. Они перепроверяются по API. #1105 перенесла инструменты golden, поэтому сохранено однократное сопоставление с main 9b34ff9: полный scoped diff должен совпасть ровно с четырьмя указанными парами blob SHA; исходники, установленный frontend/backend и зависимости не менялись. Это не объявляется новым прогоном и не разрешает игнорировать следующие изменения этих файлов.\n\nRead-only проверка на живом main подтвердила passing; новых продуктовых тестов при этом не было. Адресные проверки механизма войдут в обычный S6. После merge нужно отдельно развернуть только README и триггер существующего координатора на main, сохранив текущие пользовательские правки. Новая версия продукта не выпускается.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T06:45:35.486Z",
-        "artifactId": 13209679702,
-        "runId": 41591423887,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T06:45:41Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41591423887",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c"
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -1794,19 +1635,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1217,
-    "worker": "finish",
-    "token": "86:finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:1:admit",
-    "fence": 86,
-    "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-    "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793687977708,
-    "expiresAt": 1793691972903,
-    "patchId": "ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e",
-    "reviewRequest": "review:1217:2:ee5a9c7f64533ec6f099d5b49f0e1ea938e36c6e:aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c"
-  },
+  "active": null,
   "events": {
     "github:41504682134:1:label:spec-request": {
       "digest": "26828a81ae587a9e309a69a5c797ddb53035ec5bede3575f081e74cbea99a473",
@@ -1896,70 +1725,6 @@
       "digest": "850148fb4b00ff94fa8d071e5e2ea0e2924b0377194f48003800d1ac020e3290",
       "issue": 1216
     },
-    "finish:3ba3b595-d49e-4f67-8b05-40a2b2eecdc7": {
-      "digest": "9a3e3da642a7b0cd870353e1035d67c104ba72e1f61d4bb5aca655751c18b6b9",
-      "issue": 1217
-    },
-    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:2:synchronized": {
-      "digest": "b7792a8f8473ac0c74c24027b7aec0c3abead5ca9acdcf35d4990f47d036b6ab",
-      "issue": 1217
-    },
-    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return": {
-      "digest": "5cdcecf81c43bdac50f39cfafced40daaaa86facc90332ab29a66cf47b0358e3",
-      "issue": 1217
-    },
-    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:2:synchronized": {
-      "digest": "97ef70bdf6a1244e7b741ff646d354f704835d33491af136d191b4a9a8dd8a76",
-      "issue": 1217
-    },
-    "finish:62d158c7-adea-48ee-bfe8-2a09210c7e68": {
-      "digest": "aeebf460593e1065dd9e74a02c6d458a6b5f100d851feec2fc6ee2c72136f0a0",
-      "issue": 1217
-    },
-    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:3:s6-label": {
-      "digest": "97fb0e9bc7b95ca77bc95e25d2da86252a9c5671c4b16b9b7a10d2f3c590eba4",
-      "issue": 1217
-    },
-    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:4:review-requested": {
-      "digest": "fb0128090f59defc222741c92377cf2e2d64fa0296bf3793550985997c5c6776",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:message:860320e2da71149b10670d6496b01ef6d74a8fc9e3c507e718604b7a26f72f23": {
-      "digest": "d97c69ddb907c811e2bbda33dcf0842ae191286ec317c148fcac428453f253da",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:message:1533cf18bea2bb79f63ffb39497e8cb1fbdc844d71ca7dc023a64ddfcff60a9a": {
-      "digest": "c31d183c2010b05250e0548d8131384ebccd5e31be5b30797af980d09850f853",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:notice:ebbccc9b9ddd0feff2b8d430597caf8181b33240d896adfe7309272a4e6b80aa": {
-      "digest": "cafb7cf568d149ac168baca521d970a807b67d9a14ed31fe6f177ecf51cd3266",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:message:ebbccc9b9ddd0feff2b8d430597caf8181b33240d896adfe7309272a4e6b80aa": {
-      "digest": "38277a9dff0cd6285e768f0807d84aebdbbdb12081dbe56d62e0adea57e6af69",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:message:2c746fc2aa1faa4fa681834862e19206a20bb60cc22bfa1596c1740acf080ba7": {
-      "digest": "ad2af809c9d1c64731aeeb8525597ba4a6a2b1157f385ebe8905df387d9e7e8f",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:message:51e092e9489b3bf78f46d9bbb6d2e5f748e50f575035f430bec34ec62b18561c": {
-      "digest": "7f829719123a9f9bffc65a02f0416607ad3723918715decf3cb9d16be238f82e",
-      "issue": 1217
-    },
-    "github:41591407869:1:completions:message:f2332f04b0594e4b187b4784d813b3da7ea0d54d1b019dfbbc440b840fbf6e34": {
-      "digest": "0f34f05e7a9ce00a828185575c64f8fd13a58a16026ee20e38bc4be975387192",
-      "issue": 1217
-    },
-    "github:41591930318:1:tick:0:review-presentation": {
-      "digest": "9605e780f1a82796191423571d1399130562b8c998c7adbb88b528c73ba0ce59",
-      "issue": 1217
-    },
-    "github:41591930318:1:tick:0:review-complete": {
-      "digest": "997fe24b242a13d33a206af2efae1a0d97c50199c0c210747524b844b2a8cc5a",
-      "issue": 1217
-    },
     "finish:76fee0a2-808b-4b07-b51c-a30b938993cb": {
       "digest": "ee6d764f3a24111019baa79c57fbd4520de5ef2cf4f7e684ac42fb9b8ad4ec83",
       "issue": 1216,
@@ -2008,112 +1773,6 @@
           "materialSha": "c90041db2988466f8412c1d4a05ccce724a5079b",
           "status": "passed",
           "finishedAt": "2026-11-02T22:12:30.736Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:ab0e462b-14cd-476b-8836-c87a60943e36": {
-      "digest": "6376b121f5184e5708149548e28b07e58197429f345b5476c5c3b99efb1e77c9",
-      "issue": 1217,
-      "message": {
-        "kind": "queued",
-        "issue": 1217,
-        "at": 1793687734219,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
-        "delivered": true
-      }
-    },
-    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:1:admit": {
-      "digest": "0824d7a1384605156c260e73fc7c7b741e4136044dd2ff360a651b94ee33fe3c",
-      "issue": 1217,
-      "message": {
-        "kind": "admitted",
-        "issue": 1217,
-        "at": 1793687737854,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217": {
-      "digest": "5cdcecf81c43bdac50f39cfafced40daaaa86facc90332ab29a66cf47b0358e3",
-      "issue": 1217,
-      "message": {
-        "kind": "return",
-        "issue": 1217,
-        "at": 1793687887494,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793687887494,
-          "entry": 1,
-          "detail": "Синтаксис и типы изменённых инструментов: cancelled; Поведение затронутого механизма: cancelled",
-          "eventId": "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:3:return:return:1217"
-        },
-        "delivered": true
-      }
-    },
-    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7": {
-      "digest": "67c5e0b1499a7b85d7d75ff7b991f98b14037d0a1972c61d29d3147aa523d0e5",
-      "issue": 1217,
-      "message": {
-        "kind": "queued",
-        "issue": 1217,
-        "at": 1793687974273,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-        "delivered": true
-      }
-    },
-    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:1:admit": {
-      "digest": "eafb359a663eed8924256aadd0721a4d59da40c3ec6a69ba147b6769a8ea4b64",
-      "issue": 1217,
-      "message": {
-        "kind": "admitted",
-        "issue": 1217,
-        "at": 1793687977708,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:830ec53f-0f07-4ddd-a61d-5b81197a5db7:finish:3:s6-complete": {
-      "digest": "eacacd1a3acab8f0962a87bd7c73cda1293e35576dc2b52d8bf97e44ec5b6488",
-      "issue": 1217,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1217,
-        "at": 1793688043882,
-        "entry": 2,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T063952969-16c3247d",
-          "name": "Тесты для задачи #1217 (перед ревью)",
-          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261103T063952969-16c3247d/report.json",
-          "materialSha": "aec4d85e336ad7c0151f9047f264ebb532358a5c",
-          "status": "passed",
-          "finishedAt": "2026-11-03T06:40:42.692Z",
           "failures": []
         },
         "fromStatus": "S6-in-progress",
