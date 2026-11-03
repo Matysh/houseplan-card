@@ -969,7 +969,8 @@ export class HouseplanEditorRuntime {
   private _wallEndGuide: AlignGuide | null = null;
   private _lastGraphEditResult: GraphEditResult<any> | null = null;
   private _chainStartTarget?: TargetPointRef;
-  private readonly _drawEdgeNodes = new Map<string, { from: string; to: string }>();
+  private _chainStartPoint?: import('./plan-graph').GraphPoint;
+  private readonly _drawEdgeNodes = new Map<string, { from: string; to: string; toPoint?: import('./plan-graph').GraphPoint }>();
   private _legacyDrawBaseline: { source: string; result: ReturnType<typeof commitWallSegmentModel<ServerConfig>> } | null = null;
   private readonly physicalWriteHistory = new PhysicalWriteHistory();
   public readonly chainExit: EditorChainExit;
@@ -1689,9 +1690,10 @@ public _resolvePlanDrawPoint(
     // describe the exact same geometry (#290).
     const effectiveCandidate = candidate && samePoint(point, candidate.point) ? candidate : null;
     const lastEdge=this._drawEdgeNodes?.get(this.host._activeWallChainPartitionIds?.at(-1) || '');
-    const anchorTarget:TargetPointRef|undefined=lastEdge?{kind:'existing-node',node:lastEdge.to}:this._chainStartTarget;
-    const anchorPoint=anchor&&graphDrawTargetPoint(this.host._curSpaceCfg?.plan_graph
-      ||this._legacyDrawBaseline?.result.config.spaces.find(s=>s.id===this.host._space)?.plan_graph,anchorTarget);
+    // The active gesture already owns its exact endpoint. Pointer movement
+    // must not scan the entire graph just to recover that same anchor.
+    const anchorPoint=lastEdge?.toPoint||this._chainStartPoint
+      ||(this._chainStartTarget?.kind==='independent'?this._chainStartTarget.p:undefined);
     const authoredPoint=!candidate?graphDrawGridPoint(end,snapped,this.host._gridPitch,
       anchor&&anchorPoint?{point:anchor,p:anchorPoint}:undefined):undefined;
     return {
@@ -2650,6 +2652,8 @@ public _markupClick(ev: MouseEvent): void {
     if (!this.host._path.length) {
       this._drawEdgeNodes.clear();
       this._chainStartTarget = clickedTarget;
+      this._chainStartPoint = graphDrawTargetPoint(this.host._curSpaceCfg?.plan_graph
+        || this._legacyDrawBaseline?.result.config.spaces.find(s=>s.id===this.host._space)?.plan_graph, clickedTarget);
       this.host._activeWallChainId = `chain-${Date.now().toString(36)}`;
       this.host._activeWallChainPartitionIds = [];
       this.host._wallChainSegmentCms = [];
@@ -2703,8 +2707,8 @@ public _markupClick(ev: MouseEvent): void {
       && op.edge.kind === 'partition' && op.edge.id === id);
     if (created?.kind === 'create-edge') {
       const { from, to } = created.edge;
-      this._drawEdgeNodes.set(id, { from, to });
       const nodes = this.host._curSpaceCfg?.plan_graph?.nodes || [];
+      this._drawEdgeNodes.set(id, { from, to, toPoint: nodes.find(n=>n.id===to)?.p });
       const point = (node: string) => {
         const found = nodes.find(n => n.id === node);
         return found ? pointToNumbers(decodePoint(found.p)).map(v => v * NORM_W) : undefined;
