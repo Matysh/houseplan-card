@@ -72,6 +72,9 @@ function harness() {
     _adoptInitialSpace: noop, _resumePendingNavMode: noop, _restoreZoom: noop, _restoreKioskViewport: () => false,
     _cacheSnapshot: event('cache'), _maybeRebuildDevices: event('devices'), _ensureLiveSyncSubscriptions: noop,
     requestUpdate: event('update'), _showToast: message => events.push(message),
+    // The port is card-only; execute the real capture method used by release/history.
+    _toastPresentation: { captureContext: () => ({ owner: null }) },
+    _captureToast: () => proto._captureToast.call(host),
     _t: key => key, _errText: error => error.message,
     _devicePositionStateValid: () => true, _commitSpace: noop,
     _cancelDeviceDrag: () => false, _deviceForPointerEvent: (_event, device) => device,
