@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
 [![Live demo](https://img.shields.io/badge/demo-try_it_live-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![CodeQL](https://github.com/Matysh/houseplan-card/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/Matysh/houseplan-card/actions/workflows/github-code-scanning/codeql)
-[![Тесты — резерв CI](https://github.com/Matysh/houseplan-card/actions/workflows/process-next-fallback.yml/badge.svg?branch=dev)](https://github.com/Matysh/houseplan-card/actions/workflows/process-next-fallback.yml)
+[![CI](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FMatysh%2Fhouseplan-card%2Fprocess-release-state%2Fci.json)](https://github.com/Matysh/houseplan-card/blob/process-release-state/CI.md)
 [![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 [![Support the project](https://img.shields.io/badge/Boosty-Support_the_project-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
 
