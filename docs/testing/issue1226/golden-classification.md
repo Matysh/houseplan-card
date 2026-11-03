@@ -41,14 +41,21 @@ This current set contains 245 Lovelace and 22 panel scenes; 141 pairs change
 image dimensions. These are current-run observations, separate from the
 original 139 dimension changes and nine no-frame failures above.
 
-A manually viewed counterexample to a blanket header-only explanation is
+A manually viewed example requiring a camera-intent explanation is
 `panel-wide-plan-editor-dark-en`: both images are 1280×800 with the same header
 and editor chrome. The actual image shows 108% camera scale, a larger floor
 projection and a partly clipped lower outer notch; the baseline shows the
 complete lower outline. This is an observed image difference, not a proved
 product diagnosis: capture setup, settled camera intent and the accepted fit
 contract still need to explain it. The saved runtime reports stage920×682.
-Do not accept all 267 scenes merely because the generic header changed.
+CANVAS.md:138–157 and UX-MODES.md:108–112 explicitly require preserving
+world centre and screen pixels-per-unit on editor entry, rebasing the relative
+zoom against the new Fit and allowing stage clipping (#1207). The already
+passing View frame visually retains approximately the same outer-wall screen
+width as the actual Plan frame, unlike the smaller historical Plan baseline.
+This is consistent with the accepted handoff, not evidence of a new camera
+defect. Exact scene acceptance still requires the explicit review below;
+neither changed header height nor a changed zoom badge alone proves a bug.
 
 PROCESS.md requires explicit owner acceptance of listed frames after review.
 The gallery is review material only, and no such acceptance has been inferred.
