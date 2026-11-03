@@ -4,9 +4,10 @@ import { isDeepStrictEqual as equal } from 'node:util';
 import { launchPanelCold, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { applyUiKitTheme } from './helpers/ui-kit-theme.mjs';
 import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
+import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 requirePinnedBrowser('#1176 Select room candidates');
 const fixture=JSON.parse(readFileSync(new URL('../test/fixtures/1166-two-contours.json',import.meta.url),'utf8'));
-const config={...fixture.payload.config,model_version:fixture.model_version};
+const config=currentGraphFixture({...fixture.payload.config,model_version:fixture.model_version});
 const folder='artifacts/1176-room-candidates';mkdirSync(folder,{recursive:true});
 const {page,browser}=await launchPanelCold({width:1280,height:960});
 page.setDefaultTimeout(12000);
@@ -92,11 +93,18 @@ try{
   await history('undo');await settle();await tool('select');
  }
  // Object input wins over the face beneath the wall or its node.
- const node=card.locator('[data-hp="wall-node"]').first();
+ const nodes=card.locator('[data-hp="wall-node"]');
+ let node;
+ const viewport=page.viewportSize();
+ for(let i=0;i<await nodes.count();i++){
+  const candidate=nodes.nth(i),box=await candidate.boundingBox();
+  if(box&&box.x>=0&&box.y>=0&&box.x+box.width<=viewport.width&&box.y+box.height<=viewport.height){node=candidate;break;}
+ }
+ if(!node)throw new Error('no native wall-node target inside the visible viewport');
  await node.waitFor();await node.hover();check('node hover never offers a room',!(await state()).hover);
  await node.click();check('node click never opens a room',!(await state()).roomDialog);
  const wallPoint=await card.evaluate(c=>{
-  const p=c._spaceModel().partitions[0];return [(p.a[0]+p.b[0])/2,(p.a[1]+p.b[1])/2];
+  const p=c._spaceModel().partitions[0];return [(p.a[0]+p.b[0])*500,(p.a[1]+p.b[1])*500];
  });
  // Overlapping wall hit regions may choose either saved wall, never the face.
  await move(wallPoint);check('wall hover keeps object ownership',!(await state()).hover);

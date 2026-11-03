@@ -26,6 +26,7 @@ const setRooms = async (rooms, openings = [], walls = []) => {
     // same atomic v8 -> v9 materialisation as a real legacy document instead
     // of presenting invalid v9 data with missing wall_ids.
     card._serverCfg.model_version = 8;
+    for (const source of card._serverCfg.spaces) delete source.plan_graph;
     space.rooms = rooms;
     space.openings = openings;
     if (walls.length) space.walls = walls;

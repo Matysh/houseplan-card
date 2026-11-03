@@ -4,6 +4,8 @@
 import assert from 'node:assert/strict';
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { editGraphFixture } from './helpers/graph-fixture.mjs';
+import { projectGraphSpace } from '../test-build/plan-graph.js';
 import { applyNodeDelete } from '../test-build/wall-node-delete.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 
@@ -144,7 +146,10 @@ try {
   // #1075: cold entry never visits Select. Every tool is chosen through the
   // same public toolbar/group controls, not by changing private tool state.
   server = clone(initial);
-  Object.assign(server.spaces[0], { rooms: [], partitions: [], openings: [], wall_segments: [] });
+  // An empty floor is authored as a new legacy input, not a projection-only
+  // edit of an authoritative graph that still contains the previous walls.
+  server.spaces[0] = commitWallSegmentModel({ spaces: [{ id: 'delete-floor', title: 'Delete nodes', rooms: [], partitions: [], openings: [] }] }).config.spaces[0];
+  server = commitWallSegmentModel(server).config;
   await boot({}, true, false);
   check('delete.tools.cold_entry.is_Walls_not_Select', await page.evaluate(() => window.__card._tool), 'draw');
   // Ordinary external adoption supplies geometry while the manually selected
@@ -190,13 +195,24 @@ try {
   const q = await screen([.55, .4]); await page.mouse.move(q.x, q.y);
   check('delete.rightclick.released_pointer_cannot_pan', [(await state()).view, (await state()).zoom], [before.view, before.zoom]);
   await action().click(); await settled();
-  const expected = clone(original), floor = expected.spaces[0];
-  floor.partitions = floor.partitions.filter(wall => wall.id !== 'b').map(wall => wall.id === 'a' ? { ...wall, b: [.75, .3] } : wall);
-  floor.openings[0].host = { kind: 'partition', id: 'a', t: .25 };
+  const expected = clone(original);
+  // Independent exact expected topology: keep A/C identities, remove only B
+  // and its second edge, and retain the opening's literal source position.
+  const expectedFloor = expected.spaces[0], graph = expectedFloor.plan_graph;
+  const first = graph.edges.find(edge => edge.kind === 'partition' && edge.id === 'a');
+  const second = graph.edges.find(edge => edge.kind === 'partition' && edge.id === 'b');
+  const removedNode = first.to;
+  first.to = second.to;
+  graph.edges = graph.edges.filter(edge => edge !== second);
+  graph.nodes = graph.nodes.filter(node => node.id !== removedNode);
+  expectedFloor.openings[0].host = { kind: 'partition', id: 'a', t: .25, tq: ['1', '4'] };
+  expected.spaces[0] = projectGraphSpace(expectedFloor, graph).space;
   const canonicalExpected = commitWallSegmentModel(expected).config;
   check('delete.straight.exact_delta_and_foreign_fields', server, canonicalExpected);
   check('delete.straight.one_command', [deleteWrites().length, (await state()).history], [1, 1]);
-  check('delete.straight.original_point_intent', deleteWrites()[0].intent, { point: [.4, .3] });
+  check('delete.straight.original_point_intent', deleteWrites()[0].intent, {
+    point: [.4, .3], node_id: structuralWallNodes(original.spaces[0]).find(node => node.point[0] === .4 && node.point[1] === .3).nodeId,
+  });
   check('delete.straight.no_B_handle', (await handles()).some(p => p[0] === 400 && p[1] === 300), false);
   check('delete.straight.exact_A_C_handles', (await handles()).filter(p => p[1] === 300).sort((a, b) => a[0] - b[0]), [[150, 300], [750, 300]]);
   const doorAfter = await door.boundingBox();
@@ -259,8 +275,12 @@ try {
 
   for (const cause of ['thickness', 'opening']) {
     await reset();
-    if (cause === 'thickness') server.spaces[0].partitions.find(wall => wall.id === 'b').cm = 20;
-    else server.spaces[0].partitions.find(wall => wall.id === 'b').b[1] = .4;
+    editGraphFixture(server, 'delete-floor', cause === 'thickness'
+      ? { kind: 'thickness', edges: [{ kind: 'partition', id: 'b' }], cm: 20 }
+      : { kind: 'partitions', ids: ['b'] }, floor => {
+      if (cause === 'thickness') floor.partitions.find(wall => wall.id === 'b').cm = 20;
+      else floor.partitions.find(wall => wall.id === 'b').b[1] = .4;
+    });
     server = commitWallSegmentModel(server).config; revision++; await boot();
     const baseline = clone(server), savedRev = revision;
     await open([.4, .3]); check(`delete.${cause}.disabled`, await action().isDisabled());
@@ -350,7 +370,12 @@ try {
   }
 
   writable = true; await reset(); await page.setViewportSize({ width: 390, height: 900 });
-  await card.locator('[data-hp="zoom-fit"]').click();
+  // The responsive panel intentionally hides dedicated zoom buttons. Its
+  // ResizeObserver refits this untouched camera; wait for the visible surface.
+  await page.waitForFunction(() => {
+    const c = window.__card, s = c._stageEl, v = c._view;
+    return !c._refitRaf && Math.abs(v.h / v.w - s.clientHeight / s.clientWidth) < .001;
+  });
   for (const dark of [false, true]) {
     await page.evaluate(async dark => { const card = window.__card;
       card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode: dark } }; await card.updateComplete;

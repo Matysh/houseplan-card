@@ -134,20 +134,28 @@ const result = await page.evaluate(async () => {
     rectRoom('label-left', 200, 100, 300, 500),
     rectRoom('label-right', 300, 100, 400, 500),
   ];
+  // The second scenario is a new raw pre-identity input, not an edit of the
+  // graph/materialized wall catalogue produced by the first real gesture.
+  card._serverCfg.model_version = 8;
+  for (const source of card._serverCfg.spaces) delete source.plan_graph;
+  delete space.wall_segments;
+  delete space.walls;
   card._resize.reset();
   card._zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, 2);
   await update();
+  // Camera commands now interpolate; pointerdown intentionally cancels a live
+  // transition, so start the second gesture only after the requested zoom lands.
+  while (card._cameraTransition.active)
+    await new Promise(resolve => requestAnimationFrame(resolve));
   const zoomHandle = [...card.renderRoot.querySelectorAll('.rszhandle')]
     .find((node) => Math.abs(Number(node.getAttribute('cx')) - 300) < 1
       && Math.abs(Number(node.getAttribute('cy')) - 300) < 1
       && node.getAttribute('aria-disabled') === 'false');
-  const zoomStageRect = stage.getBoundingClientRect();
   const zoomSvg = stage.querySelector('svg');
-  const [zvx, zvy, zvw, zvh] = zoomSvg.getAttribute('viewBox').split(' ').map(Number);
-  const zoomScreen = (x, y) => [
-    zoomStageRect.left + ((x - zvx) / zvw) * zoomStageRect.width,
-    zoomStageRect.top + ((y - zvy) / zvh) * zoomStageRect.height,
-  ];
+  const zoomScreen = (x, y) => {
+    const point = new DOMPoint(x, y).matrixTransform(zoomSvg.getScreenCTM());
+    return [point.x, point.y];
+  };
   const [zsx, zsy] = zoomScreen(300, 300);
   const [ztx] = zoomScreen(325, 300);
   const zoomDispatch = (type, x, y) => zoomHandle?.dispatchEvent(new PointerEvent(type, {

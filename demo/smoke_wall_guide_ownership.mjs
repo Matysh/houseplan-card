@@ -26,7 +26,7 @@ for (const { axis, cm, zoom, theme } of cases) {
   const { page, browser } = await launch({ width: 1180, height: 920 }, 1, [], { hasTouch: true });
   try {
     await page.exposeFunction('guideWire', async message => {
-      if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true };
+      if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true, plan_graph_api: 1 };
       if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
       if (message.type !== 'houseplan/config/set') return null;
       assert.equal(message.expected_rev, revision);
@@ -62,14 +62,20 @@ for (const { axis, cm, zoom, theme } of cases) {
       const stage = await page.locator('houseplan-card').locator('.stage').boundingBox();
       const x = stage.x + stage.width / 2, y = stage.y + stage.height / 2;
       const cdp = await page.context().newCDPSession(page);
+      const startZoom = await page.evaluate(() => window.__card._zoom);
       const points = distance => [{ x: x - distance / 2, y, id: 1 }, { x: x + distance / 2, y, id: 2 }];
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points(120) });
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points(120 * zoom) });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points(120 * zoom / startZoom) });
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       await cdp.detach();
       await page.waitForTimeout(100);
+      const actualZoom = await page.evaluate(() => window.__card._zoom);
+      // CDP touch positions are float-quantized before native hit delivery.
+      // This setup-only bound is <.01 px here; world/guide assertions below
+      // remain exact and still exercise the requested half/double scale.
       check(`${theme}, ${zoom}: native pinch reaches the requested editor scale`,
-        await page.evaluate(() => window.__card._zoom), zoom);
+        Math.abs(actualZoom - zoom) < 1e-5);
+      console.log('native pinch scale', { requested: zoom, actual: actualZoom, delta: actualZoom - zoom });
     }
     const screen = p => page.evaluate(p => {
       const svg = window.__card.renderRoot.querySelector('svg.plan-svg'), q = svg.createSVGPoint();

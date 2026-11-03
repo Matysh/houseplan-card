@@ -91,7 +91,7 @@ try {
   report.bundleFingerprint = await page.evaluate(() => globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__);
   await page.exposeFunction('connectedNodeWire', message => {
     if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision,
-      can_write: true, wall_node_move_api: 1 };
+      can_write: true, wall_node_move_api: 1, plan_graph_api: 1 };
     if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
     if (message.type !== 'houseplan/wall/node_move') return null;
     assert.equal(message.expected_rev, revision, 'wire revision must match');
