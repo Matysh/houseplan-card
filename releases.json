@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 79,
+  "revision": 80,
   "active": "v1.84.0-beta.3",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -1204,14 +1204,14 @@
       "kind": "beta",
       "branch": "release/v1.84.0-beta.3",
       "sourceSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
-      "sha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
+      "sha": "6ae8563b758befe39b2ec3385924baf0547c1d41",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.84.0-beta.3",
-        "candidate": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
+        "tag": null,
+        "candidate": "6ae8563b758befe39b2ec3385924baf0547c1d41",
         "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
         "issues": [
           {
@@ -1789,7 +1789,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
+          "to": "6ae8563b758befe39b2ec3385924baf0547c1d41",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -1901,7 +1908,8 @@
     "beta1842-complete-e-20261102-1192:completion:332a55d1-bb18-455a-953b-89c1a2b824c3": "470e9994330d56e36c15a9872df871ee3e9fe45d845bc76c59c2fae387541f91",
     "beta1842-complete-e-20261102-1192:completion:2e85005e-b90c-4911-b8bc-8df649a8064d": "a926decafc8c8a295e29eb1540972320c74c65cb00b345a620ef48015495520e",
     "beta1842-complete-e-20261102-1192:completion:3f6b605b-a19d-4688-9e93-15da1f8aa627": "40f997050b4b2d6799e91ca6b81e58d4db99bb214afa202dcd23b46f8427c82e",
-    "release-beta3-create-20261103-cb1431ea": "7dcc956c73b11b3710e43deffe59232df97f6dc4708393c767f1accd2c1429e7"
+    "release-beta3-create-20261103-cb1431ea": "7dcc956c73b11b3710e43deffe59232df97f6dc4708393c767f1accd2c1429e7",
+    "release-beta3-prepared-6ae8563b758b": "42eec29845355308df3537cd8067c4f9d34c44f5f20d9a82392f78c1da923dac"
   },
   "shipReviews": {}
 }
