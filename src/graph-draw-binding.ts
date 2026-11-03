@@ -3,13 +3,13 @@ import type { PlanGraph, TargetPointRef, GraphEdgeRef } from './plan-graph';
 import type { PlanSnapCandidate } from './plan-snap-overlay';
 import * as Q from './plan-exact';
 let sequence=0;
-function allocated(kind:'node'|'edge',seed:string|undefined,edge:GraphEdgeRef):string{
+function allocated(kind:'node'|'edge',seed:string|undefined,edge?:GraphEdgeRef):string{
   if(seed===undefined){
     const uuid=globalThis.crypto?.randomUUID?.();
     return 'draw-'+kind+'-'+(uuid||Date.now().toString(36)+'-'+(++sequence).toString(36)+'-'+Math.random().toString(36).slice(2));
   }
   let hash=0xcbf29ce484222325n;
-  for(const byte of new TextEncoder().encode(JSON.stringify([seed,kind,edge.kind,edge.id])))
+  for(const byte of new TextEncoder().encode(JSON.stringify([seed,kind,edge?.kind,edge?.id])))
     hash=BigInt.asUintN(64,(hash^BigInt(byte))*0x100000001b3n);
   return 'draw-'+kind+'-'+hash.toString(16).padStart(16,'0');
 }
@@ -20,6 +20,39 @@ function authoredPoint(point:readonly number[]):Q.ExactPoint{
     return Q.toNumber(grid)===n?grid:q;
   };
   return[axis(raw[0],point[0]),axis(raw[1],point[1])];
+}
+/** Retain a known exact anchor while the UI projects it to render coordinates. */
+export function graphDrawTargetPoint(graph:PlanGraph|undefined|null,target:TargetPointRef|undefined):Q.GraphPoint|undefined{
+  if(!target)return undefined;
+  if(target.kind==='independent')return target.p;
+  const point=(id:string)=>{const n=graph?.nodes.find(n=>n.id===id);return n&&Q.decodePoint(n.p);};
+  if(target.kind==='existing-node'){const p=point(target.node);return p&&Q.encodePoint(p);}
+  const endpoints=(ref:GraphEdgeRef)=>{const edge=graph?.edges.find(e=>e.kind===ref.kind&&e.id===ref.id);
+    const a=edge&&point(edge.from),b=edge&&point(edge.to);return a&&b?[a,b]as const:undefined;};
+  if(target.kind==='on-edge'){
+    const e=endpoints(target.edge);return e&&Q.encodePoint(Q.pointAt(e[0],e[1],Q.decodeRational(target.t)));
+  }
+  const a=endpoints(target.refs[0]),b=endpoints(target.refs[1]);
+  const hit=a&&b&&Q.intersection(a[0],a[1],b[0],b[1]);return hit?Q.encodePoint(hit.p):undefined;
+}
+/** Only the native grid producer may supply `snapped`; imported points never use this path. */
+export function graphDrawGridPoint(point:readonly number[],snapped:readonly number[],pitch:number,
+  anchor?:{point:readonly number[];p:Q.GraphPoint}):Q.GraphPoint|undefined{
+  if(pitch!==1000/240||!point.every(Number.isFinite)||!snapped.every(Number.isFinite))return undefined;
+  const p=[...authoredPoint(point.map(n=>n/1000))]as [Q.Exact,Q.Exact];
+  const anchorPoint=anchor&&Q.decodePoint(anchor.p);let retained=false;
+  for(const axis of [0,1]as const){
+    const index=Math.round(snapped[axis]/pitch);
+    if(point[axis]===snapped[axis]&&Number.isSafeInteger(index)&&index*pitch===snapped[axis]){
+      p[axis]=Q.exact(BigInt(index),240n);retained=true;
+    }else if(anchor&&anchorPoint&&point[axis]===anchor.point[axis]){
+      p[axis]=anchorPoint[axis];retained=true;
+    }
+  }
+  return retained?Q.encodePoint(p):undefined;
+}
+export function graphDrawIndependentTarget(p:Q.GraphPoint):TargetPointRef{
+  return{kind:'independent',node:allocated('node',undefined),p};
 }
 function sameProjection(point:readonly number[],expected:readonly number[]):boolean{
   const roundoff=Number.EPSILON*32*Math.max(1,...point.map(Math.abs),...expected.map(Math.abs));

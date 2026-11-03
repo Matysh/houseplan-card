@@ -1,0 +1,8 @@
+{
+  "schema":1,"issue":1237,"baseStable":"v1.83.0","category":"line-fix",
+  "rationale":"Restore native drawing grid provenance lost when float render coordinates entered model11 graph authoring. Imported off-grid points retain the existing exact source decoder.",
+  "summary":{
+    "ru":"Выбранные Draw точки сетки сохраняются точными lattice-узлами.",
+    "en":"Persist native Draw grid choices as exact lattice nodes."
+  }
+}

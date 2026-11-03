@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Reconcile a warm editor's camera against its final layout after a delayed geometry refresh, preserving an applicable user camera and native node hit-testing. [#1234](https://github.com/Matysh/houseplan-card/issues/1234)
+- Carry native Draw grid indices into exact graph targets, retaining lattice points through L-shaped chains, history and reload without rounding imported off-grid points. [#1237](https://github.com/Matysh/houseplan-card/issues/1237)
 
 - Remove the retired room draft carrier after the first Draw migration, keeping its accepted wall IDs and thicknesses exactly once. [#1233](https://github.com/Matysh/houseplan-card/issues/1233)
 - Select the named parent in the large-plan Split regression after canonical room ordering; preserve real third-owner rejection and exact history checks. Product Split behavior is unchanged. [#1231](https://github.com/Matysh/houseplan-card/issues/1231)

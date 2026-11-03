@@ -2,7 +2,7 @@ import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelIn
 import { assertFiniteColumnInputs } from './column-input';
 import { commitGraphEdit, commitGraphEditResult, type GraphEditIntent, type GraphEditResult } from './graph-edit-intent';
 import { projectGraphSpace, validateGraph, type PlanGraph, type TargetPointRef } from './plan-graph';
-import { graphDrawTargetRef } from './graph-draw-binding';
+import { graphDrawTargetRef, graphDrawTargetPoint, graphDrawGridPoint, graphDrawIndependentTarget } from './graph-draw-binding';
 import { decodePoint, pointToNumbers, microRadius, toNumber } from './plan-exact';
 import { graphOpeningRun, graphOpeningRunTarget } from './graph-opening-run';
 import { sendHouseplanWrite } from './large-write-transport';
@@ -1647,6 +1647,7 @@ public _resolvePlanDrawPoint(
   ): {
     point: number[]; candidate: PlanSnapCandidate | null;
     conflicts: PlanSnapEndpoint[]; ambiguous: boolean; contextKey: string;
+    authoredPoint?: import('./plan-graph').GraphPoint;
   } {
     const snapshot = this._planSnapGeometrySnapshot();
     const anchor = this.host._path[this.host._path.length - 1];
@@ -1687,9 +1688,16 @@ public _resolvePlanDrawPoint(
     // moves the actually persisted point away from it. Preview and click must
     // describe the exact same geometry (#290).
     const effectiveCandidate = candidate && samePoint(point, candidate.point) ? candidate : null;
+    const lastEdge=this._drawEdgeNodes?.get(this.host._activeWallChainPartitionIds?.at(-1) || '');
+    const anchorTarget:TargetPointRef|undefined=lastEdge?{kind:'existing-node',node:lastEdge.to}:this._chainStartTarget;
+    const anchorPoint=anchor&&graphDrawTargetPoint(this.host._curSpaceCfg?.plan_graph
+      ||this._legacyDrawBaseline?.result.config.spaces.find(s=>s.id===this.host._space)?.plan_graph,anchorTarget);
+    const authoredPoint=!candidate?graphDrawGridPoint(end,snapped,this.host._gridPitch,
+      anchor&&anchorPoint?{point:anchor,p:anchorPoint}:undefined):undefined;
     return {
       point: end,
       candidate: effectiveCandidate,
+      ...(authoredPoint?{authoredPoint}:{}),
       conflicts: resolution.kind === 'ambiguous' ? resolution.conflicts : [],
       ambiguous: resolution.kind === 'ambiguous',
       contextKey: this._planSnapContextKey(snapshot.key),
@@ -2629,7 +2637,11 @@ public _markupClick(ev: MouseEvent): void {
     // overlaps are still rejected, but only at closing time, when the whole
     // outline is known (roomsOverlap treats full nesting as legal).
     let clickedTarget: TargetPointRef | undefined;
-    try { clickedTarget = this._drawTarget(resolved.candidate); }
+    try {
+      clickedTarget = this._drawTarget(resolved.candidate);
+      if(!clickedTarget&&resolved.authoredPoint&&pt.every((n,i)=>n===resolved.point[i]))
+        clickedTarget=graphDrawIndependentTarget(resolved.authoredPoint);
+    }
     catch (error) {
       this._legacyDrawBaseline = null;
       this._showWallModelMigrationBlocked(error);
