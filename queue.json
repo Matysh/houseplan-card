@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2135,
+  "revision": 2136,
   "nextTicket": 135,
   "nextFence": 135,
   "tasks": {
@@ -2671,7 +2671,7 @@
         "requestId": "review:1246:5:3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf:082f99ccf9c9667cb17edae74f529e9e7695872a",
         "transitionConfirmed": true
       },
-      "patchId": "3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf",
+      "patchId": "925c785a4b330200d4e5e3db8790013b883bb918",
       "changedFiles": [
         "demo/smoke_modal_toast_956.mjs",
         "demo/smoke_toast_ownership_1246.mjs",
@@ -2714,7 +2714,8 @@
         "test/optimize-plans-dialog.test.mjs",
         "test/room-save-946.test.mjs",
         "test/toast-node-action.test.mjs",
-        "test/toast-presentation.test.mjs"
+        "test/toast-presentation.test.mjs",
+        "test/toast-save-context.test.mjs"
       ],
       "s6": {
         "id": "20261103T192450682-1b9ff2d9",
@@ -2969,10 +2970,11 @@
     "token": "134:finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:1:admit",
     "fence": 134,
     "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+    "phase": "testing",
     "admittedAt": 1793735519935,
-    "expiresAt": 1793735819935
+    "expiresAt": 1793735826851,
+    "patchId": "925c785a4b330200d4e5e3db8790013b883bb918"
   },
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
@@ -3146,6 +3148,10 @@
     "finish:8f56dc92-fc50-4968-8b00-19e9fd92a9b1:finish:12:return-label": {
       "digest": "ab9c9a58b55f6030d17da60304084f42aea9d3e7fdf08884c21a42ebe1c06f0e",
       "issue": 1226
+    },
+    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:2:synchronized": {
+      "digest": "c18f685a625360f0be723231e48f376e292ae518cc123dee42a3463d968b07e9",
+      "issue": 1246
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
       "digest": "3ccf71ffef7244f371a9bd1f581458f83aa074400a4fe562fabbe693d112ee18",
