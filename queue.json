@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1414,
-  "nextTicket": 97,
+  "revision": 1415,
+  "nextTicket": 98,
   "nextFence": 97,
   "tasks": {
     "1126": {
@@ -1702,14 +1702,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1227-space-copy",
-      "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf",
+      "materialSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 96,
-      "queued": false,
+      "ticket": 97,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793705694976,
-      "reviewEntry": 2,
+      "readyAt": 1793706403168,
+      "reviewEntry": 3,
       "patchId": "bbd57e77290eb3d6805ba5be53b844d679267d8f",
       "changedFiles": [
         "custom_components/houseplan/space_copy.py",
@@ -1747,14 +1747,7 @@
         "finishedAt": "2026-11-03T11:35:42.902Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewRequest": "review:1227:2:bbd57e77290eb3d6805ba5be53b844d679267d8f:96ffe544474c6a0ffd40f005caa977afff308d26",
-      "reviewMaterial": {
-        "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf",
-        "expectedBase": "96ffe544474c6a0ffd40f005caa977afff308d26",
-        "patchId": "bbd57e77290eb3d6805ba5be53b844d679267d8f"
-      },
-      "reason": "review-findings"
+      "reviewRound": null
     }
   },
   "ownerDecisions": {},
@@ -1859,7 +1852,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1227
+  ],
   "active": null,
   "events": {
     "github:41626530748:1:completions:message:7971239504d39e4dd3c929a21e11b35b75fe7301554e4e780bdf008436172112": {
@@ -2086,6 +2081,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d4c673b2-2f3c-461e-8660-b134d372b736": {
+      "digest": "2fc15072591491bf45d8d61d42d3e990d619da1a18718d9fafa575c2d1432e5b",
+      "issue": 1227,
+      "message": {
+        "kind": "queued",
+        "issue": 1227,
+        "at": 1793706403168,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
+        "evidence": {
+          "id": "20261103T113512405-65357103",
+          "name": "Тесты для задачи #1227 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261103T113512405-65357103/report.json",
+          "materialSha": "fcde20c32d789ba5cb9a0e119f54f3fa8d6864bf",
+          "status": "passed",
+          "finishedAt": "2026-11-03T11:35:42.902Z",
+          "failures": []
+        }
       }
     }
   },
