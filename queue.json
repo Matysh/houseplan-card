@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1540,
+  "revision": 1541,
   "nextTicket": 107,
   "nextFence": 103,
   "tasks": {
@@ -1921,145 +1921,25 @@
     },
     "1235": {
       "issue": 1235,
+      "branch": "codex/1235-summary-retry",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1235-summary-retry",
-      "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 102,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793714222586,
-      "reviewEntry": 1,
-      "patchId": "55e3f180f8fa450d886640223aa8737eee8fdde5",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1235.json",
-        "docs/testing/issue1235/recovery.md",
-        "rollup.config.mjs",
-        "scripts/bundle-manifest.mjs",
-        "test/bundle-assets.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T140122500-964ee593",
-        "name": "Тесты для задачи #1235 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261103T140122500-964ee593/report.json",
-        "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:02:43.911Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+      "mergedSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
+      "mergedAt": 1793714787240,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1235:1:55e3f180f8fa450d886640223aa8737eee8fdde5:d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-      "reviewMaterial": {
-        "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-        "expectedBase": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-        "patchId": "55e3f180f8fa450d886640223aa8737eee8fdde5"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1235,
-        "requestId": "review:1235:1:55e3f180f8fa450d886640223aa8737eee8fdde5:d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-        "kind": "code",
-        "base": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-        "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-        "patchId": "55e3f180f8fa450d886640223aa8737eee8fdde5",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1235,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1235",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "<details>\n<summary>Реализованный ABI сборки, риски и проверки</summary>\n\nДо исправления native Retry после 404 настоящего summary-root получал экспорты a/s/w, undefined fingerprint и terminal error. Причина — weatherSources/weatherText используются View-погодой и nested summary-editor; Rollup разместил их в runtime-root и создал namespace wrapper только для literal import. Общие summary-weather.ts и summary-weather-i18n.ts вынесены в существующий summary-shared, публичные именованные exports root сохранены. Loader/policy/fingerprint/per-card state не менялись; runtime обхода через minified имена нет.\n\nСуществующая bundle generation/injection теперь проверяет consumed именованные exports шести View nonce-root, как уже делала для editor. Тест потерянного fingerprint/constructor/install export покрывает все 6. Это расширение проверки ABI существующего механизма, без нового этапа процесса. Обратите внимание на границы lazy графа и зависимости nested-editor; новые погодные функции не должны снова попадать в View-root.\n\nФактически: bundle-assets 49/49, fresh production build, native smoke_view_runtime_recovery PASS (en1280/ru360, real module Retry, shared dependency, mismatch, preferences, isolation/warm/detach). Отдельный audit реальных exports 32 nonce roots не нашёл иных отсутствующих имён; вывод локально output/issue-1235/nonce-exports.jsonl. Подробная запись в docs/testing/issue1235/recovery.md. Официальный S6 через finish следует после очереди/финального rebase. Реальный HA не проверялся, золотые кадры не изменялись, E2E impact передан root централизованно.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление адресное и решает задачу. Причина установлена правильно: модули `summary-weather.ts` и `summary-weather-i18n.ts` используются и погодным виджетом в корне View, и вложенным редактором сводки. Rollup положил их в чанк `summary-panel-runtime-entry`, имена экспортов при минификации стали `a`/`s`/`w`, а ожидаемые имена остались доступны только через namespace-обёртку для literal import. Повторная загрузка по raw URL с nonce эту обёртку обходит, поэтому получала undefined вместо fingerprint и переходила в terminal error. Оба модуля перенесены в существующий чанк `summary-shared`, как ранее picker и icons (#848). Загрузчик, политика повторов, проверка fingerprint и состояние отдельных карточек не менялись. Плагин сборки теперь проверяет при генерации бандла оба используемых именованных экспорта у каждого из шести корней View. Раньше так проверялся только editor. Поэтому подобная регрессия провалит сборку, а не дойдёт до пользователя. Блокеров нет. Остаётся одно ограничение: остальные nonce-корни (onboarding, iso, pdf, moon, LED, локали) проверены только одноразовым локальным аудитом и постоянной защиты не получили.",
-          "understanding": "Проблема: после временного 404 первого запроса корневого чанка сводной панели штатная кнопка Retry не восстанавливает панель. `summaryRuntimeLoader` (src/summary-runtime-loader.ts:36-43) при attempt 0 делает literal `import('./summary-panel-runtime-entry')`. Rollup переписывает такой вызов с namespace-обёрткой, поэтому даже при испорченных именах экспортов первый путь работает. При attempt>0 загрузчик делает `import(viewRuntimeRetryUrl(TOKEN))`: это сырой URL того же content-hashed файла, и код ожидает `module.SUMMARY_RUNTIME_FINGERPRINT` и `module.LoadedSummaryPanelRuntime` прямо в экспортах модуля. Когда в корневой чанк попадают общие с вложенным `summary-panel-editor` модули (`weatherSources`, `weatherText`), Rollup делает их экспортами корня. Из-за минификации имена становятся `a`/`s`/`w`, а публичный API прячется во внутренней обёртке `w`. Повторная попытка получает undefined fingerprint, и `assertViewRuntimeFingerprint` переводит границу в terminal.\n\nПосле исправления: в `manualChunks` (rollup.config.mjs:45-50) оба погодных модуля направлены в `summary-shared`. У них только type-импорты (`summary-panel-host`, `types`, `i18n/registry`), то есть это чистые листья графа. Чанк `summary-shared` и так статически импортируют и корень сводки, и редактор, поэтому лишнего сетевого запроса при холодной загрузке нет и lazy-граница сохраняется. В `VIEW_RUNTIME_RETRY_CHUNKS` (scripts/bundle-manifest.mjs:20-33) для каждого корня указан список `exports`. В `generateBundle` (bundle-manifest.mjs:456-460) каждый из них сверяется с `target.exports` по образцу существующей проверки editor (319-321).\n\nЧто разобрано: оба вызывающих пути с nonce (src/summary-runtime-loader.ts, src/view-runtime-code.ts). Имена в манифесте совпадают с фактически используемыми полями во всех шести загрузчиках: VIEW_DEVICE_MENU_FINGERPRINT/ViewDeviceMenu, LIVE_RUNTIME_FINGERPRINT/LiveRuntime, SUMMARY_RUNTIME_FINGERPRINT/LoadedSummaryPanelRuntime, ZIGBEE_OVERLAY_FINGERPRINT/installZigbeeTopologyOverlay, CONVERTER_INFO_FINGERPRINT/installPlanConverterInfo, MARKER_ALERT_FINGERPRINT/MarkerAlertViewRuntime. Также посмотрены импорты погодных модулей и их потребители (hp-summary-weather.ts, summary-panel-editor.ts, summary-panel-runtime-loaded.ts:32,559), полный код плагина retry URL и тесты в test/bundle-assets.test.mjs.",
-          "analysis": [
-            {
-              "topic": "Корректность исправления в графе чанков",
-              "assessment": "Решение лечит причину, а не симптом. Оно не трогает загрузчик и не обращается к минифицированным именам во время выполнения, а убирает условие, из-за которого Rollup превращал корень в разделяемый чанк с внутренними экспортами. Подход повторяет уже принятый в #848 приём для picker и icons, поэтому новых концепций в конфигурации не появилось. Погодные модули — листья (только `import type`), значит перенос в `summary-shared` не создаёт обратной зависимости `summary-shared` → корень View. Такая зависимость вернула бы ту же проблему. Холодный путь View не утяжеляется: корень и раньше статически импортировал `summary-shared`.",
-              "evidence": "rollup.config.mjs:45-50; src/summary-weather.ts:1-2 и src/summary-weather-i18n.ts:1 — только type-импорты; src/summary-panel-editor.ts:15-16 и src/hp-summary-weather.ts:5-6 — два потребителя; закоммиченный снимок custom_components/.../summary-panel-runtime-entry-CpRLKB22.js импортирует `./summary-shared-*.js` и в конце экспортирует `LoadedSummaryPanelRuntime`/`SUMMARY_RUNTIME_FINGERPRINT` именованно — так выглядит корректная форма до появления погоды в линии 1.84."
-            },
-            {
-              "topic": "Постоянная защита ABI при сборке",
-              "assessment": "Удачное решение, его стоит сохранить: имена используемых экспортов указаны рядом с токеном в одном манифесте, а проверка встроена в существующий шаг генерации бандла, без отдельного этапа процесса. Любое будущее попадание общего с вложенным модулем листа в корень View провалит сборку с понятным сообщением, а не даст тихий terminal error у пользователя. Направление сравнения правильное: если Rollup создаст отдельный facade-чанк, проверка ложно упадёт, но не пропустит дефект. Есть ограничение: `if (!owners.length) continue` (bundle-manifest.mjs:451) пропускает и проверку экспортов, если токена нет в коде. Но без токена нет и raw-URL повтора, так что практического риска нет.",
-              "evidence": "scripts/bundle-manifest.mjs:20-33 (манифест с exports), 449-465 (проверка до замены токена), 317-321 (прецедент для editor)."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Регрессионный тест по очереди удаляет каждое из 12 используемых имён у каждого из шести корней и ожидает отказ генерации. Это проверяет, что каждое объявленное имя действительно контролируется. Фикстура #1018 дополнена экспортами, чтобы существующий тест source-map/coverage не начал падать на новой проверке. Тесты проверяют механизм плагина на синтетическом бандле и не воспроизводят сам Rollup. Реальное поведение подтверждается свежей production-сборкой, в которую входит эта проверка, и нативным smoke со слов исполнителя и по квитанции S6.",
-              "evidence": "test/bundle-assets.test.mjs:871-891 (цикл mangled), 1551-1557 (фикстура #1018 с exports)."
-            },
-            {
-              "topic": "Родственные nonce-загрузчики",
-              "assessment": "ТЗ требует проверить родственные lazy-loader пути на тот же риск. Исполнитель сделал одноразовый аудит реальных экспортов 32 nonce-корней, его результат лежит только локально (output/issue-1235/nonce-exports.jsonl). Постоянная защита есть только у editor и шести корней View. Например, `led-strip-gate.ts:92,101` при повторе читает `module.LED_RUNTIME_FINGERPRINT`/`LED_EDITOR_FINGERPRINT` по raw URL, и та же регрессия в LED/moon/onboarding/iso/pdf сейчас при сборке не обнаружится. Сейчас дефекта нет, это граница надёжности, а не блокер (см. improvements).",
-              "evidence": "docs/testing/issue1235/recovery.md, раздел «Addressed verification»; src/led-strip-gate.ts:92,101; scripts/bundle-manifest.mjs:322-337 — для остальных корней проверяется только наличие чанка, но не экспорты."
-            },
-            {
-              "topic": "Документация и учёт",
-              "assessment": "Записи в CHANGELOG (en/ru) и в release-ledger (`line-fix`, baseStable v1.83.0) соответствуют формату соседних записей, например 1229.json. Rationale правильно относит регрессию к текущей линии 1.84, где появился погодный виджет. recovery.md точно описывает причину и границы: синтетический backend, реальный HA не проверялся. Закоммиченный HACS-снимок не обновлялся, и это ожидаемо: по истории он обновляется только релизными коммитами.",
-              "evidence": "docs/release-ledger/v1.83.0/1235.json; docs/CHANGELOG*.md; git_log по custom_components/houseplan/frontend/houseplan-assets.json — только release-коммиты."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Распространить проверку именованных экспортов на остальные nonce-корни: onboarding, iso, pdf, moon, LED runtime/field/editor, de/fr и при необходимости namespace-локали. Удобнее всего хранить в манифесте пары «модуль → используемые имена», как теперь у `VIEW_RUNTIME_RETRY_CHUNKS`, и проверять их в том же `generateBundle`. Выгода: одноразовый аудит 32 корней из этой задачи станет постоянной защитой от того же класса регрессий, например для `led-strip-gate.ts`. Цена — несколько строк манифеста и расширение существующего теста. Нового этапа процесса не нужно.",
-            "Как вариант на будущее: поскольку `manualChunks` всё время пополняется вручную (#803, #848, #866, #1166, #1235), можно вместо перечня путей выводить общие листья автоматически. Например, отправлять в shared-чанк любой модуль, который импортируют одновременно корень View и вложенный lazy-модуль. Сейчас это необязательно: новая проверка ABI и так заставит дописать путь при следующей регрессии. Но решение сократило бы цикл «поймали на сборке → вручную дописали путь»."
-          ],
-          "boundaries": "Ревью сделано только по исходникам на head a52e6cb: конфигурация Rollup, плагин `editorRuntimeRetryUrlPlugin` целиком в части View/editor, оба файла с nonce-загрузчиками View, импорты погодных модулей и их потребители, тесты bundle-assets, закоммиченный HACS-снимок как пример корректной формы корня. Сборку, тесты и smoke я не запускал. Использована квитанция S6 «Тесты для задачи #1235 (перед ревью)» на материале a52e6cb: статус passed, ошибок нет. Утверждения исполнителя о результатах bundle-assets 49/49, нативного smoke_view_runtime_recovery (en/1280, ru/360) и аудита 32 корней приняты как его отчёт, сами артефакты (output/issue-1235/nonce-exports.jsonl) недоступны. Фактический набор экспортов свежей сборки после исправления я не видел: в репозитории его нет, HACS-снимок не обновлялся. Поведение в реальном Home Assistant не проверялось ни исполнителем, ни мной."
-        },
-        "usage": {
-          "input_tokens": 20,
-          "cache_creation_input_tokens": 96845,
-          "cache_read_input_tokens": 423912,
-          "output_tokens": 8641,
-          "output_tokens_details": {
-            "thinking_tokens": 1939
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 96845,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1093,
-              "cache_read_input_tokens": 84887,
-              "cache_creation_input_tokens": 16162,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16162
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление адресное и решает задачу. Причина установлена правильно: модули `summary-weather.ts` и `summary-weather-i18n.ts` используются и погодным виджетом в корне View, и вложенным редактором сводки. Rollup положил их в чанк `summary-panel-runtime-entry`, имена экспортов при минификации стали `a`/`s`/`w`, а ожидаемые имена остались доступны только через namespace-обёртку для literal import. Повторная загрузка по raw URL с nonce эту обёртку обходит, поэтому получала undefined вместо fingerprint и переходила в terminal error. Оба модуля перенесены в существующий чанк `summary-shared`, как ранее picker и icons (#848). Загрузчик, политика повторов, проверка fingerprint и состояние отдельных карточек не менялись. Плагин сборки теперь проверяет при генерации бандла оба используемых именованных экспорта у каждого из шести корней View. Раньше так проверялся только editor. Поэтому подобная регрессия провалит сборку, а не дойдёт до пользователя. Блокеров нет. Остаётся одно ограничение: остальные nonce-корни (onboarding, iso, pdf, moon, LED, локали) проверены только одноразовым локальным аудитом и постоянной защиты не получили.\n\n## Понимание решения\n\nПроблема: после временного 404 первого запроса корневого чанка сводной панели штатная кнопка Retry не восстанавливает панель. `summaryRuntimeLoader` (src/summary-runtime-loader.ts:36-43) при attempt 0 делает literal `import('./summary-panel-runtime-entry')`. Rollup переписывает такой вызов с namespace-обёрткой, поэтому даже при испорченных именах экспортов первый путь работает. При attempt>0 загрузчик делает `import(viewRuntimeRetryUrl(TOKEN))`: это сырой URL того же content-hashed файла, и код ожидает `module.SUMMARY_RUNTIME_FINGERPRINT` и `module.LoadedSummaryPanelRuntime` прямо в экспортах модуля. Когда в корневой чанк попадают общие с вложенным `summary-panel-editor` модули (`weatherSources`, `weatherText`), Rollup делает их экспортами корня. Из-за минификации имена становятся `a`/`s`/`w`, а публичный API прячется во внутренней обёртке `w`. Повторная попытка получает undefined fingerprint, и `assertViewRuntimeFingerprint` переводит границу в terminal.\n\nПосле исправления: в `manualChunks` (rollup.config.mjs:45-50) оба погодных модуля направлены в `summary-shared`. У них только type-импорты (`summary-panel-host`, `types`, `i18n/registry`), то есть это чистые листья графа. Чанк `summary-shared` и так статически импортируют и корень сводки, и редактор, поэтому лишнего сетевого запроса при холодной загрузке нет и lazy-граница сохраняется. В `VIEW_RUNTIME_RETRY_CHUNKS` (scripts/bundle-manifest.mjs:20-33) для каждого корня указан список `exports`. В `generateBundle` (bundle-manifest.mjs:456-460) каждый из них сверяется с `target.exports` по образцу существующей проверки editor (319-321).\n\nЧто разобрано: оба вызывающих пути с nonce (src/summary-runtime-loader.ts, src/view-runtime-code.ts). Имена в манифесте совпадают с фактически используемыми полями во всех шести загрузчиках: VIEW_DEVICE_MENU_FINGERPRINT/ViewDeviceMenu, LIVE_RUNTIME_FINGERPRINT/LiveRuntime, SUMMARY_RUNTIME_FINGERPRINT/LoadedSummaryPanelRuntime, ZIGBEE_OVERLAY_FINGERPRINT/installZigbeeTopologyOverlay, CONVERTER_INFO_FINGERPRINT/installPlanConverterInfo, MARKER_ALERT_FINGERPRINT/MarkerAlertViewRuntime. Также посмотрены импорты погодных модулей и их потребители (hp-summary-weather.ts, summary-panel-editor.ts, summary-panel-runtime-loaded.ts:32,559), полный код плагина retry URL и тесты в test/bundle-assets.test.mjs.\n\n## Разбор решения\n\n### Корректность исправления в графе чанков\n\nРешение лечит причину, а не симптом. Оно не трогает загрузчик и не обращается к минифицированным именам во время выполнения, а убирает условие, из-за которого Rollup превращал корень в разделяемый чанк с внутренними экспортами. Подход повторяет уже принятый в #848 приём для picker и icons, поэтому новых концепций в конфигурации не появилось. Погодные модули — листья (только `import type`), значит перенос в `summary-shared` не создаёт обратной зависимости `summary-shared` → корень View. Такая зависимость вернула бы ту же проблему. Холодный путь View не утяжеляется: корень и раньше статически импортировал `summary-shared`.\n\nОснование: rollup.config.mjs:45-50; src/summary-weather.ts:1-2 и src/summary-weather-i18n.ts:1 — только type-импорты; src/summary-panel-editor.ts:15-16 и src/hp-summary-weather.ts:5-6 — два потребителя; закоммиченный снимок custom_components/.../summary-panel-runtime-entry-CpRLKB22.js импортирует `./summary-shared-*.js` и в конце экспортирует `LoadedSummaryPanelRuntime`/`SUMMARY_RUNTIME_FINGERPRINT` именованно — так выглядит корректная форма до появления погоды в линии 1.84.\n\n### Постоянная защита ABI при сборке\n\nУдачное решение, его стоит сохранить: имена используемых экспортов указаны рядом с токеном в одном манифесте, а проверка встроена в существующий шаг генерации бандла, без отдельного этапа процесса. Любое будущее попадание общего с вложенным модулем листа в корень View провалит сборку с понятным сообщением, а не даст тихий terminal error у пользователя. Направление сравнения правильное: если Rollup создаст отдельный facade-чанк, проверка ложно упадёт, но не пропустит дефект. Есть ограничение: `if (!owners.length) continue` (bundle-manifest.mjs:451) пропускает и проверку экспортов, если токена нет в коде. Но без токена нет и raw-URL повтора, так что практического риска нет.\n\nОснование: scripts/bundle-manifest.mjs:20-33 (манифест с exports), 449-465 (проверка до замены токена), 317-321 (прецедент для editor).\n\n### Тесты\n\nРегрессионный тест по очереди удаляет каждое из 12 используемых имён у каждого из шести корней и ожидает отказ генерации. Это проверяет, что каждое объявленное имя действительно контролируется. Фикстура #1018 дополнена экспортами, чтобы существующий тест source-map/coverage не начал падать на новой проверке. Тесты проверяют механизм плагина на синтетическом бандле и не воспроизводят сам Rollup. Реальное поведение подтверждается свежей production-сборкой, в которую входит эта проверка, и нативным smoke со слов исполнителя и по квитанции S6.\n\nОснование: test/bundle-assets.test.mjs:871-891 (цикл mangled), 1551-1557 (фикстура #1018 с exports).\n\n### Родственные nonce-загрузчики\n\nТЗ требует проверить родственные lazy-loader пути на тот же риск. Исполнитель сделал одноразовый аудит реальных экспортов 32 nonce-корней, его результат лежит только локально (output/issue-1235/nonce-exports.jsonl). Постоянная защита есть только у editor и шести корней View. Например, `led-strip-gate.ts:92,101` при повторе читает `module.LED_RUNTIME_FINGERPRINT`/`LED_EDITOR_FINGERPRINT` по raw URL, и та же регрессия в LED/moon/onboarding/iso/pdf сейчас при сборке не обнаружится. Сейчас дефекта нет, это граница надёжности, а не блокер (см. improvements).\n\nОснование: docs/testing/issue1235/recovery.md, раздел «Addressed verification»; src/led-strip-gate.ts:92,101; scripts/bundle-manifest.mjs:322-337 — для остальных корней проверяется только наличие чанка, но не экспорты.\n\n### Документация и учёт\n\nЗаписи в CHANGELOG (en/ru) и в release-ledger (`line-fix`, baseStable v1.83.0) соответствуют формату соседних записей, например 1229.json. Rationale правильно относит регрессию к текущей линии 1.84, где появился погодный виджет. recovery.md точно описывает причину и границы: синтетический backend, реальный HA не проверялся. Закоммиченный HACS-снимок не обновлялся, и это ожидаемо: по истории он обновляется только релизными коммитами.\n\nОснование: docs/release-ledger/v1.83.0/1235.json; docs/CHANGELOG*.md; git_log по custom_components/houseplan/frontend/houseplan-assets.json — только release-коммиты.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Распространить проверку именованных экспортов на остальные nonce-корни: onboarding, iso, pdf, moon, LED runtime/field/editor, de/fr и при необходимости namespace-локали. Удобнее всего хранить в манифесте пары «модуль → используемые имена», как теперь у `VIEW_RUNTIME_RETRY_CHUNKS`, и проверять их в том же `generateBundle`. Выгода: одноразовый аудит 32 корней из этой задачи станет постоянной защитой от того же класса регрессий, например для `led-strip-gate.ts`. Цена — несколько строк манифеста и расширение существующего теста. Нового этапа процесса не нужно.\n- Как вариант на будущее: поскольку `manualChunks` всё время пополняется вручную (#803, #848, #866, #1166, #1235), можно вместо перечня путей выводить общие листья автоматически. Например, отправлять в shared-чанк любой модуль, который импортируют одновременно корень View и вложенный lazy-модуль. Сейчас это необязательно: новая проверка ABI и так заставит дописать путь при следующей регрессии. Но решение сократило бы цикл «поймали на сборке → вручную дописали путь».\n\n## Границы анализа\n\nРевью сделано только по исходникам на head a52e6cb: конфигурация Rollup, плагин `editorRuntimeRetryUrlPlugin` целиком в части View/editor, оба файла с nonce-загрузчиками View, импорты погодных модулей и их потребители, тесты bundle-assets, закоммиченный HACS-снимок как пример корректной формы корня. Сборку, тесты и smoke я не запускал. Использована квитанция S6 «Тесты для задачи #1235 (перед ревью)» на материале a52e6cb: статус passed, ошибок нет. Утверждения исполнителя о результатах bundle-assets 49/49, нативного smoke_view_runtime_recovery (en/1280, ru/360) и аудита 32 корней приняты как его отчёт, сами артефакты (output/issue-1235/nonce-exports.jsonl) недоступны. Фактический набор экспортов свежей сборки после исправления я не видел: в репозитории его нет, HACS-снимок не обновлялся. Поведение в реальном Home Assistant не проверялось ни исполнителем, ни мной.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: d9b720a099fae6d77423cff816d0b911ef4b7fdc → a52e6cb44514c55826400c7f3b12623fe76081bf\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1235, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Реализованный ABI сборки, риски и проверки</summary>\n\nДо исправления native Retry после 404 настоящего summary-root получал экспорты a/s/w, undefined fingerprint и terminal error. Причина — weatherSources/weatherText используются View-погодой и nested summary-editor; Rollup разместил их в runtime-root и создал namespace wrapper только для literal import. Общие summary-weather.ts и summary-weather-i18n.ts вынесены в существующий summary-shared, публичные именованные exports root сохранены. Loader/policy/fingerprint/per-card state не менялись; runtime обхода через minified имена нет.\n\nСуществующая bundle generation/injection теперь проверяет consumed именованные exports шести View nonce-root, как уже делала для editor. Тест потерянного fingerprint/constructor/install export покрывает все 6. Это расширение проверки ABI существующего механизма, без нового этапа процесса. Обратите внимание на границы lazy графа и зависимости nested-editor; новые погодные функции не должны снова попадать в View-root.\n\nФактически: bundle-assets 49/49, fresh production build, native smoke_view_runtime_recovery PASS (en1280/ru360, real module Retry, shared dependency, mismatch, preferences, isolation/warm/detach). Отдельный audit реальных exports 32 nonce roots не нашёл иных отсутствующих имён; вывод локально output/issue-1235/nonce-exports.jsonl. Подробная запись в docs/testing/issue1235/recovery.md. Официальный S6 через finish следует после очереди/финального rebase. Реальный HA не проверялся, золотые кадры не изменялись, E2E impact передан root централизованно.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T14:05:16.597Z",
-        "artifactId": 13236508541,
-        "runId": 41649878214,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T14:05:22Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41649878214",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "d9b720a099fae6d77423cff816d0b911ef4b7fdc"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1238": {
@@ -2199,19 +2079,7 @@
     1231,
     1238
   ],
-  "active": {
-    "issue": 1235,
-    "worker": "github-coordinator",
-    "token": "102:github:41649224843:1:tick:1:admit",
-    "fence": 102,
-    "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-    "expectedBase": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793714428154,
-    "expiresAt": 1793718381820,
-    "patchId": "55e3f180f8fa450d886640223aa8737eee8fdde5",
-    "reviewRequest": "review:1235:1:55e3f180f8fa450d886640223aa8737eee8fdde5:d9b720a099fae6d77423cff816d0b911ef4b7fdc"
-  },
+  "active": null,
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
       "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
@@ -2285,62 +2153,6 @@
       "digest": "7304de378b9c11d2ff1cb49201929631c47e45ff17ecc87ff07e445bf051d3ce",
       "issue": 1230
     },
-    "github:41649224843:1:completions:message:85a13bacfb12d547e4056688db7370bf401e9ee39378b50cc90af53c1442d59e": {
-      "digest": "0d9740c85fe271f64e36c47b05d7d112ceade1999b9745f5d5e9e4e2d7478d64",
-      "issue": 1235
-    },
-    "github:41649224843:1:completions:message:53378aae8a38df95a444f90b22ea6f032feb723053d13d8d44e7bcaab6502d0e": {
-      "digest": "7d1c0e65ed40303e8d4aa096cd043dd91e28b62c74496c3937b137ec5a5a7b2f",
-      "issue": 1235
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:1:synchronized": {
-      "digest": "2631671442a5c4be8af7a58d077beefcfbfdd428069352b49ed29887da17dce3",
-      "issue": 1235
-    },
-    "github:41649476395:1:completions:message:d40e1d93df7ff4751dc9fc5e759b98ec9448b53f73b077dfc72dcc55ea5bb8ea": {
-      "digest": "86a0d8dd3b2699096bb95c660844cd7c52dabf6a1efdc9864cd76f439aa1a9b0",
-      "issue": 1235
-    },
-    "finish:868dfdc2-6728-4ff3-8275-08391650269a": {
-      "digest": "3775f10f8912c2a993518f8dd95cd7d0cae3f6b923594849a1ddd02002f32614",
-      "issue": 1235
-    },
-    "dev-build:41649224843:1:webhook": {
-      "digest": "2381f1ff760fd92448fa6463e521bcaa5128da4a25f0f5f2c1cc8c0ca4f04e3a",
-      "issue": 1235
-    },
-    "github:41649599069:1:dev-webhook:625a1c9b-921c-4b08-836f-988cf923a262:delivered": {
-      "digest": "f5ee9d608bd2579b03b496e32737fb23e2a71703b951a32f7e9a4920758ab48c",
-      "issue": 1235
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:2:s6-label": {
-      "digest": "129ccbb8e2a618b784209f440f41a1d4c4121fca3672303b9f8b070c4310f5b2",
-      "issue": 1235
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:3:review-requested": {
-      "digest": "921d660b2c23489297948f5367a41b89c611aec31619113134732c2f1100cf20",
-      "issue": 1235
-    },
-    "github:41649793732:1:completions:message:443a7d8bb61bfe57cf84b0f9d2013678664571555513eaba7fcc448ea955c2f1": {
-      "digest": "8a5e49b40257ffc53578e28eb28af8d4d470f06d6d6fe996847b9e802af52469",
-      "issue": 1235
-    },
-    "github:41649793732:1:completions:message:24ead5c096bb18a344d6b3015b7795f20c8aee1ea6b3d5867b1e7f245f84010c": {
-      "digest": "26e1b8b0f7dac0a96845bb5c0fa3b41f21595c9973e8cc0b4f59ac26022ab1c7",
-      "issue": 1235
-    },
-    "github:41649793732:1:completions:message:e20a1275cc2e17f1dca8d58b25ff137312df5e763e6f13b151a4da29a97f1fa4": {
-      "digest": "a3ffb085940340fc053928ce96d0efc97ab75d37e490f7e415c5bb13da90284f",
-      "issue": 1235
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:6:review-presentation": {
-      "digest": "90dd9e5b8bd853810af93ad13ed4ddb3c5610f4e695570971384619dc416cdb4",
-      "issue": 1235
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:6:review-complete": {
-      "digest": "7cb1d0af303f45d3795f77c3092ecbf408ac379adc02d59e5cb23970ab721e69",
-      "issue": 1235
-    },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
       "digest": "851c6e1c8aa1c378ab4435b7494a3f1a4d4383057f9431bc1b2cbfe152a75d17",
       "issue": 1230,
@@ -2394,20 +2206,6 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3": {
-      "digest": "736df49d264807538c3a3026fa4e9389fa7b1b135b24cbb21e7894a6bf1f6f28",
-      "issue": 1235,
-      "message": {
-        "kind": "queued",
-        "issue": 1235,
-        "at": 1793714222586,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "86248e1a42616f0917d7229a0a11d348a415d57c",
         "delivered": true
       }
     },
@@ -2469,21 +2267,6 @@
         "delivered": true
       }
     },
-    "github:41649224843:1:tick:1:admit": {
-      "digest": "47508b642281f9884005f008b5faa2df9a1eccdd43d02b7f49ff004823ead977",
-      "issue": 1235,
-      "message": {
-        "kind": "admitted",
-        "issue": 1235,
-        "at": 1793714428154,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "86248e1a42616f0917d7229a0a11d348a415d57c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:29271098-0fc9-4ccb-b71d-be101786d33f": {
       "digest": "3151e12d3833f7a15d2622128c97ec587d54d8409559adca7690bfbe497fa68a",
       "issue": 1231,
@@ -2509,33 +2292,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
-        "delivered": true
-      }
-    },
-    "finish:e6576e17-c49f-4888-85e0-ce79979e23b3:finish:2:s6-complete": {
-      "digest": "b0da16c47ccc0e356aac21bb24dd4a9c51a73bc6034c513564f672b744a33b51",
-      "issue": 1235,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1235,
-        "at": 1793714565132,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T140122500-964ee593",
-          "name": "Тесты для задачи #1235 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261103T140122500-964ee593/report.json",
-          "materialSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:02:43.911Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
