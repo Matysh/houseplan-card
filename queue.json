@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1605,
-  "nextTicket": 109,
+  "revision": 1606,
+  "nextTicket": 110,
   "nextFence": 106,
   "tasks": {
     "1126": {
@@ -1970,6 +1970,20 @@
         "sourceSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc"
       }
     },
+    "1234": {
+      "issue": 1234,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1234-warm-geometry-camera",
+      "materialSha": "3bb7d874df1913f880e80544b0badb9790298de1",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 109,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793715343052,
+      "reviewEntry": 1
+    },
     "1235": {
       "issue": 1235,
       "branch": "codex/1235-summary-retry",
@@ -2169,7 +2183,8 @@
   "waiting": [
     1238,
     1237,
-    1236
+    1236,
+    1234
   ],
   "active": {
     "issue": 1230,
@@ -2475,6 +2490,19 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15": {
+      "digest": "94ac82f375e038e94da22ea80e345985abdfcfbd8e2ed00b692891f1096d9227",
+      "issue": 1234,
+      "message": {
+        "kind": "queued",
+        "issue": 1234,
+        "at": 1793715343052,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3bb7d874df1913f880e80544b0badb9790298de1"
       }
     }
   },
