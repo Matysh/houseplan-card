@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1350,
+  "revision": 1351,
   "nextTicket": 96,
   "nextFence": 94,
   "tasks": {
@@ -1555,6 +1555,109 @@
         "materialSha": "3496405aa3b8c626dcea67ae8cdb86b47b7df3e0",
         "expectedBase": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
         "patchId": "d13c503dfa5476ed91f101eeb34b46ac0f7afe4d"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1220,
+        "requestId": "review:1220:1:d13c503dfa5476ed91f101eeb34b46ac0f7afe4d:9515c5fef1b4d15b7351d5a21179f6883572f26e",
+        "kind": "code",
+        "base": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
+        "materialSha": "3496405aa3b8c626dcea67ae8cdb86b47b7df3e0",
+        "patchId": "d13c503dfa5476ed91f101eeb34b46ac0f7afe4d",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1220,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1220",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "<details>\n<summary>Решение, адресные доказательства и границы</summary>\n\nИсправление использует действующий ConfigWriteContext / layout owner / operation guards вместо тождества объекта hass. Для самостоятельных Optimize и node writer captureWriteAuthority захватывает существующее поколение host, connection и user; узкий standalone port без card-owner сохраняет connection/user (или connection-less callWS) fence. Нового persisted/runtime registry не добавлено. Snapshot-identity удалён также из marker copy/history, контактной и обычной layout записи и marker follow-up layout. Dispatch и ACK ownership остаются раздельными, обработка ошибки не скрывается.\n\nДо исправления общий writer при ordinary same-connection state update сохранял на синтетическом сервере пространство/стену, но не принимал ACK и выдавал context-changed. После: 17/17 новых адресных unit, 17/17 device-structure-history, native browser create-space → draw-wall → reload (6/6 признаков) проходят. В browser меняется настоящий card.hass между config/set и ACK; helper проверяет видимую canvas цель, включая overlay hit-testing. Это recording transport, не доказательство реальной HA durability. Полный штатный S6 запускает finish после допуска/актуализации.\n\nМеста для внимания: A→B→A и смена user/connection после upload или dispatch не должны оживить старый ACK; temporary disconnect и закрытие жеста имеют существующий разный контракт. Generic transport, реальные card/node/Optimize/contact/history adapters и native create/draw покрыты адресной выборкой. Текст и UX ошибки сохранены, CAS/ACL/envelope не меняются. Real HA coverage отмечу в companion отдельно (без заявления о выполнении).\n\n</details>"
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление решает именно ту причину, которая описана в issue, и не ослабляет защиту. Во всех direct/upload writers убрано сравнение `this.hass === writeHass`, то есть тождество изменяемого snapshot hass. Вместо него используется уже существующий критерий актуальности: поколение `ConfigWriteContext` вместе с connection и user. Для самостоятельных Optimize и node writers этот критерий захватывается через новый `captureWriteAuthority`. Смена connection или user и сценарий A→B→A по-прежнему сбрасывают поколение синхронно в `requestUpdate('hass')`, поэтому чужой ACK не принимается ни после upload, ни после dispatch. Блокеров нет. Ограничение: в S6 использовались recording transport и синтетический сервер, на реальном HA исправление не проверялось. Автор указывает это сам.",
+          "understanding": "Проблема. `sendHouseplanWrite` проверяет `options.isCurrent()` после каждого await: после upload, json, перед dispatch и после ответа WS. Многие вызывающие пути добавляли в `isCurrent` сравнение `host.hass === writeHass`. Home Assistant заменяет объект hass при каждом обновлении состояний, поэтому ACK от уже сохранившего данные сервера отклонялся с кодом `context-changed`, и пользователь видел ложную ошибку. Повтор действия по совету сообщения мог создать дубль.\n\nДо/после. До исправления актуальность записи определяло тождество объекта. После него её определяют `_configWriteGuard()` / `_layoutIO.guard()` / `_configWriteContext.current(claim, host.hass)`. Эти guards сравнивают claim поколения и connection/user с живым `host.hass`. Поколение пересоздаётся в `ConfigWriteContext.observe`, который синхронно вызывается из `requestUpdate('hass')` (src/houseplan-card.ts:635), и только при реальной смене connection или user. Поэтому A→B→A не восстанавливает старый claim. Отсутствие hass (null) поколение не сбрасывает, но в этот момент сам guard возвращает false. Для `plan-optimize-write` и `wall-node-write` у host нет явного claim, поэтому добавлен `captureWriteAuthority(host)`. Он берёт `host._configWriteGuard?.()`, а если его нет, использует запасной fence по connection (или callWS при отсутствии connection) и user.id.\n\nРазобранные пути: `_sendConfigCandidate` (config/set, create-space и draw-wall), `_persistDevicePlacement` (layout/update), `persistContactPlacements` (layout/set), `_saveMarker` (follow-up layout/update), `DeviceStructureHistory.send` (marker copy/history), `commitPlanOptimization` (Optimize и space-copy через `space-copy-runtime.ts:231`), `writeWallNode` (вызывается из `wall-node-card-adapter.ts`), а также уже корректные `plan-optimize-undo.ts` и `device-copy-editor.ts`, которые изменение не затронуло. Поиск по src больше не находит сравнений `hass ===`/`!==` в путях записи; оставшийся `memo.hass === this.hass` в строке 5349 относится к мемоизации отрисовки.",
+          "analysis": [
+            {
+              "topic": "Корректность нового критерия актуальности",
+              "assessment": "Подход правильный и минимальный: новый механизм не добавлен, используется уже существующий источник истины (`ConfigWriteContext`). Fence в транспорте (`large-write-transport.ts:68`) сравнивает connection/user снятого объекта `hass`, а это значение постоянно. Значит, реальную защиту от смены authority по-прежнему даёт `isCurrent`, который смотрит на живой `host.hass`. Ни один из изменённых путей не остался без такой проверки.",
+              "evidence": "src/config-write-context.ts:12-24, 41-56; src/houseplan-card.ts:8588, 8603-8605, 8616-8619; src/layout-write-reload.ts:14-17; src/device-structure-history.ts:124-127"
+            },
+            {
+              "topic": "A→B→A, upload и dispatch",
+              "assessment": "При промежуточном B метод observe пересоздаёт `generation`, и прежний claim больше не принадлежит текущему поколению. Это верно для любой фазы: после upload до commit (`assertDispatch` в transport:132) и после ответа (`current()` в transport:74). Тест upload покрывает snapshot/connection/aba и проверяет, что commit-запрос не отправлен (writes=0). Тест реального `_sendConfigCandidate` перебирает snapshot/connection/user/aba для обоих сценариев.",
+              "evidence": "test/write-authority-snapshot.test.mjs: 'upload fences ${mode} before commit', 'real config writer: ${action}, ${mode}'"
+            },
+            {
+              "topic": "Optimize и node writers",
+              "assessment": "Раньше node move и Optimize без guard (space-copy) защищались только тождеством hass, поэтому A→B→A с возвратом к исходному объекту такая проверка пропускала. Теперь `captureWriteAuthority` подтягивает поколение карточки, так что защита стала строже. Поколение захватывается после `await host._writeChain`, но и прежний `writeHass` захватывался в той же точке, поэтому регрессии нет. Delete сохраняет собственный guard `accept` с `connection.connected !== false`: это существующий отличающийся контракт временного disconnect, автор на него указывает.",
+              "evidence": "src/plan-optimize-write.ts:52, 65-67; src/wall-node-write.ts:87, 92; src/wall-node-card-adapter.ts:78-84"
+            },
+            {
+              "topic": "Сохранение UX ошибки и раздельность dispatch/ACK",
+              "assessment": "`canDispatch` нигде не изменён. `configWriteErrorKey` и тексты не тронуты, поэтому при настоящей смене контекста сообщение остаётся прежним. После `sendHouseplanWrite` остались пост-проверки `isCurrent()`, и ACK принимается ровно один раз через `acceptConfigWrite`/`acceptPairWrite`/`acceptLayoutPosition`.",
+              "evidence": "diff src/houseplan-card.ts, src/device-contact-write.ts, src/houseplan-editor-runtime.ts:8276-8279"
+            },
+            {
+              "topic": "Доказательства",
+              "assessment": "Адресные unit-тесты вызывают настоящие `HouseplanCard.prototype._sendConfigCandidate`, `_persistDevicePlacement`, `persistContactPlacements`, `commitPlanOptimization`, `writeWallNode` и marker copy/history, поэтому это не только проверка обобщённого транспорта. Browser smoke заменяет настоящий `card.hass` между config/set и ACK и проверяет CAS следующей записи (`expected_rev === revision`) и reload. По квитанции S6 набор для задачи #1220 прошёл (report 20261103T111034978-3f7676ef). Это recording transport, а не реальный HA.",
+              "evidence": "test/write-authority-snapshot.test.mjs; test/device-structure-history.test.mjs:36-50; demo/smoke_write_authority.mjs; receipt status passed"
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "В `demo/smoke_write_authority.mjs` признак `noFalseContextError` ищет подстроку 'context changed' в `_toast`. Это зависит от английского текста и от того, что toast ещё не погас. Надёжнее явно проверять отсутствие идентификатора `err.config_context_changed` или вести счётчик вызовов `_showToast`. Основную нагрузку несут признаки `wallAckAdopted`/`createAckAdopted`, поэтому это мелочь.",
+            "Переменная `writeHass` в `_sendConfigCandidate`, `_persistDevicePlacement`, `persistContactPlacements` и `_saveMarker` больше не участвует в guard и служит только целью транспорта. Её можно встроить в вызов или пояснить коротким комментарием, что транспорт намеренно привязан к снятому объекту hass, а актуальность определяет `isCurrent`. Иначе следующий автор может решить, что сравнение потеряно, и вернуть его."
+          ],
+          "boundaries": "Код и тесты разобраны только по исходникам pinned head: config-write-context, large-write-transport, вызывающие пути карточки и editor-runtime, contact/node/optimize/undo/copy writers, layout-write-reload, card-adapter для node. Сборку и тесты я не запускал. Использована квитанция S6 «Тесты для задачи #1220 (перед ревью)», статус passed, материал 3496405a. Поведение на реальной установке HA (настоящая замена hass, временный disconnect, durability) не проверялось ни исполнителем, ни мной. Тесты используют синтетический или записывающий сервер."
+        },
+        "usage": {
+          "input_tokens": 34,
+          "cache_creation_input_tokens": 91001,
+          "cache_read_input_tokens": 921289,
+          "output_tokens": 12027,
+          "output_tokens_details": {
+            "thinking_tokens": 2345
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 91001,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 957,
+              "cache_read_input_tokens": 86012,
+              "cache_creation_input_tokens": 9193,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 9193
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает именно ту причину, которая описана в issue, и не ослабляет защиту. Во всех direct/upload writers убрано сравнение `this.hass === writeHass`, то есть тождество изменяемого snapshot hass. Вместо него используется уже существующий критерий актуальности: поколение `ConfigWriteContext` вместе с connection и user. Для самостоятельных Optimize и node writers этот критерий захватывается через новый `captureWriteAuthority`. Смена connection или user и сценарий A→B→A по-прежнему сбрасывают поколение синхронно в `requestUpdate('hass')`, поэтому чужой ACK не принимается ни после upload, ни после dispatch. Блокеров нет. Ограничение: в S6 использовались recording transport и синтетический сервер, на реальном HA исправление не проверялось. Автор указывает это сам.\n\n## Понимание решения\n\nПроблема. `sendHouseplanWrite` проверяет `options.isCurrent()` после каждого await: после upload, json, перед dispatch и после ответа WS. Многие вызывающие пути добавляли в `isCurrent` сравнение `host.hass === writeHass`. Home Assistant заменяет объект hass при каждом обновлении состояний, поэтому ACK от уже сохранившего данные сервера отклонялся с кодом `context-changed`, и пользователь видел ложную ошибку. Повтор действия по совету сообщения мог создать дубль.\n\nДо/после. До исправления актуальность записи определяло тождество объекта. После него её определяют `_configWriteGuard()` / `_layoutIO.guard()` / `_configWriteContext.current(claim, host.hass)`. Эти guards сравнивают claim поколения и connection/user с живым `host.hass`. Поколение пересоздаётся в `ConfigWriteContext.observe`, который синхронно вызывается из `requestUpdate('hass')` (src/houseplan-card.ts:635), и только при реальной смене connection или user. Поэтому A→B→A не восстанавливает старый claim. Отсутствие hass (null) поколение не сбрасывает, но в этот момент сам guard возвращает false. Для `plan-optimize-write` и `wall-node-write` у host нет явного claim, поэтому добавлен `captureWriteAuthority(host)`. Он берёт `host._configWriteGuard?.()`, а если его нет, использует запасной fence по connection (или callWS при отсутствии connection) и user.id.\n\nРазобранные пути: `_sendConfigCandidate` (config/set, create-space и draw-wall), `_persistDevicePlacement` (layout/update), `persistContactPlacements` (layout/set), `_saveMarker` (follow-up layout/update), `DeviceStructureHistory.send` (marker copy/history), `commitPlanOptimization` (Optimize и space-copy через `space-copy-runtime.ts:231`), `writeWallNode` (вызывается из `wall-node-card-adapter.ts`), а также уже корректные `plan-optimize-undo.ts` и `device-copy-editor.ts`, которые изменение не затронуло. Поиск по src больше не находит сравнений `hass ===`/`!==` в путях записи; оставшийся `memo.hass === this.hass` в строке 5349 относится к мемоизации отрисовки.\n\n## Разбор решения\n\n### Корректность нового критерия актуальности\n\nПодход правильный и минимальный: новый механизм не добавлен, используется уже существующий источник истины (`ConfigWriteContext`). Fence в транспорте (`large-write-transport.ts:68`) сравнивает connection/user снятого объекта `hass`, а это значение постоянно. Значит, реальную защиту от смены authority по-прежнему даёт `isCurrent`, который смотрит на живой `host.hass`. Ни один из изменённых путей не остался без такой проверки.\n\nОснование: src/config-write-context.ts:12-24, 41-56; src/houseplan-card.ts:8588, 8603-8605, 8616-8619; src/layout-write-reload.ts:14-17; src/device-structure-history.ts:124-127\n\n### A→B→A, upload и dispatch\n\nПри промежуточном B метод observe пересоздаёт `generation`, и прежний claim больше не принадлежит текущему поколению. Это верно для любой фазы: после upload до commit (`assertDispatch` в transport:132) и после ответа (`current()` в transport:74). Тест upload покрывает snapshot/connection/aba и проверяет, что commit-запрос не отправлен (writes=0). Тест реального `_sendConfigCandidate` перебирает snapshot/connection/user/aba для обоих сценариев.\n\nОснование: test/write-authority-snapshot.test.mjs: 'upload fences ${mode} before commit', 'real config writer: ${action}, ${mode}'\n\n### Optimize и node writers\n\nРаньше node move и Optimize без guard (space-copy) защищались только тождеством hass, поэтому A→B→A с возвратом к исходному объекту такая проверка пропускала. Теперь `captureWriteAuthority` подтягивает поколение карточки, так что защита стала строже. Поколение захватывается после `await host._writeChain`, но и прежний `writeHass` захватывался в той же точке, поэтому регрессии нет. Delete сохраняет собственный guard `accept` с `connection.connected !== false`: это существующий отличающийся контракт временного disconnect, автор на него указывает.\n\nОснование: src/plan-optimize-write.ts:52, 65-67; src/wall-node-write.ts:87, 92; src/wall-node-card-adapter.ts:78-84\n\n### Сохранение UX ошибки и раздельность dispatch/ACK\n\n`canDispatch` нигде не изменён. `configWriteErrorKey` и тексты не тронуты, поэтому при настоящей смене контекста сообщение остаётся прежним. После `sendHouseplanWrite` остались пост-проверки `isCurrent()`, и ACK принимается ровно один раз через `acceptConfigWrite`/`acceptPairWrite`/`acceptLayoutPosition`.\n\nОснование: diff src/houseplan-card.ts, src/device-contact-write.ts, src/houseplan-editor-runtime.ts:8276-8279\n\n### Доказательства\n\nАдресные unit-тесты вызывают настоящие `HouseplanCard.prototype._sendConfigCandidate`, `_persistDevicePlacement`, `persistContactPlacements`, `commitPlanOptimization`, `writeWallNode` и marker copy/history, поэтому это не только проверка обобщённого транспорта. Browser smoke заменяет настоящий `card.hass` между config/set и ACK и проверяет CAS следующей записи (`expected_rev === revision`) и reload. По квитанции S6 набор для задачи #1220 прошёл (report 20261103T111034978-3f7676ef). Это recording transport, а не реальный HA.\n\nОснование: test/write-authority-snapshot.test.mjs; test/device-structure-history.test.mjs:36-50; demo/smoke_write_authority.mjs; receipt status passed\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В `demo/smoke_write_authority.mjs` признак `noFalseContextError` ищет подстроку 'context changed' в `_toast`. Это зависит от английского текста и от того, что toast ещё не погас. Надёжнее явно проверять отсутствие идентификатора `err.config_context_changed` или вести счётчик вызовов `_showToast`. Основную нагрузку несут признаки `wallAckAdopted`/`createAckAdopted`, поэтому это мелочь.\n- Переменная `writeHass` в `_sendConfigCandidate`, `_persistDevicePlacement`, `persistContactPlacements` и `_saveMarker` больше не участвует в guard и служит только целью транспорта. Её можно встроить в вызов или пояснить коротким комментарием, что транспорт намеренно привязан к снятому объекту hass, а актуальность определяет `isCurrent`. Иначе следующий автор может решить, что сравнение потеряно, и вернуть его.\n\n## Границы анализа\n\nКод и тесты разобраны только по исходникам pinned head: config-write-context, large-write-transport, вызывающие пути карточки и editor-runtime, contact/node/optimize/undo/copy writers, layout-write-reload, card-adapter для node. Сборку и тесты я не запускал. Использована квитанция S6 «Тесты для задачи #1220 (перед ревью)», статус passed, материал 3496405a. Поведение на реальной установке HA (настоящая замена hass, временный disconnect, durability) не проверялось ни исполнителем, ни мной. Тесты используют синтетический или записывающий сервер.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9515c5fef1b4d15b7351d5a21179f6883572f26e → 3496405aa3b8c626dcea67ae8cdb86b47b7df3e0\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1220, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Решение, адресные доказательства и границы</summary>\n\nИсправление использует действующий ConfigWriteContext / layout owner / operation guards вместо тождества объекта hass. Для самостоятельных Optimize и node writer captureWriteAuthority захватывает существующее поколение host, connection и user; узкий standalone port без card-owner сохраняет connection/user (или connection-less callWS) fence. Нового persisted/runtime registry не добавлено. Snapshot-identity удалён также из marker copy/history, контактной и обычной layout записи и marker follow-up layout. Dispatch и ACK ownership остаются раздельными, обработка ошибки не скрывается.\n\nДо исправления общий writer при ordinary same-connection state update сохранял на синтетическом сервере пространство/стену, но не принимал ACK и выдавал context-changed. После: 17/17 новых адресных unit, 17/17 device-structure-history, native browser create-space → draw-wall → reload (6/6 признаков) проходят. В browser меняется настоящий card.hass между config/set и ACK; helper проверяет видимую canvas цель, включая overlay hit-testing. Это recording transport, не доказательство реальной HA durability. Полный штатный S6 запускает finish после допуска/актуализации.\n\nМеста для внимания: A→B→A и смена user/connection после upload или dispatch не должны оживить старый ACK; temporary disconnect и закрытие жеста имеют существующий разный контракт. Generic transport, реальные card/node/Optimize/contact/history adapters и native create/draw покрыты адресной выборкой. Текст и UX ошибки сохранены, CAS/ACL/envelope не меняются. Real HA coverage отмечу в companion отдельно (без заявления о выполнении).\n\n</details>\n```\n\n</details>\n",
+        "createdAt": "2026-11-03T11:14:30.261Z",
+        "artifactId": 13225831753,
+        "runId": 41625501563,
+        "runAttempt": 1,
+        "completedAt": "2026-11-03T11:14:33Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41625501563",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "9515c5fef1b4d15b7351d5a21179f6883572f26e"
       }
     },
     "1221": {
@@ -1825,9 +1928,9 @@
     "fence": 93,
     "materialSha": "3496405aa3b8c626dcea67ae8cdb86b47b7df3e0",
     "expectedBase": "9515c5fef1b4d15b7351d5a21179f6883572f26e",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793704221696,
-    "expiresAt": 1793707888059,
+    "expiresAt": 1793708102051,
     "patchId": "d13c503dfa5476ed91f101eeb34b46ac0f7afe4d",
     "reviewRequest": "review:1220:1:d13c503dfa5476ed91f101eeb34b46ac0f7afe4d:9515c5fef1b4d15b7351d5a21179f6883572f26e"
   },
@@ -1878,6 +1981,10 @@
     },
     "finish:6e18bb7d-5732-4712-bed3-4fd157ed46dd:finish:7:review-presentation": {
       "digest": "e89e106fa2dd75f08a8b4d5ab61ace2201f4fc283434ce23a98c4d01bb913c67",
+      "issue": 1220
+    },
+    "finish:6e18bb7d-5732-4712-bed3-4fd157ed46dd:finish:7:review-complete": {
+      "digest": "3686e905fafcbd82e0cffb6e91e9e2ab43fca66f00d2000baf20719dc72560ac",
       "issue": 1220
     },
     "finish:6e18bb7d-5732-4712-bed3-4fd157ed46dd": {
