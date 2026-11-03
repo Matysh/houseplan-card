@@ -188,11 +188,45 @@ try {
   out.inbox_keyboard_filter=await filter.locator('select').inputValue()==='space:other';
   await page.keyboard.press('Escape');await inbox.waitFor({state:'detached'});
   await mode('view');
+  const headerLayouts = {};
   for(const width of [1280,760,390,280]) {
     await page.setViewportSize({width,height:900});await settle();
     out[`header_${width}_no_overflow`]=await card.locator('.head').evaluate(el=>el.scrollWidth<=el.clientWidth+1);
-    out[`header_${width}_one_action_row`]=await card.locator('.header-actions').count()>0&&await card.locator('.header-actions').evaluate(el=>{const boxes=[...el.children].filter(e=>getComputedStyle(e).display!=='none').map(e=>e.getBoundingClientRect());return boxes.length>0&&Math.max(...boxes.map(b=>b.top))-Math.min(...boxes.map(b=>b.top))<2;});
-    if(width<=480)out[`phone_${width}_height`]=await card.locator('.head').evaluate(el=>el.getBoundingClientRect().height<=56);
+    if(width>480)out[`header_${width}_one_action_row`]=await card.locator('.header-actions').count()>0&&await card.locator('.header-actions').evaluate(el=>{const boxes=[...el.children].filter(e=>getComputedStyle(e).display!=='none').map(e=>e.getBoundingClientRect());return boxes.length>0&&Math.max(...boxes.map(b=>b.top))-Math.min(...boxes.map(b=>b.top))<2;});
+    else {
+      // #1184 deliberately wraps the shared header after its intrinsic final
+      // phase. Keep real direct controls and usable stage space, rather than
+      // imposing #963's superseded single-row/56px phone layout.
+      const layout=await card.evaluate(card=>{
+        const root=card.renderRoot,head=root.querySelector('.head').getBoundingClientRect();
+        const header=root.querySelector('.hdr').getBoundingClientRect(),stage=root.querySelector('.stage').getBoundingClientRect();
+        const outer=card.getBoundingClientRect();
+        const controls=[...root.querySelectorAll('.head button')].map(node=>({node,id:node.dataset.hp,rect:node.getBoundingClientRect(),visibility:getComputedStyle(node).visibility}))
+          .filter(({rect,visibility})=>rect.width>0&&rect.height>0&&visibility!=='hidden');
+        const sharedBorders=[];
+        const overlaps=controls.some((a,i)=>controls.slice(i+1).some(b=>{
+          const dx=Math.min(a.rect.right,b.rect.right)-Math.max(a.rect.left,b.rect.left),dy=Math.min(a.rect.bottom,b.rect.bottom)-Math.max(a.rect.top,b.rect.top);
+          if(dx<=.5||dy<=.5)return false;
+          // UI Kit segments intentionally share one 1px border, via -1px
+          // margin. Only that exact seam between adjacent group members is
+          // exempt; unrelated buttons and larger intersections still fail.
+          const joined=a.node.parentElement===b.node.parentElement&&a.node.nextElementSibling===b.node
+            &&a.node.parentElement.matches('.hpf-nav-modes,.hpf-icon-group')
+            &&dx===1&&a.rect.top===b.rect.top&&a.rect.bottom===b.rect.bottom
+            &&getComputedStyle(b.node).marginInlineStart==='-1px';
+          if(joined)sharedBorders.push([a.id,b.id]);
+          return !joined;
+        }));
+        return {head:head.toJSON(),header:header.toJSON(),stage:stage.toJSON(),outer:outer.toJSON(),viewportHeight:innerHeight,
+          controls:controls.map(c=>({id:c.id,rect:c.rect.toJSON()})),overlaps,sharedBorders};
+      });
+      headerLayouts[width]=layout;
+      out[`header_${width}_controls_do_not_overlap`]=layout.controls.length>0&&!layout.overlaps;
+      out[`header_${width}_direct_actions_retained`]=['settings','pdf','support','hidden-devices','space-add','mode-tab'].every(id=>layout.controls.some(c=>c.id===id));
+      out[`header_${width}_targets_44px_inside`]=layout.controls.every(({rect:r})=>r.width>=43.99&&r.height>=43.99&&r.left>=layout.head.left-1&&r.right<=layout.head.right+1&&r.top>=layout.head.top-1&&r.bottom<=layout.head.bottom+1);
+      out[`phone_${width}_stage_accounts_for_header`]=layout.stage.height>100&&layout.stage.top>=layout.header.bottom-1
+        &&layout.stage.bottom<=layout.outer.top+layout.viewportHeight+1&&layout.stage.bottom<=layout.outer.bottom+1;
+    }
   }
   await page.setViewportSize({width:1440,height:1000});await settle();
   await zoom.hover();await page.waitForTimeout(80);
@@ -204,6 +238,7 @@ try {
   await page.mouse.move(0,0);await zoom.hover();await page.waitForTimeout(350);
   out.remount_tooltip_works=await tip.isVisible()&&await tip.count()===1;
   mkdirSync('artifacts/ui-polish-963',{recursive:true});writeFileSync('artifacts/ui-polish-963/behavior.json',JSON.stringify(out,null,2));
+  writeFileSync('artifacts/ui-polish-963/header-layouts.json',JSON.stringify(headerLayouts,null,2));
   writeFileSync('artifacts/ui-polish-963/tooltip-exits.json',JSON.stringify(tooltipExits,null,2));
   console.log('Native tooltip exits',JSON.stringify(tooltipExits));
   await fixture.assertClean();checkAll(out);await finish(fixture.browser,out);

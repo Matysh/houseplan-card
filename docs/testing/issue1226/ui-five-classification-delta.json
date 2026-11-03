@@ -1,0 +1,57 @@
+[
+  {
+    "id": "smoke:smoke_device_contacts",
+    "file": "demo/smoke_device_contacts.mjs",
+    "category": "product-escape-during-device-drag",
+    "status": "failed",
+    "reason": "Original 10 failures retained. Existing native baseline proves Escape commits detached point and adds write/history; Properties escape intercepts before device drag cancellation. Later group failures can cascade; lost-capture event order is not independently classified as another product defect.",
+    "evidence": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_device_contacts.log; /home/matysh/hp-1078-sun-transparency-20261025/artifacts/866/native/result.json",
+    "name": "smoke_device_contacts",
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+    "relatedIssue": null
+  },
+  {
+    "id": "smoke:smoke_furniture_pan",
+    "file": "demo/smoke_furniture_pan.mjs",
+    "category": "accepted-decor-context-contract",
+    "status": "passed",
+    "reason": "Keep all pan/Cancel/capture/blur/floor oracles. Primary-only right-click+next-stamp witness uses independently verified empty rendered canvas; existing-item right-click now checks accepted object selection/context, exact count/history and zero config writes, then native dismissal and explicit rearm.",
+    "evidence": "output/issue1226/ui-five/furniture-port-r2.log",
+    "name": "smoke_furniture_pan",
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+    "relatedIssue": 1035
+  },
+  {
+    "id": "smoke:smoke_device_more_info",
+    "file": "demo/smoke_device_more_info.mjs",
+    "category": "native-hover-lifecycle-between-layouts",
+    "status": "passed",
+    "reason": "Original21 controls pass. Genuine picker button was covered by hovered Help popover after viewport moved under stale pointer. Natural mouse-away plus awaiting public trigger aria-expanded=false preserves native click/search/Save/Cancel/HA target/no-service contracts; no forced click or hidden Help.",
+    "evidence": "output/issue1226/ui-five/more-info-port-r2.log; output/issue1226/ui-five/more-info-diagnostic.log",
+    "name": "smoke_device_more_info",
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+    "relatedIssue": null
+  },
+  {
+    "id": "smoke:smoke_dialog_picker_998",
+    "file": "demo/smoke_dialog_picker_998.mjs",
+    "category": "native-furniture-properties-entry",
+    "status": "passed",
+    "reason": "Retain entire165-control dialog sweep at1280/390 and genuine pinned HA11 checks. Furniture painted single selection followed by rendered Properties command replaces double-click across newly installed resize hit frame. No furniture symbol choice/overlay/Save/Cancel/bounds oracle removed.",
+    "evidence": "output/issue1226/ui-five/dialog-picker-port.log",
+    "name": "smoke_dialog_picker_998",
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+    "relatedIssue": null
+  },
+  {
+    "id": "smoke:smoke_ui_polish_963",
+    "file": "demo/smoke_ui_polish_963.mjs",
+    "category": "accepted-shared-header-wrap-contract",
+    "status": "passed",
+    "reason": "Accepted1184 supersedes phone one-row/56px. Wide single row and all other behavioral assertions retained; phone checks direct actions,44px bounds, no intersections beyond exact intentional1px adjacent UI Kit shared-border seam, and stage below actual header within card/viewport height. Full changed smoke passes.",
+    "evidence": "output/issue1226/ui-five/ui-polish-port-r2.log; artifacts/ui-polish-963/header-layouts.json",
+    "name": "smoke_ui_polish_963",
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+    "relatedIssue": 1184
+  }
+]

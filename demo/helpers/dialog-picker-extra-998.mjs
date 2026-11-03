@@ -125,7 +125,12 @@ export async function runExtraPickerSweep(page, rows) {
         const p = path.getPointAtLength(path.getTotalLength() / 2).matrixTransform(path.getScreenCTM());
         return { x: p.x, y: p.y };
       });
-      await page.mouse.dblclick(point.x, point.y);
+      // Selecting furniture installs its resize/rotation hit geometry. The
+      // second press of a double click can then belong to that frame instead
+      // of the original SVG stroke. Use the rendered Properties command after
+      // the ordinary painted-object selection; retain the real dialog sweep.
+      await page.mouse.click(point.x, point.y);
+      await card.locator('[data-action=decor-properties]').click();
     } else await card.locator(`[data-hp=decor][data-id=picker-${name}]`).dblclick();
     await inspect(`decor-${name}`, card.locator('hp-dialog[data-kind=decor]'));
   }

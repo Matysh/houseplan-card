@@ -11,7 +11,12 @@ const device = () => root.locator('[data-hp="device"][data-id="d_temp"] .device-
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const target = () => dialog.locator('#marker-more-info-entity');
 const picker = () => dialog.locator('[data-more-info-target] .hpf-picker');
+const leaveHelp = async () => {
+  await page.mouse.move(0, 0);
+  await dialog.locator('hp-help .trigger[aria-expanded="true"]').waitFor({ state: 'hidden' });
+};
 const choose = async value => {
+  await leaveHelp();
   if (await target().getAttribute('aria-expanded') !== 'true') await target().click();
   await picker().locator('.hpf-panel input').fill('');
   await picker().locator(`[role="option"][data-value="${value}"]`).click();
@@ -92,6 +97,10 @@ try {
     return marker.binding === 'device:d_temp' && marker.more_info_entity === 'sensor.hp1087_aux';
   });
   for (const [width, language, dark] of [[1100, 'en', false], [1100, 'ru', true], [360, 'en', true], [360, 'ru', false]]) {
+    // A resized layout can move Help under the previous desktop pointer.
+    // Leave its real hover surface before the next independent layout witness;
+    // never force a click through an open top-layer explanation.
+    await page.mouse.move(0, 0);
     await page.setViewportSize({ width, height: 1000 });
     await page.evaluate(({ language, dark }) => {
       const card = window.__card; card.setConfig({ ...card._config, language });
@@ -100,7 +109,9 @@ try {
         : { '--primary-text-color': '#202124', '--secondary-text-color': '#5f6368', '--card-background-color': '#ffffff', '--secondary-background-color': '#e7eaee', '--divider-color': '#d7d9de' };
       for (const [key, value] of Object.entries(vars)) card.style.setProperty(key, value);
     }, { language, dark }); await settle();
-    await open(); await target().scrollIntoViewIfNeeded(); await target().click(); await settle();
+    await open(); await target().scrollIntoViewIfNeeded();
+    await leaveHelp();
+    await target().click(); await settle();
     out[`layout${width}${language}`] = await picker().evaluate(node => {
       const panel = node.querySelector('.hpf-panel'), r = panel.getBoundingClientRect();
       const dialog = node.closest('hp-dialog'), surface = dialog.shadowRoot.querySelector('.surface').getBoundingClientRect();
