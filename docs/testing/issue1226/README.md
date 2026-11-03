@@ -1,123 +1,43 @@
 # Stable test repair #1226
 
-The796original unsuccessful entries from audit41598951489 are individually classified:230Node,177backend,122browser launches,267golden frames. These files are evidence and an explicit remaining-work inventory, not a green stable result.
+All 796 original unsuccessful entries from [audit41598951489](https://github.com/Matysh/houseplan-card/actions/runs/41598951489) have an individually preserved classification and addressed evidence. This task repairs obsolete tests and runner accounting; it does not claim a green stable release or fix all newly diagnosed product behavior.
 
-- node-classification.json:210fixed,20retained RED in the latest addressed classification.
-- backend-classification.json:177 original cases addressed; the two remaining cases now have a successful ambiguous-host control and separate successful legacy/current cross-runtime target controls.
-- browser-all-classification.json joins root12, geometry32 and UI78 with exact original IDs:95addressed full-script successes;27retained failures;0not rerun. Every UI remainder has addressed evidence; actual failures retain their original guarantees. Status spelling is preserved from each sub-report.
-- golden-classification.json: all9no-frame preparation errors repaired;258visual differences remain unapproved (139crop dimensions,119same-size pixels). Capture success never counts as baseline acceptance.
+| Original population | Latest addressed classification |
+|---|---|
+| 230 Node failures |210 fixed;20 classified retained RED|
+| 177 backend failures |177 addressed|
+| 122 browser failures/timeouts |95 complete successes;27 classified retained RED|
+| 267 golden failures/differences |all nine missing captures repaired; no baseline accepted|
 
-These are per-case latest addressed proofs with their recorded source versions, not a claim that every case passed one new full profile. The resumed integration uses accepted product dev `0c030e700`; no product fix is authored by #1226. Permission/CAS guards, skips, thresholds and visual baselines were not weakened. Complete history/host/identity/privacy oracles remain. Only valid current graph fixtures, official frozen legacy decoders and actual native accessible controls replace obsolete setup assumptions.
+See node-classification.json, backend-classification.json, browser-all-classification.json and golden-classification.json for exact original names, failure history, source pins and evidence. Later local and common-run outcomes are separate; overlapping selections are never summed into a fictitious total. Remaining confirmed and unresolved behavior is recorded in [resume-findings.md](resume-findings.md). No new issues are created under the owner's file-only instruction.
 
-## Blockers and further work
+## Actual common stable profile
 
-All #1228–#1238 are now accepted in S8 and integrated from dev. Remaining confirmed and unresolved behavior is recorded in [resume-findings.md](resume-findings.md), including the current unhosted-opening edit refusal and native device Escape persistence. These are not waived by the accepted earlier fixes. Other retained cases require diagnosis, not automatic rebaselining. The title question was resolved by accepted #1207 UI-018: all full cards omit it, retaining the PDF setting; the separate static card keeps its title. The addressed full header smoke passes; see [header-title-contract.md](header-title-contract.md). Live task status remains S6 while the actual common audit is reconciled and readiness is assessed against AC1–AC3. Classified real/unresolved RED and unchanged, unapproved baselines do not impose an invented all-green gate. No finish/review/S8 or release has yet been claimed.
+[41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259) ran on product material1f3a0f343f881ef59446c664baace3df8e72a635 and companion827fb417858e10e2362092e26960f7c8ae4c5ac0. Product geometry/backend source is accepted dev0c030e700; subsequent fixture-only ports have their own addressed proof and are not attributed to the earlier audit SHA.
 
-The complete #845corpus passport is still red: inventory84→90files and229→479documents after accepted Stage4 and these fixture changes. Current model11 canonical catalogue ordering and newly discovered graph corpus require a separate full identity review; output/issue1226/corpus-passport-current.json is review material only. The existing passport has not been blindly replaced.
+-539 plan steps:504 passed,33 failed,two not-required,zero blocked;74m13.695s,zero reused.
+-Node4427:4405 passed,21 failed,one skipped across11 groups.
+-Backend2907:2906 passed,zero failed,one skipped. Coverage90.5% versus87.2%;threshold PASS.
+-Real HA77/77 business and10/10 setup PASS;zero skipped/unexecuted. Preparation/accounting and companion changes are completed separately in #1225.
+-Browser512 with30 failures. Golden326 actual images:59 passed,267 unapproved differences,zero capture errors. Measurements pass.
 
-All 229 original full inputs have now been recovered with exact original fingerprints and preserved as an immutable evidence archive, including inputs replaced by compressed hash receipts. See [corpus-preservation.md](corpus-preservation.md). This does not accept the current passport: 31 semantic mapping changes and two changed outcomes remain unresolved, and five protocol receipts were identified as extractor false positives.
+These immutable receipts are diagnostic RED, not a release certificate. Three real CI measurement/performance failures remain visible despite earlier local successes: daycycle paired-measurement validity, history0 long-task203ms against200ms, and connected-node #834 threshold. No thresholds were raised and no rerun was used to relabel them noise.
 
-Addressed Python integration:10passed/1failed (schema freshness and relay parity now pass). The initial addressed backend group was239passed/1failed. These overlapping selections must not be summed into a fictitious total.
+[Reuse diagnosis](reuse-scope-diagnosis.json) shows identical environment keys and expected conservative dependency closures: a demo script edit invalidates512 browser steps plus golden/metrics/assets, and a fixture edit invalidates all11 Node groups. Build/ZIP outputs are deliberately not restored. No cache mechanism was changed.
 
-The common fallback audit [41632300999](https://github.com/Matysh/houseplan-card/actions/runs/41632300999) completed on material `a07f4a10309c7b187ab122cf3227002f04c2e81d`, companion `6103fce2223768f7419192cdfa791ca51d232a49`. This material includes the first test ports and #1225 runner, before the later addressed ports on this branch; it is not the final AC3 candidate. Actual HA accounting is 77 business cases executed: 66 passed, 11 failed, zero skipped/unexecuted; all 10 setup cases passed. Failures are being separated into stale companion fixtures and product blockers in #1225.
+## Final addressed ports after the shared audit
 
-The audit's 326 golden frames are **59 passed, 267 different, zero capture errors**. All nine historical no-frame cases now have actual images and remain unapproved differences. Reports identify material a07f4a103 and this run; they are not stale restored reports. This current count differs deliberately from the original 258 different + nine no-frame classification above. No baseline was accepted.
+-[Browser fixture ports](ac1-two-fixture-ports.md): wall thickness36/36 PASS through actual graph intents/accepted static graph; Unified Walls17/18 PASS with full semantic rollback/history/session guarantees, retaining foreign-overlap RED.
+-[Node ports](node-author-leftovers.md): independently derived complete #281 current target PASS; #273 expected table order follows the canonical contract while its original count failure remains RED. Actual arrays and ordered room cycles are never sorted to force success.
+-[Cold setup ports](final-two-setup-ports.md): Zigbee native settings readiness44/44 PASS; converter cold-panel lifecycle6/6 PASS. Converter is outside the original122 browser failures and does not inflate their success denominator.
+-[Current corpus oracle](current-corpus-oracle-proof.md): all573 full inputs from91 files preserved, including every original229 full input. Independent exact source/owner/host/width/opaque-field evidence supports the571 accepted full-config hashes. Separate frozen229 oracle/archive stay byte-identical. #842 damaged input has a justified typed refusal; valid #478 remains positive in the current oracle and its actual refusal remains RED.
 
-Backend raw output is **2844 passed, two failed, one skipped**. Its summary currently omits the failed-count key; the exit status remains failed. The two failures are coordinate-canonicalization's cross-runtime Optimize packet and #1228's ambiguous legacy opening. Missing summary fields do not imply zero failures. The final AC3 stable result waits for known product blockers and agreed visual intent; this diagnostic run is no release publication or completed AC3.
+Final integrated comparator check on author a192a5783: six tests in4.08s, five PASS and one expected current-migration FAIL (#478),zero skipped. All573 source immutability,571 byte-idempotence/re-read,230 atom-ID multisets,230 complete room-ID multisets and473 ordered room cycles execute before the aggregate comparison with zero invariant failures. Full-config hashing ignores only object key insertion order; negative controls detect opaque loss, array reordering, numeric changes, identity changes and incomplete inventory. No full product suite/build/HA was repeated for this final comparator port.
 
-The omission is now fixed in the existing runner: only the last complete pytest summary is counted, including failed/errors. The same recorded line yields 2847 tests = 2844 passed + two failed + one skipped. TAP precedence, structured results, nonzero exits and nonempty guards remain intact. Addressed checks: `node --check` for runner and its test, then `node --test process-next/test/runner.test.mjs` — 22 passed, zero failed; the five new regression cases first produced four failures against the old parser. Evidence is in `output/issue1226/pytest-counts-{before,after}.log` in the author's analysis checkout. No backend or HA suite was rerun to validate this parser-only correction.
+The existing runner's pytest parser now counts the final complete summary including failures/errors. Its22 addressed behavior tests pass; the five new regression cases produced four failures against the old parser. TAP precedence, nonzero exits and nonempty-result protection remain intact.
 
-The later HA-fixture diagnostic [41646456489](https://github.com/Matysh/houseplan-card/actions/runs/41646456489) retained product material a07f4a103 and tested companion `afa1724d91205babbe6790804f2944450f7cf6fa`. All 77 business cases executed: **72 passed, five failed, zero skipped/unexecuted**; all ten setup cases passed. Six of seven addressed stale-fixture cases passed; the profile case advanced to its outer-Cancel behavior and remains under diagnosis. Other remaining cases are first-space exact lattice, the old Copy Optimize preflight and the two combined dirty transfer inputs. This does not certify later unexecuted companion edits or complete #1226 AC3. Actual common-run statuses are 459 reused, ten passed, 64 failed, two not-required and one blocked; elapsed 29m56s. Reuse is measured here, not inferred from unchanged SHA alone.
+## Evidence and boundaries
 
-The separate current #280rehost packet is independently proved through real HA WebSocket acceptance, full stored-config equality and Undo (3/3addressed backend cases; original legacy targets retained). This is an added cross-runtime witness, not an increase of the original177-failure count.
+[Corpus preservation](corpus-preservation.md), [resumed controls](resumed-controls.md), [UI follow-up](ui-five-followup.md), [title contract](header-title-contract.md), [source-ledger proof](current-corpus-oracle-proof.md) and per-case JSON retain source provenance. The full profile was downloaded once under output/issue1225-audit-41679296259. Earlier diagnostic runs41632300999,41646456489 and41662157218 remain historical receipts, not final-current claims.
 
-The resumed shared audit is [41662157218](https://github.com/Matysh/houseplan-card/actions/runs/41662157218), material `0bda944e3` and companion `a5ba81a`. It is actual HA proof for #1225 and a diagnostic for #1226; later test-only ports on this branch are not retroactively covered by that SHA. Source build/test-build was prepared once and shared into the analysis checkouts. Addressed results and exact boundaries are in [resumed-controls.md](resumed-controls.md) and [ui-five-followup.md](ui-five-followup.md). No final AC3 or pending HA result is declared passed.
-
-## Completed resumed shared audit (41662157218)
-
-The existing common audit completed on clean material
-`0bda944e3244a142449c30c5f802c14833af8c66` with companion
-`a5ba81afb2b624e6b84d9b3605c63e97322efb25`. Runner execution lasted
-70m26s (15:18:31–16:28:57 UTC); the surrounding Actions job also includes
-preparation/upload. Its 539 plan entries are 492 passed, 44 failed, two
-not-required and one blocked; none was reported reused in this run.
-
-Actual HA accounting is **77 executed: 73 passed, three failed, one timed out,
-zero skipped/unexecuted**. All ten setup cases passed. First-space lattice,
-current dirty export/import and native profile cases now pass. The remaining
-four cases are negative-import response-body capture, roomless Copy rendering,
-legacy import Undo, and stored vacuum trail; their primary failures are being
-diagnosed separately. A failed/timed-out case is not accepted as a pass.
-
-Node geometry reports 1268 passed, 23 failed and one skipped. Backend reports
-2904 passed, one failed and one skipped. Golden capture produced all 326 frames:
-59 passed and 267 unapproved differences, with zero missing frames. These
-numbers describe this immutable earlier candidate only. Later addressed fixture
-ports and cross-runtime target controls are recorded separately above; no
-later change is retroactively certified by this audit. The original 796-entry
-classification remains intact, and no visual baseline was accepted.
-
-The downloaded primary result lives in the author's workspace at
-`output/issue1225-audit-41662157218`; it was downloaded once. No new run is
-started by documenting this result. #1226 remains S6 + blocked; neither its
-final AC3 nor a release is claimed.
-
-## Final bounded author-side ports after the shared audit pin
-
-[Two browser fixture ports](ac1-two-fixture-ports.md) complete known stale
-preparation: wall thickness now passes all36 controls using explicit current
-intents, preserved opaque fields, isolated real legacy preparation and accepted
-static graph/revision. Unified Walls reaches the actual physical-proof boundary
-and retains complete atomic rollback/history/session checks;17/18 pass, with the
-original foreign-overlap case still RED. Object insertion order alone is not
-geometry; ordered arrays and all nested fields remain strictly compared.
-
-[Node oracle ports](node-author-leftovers.md) add a complete independently derived
-#281 target from the old accepted projection and raw-source graph authority;
-that original scenario passes. #273 expected room-table order now follows the
-accepted canonical ID contract, while its original count1vs0 remains RED.
-#845 ports only expected table order; no current output/passport is accepted.
-These addressed results are supplemental to the immutable1f3 full audit, not a
-claim that its earlier SHA executed later edits.
-
-Current integrated source discovery retains **573 full inputs in91 files**:
-all229 historical inputs and344 appended current inputs. The author's572/90
-proof in its own source branch predates the separate current storage-target
-fixture; both inventories remain accurately scoped. Current passport semantics
-still require explicit mapping review, not a source-inventory typo correction.
-Original populations remain230/177/122/267. Latest addressed counts are210 Node
-fixed with20classified retained RED,177backend addressed,95full browser successes
-with27retained RED. None of those retained rows is silently labelled a proven
-product bug or converted into a successful stable outcome.
-## Actual full profile and final setup revalidation
-
-The immutable latest full audit is
-[41679296259](https://github.com/Matysh/houseplan-card/actions/runs/41679296259),
-material1f3a0f343 and companion827fb417:539steps =504passed/33failed/two
-not-required, zero blocked; elapsed74m13.695s and zero reused. Actual Node is
-4427tests =4405PASS/21FAIL/one skipped across11groups. Backend2907 =2906PASS,
-zero failures,one skipped; coverage90.5% versus87.2% base, thresholdPASS.
-HA77/77business and10/10setupPASS, zero skipped/unexecuted. Browser512includes
-30failed. All326golden frames exist:59PASS/267unapproved differences. Measurements
-pass. This is honest RED, not a green stable/release certificate.
-
-Reconciliation against all122original failing browser positions keeps three
-newly observed CI performance/measurement failures visible despite earlier local
-PASS: daycycle invalid paired measurement, history0 long-task203ms versus200ms,
-and the #834 connected-node performance threshold. Limits are unchanged; these
-are not silently declared product regressions or waived as noise. Latest counts
-therefore become95full original successes/27retainedRED. Each original row now
-links its immutable full-run outcome, with later addressed proofs separate.
-
-[Two setup ports](final-two-setup-ports.md) then repair the actual Zigbee
-settings-owner readiness (44/44PASS) and converter cold-panel module lifecycle
-(6/6PASS). The converter failure is outside the original122failed positions and
-is recorded separately; it never inflates their success count. The two scripts
-retain every former negative/no-write/host/reload assertion. Three CI performance
-observations remain RED, without rerunning them or changing budgets.
-
-Later test edits are covered by their addressed results above, not retroactively
-attributed to1f3. The independently retained full-profile receipts and honest
-classification provide the AC3 facts; substantive review evaluates AC1–AC3
-without inventing an all-product-green gate or baseline approval when no baseline
-changes are proposed. Current passport proof work remains explicit.
+No product fix, new workflow, waiver, accepted visual baseline or release is introduced. AC1–AC3 are submitted for ordinary independent review with explicit remaining RED; unchanged unapproved goldens and classified real/unresolved behavior are not silently accepted or converted into an invented all-green task gate.

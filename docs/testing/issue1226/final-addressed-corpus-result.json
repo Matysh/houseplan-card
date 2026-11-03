@@ -1,0 +1,22 @@
+{
+  "author": "a192a5783",
+  "product": "0c030e700",
+  "compiled": "0bda944e3",
+  "command": "node --test --test-reporter=junit test/wall-identity-corpus.test.mjs",
+  "tests": 6,
+  "passed": 5,
+  "failed": 1,
+  "skipped": 0,
+  "durationMs": 4079.508935,
+  "exitCode": 1,
+  "retainedFailure": "#478 accepted/input: current migration refuses valid coincident0/22cm drafts; positive oracle retained",
+  "historical229Compatibility": "PASS, original passport and full inputs unchanged",
+  "sourceInputs": 573,
+  "successfulMigrations": 571,
+  "typedDeclines": 2,
+  "atomIdMultisets": 230,
+  "roomIdMultisets": 230,
+  "orderedRoomCycles": 473,
+  "invariantFailures": 0,
+  "primaryXml": "output/issue1226/final-corpus-guards.xml"
+}
