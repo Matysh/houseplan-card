@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1972,
+  "revision": 1973,
   "nextTicket": 125,
   "nextFence": 123,
   "tasks": {
@@ -2242,7 +2242,7 @@
       "ownerDecision": null,
       "ticket": 122,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793728670029,
       "reviewEntry": 1,
       "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951",
@@ -2284,6 +2284,20 @@
         "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
         "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
         "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1242:1:86219eb8ba1da836e04c97f6315a71ea56044951:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+        "at": 1793730394913
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793730394913,
+        "entry": 1,
+        "requestId": "review:1242:1:86219eb8ba1da836e04c97f6315a71ea56044951:ad46b790228f0b2e7ae37f7905a63843043cf2ab"
       }
     },
     "1243": {
@@ -2571,19 +2585,7 @@
     1246,
     1225
   ],
-  "active": {
-    "issue": 1242,
-    "worker": "finish",
-    "token": "122:finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:1:admit",
-    "fence": 122,
-    "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
-    "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-    "phase": "review",
-    "admittedAt": 1793729464816,
-    "expiresAt": 1793733326601,
-    "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951",
-    "reviewRequest": "review:1242:1:86219eb8ba1da836e04c97f6315a71ea56044951:ad46b790228f0b2e7ae37f7905a63843043cf2ab"
-  },
+  "active": null,
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
       "digest": "b74717bbe91c3148655850e19950fd1870a581195fa1ce207e74475c2abb5959",
@@ -2635,6 +2637,10 @@
     },
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:14:review-presentation": {
       "digest": "112334d9c3cd9c456296ba1f2c5edfaaab04e43febf4f0a871dfb01d1f4c8772",
+      "issue": 1242
+    },
+    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:14:return": {
+      "digest": "d0248db6ec729757321e71c07006cc0187e37e5e08c8fb66acac38bf367538e3",
       "issue": 1242
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
