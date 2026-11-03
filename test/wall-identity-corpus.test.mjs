@@ -3,25 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {commitWallSegmentModel} from '../test-build/wall-segment-model.js';
-import {compareCodePoints} from '../test-build/codepoint-order.js';
-import {identityProjection,loadWallIdentityCorpus,loadCompleteWallIdentityCorpus,loadHistoricalWallIdentityCorpus,withCorpusIds,extractCorpusConfigs}
+import {commitWallSegmentModel,decodeLegacyWallSegmentModel} from '../test-build/wall-segment-model.js';
+import {identityProjection,loadWallIdentityCorpus,loadCompleteWallIdentityCorpus,loadHistoricalWallIdentityCorpus,withCorpusIds,extractCorpusConfigs,corpusPassport,fullConfigSha256}
   from './helpers/wall-identity-corpus.mjs';
 
 const historical=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-identities.json',import.meta.url),'utf8'));
-// #1216 canonical graph tables determine projection order. Port only EXPECTED
-// table order; the immutable original passport/file, space order, opening order
-// and each room's oriented edge cycle remain untouched. Semantic IDs/outcomes
-// and the unreviewed current inventory still fail their complete comparison.
-const expected={...historical,documents:historical.documents.map(row=>row.ok?{...row,
-  identity:row.identity.map(space=>({...space,
-    catalogue:[...space.catalogue].sort(compareCodePoints),
-    partitions:[...space.partitions].sort(compareCodePoints),
-    rooms:[...space.rooms].sort((a,b)=>compareCodePoints(a.id,b.id)),
-  })),
-}:row)};
+const expected=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-current-identities.json',import.meta.url),'utf8'));
 const compare=(actual,baseline)=>assert.deepEqual(actual,baseline,
-  'wall corpus needs explicit current inventory/semantic passport review; full source membership is retained');
+  'wall corpus current identities/outcomes differ; full source membership and the original legacy oracle are retained');
 
 test('#845 complete persisted fixture/demo corpus retains baseline identities and byte idempotence',async t=>{
   const corpus=await loadCompleteWallIdentityCorpus(),documents=[],guardFailures=[];
@@ -48,7 +37,7 @@ test('#845 complete persisted fixture/demo corpus retains baseline identities an
       }
     }else{
       reached.successfulMigrations++;
-      documents.push({label,fingerprint,ok:true,identity:structuredClone(identityProjection(first))});
+      documents.push({label,fingerprint,ok:true,identity:structuredClone(identityProjection(first)),fullConfigSha256:fullConfigSha256(first)});
       const firstFrozen=structuredClone(first),firstBytes=JSON.stringify(firstFrozen);
       reached.idempotence++;check('byte idempotence',()=>
         assert.equal(JSON.stringify(commitWallSegmentModel(first).config),firstBytes));
@@ -89,8 +78,8 @@ test('#845 complete persisted fixture/demo corpus retains baseline identities an
   assert.equal(reached.idempotence,reached.successfulMigrations,'every successful migration reaches byte idempotence');
   assert.equal(reached.readOnlyRereads,reached.successfulMigrations,'every successful re-read reaches source immutability');
   assert.equal(guardFailures.length,0,guardFailures.map(f=>f.message+': '+String(f.cause)).join('\n'));
-  // Outcome comparison is deliberately LAST: known unreviewed membership and
-  // semantic differences must never turn the executable invariants into dead code.
+  // Outcome comparison is deliberately LAST: the retained #478 positive and
+  // any identity differences must never turn executable invariants into dead code.
   compare({schema:1,baseline:historical.baseline,inventory:corpus.inventory,documents},expected);
 });
 
@@ -108,6 +97,19 @@ test('#845 corpus guard rejects catalogue reorder, renamed id and room/opening r
     const after=structuredClone(before);damage(after.spaces[0]);
     assert.throws(()=>compare(identityProjection(after),identity));
   }
+  const opaque=structuredClone(before);opaque.settings.futureOpaque={keep:['one','two'],value:1.0000000001};
+  const retained=structuredClone(opaque);delete retained.settings.futureOpaque;
+  assert.deepEqual(identityProjection(retained),identityProjection(opaque),'opaque loss does not change identity IDs');
+  assert.throws(()=>compare(
+    {identity:identityProjection(retained),fullConfigSha256:fullConfigSha256(retained)},
+    {identity:identityProjection(opaque),fullConfigSha256:fullConfigSha256(opaque)}),
+  'complete config hash detects unknown metadata loss at unchanged IDs');
+  const keyReordered=Object.fromEntries(Object.entries(opaque).reverse());
+  assert.equal(fullConfigSha256(keyReordered),fullConfigSha256(opaque),'only object key order is ignored');
+  const arrayChanged=structuredClone(opaque);arrayChanged.settings.futureOpaque.keep.reverse();
+  assert.notEqual(fullConfigSha256(arrayChanged),fullConfigSha256(opaque),'array order is never canonicalized');
+  const numberChanged=structuredClone(opaque);numberChanged.settings.futureOpaque.value=1;
+  assert.notEqual(fullConfigSha256(numberChanged),fullConfigSha256(opaque),'numeric precision is never normalized');
   const unsigned=structuredClone(expected);unsigned.documents.push({label:'new-config'});
   assert.throws(()=>compare(unsigned,expected),'new config cannot silently escape the passport');
 });
@@ -151,6 +153,11 @@ test('#845 all 229 original full inputs remain immutable and distinct from modif
     assert.deepEqual(retained.input,entry.input,entry.label+': complete current input');
   }
   assert.deepEqual(complete.inventory,current.inventory,'zero-config files stay inventoried');
-  assert.deepEqual(complete.historicalInventory,expected.inventory,'all historical source files stay inventoried');
+  assert.deepEqual(complete.historicalInventory,historical.inventory,'all historical source files stay inventoried');
   assert.equal(new Set(complete.entries.map(row=>row.label)).size,complete.entries.length,'labels never alias changed inputs');
+});
+test('#845 frozen compatibility preserves all original229 rows without reordering expectations',()=>{
+  const corpus=loadHistoricalWallIdentityCorpus(),source=structuredClone(corpus);
+  assert.deepEqual(corpusPassport(decodeLegacyWallSegmentModel,corpus),historical);
+  assert.deepEqual(corpus,source,'all full historical inputs and provenance remain immutable');
 });

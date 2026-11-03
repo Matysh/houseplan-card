@@ -9,6 +9,13 @@ import {Script} from 'node:vm';
 export const CORPUS_ROOT=fileURLToPath(new URL('../..',import.meta.url));
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
+/** Full persisted JSON: only object key order is canonical; arrays and values are intact. */
+export function fullConfigSha256(config) {
+  const canonical=value=>Array.isArray(value)?value.map(canonical)
+    :value!==null&&typeof value==='object'
+      ?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+  return hash(canonical(config));
+}
 export function identityProjection(config) {
   return (config.spaces||[]).map(space=>({
     space:space.id,
@@ -67,7 +74,7 @@ export async function loadWallIdentityCorpus(root=CORPUS_ROOT) {
       if(!file.name.endsWith('.json'))continue;
       const label=relative(root,path).replaceAll('\\','/');
       // These are the explicit repaired witnesses and this guard's own passport.
-      if(/^845-wall-(identity-parity|corpus-identities)\.json$/.test(file.name))continue;
+      if(/^845-wall-(identity-parity|corpus-identities|corpus-current-identities)\.json$/.test(file.name))continue;
       const found=extractCorpusConfigs(JSON.parse(readFileSync(path,'utf8')),label);
       inventory.push({file:label,configs:found.length});
       entries.push(...found);
