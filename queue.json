@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1556,
+  "revision": 1557,
   "nextTicket": 107,
   "nextFence": 104,
   "tasks": {
@@ -1856,32 +1856,24 @@
     },
     "1231": {
       "issue": 1231,
+      "branch": "codex/1231-shared-wall-split",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1231-shared-wall-split",
-      "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 105,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793714474016,
-      "reviewEntry": 1,
-      "patchId": "b177a0539f976fb0ee0c27e5ed62b86a245999ee",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "test/helpers/geometry-commit-harness.mjs",
-        "test/shared-wall-split.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T140741035-581a759a",
-        "name": "Тесты для задачи #1231 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1101-space-delete-20261028/.git/process-next/runs/20261103T140741035-581a759a/report.json",
-        "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:08:17.788Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "a52e6cb44514c55826400c7f3b12623fe76081bf",
+      "mergedSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+      "mergedAt": 1793714905915,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1232": {
@@ -2094,18 +2086,7 @@
     1230,
     1238
   ],
-  "active": {
-    "issue": 1231,
-    "worker": "finish",
-    "token": "103:finish:77e533ec-2487-47ce-8588-91720bf59172:finish:1:admit",
-    "fence": 103,
-    "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-    "expectedBase": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793714810839,
-    "expiresAt": 1793718500640,
-    "patchId": "b177a0539f976fb0ee0c27e5ed62b86a245999ee"
-  },
+  "active": null,
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
       "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
@@ -2178,18 +2159,6 @@
     "github:41649224383:1:completions:notice:00c9254e10485c35adcab7c3cd0d0a308fcf0f31c6d2fa5688502f719a1a60c4": {
       "digest": "7304de378b9c11d2ff1cb49201929631c47e45ff17ecc87ff07e445bf051d3ce",
       "issue": 1230
-    },
-    "github:41650461162:1:completions:message:3272dc559522679c3eeceb91ac7ca1dbe473e212abafa9bccb344adf5f7dd732": {
-      "digest": "91f117b0906fb82205ead095ea3167faa820d2605c27e8235d36841f5696c1cb",
-      "issue": 1231
-    },
-    "finish:29271098-0fc9-4ccb-b71d-be101786d33f:finish:1:synchronized": {
-      "digest": "4b418f94fa21626c2e7af6ddbd650ff506950f7ffd0a997b9a9e3bf04c41dd10",
-      "issue": 1231
-    },
-    "finish:0335ac5d-5a67-4d06-b91c-92ab3f2b0fbf": {
-      "digest": "2b846b4440c593730358e097dd9c14a71f107731a3434e94f524e91727597aa8",
-      "issue": 1231
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
       "digest": "851c6e1c8aa1c378ab4435b7494a3f1a4d4383057f9431bc1b2cbfe152a75d17",
@@ -2305,20 +2274,6 @@
         "delivered": true
       }
     },
-    "finish:29271098-0fc9-4ccb-b71d-be101786d33f": {
-      "digest": "3151e12d3833f7a15d2622128c97ec587d54d8409559adca7690bfbe497fa68a",
-      "issue": 1231,
-      "message": {
-        "kind": "queued",
-        "issue": 1231,
-        "at": 1793714474016,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "714f20de41ec28af167c9b42b28dbf524521b943",
-        "delivered": true
-      }
-    },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
       "issue": 1238,
@@ -2330,21 +2285,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
-        "delivered": true
-      }
-    },
-    "finish:77e533ec-2487-47ce-8588-91720bf59172:finish:1:admit": {
-      "digest": "fa2e01728df868cec4faec544990a8566ceb7d561ebd6a0cd41e6c45a8049cc5",
-      "issue": 1231,
-      "message": {
-        "kind": "admitted",
-        "issue": 1231,
-        "at": 1793714810839,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "714f20de41ec28af167c9b42b28dbf524521b943",
-        "phase": "sync",
         "delivered": true
       }
     },
