@@ -2,6 +2,8 @@
 import { launchPanelCold, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launchPanelCold();
 const out = await page.evaluate(async () => {
+  // The production entry waits for HA's public root definition.
+  customElements.define('home-assistant', class extends HTMLElement {});
   const root = document.createElement('home-assistant');
   root.hass = { locale: { language: 'ru' } };
   document.body.append(root);
