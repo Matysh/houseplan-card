@@ -316,7 +316,7 @@
     "reason": "GEO-LEGACY-RENDER: unchanged historical plan throws polygon clipping error inside _innerRoomContour before repaired union checks.",
     "evidence": "output/issue1226/geometry/smoke_wall_union_isolation-current-dev.log",
     "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_union_isolation.log",
-    "relatedIssue": null
+    "relatedIssue": 1232
   },
   {
     "id": "smoke:smoke_wallthick_standalone",
