@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1642,
+  "revision": 1643,
   "nextTicket": 110,
   "nextFence": 108,
   "tasks": {
@@ -2029,14 +2029,24 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1237-native-grid-provenance",
-      "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
+      "materialSha": "782be555e96df025025139eff8c9ff93c29d9607",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 107,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714995417,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "9abfdf0500ffa3f24ce0a196c10873d7f2d4c50c",
+      "changedFiles": [
+        "demo/smoke_native_grid_draw.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1237.json",
+        "src/graph-draw-binding.ts",
+        "src/houseplan-editor-runtime.ts",
+        "test/native-grid-draw.test.mjs"
+      ]
     },
     "1238": {
       "issue": 1238,
@@ -2220,11 +2230,12 @@
     "worker": "finish",
     "token": "107:finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:1:admit",
     "fence": 107,
-    "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "782be555e96df025025139eff8c9ff93c29d9607",
+    "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+    "phase": "testing",
     "admittedAt": 1793715959393,
-    "expiresAt": 1793716259393
+    "expiresAt": 1793716286824,
+    "patchId": "9abfdf0500ffa3f24ce0a196c10873d7f2d4c50c"
   },
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
@@ -2274,6 +2285,10 @@
     "finish:77e533ec-2487-47ce-8588-91720bf59172:finish:8:return-label": {
       "digest": "b66bb19aba5cc063b10bbab54a0721f7f32b9338c6c68a220948bb4bd0500670",
       "issue": 1238
+    },
+    "finish:64e90297-ded8-47d7-a66f-82f934c27465:finish:1:synchronized": {
+      "digest": "34843347f8156214cde4c3080b3ea0a6ab00513bc5d04006ccd7dc743dddf592",
+      "issue": 1237
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
