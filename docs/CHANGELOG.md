@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.84.0-beta.3 — 2026-11-03
+
 - Synchronize the installable review workflow with the deployed ship-batch workflow; check all installed template/target pairs to prevent reinstalling stale workflows. [#1218](https://github.com/Matysh/houseplan-card/issues/1218)
 
 - Point the CI badge directly to the actual source test run for the current stable, preserving its dynamic status and the separate CodeQL badge. [#1219](https://github.com/Matysh/houseplan-card/issues/1219)
