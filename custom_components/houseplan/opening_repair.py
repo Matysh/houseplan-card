@@ -12,7 +12,8 @@ Pure: no Home Assistant. The repair runs on the raw document config before
 numbers the schema will judge. Wall hosts are judged after the shared
 coordinate canonicaliser, partition hosts before it, exactly as the schema
 does. Everything else in the file is left as it is; an opening or host the
-repair cannot read is left for the schema to refuse.
+repair cannot read is left for the schema to refuse. A readable exact host
+with contradictory numeric/exact parameters is refused before repair.
 
 1. Openings that pass every host check keep their host. Of two overlapping
    ones, the one earlier in the document keeps it.
@@ -62,7 +63,7 @@ def _number(value: Any) -> bool:
 
 
 def _host(opening: Any, *, canonical_view: bool = False) -> dict[str, Any] | None:
-    """A host record of the schema's exact shape, or None (left to the schema)."""
+    """Read a schema-shaped host; contradictory raw exact intent is refused."""
     if not isinstance(opening, dict):
         return None
     host = opening.get("host")
@@ -82,6 +83,8 @@ def _host(opening: Any, *, canonical_view: bool = False) -> dict[str, Any] | Non
             return None
         projections = (float(exact), canonicalize_number(float(exact))) if canonical_view else (float(exact),)
         if host["t"] not in projections:
+            if not canonical_view:
+                raise GraphError("opening_parameter_projection_mismatch")
             return None
     return host
 

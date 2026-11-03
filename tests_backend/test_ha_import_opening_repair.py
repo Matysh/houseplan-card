@@ -149,6 +149,15 @@ def test_malformed_or_inconsistent_exact_host_parameter_is_not_silently_repaired
 
 
 @pytest.mark.parametrize("model", [10, 11])
+def test_clean_geometry_cannot_hide_a_contradictory_exact_host_parameter(tmp_path, model):
+    document = _document(tmp_path, model)
+    _door(document)["host"]["tq"] = ["1", "2"]  # Numeric t still describes x=.4 (one third).
+    with pytest.raises(ImportFailure) as rejected:
+        parse_document(json.dumps(document).encode())
+    assert rejected.value.code == "invalid_config"
+
+
+@pytest.mark.parametrize("model", [10, 11])
 def test_ambiguous_exact_opening_detaches_instead_of_guessing_a_carrier(tmp_path, model):
     graph = {"version": 1, "nodes": [
         {"id": "a", "p": ["l", "48", "48"]}, {"id": "b", "p": ["l", "192", "48"]},
