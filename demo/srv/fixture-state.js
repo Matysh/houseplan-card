@@ -1,8 +1,10 @@
 // A small wire fixture, not a second backend validator. Payloads are cloned at
 // the boundary so an optimistic client cannot mutate the saved server document.
-export function createFixtureStore(config, layout, emit = () => {}, { markerHistory = false, externalScreens = false } = {}) {
+export function createFixtureStore(config, layout, emit = () => {}, {
+  markerHistory = false, externalScreens = false, configRevision = 1, layoutRevision = 1,
+} = {}) {
   let cfg = structuredClone(config), positions = structuredClone(layout);
-  let configRev = 1, layoutRev = 1;
+  let configRev = configRevision, layoutRev = layoutRevision;
   // #1073 is a wire/lifecycle fixture, not the production delta validator.
   // Real conflict/ACL/file/paired-write behavior is covered by HA tests.
   const commands = new Map(), receipts = new Map();
