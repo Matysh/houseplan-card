@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1388,
+  "revision": 1389,
   "nextTicket": 96,
   "nextFence": 96,
   "tasks": {
@@ -1712,7 +1712,7 @@
       "reviewEntry": 1,
       "automationError": "automation-error",
       "automationSince": 1793704809402,
-      "automationDetail": "Commit tracked task changes before finish"
+      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
     }
   },
   "ownerDecisions": {},
@@ -1856,6 +1856,10 @@
     },
     "finish:f5764e40-20d7-4992-8739-f5b85a833845": {
       "digest": "0819ffa4a9614e7425c0c72939844427da1702cd323029bee3f6574edc61d029",
+      "issue": 1227
+    },
+    "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb:finish:3:automation-pending": {
+      "digest": "e810e487c6a328fc5a089b7cb5d5638ee2265355171b6f5d9a82f5acf3f5f5af",
       "issue": 1227
     },
     "finish:b6ee8126-3bf4-41aa-a328-b97be4929abb": {
