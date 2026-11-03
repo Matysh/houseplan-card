@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2175,
+  "revision": 2176,
   "nextTicket": 136,
   "nextFence": 136,
   "tasks": {
@@ -532,26 +532,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6"
-      }
-    },
-    "1186": {
-      "issue": 1186,
-      "branch": "codex/1186-artifact-media",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "bfc2d7324795183834d54794b3c103d77f100e76",
-      "mergedAt": 1793553911810,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "commentDigest": "cbcecf0ee8a8338a5494"
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1187": {
@@ -2678,7 +2658,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4"
       }
     },
     "1247": {
@@ -3199,6 +3180,18 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:41709362649:1:1246": {
+      "digest": "bd3075de26573476414d6138cb795bfc40af81ecccbb4c278ed5792e2c9263c8",
+      "issue": 1246,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1246,
+        "at": 1793736872915,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4"
       }
     }
   },
