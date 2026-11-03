@@ -1,22 +1,20 @@
-<!-- release: v1.84.0-beta.2 -->
+<!-- release: v1.84.0-beta.3 -->
 ## Основное
 
-- Общая шапка панели и карточки: согласованные действия и перенос элементов на узких экранах.
-- При копировании пространства можно независимо выбрать мебель и декор; обе опции изначально выключены.
-- «Выбрать» подсвечивает свободные замкнутые контуры и открывает создание комнаты. «Стены» свободно рисуют внутри них.
-- Путь пылесоса сохраняет живое продолжение до фактически отображаемой шайбы при задержке и обновлении маршрута.
-- Исправлена обрисовка внутренних швов в углах стен.
-- Убран повторный расчёт отпечатка при принятии сохранённой конфигурации; механизмы сохранения и конфликтов сохранены.
+- Геометрия плана хранится в точном графе с постоянными ID узлов и стен. Старые планы переходят на новую модель при структурном сохранении с резервной копией исходных данных.
+- Обновлены общий UI Kit, подсказки, всплывающие сообщения и переходы редактора; исправлены залипающие превью стен и вспышки заливки проёмов.
+- Внешние экраны получили отдельные настройки вида каждого пространства: поворот, масштаб, размеры значков и учёт сводной панели. Добавлена общая настройка учёта сводки при центрировании обычного Просмотра.
+- Восстановлена привязка импортированных проёмов; исправлены отдельные ошибки создания комнат, рисования и позднего обновления камеры. Optimize сохраняет диагностику даже без изменений плана.
+- Для Zigbee добавлены пояснения о различиях карт связей и маршрутов, убрано повторение сообщения об отсутствии данных. Названия карточек в HA и заголовок погодной сводки приведены в порядок.
 
-[Подробный список изменений](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.2/docs/CHANGELOG.ru.md)
+[Подробный технический список](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.3/docs/CHANGELOG.ru.md)
 
 ## Highlights
 
-- A shared panel and card header with consistent actions and wrapping on narrow screens.
-- Space copies can independently include furniture and decor; both choices start unchecked.
-- Select highlights free closed wall contours and opens room creation. Walls remains free to draw inside them.
-- The vacuum trail keeps its live tip attached to the displayed robot during delayed and partial route updates.
-- Internal seams at wall corners are fixed.
-- Accepted configuration writes avoid a duplicate fingerprint calculation while preserving persistence and conflict handling.
+- Plan geometry uses an exact graph with stable node and wall IDs. Existing plans migrate on structural saves, retaining a backup of their original data.
+- Shared UI components, help, toasts and editor transitions have been refined; stale wall previews and opening-fill flashes are fixed.
+- External screens support per-space rotation, zoom, marker sizes and summary-aware framing. Ordinary View has a shared option to include the summary when centering the plan.
+- Imported openings retain their bindings, with fixes for room creation, drawing and delayed camera refresh. Optimize retains diagnostics even when the plan needs no changes.
+- Zigbee help explains differences between link maps and confirmed routes, duplicate missing-data messages are removed, and HA picker metadata and weather headings are localized consistently.
 
-[Detailed changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.2/docs/CHANGELOG.md)
+[Detailed technical changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.3/docs/CHANGELOG.md)
