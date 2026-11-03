@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1574,
-  "nextTicket": 107,
+  "revision": 1575,
+  "nextTicket": 108,
   "nextFence": 105,
   "tasks": {
     "1126": {
@@ -2005,6 +2005,20 @@
         "status": "pending"
       }
     },
+    "1237": {
+      "issue": 1237,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1237-native-grid-provenance",
+      "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 107,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793714995417,
+      "reviewEntry": 1
+    },
     "1238": {
       "issue": 1238,
       "track": "show",
@@ -2137,7 +2151,8 @@
   },
   "waiting": [
     1230,
-    1238
+    1238,
+    1237
   ],
   "active": {
     "issue": 1232,
@@ -2416,6 +2431,19 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "finish:64e90297-ded8-47d7-a66f-82f934c27465": {
+      "digest": "cc5eaf2f57692c79e8f22f08308f7be00c368d2cc776c1ddac7eccebd9ef2f22",
+      "issue": 1237,
+      "message": {
+        "kind": "queued",
+        "issue": 1237,
+        "at": 1793714995417,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210"
       }
     }
   },
