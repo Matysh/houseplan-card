@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2098,
-  "nextTicket": 132,
+  "revision": 2099,
+  "nextTicket": 133,
   "nextFence": 132,
   "tasks": {
     "1126": {
@@ -2392,15 +2392,15 @@
       "issue": 1246,
       "track": "show",
       "layer": "product",
-      "branch": "issue/1246-toast-context-recovery",
-      "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
+      "branch": "issue/1246-toast-s6-reuse",
+      "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 131,
-      "queued": false,
+      "ticket": 132,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793733030754,
-      "reviewEntry": 4,
+      "readyAt": 1793733756972,
+      "reviewEntry": 5,
       "notice": {
         "key": "4:reuse-base-update",
         "reason": "reuse-base-update",
@@ -2453,8 +2453,7 @@
         "test/room-save-946.test.mjs",
         "test/toast-node-action.test.mjs",
         "test/toast-presentation.test.mjs"
-      ],
-      "reason": "reuse-base-update"
+      ]
     },
     "1247": {
       "issue": 1247,
@@ -2667,7 +2666,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1246
+  ],
   "active": null,
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
@@ -2978,6 +2979,19 @@
           "entry": 4,
           "eventId": "return:1246:131:reuse-base-update:return:1246"
         }
+      }
+    },
+    "ready:1246:0bdcf608eb29c774c6160fcedb0399bba4e4290b:reuse-critical": {
+      "digest": "51ce39c70f1a040ee763e2e5eff8e485e5988c80bbd1dba7009a403fe4aeb75d",
+      "issue": 1246,
+      "message": {
+        "kind": "queued",
+        "issue": 1246,
+        "at": 1793733756972,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b"
       }
     }
   },
