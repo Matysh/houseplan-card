@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1266,
-  "nextTicket": 90,
+  "revision": 1267,
+  "nextTicket": 91,
   "nextFence": 90,
   "tasks": {
     "1126": {
@@ -1510,6 +1510,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1222": {
+      "issue": 1222,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1222-decor-redo",
+      "materialSha": "934ddf7c09e322308ee491fbbcbec42c0550c906",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 90,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793703486129,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1614,9 +1628,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1222
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:b7308850-4c7a-47b6-9407-aed77629a9c7": {
+      "digest": "58c26891acfa18b3b7843777f7781229042e6dd63c4966ec4152949891f7e924",
+      "issue": 1222,
+      "message": {
+        "kind": "queued",
+        "issue": 1222,
+        "at": 1793703486129,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "934ddf7c09e322308ee491fbbcbec42c0550c906"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "44330439f73c5bd6a70323797d5558102215bcf0",
     "status": "delivered",
