@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2077,
-  "nextTicket": 131,
+  "revision": 2078,
+  "nextTicket": 132,
   "nextFence": 130,
   "tasks": {
     "1126": {
@@ -2383,14 +2383,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1246-toast-context-recovery",
-      "materialSha": "46d4ab860e2a3d576a04bb6728f1154da79974a7",
+      "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 128,
-      "queued": false,
+      "ticket": 131,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793730843511,
-      "reviewEntry": 3,
+      "readyAt": 1793733030754,
+      "reviewEntry": 4,
       "notice": {
         "key": "3:checks-failed",
         "reason": "checks-failed",
@@ -2443,8 +2443,7 @@
         "test/room-save-946.test.mjs",
         "test/toast-node-action.test.mjs",
         "test/toast-presentation.test.mjs"
-      ],
-      "reason": "checks-failed"
+      ]
     },
     "1247": {
       "issue": 1247,
@@ -2675,7 +2674,8 @@
     }
   },
   "waiting": [
-    1226
+    1226,
+    1246
   ],
   "active": {
     "issue": 1252,
@@ -3013,6 +3013,19 @@
         "layer": "product",
         "materialSha": "b1c227e98883d05c38ac8ccec41b19de09a97804",
         "delivered": true
+      }
+    },
+    "ready:1246:0e50780e4b5bca85b96519256520ac9f1f92a3ed:reuse-critical": {
+      "digest": "dee279d4d47909c6c9a4b7fea259e68e910491bc80780c4e3cde70c00e56bfe4",
+      "issue": 1246,
+      "message": {
+        "kind": "queued",
+        "issue": 1246,
+        "at": 1793733030754,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed"
       }
     }
   },
