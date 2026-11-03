@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1559,
+  "revision": 1560,
   "nextTicket": 107,
   "nextFence": 105,
   "tasks": {
@@ -2186,6 +2186,10 @@
       "digest": "af1e653080eaff7f4e9f11daa7e4f58a3b87f311bd64b635ac5bd4c1797a9f86",
       "issue": 1232
     },
+    "github:41650780379:1:completions:message:6ebcf6cd34dd4b5b3d4173572ffa83e278c5f246a7d5c7f722f8f0c0c6596387": {
+      "digest": "2564664d03639dfef09c69ebdd9480918d5223e1373bb40c5bc1c44b728126bf",
+      "issue": 1232
+    },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
       "digest": "851c6e1c8aa1c378ab4435b7494a3f1a4d4383057f9431bc1b2cbfe152a75d17",
       "issue": 1230,
@@ -2312,29 +2316,6 @@
         "layer": "product",
         "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
         "delivered": true
-      }
-    },
-    "finish:29271098-0fc9-4ccb-b71d-be101786d33f:finish:2:s6-complete": {
-      "digest": "186398f128c4b19c9486479b760d3ac0f39291071c3edbd7af07eecb2eeb1b09",
-      "issue": 1231,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1231,
-        "at": 1793714900640,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-        "phase": "ready-to-merge",
-        "evidence": {
-          "id": "20261103T140741035-581a759a",
-          "name": "Тесты для задачи #1231 (перед слиянием)",
-          "reportPath": "/home/matysh/hp-1101-space-delete-20261028/.git/process-next/runs/20261103T140741035-581a759a/report.json",
-          "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:08:17.788Z",
-          "failures": []
-        }
       }
     },
     "finish:8190ac02-a591-4eaf-ab2d-6b2a469a048f:finish:1:admit": {
