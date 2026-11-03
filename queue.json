@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2200,
+  "revision": 2201,
   "nextTicket": 137,
   "nextFence": 137,
   "tasks": {
@@ -2511,7 +2511,21 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793742851664,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "7d1f35cfdc6f5ea78a500618826f8c78dbfbbe33",
+      "changedFiles": [
+        "demo/helpers/wall-node-python.py",
+        "demo/smoke_wall_node_python_roundtrip.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/release-ledger/v1.83.0/1256.json",
+        "docs/release-ledger/v1.83.0/1257.json",
+        "src/json-value-equal.ts",
+        "src/plan-graph.ts",
+        "src/wall-segment-model.ts",
+        "test/graph-projection-order.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2623,12 +2637,17 @@
     "token": "136:finish:da0ef80b-4ce0-4f15-b336-1e9cce22de34:finish:1:admit",
     "fence": 136,
     "materialSha": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
+    "phase": "testing",
     "admittedAt": 1793742854994,
-    "expiresAt": 1793743154994
+    "expiresAt": 1793743161298,
+    "patchId": "7d1f35cfdc6f5ea78a500618826f8c78dbfbbe33"
   },
   "events": {
+    "finish:da0ef80b-4ce0-4f15-b336-1e9cce22de34:finish:2:synchronized": {
+      "digest": "671465327d7de1b024b932855cee8d114c6997cb8d67c56f136d373da520da46",
+      "issue": 1256
+    },
     "finish:da0ef80b-4ce0-4f15-b336-1e9cce22de34": {
       "digest": "78dd686c97055113199b60e325c0bcc3c8ecf7e611d1690f28a715214ff60e58",
       "issue": 1256,
