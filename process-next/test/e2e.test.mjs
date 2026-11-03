@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BETA_E2E } from '../catalog/selections.mjs';
 import { CONVERTER_CASES } from '../converters/cases.mjs';
-import { chooseE2ETests, listedTests, makeE2ESteps, reserveLoopbackPort, runE2E, testListText, verifyE2ESelection } from '../lib/e2e.mjs';
+import { chooseE2ETests, listedTests, makeE2ESteps, reserveLoopbackPort, runE2E, summarizeE2EResults, testListText, verifyE2ESelection } from '../lib/e2e.mjs';
 
 const project = t => t.suite === 'upgrade' ? 'upgrade' : t.suite === 'first-run'
   ? `first-run-${t.file.includes('.viewer.') ? 'viewer' : 'admin'}` : t.file.includes('.viewer.') ? 'viewer' : t.file.includes('.mobile.') ? 'mobile' : 'admin';
@@ -47,6 +47,33 @@ test('Playwright list retains nested title/project identity and rejects discover
   assert.deepEqual(row.titlePath, ['nested', 'the case']);
   assert.equal(testListText([row]), '[admin] › panel.admin.spec.mjs › nested › the case\n');
   assert.throws(() => listedTests({ errors: [{ message: 'module missing' }] }), /load errors/);
+});
+
+test('dependency-skipped Playwright rows without results stay skipped and failed setup stays separate', () => {
+  // The actual Playwright report uses status=skipped and results=[], rather
+  // than a synthetic last result with status=skipped, when dependencies fail.
+  for (const size of [10, 64]) {
+    const selected = Array.from({ length: size }, (_, i) => ({ project: 'admin', file: 'tests/plan.admin.spec.mjs', title: `case ${i}` }));
+    const actual = selected.map(row => ({ ...row, results: [], status: 'skipped' }));
+    actual.push({ project: 'setup', file: 'tests/auth.setup.mjs', title: 'login', results: [{ status: 'passed' }] },
+      { project: 'plan-model', file: 'tests/plan-model.setup.mjs', title: 'migrate', results: [{ status: 'failed' }] });
+    const result = summarizeE2EResults(actual, selected, 1);
+    assert.equal(result.status, 'failed');
+    assert.equal(result.tests, size); assert.equal(result.failed, 0); assert.equal(result.skipped, size);
+    assert.deepEqual(result.setup, { tests: 2, passed: 1, failed: 1, skipped: 0, unexecuted: 0 });
+    assert.equal(result.counts.setupFailed, 1); assert.equal(result.counts.failed, 0);
+  }
+});
+
+test('business failures, skipped and absent/interrupted attempts are not conflated', () => {
+  const rows = ['passed', 'failed', 'timedOut', 'skipped', 'interrupted', undefined].map((status, i) => ({
+    project: 'admin', file: 'tests/plan.admin.spec.mjs', title: `case ${i}`, results: status ? [{ status }] : [],
+  }));
+  const result = summarizeE2EResults(rows, rows, 1);
+  assert.deepEqual({ tests: result.tests, passed: result.passed, failed: result.failed, skipped: result.skipped, unexecuted: result.unexecuted },
+    { tests: 6, passed: 1, failed: 2, skipped: 1, unexecuted: 2 });
+  assert.equal(result.status, 'failed');
+  assert.equal(summarizeE2EResults(rows.slice(0, 1), rows.slice(0, 1), 1).status, 'failed', 'a nonzero process cannot be masked by passing cases');
 });
 
 test('plan has exact prerequisites and no broad-suite fallback', () => {
