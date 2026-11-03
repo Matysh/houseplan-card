@@ -8088,7 +8088,9 @@ private _pointerUp(ev: PointerEvent, d: DevItem): void {
     context ??= this._toastPresentation.captureContext();
     // A toast supersedes transient explanatory surfaces in this card only.
     // Dialogs own their portal/overlay registry, so another card stays intact.
-    (context.owner?.host as HpDialog | undefined)?.closeTransientOverlays('toast');
+    if (this._toastPresentation.isOwnerActive(context)) {
+      (context.owner!.host as HpDialog).closeTransientOverlays('toast');
+    }
     this._toast = msg;
     this._toastPresentation.show(this._toast, id, 'message', context);
     clearTimeout(this._toastTimer);

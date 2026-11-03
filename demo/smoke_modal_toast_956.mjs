@@ -159,6 +159,19 @@ try{
       &&!dialog.shadowRoot.querySelector('[data-hp=toast]');
     c.hass=original;c._spaceDialog=null;c.requestUpdate();await c.updateComplete;return stayed;
   });
+  out.reusedShellNeverRevivesRetiredToastContext=await page.evaluate(async()=>{
+    const c=window.__card;await window.__hpTest.settled();
+    const shell=document.createElement('hp-dialog');shell.title='Toast lifetime';shell.hass=c.hass;
+    c.shadowRoot.appendChild(shell);await shell.updateComplete;
+    const late=c._captureToast();c._showToast('old lifetime','toast.error');await new Promise(requestAnimationFrame);
+    const owned=!!shell.shadowRoot.querySelector('[data-hp=toast]');
+    const retirement=shell.beginExit();shell.cancelExit();await retirement;await shell.updateComplete;
+    let closed=0;const close=shell.closeTransientOverlays;shell.closeTransientOverlays=()=>{closed++;};
+    late('late old lifetime','toast.error');await new Promise(requestAnimationFrame);
+    const stayed=c.shadowRoot.querySelector('[data-hp=toast-portal] > [data-hp=toast]')?.textContent==='late old lifetime'
+      &&!shell.shadowRoot.querySelector('[data-hp=toast]')&&closed===0;
+    shell.closeTransientOverlays=close;shell.remove();return owned&&stayed;
+  });
   console.log('announcement log',await page.evaluate(()=>window.__toast956Announcements));
   await page.evaluate(async()=>{window.__toast956Write.reject=4;await window.__hpTest.setMode('plan');await window.__hpTest.openRoomEdit('r1');});
   await name.fill(draft+' detached');await name.press('Tab');await save.click();await notice.waitFor();
