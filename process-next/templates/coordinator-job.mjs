@@ -8,11 +8,12 @@ const config = JSON.parse(readFileSync('process-next/config.json', 'utf8'));
 const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
 const delivery = `github:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT ?? 1}`;
 const call = (command, event) => executeRemoteCommand({ command, config, event, execute: true });
-// Refresh existing release evidence only. A main push must not advance the task
-// queue or trigger a dev build; the regular tick also retries failed delivery.
-if (['push', 'schedule', 'workflow_dispatch'].includes(process.env.GITHUB_EVENT_NAME)) {
+// Metadata has its own job/concurrency: a slow badge delivery never occupies
+// the queue worker. It uses release evidence, not a new test/build/review run.
+if (process.env.PROCESS_NEXT_CI_ONLY === 'true') {
   try { console.log(JSON.stringify(await call('ci-status', { id: `${delivery}:ci-status` }))); }
   catch (error) { console.error(`Public CI metadata remains pending: ${error.message}; retry on the next tick`); }
+  process.exit(0);
 }
 if (process.env.GITHUB_EVENT_NAME === 'push') process.exit(0);
 if (process.env.GITHUB_EVENT_NAME === 'issues') {
