@@ -21,6 +21,14 @@ const fullCommit={};
 for(const name of characterizationCases){
  const actual=characterize(name),expected=oldCommit.results[name];
  const doc={...actual,ok:expected.ok,toasts:expected.toasts};
+ // The accepted graph commit boundary reports a failed physical preflight
+ // through its wall-model refusal owner. Preserve refusal/rollback/history;
+ // only these named diagnostic strings changed, not an arbitrary red result.
+ if(name.startsWith('marker-')&&name.endsWith('-safe-refusal')){
+  assert.deepEqual(expected.toasts,['toast.geometry_unsafe']);
+  assert.deepEqual(actual.toasts,['toast.wall_model_migration_blocked']);
+  doc.toasts=actual.toasts;
+ }
  if(actual.ok!==expected.ok){
   assert.equal(name,'unsafe','an unexplained outcome change cannot become a new passport');
   doc.config=fixture();doc.history=[]; // retain refusal, rollback and empty history, even while product is red

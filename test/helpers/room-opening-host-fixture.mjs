@@ -2,7 +2,9 @@
 // consume candidates from the same production deletion/face/identity stages.
 import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
-import { commitWallSegmentModel } from '../../test-build/wall-segment-model.js';
+// Frozen TS/Python v10 adapter passport, not a current editor writer. Current
+// graph delete-room/faces hosts are tested in graph-edit-intent.test.mjs.
+import { decodeLegacyWallSegmentModel as commitWallSegmentModel } from '../../test-build/wall-segment-model.js';
 import { spaceModels, GRID_PITCH, GRID_STEP_N, NORM_W } from '../../test-build/space-geometry.js';
 import { wallIntervals, materializeWallIntervals, applyWallThicknessToNewRoom } from '../../test-build/wall-thickness.js';
 import { planRoomDeletion, parameterOnPartition } from '../../test-build/room-deletion.js';

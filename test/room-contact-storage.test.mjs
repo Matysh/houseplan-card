@@ -6,7 +6,8 @@ import {buildWallFaceGraph,findWallFaceAtPoint} from '../test-build/wall-face-gr
 import {spaceModels,GRID_PITCH,NORM_W} from '../test-build/space-geometry.js';
 import {buildPlanSnapGeometry} from '../test-build/plan-snap-overlay.js';
 import {optimizePlans} from '../test-build/plan-optimizer.js';
-import {commitWallSegmentModel,wallModelOffGridValueCount} from '../test-build/wall-segment-model.js';
+import {commitWallSegmentModel,decodeLegacyWallSegmentModel,wallModelOffGridValueCount} from '../test-build/wall-segment-model.js';
+import {editGraphFixture} from './helpers/graph-fixture.mjs';
 import {checkOptimizeGeometry} from '../test-build/plan-geometry-preflight.js';
 import {wallFaceProvenPoints,storedWallContact} from '../test-build/stored-wall-contact.js';
 
@@ -49,7 +50,7 @@ test('#1166 storage tolerance does not close two distinct authored endpoints',()
 for(const optimize of [false,true])for(const reverse of [false,true])
 test(`#1166 ${optimize?'Optimize then ':''}both rooms materialize in ${reverse?'reverse':'forward'} order without new debt`,()=>{
   const before=source();
-  let current=optimize?optimizePlans(before,{}).config:structuredClone(before);
+  let current=optimize?optimizePlans(before,{}).config:commitWallSegmentModel(before).config;
   both(current);
   const queries=reverse?[[-200,1240],[350,400]]:[[350,400],[-200,1240]];
   for(const [index,point]of queries.entries()){
@@ -58,8 +59,9 @@ test(`#1166 ${optimize?'Optimize then ':''}both rooms materialize in ${reverse?'
     const inherited=wallFaceProvenPoints([face.ring.map(p=>p.map(v=>v/NORM_W))],
       graph(current).faces.map(f=>f.ring.map(p=>p.map(v=>v/NORM_W))));
     const initialDebt=wallModelOffGridValueCount(current.spaces[0],inherited);
-    current.spaces[0].rooms.push({id:`added-${index}`,name:'Synthetic',area:null,poly:face.ring.map(p=>p.map(v=>v/NORM_W))});
-    current=commitWallSegmentModel(current).config;
+    editGraphFixture(current,current.spaces[0].id,{kind:'faces',rooms:[`added-${index}`],
+      consumedPartitionIds:current.spaces[0].partitions.map(p=>p.id),sourceEdges:current.spaces[0].plan_graph.edges},
+      space=>space.rooms.push({id:`added-${index}`,name:'Synthetic',area:null,poly:face.ring.map(p=>p.map(v=>v/NORM_W))}));
     assert.ok(wallModelOffGridValueCount(current.spaces[0])<=initialDebt);
     assert.equal(checkOptimizeGeometry(current).ok,true);
     assert.equal(current.spaces[0].rooms.length,index+1);
@@ -70,13 +72,15 @@ test('#1166 derived shared cuts get one stored identity before final rounding',(
   const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/1166-shared-cut.json',import.meta.url),'utf8'));
   const input=structuredClone(fixture.source);
   input.spaces[0].rooms.push(fixture.room);
-  const first=commitWallSegmentModel(input).config;
+  // The historical shared-cut adapter fixture intentionally contains raw
+  // legacy projection contacts; its frozen decoder remains passported.
+  const first=decodeLegacyWallSegmentModel(input).config;
   const space=first.spaces[0],spans=space.wall_segments.map(w=>JSON.stringify([w.a,w.b]));
   assert.equal(new Set(spans).size,spans.length,'no different IDs collapse to the same stored span');
   assert.deepEqual(space.wall_segments.find(w=>w.id==='south').future_wall,{keep:true});
   const shared=space.rooms.map(room=>new Set(room.wall_ids));
   assert.ok([...shared[0]].some(id=>shared[1].has(id)),'the real shared edge has one identity');
-  assert.deepEqual(commitWallSegmentModel(first).config,first,'the next ordinary write stays valid');
+  assert.deepEqual(decodeLegacyWallSegmentModel(first).config,first,'the next legacy adapter pass stays valid');
 });
 
 test('#1166 incidence uses the existing normalized P4 boundary, not the wider topology key',()=>{
