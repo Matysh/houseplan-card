@@ -132,3 +132,30 @@ The #478unfinished work case now independently proves complete continuous covera
 ## Current full rehost packet, independently accepted
 
 The original280-optimize-rehost-candidate.json model10 capture remains unchanged. A separate280-optimize-rehost-current.json contains the complete current config and actual API2graph_change receipt. It starts from the real config/get appearance projection, not an unnormalised legacy-only colour fixture. The current full Node config matches this literal; independent Python HA WS accepts the packet, stores the entire config byte-structurally (including exactgraph/host/opaque fields) and performs Undo. Both original legacy packet cases remain selected:3/3backend casesPASS. The two other coincident safety/fixed-point failures stayRED. Total original Node230now201fixed/29remaining.
+
+## Resumed on accepted dev 0c030e700 (combined 0bda944e3)
+
+A single shared compiled test-build was reused; no second build was made. The exact 22 original Node names owned by this executor ran once: 6 PASS / 16 FAIL. Original six Resize failures belong to the sibling executor and were deliberately excluded. Five diagnostics cases now pass unchanged after #1229; the large split passes after accepted #1231's named-room fixture correction. #1231 did not change product Split.
+
+Two additional narrow ports pass: unsafe NaN keeps the same full config SHA, FALSE outcome and empty history after #1230, with the accepted graph-boundary diagnostic `wall_model_migration_blocked`; the already-current graph history scenario follows #1167's explicit legacy-cleanup bypass and proves the complete foreign floor stays identical, the own metadata set precedes exact Undo, and history/theme/toast are exact. Both unmodified legacy K3 Delete/Cancel counterproofs pass. Named large-plan thickness/merge and the three new #1231 positive/negative/history cases pass (5/5), without repeating the original large split.
+
+Current original-230 classification: **209 fixed / 21 retained red**, including the sibling's six original Resize rows not re-run here and the aggregate corpus. This is not an all-suite result.
+
+### Current unhosted-opening deletion refusal
+
+The #842 explicit partition/opening deletion remains RED for a demonstrated current reason. Official model9 migration produces a valid graph and leaves a legitimate unrelated opening without `host`. `commitGraphEditResult(..., {kind:'partitions',ids:['p']})` passes all before.openings as graph context. `validateGraph` treats an opening without an own `host` property as a bare EdgeRef and refuses `plan-graph:host`. The same pure current-graph operation reproduces independently of the writer host. `repros/explicit-delete-unhosted-opening.mjs` intentionally fails; it is a manual minimal reproducer, not a skipped/accepted result. No product patch or new issue was made.
+
+### #248 target distinction
+
+`Optimize(raw7)` differs from both `commit(raw7)` and `commit(old canonical expected10)`: Optimize snaps some x targets while retaining raw-source graph IDs and some y rationals. Its second pass is already unchanged. A separate current migration-facade/Python target therefore cannot replace this exact complete Optimize oracle. Full input/first/second/reference differences remain in `output/issue1226/storage-current-independent.json`; the original target is still RED.
+
+### Command evidence
+
+- `output/issue1226/node-final-22-selection.json` and `node-final-22.xml`: exact selected names and initial 6/16 result.
+- `unsafe-diagnostic-port.log`: 1/1 PASS; `history-current-cleanup-port.log`: 1/1 PASS; `history-legacy-cleanup-counterproof.log`: 2/2 PASS.
+- `named-room-controls.log`: 5/5 PASS, 54.7 seconds.
+- `corpus-controls.log`: 2/2 PASS for typed-receipt extraction/full opaque input retention and independent immutable archive/current union integrity.
+- `corpus-complete-current.xml`: original aggregate remains RED; expected passport was not changed.
+- `explicit-delete-minimal.log`: expected-success reproduction fails with plan-graph:host; the shell's trailing log display is not the Node exit status.
+
+No full stable audit, browser/HA test, product build, mutation run, golden acceptance or release was performed by this executor.

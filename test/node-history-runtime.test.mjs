@@ -279,20 +279,22 @@ test('#843 AC2 own write failed (transport): history.unavailable, history kept, 
   assert.deepEqual(s.stack(), { undo: 'Add room', redo: MOVE, size: 1 });
   assert.deepEqual(s.toasts, [undoName(MOVE)]);
 });
-test('#843 AC2 own write refused by #842 K2: history.unavailable, history kept; after the K3 answer Undo passes', async () => {
+test('#843 AC2 current graph metadata before Undo preserves foreign-floor records without legacy K3', async () => {
   const s = await moved({ damaged: true });
+  const foreign = clone(s.floorOf('g'));
   s.host._serverCfg.settings.theme = 'dark';
   s.runtime._saveConfig();
   s.runtime._undoGeometry(); await s.idle();
-  assert.equal(s.confirms.length, 1, 'the K3 question was asked');
-  assert.deepEqual(s.nodeWrites(), ['apply@3:f']);
-  assert.deepEqual(s.stack(), { undo: MOVE, redo: null, size: 2 });
-  assert.deepEqual(s.toasts, ['history.unavailable']);
-  s.confirms[0].resolve(true); await s.idle();
-  s.runtime._undoGeometry(); await s.idle();
+  // Model11 authority never enters the destructive legacy cleanup filter (#1167).
+  // Keep its foreign record and prove the own metadata write precedes exact Undo.
+  assert.equal(s.confirms.length, 0, 'legacy K3 does not rewrite a current graph');
   assert.deepEqual(s.nodeWrites(), ['apply@3:f', 'undo@5:f']);
+  assert.deepEqual(s.server.log.slice(1).map(m => `${m.type.split('/').at(-1)}@${m.expected_rev}`),
+    ['set@4', 'node_move@5']);
   assert.deepEqual([s.floorOf('f'), s.server.config.settings.theme], [s.original, 'dark']);
+  assert.deepEqual(s.floorOf('g'), foreign, 'the entire foreign floor remains byte-identical');
   assert.deepEqual(s.stack(), { undo: 'Add room', redo: MOVE, size: 1 });
+  assert.deepEqual(s.toasts, [undoName(MOVE)]);
 });
 for (const [name, edit] of [
   ['Rename room', space => { space.rooms[0].name = 'Renamed'; }],

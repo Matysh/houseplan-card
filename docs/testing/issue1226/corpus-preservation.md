@@ -41,8 +41,7 @@ typed `graph_change` receipts, whose `spaces` entries are protocol patches rathe
 than persisted spaces: two in `1061-align-carrier.json`, two in
 `1166-room-candidates.json`, and one in `280-optimize-rehost-current.json`.
 A proposed narrow extractor correction excludes exactly those five and preserves
-the other 474 inputs byte-for-byte under JSON serialization. It has **not** been
-applied here. The zero-config source files must stay inventoried.
+the other 474 inputs byte-for-byte under JSON serialization. It is now implemented by the narrow typed-envelope extractor; no product data is rewritten. The zero-config source files must stay inventoried.
 
 Among the 198 surviving original labels, 26 match completely; 72 differ only in
 table order; 67 now point to changed full inputs; 31 have unresolved semantic
@@ -51,7 +50,7 @@ refusals are `478-room-draft-migration-vectors.json/accepted/input` and
 `842-geometry-cleanup.json/before`. These aggregate observations alone do not
 establish a new product defect or prove equivalence to #1231/#1232.
 
-## Required next port
+## Implemented source preservation and remaining passport review
 
 Keep the recovered original 229 records and append genuine current sources under
 separate provenance: 276 new sources and 67 changed inputs give 572 source records
@@ -65,3 +64,7 @@ required. The 31 semantic deltas and two changed outcomes stay red until proven;
 nearest-edge matching or automatic acceptance of generated passports is not a
 substitute. A future loader must consume tracked archive bytes and verify input
 fingerprints, rather than fetch Git history during CI.
+
+The test loader now reads this tracked archive directly, checks the compressed bytes, original manifest SHA, all 229 per-input fingerprints and unchanged original expected rows. The complete guard consumes the historical/current union: historical labels keep their original full input; a changed current input receives a separate `@current:<fingerprint>` label. Identical label/fingerprint pairs share provenance only. The active union is **572 full documents** from **90 current files**, with **36 zero-config files** retained and **98 archive-only historical sources** restored (the 31 former receipts plus 67 changed inputs).
+
+Addressed integrity tests independently read the archive and compare every original full input and source commit; every current full source remains selected. Opaque metadata stays inside the fingerprint and complete input. The negative catalogue-order/ID/room/opening guard is unchanged. The aggregate identity passport remains RED against the unchanged original expected file: this source recovery is not automatic acceptance of current model11 identity or room cycles. The 31 semantic changes and two refused old positives still require explicit proof/review.

@@ -2,6 +2,7 @@
 import {createHash} from 'node:crypto';
 import {readdirSync,readFileSync} from 'node:fs';
 import {resolve,relative} from 'node:path';
+import {gunzipSync} from 'node:zlib';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {Script} from 'node:vm';
 
@@ -22,6 +23,13 @@ export function extractCorpusConfigs(value,label) {
   const entries=[];
   const visit=(v,path)=>{
     if(!v||typeof v!=='object')return;
+    // graph_change.spaces contains protocol patches, not persisted spaces.
+    // Stop at the typed envelope; never reinterpret patch fragments as configs.
+    if(!Array.isArray(v)&&[1,2].includes(v.version)&&Array.isArray(v.spaces)&&v.spaces.length
+      &&v.spaces.every(s=>s&&typeof s==='object'&&!Array.isArray(s)
+        &&typeof s.space_id==='string'&&!Object.hasOwn(s,'id')
+        &&s.patch&&typeof s.patch==='object'&&!Array.isArray(s.patch)
+        &&(Object.hasOwn(s,'base')||Object.hasOwn(s,'base_digest'))))return;
     if(!Array.isArray(v)&&Array.isArray(v.spaces)
       &&v.spaces.every(s=>s&&typeof s==='object'&&!Array.isArray(s))){
       entries.push({label:path,input:structuredClone(v)}); return;
@@ -108,4 +116,43 @@ export function corpusPassport(commit,corpus) {
   return {schema:1,baseline:'a7ee8e44f23e0f2b1e5b77cb73987bfb3116ba64',
     inventory:corpus.inventory,
     documents:corpus.entries.map(({label,input})=>({label,fingerprint:hash(input),...corpusOutcome(commit,input)}))};
+}
+
+/** Immutable original inputs: never depend on Git history or current decoder output. */
+export function loadHistoricalWallIdentityCorpus(root=CORPUS_ROOT) {
+  const bytes=readFileSync(resolve(root,'docs/testing/issue1226/repros/845-historical-inputs.json.gz'));
+  const expected=readFileSync(resolve(root,'test/fixtures/845-wall-corpus-identities.json'));
+  const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+  if(digest(bytes)!=='166699b562311b4f742f2ad563f081e0356239b89afe5168a30273a8fe078115')
+    throw Error('wall corpus: historical archive bytes changed');
+  const archive=JSON.parse(gunzipSync(bytes)), manifest=JSON.parse(expected);
+  if(digest(expected)!=='1507c3a072c3eb42a754d5908ac17f9b51d6d9a126248cfbe6adbd626fef5317'
+    ||archive.manifest!==digest(expected)||archive.schema!==1||archive.records?.length!==229)
+    throw Error('wall corpus: original passport or archive membership changed');
+  const old=new Map(manifest.documents.map(row=>[row.label,row])), labels=new Set();
+  const entries=archive.records.map(record=>{
+    if(labels.has(record.label)||!old.has(record.label)||hash(record.input)!==record.fingerprint
+      ||JSON.stringify(record.expected)!==JSON.stringify(old.get(record.label))
+      ||record.expected.fingerprint!==record.fingerprint||!record.source?.commit)
+      throw Error('wall corpus: historical input/expected/provenance mismatch: '+record.label);
+    labels.add(record.label);
+    return {label:record.label,input:structuredClone(record.input),fingerprint:record.fingerprint,
+      provenance:[{...structuredClone(record.source),recoveryKind:record.source.kind,kind:'historical'}]};
+  });
+  if(labels.size!==old.size)throw Error('wall corpus: an original source is missing');
+  return {entries,inventory:structuredClone(manifest.inventory)};
+}
+
+/** Preserve historical label+input pairs; append changed/new current sources separately. */
+export async function loadCompleteWallIdentityCorpus(root=CORPUS_ROOT) {
+  const historical=loadHistoricalWallIdentityCorpus(root), current=await loadWallIdentityCorpus(root);
+  const entries=historical.entries, old=new Map(entries.map(entry=>[entry.label,entry]));
+  for(const entry of current.entries){
+    const fingerprint=hash(entry.input), previous=old.get(entry.label);
+    const provenance={kind:'current',label:entry.label,fingerprint};
+    if(previous?.fingerprint===fingerprint){previous.provenance.push(provenance);continue;}
+    entries.push({...entry,label:previous?entry.label+'@current:'+fingerprint:entry.label,fingerprint,
+      provenance:[provenance]});
+  }
+  return {entries,inventory:current.inventory,historicalInventory:historical.inventory};
 }

@@ -49,7 +49,7 @@
     "unsafe": {
       "ok": false,
       "toasts": [
-        "toast.geometry_unsafe"
+        "toast.wall_model_migration_blocked"
       ],
       "config": "f4bdd395021a9bfc729490b947f73eeae01e53114b5786c5e8b85961bc159508",
       "history": []
