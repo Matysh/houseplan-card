@@ -9,8 +9,8 @@ No tests/build/lint/link checks are required because of this documentation.
 - External repository: https://github.com/Matysh/houseplan-e2e
 - PR: https://github.com/Matysh/houseplan-e2e/pull/18
 - Exact base: `115ae6f985f084696cde3f419d88d7751c4de972`
-- Exact head: `a5ba81afb2b624e6b84d9b3605c63e97322efb25`
-- Full original Git diff: `companion-full.patch` (including all24 changed files).
+- Exact head: `827fb417858e10e2362092e26960f7c8ae4c5ac0`
+- Full original Git diff: `companion-full.patch` (including all27 changed files).
 - `MANIFEST.json` maps each original path/ref to its complete text snapshot,
   original Git blob ID, SHA256 and byte count. Sources were read using Git show
   at the exact revisions; `.txt` suffixes make them inert review material.
@@ -67,6 +67,34 @@ Historical actual HA results and scope limits are in the snapshot
 `companion/head/task-impact/houseplan-card-1225.md.txt` and its per-case JSON.
 Those are author evidence, not a substitute for independent code review.
 Earlier advisory on6103fce did not certify subsequent A-D/profile/Copy changes.
-The final common diagnostic run41662157218 pins product0bda944e3244a142449c30c5f802c14833af8c66
-and this exact companion head; it is still running when this packet is written.
-Do not infer a PASS of its77 scenarios or of #1226 from this packet.
+The third common audit41662157218 used product0bda944e/companiona5ba81a:
+77 executed =73 passed,3 failed,1 timed out; no skips, setups10/10 passed.
+`HA-41662157218.json.txt` preserves the translated primary counts and per-case
+result paths. This is author-readable evidence, not a replacement for code review.
+
+The four remaining fixtures were corrected after that run, without removing
+oracles: Copy explicitly proves a loaded roomless copy with all four real
+zero-wall endpoints plus whole-space reload durability; only the oversized
+negative uses a bounded, uniquely correlated public CDP Network observer of the
+same real POST/status/body (no routing, repeat, mock or raw request in receipts);
+the literal10 input inherits only the historical discovery checkpoint from its
+original parent while preserving geometry/opaque/opening/Undo assertions; and
+the immutable vacuum trail journey runs before destructive full imports using
+the existing single-worker filename order, with a real trail/get precondition.
+
+Additional current source entry points:
+
+- `companion/head/tests/lib/preview-observer.mjs.txt`
+- `companion/head/tests/00-vacuum-trail.admin.spec.mjs.txt`
+- `companion/head/.github/workflows/e2e.yml.txt`
+
+The last file adds only the missing pinned Chromium prerequisite before the
+existing browser-dependent unit tests; no new workflow or gate is introduced.
+A real unseeded-backup/background-write Undo invalidation was observed separately
+and recorded in the integrator's findings file; these fixture changes do not
+claim to fix it. The current literal10 checkpoint preserves filter_seeded; the
+ordinary foreign-transfer rule still clears known_devices/new_device_ids.
+
+Current common diagnostic41679296259 pins product1f3a0f343f881ef59446c664baace3df8e72a635
+and this exact companion827fb417858e10e2362092e26960f7c8ae4c5ac0. It is running
+when this packet is refreshed. Do not infer a PASS of its77 scenarios or of#1226.

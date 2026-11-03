@@ -2,14 +2,14 @@
 import { test, expect } from '@playwright/test';
 import { compareTags } from '../scripts/tags.mjs';
 import { installedRecord, requireHooks } from './lib/contract.mjs';
-import { card, evidence, expectPlanDrawn } from './lib/ha-page.mjs';
+import { card, evidence, expectPlanDrawn, stageOf } from './lib/ha-page.mjs';
 import { planConfig, planLayout, spaceOf, waitForConfig } from './lib/ha-ws.mjs';
 import { HP, hp } from './lib/hooks.mjs';
 import { clickFloor, enterEditor, field, leaveEditor, openPlan, selectSpace, snap, useTool } from './lib/plan.mjs';
 import { profileWire, attachProfileReceipt } from './lib/panel-profiles.mjs';
 import { restoreSeedAfterEach } from './lib/seed-guard.mjs';
 
-requireHooks(test, 'space-settings', 'action@data-action', 'dialog@data-kind');
+requireHooks(test, 'space-settings', 'action@data-action', 'dialog@data-kind', 'stage');
 restoreSeedAfterEach(test);
 
 test('space-copy name survives the retired HA settings shell and Cancel keeps configuration', async ({ page }, testInfo) => {
@@ -127,8 +127,35 @@ test('space-copy furniture and decor choices persist all four combinations witho
     expect(stored.markers).toEqual(before.markers);
     expect((await planLayout()).layout).toEqual(layoutBefore);
     await page.reload();
-    await expectPlanDrawn(page, card(page));
+    const fresh = card(page);
+    // Copy converts the room outline into independent partitions; this saved
+    // space intentionally has no room records. Require its real geometry.
+    await expect(fresh.locator(HP.ready)).toBeVisible();
+    const surface = stageOf(fresh); await expect(surface).toBeVisible();
+    await expect.poll(async () => (await surface.boundingBox())?.height ?? 0).toBeGreaterThan(200);
     const reloaded = (await planConfig()).config;
+    expect(spaceOf(reloaded, copy.id)).toEqual(copy);
+    expect(copy.rooms).toEqual([]);
+    await expect(fresh.locator(HP.room)).toHaveCount(0);
+    expect(copy.partitions).toHaveLength(4);
+    expect(copy.partitions.every(partition => partition.cm === 0)).toBe(true);
+    const orderSegments = segments => segments.map(segment => segment.sort((a, b) => a[0] - b[0] || a[1] - b[1]))
+      .sort((a, b) => a[0][0] - b[0][0] || a[0][1] - b[0][1] || a[1][0] - b[1][0] || a[1][1] - b[1][1]);
+    const group = surface.locator('.zero-walls');
+    await expect(group).toBeVisible();
+    expect(await group.evaluate(node => Number(getComputedStyle(node).opacity))).toBeGreaterThan(0);
+    const lines = surface.locator('line.zero-wall');
+    await expect(lines).toHaveCount(4);
+    const rendered = await lines.evaluateAll(nodes => nodes.map(node => {
+      const style = getComputedStyle(node);
+      return { points: [[Number(node.getAttribute('x1')), Number(node.getAttribute('y1'))],
+        [Number(node.getAttribute('x2')), Number(node.getAttribute('y2'))]],
+        paints: style.display !== 'none' && style.visibility !== 'hidden' && style.stroke !== 'none'
+          && Number(style.strokeOpacity) > 0 && parseFloat(style.strokeWidth) > 0 };
+    }));
+    expect(rendered.every(line => line.paints)).toBe(true);
+    expect(orderSegments(rendered.map(line => line.points))).toEqual(orderSegments(copy.partitions.map(partition =>
+      [partition.a.map(value => value * 1000), partition.b.map(value => value * 1000)])));
     expect(spaceOf(reloaded, copy.id).decor || []).toEqual(copy.decor || []);
     expect(spaceOf(reloaded, sourceId)).toEqual(source);
     await selectSpace(card(page), copy.id);

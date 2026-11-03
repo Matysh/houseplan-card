@@ -3,13 +3,14 @@
   "repository": "https://github.com/Matysh/houseplan-e2e",
   "pullRequest": "https://github.com/Matysh/houseplan-e2e/pull/18",
   "base": "115ae6f985f084696cde3f419d88d7751c4de972",
-  "head": "a5ba81afb2b624e6b84d9b3605c63e97322efb25",
+  "head": "827fb417858e10e2362092e26960f7c8ae4c5ac0",
   "fullDiff": {
     "path": "companion-full.patch",
-    "bytes": 303051,
-    "sha256": "67fc6b68e4146a1ce3c95209252b91677ad3e25f676f373650d55973d5b74519"
+    "bytes": 324736,
+    "sha256": "019fc04c91be94392137357ce75f2e5ca13885dcb903384f8334b66256deb167"
   },
   "changedFiles": [
+    ".github/workflows/e2e.yml",
     "fixtures/backups/README.md",
     "fixtures/backups/current-dirty-geometry.json",
     "fixtures/backups/legacy10-transfer-cases.json",
@@ -18,6 +19,7 @@
     "task-impact/houseplan-card-1225.md",
     "test/profile-fixtures.test.mjs",
     "test/visible-plan-target.test.mjs",
+    "tests/00-vacuum-trail.admin.spec.mjs",
     "tests/editor-decor.admin.spec.mjs",
     "tests/editor-plan.admin.spec.mjs",
     "tests/first-run/first-space.admin.spec.mjs",
@@ -25,6 +27,7 @@
     "tests/lib/backup-fixtures.mjs",
     "tests/lib/exact-graph-first-space.mjs",
     "tests/lib/panel-profiles.mjs",
+    "tests/lib/preview-observer.mjs",
     "tests/lib/profile-fixtures.mjs",
     "tests/lib/visible-plan-target.mjs",
     "tests/panel-kiosk.admin.spec.mjs",
@@ -33,9 +36,28 @@
     "tests/plan-model.setup.mjs",
     "tests/space-copy-lifecycle.admin.spec.mjs",
     "tests/transfer-export.admin.spec.mjs",
-    "tests/transfer-import.admin.spec.mjs"
+    "tests/transfer-import.admin.spec.mjs",
+    "tests/vacuum-trail.admin.spec.mjs"
   ],
   "entries": [
+    {
+      "side": "base",
+      "source": ".github/workflows/e2e.yml",
+      "role": "changed-source before",
+      "snapshot": "companion/base/.github/workflows/e2e.yml.txt",
+      "bytes": 10542,
+      "sha256": "2e36810314585bcd3f28a11643a94f6551de5070b67d9d1b555fdfbf86ce1bc3",
+      "gitBlob": "11898f3ca57c337948f57dbf1d9c500a6c76d24c"
+    },
+    {
+      "side": "head",
+      "source": ".github/workflows/e2e.yml",
+      "role": "changed-source after",
+      "snapshot": "companion/head/.github/workflows/e2e.yml.txt",
+      "bytes": 10703,
+      "sha256": "a19e510104af8c568ffd7b76c2abd0483e3c1110c13501ac627cee0c86882ebf",
+      "gitBlob": "d05fd494c6c217b8cd2a22cb65b550cf9aa1c89c"
+    },
     {
       "side": "base",
       "source": "fixtures/backups/README.md",
@@ -134,6 +156,96 @@
       "bytes": 4053,
       "sha256": "11c774cf05214b4fce443220ab87dbe7696d2a1b20f2a0b90d2a8f7dbd47b52c",
       "gitBlob": "23e58b846bd96ed31c199b4d167805ae5a2b4487"
+    },
+    {
+      "side": "head",
+      "source": "tests/00-vacuum-trail.admin.spec.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/00-vacuum-trail.admin.spec.mjs.txt",
+      "bytes": 6001,
+      "sha256": "739ac911a7f3444059a3e8d3a59fab8364459e903d38fba84d635bea44234a4f",
+      "gitBlob": "dc61d8ce44eb19761ce1bc357f2c82fd652bf317"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/contract.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/contract.mjs.txt",
+      "bytes": 9025,
+      "sha256": "a624db6dabcc402e471f23b028aa65de15fd76682312012efcc6ad1699f4ffde",
+      "gitBlob": "5f577ea3e3d84efb641a13f62e946a4b8bdd9fc0"
+    },
+    {
+      "side": "head",
+      "source": "scripts/tags.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/scripts/tags.mjs.txt",
+      "bytes": 743,
+      "sha256": "5a38e6c196d6d7b3aee1c687d2439db98165f639873e423b176428b6f2911f49",
+      "gitBlob": "531c7807dc2c1efd13887922da1f8a87ebb53e0e"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-api.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-api.mjs.txt",
+      "bytes": 2701,
+      "sha256": "0b51c042d6fa60cc7d378826fb47e6d2ef994e19010775b1b4c00ee46c2d0071",
+      "gitBlob": "6e64e105d6683bf283b6aad743f408b05eadaa07"
+    },
+    {
+      "side": "head",
+      "source": "scripts/users.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/scripts/users.mjs.txt",
+      "bytes": 722,
+      "sha256": "a5998746c31adb34bb38b09d8b587bafbb6da19dcedd6900af209b9a0543d65c",
+      "gitBlob": "8a0657ab83f83aa5fc65034b237c8b979549f21f"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-page.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-page.mjs.txt",
+      "bytes": 7294,
+      "sha256": "6f7273fbbdfe0c30eabb78193ea3aa55ab63f332ac6e96aac2bfa2cef644ccbe",
+      "gitBlob": "bd5007ce019b88d309cb8675eb1fe130192989b6"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/hooks.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/hooks.mjs.txt",
+      "bytes": 1833,
+      "sha256": "bbe53ed72ed9099b6837959fa7fdae5e8fe4ba215731a49e671ea126a6968fd0",
+      "gitBlob": "df15a12d1959081647e5ae4093d7c33649596c76"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/ha-ws.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/ha-ws.mjs.txt",
+      "bytes": 6356,
+      "sha256": "840bce8a4eeebe5f83d2ed0063028472443bab3fd94fc25be4ed199278133678",
+      "gitBlob": "9a0a3fbddb80b66e9636f0315cdd52743f8f00dd"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/plan.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/plan.mjs.txt",
+      "bytes": 8277,
+      "sha256": "9f52948a90814ff64f3bde76bf62d2e86084f496da4ecaff19e3270946a34d9f",
+      "gitBlob": "c69fe046875b791acc37ca7964dae0883ee32a2a"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/panel-release-contract.mjs",
+      "role": "relative-import context",
+      "snapshot": "companion/head/tests/lib/panel-release-contract.mjs.txt",
+      "bytes": 1222,
+      "sha256": "06aecce180f9b06df751f8e1542fb4f5f151b144db8284daaba75d5e71ebe8c7",
+      "gitBlob": "e22ec3114d750a1ea2d1ef1729255695ab5f4429"
     },
     {
       "side": "base",
@@ -242,87 +354,6 @@
       "bytes": 9431,
       "sha256": "383febce822fe40267e0236c162b408c29c3c594d48eb52a254cf69726229686",
       "gitBlob": "96437c5779bd33b289b30fbac19eeaba36e956e8"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/contract.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/contract.mjs.txt",
-      "bytes": 9025,
-      "sha256": "a624db6dabcc402e471f23b028aa65de15fd76682312012efcc6ad1699f4ffde",
-      "gitBlob": "5f577ea3e3d84efb641a13f62e946a4b8bdd9fc0"
-    },
-    {
-      "side": "head",
-      "source": "scripts/tags.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/scripts/tags.mjs.txt",
-      "bytes": 743,
-      "sha256": "5a38e6c196d6d7b3aee1c687d2439db98165f639873e423b176428b6f2911f49",
-      "gitBlob": "531c7807dc2c1efd13887922da1f8a87ebb53e0e"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/ha-page.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/ha-page.mjs.txt",
-      "bytes": 7294,
-      "sha256": "6f7273fbbdfe0c30eabb78193ea3aa55ab63f332ac6e96aac2bfa2cef644ccbe",
-      "gitBlob": "bd5007ce019b88d309cb8675eb1fe130192989b6"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/hooks.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/hooks.mjs.txt",
-      "bytes": 1833,
-      "sha256": "bbe53ed72ed9099b6837959fa7fdae5e8fe4ba215731a49e671ea126a6968fd0",
-      "gitBlob": "df15a12d1959081647e5ae4093d7c33649596c76"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/ha-ws.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/ha-ws.mjs.txt",
-      "bytes": 6356,
-      "sha256": "840bce8a4eeebe5f83d2ed0063028472443bab3fd94fc25be4ed199278133678",
-      "gitBlob": "9a0a3fbddb80b66e9636f0315cdd52743f8f00dd"
-    },
-    {
-      "side": "head",
-      "source": "scripts/users.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/scripts/users.mjs.txt",
-      "bytes": 722,
-      "sha256": "a5998746c31adb34bb38b09d8b587bafbb6da19dcedd6900af209b9a0543d65c",
-      "gitBlob": "8a0657ab83f83aa5fc65034b237c8b979549f21f"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/ha-api.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/ha-api.mjs.txt",
-      "bytes": 2701,
-      "sha256": "0b51c042d6fa60cc7d378826fb47e6d2ef994e19010775b1b4c00ee46c2d0071",
-      "gitBlob": "6e64e105d6683bf283b6aad743f408b05eadaa07"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/plan.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/plan.mjs.txt",
-      "bytes": 8277,
-      "sha256": "9f52948a90814ff64f3bde76bf62d2e86084f496da4ecaff19e3270946a34d9f",
-      "gitBlob": "c69fe046875b791acc37ca7964dae0883ee32a2a"
-    },
-    {
-      "side": "head",
-      "source": "tests/lib/panel-release-contract.mjs",
-      "role": "relative-import context",
-      "snapshot": "companion/head/tests/lib/panel-release-contract.mjs.txt",
-      "bytes": 1222,
-      "sha256": "06aecce180f9b06df751f8e1542fb4f5f151b144db8284daaba75d5e71ebe8c7",
-      "gitBlob": "e22ec3114d750a1ea2d1ef1729255695ab5f4429"
     },
     {
       "side": "head",
@@ -446,9 +477,9 @@
       "source": "tests/lib/backup-fixtures.mjs",
       "role": "relative-import context",
       "snapshot": "companion/head/tests/lib/backup-fixtures.mjs.txt",
-      "bytes": 18051,
-      "sha256": "69299d6f743870f9c205d65143760ebe7f85739a0490f82cb60799848d4e5559",
-      "gitBlob": "bd0f9e5fd2b5d0135dadb7322a4461ac29df0289"
+      "bytes": 18755,
+      "sha256": "4387281cddfb31c84f00df9e63000d99929d7cbfc647a88c4db7a3277e6e613f",
+      "gitBlob": "4f1bbb0be865bf007606304dbc3755b1e8a2cbce"
     },
     {
       "side": "head",
@@ -485,6 +516,15 @@
       "bytes": 17857,
       "sha256": "1fd8fe07648a07fcdd4e5673f4f06b8bcef467252bdf6a4f8f3bb7d15532a5d7",
       "gitBlob": "56d383456ef506684aec635a341730608505a53c"
+    },
+    {
+      "side": "head",
+      "source": "tests/lib/preview-observer.mjs",
+      "role": "changed-source after",
+      "snapshot": "companion/head/tests/lib/preview-observer.mjs.txt",
+      "bytes": 3302,
+      "sha256": "1eb81d9cd1fc5e18ec7be9c9368f82efff244ab509f485b7b879246370dca615",
+      "gitBlob": "b806e08d01004365339948c47d9b5bbaa6f022d0"
     },
     {
       "side": "base",
@@ -626,9 +666,9 @@
       "source": "tests/space-copy-lifecycle.admin.spec.mjs",
       "role": "changed-source after",
       "snapshot": "companion/head/tests/space-copy-lifecycle.admin.spec.mjs.txt",
-      "bytes": 8709,
-      "sha256": "92be05d44af0029318674bdaedda1a102237d449c07247219083728e898b47b9",
-      "gitBlob": "011db372c87a20aa9838829bf3eca6aa3c503f7e"
+      "bytes": 10617,
+      "sha256": "cc2505b8499844f98490bf95d954c5da35ab48bb679aea648457ce8ddd6a47af",
+      "gitBlob": "ffa4615089c504fc8f4f705fade42a88c18af3c6"
     },
     {
       "side": "base",
@@ -662,9 +702,18 @@
       "source": "tests/transfer-import.admin.spec.mjs",
       "role": "changed-source after",
       "snapshot": "companion/head/tests/transfer-import.admin.spec.mjs.txt",
-      "bytes": 21415,
-      "sha256": "d22f2fb754b8b77142a03bb92580ed1d2fc0f59f9953d30e9a61095bc97d8763",
-      "gitBlob": "15c89c24065c22fcebb94778ea61b69a027d2f93"
+      "bytes": 22488,
+      "sha256": "1f793b005012cbd5bad19fcff0ce2a0d4a6462e5eac07466864c205ebdc49003",
+      "gitBlob": "29c99b8301a2c0c0ee1571c3fc90965a1a8c8de5"
+    },
+    {
+      "side": "base",
+      "source": "tests/vacuum-trail.admin.spec.mjs",
+      "role": "changed-source before",
+      "snapshot": "companion/base/tests/vacuum-trail.admin.spec.mjs.txt",
+      "bytes": 5197,
+      "sha256": "c94de61ee549fa476eab8b9fcaf8e51c9dc809d01d1a9183fc4146e6a4b773c7",
+      "gitBlob": "106f38181ffe7dce29665c06b3432ef5490566e2"
     },
     {
       "side": "head",
@@ -701,15 +750,6 @@
       "bytes": 2907,
       "sha256": "052be080ba7b073b2252753dcc916d727f79843fd07a16dfca9c6497c841edd2",
       "gitBlob": "eb86979d08402805feb2081b97f6249961c7aa0e"
-    },
-    {
-      "side": "head",
-      "source": ".github/workflows/e2e.yml",
-      "role": "unchanged execution/seed/contract context",
-      "snapshot": "companion/head/.github/workflows/e2e.yml.txt",
-      "bytes": 10542,
-      "sha256": "2e36810314585bcd3f28a11643a94f6551de5070b67d9d1b555fdfbf86ce1bc3",
-      "gitBlob": "11898f3ca57c337948f57dbf1d9c500a6c76d24c"
     },
     {
       "side": "head",
@@ -782,6 +822,15 @@
       "bytes": 11134,
       "sha256": "db59be0055a2497c18915be0abe268094aa1efc4b5fa0ea58708535e88f59828",
       "gitBlob": "7453c143d1cbe4083f25d55c9f27d7be752683be"
+    },
+    {
+      "side": "head",
+      "source": "seed/.storage/houseplan.trails",
+      "role": "unchanged execution/seed/contract context",
+      "snapshot": "companion/head/seed/.storage/houseplan.trails.txt",
+      "bytes": 12580,
+      "sha256": "9a76603eb647f30e8e6c02dc2415c5d9f3899f7bf58867eaba98701bab0d247a",
+      "gitBlob": "1169db6046e1a96686f1c1f1198ee0d46ab1439c"
     },
     {
       "side": "head",

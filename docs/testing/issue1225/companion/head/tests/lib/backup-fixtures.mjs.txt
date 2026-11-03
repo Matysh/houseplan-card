@@ -64,10 +64,20 @@ export function geometryRefusalPlans(base) {
 }
 
 /** #1033 model10 input remains literal, never a relabelled current export. */
-export function legacy10OpeningPlan() {
+export function legacy10OpeningPlan(parentSettings) {
   const document = copy(LEGACY10_TRANSFER.openingRepair);
   assert.equal(document.model_version, 10);
   assert.ok(document.payload.config.spaces.every(space => !space.plan_graph));
+  if (parentSettings) {
+    // Historical discovery checkpoint, already present in the genuine parent
+    // backup. Preserve only these keys, not unrelated modern space references.
+    const keys = ['filter_seeded', 'known_devices', 'new_device_ids'];
+    for (const key of keys) assert.ok(Object.hasOwn(parentSettings, key), `parent checkpoint missing ${key}`);
+    assert.equal(parentSettings.filter_seeded, true);
+    assert.ok(Array.isArray(parentSettings.known_devices) && Array.isArray(parentSettings.new_device_ids));
+    document.payload.config.settings = { ...document.payload.config.settings,
+      ...Object.fromEntries(keys.map(key => [key, copy(parentSettings[key])])) };
+  }
   const { host, ...opening } = document.payload.config.spaces[0].openings[0];
   assert.deepEqual(host, { kind: 'wall', id: 'legacy-top', t: .5 });
   return { document, expected: { opening, geometry: copy(LEGACY10_TRANSFER.expectedOpeningRepairGeometry) } };

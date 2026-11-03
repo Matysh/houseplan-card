@@ -61,6 +61,8 @@ jobs:
           cache: npm
       # the unit suite reads PNGs and ZIPs (pngjs, pixelmatch)
       - run: npm ci
+      - name: Подготовить pinned Chromium для browser-dependent unit
+        run: node node_modules/playwright/cli.js install --with-deps chromium
       - name: Проверки выбора версий и матрицы
         run: node --test test/*.test.mjs
       - id: plan

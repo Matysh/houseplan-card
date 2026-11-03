@@ -18,6 +18,7 @@ import { chooseBackup, footerCancel, openMaintenance, previewReply } from './lib
 import { card, evidence, expectPlanDrawn, spaceEntry } from './lib/ha-page.mjs';
 import { planConfig, planLayout, spaceOf, wsCall } from './lib/ha-ws.mjs';
 import { HP, hp } from './lib/hooks.mjs';
+import { observeLargePreview } from './lib/preview-observer.mjs';
 import { action, field, selectSpace } from './lib/plan.mjs';
 import { restoreSeedAfterEach } from './lib/seed-guard.mjs';
 
@@ -214,7 +215,7 @@ test('a JSON from House Plan 1.62 on another Home Assistant is migrated to the c
 
   if (after.model_version >= 11) await test.step('#1033 genuine legacy10 off-wall import and full Undo', async () => {
     const previous = await transferState();
-    const plan = legacy10OpeningPlan(), raw = Buffer.from(JSON.stringify(plan.document));
+    const plan = legacy10OpeningPlan(document.payload.config.settings), raw = Buffer.from(JSON.stringify(plan.document));
     await testInfo.attach('literal-legacy10-off-wall.json', { body: raw, contentType: 'application/json' });
     const { host, settings } = await openMaintenance(page), replied = previewReply(page);
     const dialog = await chooseBackup(page, host, settings, { name: 'legacy10-off-wall.json', mimeType: 'application/json', buffer: raw });
@@ -309,20 +310,35 @@ test('damaged, wrong and invalid files are refused and the plan stays as it was'
   let maintenance = settings;
   for (const [what, name, mimeType, buffer, message, expectedCode] of cases) {
     await test.step(what, async () => {
-      const replied = previewReply(page);
-      const dialog = await chooseBackup(page, host, maintenance, { name, mimeType, buffer });
-      const response = await replied, reply = await response.json();
-      expect(response.ok(), JSON.stringify(reply)).toBe(false);
-      if (expectedCode) expect(reply.error).toBe(expectedCode);
-      expect(reply.token).toBeUndefined();
-      expect(reply.preview).toBeUndefined();
-      await expect(dialog.getByRole('alert')).toContainText(message);
-      await expect(dialog.locator(HP.dialogConfirm)).toHaveCount(0);
-      if (what === 'a damaged ZIP') await evidence(testInfo, page, 'import-refused-damaged-zip');
-      await footerCancel(dialog).click();
-      await expect(dialog).toBeHidden();
-      expect(await transferState(), `${what}: entire pair, revisions and Undo are unchanged`).toEqual(before);
-      ({ settings: maintenance } = await reopenMaintenance(host));
+      const large = name === 'huge.json' ? await observeLargePreview(page) : null;
+      try {
+        const replied = previewReply(page);
+        const dialog = await chooseBackup(page, host, maintenance, { name, mimeType, buffer });
+        const response = await replied;
+        const observed = large ? await large.response : null;
+        const reply = observed ? observed.reply : await response.json();
+        if (observed) {
+          expect(observed.url).toBe(response.url()); expect(observed.status).toBe(response.status());
+          expect(observed.method).toBe('POST'); expect(large.requests).toHaveLength(1);
+          await testInfo.attach('oversize-preview-real-http.json', { body: JSON.stringify({
+            url: observed.url, requestId: observed.requestId, method: observed.method,
+            status: observed.status, error: reply.error, hasToken: Object.hasOwn(reply, 'token'),
+            hasPreview: Object.hasOwn(reply, 'preview'), requestCount: large.requests.length,
+          }), contentType: 'application/json' });
+        }
+        expect(response.ok(), JSON.stringify(reply)).toBe(false);
+        if (expectedCode) expect(reply.error).toBe(expectedCode);
+        expect(reply.token).toBeUndefined();
+        expect(reply.preview).toBeUndefined();
+        await expect(dialog.getByRole('alert')).toContainText(message);
+        await expect(dialog.locator(HP.dialogConfirm)).toHaveCount(0);
+        if (what === 'a damaged ZIP') await evidence(testInfo, page, 'import-refused-damaged-zip');
+        await footerCancel(dialog).click();
+        await expect(dialog).toBeHidden();
+        expect(await transferState(), `${what}: entire pair, revisions and Undo are unchanged`).toEqual(before);
+        ({ settings: maintenance } = await reopenMaintenance(host));
+        if (large) expect(large.requests).toHaveLength(1);
+      } finally { await large?.dispose(); }
     });
   }
 });
