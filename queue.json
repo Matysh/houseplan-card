@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 1501,
+  "revision": 1502,
   "nextTicket": 104,
-  "nextFence": 101,
+  "nextFence": 102,
   "tasks": {
     "1126": {
       "issue": 1126,
@@ -1884,7 +1884,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 101,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714082036,
       "reviewEntry": 1
@@ -2020,11 +2020,20 @@
     }
   },
   "waiting": [
-    1233,
     1235,
     1232
   ],
-  "active": null,
+  "active": {
+    "issue": 1233,
+    "worker": "github-coordinator",
+    "token": "101:github:41648973536:1:tick:0:admit",
+    "fence": 101,
+    "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793714280369,
+    "expiresAt": 1793714580369
+  },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
       "digest": "8c87ddf22239024019830f7afa575e032b0b2959ff1cab9bb9b0075aedfcae8b",
@@ -2206,6 +2215,20 @@
           "requestId": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
           "eventId": "author-finite-sparse-1230-1793714275635:return:1230"
         }
+      }
+    },
+    "github:41648973536:1:tick:0:admit": {
+      "digest": "5b3b76417aa7b705dd863e370a57f7ff6a9fc6e7998bb39a55d9eb0ef808c721",
+      "issue": 1233,
+      "message": {
+        "kind": "admitted",
+        "issue": 1233,
+        "at": 1793714280369,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
+        "phase": "sync"
       }
     }
   },
