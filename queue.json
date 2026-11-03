@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2080,
+  "revision": 2081,
   "nextTicket": 132,
   "nextFence": 130,
   "tasks": {
@@ -2555,6 +2555,108 @@
         "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
         "expectedBase": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
         "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1252,
+        "requestId": "review:1252:1:3c534d3cd09ad85beea7a227b25565e78fb0d56a:5126d7401c4755f6612aa27aaddbb26c9f3ca171",
+        "kind": "code",
+        "base": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
+        "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+        "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1252,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1252",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "<details>\n<summary>Решение и фактическая адресная проверка</summary>\n\nИзменены только checkout двух служебных jobs (progress/public-ci) в canonical template и развёрнутом workflow плюс RU/EN changelog. Добавлен cone sparse-набор process-next, scripts, demo/helpers; fetch-depth:0, токен, permissions, concurrency, таймауты и все команды сохранены. Закреплённый checkout сам включает blob:none. Сборочный dev-build, reviewer и fallback не изменены. Новых постоянных тестов, реестров или гейтов нет.\n\nОднократная проверка в Ubuntu WSL сделана настоящим HTTPS partial clone GitHub, без использования объектов существующего checkout: исходный dev ad46b790228f0b2e7ae37f7905a63843043cf2ab, те же sparse-каталоги, full ancestry. Checkout занял около 6 секунд, итоговые pack-файлы после адресных чтений — 11,83 МиБ. Это локальное наблюдение, не обещание такого же времени на hosted runner.\n\nPASS: импорт remote.mjs со всеми транзитивными зависимостями; shallow=false, promisor=true, filter=blob:none; src/docs/legacy/custom_components/test отсутствуют в рабочем каталоге. Ledger blob из docs изначально действительно отсутствовал в локальной object database, readTaskReleaseMilestone догрузил его и получил ready/milestone11 для #1244. git show package.json предыдущего SHA, ancestry и productIdentity отработали; каталог docs при этом не появился. Проверка команды публикации была только offline, без записей в GitHub.\n\nОтдельный синтетический bare-репозиторий с file:// upload-pack allowFilter=true: существующий GitAdapter.merge на partial+sparse clone сделал ровно один atomic push, обновил dev и process-state до S8, удалил issue/1; исключённый продуктовый blob изначально не был скачан, после merge доступен через git show, но не материализован в worktree. PASS, около 0,39 секунды. Все записи только в одноразовый локальный fixture; он удалён. Временные проверочные скрипты в ignored process-next/.state, в продукт/постоянный тестовый набор не добавляются.\n\nШтатный S6 через finish: синтаксис изменённых YAML и существующие адресные github/task-completion/ci-status tests. Предварительные проверки выше дополняют, а не подменяют его receipt. Особое внимание ревью: достаточность runtime imports, сохранённая ancestry и работа с blob вне sparse, отсутствие скрытого изменения задач/релиза. Workflow в main сейчас совпадает по blob с исходным dev; после принятия и merge будет точечно обновлён только этот workflow в main, с проверкой текущего head и без переноса продукта.\n\n</details>"
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Изменение подходит для задачи, и я не нашёл блокеров. В checkout двух служебных jobs (`public-ci` и `progress`) добавлен cone sparse-набор `process-next`, `scripts`, `demo/helpers`. При этом `fetch-depth: 0`, токен, таймауты, concurrency и команды остались прежними. Шаблон и развёрнутый workflow побайтно совпадают: в diff одинаковые хэши `d92bf6138..fd797ce7b`. Сборочный `dev-build` по-прежнему делает полный checkout. По исходникам видно, что код, который реально выполняется в этих jobs, использует только модули внутри трёх выбранных каталогов. С Git он работает через операции, которые не требуют файлов в рабочем каталоге: `ls-remote`, `cat-file -e`, `merge-base --is-ancestor`, `git show <sha>:<path>`, `ls-tree`, сборку state-коммита без рабочего каталога и atomic push. Поэтому partial clone (`blob:none`) вместе со sparse ничего не ломает: недостающие blobs подгружаются адресно. Эффект для пользователя появится только после точечного обновления workflow в `main`. Реальное ускорение и первая доставка комментария будут подтверждены первым штатным запуском после развёртывания, как и предусмотрено в ТЗ.",
+          "understanding": "Проблема. Служебные jobs координатора с лимитом 5 и 2 минуты клонировали весь dev с полной историей и всеми blobs: около 192 МиБ несжатого дерева. В #1244 первая попытка опубликовать итог merge упёрлась в таймаут ещё на checkout, а итоговый комментарий появился почти через 10 минут.\n\nДо изменения: обычный `actions/checkout` с `fetch-depth: 0`. После: тот же checkout плюс `sparse-checkout` в cone-режиме. Закреплённая версия action в этом случае сама передаёт `--filter=blob:none`. Граф коммитов и деревья доступны целиком, в рабочий каталог разворачиваются только три каталога и корневые файлы, включая `.nvmrc` для setup-node. Остальные blobs подгружаются по запросу, с теми же сохранёнными учётными данными checkout.\n\nКакие пути я разобрал:\n- `coordinator-job.mjs` и все его прямые и транзитивные статические импорты. Выходы из `process-next` ведут только в `demo/helpers/icon-sources.mjs`, `scripts/telegram-release.mjs`, `user-stable-changelog.mjs`, `release-narrative.mjs`, `spawn-portable.mjs`, `mutation-gate-report.mjs`. Внутри у них только node-builtins и соседние файлы из `scripts`.\n- Чтения файлов при загрузке модулей: `inventory.json`, `baselines`, `prompts`, `evidence/ci-v1.83.1.json`, `config.json`. Все они лежат в `process-next`.\n- Команды, которые вызывает job: `ci-status`, `label` (включая ревью ТЗ), `reconcile`, `reconcile-completions`, `dev-webhook`.\n- `GitAdapter.merge` и `stateCommit`, `readTaskReleaseMilestone`, `productSnapshot` для плашки CI.\n- `inspectTaskMaterial` с `git diff --binary`. Он вызывается только в локальном `finish` и в команде `synchronized`, но не в hosted `reconcile`.",
+          "analysis": [
+            {
+              "topic": "Достаточность sparse-набора для импортов",
+              "assessment": "Набора хватает. Все относительные импорты за пределы `process-next` из модулей, которые грузит `remote.mjs`, ведут в `scripts/**` или `demo/helpers/**`. Транзитивные импорты этих скриптов остаются внутри `scripts`. Импорты `demo/golden`, `demo/serve.mjs`, `test-build` есть только в `catalog/golden-*`, `startup-smoke`, тестах и `coordinator-dev-build.mjs`; служебные jobs их не загружают. Внешних npm-пакетов hosted-путь не требует, `npm ci` здесь не было и раньше. Выбор каталогов, а не списка файлов, оправдан: новый helper в `scripts` подхватится сам.",
+              "evidence": "Поиск `from '../../` по `process-next`: `lib/catalog.mjs:9`, `lib/notifications.mjs:2`, `lib/release-preparation.mjs:3`, `lib/background.mjs:7`, `templates/coordinator-dev-build.mjs:4`. Импорты `scripts/telegram-release.mjs:4-6`, `scripts/user-stable-changelog.mjs:4`, `scripts/mutation-gate-report.mjs:31`, `demo/helpers/icon-sources.mjs:1-2`. Автор также сообщает, что `remote.mjs` успешно импортировался в реальном partial+sparse clone."
+            },
+            {
+              "topic": "Сохранность ancestry и работа с blobs вне sparse",
+              "assessment": "Корректно. При `fetch-depth: 0` клон не shallow, поэтому `merge-base --is-ancestor` и `ensureCommit` работают как раньше. Под фильтром `blob:none` `ensureCommit` подтягивает недостающий коммит без его blobs. Ledger, `package.json` других коммитов и `queue.json` читаются через `git show <sha>:<path>` и при необходимости подгружаются адресно. `ls-tree -r` в `productSnapshot` использует только деревья и OID, содержимое файлов ему не нужно.",
+              "evidence": "`process-next/lib/github.mjs:245-253` (assertAncestor, ensureCommit), `lib/release-data.mjs:9,13`, `lib/ci-status.mjs:16,22`, `lib/github.mjs:288`. Автор сообщает, что ledger-blob изначально отсутствовал и был подгружен, а для #1244 получено ready/milestone 11."
+            },
+            {
+              "topic": "Механизм merge в partial+sparse клоне",
+              "assessment": "Не зависит от рабочего каталога. `stateCommit` собирает дерево через временный `GIT_INDEX_FILE`: `read-tree` без `-u`, `hash-object`, `update-index --cacheinfo`, `write-tree`, `commit-tree`. Содержимое чужих blobs для этого не нужно. Push отправляет только новый state-коммит и его дерево, а `materialSha` уже есть на remote в ветке задачи. CAS через `--force-with-lease` и `--atomic` не изменился.",
+              "evidence": "`process-next/lib/github.mjs:254-311`. Синтетический прогон автора на partial+sparse bare-fixture показал ровно один atomic push, а исключённый blob не появился в рабочем каталоге. Это результат автора; я его не воспроизводил."
+            },
+            {
+              "topic": "Границы изменения и согласованность шаблона",
+              "assessment": "Изменение минимальное и адресное. Шаблон и workflow совпадают по blob. `dev-build`, reviewer, fallback и релизные workflow не тронуты. Новых гейтов, сервисов и реестров нет. Комментарий в YAML объясняет неочевидную причину: почему сохранена история и почему ограничено содержимое. Запись в changelog следует сложившейся практике для процессных задач (ср. #1241). Ledger-записи для #1252 нет, но у infra-задачи #1241 её тоже нет; по `release-data.mjs:1` её отсутствие не блокирует merge.",
+              "evidence": "diff `.github/workflows/process-next-coordinator.yml` и `process-next/templates/coordinator.yml`: одинаковые index-хэши, задание `dev-build` (строки 90-94) без sparse. `process-next/catalog/cutover.json:126-131` описывает связь шаблон→target."
+            },
+            {
+              "topic": "Характер отказа и откат",
+              "assessment": "Если в будущем hosted-путь импортирует файл вне трёх каталогов, `node` упадёт с ERR_MODULE_NOT_FOUND ещё до публикации. Job станет явно красной, а merge и состояние очереди не пострадают, потому что запись идёт только через atomic push. Откат тривиален: убрать `sparse-checkout` из workflow в `main`. Это приемлемая граница надёжности для узкой правки, ТЗ прямо выбрало каталоги вместо реестра.",
+              "evidence": "`process-next/templates/coordinator-job.mjs:1-5` (статические импорты на верхнем уровне), `lib/github.mjs:293-306`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Необязательно: в YAML-комментарии можно перечислить, какие внешние импорты держат `scripts` и `demo/helpers` в наборе (`demo/helpers/icon-sources.mjs` через `lib/catalog.mjs`, `scripts/*` через notifications и release-preparation). Тогда при чистке этих зависимостей будет видно, что каталоги можно убрать или что новый импорт из `demo/golden` нужно сюда добавить. Цена — одна-две строки комментария. Новый гейт ради этого не нужен."
+          ],
+          "boundaries": "Сборку, тесты и workflow я не запускал. Всё выше получено чтением исходников на head `082f99c`: workflow и шаблон, `coordinator-job.mjs`, `remote.mjs` (обработчики команд), `lib/github.mjs` (GitAdapter, runGit), `lib/ci-status.mjs`, `lib/release-data.mjs`, `lib/catalog.mjs`, `lib/coordinator.mjs` (Git-вызовы), `lib/task-completion.mjs`, импорты в `scripts` и `demo/helpers`. Поведение pinned `actions/checkout` (`blob:none` при sparse-checkout, cone-режим по умолчанию с корневыми файлами, сохранённый extraheader для ленивых fetch) взято из ТЗ и общего знания action; исходник action через доступные инструменты я не открывал. Использован S6-receipt `20261103T190616323-597ade13` со статусом passed (синтаксис YAML и адресные тесты github, task-completion и ci-status). Разовые проверки автора (реальный HTTPS partial clone, импорт `remote.mjs`, ленивое чтение ledger, синтетический merge) учтены как его заявленные результаты; повторно я их не выполнял. Фактическое ускорение на hosted runner, работа ленивых fetch с `HP_PROCESS_TOKEN` в Actions и доставка комментария подтвердятся только первым штатным запуском после точечного обновления workflow в `main`. Это пост-merge шаг из ТЗ, кодом здесь он не проверяется."
+        },
+        "usage": {
+          "input_tokens": 54,
+          "cache_creation_input_tokens": 95932,
+          "cache_read_input_tokens": 1534201,
+          "output_tokens": 14287,
+          "output_tokens_details": {
+            "thinking_tokens": 6076
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 95932,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 946,
+              "cache_read_input_tokens": 88906,
+              "cache_creation_input_tokens": 11230,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 11230
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение подходит для задачи, и я не нашёл блокеров. В checkout двух служебных jobs (`public-ci` и `progress`) добавлен cone sparse-набор `process-next`, `scripts`, `demo/helpers`. При этом `fetch-depth: 0`, токен, таймауты, concurrency и команды остались прежними. Шаблон и развёрнутый workflow побайтно совпадают: в diff одинаковые хэши `d92bf6138..fd797ce7b`. Сборочный `dev-build` по-прежнему делает полный checkout. По исходникам видно, что код, который реально выполняется в этих jobs, использует только модули внутри трёх выбранных каталогов. С Git он работает через операции, которые не требуют файлов в рабочем каталоге: `ls-remote`, `cat-file -e`, `merge-base --is-ancestor`, `git show <sha>:<path>`, `ls-tree`, сборку state-коммита без рабочего каталога и atomic push. Поэтому partial clone (`blob:none`) вместе со sparse ничего не ломает: недостающие blobs подгружаются адресно. Эффект для пользователя появится только после точечного обновления workflow в `main`. Реальное ускорение и первая доставка комментария будут подтверждены первым штатным запуском после развёртывания, как и предусмотрено в ТЗ.\n\n## Понимание решения\n\nПроблема. Служебные jobs координатора с лимитом 5 и 2 минуты клонировали весь dev с полной историей и всеми blobs: около 192 МиБ несжатого дерева. В #1244 первая попытка опубликовать итог merge упёрлась в таймаут ещё на checkout, а итоговый комментарий появился почти через 10 минут.\n\nДо изменения: обычный `actions/checkout` с `fetch-depth: 0`. После: тот же checkout плюс `sparse-checkout` в cone-режиме. Закреплённая версия action в этом случае сама передаёт `--filter=blob:none`. Граф коммитов и деревья доступны целиком, в рабочий каталог разворачиваются только три каталога и корневые файлы, включая `.nvmrc` для setup-node. Остальные blobs подгружаются по запросу, с теми же сохранёнными учётными данными checkout.\n\nКакие пути я разобрал:\n- `coordinator-job.mjs` и все его прямые и транзитивные статические импорты. Выходы из `process-next` ведут только в `demo/helpers/icon-sources.mjs`, `scripts/telegram-release.mjs`, `user-stable-changelog.mjs`, `release-narrative.mjs`, `spawn-portable.mjs`, `mutation-gate-report.mjs`. Внутри у них только node-builtins и соседние файлы из `scripts`.\n- Чтения файлов при загрузке модулей: `inventory.json`, `baselines`, `prompts`, `evidence/ci-v1.83.1.json`, `config.json`. Все они лежат в `process-next`.\n- Команды, которые вызывает job: `ci-status`, `label` (включая ревью ТЗ), `reconcile`, `reconcile-completions`, `dev-webhook`.\n- `GitAdapter.merge` и `stateCommit`, `readTaskReleaseMilestone`, `productSnapshot` для плашки CI.\n- `inspectTaskMaterial` с `git diff --binary`. Он вызывается только в локальном `finish` и в команде `synchronized`, но не в hosted `reconcile`.\n\n## Разбор решения\n\n### Достаточность sparse-набора для импортов\n\nНабора хватает. Все относительные импорты за пределы `process-next` из модулей, которые грузит `remote.mjs`, ведут в `scripts/**` или `demo/helpers/**`. Транзитивные импорты этих скриптов остаются внутри `scripts`. Импорты `demo/golden`, `demo/serve.mjs`, `test-build` есть только в `catalog/golden-*`, `startup-smoke`, тестах и `coordinator-dev-build.mjs`; служебные jobs их не загружают. Внешних npm-пакетов hosted-путь не требует, `npm ci` здесь не было и раньше. Выбор каталогов, а не списка файлов, оправдан: новый helper в `scripts` подхватится сам.\n\nОснование: Поиск `from '../../` по `process-next`: `lib/catalog.mjs:9`, `lib/notifications.mjs:2`, `lib/release-preparation.mjs:3`, `lib/background.mjs:7`, `templates/coordinator-dev-build.mjs:4`. Импорты `scripts/telegram-release.mjs:4-6`, `scripts/user-stable-changelog.mjs:4`, `scripts/mutation-gate-report.mjs:31`, `demo/helpers/icon-sources.mjs:1-2`. Автор также сообщает, что `remote.mjs` успешно импортировался в реальном partial+sparse clone.\n\n### Сохранность ancestry и работа с blobs вне sparse\n\nКорректно. При `fetch-depth: 0` клон не shallow, поэтому `merge-base --is-ancestor` и `ensureCommit` работают как раньше. Под фильтром `blob:none` `ensureCommit` подтягивает недостающий коммит без его blobs. Ledger, `package.json` других коммитов и `queue.json` читаются через `git show <sha>:<path>` и при необходимости подгружаются адресно. `ls-tree -r` в `productSnapshot` использует только деревья и OID, содержимое файлов ему не нужно.\n\nОснование: `process-next/lib/github.mjs:245-253` (assertAncestor, ensureCommit), `lib/release-data.mjs:9,13`, `lib/ci-status.mjs:16,22`, `lib/github.mjs:288`. Автор сообщает, что ledger-blob изначально отсутствовал и был подгружен, а для #1244 получено ready/milestone 11.\n\n### Механизм merge в partial+sparse клоне\n\nНе зависит от рабочего каталога. `stateCommit` собирает дерево через временный `GIT_INDEX_FILE`: `read-tree` без `-u`, `hash-object`, `update-index --cacheinfo`, `write-tree`, `commit-tree`. Содержимое чужих blobs для этого не нужно. Push отправляет только новый state-коммит и его дерево, а `materialSha` уже есть на remote в ветке задачи. CAS через `--force-with-lease` и `--atomic` не изменился.\n\nОснование: `process-next/lib/github.mjs:254-311`. Синтетический прогон автора на partial+sparse bare-fixture показал ровно один atomic push, а исключённый blob не появился в рабочем каталоге. Это результат автора; я его не воспроизводил.\n\n### Границы изменения и согласованность шаблона\n\nИзменение минимальное и адресное. Шаблон и workflow совпадают по blob. `dev-build`, reviewer, fallback и релизные workflow не тронуты. Новых гейтов, сервисов и реестров нет. Комментарий в YAML объясняет неочевидную причину: почему сохранена история и почему ограничено содержимое. Запись в changelog следует сложившейся практике для процессных задач (ср. #1241). Ledger-записи для #1252 нет, но у infra-задачи #1241 её тоже нет; по `release-data.mjs:1` её отсутствие не блокирует merge.\n\nОснование: diff `.github/workflows/process-next-coordinator.yml` и `process-next/templates/coordinator.yml`: одинаковые index-хэши, задание `dev-build` (строки 90-94) без sparse. `process-next/catalog/cutover.json:126-131` описывает связь шаблон→target.\n\n### Характер отказа и откат\n\nЕсли в будущем hosted-путь импортирует файл вне трёх каталогов, `node` упадёт с ERR_MODULE_NOT_FOUND ещё до публикации. Job станет явно красной, а merge и состояние очереди не пострадают, потому что запись идёт только через atomic push. Откат тривиален: убрать `sparse-checkout` из workflow в `main`. Это приемлемая граница надёжности для узкой правки, ТЗ прямо выбрало каталоги вместо реестра.\n\nОснование: `process-next/templates/coordinator-job.mjs:1-5` (статические импорты на верхнем уровне), `lib/github.mjs:293-306`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно: в YAML-комментарии можно перечислить, какие внешние импорты держат `scripts` и `demo/helpers` в наборе (`demo/helpers/icon-sources.mjs` через `lib/catalog.mjs`, `scripts/*` через notifications и release-preparation). Тогда при чистке этих зависимостей будет видно, что каталоги можно убрать или что новый импорт из `demo/golden` нужно сюда добавить. Цена — одна-две строки комментария. Новый гейт ради этого не нужен.\n\n## Границы анализа\n\nСборку, тесты и workflow я не запускал. Всё выше получено чтением исходников на head `082f99c`: workflow и шаблон, `coordinator-job.mjs`, `remote.mjs` (обработчики команд), `lib/github.mjs` (GitAdapter, runGit), `lib/ci-status.mjs`, `lib/release-data.mjs`, `lib/catalog.mjs`, `lib/coordinator.mjs` (Git-вызовы), `lib/task-completion.mjs`, импорты в `scripts` и `demo/helpers`. Поведение pinned `actions/checkout` (`blob:none` при sparse-checkout, cone-режим по умолчанию с корневыми файлами, сохранённый extraheader для ленивых fetch) взято из ТЗ и общего знания action; исходник action через доступные инструменты я не открывал. Использован S6-receipt `20261103T190616323-597ade13` со статусом passed (синтаксис YAML и адресные тесты github, task-completion и ci-status). Разовые проверки автора (реальный HTTPS partial clone, импорт `remote.mjs`, ленивое чтение ledger, синтетический merge) учтены как его заявленные результаты; повторно я их не выполнял. Фактическое ускорение на hosted runner, работа ленивых fetch с `HP_PROCESS_TOKEN` в Actions и доставка комментария подтвердятся только первым штатным запуском после точечного обновления workflow в `main`. Это пост-merge шаг из ТЗ, кодом здесь он не проверяется.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5126d7401c4755f6612aa27aaddbb26c9f3ca171 → 082f99ccf9c9667cb17edae74f529e9e7695872a\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1252, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Решение и фактическая адресная проверка</summary>\n\nИзменены только checkout двух служебных jobs (progress/public-ci) в canonical template и развёрнутом workflow плюс RU/EN changelog. Добавлен cone sparse-набор process-next, scripts, demo/helpers; fetch-depth:0, токен, permissions, concurrency, таймауты и все команды сохранены. Закреплённый checkout сам включает blob:none. Сборочный dev-build, reviewer и fallback не изменены. Новых постоянных тестов, реестров или гейтов нет.\n\nОднократная проверка в Ubuntu WSL сделана настоящим HTTPS partial clone GitHub, без использования объектов существующего checkout: исходный dev ad46b790228f0b2e7ae37f7905a63843043cf2ab, те же sparse-каталоги, full ancestry. Checkout занял около 6 секунд, итоговые pack-файлы после адресных чтений — 11,83 МиБ. Это локальное наблюдение, не обещание такого же времени на hosted runner.\n\nPASS: импорт remote.mjs со всеми транзитивными зависимостями; shallow=false, promisor=true, filter=blob:none; src/docs/legacy/custom_components/test отсутствуют в рабочем каталоге. Ledger blob из docs изначально действительно отсутствовал в локальной object database, readTaskReleaseMilestone догрузил его и получил ready/milestone11 для #1244. git show package.json предыдущего SHA, ancestry и productIdentity отработали; каталог docs при этом не появился. Проверка команды публикации была только offline, без записей в GitHub.\n\nОтдельный синтетический bare-репозиторий с file:// upload-pack allowFilter=true: существующий GitAdapter.merge на partial+sparse clone сделал ровно один atomic push, обновил dev и process-state до S8, удалил issue/1; исключённый продуктовый blob изначально не был скачан, после merge доступен через git show, но не материализован в worktree. PASS, около 0,39 секунды. Все записи только в одноразовый локальный fixture; он удалён. Временные проверочные скрипты в ignored process-next/.state, в продукт/постоянный тестовый набор не добавляются.\n\nШтатный S6 через finish: синтаксис изменённых YAML и существующие адресные github/task-completion/ci-status tests. Предварительные проверки выше дополняют, а не подменяют его receipt. Особое внимание ревью: достаточность runtime imports, сохранённая ancestry и работа с blob вне sparse, отсутствие скрытого изменения задач/релиза. Workflow в main сейчас совпадает по blob с исходным dev; после принятия и merge будет точечно обновлён только этот workflow в main, с проверкой текущего head и без переноса продукта.\n\n</details>\n```\n\n</details>\n",
+        "createdAt": "2026-11-03T19:17:33.027Z",
+        "artifactId": 13264360547,
+        "runId": 41700271582,
+        "runAttempt": 1,
+        "completedAt": "2026-11-03T19:17:39Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41700271582",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "5126d7401c4755f6612aa27aaddbb26c9f3ca171"
       }
     }
   },
@@ -2685,9 +2787,9 @@
     "fence": 129,
     "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
     "expectedBase": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793732745679,
-    "expiresAt": 1793736425708,
+    "expiresAt": 1793737101140,
     "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a",
     "reviewRequest": "review:1252:1:3c534d3cd09ad85beea7a227b25565e78fb0d56a:5126d7401c4755f6612aa27aaddbb26c9f3ca171"
   },
@@ -2802,6 +2904,10 @@
     },
     "finish:8d2a2006-9d42-4f83-8426-077a0714b3ee:finish:15:review-presentation": {
       "digest": "5cbf5a1e3429baba80843a01dd62f34793da25ed0da9976248120292bb8be306",
+      "issue": 1252
+    },
+    "finish:8d2a2006-9d42-4f83-8426-077a0714b3ee:finish:15:review-complete": {
+      "digest": "3cb905e5353f2b01b5c2e64d3220a9410ae2920ca1226c3585ed2a541fecb1a9",
       "issue": 1252
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
