@@ -18,7 +18,7 @@ import {
 const NORM_W = 1000;
 const clone = (value) => structuredClone(value);
 const configOf = (space, markers = []) => ({
-  model_version: PLAN_MODEL_VERSION,
+  model_version: 10, // legacy partition finalizer input; finish() crosses the model11 graph boundary
   spaces: [space], markers, settings: {},
 });
 const finish = (config, seedIds) => {
@@ -72,7 +72,10 @@ test('#477 seed scope merges the touched chain but leaves unrelated historical s
   const result = finish(input, ['new-a', 'new-b']);
   assert.equal(result.report.partitionsMerged, 1);
   assert.deepEqual(result.config.spaces[0].partitions.map((partition) => partition.id),
-    ['old-a', 'old-b', 'new-a']);
+    ['new-a', 'old-a', 'old-b']); // current graph collections use canonical ID order
+  for (const id of ['old-a', 'old-b']) assert.deepEqual(
+    result.config.spaces[0].partitions.find(p => p.id === id), input.spaces[0].partitions.find(p => p.id === id),
+    'unrelated historical carriers retain every field');
 });
 
 test('#477 a missing writer seed cannot reconcile unrelated coincident partitions', () => {

@@ -33,7 +33,7 @@ test('#478 real second floor migrates legacy work and reconciles ordinary walls 
   assert.equal(result.report.roomDraftsMigrated, 1);
   assert.equal(result.report.roomDraftSegmentsMigrated, 1);
   const space = result.config.spaces[0];
-  assert.equal(space.partitions, undefined);
+  assert.deepEqual(space.partitions, []);
   assert.equal(space.room_drafts, undefined);
 
   const leftProfile = wallIntervals(
@@ -67,7 +67,7 @@ test('issue 296 reconciles the covered middle and keeps deterministic disjoint r
   assert.equal(first.report.partitionsReconciled, 1);
   assert.equal(first.config.spaces[0].partitions.length, 2);
   assert.equal(first.config.spaces[0].partitions[0].id, 'long-wall');
-  assert.match(first.config.spaces[0].partitions[1].id, /^long-wall~r-/);
+  assert.match(first.config.spaces[0].partitions[1].id, /^long-wall~[1-9]\d*$/);
   assert.deepEqual(first.config.spaces[0].partitions.map((partition) => [partition.a, partition.b]), [
     [[-0.25, 0], [0, 0]],
     [[1, 0], [1.25, 0]],
@@ -147,7 +147,7 @@ test('issue 296 keeps an opening wholly on a residual with exact absolute geomet
   };
   const result = optimizePlans(configOf(space), {});
   const opening = result.config.spaces[0].openings[0];
-  assert.match(opening.host.id, /^host~r-/);
+  assert.match(opening.host.id, /^host~[1-9]\d*$/);
   assert.equal(opening.x, 1.1);
   assert.equal(opening.y, 0);
   assert.equal(opening.angle, 0);

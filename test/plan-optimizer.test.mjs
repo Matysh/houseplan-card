@@ -14,6 +14,7 @@ import {
   wallBodiesGeometry, wallIntervals, wallKey,
 } from '../test-build/wall-thickness.js';
 import { checkMixedRoleRecords, checkWallKeys } from '../scripts/model-invariants.mjs';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
 const room = (id, x0, x1, openTo) => ({
   id,
@@ -67,7 +68,7 @@ const assertNoPersistedChanges = (result) => {
 };
 
 const coincidentPartitionConfig = ({ roomCm = 20, partitionCm = 20, partial = false } = {}) => ({
-  model_version: PLAN_MODEL_VERSION,
+  model_version: 10, // authored legacy projections; Optimize performs the model11 transition
   spaces: [{
     id: 'coincident', title: 'Coincident', view_box: [0, 0, 1, 1], cell_cm: 5,
     rooms: [
@@ -99,13 +100,13 @@ test('Optimize reconciles an exact coincident partition and losslessly rehosts i
   assert.equal(first.report.partitionsReconciled, 1);
   assert.equal(first.report.openingsRehosted, 1);
   const space = first.config.spaces[0];
-  assert.equal(space.partitions, undefined);
+  assert.deepEqual(space.partitions, []);
   assert.equal(space.openings.length, 1);
   assert.equal(space.openings[0].host?.kind, 'wall');
   assert.deepEqual(space.openings[0], {
     id: 'door', type: 'door', x: 0.5, y: 0.5, angle: -90, length: 0.2,
     contact: 'binary_sensor.door', lock: 'lock.door', invert: true,
-    host: { kind: 'wall', id: space.openings[0].host.id, t: 0.5 },
+    host: { kind: 'wall', id: space.openings[0].host.id, t: 0.5, tq: ['1','2'] },
   });
 
   const second = optimizePlans(first.config, first.layout);
@@ -119,7 +120,7 @@ test('Optimize uses the exact max envelope for nested coincident thicknesses', (
   for (const [roomCm, partitionCm, expected] of [[30, 20, 30], [20, 30, 30]]) {
     const result = optimizePlans(coincidentPartitionConfig({ roomCm, partitionCm }), {});
     assert.equal(result.report.partitionsReconciled, 1);
-    assert.equal(result.config.spaces[0].partitions, undefined);
+    assert.deepEqual(result.config.spaces[0].partitions, []);
     const intervals = wallIntervals(
       result.config.spaces[0].rooms, result.config.spaces[0].walls, [],
       S, 5, GRID_PITCH, 1,
@@ -133,17 +134,16 @@ test('Optimize reconciles fully hidden subspans but leaves ambiguous partitions 
   const partial = coincidentPartitionConfig({ partial: true });
   const partialResult = optimizePlans(partial, {});
   assert.equal(partialResult.report.partitionsReconciled, 1);
-  assert.equal(partialResult.config.spaces[0].partitions, undefined);
+  assert.deepEqual(partialResult.config.spaces[0].partitions, []);
   assert.equal(partialResult.config.spaces[0].openings[0].host?.kind, 'wall');
 
   const ambiguous = coincidentPartitionConfig();
   ambiguous.spaces[0].partitions.push({
     id: 'second', a: [0.5, 0], b: [0.5, 1], cm: 10,
   });
-  const ambiguousResult = optimizePlans(ambiguous, {});
-  assert.equal(ambiguousResult.report.partitionsReconciled, 0);
-  assert.equal(ambiguousResult.config.spaces[0].partitions.length, 2);
-  assert.ok(ambiguousResult.config.spaces[0].openings[0].host);
+  const before = structuredClone(ambiguous);
+  assert.throws(() => optimizePlans(ambiguous, {}), { code: 'thickness-conflict' });
+  assert.deepEqual(ambiguous, before, 'ambiguous legacy walls refuse atomically at graph migration');
 });
 
 // Privacy-minimised six-room topology from #218/#223. The relevant stored ULP
@@ -198,7 +198,7 @@ const topologyMicroIntervalFixture = () => {
 test('Optimize collapses one isolated thickness micro-interval and is idempotent', () => {
   const fixture = microIntervalFixture();
   const config = {
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [{
       id: 'micro', title: 'Micro', view_box: [0, 0, 1, 1], cell_cm: 5,
       rooms: fixture.rooms, walls: fixture.walls,
@@ -226,7 +226,7 @@ test('Optimize collapses one isolated thickness micro-interval and is idempotent
 test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
   const fixture = topologyMicroIntervalFixture();
   const config = {
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [{
       id: 'topology-micro', title: 'Topology micro', view_box: [0, 0, 1, 1], cell_cm: 5,
       rooms: fixture.rooms, walls: fixture.walls,
@@ -291,7 +291,7 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
 
 test('#299 Optimize keeps the real first-floor shared/outer role breakpoint', () => {
   const config = {
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [structuredClone(realFirstFloorFixture.space)],
     markers: [], settings: {},
   };
@@ -318,7 +318,7 @@ test('#299 Optimize keeps the real first-floor shared/outer role breakpoint', ()
 
 test('Optimize canonicalizes the six-room ULP source without claiming a visible move', () => {
   const config = {
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [{
       id: 'noisy', title: 'Noisy', view_box: [0, 0, 1, 1], cell_cm: 5,
       rooms: noisySixRoomFloor.map((poly, index) => ({ id: `room-${index}`, poly })),
@@ -364,7 +364,7 @@ test('issue 248 Optimize stays a no-op across the lattice storage round-trip', (
   assert.deepEqual(storageRoundtripFixture.input, inputBefore, 'preview must keep fixture input');
   assert.equal(first.changed, true);
   assert.ok(first.report.latticeCoordinatesCanonicalized > 0);
-  assert.deepEqual(first.config, storageRoundtripFixture.expected.config);
+  assert.deepEqual(first.config, commitWallSegmentModel(storageRoundtripFixture.expected.config).config);
   assert.deepEqual(first.layout, storageRoundtripFixture.expected.layout);
   assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
   assert.deepEqual(canonicalizeLayoutGeometry(first.layout), first.layout);
@@ -387,7 +387,7 @@ test('issue 258 Optimize canonicalizes an affected wall key across storage round
   const space = structuredClone(wallKeyRoundtripFixture.space);
   space.walls[0].key = wallKeyRoundtripFixture.affected_key;
   const config = {
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [space],
     markers: [], settings: {},
   };
@@ -628,7 +628,7 @@ test('legacy physical decor fields are clamped to the persisted schema', () => {
 
 test('invalid legacy plan_scale is preserved instead of being counted as migrated', () => {
   const result = optimizePlans({
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [{
       id: 'f1', title: 'Floor', view_box: [0, 0, 1, 1],
       plan_scale: 'broken', rooms: [],
@@ -672,18 +672,18 @@ test('issue 252 Optimize detaches a live marker without silently deleting its ol
 
 test('optimizer never downgrades a model from a newer client', () => {
   const future = PLAN_MODEL_VERSION + 1;
-  const result = optimizePlans({
+  const input = {
     model_version: future,
     spaces: [], markers: [], settings: {},
-  }, {});
-  assert.equal(result.changed, false);
-  assert.equal(result.config.model_version, future);
-  assert.equal(result.report.modelTo, future);
+  };
+  const before = structuredClone(input);
+  assert.throws(() => optimizePlans(input, {}), error => error.code === 'model-version');
+  assert.deepEqual(input, before, 'unknown future authority is rejected without changing the document');
 });
 
 test('legacy filled shapes receive the canonical fill fields', () => {
   const result = optimizePlans({
-    model_version: PLAN_MODEL_VERSION,
+    model_version: 10, // authored legacy projections; Optimize performs the model11 transition
     spaces: [{
       id: 'f1', title: 'Floor', view_box: [0, 0, 1, 1], rooms: [],
       decor: [{
@@ -880,5 +880,5 @@ test('issue 229 a node on the side of a room survives the sweep', () => {
   assert.equal(result.report.partitionsMerged, 0, 'the room side holds the node');
   assert.equal(result.report.partitionsReconciled, 2,
     'the two node-bounded records are then independently absorbed by #296');
-  assert.equal(result.config.spaces[0].partitions, undefined);
+  assert.deepEqual(result.config.spaces[0].partitions, []);
 });

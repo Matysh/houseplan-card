@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { prepareResizeAtomProjection as prepare, applyResizeAtomProjection as apply,
   projectResizeAtomCatalogue as atoms, projectResizeAtomConsumers as consumers,
   prepareResizeAtomContext as context, projectResizeStoredAtoms as projectStored } from '../test-build/resize-atom-projection.js';
-import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+// This suite exercises the retained v0-v10 atom-projection algorithm, whose
+// inputs are deliberately edited projections. Current graph resize uses
+// graph-edit-intent and is covered separately; never impersonate its writer.
+import { decodeLegacyWallSegmentModel as commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { checkSpacePhysicalGeometry } from '../test-build/plan-geometry-preflight.js';
 import { junctionLimitViolations, increasedViolations } from '../test-build/junction-limits.js';
 
