@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1844,
+  "revision": 1845,
   "nextTicket": 119,
   "nextFence": 119,
   "tasks": {
@@ -2248,7 +2248,10 @@
         "at": 1793726853292,
         "entry": 1,
         "eventId": "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0:finish:4:return:return:1243"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793727287101,
+      "automationDetail": "Commit tracked task changes before finish"
     },
     "1248": {
       "issue": 1248,
@@ -2479,6 +2482,10 @@
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return": {
       "digest": "eb03e285cd3e69321fb361a6ff441ff5623243ff1d8a2c5de02a2dc2138aa13b",
       "issue": 1248
+    },
+    "finish:dc12ea94-e96c-42ec-890b-4a6c11f14bb2:finish:2:automation-pending": {
+      "digest": "ea1fb7a78cce614c70a74da4201e4d3b8412edee3fae84a18b6cdd553966b3d5",
+      "issue": 1243
     },
     "finish:87ecfb39-304c-42cb-82e7-c17cf27b36a0": {
       "digest": "06f36608ae4d803782fc4497f57ae88add3307ca474ff8491c21ae94358971c1",
