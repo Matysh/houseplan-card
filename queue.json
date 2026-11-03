@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1826,
-  "nextTicket": 117,
+  "revision": 1827,
+  "nextTicket": 118,
   "nextFence": 117,
   "tasks": {
     "1126": {
@@ -2240,6 +2240,20 @@
         "src/hp-summary-weather.ts",
         "src/summary-panel-runtime-loaded.ts"
       ]
+    },
+    "1248": {
+      "issue": 1248,
+      "track": "ship",
+      "layer": "product",
+      "branch": "issue/1248-editor-focus",
+      "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 117,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793726704754,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -2344,7 +2358,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1248
+  ],
   "active": {
     "issue": 1243,
     "worker": "finish",
@@ -2407,6 +2423,19 @@
         "layer": "product",
         "materialSha": "e81b2136c49581a9506e7586e9e0f4277838633e",
         "phase": "sync"
+      }
+    },
+    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624": {
+      "digest": "89417b2c25eb780012fd053b9857da71ec44e7b7072e12b5b89fcdc10d4c08c7",
+      "issue": 1248,
+      "message": {
+        "kind": "queued",
+        "issue": 1248,
+        "at": 1793726704754,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751"
       }
     }
   },
