@@ -148,7 +148,7 @@ async function stableEnvironment(page, scenario) {
   await page.evaluate(installStaticStability);
   await page.evaluate(({
     variables, panelVariableNames, theme, panelHost, attemptedTarget, attemptKey, disableIsoFilters,
-    moonClock,
+    moonClock, wideTabs,
   }) => {
     // #661: a moon scene reads the browser clock. The scenario shifts it to
     // its instant (time keeps flowing, so the card's timers behave); every
@@ -185,6 +185,7 @@ async function stableEnvironment(page, scenario) {
           font-family: Arial, sans-serif !important; }
         #host { width: min(100%, 1120px) !important; margin: 0 auto !important;
           padding: 8px !important; box-sizing: border-box !important; }
+        html[data-hp-golden-wide-tabs] body #host { width:100% !important; }
         html[data-hp-golden-panel], html[data-hp-golden-panel] body {
           height: 100%; min-height: 0;
         }
@@ -197,6 +198,7 @@ async function stableEnvironment(page, scenario) {
       document.head.appendChild(style);
     }
     document.documentElement.toggleAttribute('data-hp-golden-panel', panelHost);
+    document.documentElement.toggleAttribute('data-hp-golden-wide-tabs', wideTabs);
     for (const name of panelVariableNames) document.documentElement.style.removeProperty(name);
     for (const [name, value] of Object.entries(variables))
       document.documentElement.style.setProperty(name, value);
@@ -214,6 +216,7 @@ async function stableEnvironment(page, scenario) {
     panelVariableNames: Object.keys(panelThemeVars.dark),
     theme: scenario.theme,
     panelHost: scenario.panelHost === true,
+    wideTabs: !!scenario.tabDrag,
     attemptedTarget: scenario.versionRecoveryAttempted
       ? String(scenario.integrationVersion || '').trim() : null,
     attemptKey: VERSION_RELOAD_ATTEMPT_KEY,
@@ -1204,6 +1207,9 @@ export async function prepareGoldenScenario(page, scenario) {
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: scenario.decorGroupStyle?decorStyleRevision:1,
           can_write: scenario.canWrite !== false,
+          // Match the current server's public graph capabilities, including
+          // fixtures that exercise native editor actions after the read.
+          plan_graph_api: 1, graph_change_api: 2,
           ...(scenario.approvedUi === 'summary' ? { summary_panel_api: 1 } : {}),
           ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
@@ -2964,7 +2970,9 @@ export async function prepareGoldenScenario(page, scenario) {
       const button = root.querySelector('[data-hp="select-trigger"]');
       const bounds = button.getBoundingClientRect(), style = getComputedStyle(button);
       if (field.value !== scenario.space || !button.textContent.includes(scenario.headerSpaces.title)
-          || Math.abs(bounds.height - 44) > .5 || host.getAttribute('variant') !== 'header' || style.borderRadius !== '7px'
+          || Math.abs(bounds.height - 44) > .5 || host.getAttribute('variant') !== 'header'
+          || style.borderTopLeftRadius !== '7px' || style.borderBottomLeftRadius !== '7px'
+          || style.borderTopRightRadius !== '0px' || style.borderBottomRightRadius !== '0px'
           || style.visibility !== 'visible' || style.opacity === '0')
         throw new Error(`compact floor field is not visibly usable: ${scenario.id}`);
       if (scenario.headerSpaces.open) {

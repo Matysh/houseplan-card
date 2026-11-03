@@ -43,7 +43,7 @@ const res = await page.evaluate(async () => {
   // First materialise the legacy demo plan through the production structural
   // barrier, then turn exactly the shared r1/r2 carrier into a zero wall.
   out.materialized = await setThickness([550, 250], 15);
-  out.modelV10 = c._serverCfg.model_version === 10
+  out.modelV11 = c._serverCfg.model_version === 11
     && Array.isArray(sp().wall_segments)
     && sp().rooms.every((room) => Array.isArray(room.wall_ids));
   out.zeroApplied = await setThickness([550, 250], 0);

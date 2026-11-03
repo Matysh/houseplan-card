@@ -57,6 +57,7 @@ export function bundledProducers(root) {
 }
 export function callsFor(coverage,target){
  if(!target)return 0;
+ if(Array.isArray(target))return target.reduce((count,item)=>count+callsFor(coverage,item),0);
  const scripts=coverage.filter(script=>{try{return new URL(script.url).pathname==='/assets/'+target.relative;}catch{return false;}});
  const functions=scripts.flatMap(s=>s.functions).filter(fn=>{
   const start=fn.ranges[0]?.startOffset;return start===target.start||start===target.classStart

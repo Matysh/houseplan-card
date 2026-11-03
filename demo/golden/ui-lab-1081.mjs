@@ -26,11 +26,12 @@ export async function prepareUiLab1081(page, scenario) {
     await card.locator('[data-hp="space-add"]').click();
     await card.locator('hp-dialog[data-kind="space"] [data-section="basics"][aria-current="page"]').waitFor();
   } else if (scenario.uiLab1081 === 'space-blocker') {
-    // Open through the visible desktop tab gear, then exercise responsive
+    // Open through the visible header gear (tab or compact picker), then exercise responsive
     // reflow. The launch facade belongs to the discarded pre-golden card.
     await page.setViewportSize({ width: 1180, height: 900 });
-    await card.locator(`[data-hp="space-tab"][data-id="${scenario.space}"]`).hover();
-    await card.locator(`[data-hp="space-settings"][data-id="${scenario.space}"]`).click();
+    const tab = card.locator(`[data-hp="space-tab"][data-id="${scenario.space}"]`).filter({ visible: true });
+    if (await tab.count()) await tab.hover();
+    await card.locator(`[data-hp="space-settings"][data-id="${scenario.space}"]`).filter({ visible: true }).click();
     await card.locator('[data-hp="space-delete"]').click();
     await card.locator('[data-action="space-delete-devices"]').waitFor();
     await page.setViewportSize(scenario.viewport);
