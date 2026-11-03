@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1777,
+  "revision": 1778,
   "nextTicket": 115,
   "nextFence": 115,
   "tasks": {
@@ -2276,26 +2276,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240": {
-      "digest": "e8cfb5f6d4447bdd25fe8dccf2e093a129c831026669a9ed633978b128b387d8",
-      "issue": 1240,
-      "message": {
-        "kind": "return",
-        "issue": 1240,
-        "at": 1793722635689,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793722635689,
-          "entry": 1,
-          "detail": "Браузер: card picker locale: failed",
-          "eventId": "finish:ff4b3d0b-8ce5-468c-b496-43fc4b0bc4d3:finish:3:return:return:1240"
-        }
-      }
-    },
     "finish:6a43ad66-db1a-498c-a80a-80a4b8a98115": {
       "digest": "b6fc828d298127b7df553257bd29f07bfb548b6ec64c669b6740d0d1fa4a7123",
       "issue": 1240,
