@@ -2519,7 +2519,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean;
+    showRoomTooltip: boolean; showLqi: import('./signal-visibility').SignalVisibility; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; centerSummary: boolean; moon: boolean; externalScreens?: unknown; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -2676,7 +2676,17 @@ export class HouseplanCard extends LitElement {
   private _screenFitRequest: 'fit' | 'home' | 'double-tap' | null = null;
   private _screenCameraTransition = false;
   private _screenRecoveredCamera = false;
+  private _screenRestoreZoom: number | null = null;
   private get _hasScreenProfile(): boolean { return this._kiosk && this._externalScreen.profile !== undefined; }
+  /** Profiles own their explicit false as well as true. A bare kiosk keeps its
+   * existing camera; the installation switch is only for ordinary View. */
+  private get _centerSummary(): boolean {
+    return this._hasScreenProfile ? this._externalScreen.center_summary === true
+      : !this._kiosk && this._settings.center_summary === true;
+  }
+  private get _usesScreenCamera(): boolean {
+    return this._mode === 'view' && (this._hasScreenProfile || this._centerSummary);
+  }
   private get _screenAtReference(): boolean | undefined {
     if (!this._hasScreenProfile) return undefined;
     return !!this._view && !!this._screenReference && !this._screenReferencePending
@@ -2684,7 +2694,7 @@ export class HouseplanCard extends LitElement {
         this._cameraTransition.active || this._pointers.size > 0 || !!this._pinchStart || !!this._panStart);
   }
   private get _zoomBadge(): { percent: number; hidden: boolean } {
-    return this._hasScreenProfile && this._screenReference
+    return this._usesScreenCamera && this._screenReference
       ? screenZoomBadge(this._cameraState(), this._screenReference)
       : { percent: Math.round(this._zoom * 100), hidden: this._zoom <= 1 };
   }
@@ -2695,9 +2705,12 @@ export class HouseplanCard extends LitElement {
 
   /** One reference owner. State values never enter the geometry key. */
   private _syncScreenCamera(): void {
-    if (!this._hasScreenProfile) {
+    if (!this._usesScreenCamera) {
+      // Editor handoff owns its world camera. Retain the View reference so
+      // returning from an editor does not look like a fresh opening fit.
+      if (this._mode !== 'view' && this._centerSummary) return;
       this._screenReference = null; this._screenReferenceKey = ''; this._screenReferencePending = false;
-      this._screenFitRequest = null; this._screenRecoveredCamera = false; return;
+      this._screenFitRequest = null; this._screenRecoveredCamera = false; this._screenRestoreZoom = null; return;
     }
     const stage = this._stageEl;
     if (!stage?.clientWidth || !stage.clientHeight || this._modeTransitionBusy) return;
@@ -2708,20 +2721,26 @@ export class HouseplanCard extends LitElement {
     if (!geometry) return;
     const size: [number, number] = [stage.clientWidth, stage.clientHeight];
     const vb = this._baseVb(), display = this._displayBase(vb), screen = this._externalScreen;
-    const key = JSON.stringify([screen, this._space, this._rotation, vb, display, size, geometry.key]);
+    const key = JSON.stringify([screen, this._centerSummary, this._space, this._rotation, vb, display, size, geometry.key]);
     if (!explicit && !this._screenReferencePending && key === this._screenReferenceKey) return;
     const previous = this._screenReference, current = this._cameraState();
-    const follow = !this._screenRecoveredCamera && (this._screenReferencePending || !previous || onScreenReference(current, previous,
+    const fullReference = !previous && !this._hasScreenProfile
+      ? screenCameraTarget(vb, display, this._rotation, size, screenFreeArea(...size, null), 1) : null;
+    const follow = !this._screenRecoveredCamera && (this._screenReferencePending
+      || (!previous && (this._hasScreenProfile || !this._view || !!fullReference && onScreenReference(current, fullReference)))
+      || !!previous && onScreenReference(current, previous,
       this._cameraTransition.active || this._pointers.size > 0));
-    const free = screenFreeArea(...size, screen.center_summary ? geometry.panel : null);
-    const reference = screenCameraTarget(vb, display, this._rotation, size, free, screen.zoom ?? 1);
+    const free = screenFreeArea(...size, this._centerSummary ? geometry.panel : null);
+    const reference = screenCameraTarget(vb, display, this._rotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1);
     if (!reference) return;
     this._screenReference = reference; this._screenReferenceKey = key;
     this._screenRecoveredCamera = false;
     this._screenReferencePending = false; this._screenFitRequest = null;
     this._lastValidStageSize = size;
     if (follow || explicit) {
-      const target = explicit ? screenCameraTarget(vb, display, this._rotation, size, free, 1)! : reference;
+      const multiplier = this._screenRestoreZoom === null ? 1 : this._screenRestoreZoom / reference.camera.zoom;
+      const target = explicit || this._screenRestoreZoom !== null
+        ? screenCameraTarget(vb, display, this._rotation, size, free, explicit ? 1 : multiplier)! : reference;
       this._cancelCameraTransition(false);
       this._screenCameraTransition = true;
       if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', explicit ? CAMERA_FIT_MS : 0)) this._screenCameraTransition = false;
@@ -2731,6 +2750,7 @@ export class HouseplanCard extends LitElement {
         pixelsPerUnit: previous.pixelsPerUnit * previous.camera.viewBox.w / view.w }, vb, display, this._rotation, ...size);
       this._cancelCameraTransition(false); this._zoom = camera.zoom; this._view = camera.viewBox;
     }
+    this._screenRestoreZoom = null;
     this.requestUpdate();
   }
 
@@ -2738,6 +2758,7 @@ export class HouseplanCard extends LitElement {
     this._clearRoomFocus(true); this._cancelCameraTransition(false);
     this._showFar = true; this._frame = null; this._screenReferencePending = true;
     this._screenRecoveredCamera = false;
+    this._screenRestoreZoom = null;
     this._screenFitRequest = null;
     this._beginContinuityCandidate('screen-reference', true);
     this.requestUpdate();
@@ -4040,6 +4061,7 @@ export class HouseplanCard extends LitElement {
     // #713: one floor plane, and the window size is in the memo key, so the
     // saved camera is valid in either projection; only zoom is re-read.
     this._view = vp.view ? { ...vp.view } : null;
+    this._screenRecoveredCamera = !!this._view && this._usesScreenCamera;
     if (!sameProjection) {
       if (this._view) this._rezoom();
       else if (vp.logicalCenter) this._applyView(vp.zoom, vp.logicalCenter.x, vp.logicalCenter.y);
@@ -4379,7 +4401,7 @@ export class HouseplanCard extends LitElement {
 
   /** Called from updated(): one token owns at most one paint barrier. */
   private _settleContinuityFrame(externalUpdate: boolean): void {
-    if (this._hasScreenProfile && (this._screenReferencePending || !this._screenReference)) return;
+    if (this._usesScreenCamera && (this._screenReferencePending || !this._screenReference)) return;
     if (this._booting) return;
     // A complete steady frame has no candidate to settle. Reading its size
     // after Lit writes would force layout only to return below anyway.
@@ -4952,7 +4974,7 @@ export class HouseplanCard extends LitElement {
       }
     }
     this._syncScreenCamera();
-    if (!this._hasScreenProfile && stage && !this._view) this._refitView();
+    if (!this._usesScreenCamera && stage && !this._view) this._refitView();
     this._editorSecondary?.afterRender();
     this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
     // onboarding: on an empty server config, open the space dialog right away
@@ -7377,7 +7399,7 @@ export class HouseplanCard extends LitElement {
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
     if (this._modeTransitionBusy || this._warmModeRequest) return;
-    if (this._hasScreenProfile) { this._summary?.resized(); this.requestUpdate(); return; }
+    if (this._usesScreenCamera) { this._summary?.resized(); this.requestUpdate(); return; }
     const stage = this._stageEl;
     // ResizeObserver may deliver a zero/transitional box while a browser tab
     // is frozen or while Lovelace replaces the card. Mutating `_view` from
@@ -7520,7 +7542,7 @@ export class HouseplanCard extends LitElement {
   private _resetZoom(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
     this._clearRoomFocus();
     this._prepareCameraCommand();
-    if (this._hasScreenProfile) { this._screenFitRequest = reason; this.requestUpdate(); return; }
+    if (this._usesScreenCamera) { this._screenFitRequest = reason; this._screenRestoreZoom = null; this.requestUpdate(); return; }
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     this._startCameraTransition(
@@ -7564,6 +7586,13 @@ export class HouseplanCard extends LitElement {
     const saved = Number(this._zoomBySpace[this._space]);
     const z = carousel || !Number.isFinite(saved) || saved <= 0 ? 1 : saved;
     this._zoom = z;
+    if (this._usesScreenCamera) {
+      this._screenReferencePending = true; this._screenRecoveredCamera = false;
+      this._screenFitRequest = null;
+      // Ordinary preferences store canonical zoom, not a profile multiplier.
+      this._screenRestoreZoom = carousel || !Number.isFinite(saved) || saved <= 0 ? null : saved;
+      this.requestUpdate(); return;
+    }
     if (carousel) this._saveZoom();
     const stage = this._stageEl;
     if (stage && stage.clientHeight) {

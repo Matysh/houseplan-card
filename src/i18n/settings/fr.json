@@ -107,6 +107,8 @@
   "gs.device_battery_off": "Aucune",
   "gs.radar_show_live_hint": "Affiche ou masque toutes les cibles radar en direct. Cela ne démarre ni n’arrête l’enregistrement d’observation.",
   "gs.volumetric_view_hint": "Murs, portes, fenêtres et icônes d'appareils en relief. La décoration et le plan à plat ne changent pas.",
+  "gs.center_summary": "Tenir compte du panneau latéral pour le centrage",
+  "gs.center_summary_hint": "Dans la vue, centre et ajuste le plan dans la zone non couverte par le panneau récapitulatif visible. Désactivé par défaut. Les profils d’écran externe utilisent leur propre réglage.",
   "gs.moon": "Lune sur le plan au crépuscule et la nuit",
   "gs.moon_hint": "Affichée derrière le plan quel que soit le fond, à partir de 3° au-dessus de l’horizon, sauf autour de la nouvelle lune ; calculée à partir des coordonnées du domicile dans Home Assistant.",
   "gs.moon_status_shown": "Maintenant : affichée ({alt}° au-dessus de l’horizon, éclairée à {pct} %).",

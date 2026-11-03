@@ -107,6 +107,8 @@
   "gs.device_battery_off": "Keine",
   "gs.radar_show_live_hint": "Blendet alle Live-Radarziele ein oder aus. Die Beobachtungsaufzeichnung wird dadurch nicht gestartet oder gestoppt.",
   "gs.volumetric_view_hint": "Wände, Türen, Fenster und Gerätesymbole mit Tiefe. Dekor und der flache Plan bleiben unverändert.",
+  "gs.center_summary": "Seitenleiste beim Zentrieren berücksichtigen",
+  "gs.center_summary_hint": "Zentriert und passt den Plan in der Ansicht in den Bereich ohne die sichtbare Übersichtsleiste ein. Standardmäßig aus. Externe Bildschirmprofile verwenden ihre eigene Einstellung.",
   "gs.moon": "Mond über dem Plan in Dämmerung und Nacht",
   "gs.moon_hint": "Erscheint hinter dem Plan bei jedem Hintergrund, ab 3° über dem Horizont, außer um Neumond; berechnet aus den Koordinaten des Zuhauses in Home Assistant.",
   "gs.moon_status_shown": "Jetzt: sichtbar ({alt}° über dem Horizont, {pct} % beleuchtet).",

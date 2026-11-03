@@ -224,7 +224,7 @@ export class LoadedSummaryPanelRuntime {
   /** A value resize refreshes the next epoch's measurement, never its camera.
    * Enter/leave opacity and translate are deliberately absent from this box. */
   private observePanelBox(): void {
-    const panel = this.host._externalScreen?.profile === undefined ? null
+    const panel = this.host._externalScreen?.profile === undefined && this.host._settings.center_summary !== true ? null
       : this.host.renderRoot.querySelector<HTMLElement>('.summary-overlay');
     if (panel === this.observedPanel) return;
     this.panelObserver?.disconnect(); this.panelObserver = null;

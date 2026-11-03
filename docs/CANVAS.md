@@ -156,6 +156,15 @@ mode switch preserves the newly selected floor's camera. Reload restores the
 saved scalar with the existing centering policy; it does not persist a new
 camera-centre preference.
 
+The default-off General setting `center_summary` uses the existing screen
+camera for ordinary View only: center and Fit all use the actually visible
+summary panel's free area, including right/bottom layouts and rotation.
+The camera still covers the full stage. A hidden or unfitted panel reserves
+nothing; HA value ticks do not recenter. Manual and warm-restored cameras and
+editor handoff retain their world camera. Cold per-space restore retains the
+saved canonical zoom and centers in the free area. External-screen profiles
+keep their own explicit `center_summary` value; bare kiosk is unchanged.
+
 Frame growth/shrink rebases relative zoom while retaining physical screen scale
 and centre at every quarter turn. Frames still grow/recompute normally, including
 the editor union and View's recomputed core. Snapshot-held device positions use

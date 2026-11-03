@@ -158,6 +158,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: t('gs.volumetric_view'), help: help(st('gs.volumetric_view_hint'),t('gs.volumetric_view')),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           }),
+          toggleRow({
+            id: 'gs-center-summary', icon: 'mdi:align-horizontal-center',
+            title: st('gs.center_summary'), help: help(st('gs.center_summary_hint'), st('gs.center_summary')),
+            checked: d.centerSummary, onChange: (v) => set({ centerSummary: v }),
+          }),
           field({
             label: st('gs.bg_mode'), help: this._help('gs.bg_mode.help'),
             control: selectControl({
@@ -312,7 +317,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, showLqi: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, showLqi: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, centerSummary: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       <div class="dialog-action-group dialog-action-commit">

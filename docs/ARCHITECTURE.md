@@ -2360,7 +2360,9 @@ legacy attachment/slot API is removed (#909). Factory/pending caches,
 fingerprint validation and retry URLs stay on their existing paths.
 `summary-panel-editor.ts` loads on the settings button; its revision-checked
 shared write precedes the local show choice. #505 styles and the 190 ms phases
-stay lazy and never move the camera; editors and the space card never load the
+stay lazy; the default-off ordinary View `settings.center_summary` and screen
+profiles reuse `screen-camera.ts` with the measured, epoch-cached panel box.
+Live value changes do not move the camera. Editors and the space card never load the
 panel. Device totals need an authoritative registry snapshot and dedupe parent
 device ids before visual filters; clean area unions canonical room floors per
 space with that space's `cell_cm`.

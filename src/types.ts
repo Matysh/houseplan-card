@@ -355,6 +355,8 @@ export interface ServerConfig {
     show_device_battery?: boolean;
     /** #649: the whole installation views plans in 2.5D; absent or false keeps Flat. */
     volumetric_view?: boolean;
+    /** Opt-in ordinary View framing around the visible summary panel. */
+    center_summary?: boolean;
     /** #661: the moon on the "Follow the Sun" background; only `true` switches it on. */
     moon?: boolean;
     north_deg?: number;

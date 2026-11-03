@@ -15,6 +15,7 @@ const out = await page.evaluate(async () => {
   const hass=window.__mkHass(), initial=await hass.callWS({type:'houseplan/config/get'});
   const view={rotation:0,zoom:2,summary:'show',center_summary:true,icon_scale:null,font_scale:null};
   initial.config.settings ||= {};
+  initial.config.settings.center_summary = true; // Ordinary preference must not override a profile.
   initial.config.settings.external_screens={version:2,next_id:2,screens:[{id:1,space:null,cycle:0,idle:0,default_view:view,space_views:{}}]};
   initial.config.settings.summary_panel={version:1,title:'Synthetic summary',show_on_mobile:true,blocks:[{
     id:'b',title:'State',visible:true,scope:{type:'all'},values:[{id:'v',label:'Value',source:{type:'entity',entity_id:'sensor.profile_value'}}]}]};
@@ -48,6 +49,13 @@ const out = await page.evaluate(async () => {
       && Math.abs((b.y+b.h/2-v.y)*ppu-freeH/2)<1;
   };
   out.opening200FitsFreeArea=visibleCheck();
+  await update({center_summary:false});
+  {
+    const s=c._stageEl, vb=c._baseVb(), b=c._displayBase(vb), v=c._viewOr(vb), ppu=s.clientWidth/v.w;
+    out.profileFalseOverridesGlobalTrue=Math.abs(ppu/(Math.min(s.clientWidth/b.w,s.clientHeight/b.h)*c._externalScreen.zoom)-1)<.0001
+      &&Math.abs((b.x+b.w/2-v.x)*ppu-s.clientWidth/2)<1;
+  }
+  await update({center_summary:true});
   out.rotationsAndZooms=true;
   for(const rotation of [0,90,180,270]) for(const zoom of [.1,.5,1,2,10]) {
     await update({rotation,zoom});

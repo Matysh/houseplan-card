@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1242,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "An opt-in installation-wide setting adds summary-aware centering and Fit all to ordinary View. Existing configurations stay off; explicit screen-profile values and user camera handoff remain authoritative.",
+  "summary": {
+    "ru": "Обычный Просмотр может центрировать и вписывать план с учётом сводной панели; новая общая опция по умолчанию выключена.",
+    "en": "Ordinary View can center and fit the plan around the summary panel through a new default-off General setting."
+  }
+}
