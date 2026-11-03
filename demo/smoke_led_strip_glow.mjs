@@ -868,6 +868,9 @@ check('the Glow radius has one wrapper focus outline', JSON.stringify(visibleRad
 await page.reload();
 await page.waitForFunction(() => window.__card?._loadOk);
 await installHpTestOnPage(page);
+// Reload recreated the demo's fixed-width embedding host; restore this scene's
+// ordinary desktop container before using its responsive header controls.
+await prepareDesktopControls(page);
 await evaluate(() => {
   window.__899ColdCamera = () => {
     const card = window.__card, root = card.shadowRoot;
@@ -965,6 +968,9 @@ ledRequests.length = 0;
 await page.reload();
 await page.waitForFunction(() => window.__card?._loadOk);
 await installHpTestOnPage(page);
+// Reload recreated the demo's fixed-width embedding host; restore this scene's
+// ordinary desktop container before using its responsive header controls.
+await prepareDesktopControls(page);
 await evaluate(async () => {
   window.__card.setConfig({ type: 'custom:houseplan-card', floor: 'garden' });
   await window.__card.updateComplete;

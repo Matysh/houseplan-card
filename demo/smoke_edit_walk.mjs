@@ -19,26 +19,14 @@
 // поэтому воспроизводится одной командой:
 //   node demo/smoke_edit_walk.mjs --seed 7 --plan real-plan-second-floor.json
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
 
-// `model-invariants.mjs` и оптимизатор — скомпилированный продуктовый код, а не
-// вторая модель. Значит смок обязан собрать тот же `test-build`, который делает
-// `npm test`: на чистом Linux CI этого каталога нет, и опора на оставшийся от
-// разработчика падает до запуска браузера. Ровно эту ошибку уже проходил
-// `smoke_lattice_write_barrier.mjs` — здесь она повторена по той же причине.
-const root = fileURLToPath(new URL('..', import.meta.url));
-execFileSync(process.execPath, [
-  resolve(root, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.test.json',
-], { cwd: root, stdio: 'inherit' });
-execFileSync(process.execPath, [resolve(root, 'scripts/fix-test-build.mjs')], {
-  cwd: root, stdio: 'inherit',
-});
+// The process prepares test-build once for the complete validation candidate.
+// Standalone use requires: node process-next/catalog/prepare.mjs tests
 const { optimizePlans } = await import('../test-build/plan-optimizer.js');
 const { checkOptimizeGeometry } = await import('../test-build/plan-geometry-preflight.js');
-const { WallSegmentModelError } = await import('../test-build/wall-segment-model.js');
+const { WallSegmentModelError, commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
+const { PlanGraphError } = await import('../test-build/plan-graph.js');
 const {
   checkHiddenObstacles, checkMixedRoleRecords, checkWallKeys, checkReferences,
   checkPhysicalGeometry, latticeProfile, readModel,
@@ -58,8 +46,9 @@ const arg = (name, fallback) => {
  * обязан отделять её исходный долг от НОВЫХ нарушений каждого жеста.
  */
 const PLANS = [
-  { file: 'real-plan-second-floor.json', debt: 1 },
-  { file: 'real-plan-first-floor.json', debt: 0 },
+  // The one historical carrier has three exact role atoms after model11 migration.
+  { file: 'real-plan-second-floor.json', debt: 1, currentDebt: 3 },
+  { file: 'real-plan-first-floor.json', debt: 0, currentDebt: 0 },
 ];
 
 /**
@@ -126,6 +115,26 @@ const countKinds = (violations) => {
   }
   return counts;
 };
+
+// Ignore only the documented old physical carrier, including its exact
+// migration atoms. Other owners, changed thickness/metadata or points outside
+// that original carrier remain ordinary new violations, regardless of counts.
+const withoutHistoricalDebt = (violations, config, source) => violations.filter(v => {
+  if(v.kind !== 'partition_over_room_wall'
+    || !/^real-second-floor:partition-mt2on9ou-0(?:~[12])?$/.test(v.owner)) return true;
+  const old = source.spaces.find(s => s.id === 'real-second-floor')?.partitions
+    ?.find(p => p.id === 'partition-mt2on9ou-0');
+  const part = config.spaces.find(s => s.id === 'real-second-floor')?.partitions
+    ?.find(p => 'real-second-floor:' + p.id === v.owner);
+  if(!old || !part) return true;
+  const metadata = p => JSON.stringify(Object.fromEntries(Object.entries(p).filter(([k]) => !['id','a','b'].includes(k))));
+  if(metadata(part) !== metadata(old)) return true;
+  const d=old.b.map((x,i)=>x-old.a[i]), length=d[0]**2+d[1]**2;
+  return ![part.a,part.b].every(p => {
+    const q=p.map((x,i)=>x-old.a[i]), t=(q[0]*d[0]+q[1]*d[1])/length;
+    return Math.abs(q[0]*d[1]-q[1]*d[0]) < 1e-12 && t >= -1e-12 && t <= 1+1e-12;
+  });
+});
 
 const beyondBaseline = (violations, baseline) => {
   const now = countKinds(violations);
@@ -229,17 +238,27 @@ const currentConfig = () => page.evaluate(() => JSON.parse(JSON.stringify(window
 
 for (const plan of PLANS) {
   const source = configOf(plan.file);
-  for (const seed of SEEDS) {
+  const legacy = inspect(source.config);
+  checkAll({ ['legacy_debt_' + plan.file]: legacy.violations.length }, { ['legacy_debt_' + plan.file]: plan.debt });
+  // Cross the official model11 boundary before measuring the gesture baseline.
+  // This exposes existing atomized debt before the first command instead of
+  // reporting a no-op migration split as three newly created hidden walls.
+  const current = commitWallSegmentModel(source.config).config;
+  if (plan.debt) checkAll({ historicalCarrierDebtOnly: inspect(current).violations.every(v =>
+    v.kind === 'partition_over_room_wall' && /^real-second-floor:partition-mt2on9ou-0(?:~[12])?$/.test(v.owner)) });
+  // Retain the original legacy walks; current walks add graph-era coverage.
+  for (const representation of ['legacy', 'current']) for (const seed of SEEDS) {
     const random = rng(seed);
     const trace = [];
-    let config = JSON.parse(JSON.stringify(source.config));
+    let config = JSON.parse(JSON.stringify(representation === 'legacy' ? source.config : current));
     let broke = null;
     const baseline = inspect(config);
-    baseline.counts = countKinds(baseline.violations);
-    if (baseline.violations.length !== plan.debt) {
+    baseline.counts = countKinds(withoutHistoricalDebt(baseline.violations, config, source.config));
+    const debt = representation === 'legacy' ? plan.debt : plan.currentDebt;
+    if (baseline.violations.length !== debt) {
       failures.push({
         plan: plan.file, seed, step: -1,
-        action: `объявленный долг фикстуры ${plan.debt}`
+        action: `объявленный ${representation}-долг фикстуры ${debt}`
           + `, фактический ${baseline.violations.length}`,
         violations: baseline.violations, trace: [],
       });
@@ -265,6 +284,7 @@ for (const plan of PLANS) {
         action = `удаление комнаты ${roomId} с сохранением стен`;
       } else {
         const before = await currentConfig();
+        const beforeBytes = JSON.stringify(before);
         try {
           const result = optimizePlans(before, {}, {}, {});
           // The product shows the preview but refuses to apply a candidate
@@ -280,8 +300,10 @@ for (const plan of PLANS) {
             action = `оптимизация (изменений: ${result.report.total})`;
           }
         } catch (error) {
-          if (!(error instanceof WallSegmentModelError)) throw error;
-          action = `оптимизация безопасно заблокирована (${error.reason})`;
+          if (!(error instanceof WallSegmentModelError) && !(error instanceof PlanGraphError)) throw error;
+          checkAll({ refusedOptimizeRetainsInputAndLiveConfig: beforeBytes === JSON.stringify(before)
+            && beforeBytes === JSON.stringify(await currentConfig()) });
+          action = `оптимизация безопасно заблокирована (${error.reason || error.code})`;
         }
       }
       trace.push(action);
@@ -297,12 +319,12 @@ for (const plan of PLANS) {
           detail: 'жест записал координату мимо решётки',
         });
       }
-      const fresh = beyondBaseline(found, baseline.counts);
+      const fresh = beyondBaseline(withoutHistoricalDebt(found, config, source.config), baseline.counts);
       if (fresh.length) broke = { step, action, violations: found, kinds: fresh };
     }
     const key = `${plan.file}:${seed}`;
     const known = KNOWN[key] || null;
-    const label = `${plan.file.replace('real-plan-', '').replace('.json', '')}_seed${seed}`;
+    const label = `${plan.file.replace('real-plan-', '').replace('.json', '')}_seed${seed}${representation === 'current' ? '_current' : ''}`;
     const asExpected = known
       ? !!broke && broke.step === known.step
         && JSON.stringify(broke.kinds) === JSON.stringify([...known.kinds].sort())

@@ -84,7 +84,17 @@ const res = await page.evaluate(async () => {
   // must not participate in the structural migration exercised here.
   delete sp().openings;
   await upd();
+  // The default demo has no authored thickness record on this divider. A
+  // no-op 0→0 edit no longer creates graph authority; author a positive wall
+  // first, then exercise the real positive→zero transition under test.
+  out.positiveWallCreated = await setThickness([550, 250], 15);
+  const divider = () => (sp().wall_segments || []).filter(w => w.a[0] === .55 && w.b[0] === .55);
+  const dividerIds = divider().map(w => w.id);
+  const positiveIds = divider().filter(w => w.cm === 15).map(w => w.id);
+  out.positiveWallStored = positiveIds.length > 0;
   out.zeroWallCreated = await setThickness([550, 250], 0);
+  out.zeroWallStoredWithIdentity = JSON.stringify(divider().map(w => w.id)) === JSON.stringify(dividerIds)
+    && divider().every(w => w.cm === 0);
   sp().zero_wall_style = 'dashed';
   await upd();
   await mode('view');

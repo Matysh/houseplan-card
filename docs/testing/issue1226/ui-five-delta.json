@@ -1,0 +1,80 @@
+[
+  {
+    "id": "smoke:smoke_edit_walk",
+    "file": "demo/smoke_edit_walk.mjs",
+    "status": "failed",
+    "category": "current-and-legacy-geometry",
+    "reason": "Original legacy walks are retained, with six current-graph walks added. Known old partition debt is filtered only for the original carrier identity/metadata/thickness and collinear in-range atoms; raw debt1 and current debt3 remain explicit. Eleven walks pass, original legacy first-floor seed2 step3 remains RED: Delete Keep walls creates two hidden partitions and a mixed-role record. Typed current Optimize refusal additionally proves byte-identical input/live config; arbitrary exceptions still fail.",
+    "evidence": {
+      "base": "0bda944e3",
+      "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_edit_walk.log",
+      "baselineReused": false,
+      "fullStableAudit": false,
+      "newBuild": false,
+      "log": "output/issue1226/ui-edit-walk-both-models.log",
+      "sha256": "9c5ab1db23e931bb11d765ca1f3c1e670a5a9029b0efa1b8e5808e6b975bf18e"
+    }
+  },
+  {
+    "id": "smoke:smoke_editor_tabs",
+    "file": "demo/smoke_editor_tabs.mjs",
+    "status": "passed",
+    "category": "public-draft-lifecycle-and-accepted-ui",
+    "reason": "Public room Cancel/Discard retires the face draft before isolated keyboard-fixture cleanup. Full accessible mode labels remain exact; visible short labels and 44px active group segment/hidden View reservation follow accepted #1207 UI-006. All other close/hit/glyph/keyboard/context/geometry/draft controls pass.",
+    "evidence": {
+      "base": "0bda944e3",
+      "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_editor_tabs.log",
+      "baselineReused": false,
+      "fullStableAudit": false,
+      "newBuild": false,
+      "log": "output/issue1226/ui-editor-tabs-accepted-segment.log",
+      "sha256": "ee663347c25f493b00e54a1b5314f49630e4abad5eb7bb7d152c90722194ac9a"
+    }
+  },
+  {
+    "id": "smoke:smoke_floor_cache_reuse",
+    "file": "demo/smoke_floor_cache_reuse.mjs",
+    "status": "failed",
+    "category": "retained-current-resize-refusal",
+    "reason": "The original 0bda run remains authoritative: after real Undo a native Resize starts but refuses every preview, union0/no live areas rather than required union1/two rooms. All other original cache/held-ACK/rejection/fresh-card/history controls passed. No fixture, quota, no-op or history oracle was relaxed and no duplicate unchanged run was made.",
+    "evidence": {
+      "base": "0bda944e3",
+      "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_floor_cache_reuse.log",
+      "baselineReused": true,
+      "fullStableAudit": false,
+      "newBuild": false
+    }
+  },
+  {
+    "id": "smoke:smoke_hide_layers",
+    "file": "demo/smoke_hide_layers.mjs",
+    "status": "passed",
+    "category": "explicit-positive-to-zero-fixture",
+    "reason": "The default demo selected divider is already zero with no authored record; a no-op0→0 does not create graph paint. Fixture now uses actual Thickness15→0, proving a stored positive atom and exact divider IDs after zero. All original View/editor zero-paint, decor/opening semantics, dialog, hit-bead and real backdrop-drag assertions pass.",
+    "evidence": {
+      "base": "0bda944e3",
+      "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_hide_layers.log",
+      "baselineReused": false,
+      "fullStableAudit": false,
+      "newBuild": false,
+      "log": "output/issue1226/ui-hide-zero-fixture-port-r2.log",
+      "sha256": "a12b7cb43c9d9134b5bb1b35e9096b66775d9e92e7611d1cc92b02edd6782a87"
+    }
+  },
+  {
+    "id": "smoke:smoke_led_strip_glow",
+    "file": "demo/smoke_led_strip_glow.mjs",
+    "status": "passed",
+    "category": "reload-embedding-lifecycle",
+    "reason": "The ordinary wide desktop embedding style is recreated after both reloads, because reload restores the demo fixed780px host. No hidden control is forced visible. The complete smoke passes, including service ledger, trusted navigation/touch/pinch, identity, static cards, colours, transitions and cold LED lazy-loading.",
+    "evidence": {
+      "base": "0bda944e3",
+      "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_led_strip_glow.log",
+      "baselineReused": false,
+      "fullStableAudit": false,
+      "newBuild": false,
+      "log": "output/issue1226/ui-led-cold-host-port.log",
+      "sha256": "1c06a9a11c7001f9d889632df04ccdaa2937f7dab54b1e59b8c31a82ffa2aa33"
+    }
+  }
+]

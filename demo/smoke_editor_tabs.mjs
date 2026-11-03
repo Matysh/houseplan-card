@@ -15,9 +15,10 @@ const res = await page.evaluate(async () => {
   };
   // 1) две вкладки, Просмотра нет, крестиков в неактивных нет
   out.twoTabs = tabs().length === 3; // третья — Редактор подложки (v1.33.0)
-  out.labels = tabs().map((t) => t.textContent.trim());
-  // #660: X does not live inside a mode button; its slot follows the active
-  // button and moves to the group end (empty but same size) in View.
+  out.labels = tabs().map((t) => t.getAttribute('aria-label'));
+  out.visibleShortLabels = tabs().map((t) => t.textContent.trim());
+  // X is a separate group segment after the active mode (#1207 UI-006).
+  // View omits the segment; each mode keeps its full accessible name.
   out.noCrossIdle = sr().querySelectorAll('.modetab .closex').length === 0
     && !sr().querySelector('.editor-close-slot .closex');
   out.startView = c._mode === 'view';
@@ -210,10 +211,9 @@ const res = await page.evaluate(async () => {
   out.barCloseWorks = c._mode === 'view'
     && getComputedStyle(chrome).visibility === 'hidden'
     && chrome.getBoundingClientRect().height < 1;
-  // 7) #660 (+#195): the header X sits in a fixed 24 x 24 slot after the active
-  // mode; the slot is its hit target around a 13 px glyph and has the same size
-  // outside an editor, so the header never changes width. Exercise the slot's
-  // edge rather than calling the element's centre programmatically.
+  // 7) #1207 UI-006 replaces the historical #660 idle reservation with a 44px
+  // active segment, retaining the 13px glyph and expanded edge hit target.
+  // Exercise the segment edge, and verify View removes its empty reservation.
   const tabCrossChecks = [];
   for (let index = 0; index < tabs().length; index++) {
     tabs()[index].click(); await settleMode();
@@ -236,9 +236,10 @@ const res = await page.evaluate(async () => {
     tabCrossChecks.push({
       target: rect.width >= 24 && rect.height >= 24,
       glyph: glyphStays13,
-      // The slot is the footprint: same box in the editor and after closing it.
-      footprint: Math.abs(slot.width - idleSlot.width) <= 0.5
-        && Math.abs(slot.height - idleSlot.height) <= 0.5 && Math.abs(slot.width - 24) <= 0.5,
+      // Accepted #1207 UI-006 replaces the old 24px idle reservation with
+      // a 44px active segment inside the group and no empty View segment.
+      footprint: Math.abs(slot.width - 44) <= 0.5 && Math.abs(slot.height - 44) <= 0.5
+        && idleSlot.width === 0 && idleSlot.height === 0,
       edgeHit: !!hit && (hit === cross || cross.contains(hit)),
       summary: editorSummaryVisible,
       closed: c._mode === 'view',
@@ -246,7 +247,7 @@ const res = await page.evaluate(async () => {
   }
   out.tabCrossTargetsAtLeast24 = tabCrossChecks.every((check) => check.target);
   out.tabCrossGlyphStays13 = tabCrossChecks.every((check) => check.glyph);
-  out.tabCrossKeepsLayoutFootprint = tabCrossChecks.every((check) => check.footprint);
+  out.tabCrossUsesAcceptedActiveSegment = tabCrossChecks.every((check) => check.footprint);
   out.tabCrossExpandedEdgeWorks = tabCrossChecks.every((check) => check.edgeHit && check.closed);
   out.tabCrossWorks = tabCrossChecks.every((check) => check.closed);
   out.summaryControlsStayInEveryEditor = tabCrossChecks.every((check) => check.summary);
@@ -366,6 +367,16 @@ const res = await page.evaluate(async () => {
   const noAreaSave = sr().querySelector('hp-dialog.roomdialog .room-save');
   out.noAreaUsesRegularSave = !!noAreaSave && !noAreaSave.disabled
     && sr().querySelectorAll('hp-dialog.roomdialog .room-save').length === 1;
+  // Close through the room form's own lifecycle before restoring this isolated
+  // keyboard fixture: the current face batch is a separate draft owner.
+  roomDialog?.querySelector('[slot="footer"] [data-hp="dialog-cancel"]')?.click();
+  await hp.settled();
+  const discardRoom = sr().querySelector('hp-dialog[data-kind="confirm"] [data-confirm-key="discard-room-dialog"]');
+  if (discardRoom) {
+    discardRoom.closest('hp-dialog').querySelector('[slot="footer"] [data-hp="dialog-confirm"]').click();
+    await hp.settled();
+  }
+  out.roomDialogCancelRetiresFaceDraft = !c._roomDialog && !c._wallFaceBatch;
   c._path = savedPath;
   chainSpace.partitions = beforeCtrlPartitions;
   c._activeWallChainId = null;
@@ -397,5 +408,6 @@ const res = await page.evaluate(async () => {
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
   "labels": ["Plan editor", "Device editor", "Background editor"],
+  "visibleShortLabels": ["Plan", "Devices", "Background"],
 });
 await finish(browser, res);
