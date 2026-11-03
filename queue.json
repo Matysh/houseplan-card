@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1504,
-  "nextTicket": 104,
+  "revision": 1505,
+  "nextTicket": 105,
   "nextFence": 102,
   "tasks": {
     "1126": {
@@ -1814,14 +1814,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1230-finite-column-input",
-      "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
+      "materialSha": "c04e7b168f89c13f1fafd6191a43136099b26c51",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 100,
-      "queued": false,
+      "ticket": 104,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793713893625,
-      "reviewEntry": 1,
+      "readyAt": 1793714336896,
+      "reviewEntry": 2,
       "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -1843,13 +1843,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
-      "reviewMaterial": {
-        "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
-        "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
-        "patchId": "8b75b19cf624ed64fc2c4df3743eed0abfee8f51"
-      },
-      "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
       "notice": {
         "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
         "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
@@ -2030,7 +2023,8 @@
   },
   "waiting": [
     1235,
-    1232
+    1232,
+    1230
   ],
   "active": {
     "issue": 1233,
@@ -2248,6 +2242,28 @@
         "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52": {
+      "digest": "c59d0a9f70eb63d231da54b3126814bb561f0d920c369a44a254e804ab9ccdd5",
+      "issue": 1230,
+      "message": {
+        "kind": "queued",
+        "issue": 1230,
+        "at": 1793714336896,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c04e7b168f89c13f1fafd6191a43136099b26c51",
+        "evidence": {
+          "id": "20261103T135249481-ae45ebf7",
+          "name": "Тесты для задачи #1230 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261103T135249481-ae45ebf7/report.json",
+          "materialSha": "cda226667fb0dae4213ccd0f7418e90aa7ce3333",
+          "status": "passed",
+          "finishedAt": "2026-11-03T13:53:33.230Z",
+          "failures": []
+        }
       }
     }
   },
