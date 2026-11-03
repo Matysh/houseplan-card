@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1987,
+  "revision": 1988,
   "nextTicket": 128,
   "nextFence": 126,
   "tasks": {
@@ -2495,17 +2495,18 @@
       "readyAt": 1793730555484,
       "reviewEntry": 2,
       "notice": {
-        "key": "1:rebase-conflict",
-        "reason": "rebase-conflict",
+        "key": "2:rebase-conflict-recovery",
+        "reason": "rebase-conflict-recovery",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793730459537,
-        "entry": 1,
-        "eventId": "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return:return:1246"
+        "at": 1793730816509,
+        "entry": 2,
+        "eventId": "return:1246:125:rebase-conflict-recovery:return:1246"
       },
       "automationError": "automation-error",
       "automationSince": 1793730567371,
-      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
+      "automationDetail": "Local branch changed after ready; do not overwrite the remote task",
+      "reason": "rebase-conflict-recovery"
     },
     "1247": {
       "issue": 1247,
@@ -2708,17 +2709,7 @@
     1225,
     1242
   ],
-  "active": {
-    "issue": 1246,
-    "worker": "finish",
-    "token": "125:finish:74f42b8f-f233-478f-91b2-b50448b6e147:finish:1:admit",
-    "fence": 125,
-    "materialSha": "c4779c99782afec7016e38ef302371738c25536c",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793730559571,
-    "expiresAt": 1793731038394
-  },
+  "active": null,
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
       "digest": "b74717bbe91c3148655850e19950fd1870a581195fa1ce207e74475c2abb5959",
@@ -2806,6 +2797,10 @@
     },
     "finish:0d5addc3-ee54-4382-8cb8-864707d2c05a": {
       "digest": "3819a9400b48ce15a58162dfabe5756dc8f2437a5b59bb8214a6b6287fde2080",
+      "issue": 1246
+    },
+    "return:1246:125:rebase-conflict-recovery": {
+      "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
       "issue": 1246
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
@@ -3034,6 +3029,25 @@
           "finishedAt": "2026-11-03T18:14:36.609Z",
           "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
           "execution": "github"
+        }
+      }
+    },
+    "return:1246:125:rebase-conflict-recovery:return:1246": {
+      "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
+      "issue": 1246,
+      "message": {
+        "kind": "return",
+        "issue": 1246,
+        "at": 1793730816509,
+        "entry": 2,
+        "notice": {
+          "key": "2:rebase-conflict-recovery",
+          "reason": "rebase-conflict-recovery",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793730816509,
+          "entry": 2,
+          "eventId": "return:1246:125:rebase-conflict-recovery:return:1246"
         }
       }
     }
