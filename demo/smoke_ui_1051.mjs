@@ -1,10 +1,12 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // Approved UI-019–028/031: real controls, owned drafts and synthetic persisted data.
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { installUiPolish963Fixture } from './helpers/ui-polish-963-fixture.mjs';
 import { mkdirSync } from 'node:fs';
 
 requirePinnedBrowser('smoke_ui_1051');
-const { page, browser } = await launch({ width: 1500, height: 1000 });
+const { page, browser } = await launch({ width: 2000, height: 1000 });
+await prepareDesktopControls(page);
 const card = page.locator('houseplan-card'), panel = card.locator('[data-hp=properties-panel]');
 const menu = card.locator('[data-hp=decor-context-menu]');
 const settle = () => page.evaluate(() => window.__hpTest.settled());

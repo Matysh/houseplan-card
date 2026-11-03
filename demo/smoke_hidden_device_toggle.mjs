@@ -1,8 +1,10 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 // #919: native display toggle, immutable stored visibility and ordinary faces.
 import { launch, check, checkAll, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
-const { page, browser } = await launch({ width: 1440, height: 1000 }, 1, [], { hasTouch: true });
+const { page, browser } = await launch({ width: 2000, height: 1000 }, 1, [], { hasTouch: true });
+await prepareDesktopControls(page);
 try {
 let card = page.locator('houseplan-card').first();
 const settle = async () => {
@@ -64,6 +66,7 @@ await page.evaluate(async () => {
   } };
 });
 await settle();
+await prepareDesktopControls(page);
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 await card.locator('[data-hp="zoom-in"]').click(); await settle();
 const before = await stored();
@@ -136,6 +139,7 @@ await toggle();
 checkAll({ toolbarOffUpdatesHeader: (await state()).shown === 'false', toolbarOffHidesMarker: !(await state()).exists });
 await toggle();
 check('toolbarOnUpdatesHeader', (await state()).shown, 'true');
+await prepareDesktopControls(page);
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 const positionBefore = await page.evaluate(() => structuredClone(window.__card._layout[window.__hiddenTargets.lamp]));
 const writerStart = await page.evaluate(() => window.__hiddenWrites.length);
@@ -232,10 +236,14 @@ await page.evaluate(async () => {
     settings: { filter_seeded: true } }));
   await window.__hpTest.setLayout({ 'hidden-far': { s: 'f1', x: 90, y: .5 } });
 }); await settle();
+await prepareDesktopControls(page);
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 const frameBefore = await page.evaluate(() => ({ ...window.__card._view }));
 await toggle();
-check('farRevealDoesNotMoveCamera', JSON.stringify(await page.evaluate(() => ({ ...window.__card._view }))), JSON.stringify(frameBefore));
+const frameAfterReveal = await page.evaluate(() => ({ ...window.__card._view }));
+// Ignore object insertion order and sub-picounit camera round-trip noise.
+check('farRevealDoesNotMoveCamera', ['x','y','w','h'].every(key=>Math.abs(frameAfterReveal[key]-frameBefore[key])<=1e-9));
+await prepareDesktopControls(page);
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 const fitted = await page.evaluate(() => ({ ...window.__card._view }));
 check('nextFitIncludesRevealedFarMarker', fitted.w > frameBefore.w * 20);
@@ -279,7 +287,7 @@ check('touchEyeDoesNotCallHA', await page.evaluate(() => window.__serviceCalls.l
 // A revealed virtual lamp with an incoming driver does: the saved-hidden target
 // must enter the display graph, otherwise this native click changes its dormant
 // manual bit instead of operating the real relay.
-await page.setViewportSize({ width: 1440, height: 1000 });
+await page.setViewportSize({ width: 2000, height: 1000 });
 await page.evaluate(async () => {
   const c = window.__card;
   if (!['on', 'off'].includes(c.hass.states['switch.kettle']?.state)) throw Error('linked fixture needs its active HA relay');
@@ -309,6 +317,7 @@ const linkedFace = card.locator('[data-hp="device"][data-id="hidden-linked-light
 check('linkedLightAbsentWithEyeOff', await linkedFace.count(), 0);
 const linkedPair = await stored();
 await toggle();
+await prepareDesktopControls(page);
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 check('linkedLightRevealedAsOrdinary', await linkedFace.evaluate(el => !el.classList.contains('ghost')));
 const linkedBefore = await page.evaluate(() => ({ calls: window.__serviceCalls.length,

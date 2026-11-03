@@ -85,7 +85,7 @@ const kio = await page.evaluate(() => {
 for (const [k, v] of Object.entries(kio)) check(k, v);
 
 // #997: compact navigation has one separate gear for the selected space.
-await page.setViewportSize({width:1000,height:900});
+await page.setViewportSize({width:600,height:900});
 const compact={};
 for(const mode of ['view','plan','devices','decor']) {
   await page.evaluate(mode=>window.__hpTest.setMode(mode),mode);

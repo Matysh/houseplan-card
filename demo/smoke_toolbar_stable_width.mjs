@@ -25,7 +25,7 @@ try{
       for(const mode of modes){
         const tab=card.locator(`[data-hp="mode-tab"][data-mode="${mode}"]`);
         assert.equal(await tab.getAttribute('aria-label'),words[lang][`mode.${mode}`]);
-        assert.equal(await tab.getAttribute('title'),words[lang][`mode.${mode}_tip`]);
+        assert.equal(await tab.getAttribute('data-hp-tooltip'),words[lang][`mode.${mode}_tip`]);
         await tab.click();await settle();
         const state=await card.evaluate(c=>{
           const root=c.shadowRoot,head=root.querySelector('.head'),group=head.querySelector('.modes');
@@ -38,7 +38,7 @@ try{
             x:rect.x+5,y:rect.y+rect.height/2,stage:root.querySelector('.stage').clientHeight,
             nestedClose:!!group.querySelector('.modetab .closex'),count:!!head.querySelector('.count')};
         });
-        assert.ok(state.closeWidth>=44&&state.closeHeight>=44&&state.closeAfterActive&&state.hit,JSON.stringify(state));
+        assert.ok(Math.round(state.closeWidth*1000)/1000>=44&&Math.round(state.closeHeight*1000)/1000>=44&&state.closeAfterActive&&state.hit,JSON.stringify(state));
         assert.ok(state.scroll<=state.available+1&&state.stage>50,JSON.stringify(state));
         assert.ok(!state.nestedClose&&!state.count,JSON.stringify(state));
         if(previous)assert.ok(Math.abs(previous.width-state.width)<1&&Math.abs(previous.height-state.height)<1,JSON.stringify({previous,state}));

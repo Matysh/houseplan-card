@@ -156,6 +156,7 @@ const res = await page.evaluate(async () => {
 
   // Editors draw no light.
   await t.setMode('plan');
+  while(c._modeTransitionBusy || c._modeTransitionPreparing) await new Promise(resolve=>requestAnimationFrame(resolve));
   out.editorNoLight = beams().length === 0 && flatWedges().length === 0;
   await t.setMode('view');
 

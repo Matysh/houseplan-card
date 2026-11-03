@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 /**
  * #780 AC4/AC7/AC12/AC14/AC17 (ТЗ §3, §5, §7, §8, §13.1): the LED strip in
  * the View and on the static card. No LED chunk without a displayed active
@@ -22,7 +23,8 @@ import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 import { attestLaunchedBrowser } from '../scripts/browser-attestation.mjs';
 import { transitionOutcome } from './transition-timeline.mjs';
 
-const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
+const { page, browser } = await launch({ width: 2000, height: 820 }, 1);
+await prepareDesktopControls(page);
 const browserPassport = await attestLaunchedBrowser(browser, { reason: 'LED transition observation #896' });
 const ledRequests = [];
 const transitionEvidence = [];

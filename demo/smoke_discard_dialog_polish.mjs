@@ -18,7 +18,7 @@ const openDirty = async () => {
     card._openSettingsDialog();
     await card.updateComplete;
   });
-  await owner.locator('#gs-show-lqi').click();
+  await owner.locator('#gs-room-tooltip').click();
 };
 const openQuestion = async () => {
   // Sample the same rendering turn as the public cancel click; a locator's
@@ -58,7 +58,7 @@ const finishEntrance = () => question.locator('.surface').evaluate(surface => {
 });
 const waitReturned = async () => {
   await question.waitFor({ state: 'detached' });
-  await owner.locator('#gs-show-lqi').waitFor();
+  await owner.locator('#gs-room-tooltip').waitFor();
 };
 
 try {
@@ -79,7 +79,7 @@ try {
     await page.mouse.move(2, 2);
     await openDirty();
     const saved = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
-    const draft = await owner.locator('#gs-show-lqi').isChecked();
+    const draft = await owner.locator('#gs-room-tooltip').isChecked();
     await page.keyboard.press('Tab');
     const first = await openQuestion();
     for (const [key, value] of Object.entries(first)) results[`${width}_${theme}_${key}`] = value;
@@ -105,17 +105,17 @@ try {
     });
     await close.click();
     await waitReturned();
-    results[`${width}_closeKeepsDraft`] = await owner.locator('#gs-show-lqi').isChecked() === draft;
+    results[`${width}_closeKeepsDraft`] = await owner.locator('#gs-room-tooltip').isChecked() === draft;
     await openQuestion();
     await finishEntrance();
     await page.keyboard.press('Escape');
     await waitReturned();
-    results[`${width}_escapeKeepsDraft`] = await owner.locator('#gs-show-lqi').isChecked() === draft;
+    results[`${width}_escapeKeepsDraft`] = await owner.locator('#gs-room-tooltip').isChecked() === draft;
     await openQuestion();
     await finishEntrance();
     await back.click();
     await waitReturned();
-    results[`${width}_backKeepsDraft`] = await owner.locator('#gs-show-lqi').isChecked() === draft;
+    results[`${width}_backKeepsDraft`] = await owner.locator('#gs-room-tooltip').isChecked() === draft;
     await openQuestion();
     await finishEntrance();
     await question.locator('[data-hp="dialog-confirm"]').click();

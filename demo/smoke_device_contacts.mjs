@@ -1,9 +1,11 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #866: actual production faces, native mouse/keyboard gestures and point writer.
 import { launch, check, checkAll, finish } from './serve.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 
-const { page, browser } = await launch({ width: 1600, height: 1000 },1,[],{hasTouch:true});
+const { page, browser } = await launch({ width: 2000, height: 1000 },1,[],{hasTouch:true});
+await prepareDesktopControls(page);
 const dir = process.env.HP_CONTACT_ARTIFACTS || 'artifacts/866/native';
 mkdirSync(dir, { recursive: true });
 const card = page.locator('houseplan-card');

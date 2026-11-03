@@ -1,7 +1,9 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #935: native editor context menu, real persisted wire pair and cold reader.
 import { launch, check, checkAll, finish } from './serve.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
-const { page, browser } = await launch({ width: 1440, height: 1000 });
+const { page, browser } = await launch({ width: 2000, height: 1000 });
+await prepareDesktopControls(page);
 page.on('pageerror',error=>console.error('copy-page-error',error.message));
 let card = page.locator('houseplan-card');
 await page.evaluate(async () => {
@@ -173,6 +175,7 @@ check('cold-reader-retains-independent-virtual-copy',await page.evaluate(id=>{
   const c=window.__card,d=c._devices.find(d=>d.id===id);return d?.bindingKind==='virtual'&&d.name==='Copy lamp 3'&&!!c._layout[id];
 },newMarker.id),true);
 await card.locator(`[data-hp="device"][data-id="${newMarker.id}"]`).click();
+await card.locator('[data-field="properties-settings"]').click();
 await card.locator('#marker-name').fill('Changed copy only');
 await card.locator('[data-hp="dialog-confirm"]').click();
 await page.evaluate(()=>window.__hpTest.waitForWrites());

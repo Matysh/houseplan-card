@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1081/UI-044: native pan, presented grid-edge pixels and bounded camera paint.
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -5,7 +6,8 @@ import { resolve } from 'node:path';
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 requirePinnedBrowser();
-const { page, browser } = await launch({ width: 1400, height: 1000 }, 1, [], { reducedMotion: 'reduce' });
+const { page, browser } = await launch({ width: 2000, height: 1000 }, 1, [], { reducedMotion: 'reduce' });
+await prepareDesktopControls(page);
 const output = resolve(process.env.HP_1081_GRID_OUTPUT || 'output/ui-lab-1081-grid');
 mkdirSync(output, { recursive: true });
 const results = [];

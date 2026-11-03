@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './desktop-controls.mjs';
 // #1093 AC8: trusted Save across retired dialog, HA authority and route owners.
 import assert from 'node:assert/strict';
 
@@ -5,6 +6,8 @@ export async function runSaveAuthorityWitnesses({createScene,scenarios=['space-r
   const results=[];
   for(const scenario of scenarios) {
     const scene=await createScene(scenario),{page,card}=scene;
+    await page.setViewportSize({ ...page.viewportSize(), width:2000 });
+  await prepareDesktopControls(page);
     const kind=scenario.startsWith('space')?'space':scenario.startsWith('room')?'room':'settings';
     const tick=()=>page.evaluate(async()=>{await window.__card.updateComplete;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
     const row={scenario,kind};results.push(row);
@@ -38,6 +41,7 @@ export async function runSaveAuthorityWitnesses({createScene,scenarios=['space-r
       if(kind==='space')await card.locator('[data-hp="space-settings"][data-id="f1"]').click();
       else if(kind==='room') {
         await page.evaluate(()=>window.__hpTest.setMode('plan'));
+        await card.locator('[data-hp="zoom-fit"]').click();
         await card.locator('[data-hp="room-settings"][data-room="f1-r0"]').click();
       } else await card.locator('[data-hp="settings"]').click();
       const dialog=card.locator(`hp-dialog[data-kind="${kind}"]`);

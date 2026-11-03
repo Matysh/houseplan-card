@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #998: actual form sweep. Native selectors remain value sources; UI Kit owns
 // presentation, keyboard dismissal and viewport bounds in each dialog.
 import assert from 'node:assert/strict';
@@ -27,6 +28,8 @@ try {
   await installHpTestOnPage(page);
   await installSettingsDeviceFixture(page);
   await installSettingsSpaceFixture(page);
+  await page.setViewportSize({width:2000,height:1000});
+  await prepareDesktopControls(page);
   const cases = [['general','settings'],['space','space'],['room','room'],
     ['led','marker','demo_led_controller'],['climate','marker','demo_living_climate'],
     ['vacuum','marker','demo_x50'],['radar','marker','demo_radar']];

@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1070: native controls/gestures plus exact painted-frame and persistence oracles.
 import { launch, launchColdView, launchPanelCold, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
@@ -5,7 +6,8 @@ import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 requirePinnedBrowser();
-const { page, browser } = await launch({ width: 1100, height: 1000 });
+const { page, browser } = await launch({ width: 2000, height: 1000 });
+await prepareDesktopControls(page);
 const evidence = process.env.HP_ROTATION_EVIDENCE || 'artifacts/plan-rotation-1070';
 mkdirSync(evidence, { recursive: true });
 const card = page.locator('houseplan-card').first();

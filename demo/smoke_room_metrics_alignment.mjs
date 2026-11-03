@@ -1,3 +1,4 @@
+import { fitVisibleView, zoomVisibleView } from './helpers/view-controls.mjs';
 // #1039: centre the painted name and complete readings, not a name+action box.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -106,7 +107,7 @@ try {
             c.hass = { ...c.hass, user: { ...c.hass.user, is_admin: true } };
           });
           await ready();
-          await page.locator(`[data-hp="${zoom}"]`).click();
+          await (zoom==='zoom-fit'?fitVisibleView(page):zoomVisibleView(page));
           await ready();
           for (const role of ['admin', 'viewer', 'kiosk']) {
             await page.evaluate(role => {

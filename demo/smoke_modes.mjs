@@ -10,7 +10,7 @@ const st = () => page.evaluate(() => {
   return {
     mode: c._mode,
     modeTabs: sr.querySelectorAll('.modetab').length,
-    active: sr.querySelector('.modetab.active')?.textContent.trim(),
+    active: sr.querySelector('.modetab.active')?.getAttribute('data-mode'),
     // #616: the phone gear (.header-menu-button) is in the DOM but hidden above 480 px.
     // #919: the eye is a separate display control, not an editor action.
     editBtns: sr.querySelectorAll('.head .btn:not(.zb):not(.header-menu-button):not([data-hp="hidden-devices"])').length,
@@ -92,8 +92,8 @@ out.backToView = (await st()).mode;
 checkAll(out, {
   "start": {"mode": "view", "modeTabs": 3, "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": false, "stageClass": "stage mode-view"},
   "viewDragMoved": false,
-  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": true, "stageClass": "stage markup tool-select mode-plan"},
-  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": true, "stageClass": "stage mode-devices"},
+  "plan": {"mode": "plan", "modeTabs": 3, "active": "plan", "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": true, "stageClass": "stage markup tool-select mode-plan"},
+  "devices": {"mode": "devices", "modeTabs": 3, "active": "devices", "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": true, "stageClass": "stage mode-devices"},
   "backToView": "view",
 });
 await finish(browser, out);

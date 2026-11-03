@@ -1,3 +1,5 @@
+import { fitVisibleView } from './helpers/view-controls.mjs';
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #920: real settings controls, live HA states, Flat/2.5D/kiosk and an
 // independent static card. No writes to private product state.
 import { mkdirSync } from 'node:fs';
@@ -5,7 +7,8 @@ import { launch, checkAll, finish } from './serve.mjs';
 import { requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 
 requirePinnedBrowser('smoke_room_co2');
-const { page, browser } = await launch({ width: 1280, height: 900 });
+const { page, browser } = await launch({ width: 2000, height: 900 });
+await prepareDesktopControls(page);
 page.setDefaultTimeout(12000);
 const out = {};
 const card = page.locator('houseplan-card');
@@ -178,7 +181,7 @@ try {
     cfg.spaces.find(s => s.id === 'f1').settings.card_font_scale = 3;
   }));
   await sourceState('sensor.manual_co2', '12345678901234567890');
-  await card.locator('[data-hp="zoom-fit"]').click();
+  await fitVisibleView(page);
   await page.waitForFunction(() => !window.__card._cameraTransition?.active);
   out.longFiveMetricRowFits = await room.locator('.rlmetrics').evaluate(row => {
     const a = row.getBoundingClientRect(), b = row.getRootNode().querySelector('.stage').getBoundingClientRect();

@@ -44,7 +44,7 @@ const res = await page.evaluate(async () => {
   out.batteryFollowsExisting = JSON.stringify(controls.map((i) => i.type === 'checkbox' ? i.id : `${i.name}:${i.value}`)) === JSON.stringify([
     'gs-room-tooltip', 'gs-radar-live',
     'gs-device-battery:all',
-    'gs-show-lqi',
+    'gs-show-lqi:on',
   ]);
   const row = q('#gs-volumetric-view').closest('.hpf-toggle')?.parentElement ?? null;
   out.rowTitleAndIcon = !!row && row.textContent.includes(c._t('gs.volumetric_view'))
@@ -67,7 +67,7 @@ const res = await page.evaluate(async () => {
 
   // Editors are Flat, View returns to 2.5D.
   await t.setMode('plan');
-  out.editorFlat = !iso();
+  out.editorFlat = await waitFor(() => !iso());
   await t.setMode('view');
   out.viewIsoAgain = await waitFor(() => iso());
 

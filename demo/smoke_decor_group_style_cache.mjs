@@ -1,3 +1,4 @@
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1071: native sidebar edits must not rebuild unrelated physical walls.
 import { launch, check as checkValue, finish, requirePinnedBrowser } from './serve.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
@@ -15,7 +16,8 @@ const check=(name,actual,expected=true)=> {
 };
 
 requirePinnedBrowser();
-const {page,browser}=await launch({width:1600,height:1100});
+const {page,browser}=await launch({width:2000,height:1100});
+await prepareDesktopControls(page);
 const card=()=>page.locator('houseplan-card');
 const panel=()=>card().locator('[data-hp="properties-panel"]');
 const picker=()=>panel().locator('[data-property="stroke"] hp-color-opacity');

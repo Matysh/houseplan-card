@@ -1,3 +1,4 @@
+import {prepareDesktopControls} from './helpers/desktop-controls.mjs';
 // #963: ordinary user paths on synthetic data, with measured layout and negative lifecycle checks.
 import {launchHaDialogFixture} from './helpers/ha-dialog-fixture.mjs';
 import {UI_POLISH_963_HA_PIN} from './helpers/ui-polish-963-pin.mjs';
@@ -16,6 +17,8 @@ const settle=()=>page.evaluate(()=>window.__hpTest.settled());
 const mode=async value=>{await page.evaluate(value=>window.__hpTest.setMode(value),value);await page.waitForFunction(()=>!window.__card._modeTransitionBusy);};
 try {
   await prepareUi963Page(page,fixture.url);
+  await page.setViewportSize({width:2000,height:1000});
+  await prepareDesktopControls(page);
   await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
   const baseline=await page.evaluate(()=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout}));
   await mode('plan');await panel.waitFor();

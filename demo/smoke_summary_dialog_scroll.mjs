@@ -78,7 +78,11 @@ async function scenario(viewport, { flexContent = true } = {}) {
     for (let i = 0; i < 80 && !root().querySelector('hp-dialog[data-kind="summary"]'); i += 1) { await frame(); }
     const dialog = root().querySelector('hp-dialog[data-kind="summary"]');
     if (!dialog) return { dialog: false };
-    if (!flexContent) { dialog.flexContent = false; dialog.removeAttribute('flex-content'); }
+    if (!flexContent) {
+      // settings-layout now also forwards flexcontent; disable both public owners
+      // for the negative witness, otherwise it never recreates the old failure.
+      dialog.flexContent = false; dialog.removeAttribute('flex-content'); dialog.removeAttribute('settings-layout');
+    }
     await dialog.updateComplete;
     await settle();
     await new Promise((resolve) => setTimeout(resolve, 150));
