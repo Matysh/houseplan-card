@@ -1,6 +1,6 @@
-// #291: the production bundle's ordinary config and point-wise layout writers
-// must adopt and send the same exact lattice candidate without editor-specific
-// snap calls.
+// #291/#1216: metadata writers adopt their exact wire candidate; legacy
+// structural carriers remain byte-identical until an explicit graph edit.
+// Nonstructural coordinates and point-wise layout still canonicalize.
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -75,21 +75,23 @@ const out = await page.evaluate(async () => {
   result.configWriterAdoptsExactPayload = !!sent
     && JSON.stringify(card._serverCfg) === serialized;
   const floor = sent?.spaces[0];
-  result.roomAndWallCoordinatesCanonical = floor?.rooms?.[0]?.poly?.[0]?.[0] === node
-    && floor?.walls?.[0]?.a?.[0] === node;
-  result.openingAndDecorCoordinatesCanonical = floor?.openings?.[0]?.x === node
+  result.legacyRoomAndWallCoordinatesPreserved = floor?.rooms?.[0]?.poly?.[0]?.[0] === noise
+    && floor?.walls?.[0]?.a?.[0] === noise;
+  result.legacyOpeningPreservedAndDecorCanonical = floor?.openings?.[0]?.x === noise
     && floor?.decor?.[0]?.x1 === node && floor?.decor?.[1]?.w === node
     && floor?.decor?.[2]?.x === node;
-  result.draftPartitionColumnSpanCoordinatesCanonical =
-    floor?.room_drafts?.[0]?.points?.[0]?.[0] === node
-    && floor?.partitions?.[0]?.a?.[0] === node
+  result.legacyDraftPartitionSpanPreservedAndColumnCanonical =
+    floor?.room_drafts?.[0]?.points?.[0]?.[0] === noise
+    && floor?.partitions?.[0]?.a?.[0] === noise
     && floor?.wall_columns?.[0]?.center?.[0] === node
-    && floor?.open_spans?.[0]?.a?.[1] === node;
+    && floor?.open_spans?.[0]?.a?.[1] === noise;
+  result.completeLegacyStructuralBytesPreserved = ['rooms','walls','partitions','room_drafts','open_spans','openings']
+    .every(key => JSON.stringify(floor?.[key]) === JSON.stringify(config.spaces[0][key]));
   result.authoredOffGridAndUnknownSurvive = floor?.decor?.[1]?.x === far
     && floor?.future?.numeric === unknown
     && sent?.markers?.[0]?.future === unknown;
   result.scalarFieldsKeepNineDecimalContract = floor?.plan_x === 0.12345679
-    && floor?.openings?.[0]?.angle === 1.234567891
+    && floor?.openings?.[0]?.angle === config.spaces[0].openings[0].angle
     && sent?.markers?.[0]?.angle === 1.234567891;
 
   card._serverStorage = true;
@@ -108,6 +110,7 @@ const out = await page.evaluate(async () => {
   result.layoutMetadataSurvives = card._layout.marker.future === unknown;
   return {
     result,
+    sourcePair: { config: structuredClone(config), layout: {} },
     // Profile the exact candidates adopted by the production writers, not the
     // noisy objects injected above. This is the common-boundary half of AC4;
     // the controller half is exercised by the production smokes named in the
@@ -119,6 +122,6 @@ const out = await page.evaluate(async () => {
   };
 });
 
-out.result.latticeProfileNoiseZeroAfterEveryCommittedPair = out.committedPairs
-  .every((model) => latticeProfile(model).noise === 0);
+out.result.metadataWriteAddsNoNewLatticeNoise = out.committedPairs
+  .every((model) => latticeProfile(model).noise <= latticeProfile(out.sourcePair).noise);
 await finish(browser, checkAll(out.result));

@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launch, check, finish } from './serve.mjs';
+import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 
 const seed = JSON.parse(readFileSync(new URL('../test/fixtures/996-room-opening-host.json', import.meta.url), 'utf8'));
 const localPython = fileURLToPath(new URL('../.venv-ci/Scripts/python.exe', import.meta.url));
@@ -37,10 +38,9 @@ async function settleWrites(expected) {
 }
 async function clickPlan(x, y) {
   const point = await page.evaluate(([x, y]) => {
-    const rect = window.__card.renderRoot.querySelector('.stage').getBoundingClientRect();
-    const view = window.__card._view;
-    return { x: rect.left + (x * 1000 - view.x) / view.w * rect.width,
-      y: rect.top + (y * 1000 - view.y) / view.h * rect.height };
+    const svg = window.__card.renderRoot.querySelector('.stage svg');
+    const point = new DOMPoint(x * 1000, y * 1000).matrixTransform(svg.getScreenCTM());
+    return { x: point.x, y: point.y };
   }, [x, y]);
   await page.mouse.click(point.x, point.y);
 }
@@ -53,9 +53,12 @@ try {
       ({ page, browser } = await launch({ width: 1400, height: 1000 }));
       await installOracle();
     }
-    const config = structuredClone(seed);
-    config.spaces[0].openings[0].type = type;
-    if (type === 'window') for (const key of ['lock', 'flip_h', 'flip_v']) delete config.spaces[0].openings[0][key];
+    const raw = structuredClone(seed);
+    raw.spaces[0].openings[0].type = type;
+    if (type === 'window') for (const key of ['lock', 'flip_h', 'flip_v']) delete raw.spaces[0].openings[0][key];
+    // This is a current delete/history/promotion test. First legacy migration
+    // has its own tests; Undo here restores the exact accepted graph baseline.
+    const config = currentGraphFixture(raw);
     await page.evaluate(async config => {
       if (window.__roomHostBaseHass) window.__card.hass = window.__roomHostBaseHass;
       await window.__hpTest.setServerConfig(config);

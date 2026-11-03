@@ -50,7 +50,8 @@ await page.evaluate(async fixture => {
     if (message.type === 'houseplan/config/set') window.__surfaceSaves.push(structuredClone(message));
     return call.call(c.hass, message);
   };
-  await window.__hpTest.setServerConfig(cfg => ({ ...cfg, spaces: fixture.spaces, markers: [] }));
+  await window.__hpTest.setServerConfig(cfg => ({ ...cfg, model_version: fixture.model_version,
+    spaces: fixture.spaces, markers: [] }));
   await window.__hpTest.setLayout({}); await window.__hpTest.setMode('plan');
   await window.__hpTest.setTool('wall-thickness');
 }, fixture);
@@ -311,9 +312,14 @@ for (const [mode, tool, fieldSelector] of [['plan', 'draw', '.drawwall input'], 
   await nativeMode(mode); await page.evaluate(tool => window.__hpTest.setTool(tool), tool);
   await page.waitForFunction(() => !window.__card._modeTransitionBusy); await pause();
   const field = page.locator(fieldSelector).first();
-  const original = await field.inputValue(); await field.fill('12.5'); r = await field.boundingBox(); before = await state();
+  // Both native trays accept 2.5; Draw's three-character field and the decor
+  // width range do not accept the old 12.5 probe as a persistent draft.
+  const original = await field.inputValue(); await field.fill('2.5');
+  await page.evaluate(() => window.__card.updateComplete);
+  check(`AC9 ${mode} tray accepts the legal numeric probe`, await field.inputValue(), '2.5');
+  r = await field.boundingBox(); before = await state();
   await selectNumber(field, async () => {
-    check(`AC9 ${mode} held selection never spins the number`, await field.inputValue(), '12.5');
+    check(`AC9 ${mode} held selection never spins the number`, await field.inputValue(), '2.5');
     check(`AC9 ${mode} held selection keeps scene fixed`, eq(before.camera, (await state()).camera));
   });
   await page.keyboard.type('9');

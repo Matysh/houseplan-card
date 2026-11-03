@@ -115,7 +115,9 @@ const hover = await page.evaluate(() => {
   return {
     // Браузер сообщает длинные формы: border-top-color и так далее.
     hoverAnimatesBorder: starts.some((entry) => /^border-\w+-color$/.test(entry.property) && entry.onMarker),
-    hoverStartsNoShadow: starts.every((entry) => entry.property !== 'box-shadow'),
+      // UI Kit controls outside a marker may animate their own focus/hover.
+      // The regression concerns marker paint, like the border oracle above.
+      hoverStartsNoShadow: starts.every((entry) => entry.property !== 'box-shadow' || !entry.onMarker),
   };
 });
 

@@ -263,7 +263,8 @@ const out = await page.evaluate(async () => {
   // ---- 2b) …and the second run has nothing to do ------------------------
   await c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
-  o.secondRunMovesNothing = c._alignDialog.report.moved === 0;
+  if (!c._alignDialog) console.error('second optimize refused', JSON.stringify({toast:c._toast,config:c._serverCfg,layout:c._layout}));
+  o.secondRunMovesNothing = c._alignDialog?.report.moved === 0;
   o.secondRunOffersNoButton = !sr().querySelector('hp-dialog .btn.on');
   c._alignDialog = null;
   await c.updateComplete;

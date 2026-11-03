@@ -13,6 +13,7 @@
 // текущий рендер за единственный источник истины.
 import { readFileSync } from 'node:fs';
 import { launch, check, finish } from './serve.mjs';
+import { currentGraphFixture } from './helpers/graph-fixture.mjs';
 
 const corpus = (name) => JSON.parse(readFileSync(
   new URL(`../test/fixtures/560-corpus/${name}.json`, import.meta.url), 'utf8',
@@ -20,25 +21,18 @@ const corpus = (name) => JSON.parse(readFileSync(
 
 const { page, browser } = await launch();
 
-/** Положить план корпуса в карточку как готовую модель v10. */
+/** Adopt one complete graph authority; never overlay projections on a previous corpus graph. */
 const loadCorpus = async (config) => {
-  await page.evaluate((incoming) => {
+  await page.evaluate(async (incoming) => {
     const card = window.__card;
-    const space = incoming.spaces[0];
-    card._serverCfg.model_version = incoming.model_version;
-    const target = card._serverCfg.spaces.find((candidate) => candidate.id === card._space);
-    for (const key of ['rooms', 'walls', 'wall_segments', 'openings', 'partitions']) {
-      if (space[key]) target[key] = structuredClone(space[key]);
-      else delete target[key];
-    }
-    target.cell_cm = space.cell_cm;
-    for (const key of ['decor', 'wall_columns', 'room_drafts', 'open_spans']) delete target[key];
+    await window.__hpTest.setServerConfig(incoming);
+    await window.__hpTest.switchSpace(incoming.spaces[0].id);
     card._geometryHistory.clear();
     card._resize.reset();
     card._cfgEpoch++;
     card.requestUpdate();
     return card.updateComplete;
-  }, config);
+  }, currentGraphFixture(config));
   await page.waitForTimeout(60);
 };
 

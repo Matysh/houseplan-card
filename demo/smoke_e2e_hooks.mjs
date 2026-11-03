@@ -316,14 +316,38 @@ try {
       return group.length >= 2 && group.every(d => d.hasAttribute('data-hp-device-contact'))
         && contour.closest('[data-hp="device"]').dataset.id === owner;
     });
-    await hp.setMode('devices');
+    await hp.setMode('view');
     return o;
   }, { contacts: makeDeviceContactsFixture(), assetId }));
-  await page.locator('houseplan-card').locator('[data-hp="device"][data-id="row-designer-0"]').click();
-  Object.assign(out, await page.evaluate(async () => {
+  // The preceding calibration can retain a zoomed camera. Native double-tap
+  // is the responsive Fit action even when header zoom buttons are hidden.
+  const summaryToggle = page.locator('houseplan-card [data-hp="summary-toggle"]');
+  if (await summaryToggle.getAttribute('aria-pressed') === 'true') {
+    await summaryToggle.click();
+    await page.evaluate(() => window.__hpTest.settled());
+  }
+  const contactStage = page.locator('houseplan-card [data-hp="stage"]');
+  await contactStage.scrollIntoViewIfNeeded();
+  const stageBox = await contactStage.boundingBox();
+  await page.mouse.dblclick(stageBox.x + stageBox.width * .02, stageBox.y + stageBox.height * .98);
+  await page.evaluate(async () => { await window.__hpTest.settled(); await window.__hpTest.setMode('devices'); });
+  // Select a genuinely visible virtual marker. Identity hooks do not depend on
+  // a particular fixture row or a retired compact-header Fit button.
+  const selectedId = await page.evaluate(() => {
+    const root = window.__card.renderRoot, stage = root.querySelector('[data-hp="stage"]').getBoundingClientRect();
+    return [...root.querySelectorAll('[data-hp="device"][data-id]')].find(el => {
+      const r = el.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+      return window.__card._serverCfg.markers.some(marker => marker.id === el.dataset.id && marker.binding === 'virtual' && marker.space === 'golden-contacts')
+        && r.width > 0 && r.height > 0
+        && x > Math.max(stage.left,0) && x < Math.min(stage.right,innerWidth) && y > Math.max(stage.top,0) && y < Math.min(stage.bottom,innerHeight);
+    })?.dataset.id;
+  });
+  if (!selectedId) throw Error('contact fixture has no visible virtual marker for native selection');
+  await page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${selectedId}"]`).click();
+  Object.assign(out, await page.evaluate(async selectedId => {
     const c = window.__card, hp = window.__hpTest, root = c.renderRoot, o = {};
     await hp.settled();
-    o.selectionIdentity = root.querySelector('[data-hp="device"][data-id="row-designer-0"]').dataset.selected === 'true';
+    o.selectionIdentity = root.querySelector(`[data-hp="device"][data-id="${selectedId}"]`).dataset.selected === 'true';
     const panel = root.querySelector('[data-hp="properties-panel"]');
     if (!panel) throw new Error('native selection did not open Properties');
     const x = panel.querySelector('[data-hp="field"][data-field="properties-x"]');
@@ -334,13 +358,13 @@ try {
     o.propertiesControl = x.value === value && JSON.stringify(c._serverCfg) === saved;
     root.querySelector('[data-hp="tool"][data-tool="device-inbox"]').click(); await hp.settled();
     const catalog = root.querySelector('hp-dialog[data-kind="device-inbox"]');
-    const virtual = catalog.querySelector('[data-hp="device-catalog-row"][data-id="row-designer-0"]');
-    o.virtualCatalogUsesMarkerId = !!virtual && !!virtual.querySelector('[data-hp="device-catalog-select"][data-id="row-designer-0"]');
+    const virtual = catalog.querySelector(`[data-hp="device-catalog-row"][data-id="${selectedId}"]`);
+    o.virtualCatalogUsesMarkerId = !!virtual && !!virtual.querySelector(`[data-hp="device-catalog-select"][data-id="${selectedId}"]`);
     await hp.close(catalog, { via: 'cancel' });
     await hp.setMode('view');
     o.viewHasNoSelectedDevice = !root.querySelector('[data-hp="device"][data-selected="true"]');
     return o;
-  }));
+  }, selectedId));
   const card = page.locator('houseplan-card');
   const stage = card.locator('[data-hp="stage"]');
   const beforeCamera = await stage.getAttribute('viewBox'), box = await stage.boundingBox();
@@ -359,7 +383,7 @@ try {
   const notice = card.locator('[data-hp="toast"][data-id="toast.plan_formats"]');
   await notice.waitFor();
   out.toastKeyFromRealNegativeInput = await notice.count() === 1;
-  await page.evaluate(async () => { await window.__hpTest.setMode('view'); const id = window.__card.renderRoot.querySelector('[data-hp="space-tab"][aria-current="page"]')?.dataset.space; await window.__hpTest.openSpaceDialog('edit', id); });
+  await page.evaluate(async () => { await window.__hpTest.setMode('view'); const id = window.__card.renderRoot.querySelector('[data-hp="space-tab"][aria-current="page"]')?.dataset.space || window.__card.renderRoot.querySelector('[data-hp=space-settings][data-id]')?.dataset.id; await window.__hpTest.openSpaceDialog('edit', id); });
   out.toastKeySurvivesModalRouting = await notice.count() === 1;
   await page.evaluate(async () => { await window.__hpTest.close(undefined, { via: 'cancel' }); });
   await page.setViewportSize({ width: 390, height: 884 });

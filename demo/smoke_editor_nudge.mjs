@@ -1,7 +1,9 @@
 // #1025: real selection and keyboard against the ordinary persisted harness writer.
 import {launch,check,finish,requirePinnedBrowser} from './serve.mjs';
+import {currentGraphFixture} from './helpers/graph-fixture.mjs';
 requirePinnedBrowser();
 const {page,browser}=await launch({width:1600,height:1000});
+await page.exposeFunction('__canonicalNudgeFixture', currentGraphFixture);
 const card=page.locator('houseplan-card'), step=1/240;
 const near=(a,b)=>Math.abs(a-b)<1e-7;
 // Storage retains nine normalized decimals; legacy wall-flush points can have
@@ -29,7 +31,9 @@ try{
   await page.addStyleTag({content:'#host{width:100%;padding:0;margin:0}'});
   await page.evaluate(async()=>{
     await window.__hpTest.waitForWrites();
-    await window.__hpTest.setServerConfig(cfg=>({...cfg,settings:{...cfg.settings,volumetric_view:false},spaces:[{
+    const cfg=structuredClone(window.__card._serverCfg);
+    const candidate=await window.__canonicalNudgeFixture({...cfg,model_version:10,
+      settings:{...cfg.settings,volumetric_view:false},spaces:[{
       id:'nudge',title:'Nudge',view_box:[0,0,1,1],cell_cm:5,rooms:[],wall_segments:[],
       partitions:[{id:'free',a:[.183,.3],b:[.483,.3],cm:10,future:{keep:true}},
         {id:'connected',a:[.15,.65],b:[.38,.65],cm:10},{id:'branch',a:[.38,.65],b:[.38,.85],cm:10},
@@ -38,7 +42,8 @@ try{
         {id:'door',type:'door',x:.67,y:.5,angle:45,length:.04,host:{kind:'partition',id:'diagonal',t:.5}}]},
       {id:'upstairs',title:'Other floor',rooms:[],wall_segments:[]}],markers:[
       {id:'keyboard-light',binding:'virtual',space:'nudge',name:'Keyboard light',icon:'mdi:lightbulb',size:1},
-      {id:'untouched-light',binding:'virtual',space:'nudge',name:'Untouched',icon:'mdi:lightbulb',size:1}]}));
+      {id:'untouched-light',binding:'virtual',space:'nudge',name:'Untouched',icon:'mdi:lightbulb',size:1}]});
+    await window.__hpTest.setServerConfig(candidate);
     await window.__hpTest.setLayout({'keyboard-light':{s:'nudge',x:.183,y:.52,k:1.3,future:{opaque:true}},
       'untouched-light':{s:'nudge',x:.85,y:.82},foreign:{s:'upstairs',x:.3123,y:.7123,future:{opaque:[1,2]}}});
     await window.__hpTest.switchSpace('nudge');await window.__hpTest.setMode('plan');await window.__hpTest.setTool('select');
@@ -62,24 +67,24 @@ try{
   await selectWall('free');before=await state();check('nudge.free_native_selection',before.identity?.objectId,'free');
   await press('ArrowRight');let after=await state();
   check('nudge.accepted_canvas_arrow_prevents_scroll',await page.evaluate(()=>window.__nudgeKeys.at(-1)?.prevented));
-  check('nudge.wall_full_segment_exact_step',after.space.partitions[0].a.every((n,i)=>near(n,before.space.partitions[0].a[i]+(i===0?step:0)))
-    &&after.space.partitions[0].b.every((n,i)=>near(n,before.space.partitions[0].b[i]+(i===0?step:0))));
-  check('nudge.wall_offset_identity_unknown',after.space.partitions[0].id==='free'&&near(after.space.partitions[0].a[0],.183+step)
-    &&JSON.stringify(after.space.partitions[0].future)===JSON.stringify(before.space.partitions[0].future));
-  check('nudge.hosted_opening_atomic',near(after.space.openings[0].x,before.space.openings[0].x+step)
-    &&near(after.space.openings[0].y,before.space.openings[0].y)&&JSON.stringify(after.space.openings[0].host)===JSON.stringify(before.space.openings[0].host)
-    &&JSON.stringify(after.space.openings[0].future)===JSON.stringify(before.space.openings[0].future));
+  check('nudge.wall_full_segment_exact_step',after.space.partitions.find(p=>p.id==='free').a.every((n,i)=>near(n,before.space.partitions.find(p=>p.id==='free').a[i]+(i===0?step:0)))
+    &&after.space.partitions.find(p=>p.id==='free').b.every((n,i)=>near(n,before.space.partitions.find(p=>p.id==='free').b[i]+(i===0?step:0))));
+  check('nudge.wall_offset_identity_unknown',after.space.partitions.find(p=>p.id==='free').id==='free'&&near(after.space.partitions.find(p=>p.id==='free').a[0],.183+step)
+    &&JSON.stringify(after.space.partitions.find(p=>p.id==='free').future)===JSON.stringify(before.space.partitions.find(p=>p.id==='free').future));
+  check('nudge.hosted_opening_atomic',near(after.space.openings.find(o=>o.id==='hosted').x,before.space.openings.find(o=>o.id==='hosted').x+step)
+    &&near(after.space.openings.find(o=>o.id==='hosted').y,before.space.openings.find(o=>o.id==='hosted').y)&&JSON.stringify(after.space.openings.find(o=>o.id==='hosted').host)===JSON.stringify(before.space.openings.find(o=>o.id==='hosted').host)
+    &&JSON.stringify(after.space.openings.find(o=>o.id==='hosted').future)===JSON.stringify(before.space.openings.find(o=>o.id==='hosted').future));
   check('nudge.wall_one_write_one_history_no_scroll',after.geometry===before.geometry+1&&after.writes===before.writes+1&&after.scroll===before.scroll);
-  await press('Control+z');after=await state();check('nudge.wall_undo',near(after.space.partitions[0].a[0],before.space.partitions[0].a[0]));
-  await press('Control+y');after=await state();check('nudge.wall_redo',near(after.space.partitions[0].a[0],before.space.partitions[0].a[0]+step));
+  await press('Control+z');after=await state();check('nudge.wall_undo',near(after.space.partitions.find(p=>p.id==='free').a[0],before.space.partitions.find(p=>p.id==='free').a[0]));
+  await press('Control+y');after=await state();check('nudge.wall_redo',near(after.space.partitions.find(p=>p.id==='free').a[0],before.space.partitions.find(p=>p.id==='free').a[0]+step));
   await selectOpening('door');before=await state();check('nudge.opening_native_selection',before.identity?.objectId,'door');
   await press('ArrowUp');await press('ArrowDown');check('nudge.45_inactive_pair_noop',await state(),before);
   await press('ArrowRight');after=await state();
-  check('nudge.45_right_one_cell_along_host',near(after.space.openings[1].x-before.space.openings[1].x,step/Math.sqrt(2))
-    &&near(after.space.openings[1].y-before.space.openings[1].y,step/Math.sqrt(2))&&after.space.openings[1].host.id==='diagonal');
+  check('nudge.45_right_one_cell_along_host',near(after.space.openings.find(o=>o.id==='door').x-before.space.openings.find(o=>o.id==='door').x,step/Math.sqrt(2))
+    &&near(after.space.openings.find(o=>o.id==='door').y-before.space.openings.find(o=>o.id==='door').y,step/Math.sqrt(2))&&after.space.openings.find(o=>o.id==='door').host.id==='diagonal');
   check('nudge.opening_one_write_one_history',after.geometry===before.geometry+1&&after.writes===before.writes+1);
-  await press('Control+z');after=await state();check('nudge.opening_undo',near(after.space.openings[1].host.t,before.space.openings[1].host.t));
-  await press('Control+y');after=await state();check('nudge.opening_redo',after.space.openings[1].host.t>before.space.openings[1].host.t);
+  await press('Control+z');after=await state();check('nudge.opening_undo',near(after.space.openings.find(o=>o.id==='door').host.t,before.space.openings.find(o=>o.id==='door').host.t));
+  await press('Control+y');after=await state();check('nudge.opening_redo',after.space.openings.find(o=>o.id==='door').host.t>before.space.openings.find(o=>o.id==='door').host.t);
   // Controls use trusted focus and key events, including nested shadow inputs.
   await selectWall('free');before=await state();
   check('nudge.properties_control_has_no_modal',await card.locator('hp-dialog').count(),0);

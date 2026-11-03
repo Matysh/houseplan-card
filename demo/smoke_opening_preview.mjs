@@ -3,8 +3,25 @@
 // real architectural symbol painted above the wall body. Tests are authored
 // here but run only as part of the release gate.
 import { launch, checkAll, finish } from './serve.mjs';
+import { currentGraphFixture, editGraphFixture } from './helpers/graph-fixture.mjs';
 
 const { page, browser } = await launch();
+await page.exposeFunction('__openingPreviewPartition', (config, spaceId, partition) => {
+  // The partition-target scenario is independent of the completed opening
+  // save/preview journey. Author a fresh valid baseline instead of mutating
+  // a graph's ignored partition projection or inheriting legacy unhosted doors.
+  if (partition) {
+    config.model_version = 10;
+    for (const space of config.spaces) delete space.plan_graph;
+    config.spaces.find(space => space.id === spaceId).openings = [];
+  }
+  const next = currentGraphFixture(config);
+  editGraphFixture(next, spaceId, { kind: 'partitions', ids: ['opening-smoke-partition'] }, space => {
+    space.partitions = space.partitions.filter(p => p.id !== 'opening-smoke-partition');
+    if (partition) space.partitions.push(partition);
+  });
+  return next;
+});
 await page.evaluate(() => {
   window.__card._setMode('plan');
   return window.__card.updateComplete;
@@ -324,9 +341,11 @@ const res = await page.evaluate(async () => {
   const bodyCentre = card._roomCenter(room);
   const bodyX = bodyCentre[0] / 1000;
   const bodyY = bodyCentre[1] / card._spaceH;
-  card._curSpaceCfg.partitions = [{
+  const partitionFixture = {
     id: 'opening-smoke-partition', a: [bodyX - 0.05, bodyY], b: [bodyX + 0.05, bodyY], cm: 20,
-  }];
+  };
+  await window.__hpTest.setServerConfig(await window.__openingPreviewPartition(
+    structuredClone(card._serverCfg), card._space, partitionFixture));
   card._cfgEpoch++;
   card._openingPlacementIntervalsCache = null;
   card._cursorPt = bodyCentre;
@@ -335,7 +354,8 @@ const res = await page.evaluate(async () => {
   out.partitionIsOpeningTarget = !!root().querySelector('.opening-preview')
     && partitionCandidate?.host?.kind === 'partition'
     && partitionCandidate.host.id === 'opening-smoke-partition';
-  card._curSpaceCfg.partitions = [];
+  await window.__hpTest.setServerConfig(await window.__openingPreviewPartition(
+    structuredClone(card._serverCfg), card._space, null));
   card._curSpaceCfg.wall_columns = [{
     id: 'opening-smoke-column', shape: 'square', cm: 30, center: [bodyX, bodyY], angle: 0,
   }];
