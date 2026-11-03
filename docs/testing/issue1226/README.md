@@ -4,7 +4,7 @@ All 796 original unsuccessful entries from [audit41598951489](https://github.com
 
 | Original population | Latest addressed classification |
 |---|---|
-| 230 Node failures |210 fixed;20 classified retained RED|
+| 230 Node failures |209 fixed;21 classified retained RED|
 | 177 backend failures |177 addressed|
 | 122 browser failures/timeouts |95 complete successes;27 classified retained RED|
 | 267 golden failures/differences |all nine missing captures repaired; no baseline accepted|
@@ -41,3 +41,7 @@ The existing runner's pytest parser now counts the final complete summary includ
 [Corpus preservation](corpus-preservation.md), [resumed controls](resumed-controls.md), [UI follow-up](ui-five-followup.md), [title contract](header-title-contract.md), [source-ledger proof](current-corpus-oracle-proof.md) and per-case JSON retain source provenance. The full profile was downloaded once under output/issue1225-audit-41679296259. Earlier diagnostic runs41632300999,41646456489 and41662157218 remain historical receipts, not final-current claims.
 
 No product fix, new workflow, waiver, accepted visual baseline or release is introduced. AC1–AC3 are submitted for ordinary independent review with explicit remaining RED; unchanged unapproved goldens and classified real/unresolved behavior are not silently accepted or converted into an invented all-green task gate.
+
+## Official review correction M1
+
+[Review41705603244](https://github.com/Matysh/houseplan-card/actions/runs/41705603244) correctly identified one falsely accepted refusal. The original Optimize ambiguous-partitions test again requires successful preservation of both original partition IDs/cm and the opening host, including model11 identity and source immutability. The actual thickness-conflict stays RED, as in #478. The original230-row population remains unchanged; latest209fixed/21retainedRED corrects the earlier210/20classification. See [response](review-m1-response.md). No full audit/build/HA is repeated for this positive-oracle correction.

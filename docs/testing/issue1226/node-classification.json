@@ -1198,12 +1198,23 @@
   {
     "file": "test/plan-optimizer.test.mjs",
     "name": "Optimize reconciles fully hidden subspans but leaves ambiguous partitions untouched",
-    "category": "stale-fixture-or-oracle",
-    "status": "fixed",
-    "reason": "Raw authored projections are legacy10, not malformed model11; current graph empty collection and exact host tq are explicit. Ambiguous thickness refuses atomically at migration; unrelated future model refuses with model-version.",
-    "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml; after product fixes: output/issue1226/post-product-1220-24.xml (origin/dev 96ffe5444, fresh test-build)",
+    "category": "confirmed-current-migration-defect",
+    "status": "retained-red",
+    "reason": "Official M1 restores the original positive guarantee: Optimize must retain both coincident partitions with original IDs/cm and opening host through the model11 migration, without mutating the input. Actual migration still throws thickness-conflict. This is the same carrier-coalescing defect as the valid #478 source, not a stale expectation. No expected refusal or product fix is introduced.",
+    "evidence": "Official review41705603244 M1; docs/testing/issue1226/review-m1-response.md; addressed exact original-case XML recorded there; docs/testing/issue1226/corpus-review/two-refusals.md",
     "relatedIssue": 1226,
-    "originalFailure": "plan-graph:graph-missing:coincident"
+    "originalFailure": "plan-graph:graph-missing:coincident",
+    "revalidations": [
+      {
+        "status": "fixed",
+        "category": "stale-fixture-or-oracle",
+        "reason": "Raw authored projections are legacy10, not malformed model11; current graph empty collection and exact host tq are explicit. Ambiguous thickness refuses atomically at migration; unrelated future model refuses with model-version.",
+        "evidence": "Original: run 41598951489 on cb1431ea, local-geometry.xml/local-node-rest.xml; current: output/issue1226/final-guard-checks.xml; after product fixes: output/issue1226/post-product-1220-24.xml (origin/dev 96ffe5444, fresh test-build)",
+        "correction": "Official review41705603244 M1: refusal was incorrectly accepted as an expected outcome."
+      }
+    ],
+    "currentFailure": "thickness-conflict: valid coincident partitions redundant20cm/second10cm are coalesced during migration; restored positive preservation assertion remains RED.",
+    "latestAc1": "official-M1-positive-contract-restored"
   },
   {
     "file": "test/plan-optimizer.test.mjs",

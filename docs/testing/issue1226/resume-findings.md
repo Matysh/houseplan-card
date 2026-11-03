@@ -162,3 +162,7 @@ fingerprints and the three read-only probes are in
 closures while retaining actual shared helpers, dynamic-reader and icon-source
 dependencies. No pipeline/cache code, workflow, filter or CI run is changed here;
 no new issue is created for this finding.
+
+## Same migration defect: positive-width coincident partitions (official M1)
+
+The original `Optimize reconciles fully hidden subspans but leaves ambiguous partitions untouched` input contains two independent coincident partitions, redundant20cm and second10cm, with a door hosted on redundant. Migration merges same-kind carriers by their node pair and throws thickness-conflict. As for the valid #478 zero/positive-width witness above, this forced merge is not a preservation contract. Official review41705603244 M1 identified the author's incorrect expected-refusal port. The test again requires successful model11 preservation of both IDs/cm and host with immutable input; it remains RED. The classification is corrected from fixed to confirmed migration defect, not waived. No new GitHub issue or product patch is introduced.

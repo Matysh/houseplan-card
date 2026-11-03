@@ -143,8 +143,22 @@ test('Optimize reconciles fully hidden subspans but leaves ambiguous partitions 
     id: 'second', a: [0.5, 0], b: [0.5, 1], cm: 10,
   });
   const before = structuredClone(ambiguous);
-  assert.throws(() => optimizePlans(ambiguous, {}), { code: 'thickness-conflict' });
-  assert.deepEqual(ambiguous, before, 'ambiguous legacy walls refuse atomically at graph migration');
+  let ambiguousResult;
+  try {
+    ambiguousResult = optimizePlans(ambiguous, {});
+  } finally {
+    assert.deepEqual(ambiguous, before, 'Optimize preview never mutates either coincident source carrier');
+  }
+  assert.equal(ambiguousResult.config.model_version, PLAN_MODEL_VERSION);
+  assert.equal(ambiguousResult.report.partitionsReconciled, 0);
+  const space = ambiguousResult.config.spaces[0];
+  assert.deepEqual(space.partitions, before.spaces[0].partitions,
+    'different-thickness carriers retain both original IDs, geometry and cm');
+  assert.deepEqual(space.plan_graph.edges.filter(edge => edge.kind === 'partition')
+    .map(({ id, cm }) => ({ id, cm })), [{ id: 'redundant', cm: 20 }, { id: 'second', cm: 10 }]);
+  assert.deepEqual(space.openings, before.spaces[0].openings.map(opening => ({
+    ...opening, host: { ...opening.host, tq: ['1', '2'] },
+  })), 'the original opening and its partition host survive losslessly in model11');
 });
 
 // Privacy-minimised six-room topology from #218/#223. The relevant stored ULP
