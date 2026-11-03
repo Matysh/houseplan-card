@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1842,
-  "nextTicket": 118,
+  "revision": 1843,
+  "nextTicket": 119,
   "nextFence": 118,
   "tasks": {
     "1126": {
@@ -2223,14 +2223,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "issue/1243-weather-heading",
-      "materialSha": "32d8c663a9c87c2eedc5d5beba21e1c55b08eefa",
+      "materialSha": "6aa9503096daac765d314d3ae8f39af44544fedd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 116,
-      "queued": false,
+      "ticket": 118,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793726498811,
-      "reviewEntry": 1,
+      "readyAt": 1793727277462,
+      "reviewEntry": 2,
       "patchId": "e7f965225e22600a6bb1d263a5791913556571b0",
       "changedFiles": [
         "demo/smoke_summary_weather.mjs",
@@ -2240,7 +2240,6 @@
         "src/hp-summary-weather.ts",
         "src/summary-panel-runtime-loaded.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2388,7 +2387,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1243
+  ],
   "active": null,
   "events": {
     "github:41683293980:1:completions:message:f26cadb0cf007f2105533ea07945abe91134b3e54bc17e2b5f9cfd4377145f37": {
@@ -2566,6 +2567,19 @@
           "entry": 1,
           "eventId": "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return:return:1248"
         }
+      }
+    },
+    "finish:dc12ea94-e96c-42ec-890b-4a6c11f14bb2": {
+      "digest": "cac1d980a96eb1fa44d417e6d5860961a59f3beb3665923a3b376697ec9a4085",
+      "issue": 1243,
+      "message": {
+        "kind": "queued",
+        "issue": 1243,
+        "at": 1793727277462,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "6aa9503096daac765d314d3ae8f39af44544fedd"
       }
     }
   },
