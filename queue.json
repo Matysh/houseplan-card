@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1925,
+  "revision": 1926,
   "nextTicket": 123,
   "nextFence": 122,
   "tasks": {
@@ -2475,6 +2475,10 @@
     "expiresAt": 1793729098151
   },
   "events": {
+    "github:41689040323:1:dev-webhook:61b7ad05-d8b8-4cf0-8054-1068541ed6a2:delivered": {
+      "digest": "4e0b238c3ffe9f9125ac1706aa93f51f7ecbfbf92a2fb7142ee56f8ffe73ee64",
+      "issue": 1244
+    },
     "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
       "digest": "24e1edf7aed6946369b9de71ffcd021fc2d7471c2da828ba1aefa7c0e63b2fa5",
       "issue": 1244,
@@ -2532,7 +2536,7 @@
   },
   "devWebhook": {
     "sourceSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-    "status": "pending",
+    "status": "delivered",
     "integrationTree": "38d855207e7efb6793a343940a1d90f1f6519736"
   }
 }
