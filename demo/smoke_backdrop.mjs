@@ -326,7 +326,7 @@ await settle();
 
 // ---------- 5) the reset button ------------------------------------------
 const resetSelector = await page.locator('[data-hp="properties-panel"] [data-field="properties-reset"]').isVisible()
-  ? '[data-hp="properties-panel"] [data-field="properties-reset"]' : '[data-action="backdrop-reset"]:visible';
+  ? '[data-hp="properties-panel"] [data-field="properties-reset"]' : '[data-action="backdrop-reset"]';
 check('reset_button_offered_once_moved', await q(resetSelector), 1);
 check('reset_button_absent_from_primary_bar', await q('.decorbar .bdreset'), 0);
 await page.locator('houseplan-card').locator(resetSelector).click();
