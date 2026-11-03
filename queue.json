@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1179,
-  "nextTicket": 85,
+  "revision": 1180,
+  "nextTicket": 86,
   "nextFence": 85,
   "tasks": {
     "1126": {
@@ -1493,6 +1493,20 @@
         "requestId": "review:1216:1:78862967473a87c192f20e785015e5e6db6c9727:aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
         "transitionConfirmed": true
       }
+    },
+    "1217": {
+      "issue": 1217,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/ci-main-badge",
+      "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 85,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793687734219,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -1597,7 +1611,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1217
+  ],
   "active": null,
   "events": {
     "github:41504682134:1:label:spec-request": {
@@ -1742,6 +1758,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:ab0e462b-14cd-476b-8836-c87a60943e36": {
+      "digest": "6376b121f5184e5708149548e28b07e58197429f345b5476c5c3b99efb1e77c9",
+      "issue": 1217,
+      "message": {
+        "kind": "queued",
+        "issue": 1217,
+        "at": 1793687734219,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6"
       }
     }
   },
