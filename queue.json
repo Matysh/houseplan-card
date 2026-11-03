@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1697,
+  "revision": 1698,
   "nextTicket": 113,
   "nextFence": 111,
   "tasks": {
@@ -2036,164 +2036,25 @@
     },
     "1236": {
       "issue": 1236,
+      "branch": "codex/1236-local-opening-preview",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1236-local-opening-preview",
-      "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 110,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793716117830,
-      "reviewEntry": 2,
-      "notice": {
-        "key": "1:rebase-conflict",
-        "reason": "rebase-conflict",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793716061066,
-        "entry": 1,
-        "eventId": "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:2:return:return:1236"
-      },
-      "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50",
-      "changedFiles": [
-        "demo/performance/opening-drag-coverage.mjs",
-        "demo/smoke_opening_drag_graph.mjs",
-        "docs/CANVAS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1236.json",
-        "src/direct-wall-geometry.ts",
-        "src/opening-drag-preview.ts",
-        "test/direct-wall-geometry.test.mjs",
-        "test/opening-drag-coverage.test.mjs",
-        "test/opening-drag.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T143512842-cc1759c2",
-        "name": "Тесты для задачи #1236 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1097-opening-drag-20261028/.git/process-next/runs/20261103T143512842-cc1759c2/report.json",
-        "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "status": "passed",
-        "finishedAt": "2026-11-03T14:35:58.663Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+      "mergedSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+      "mergedAt": 1793716912099,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1236:2:b62eea32e9379ee3b1499de2610fc19775629d50:9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-      "reviewMaterial": {
-        "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "expectedBase": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1236,
-        "requestId": "review:1236:2:b62eea32e9379ee3b1499de2610fc19775629d50:9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "kind": "code",
-        "base": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-        "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1236,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1236",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "<details>\n<summary>#1236: причина, локальная exact подготовка, строгие witnesses и границы</summary>\n\nПричина первого full fallback однозначна: `OpeningDragWalls.prepare` возвращал false для любого plan_graph. Legacy crop действительно терял owner metadata, поэтому просто удалить этот запрет было бы неверно.\n\nCurrent drag теперь готовит один retained exact patch на исходного/текущего host и viewport: домены обоих владельцев, fixed cuts остальных проёмов, ближайший foreign material и columns. На кадрах заново вырезается только изменяемый host-owned material; exact arrangement видит лишь этот patch. Тот же canonical ownership resolver и half-plane masks используются settled renderer и preview. `t/tq` не входят в ключ подготовленного patch, поэтому обычное движение по одному хосту не запускает подготовку заново; смена хоста/viewport обновляет patch. Pixel padding включает края complementary clip. Отсутствующий/orphan host, неизвестный transform и настоящий failure сохраняют прежний observable fallback. Никакие counters или пороги не изменены, продукт не пишет до pointerup.\n\nВ unit добавлены совпадение локального material с независимым full canonical oracle внутри patch (включая foreign wall, column и fixed other opening), отсутствие далёкого floor material, неизменность graph/columns/base; 30 изменений exact host t/tq сохраняют один retained patch, unsupported viewport остаётся fallback. Opening/direct targeted **23/23 PASS**, отдельная coverage проверка **1/1 PASS**.\n\nНовый адресный `smoke_opening_drag_graph.mjs` использует допустимую model11 fixture, заранее построенную настоящим commitWallSegmentModel из legacy с validateGraph=ok. Для стены и перегородки отдельно: настоящий trusted mouse down, по30held кадров для Cancel и Release, viewport changes15/20, видимые плечи и пустой центр, unchanged saved space/history/pools/cache families, **fallback0**. На release — ровно1 реальная запись и1 backend ACK,1history step, persisted exact native snapped preview, host tq, все остальные свойства и structural nodes/edges/projections неизменны; native Undo восстанавливает всё пространство exact byte-for-byte. Этот scoped native witness **PASS**. Source legacy fixture неизменна; её миграция не выдаётся за pointermove work.\n\nCoverage preparation выявила старую неоднозначность shape-only поиска: directIndependentParts имеет тот же `{partitions,columns,patches,all}`, что physicalBodyParts. Oracle теперь находит именно producer, вызываемый `_physicalBodiesR`, разрешая импорт/экспорт aliases между чанками. Отсутствующая/неоднозначная связь fail-closed. Unit показывает positive counter, zero и unrelated same-shape negative; browser доказывает **cold physical producer>0**, затем **held physical calls=0**, **constructor=1** на drag. Это исправление идентификации, не отключение проверки.\n\nИсторические `smoke_opening_drag` / `smoke_partition_openings_preview` не переприняты и остаются диагностическими RED: первый теперь проходит все30held кадров без fallback, но останавливается на старом 9-decimal baseline против current exact x/tq; второй после корректной coverage идентификации останавливается на прежнем assertion `host.t` без tq до своего opening segment. Эти устаревшие ожидания не изменены и относятся к #1226. Их полный PASS не заявляется; новый current witness проверяет требуемые save/metadata/history без сравнения с устаревшей округлённой формой.\n\nШтатный finish выполнит S6 после актуализации в очереди, включая новый browser witness. Golden/performance лимиты не тронуты. E2E-impact координатор запишет в companion; beta не разрешена.\n\n</details>"
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять. Причина найдена верно. До изменения `OpeningDragWalls.prepare` возвращал false для любого `plan_graph`, поэтому каждый кадр перетаскивания проёма в model11 шёл через полный canonical fallback. Новый путь `directOpeningDrag` один раз на host/viewport готовит локальный участок. В него входят исходные материалы владельцев хоста, заранее вырезанные остальными проёмами, ближайшие чужие материалы и колонны. На каждом кадре заново вырезается только материал владельцев хоста. Для этого используются те же `openingOwners`/`cutMaterials`, что и в settled-рендере, поэтому внутри clip локальная геометрия по построению совпадает с canonical. Unit-тест подтверждает это независимым сравнением с полным oracle. Путь записи, Cancel и Undo в diff не менялись. Fallback для хоста без привязки или orphan-хоста, неподдерживаемого transform и сбоя arrangement сохранён, счётчики не ослаблены. Блокеров не нашёл. Владельцу стоит учесть одно: два исторических свидетеля из issue (`smoke_opening_drag`, `smoke_partition_openings_preview`) по словам автора остаются RED. Падают они на устаревших ожиданиях при отпускании (9 знаков после запятой и `host.t` без `tq`), которые относятся к #1226. Этот diff путь записи не трогает, и объяснение правдоподобно, но их зелёного прогона нет.",
-          "understanding": "Проблема. В model11 drag проёма уже на втором кадре увеличивал `_openingDragFallbackBuilds`. `_renderOpeningDragBodies` получал null от `OpeningDragWalls.render`, потому что `prepare` безусловно возвращал false при `space.plan_graph`. Старый legacy-crop (`recutWallBodiesGeometry` по обрезанному `roomGeom`) теряет owner-метаданные точной структуры, поэтому снимать запрет без замены было бы неверно.\n\nПосле. Если в `prepare` есть `plan_graph`, а у исходного и текущего проёма есть host, строится ключ из viewport и kind/id обоих хостов; `t/tq` в ключ не входят. Вызывается `directOpeningDrag(base.roomGeom, …)`: по WeakMap `retained` он находит `Structure`, которую сохранил `directWallGeometry` для settled-пола. Дальше:\n- набор владельцев — это объединение `openingOwners` исходного и текущего проёма (члены run);\n- dynamic — материалы, у которых хотя бы один владелец входит в этот набор. Они один раз вырезаются остальными проёмами и `partitionCuts` без перетаскиваемого;\n- fixed — остальные материалы в пределах `bounds+padding`, тоже вырезанные остальными проёмами, плюс ближние колонны;\n- `bounds` — bbox dynamic с запасом `max(gridPitch, 2 физических пикселя)`.\n\nНа кадре `render` вырезает только dynamic текущим проёмом (`roomInputs([opening])` и partition-cut из `geometryOpenings`) и строит `A.arrangeComponents` по fixed+dynamic. Clip строится через тот же `openingDragClip`: снаружи рисуется settled, внутри — локальная геометрия.\n\nРазобранные пути:\n- вызов из `houseplan-editor-runtime.ts::_renderOpeningDragBodies` (6129–6161). Объект создаётся один раз на drag, сбрасывается в `_opPointerDown`/`_cancelOpeningDrag`;\n- источник `extraBodies` — `_physicalBodiesR().all`. Тот же массив, что вернул `directIndependentParts` и записал в WeakMap `extras`, так что `extras.get` находит columns и partitionCuts без двойного учёта перегородок;\n- `geometryRoomOpeningInputs` передаёт `host` и исключает некомпозитные partition-проёмы. Поэтому партиционный проём режет перегородку только через `partitionCuts` — так же, как в canonical;\n- `wallBodiesGeometry` → `directWallGeometry` (settled-слой) и `physicalBodyParts` → `directIndependentParts`;\n- инструмент coverage (`bundledProducers`): теперь выбирается producer, вызываемый из `_physicalBodiesR`, с разрешением import/export-алиасов. Если связь не найдена или неоднозначна, инструмент падает (fail-closed).",
-          "analysis": [
-            {
-              "topic": "Эквивалентность локального результата canonical внутри clip",
-              "assessment": "Решение корректно по построению. Маски вычитаются коммутативно. Dynamic-материалы сначала вырезаются остальными проёмами и `partitionCuts`, затем на кадре — текущим проёмом. Это то же множество вычитаний, что в `materialPieces` полного прохода. Смешанные junction-fan (хост + чужой владелец) попадают в dynamic и режутся масками всех своих владельцев, как и в canonical. Исключённые далёкие материалы не могут пересечь clip: clip — это `bounds`, расширенные максимум на физический пиксель, а `near` проверяет `bounds+padding`, где padding ≥ 2 физических пикселя. Ложной кромки (stroke) на границе clip из-за отброшенного соседа не возникает. Хорошо, что владельцы, маски и slot берутся из общих `openingOwners`/`cutMaterials` (рефакторинг `materialPieces` без изменения поведения), а не из параллельной копии.",
-              "evidence": "`src/direct-wall-geometry.ts:221-254` (выделенные `openingOwners`/`cutMaterials`), `:268-284` (`directOpeningDrag`). Тест `test/direct-wall-geometry.test.mjs` «1236 retained opening patch…»: симметричная разность с `directWallGeometry(...).geom` внутри bounds меньше 1e-10 для x=12..15, включая соседнюю стену w1, колонну и фиксированный проём; далёкая стена w2 в результат не попадает; исходные graph/columns/base не меняются."
-            },
-            {
-              "topic": "Подготовка один раз и ключ кеша",
-              "assessment": "В ключ входят viewport и kind/id обоих хостов, `t/tq` — нет. Поэтому обычное движение не запускает повторную подготовку, а смена viewport (кадры 15/20 в smoke) переподготавливает только локальный участок без полного пересчёта пола. При неудачной переподготовке старые `direct`/`key` остаются, и метод возвращает false — fallback корректен. Небольшая избыточность: набор владельцев определяется run, а ключ — id члена run. Переход на соседний сегмент того же run переподготовит идентичный участок (O(materials) по bbox, без physical producer).",
-              "evidence": "`src/opening-drag-preview.ts:125-138`. Тест `test/opening-drag.test.mjs` «1236 current drag retains…»: 30 изменений `t/tq` дают `strictEqual(preview.direct, retained)`; viewport с `b=.2` возвращает null, то есть ведёт в fallback."
-            },
-            {
-              "topic": "Сохранённый fallback и границы поддержки",
-              "assessment": "Полный проход остаётся для проёма без привязки к хосту или с orphan-хостом, для неизвестного transform (`openingDragClip` → null), при отсутствии записи `retained`, при пустом dynamic, при `failures` в arrangement и при исключении (try/catch в `render`). Счётчик `_openingDragFallbackBuilds` и его семантика не изменены. Проём без привязки к хосту в model11 (например, отсоединённые неоднозначные проёмы из #1228) по-прежнему рисуется через полный fallback на каждом кадре. Это не регрессия (до исправления так шли все проёмы model11) и соответствует «неподдерживаемому случаю», хотя `openingOwners` уже умеет искать ближайшую коллинеарную стену.",
-              "evidence": "`src/opening-drag-preview.ts:126,134-135,205-211,234-236`. `src/houseplan-editor-runtime.ts:6151-6160`."
-            },
-            {
-              "topic": "Запись, Cancel, Undo",
-              "assessment": "Diff не затрагивает `_opPointerMoveNow`, путь pointerup/writer, `_cancelOpeningDrag` и историю. Изменён только transient-рендер. Поэтому сохранение «нет записи до отпускания» следует из неизменённого кода. Новый smoke дополнительно проверяет это нативно: одна запись и один ACK, точный snapped x, неизменные структурные проекции, Undo восстанавливает пространство байт в байт.",
-              "evidence": "Состав diff: изменены только `src/direct-wall-geometry.ts` и `src/opening-drag-preview.ts`. `demo/smoke_opening_drag_graph.mjs:52-63`."
-            },
-            {
-              "topic": "Идентификация producer в coverage-оракуле",
-              "assessment": "Изменение оправдано и не ослабляет проверку. `directIndependentParts` возвращает объект той же формы `{partitions,columns,patches,all}`, поэтому поиск только по форме неоднозначен. Теперь выбирается функция, вызываемая из `_physicalBodiesR` (с разрешением алиасов между чанками), а при потере связи инструмент падает. Для model11 `physicalBodyParts` по-прежнему вызывается при каждом построении (через неё же идёт делегирование в direct) и из fallback-ветки `_renderOpeningDragBodies`. Поэтому held calls=0 действительно означает отсутствие физического пересчёта пола.",
-              "evidence": "`demo/performance/opening-drag-coverage.mjs:23-27,46-56`. `test/opening-drag-coverage.test.mjs`: положительный случай, нулевой и отрицательный для функции той же формы, плюс fail-closed. `src/houseplan-card.ts:10302-10313`, `src/physical-geometry.ts:227-237`."
-            },
-            {
-              "topic": "Свидетели из issue",
-              "assessment": "Задача восстанавливает их цель (локальность held-кадров), но сами скрипты по словам автора остаются RED на ожиданиях при отпускании. В `smoke_partition_openings_preview.mjs:359` ожидается `host:{...,t:.85}` без `tq`, а проверки held-кадров (327–350) идут раньше. Diff не меняет writer, так что падение не вызвано этим изменением; принадлежность к #1226 правдоподобна. Новый `smoke_opening_drag_graph.mjs` закрывает те же требования на допустимой model11-фикстуре для стены и перегородки, не ослабляя исторические скрипты.",
-              "evidence": "`demo/smoke_partition_openings_preview.mjs:327-360`. Контекст автора. Комментарий #1226 в теле issue."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Строить ключ подготовки из отсортированного набора `openingOwners` (членов run), а не из id хостов. Переход между сегментами одного run перестанет запускать идентичную переподготовку. Цена — одна строка и вызов `openingOwners` до сравнения ключа; поведение не меняется.",
-            "`docs/ARCHITECTURE.md:43` описывает только legacy crop («crops the retained uncut masonry…»). Стоит добавить одно предложение о model11: один раз готовятся участки владельцев хоста, на кадре вырезается только материал хоста. Новый smoke также можно указать в инструкции `docs/feature-notes.md:183` рядом с историческими скриптами — иначе по документации локальность model11 проверяют только RED-скрипты.",
-            "При желании (не в объёме задачи) поддержать проём без привязки к хосту в model11: `openingOwners` уже находит ближайшую коллинеарную стену. Сейчас такие проёмы по-прежнему идут через полный fallback на каждом кадре. Выгода — локальность и для отсоединённых проёмов из #1228; цена — ключ придётся строить по найденным владельцам, которые могут меняться между кадрами."
-          ],
-          "boundaries": "Код изучен по исходникам: полностью `src/opening-drag-preview.ts`, `src/direct-wall-geometry.ts` и `demo/performance/opening-drag-coverage.mjs`; новые тесты и smoke; вызывающие пути `_renderOpeningDragBodies` и `_opPointerDown`/`_opPointerMoveNow` (начало), `_physicalBodiesR`, `_roomWallOpeningInputs` → `geometryRoomOpeningInputs`, `geometryOpenings`, `physicalBodyParts` → `directIndependentParts`, `wallBodiesGeometry` → `directWallGeometry`; хвост исторического `smoke_partition_openings_preview.mjs`. Сборку, тесты и smoke я не запускал. Использована квитанция S6 `20261103T143512842-cc1759c2` («Тесты для задачи #1236 (перед ревью)», passed, материал d92890e9). Её состав мне недоступен, поэтому то, что в набор вошёл именно `demo/smoke_opening_drag_graph.mjs`, известно только со слов автора. В репозитории новый smoke ни в каком реестре не упоминается. Заявления автора о результатах 23/23 и 1/1 и о местах падения исторических скриптов на устаревших ожиданиях #1226 не проверены запуском. Производительность arrangement на больших этажах с длинными или диагональными run (большой bbox → больше fixed-материалов в каждом кадре) по исходникам не измерялась; лимиты benchmark не менялись."
-        },
-        "usage": {
-          "input_tokens": 42,
-          "cache_creation_input_tokens": 105384,
-          "cache_read_input_tokens": 1329995,
-          "output_tokens": 23283,
-          "output_tokens_details": {
-            "thinking_tokens": 15129
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 105384,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 963,
-              "cache_read_input_tokens": 92363,
-              "cache_creation_input_tokens": 17225,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 17225
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять. Причина найдена верно. До изменения `OpeningDragWalls.prepare` возвращал false для любого `plan_graph`, поэтому каждый кадр перетаскивания проёма в model11 шёл через полный canonical fallback. Новый путь `directOpeningDrag` один раз на host/viewport готовит локальный участок. В него входят исходные материалы владельцев хоста, заранее вырезанные остальными проёмами, ближайшие чужие материалы и колонны. На каждом кадре заново вырезается только материал владельцев хоста. Для этого используются те же `openingOwners`/`cutMaterials`, что и в settled-рендере, поэтому внутри clip локальная геометрия по построению совпадает с canonical. Unit-тест подтверждает это независимым сравнением с полным oracle. Путь записи, Cancel и Undo в diff не менялись. Fallback для хоста без привязки или orphan-хоста, неподдерживаемого transform и сбоя arrangement сохранён, счётчики не ослаблены. Блокеров не нашёл. Владельцу стоит учесть одно: два исторических свидетеля из issue (`smoke_opening_drag`, `smoke_partition_openings_preview`) по словам автора остаются RED. Падают они на устаревших ожиданиях при отпускании (9 знаков после запятой и `host.t` без `tq`), которые относятся к #1226. Этот diff путь записи не трогает, и объяснение правдоподобно, но их зелёного прогона нет.\n\n## Понимание решения\n\nПроблема. В model11 drag проёма уже на втором кадре увеличивал `_openingDragFallbackBuilds`. `_renderOpeningDragBodies` получал null от `OpeningDragWalls.render`, потому что `prepare` безусловно возвращал false при `space.plan_graph`. Старый legacy-crop (`recutWallBodiesGeometry` по обрезанному `roomGeom`) теряет owner-метаданные точной структуры, поэтому снимать запрет без замены было бы неверно.\n\nПосле. Если в `prepare` есть `plan_graph`, а у исходного и текущего проёма есть host, строится ключ из viewport и kind/id обоих хостов; `t/tq` в ключ не входят. Вызывается `directOpeningDrag(base.roomGeom, …)`: по WeakMap `retained` он находит `Structure`, которую сохранил `directWallGeometry` для settled-пола. Дальше:\n- набор владельцев — это объединение `openingOwners` исходного и текущего проёма (члены run);\n- dynamic — материалы, у которых хотя бы один владелец входит в этот набор. Они один раз вырезаются остальными проёмами и `partitionCuts` без перетаскиваемого;\n- fixed — остальные материалы в пределах `bounds+padding`, тоже вырезанные остальными проёмами, плюс ближние колонны;\n- `bounds` — bbox dynamic с запасом `max(gridPitch, 2 физических пикселя)`.\n\nНа кадре `render` вырезает только dynamic текущим проёмом (`roomInputs([opening])` и partition-cut из `geometryOpenings`) и строит `A.arrangeComponents` по fixed+dynamic. Clip строится через тот же `openingDragClip`: снаружи рисуется settled, внутри — локальная геометрия.\n\nРазобранные пути:\n- вызов из `houseplan-editor-runtime.ts::_renderOpeningDragBodies` (6129–6161). Объект создаётся один раз на drag, сбрасывается в `_opPointerDown`/`_cancelOpeningDrag`;\n- источник `extraBodies` — `_physicalBodiesR().all`. Тот же массив, что вернул `directIndependentParts` и записал в WeakMap `extras`, так что `extras.get` находит columns и partitionCuts без двойного учёта перегородок;\n- `geometryRoomOpeningInputs` передаёт `host` и исключает некомпозитные partition-проёмы. Поэтому партиционный проём режет перегородку только через `partitionCuts` — так же, как в canonical;\n- `wallBodiesGeometry` → `directWallGeometry` (settled-слой) и `physicalBodyParts` → `directIndependentParts`;\n- инструмент coverage (`bundledProducers`): теперь выбирается producer, вызываемый из `_physicalBodiesR`, с разрешением import/export-алиасов. Если связь не найдена или неоднозначна, инструмент падает (fail-closed).\n\n## Разбор решения\n\n### Эквивалентность локального результата canonical внутри clip\n\nРешение корректно по построению. Маски вычитаются коммутативно. Dynamic-материалы сначала вырезаются остальными проёмами и `partitionCuts`, затем на кадре — текущим проёмом. Это то же множество вычитаний, что в `materialPieces` полного прохода. Смешанные junction-fan (хост + чужой владелец) попадают в dynamic и режутся масками всех своих владельцев, как и в canonical. Исключённые далёкие материалы не могут пересечь clip: clip — это `bounds`, расширенные максимум на физический пиксель, а `near` проверяет `bounds+padding`, где padding ≥ 2 физических пикселя. Ложной кромки (stroke) на границе clip из-за отброшенного соседа не возникает. Хорошо, что владельцы, маски и slot берутся из общих `openingOwners`/`cutMaterials` (рефакторинг `materialPieces` без изменения поведения), а не из параллельной копии.\n\nОснование: `src/direct-wall-geometry.ts:221-254` (выделенные `openingOwners`/`cutMaterials`), `:268-284` (`directOpeningDrag`). Тест `test/direct-wall-geometry.test.mjs` «1236 retained opening patch…»: симметричная разность с `directWallGeometry(...).geom` внутри bounds меньше 1e-10 для x=12..15, включая соседнюю стену w1, колонну и фиксированный проём; далёкая стена w2 в результат не попадает; исходные graph/columns/base не меняются.\n\n### Подготовка один раз и ключ кеша\n\nВ ключ входят viewport и kind/id обоих хостов, `t/tq` — нет. Поэтому обычное движение не запускает повторную подготовку, а смена viewport (кадры 15/20 в smoke) переподготавливает только локальный участок без полного пересчёта пола. При неудачной переподготовке старые `direct`/`key` остаются, и метод возвращает false — fallback корректен. Небольшая избыточность: набор владельцев определяется run, а ключ — id члена run. Переход на соседний сегмент того же run переподготовит идентичный участок (O(materials) по bbox, без physical producer).\n\nОснование: `src/opening-drag-preview.ts:125-138`. Тест `test/opening-drag.test.mjs` «1236 current drag retains…»: 30 изменений `t/tq` дают `strictEqual(preview.direct, retained)`; viewport с `b=.2` возвращает null, то есть ведёт в fallback.\n\n### Сохранённый fallback и границы поддержки\n\nПолный проход остаётся для проёма без привязки к хосту или с orphan-хостом, для неизвестного transform (`openingDragClip` → null), при отсутствии записи `retained`, при пустом dynamic, при `failures` в arrangement и при исключении (try/catch в `render`). Счётчик `_openingDragFallbackBuilds` и его семантика не изменены. Проём без привязки к хосту в model11 (например, отсоединённые неоднозначные проёмы из #1228) по-прежнему рисуется через полный fallback на каждом кадре. Это не регрессия (до исправления так шли все проёмы model11) и соответствует «неподдерживаемому случаю», хотя `openingOwners` уже умеет искать ближайшую коллинеарную стену.\n\nОснование: `src/opening-drag-preview.ts:126,134-135,205-211,234-236`. `src/houseplan-editor-runtime.ts:6151-6160`.\n\n### Запись, Cancel, Undo\n\nDiff не затрагивает `_opPointerMoveNow`, путь pointerup/writer, `_cancelOpeningDrag` и историю. Изменён только transient-рендер. Поэтому сохранение «нет записи до отпускания» следует из неизменённого кода. Новый smoke дополнительно проверяет это нативно: одна запись и один ACK, точный snapped x, неизменные структурные проекции, Undo восстанавливает пространство байт в байт.\n\nОснование: Состав diff: изменены только `src/direct-wall-geometry.ts` и `src/opening-drag-preview.ts`. `demo/smoke_opening_drag_graph.mjs:52-63`.\n\n### Идентификация producer в coverage-оракуле\n\nИзменение оправдано и не ослабляет проверку. `directIndependentParts` возвращает объект той же формы `{partitions,columns,patches,all}`, поэтому поиск только по форме неоднозначен. Теперь выбирается функция, вызываемая из `_physicalBodiesR` (с разрешением алиасов между чанками), а при потере связи инструмент падает. Для model11 `physicalBodyParts` по-прежнему вызывается при каждом построении (через неё же идёт делегирование в direct) и из fallback-ветки `_renderOpeningDragBodies`. Поэтому held calls=0 действительно означает отсутствие физического пересчёта пола.\n\nОснование: `demo/performance/opening-drag-coverage.mjs:23-27,46-56`. `test/opening-drag-coverage.test.mjs`: положительный случай, нулевой и отрицательный для функции той же формы, плюс fail-closed. `src/houseplan-card.ts:10302-10313`, `src/physical-geometry.ts:227-237`.\n\n### Свидетели из issue\n\nЗадача восстанавливает их цель (локальность held-кадров), но сами скрипты по словам автора остаются RED на ожиданиях при отпускании. В `smoke_partition_openings_preview.mjs:359` ожидается `host:{...,t:.85}` без `tq`, а проверки held-кадров (327–350) идут раньше. Diff не меняет writer, так что падение не вызвано этим изменением; принадлежность к #1226 правдоподобна. Новый `smoke_opening_drag_graph.mjs` закрывает те же требования на допустимой model11-фикстуре для стены и перегородки, не ослабляя исторические скрипты.\n\nОснование: `demo/smoke_partition_openings_preview.mjs:327-360`. Контекст автора. Комментарий #1226 в теле issue.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Строить ключ подготовки из отсортированного набора `openingOwners` (членов run), а не из id хостов. Переход между сегментами одного run перестанет запускать идентичную переподготовку. Цена — одна строка и вызов `openingOwners` до сравнения ключа; поведение не меняется.\n- `docs/ARCHITECTURE.md:43` описывает только legacy crop («crops the retained uncut masonry…»). Стоит добавить одно предложение о model11: один раз готовятся участки владельцев хоста, на кадре вырезается только материал хоста. Новый smoke также можно указать в инструкции `docs/feature-notes.md:183` рядом с историческими скриптами — иначе по документации локальность model11 проверяют только RED-скрипты.\n- При желании (не в объёме задачи) поддержать проём без привязки к хосту в model11: `openingOwners` уже находит ближайшую коллинеарную стену. Сейчас такие проёмы по-прежнему идут через полный fallback на каждом кадре. Выгода — локальность и для отсоединённых проёмов из #1228; цена — ключ придётся строить по найденным владельцам, которые могут меняться между кадрами.\n\n## Границы анализа\n\nКод изучен по исходникам: полностью `src/opening-drag-preview.ts`, `src/direct-wall-geometry.ts` и `demo/performance/opening-drag-coverage.mjs`; новые тесты и smoke; вызывающие пути `_renderOpeningDragBodies` и `_opPointerDown`/`_opPointerMoveNow` (начало), `_physicalBodiesR`, `_roomWallOpeningInputs` → `geometryRoomOpeningInputs`, `geometryOpenings`, `physicalBodyParts` → `directIndependentParts`, `wallBodiesGeometry` → `directWallGeometry`; хвост исторического `smoke_partition_openings_preview.mjs`. Сборку, тесты и smoke я не запускал. Использована квитанция S6 `20261103T143512842-cc1759c2` («Тесты для задачи #1236 (перед ревью)», passed, материал d92890e9). Её состав мне недоступен, поэтому то, что в набор вошёл именно `demo/smoke_opening_drag_graph.mjs`, известно только со слов автора. В репозитории новый smoke ни в каком реестре не упоминается. Заявления автора о результатах 23/23 и 1/1 и о местах падения исторических скриптов на устаревших ожиданиях #1226 не проверены запуском. Производительность arrangement на больших этажах с длинными или диагональными run (большой bbox → больше fixed-материалов в каждом кадре) по исходникам не измерялась; лимиты benchmark не менялись.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d → d92890e9d0ff2f48a44f19a10097c886a712e9b7\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1236, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>#1236: причина, локальная exact подготовка, строгие witnesses и границы</summary>\n\nПричина первого full fallback однозначна: `OpeningDragWalls.prepare` возвращал false для любого plan_graph. Legacy crop действительно терял owner metadata, поэтому просто удалить этот запрет было бы неверно.\n\nCurrent drag теперь готовит один retained exact patch на исходного/текущего host и viewport: домены обоих владельцев, fixed cuts остальных проёмов, ближайший foreign material и columns. На кадрах заново вырезается только изменяемый host-owned material; exact arrangement видит лишь этот patch. Тот же canonical ownership resolver и half-plane masks используются settled renderer и preview. `t/tq` не входят в ключ подготовленного patch, поэтому обычное движение по одному хосту не запускает подготовку заново; смена хоста/viewport обновляет patch. Pixel padding включает края complementary clip. Отсутствующий/orphan host, неизвестный transform и настоящий failure сохраняют прежний observable fallback. Никакие counters или пороги не изменены, продукт не пишет до pointerup.\n\nВ unit добавлены совпадение локального material с независимым full canonical oracle внутри patch (включая foreign wall, column и fixed other opening), отсутствие далёкого floor material, неизменность graph/columns/base; 30 изменений exact host t/tq сохраняют один retained patch, unsupported viewport остаётся fallback. Opening/direct targeted **23/23 PASS**, отдельная coverage проверка **1/1 PASS**.\n\nНовый адресный `smoke_opening_drag_graph.mjs` использует допустимую model11 fixture, заранее построенную настоящим commitWallSegmentModel из legacy с validateGraph=ok. Для стены и перегородки отдельно: настоящий trusted mouse down, по30held кадров для Cancel и Release, viewport changes15/20, видимые плечи и пустой центр, unchanged saved space/history/pools/cache families, **fallback0**. На release — ровно1 реальная запись и1 backend ACK,1history step, persisted exact native snapped preview, host tq, все остальные свойства и structural nodes/edges/projections неизменны; native Undo восстанавливает всё пространство exact byte-for-byte. Этот scoped native witness **PASS**. Source legacy fixture неизменна; её миграция не выдаётся за pointermove work.\n\nCoverage preparation выявила старую неоднозначность shape-only поиска: directIndependentParts имеет тот же `{partitions,columns,patches,all}`, что physicalBodyParts. Oracle теперь находит именно producer, вызываемый `_physicalBodiesR`, разрешая импорт/экспорт aliases между чанками. Отсутствующая/неоднозначная связь fail-closed. Unit показывает positive counter, zero и unrelated same-shape negative; browser доказывает **cold physical producer>0**, затем **held physical calls=0**, **constructor=1** на drag. Это исправление идентификации, не отключение проверки.\n\nИсторические `smoke_opening_drag` / `smoke_partition_openings_preview` не переприняты и остаются диагностическими RED: первый теперь проходит все30held кадров без fallback, но останавливается на старом 9-decimal baseline против current exact x/tq; второй после корректной coverage идентификации останавливается на прежнем assertion `host.t` без tq до своего opening segment. Эти устаревшие ожидания не изменены и относятся к #1226. Их полный PASS не заявляется; новый current witness проверяет требуемые save/metadata/history без сравнения с устаревшей округлённой формой.\n\nШтатный finish выполнит S6 после актуализации в очереди, включая новый browser witness. Golden/performance лимиты не тронуты. E2E-impact координатор запишет в companion; beta не разрешена.\n\n</details>\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T14:41:07.212Z",
-        "artifactId": 13239402431,
-        "runId": 41655322081,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T14:41:13Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41655322081",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1237": {
@@ -2395,19 +2256,7 @@
     1237,
     1238
   ],
-  "active": {
-    "issue": 1236,
-    "worker": "finish",
-    "token": "110:finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:1:admit",
-    "fence": 110,
-    "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-    "expectedBase": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793716454328,
-    "expiresAt": 1793720506233,
-    "patchId": "b62eea32e9379ee3b1499de2610fc19775629d50",
-    "reviewRequest": "review:1236:2:b62eea32e9379ee3b1499de2610fc19775629d50:9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d"
-  },
+  "active": null,
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
       "digest": "b770af57ca91d84c4e9ed1e8d894f3dbb2a5fd935a2df8aa81fc86383045eb97",
@@ -2485,74 +2334,6 @@
       "digest": "24b5097c8984a2971b0396590f79b819db0532ee552bff92d4856e610f97d705",
       "issue": 1237
     },
-    "github:41653599639:1:completions:message:bb00588bb4ef72dcd44c1fd46209a3b117c84248df138ea13f67ee6ccad633e8": {
-      "digest": "fa8f9478cc2ff7bd822f1cd374541a1066ac8e9700f80682a50e7089aa44e2f1",
-      "issue": 1236
-    },
-    "github:41653599639:1:completions:message:5557daba1cea0fc334e799d33caa7d193ce24193d2424087e0d725fb0cacb761": {
-      "digest": "51007cdc2a0306ecafec4f646dde2f2379ae358eda0977823c3ca8de358c25d3",
-      "issue": 1236
-    },
-    "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:2:return": {
-      "digest": "e81e38a01963037f20742d93d0bec93918f603a78636f482acf18af8f1f26862",
-      "issue": 1236
-    },
-    "github:41654131092:1:completions:notice:301fb21ee14e25535b8835814a419b521a494425fdf582233d268cce5982511b": {
-      "digest": "aaeb9f6b24c86481b775474660e6a688992f8030c562147f9abdfd89109c5785",
-      "issue": 1236
-    },
-    "github:41654945236:1:completions:message:229186478281409ac72b1e8997c6625352d17a3a43ad90c32620569e15d42b2d": {
-      "digest": "9c518a6b8f6d9c9342edaca3e7a88e711b6061331998089dbff340f5b080ae1d",
-      "issue": 1236
-    },
-    "github:41654945236:1:completions:message:6bb4a820e271e1081deede0490a2ab5980bd3073dd0bcedc660b1298964dbd2b": {
-      "digest": "45ef6de68d300debce3089dae6cffdb9bb4e6c67409e94bc09e90d1c42a70ade",
-      "issue": 1236
-    },
-    "github:41654945236:1:completions:message:7aca413ecc4017d08544ad99378fc808b25615b5b52648cb19dafb6d9e36ad95": {
-      "digest": "54d5faf25a2d936f829e0764cb010d30d9d5f29efd743b5e5e4cdfe328a632da",
-      "issue": 1236
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:1:synchronized": {
-      "digest": "5f7e6f81c83decb2f083b531a40a478625b8f50a8264a3f75814f7c5ebb84e12",
-      "issue": 1236
-    },
-    "finish:c2590f98-5160-4fe1-9108-e0c79d2a3424": {
-      "digest": "e480fee213f0436dd0dac1c17ab5525a7dfafe8ae35a3fc98ed6d315c7f69b1c",
-      "issue": 1236
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:2:s6-label": {
-      "digest": "5384900953dbff40fd0349401ba0db996bf8a6e121e0f47eeb6057b0db7facad",
-      "issue": 1236
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:3:review-requested": {
-      "digest": "7defcc369efbc4154e06595c62df9a1bcc43929320a06d15214210cfaef02d6e",
-      "issue": 1236
-    },
-    "github:41655295379:1:completions:message:7422209a92cc1a30b57ecb8b5b8662a3d63c904957c6e584ad1dc2b8d311249b": {
-      "digest": "7cb32c04a6e3676a3796d1e5c490764cddaa53b408a0823b1cdc6f187ff4169a",
-      "issue": 1236
-    },
-    "dev-build:41654945236:1:webhook": {
-      "digest": "811877abbc5c107c4524daa3d2e3ac1621114b2d3a515a526a2b17bc33989b4a",
-      "issue": 1236
-    },
-    "github:41655295379:1:dev-webhook:edd90cb5-033c-45c3-924a-1bfa07b7ff6a:delivered": {
-      "digest": "a86f2a5af67a8e064726c955f60e862eea3f45d01c86c5864048784fdd5780ed",
-      "issue": 1236
-    },
-    "github:41655297971:1:completions:message:98fc02a3a4dce20a305fcaca89991e439b21157aeb8158f769974f198b06d94f": {
-      "digest": "6ec7ebc169f15f41b9957c0d5a42e7b9746253e7f160176fe2c3aa897e17ad0a",
-      "issue": 1236
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:8:review-presentation": {
-      "digest": "dd70f94d2a0c1bce38b77c47782ec76a55611991581004016b32370db841ae63",
-      "issue": 1236
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:8:review-complete": {
-      "digest": "fe3f1be19d1346babfbf2da6c8184a281aacfcb533ddb9b07471dcdf2bef1468",
-      "issue": 1236
-    },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
       "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
       "issue": 1238,
@@ -2578,20 +2359,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "15dfe03df9422ad875f9760d4ff2ed0d1514b210",
-        "delivered": true
-      }
-    },
-    "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2": {
-      "digest": "f0a27b39fa5b04c4d9bc5f9437e39050a31c7ba2cc9d57a5cac53d0074f0b09a",
-      "issue": 1236,
-      "message": {
-        "kind": "queued",
-        "issue": 1236,
-        "at": 1793715188946,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2743744820a7e0c2362169007dad433ebc7abb19",
         "delivered": true
       }
     },
@@ -2673,55 +2440,6 @@
         "delivered": true
       }
     },
-    "github:41653599639:1:tick:0:admit": {
-      "digest": "b0d9b121f7f5bdfab4f30f00f6285f8900e330c1419d57152f00eef5f9be78ad",
-      "issue": 1236,
-      "message": {
-        "kind": "admitted",
-        "issue": 1236,
-        "at": 1793716036997,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "2743744820a7e0c2362169007dad433ebc7abb19",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:2:return:return:1236": {
-      "digest": "e81e38a01963037f20742d93d0bec93918f603a78636f482acf18af8f1f26862",
-      "issue": 1236,
-      "message": {
-        "kind": "return",
-        "issue": 1236,
-        "at": 1793716061066,
-        "entry": 1,
-        "notice": {
-          "key": "1:rebase-conflict",
-          "reason": "rebase-conflict",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793716061066,
-          "entry": 1,
-          "eventId": "finish:9c349ef6-9f09-40fc-99b5-e64f32bd7bb2:finish:2:return:return:1236"
-        },
-        "delivered": true
-      }
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61": {
-      "digest": "15b0590f2de738ffbaa9e81b3a050ab88a7a155f2398c4a92d436906b59f344a",
-      "issue": 1236,
-      "message": {
-        "kind": "queued",
-        "issue": 1236,
-        "at": 1793716117830,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666",
-        "delivered": true
-      }
-    },
     "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc": {
       "digest": "42151cb7dcb8bfc0a92c77b45d31b7c5959c36ac60c2885056af1770c2a08363",
       "issue": 1237,
@@ -2756,48 +2474,6 @@
           "finishedAt": "2026-11-03T14:21:04.052Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:1:admit": {
-      "digest": "2fbc956b47c31490e1fe4032c064339a314efac39022554de510b6e56bc5ab90",
-      "issue": 1236,
-      "message": {
-        "kind": "admitted",
-        "issue": 1236,
-        "at": 1793716454328,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:6e2f8481-d54e-4ce6-b74c-3b27878b3d61:finish:2:s6-complete": {
-      "digest": "36d99ab82a447c1f5913b06a9a3cbbd2684dad1d3d6924f6714cfff5469ba015",
-      "issue": 1236,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1236,
-        "at": 1793716559927,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T143512842-cc1759c2",
-          "name": "Тесты для задачи #1236 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1097-opening-drag-20261028/.git/process-next/runs/20261103T143512842-cc1759c2/report.json",
-          "materialSha": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
-          "status": "passed",
-          "finishedAt": "2026-11-03T14:35:58.663Z",
-          "failures": []
-        },
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
