@@ -202,12 +202,12 @@ test('frontend write paths adopt canonical candidates before persistence (#224)'
   );
   assert.match(
     eagerCardSource,
-    /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);/,
-    'the eager View writer keeps the same canonicalization barrier as the lazy editor writer',
+    /const candidate = canonicalizeConfigWrite\(this\._serverCfg\);/,
+    'the eager metadata writer uses the write-aware canonicalization barrier, preserving legacy structural coordinates',
   );
   assert.match(
     source,
-    /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate/,
+    /const canonicalCandidate = canonicalizeConfigWrite\(candidate\);[\s\S]*config: canonicalCandidate/,
   );
   // #500: the reactive root is replaced only when canonicalization changed
   // content — the rule moved into the identity owner with the writers.

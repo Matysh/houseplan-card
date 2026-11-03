@@ -205,7 +205,8 @@ test('#461 malformed local geometry fails closed into the proof', () => {
 test('#461/#478 production source keeps bounded append and terminal room barriers separate', () => {
   const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
   const transaction = readFileSync(new URL('../src/draft-live-commit.ts', import.meta.url), 'utf8');
-  assert.match(runtime, /partitions\.push\([\s\S]*?commitWallChainSegmentGeometry\(this,/);
+  assert.match(runtime, /partitions\.push\([\s\S]*?_commitPhysicalGeometry\(this\.host\._t\('history\.wall_segment'\), before, \[\], true,\s*\{ kind: 'partitions', ids: \[id\], endpointRefs:/,
+    'current append names the exact partition and endpoint graph references at the shared safety barrier');
   assert.match(transaction, /commitWallChainSegmentGeometry<[\s\S]*?isSinglePartitionAppend/);
   assert.match(transaction, /commitWallChainSegmentGeometry<[\s\S]*?wallChainLiveCandidateSpace/);
   assert.match(transaction,

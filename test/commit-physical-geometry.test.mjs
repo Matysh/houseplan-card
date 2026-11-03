@@ -12,10 +12,13 @@ for(const [name,change] of Object.entries(scenarios))test('#1099 '+name+' builds
  assert.ok(counts.preflight+counts.junction<=limit+1,JSON.stringify(counts));
 });
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {characterize,characterizationCases} from './helpers/geometry-commit-characterization.mjs';
 const baseline=JSON.parse(readFileSync(new URL('./fixtures/1099-commit-characterization.json',import.meta.url),'utf8')).results;
+const exactHash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const passport=result=>({...result,config:exactHash(result.config),history:result.history.map(item=>({...item,before:exactHash(item.before)}))});
 for(const name of characterizationCases)test('#1099 unchanged byte result and refusal: '+name,()=>{
- assert.equal(JSON.stringify(characterize(name)),JSON.stringify(baseline[name]),name);
+ assert.equal(JSON.stringify(passport(characterize(name))),JSON.stringify(baseline[name]),name);
 });
 test('#1099 one baseline per space, repeated equivalent documents hit and cache stays bounded',()=>{
  const h=harness(),original=structuredClone(h.host._serverCfg);let first;
@@ -73,10 +76,16 @@ test('#1099 baseline content and revision changes both retire the per-space slot
  h.runtime._junctionLimitsIntroduced(structuredClone(previous),previous,'f');assert.equal(h.counts.junction,calls+2);
 });
 for(const name of characterizationCases.filter(name=>name.startsWith('marker-')))test('#1099 frozen markers during every approval/migration construction: '+name,()=>{
- assert.equal(JSON.stringify(characterize(name,{freezeGuards:true})),JSON.stringify(baseline[name]));
+ assert.equal(JSON.stringify(passport(characterize(name,{freezeGuards:true}))),JSON.stringify(baseline[name]));
 });
-test('#1099 the large-house corpus actually exercises equal and changed candidate fingerprints',()=>{
- assert.deepEqual([...largeEqualityKinds].sort(),[false,true]);
+test('#1099 current graph previews already have canonical candidate fingerprints',()=>{
+ assert.deepEqual([...largeEqualityKinds],[true]);
+});
+test('#1099 projection-only mutation cannot impersonate an explicit graph preview',()=>{
+ const h=harness(),before=h.runtime._geometrySnapshot('f');
+ h.host._serverCfg.spaces[0].rooms[0].poly[0][0]=.1;
+ assert.equal(h.runtime._commitPhysicalGeometry('unscoped projection',before),false);
+ assert.equal(h.history.length,0);
 });
 test('#1099 a failed preview is never reused as a successful commit proof',()=>{
  const h=harness(),before=h.runtime._geometrySnapshot('f');scenarios.thickness(h.host._serverCfg.spaces[0]);

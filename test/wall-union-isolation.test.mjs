@@ -172,7 +172,7 @@ test('#278 production source routes physical writers through one barrier and dec
   );
   for (const historyKey of ['physical_move', 'physical_edit']) {
     assert.match(physicalOwner, new RegExp(
-      `this\\.port\\.commit\\('history\\.${historyKey}', drag\\.before\\)`,
+      `this\\.port\\.commit\\('history\\.${historyKey}', drag\\.before, \\{ kind: (?:drag\\.kind|'column'), id: drag\\.id \\}\\)`,
     ), `the ${historyKey} owner writer uses its bounded commit port`);
   }
   assert.equal((physicalOwner.match(/this\.port\.commit\(/g) || []).length, 2,
@@ -180,11 +180,11 @@ test('#278 production source routes physical writers through one barrier and dec
   assert.doesNotMatch(physicalOwner, /_recordGeometry|_saveConfig|_writeConfig/,
     'the gesture owner cannot bypass the physical persistence barrier');
   assert.match(runtime,
-    /this\.physicalGesture = new PhysicalBodyGestureRuntime\(\{[\s\S]{0,800}commit: \(key, before\) => this\._commitPhysicalGeometry\(host\._t\(key\), before\)/,
+    /this\.physicalGesture = new PhysicalBodyGestureRuntime\(\{[\s\S]{0,800}commit: \(key, before, selection\) => this\._commitPhysicalGeometry\(host\._t\(key\), before, \[\], true,/,
     'the actual physical owner commit port routes to the shared approval barrier');
   assert.match(runtime,
-    /commitWallChainSegmentGeometry\(this, this\.host\._t\('history\.wall_segment'/,
-    'an intermediate wall append uses its dedicated bounded physical barrier');
+    /this\._commitPhysicalGeometry\(this\.host\._t\('history\.wall_segment'\), before, \[\], true,\s*\{ kind: 'partitions', ids: \[id\], endpointRefs:/,
+    'an intermediate wall append crosses the common graph-aware safety barrier with exact endpoint refs');
   // #313 introduced a second thickness commit point (independent masonry).
   // BOTH must go through the barrier: replacing either with _recordGeometry
   // reduces the count and reddens this line.

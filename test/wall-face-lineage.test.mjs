@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { selectWallFaceLineage, settleWallFaceLineage } from '../test-build/wall-face-lineage.js';
-import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+// This pure residual-lineage suite owns retained legacy v10 imports. Model11
+// face commands have their own exact-graph suites and reject projection edits.
+import { decodeLegacyWallSegmentModel as commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { reconcileCoincidentPartitions } from '../test-build/coincident-partitions.js';
 import { spaceModels, GRID_PITCH, GRID_STEP_N, NORM_W } from '../test-build/space-geometry.js';
 import { setWallThickness, applyWallThicknessToNewRoom } from '../test-build/wall-thickness.js';
