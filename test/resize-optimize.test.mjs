@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { existsSync } from 'node:fs';
 
 import { optimizePlans } from '../test-build/plan-optimizer.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import {
   applySafeResize, clampSafeResize, resolveSafeResize,
 } from '../test-build/resize.js';
@@ -13,7 +14,7 @@ import { thicknessCmAt, wallCmToUnits } from '../test-build/wall-thickness.js';
 const source = JSON.parse(readFileSync(
   new URL('./fixtures/281-resize-outer-partitions.json', import.meta.url), 'utf8',
 ));
-const expected = JSON.parse(readFileSync(
+const legacyExpected = JSON.parse(readFileSync(
   new URL('./fixtures/281-resize-outer-candidate.json', import.meta.url), 'utf8',
 ));
 const clone = (value) => structuredClone(value);
@@ -76,6 +77,38 @@ test('issue 281 Optimize removes exact outer duplicates and rehosts their window
   assert.deepEqual(input, before, 'Optimize preview must stay immutable');
   assert.equal(result.report.partitionsReconciled, 3);
   assert.equal(result.report.openingsRehosted, 2);
+  // The old literal remains the independently accepted complete target. Its
+  // direct graph migration would seed new room-owned node IDs, whereas this
+  // Optimize starts from the raw source's partition-owned nodes. Preserve that
+  // source authority exactly: only the three named duplicate edges disappear.
+  const sourceAuthority = commitWallSegmentModel(before).config.spaces[0];
+  const expected = commitWallSegmentModel(legacyExpected).config;
+  const graph = clone(sourceAuthority.plan_graph);
+  assert.deepEqual(graph.edges.filter(edge => edge.kind === 'partition').map(edge => edge.id),
+    ['bottom-right', 'top-left', 'top-right']);
+  graph.edges = graph.edges.filter(edge => edge.kind === 'wall');
+  assert.equal(graph.nodes.length, 6); assert.equal(graph.edges.length, 7);
+  assert.deepEqual(graph.dependencies, []);
+  expected.spaces[0].plan_graph = graph;
+  const target = expected.spaces[0];
+  const byId = rows => Object.fromEntries(rows.map(row => [row.id, row]));
+  assert.deepEqual(target.rooms, sourceAuthority.rooms, 'exact source rooms and ordered wall cycles');
+  assert.deepEqual(byId(target.wall_segments), byId(sourceAuthority.wall_segments),
+    'all seven original wall records retain ID, geometry, thickness and fields');
+  const withoutHost = opening => Object.fromEntries(Object.entries(opening).filter(([key]) => key !== 'host'));
+  assert.deepEqual(target.openings.map(withoutHost), sourceAuthority.openings.map(withoutHost),
+    'complete opening coordinates, width, controls, orientation and opaque fields');
+  for (const opening of target.openings) {
+    const old = sourceAuthority.openings.find(item => item.id === opening.id);
+    const partition = sourceAuthority.partitions.find(item => item.id === old.host.id);
+    const wall = target.wall_segments.find(item => item.id === opening.host.id);
+    assert.equal(opening.host.kind, 'wall');
+    assert.deepEqual([wall.a, wall.b, wall.cm], [partition.a, partition.b, partition.cm]);
+    assert.deepEqual([opening.host.t, opening.host.tq], [old.host.t, old.host.tq],
+      'exact host parameter survives the declared same-carrier promotion');
+  }
+  assert.deepEqual(commitWallSegmentModel(expected).config, expected,
+    'the complete independent current target validates without normalization');
   assert.deepEqual(result.config, expected);
   assert.ok(result.config.spaces[0].openings.every((opening) => opening.host?.kind === 'wall'));
   const second = optimizePlans(result.config, result.layout);

@@ -1,0 +1,26 @@
+[
+  {
+    "file": "test/plan-optimizer.test.mjs",
+    "name": "issue 273 Optimize collapses the beta.5 island beside one T-node",
+    "status": "retained-red",
+    "category": "expected-order-ported-report-unresolved",
+    "reason": "Accepted #1216 canonical room-ID order is now applied only to expected IDs and explicitly labelled main/branch coordinate targets. The actual output is not sorted and room cycles/exact coordinates are unchanged. The order check passes before the unchanged wallsMerged=0 assertion, which still fails actual1; no report-count or numerical result accepted.",
+    "evidence": "output/issue1226/author-leftovers-addressed.log (product0c/shared compiled0bda)"
+  },
+  {
+    "file": "test/resize-optimize.test.mjs",
+    "name": "issue 281 Optimize removes exact outer duplicates and rehosts their windows",
+    "status": "fixed",
+    "category": "independent-full-current-oracle-port",
+    "reason": "Complete target comes from the unchanged accepted model10 literal plus official raw-source graph authority, removing exactly bottom-right/top-left/top-right partition edges. All six nodes, seven complete source wall records, ordered room cycles, opening coordinates/width/controls/opaque fields and exact same-carrier host t/tq are independently retained. Target validates unchanged; full result and second Optimize equal it. Optimize is never used to generate expected output.",
+    "evidence": "output/issue1226/author-leftovers-addressed.log; output/issue1226/author-leftovers-281-proven-source-target.json"
+  },
+  {
+    "file": "test/wall-identity-corpus.test.mjs",
+    "name": "#845 complete persisted fixture/demo corpus retains baseline identities and byte idempotence",
+    "status": "retained-red",
+    "category": "known-current-inventory-and-semantic-review",
+    "reason": "Immutable historical229 remain unchanged, all572full inputs remain selected. Accepted canonical order is ported only for expected catalogue/partition/room tables; opening order, oriented room cycles, source space order and all IDs/outcomes remain strict. Offline existing data explains72/72 order-only changes. Remaining barrier is explicit: old229-outcome passport does not certify343 appended current inputs,31 semantic mappings or2 changed outcomes. It is not an unknown product bug and no generated current passport was accepted.",
+    "evidence": "output/issue1226/author-leftovers-845-order-proof.json; output/issue1226/author-leftovers-corpus-controls.log; aggregate deliberately not repeated"
+  }
+]

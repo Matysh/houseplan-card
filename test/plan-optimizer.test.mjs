@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { compareCodePoints } from '../test-build/codepoint-order.js';
 
 import {
   collapseIsolatedWallThicknessIslands, optimizePlans, PLAN_MODEL_VERSION,
@@ -242,22 +243,22 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
   assert.deepEqual(config, before, 'preview must not mutate the T-node source');
   assert.equal(first.changed, true);
   assert.equal(first.report.canonicalized, 1);
-  assert.equal(first.report.wallsMerged, 0,
-    'role breakpoints may keep the record count even after the micro island is repaired');
   const canonicalBefore = canonicalizeConfigGeometry(before);
   assert.deepEqual(
     first.config.spaces[0].rooms.map((room) => room.id),
-    canonicalBefore.spaces[0].rooms.map((room) => room.id),
-    'T migration preserves room identity and order',
+    canonicalBefore.spaces[0].rooms.map((room) => room.id).sort(compareCodePoints),
+    '#1216 migration preserves room IDs in canonical code-point order',
   );
+  assert.equal(first.report.wallsMerged, 0,
+    'role breakpoints may keep the record count even after the micro island is repaired');
   assert.deepEqual(
-    first.config.spaces[0].rooms.map((room) => room.poly.filter((point) => (
+    first.config.spaces[0].rooms.map((room) => ({ id: room.id, points: room.poly.filter((point) => (
       point[0] === 83 / 240 || point[0] === 203 / 240 || point[0] === 213 / 240
-    ))),
+    )) })),
     [
-      [[203 / 240, 83 / 240], [213 / 240, 83 / 240]],
-      [[203 / 240, 59 / 240], [213 / 240, 59 / 240], [213 / 240, 83 / 240], [203 / 240, 83 / 240]],
-    ],
+      { id: 'main', points: [[203 / 240, 83 / 240], [213 / 240, 83 / 240]] },
+      { id: 'branch', points: [[203 / 240, 59 / 240], [213 / 240, 59 / 240], [213 / 240, 83 / 240], [203 / 240, 83 / 240]] },
+    ].sort((a, b) => compareCodePoints(a.id, b.id)),
     'atomization materialises the exact T-node and owner-role breakpoints',
   );
   assert.equal(first.config.spaces[0].walls.length, 3);

@@ -4,11 +4,24 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {commitWallSegmentModel} from '../test-build/wall-segment-model.js';
+import {compareCodePoints} from '../test-build/codepoint-order.js';
 import {corpusPassport,identityProjection,loadWallIdentityCorpus,loadCompleteWallIdentityCorpus,loadHistoricalWallIdentityCorpus,withCorpusIds,extractCorpusConfigs}
   from './helpers/wall-identity-corpus.mjs';
 
-const expected=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-identities.json',import.meta.url),'utf8'));
-const compare=(actual,baseline)=>assert.deepEqual(actual,baseline,'wall corpus identity/order/input membership changed');
+const historical=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-identities.json',import.meta.url),'utf8'));
+// #1216 canonical graph tables determine projection order. Port only EXPECTED
+// table order; the immutable original passport/file, space order, opening order
+// and each room's oriented edge cycle remain untouched. Semantic IDs/outcomes
+// and the unreviewed current inventory still fail their complete comparison.
+const expected={...historical,documents:historical.documents.map(row=>row.ok?{...row,
+  identity:row.identity.map(space=>({...space,
+    catalogue:[...space.catalogue].sort(compareCodePoints),
+    partitions:[...space.partitions].sort(compareCodePoints),
+    rooms:[...space.rooms].sort((a,b)=>compareCodePoints(a.id,b.id)),
+  })),
+}:row)};
+const compare=(actual,baseline)=>assert.deepEqual(actual,baseline,
+  'wall corpus needs explicit current inventory/semantic passport review; full source membership is retained');
 
 test('#845 complete persisted fixture/demo corpus retains baseline identities and byte idempotence',async t=>{
   const corpus=await loadCompleteWallIdentityCorpus();
