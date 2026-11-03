@@ -80,7 +80,10 @@ const res = await page.evaluate(async () => {
 
   c._splitClick([700, 250]);
   c._splitClick([600, 400]);
-  c._splitClick([900, 405]);
+  // Two lattice steps of vertical separation keep the deliberately slanted
+  // divider above the independent 5 cm node-to-segment clearance threshold.
+  // One step has perpendicular clearance 4.9995178 cm, legitimately refused.
+  c._splitClick([900, 410]);
   out.realSplitReachedDialog = !!c._pendingSplit && !!c._roomDialog;
   c._nameSel = 'Zero divider child';
   c._commitRoom();
@@ -90,6 +93,10 @@ const res = await page.evaluate(async () => {
   const divider = rooms.length === 2 ? sharedEdge(rooms) : null;
   out.realSplitSaved = rooms.length === 2 && !c._pendingSplit;
   out.dividerFound = !!divider;
+  out.dividerRetainsBothSnappedEndpoints = !!divider
+    && [[divider.slice(0, 2), divider.slice(2)], [divider.slice(2), divider.slice(0, 2)]]
+      .some(([start, end]) => samePoint(start, [600, 400])
+        && samePoint(end, [900, 98 / 240 * 1000]));
   out.anglePreserved = !!divider && Math.abs(divider[3] - divider[1]) > 1;
   out.dividerStaysZero = !!divider && c._intervalCm(divider) === 0;
 
