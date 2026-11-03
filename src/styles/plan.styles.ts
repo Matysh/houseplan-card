@@ -77,6 +77,12 @@ export const planStyles = css`
         color-mix(in srgb,var(--hp-room-outline-color) calc(var(--hp-room-outline-stroke-alpha) * 100%),transparent) calc(var(--hp-mode-plan-weight) * 100%));
       stroke-opacity:1;
     }
+    /* #1244: the tunnel continues the live floor, whose premultiplied fill
+       fades by exactly this plan weight. Keep the architecture multiplier
+       once (Decor), and retire the tunnel only after Plan reaches its end. */
+    .stage.mode-transition .opening-tunnels[data-layer="data"] {
+      opacity:calc(var(--hp-mode-architecture-opacity) * (1 - var(--hp-mode-plan-weight)));
+    }
     .stage.mode-transition .devlayer .dev {
       filter:opacity(calc(1 - .65 * var(--hp-mode-plan-weight) / var(--hp-mode-architecture-opacity)));
     }

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1244,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Synchronize the existing thick-wall tunnel floor fill with the common Plan mode weight instead of immediately retiring or restoring it at mode commit.",
+  "summary": {
+    "ru": "Проёмы не вспыхивают белым на тёмном полу при входе в редактор плана и выходе из него.",
+    "en": "Openings no longer flash white on dark floors when entering or leaving the Plan editor."
+  }
+}

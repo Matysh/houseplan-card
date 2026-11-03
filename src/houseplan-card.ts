@@ -9851,9 +9851,10 @@ export class HouseplanCard extends LitElement {
     space: SpaceModel,
     roomFills: RoomFillFrame,
   ): TemplateResult {
-    // Plan mode replaces live fills with its blue editing wash. A coloured
-    // tunnel there would no longer repeat the room and could obstruct handles.
-    if (this._markup || !this._spaceWalls.length || !this._openingsR.length)
+    // Settled Plan has no data tunnel (its blue wash belongs to the room).
+    // During handoff retain the same surface: CSS fades its live fill with
+    // the floor's shared plan weight, rather than exposing white paper early.
+    if ((this._markup && !this._modeTransitionBusy) || !this._spaceWalls.length || !this._openingsR.length)
       return svg`` as unknown as TemplateResult;
     const openCuts = this._openCuts();
     const geometryInputs = this._openingsR.map((opening) => ({
