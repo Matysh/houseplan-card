@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1604,
+  "revision": 1605,
   "nextTicket": 109,
   "nextFence": 106,
   "tasks": {
@@ -1842,7 +1842,7 @@
         "finishedAt": "2026-11-03T14:15:32.047Z",
         "failures": []
       },
-      "reviewRound": 1,
+      "reviewRound": 2,
       "notice": {
         "key": "1:Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
         "reason": "Автор обнаружил дополнительный случай разреженного массива center: Array.every пропускает отсутствующий элемент. Возвращаю на S6 для адресного исправления и нового код-ревью.",
@@ -1852,6 +1852,12 @@
         "entry": 1,
         "requestId": "review:1230:1:8b75b19cf624ed64fc2c4df3743eed0abfee8f51:56585f1828bad0e7f483410eb793bdda5a8735fe",
         "eventId": "author-finite-sparse-1230-1793714275635:return:1230"
+      },
+      "reviewRequest": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+      "reviewMaterial": {
+        "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+        "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+        "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb"
       }
     },
     "1231": {
@@ -2145,6 +2151,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1230:review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712": {
+      "issue": 1230,
+      "kind": "code",
+      "requestId": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+      "materialSha": "0009156acd78c58cfaca7ce756fa8388d90adb75",
+      "expectedBase": "cfda99f135870cec7d99ee3a23fbf4d5edacb712",
+      "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-03T14:15:40.580Z"
+      }
     }
   },
   "waiting": [
@@ -2162,7 +2181,8 @@
     "phase": "review",
     "admittedAt": 1793715238615,
     "expiresAt": 1793718933245,
-    "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb"
+    "patchId": "400bce86695e927f0488cc35c1f72e7e1ee22ceb",
+    "reviewRequest": "review:1230:2:400bce86695e927f0488cc35c1f72e7e1ee22ceb:cfda99f135870cec7d99ee3a23fbf4d5edacb712"
   },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
@@ -2259,6 +2279,10 @@
     },
     "finish:5c9ceb57-f53c-4171-9d3d-4de3125f2d52:finish:2:s6-label": {
       "digest": "c3f73b99ab9cb74640365a7a0ff7425016a7c018617ed8d2ef381408cf80d29a",
+      "issue": 1230
+    },
+    "github:41651649831:1:tick:0:review-requested": {
+      "digest": "41f6402c3f750d796a045cf012312ad20025e245e69265d27857be25c4407643",
       "issue": 1230
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
