@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1182,
+  "revision": 1183,
   "nextTicket": 86,
   "nextFence": 86,
   "tasks": {
@@ -1506,7 +1506,26 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793687734219,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "684ad6837980c84e4ed02473b892ca447ab732ec",
+      "changedFiles": [
+        ".github/workflows/process-next-coordinator.yml",
+        "README.md",
+        "README.ru.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DEVELOPMENT.md",
+        "process-next/evidence/ci-v1.83.1.json",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/ci-status.mjs",
+        "process-next/lib/release.mjs",
+        "process-next/remote.mjs",
+        "process-next/templates/coordinator-job.mjs",
+        "process-next/templates/coordinator.yml",
+        "process-next/test/ci-status.test.mjs",
+        "process-next/test/release.test.mjs",
+        "process-next/test/remote.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -1618,10 +1637,11 @@
     "token": "85:finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:1:admit",
     "fence": 85,
     "materialSha": "3b304798dcca1206fa0fd037a55748f7e91ed8d6",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
+    "phase": "testing",
     "admittedAt": 1793687737854,
-    "expiresAt": 1793688097065
+    "expiresAt": 1793688133306,
+    "patchId": "684ad6837980c84e4ed02473b892ca447ab732ec"
   },
   "events": {
     "github:41504682134:1:label:spec-request": {
@@ -1714,6 +1734,10 @@
     },
     "finish:3ba3b595-d49e-4f67-8b05-40a2b2eecdc7": {
       "digest": "9a3e3da642a7b0cd870353e1035d67c104ba72e1f61d4bb5aca655751c18b6b9",
+      "issue": 1217
+    },
+    "finish:ab0e462b-14cd-476b-8836-c87a60943e36:finish:2:synchronized": {
+      "digest": "b7792a8f8473ac0c74c24027b7aec0c3abead5ca9acdcf35d4990f47d036b6ab",
       "issue": 1217
     },
     "finish:76fee0a2-808b-4b07-b51c-a30b938993cb": {
