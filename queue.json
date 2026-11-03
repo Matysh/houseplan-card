@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1797,
+  "revision": 1798,
   "nextTicket": 116,
   "nextFence": 116,
   "tasks": {
@@ -2197,7 +2197,28 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793725636442,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "77c6cbcdb2468291b13384ab9e744a9e5fa5d273",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/process/AUTHOR.md",
+        "docs/process/REVIEWER.md",
+        "docs/process/SERVICE-COMMENTS.md",
+        "process-next/lib/coordinator.mjs",
+        "process-next/lib/queue.mjs",
+        "process-next/lib/review-publication.mjs",
+        "process-next/lib/service-messages.mjs",
+        "process-next/lib/task-completion.mjs",
+        "process-next/remote.mjs",
+        "process-next/templates/review-context.md",
+        "process-next/test/queue.test.mjs",
+        "process-next/test/remote.test.mjs",
+        "process-next/test/review-publication.test.mjs",
+        "process-next/test/service-messages.test.mjs",
+        "process-next/test/task-completion.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -2309,12 +2330,17 @@
     "token": "115:finish:73337638-8db8-49ab-86e6-ab7bb471f266:finish:1:admit",
     "fence": 115,
     "materialSha": "2ad5f43ce2dea9ee33fff5fe98ee82f520578494",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
+    "phase": "testing",
     "admittedAt": 1793725640726,
-    "expiresAt": 1793725940726
+    "expiresAt": 1793725951470,
+    "patchId": "77c6cbcdb2468291b13384ab9e744a9e5fa5d273"
   },
   "events": {
+    "finish:73337638-8db8-49ab-86e6-ab7bb471f266:finish:2:synchronized": {
+      "digest": "77b136337e87bd17a0fec95bf44de639221fcff3b5e4f0abf4441f769ccb16f0",
+      "issue": 1241
+    },
     "finish:73337638-8db8-49ab-86e6-ab7bb471f266": {
       "digest": "c38eec221b4a2df46b43a6b15af873819a888d08360fa8e1ae6eccddf0f0cc92",
       "issue": 1241,
