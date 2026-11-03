@@ -47,9 +47,9 @@ export function largeFixture(){
  return commitWallSegmentModel({spaces:[{id:'f',title:'Large',cell_cm:1,rooms,walls},square('g',60),square('h',64)],markers:[],settings:{}}).config;
 }
 export const largeScenarios={
- thickness(sp){authoredChange(sp,{kind:'thickness',rooms:[sp.rooms[0].id],cm:20},()=>{});},
+ thickness(sp){if(!sp.rooms.some(room=>room.id==='left-r'))throw Error('missing thickness parent left-r');authoredChange(sp,{kind:'thickness',rooms:['left-r'],cm:20},()=>{});},
  // The UI composite split retains the parent room identity and adds a child.
- split(sp){const parent=sp.rooms[0].id;authoredChange(sp,{kind:'faces',rooms:[parent,'split-b']},draft=>{draft.rooms.splice(0,1,{...draft.rooms[0],poly:[[0,0],[1,0],[1,2],[0,2]]},{id:'split-b',poly:[[1,0],[2,0],[2,2],[1,2]]});});},
- merge(sp){authoredChange(sp,{kind:'merge-rooms',keep:sp.rooms[0].id,drop:sp.rooms[1].id},draft=>{const keep=draft.rooms[0];draft.rooms.splice(0,2,{...keep,poly:[[0,0],[4,0],[4,2],[0,2]]});});},
+ split(sp){const parent='left-r';if(!sp.rooms.some(room=>room.id===parent))throw Error('missing split parent left-r');authoredChange(sp,{kind:'faces',rooms:[parent,'split-b']},draft=>{const i=draft.rooms.findIndex(room=>room.id===parent);draft.rooms.splice(i,1,{...draft.rooms[i],poly:[[0,0],[1,0],[1,2],[0,2]]},{id:'split-b',poly:[[1,0],[2,0],[2,2],[1,2]]});});},
+ merge(sp){if(!['left-r','right-r'].every(id=>sp.rooms.some(room=>room.id===id)))throw Error('missing merge pair');authoredChange(sp,{kind:'merge-rooms',keep:'left-r',drop:'right-r'},draft=>{const keep=draft.rooms.find(room=>room.id==='left-r');draft.rooms=draft.rooms.filter(room=>!['left-r','right-r'].includes(room.id));draft.rooms.push({...keep,poly:[[0,0],[4,0],[4,2],[0,2]]});});},
  column:scenarios.column,
 };

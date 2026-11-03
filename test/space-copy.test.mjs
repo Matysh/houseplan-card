@@ -96,7 +96,8 @@ test('#456 copies the complete allowed physical surface without room or device o
     { id: 'cwseed1', a: [1, 0], b: [1, 1], cm: 0 },
     { id: 'cpseed2', a: [0.5, 0], b: [0.5, 1], cm: 10 },
   ]);
-  assert.deepEqual(copy.partitions[2].style, before.spaces[1].partitions[0].style, 'the immutable builder preserves carrier properties; the server schema owns admissibility');
+  assert.deepEqual(copy.partitions[2].style, before.spaces[1].partitions[0].style,
+    'the immutable builder preserves opaque carrier properties; server schema owns admissibility');
   copy.partitions[2].style.keep = false;
   assert.equal(input.spaces[1].partitions[0].style.keep, true, 'opaque edge props are deep-copied');
   assert.deepEqual(copy.openings.map((opening) => ({

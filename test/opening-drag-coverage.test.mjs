@@ -5,6 +5,22 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {bundledProducers,callsFor} from '../demo/performance/opening-drag-coverage.mjs';
 
+test('opening coverage retains discovery and counting of graph and legacy materializers',t=>{
+ const root=mkdtempSync(join(tmpdir(),'hp-opening-producers-'));
+ t.after(()=>rmSync(root,{recursive:true,force:true}));
+ writeFileSync(join(root,'legacy.js'),'function oldBody(){return {partitions:[],columns:[],patches:[],all:[]};} export {oldBody as b};');
+ writeFileSync(join(root,'graph.js'),'function graphBody(){return Object.defineProperty({partitions:[],columns:[],patches:[],all:[]},"rawPatches",{value:[]});}');
+ writeFileSync(join(root,'card.js'),'import {b as producer} from "./legacy.js"; class Card {_physicalBodiesR(){return producer();}}');
+ const targets=bundledProducers(root).allPhysical;
+ assert.equal(targets.length,2);
+ const coverage=targets.map((target,index)=>({url:`http://demo.local/assets/${target.relative}`,
+  functions:[{functionName:target.name,ranges:[{startOffset:target.start,endOffset:target.end,count:index+1}]}]}));
+ assert.equal(callsFor(coverage,targets),3,'complete materializer diagnostics count both sources');
+ assert.equal(callsFor([],targets),0);
+ rmSync(join(root,'legacy.js'));rmSync(join(root,'graph.js'));
+ assert.throws(()=>bundledProducers(root),/missing physical body producers/);
+});
+
 test('1236 producer coverage follows the saved physical cache callsite across chunk aliases',()=>{
  const root=mkdtempSync(join(tmpdir(),'hp-opening-producer-'));
  try{

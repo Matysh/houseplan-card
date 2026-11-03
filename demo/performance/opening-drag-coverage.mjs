@@ -43,6 +43,7 @@ export function bundledProducers(root) {
    };visit(file);
   }
  }};walk('');
+ if(!physical.length)throw Error('missing physical body producers');
  const resolve=(relative,name,seen=new Set())=>{
   const key=relative+':'+name;if(seen.has(key))return key;seen.add(key);
   const mod=modules.get(relative),imported=mod?.imports.get(name);
@@ -53,7 +54,9 @@ export function bundledProducers(root) {
  const selected=physical.filter(fn=>called.has(resolve(fn.relative,fn.name)));
  if(selected.length!==1)throw Error('ambiguous/missing physicalBodyParts cache callsite: '+JSON.stringify({physical,selected}));
  if(constructors.length>1)throw Error('ambiguous crop constructor');
- return {physical:selected[0],constructor:constructors[0]??null};
+ // Keep complete discovery available for diagnostics, while the canonical
+ // fallback oracle follows the actual saved-floor cache producer (#1236).
+ return {physical:selected[0],allPhysical:physical,constructor:constructors[0]??null};
 }
 export function callsFor(coverage,target){
  if(!target)return 0;
