@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1297,
+  "revision": 1298,
   "nextTicket": 94,
   "nextFence": 92,
   "tasks": {
@@ -1562,6 +1562,114 @@
         "materialSha": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
         "expectedBase": "a2ab12d74261ff9b337332ff4e872483c668eb86",
         "patchId": "68bd80e8823548e2cace781c0523ee537b24b291"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1222,
+        "requestId": "review:1222:1:68bd80e8823548e2cace781c0523ee537b24b291:a2ab12d74261ff9b337332ff4e872483c668eb86",
+        "kind": "code",
+        "base": "a2ab12d74261ff9b337332ff4e872483c668eb86",
+        "materialSha": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
+        "patchId": "68bd80e8823548e2cace781c0523ee537b24b291",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1222,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1222",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "<details>\n<summary>Причина, решение, проверки и ограничения</summary>\n\nНа cb1431ea нативный smoke повторяет 2→1→1 и исключение на отсутствующей второй линии. Undo чистого декора на legacy источнике попадал в строгий structural restore и мигрировал документ в model11; старый Redo-снимок графа не содержал и затем отвергался. Дополнительно session-only decorLineSession участвовал в сравнении физического носителя.\n\nИсправление не запускает миграцию из точного decor-only restore: только при равенстве остальных полей, отсутствии node/chain/room-reference эффектов и pending physical writes. Для legacy запрещены смешанный graph/legacy и некорректные/будущие версии. Current-модель сохраняет прежний complete-carrier guard. Mixed/structural history остаётся строгой; transport guards #1220 не меняются.\n\nАдресный unit-набор decor-history-restore: 44/44 PASS; новые проверки включают настоящий history cursor 2→1→2 без смены модели, сохранность физических identity/других пространств и отрицательные physical/node/chain/reference/mixed/future случаи. Исходный native smoke RED сохранён локально. Штатный S6 через finish включает его и родственные creation_selection, decor, multiselect, плюс малые history unit cases и критичное ядро. Результат этих браузерных проверок пока не заявлен.\n\nОсобенно проверить, что legacy shortcut меняет только decor и не скрывает структурную правку; будущие/смешанные документы не получают нового допуска. Пользовательский HA, golden baseline и версия пакета не изменяются.\n\n</details>"
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление узкое и закрывает установленную причину. Undo чистого декора на legacy-документе больше не уходит в строгий structural restore с миграцией в model11. Поэтому Redo-снимок без `plan_graph` снова применим, и сценарий 2→1→2 восстанавливается. Session-only `decorLineSession` больше не делает decor-шаг «физическим». Из-за него раньше и current-модель проходила по строгой ветке. Новый допуск для legacy ограничен: меняется только `space.decor`, остальные снимковые поля должны совпадать, при этом не должно быть node/chain/roomReferences и pending physical writes. Смешанные graph/legacy документы и документы с будущими или некорректными версиями отклоняются. Ветка для current-модели и `restoreNonPhysicalHistory` по поведению не изменились. Блокеров не нашёл. Браузерные доказательства AC1–AC3 есть только в виде квитанции S6 со статусом passed. Её состав я видел лишь в описании автора.",
+          "understanding": "Проблема. На legacy-источнике (model_version < 11 и без `plan_graph`) после создания двух линий Undo шёл через `_applyGeometryState` в строгую ветку. Строгая ветка — это `_restoreGeometryStateLocal` и `commitEditedSpaceModel`. Она мигрировала документ в model11, хотя шаг касался только декора. Сохранённый Redo-снимок `after` не содержит графа, поэтому для уже мигрированного документа он отвергался: 2→1→1, затем исключение в smoke. Была и вторая причина. `withoutDecor` и `withoutPresentation` не исключали `decorLineSession`, поэтому сравнение live-снимка (без курсора) с исторической записью (с курсором) всегда давало несовпадение. Из-за этого decor-only путь не срабатывал даже на current-модели.\n\nПосле исправления (`src/decor-history-restore.ts`) обе функции вырезают `decorLineSession` перед fingerprint. `restorableSpace` получил флаг `legacyDecor`, его передаёт только `restoreDecorOnlyHistory`. При версии ниже 11 (undefined считается 0) допускаются целые версии 0..10, но только если ни одно пространство не содержит `plan_graph`. Тогда меняется только `space.decor` без миграции, а запись идёт обычным `_saveConfig` → `_writeConfig`. Этот путь и сейчас не мигрирует модель, а только нормализует legacy-поля в режиме `preserveStructure` — так же, как при обычном создании декора на legacy-плане. Для версии 11 проверка полноты носителя осталась прежней. `restoreNonPhysicalHistory` вызывается без флага, поэтому лестницы и подложка на legacy по-прежнему идут строгой веткой.\n\nРазобранные пути:\n- `_applyGeometryState` (runtime 2305–2383): decorOnly, presentationOnly, `physicalChanged` и `spacePhysicalGeometryFingerprint` без decor и курсора;\n- `_stepGeometryHistory` → `decorLine.restore` (2422–2441);\n- `_recordGeometry` и `_geometrySnapshotFromConfig` (1852–1899);\n- `_writeConfig`, `_prepareConfigCandidate`, `normalizeLegacyGeometryInPlace`;\n- `commitWallSegmentModel` (миграция при version < 11, отказ для mixed/future).",
+          "analysis": [
+            {
+              "topic": "Корень дефекта и точность исправления",
+              "assessment": "Объяснение автора совпадает с кодом. В строгой ветке вызов `commitEditedSpaceModel` для legacy неизбежно мигрирует документ: `commitWallSegmentModel` при `version < 11` строит граф и ставит model_version = 11. Обратный Redo по legacy-снимку после этого несовместим с мигрированным документом. Исправление не переделывает историю, а возвращает decor-шагу его естественную семантику: декор не меняет модель стен. Это минимальное и правильное место исправления.",
+              "evidence": "src/wall-segment-model.ts:956–1001; src/houseplan-editor-runtime.ts:2324–2328, 2352–2353, 2360; src/decor-history-restore.ts:17–26, 36."
+            },
+            {
+              "topic": "Курсор `decorLineSession` в сравнении",
+              "assessment": "`_recordGeometry` добавляет `decorLineSession` только в историческую запись, а live-снимок `_geometrySnapshot` его не содержит. Поэтому раньше `contentFingerprint(withoutDecor(before)) !== ...(target)` срабатывал всегда, когда в записи был курсор. Исключение курсора из обеих функций корректно: это не persisted-поле, и `spacePhysicalGeometryFingerprint` его тоже не учитывает. Курсор восстанавливается отдельно через `decorLine.restore`.",
+              "evidence": "runtime 1885–1890, 2437–2438; plan-geometry-preflight.ts:125–138; decor-history-restore.ts:7–10."
+            },
+            {
+              "topic": "Границы нового legacy-допуска",
+              "assessment": "Допуск не скрывает структурную правку. Все снимковые поля кроме decor и курсора должны совпадать: plan_graph, rooms, walls, wall_segments, open_spans, openings, partitions, wall_columns, stairs, plan_transform. Записывается только `space.decor`. Guarded-состояния, pending physical writes (проверка у вызывающего), mixed (`plan_graph` в любом пространстве), будущие, отрицательные и нецелые версии отклоняются до любой мутации. `restoreNonPhysicalHistory` не получает новых прав, потому что `legacyDecor` по умолчанию false. Поведение при version === 11 побайтно эквивалентно прежнему: тот же порядок guarded/version и та же проверка полноты носителя. Полезно сохранить именно такую форму: флаг передаётся только из decor-функции, а не расширяет общий `restorableSpace`.",
+              "evidence": "decor-history-restore.ts:14–31, 45–48; runtime 2324 (`!host._pendingPhysicalWrites.size`); тесты 73–86 (physical/references/node/chain/mixed/future/invalid-version) и 120–139 (`#1100 legacy` по-прежнему false)."
+            },
+            {
+              "topic": "Совместимость с прежними тестами #1075",
+              "assessment": "Случай `#1075 legacy` ставит model_version = 9 поверх фикстуры, уже закоммиченной `commitWallSegmentModel`, то есть с `plan_graph`. Новая проверка mixed отклоняет такой документ, поэтому ожидание false остаётся верным и семантически оправданным: документ «v9 с графом» не является доказанным legacy-носителем.",
+              "evidence": "test/decor-history-restore.test.mjs:6–9, 29; wall-segment-model.ts:963 (`mixed-graph-model`)."
+            },
+            {
+              "topic": "Тесты",
+              "assessment": "Новые unit-проверки содержательные. Они проверяют идентичность физических объектов и чужих пространств, неизменность model_version, отсутствие `plan_graph` и сценарий, в котором live-снимок без курсора не превращает шаг в физический. Есть и тест через настоящий курсор истории 2→1→2 с `preflight = 0` и полным совпадением с принятым config. Unit-тесты не заменяют нативный браузерный smoke, но его, по словам автора, включала квитанция S6.",
+              "evidence": "test/decor-history-restore.test.mjs:46–105; receipt 20261103T110029371-b04758b9, status passed, failures []."
+            },
+            {
+              "topic": "Документация и ledger",
+              "assessment": "DECOR-EDITOR.md, CHANGELOG (en/ru) и ledger точно описывают новую границу: legacy-источник без первой структурной записи не мигрируется, mixed-шаги остаются строгими, курсор не считается persisted-полем. Расхождений с кодом не нашёл.",
+              "evidence": "docs/DECOR-EDITOR.md:57–66; docs/release-ledger/v1.83.0/1222.json."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Можно добавить в задачу или в комментарий к ней короткий итог разбора AC3: что именно показали `smoke_decor_creation_selection` (redo_delete), `smoke_decor` (lineStyleUndoRedo) и `smoke_decor_multiselect` (shared_redo_complete) на этом SHA. Это тот же корень или нет, и прошли ли они. Квитанция S6 даёт только общий passed, а ТЗ просит явно разобрать родственные отказы. Цена — один комментарий, код при этом не меняется.",
+            "Остаётся пограничный случай (гипотеза, не регрессия). При первой записи `_prepareConfigCandidate` нормализует live-config на месте: удаляет `segments` и канонизирует `wall_columns`. Если загруженный legacy-документ ещё не был канонизирован, снимки шагов до первой записи будут отличаться от live по `wall_columns`. Тогда Undo такого шага уйдёт в строгую ветку, а Redo снова получит прежний класс отказа. Подтвердить или опровергнуть можно unit-тестом: legacy-документ с неканоничным `wall_columns` → запись → Undo/Redo первого decor-шага. Если подтвердится, это отдельная задача про канонизацию на загрузке, а не расширение этой."
+          ],
+          "boundaries": "Изучено по исходникам на head d1425dcb, ничего не запускал:\n- `src/decor-history-restore.ts` целиком;\n- вызывающие пути в `src/houseplan-editor-runtime.ts`: `_applyGeometryState`, `_stepGeometryHistory`, `_recordGeometry`, `_geometrySnapshotFromConfig`, `_writeConfig`, `_prepareConfigCandidate`;\n- `commitWallSegmentModel` и `decodeLegacyWallSegmentModel`, `normalizeLegacyGeometryInPlace`, `spacePhysicalGeometryFingerprint`;\n- тестовый файл целиком.\n\nИспользована квитанция S6 «Тесты для задачи #1222 (перед ревью)» (passed, без failures). Её состав — нативный `smoke_decor_line_click`, родственные creation_selection/decor/multiselect, unit-набор и критичное ядро — известен только из контекста автора, сам отчёт по локальному пути недоступен. Поэтому браузерные AC1 (включая выбор и anchor), AC2 (Escape, стиль, сохранение/reload) и AC3 (родственные smoke) принимаю на основании этой квитанции, а не собственной проверки. Транспортную часть #1220 не рассматривал: она не менялась. Хелпер `test/helpers/geometry-history-harness.mjs` не читал, поэтому полноту его эмуляции runtime не подтверждаю."
+        },
+        "usage": {
+          "input_tokens": 28,
+          "cache_creation_input_tokens": 59040,
+          "cache_read_input_tokens": 457792,
+          "output_tokens": 9961,
+          "output_tokens_details": {
+            "thinking_tokens": 3644
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 59040,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 1032,
+              "cache_read_input_tokens": 46324,
+              "cache_creation_input_tokens": 12716,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 12716
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление узкое и закрывает установленную причину. Undo чистого декора на legacy-документе больше не уходит в строгий structural restore с миграцией в model11. Поэтому Redo-снимок без `plan_graph` снова применим, и сценарий 2→1→2 восстанавливается. Session-only `decorLineSession` больше не делает decor-шаг «физическим». Из-за него раньше и current-модель проходила по строгой ветке. Новый допуск для legacy ограничен: меняется только `space.decor`, остальные снимковые поля должны совпадать, при этом не должно быть node/chain/roomReferences и pending physical writes. Смешанные graph/legacy документы и документы с будущими или некорректными версиями отклоняются. Ветка для current-модели и `restoreNonPhysicalHistory` по поведению не изменились. Блокеров не нашёл. Браузерные доказательства AC1–AC3 есть только в виде квитанции S6 со статусом passed. Её состав я видел лишь в описании автора.\n\n## Понимание решения\n\nПроблема. На legacy-источнике (model_version < 11 и без `plan_graph`) после создания двух линий Undo шёл через `_applyGeometryState` в строгую ветку. Строгая ветка — это `_restoreGeometryStateLocal` и `commitEditedSpaceModel`. Она мигрировала документ в model11, хотя шаг касался только декора. Сохранённый Redo-снимок `after` не содержит графа, поэтому для уже мигрированного документа он отвергался: 2→1→1, затем исключение в smoke. Была и вторая причина. `withoutDecor` и `withoutPresentation` не исключали `decorLineSession`, поэтому сравнение live-снимка (без курсора) с исторической записью (с курсором) всегда давало несовпадение. Из-за этого decor-only путь не срабатывал даже на current-модели.\n\nПосле исправления (`src/decor-history-restore.ts`) обе функции вырезают `decorLineSession` перед fingerprint. `restorableSpace` получил флаг `legacyDecor`, его передаёт только `restoreDecorOnlyHistory`. При версии ниже 11 (undefined считается 0) допускаются целые версии 0..10, но только если ни одно пространство не содержит `plan_graph`. Тогда меняется только `space.decor` без миграции, а запись идёт обычным `_saveConfig` → `_writeConfig`. Этот путь и сейчас не мигрирует модель, а только нормализует legacy-поля в режиме `preserveStructure` — так же, как при обычном создании декора на legacy-плане. Для версии 11 проверка полноты носителя осталась прежней. `restoreNonPhysicalHistory` вызывается без флага, поэтому лестницы и подложка на legacy по-прежнему идут строгой веткой.\n\nРазобранные пути:\n- `_applyGeometryState` (runtime 2305–2383): decorOnly, presentationOnly, `physicalChanged` и `spacePhysicalGeometryFingerprint` без decor и курсора;\n- `_stepGeometryHistory` → `decorLine.restore` (2422–2441);\n- `_recordGeometry` и `_geometrySnapshotFromConfig` (1852–1899);\n- `_writeConfig`, `_prepareConfigCandidate`, `normalizeLegacyGeometryInPlace`;\n- `commitWallSegmentModel` (миграция при version < 11, отказ для mixed/future).\n\n## Разбор решения\n\n### Корень дефекта и точность исправления\n\nОбъяснение автора совпадает с кодом. В строгой ветке вызов `commitEditedSpaceModel` для legacy неизбежно мигрирует документ: `commitWallSegmentModel` при `version < 11` строит граф и ставит model_version = 11. Обратный Redo по legacy-снимку после этого несовместим с мигрированным документом. Исправление не переделывает историю, а возвращает decor-шагу его естественную семантику: декор не меняет модель стен. Это минимальное и правильное место исправления.\n\nОснование: src/wall-segment-model.ts:956–1001; src/houseplan-editor-runtime.ts:2324–2328, 2352–2353, 2360; src/decor-history-restore.ts:17–26, 36.\n\n### Курсор `decorLineSession` в сравнении\n\n`_recordGeometry` добавляет `decorLineSession` только в историческую запись, а live-снимок `_geometrySnapshot` его не содержит. Поэтому раньше `contentFingerprint(withoutDecor(before)) !== ...(target)` срабатывал всегда, когда в записи был курсор. Исключение курсора из обеих функций корректно: это не persisted-поле, и `spacePhysicalGeometryFingerprint` его тоже не учитывает. Курсор восстанавливается отдельно через `decorLine.restore`.\n\nОснование: runtime 1885–1890, 2437–2438; plan-geometry-preflight.ts:125–138; decor-history-restore.ts:7–10.\n\n### Границы нового legacy-допуска\n\nДопуск не скрывает структурную правку. Все снимковые поля кроме decor и курсора должны совпадать: plan_graph, rooms, walls, wall_segments, open_spans, openings, partitions, wall_columns, stairs, plan_transform. Записывается только `space.decor`. Guarded-состояния, pending physical writes (проверка у вызывающего), mixed (`plan_graph` в любом пространстве), будущие, отрицательные и нецелые версии отклоняются до любой мутации. `restoreNonPhysicalHistory` не получает новых прав, потому что `legacyDecor` по умолчанию false. Поведение при version === 11 побайтно эквивалентно прежнему: тот же порядок guarded/version и та же проверка полноты носителя. Полезно сохранить именно такую форму: флаг передаётся только из decor-функции, а не расширяет общий `restorableSpace`.\n\nОснование: decor-history-restore.ts:14–31, 45–48; runtime 2324 (`!host._pendingPhysicalWrites.size`); тесты 73–86 (physical/references/node/chain/mixed/future/invalid-version) и 120–139 (`#1100 legacy` по-прежнему false).\n\n### Совместимость с прежними тестами #1075\n\nСлучай `#1075 legacy` ставит model_version = 9 поверх фикстуры, уже закоммиченной `commitWallSegmentModel`, то есть с `plan_graph`. Новая проверка mixed отклоняет такой документ, поэтому ожидание false остаётся верным и семантически оправданным: документ «v9 с графом» не является доказанным legacy-носителем.\n\nОснование: test/decor-history-restore.test.mjs:6–9, 29; wall-segment-model.ts:963 (`mixed-graph-model`).\n\n### Тесты\n\nНовые unit-проверки содержательные. Они проверяют идентичность физических объектов и чужих пространств, неизменность model_version, отсутствие `plan_graph` и сценарий, в котором live-снимок без курсора не превращает шаг в физический. Есть и тест через настоящий курсор истории 2→1→2 с `preflight = 0` и полным совпадением с принятым config. Unit-тесты не заменяют нативный браузерный smoke, но его, по словам автора, включала квитанция S6.\n\nОснование: test/decor-history-restore.test.mjs:46–105; receipt 20261103T110029371-b04758b9, status passed, failures [].\n\n### Документация и ledger\n\nDECOR-EDITOR.md, CHANGELOG (en/ru) и ledger точно описывают новую границу: legacy-источник без первой структурной записи не мигрируется, mixed-шаги остаются строгими, курсор не считается persisted-полем. Расхождений с кодом не нашёл.\n\nОснование: docs/DECOR-EDITOR.md:57–66; docs/release-ledger/v1.83.0/1222.json.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно добавить в задачу или в комментарий к ней короткий итог разбора AC3: что именно показали `smoke_decor_creation_selection` (redo_delete), `smoke_decor` (lineStyleUndoRedo) и `smoke_decor_multiselect` (shared_redo_complete) на этом SHA. Это тот же корень или нет, и прошли ли они. Квитанция S6 даёт только общий passed, а ТЗ просит явно разобрать родственные отказы. Цена — один комментарий, код при этом не меняется.\n- Остаётся пограничный случай (гипотеза, не регрессия). При первой записи `_prepareConfigCandidate` нормализует live-config на месте: удаляет `segments` и канонизирует `wall_columns`. Если загруженный legacy-документ ещё не был канонизирован, снимки шагов до первой записи будут отличаться от live по `wall_columns`. Тогда Undo такого шага уйдёт в строгую ветку, а Redo снова получит прежний класс отказа. Подтвердить или опровергнуть можно unit-тестом: legacy-документ с неканоничным `wall_columns` → запись → Undo/Redo первого decor-шага. Если подтвердится, это отдельная задача про канонизацию на загрузке, а не расширение этой.\n\n## Границы анализа\n\nИзучено по исходникам на head d1425dcb, ничего не запускал:\n- `src/decor-history-restore.ts` целиком;\n- вызывающие пути в `src/houseplan-editor-runtime.ts`: `_applyGeometryState`, `_stepGeometryHistory`, `_recordGeometry`, `_geometrySnapshotFromConfig`, `_writeConfig`, `_prepareConfigCandidate`;\n- `commitWallSegmentModel` и `decodeLegacyWallSegmentModel`, `normalizeLegacyGeometryInPlace`, `spacePhysicalGeometryFingerprint`;\n- тестовый файл целиком.\n\nИспользована квитанция S6 «Тесты для задачи #1222 (перед ревью)» (passed, без failures). Её состав — нативный `smoke_decor_line_click`, родственные creation_selection/decor/multiselect, unit-набор и критичное ядро — известен только из контекста автора, сам отчёт по локальному пути недоступен. Поэтому браузерные AC1 (включая выбор и anchor), AC2 (Escape, стиль, сохранение/reload) и AC3 (родственные smoke) принимаю на основании этой квитанции, а не собственной проверки. Транспортную часть #1220 не рассматривал: она не менялась. Хелпер `test/helpers/geometry-history-harness.mjs` не читал, поэтому полноту его эмуляции runtime не подтверждаю.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: a2ab12d74261ff9b337332ff4e872483c668eb86 → d1425dcbcc0989e71c7db9c6648313ccd5bff6c1\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1222, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n<details>\n<summary>Причина, решение, проверки и ограничения</summary>\n\nНа cb1431ea нативный smoke повторяет 2→1→1 и исключение на отсутствующей второй линии. Undo чистого декора на legacy источнике попадал в строгий structural restore и мигрировал документ в model11; старый Redo-снимок графа не содержал и затем отвергался. Дополнительно session-only decorLineSession участвовал в сравнении физического носителя.\n\nИсправление не запускает миграцию из точного decor-only restore: только при равенстве остальных полей, отсутствии node/chain/room-reference эффектов и pending physical writes. Для legacy запрещены смешанный graph/legacy и некорректные/будущие версии. Current-модель сохраняет прежний complete-carrier guard. Mixed/structural history остаётся строгой; transport guards #1220 не меняются.\n\nАдресный unit-набор decor-history-restore: 44/44 PASS; новые проверки включают настоящий history cursor 2→1→2 без смены модели, сохранность физических identity/других пространств и отрицательные physical/node/chain/reference/mixed/future случаи. Исходный native smoke RED сохранён локально. Штатный S6 через finish включает его и родственные creation_selection, decor, multiselect, плюс малые history unit cases и критичное ядро. Результат этих браузерных проверок пока не заявлен.\n\nОсобенно проверить, что legacy shortcut меняет только decor и не скрывает структурную правку; будущие/смешанные документы не получают нового допуска. Пользовательский HA, golden baseline и версия пакета не изменяются.\n\n</details>\n```\n\n</details>\n",
+        "createdAt": "2026-11-03T11:04:41.178Z",
+        "artifactId": 13223869624,
+        "runId": 41624172218,
+        "runAttempt": 1,
+        "completedAt": "2026-11-03T11:04:45Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41624172218",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "a2ab12d74261ff9b337332ff4e872483c668eb86"
       }
     },
     "1223": {
@@ -1742,9 +1850,9 @@
     "fence": 91,
     "materialSha": "d1425dcbcc0989e71c7db9c6648313ccd5bff6c1",
     "expectedBase": "a2ab12d74261ff9b337332ff4e872483c668eb86",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793703581891,
-    "expiresAt": 1793707312442,
+    "expiresAt": 1793707491700,
     "patchId": "68bd80e8823548e2cace781c0523ee537b24b291",
     "reviewRequest": "review:1222:1:68bd80e8823548e2cace781c0523ee537b24b291:a2ab12d74261ff9b337332ff4e872483c668eb86"
   },
@@ -1783,6 +1891,10 @@
     },
     "github:41624443951:1:tick:0:review-presentation": {
       "digest": "796ba5104d23c4a69093d7af9226b5d6fe463aafa98de54bd32e20389c4e78de",
+      "issue": 1222
+    },
+    "github:41624443951:1:tick:0:review-complete": {
+      "digest": "a6666dedcfe299399edb72c427d4b9802e7fe989e968a7dc5e0fc7d86d14fbaa",
       "issue": 1222
     },
     "finish:b7308850-4c7a-47b6-9407-aed77629a9c7": {
