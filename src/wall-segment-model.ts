@@ -948,7 +948,12 @@ export function decodeLegacyWallSegmentModel<T>(
 export function commitWallSegmentModel<T>(
   input: T, options: WallSegmentCommitOptions = {},
 ): WallSegmentCommitResult<T> {
-  for (const space of (input as any)?.spaces || []) assertFiniteColumnInputs(space);
+  try {
+    for (const space of (input as any)?.spaces || []) assertFiniteColumnInputs(space);
+  } catch {
+    // Hover/history callers distinguish a rejected model from a programming fault.
+    throw new WallSegmentModelError('invalid-room', 'invalid-column-geometry');
+  }
   const before = JSON.stringify(input);
   const config: any = clone(input);
   const graphMappings = new Map<string, GraphMapping>();
