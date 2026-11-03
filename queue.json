@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2113,
+  "revision": 2114,
   "nextTicket": 134,
   "nextFence": 133,
   "tasks": {
@@ -2397,7 +2397,7 @@
       "ownerDecision": null,
       "ticket": 132,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793733756972,
       "reviewEntry": 5,
       "notice": {
@@ -2453,7 +2453,17 @@
         "test/room-save-946.test.mjs",
         "test/toast-node-action.test.mjs",
         "test/toast-presentation.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T192450682-1b9ff2d9",
+        "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
+        "runId": 41702741150,
+        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
+        "status": "passed",
+        "finishedAt": "2026-11-03T19:25:52.962Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
+        "execution": "github"
+      }
     },
     "1247": {
       "issue": 1247,
@@ -2676,9 +2686,9 @@
     "fence": 132,
     "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
     "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793733767952,
-    "expiresAt": 1793734278746,
+    "expiresAt": 1793737584821,
     "patchId": "3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf"
   },
   "events": {
@@ -3072,6 +3082,35 @@
         "layer": "product",
         "materialSha": "e6fe4e04616111f3bf658d7d432ac84539c091b8",
         "delivered": true
+      }
+    },
+    "finish:4dc15033-adf0-43c2-8d94-0204cbb546a9:finish:1:s6-complete": {
+      "digest": "7a9dce2d275f0b049c72693c1e26649d320e81d729a9b4058cab42832196db9d",
+      "issue": 1246,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1246,
+        "at": 1793733984821,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T192450682-1b9ff2d9",
+          "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
+          "runId": 41702741150,
+          "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
+          "status": "passed",
+          "finishedAt": "2026-11-03T19:25:52.962Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
+          "execution": "github"
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\nВыполнить К1–К3 без исключений по тексту/ID. Уже показанный тост остаётся у исходной поверхности; открытие нового или вложенного диалога его не присваивает. Когда исходный владелец закрывается, сообщение возвращается на карточку, но не в посторонний диалог.\n\n### Решение и альтернативы\nToastPresentation сохраняет ToastContext при show и маршрутизирует только к сохранённому owner. _captureToast/captureToast возвращают callback, захватываемый до await; deferred config/layout writers захватывают контекст при постановке, не при позднем flush. Явно охвачены Save room/space/marker/settings/rules, удаление/копирование, onboarding/import, файлы/архив, vacuum, LED/history, свойства/keyboard, общий reload/write/error и View services. Существующие authority/dialogSession guards не заменяются toast-контекстом. Page-wide lazy/locale/art diagnostics явно принадлежат карточке. Чужие transient overlays не закрываются поздним сообщением старого действия.\nГлобальный вывод всех сообщений под modal отвергнут из-за #956. Фильтр space_deleted/текста отвергнут: принадлежность — действие/поверхность, не содержимое. Один notice и прежний replace-not-queue deadline 3500ms сохранены; owner changes не перезапускают таймер/paint/live announcement.\n\n### Риски и места для внимания\nДополнительный аудит перед допуском: долгоживущий wall-node adapter также имел late-result toast port. Его Move/Delete сообщения явно принадлежат canvas/card, а новый объект NodeHistory port захватывает callback при каждом вызове истории. Это не глобальный card fallback: ошибки собственных modal Save продолжают принадлежать исходному hp-dialog. Guards узлов/истории не изменены; добавлен адресный adapter regression.\n\nToastOwner — lifetime token, не просто HTMLElement: accepted beginExit/detach навсегда завершает токен. При cancelExit/reopen после accepted retirement тот же hp-dialog получает новый token; обычные ready/повторный sync/rejectClose без принятого закрытия сохраняют текущий token. Старый захваченный callback не может ни показать сообщение в новой lifetime того же shell, ни закрыть её transient overlays. Покрыто unit и genuine-modal browser reuse case.\n\nПри первом допуске актуализация до ad46b7902 вернула S6 по единственному rebase-conflict соседних импортов houseplan-editor-runtime. Сохранены оба независимых импорта: prepareDialogReturnFocus из уже принятой задачи и captureToast из #1246. Ручного merge/dev/force push нет; последующий finish актуализирует remote task branch своим штатным механизмом.\n\nШтатный synchronize затем отказал из-за различия patchId контекста импортов (`Local branch changed after ready`). Собственный sync lease fence125 возвращён публичной remote return с проверкой issue/token и reason rebase-conflict-recovery. Чтобы не переписывать remote историю, результат 59288b255 опубликован обычным push в новой task-ветке `issue/1246-toast-context-recovery`; дальнейший finish использует её. Старый remote c4779c997 не перезаписывался, queue.json/dev вручную не менялись. Ни один из этих возвратов не является результатом S6 — выбранный набор и show code review по-прежнему обязательны.\nОбъём call-site правок вызван существующими разными async входами, а не механической заменой всех ~215 _showToast. Синхронные validation/action сообщения сохраняют show-time owner. Даже dialogSession guard не решает nested-confirm: исходный диалог остаётся тем же, но активный footer уже другой, поэтому Save callbacks тоже захватываются до await. Лёгкие standalone/test ports без _captureToast сохраняют прежний adapter callback; настоящий HouseplanCard предоставляет _captureToast.\nОбработка данных/прав и существующие session guards остаются прежними; это не проект общей отмены операций или переписывания всех editor lifecycles. Ревью стоит внимательно разобрать late result callbacks и общие отложенные writers.\n\n### Проверки и ограничения\nПосле ремонта test adapter dev продвинулся до082f99ccf (#1252). В своём sync lease131 выполнен чистый rebase без продуктовых изменений; результат0bdcf608e опубликован ordinary push в `issue/1246-toast-s6-reuse`. Для передачи previous_run используется документированный публичный fallback workflow после actual ready/admit/synchronized, затем обычный finish наблюдает тот же requestId и валидирует фактический report. Это восстановление транспорта reuse, не ручной PASS/правка queue.json.\nФактический первый S6: https://github.com/Matysh/houseplan-card/actions/runs/41699400780 — FAILED, не PASS. Шесть остальных шагов прошли (build/types, подготовка, startup View, area126, browser24); критичный минимум дал134PASS/17FAIL. Все17 имеют одну причину: test/layout-write-reload.test.mjs вызывает настоящие exported card _pointerUp/history на fakehost, которому не был подключён новый _captureToast. Подключён минимальный card-only _toastPresentation.captureContext и реальное proto._captureToast, без изменения17 бизнесassertions прав/данных/ACK/history. Адресный `node --test test/layout-write-reload.test.mjs` после ремонта37/37PASS. Исправление только в test adapter, src/demo не меняются; прежние зелёные шаги применимы по неизменным inputs, критичный набор должен получить собственный успешный S6 receipt через очередь.\nВне toast-области найден baseline FAIL по счётчикам WallBooleanBaseline. Контроль без каких-либо Toast-изменений: чистый task-1247, HEAD f2436671e6a48a64ed785f89cf014b467a123cbb, `node --test --test-name-pattern '^Esc retries' test/wall-node-card-adapter.test.mjs` — тот же FAIL `recorded > 0`; полный исходный adapter test — 13 PASS/9 FAIL. Хеши/условия и вопрос для отдельного разбора: https://github.com/Matysh/houseplan-card/issues/1251. Причина нулевого счётчика не объявляется доказанно «устаревшим тестом»; геометрия/история этими падениями не подтверждены. Этот файл возвращён точно к исходному состоянию и не чинится в #1246. Узкий toast-node-action проверяет adapter/context и настоящий pending node-history refusal; сохранение Move/Delete lifecycle guards проверяется существующими wall-node-editor и wall-node-delete-menu тестами. Эти адресные файлы включены в финальный S6; девять отдельных FAIL не объявляются PASS.\nЛокально: npm run typecheck, npm run build; 53 адресных теста сохранения/прав/тостов прошли, затем добавленный реальный delayed room Save regression тоже PASS. Genuine HA modal synthetic smoke подтвердил glyph paint собственной Save-ошибки, отсутствие переноса во вложенный confirm/новый Space, один DOM notice, повторный одинаковый текст, AX/live announcement и исходный lifetime; финальная S6 выборка перечислена в artifacts/finish-1246.json и будет выполнена finish --s6 github в общей очереди.\nСтенд синтетический: настоящая официальная HA frontend modal-компонента работает с fake-hass, не с полноценным HA-сервером. Это не HA-server E2E; серверные права/хранение этим smoke не подтверждаются. Установка HA владельца не менялась. Реальные HA E2E перед бетой: надо, сценарий записан https://github.com/Matysh/houseplan-e2e/issues/21. RU/EN changelog и stable-fix ledger v1.83.0 добавлены.\n\nФинальная локальная диагностика: `npm run build` PASS; `node --test test/optimize-plans-dialog.test.mjs` — 41/41 PASS, включая late Optimize failure; `node --test test/toast-presentation.test.mjs test/room-save-946.test.mjs test/space-delete-dialog.test.mjs` — 28/28 PASS до добавления отдельного lifetime case, затем toast/node subset 11/11 PASS. `node demo/smoke_toast_ownership_1246.mjs` в WSL — 24/24 именованных проверок PASS, в том числе реальный `_cardToggle` с отложенным fake service failure после открытия Space dialog, config-write, поставленный до открытия, но flushed после, и повторное использование того же genuine-modal shell после accepted retirement. Дополнение узкого Optimize port покрыто его контрактным тестом и behavioral regression. Финальные S6, обязательный startup/critical минимум и независимое ревью выполняет только finish.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
