@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1257,
+  "revision": 1258,
   "nextTicket": 90,
   "nextFence": 90,
   "tasks": {
@@ -1607,18 +1607,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "dev-build:41595740649:1:1216": {
-      "digest": "18e77e30c0937df7441ed88ff27411f76757667c7bac21cbd283db029a42322d",
-      "issue": 1216,
-      "message": {
-        "kind": "dev-build",
-        "issue": 1216,
-        "at": 1793690592757,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "44330439f73c5bd6a70323797d5558102215bcf0"
-      }
-    },
     "finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:4:s6-complete": {
       "digest": "45f9bcc8e08fe24b6f58048078fe9f9d451a80f9fbf0207ae32d14f3d76081ed",
       "issue": 1218,
