@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2101,
+  "revision": 2102,
   "nextTicket": 133,
   "nextFence": 132,
   "tasks": {
@@ -2964,7 +2964,8 @@
         "track": "show",
         "layer": "product",
         "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
-        "phase": "sync"
+        "phase": "sync",
+        "delivered": true
       }
     },
     "return:1246:131:reuse-base-update:return:1246": {
