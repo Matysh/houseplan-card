@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1657,
+  "revision": 1658,
   "nextTicket": 111,
   "nextFence": 110,
   "tasks": {
@@ -1968,7 +1968,7 @@
       "ownerDecision": null,
       "ticket": 109,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793715343052,
       "reviewEntry": 1,
       "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af",
@@ -1982,7 +1982,16 @@
         "src/houseplan-card.ts",
         "src/warm-mode-adoption.ts",
         "test/warm-mode-adoption.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T142821302-c3a1d71f",
+        "name": "Тесты для задачи #1234 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261103T142821302-c3a1d71f/report.json",
+        "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+        "status": "passed",
+        "finishedAt": "2026-11-03T14:29:02.559Z",
+        "failures": []
+      }
     },
     "1235": {
       "issue": 1235,
@@ -2244,9 +2253,9 @@
     "fence": 109,
     "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
     "expectedBase": "0009156acd78c58cfaca7ce756fa8388d90adb75",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793716086240,
-    "expiresAt": 1793716426374,
+    "expiresAt": 1793719743829,
     "patchId": "6d884dc52a31ffdf41645612de3536a5e3f090af"
   },
   "events": {
@@ -2539,6 +2548,29 @@
         "track": "show",
         "layer": "product",
         "materialSha": "c1c7b057b5636991176cd430b6dcb39adf330666"
+      }
+    },
+    "finish:8a35d53d-42b6-40fb-abc0-1668136d1b15:finish:4:s6-complete": {
+      "digest": "b8bba720250045215f666de0cd49cb673c457b7fcfd8dde65022fa6784f6cc81",
+      "issue": 1234,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1234,
+        "at": 1793716143829,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T142821302-c3a1d71f",
+          "name": "Тесты для задачи #1234 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261103T142821302-c3a1d71f/report.json",
+          "materialSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d",
+          "status": "passed",
+          "finishedAt": "2026-11-03T14:29:02.559Z",
+          "failures": []
+        }
       }
     }
   },
