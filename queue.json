@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 2017,
+  "revision": 2018,
   "nextTicket": 130,
-  "nextFence": 127,
+  "nextFence": 128,
   "tasks": {
     "1126": {
       "issue": 1126,
@@ -2250,7 +2250,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 127,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793730712780,
       "reviewEntry": 2,
@@ -2608,11 +2608,20 @@
     }
   },
   "waiting": [
-    1242,
     1246,
     1252
   ],
-  "active": null,
+  "active": {
+    "issue": 1242,
+    "worker": "finish",
+    "token": "127:finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:2:admit",
+    "fence": 127,
+    "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793731636076,
+    "expiresAt": 1793731936076
+  },
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
       "digest": "b74717bbe91c3148655850e19950fd1870a581195fa1ce207e74475c2abb5959",
@@ -2918,6 +2927,30 @@
         "layer": "infra",
         "materialSha": "540ccd7d35598c03fd8b2a2de05df26af4806b8c",
         "delivered": true
+      }
+    },
+    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:2:admit": {
+      "digest": "78e6c2fdc358823745c114267c3d63e155ff7f077b4fc1dabfd3171ce56a659b",
+      "issue": 1242,
+      "message": {
+        "kind": "admitted",
+        "issue": 1242,
+        "at": 1793731636076,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261103T181344781-b36a1b9a",
+          "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
+          "runId": 41691380285,
+          "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+          "status": "passed",
+          "finishedAt": "2026-11-03T18:14:36.609Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
+          "execution": "github"
+        }
       }
     }
   },
