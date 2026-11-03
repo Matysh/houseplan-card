@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 89,
-  "active": "v1.84.0-beta.3-20261103",
+  "revision": 90,
+  "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
       "id": "v1.84.0-beta.2",
@@ -2155,7 +2155,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "abandoned",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -3136,7 +3136,8 @@
     "beta1843-run-a-20261103": "3ec0fcd51127f8fd708bc7ca9d38f9dc4a58a40c4309fc455c417ab8eb6dac1a",
     "ship-review:prepare:a163fb1c-9253-4270-ad58-a8a58d7fca05": "2bebd46bbe1dcad574c088bdad4febb24b2dfd32285b7be12e0743656fa18e58",
     "ship-review:result:64a0eba6-d6ce-4145-9703-5885300a1b86": "8f48ef0b440abc73f918599489c811c00d2741f1df1726afed78461a5c80c8fd",
-    "beta1843-actual-results-before-owner-stop-20261104": "fb57174ee94067859cea78e1903594b4e1dae57dcf867ef8e075f95af971df44"
+    "beta1843-actual-results-before-owner-stop-20261104": "fb57174ee94067859cea78e1903594b4e1dae57dcf867ef8e075f95af971df44",
+    "beta1843-abandon-owner-20261104": "ec12bbb771c6be8a489fbe494751d71c548f63afb1b126f44240b530a8599322"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
