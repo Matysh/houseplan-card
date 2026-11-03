@@ -5,7 +5,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {commitWallSegmentModel} from '../test-build/wall-segment-model.js';
 import {compareCodePoints} from '../test-build/codepoint-order.js';
-import {corpusPassport,identityProjection,loadWallIdentityCorpus,loadCompleteWallIdentityCorpus,loadHistoricalWallIdentityCorpus,withCorpusIds,extractCorpusConfigs}
+import {identityProjection,loadWallIdentityCorpus,loadCompleteWallIdentityCorpus,loadHistoricalWallIdentityCorpus,withCorpusIds,extractCorpusConfigs}
   from './helpers/wall-identity-corpus.mjs';
 
 const historical=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-identities.json',import.meta.url),'utf8'));
@@ -24,23 +24,74 @@ const compare=(actual,baseline)=>assert.deepEqual(actual,baseline,
   'wall corpus needs explicit current inventory/semantic passport review; full source membership is retained');
 
 test('#845 complete persisted fixture/demo corpus retains baseline identities and byte idempotence',async t=>{
-  const corpus=await loadCompleteWallIdentityCorpus();
-  compare(corpusPassport(commitWallSegmentModel,corpus),expected);
-  for(const {label,input} of corpus.entries)withCorpusIds(()=>{
-    const frozen=structuredClone(input),first=commitWallSegmentModel(input).config;
-    assert.deepEqual(input,frozen,label+': read-only');
-    assert.equal(JSON.stringify(commitWallSegmentModel(first).config),JSON.stringify(first),label);
-    if(Number(input.model_version)>=10)for(const old of input.spaces||[]){
-      const current=first.spaces.find(s=>s.id===old.id);
-      // Complete v10 documents preserve each stored atom, not merely reference validity.
-      if((old.wall_segments||[]).length&&(old.rooms||[]).every(r=>r.poly?.length===r.wall_ids?.length)){
-        assert.deepEqual([...current.wall_segments.map(w=>w.id)].sort(),[...old.wall_segments.map(w=>w.id)].sort(),label);
-        assert.deepEqual(current.rooms.map(r=>r.wall_ids),old.rooms.map(r=>r.wall_ids),label);
+  const corpus=await loadCompleteWallIdentityCorpus(),documents=[],guardFailures=[];
+  const reached={inputs:0,readOnly:0,successfulMigrations:0,declines:0,unexpectedErrors:0,
+    idempotence:0,readOnlyRereads:0,storedAtomSets:0,roomIdSets:0,orderedRoomCycles:0,failedChecks:0};
+  for(const {label,input} of corpus.entries){
+    try{withCorpusIds(()=>{
+    reached.inputs++;
+    const frozen=structuredClone(input),failures=[];
+    const check=(name,assertion)=>{
+      try{assertion();}catch(error){reached.failedChecks++;failures.push(new Error(label+': '+name,{cause:error}));}
+    };
+    let first,error;
+    try{first=commitWallSegmentModel(input).config;}catch(caught){error=caught;}
+    // A refusal must not mutate the source either. Never let an earlier
+    // membership/identity difference prevent this guard from running.
+    reached.readOnly++;check('read-only source',()=>assert.deepEqual(input,frozen));
+    const fingerprint=createHash('sha256').update(JSON.stringify(frozen)).digest('hex');
+    if(error){
+      if(error.reason){reached.declines++;documents.push({label,fingerprint,ok:false,reason:error.reason});}
+      else{
+        reached.unexpectedErrors++;documents.push({label,fingerprint,unexpectedError:String(error)});
+        check('unexpected migration exception',()=>{throw error;});
+      }
+    }else{
+      reached.successfulMigrations++;
+      documents.push({label,fingerprint,ok:true,identity:structuredClone(identityProjection(first))});
+      const firstFrozen=structuredClone(first),firstBytes=JSON.stringify(firstFrozen);
+      reached.idempotence++;check('byte idempotence',()=>
+        assert.equal(JSON.stringify(commitWallSegmentModel(first).config),firstBytes));
+      reached.readOnlyRereads++;check('read-only successful re-read',()=>assert.deepEqual(first,firstFrozen));
+      if(Number(frozen.model_version)>=10)for(const old of frozen.spaces||[]){
+        // Complete v10 documents preserve each stored atom, not merely reference validity.
+        if((old.wall_segments||[]).length&&(old.rooms||[]).every(r=>r.poly?.length===r.wall_ids?.length)){
+          const current=firstFrozen.spaces.find(s=>s.id===old.id);
+          reached.storedAtomSets++;check('stored atom IDs in '+old.id,()=>{
+            assert.ok(current,'the stored space survives');
+            const ids=rows=>rows.reduce((counts,wall)=>counts.set(wall.id,(counts.get(wall.id)||0)+1),new Map());
+            assert.deepEqual(ids(current.wall_segments),ids(old.wall_segments));
+          });
+          reached.roomIdSets++;check('complete room ID multiset in '+old.id,()=>{
+            const ids=rows=>rows.reduce((counts,room)=>counts.set(room.id,(counts.get(room.id)||0)+1),new Map());
+            assert.deepEqual(ids(current?.rooms||[]),ids(old.rooms||[]));
+          });
+          const currentRooms=new Map((current?.rooms||[]).map(room=>[room.id,room]));
+          for(const room of old.rooms||[]){
+            reached.orderedRoomCycles++;check('ordered cycle of room '+room.id,()=>{
+              assert.ok(currentRooms.has(room.id),'the same room ID survives canonical table ordering');
+              assert.deepEqual(currentRooms.get(room.id).wall_ids,room.wall_ids);
+            });
+          }
+        }
       }
     }
-  });
+    guardFailures.push(...failures);
+    });}catch(error){reached.failedChecks++;guardFailures.push(error);}
+  }
+  t.diagnostic('wall corpus guards reached: '+JSON.stringify(reached));
   t.diagnostic('wall corpus: '+corpus.entries.length+' documents from '+corpus.inventory.length+' files; '
     +corpus.inventory.filter(f=>!f.configs).length+' non-config sources explicitly inventoried');
+  assert.equal(reached.inputs,corpus.entries.length,'every selected full input reaches its guard');
+  assert.equal(reached.readOnly,reached.inputs,'successful and refused sources both reach immutability checks');
+  assert.equal(reached.successfulMigrations+reached.declines+reached.unexpectedErrors,reached.inputs);
+  assert.equal(reached.roomIdSets,reached.storedAtomSets,'every stored-atom space also checks the complete room ID multiset');
+  assert.equal(reached.idempotence,reached.successfulMigrations,'every successful migration reaches byte idempotence');
+  assert.equal(reached.readOnlyRereads,reached.successfulMigrations,'every successful re-read reaches source immutability');
+  assert.equal(guardFailures.length,0,guardFailures.map(f=>f.message+': '+String(f.cause)).join('\n'));
+  // Outcome comparison is deliberately LAST: known unreviewed membership and
+  // semantic differences must never turn the executable invariants into dead code.
+  compare({schema:1,baseline:historical.baseline,inventory:corpus.inventory,documents},expected);
 });
 
 test('#845 corpus guard rejects catalogue reorder, renamed id and room/opening relink',()=>{

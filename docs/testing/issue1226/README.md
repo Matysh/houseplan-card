@@ -2,16 +2,16 @@
 
 The796original unsuccessful entries from audit41598951489 are individually classified:230Node,177backend,122browser launches,267golden frames. These files are evidence and an explicit remaining-work inventory, not a green stable result.
 
-- node-classification.json:209fixed,21red/pending in the latest addressed classification.
+- node-classification.json:210fixed,20retained RED in the latest addressed classification.
 - backend-classification.json:177 original cases addressed; the two remaining cases now have a successful ambiguous-host control and separate successful legacy/current cross-runtime target controls.
-- browser-all-classification.json joins root12, geometry32 and UI78 with exact original IDs:97addressed full-script successes;25retained failures;0not rerun. Every UI remainder has addressed evidence; actual failures retain their original guarantees. Status spelling is preserved from each sub-report.
+- browser-all-classification.json joins root12, geometry32 and UI78 with exact original IDs:98addressed full-script successes;24retained failures;0not rerun. Every UI remainder has addressed evidence; actual failures retain their original guarantees. Status spelling is preserved from each sub-report.
 - golden-classification.json: all9no-frame preparation errors repaired;258visual differences remain unapproved (139crop dimensions,119same-size pixels). Capture success never counts as baseline acceptance.
 
 These are per-case latest addressed proofs with their recorded source versions, not a claim that every case passed one new full profile. The resumed integration uses accepted product dev `0c030e700`; no product fix is authored by #1226. Permission/CAS guards, skips, thresholds and visual baselines were not weakened. Complete history/host/identity/privacy oracles remain. Only valid current graph fixtures, official frozen legacy decoders and actual native accessible controls replace obsolete setup assumptions.
 
 ## Blockers and further work
 
-All #1228–#1238 are now accepted in S8 and integrated from dev. Remaining confirmed and unresolved behavior is recorded in [resume-findings.md](resume-findings.md), including the current unhosted-opening edit refusal and native device Escape persistence. These are not waived by the accepted earlier fixes. Other retained cases require diagnosis, not automatic rebaselining. The title question was resolved by accepted #1207 UI-018: all full cards omit it, retaining the PDF setting; the separate static card keeps its title. The addressed full header smoke passes; see [header-title-contract.md](header-title-contract.md). Task remains S6+blocked on remaining behavior, corpus review and visual acceptance; no finish/review/S8 or release is claimed.
+All #1228–#1238 are now accepted in S8 and integrated from dev. Remaining confirmed and unresolved behavior is recorded in [resume-findings.md](resume-findings.md), including the current unhosted-opening edit refusal and native device Escape persistence. These are not waived by the accepted earlier fixes. Other retained cases require diagnosis, not automatic rebaselining. The title question was resolved by accepted #1207 UI-018: all full cards omit it, retaining the PDF setting; the separate static card keeps its title. The addressed full header smoke passes; see [header-title-contract.md](header-title-contract.md). Live task status remains S6 while the actual common audit is reconciled and readiness is assessed against AC1–AC3. Classified real/unresolved RED and unchanged, unapproved baselines do not impose an invented all-green gate. No finish/review/S8 or release has yet been claimed.
 
 The complete #845corpus passport is still red: inventory84→90files and229→479documents after accepted Stage4 and these fixture changes. Current model11 canonical catalogue ordering and newly discovered graph corpus require a separate full identity review; output/issue1226/corpus-passport-current.json is review material only. The existing passport has not been blindly replaced.
 
@@ -61,3 +61,31 @@ The downloaded primary result lives in the author's workspace at
 `output/issue1225-audit-41662157218`; it was downloaded once. No new run is
 started by documenting this result. #1226 remains S6 + blocked; neither its
 final AC3 nor a release is claimed.
+
+## Final bounded author-side ports after the shared audit pin
+
+[Two browser fixture ports](ac1-two-fixture-ports.md) complete known stale
+preparation: wall thickness now passes all36 controls using explicit current
+intents, preserved opaque fields, isolated real legacy preparation and accepted
+static graph/revision. Unified Walls reaches the actual physical-proof boundary
+and retains complete atomic rollback/history/session checks;17/18 pass, with the
+original foreign-overlap case still RED. Object insertion order alone is not
+geometry; ordered arrays and all nested fields remain strictly compared.
+
+[Node oracle ports](node-author-leftovers.md) add a complete independently derived
+#281 target from the old accepted projection and raw-source graph authority;
+that original scenario passes. #273 expected room-table order now follows the
+accepted canonical ID contract, while its original count1vs0 remains RED.
+#845 ports only expected table order; no current output/passport is accepted.
+These addressed results are supplemental to the immutable1f3 full audit, not a
+claim that its earlier SHA executed later edits.
+
+Current integrated source discovery retains **573 full inputs in91 files**:
+all229 historical inputs and344 appended current inputs. The author's572/90
+proof in its own source branch predates the separate current storage-target
+fixture; both inventories remain accurately scoped. Current passport semantics
+still require explicit mapping review, not a source-inventory typo correction.
+Original populations remain230/177/122/267. Latest addressed counts are210 Node
+fixed with20classified retained RED,177backend addressed,98full browser successes
+with24retained RED. None of those retained rows is silently labelled a proven
+product bug or converted into a successful stable outcome.
