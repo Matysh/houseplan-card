@@ -27,6 +27,25 @@ const resolve = (space, parts = annotated(space), opening = space.openings[0], s
 const solid = (parts, cuts = []) => unionBodies(physicalBodyParts({ partitions: parts, wall_columns: [] }, 5, PITCH, 1e-6, cuts).all);
 const child = (space, id) => space.plan_graph.edges.find(e => e.kind === 'partition' && e.id === id);
 
+test('reused run metadata remains carrier-local and a replacement graph cannot reuse old coordinates', () => {
+  const space = fixture(); annotated(space, 1);
+  const first = annotated(space), second = annotated(space);
+  const before = resolve(space, second).resolved;
+  assert.ok(before);
+  first[0].a[0] += 1;
+  assert.equal(graphOpeningRun(first[0]), undefined);
+  assert.deepEqual(resolve(space, second).resolved, before);
+  const graph = clone(space.plan_graph);
+  for (const node of graph.nodes) {
+    assert.equal(node.p[0], 'l');
+    node.p[1] = String(BigInt(node.p[1]) + 240n);
+  }
+  annotateGraphOpeningRuns(graph, second, 'partition', SCALE);
+  assert.ok(second.every(carrier => !graphOpeningRun(carrier)), 'old projected carriers fail closed against the replacement graph');
+  const translated = projectGraphSpace(space, graph).space;
+  assert.equal(resolve(translated).resolved.center[0], before.center[0] + SCALE);
+});
+
 test('migrated anchorchild t=1 retains a valid crossing window and its exact persisted host', () => {
   const space = fixture(), frozen = clone(space), parts = annotated(space);
   assert.equal(space.partitions.length, 2, 'zero-wall crossing really split the source carrier');

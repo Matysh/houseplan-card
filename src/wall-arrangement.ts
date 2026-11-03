@@ -8,15 +8,21 @@ export type Polygon = Point[];
 type Box = [number,number,number,number];
 export const pointKey=(p:Point):string=>p.map(q=>q.n+'/'+q.d).join(',');
 export const pointNumbers=(p:Point):number[]=>p.map(Q.toNumber);
+// Offsets reuse many identical coordinates across strips, fans and retained
+// floor versions. Share their immutable dyadics, with a fixed memory bound.
+const dyadics=new Map<number,Q.Exact>(),binaryView=new DataView(new ArrayBuffer(8));
 export function binary64(value:number):Q.Exact {
   if(!Number.isFinite(value))throw new Error('wall-arrangement:nonfinite');
   if(value===0)return Q.ZERO;
-  const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value,false);
-  const bits=view.getBigUint64(0,false),negative=bits>>63n,exponent=Number((bits>>52n)&2047n);
+  const cached=dyadics.get(value);if(cached)return cached;
+  binaryView.setFloat64(0,value,false);
+  const bits=binaryView.getBigUint64(0,false),negative=bits>>63n,exponent=Number((bits>>52n)&2047n);
   const fraction=bits&((1n<<52n)-1n),mantissa=exponent?(1n<<52n)|fraction:fraction;
   const shift=(exponent?exponent-1023:-1022)-52;
   const n=negative?-mantissa:mantissa;
-  return shift>=0?Q.exact(n<<BigInt(shift)):Q.exact(n,1n<<BigInt(-shift));
+  const result=Object.freeze(shift>=0?Q.exact(n<<BigInt(shift)):Q.exact(n,1n<<BigInt(-shift)));
+  dyadics.set(value,result);if(dyadics.size>512)dyadics.delete(dyadics.keys().next().value!);
+  return result;
 }
 export const numericPoint=(p:readonly number[]):Point=>[binary64(p[0]),binary64(p[1])];
 export function area(poly:Polygon):Q.Exact {

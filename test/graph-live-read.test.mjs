@@ -9,6 +9,7 @@ import {spaceModels} from '../test-build/space-geometry.js';
 import {wallGraphSource} from '../test-build/wall-graph-source.js';
 import {prepareSpacePhysicalGeometryInputs} from '../test-build/plan-geometry-preflight.js';
 import {wallBodiesGeometry} from '../test-build/wall-thickness.js';
+import {junctionLimitViolations} from '../test-build/junction-limits.js';
 
 test('resize and draft physical projections retain accepted graph closure and bypass legacy joins',()=>{
  const raw=directWallScenes().find(s=>s.id==='mixed-junctions');
@@ -32,5 +33,22 @@ test('resize and draft physical projections retain accepted graph closure and by
   assert.equal(geometry.status,'ok');assert.ok(geometry.multiWallNodes);
  }
  assert.equal(JSON.stringify(space.plan_graph),original);
+});
+
+test('shared Resize physical proof retains normalized clearance, including an actually undersized room',()=>{
+ const raw={id:'s',cell_cm:5,rooms:[{id:'tiny',poly:[[.1,.1],[.115,.1],[.115,.115],[.1,.115]]}]};
+ raw.rooms[0].wall_ids=['a','b','c','d'];
+ raw.wall_segments=raw.rooms[0].poly.map((a,i)=>({id:raw.rooms[0].wall_ids[i],a,b:raw.rooms[0].poly[(i+1)%4],cm:15}));
+ const space=graphViewSpace({...raw,plan_graph:migrateGraphSpace(raw,{sourceModelVersion:10}).graph});
+ const candidate=resizeLiveCandidateSpace(space,['tiny']);
+ const model=spaceModels({model_version:11,spaces:[candidate]})[0],i=prepareSpacePhysicalGeometryInputs(candidate,model);
+ const geometry=wallBodiesGeometry(model.rooms,i.walls,i.openCuts,i.roomOpenings,
+  i.wallKeyPitch,i.cellCm,i.gridPitch,i.coordScale,i.physicalBodies);
+ const config={model_version:11,spaces:[candidate]},segments=candidate.wall_segments;
+ const fresh=junctionLimitViolations(config,'s',segments);
+ const shared=junctionLimitViolations(config,'s',segments,geometry);
+ const p5=shared.find(v=>v.rule==='clearance');assert.ok(p5,'the room really violates P5');
+ assert.ok(Math.abs(p5.actual-9)<1e-8,'9 cm2, not render units squared');
+ assert.deepEqual(shared.map(v=>[v.rule,v.subject]),fresh.map(v=>[v.rule,v.subject]));
 });
 

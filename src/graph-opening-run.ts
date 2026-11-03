@@ -43,6 +43,18 @@ interface RunMetadata {
   checkCarrier: boolean;
 }
 const RUN = Symbol('houseplan.graph-opening-run');
+// Accepted graph reducers replace identity. Projecting the same graph again
+// must not rebuild and retain one run descriptor per model/carrier copy.
+const runCache = new WeakMap<PlanGraph, Map<string, ReadonlyMap<string, GraphOpeningRun>>>();
+function attachRuns(carriers: readonly Record<string, any>[], runs: ReadonlyMap<string, GraphOpeningRun>): void {
+  for (const carrier of carriers) {
+    if (Object.prototype.hasOwnProperty.call(carrier, RUN)) delete (carrier as any)[RUN];
+    const run = runs.get(carrier.id);
+    if (run) Object.defineProperty(carrier, RUN, {
+      value: { run, checkCarrier: true }, enumerable: true, configurable: true,
+    });
+  }
+}
 const canonical = (value: unknown): string => JSON.stringify(value, (_name, item) => {
   if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
   return Object.fromEntries(Object.keys(item).sort().map(name => [name, item[name]]));
@@ -83,10 +95,30 @@ export function annotateGraphOpeningRuns<T extends Record<string, any>>(
   graph: PlanGraph, carriers: readonly T[], kind: EdgeKind, coordScale = 1,
 ): void {
   if (!(coordScale > 0) || !Number.isFinite(coordScale)) throw new Error('invalid graph opening scale');
+  if (!carriers.length) return;
+  const cacheKey = kind + ':' + coordScale;
+  const cached = runCache.get(graph)?.get(cacheKey);
+  if (cached) { attachRuns(carriers, cached); return; }
+  const normalized = coordScale !== 1 && runCache.get(graph)?.get(kind + ':1');
+  if (normalized) {
+    // graphViewSpace already found exact continuity. Rendering only multiplies
+    // those same rounded source coordinates; do not solve the graph again.
+    const points = new Map<readonly [number, number], Readonly<[number, number]>>();
+    const scaled = (point: readonly [number, number]) => {
+      let result = points.get(point);
+      if (!result) { result = Object.freeze([point[0] * coordScale, point[1] * coordScale] as [number, number]); points.set(point, result); }
+      return result;
+    };
+    const runs = new Map<string, GraphOpeningRun>();
+    for (const [id, run] of normalized) runs.set(id, Object.freeze({
+      ...run, a: scaled(run.a), b: scaled(run.b), coordScale,
+      anchor: Object.freeze({ ...run.anchor, a: scaled(run.anchor.a), b: scaled(run.anchor.b) }),
+    }));
+    runCache.get(graph)!.set(cacheKey, runs); attachRuns(carriers, runs); return;
+  }
   const points = new Map(graph.nodes.map(node => [node.id, decodePoint(node.p)]));
   const graphPoints = new Map(graph.nodes.map(node => [node.id, node.p]));
   const edges = graph.edges.filter(edge => edge.kind === kind && edge.cm > 0);
-  const byId = new Map(edges.map(edge => [edge.id, edge]));
   const signatures = new Map(edges.map(edge => [edge.id, canonical(edge.props || {})]));
   const incident = new Map<string, GraphEdge[]>();
   for (const edge of edges) for (const node of [edge.from, edge.to]) {
@@ -125,31 +157,41 @@ export function annotateGraphOpeningRuns<T extends Record<string, any>>(
     const component = { members: Object.freeze(members), ends, key: JSON.stringify([kind, members]) };
     for (const id of members) components.set(id, component);
   }
-  for (const carrier of carriers) {
-    if (Object.prototype.hasOwnProperty.call(carrier, RUN)) delete (carrier as any)[RUN];
-    const edge = byId.get(carrier.id);
-    if (!edge) continue;
+  const physical = new Map<string, Readonly<[number, number]>>();
+  const exact = new Map<string, Readonly<GraphPoint>>();
+  const numberPoint = (id: string) => {
+    let point = physical.get(id);
+    if (!point) { point = Object.freeze(physicalPoint(points.get(id)!, coordScale)); physical.set(id, point); }
+    return point;
+  };
+  const exactPoint = (id: string) => {
+    let point = exact.get(id);
+    if (!point) { point = Object.freeze(graphPoints.get(id)!.slice()) as Readonly<GraphPoint>; exact.set(id, point); }
+    return point;
+  };
+  const runs = new Map<string, GraphOpeningRun>();
+  for (const edge of edges) {
     const component = components.get(edge.id)!;
     let [from, to] = component.ends;
     const direction = pointSub(points.get(edge.to)!, points.get(edge.from)!);
     if (cmp(dot(pointSub(points.get(to)!, points.get(from)!), direction), ZERO) < 0) [from, to] = [to, from];
     const run: GraphOpeningRun = Object.freeze({
       key: component.key, kind, members: component.members,
-      a: Object.freeze(physicalPoint(points.get(from)!, coordScale)),
-      b: Object.freeze(physicalPoint(points.get(to)!, coordScale)),
+      a: numberPoint(from),
+      b: numberPoint(to),
       anchor: Object.freeze({
         id: edge.id,
-        a: Object.freeze(physicalPoint(points.get(edge.from)!, coordScale)),
-        b: Object.freeze(physicalPoint(points.get(edge.to)!, coordScale)),
-        exactA: Object.freeze(graphPoints.get(edge.from)!.slice()) as Readonly<GraphPoint>,
-        exactB: Object.freeze(graphPoints.get(edge.to)!.slice()) as Readonly<GraphPoint>,
+        a: numberPoint(edge.from),
+        b: numberPoint(edge.to),
+        exactA: exactPoint(edge.from),
+        exactB: exactPoint(edge.to),
       }),
       coordScale,
     });
-    Object.defineProperty(carrier, RUN, {
-      value: { run, checkCarrier: true }, enumerable: true, configurable: true,
-    });
+    runs.set(edge.id, run);
   }
+  const cache = runCache.get(graph) || new Map(); cache.set(cacheKey, runs); runCache.set(graph, cache);
+  attachRuns(carriers, runs);
 }
 
 /** Exact host tq chooses the centre; the anchor ID/parameter are never changed. */
