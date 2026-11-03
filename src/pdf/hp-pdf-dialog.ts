@@ -36,6 +36,7 @@ export interface PdfDialogContext {
   resolveRoomArea?: (roomId: string, contour: number[][]) => number | undefined;
   t: (key: string, vars?: Record<string, string | number>) => string;
   toast: (message: string, id?: string) => void;
+  captureToast?: () => (message: string, id?: string) => void;
   close: () => void;
   save: (request: ExportRequest) => Promise<void>;
   svgSource?: () => SvgViewSource;
@@ -126,6 +127,7 @@ export class HpPdfDialog extends LitElement {
 
   private async save(): Promise<void> {
     if (this.busy || !this.options) return;
+    const showToast = this.context.captureToast?.() ?? this.context.toast;
     if (this.format === 'svg' && this.svgOptions.background === 'custom'
       && this.renderRoot.querySelector<HpColorOpacity>('hp-color-opacity')?.prepareCompletion() === false) return;
     this.busy = true;
@@ -143,7 +145,7 @@ export class HpPdfDialog extends LitElement {
       const code = error instanceof Error ? error.message : '';
       const allowed = ['pdf.too_large', 'pdf.asset_failed', 'svg.too_large', 'svg.asset_failed', 'svg.view_required', 'svg.cancelled', 'svg.not_ready'];
       const key = allowed.includes(code) ? code : this.format === 'svg' ? 'svg.failed' : 'pdf.failed';
-      this.context.toast(this.context.t(key), key);
+      showToast(this.context.t(key), key);
     } finally {
       this.busy = false;
       this.requestUpdate();

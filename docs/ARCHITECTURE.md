@@ -1107,10 +1107,14 @@ manifest-listed chunks. Build mechanics: [DEVELOPMENT.md](DEVELOPMENT.md).
    `hp-confirm` (#32): replace-not-queue, every dismissal cancels, a token
    rejects stale decisions, callers re-resolve targets after `await`. Native
    `confirm()` is not a supported surface.
-   One card-owned `ToastPresentation` moves a single notice node between the
-   root placeholder and the active `hp-dialog` footer, inside the actual modal
-   flat tree (#956). A shadow-root-scoped owner stack follows connect, ready,
-   close/reject and detach; nested component roots resolve to the same card.
+   One card-owned `ToastPresentation` keeps a single notice node on its originating
+   card or `hp-dialog` footer, inside that modal's actual flat tree (#956, #1246).
+   The shadow-root-scoped stack selects a new message's owner, never reroutes an
+   existing message to a newly active dialog. Async action paths capture their
+   toast callback before awaiting results; data/session guards remain independent.
+   Closing the original owner returns its notice to the card, not another dialog.
+   Connect/ready/close/reject and detach follow the same owner identity; nested
+   component roots resolve to the same card.
    The absolute footer notice does not change form geometry or cover actions.
    New messages announce once; rerouting retains ordinary accessible text with
    live announcements disabled. Only `_showToast` owns the replace-not-queue

@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 /** Confirmed structural commands share the existing Devices CommandStack. */
 import { html, nothing } from 'lit';
@@ -126,7 +127,8 @@ export class DeviceStructureHistory {
       canDispatch: () => host._canEdit && !host._kiosk && host._mode === 'devices',
     });
   }
-  private async recover(): Promise<void> {
+private async recover(): Promise<void> {
+    const showToast = captureToast(this.host);
     if (!this.needsResolution || !this.context || !this.current(this.context)) return;
     const claim = this.context;
     const token = this.unresolved?.request.token;
@@ -140,7 +142,7 @@ export class DeviceStructureHistory {
           this.host._devicePositionHistory.removeWhere(command => 'kind' in command.before
             && command.before.kind === 'structure' && command.before.token === token);
         const key = code === 'device_history_unavailable' ? 'history.device_restore_unavailable' : 'history.device_structure_conflict';
-        this.host._showToast(this.t(key), key);
+        showToast(this.t(key), key);
       }
     }
     finally {
@@ -167,6 +169,7 @@ export class DeviceStructureHistory {
       this.heartbeat = setTimeout(() => { this.heartbeat = null; this.prune(true); }, 5 * 60 * 1000);
   }
   async restore(direction: 'undo' | 'redo', command: NamedCommand<DeviceEditorHistoryState>): Promise<void> {
+    const showToast = captureToast(this.host);
     const h = this.host, state = command.before;
     if (!('kind' in state) || state.kind !== 'structure' || !this.available || h._devicePositionBusy) return;
     const claim = h._configWriteContext.claim(), space = h._space;
@@ -187,7 +190,7 @@ export class DeviceStructureHistory {
         if (direction === 'undo') h._devicePositionHistory.confirmUndo(command);
         else h._devicePositionHistory.confirmRedo(command);
         if (h._selId && !reply.config.markers.some(marker => marker.id === h._selId && !marker.removed)) h._selId = null;
-        h._showToast(h._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }),
+        showToast(h._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }),
           direction === 'undo' ? 'history.undone' : 'history.redone');
       });
     } catch (error) {
@@ -198,7 +201,7 @@ export class DeviceStructureHistory {
         h._devicePositionHistory.removeWhere(item => item === command);
       }
       const key = code === 'device_history_unavailable' ? 'history.device_restore_unavailable' : 'history.device_structure_conflict';
-      h._showToast(this.t(key), key);
+      showToast(this.t(key), key);
     } finally {
       if (h._configWriteContext.current(claim, h.hass)) {
         h._devicePositionBusy = this.needsResolution;

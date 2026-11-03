@@ -40,7 +40,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import { dialogPresence } from './dialog-presence';
 import type { HpDialog } from './hp-dialog';
-import {ToastPresentation} from './toast-presentation';
+import {ToastPresentation, type ToastContext, type ToastCallback} from './toast-presentation';
 import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import './hp-confirm';
 import {
@@ -746,7 +746,7 @@ export class HouseplanCard extends LitElement {
       // A terminal fingerprint failure asks for the same page reload as the
       // eager version notice. Keep network/non-terminal retry advice intact.
       if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
-        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
+        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info), 'message', { owner: null });
       }
     },
   });
@@ -777,7 +777,7 @@ export class HouseplanCard extends LitElement {
     failed: (error, info) => {
       console.error('[houseplan] unable to load onboarding runtime', error);
       if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
-        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
+        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info), 'message', { owner: null });
       }
     },
   });
@@ -848,7 +848,7 @@ export class HouseplanCard extends LitElement {
         const common = lazyLoadFailureMessage((key) => this._t(key), info);
         const generic = this._t('editor.load_failed');
         const advice = common.startsWith(generic) ? common.slice(generic.length).trim() : common;
-        this._showToast(`${this._t('pdf.failed')} ${advice}`.trim());
+        this._showToast(`${this._t('pdf.failed')} ${advice}`.trim(), 'message', { owner: null });
       }
     },
   });
@@ -3173,8 +3173,8 @@ export class HouseplanCard extends LitElement {
     // the console warning from the shared LanguageRuntime.
     this._languageFailureUnsub?.();
     this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {
-      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed');
-    }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed'))); // #474
+      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed', { owner: null });
+    }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed', { owner: null }))); // #474
     super.connectedCallback();
     this._toastPresentation.connect(this.renderRoot as ShadowRoot);
     for (const type of ['pointerdown', 'pointermove', 'click', 'wheel', 'keydown']) this.addEventListener(
@@ -5643,7 +5643,7 @@ export class HouseplanCard extends LitElement {
     localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
   }
 
-  private _persistLayout = debounce(() => {
+  private _persistLayout = this._debounceToast((showToast) => {
     if (this._serverStorage) {
       const isCurrent = this._layoutIO.guard();
       if (!isCurrent() || !this._loadOk) return;
@@ -5656,7 +5656,7 @@ export class HouseplanCard extends LitElement {
         this._layout = { ...this._layout, [id]: pos };
         // Labels and markers share the exact point-write ACK/retirement owner.
         void this._persistDevicePlacement(id, pos)
-          .catch((e: unknown) => { if (isCurrent()) this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) }), 'toast.pos_save_failed'); });
+          .catch((e: unknown) => { if (isCurrent()) showToast(this._t('toast.pos_save_failed', { err: this._errText(e) }), 'toast.pos_save_failed'); });
       }
       this._cacheSnapshot();
     } else {
@@ -5840,7 +5840,8 @@ export class HouseplanCard extends LitElement {
    * stale saved point win between registry paint and server acknowledgement.
    * Layout deletion is deliberately completed before provenance advances.
    */
-  private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
+private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
+    const showToast = this._captureToast();
     // A continuity-cache frame is renderable before the authoritative config
     // and layout pair has finished loading. Never let that stale frame drive a
     // destructive lifecycle write: the cached Area snapshot can disagree with
@@ -5878,7 +5879,7 @@ export class HouseplanCard extends LitElement {
         } catch (error: unknown) {
           deleteFailed = true;
           this._layout = applyDevicePlacement(this._layout, decision.id, before);
-          this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
+          showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
         }
       }
 
@@ -5899,7 +5900,7 @@ export class HouseplanCard extends LitElement {
           settings: () => this._settings,
           stage: (settings) => this._setAreaLifecycleConfig({ ...this._serverCfg!, settings }),
           refreshFingerprint: () => this._adoption.refreshConfigFingerprint(),
-          write: () => this._writeConfig(),
+          write: () => this._writeConfig(null, showToast),
           deferred: this._saveConfigDebounced,
         }, st, nextSnapshot, attentionChanged ? nextAttention : undefined);
         if (failure) {
@@ -5916,7 +5917,7 @@ export class HouseplanCard extends LitElement {
               await this._persistDevicePlacement(id, placement);
             } catch (restoreError: unknown) {
               restoreFailed.add(id);
-              this._showToast(this._t('toast.pos_save_failed', {
+              showToast(this._t('toast.pos_save_failed', {
                 err: this._errText(restoreError),
               }), 'toast.pos_save_failed');
             }
@@ -5926,10 +5927,10 @@ export class HouseplanCard extends LitElement {
           const code = error && typeof error === 'object' && 'code' in error
             ? (error as { code?: unknown }).code : undefined;
           if (code === 'conflict') {
-            this._showToast(this._t('toast.conflict'), 'toast.conflict');
+            showToast(this._t('toast.conflict'), 'toast.conflict');
             await this._reloadConfigOnly(true);
           } else if (!isGeometryCleanupRefusal(error)) {
-            this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }), 'toast.cfg_save_failed');
+            showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }), 'toast.cfg_save_failed');
           }
           if (restoreFailed.size && this._serverCfg) {
             const attentionSettings = this._settings;
@@ -5944,9 +5945,9 @@ export class HouseplanCard extends LitElement {
             };
             this._setAreaLifecycleConfig(attentionConfig);
             try {
-              await this._writeConfig();
+              await this._writeConfig(null, showToast);
             } catch (attentionError: unknown) {
-              this._showToast(this._t('toast.cfg_save_failed', {
+              showToast(this._t('toast.cfg_save_failed', {
                 err: this._errText(attentionError),
               }), 'toast.cfg_save_failed');
             }
@@ -6175,7 +6176,8 @@ export class HouseplanCard extends LitElement {
     return properties ? properties.command(() => this._applyDevicePositionHistory(direction)) : this._applyDevicePositionHistory(direction);
   }
 
-  private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+private async _applyDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+    const showToast = this._captureToast();
     if (this._cancelDeviceDrag() || this._devicePositionBusy) return;
     const isCurrent = this._layoutIO.guard();
     const ownsPending = this._layoutIO.guard(true);
@@ -6196,7 +6198,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._devicePositionStateValid(target) || target.related?.some(s=>!this._devicePositionStateValid(s))) {
       this._devicePositionHistory.clear();
-      this._showToast(this._t('history.device_stale'), 'history.device_stale');
+      showToast(this._t('history.device_stale'), 'history.device_stale');
       this.requestUpdate();
       return;
     }
@@ -6204,7 +6206,7 @@ export class HouseplanCard extends LitElement {
     const from = direction === 'undo' ? command.after : command.before;
     if ('kind' in from || !devicePositionHistoryMatches(this._layout, from)) {
       this._devicePositionHistory.removeWhere(item => item === command);
-      this._showToast(this._t('history.device_stale'), 'history.device_stale');
+      showToast(this._t('history.device_stale'), 'history.device_stale');
       this.requestUpdate();
       return;
     }
@@ -6221,7 +6223,7 @@ export class HouseplanCard extends LitElement {
     try {
       await this._persistDevicePlacement(target.deviceId, target.placement,target.related);
       if (!isCurrent()) return;
-      this._showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
+      showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
         name: command.name,
       }), direction === 'undo' ? 'history.undone' : 'history.redone');
     } catch (error: unknown) {
@@ -6230,7 +6232,7 @@ export class HouseplanCard extends LitElement {
       for(const s of relatedRollback??[])this._previewDevicePlacement(s.deviceId,s.placement);
       if (direction === 'undo') this._devicePositionHistory.redo();
       else this._devicePositionHistory.undo();
-      this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
+      showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
     } finally {
       if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
     }
@@ -6477,7 +6479,8 @@ export class HouseplanCard extends LitElement {
     this._viewRuntimes.openDeviceMenu({ current, target: ev.currentTarget as Element | null, x: ev.clientX, y: ev.clientY });
   }
 
-  private _clickDevice(ev: Event, d: DevItem): void {
+private _clickDevice(ev: Event, d: DevItem): void {
+    const showToast = this._captureToast();
     // Devices are passive landmarks in Plan/Background. Guard before stopping
     // propagation so a Background tool still owns the same canvas point even
     // if a future CSS change accidentally makes a marker a hit target again.
@@ -6505,7 +6508,7 @@ export class HouseplanCard extends LitElement {
         { spaceId: actionSpace, id: actionDevice.id });
       if (current && !current.hidden) return current;
       this._tapConfirm = null; this._closeInfoCard();
-      this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
+      showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
       return null;
     };
     const action = projectedTapAction(
@@ -6544,7 +6547,7 @@ export class HouseplanCard extends LitElement {
             this._capturedSnapshotVirtual = '';
             this._cacheSnapshot();
             this.requestUpdate();
-          }).catch((e: any) => this._showToast(this._t(
+          }).catch((e: any) => showToast(this._t(
             'toast.virtual_light_toggle_failed', { err: this._errText(e) },
           ), 'toast.virtual_light_toggle_failed'));
           return;
@@ -6552,7 +6555,7 @@ export class HouseplanCard extends LitElement {
         const { command } = operation;
         this._startDevicePressFeedback(actionDevice.id);
         this.hass.callService(command.domain, command.service, command.data)
-          .catch((e: unknown) => this._showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
+          .catch((e: unknown) => showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
       };
       const name = toggleIntentName(initial) || actionDevice.name;
       if (actionDevice.marker?.tap_confirm) {
@@ -6571,7 +6574,7 @@ export class HouseplanCard extends LitElement {
             if (current && !toggleOperation(current)
                 && this._showUnavailableToggleTargets(current)) return;
             if (!current || !sameToggleOperationTargets(initial, current)) {
-              this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
+              showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed');
               return;
             }
             execute(current); // current state decides the current direction
@@ -6597,7 +6600,7 @@ export class HouseplanCard extends LitElement {
       const svc = runServiceFor(target);
       const st = this.hass.states[target];
       if (!svc || !st) {
-        this._showToast(this._t('toast.run_target_missing'), 'toast.run_target_missing');
+        showToast(this._t('toast.run_target_missing'), 'toast.run_target_missing');
         return;
       }
       const name = st.attributes?.friendly_name || target;
@@ -6606,7 +6609,7 @@ export class HouseplanCard extends LitElement {
         if (!current) return;
         if (current.marker?.tap_target !== target) {
           this._tapConfirm = null; this._closeInfoCard();
-          this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
+          showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
         }
         if (!this._deviceBindingActive(current) || !this._planEntityAvailable(target)) return;
         this._startDevicePressFeedback(actionDevice.id);
@@ -6617,9 +6620,9 @@ export class HouseplanCard extends LitElement {
               actionDevice.id, 'event', this._activitySourceKey(actionDevice),
             );
             this.requestUpdate();
-            this._showToast(this._t('toast.run_started', { name }), 'toast.run_started');
+            showToast(this._t('toast.run_started', { name }), 'toast.run_started');
           })
-          .catch((e: unknown) => this._showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
+          .catch((e: unknown) => showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
       });
       return;
     }
@@ -8005,7 +8008,8 @@ export class HouseplanCard extends LitElement {
     if (contact && drag.spacing) drag.spacing.hint = drag.spacing.hint.filter((t) => Math.hypot(t.x - contact.x, t.y - contact.y) <= 2e-6);
     this._previewDevicePlacement(d.id, contact ? this._devicePlacementForCanvas(d, contact.x, contact.y, true) : fallback);
   }
-  private _pointerUp(ev: PointerEvent, d: DevItem): void {
+private _pointerUp(ev: PointerEvent, d: DevItem): void {
+    const showToast = this._captureToast();
     d = this._deviceForPointerEvent(ev, d);
     this._deviceHits.release(ev.pointerId);
     this._viewHold.cancel(ev.pointerId);
@@ -8052,7 +8056,7 @@ export class HouseplanCard extends LitElement {
       } catch (error: unknown) {
         if (!isCurrent()) return;
         for(const s of [movement.before,...movement.before.related??[]])this._previewDevicePlacement(s.deviceId,s.placement);
-        this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
+        showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }), 'toast.pos_save_failed');
       } finally {
         if (ownsPending()) { this._devicePositionBusy = false; this.requestUpdate(); }
       }
@@ -8066,15 +8070,27 @@ export class HouseplanCard extends LitElement {
     this._cancelDeviceDrag();
   }
 
-  private _showToast(msg: string, id = 'message'): void {
+  public _captureToast(): ToastCallback {
+    const context = this._toastPresentation.captureContext();
+    return (message, id) => this._showToast(message, id, context);
+  }
+
+  /** A deferred write belongs to its scheduling action, not the later flush. */
+  private _debounceToast(work: (showToast: ToastCallback) => void, ms: number): Debounced<() => void> {
+    const pending = debounce(work, ms);
+    return Object.assign(() => pending(this._captureToast()), {
+      flush: () => pending.flush(), cancel: () => pending.cancel(), pending: () => pending.pending(),
+    });
+  }
+
+  private _showToast(msg: string, id = 'message', context?: ToastContext): void {
     if (!this.isConnected) return;
+    context ??= this._toastPresentation.captureContext();
     // A toast supersedes transient explanatory surfaces in this card only.
     // Dialogs own their portal/overlay registry, so another card stays intact.
-    for (const dialog of this.renderRoot.querySelectorAll<HpDialog>('hp-dialog')) {
-      dialog.closeTransientOverlays('toast');
-    }
+    (context.owner?.host as HpDialog | undefined)?.closeTransientOverlays('toast');
     this._toast = msg;
-    this._toastPresentation.show(this._toast, id);
+    this._toastPresentation.show(this._toast, id, 'message', context);
     clearTimeout(this._toastTimer);
     this._toastTimer = window.setTimeout(() => {
       this._toast = '';
@@ -8621,8 +8637,8 @@ export class HouseplanCard extends LitElement {
     return () => pendingOnly ? this._configWriteContext.owns(claim) : this._configWriteContext.current(claim, this.hass);
   }
 
-  private _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
-    if (this._editorRuntime) return this._editorRuntime._writeConfig(attempt);
+  private _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, showToast = this._captureToast()): Promise<void> {
+    if (this._editorRuntime) return this._editorRuntime._writeConfig(attempt, undefined, undefined, showToast);
     // Registry discovery may update shared metadata while the card is still
     // display-only. Persist that small View-owned mutation without pulling in
     // the editor runtime; strict physical-write validation is impossible here
@@ -8761,22 +8777,22 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._redoGeometry();
   }
 
-  private _saveConfigDebounced = debounce(() => {
+  private _saveConfigDebounced = this._debounceToast((showToast) => {
     if (!this._serverCfg) return;
-    this._writeConfig().catch((e: any) => {
+    this._writeConfig(null, showToast).catch((e: any) => {
       const physicalRollback = e?.physicalGeometryRolledBack === true;
       if (e?.code === 'geometry-unsafe' || isGeometryCleanupRefusal(e)) {
         return; // already answered: the unsafe-geometry toast, or the #842 K3 question
       } else if (e?.code === 'wall_model_client_outdated') {
-        this._showToast(this._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
+        showToast(this._t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
       } else if (e?.code === 'conflict') {
         // a real one now: another window wrote between our read and our write
-        this._showToast(this._t('toast.conflict'), 'toast.conflict');
+        showToast(this._t('toast.conflict'), 'toast.conflict');
         if (!physicalRollback) {
           recoverConfigWriteConflict(this._editorRuntime, () => this._reloadConfigOnly(true));
         }
       } else {
-        this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }), 'toast.cfg_save_failed');
+        showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }), 'toast.cfg_save_failed');
       }
       if (physicalRollback) void this._reloadRejectedPhysicalWrite();
     });
@@ -11032,6 +11048,7 @@ export class HouseplanCard extends LitElement {
       },
       t: (key, vars) => this._t(key as I18nKey, vars),
       toast: (message, id) => this._showToast(message, id),
+      captureToast: () => this._captureToast(),
       close: () => { this._pdfDialog = false; this.requestUpdate(); },
     });
   }
@@ -13701,7 +13718,8 @@ export class HouseplanCard extends LitElement {
   }
 
   /** The same safe action authority as a marker, with only the selected row as target. */
-  private _cardToggle(eid: string): void {
+private _cardToggle(eid: string): void {
+    const showToast = this._captureToast();
     if (this._mode !== 'view' || !this._infoCard) return;
     const context = { spaceId: this._space, id: this._infoCard.id };
     const device = currentMarkerActionDevice(this._devices, this._space, context);
@@ -13715,13 +13733,13 @@ export class HouseplanCard extends LitElement {
       if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.hass)
           || !current || this._infoCard?.id !== context.id
           || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {
-        this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
+        showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
       }
       const intent = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
       if (!intent.command || !sameToggleOperationTargets(initial, intent)) return;
       this._startDevicePressFeedback(current.id);
       this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)
-        .catch((error: unknown) => this._showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'));
+        .catch((error: unknown) => showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'));
     };
     if (infoCardTapConfirmationRequired(device)) {
       this._tapConfirm = {

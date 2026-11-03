@@ -1,3 +1,4 @@
+import { captureToast } from '../toast-presentation';
 /** #819: one post-confirmation deletion path for editor and onboarding. */
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { collectSpaceMarkerDependencies, type SpaceDeletionDependencyReport } from '../space-deletion';
@@ -10,6 +11,7 @@ export async function completeSpaceDeletion(
   dependencies: SpaceDeletionDependencyReport,
   removeMarkers = false,
 ): Promise<void> {
+    const showToast = captureToast(host);
   const currentDialog = host._spaceDialog;
   const currentConfig = host._serverCfg;
   if (!currentDialog || currentDialog.mode !== 'edit'
@@ -58,7 +60,7 @@ export async function completeSpaceDeletion(
     if (host._space === spaceId) host._commitSpace(host._serverCfg!.spaces[0]?.id || '');
     host._regSignature = '';
     host._maybeRebuildDevices();
-    host._showToast(host._t('toast.space_deleted'), 'toast.space_deleted');
+    showToast(host._t('toast.space_deleted'), 'toast.space_deleted');
   } catch (error: unknown) {
     const failure = error as { code?: string };
     if (failure?.code === 'conflict' || failure?.code === 'space_in_use') {
@@ -74,6 +76,6 @@ export async function completeSpaceDeletion(
       };
       if (!stillLastSpace && refreshed.count) void revealSpaceDeleteBlocker(host);
     }
-    host._showToast(host._t('toast.delete_failed', { err: host._errText(error) }), 'toast.delete_failed');
+    showToast(host._t('toast.delete_failed', { err: host._errText(error) }), 'toast.delete_failed');
   }
 }

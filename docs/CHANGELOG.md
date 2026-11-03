@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep toasts with their originating card/dialog action, including late async results; opening another dialog no longer inherits old messages, while its own errors remain visible in the HA modal. [#1246](https://github.com/Matysh/houseplan-card/issues/1246)
+
 - Keep issue timelines focused on substantive verdicts and handoffs without routine queue or waiting notices. Publish corrections with resubmission and include the complete accepted code review in the merge result, preserving history, detail and actionable failures. [#1241](https://github.com/Matysh/houseplan-card/issues/1241)
 - Use one localized Weather heading when weather is the summary panel's only visible content, preserving its saved custom title. [#1243](https://github.com/Matysh/houseplan-card/issues/1243)
 

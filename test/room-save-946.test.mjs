@@ -21,6 +21,20 @@ function fixture(settings = {}) {
   return {host,runtime,original:structuredClone(config),payload:()=>payload};
 }
 
+test('#1246 late failed Save uses the originating dialog callback, not a nested or replacement surface',async()=>{
+  const {host,runtime}=fixture();rememberRoomBaseline(host);
+  let active='room',reject;
+  const results=[];
+  host._captureToast=()=>{const origin=active;return (text,id)=>results.push({origin,text,id});};
+  host._showToast=()=>assert.fail('late Save must not resolve its owner at completion');
+  host._rollbackOptimistic=()=>false;
+  runtime._saveConfigNow=()=>new Promise((_,fail)=>{reject=fail;});
+  const pending=saveRoomEdit(runtime);
+  active='nested-confirm';reject(new Error('same failure'));await pending;
+  assert.deepEqual(results,[{origin:'room',text:'toast.error',id:'toast.error'}]);
+  assert.equal(host._roomDialog,true);
+});
+
 test('#1093 deferred ACK never closes a room early or retires a replacement owner', async()=>{
   for(const scenario of ['accepted','replacement','context','refused']){
     const f=fixture();rememberRoomBaseline(f.host);

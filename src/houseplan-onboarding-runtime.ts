@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import { html, nothing, type TemplateResult } from 'lit';
 import { renderFloorImportDialog } from './floor-import-dialog';
 import { renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick';
@@ -127,7 +128,8 @@ export class HouseplanOnboardingRuntime {
     return 0;
   }
 
-  public async _deleteServerPlan(name: string): Promise<void> {
+public async _deleteServerPlan(name: string): Promise<void> {
+    const showToast = captureToast(this.host);
     const dialog = this.host._spaceDialog;
     const plan = dialog?.saved?.find((candidate) => candidate.name === name);
     if (!dialog || !plan || plan.used_by.length || plan.url === dialog.planUrl) return;
@@ -152,7 +154,7 @@ export class HouseplanOnboardingRuntime {
         ...dialog, saved: dialog.saved.filter((plan) => plan.name !== name),
       };
     } catch (error: unknown) {
-      this.host._showToast(this.host._t('toast.plan_delete_failed', {
+      showToast(this.host._t('toast.plan_delete_failed', {
         err: this.host._errText(error),
       }), 'toast.plan_delete_failed');
     }
@@ -201,12 +203,13 @@ export class HouseplanOnboardingRuntime {
     }
   }
 
-  public async _saveSpaceDialog(): Promise<void> {
+public async _saveSpaceDialog(): Promise<void> {
+    const showToast = captureToast(this.host);
     const dialog = this.host._spaceDialog;
     if (!dialog || dialog.busy || !dialog.title.trim()) return;
     if (spaceDialogProblems(dialog, 'space-onboard', this.host._imperial).length) return;
     if (dialog.source === 'file' && !dialog.planFile && !dialog.planUrl) {
-      this.host._showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
+      showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
       return;
     }
     const wasFirst = dialog.mode === 'create' && (this.host._serverCfg?.spaces.length || 0) === 0;
@@ -275,11 +278,11 @@ export class HouseplanOnboardingRuntime {
         this.host._path = [];
         this.host._cursorPt = null;
         this.host._primeDrawWallField();
-        this.host._showToast(this.host._t(wasFirst && !wasImport
+        showToast(this.host._t(wasFirst && !wasImport
           ? 'toast.space_added_onboard' : 'import.done'), wasFirst && !wasImport
           ? 'toast.space_added_onboard' : 'import.done');
       } else {
-        this.host._showToast(this.host._t(dialog.mode === 'create'
+        showToast(this.host._t(dialog.mode === 'create'
           ? 'toast.space_added' : 'toast.space_saved'), dialog.mode === 'create'
           ? 'toast.space_added' : 'toast.space_saved');
         if (dialog.mode === 'create') {
@@ -299,7 +302,7 @@ export class HouseplanOnboardingRuntime {
       if (this.host._spaceDialog) this.host._spaceDialog = {
         ...this.host._spaceDialog, busy: false,
       };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
+      showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
     }
   }
 
@@ -326,14 +329,15 @@ export class HouseplanOnboardingRuntime {
     loadSpacePlanList(this.host);
   }
 
-  public _skipImport(): void {
+public _skipImport(): void {
+    const showToast = captureToast(this.host);
     this.host._spaceDialog = null;
     if (this.host._importQueue.length) this._openNextImport();
     else if (this.host._importTotal > 0 && this.host._model.length) {
       this.host._importTotal = 0;
       this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || this.host._space);
       void this.host._requestMode('plan').then(() => {
-        this.host._showToast(this.host._t('import.done'), 'import.done');
+        showToast(this.host._t('import.done'), 'import.done');
       });
     }
   }

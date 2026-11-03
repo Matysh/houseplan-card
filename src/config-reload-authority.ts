@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import { presentationRouteOwner } from './route-kiosk';
 /**
  * Ownership for overlapping authoritative config reads (#543).
@@ -234,6 +235,7 @@ export async function reloadConfigOnly(
   observedRev?: number,
   afterApplied?: () => void,
 ): Promise<void> {
+    const showToast = captureToast(host);
   let reservation: ConfigReloadEventReservation | null = null;
   const owner = host._configReloadAuthority;
   if (!force) {
@@ -275,7 +277,7 @@ export async function reloadConfigOnly(
   } catch (error: unknown) {
     if (!isCurrent()) return;
     settleCurrentAttempt = true;
-    host._showToast(host._t('toast.cfg_reload_failed', { err: host._errText(error) }), 'toast.cfg_reload_failed');
+    showToast(host._t('toast.cfg_reload_failed', { err: host._errText(error) }), 'toast.cfg_reload_failed');
   } finally {
     // Adoption changes its own baseline, so remember the owned outcome rather
     // than re-evaluating the pre-adoption fingerprint after success.

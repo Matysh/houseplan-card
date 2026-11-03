@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 /** #930: one candidate and post-commit cleanup for single and catalog Delete. */
 import { deletePlanMarkerRecords, removeMarkerControlReferences } from './devices';
@@ -134,6 +135,7 @@ const targetForId = (runtime: HouseplanEditorRuntime, id: string): MarkerDeletio
 
 /** Panel Delete enters the same durable cleanup command without a fabricated dialog draft. */
 export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: string, binding: string, candidateCurrent?: () => boolean): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   if (host._devicePositionBusy) return;
   const claim = host._configWriteContext.claim();
@@ -149,13 +151,14 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
   if (!accepted || !current()) return;
   try {
     await commitDeletion(runtime, [{ id, binding }], candidateCurrent);
-    if (host._configWriteContext.current(claim, host.hass)) host._showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
+    if (host._configWriteContext.current(claim, host.hass)) showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
   } catch (error) {
-    if (current() && !runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (current() && !runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }
 
 export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const dialog = host._markerDialog;
   if (!dialog?.devId || dialog.busy || host._devicePositionBusy || !host._canEdit || host._kiosk) return;
@@ -185,11 +188,11 @@ export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<voi
     await commitDeletion(runtime, [target], undefined, closeAcceptedForm);
     if (!current()) return;
     closeAcceptedForm();
-    host._showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
+    showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
   } catch (error) {
     if (!current()) return;
     if (host._markerDialog === pending) host._markerDialog = { ...pending, busy: false };
-    if (!runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (!runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }
 
@@ -201,6 +204,7 @@ export const inboxDeletionSignature = (rows: readonly DeviceInboxRow[]): string 
 export async function deleteInboxSelection(
   runtime: HouseplanEditorRuntime, selectedRows: () => DeviceInboxRow[], scope: string,
 ): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const dialog = host._deviceInbox;
   if (!dialog || dialog.busy || host._devicePositionBusy || !host._canEdit || host._kiosk) return;
@@ -223,16 +227,16 @@ export async function deleteInboxSelection(
   if (!host._canEdit || host._kiosk || navigation !== runtime.navigationIntent
       || signature !== inboxDeletionSignature(selectedRows())) {
     host._deviceInbox = { ...pending, busy: undefined, selected: [] };
-    host._showToast(inboxT(host, 'device_inbox.selection_changed'), 'device_inbox.selection_changed'); return;
+    showToast(inboxT(host, 'device_inbox.selection_changed'), 'device_inbox.selection_changed'); return;
   }
   try {
     await commitDeletion(runtime, rows.map((row) => ({ id: (row.deviceId || row.markerId)!, binding: row.binding })));
     if (!current()) return;
     if (host._deviceInbox === pending) host._deviceInbox = { ...pending, busy: undefined, selected: [] };
-    host._showToast(inboxT(host, 'device_inbox.batch_deleted', { count: rows.length }), 'device_inbox.batch_deleted');
+    showToast(inboxT(host, 'device_inbox.batch_deleted', { count: rows.length }), 'device_inbox.batch_deleted');
   } catch (error) {
     if (!current()) return;
     if (host._deviceInbox === pending) host._deviceInbox = { ...pending, busy: undefined };
-    if (!runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (!runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }

@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /** Atomic persistence and retry state for vacuum calibration (#442). */
 import type { I18nKey } from './i18n';
 import type { DevItem, Marker, ServerConfig } from './types';
@@ -80,6 +81,7 @@ export async function saveVacuumMatrix(
   matrix: Affine,
   routeId = '',
 ): Promise<boolean> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const previous = host._serverCfg;
   if (!previous) return false;
@@ -113,7 +115,7 @@ export async function saveVacuumMatrix(
   } catch (error) {
     restoreDeferred(host._rollbackOptimistic(attempt));
     rebuild(host);
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
+    if (!isGeometryCleanupRefusal(error)) showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }), 'toast.cfg_save_failed');
     return false;
   }
 }
@@ -123,6 +125,7 @@ export async function saveAutomaticCalibration(
   runtime: VacuumCalibrationWriteRuntime,
   request: Omit<CalibrationProposal, 'error' | 'busy'>,
 ): Promise<void> {
+    const showToast = captureToast(runtime.host);
   if (automaticWrites.has(runtime)) return;
   automaticWrites.add(runtime);
   const host = runtime.host;
@@ -136,7 +139,7 @@ export async function saveAutomaticCalibration(
     const saved = await saveVacuumMatrix(
       runtime, request.markerId, request.source, request.mapId, request.matrix, request.routeId,
     );
-    if (saved) host._showToast(host._t('vac.autocal_done', { rooms: String(request.rooms) }), 'vac.autocal_done');
+    if (saved) showToast(host._t('vac.autocal_done', { rooms: String(request.rooms) }), 'vac.autocal_done');
   } finally {
     automaticWrites.delete(runtime);
     if (busyDialog && host._markerDialog === busyDialog) {
@@ -151,6 +154,7 @@ export async function applyCalibrationProposal(
   runtime: VacuumCalibrationWriteRuntime,
   manual: boolean,
 ): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const proposal = host._vacCalConfirm;
   if (!proposal || proposal.busy) return;
@@ -182,7 +186,7 @@ export async function applyCalibrationProposal(
     host._vacCalConfirm = saved ? null : { ...proposal, busy: false };
     host.requestUpdate();
   }
-  if (saved) host._showToast(host._t('vac.autocal_done', { rooms: String(proposal.rooms) }), 'vac.autocal_done');
+  if (saved) showToast(host._t('vac.autocal_done', { rooms: String(proposal.rooms) }), 'vac.autocal_done');
 }
 
 /** Save manual-fit parameters, retaining the exact overlay draft on rejection. */
@@ -190,6 +194,7 @@ export async function saveManualCalibration(
   runtime: VacuumCalibrationWriteRuntime,
   matrixOf: (params: FitParams) => Affine,
 ): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   const fit = host._vacFit;
   if (!fit || fit.busy) return;
@@ -203,5 +208,5 @@ export async function saveManualCalibration(
     host._vacFit = saved ? null : { ...fit, busy: false, drag: null };
     host.requestUpdate();
   }
-  if (saved) host._showToast(host._t('vac.cal_done'), 'vac.cal_done');
+  if (saved) showToast(host._t('vac.cal_done'), 'vac.cal_done');
 }

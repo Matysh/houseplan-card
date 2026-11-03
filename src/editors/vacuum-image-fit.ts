@@ -1,3 +1,4 @@
+import { captureToast } from '../toast-presentation';
 /** The image read owns the editor context; only the existing config writer saves. */
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import type { DevItem } from '../types';
@@ -22,6 +23,7 @@ function sameSource(runtime: HouseplanEditorRuntime, marker: string, source: str
 export async function loadVacuumImageFit(
   runtime: HouseplanEditorRuntime, device: DevItem, source: string, mapId: string,
 ): Promise<VacuumMapPreview | null> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host, dialog = host._markerDialog, hass = host.hass;
   if (!dialog || dialog.busy) return null;
   const marker = markerIdentity(runtime, device.id);
@@ -33,15 +35,15 @@ export async function loadVacuumImageFit(
     if (host._markerDialog !== dialog) return null;
     if (host.hass?.connection !== hass.connection || host.hass?.user?.id !== hass.user?.id
       || !sameSource(runtime, device.id, source, mapId) || markerIdentity(runtime, device.id) !== marker) {
-      host._showToast(host._t('vac.ecovacs_map_changed'), 'vac.ecovacs_map_changed');
+      showToast(host._t('vac.ecovacs_map_changed'), 'vac.ecovacs_map_changed');
       return null;
     }
     const preview = vacuumMapPreview(value, source, mapId);
-    if (!preview) host._showToast(host._t('vac.ecovacs_preview_error'), 'vac.ecovacs_preview_error');
+    if (!preview) showToast(host._t('vac.ecovacs_preview_error'), 'vac.ecovacs_preview_error');
     else owners.set(preview, { connection: hass.connection, user: hass.user?.id, marker });
     return preview;
   } catch {
-    if (host._markerDialog === dialog) host._showToast(host._t('vac.ecovacs_preview_error'), 'vac.ecovacs_preview_error');
+    if (host._markerDialog === dialog) showToast(host._t('vac.ecovacs_preview_error'), 'vac.ecovacs_preview_error');
     return null;
   } finally {
     if (host._markerDialog === dialog) {

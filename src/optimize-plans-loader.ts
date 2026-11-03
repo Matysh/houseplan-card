@@ -50,11 +50,12 @@ export class LazyOptimizePlansDialog {
   }
 
   private async withDialog(action: (dialog: OptimizePlansDialog) => unknown): Promise<void> {
+    const showToast = this.port.captureToast?.() ?? ((message: string, id?: string) => this.port.showToast(message, id));
     let dialog: OptimizePlansDialog;
     try {
       dialog = await this.load();
     } catch {
-      this.port.showToast(`${this.port.t('editor.load_failed')} ${this.port.t('editor.retry_advice')}`);
+      showToast(`${this.port.t('editor.load_failed')} ${this.port.t('editor.retry_advice')}`);
       return;
     }
     await action(dialog);

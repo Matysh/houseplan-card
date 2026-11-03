@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {ToastPresentation,setToastOwner,toastRootOf,visibleToastBounds} from '../test-build/toast-presentation.js';
+import {ToastPresentation,setToastOwner,toastRootOf,visibleToastBounds,captureToast} from '../test-build/toast-presentation.js';
 
 // Small DOM adapter, not a second implementation of owner/announcement policy.
 class NodeStub {
@@ -39,18 +39,38 @@ test('#1207 hint identity is stable; hints never supersede a message and leave o
  assert.equal(root.portal.children.length,0);p.disconnect();
 });
 
-test('new text announces once; renders and owner changes preserve one non-live visible node',()=>{
+test('#1246 card messages never enter a new owner, irrespective of identity or text',()=>{
  const {root,p}=setup(),a=owner(root),b=owner(root);p.show('first','toast.saved');flush();
  const n=root.portal.children[0];assert.equal(n.textContent,'first');assert.equal(n.attributes.get('role'),'alert');
  p.refresh();assert.equal(root.portal.children[0],n);
  assert.equal(n.dataset.id,'toast.saved');
- setToastOwner(root,a,true);assert.equal(a.portal().children[0],n);assert.equal(root.portal.children.length,0);
- assert.equal(n.attributes.get('aria-live'),'off');assert.equal(n.attributes.has('role'),false);
- setToastOwner(root,b,true);assert.equal(b.portal().children[0],n);assert.equal(a.portal().children.length,0);
- setToastOwner(root,b,false);assert.equal(a.portal().children[0],n);assert.equal(n.textContent,'first');
+ setToastOwner(root,a,true);assert.equal(root.portal.children[0],n);assert.equal(a.portal().children.length,0);
+ assert.equal(n.attributes.get('aria-live'),'assertive');assert.equal(n.attributes.get('role'),'alert');
+ setToastOwner(root,b,true);assert.equal(root.portal.children[0],n);assert.equal(b.portal().children.length,0);
+ setToastOwner(root,b,false);assert.equal(root.portal.children[0],n);assert.equal(n.textContent,'first');
  assert.equal(n.dataset.id,'toast.saved','moving the notice preserves its message identity');
  p.show('first');assert.equal(n.textContent,'');flush();assert.equal(n.textContent,'first');assert.equal(n.attributes.get('role'),'alert');
+ assert.equal(a.portal().children[0],n,'a genuinely new message belongs to its current surface');
  assert.equal(n.dataset.id,'message','unkeyed replacement must not retain the previous key');
+ p.disconnect();
+});
+test('#1246 nested, replacement and retiring owners never acquire another action\'s notice',()=>{
+ const {root,p}=setup(),a=owner(root),b=owner(root);setToastOwner(root,a,true);
+ p.show('failed','toast.error');flush();const n=a.portal().children[0];
+ setToastOwner(root,b,true);p.refresh();assert.equal(a.portal().children[0],n);assert.equal(b.portal().children.length,0);
+ assert.equal(frames.size,0,'owner changes do not restart painting');
+ setToastOwner(root,a,false);assert.equal(root.portal.children[0],n);assert.equal(b.portal().children.length,0);
+ assert.equal(n.attributes.get('aria-live'),'off');assert.equal(n.attributes.has('role'),false);
+ p.refresh();assert.equal(root.portal.children[0],n);p.disconnect();
+});
+test('#1246 delayed callbacks retain the starting card/modal context, including repeated text',()=>{
+ const {root,p}=setup(),a=owner(root),b=owner(root);
+ const host={_captureToast(){const context=p.captureContext();return (message,id)=>p.show(message,id,'message',context);},_showToast(message,id){p.show(message,id);}};
+ const fromCard=captureToast(host);setToastOwner(root,a,true);
+ fromCard('same','toast.error');flush();assert.equal(root.portal.children[0].textContent,'same');assert.equal(a.portal().children.length,0);
+ const fromA=captureToast(host);setToastOwner(root,b,true);
+ fromA('same','toast.error');flush();assert.equal(a.portal().children[0].textContent,'same');assert.equal(b.portal().children.length,0);
+ setToastOwner(root,a,false);fromA('same','another.error');flush();assert.equal(root.portal.children[0].textContent,'same');assert.equal(b.portal().children.length,0);
  p.disconnect();
 });
 test('replacement and clear/disconnect retire pending frames, no resurrection or cross-card routing',()=>{

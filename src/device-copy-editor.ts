@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 import { sendHouseplanWrite } from './large-write-transport';
 /** Devices-only command/menu, deliberately outside the initial View graph (#935). */
@@ -103,8 +104,9 @@ export class DeviceCopyEditor {
     await this.copy({ id: current.id, space: h._space, context: h._configWriteContext.claim(), cr: h._cfgRev, lr: h._layoutRev,
       cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout), x: 0, y: 0, target: null });
   }
-  private async copy(m: Menu): Promise<void> {
-    if (this.busy || !this.unchanged(m)) { this.close(); this.host._showToast(this.t('device.copy_changed'), 'device.copy_changed'); return; }
+private async copy(m: Menu): Promise<void> {
+    const showToast = captureToast(this.host);
+    if (this.busy || !this.unchanged(m)) { this.close(); showToast(this.t('device.copy_changed'), 'device.copy_changed'); return; }
     const h = this.host;
     let id = '';
     const operation = ++this.operation;
@@ -174,7 +176,7 @@ export class DeviceCopyEditor {
         if (this.contextCurrent(m) && response.config.markers.some(item => item.id === id && !item.removed)) this.history?.record(response,
           toolsT(langOf(h.hass, h._config?.language), 'history.device_copy', { name }), id, m.space);
         if (recovered && this.contextCurrent(m) && response.config.markers.some(item => item.id === id && !item.removed)) {
-          h._showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id);
+          showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id);
         }
       };
       const response: CopyResponse = this.history?.available
@@ -205,7 +207,7 @@ export class DeviceCopyEditor {
           const dy = Math.max(view.y + pad - y, 0) - Math.max(y - (view.y + view.h - pad), 0);
           if (dx || dy) h._applyView(h._zoom, view.x + view.w / 2 - dx, view.y + view.h / 2 - dy);
         }
-        h._showToast(this.t('device.copy_created'), 'device.copy_created');
+        showToast(this.t('device.copy_created'), 'device.copy_created');
         this.copied?.(id, m.id);
       }
     } catch (error) {
@@ -216,7 +218,7 @@ export class DeviceCopyEditor {
       if (sent && !this.history?.available) {
         try { await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]); } catch { /* retain the failure, never retry the write */ }
         if (h._serverCfg?.markers?.some(marker => marker.id === id) && h._layout[id]) {
-          if (this.contextCurrent(m)) { h._showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id); }
+          if (this.contextCurrent(m)) { showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id); }
           return;
         }
       }
@@ -227,7 +229,7 @@ export class DeviceCopyEditor {
         : detail.code === 'unauthorized' ? 'device.copy_access'
         : linksFailed ? 'device.copy_links_failed'
         : detail.code === 'unknown_command' ? 'device.copy_backend' : 'device.copy_failed');
-      h._showToast(this.t(key), key);
+      showToast(this.t(key), key);
     } finally {
       if (operation === this.operation) {
         this.busy = false; this.busyContext = null;

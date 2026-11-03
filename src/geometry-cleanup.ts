@@ -1,3 +1,4 @@
+import { captureToast } from './toast-presentation';
 /**
  * Write-time candidate preparation that never loses plan objects silently (#842).
  *
@@ -219,6 +220,7 @@ export function refuseGeometryWrite(runtime: GeometryCleanupPort, removal: Geome
 }
 
 async function askGeometryCleanup(runtime: GeometryCleanupPort, removal: GeometryRemoval): Promise<void> {
+    const showToast = captureToast(runtime.host);
   const host = runtime.host;
   asking.set(host, removal.fingerprint);
   let accepted = false;
@@ -248,7 +250,7 @@ async function askGeometryCleanup(runtime: GeometryCleanupPort, removal: Geometr
   host._saveConfigDebounced.flush();
   if (!current || current.fingerprint !== removal.fingerprint) return;
   host._writeChain.then(
-    () => host._showToast(host._t('toast.geometry_cleanup_done'), 'toast.geometry_cleanup_done'),
+    () => showToast(host._t('toast.geometry_cleanup_done'), 'toast.geometry_cleanup_done'),
     () => undefined, // the deferred writer's ordinary failure policy already answered
   );
 }

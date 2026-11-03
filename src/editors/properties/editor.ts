@@ -1,3 +1,4 @@
+import { captureToast } from '../../toast-presentation';
 import { waitForPriorConfigWrite } from '../../prior-config-write';
 import { html, nothing, type TemplateResult } from 'lit';
 import { dialogPresence } from '../../dialog-presence';
@@ -117,7 +118,8 @@ export class PropertiesEditor {
     return this.beforeIntent(() => {}, false, true);
   }
   /** The existing command lane publishes one history step only after the whole move is accepted. */
-  finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPress, current: () => boolean): void {
+finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPress, current: () => boolean): void {
+    const showToast = captureToast(this.host);
     const host = this.host, owner = this.identity;
     if (!before || !owner || !current() || !host._serverCfg || press.ids.length < 2) return;
     const previous = structuredClone(host._serverCfg);
@@ -128,7 +130,7 @@ export class PropertiesEditor {
     try { candidate = this.runtime._prepareConfigCandidate(structuredClone(host._serverCfg)); }
     catch {
       host._adoption.stageLocalConfig(previous); host._cfgEpoch++;
-      host._showToast(this.t('geometry_error'), 'geometry_error'); host.requestUpdate(); return;
+      showToast(this.t('geometry_error'), 'geometry_error'); host.requestUpdate(); return;
     }
     this.commandAuthority();
     const receipt = {};
@@ -151,7 +153,7 @@ export class PropertiesEditor {
           restoreDeferred(host._rollbackOptimistic(attempt));
         if (owned()) {
           const key = (error as { code?: string })?.code === 'conflict' ? 'external_change' : 'save_error';
-          host._showToast(this.t(key), key);
+          showToast(this.t(key), key);
         }
       }
     }).finally(() => { if (this.handoff === receipt) this.handoff = null; host.requestUpdate(); });
@@ -362,6 +364,7 @@ export class PropertiesEditor {
     if (this.handingOff) return false;
     if (!this.wide && !compactDecor) { if (modal) this.fields.invalidate(); return true; }
     if (!this.fields.draft && !this.host._writesPending) return true;
+    const showToast = captureToast(this.host);
     const authority = this.commandAuthority(), identity = this.identity, receipt = {};
     this.handoff = receipt;
     void this.fields.finishThen(async () => {
@@ -372,7 +375,7 @@ export class PropertiesEditor {
       this.closeTransient();
       if (modal) this.fields.invalidate();
       action();
-    }).catch(() => { if (this.handoff === receipt) this.host._showToast(this.t('save_error'), 'save_error'); })
+    }).catch(() => { if (this.handoff === receipt) showToast(this.t('save_error'), 'save_error'); })
       .finally(() => { if (this.handoff === receipt) this.handoff = null; });
     return false;
   }
@@ -640,8 +643,9 @@ export class PropertiesEditor {
   }
 
   /** The history cursor is restored on a conflict; unrelated marker keys are not history state. */
-  async restoreVisual(direction: 'undo' | 'redo', command: NamedCommand<DeviceEditorHistoryState>,
+async restoreVisual(direction: 'undo' | 'redo', command: NamedCommand<DeviceEditorHistoryState>,
     position: CommandPosition<DeviceEditorHistoryState> | null): Promise<void> {
+    const showToast = captureToast(this.host);
     if (!('kind' in command.before) || !('kind' in command.after) || command.before.kind !== 'visual' || command.after.kind !== 'visual') return;
     const host = this.host, target = direction === 'undo' ? command.before : command.after;
     const from = direction === 'undo' ? command.after : command.before;
@@ -651,7 +655,7 @@ export class PropertiesEditor {
     const expected = marker && deviceVisualFields(marker, from.fields.map(field => field.key));
     if (!device || !marker || bindingOf(device) !== target.binding || marker.binding !== target.binding
       || device.bindingStatus?.kind === 'ha_disabled' || !samePropertiesValue(expected, from.fields)) {
-      restoreCursor(); host._showToast(this.t('external_change'), 'external_change'); return;
+      restoreCursor(); showToast(this.t('external_change'), 'external_change'); return;
     }
     const authority = host._configWriteContext.claim(), previous = host._serverCfg!;
     const candidate: ServerConfig = structuredClone(previous);
@@ -665,10 +669,10 @@ export class PropertiesEditor {
         && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);
       if (!host._configWriteContext.current(authority, host.hass)) return;
       if (host._space !== target.spaceId) { host._commitSpace(target.spaceId); host._restoreZoom(); }
-      host._showToast(host._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }), direction === 'undo' ? 'history.undone' : 'history.redone');
+      showToast(host._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }), direction === 'undo' ? 'history.undone' : 'history.redone');
     } catch {
       if (host._configWriteContext.current(authority, host.hass)) {
-        restoreDeferred(host._rollbackOptimistic(attempt)); restoreCursor(); host._showToast(this.t('save_error'), 'save_error');
+        restoreDeferred(host._rollbackOptimistic(attempt)); restoreCursor(); showToast(this.t('save_error'), 'save_error');
       }
     } finally { if (host._configWriteContext.owns(authority)) { host._devicePositionBusy = false; host.requestUpdate(); } }
   }

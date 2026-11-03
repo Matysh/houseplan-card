@@ -1,3 +1,4 @@
+import { captureToast } from '../toast-presentation';
 /** Commands belong to the existing editor selection/lane; no listener, capture or writer of their own. */
 import { CANVAS_LIMIT, NORM_W } from '../canvas-constants';
 import { contentFingerprint } from '../visual-continuity';
@@ -99,7 +100,8 @@ export class KeyboardNudge {
     try { return !!h._serverCfg && h._checkSpacePhysicalGeometry({...h._serverCfg,spaces:[space]},space.id).ok; }
     catch { return false; }
   }
-  handle(event: KeyboardEvent, dx: number, dy: number): boolean {
+handle(event: KeyboardEvent, dx: number, dy: number): boolean {
+    const showToast = captureToast(this.host);
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey
       || arrowControl(event.composedPath()) || this.focusedControl() || !this.allowed()) return false;
     if ([...this.jobs].some(j=>this.host._configWriteContext.owns(j.owner.authority))
@@ -121,7 +123,7 @@ export class KeyboardNudge {
       } catch (error: unknown) {
         this.retireOwner(owner);
         if (this.dataCurrent(owner) && (error as {code?:string})?.code !== 'context-changed')
-          h._showToast(h._t('toast.pos_save_failed', {err:h._errText(error)}), 'toast.pos_save_failed');
+          showToast(h._t('toast.pos_save_failed', {err:h._errText(error)}), 'toast.pos_save_failed');
       } finally { this.jobs.delete(job); if (![...this.jobs].some(j=>j.owner===owner) && this.owner===owner) this.owner=null; }
     });
     return true;

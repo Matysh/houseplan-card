@@ -77,6 +77,7 @@ export interface OptimizePlansDialogPort {
   cardVersion(): string;
   requestUpdate(): void;
   showToast(message: string, id?: string): void;
+  captureToast?(): (message: string, id?: string) => void;
   errorText(error: unknown): string;
   checkGeometry(config: ServerConfig): OptimizeGeometryPreflightResult;
   referenceContext(removeLiveMissingPositions: boolean, removeInvalidMissingPositions?: boolean): SpaceReferenceRepairContext;
@@ -182,6 +183,7 @@ export class OptimizePlansDialog {
   }
 
   public async copyDiagnostics(): Promise<void> {
+    const showToast = this.port.captureToast?.() ?? ((message: string, id?: string) => this.port.showToast(message, id));
     const dialog = this.port.dialog();
     const preflight = dialog?.preflight;
     if (!dialog) return;
@@ -206,7 +208,7 @@ export class OptimizePlansDialog {
     try {
       await navigator.clipboard.writeText(text);
       if (this.fallbacks.delete(dialog)) this.port.requestUpdate();
-      this.port.showToast(this.port.t('gs.preflight_copied'), 'gs.preflight_copied');
+      showToast(this.port.t('gs.preflight_copied'), 'gs.preflight_copied');
     } catch {
       // Insecure context / embedded webview: surface the block inline so the
       // owner can select and copy it by hand.
@@ -313,6 +315,7 @@ export class OptimizePlansDialog {
    * one-deep snapshot that remains undoable until the next plan edit.
    */
   public async run(): Promise<void> {
+    const showToast = this.port.captureToast?.() ?? ((message: string, id?: string) => this.port.showToast(message, id));
     let d = this.port.dialog();
     if (!this.port.canWrite()) {
       this.port.showToast(this.port.t('gs.optimize_write_required'), 'gs.optimize_write_required');
@@ -343,12 +346,12 @@ export class OptimizePlansDialog {
       if (this.port.dialog() !== pending || !this.port.canWrite()) return;
       if (d.removeInvalidMissingPositions) {
         this.preview(false, false);
-        this.port.showToast(this.port.t('gs.optimize_invalid_done', {
+        showToast(this.port.t('gs.optimize_invalid_done', {
           n: String(d.report.invalidPositionsRemoved.length),
         }), 'gs.optimize_invalid_done');
       } else this.port.setDialog(null);
       if (d.removeInvalidMissingPositions) return;
-      this.port.showToast(this.port.t('gs.align_done', {
+      showToast(this.port.t('gs.align_done', {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
           + d.report.coordsCanonicalized + d.report.latticeCoordinatesCanonicalized
@@ -367,12 +370,12 @@ export class OptimizePlansDialog {
         if (this.port.canWrite()) this.preview(false, false);
         else this.port.setDialog({ ...pending, busy: false });
         const key = this.port.canWrite() ? 'gs.optimize_preview_changed' : 'gs.optimize_write_required';
-        this.port.showToast(this.port.t(key), key);
+        showToast(this.port.t(key), key);
         return;
       }
       if (current) this.port.setDialog({ ...current, busy: false });
       if (e?.code === 'wall_model_client_outdated') {
-        this.port.showToast(this.port.t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
+        showToast(this.port.t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
         return;
       }
       if (e?.code === 'conflict') {
@@ -380,7 +383,7 @@ export class OptimizePlansDialog {
         if (this.port.dialog() !== current && this.port.dialog()?.source !== current.source) return;
         if (this.port.canWrite()) this.preview(false, false);
       }
-      if (!isGeometryCleanupRefusal(e)) this.port.showToast(this.port.t('toast.error', { err: this.port.errorText(e) }), 'toast.error');
+      if (!isGeometryCleanupRefusal(e)) showToast(this.port.t('toast.error', { err: this.port.errorText(e) }), 'toast.error');
     }
   }
 
