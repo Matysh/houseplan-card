@@ -128,7 +128,7 @@ test('#1073 synchronous preparation does not re-hash the complete plan without a
   f.editor.unchanged=(...args)=>{checks++;return unchanged(...args);};
   f.h.transport=request=>Promise.resolve({config:f.h._serverCfg,layout:f.h._layout,config_rev:6,layout_rev:7});
   await f.editor.copyDevice(f.h._devices[0]);
-  assert.equal(checks,2,'before command and after queued writes; pure preparation cannot interleave another event');
+  assert.equal(checks,3,'before command, after queued writes and the current dispatch authority barrier; pure preparation adds no extra hash');
   assert.equal(f.messages.length,1);assert.equal(f.adoptions.length,1);
 });
 

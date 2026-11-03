@@ -25,6 +25,8 @@
 // пространства. Сама геометрия владельца в репозиторий не попадает: фикстуры
 // синтетические и воспроизводят названные условия числами, а не планом дома.
 import test from 'node:test';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { validateGraph } from '../test-build/plan-graph.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -267,7 +269,7 @@ for (const item of CORPUS) {
 
   test(`корпус #560 ${label}: фикстура несёт своё условие — ${item.what}`, () => {
     const { config, layout } = load(item.file);
-    assert.equal(config.model_version, 10, 'корпус ведётся на актуальной модели');
+    assert.equal(config.model_version, 10, 'исходный импортный корпус фиксирует legacy model10');
     item.condition(config.spaces[0], layout);
   });
 
@@ -285,10 +287,23 @@ for (const item of CORPUS) {
     assert.deepEqual(config, guard, 'Optimize не имеет права менять вход (#281)');
     assert.deepEqual(kinds(violations(first.config, first.layout)), expected.slice().sort(),
       'после Optimize новых нарушений нет');
-    assert.equal(first.changed, item.fixedPointOnImport ? false : true,
-      item.fixedPointOnImport
-        ? 'приведённый план Optimize трогать не должен'
-        : 'фикстура заявлена как требующая приведения');
+    assert.equal(first.changed, true, 'первый Optimize включает ожидаемый переход model10 → model11');
+    if (item.fixedPointOnImport) {
+      const migrated = commitWallSegmentModel(guard).config;
+      const projections = config => config.spaces.map(space => {
+        const projected = clone(space); delete projected.plan_graph;
+        for (const opening of projected.openings || []) if (opening.host) delete opening.host.tq;
+        return projected;
+      });
+      assert.deepEqual(projections(first.config), projections(migrated),
+        'точная нормализация графа не меняет проекции, метаданные и идентичность приведённой геометрии');
+      first.config.spaces.forEach((space, i) => {
+        assert.equal(validateGraph(space.plan_graph).ok, true);
+        assert.deepEqual(space.plan_graph.nodes.map(node => node.id), migrated.spaces[i].plan_graph.nodes.map(node => node.id));
+        assert.deepEqual(space.plan_graph.edges, migrated.spaces[i].plan_graph.edges);
+      });
+      assert.deepEqual(first.layout, layout, 'миграция графа не сдвигает устройства');
+    }
 
     const second = optimizePlans(clone(first.config), clone(first.layout));
     assert.equal(second.changed, false, 'второй Optimize — фикс-пойнт (#477)');

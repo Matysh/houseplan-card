@@ -512,7 +512,14 @@
     },
     "config.settings.show_lqi": {
       "required": false,
-      "type": "bool"
+      "variants": [
+        {
+          "type": "bool"
+        },
+        {
+          "const": "low"
+        }
+      ]
     },
     "config.settings.show_room_tooltip": {
       "required": false,
@@ -1555,6 +1562,7 @@
     "config.spaces[].settings.show_lqi_mode": {
       "enum": [
         "inherit",
+        "low",
         "off",
         "on"
       ],
