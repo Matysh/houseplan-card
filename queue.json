@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2063,
+  "revision": 2064,
   "nextTicket": 130,
   "nextFence": 130,
   "tasks": {
@@ -2516,7 +2516,7 @@
       "ownerDecision": null,
       "ticket": 129,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793730961957,
       "reviewEntry": 1,
       "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a",
@@ -2525,7 +2525,16 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "process-next/templates/coordinator.yml"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T190616323-597ade13",
+        "name": "Тесты для задачи #1252 (перед ревью)",
+        "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261103T190616323-597ade13/report.json",
+        "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+        "status": "passed",
+        "finishedAt": "2026-11-03T19:07:01.330Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -2638,9 +2647,9 @@
     "fence": 129,
     "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
     "expectedBase": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793732745679,
-    "expiresAt": 1793733071761,
+    "expiresAt": 1793736422673,
     "patchId": "3c534d3cd09ad85beea7a227b25565e78fb0d56a"
   },
   "events": {
@@ -2876,6 +2885,34 @@
         "layer": "infra",
         "materialSha": "540ccd7d35598c03fd8b2a2de05df26af4806b8c",
         "phase": "sync"
+      }
+    },
+    "finish:8d2a2006-9d42-4f83-8426-077a0714b3ee:finish:4:s6-complete": {
+      "digest": "90e6693eb794ebbdc9eeb327ecf35d6e4a54278b5541c5c615cd62076a9b26d8",
+      "issue": 1252,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1252,
+        "at": 1793732822673,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+        "phase": "review",
+        "evidence": {
+          "id": "20261103T190616323-597ade13",
+          "name": "Тесты для задачи #1252 (перед ревью)",
+          "reportPath": "/mnt/c/Users/Admin/Documents/ChatGPT/Houseplan/review-source/.git/process-next/runs/20261103T190616323-597ade13/report.json",
+          "materialSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+          "status": "passed",
+          "finishedAt": "2026-11-03T19:07:01.330Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "<details>\n<summary>Решение и фактическая адресная проверка</summary>\n\nИзменены только checkout двух служебных jobs (progress/public-ci) в canonical template и развёрнутом workflow плюс RU/EN changelog. Добавлен cone sparse-набор process-next, scripts, demo/helpers; fetch-depth:0, токен, permissions, concurrency, таймауты и все команды сохранены. Закреплённый checkout сам включает blob:none. Сборочный dev-build, reviewer и fallback не изменены. Новых постоянных тестов, реестров или гейтов нет.\n\nОднократная проверка в Ubuntu WSL сделана настоящим HTTPS partial clone GitHub, без использования объектов существующего checkout: исходный dev ad46b790228f0b2e7ae37f7905a63843043cf2ab, те же sparse-каталоги, full ancestry. Checkout занял около 6 секунд, итоговые pack-файлы после адресных чтений — 11,83 МиБ. Это локальное наблюдение, не обещание такого же времени на hosted runner.\n\nPASS: импорт remote.mjs со всеми транзитивными зависимостями; shallow=false, promisor=true, filter=blob:none; src/docs/legacy/custom_components/test отсутствуют в рабочем каталоге. Ledger blob из docs изначально действительно отсутствовал в локальной object database, readTaskReleaseMilestone догрузил его и получил ready/milestone11 для #1244. git show package.json предыдущего SHA, ancestry и productIdentity отработали; каталог docs при этом не появился. Проверка команды публикации была только offline, без записей в GitHub.\n\nОтдельный синтетический bare-репозиторий с file:// upload-pack allowFilter=true: существующий GitAdapter.merge на partial+sparse clone сделал ровно один atomic push, обновил dev и process-state до S8, удалил issue/1; исключённый продуктовый blob изначально не был скачан, после merge доступен через git show, но не материализован в worktree. PASS, около 0,39 секунды. Все записи только в одноразовый локальный fixture; он удалён. Временные проверочные скрипты в ignored process-next/.state, в продукт/постоянный тестовый набор не добавляются.\n\nШтатный S6 через finish: синтаксис изменённых YAML и существующие адресные github/task-completion/ci-status tests. Предварительные проверки выше дополняют, а не подменяют его receipt. Особое внимание ревью: достаточность runtime imports, сохранённая ancestry и работа с blob вне sparse, отсутствие скрытого изменения задач/релиза. Workflow в main сейчас совпадает по blob с исходным dev; после принятия и merge будет точечно обновлён только этот workflow в main, с проверкой текущего head и без переноса продукта.\n\n</details>",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
