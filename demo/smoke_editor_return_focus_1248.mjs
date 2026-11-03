@@ -4,6 +4,16 @@ import { launchColdView, finish } from './serve.mjs';
 
 const { page, browser } = await launchColdView({ width: 1440, height: 900 });
 try {
+  await page.locator('[data-hp="support"]').click();
+  const dialog = page.locator('hp-dialog[data-kind="support"]');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  const support = page.locator('[data-hp="support"]');
+  await expect(support).toBeFocused();
+  assert.equal(await support.evaluate(el => getComputedStyle(el).outlineStyle), 'none');
+  await page.keyboard.press('Tab');
+  assert.equal(await support.evaluate(el => el.classList.contains('hp-dialog-return-focus')), false);
   for (const dark of [false, true]) {
     await page.evaluate(dark => {
       window.__card.style.setProperty('--primary-color', dark ? '#64b5f6' : '#1976d2');

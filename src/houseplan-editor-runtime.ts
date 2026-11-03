@@ -1321,7 +1321,13 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     if (mode === 'view' && previousMode !== 'view') {
       const active = this.host.renderRoot instanceof ShadowRoot ? this.host.renderRoot.activeElement : null;
       if (active instanceof HTMLElement && active.matches('.hpf-nav-item,.hpf-icon-action')) {
-        prepareDialogReturnFocus(active);
+        // Escape is handled during window capture. Register the return-focus
+        // listener after this same event has passed the shadow root, otherwise
+        // it would immediately clear its own suppression.
+        queueMicrotask(() => {
+          if (this.host._mode === 'view' && this.host.renderRoot instanceof ShadowRoot
+            && this.host.renderRoot.activeElement === active) prepareDialogReturnFocus(active);
+        });
       }
     }
     if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
