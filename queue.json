@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1909,
+  "revision": 1910,
   "nextTicket": 123,
   "nextFence": 121,
   "tasks": {
@@ -2322,45 +2322,24 @@
     },
     "1248": {
       "issue": 1248,
+      "branch": "issue/1248-editor-focus",
       "track": "ship",
       "layer": "product",
-      "branch": "issue/1248-editor-focus",
-      "materialSha": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 120,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793727698404,
-      "reviewEntry": 2,
-      "patchId": "bd6a7313a583b96163e2cefedc708f5de0425a4a",
-      "changedFiles": [
-        "demo/smoke_editor_return_focus_1248.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1248.json",
-        "src/houseplan-editor-runtime.ts",
-        "src/styles/icon-action.styles.ts",
-        "src/styles/navigation.styles.ts"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793727095199,
-        "entry": 1,
-        "eventId": "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return:return:1248"
+      "status": "S8-merged",
+      "expectedBase": "f2436671e6a48a64ed785f89cf014b467a123cbb",
+      "mergedSha": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+      "mergedAt": 1793728761871,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261103T175655134-f6038c5e",
-        "requestId": "s6:1248:2f859d980787357fd1e2d98e4a771eda",
-        "runId": 41688829964,
-        "materialSha": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-        "status": "passed",
-        "finishedAt": "2026-11-03T17:58:00.395Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41688829964",
-        "execution": "github"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -2470,161 +2449,8 @@
     1244,
     1242
   ],
-  "active": {
-    "issue": 1248,
-    "worker": "finish",
-    "token": "120:finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11:finish:1:admit",
-    "fence": 120,
-    "materialSha": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-    "expectedBase": "f2436671e6a48a64ed785f89cf014b467a123cbb",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793728494424,
-    "expiresAt": 1793732356014,
-    "patchId": "bd6a7313a583b96163e2cefedc708f5de0425a4a"
-  },
+  "active": null,
   "events": {
-    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:2:synchronized": {
-      "digest": "b44cb82ff9b3d159795bcc4fbc4f96ede62d2234e5c9f712f83957ae40672e07",
-      "issue": 1248
-    },
-    "finish:c552d0f5-ced0-42e1-b629-86fbc446ec5a": {
-      "digest": "acf2eb72d403cd5dcda5e3921e1d57688e999d627001a1495ad55b619f3007b2",
-      "issue": 1248
-    },
-    "finish:50f4f0ee-fb1d-4c5c-b7c7-e0f85e5d5713": {
-      "digest": "11ee5003bd5c7047a8a790786afa027a48788d467ddba1588c06f04f8331b7dc",
-      "issue": 1248
-    },
-    "finish:241479b3-7da3-4a2c-8464-dde1e1888846": {
-      "digest": "bb5e4acacb22c482fb68d04c8a5204aaf98b29ddb9077571385f6b7b42e91379",
-      "issue": 1248
-    },
-    "github:41684037211:1:completions:message:e88e1443a363df696446487a603515f07ed3a17512690cbc9d90ca32cd19bd7b": {
-      "digest": "d967ff367bd59ed9a4346110e7ff5c4c7fd00a58fb6f5b8412bb1e0754d755be",
-      "issue": 1248
-    },
-    "github:41684037211:1:completions:message:b0f3482861181e67685a558b2aebaec55f86b34391b0036c93ba828bc788be92": {
-      "digest": "c25f82b402e95893fec074bab8b877cd61a6acf781bc664b127cdc988e2122ec",
-      "issue": 1248
-    },
-    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return": {
-      "digest": "eb03e285cd3e69321fb361a6ff441ff5623243ff1d8a2c5de02a2dc2138aa13b",
-      "issue": 1248
-    },
-    "github:41686336528:1:completions:notice:13bec2017c50b7047c8218d6ad78276b80ed20f17881d40885b6789f91a75934": {
-      "digest": "3f362d2435cec5c7bb77b52d01d82a960f984279e8f7772928f6be88d55bb268",
-      "issue": 1248
-    },
-    "finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11:finish:2:synchronized": {
-      "digest": "9e1a638bd40987bda085130ad25650087607ebe091abc3ca193dec1dd0c76b5c",
-      "issue": 1248
-    },
-    "finish:285e29e5-ded8-4802-a73b-966ace38018f": {
-      "digest": "daf839892e5b23c0e0db5eddffe162c8c36c6c4f1b47fbca349c82060c35408f",
-      "issue": 1248
-    },
-    "github:41688769098:1:completions:message:37c7493bea53ac3f5405f4819bcdf2e05804dbaef945a905dcec412a0a3385f7": {
-      "digest": "b62a35770efc747f4580d8327b4858e1e171a8e664c352cf873af94afbc8f7fd",
-      "issue": 1248
-    },
-    "github:41688769098:1:completions:message:32ef739092d0bd6eb337762047f4ece72e87e3a18ad60f930f64f57278fdaf49": {
-      "digest": "a7691c00310e53be2f8635264999eeaf6422677a6a649c018b705706e5314d3c",
-      "issue": 1248
-    },
-    "finish:cf206c32-1a28-4d2c-b9e5-807f07eac1dc": {
-      "digest": "56561e6e419e5e32b63e78b2c8358ca9dd5242928d56f39642c6a66d68766817",
-      "issue": 1248
-    },
-    "finish:940c55df-fd2c-4e3b-8433-028070b7d56c": {
-      "digest": "681c4a37e9df95add1ce27d0d3c2da17b6cc1ef8825bdfa1d8773e57f9aee50d",
-      "issue": 1248
-    },
-    "finish:b1016e23-2c36-4894-bc99-014b872f7d4e": {
-      "digest": "a0862d07e11777fb87caf9882202309247a539093add7d222ea80dcf204c4c54",
-      "issue": 1248
-    },
-    "finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11:finish:3:s6-complete": {
-      "digest": "6f36aaa36e3f4214e1220f8f9f6efc5ab2133507f7b2c48a09466e59bf042bef",
-      "issue": 1248
-    },
-    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624": {
-      "digest": "89417b2c25eb780012fd053b9857da71ec44e7b7072e12b5b89fcdc10d4c08c7",
-      "issue": 1248,
-      "message": {
-        "kind": "queued",
-        "issue": 1248,
-        "at": 1793726704754,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751",
-        "delivered": true
-      }
-    },
-    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:1:admit": {
-      "digest": "98842eca162cdd2942589c4a7e54f1246504695719ec0cca450ee72fba8d0670",
-      "issue": 1248,
-      "message": {
-        "kind": "admitted",
-        "issue": 1248,
-        "at": 1793726892098,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "7d1798261211fd2997e9aabdc91c0f2cb0eec751",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return:return:1248": {
-      "digest": "eb03e285cd3e69321fb361a6ff441ff5623243ff1d8a2c5de02a2dc2138aa13b",
-      "issue": 1248,
-      "message": {
-        "kind": "return",
-        "issue": 1248,
-        "at": 1793727095199,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793727095199,
-          "entry": 1,
-          "eventId": "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:3:return:return:1248"
-        },
-        "delivered": true
-      }
-    },
-    "finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11": {
-      "digest": "746dbd006b6732565c31e88eec8190805d0490e00b698da494a0bcf90f296ebc",
-      "issue": 1248,
-      "message": {
-        "kind": "queued",
-        "issue": 1248,
-        "at": 1793727698404,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "c8266cfb23ec718eaa33707681532e4a2604c646",
-        "delivered": true
-      }
-    },
-    "finish:e504165e-f9af-4d8e-8a89-8c5c971c3d11:finish:1:admit": {
-      "digest": "35a9f7b14eeaa42997dc6b361a9c4fb4ea7bbdf368fece5ed5221475ed3fbf5e",
-      "issue": 1248,
-      "message": {
-        "kind": "admitted",
-        "issue": 1248,
-        "at": 1793728494424,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "c8266cfb23ec718eaa33707681532e4a2604c646",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
       "digest": "24e1edf7aed6946369b9de71ffcd021fc2d7471c2da828ba1aefa7c0e63b2fa5",
       "issue": 1244,
