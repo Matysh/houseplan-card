@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1985,
-  "nextTicket": 127,
+  "revision": 1986,
+  "nextTicket": 128,
   "nextFence": 126,
   "tasks": {
     "1126": {
@@ -2349,14 +2349,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1242-summary-camera",
-      "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+      "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 122,
-      "queued": false,
+      "ticket": 127,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793728670029,
-      "reviewEntry": 1,
+      "readyAt": 1793730712780,
+      "reviewEntry": 2,
       "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951",
       "changedFiles": [
         "custom_components/houseplan/validation.py",
@@ -2391,13 +2391,6 @@
         "execution": "github"
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1242:1:86219eb8ba1da836e04c97f6315a71ea56044951:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-      "reviewMaterial": {
-        "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
-        "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1242:1:86219eb8ba1da836e04c97f6315a71ea56044951:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
         "at": 1793730394913
@@ -2712,7 +2705,8 @@
     }
   },
   "waiting": [
-    1225
+    1225,
+    1242
   ],
   "active": {
     "issue": 1246,
@@ -3014,6 +3008,29 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577"
+      }
+    },
+    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66": {
+      "digest": "873cad50a1aa1b2a47e551a89d08c6f82dec1be3639384f3d6eaf95c84408ce2",
+      "issue": 1242,
+      "message": {
+        "kind": "queued",
+        "issue": 1242,
+        "at": 1793730712780,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
+        "evidence": {
+          "id": "20261103T181344781-b36a1b9a",
+          "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
+          "runId": 41691380285,
+          "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+          "status": "passed",
+          "finishedAt": "2026-11-03T18:14:36.609Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
+          "execution": "github"
+        }
       }
     }
   },
