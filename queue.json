@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1503,
+  "revision": 1504,
   "nextTicket": 104,
   "nextFence": 102,
   "tasks": {
@@ -1887,7 +1887,16 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793714082036,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "ef1465ed3fa8a9df51c99f0945cc76a3229439fc",
+      "changedFiles": [
+        "demo/smoke_v8_draft_write.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1233.json",
+        "src/houseplan-editor-runtime.ts",
+        "test/legacy-draft-commit.test.mjs"
+      ]
     },
     "1235": {
       "issue": 1235,
@@ -2029,10 +2038,11 @@
     "token": "101:github:41648973536:1:tick:0:admit",
     "fence": 101,
     "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "56585f1828bad0e7f483410eb793bdda5a8735fe",
+    "phase": "testing",
     "admittedAt": 1793714280369,
-    "expiresAt": 1793714580369
+    "expiresAt": 1793714633287,
+    "patchId": "ef1465ed3fa8a9df51c99f0945cc76a3229439fc"
   },
   "events": {
     "github:41648108341:1:completions:message:43ad15c8e575dd3fc039f8eec96db7cf3a60aed2443a40c699946e137fa88521": {
@@ -2101,6 +2111,10 @@
     },
     "github:41648973536:1:completions:message:d634d6db76b70219b38b6d0ad7f6690fe7a36b37e297902b8101b9623c4e9cfe": {
       "digest": "ab9c2aa4976e91399b2f18ec8aa371386266c73fa2941554a980284eebc926e8",
+      "issue": 1233
+    },
+    "finish:1ac23713-d492-426e-a9eb-130e6f4aa9db:finish:1:synchronized": {
+      "digest": "e4bf3c30347b8362707f6d43b7fc7b610d154e8ffd1dbeb48f43dda890b3967a",
       "issue": 1233
     },
     "finish:fdc3af8d-7d83-4e5c-b535-cd00ad95337c": {
