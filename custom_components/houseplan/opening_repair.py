@@ -38,7 +38,7 @@ from .coordinate_canonicalization import (
 )
 from .validation import partition_opening_host_fault, wall_opening_host_fault
 from .wall_segment_model import (
-    WALL_SEGMENT_MODEL_VERSION,
+    LEGACY_WALL_SEGMENT_MODEL_VERSION,
     opening_frame,
     pick_wall_carrier,
     wall_carrier_eligible,
@@ -95,7 +95,7 @@ def _place_on_wall(
 ) -> dict[str, Any] | None:
     """The placement the next plan write would give an unhosted opening, checked.
 
-    Model 10 writes heal only onto a unique free carrier; older models go
+    Model 10 and later writes heal only onto a unique free carrier; older models go
     through the initial migration, which picks among free carriers (#316 §3.2).
     The placement is canonicalised and judged by the schema predicate and by
     the carrier rule again, so that write keeps it as it is.
@@ -108,7 +108,7 @@ def _place_on_wall(
                 if wall_carrier_eligible(segment, centre, angle, half)]
     free = [segment for segment in eligible
             if wall_interval_free(view_space, view, segment, centre, half)]
-    if model >= WALL_SEGMENT_MODEL_VERSION:
+    if model >= LEGACY_WALL_SEGMENT_MODEL_VERSION:
         carrier = eligible[0] if len(eligible) == 1 and free else None
     else:
         carrier = pick_wall_carrier(free, None, centre)

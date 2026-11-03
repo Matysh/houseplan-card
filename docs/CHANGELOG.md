@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Preserve Optimize diagnostics and safe cleanup/recheck actions when the plan itself needs no changes. [#1229](https://github.com/Matysh/houseplan-card/issues/1229)
+- Keep the unique-carrier import repair rule for saved model10 plans after the model11 upgrade; ambiguous openings stay detached, preserving their width and settings. Older initial-migration selection remains unchanged. [#1228](https://github.com/Matysh/houseplan-card/issues/1228)
 
 - Make the native Draw/Resize regression check reject targets covered by editor controls and expose the original graph segments through the public zoom control. Preserve graph, metadata and history assertions; no product geometry change. [#1221](https://github.com/Matysh/houseplan-card/issues/1221)
 

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1228,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Restore the saved model10 unique-carrier import policy after the model11 constant bump in the 1.84 line. Published 1.83 already enforced this policy; historical initial migration remains unchanged.",
+  "summary": {
+    "ru": "Импорт raw model10 не выбирает произвольную стену для неоднозначного проёма.",
+    "en": "Raw model10 import keeps an ambiguous opening detached instead of choosing an arbitrary wall."
+  }
+}
