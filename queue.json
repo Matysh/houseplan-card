@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1256,
+  "revision": 1257,
   "nextTicket": 90,
   "nextFence": 90,
   "tasks": {
@@ -1449,32 +1449,24 @@
     },
     "1218": {
       "issue": 1218,
+      "branch": "codex/1218",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/1218",
-      "materialSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 89,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793690309025,
-      "reviewEntry": 1,
-      "patchId": "159385e506ceea3cf8b6d2887df66df288f7031b",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/templates/review.yml",
-        "process-next/test/install-templates.test.mjs"
-      ],
-      "s6": {
-        "id": "20261103T072311555-13bce0a7",
-        "name": "Тесты для задачи #1218 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261103T072311555-13bce0a7/report.json",
-        "materialSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
-        "status": "passed",
-        "finishedAt": "2026-11-03T07:23:11.710Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "44330439f73c5bd6a70323797d5558102215bcf0",
+      "mergedSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
+      "mergedAt": 1793690602694,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     },
     "1219": {
@@ -1613,72 +1605,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1218,
-    "worker": "finish",
-    "token": "89:finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:1:admit",
-    "fence": 89,
-    "materialSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
-    "expectedBase": "44330439f73c5bd6a70323797d5558102215bcf0",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793690497302,
-    "expiresAt": 1793694197238,
-    "patchId": "159385e506ceea3cf8b6d2887df66df288f7031b"
-  },
+  "active": null,
   "events": {
-    "github:41595740649:1:completions:message:25517c43bdc34866a87dc86e74d486ccef2fad4da96b20b630a96b50fc14380a": {
-      "digest": "a6acb8adecacd0923330038e8246379a1bf509f06167126be2a2c444606074f0",
-      "issue": 1218
-    },
-    "finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:2:automation-pending": {
-      "digest": "9552042a04cb67d921aee0e592ba82ab394269d4040e196224288c83a6043fc6",
-      "issue": 1218
-    },
-    "finish:9e978a18-6a6f-4d8e-a00b-818b44c05cb9": {
-      "digest": "08f0dd04d47d1324f51722bbf5d86816c0c23d15a30d42d41cba12aaa36faf68",
-      "issue": 1218
-    },
-    "finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:3:synchronized": {
-      "digest": "6677a68e69d18c08c58240c89b661fb119edcfa062daf7eac87f189b25182c62",
-      "issue": 1218
-    },
-    "dev-build:41595740649:1:webhook": {
-      "digest": "b905fc08edfad4a1b80ac0611994d33b8399f55b5d57870275fdef02386d8e58",
-      "issue": 1218
-    },
-    "dev-build:41595740649:1:webhook:c23f9a4f-2c71-4799-b850-0fc11c1c48d1:delivered": {
-      "digest": "93b8220931c06e54c0a3be546ddfb0df68d9fb07d25b6d94d6dfd3cf21c14cf8",
-      "issue": 1218
-    },
-    "finish:5e052b89-d094-4246-a95f-25aa83c943cb": {
-      "digest": "3d24ea4ae5e2d5e04aed207233ddaedc4cdf99933e1b66d32f2edb6a3b475549",
-      "issue": 1218,
-      "message": {
-        "kind": "queued",
-        "issue": 1218,
-        "at": 1793690309025,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "8591887f2bfe6a1dcf78615be89bd5dc25344862",
-        "delivered": true
-      }
-    },
-    "finish:5e052b89-d094-4246-a95f-25aa83c943cb:finish:1:admit": {
-      "digest": "012006a1009014c67e4e0d3d9942dc9a5edc06dbe2dbbbd87000e7d7eda06816",
-      "issue": 1218,
-      "message": {
-        "kind": "admitted",
-        "issue": 1218,
-        "at": 1793690497302,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "8591887f2bfe6a1dcf78615be89bd5dc25344862",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "dev-build:41595740649:1:1216": {
       "digest": "18e77e30c0937df7441ed88ff27411f76757667c7bac21cbd283db029a42322d",
       "issue": 1216,
