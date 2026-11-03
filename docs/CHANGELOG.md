@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept valid Low-only Zigbee settings in support-report packages at the relay, with matching closed integration/relay validators. Deploy the accepted relay schema separately before releasing this mode. [#1223](https://github.com/Matysh/houseplan-card/issues/1223)
+
 - Synchronize the installable review workflow with the deployed ship-batch workflow; check all installed template/target pairs to prevent reinstalling stale workflows. [#1218](https://github.com/Matysh/houseplan-card/issues/1218)
 
 - Point the CI badge directly to the actual source test run for the current stable, preserving its dynamic status and the separate CodeQL badge. [#1219](https://github.com/Matysh/houseplan-card/issues/1219)

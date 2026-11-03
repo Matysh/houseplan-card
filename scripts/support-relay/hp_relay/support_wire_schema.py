@@ -284,9 +284,10 @@ GLOBAL_SETTINGS = Object(
         "bg_mode": nullable(enum("static", "daynight")),
         "sun_ray_origin": enum("inner", "outer"),
         **fields(
-            "sun_rays show_room_tooltip show_lqi volumetric_view moon filter_seeded group_lights",
+            "sun_rays show_room_tooltip volumetric_view moon filter_seeded group_lights",
             nullable(BOOL),
         ),
+        "show_lqi": Choice((None, BOOL, enum("low"))),
         "show_device_battery": Choice((None, BOOL, enum("low"))),
         "fill_colors": Object(
             fields(
@@ -343,7 +344,7 @@ SPACE_SETTINGS = Object(
         "custom_fill": nullable(FILL_COLOR),
         "name_color": FILL_COLOR,
         "wall_fill": FILL_COLOR,
-        "show_lqi_mode": enum("inherit", "on", "off"),
+        "show_lqi_mode": enum("inherit", "on", "low", "off"),
         "show_device_battery_mode": enum("inherit", "all", "low", "off"),
     }
 )

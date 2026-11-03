@@ -98,6 +98,31 @@ class V2HttpTestCase(unittest.TestCase):
     setUp = helpers.HttpSurfaceTestCase.setUp
     tearDown = helpers.HttpSurfaceTestCase.tearDown
     call = helpers.HttpSurfaceTestCase.call
+
+    def test_http_low_only_lqi_and_closed_settings_contract(self):
+        package = json.loads(FIXTURE.read_bytes())
+        config = package["plan_backup"]["config"]
+        config.setdefault("settings", {})["show_lqi"] = "low"
+        config["spaces"] = [{"id": "space-low-1223", "settings": {"show_lqi_mode": "low"}}]
+        raw = json.dumps(package).encode()
+        content_type, body = build_body(request_json(raw, key="http-low-1223"), raw)
+        status, payload = self.call("POST", "/v1/reports", body, content_type)
+        self.assertEqual(status, 200, payload)
+        self.assertEqual(self.service.delivery.calls[0][2], raw)
+        for index, (scope, key, value) in enumerate([
+            ("global", "show_lqi", "LOW"),
+            ("space", "show_lqi_mode", True),
+            ("space", "unknown_lqi_private", "not wire data"),
+        ]):
+            bad = copy.deepcopy(package)
+            config = bad["plan_backup"]["config"]
+            settings = config["settings"] if scope == "global" else config["spaces"][0]["settings"]
+            settings[key] = value
+            blob = json.dumps(bad).encode()
+            content_type, body = build_body(request_json(blob, key=f"http-low-bad-{index}"), blob)
+            status, payload = self.call("POST", "/v1/reports", body, content_type)
+            self.assertEqual((status, payload["error"]), (400, "support_rejected"))
+
     def test_http_v2_attachment_is_exact_and_nested_unknown_is_not_accepted(self):
         raw = FIXTURE.read_bytes()
         content_type, body = build_body(request_json(raw, key="http-v2-positive"), raw)
