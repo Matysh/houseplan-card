@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2097,
+  "revision": 2098,
   "nextTicket": 132,
   "nextFence": 132,
   "tasks": {
@@ -2402,13 +2402,13 @@
       "readyAt": 1793733030754,
       "reviewEntry": 4,
       "notice": {
-        "key": "3:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
+        "key": "4:reuse-base-update",
+        "reason": "reuse-base-update",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793732696248,
-        "entry": 3,
-        "eventId": "finish:df291976-35e5-4b0d-be41-42d771b7587d:finish:3:return:return:1246"
+        "at": 1793733746936,
+        "entry": 4,
+        "eventId": "return:1246:131:reuse-base-update:return:1246"
       },
       "patchId": "e16d571207d9fcb85eed06b1381f7fed5e89e164",
       "changedFiles": [
@@ -2453,7 +2453,8 @@
         "test/room-save-946.test.mjs",
         "test/toast-node-action.test.mjs",
         "test/toast-presentation.test.mjs"
-      ]
+      ],
+      "reason": "reuse-base-update"
     },
     "1247": {
       "issue": 1247,
@@ -2667,17 +2668,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1246,
-    "worker": "toast-reuse-host",
-    "token": "131:admit:1246:0e50780e4b5bca85b96519256520ac9f1f92a3ed:reuse-critical",
-    "fence": 131,
-    "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793733675055,
-    "expiresAt": 1793733975055
-  },
+  "active": null,
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
       "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
@@ -2742,6 +2733,10 @@
     "finish:8df2eedb-ab7b-46f4-b8f0-097791c33abb:finish:1:return": {
       "digest": "91d34787066c0a9c1c2b92a7526b2413981e7f330db4570b0bb0d84dceac03d5",
       "issue": 1226
+    },
+    "return:1246:131:reuse-base-update": {
+      "digest": "60ec91427038bdda6e990030b287985d9157a7cc28a1b7a97ff76e86cd9c8808",
+      "issue": 1246
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
       "digest": "3ccf71ffef7244f371a9bd1f581458f83aa074400a4fe562fabbe693d112ee18",
@@ -2964,6 +2959,25 @@
         "layer": "product",
         "materialSha": "0e50780e4b5bca85b96519256520ac9f1f92a3ed",
         "phase": "sync"
+      }
+    },
+    "return:1246:131:reuse-base-update:return:1246": {
+      "digest": "60ec91427038bdda6e990030b287985d9157a7cc28a1b7a97ff76e86cd9c8808",
+      "issue": 1246,
+      "message": {
+        "kind": "return",
+        "issue": 1246,
+        "at": 1793733746936,
+        "entry": 4,
+        "notice": {
+          "key": "4:reuse-base-update",
+          "reason": "reuse-base-update",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793733746936,
+          "entry": 4,
+          "eventId": "return:1246:131:reuse-base-update:return:1246"
+        }
       }
     }
   },
