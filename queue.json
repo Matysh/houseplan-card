@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1932,
+  "revision": 1933,
   "nextTicket": 123,
   "nextFence": 122,
   "tasks": {
@@ -2300,6 +2300,13 @@
         "finishedAt": "2026-11-03T18:03:28.644Z",
         "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41689698638",
         "execution": "github"
+      },
+      "reviewRound": 1,
+      "reviewRequest": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+      "reviewMaterial": {
+        "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+        "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+        "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9"
       }
     },
     "1247": {
@@ -2477,6 +2484,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1244:review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096": {
+      "issue": 1244,
+      "kind": "code",
+      "requestId": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+      "materialSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+      "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
+      "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-03T18:04:02.402Z"
+      }
     }
   },
   "waiting": [
@@ -2492,7 +2512,8 @@
     "phase": "review",
     "admittedAt": 1793728798151,
     "expiresAt": 1793732633784,
-    "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9"
+    "patchId": "a123437815ff3dd9ce3cac536a69bc06b65bb6b9",
+    "reviewRequest": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096"
   },
   "events": {
     "github:41689040323:1:dev-webhook:61b7ad05-d8b8-4cf0-8054-1068541ed6a2:delivered": {
@@ -2517,6 +2538,10 @@
     },
     "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:2:s6-label": {
       "digest": "e6aeb303f9f2a5746353ef3ca03bd029fe0f712d2aafca8c6dd14cb8b9a96cab",
+      "issue": 1244
+    },
+    "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef:finish:3:review-requested": {
+      "digest": "a2fa0bb4e29f944ecac5979b4c239e13c9f4128234de6b2dfc800a75f9c14521",
       "issue": 1244
     },
     "finish:9f29f75d-59e8-46e3-bb34-7a6774d272ef": {
