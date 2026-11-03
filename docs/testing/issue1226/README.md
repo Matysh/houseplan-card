@@ -15,6 +15,8 @@ No product source, permission/CAS guard, skip, threshold or visual baseline was 
 
 The complete #845corpus passport is still red: inventory84→90files and229→479documents after accepted Stage4 and these fixture changes. Current model11 canonical catalogue ordering and newly discovered graph corpus require a separate full identity review; output/issue1226/corpus-passport-current.json is review material only. The existing passport has not been blindly replaced.
 
+All 229 original full inputs have now been recovered with exact original fingerprints and preserved as an immutable evidence archive, including inputs replaced by compressed hash receipts. See [corpus-preservation.md](corpus-preservation.md). This does not accept the current passport: 31 semantic mapping changes and two changed outcomes remain unresolved, and five protocol receipts were identified as extractor false positives.
+
 Addressed Python integration:10passed/1failed (schema freshness and relay parity now pass). The initial addressed backend group was239passed/1failed. These overlapping selections must not be summed into a fictitious total.
 
 The common fallback audit [41632300999](https://github.com/Matysh/houseplan-card/actions/runs/41632300999) completed on material `a07f4a10309c7b187ab122cf3227002f04c2e81d`, companion `6103fce2223768f7419192cdfa791ca51d232a49`. This material includes the first test ports and #1225 runner, before the later addressed ports on this branch; it is not the final AC3 candidate. Actual HA accounting is 77 business cases executed: 66 passed, 11 failed, zero skipped/unexecuted; all 10 setup cases passed. Failures are being separated into stale companion fixtures and product blockers in #1225.
