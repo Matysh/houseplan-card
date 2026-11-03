@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2041,
+  "revision": 2042,
   "nextTicket": 130,
   "nextFence": 128,
   "tasks": {
@@ -2253,160 +2253,25 @@
     },
     "1242": {
       "issue": 1242,
+      "branch": "issue/1242-summary-camera",
       "track": "show",
       "layer": "product",
-      "branch": "issue/1242-summary-camera",
-      "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 127,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793730712780,
-      "reviewEntry": 2,
-      "patchId": "ef4cc89951ca22c7228dfd48cd9b3babced804e0",
-      "changedFiles": [
-        "custom_components/houseplan/validation.py",
-        "demo/smoke_screen_camera_1165.mjs",
-        "demo/smoke_summary_camera.mjs",
-        "demo/smoke_summary_camera_cold.mjs",
-        "demo/smoke_summary_camera_restore.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CANVAS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.83.0/1242.json",
-        "src/editors/general-settings-dialog.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n/settings/de.json",
-        "src/i18n/settings/en.json",
-        "src/i18n/settings/fr.json",
-        "src/i18n/settings/ru.json",
-        "src/summary-panel-runtime-loaded.ts",
-        "src/types.ts",
-        "tests_backend/test_summary_camera_settings.py"
-      ],
-      "s6": {
-        "id": "20261103T184949573-07017e1a",
-        "requestId": "s6:1242:1aa1fb6e0b7392f87adc8368a43bdb77",
-        "runId": 41697166579,
-        "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-        "status": "passed",
-        "finishedAt": "2026-11-03T18:50:42.448Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41697166579",
-        "execution": "github"
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793730394913,
-        "entry": 1,
-        "requestId": "review:1242:1:86219eb8ba1da836e04c97f6315a71ea56044951:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
+      "mergedSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
+      "mergedAt": 1793732445582,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1242:2:ef4cc89951ca22c7228dfd48cd9b3babced804e0:a649fc3251d7a115d93eb6f0817024d04ab8b577",
-      "reviewMaterial": {
-        "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-        "expectedBase": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "patchId": "ef4cc89951ca22c7228dfd48cd9b3babced804e0"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1242,
-        "requestId": "review:1242:2:ef4cc89951ca22c7228dfd48cd9b3babced804e0:a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "kind": "code",
-        "base": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-        "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-        "patchId": "ef4cc89951ca22c7228dfd48cd9b3babced804e0",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1242,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1242",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\n\nРеализована опция `settings.center_summary` в Общие настройки → Оформление и фон непосредственно после 2.5D, default-off. Это обычный View, не включение kiosk/профиля. Save хранит только true, выключение удаляет ключ; Cancel остаётся общим механизмом черновика. Backend принимает только boolean, отсутствие не материализуется. RU/EN changelog и ledger текущего цикла v1.83.0: major (новая opt-in функция).\n\n### Решение и альтернативы\n\nИспользован существующий `screenFreeArea/screenCameraTarget`, а не новая формула или обход геометрии. `_usesScreenCamera` расширяет прежнего владельца камеры на обычный View; `_centerSummary` явно отдаёт приоритет true/false существующего профиля. Bare kiosk не использует общую настройку. Размеры панели — прежние epoch-кеш и ResizeObserver; наблюдение теперь включается и при общей опции, без нового покадрового DOM measurement. При скрытии/непомещении панели свободна вся сцена; state-only HA ticks сохраняют reference и камеру.\n\nСохранён обычный canonical zoom при восстановлении между этажами/перезагрузкой. Ручная камера не становится новым fit по изменению панели; тёплое восстановление и View/editor handoff удерживают ракурс. Бейдж масштаба в ordinary summary-aware View показывает 100% относительно свободной области. Рассмотрен простой перенос только центра: отклонён, поскольку не решает Fit all и дублирует действующую математику экранов.\n\n### Риски и места для внимания\n\nОсобенно полезно проверить переходы cold restore → первый reference, сохранённый scalar против профильного multiplier, editor handoff и warm remount; отдельные проверки ниже защищают их. Профиль с явным false при общем true проверяется действующим profile smoke. Редакторы не получают новый camera owner; touch editor best effort, новый control — обычная shared General settings форма.\n\nОбезличенный support report пока намеренно не экспортирует эту косметическую опцию: расширение закрытого wire-контракта потребовало бы синхронного внешнего relay deploy, не порученного этой задачей. Полный backup/config JSON roundtrip сохраняет ключ; существующие backup export не фильтруют общий settings. Пользовательский HA, frontend snapshot и визуальные baseline не менялись. Независимых обнаруженных дефектов вне scope нет.\n\n### Проверки и ограничения\n\nДополнительная адресная delay-проба до финального S6 обнаружила раскрытие обычного View до готовности reference при задержке summary chunk на 2500 мс (74 sampled frames после boot cap без reference). Защита существующего bootveil расширена с профиля на общий screen-camera owner. Новый `demo/smoke_summary_camera_cold.mjs` проверяет и поздний успех, и контролируемый 503: неверная камера не раскрывается; после готовности reference veil снимается, а при штатном `summary.unavailable` используется full-stage fallback без зависания. Debug PASS, 14 assertions. Загрузчик и его тайминги не менялись.\n\nПредварительный debug вне финального S6: `npm run build` PASS (типы + Rollup); `demo/smoke_summary_camera.mjs` PASS, 18 assertions на обычной панели: default off, Save/Cancel, правая/нижняя панель, Flat/2.5D и повороты, скрытая/непоместившаяся панель, state ticks, saved zoom, ручной ракурс, editor handoff, warm remount. `demo/smoke_screen_camera_1165.mjs` PASS, 14 assertions с добавленным profile false/global true. Ubuntu WSL, Node22.23.2, Playwright1.62.0, Chromium151.0.7922.34. `tests_backend/test_summary_camera_settings.py`: 8/8 PASS через подготовленный Python venv: отсутствие, true/false JSON/schema roundtrip, невалидные типы. `python3` вне venv не содержит pytest; это не выдаётся за PASS.\n\nПервый финальный S6 прошёл на `79ab89c2`: [run 41691380285](https://github.com/Matysh/houseplan-card/actions/runs/41691380285), но последующее ревью вернуло задачу по гонке сохранённого масштаба, описанной ниже. Новый финальный S6 выполняется через общий queue slot командой finish, GitHub-резервом из-за Windows Git worktree metadata, не через retired gate. В запрос входят четыре browser smoke (ordinary, cold delay/refusal, saved zoom/server race, profile), screen-camera unit и адресный backend файл; успешный финальный результат публикует координатор. Полный product/backend, golden, HA E2E и performance на этой задаче не запускались и не заявлены. HA E2E: надо дополнить существующий settings/summary journey перед следующей бетой, [Matysh/houseplan-e2e#22](https://github.com/Matysh/houseplan-e2e/issues/22).\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [review run 41692081808](https://github.com/Matysh/houseplan-card/actions/runs/41692081808), материал `79ab89c2792f0bc5d80a25089f74825a533905df`, содержательный verdict `changes_requested` (не технический отказ). Единственный blocker — сохранённый zoom теряется, если cached config уже показан, runtime сводки готов, а config/get ещё задержан.\n\nНовый материал для повторной передачи: `ad2283e33` (до штатного rebase в очереди).\n\n- Замечание → исправление: при первом ordinary reference без камеры теперь учитывается конечный положительный `_zoomBySpace[_space]` как canonical scalar; это сохраняет HP-1551 и до ответа сервера. Обычный `_restoreZoom` после authoritative adopt получает то же не затёртое значение.\n- Замечание → исправление: автоматические reference/layout переходы помечены `_screenCameraAutomatic`; settle/cancel не записывают их в zoom preference. Явные Fit all и пользовательские zoom-команды сохраняют прежний путь записи. Это часть устранения гонки, а не изменение загрузчика или глобального `_saveZoom`.\n- Проверка → результат: новый `demo/smoke_summary_camera_restore.mjs` использует реальный LS_CFG snapshot и LS_ZOOM=1.5, задерживает `houseplan/config/get` на 2000 мс и доказывает, что summary reference появился до server adopt. На прежнем коде 5 assertions FAIL; после исправления все 7 PASS: первый/authoritative zoom=1.5, отсутствие автоматических LS-записей, сохранение явного Fit all, отсутствие записи при автоматическом follow. Повтор `npm run build` и ordinary smoke (18 assertions) PASS. Финальный S6 нового материала — через finish, не вместо него.\n- Необязательные предложения по анимации, warm-remount сразу в редактор и observer в bare kiosk не реализовывались: они не были установленными дефектами/blocker и не нужны для адресного исправления. Новых самостоятельных дефектов вне scope не установлено."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Повторный раунд: единственный блокер раунда 1 устранён, новых существенных дефектов не нашёл. Работу можно принять.\n\nБлокер был такой: если конфигурация уже взята из кэша, сводка готова, а ответ сервера ещё не пришёл, сохранённый масштаб этажа терялся. Теперь его закрывают два независимых механизма:\n- первый эталон без камеры берёт сохранённый canonical zoom из `_zoomBySpace`;\n- автоматические переходы экранной камеры больше не записывают предпочтение масштаба.\n\nВторой механизм заодно убирает дрейф сохранённого масштаба, о котором говорилось в улучшениях раунда 1: раньше его переписывало каждое скрытие или показ панели. Явное «Вписать всё» и пользовательские жесты сохраняют масштаб, как и раньше. Порядок «сводка раньше сервера» теперь воспроизводит отдельный smoke-тест, и он входит в успешный S6 run 41697166579.",
-          "understanding": "Задача: добавить в обычный View общую опцию `settings.center_summary`, по умолчанию выключенную. При включённой опции центрирование и «Вписать всё» считаются по свободной области stage, то есть без реально показанной сводной панели. Используется существующий механизм камеры экранов (`screenFreeArea`/`screenCameraTarget`). Явное значение профиля экрана имеет приоритет, bare kiosk не меняется.\n\nАрхитектура решения после раунда 1 не изменилась:\n- `_centerSummary` и `_usesScreenCamera` расширяют владельца экранной камеры на обычный View;\n- множитель масштаба для ordinary View равен 1;\n- `_restoreZoom` для ordinary View переводит эталон в pending и передаёт сохранённый масштаб через `_screenRestoreZoom`.\n\nЧто изменилось в этом раунде:\n1. В `_syncScreenCamera` (src/houseplan-card.ts:2733-2738) при первом эталоне без камеры, без `_view` и без профиля `_screenRestoreZoom` заполняется сохранённым `_zoomBySpace[_space]`. Из него считается multiplier = saved / reference.camera.zoom. Поэтому в холодном кадре до ответа config/get на экран выходит сохранённый масштаб, а не fit свободной области.\n2. Добавлено поле `_screenCameraAutomatic`. Оно взводится перед автоматическим переходом (`!explicit`, строка 2758) и сбрасывается в `_settleCameraTransition`/`_cancelCameraTransition`. Пока оно взведено, `_saveZoom` не вызывается (1415-1422, 1436-1446).\n\nРазобранные пути:\n- `_syncScreenCamera` целиком;\n- `_startCameraTransition` → `CameraTransitionController.start`: при duration 0 вызывает `_settle` синхронно (src/viewport-transition.ts:144-160), поэтому флаг не переживает автоматический переход. Ветка no-op (`sameCameraState`) возвращает false, и флаг сбрасывается на месте (2759-2761);\n- `_resetZoom` (явный fit, `_screenRestoreZoom=null`, сохранение масштаба через обычный путь);\n- `_restoreZoom` (pending + saved);\n- `_saveZoom` (по-прежнему отключён для профиля);\n- взаимодействие холодного заполнения `_screenRestoreZoom` с явным Fit all до первого эталона: приоритет у explicit с множителем 1, затем значение сбрасывается в null;\n- warm adopt: при наличии `_view` холодное заполнение не срабатывает, `_screenRecoveredCamera` удерживает ракурс.\n\nВызовов `_restoreZoom(true)` (carousel) в коде нет, поэтому пропуск `if (carousel) this._saveZoom()` в ordinary-ветке поведения не меняет.",
-          "analysis": [
-            {
-              "topic": "Замечание раунда 1 о потере сохранённого масштаба: устранено",
-              "assessment": "Исправление действует на двух уровнях и поэтому надёжно.\n\nПервый уровень убирает исходную причину. Холодный эталон больше не игнорирует подготовленный HP-1551 масштаб: `_screenRestoreZoom` заполняется из `_zoomBySpace`, и итоговый `camera.zoom` совпадает с сохранённым значением.\n\nВторой уровень работает, даже если первый когда-нибудь промахнётся (например, при другом порядке загрузок). Автоматический переход не может перезаписать `_zoomBySpace`/LS, поэтому последующий `_restoreZoom()` из afterAdopt прочитает исходное значение.\n\nЗаполнение стоит после раннего выхода по неизменному ключу. Если `reference` не построен, значение просто доживает до следующего вызова, а в конце успешного прохода сбрасывается (2768).",
-              "evidence": "src/houseplan-card.ts:2733-2738, 2752-2768; 1414-1447; src/viewport-transition.ts:144-160; demo/smoke_summary_camera_restore.mjs проверяет LS_CFG + LS_ZOOM=1.5 при задержке config/get 2000 мс. Проверки: `summaryReferencePrecedesServer`, `cachedFirstCameraKeepsSavedZoom`, `firstReferenceDoesNotWritePreference`, `authoritativeCameraKeepsSavedZoom`."
-            },
-            {
-              "topic": "Флаг автоматического перехода и границы его действия",
-              "assessment": "Флаг выбран удачно: это одно поле состояния, а глобальный `_saveZoom` и загрузчик не меняются. Время жизни флага короткое и детерминированное:\n- автоматические переходы всегда идут с duration 0 и завершаются синхронно внутри `start`;\n- если переход не стартовал, флаг сбрасывается сразу;\n- любой cancel его сбрасывает.\n\nЯвный Fit all (`explicit`) идёт с флагом false и с CAMERA_FIT_MS, то есть по прежнему пути сохранения. Пользовательские жесты и zoom-команды проходят мимо `_syncScreenCamera`, поэтому флаг их не затрагивает. Отдельной проверкой это подтверждено: `explicitFitStillPersists` и `automaticFollowDoesNotWritePreference`.",
-              "evidence": "src/houseplan-card.ts:2756-2761, 7560, 7572-7582; demo/smoke_summary_camera_restore.mjs (последние три проверки)."
-            },
-            {
-              "topic": "Остальная часть решения (повторно не разбиралась подробно)",
-              "assessment": "Выводы раунда 1 по этим частям остаются в силе, и новый diff их не затрагивает:\n- переиспользуется `screenFreeArea`/`screenCameraTarget`;\n- явный false профиля имеет приоритет;\n- bare kiosk исключён;\n- bootveil защищает холодный старт;\n- схема, настройка, Save/Cancel, i18n и документация согласованы.",
-              "evidence": "src/houseplan-card.ts:2686-2695, 2730, 2745-2746; custom_components/houseplan/validation.py:2970; src/houseplan-editor-runtime.ts:9863-9864."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Узкий граничный случай. Если панель меняет размер во время анимации явного «Вписать всё» (CAMERA_FIT_MS), а камера на допуске `active` ещё считается «в эталоне», автоматический follow отменит явный переход через `_cancelCameraTransition(false)`. Сохранения при этом не будет: ни явного, ни автоматического. В итоге результат Fit all не станет новым предпочтением этажа, и останется прежнее. Последствие мягкое, порчи данных нет. Если захочется закрыть: при прерывании явного fit автоматическим follow можно переносить признак explicit на новый переход. Цена — ещё одна ветка в `_syncScreenCamera`, поэтому обязательным это не считаю.",
-            "Необязательные предложения раунда 1 (плавный переход при показе или скрытии панели вместо 0 мс, warm remount сразу в редактор, observer в bare kiosk) исполнитель обоснованно не реализовал. Их ценность прежняя. Из них самый заметный для пользователя — рывок плана при ручном переключении панели в обычном View, его стоит рассмотреть отдельно."
-          ],
-          "boundaries": "Ревью выполнено по исходникам pinned head 5126d740 и diff относительно a649fc32. Сборку, smoke, unit и backend-тесты я не запускал.\n\nКак результат S6 использован receipt run 41697166579 (status passed) по выбранному исполнителем набору: четыре browser smoke, включая новый smoke_summary_camera_restore, screen-camera unit и адресный backend-файл. Утверждение «5 FAIL на прежнем коде / 7 PASS после исправления» — отчёт исполнителя, я его не проверял.\n\nПолные product/backend-тесты, golden, HA E2E и performance не запускались, исполнитель этого и не заявляет. HA E2E вынесен в Matysh/houseplan-e2e#22.\n\nНе проверял визуальное поведение (рывок при переключении панели, bootveil при warm remount в редактор) и touch-редактор. Минифицированные бандлы не читал."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 91435,
-          "cache_read_input_tokens": 470572,
-          "output_tokens": 9282,
-          "output_tokens_details": {
-            "thinking_tokens": 4361
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 91435,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 761,
-              "cache_read_input_tokens": 84593,
-              "cache_creation_input_tokens": 11046,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11046
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nПовторный раунд: единственный блокер раунда 1 устранён, новых существенных дефектов не нашёл. Работу можно принять.\n\nБлокер был такой: если конфигурация уже взята из кэша, сводка готова, а ответ сервера ещё не пришёл, сохранённый масштаб этажа терялся. Теперь его закрывают два независимых механизма:\n- первый эталон без камеры берёт сохранённый canonical zoom из `_zoomBySpace`;\n- автоматические переходы экранной камеры больше не записывают предпочтение масштаба.\n\nВторой механизм заодно убирает дрейф сохранённого масштаба, о котором говорилось в улучшениях раунда 1: раньше его переписывало каждое скрытие или показ панели. Явное «Вписать всё» и пользовательские жесты сохраняют масштаб, как и раньше. Порядок «сводка раньше сервера» теперь воспроизводит отдельный smoke-тест, и он входит в успешный S6 run 41697166579.\n\n## Понимание решения\n\nЗадача: добавить в обычный View общую опцию `settings.center_summary`, по умолчанию выключенную. При включённой опции центрирование и «Вписать всё» считаются по свободной области stage, то есть без реально показанной сводной панели. Используется существующий механизм камеры экранов (`screenFreeArea`/`screenCameraTarget`). Явное значение профиля экрана имеет приоритет, bare kiosk не меняется.\n\nАрхитектура решения после раунда 1 не изменилась:\n- `_centerSummary` и `_usesScreenCamera` расширяют владельца экранной камеры на обычный View;\n- множитель масштаба для ordinary View равен 1;\n- `_restoreZoom` для ordinary View переводит эталон в pending и передаёт сохранённый масштаб через `_screenRestoreZoom`.\n\nЧто изменилось в этом раунде:\n1. В `_syncScreenCamera` (src/houseplan-card.ts:2733-2738) при первом эталоне без камеры, без `_view` и без профиля `_screenRestoreZoom` заполняется сохранённым `_zoomBySpace[_space]`. Из него считается multiplier = saved / reference.camera.zoom. Поэтому в холодном кадре до ответа config/get на экран выходит сохранённый масштаб, а не fit свободной области.\n2. Добавлено поле `_screenCameraAutomatic`. Оно взводится перед автоматическим переходом (`!explicit`, строка 2758) и сбрасывается в `_settleCameraTransition`/`_cancelCameraTransition`. Пока оно взведено, `_saveZoom` не вызывается (1415-1422, 1436-1446).\n\nРазобранные пути:\n- `_syncScreenCamera` целиком;\n- `_startCameraTransition` → `CameraTransitionController.start`: при duration 0 вызывает `_settle` синхронно (src/viewport-transition.ts:144-160), поэтому флаг не переживает автоматический переход. Ветка no-op (`sameCameraState`) возвращает false, и флаг сбрасывается на месте (2759-2761);\n- `_resetZoom` (явный fit, `_screenRestoreZoom=null`, сохранение масштаба через обычный путь);\n- `_restoreZoom` (pending + saved);\n- `_saveZoom` (по-прежнему отключён для профиля);\n- взаимодействие холодного заполнения `_screenRestoreZoom` с явным Fit all до первого эталона: приоритет у explicit с множителем 1, затем значение сбрасывается в null;\n- warm adopt: при наличии `_view` холодное заполнение не срабатывает, `_screenRecoveredCamera` удерживает ракурс.\n\nВызовов `_restoreZoom(true)` (carousel) в коде нет, поэтому пропуск `if (carousel) this._saveZoom()` в ordinary-ветке поведения не меняет.\n\n## Разбор решения\n\n### Замечание раунда 1 о потере сохранённого масштаба: устранено\n\nИсправление действует на двух уровнях и поэтому надёжно.\n\nПервый уровень убирает исходную причину. Холодный эталон больше не игнорирует подготовленный HP-1551 масштаб: `_screenRestoreZoom` заполняется из `_zoomBySpace`, и итоговый `camera.zoom` совпадает с сохранённым значением.\n\nВторой уровень работает, даже если первый когда-нибудь промахнётся (например, при другом порядке загрузок). Автоматический переход не может перезаписать `_zoomBySpace`/LS, поэтому последующий `_restoreZoom()` из afterAdopt прочитает исходное значение.\n\nЗаполнение стоит после раннего выхода по неизменному ключу. Если `reference` не построен, значение просто доживает до следующего вызова, а в конце успешного прохода сбрасывается (2768).\n\nОснование: src/houseplan-card.ts:2733-2738, 2752-2768; 1414-1447; src/viewport-transition.ts:144-160; demo/smoke_summary_camera_restore.mjs проверяет LS_CFG + LS_ZOOM=1.5 при задержке config/get 2000 мс. Проверки: `summaryReferencePrecedesServer`, `cachedFirstCameraKeepsSavedZoom`, `firstReferenceDoesNotWritePreference`, `authoritativeCameraKeepsSavedZoom`.\n\n### Флаг автоматического перехода и границы его действия\n\nФлаг выбран удачно: это одно поле состояния, а глобальный `_saveZoom` и загрузчик не меняются. Время жизни флага короткое и детерминированное:\n- автоматические переходы всегда идут с duration 0 и завершаются синхронно внутри `start`;\n- если переход не стартовал, флаг сбрасывается сразу;\n- любой cancel его сбрасывает.\n\nЯвный Fit all (`explicit`) идёт с флагом false и с CAMERA_FIT_MS, то есть по прежнему пути сохранения. Пользовательские жесты и zoom-команды проходят мимо `_syncScreenCamera`, поэтому флаг их не затрагивает. Отдельной проверкой это подтверждено: `explicitFitStillPersists` и `automaticFollowDoesNotWritePreference`.\n\nОснование: src/houseplan-card.ts:2756-2761, 7560, 7572-7582; demo/smoke_summary_camera_restore.mjs (последние три проверки).\n\n### Остальная часть решения (повторно не разбиралась подробно)\n\nВыводы раунда 1 по этим частям остаются в силе, и новый diff их не затрагивает:\n- переиспользуется `screenFreeArea`/`screenCameraTarget`;\n- явный false профиля имеет приоритет;\n- bare kiosk исключён;\n- bootveil защищает холодный старт;\n- схема, настройка, Save/Cancel, i18n и документация согласованы.\n\nОснование: src/houseplan-card.ts:2686-2695, 2730, 2745-2746; custom_components/houseplan/validation.py:2970; src/houseplan-editor-runtime.ts:9863-9864.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Узкий граничный случай. Если панель меняет размер во время анимации явного «Вписать всё» (CAMERA_FIT_MS), а камера на допуске `active` ещё считается «в эталоне», автоматический follow отменит явный переход через `_cancelCameraTransition(false)`. Сохранения при этом не будет: ни явного, ни автоматического. В итоге результат Fit all не станет новым предпочтением этажа, и останется прежнее. Последствие мягкое, порчи данных нет. Если захочется закрыть: при прерывании явного fit автоматическим follow можно переносить признак explicit на новый переход. Цена — ещё одна ветка в `_syncScreenCamera`, поэтому обязательным это не считаю.\n- Необязательные предложения раунда 1 (плавный переход при показе или скрытии панели вместо 0 мс, warm remount сразу в редактор, observer в bare kiosk) исполнитель обоснованно не реализовал. Их ценность прежняя. Из них самый заметный для пользователя — рывок плана при ручном переключении панели в обычном View, его стоит рассмотреть отдельно.\n\n## Границы анализа\n\nРевью выполнено по исходникам pinned head 5126d740 и diff относительно a649fc32. Сборку, smoke, unit и backend-тесты я не запускал.\n\nКак результат S6 использован receipt run 41697166579 (status passed) по выбранному исполнителем набору: четыре browser smoke, включая новый smoke_summary_camera_restore, screen-camera unit и адресный backend-файл. Утверждение «5 FAIL на прежнем коде / 7 PASS после исправления» — отчёт исполнителя, я его не проверял.\n\nПолные product/backend-тесты, golden, HA E2E и performance не запускались, исполнитель этого и не заявляет. HA E2E вынесен в Matysh/houseplan-e2e#22.\n\nНе проверял визуальное поведение (рывок при переключении панели, bootveil при warm remount в редактор) и touch-редактор. Минифицированные бандлы не читал.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: a649fc3251d7a115d93eb6f0817024d04ab8b577 → 5126d7401c4755f6612aa27aaddbb26c9f3ca171\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1242, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\n\nРеализована опция `settings.center_summary` в Общие настройки → Оформление и фон непосредственно после 2.5D, default-off. Это обычный View, не включение kiosk/профиля. Save хранит только true, выключение удаляет ключ; Cancel остаётся общим механизмом черновика. Backend принимает только boolean, отсутствие не материализуется. RU/EN changelog и ledger текущего цикла v1.83.0: major (новая opt-in функция).\n\n### Решение и альтернативы\n\nИспользован существующий `screenFreeArea/screenCameraTarget`, а не новая формула или обход геометрии. `_usesScreenCamera` расширяет прежнего владельца камеры на обычный View; `_centerSummary` явно отдаёт приоритет true/false существующего профиля. Bare kiosk не использует общую настройку. Размеры панели — прежние epoch-кеш и ResizeObserver; наблюдение теперь включается и при общей опции, без нового покадрового DOM measurement. При скрытии/непомещении панели свободна вся сцена; state-only HA ticks сохраняют reference и камеру.\n\nСохранён обычный canonical zoom при восстановлении между этажами/перезагрузкой. Ручная камера не становится новым fit по изменению панели; тёплое восстановление и View/editor handoff удерживают ракурс. Бейдж масштаба в ordinary summary-aware View показывает 100% относительно свободной области. Рассмотрен простой перенос только центра: отклонён, поскольку не решает Fit all и дублирует действующую математику экранов.\n\n### Риски и места для внимания\n\nОсобенно полезно проверить переходы cold restore → первый reference, сохранённый scalar против профильного multiplier, editor handoff и warm remount; отдельные проверки ниже защищают их. Профиль с явным false при общем true проверяется действующим profile smoke. Редакторы не получают новый camera owner; touch editor best effort, новый control — обычная shared General settings форма.\n\nОбезличенный support report пока намеренно не экспортирует эту косметическую опцию: расширение закрытого wire-контракта потребовало бы синхронного внешнего relay deploy, не порученного этой задачей. Полный backup/config JSON roundtrip сохраняет ключ; существующие backup export не фильтруют общий settings. Пользовательский HA, frontend snapshot и визуальные baseline не менялись. Независимых обнаруженных дефектов вне scope нет.\n\n### Проверки и ограничения\n\nДополнительная адресная delay-проба до финального S6 обнаружила раскрытие обычного View до готовности reference при задержке summary chunk на 2500 мс (74 sampled frames после boot cap без reference). Защита существующего bootveil расширена с профиля на общий screen-camera owner. Новый `demo/smoke_summary_camera_cold.mjs` проверяет и поздний успех, и контролируемый 503: неверная камера не раскрывается; после готовности reference veil снимается, а при штатном `summary.unavailable` используется full-stage fallback без зависания. Debug PASS, 14 assertions. Загрузчик и его тайминги не менялись.\n\nПредварительный debug вне финального S6: `npm run build` PASS (типы + Rollup); `demo/smoke_summary_camera.mjs` PASS, 18 assertions на обычной панели: default off, Save/Cancel, правая/нижняя панель, Flat/2.5D и повороты, скрытая/непоместившаяся панель, state ticks, saved zoom, ручной ракурс, editor handoff, warm remount. `demo/smoke_screen_camera_1165.mjs` PASS, 14 assertions с добавленным profile false/global true. Ubuntu WSL, Node22.23.2, Playwright1.62.0, Chromium151.0.7922.34. `tests_backend/test_summary_camera_settings.py`: 8/8 PASS через подготовленный Python venv: отсутствие, true/false JSON/schema roundtrip, невалидные типы. `python3` вне venv не содержит pytest; это не выдаётся за PASS.\n\nПервый финальный S6 прошёл на `79ab89c2`: [run 41691380285](https://github.com/Matysh/houseplan-card/actions/runs/41691380285), но последующее ревью вернуло задачу по гонке сохранённого масштаба, описанной ниже. Новый финальный S6 выполняется через общий queue slot командой finish, GitHub-резервом из-за Windows Git worktree metadata, не через retired gate. В запрос входят четыре browser smoke (ordinary, cold delay/refusal, saved zoom/server race, profile), screen-camera unit и адресный backend файл; успешный финальный результат публикует координатор. Полный product/backend, golden, HA E2E и performance на этой задаче не запускались и не заявлены. HA E2E: надо дополнить существующий settings/summary journey перед следующей бетой, [Matysh/houseplan-e2e#22](https://github.com/Matysh/houseplan-e2e/issues/22).\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [review run 41692081808](https://github.com/Matysh/houseplan-card/actions/runs/41692081808), материал `79ab89c2792f0bc5d80a25089f74825a533905df`, содержательный verdict `changes_requested` (не технический отказ). Единственный blocker — сохранённый zoom теряется, если cached config уже показан, runtime сводки готов, а config/get ещё задержан.\n\nНовый материал для повторной передачи: `ad2283e33` (до штатного rebase в очереди).\n\n- Замечание → исправление: при первом ordinary reference без камеры теперь учитывается конечный положительный `_zoomBySpace[_space]` как canonical scalar; это сохраняет HP-1551 и до ответа сервера. Обычный `_restoreZoom` после authoritative adopt получает то же не затёртое значение.\n- Замечание → исправление: автоматические reference/layout переходы помечены `_screenCameraAutomatic`; settle/cancel не записывают их в zoom preference. Явные Fit all и пользовательские zoom-команды сохраняют прежний путь записи. Это часть устранения гонки, а не изменение загрузчика или глобального `_saveZoom`.\n- Проверка → результат: новый `demo/smoke_summary_camera_restore.mjs` использует реальный LS_CFG snapshot и LS_ZOOM=1.5, задерживает `houseplan/config/get` на 2000 мс и доказывает, что summary reference появился до server adopt. На прежнем коде 5 assertions FAIL; после исправления все 7 PASS: первый/authoritative zoom=1.5, отсутствие автоматических LS-записей, сохранение явного Fit all, отсутствие записи при автоматическом follow. Повтор `npm run build` и ordinary smoke (18 assertions) PASS. Финальный S6 нового материала — через finish, не вместо него.\n- Необязательные предложения по анимации, warm-remount сразу в редактор и observer в bare kiosk не реализовывались: они не были установленными дефектами/blocker и не нужны для адресного исправления. Новых самостоятельных дефектов вне scope не установлено.\n```\n\n</details>\n",
-        "createdAt": "2026-11-03T18:59:56.686Z",
-        "artifactId": 13261253473,
-        "runId": 41697845958,
-        "runAttempt": 1,
-        "completedAt": "2026-11-03T19:00:00Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41697845958",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "a649fc3251d7a115d93eb6f0817024d04ab8b577"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1243": {
@@ -2717,80 +2582,8 @@
     1246,
     1252
   ],
-  "active": {
-    "issue": 1242,
-    "worker": "finish",
-    "token": "127:finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:2:admit",
-    "fence": 127,
-    "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-    "expectedBase": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793731636076,
-    "expiresAt": 1793736039780,
-    "patchId": "ef4cc89951ca22c7228dfd48cd9b3babced804e0",
-    "reviewRequest": "review:1242:2:ef4cc89951ca22c7228dfd48cd9b3babced804e0:a649fc3251d7a115d93eb6f0817024d04ab8b577"
-  },
+  "active": null,
   "events": {
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
-      "digest": "b74717bbe91c3148655850e19950fd1870a581195fa1ce207e74475c2abb5959",
-      "issue": 1242
-    },
-    "finish:9c53c4bf-82ba-4d28-a95d-ba46b243c115": {
-      "digest": "0e7714a420d42a732ae6ea6c53ce8ad635d481234133a3ff9aef22807e0bca0c",
-      "issue": 1242
-    },
-    "finish:8b0efc43-cad7-4c34-b51a-081e19ccf984": {
-      "digest": "279a5d2b8598c528261cdc02676c69777523a6129220fb6a0359a1ca20ce119d",
-      "issue": 1242
-    },
-    "finish:3e82ce01-67a8-4488-83ca-f413268ebe85": {
-      "digest": "c691e32e41ada538ce8400deea0e4aa4cb16ad714c5be620e7faac1cf5fdb53b",
-      "issue": 1242
-    },
-    "finish:6d7d5add-d04a-4dbd-8a28-40441c363c1f": {
-      "digest": "ed78e86964d1a980fe1cb491180fb18f5559d8dabbe4ab4b658db637a57de7a6",
-      "issue": 1242
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:3:s6-label": {
-      "digest": "ef58958436c609e16299f5333cba95f939c7fc644560bcd0404cd2cd1de32ed7",
-      "issue": 1242
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:4:review-requested": {
-      "digest": "ff191c027b16e111c3f0b3f137ab09e157cd94eca956ca692cb76990d5b061c5",
-      "issue": 1242
-    },
-    "github:41691140555:1:completions:message:cb0e0256687540a8e684039ef8ad4be2beb2bc266d2cf641b8e9e6615ff89aff": {
-      "digest": "cba981247c9c2b938f1f1e8749e077e7eecbe383cec6d6895a5c4a394ccc2e93",
-      "issue": 1242
-    },
-    "github:41691140555:1:completions:message:239579dc6a4be05bc11a6c988ae8f6966b8df0a290d42db777ee9f31030d0e3f": {
-      "digest": "b28fbddaff2892c8bb2095a49d444b514329935ad89892b20cc3bc7bebf7abf7",
-      "issue": 1242
-    },
-    "github:41691140555:1:completions:message:003dc106d9bfc2324906ef6090b0b79a37a5af1f297fb19321920339c7bf3bc2": {
-      "digest": "39206f7e74dd893b093c833b2b2bd2a63fb135f56920a43d250eae19e98ee1a6",
-      "issue": 1242
-    },
-    "dev-build:41691140555:1:webhook": {
-      "digest": "1e71dac02d3f909de86f1800e09810c40a3e682a6a8dade9141558c7db795e56",
-      "issue": 1242
-    },
-    "dev-build:41691140555:1:webhook:cce3b53e-8265-483b-b137-9dca05df433d:delivered": {
-      "digest": "c859fab1950df5c0a3821f59a809ce5a43899230a46d2280677a2ba0f6d683fb",
-      "issue": 1242
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:14:review-presentation": {
-      "digest": "112334d9c3cd9c456296ba1f2c5edfaaab04e43febf4f0a871dfb01d1f4c8772",
-      "issue": 1242
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:14:return": {
-      "digest": "d0248db6ec729757321e71c07006cc0187e37e5e08c8fb66acac38bf367538e3",
-      "issue": 1242
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:14:return-label": {
-      "digest": "507805e648ad274f804d833675f6ac2e8a57bf8f70ee685c46850b51c6111012",
-      "issue": 1242
-    },
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
       "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
       "issue": 1246
@@ -2815,75 +2608,9 @@
       "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
       "issue": 1246
     },
-    "github:41694597150:1:completions:report:5a4f40aac93788991f2ad47356857880e152e1edd988670b376a2dc888fb8281": {
-      "digest": "e26a6e7ba1d384d96ddbb0b5d34c4816957b771c11d2478ea3fc906751f82669",
-      "issue": 1242
-    },
     "github:41694597150:1:completions:notice:a7b7f3196e22982bec8e0e0bba5b5a4f205003ec6c333f9c4e93b250ee28fd64": {
       "digest": "bbee027053045674db2ec2c8728424313e0510158668d728dd332754f4d398ec",
       "issue": 1246
-    },
-    "github:41694597150:1:completions:metadata:72822c9a-2410-4257-8dea-b8e2ea7e1c26:task-notice:1242::": {
-      "digest": "9a2f04f589c06014edb8e6d087b173276acade271a10ea2aa019166afeac1c3d",
-      "issue": 1242
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:3:synchronized": {
-      "digest": "46878737ff6148139c9b363271061646d792c47d4f3cbd2150453b466675cea3",
-      "issue": 1242
-    },
-    "finish:d798819d-fb6c-40a9-a574-2cc4e281a1c0": {
-      "digest": "fcf09c3ab67817a72a1df895105f4b81f1abecc0599b01da17ee035e9737f697",
-      "issue": 1242
-    },
-    "finish:72e7f0b5-c631-4dbd-b3de-451715195682": {
-      "digest": "3db75828630760b0de0777007c11cdb31684d075dac03b224f440ffa3852c7c7",
-      "issue": 1242
-    },
-    "finish:8cd30b0c-882e-4368-bf31-63dc5ffdeada": {
-      "digest": "83f090e43709f05feb653c52c622909af911efd394df0413bb50f5fcfcff4a8c",
-      "issue": 1242
-    },
-    "finish:8c003b0c-6f5a-4a87-8921-73fa02111890": {
-      "digest": "4a301095380fb079dc9f55df34d31a76a25b3452797550dddb9cd422eeef400b",
-      "issue": 1242
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:4:s6-label": {
-      "digest": "a4896e3ebb59a753a0b2f99ae5336efc02e70ab4fe3bdcf28ea39c5b2605e288",
-      "issue": 1242
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:5:review-requested": {
-      "digest": "8b789901ab2d4f11af85b0067cf5160b77db5fa4b517edb2cd9dab5669cc7ba0",
-      "issue": 1242
-    },
-    "github:41697822561:1:completions:message:e9504ef4283fb4f8cca97adf4ae71bfb2d2f584f3a25faa9579486741fabaa6b": {
-      "digest": "569b5b81b40ee373ab80ba299d3962496a0a26e730621cbcf0853fa8fc3b74f8",
-      "issue": 1242
-    },
-    "github:41697822561:1:completions:message:7656b6c082aa2643a68d1d09d68deb4bc3e46a9a3b1d5d6a9452468503a0ee4b": {
-      "digest": "f24fcd2c7f1e49d1289c9ec83d56c6a13cf0a31d0677c4580a722ff424b9973f",
-      "issue": 1242
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:13:review-presentation": {
-      "digest": "89e23e72b3f3285a8ab78650c3b4580afd6683a208401e2c15e8210a3e6a7a57",
-      "issue": 1242
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:13:review-complete": {
-      "digest": "63d341d07fee58f269e0feca76211b8ce66f323d9d69a3125cfe4cbf1321aa51",
-      "issue": 1242
-    },
-    "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
-      "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
-      "issue": 1242,
-      "message": {
-        "kind": "queued",
-        "issue": 1242,
-        "at": 1793728670029,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
-        "delivered": true
-      }
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
       "digest": "3ccf71ffef7244f371a9bd1f581458f83aa074400a4fe562fabbe693d112ee18",
@@ -2896,52 +2623,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "58d458895ce130b360851a4efa50cbcb43579238",
-        "delivered": true
-      }
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:1:admit": {
-      "digest": "3af392b402d4bbf8f6cd8ac790718c76daef935f781be7f63ccb38a7aff0501a",
-      "issue": 1242,
-      "message": {
-        "kind": "admitted",
-        "issue": 1242,
-        "at": 1793729464816,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:3:s6-complete": {
-      "digest": "8aef61245685fe347d3c5204669d614bd1c5a295eb6ed06df62d7897892320aa",
-      "issue": 1242,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1242,
-        "at": 1793729726601,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T181344781-b36a1b9a",
-          "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
-          "runId": 41691380285,
-          "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
-          "status": "passed",
-          "finishedAt": "2026-11-03T18:14:36.609Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
-          "execution": "github"
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\n\nРеализована опция `settings.center_summary` в Общие настройки → Оформление и фон непосредственно после 2.5D, default-off. Это обычный View, не включение kiosk/профиля. Save хранит только true, выключение удаляет ключ; Cancel остаётся общим механизмом черновика. Backend принимает только boolean, отсутствие не материализуется. RU/EN changelog и ledger текущего цикла v1.83.0: major (новая opt-in функция).\n\n### Решение и альтернативы\n\nИспользован существующий `screenFreeArea/screenCameraTarget`, а не новая формула или обход геометрии. `_usesScreenCamera` расширяет прежнего владельца камеры на обычный View; `_centerSummary` явно отдаёт приоритет true/false существующего профиля. Bare kiosk не использует общую настройку. Размеры панели — прежние epoch-кеш и ResizeObserver; наблюдение теперь включается и при общей опции, без нового покадрового DOM measurement. При скрытии/непомещении панели свободна вся сцена; state-only HA ticks сохраняют reference и камеру.\n\nСохранён обычный canonical zoom при восстановлении между этажами/перезагрузкой. Ручная камера не становится новым fit по изменению панели; тёплое восстановление и View/editor handoff удерживают ракурс. Бейдж масштаба в ordinary summary-aware View показывает 100% относительно свободной области. Рассмотрен простой перенос только центра: отклонён, поскольку не решает Fit all и дублирует действующую математику экранов.\n\n### Риски и места для внимания\n\nОсобенно полезно проверить переходы cold restore → первый reference, сохранённый scalar против профильного multiplier, editor handoff и warm remount; отдельные проверки ниже защищают их. Профиль с явным false при общем true проверяется действующим profile smoke. Редакторы не получают новый camera owner; touch editor best effort, новый control — обычная shared General settings форма.\n\nОбезличенный support report пока намеренно не экспортирует эту косметическую опцию: расширение закрытого wire-контракта потребовало бы синхронного внешнего relay deploy, не порученного этой задачей. Полный backup/config JSON roundtrip сохраняет ключ; существующие backup export не фильтруют общий settings. Пользовательский HA, frontend snapshot и визуальные baseline не менялись. Независимых обнаруженных дефектов вне scope нет.\n\n### Проверки и ограничения\n\nДополнительная адресная delay-проба до финального S6 обнаружила раскрытие обычного View до готовности reference при задержке summary chunk на 2500 мс (74 sampled frames после boot cap без reference). Защита существующего bootveil расширена с профиля на общий screen-camera owner. Новый `demo/smoke_summary_camera_cold.mjs` проверяет и поздний успех, и контролируемый 503: неверная камера не раскрывается; после готовности reference veil снимается, а при штатном `summary.unavailable` используется full-stage fallback без зависания. Debug PASS, 14 assertions. Загрузчик и его тайминги не менялись.\n\nПредварительный debug вне финального S6: `npm run build` PASS (типы + Rollup); `demo/smoke_summary_camera.mjs` PASS, 18 assertions на обычной панели: default off, Save/Cancel, правая/нижняя панель, Flat/2.5D и повороты, скрытая/непоместившаяся панель, state ticks, saved zoom, ручной ракурс, editor handoff, warm remount. `demo/smoke_screen_camera_1165.mjs` PASS, 14 assertions с добавленным profile false/global true. Ubuntu WSL, Node22.23.2, Playwright1.62.0, Chromium151.0.7922.34. `tests_backend/test_summary_camera_settings.py`: 8/8 PASS через подготовленный Python venv: отсутствие, true/false JSON/schema roundtrip, невалидные типы. `python3` вне venv не содержит pytest; это не выдаётся за PASS.\n\nФинальный S6 выполняется через общий queue slot командой finish, GitHub-резервом из-за Windows Git worktree metadata, не через retired gate. В запрос входят три browser smoke (ordinary, cold delay/refusal, profile), screen-camera unit и адресный backend файл; успешный финальный результат публикует координатор. Полный product/backend, golden, HA E2E и performance на этой задаче не запускались и не заявлены. HA E2E: надо дополнить существующий settings/summary journey перед следующей бетой, [Matysh/houseplan-e2e#22](https://github.com/Matysh/houseplan-e2e/issues/22).",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
@@ -3009,30 +2690,6 @@
         "delivered": true
       }
     },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66": {
-      "digest": "873cad50a1aa1b2a47e551a89d08c6f82dec1be3639384f3d6eaf95c84408ce2",
-      "issue": 1242,
-      "message": {
-        "kind": "queued",
-        "issue": 1242,
-        "at": 1793730712780,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
-        "evidence": {
-          "id": "20261103T181344781-b36a1b9a",
-          "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
-          "runId": 41691380285,
-          "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
-          "status": "passed",
-          "finishedAt": "2026-11-03T18:14:36.609Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
-          "execution": "github"
-        },
-        "delivered": true
-      }
-    },
     "return:1246:125:rebase-conflict-recovery:return:1246": {
       "digest": "3de194bbedba1ddd375c85382c9356acea3d83e654e02ff791b4460267a03090",
       "issue": 1246,
@@ -3078,62 +2735,6 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "540ccd7d35598c03fd8b2a2de05df26af4806b8c",
-        "delivered": true
-      }
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:2:admit": {
-      "digest": "78e6c2fdc358823745c114267c3d63e155ff7f077b4fc1dabfd3171ce56a659b",
-      "issue": 1242,
-      "message": {
-        "kind": "admitted",
-        "issue": 1242,
-        "at": 1793731636076,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ad2283e33b383f64210d2dedd92ab500dbc93a1a",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261103T181344781-b36a1b9a",
-          "requestId": "s6:1242:3aec1c4b586a52979c7c9201620cee1a",
-          "runId": 41691380285,
-          "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
-          "status": "passed",
-          "finishedAt": "2026-11-03T18:14:36.609Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41691380285",
-          "execution": "github"
-        },
-        "delivered": true
-      }
-    },
-    "finish:13427004-3907-4254-bfd4-f8bf7a2b6c66:finish:4:s6-complete": {
-      "digest": "b26f4f48fcc91f8734a634a7b9ce8492f8ec0d96746fb7fdc194bd437a2890de",
-      "issue": 1242,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1242,
-        "at": 1793731900240,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-        "phase": "review",
-        "evidence": {
-          "id": "20261103T184949573-07017e1a",
-          "requestId": "s6:1242:1aa1fb6e0b7392f87adc8368a43bdb77",
-          "runId": 41697166579,
-          "materialSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-          "status": "passed",
-          "finishedAt": "2026-11-03T18:50:42.448Z",
-          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41697166579",
-          "execution": "github"
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Цель и результат\n\nРеализована опция `settings.center_summary` в Общие настройки → Оформление и фон непосредственно после 2.5D, default-off. Это обычный View, не включение kiosk/профиля. Save хранит только true, выключение удаляет ключ; Cancel остаётся общим механизмом черновика. Backend принимает только boolean, отсутствие не материализуется. RU/EN changelog и ledger текущего цикла v1.83.0: major (новая opt-in функция).\n\n### Решение и альтернативы\n\nИспользован существующий `screenFreeArea/screenCameraTarget`, а не новая формула или обход геометрии. `_usesScreenCamera` расширяет прежнего владельца камеры на обычный View; `_centerSummary` явно отдаёт приоритет true/false существующего профиля. Bare kiosk не использует общую настройку. Размеры панели — прежние epoch-кеш и ResizeObserver; наблюдение теперь включается и при общей опции, без нового покадрового DOM measurement. При скрытии/непомещении панели свободна вся сцена; state-only HA ticks сохраняют reference и камеру.\n\nСохранён обычный canonical zoom при восстановлении между этажами/перезагрузкой. Ручная камера не становится новым fit по изменению панели; тёплое восстановление и View/editor handoff удерживают ракурс. Бейдж масштаба в ordinary summary-aware View показывает 100% относительно свободной области. Рассмотрен простой перенос только центра: отклонён, поскольку не решает Fit all и дублирует действующую математику экранов.\n\n### Риски и места для внимания\n\nОсобенно полезно проверить переходы cold restore → первый reference, сохранённый scalar против профильного multiplier, editor handoff и warm remount; отдельные проверки ниже защищают их. Профиль с явным false при общем true проверяется действующим profile smoke. Редакторы не получают новый camera owner; touch editor best effort, новый control — обычная shared General settings форма.\n\nОбезличенный support report пока намеренно не экспортирует эту косметическую опцию: расширение закрытого wire-контракта потребовало бы синхронного внешнего relay deploy, не порученного этой задачей. Полный backup/config JSON roundtrip сохраняет ключ; существующие backup export не фильтруют общий settings. Пользовательский HA, frontend snapshot и визуальные baseline не менялись. Независимых обнаруженных дефектов вне scope нет.\n\n### Проверки и ограничения\n\nДополнительная адресная delay-проба до финального S6 обнаружила раскрытие обычного View до готовности reference при задержке summary chunk на 2500 мс (74 sampled frames после boot cap без reference). Защита существующего bootveil расширена с профиля на общий screen-camera owner. Новый `demo/smoke_summary_camera_cold.mjs` проверяет и поздний успех, и контролируемый 503: неверная камера не раскрывается; после готовности reference veil снимается, а при штатном `summary.unavailable` используется full-stage fallback без зависания. Debug PASS, 14 assertions. Загрузчик и его тайминги не менялись.\n\nПредварительный debug вне финального S6: `npm run build` PASS (типы + Rollup); `demo/smoke_summary_camera.mjs` PASS, 18 assertions на обычной панели: default off, Save/Cancel, правая/нижняя панель, Flat/2.5D и повороты, скрытая/непоместившаяся панель, state ticks, saved zoom, ручной ракурс, editor handoff, warm remount. `demo/smoke_screen_camera_1165.mjs` PASS, 14 assertions с добавленным profile false/global true. Ubuntu WSL, Node22.23.2, Playwright1.62.0, Chromium151.0.7922.34. `tests_backend/test_summary_camera_settings.py`: 8/8 PASS через подготовленный Python venv: отсутствие, true/false JSON/schema roundtrip, невалидные типы. `python3` вне venv не содержит pytest; это не выдаётся за PASS.\n\nПервый финальный S6 прошёл на `79ab89c2`: [run 41691380285](https://github.com/Matysh/houseplan-card/actions/runs/41691380285), но последующее ревью вернуло задачу по гонке сохранённого масштаба, описанной ниже. Новый финальный S6 выполняется через общий queue slot командой finish, GitHub-резервом из-за Windows Git worktree metadata, не через retired gate. В запрос входят четыре browser smoke (ordinary, cold delay/refusal, saved zoom/server race, profile), screen-camera unit и адресный backend файл; успешный финальный результат публикует координатор. Полный product/backend, golden, HA E2E и performance на этой задаче не запускались и не заявлены. HA E2E: надо дополнить существующий settings/summary journey перед следующей бетой, [Matysh/houseplan-e2e#22](https://github.com/Matysh/houseplan-e2e/issues/22).\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [review run 41692081808](https://github.com/Matysh/houseplan-card/actions/runs/41692081808), материал `79ab89c2792f0bc5d80a25089f74825a533905df`, содержательный verdict `changes_requested` (не технический отказ). Единственный blocker — сохранённый zoom теряется, если cached config уже показан, runtime сводки готов, а config/get ещё задержан.\n\nНовый материал для повторной передачи: `ad2283e33` (до штатного rebase в очереди).\n\n- Замечание → исправление: при первом ordinary reference без камеры теперь учитывается конечный положительный `_zoomBySpace[_space]` как canonical scalar; это сохраняет HP-1551 и до ответа сервера. Обычный `_restoreZoom` после authoritative adopt получает то же не затёртое значение.\n- Замечание → исправление: автоматические reference/layout переходы помечены `_screenCameraAutomatic`; settle/cancel не записывают их в zoom preference. Явные Fit all и пользовательские zoom-команды сохраняют прежний путь записи. Это часть устранения гонки, а не изменение загрузчика или глобального `_saveZoom`.\n- Проверка → результат: новый `demo/smoke_summary_camera_restore.mjs` использует реальный LS_CFG snapshot и LS_ZOOM=1.5, задерживает `houseplan/config/get` на 2000 мс и доказывает, что summary reference появился до server adopt. На прежнем коде 5 assertions FAIL; после исправления все 7 PASS: первый/authoritative zoom=1.5, отсутствие автоматических LS-записей, сохранение явного Fit all, отсутствие записи при автоматическом follow. Повтор `npm run build` и ordinary smoke (18 assertions) PASS. Финальный S6 нового материала — через finish, не вместо него.\n- Необязательные предложения по анимации, warm-remount сразу в редактор и observer в bare kiosk не реализовывались: они не были установленными дефектами/blocker и не нужны для адресного исправления. Новых самостоятельных дефектов вне scope не установлено.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
