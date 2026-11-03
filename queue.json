@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1859,
+  "revision": 1860,
   "nextTicket": 120,
   "nextFence": 120,
   "tasks": {
@@ -2245,14 +2245,22 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1247-wall-preview",
-      "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc",
+      "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 119,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793727667034,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c5229bcffc7e2d706fd1f62a86eb23839e79c461",
+      "changedFiles": [
+        "demo/smoke_wall_preview_handoff_1247.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1247.json",
+        "src/live-editor.ts"
+      ]
     },
     "1248": {
       "issue": 1248,
@@ -2397,11 +2405,12 @@
     "worker": "finish",
     "token": "119:finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:1:admit",
     "fence": 119,
-    "materialSha": "7e05c2ccbc6437bc83b5ef1c2561ea91490b5bfc",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "f2436671e6a48a64ed785f89cf014b467a123cbb",
+    "expectedBase": "6aa9503096daac765d314d3ae8f39af44544fedd",
+    "phase": "testing",
     "admittedAt": 1793727670991,
-    "expiresAt": 1793727970991
+    "expiresAt": 1793727980669,
+    "patchId": "c5229bcffc7e2d706fd1f62a86eb23839e79c461"
   },
   "events": {
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624:finish:2:synchronized": {
@@ -2435,6 +2444,10 @@
     "github:41686336528:1:completions:notice:13bec2017c50b7047c8218d6ad78276b80ed20f17881d40885b6789f91a75934": {
       "digest": "3f362d2435cec5c7bb77b52d01d82a960f984279e8f7772928f6be88d55bb268",
       "issue": 1248
+    },
+    "finish:c66ab32f-ee39-4972-a4c0-0dfa816a832b:finish:2:synchronized": {
+      "digest": "3d18998901520fbb9514cfd0e68dc3833b8cc0a44714c34b387efb8fc1d26842",
+      "issue": 1247
     },
     "finish:5ff5ae02-76f7-48a3-9443-a0ab020ec624": {
       "digest": "89417b2c25eb780012fd053b9857da71ec44e7b7072e12b5b89fcdc10d4c08c7",
