@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2195,
+  "revision": 2196,
   "nextTicket": 136,
   "nextFence": 136,
   "tasks": {
@@ -1714,7 +1714,7 @@
       "issue": 1226,
       "branch": "codex/1225-1226-revalidation-20261103",
       "track": "show",
-      "layer": "product",
+      "layer": "infra",
       "status": "S8-merged",
       "expectedBase": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
       "mergedSha": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
