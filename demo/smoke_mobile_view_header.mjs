@@ -1,4 +1,4 @@
-// #1184: native shared-header controls, container adaptation, titles and roles.
+// #1184/#1207 UI-018: native shared-header controls, adaptation, hidden PDF title and roles.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launch, finish } from './serve.mjs';
@@ -26,6 +26,7 @@ const read = () => card().evaluate(c => {
   return { width: bounds.width, height: bounds.height, scroll: head.scrollWidth,
     phase: Number(root.querySelector('.hdr').dataset.panelFlow),
     title: head.querySelector('.title')?.textContent.trim(), titleHint: head.querySelector('.title')?.title,
+    titleCount: head.querySelectorAll('.title').length,
     controls: buttons.map(e => ({ id:e.dataset.hp, mode:e.dataset.mode, width:e.getBoundingClientRect().width,
       height:e.getBoundingClientRect().height, inside:e.getBoundingClientRect().left >= bounds.left - 1 && e.getBoundingClientRect().right <= bounds.right + 1 })),
     legacy: !!root.querySelector('[data-hp="header-menu"],[data-hp="header-menu-item"],[data-hp="header-menu-scrim"]'),
@@ -40,7 +41,7 @@ try {
     await size(width); const row = await read(); records.push(row);
     assert.ok(row.scroll <= row.width + 1, JSON.stringify(row));
     assert.ok(row.controls.every(c => c.inside && c.width >= 43.99 && c.height >= 43.99), JSON.stringify(row));
-    assert.ok(!row.legacy && !row.haMenu && row.title.includes('House Plan'), JSON.stringify(row));
+    assert.ok(!row.legacy && !row.haMenu && row.titleCount === 0, JSON.stringify(row));
     for (const id of ['mode-tab','settings','pdf','support','hidden-devices','space-add'])
       assert.ok(row.controls.some(c => c.id === id), id + ' at ' + width);
     assert.equal(row.metricTrees, 0); assert.ok(row.stageHeight > 100);
@@ -63,11 +64,23 @@ try {
   assert.notEqual(await eye.getAttribute('aria-pressed'), pressed); await eye.tap(); await settle();
   const title = 'A very long custom Houseplan card title that must remain readable';
   await page.evaluate(title => window.__card.setConfig({ ...window.__card._config, title }), title); await settle();
-  let row = await read(); assert.equal(row.titleHint, title); assert.ok(row.scroll <= row.width + 1);
+  let row = await read(); assert.equal(row.titleCount, 0); assert.equal(row.titleHint, undefined); assert.ok(row.scroll <= row.width + 1);
+  assert.equal(await card().evaluate(c => c._config.title), title, 'hidden title stays configured for PDF');
   await card().locator('.hdr').screenshot({ path:`${dir}/long-title-390.png` });
+  // UI-018 applies to every full Lovelace card, not only Sections. The same
+  // existing field still reaches the real PDF surface; do not restore the
+  // heading, delete its config, or replace the PDF runtime with a fake.
+  await card().locator('[data-hp="pdf"]').tap();
+  const pdf = card().locator('hp-pdf-dialog');
+  await pdf.waitFor({ state:'attached' });
+  const pdfCancel = pdf.locator('[slot=footer] [data-hp=dialog-cancel]');
+  await pdfCancel.waitFor({ state:'visible' });
+  assert.equal(await pdf.evaluate(dialog => dialog.context.cardTitle), title);
+  await pdfCancel.tap();
+  await pdf.waitFor({ state:'detached' }); await settle();
   for (const language of ['en','ru']) {
     await page.evaluate(language => window.__card.setConfig({ ...window.__card._config,language }), language);
-    await settle(); row = await read(); assert.ok(row.scroll <= row.width + 1, JSON.stringify(row));
+    await settle(); row = await read(); assert.equal(row.titleCount, 0); assert.ok(row.scroll <= row.width + 1, JSON.stringify(row));
     await card().locator('.hdr').screenshot({ path:`${dir}/long-title-390-${language}.png` });
   }
   await page.evaluate(() => {
@@ -92,6 +105,7 @@ try {
   });
   await page.waitForFunction(() => window.__card.shadowRoot?.querySelector('.stage') && !window.__card._booting);
   await settle(); row = await read();
+  assert.equal(row.titleCount, 0, 'read-only full card also omits its configured heading');
   assert.ok(!row.controls.some(c => ['mode-tab','settings','pdf','support','space-add','space-settings'].includes(c.id)), JSON.stringify(row));
   assert.ok(row.controls.some(c => c.id === 'hidden-devices'));
   await card().locator('[data-hp="hidden-devices"]').tap(); await settle();
