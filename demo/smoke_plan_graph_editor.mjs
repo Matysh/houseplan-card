@@ -96,11 +96,18 @@ const nativePoint = async (x, y) => {
   const point = await page.evaluate(([x, y]) => {
     const svg = window.__card.renderRoot.querySelector('svg.plan-svg'), p = svg.createSVGPoint();
     p.x = x; p.y = y; const s = p.matrixTransform(svg.getScreenCTM()), r = svg.getBoundingClientRect();
-    return { x: s.x, y: s.y, inside: s.x >= r.left && s.x <= r.right && s.y >= r.top && s.y <= r.bottom };
+    const stage = svg.closest('.stage').getBoundingClientRect();
+    const within = r => s.x >= r.left && s.x <= r.right && s.y >= r.top && s.y <= r.bottom;
+    const hit = window.__card.renderRoot.elementFromPoint(s.x, s.y);
+    return { x: s.x, y: s.y, inside: within(r) && within(stage),
+      unobscured: !!hit && svg.contains(hit)
+        && !hit.closest('button,input,select,textarea,[contenteditable="true"],.drawwall,[role="dialog"]'),
+      hit: hit ? `${hit.localName}.${hit.getAttribute('class') || ''}` : null };
   }, [x, y]);
   const viewport = page.viewportSize();
   assert.ok(point.inside && point.x >= 0 && point.x < viewport.width && point.y >= 0 && point.y < viewport.height,
     `native plan target must be on stage: ${JSON.stringify(point)}`);
+  assert.ok(point.unobscured, `native plan target must hit unobscured SVG: ${JSON.stringify(point)}`);
   return point;
 };
 const draw = async (x, y) => {
@@ -124,6 +131,21 @@ const drawFromKnownCarrier = async currentModel => {
   await boot(config, 'draw');
   const field = page.locator('houseplan-card .drawwall input');
   await field.fill('15'); await field.press('Tab');
+  // The floating Draw panel lives inside stage; SVG bounds alone accept its
+  // input as a canvas target. Prove nativePoint rejects the actual overlay.
+  const occluded = await field.evaluate(input => {
+    const svg = input.getRootNode().querySelector('svg.plan-svg'), r = input.getBoundingClientRect();
+    const p = svg.createSVGPoint(); p.x = r.left + r.width / 2; p.y = r.top + r.height / 2;
+    const world = p.matrixTransform(svg.getScreenCTM().inverse());
+    return [world.x, world.y];
+  });
+  await assert.rejects(() => nativePoint(...occluded), /must hit unobscured SVG/);
+  check(`${label} native target rejects the visible Draw overlay`, true);
+  // Keep the original world segments and expose them using the public camera
+  // control: at the fitted zoom the legacy second point is behind Draw's hint.
+  await page.locator('houseplan-card [data-hp="zoom-out"]').click();
+  await page.waitForFunction(() => !window.__card._cameraTransition?.active && !window.__card._modeTransitionBusy);
+  await settle();
   // Current first targets a known endpoint; legacy first targets the interior
   // (which requires a pending split before the first accepted candidate).
   const firstX = currentModel ? 200 : 500;

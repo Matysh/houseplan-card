@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make the native Draw/Resize regression check reject targets covered by editor controls and expose the original graph segments through the public zoom control. Preserve graph, metadata and history assertions; no product geometry change. [#1221](https://github.com/Matysh/houseplan-card/issues/1221)
+
 - Accept valid Low-only Zigbee settings in support-report packages at the relay, with matching closed integration/relay validators. Deploy the accepted relay schema separately before releasing this mode. [#1223](https://github.com/Matysh/houseplan-card/issues/1223)
 - Keep decor Undo/Redo on its unchanged legacy wall carrier instead of migrating the plan during Undo; restore active line-chain cursors without turning their history into a structural write. [#1222](https://github.com/Matysh/houseplan-card/issues/1222)
 - Finish near-axis Optimize against coherent exact-graph projections so its first candidate is already a fixed point, including after storage round-trip. [#1224](https://github.com/Matysh/houseplan-card/issues/1224)
