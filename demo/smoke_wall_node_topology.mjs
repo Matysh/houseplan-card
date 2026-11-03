@@ -5,13 +5,16 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { editGraphFixture } from './helpers/graph-fixture.mjs';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 const wall = (id, a, b, cm = 25) => ({ id, a, b, cm });
 const config = (partitions, rooms = []) => {
   const cfg = commitWallSegmentModel({ spaces: [{ id: 'topology', title: 'Topology',
     view_box: [0, 0, 1, 1], rooms, partitions, zero_wall_style: 'dashed', future: { intact: true } }], markers: [],
     settings: { filter_seeded: true, known_devices: [], new_device_ids: [] } }).config;
-  for (const wall of cfg.spaces[0].wall_segments) wall.cm = 25;
+  if (rooms.length) editGraphFixture(cfg, 'topology', { kind: 'thickness', rooms: rooms.map(room => room.id), cm: 25 }, draft => {
+    for (const wall of draft.wall_segments) wall.cm = 25;
+  });
   return commitWallSegmentModel(cfg).config;
 };
 const scenarios = [
@@ -44,7 +47,7 @@ const cameraReady = () => {
 await page.exposeFunction('topologyWire', async message => {
   if (message.type === 'houseplan/config/get') {
     const response = { config: structuredClone(server), rev: revision, can_write: canWrite,
-      ...(capability ? { wall_node_move_api: 1 } : {}) };
+      ...(capability ? { wall_node_move_api: 1, plan_graph_api: 1 } : {}) };
     // Deliberately outlive an early warm render. Visible handles alone do not
     // prove that this new legacy read has replaced the previous scenario.
     if (!response.config.spaces[0].wall_segments) await new Promise(resolve => setTimeout(resolve, 900));
@@ -192,6 +195,7 @@ for (const scenario of scenarios) {
     await page.evaluate(() => document.querySelector('#node-static').remove());
     await mount({ ...accepted, settings: { ...accepted.settings, volumetric_view: true } });
     await page.evaluate(() => window.__hpTest.setMode('view'));
+    await page.waitForFunction(() => window.__card._mode === 'view' && !window.__card._modeTransitionBusy);
     await page.waitForFunction(() => window.__card.renderRoot.querySelector('.stage.projection-iso .iso-wall-top'));
     assert.deepEqual(await page.evaluate(() => window.__card._serverCfg.spaces), accepted.spaces,
       '2.5D draws committed geometry, without modifying its carrier');
@@ -279,7 +283,8 @@ const prematureReady = await page.evaluate(() => {
 assert.equal(prematureReady.handles, true, 'visible handles alone falsely report ready during a real resize');
 assert.ok(prematureReady.errorPx > 0.5, 'real resize exposes the old camera before its asynchronous refit');
 await page.waitForFunction(cameraReady);
-const legacy = structuredClone(cycle.cfg); delete legacy.spaces[0].wall_segments;
+const legacy = structuredClone(cycle.cfg); legacy.model_version = 10;
+delete legacy.spaces[0].wall_segments; delete legacy.spaces[0].plan_graph;
 await mount(legacy); const legacyBefore = await page.evaluate(() => structuredClone(window.__card._serverCfg));
 const legacyWrites = writes; await drag(cycle.point, cycle.target);
 await page.waitForTimeout(700); await page.keyboard.press('Escape'); await page.mouse.up();
@@ -299,6 +304,7 @@ assert.deepEqual(server, cycle.cfg); assert.equal(await page.evaluate(() => wind
 refused = false; await mount(cycle.cfg);
 for (const mode of ['view', 'devices', 'decor']) { // decor is the Background editor's internal mode
   await page.evaluate(async mode => { await window.__hpTest.setMode(mode); }, mode);
+  await page.waitForFunction(mode => window.__card._mode === mode && !window.__card._modeTransitionBusy, mode);
   assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('.hp-node-handle').length), 0,
     `${mode}: no wall-node handles`);
 }

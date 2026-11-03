@@ -56,6 +56,7 @@ const out = await page.evaluate(async () => {
   };
   const clone = (value) => JSON.parse(JSON.stringify(value));
   let serverConfig = clone(original), serverLayout = {}, backup = null;
+  let configRev = 1, layoutRev = 1;
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
   card.hass = {
@@ -65,17 +66,17 @@ const out = await page.evaluate(async () => {
         sent.push(message.type);
         backup = { config: clone(serverConfig), layout: clone(serverLayout) };
         serverConfig = clone(message.config); serverLayout = clone(message.layout);
-        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true };
+        return { ok: true, config_rev: ++configRev, layout_rev: ++layoutRev, can_undo: true };
       }
       if (message.type === 'houseplan/plan/optimize_undo') {
         sent.push(message.type);
         serverConfig = clone(backup.config); serverLayout = clone(backup.layout);
-        return { ok: true, config_rev: 3, layout_rev: 3, can_undo: false };
+        return { ok: true, config_rev: ++configRev, layout_rev: ++layoutRev, can_undo: false };
       }
       if (message.type === 'houseplan/config/get')
-        return { config: clone(serverConfig), rev: 3, can_write: true, can_optimize_undo: !!backup };
+        return { config: clone(serverConfig), rev: configRev, can_write: true, can_optimize_undo: !!backup };
       if (message.type === 'houseplan/layout/get')
-        return { layout: clone(serverLayout), rev: 3 };
+        return { layout: clone(serverLayout), rev: layoutRev };
       return baseCall(message);
     },
   };

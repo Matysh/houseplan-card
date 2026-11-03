@@ -1,13 +1,24 @@
 /** Issue #137: architectural endpoint/line overlay and exact snap in Plan. */
 import { launch, checkAll, finish } from './serve.mjs';
+import { currentGraphFixture, editGraphFixture } from './helpers/graph-fixture.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
+await page.exposeFunction('snapHiddenPartitionFixture', source => {
+  const config = currentGraphFixture(source);
+  editGraphFixture(config, 'snap', { kind: 'partitions', ids: ['hidden-partition'] }, draft => {
+    draft.partitions.push({ id: 'hidden-partition', a: [0.1, 0.1], b: [0.5, 0.1], cm: 15 });
+  });
+  return config;
+});
 
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const settlePaint = async () => { await card.updateComplete; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); };
+  const update = async () => { card.requestUpdate(); await settlePaint();
+    while (card._modeTransitionBusy) await new Promise(resolve => requestAnimationFrame(resolve));
+    await settlePaint(); };
   const cfg = {
     model_version: 10,
     spaces: [{
@@ -60,12 +71,11 @@ const out = await page.evaluate(async () => {
 
   const stage = root().querySelector('.stage');
   const eventAt = (x, y, type = 'pointermove', extra = {}) => {
-    const rect = stage.getBoundingClientRect();
-    const view = card._viewOr(card._baseVb());
+    const point = new DOMPoint(x, y).matrixTransform(stage.querySelector('svg').getScreenCTM());
     const EventType = type.startsWith('pointer') ? PointerEvent : MouseEvent;
     return new EventType(type, {
-      clientX: rect.left + ((x - view.x) / view.w) * rect.width,
-      clientY: rect.top + ((y - view.y) / view.h) * rect.height,
+      clientX: point.x,
+      clientY: point.y,
       bubbles: true,
       pointerId: 41,
       pointerType: 'mouse',
@@ -108,13 +118,13 @@ const out = await page.evaluate(async () => {
       || (close(x, 500) && (close(y, 200) || close(y, 300)));
   });
   stage.dispatchEvent(eventAt(300, 100));
-  await card.updateComplete;
+  await settlePaint();
   result.openingGapDoesNotActivateSnap = !active();
   stage.dispatchEvent(eventAt(840, 600));
-  await card.updateComplete;
+  await settlePaint();
   result.partitionOpeningGapDoesNotActivateSnap = !active();
   stage.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true, pointerId: 41 }));
-  await card.updateComplete;
+  await settlePaint();
   result.pointerLeaveClearsActiveNode = !active();
 
   // The remainder exercises structural writes, not opening migration. Remove
@@ -136,18 +146,18 @@ const out = await page.evaluate(async () => {
   };
 
   stage.dispatchEvent(eventAt(104, 104));
-  await card.updateComplete;
+  await settlePaint();
   result.endpointHoverIsActive = active()?.getAttribute('data-kind') === 'endpoint'
     && close(+active().getAttribute('cx'), 100) && close(+active().getAttribute('cy'), 100)
     && close(+active().getAttribute('r'), card._cmToUnits(10));
   stage.dispatchEvent(eventAt(735, 606));
-  await card.updateComplete;
+  await settlePaint();
   const initialLineActive = active()?.getAttribute('data-kind') === 'line';
   stage.dispatchEvent(eventAt(500, 650));
-  await card.updateComplete;
+  await settlePaint();
   const initialMissInactive = !active();
   stage.dispatchEvent(eventAt(104, 104));
-  await card.updateComplete;
+  await settlePaint();
   card.requestUpdate = originalRequestUpdate;
   result.initialHoverAvoidsFullCardUpdate = initialHoverUpdates === 0;
   result.initialHoverCyclesCandidateKinds = initialLineActive && initialMissInactive
@@ -158,7 +168,7 @@ const out = await page.evaluate(async () => {
     )[index],
   );
   card._markupClick(eventAt(104, 104, 'click', { shiftKey: true }));
-  await card.updateComplete;
+  await settlePaint();
   result.endpointOverridesGridAndShift = card._path.length === 1
     && close(card._path[0][0], 100) && close(card._path[0][1], 100);
 
@@ -167,12 +177,12 @@ const out = await page.evaluate(async () => {
   // so a wall from it may legitimately complete a face and open the room flow.
   card._cancelPath();
   card._markupClick(eventAt(504, 654, 'click'));
-  await card.updateComplete;
+  await settlePaint();
   result.freeStartForLineSnap = card._path.length === 1
     && Number.isFinite(card._path[0][0]) && Number.isFinite(card._path[0][1]);
 
   stage.dispatchEvent(eventAt(735, 606));
-  await card.updateComplete;
+  await settlePaint();
   const lineNode = active();
   result.lineHoverShowsOneDynamicNode = !!lineNode
     && lineNode.getAttribute('data-kind') === 'line'
@@ -186,7 +196,7 @@ const out = await page.evaluate(async () => {
   const originalPartition = JSON.stringify(card._curSpaceCfg.partitions
     .find((item) => item.id === 'base-partition'));
   card._markupClick(eventAt(735, 606, 'click'));
-  await card.updateComplete;
+  await settlePaint();
   result.drawPathLength = card._path.length;
   result.drawCommitUsesExactLineNode = card._path.length === 2
     && close(card._path[1][0], linePoint[0]) && close(card._path[1][1], linePoint[1]);
@@ -216,14 +226,14 @@ const out = await page.evaluate(async () => {
       && Math.min(line[1], line[3]) < 700 && Math.max(line[1], line[3]) > 600
   ));
   stage.dispatchEvent(eventAt(302, 602));
-  await card.updateComplete;
+  await settlePaint();
   result.intermediateCurrentPointDoesNotSelfSnap = !active();
   stage.dispatchEvent(eventAt(102, 602));
-  await card.updateComplete;
+  await settlePaint();
   result.firstCurrentPointRemainsClosureTarget = active()?.getAttribute('data-kind') === 'endpoint'
     && close(+active().getAttribute('cx'), 100) && close(+active().getAttribute('cy'), 600);
   stage.dispatchEvent(eventAt(302, 698));
-  await card.updateComplete;
+  await settlePaint();
   result.currentAnchorDoesNotCreateZeroSegment = !active();
   card._cancelPath();
   card._activateMarkupTool('draw');
@@ -231,13 +241,13 @@ const out = await page.evaluate(async () => {
   // Use a fresh point on the same physical line: the earlier assertion left
   // 735,600 as a saved-draft endpoint, and public Walls correctly resumes it.
   card._markupClick(eventAt(775, 606, 'click'));
-  await card.updateComplete;
+  await settlePaint();
   result.tapWithoutHoverSnapsFirstPoint = card._path.length === 1
     && close(card._path[0][1], 600)
     && close((card._path[0][0] - 600) / card._gridPitch,
       Math.round((card._path[0][0] - 600) / card._gridPitch));
   card._markupClick(eventAt(896, 496, 'click'));
-  await card.updateComplete;
+  await settlePaint();
   result.secondPathLengthBeforeSelect = card._path.length;
   result.secondNoRoomDialog = card._roomDialog !== true;
   const secondDrawnIds = [...card._activeWallChainPartitionIds];
@@ -273,13 +283,11 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(eventAt(830, 670, 'pointermove', { pointerId: 62, buttons: 1 }));
   stage.dispatchEvent(eventAt(620, 540, 'pointercancel', { pointerId: 61 }));
   stage.dispatchEvent(eventAt(830, 670, 'pointerup', { pointerId: 62 }));
-  await card.updateComplete;
+  await settlePaint();
   result.panPinchCancelDoNotCommit = card._path.length === 0
     && JSON.stringify({ partitions: card._curSpaceCfg.partitions }) === gestureGeometry;
 
-  card._curSpaceCfg.partitions.push({
-    id: 'hidden-partition', a: [0.1, 0.1], b: [0.5, 0.1], cm: 15,
-  });
+  card._serverCfg = await window.snapHiddenPartitionFixture(card._serverCfg);
   card._modelCache = null;
   card._cfgEpoch++;
   card._activateMarkupTool('select');
@@ -416,6 +424,7 @@ out.forcedColorsStayReadable = await page.evaluate(async () => {
   card._path = [];
   card.requestUpdate();
   await card.updateComplete;
+  while (card._modeTransitionBusy) await new Promise(resolve => requestAnimationFrame(resolve));
   const overlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
   const line = overlay?.querySelector('.plan-snap-line');
   const node = overlay?.querySelector('.plan-snap-node');

@@ -5,7 +5,32 @@
 // The unit tests own the rules; this smoke owns the wiring — that finishing a
 // chain in the real editor rewrites only the completed compatible run.
 import { launch, checkAll, finish } from './serve.mjs';
+import { currentGraphFixture, editGraphFixture } from './helpers/graph-fixture.mjs';
+import { encodePoint, readSourcePoint, decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 const { page, browser } = await launch({ width: 1000, height: 900 }, 1);
+await page.exposeFunction('chainPartitionFixture', (source, partitions) => {
+  const config = currentGraphFixture(source), id = config.spaces[0].id;
+  const ids = [...new Set([...config.spaces[0].partitions || [], ...partitions].map(wall => wall.id))];
+  // These records represent one already accepted chain, so name its intended
+  // contacts explicitly; equal projected numbers alone do not confer identity.
+  const endpointRefs = Object.fromEntries(partitions.map(wall => [wall.id, [wall.a, wall.b].map(p => {
+    const old = config.spaces[0].plan_graph.nodes.find(node => {
+      const value = pointToNumbers(decodePoint(node.p)); return value[0] === p[0] && value[1] === p[1];
+    });
+    return old ? { kind: 'existing-node', node: old.id }
+      : { kind: 'independent', node: 'fixture-chain:' + JSON.stringify(p), p: encodePoint(readSourcePoint(p)) };
+  })]));
+  editGraphFixture(config, id, { kind: 'partitions', ids, endpointRefs }, draft => { draft.partitions = partitions; });
+  return config;
+});
+const initialChain = currentGraphFixture({ spaces: [{ id: 'chain', title: 'Chain',
+  view_box: [0, 0, 1, 1], rooms: [{ id: 'envelope',
+    poly: [[.01, .01], [.99, .01], [.99, .99], [.01, .99]] }], partitions: [] }],
+  markers: [], settings: { filter_seeded: true, known_devices: [], new_device_ids: [] } });
+await page.evaluate(async config => {
+  await window.__hpTest.setServerConfig(config); await window.__hpTest.setLayout({});
+  await window.__hpTest.switchSpace('chain'); await window.__hpTest.setMode('plan');
+}, initialChain);
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -15,6 +40,10 @@ const res = await page.evaluate(async () => {
   };
   const space = () => c._serverCfg.spaces.find((s) => s.id === c._space);
   const partitionCount = () => (space().partitions || []).length;
+  const seedAcceptedPartitions = async partitions => {
+    c._serverCfg = await window.chainPartitionFixture(c._serverCfg, partitions);
+    c._cfgEpoch++; c._modelCache = null; await settle();
+  };
 
   c._mode = 'plan'; c.requestUpdate(); await settle();
   await new Promise((r) => setTimeout(r, 400));
@@ -26,10 +55,10 @@ const res = await page.evaluate(async () => {
   // then finish the session.
   c._path = [[200, 500], [300, 500], [420, 500], [560, 500]];
   const straightIds = ['straight-a', 'straight-b', 'straight-c'];
-  space().partitions = [...(space().partitions || []),
+  await seedAcceptedPartitions([...(space().partitions || []),
     { id: straightIds[0], a: [.2, .5], b: [.3, .5], cm: 15 },
     { id: straightIds[1], a: [.3, .5], b: [.42, .5], cm: 15 },
-    { id: straightIds[2], a: [.42, .5], b: [.56, .5], cm: 15 }];
+    { id: straightIds[2], a: [.42, .5], b: [.56, .5], cm: 15 }]);
   c._activeWallChainId = 'straight-chain';
   c._activeWallChainPartitionIds = straightIds;
   c._wallChainSegmentCms = [15, 15, 15];
@@ -48,10 +77,10 @@ const res = await page.evaluate(async () => {
   const beforeCorner = partitionCount();
   c._path = [[200, 700], [400, 700], [400, 820]];
   const cornerIds = ['corner-a', 'corner-b'];
-  space().partitions.push(
+  await seedAcceptedPartitions([...(space().partitions || []),
     { id: cornerIds[0], a: [.2, .7], b: [.4, .7], cm: 15 },
     { id: cornerIds[1], a: [.4, .7], b: [.4, .82], cm: 15 },
-  );
+  ]);
   c._activeWallChainId = 'corner-chain';
   c._activeWallChainPartitionIds = cornerIds;
   c._wallChainSegmentCms = [15, 15];
@@ -63,7 +92,7 @@ const res = await page.evaluate(async () => {
   // compatible saved run it touches; unrelated partitions remain untouched.
   const beforeTouch = partitionCount();
   const extensionId = 'extension-wall';
-  space().partitions.push({ id: extensionId, a: [.56, .5], b: [.7, .5], cm: 15 });
+  await seedAcceptedPartitions([...(space().partitions || []), { id: extensionId, a: [.56, .5], b: [.7, .5], cm: 15 }]);
   c._activeWallChainId = 'extension-chain';
   c._activeWallChainPartitionIds = [extensionId];
   c._wallChainSegmentCms = [15];
@@ -73,9 +102,12 @@ const res = await page.evaluate(async () => {
   c._finishWallChain();
   await settle();
   out.finishMergesOnlyTheExtension = partitionCount() === beforeTouch;
-  const extended = (space().partitions || []).find((p) => p.id === extensionId);
-  const joined = (space().partitions || []).find((p) => p.id === straightIds[0]);
-  out.extensionJoinedExistingRun = !extended && !!joined
+  // Graph projection defines codepoint order, so merge preserves the first
+  // canonical input identity rather than legacy array insertion order.
+  const [retainedId, removedId] = [extensionId, straightIds[0]].sort();
+  const removed = (space().partitions || []).find((p) => p.id === removedId);
+  const joined = (space().partitions || []).find((p) => p.id === retainedId);
+  out.extensionJoinedExistingRun = !removed && !!joined
     && Math.abs(joined.a[0] * 1000 - 200) < 0.01
     && Math.abs(joined.b[0] * 1000 - 700) < 0.01;
   out.sessionCleared = !c._activeWallChainId

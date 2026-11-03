@@ -51,6 +51,10 @@ async function scenario(name, config, body) {
       await window.__hpTest.switchSpace('closure');
       await window.__hpTest.setMode('plan');
       await window.__hpTest.setTool('draw');
+      // #1176: completed existing faces are selected, while the native-draw
+      // scenario below still starts with Walls and closes its new cut.
+      if (config.spaces[0].partitions.some(wall => wall.id === 'new-carrier'))
+        await window.__hpTest.setTool('select');
       await new Promise(resolve => setTimeout(resolve, 500));
       await window.__hpTest.settled();
       const card = window.__card, fallback = card.hass.callWS.bind(card.hass);
@@ -62,7 +66,7 @@ async function scenario(name, config, body) {
             state.saved = structuredClone(response.config); state.rev = response.rev;
             return response;
           }
-          return { config: structuredClone(state.saved), rev: state.rev, can_write: true };
+          return { config: structuredClone(state.saved), rev: state.rev, can_write: true, plan_graph_api: 1 };
         }
         if (message.type !== 'houseplan/config/set') return fallback(message);
         if (state.rejectNext) {

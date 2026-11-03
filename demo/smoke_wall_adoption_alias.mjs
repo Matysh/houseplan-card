@@ -18,12 +18,14 @@ await page.evaluate(() => {
       ] },
   ], markers: [], settings: {} };
   const previous = window.__card, hass = window.__mkHass(), callWS = hass.callWS.bind(hass);
-  let rev = 1;
+  let rev = 1, saved = structuredClone(source);
   window.__aliasWrites = [];
   hass.callWS = async message => {
-    if (message.type === 'houseplan/config/get') return { config: structuredClone(source), rev, can_write: true };
+    if (message.type === 'houseplan/config/get') return { config: structuredClone(saved), rev, can_write: true, plan_graph_api: 1 };
     if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
     if (message.type === 'houseplan/config/set') {
+      if (message.expected_rev !== rev) throw Object.assign(new Error('conflict'), { code: 'conflict' });
+      saved = structuredClone(message.config);
       window.__aliasWrites.push(structuredClone(message)); return { ok: true, rev: ++rev };
     }
     return callWS(message);
