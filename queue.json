@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2008,
+  "revision": 2009,
   "nextTicket": 129,
   "nextFence": 127,
   "tasks": {
@@ -2513,7 +2513,7 @@
       "notice": {
         "key": "2:rebase-conflict-recovery",
         "reason": "rebase-conflict-recovery",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793730816509,
         "entry": 2,
@@ -2888,6 +2888,10 @@
     "github:41694597150:1:completions:message:ffcb57d57260a618e9aa940dc87216be782e6a9150f5ad30e4bf2025499ad99d": {
       "digest": "6fcdf42d62fa8f4afbee902299975e572fbed1a95a73249cd205d2d8d9055f63",
       "issue": 1225
+    },
+    "github:41694597150:1:completions:notice:a7b7f3196e22982bec8e0e0bba5b5a4f205003ec6c333f9c4e93b250ee28fd64": {
+      "digest": "bbee027053045674db2ec2c8728424313e0510158668d728dd332754f4d398ec",
+      "issue": 1246
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
       "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
