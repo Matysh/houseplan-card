@@ -28,7 +28,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_canvas_surface_gestures.log"
     },
     {
       "id": "smoke:smoke_decor_creation_selection",
@@ -54,7 +57,10 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1222
+      "dependencyIssue": 1222,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_creation_selection.log"
     },
     {
       "id": "smoke:smoke_canvas_frame",
@@ -79,7 +85,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_canvas_frame.log"
     },
     {
       "id": "smoke:smoke_config_lifecycle",
@@ -101,7 +110,10 @@
           "seconds": 7,
           "log": "output/issue1226-ui/config_lifecycle.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_config_lifecycle.log"
     },
     {
       "id": "smoke:smoke_daycycle_outline_removed",
@@ -123,7 +135,10 @@
           "seconds": 3,
           "log": "output/issue1226-ui/daycycle_outline_removed.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_outline_removed.log"
     },
     {
       "id": "smoke:smoke_daycycle_raster",
@@ -150,7 +165,10 @@
           "fixturePatch": "a5aa896cd",
           "report": "artifacts/diagnostics/863/issue1226-clean-a5aa896cd.json"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_daycycle_raster.log"
     },
     {
       "id": "smoke:smoke_decor",
@@ -176,7 +194,10 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1222
+      "dependencyIssue": 1222,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor.log"
     },
     {
       "id": "smoke:smoke_decor_group_style_cache",
@@ -198,7 +219,10 @@
           "seconds": 7,
           "log": "output/issue1226-ui/decor_group_style_cache.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_group_style_cache.log"
     },
     {
       "id": "smoke:smoke_decor_line_click",
@@ -226,7 +250,10 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1222
+      "dependencyIssue": 1222,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_line_click.log"
     },
     {
       "id": "smoke:smoke_decor_multiselect",
@@ -252,7 +279,10 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1222
+      "dependencyIssue": 1222,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_multiselect.log"
     },
     {
       "id": "smoke:smoke_decor_order",
@@ -274,7 +304,10 @@
           "log": "output/issue1226-ui/decor_order-final.log",
           "evidence": "native standalone final command exit0; all assertions OK"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_decor_order.log"
     },
     {
       "id": "smoke:smoke_device_contact_reflow",
@@ -296,7 +329,10 @@
           "seconds": 19,
           "log": "output/issue1226-ui/device_contact_reflow.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contact_reflow.log"
     },
     {
       "id": "smoke:smoke_device_contact_zoom",
@@ -318,14 +354,17 @@
           "seconds": 27,
           "log": "output/issue1226-ui/device_contact_zoom.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contact_zoom.log"
     },
     {
       "id": "smoke:smoke_device_contacts",
       "file": "demo/smoke_device_contacts.mjs",
-      "category": "business-invariant-failure",
+      "category": "product-escape-during-device-drag",
       "status": "failed",
-      "reason": "After native desktop setup the business assertion is still red (cancel/blur restoration or the next deliberate click). Preserve it and collect a minimal product/fixture reproduction.",
+      "reason": "Original 10 failures retained. Existing native baseline proves Escape commits detached point and adds write/history; Properties escape intercepts before device drag cancellation. Later group failures can cascade; lost-capture event order is not independently classified as another product defect.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -341,7 +380,34 @@
           "log": "output/issue1226-ui/device_contacts.log",
           "failureTail": "\nFAILED (10):\n  - cancelRestoresContact: expected true, got false\n  - cancelNoWrite: expected true, got false\n  - cancelExactPosition: expected true, got false\n  - cancelNoHistory: expected true, got false\n  - pointercancel:group-restored: expected true, got false\n  - lostpointercapture:no-write: expected true, got false\n  - lostpointercapture:no-history: expected true, got false\n  - lostpointercapture:exact-restore: expected true, got false\n  - lostpointercapture:group-restored: expected true, got false\n  - blur:group-restored: expected true, got false\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_contacts.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_device_contacts",
+          "file": "demo/smoke_device_contacts.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 6738,
+          "log": "output/issue1226/resume-ui/smoke_device_contacts.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_device_contacts",
+          "file": "demo/smoke_device_contacts.mjs",
+          "category": "product-escape-during-device-drag",
+          "status": "failed",
+          "reason": "Original 10 failures retained. Existing native baseline proves Escape commits detached point and adds write/history; Properties escape intercepts before device drag cancellation. Later group failures can cascade; lost-capture event order is not independently classified as another product defect.",
+          "evidence": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_device_contacts.log; /home/matysh/hp-1078-sun-transparency-20261025/artifacts/866/native/result.json",
+          "name": "smoke_device_contacts",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "relatedIssue": null
+        }
+      ]
     },
     {
       "id": "smoke:smoke_device_copy",
@@ -363,14 +429,17 @@
           "seconds": 8,
           "log": "output/issue1226-ui/device_copy.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_copy.log"
     },
     {
       "id": "smoke:smoke_device_more_info",
       "file": "demo/smoke_device_more_info.mjs",
-      "category": "native-pointer-obstruction",
-      "status": "failed",
-      "reason": "Current reproduction finds the intended More Info field, but hp-help intercepts its centre click. Diagnose painted hit bounds before changing the native gesture; no force click.",
+      "category": "native-hover-lifecycle-between-layouts",
+      "status": "passed",
+      "reason": "Original21 controls pass. Genuine picker button was covered by hovered Help popover after viewport moved under stale pointer. Natural mouse-away plus awaiting public trigger aria-expanded=false preserves native click/search/Save/Cancel/HA target/no-service contracts; no forced click or hidden Help.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -386,7 +455,34 @@
           "log": "output/issue1226-ui/device_more_info.log",
           "failureTail": "or('#marker-more-info-entity')`,\n    '    - locator resolved to <button type=\"button\" data-hp=\"field\" aria-expanded=\"false\" aria-haspopup=\"listbox\" id=\"marker-more-info-entity\" class=\"hpf-select hpf-pick \" aria-label=\"Open in Home Assistant\" data-field=\"marker-more-info-entity\">…</button>',\n    '  - attempting click action',\n    '    2 × waiting for element to be visible, enabled and stable',\n    '      - element is visible, enabled and stable',\n    '      - scrolling into view if needed',\n    '      - done scrolling',\n    '      - <hp-help instant=\"\" data-has-content=\"\" data-pointer-hover=\"\" data-help-key=\"marker.more_info_help\"></hp-help> from <span class=\"hpf-label hpf-labelrow \">…</span> subtree intercepts pointer events',\n    '    - retrying click action',\n    '    - waiting 20ms',\n    '    2 × waiting for element to be visible, enabled and stable',\n    '      - element is visible, enabled and stable',\n    '      - scrolling into view if needed',\n    '      - done scrolling',\n    '      - <hp-help instant=\"\" data-has-content=\"\" data-pointer-hover=\"\" data-help-key=\"marker.more_info_help\"></hp-help> from <span class=\"hpf-label hpf-labelrow \">…</span> subtree intercepts pointer events',\n    '    - retrying click action',\n    '      - waiting 100ms',\n    '    58 × waiting for element to be visible, enabled and stable',\n    '       - element is visible, enabled and stable',\n    '       - scrolling into view if needed',\n    '       - done scrolling',\n    '       - <hp-help instant=\"\" data-has-content=\"\" data-pointer-hover=\"\" data-help-key=\"marker.more_info_help\"></hp-help> from <span class=\"hpf-label hpf-labelrow \">…</span> subtree intercepts pointer events',\n    '     - retrying click action',\n    '       - waiting 500ms'\n  ],\n  name: 'TimeoutError'\n}\n\nNode.js v22.23.2\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_more_info.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_device_more_info",
+          "file": "demo/smoke_device_more_info.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 39392,
+          "log": "output/issue1226/resume-ui/smoke_device_more_info.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_device_more_info",
+          "file": "demo/smoke_device_more_info.mjs",
+          "category": "native-hover-lifecycle-between-layouts",
+          "status": "passed",
+          "reason": "Original21 controls pass. Genuine picker button was covered by hovered Help popover after viewport moved under stale pointer. Natural mouse-away plus awaiting public trigger aria-expanded=false preserves native click/search/Save/Cancel/HA target/no-service contracts; no forced click or hidden Help.",
+          "evidence": "output/issue1226/ui-five/more-info-port-r2.log; output/issue1226/ui-five/more-info-diagnostic.log",
+          "name": "smoke_device_more_info",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "relatedIssue": null
+        }
+      ]
     },
     {
       "id": "smoke:smoke_device_structure_history",
@@ -408,14 +504,17 @@
           "seconds": 10,
           "log": "output/issue1226-ui/device_structure_history.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_device_structure_history.log"
     },
     {
       "id": "smoke:smoke_dialog_picker_998",
       "file": "demo/smoke_dialog_picker_998.mjs",
-      "category": "native-decor-dialog-investigation",
-      "status": "failed",
-      "reason": "Native sweeps pass all seven primary dialogs at1280/390 and extra column/stairs/image choices. The furniture double-click does not open its decor dialog; preserve that native business path, no force click.",
+      "category": "native-furniture-properties-entry",
+      "status": "passed",
+      "reason": "Retain entire165-control dialog sweep at1280/390 and genuine pinned HA11 checks. Furniture painted single selection followed by rendered Properties command replaces double-click across newly installed resize hit frame. No furniture symbol choice/overlay/Save/Cancel/bounds oracle removed.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -431,7 +530,34 @@
           "log": "output/issue1226-ui/dialog_picker_998.log",
           "failureTail": "а передний план\"\\n' +\n      '  - button \"На задний план\"\\n' +\n      '  - button \"Свойства\":\\n' +\n      '    - img\\n' +\n      '    - text: Свойства\\n' +\n      '  - button \"Удалить\":\\n' +\n      '    - img\\n' +\n      '    - text: Удалить\\n' +\n      '- img:\\n' +\n      '  - text: Temperature\\n' +\n      '  - img \"Лестница\"\\n' +\n      '- complementary \"Свойства\":\\n' +\n      '  - text: Мебель Мебель · Picker sweep\\n' +\n      '  - heading \"Положение\" [level=3]\\n' +\n      '  - text: Центр · X\\n' +\n      '  - spinbutton \"Центр · X\": \"570\"\\n' +\n      '  - text: см Центр · Y\\n' +\n      '  - spinbutton \"Центр · Y\": \"720\"\\n' +\n      '  - text: см\\n' +\n      '  - paragraph: Положение центра рамки выделения.\\n' +\n      '  - heading \"Геометрия\" [level=3]\\n' +\n      '  - text: Ширина\\n' +\n      '  - spinbutton \"Ширина\": \"180\"\\n' +\n      '  - text: см Высота на плане\\n' +\n      '  - spinbutton \"Высота на плане\": \"120\"\\n' +\n      '  - text: см Угол\\n' +\n      '  - spinbutton \"Угол\": \"0\"\\n' +\n      '  - text: ° Масштаб — %\\n' +\n      '  - heading \"Оформление\" [level=3]\\n' +\n      '  - text: Цвет контура\\n' +\n      `  - 'button \"Цвет контура: #607d8b, 100%\"'\\n` +\n      `  - 'textbox \"Цвет контура: Цвет HEX\"': \"#607D8B\"\\n` +\n      '  - spinbutton \"Непрозрачность\": \"100\"\\n' +\n      '  - text: \"% Заливка — Толщина контура\"\\n' +\n      '  - spinbutton \"Толщина контура\": \"3.6\"\\n' +\n      '  - text: см Стиль линии —\\n' +\n      '  - heading \"Мебель\" [level=3]\\n' +\n      '  - text: Отражение\\n' +\n      '  - button \"Горизонтально\"\\n' +\n      '  - button \"Вертикально\"\\n' +\n      '  - button \"На передний план\"\\n' +\n      '  - button \"На задний план\"\\n' +\n      '  - button \"Удалить\"\\n' +\n      '  - text: Ctrl A Выделить весь декор Ctrl M Выделить всю мебель Ctrl Z Отменить правку'\n  }\n}\n\nNode.js v22.23.2\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_dialog_picker_998.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_dialog_picker_998",
+          "file": "demo/smoke_dialog_picker_998.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 70374,
+          "log": "output/issue1226/resume-ui/smoke_dialog_picker_998.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_dialog_picker_998",
+          "file": "demo/smoke_dialog_picker_998.mjs",
+          "category": "native-furniture-properties-entry",
+          "status": "passed",
+          "reason": "Retain entire165-control dialog sweep at1280/390 and genuine pinned HA11 checks. Furniture painted single selection followed by rendered Properties command replaces double-click across newly installed resize hit frame. No furniture symbol choice/overlay/Save/Cancel/bounds oracle removed.",
+          "evidence": "output/issue1226/ui-five/dialog-picker-port.log",
+          "name": "smoke_dialog_picker_998",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "relatedIssue": null
+        }
+      ]
     },
     {
       "id": "smoke:smoke_discard_dialog_polish",
@@ -453,7 +579,10 @@
           "seconds": 6,
           "log": "output/issue1226-ui/discard_dialog_polish.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_discard_dialog_polish.log"
     },
     {
       "id": "smoke:smoke_e2e_hooks",
@@ -479,14 +608,17 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_e2e_hooks.log"
     },
     {
       "id": "smoke:smoke_edit_walk",
       "file": "demo/smoke_edit_walk.mjs",
-      "category": "retained-edit-sequence-invariant",
+      "category": "current-and-legacy-geometry",
       "status": "failed",
-      "reason": "Three deterministic original 24-step walks remain red: second-floor seeds 2/3 and first-floor seed 2. Current outputs violate the original exact model invariant/debt oracle. Preserve the saved failing configs and chains; no expected-debt acceptance or geometry rounding.",
+      "reason": "Original legacy walks are retained, with six current-graph walks added. Known old partition debt is filtered only for the original carrier identity/metadata/thickness and collinear in-range atoms; raw debt1 and current debt3 remain explicit. Eleven walks pass, original legacy first-floor seed2 step3 remains RED: Delete Keep walls creates two hidden partitions and a mixed-role record. Typed current Optimize refusal additionally proves byte-identical input/live config; arbitrary exceptions still fail.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -507,7 +639,39 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1224
+      "dependencyIssue": 1224,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_edit_walk.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_edit_walk",
+          "file": "demo/smoke_edit_walk.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 19667,
+          "log": "output/issue1226/resume-ui/smoke_edit_walk.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_edit_walk",
+          "file": "demo/smoke_edit_walk.mjs",
+          "status": "failed",
+          "category": "current-and-legacy-geometry",
+          "reason": "Original legacy walks are retained, with six current-graph walks added. Known old partition debt is filtered only for the original carrier identity/metadata/thickness and collinear in-range atoms; raw debt1 and current debt3 remain explicit. Eleven walks pass, original legacy first-floor seed2 step3 remains RED: Delete Keep walls creates two hidden partitions and a mixed-role record. Typed current Optimize refusal additionally proves byte-identical input/live config; arbitrary exceptions still fail.",
+          "evidence": {
+            "base": "0bda944e3",
+            "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_edit_walk.log",
+            "baselineReused": false,
+            "fullStableAudit": false,
+            "newBuild": false,
+            "log": "output/issue1226/ui-edit-walk-both-models.log",
+            "sha256": "9c5ab1db23e931bb11d765ca1f3c1e670a5a9029b0efa1b8e5808e6b975bf18e"
+          }
+        }
+      ]
     },
     {
       "id": "smoke:smoke_editor_command_latency",
@@ -529,7 +693,10 @@
           "seconds": 23,
           "log": "output/issue1226-ui/editor_command_latency.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_command_latency.log"
     },
     {
       "id": "smoke:smoke_editor_nudge",
@@ -558,7 +725,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_nudge.log"
     },
     {
       "id": "smoke:smoke_editor_styles_lazy",
@@ -583,14 +753,17 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_styles_lazy.log"
     },
     {
       "id": "smoke:smoke_editor_tabs",
       "file": "demo/smoke_editor_tabs.mjs",
-      "category": "mode-transition-investigation",
-      "status": "failed",
-      "reason": "The native mode transition witness remains in plan while requesting devices. Inspect pending draft/transition ownership; do not bypass mode guards.",
+      "category": "public-draft-lifecycle-and-accepted-ui",
+      "status": "passed",
+      "reason": "Public room Cancel/Discard retires the face draft before isolated keyboard-fixture cleanup. Full accessible mode labels remain exact; visible short labels and 44px active group segment/hidden View reservation follow accepted #1207 UI-006. All other close/hit/glyph/keyboard/context/geometry/draft controls pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -606,14 +779,46 @@
           "log": "output/issue1226-ui/editor_tabs.log",
           "failureTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: Error: __hpTest.setMode: ha-card[data-hp-mode] не перешёл в devices (сейчас plan)\n    at waitFor (eval at evaluate (:311:30), <anonymous>:56:47)\n    at async Object.setMode (eval at evaluate (:311:30), <anonymous>:148:7)\n    at async eval (eval at evaluate (:311:30), <anonymous>:384:3)\n    at async <anonymous>:337:30\n    at /home/matysh/hp-batch2-infra910-20261015/demo/smoke_editor_tabs.mjs:3:24 {\n  log: []\n}\n\nNode.js v22.23.2\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_editor_tabs.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_editor_tabs",
+          "file": "demo/smoke_editor_tabs.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 10989,
+          "log": "output/issue1226/resume-ui/smoke_editor_tabs.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_editor_tabs",
+          "file": "demo/smoke_editor_tabs.mjs",
+          "status": "passed",
+          "category": "public-draft-lifecycle-and-accepted-ui",
+          "reason": "Public room Cancel/Discard retires the face draft before isolated keyboard-fixture cleanup. Full accessible mode labels remain exact; visible short labels and 44px active group segment/hidden View reservation follow accepted #1207 UI-006. All other close/hit/glyph/keyboard/context/geometry/draft controls pass.",
+          "evidence": {
+            "base": "0bda944e3",
+            "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_editor_tabs.log",
+            "baselineReused": false,
+            "fullStableAudit": false,
+            "newBuild": false,
+            "log": "output/issue1226/ui-editor-tabs-accepted-segment.log",
+            "sha256": "ee663347c25f493b00e54a1b5314f49630e4abad5eb7bb7d152c90722194ac9a"
+          }
+        }
+      ]
     },
     {
       "id": "smoke:smoke_floor_cache_reuse",
       "file": "demo/smoke_floor_cache_reuse.mjs",
-      "category": "retained-current-graph-undo-resize",
+      "category": "retained-current-resize-refusal",
       "status": "failed",
-      "reason": "All other original cache/fresh-card/held-ACK checks pass. After native Undo, the next trusted Resize begins but accepts no preview: unions 0 versus required 1, no live areas, geometry-safe-refusal toast. Full history/cache contracts stay red; do not bless no-op gestures or relax quotas.",
+      "reason": "The original 0bda run remains authoritative: after real Undo a native Resize starts but refuses every preview, union0/no live areas rather than required union1/two rooms. All other original cache/held-ACK/rejection/fresh-card/history controls passed. No fixture, quota, no-op or history oracle was relaxed and no duplicate unchanged run was made.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -631,14 +836,44 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_floor_cache_reuse.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_floor_cache_reuse",
+          "file": "demo/smoke_floor_cache_reuse.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 17834,
+          "log": "output/issue1226/resume-ui/smoke_floor_cache_reuse.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_floor_cache_reuse",
+          "file": "demo/smoke_floor_cache_reuse.mjs",
+          "status": "failed",
+          "category": "retained-current-resize-refusal",
+          "reason": "The original 0bda run remains authoritative: after real Undo a native Resize starts but refuses every preview, union0/no live areas rather than required union1/two rooms. All other original cache/held-ACK/rejection/fresh-card/history controls passed. No fixture, quota, no-op or history oracle was relaxed and no duplicate unchanged run was made.",
+          "evidence": {
+            "base": "0bda944e3",
+            "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_floor_cache_reuse.log",
+            "baselineReused": true,
+            "fullStableAudit": false,
+            "newBuild": false
+          }
+        }
+      ]
     },
     {
       "id": "smoke:smoke_furniture_pan",
       "file": "demo/smoke_furniture_pan.mjs",
-      "category": "business-invariant-failure",
-      "status": "failed",
-      "reason": "After native desktop setup the business assertion is still red (cancel/blur restoration or the next deliberate click). Preserve it and collect a minimal product/fixture reproduction.",
+      "category": "accepted-decor-context-contract",
+      "status": "passed",
+      "reason": "Keep all pan/Cancel/capture/blur/floor oracles. Primary-only right-click+next-stamp witness uses independently verified empty rendered canvas; existing-item right-click now checks accepted object selection/context, exact count/history and zero config writes, then native dismissal and explicit rearm.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -654,7 +889,34 @@
           "log": "output/issue1226-ui/furniture_pan.log",
           "failureTail": "ttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-pn2UOn --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n\nFAILED (1):\n  - furniture.next_deliberate_click_works: expected 2, got 1\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_furniture_pan.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_furniture_pan",
+          "file": "demo/smoke_furniture_pan.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 3508,
+          "log": "output/issue1226/resume-ui/smoke_furniture_pan.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_furniture_pan",
+          "file": "demo/smoke_furniture_pan.mjs",
+          "category": "accepted-decor-context-contract",
+          "status": "passed",
+          "reason": "Keep all pan/Cancel/capture/blur/floor oracles. Primary-only right-click+next-stamp witness uses independently verified empty rendered canvas; existing-item right-click now checks accepted object selection/context, exact count/history and zero config writes, then native dismissal and explicit rearm.",
+          "evidence": "output/issue1226/ui-five/furniture-port-r2.log",
+          "name": "smoke_furniture_pan",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "relatedIssue": 1035
+        }
+      ]
     },
     {
       "id": "smoke:smoke_gear_tabs",
@@ -676,7 +938,10 @@
           "seconds": 4,
           "log": "output/issue1226-ui/gear_tabs.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_gear_tabs.log"
     },
     {
       "id": "smoke:smoke_general_settings_form",
@@ -699,7 +964,10 @@
           "seconds": 5,
           "log": "output/issue1226-ui/general_settings_form.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_general_settings_form.log"
     },
     {
       "id": "smoke:smoke_geometry_cleanup_842",
@@ -725,7 +993,23 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_geometry_cleanup_842.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_geometry_cleanup_842",
+          "file": "demo/smoke_geometry_cleanup_842.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 19350,
+          "log": "output/issue1226/resume-ui/smoke_geometry_cleanup_842.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_geometry_corpus",
@@ -751,7 +1035,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_geometry_corpus.log"
     },
     {
       "id": "smoke:smoke_grid_snap",
@@ -775,7 +1062,23 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_grid_snap.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_grid_snap",
+          "file": "demo/smoke_grid_snap.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 5349,
+          "log": "output/issue1226/resume-ui/smoke_grid_snap.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_hidden_device_toggle",
@@ -797,14 +1100,17 @@
           "seconds": 11,
           "log": "output/issue1226-ui/hidden_device_toggle.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_hidden_device_toggle.log"
     },
     {
       "id": "smoke:smoke_hide_layers",
       "file": "demo/smoke_hide_layers.mjs",
-      "category": "retained-zero-thickness-paint",
-      "status": "failed",
-      "reason": "The real Thickness workflow opens its dialog, but no zero-wall paint appears in View or any of the three editors. Existing hide/opening/decor/geometry/handle-size checks otherwise pass. Selectors still exist in current renderers; no visibility assertion or zero-thickness semantics changed.",
+      "category": "explicit-positive-to-zero-fixture",
+      "status": "passed",
+      "reason": "The default demo selected divider is already zero with no authored record; a no-op0→0 does not create graph paint. Fixture now uses actual Thickness15→0, proving a stored positive atom and exact divider IDs after zero. All original View/editor zero-paint, decor/opening semantics, dialog, hit-bead and real backdrop-drag assertions pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -825,7 +1131,39 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_hide_layers.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_hide_layers",
+          "file": "demo/smoke_hide_layers.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 2930,
+          "log": "output/issue1226/resume-ui/smoke_hide_layers.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_hide_layers",
+          "file": "demo/smoke_hide_layers.mjs",
+          "status": "passed",
+          "category": "explicit-positive-to-zero-fixture",
+          "reason": "The default demo selected divider is already zero with no authored record; a no-op0→0 does not create graph paint. Fixture now uses actual Thickness15→0, proving a stored positive atom and exact divider IDs after zero. All original View/editor zero-paint, decor/opening semantics, dialog, hit-bead and real backdrop-drag assertions pass.",
+          "evidence": {
+            "base": "0bda944e3",
+            "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_hide_layers.log",
+            "baselineReused": false,
+            "fullStableAudit": false,
+            "newBuild": false,
+            "log": "output/issue1226/ui-hide-zero-fixture-port-r2.log",
+            "sha256": "a12b7cb43c9d9134b5bb1b35e9096b66775d9e92e7611d1cc92b02edd6782a87"
+          }
+        }
+      ]
     },
     {
       "id": "smoke:smoke_houseplan_panel",
@@ -849,7 +1187,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_houseplan_panel.log"
     },
     {
       "id": "smoke:smoke_interior_window_light",
@@ -871,7 +1212,10 @@
           "seconds": 18,
           "log": "output/issue1226-ui/interior_window_light.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_interior_window_light.log"
     },
     {
       "id": "smoke:smoke_iso_sun",
@@ -894,7 +1238,10 @@
           "seconds": 3,
           "log": "output/issue1226-ui/iso_sun.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_iso_sun.log"
     },
     {
       "id": "smoke:smoke_iso_tiles",
@@ -917,7 +1264,10 @@
           "seconds": 10,
           "log": "output/issue1226-ui/iso_tiles.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_iso_tiles.log"
     },
     {
       "id": "smoke:smoke_lattice_write_barrier",
@@ -946,14 +1296,17 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_lattice_write_barrier.log"
     },
     {
       "id": "smoke:smoke_led_strip_glow",
       "file": "demo/smoke_led_strip_glow.mjs",
-      "category": "fixture-layout-and-followup",
-      "status": "failed",
-      "reason": "The original first blocker was hidden desktop zoom controls. Native desktop preparation now exposes subsequent independent assertions; retained failures require separate diagnosis.",
+      "category": "reload-embedding-lifecycle",
+      "status": "passed",
+      "reason": "The ordinary wide desktop embedding style is recreated after both reloads, because reload restores the demo fixed780px host. No hidden control is forced visible. The complete smoke passes, including service ledger, trusted navigation/touch/pinch, identity, static cards, colours, transitions and cold LED lazy-loading.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -969,7 +1322,39 @@
           "log": "output/issue1226-ui/led_strip_glow.log",
           "failureTail": "3\n    triggerUncaughtException(\n    ^\n\nlocator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('houseplan-card [data-hp=\"zoom-fit\"]')\u001b[22m\n\u001b[2m    - locator resolved to <button data-hp=\"zoom-fit\" aria-label=\"Fit all\" data-hp-tooltip=\"Fit all\" class=\"btn zb hpf-icon-action\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /home/matysh/hp-batch2-infra910-20261015/demo/smoke_led_strip_glow.mjs:899:59 {\n  log: [\n    `  - waiting for locator('houseplan-card [data-hp=\"zoom-fit\"]')`,\n    '    - locator resolved to <button data-hp=\"zoom-fit\" aria-label=\"Fit all\" data-hp-tooltip=\"Fit all\" class=\"btn zb hpf-icon-action\">…</button>',\n    '  - attempting click action',\n    '    2 × waiting for element to be visible, enabled and stable',\n    '      - element is not visible',\n    '    - retrying click action',\n    '    - waiting 20ms',\n    '    2 × waiting for element to be visible, enabled and stable',\n    '      - element is not visible',\n    '    - retrying click action',\n    '      - waiting 100ms',\n    '    58 × waiting for element to be visible, enabled and stable',\n    '       - element is not visible',\n    '     - retrying click action',\n    '       - waiting 500ms'\n  ],\n  name: 'TimeoutError'\n}\n\nNode.js v22.23.2\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_led_strip_glow.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_led_strip_glow",
+          "file": "demo/smoke_led_strip_glow.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 74217,
+          "log": "output/issue1226/resume-ui/smoke_led_strip_glow.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_led_strip_glow",
+          "file": "demo/smoke_led_strip_glow.mjs",
+          "status": "passed",
+          "category": "reload-embedding-lifecycle",
+          "reason": "The ordinary wide desktop embedding style is recreated after both reloads, because reload restores the demo fixed780px host. No hidden control is forced visible. The complete smoke passes, including service ledger, trusted navigation/touch/pinch, identity, static cards, colours, transitions and cold LED lazy-loading.",
+          "evidence": {
+            "base": "0bda944e3",
+            "baseline": "/home/matysh/hp-1078-sun-transparency-20261025/output/issue1226/resume-ui/smoke_led_strip_glow.log",
+            "baselineReused": false,
+            "fullStableAudit": false,
+            "newBuild": false,
+            "log": "output/issue1226/ui-led-cold-host-port.log",
+            "sha256": "1c06a9a11c7001f9d889632df04ccdaa2937f7dab54b1e59b8c31a82ffa2aa33"
+          }
+        }
+      ]
     },
     {
       "id": "smoke:smoke_led_zoom_quality",
@@ -991,7 +1376,10 @@
           "seconds": 20,
           "log": "output/issue1226-ui/led_zoom_quality.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_led_zoom_quality.log"
     },
     {
       "id": "smoke:smoke_marker_shadow_transitions",
@@ -1016,7 +1404,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_marker_shadow_transitions.log"
     },
     {
       "id": "smoke:smoke_mobile_view_header",
@@ -1057,7 +1448,10 @@
           "pinnedDesign": "5529ab77c479c6d373fcd3e605574871e5093b3e",
           "clause": "UI-018 and accepted UI-017/018 clarification"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_mobile_view_header.log"
     },
     {
       "id": "smoke:smoke_modes",
@@ -1081,7 +1475,10 @@
           "seconds": 3,
           "log": "output/issue1226-ui/modes.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_modes.log"
     },
     {
       "id": "smoke:smoke_opening_drag",
@@ -1106,7 +1503,23 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "relatedIssue": 1236
+      "relatedIssue": 1236,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_opening_drag.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_opening_drag",
+          "file": "demo/smoke_opening_drag.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 11693,
+          "log": "output/issue1226/resume-ui/smoke_opening_drag.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_opening_measure",
@@ -1130,7 +1543,23 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_opening_measure.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_opening_measure",
+          "file": "demo/smoke_opening_measure.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 4784,
+          "log": "output/issue1226/resume-ui/smoke_opening_measure.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_opening_preview",
@@ -1155,13 +1584,16 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_opening_preview.log"
     },
     {
       "id": "smoke:smoke_orphan_space_references",
       "file": "demo/smoke_orphan_space_references.mjs",
       "category": "confirmed-product-report-reset",
-      "status": "failed",
+      "status": "passed",
       "reason": "Original remaining-only-warning/no-Apply assertion remains red after the current product base. Preserve the strict report, no-write, Undo and owner checks; covered by the root-confirmed Optimize report-reset bug.",
       "evidence": {
         "originalRun": 41598951489,
@@ -1181,7 +1613,23 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1229
+      "dependencyIssue": 1229,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_orphan_space_references.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_orphan_space_references",
+          "file": "demo/smoke_orphan_space_references.mjs",
+          "status": "passed",
+          "exit": 0,
+          "signal": null,
+          "durationMs": 2113,
+          "log": "output/issue1226/resume-ui/smoke_orphan_space_references.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_plan_rotation",
@@ -1203,7 +1651,10 @@
           "seconds": 16,
           "log": "output/issue1226-ui/plan_rotation.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_plan_rotation.log"
     },
     {
       "id": "smoke:smoke_room_co2",
@@ -1225,7 +1676,10 @@
           "seconds": 9,
           "log": "output/issue1226-ui/room_co2.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_co2.log"
     },
     {
       "id": "smoke:smoke_room_device_discovery",
@@ -1252,7 +1706,23 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1220
+      "dependencyIssue": 1220,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_device_discovery.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_room_device_discovery",
+          "file": "demo/smoke_room_device_discovery.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 48069,
+          "log": "output/issue1226/resume-ui/smoke_room_device_discovery.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_room_metrics_alignment",
@@ -1274,7 +1744,10 @@
           "seconds": 31,
           "log": "output/issue1226-ui/room_metrics_alignment.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_metrics_alignment.log"
     },
     {
       "id": "smoke:smoke_room_opening_host",
@@ -1298,7 +1771,23 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_room_opening_host.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_room_opening_host",
+          "file": "demo/smoke_room_opening_host.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 35921,
+          "log": "output/issue1226/resume-ui/smoke_room_opening_host.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_selective_invalidation_authority",
@@ -1318,7 +1807,10 @@
           "seconds": 17,
           "log": "output/issue1226-ui/selective_invalidation_authority.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_authority.log"
     },
     {
       "id": "smoke:smoke_selective_invalidation_history0",
@@ -1338,7 +1830,10 @@
           "seconds": 33,
           "log": "output/issue1226-ui/selective_invalidation_history0.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history0.log"
     },
     {
       "id": "smoke:smoke_selective_invalidation_history320",
@@ -1358,7 +1853,10 @@
           "seconds": 58,
           "log": "output/issue1226-ui/selective_invalidation_history320.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_history320.log"
     },
     {
       "id": "smoke:smoke_selective_invalidation_inactive",
@@ -1380,7 +1878,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_inactive.log"
     },
     {
       "id": "smoke:smoke_settings_polish_radar_vacuum_955",
@@ -1405,7 +1906,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_settings_polish_radar_vacuum_955.log"
     },
     {
       "id": "smoke:smoke_signal_visibility",
@@ -1427,7 +1931,10 @@
           "seconds": 9,
           "log": "output/issue1226-ui/signal_visibility.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_signal_visibility.log"
     },
     {
       "id": "smoke:smoke_space_copy_categories",
@@ -1453,7 +1960,10 @@
           "seconds": 9,
           "log": "output/issue1226-ui/space_copy_categories.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_space_copy_categories.log"
     },
     {
       "id": "smoke:smoke_space_tab_reorder",
@@ -1475,7 +1985,10 @@
           "seconds": 7,
           "log": "output/issue1226-ui/space_tab_reorder.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_space_tab_reorder.log"
     },
     {
       "id": "smoke:smoke_summary_dialog_scroll",
@@ -1500,7 +2013,10 @@
           "seconds": 6,
           "log": "output/issue1226-ui/summary_dialog_scroll.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_summary_dialog_scroll.log"
     },
     {
       "id": "smoke:smoke_sun",
@@ -1525,7 +2041,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_sun.log"
     },
     {
       "id": "smoke:smoke_toolbar_stable_width",
@@ -1547,7 +2066,10 @@
           "seconds": 17,
           "log": "output/issue1226-ui/toolbar_stable_width.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_toolbar_stable_width.log"
     },
     {
       "id": "smoke:smoke_ui_1051",
@@ -1569,7 +2091,10 @@
           "seconds": 11,
           "log": "output/issue1226-ui/ui_1051.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_1051.log"
     },
     {
       "id": "smoke:smoke_ui_lab_1081",
@@ -1591,7 +2116,10 @@
           "seconds": 6,
           "log": "output/issue1226-ui/ui_lab_1081.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_lab_1081.log"
     },
     {
       "id": "smoke:smoke_ui_lab_grid",
@@ -1613,14 +2141,17 @@
           "seconds": 5,
           "log": "output/issue1226-ui/ui_lab_grid.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_lab_grid.log"
     },
     {
       "id": "smoke:smoke_ui_polish_963",
       "file": "demo/smoke_ui_polish_963.mjs",
-      "category": "accepted-header-contract-migration",
-      "status": "failed",
-      "reason": "After exposing desktop controls all native tooltip/lifecycle/data witnesses pass; the remaining four assertions require the retired phone single-row56px header. Compare the accepted #1184 intrinsic phase4 contract before porting those layout oracles.",
+      "category": "accepted-shared-header-wrap-contract",
+      "status": "passed",
+      "reason": "Accepted1184 supersedes phone one-row/56px. Wide single row and all other behavioral assertions retained; phone checks direct actions,44px bounds, no intersections beyond exact intentional1px adjacent UI Kit shared-border seam, and stage below actual header within card/viewport height. Full changed smoke passes.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1636,7 +2167,34 @@
           "log": "output/issue1226-ui/ui_polish_963.log",
           "failureTail": "true,\n \"column_rotation_0_native_hit\": true,\n \"column_rotation_0_saved_angle\": true,\n \"column_rotation_0_keeps_centre\": true,\n \"column_rotation_0_undo\": true,\n \"column_rotation_1_native_hit\": true,\n \"column_rotation_1_saved_angle\": true,\n \"column_rotation_1_keeps_centre\": true,\n \"column_rotation_1_undo\": true,\n \"reduced_motion_no_section_animation\": true,\n \"reduced_motion_summary_controls\": true,\n \"contour_note_in_position\": true,\n \"contour_no_empty_features\": true,\n \"disabled_delete_delay\": true,\n \"disabled_delete_reason\": true,\n \"disabled_delete_bounds\": true,\n \"disabled_delete_preserves_wall\": true,\n \"editor_change_retires_tooltip\": true,\n \"devices_history_at_end\": true,\n \"devices_en_device-inbox_meaningful_hint\": true,\n \"devices_en_icon-rules_meaningful_hint\": true,\n \"devices_ru_device-inbox_meaningful_hint\": true,\n \"devices_ru_icon-rules_meaningful_hint\": true,\n \"devices_de_device-inbox_meaningful_hint\": true,\n \"devices_de_icon-rules_meaningful_hint\": true,\n \"devices_fr_device-inbox_meaningful_hint\": true,\n \"devices_fr_icon-rules_meaningful_hint\": true,\n \"device_hints_preserve_data\": true,\n \"inbox_actual_select\": true,\n \"inbox_keyboard_filter\": true,\n \"header_1280_no_overflow\": true,\n \"header_1280_one_action_row\": true,\n \"header_760_no_overflow\": true,\n \"header_760_one_action_row\": true,\n \"header_390_no_overflow\": true,\n \"header_390_one_action_row\": false,\n \"phone_390_height\": false,\n \"header_280_no_overflow\": true,\n \"header_280_one_action_row\": false,\n \"phone_280_height\": false,\n \"remount_retires_old_tooltip\": true,\n \"remount_tooltip_works\": true\n}\n\nFAILED (4):\n  - header_390_one_action_row: expected true, got false\n  - phone_390_height: expected true, got false\n  - header_280_one_action_row: expected true, got false\n  - phone_280_height: expected true, got false\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_963.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_ui_polish_963",
+          "file": "demo/smoke_ui_polish_963.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 36380,
+          "log": "output/issue1226/resume-ui/smoke_ui_polish_963.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        },
+        {
+          "id": "smoke:smoke_ui_polish_963",
+          "file": "demo/smoke_ui_polish_963.mjs",
+          "category": "accepted-shared-header-wrap-contract",
+          "status": "passed",
+          "reason": "Accepted1184 supersedes phone one-row/56px. Wide single row and all other behavioral assertions retained; phone checks direct actions,44px bounds, no intersections beyond exact intentional1px adjacent UI Kit shared-border seam, and stage below actual header within card/viewport height. Full changed smoke passes.",
+          "evidence": "output/issue1226/ui-five/ui-polish-port-r2.log; artifacts/ui-polish-963/header-layouts.json",
+          "name": "smoke_ui_polish_963",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "relatedIssue": 1184
+        }
+      ]
     },
     {
       "id": "smoke:smoke_ui_polish_963_touch",
@@ -1660,7 +2218,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_963_touch.log"
     },
     {
       "id": "smoke:smoke_ui_polish_976",
@@ -1682,13 +2243,16 @@
           "seconds": 8,
           "log": "output/issue1226-ui/ui_polish_976.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_ui_polish_976.log"
     },
     {
       "id": "smoke:smoke_view_runtime_recovery",
       "file": "demo/smoke_view_runtime_recovery.mjs",
       "category": "confirmed-product-minified-retry-export-contract",
-      "status": "failed",
+      "status": "passed",
       "reason": "Real summary-root 404 followed by native Retry loads the real nonce asset, but the loader reads module.SUMMARY_RUNTIME_FINGERPRINT/LoadedSummaryPanelRuntime while that asset exports only a/s/w. The named namespace is wrapped as w; source retry bypasses Rollup namespace mapping. It therefore stays terminal error with undefined fingerprint. This is a loader/build contract defect, not a fixture extractor: no mock unwrap or retry expectation weakening.",
       "evidence": {
         "originalRun": 41598951489,
@@ -1707,7 +2271,23 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "relatedIssue": 1235
+      "relatedIssue": 1235,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_view_runtime_recovery.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_view_runtime_recovery",
+          "file": "demo/smoke_view_runtime_recovery.mjs",
+          "status": "passed",
+          "exit": 0,
+          "signal": null,
+          "durationMs": 45763,
+          "log": "output/issue1226/resume-ui/smoke_view_runtime_recovery.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_volumetric_setting",
@@ -1731,7 +2311,10 @@
           "seconds": 3,
           "log": "output/issue1226-ui/volumetric_setting.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_volumetric_setting.log"
     },
     {
       "id": "smoke:smoke_warm_mode_adoption",
@@ -1754,7 +2337,23 @@
           "log": "output/issue1226-ui/warm_mode_adoption.log",
           "failureTail": "{\n \"ac2-pending-false\": true,\n \"ac2-camera-false\": true,\n \"ac2-pixels-false\": true,\n \"ac2-mode-false\": true,\n \"ac1-view-false\": false,\n \"ac2-pending-true\": true,\n \"ac2-camera-true\": true,\n \"ac2-pixels-true\": true,\n \"ac2-mode-true\": true,\n \"ac1-view-true\": false,\n \"ac3HeightPair\": true,\n \"ac3PairDiagnostic\": true,\n \"ac3ZeroSizePreservesPair\": true,\n \"ac3HaOwnedPair\": true,\n \"ac4-tab-present-false\": true,\n \"ac4-user-mode-false\": true,\n \"ac4-tab-present-true\": true,\n \"ac4-user-mode-true\": true,\n \"ac5SpaceWins\": true,\n \"ac6ImmediateCamera\": true,\n \"ac6ImmediateView\": false,\n \"ac6PermissionDenied\": true,\n \"ac6NewCameraNotOverridden\": true,\n \"ac6PanDuringRuntimeReleasesHold\": true,\n \"ac6PanDuringRuntimeAllowsResize\": true,\n \"ac6KioskDoesNotEnterEditor\": true,\n \"ac6ViewCancelsPending\": true,\n \"ac6ViewCancelsReservedHeader\": true,\n \"ac6DetachedDoesNotCommit\": true,\n \"ac6ResizeReleased\": true,\n \"ac5TouchSpaceWins\": true\n}\n\nFAILED (3):\n  - ac1-view-false: expected true, got false\n  - ac1-view-true: expected true, got false\n  - ac6ImmediateView: expected true, got false\n"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_warm_mode_adoption.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_warm_mode_adoption",
+          "file": "demo/smoke_warm_mode_adoption.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 39341,
+          "log": "output/issue1226/resume-ui/smoke_warm_mode_adoption.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_writer_fixed_point",
@@ -1782,7 +2381,23 @@
           "fixturePatch": "a5aa896cd"
         }
       },
-      "dependencyIssue": 1224
+      "dependencyIssue": 1224,
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_writer_fixed_point.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_writer_fixed_point",
+          "file": "demo/smoke_writer_fixed_point.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 3514,
+          "log": "output/issue1226/resume-ui/smoke_writer_fixed_point.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_zigbee_enable_refresh",
@@ -1806,7 +2421,10 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_enable_refresh.log"
     },
     {
       "id": "smoke:smoke_zigbee_led_topology",
@@ -1828,7 +2446,10 @@
           "seconds": 14,
           "log": "output/issue1226-ui/zigbee_led_topology.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_led_topology.log"
     },
     {
       "id": "smoke:smoke_zigbee_tooltip_layout",
@@ -1856,7 +2477,23 @@
           "productSource": "96ffe5444",
           "fixturePatch": "a5aa896cd"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zigbee_tooltip_layout.log",
+      "revalidations": [
+        {
+          "id": "smoke:smoke_zigbee_tooltip_layout",
+          "file": "demo/smoke_zigbee_tooltip_layout.mjs",
+          "status": "failed",
+          "exit": 1,
+          "signal": null,
+          "durationMs": 13869,
+          "log": "output/issue1226/resume-ui/smoke_zigbee_tooltip_layout.log",
+          "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+          "scope": "original retained root/UI case revalidation"
+        }
+      ]
     },
     {
       "id": "smoke:smoke_zoom_badge_visibility",
@@ -1878,7 +2515,10 @@
           "seconds": 3,
           "log": "output/issue1226-ui/zoom_badge_visibility.log"
         }
-      }
+      },
+      "originalRun": 41598951489,
+      "originalStatus": "failed",
+      "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_zoom_badge_visibility.log"
     }
   ],
   "targetedSummary": {
@@ -1886,5 +2526,13 @@
     "failed": 21,
     "not-rerun": 0
   },
-  "notRerunPolicy": "Every one of the 33 previously not-rerun UI rows now has addressed local execution evidence. The preceding 45 classifications are unchanged; full integrated stable/HA audit remains the parent task."
+  "notRerunPolicy": "Every one of the 33 previously not-rerun UI rows now has addressed local execution evidence. The preceding 45 classifications are unchanged; full integrated stable/HA audit remains the parent task.",
+  "latestResumedSummary": {
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+    "source": "latest addressed proofs, not a completed current stable profile",
+    "counts": {
+      "passed": 66,
+      "failed": 12
+    }
+  }
 }

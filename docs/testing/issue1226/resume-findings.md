@@ -1,0 +1,77 @@
+# Findings after accepted #1228–#1238
+
+Product base: `0c030e700`; joint diagnostic material: `0bda944e3`.
+These findings are not product fixes in #1226. Existing tests remain RED where
+the behavior is not proved correct. No new issue or product change is implied
+by recording a candidate here.
+
+## Confirmed: unrelated unhosted opening blocks a valid partition edit
+
+The official legacy migration produces a current graph with a legitimate
+unrelated opening that has no `host`. A current partitions edit then fails with
+`plan-graph:host`: `commitGraphEditResult` passes every `before.openings` item to
+graph validation, which interprets an object without an own `host` as a bare
+edge reference and looks for an undefined edge. A detached opening is supported
+by #1033 and is also the normal output of successful #1238 repair.
+
+Minimal current-source expected-success reproduction:
+`repros/explicit-delete-unhosted-opening.mjs`. It does not rely on rejected raw
+projection mutation or a legacy writer. The original explicit-delete test stays
+RED. See `node-classification.md` for code locations and command evidence.
+
+## Confirmed: Escape can leave device drag active and release commits it
+
+The native contacts scenario presses Escape during a genuine drag with the
+device's Properties selected. After pointer release the saved position is
+`.4291666667/.3791666667` instead of the starting `.28885/.3`; history advances
+from one to two. `_onKey` invokes `properties.escape(e)` before its device-drag
+cancel branch; Properties checks decor gestures but does not account for the
+active device drag, so it consumes Escape first.
+
+Evidence: the current native `artifacts/866/native/result.json` in the geometry
+analysis checkout, `output/issue1226/resume-ui/smoke_device_contacts.log`, and
+`ui-five-followup.md`. `smoke_device_contacts` remains RED. Later group-restored
+failures can be cascades of this first unwanted commit; lost capture needs its
+own isolated event-order proof and is not declared a separate defect here.
+
+## Unresolved: shared-boundary Resize and thickness
+
+The current Resize producer creates two moved horizontal segments ending at
+`.45/.5`; the fixed lower room retains its whole `.1/.5 → .5/.5` edge without
+an incident node at the new junction. The old six Resize checks remain RED.
+Current minimal probe: `repros/current-resize-incident-node.mjs`. Do not claim
+that the accepted #1231 fixture repair fixed or failed to fix this operation:
+#1231 selected its named room instead of an unrelated canonical array index.
+The required ownership/contact contract needs an independent positive witness.
+
+The thickness transition separately stores coincident, oppositely directed
+edges with 10cm and 0cm material; measured intervals are `[10,0,0]` rather than
+`[10,0,10]`. Separate coincident material can be intentional under #1216, so this
+is a retained diagnostic, not an automatically filed product bug. Details and
+exact source are in `geometry-latest-followup.md`.
+
+## Unresolved: complete Optimize target and corpus identities
+
+The original #248 Optimize output differs from both raw exact migration and
+the historical lattice-normalized model10 target. Its second pass is already a
+no-op, but that alone does not justify replacing its full target. The new shared
+current storage fixture tests the migration facade only; it must not be used to
+accept Optimize output automatically.
+
+All 229 historical corpus sources remain available, alongside current inputs
+under separate provenance. The original complete passport is still RED; atom
+and host mapping deltas are not accepted by count or nearest-edge matching.
+
+## Safe stale contracts that were ported
+
+- More Info: move the real pointer off prior help before the layout/selection
+  sweep; never hide the help or force the picker click.
+- Furniture: right-clicking an existing item selects it and opens its context;
+  the empty-point primary stamp and Cancel/blur/capture guarantees stay checked.
+- Compact header: direct actions may wrap under accepted #1184/#1207, while
+  44px targets, real bounds and stage placement remain checked.
+- Opening preview: the demo card was fixed at 780px, so viewport-only resizing
+  never resized its host. The port really resizes the embedding and retains both
+  the old body-paint positive and zero full-floor work throughout held input.
+- Cold reload: external desktop fixture styles must be restored before using
+  desktop-only zoom controls. This does not change the product camera.

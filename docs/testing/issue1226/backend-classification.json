@@ -34,8 +34,8 @@
     "file": "tests_backend/test_coordinate_canonicalization.py",
     "name": "test_optimize_roundtrip_fixture_has_one_backend_canonical_target",
     "category": "outdated-cross-runtime-fixture",
-    "status": "unresolved",
-    "reason": "Confirmed full-document model11 vs historical model10 cross-language target mismatch. Preserve raw historical expected fixture; a separate reviewed current graph passport is still needed.",
+    "status": "passed",
+    "reason": "Preserve the original model10 target through the official legacy reader and verify a separate full exact migration target against TS and Python. The distinct Optimize Node oracle remains RED.",
     "originalError": "AssertionError: assert {'markers': [..., ...}, ...}]} == {'markers': [... grid', ...}]}",
     "currentTest": "tests_backend/test_coordinate_canonicalization.py::test_optimize_roundtrip_fixture_has_one_backend_canonical_target",
     "evidence": {
@@ -44,7 +44,8 @@
       "addressedReport": null,
       "addressedIntegrationReport": "output/issue1226/backend-integration.xml"
     },
-    "relatedIssue": null
+    "relatedIssue": null,
+    "latestEvidence": "output/issue1226/storage-current-python.log:2PASS; storage-current-node.log:1PASS"
   },
   {
     "file": "tests_backend/test_ha_room_opening_host.py",
@@ -785,8 +786,8 @@
     "file": "tests_backend/test_opening_repair.py",
     "name": "test_between_two_eligible_walls_the_next_write_decides[10-detached]",
     "category": "product-defect",
-    "status": "failed",
-    "reason": "After restoring a real raw model10 fixture, _place_on_wall still rehosts among two eligible carriers because the unique-carrier threshold moved from10 to WALL_SEGMENT_MODEL_VERSION=11. The existing model10 fail-closed contract and production docstring require detachment. Preserve the red test; finding BE-REPAIR-10.",
+    "status": "passed",
+    "reason": "Accepted #1228 now refuses the ambiguous model10 host; both parameter cases passed on the resumed product.",
     "originalError": "assert 0 == 1",
     "currentTest": "tests_backend/test_opening_repair.py::test_between_two_eligible_walls_the_next_write_decides[10-detached]",
     "evidence": {
@@ -794,7 +795,8 @@
       "originalLog": "product-backend.log",
       "addressedReport": "output/issue1226/backend-addressed.xml"
     },
-    "relatedIssue": 1228
+    "relatedIssue": 1228,
+    "latestEvidence": "output/issue1226/resume-backend-two.log (the two host cases passed; its separate old target failed before the explicit target port)"
   },
   {
     "file": "tests_backend/test_opening_repair.py",

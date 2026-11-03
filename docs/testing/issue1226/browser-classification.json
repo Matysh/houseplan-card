@@ -22,12 +22,25 @@
   {
     "file": "demo/smoke_v8_draft_write.mjs",
     "category": "confirmed-product-regression",
-    "status": "retained-red",
+    "status": "passed",
     "checks": 8,
     "passed": 7,
     "reason": "Real v9 Draw migration emits model11 graph and correct old partition IDs/cm, but leaves room_drafts in both live and actual wire config. Strengthened wire/no-legacy and idempotent prepare assertions; raw v9 seed not pre-migrated.",
     "evidence": "root output/issue1226/v8-node-final.log; output/issue1226/v8-legacy-current-state.json",
-    "relatedIssue": 1233
+    "relatedIssue": 1233,
+    "revalidations": [
+      {
+        "id": "smoke:smoke_v8_draft_write",
+        "file": "demo/smoke_v8_draft_write.mjs",
+        "status": "passed",
+        "exit": 0,
+        "signal": null,
+        "durationMs": 1987,
+        "log": "output/issue1226/resume-ui/smoke_v8_draft_write.log",
+        "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+        "scope": "original retained root/UI case revalidation"
+      }
+    ]
   },
   {
     "file": "demo/smoke_draw_wall_thickness.mjs",
@@ -37,6 +50,19 @@
     "passed": 11,
     "reason": "Second room uses actual Draw markupClick, persisted named edges and saveRoom. Adjacent room is refused geometry_unsafe even at normal dimensions; strict old shared cm/ID expectations remain. Possible #1231 relationship unproven.",
     "evidence": "root output/issue1226/thickness-node-final.log; output/issue1226/thickness-current-state.json; thickness-large-r6.log",
-    "relatedIssue": null
+    "relatedIssue": null,
+    "revalidations": [
+      {
+        "id": "smoke:smoke_draw_wall_thickness",
+        "file": "demo/smoke_draw_wall_thickness.mjs",
+        "status": "failed",
+        "exit": 1,
+        "signal": null,
+        "durationMs": 4525,
+        "log": "output/issue1226/resume-ui/smoke_draw_wall_thickness.log",
+        "base": "0bda944e3244a142449c30c5f802c14833af8c66",
+        "scope": "original retained root/UI case revalidation"
+      }
+    ]
   }
 ]

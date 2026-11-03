@@ -79,6 +79,7 @@ const sample = () => page.evaluate((ids) => {
   }));
   const body = root.querySelector('[data-hp-live-editor] .physical-drag');
   return {
+    frame: { viewportWidth: innerWidth, stageWidth: root.querySelector('.stage').getBoundingClientRect().width },
     builds: { ...c._floorCacheBuilds }, pool: [...c._wallUnionPool.keys()], epoch: c._cfgEpoch,
     openingDrag: c._opDrag && { id: c._opDrag.id, moved: c._opDrag.moved },
     openingDragFallbacks: c._editorRuntime._openingDragFallbackBuilds ?? 0,
@@ -328,14 +329,19 @@ try {
   const openingDown = await sample();
   assert.equal(openingDown.openingDrag.id, 'held_window', 'trusted hit starts the actual opening owner');
   const openingBefore = openingDown.space.openings.find(o => o.id === 'held_window');
+  const viewportFrames = [];
   for (let index = 1; index <= 30; index++) {
     if (index === 15 || index === 20) {
       await page.setViewportSize({width:index === 15 ? 720 : 1280,height:960});
+      // demo.html intentionally embeds a fixed 780px card. Resizing only the
+      // browser never resized this host, so it did not exercise that route.
+      await page.evaluate(() => { document.getElementById('host').style.width = `${Math.min(780,innerWidth-40)}px`; });
       await settle();
     }
     const target = await at(575 + index * 50 / 30, 300);
     await page.mouse.move(target.x, target.y); await settle();
     const frame = await sample();
+    if (index === 15 || index === 20) viewportFrames.push(frame.frame);
     unchangedBeforeRelease(frame, openingDown);
     assert.equal(frame.epoch, openingDown.epoch);
     assert.deepEqual(frame.pool, openingDown.pool);
@@ -355,12 +361,18 @@ try {
   const openingHeld = await sample();
   assert.equal(openingHeld.openingDrag.moved, true);
   assert.ok(openingHeld.liveFrames > openingDown.liveFrames);
-  assert.ok(openingHeld.full > openingDown.full, 'real viewport changes exercised ordinary host paint during the held opening');
+  // The accepted retained-body renderer can repaint layout without rebuilding
+  // _renderBody. Prove the native viewport AND the actual host frame changed,
+  // retaining the cut/paint/zero-canonical-work assertions at every such frame.
+  assert.deepEqual(viewportFrames.map(frame => frame.viewportWidth), [720, 1280]);
+  assert.ok(Math.abs(viewportFrames[0].stageWidth - viewportFrames[1].stageWidth) > 1,
+    'real viewport changes reached the host frame while the opening remained held');
+  assert.ok(openingHeld.full > openingDown.full, 'real host resizing exercises ordinary body paint during the held opening');
   near(one(openingHeld, 'held_window').origin[0], 625);
   await page.mouse.up(); await writesSettled(); await settle();
   const openingReleased = await sample();
   const changedOpening = openingReleased.space.openings.find(o => o.id === 'held_window');
-  assert.deepEqual(changedOpening, { ...openingBefore, x: .625, host: { ...openingBefore.host, t: .85 } },
+  assert.deepEqual(changedOpening, { ...openingBefore, x: .625, host: { ...openingBefore.host, t: .85, tq: ['17', '20'] } },
     'same saved position, host.t, angle and every non-position field');
   assert.equal(openingReleased.writes, openingDown.writes + 1);
   assert.equal(openingReleased.history, openingDown.history + 1);

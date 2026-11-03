@@ -42,7 +42,10 @@ from custom_components.houseplan.validation import (
     LAYOUT_SCHEMA,
     POS_SCHEMA,
 )
-from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+from custom_components.houseplan.wall_segment_model import (
+    commit_wall_segment_model,
+    decode_legacy_wall_segment_model,
+)
 
 FIXTURE = (
     Path(__file__).parents[1]
@@ -101,15 +104,24 @@ def test_furniture_flip_flags_survive_coordinate_canonicalization_unchanged() ->
     assert mirrored["flip_v"] is False
 
 
-def test_optimize_roundtrip_fixture_has_one_backend_canonical_target() -> None:
-    """#248: Python consumes the same cross-runtime target as the Node test."""
+@pytest.mark.parametrize("target", ["legacy-canonical", "current-exact"])
+def test_optimize_roundtrip_fixture_has_one_backend_canonical_target(target) -> None:
+    """Keep the old canonical reader and the exact current facade separate."""
     fixture = json.loads(OPTIMIZE_ROUNDTRIP_FIXTURE.read_text(encoding="utf-8"))
     source = fixture["input"]
     expected = fixture["expected"]
     assert all(space["view_box"] == [0, 0, 1, 1]
                for space in source["config"]["spaces"])
     canonical_source = canonicalize_config_geometry(source["config"])
-    migrated, _count = commit_wall_segment_model(canonical_source)
+    if target == "legacy-canonical":
+        migrated, _count = decode_legacy_wall_segment_model(canonical_source)
+    else:
+        # #1167/#1216 freeze ORIGINAL legacy coordinates before old snapping.
+        # This facade target is not an automatic acceptance of Optimize output.
+        current = json.loads(OPTIMIZE_ROUNDTRIP_FIXTURE.with_name(
+            "optimize-storage-roundtrip-current.json").read_text(encoding="utf-8"))
+        expected = current["expected"]
+        migrated, _count = commit_wall_segment_model(source["config"])
     assert migrated == expected["config"]
     assert canonicalize_layout_geometry(source["layout"]) == expected["layout"]
     assert CONFIG_SCHEMA(source["config"]) == canonical_source

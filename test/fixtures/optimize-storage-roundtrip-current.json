@@ -1,0 +1,414 @@
+{
+  "provenance": {
+    "source": "optimize-storage-roundtrip.json",
+    "source_sha256": "a148f394de4d063357252a0600214bb13eccb31c6a2fcbaab25fde24a370cd88",
+    "contract": "Exact model11 migration facade target from unchanged raw model7 source. Not an Optimize expected output; legacy canonical target remains separate and unchanged."
+  },
+  "expected": {
+    "config": {
+      "model_version": 11,
+      "spaces": [
+        {
+          "id": "fine",
+          "title": "Fine grid",
+          "cell_cm": 3,
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "rooms": [
+            {
+              "id": "fine-room",
+              "name": "Fine room",
+              "poly": [
+                [
+                  0.004166666766666667,
+                  0
+                ],
+                [
+                  0.008333333333333333,
+                  0
+                ],
+                [
+                  0.008333333233333334,
+                  0.008333333333333333
+                ],
+                [
+                  0.004166666766666667,
+                  0.008333333333333333
+                ]
+              ],
+              "wall_ids": [
+                "wall-o7jeq4zbgcylrx4nbesz",
+                "wall-e7etdmx7xg3mahu4avma",
+                "wall-4aynx5ho42xjmcir2ssg",
+                "wall-z5phvtyh5tgfg6vrsa4o"
+              ]
+            }
+          ],
+          "wall_segments": [
+            {
+              "id": "wall-4aynx5ho42xjmcir2ssg",
+              "a": [
+                0.004166666766666667,
+                0.008333333333333333
+              ],
+              "b": [
+                0.008333333233333334,
+                0.008333333333333333
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-e7etdmx7xg3mahu4avma",
+              "a": [
+                0.008333333333333333,
+                0
+              ],
+              "b": [
+                0.008333333233333334,
+                0.008333333333333333
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-o7jeq4zbgcylrx4nbesz",
+              "a": [
+                0.004166666766666667,
+                0
+              ],
+              "b": [
+                0.008333333333333333,
+                0
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-z5phvtyh5tgfg6vrsa4o",
+              "a": [
+                0.004166666766666667,
+                0
+              ],
+              "b": [
+                0.004166666766666667,
+                0.008333333333333333
+              ],
+              "cm": 0
+            }
+          ],
+          "partitions": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666616666667%5C%22%2C%5C%22500000000000000000%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "2",
+                  "0"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666616666667%5C%22%2C%5C%22500000000000000000%5C%22%2C%5C%228333333433333333%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "4166666616666667",
+                  "500000000000000000",
+                  "1",
+                  "120"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666766666667%5C%22%2C%5C%221000000000000000000%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "4166666766666667",
+                  "1000000000000000000",
+                  "0",
+                  "1"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666766666667%5C%22%2C%5C%221000000000000000000%5C%22%2C%5C%228333333433333333%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "4166666766666667",
+                  "1000000000000000000",
+                  "1",
+                  "120"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "wall-4aynx5ho42xjmcir2ssg",
+                "from": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666766666667%5C%22%2C%5C%221000000000000000000%5C%22%2C%5C%228333333433333333%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666616666667%5C%22%2C%5C%22500000000000000000%5C%22%2C%5C%228333333433333333%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-e7etdmx7xg3mahu4avma",
+                "from": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666616666667%5C%22%2C%5C%22500000000000000000%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666616666667%5C%22%2C%5C%22500000000000000000%5C%22%2C%5C%228333333433333333%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-o7jeq4zbgcylrx4nbesz",
+                "from": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666766666667%5C%22%2C%5C%221000000000000000000%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666616666667%5C%22%2C%5C%22500000000000000000%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-z5phvtyh5tgfg6vrsa4o",
+                "from": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666766666667%5C%22%2C%5C%221000000000000000000%5C%22%2C%5C%220%5C%22%2C%5C%221%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22fine-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%224166666766666667%5C%22%2C%5C%221000000000000000000%5C%22%2C%5C%228333333433333333%5C%22%2C%5C%221000000000000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "fine-room",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "wall-o7jeq4zbgcylrx4nbesz",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-e7etdmx7xg3mahu4avma",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-4aynx5ho42xjmcir2ssg",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-z5phvtyh5tgfg6vrsa4o",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": []
+          }
+        },
+        {
+          "id": "regular",
+          "title": "Regular grid",
+          "cell_cm": 5,
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "rooms": [
+            {
+              "id": "regular-room",
+              "name": "Regular room",
+              "poly": [
+                [
+                  0.1,
+                  0.1
+                ],
+                [
+                  0.2,
+                  0.1
+                ],
+                [
+                  0.1999999999,
+                  0.2
+                ],
+                [
+                  0.1000000001,
+                  0.2
+                ]
+              ],
+              "wall_ids": [
+                "wall-wkjdgvxkdvycd7r7vch3",
+                "wall-5cpegapcqzk7z5qvqfwx",
+                "wall-min22n7bdn65nharmwrq",
+                "wall-6ydgelnzulo4kyloww6i"
+              ]
+            }
+          ],
+          "wall_segments": [
+            {
+              "id": "wall-5cpegapcqzk7z5qvqfwx",
+              "a": [
+                0.2,
+                0.1
+              ],
+              "b": [
+                0.1999999999,
+                0.2
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-6ydgelnzulo4kyloww6i",
+              "a": [
+                0.1,
+                0.1
+              ],
+              "b": [
+                0.1000000001,
+                0.2
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-min22n7bdn65nharmwrq",
+              "a": [
+                0.1000000001,
+                0.2
+              ],
+              "b": [
+                0.1999999999,
+                0.2
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-wkjdgvxkdvycd7r7vch3",
+              "a": [
+                0.1,
+                0.1
+              ],
+              "b": [
+                0.2,
+                0.1
+              ],
+              "cm": 0
+            }
+          ],
+          "partitions": [],
+          "walls": [],
+          "plan_graph": {
+            "version": 1,
+            "nodes": [
+              {
+                "id": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221000000001%5C%22%2C%5C%2210000000000%5C%22%2C%5C%221%5C%22%2C%5C%2210%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "24",
+                  "24"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221000000001%5C%22%2C%5C%2210000000000%5C%22%2C%5C%222000000001%5C%22%2C%5C%2210000000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "1000000001",
+                  "10000000000",
+                  "1",
+                  "5"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221999999999%5C%22%2C%5C%2210000000000%5C%22%2C%5C%221%5C%22%2C%5C%2210%5C%22%5D%22%5D",
+                "p": [
+                  "l",
+                  "48",
+                  "24"
+                ]
+              },
+              {
+                "id": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221999999999%5C%22%2C%5C%2210000000000%5C%22%2C%5C%222000000001%5C%22%2C%5C%2210000000000%5C%22%5D%22%5D",
+                "p": [
+                  "q",
+                  "1999999999",
+                  "10000000000",
+                  "1",
+                  "5"
+                ]
+              }
+            ],
+            "edges": [
+              {
+                "id": "wall-5cpegapcqzk7z5qvqfwx",
+                "from": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221999999999%5C%22%2C%5C%2210000000000%5C%22%2C%5C%221%5C%22%2C%5C%2210%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221999999999%5C%22%2C%5C%2210000000000%5C%22%2C%5C%222000000001%5C%22%2C%5C%2210000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-6ydgelnzulo4kyloww6i",
+                "from": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221000000001%5C%22%2C%5C%2210000000000%5C%22%2C%5C%221%5C%22%2C%5C%2210%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221000000001%5C%22%2C%5C%2210000000000%5C%22%2C%5C%222000000001%5C%22%2C%5C%2210000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-min22n7bdn65nharmwrq",
+                "from": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221000000001%5C%22%2C%5C%2210000000000%5C%22%2C%5C%222000000001%5C%22%2C%5C%2210000000000%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221999999999%5C%22%2C%5C%2210000000000%5C%22%2C%5C%222000000001%5C%22%2C%5C%2210000000000%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              },
+              {
+                "id": "wall-wkjdgvxkdvycd7r7vch3",
+                "from": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221000000001%5C%22%2C%5C%2210000000000%5C%22%2C%5C%221%5C%22%2C%5C%2210%5C%22%5D%22%5D",
+                "to": "n:%5B%22room%22%2C%22regular-room%22%2C%22%5B%5C%22q%5C%22%2C%5C%221999999999%5C%22%2C%5C%2210000000000%5C%22%2C%5C%221%5C%22%2C%5C%2210%5C%22%5D%22%5D",
+                "kind": "wall",
+                "cm": 0
+              }
+            ],
+            "rooms": [
+              {
+                "room": "regular-room",
+                "edges": [
+                  {
+                    "kind": "wall",
+                    "id": "wall-wkjdgvxkdvycd7r7vch3",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-5cpegapcqzk7z5qvqfwx",
+                    "reverse": false
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-min22n7bdn65nharmwrq",
+                    "reverse": true
+                  },
+                  {
+                    "kind": "wall",
+                    "id": "wall-6ydgelnzulo4kyloww6i",
+                    "reverse": true
+                  }
+                ]
+              }
+            ],
+            "dependencies": []
+          }
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "layout": {
+      "sensor.fine": {
+        "s": "fine",
+        "x": 0.004166666666666667,
+        "y": 0.008333333333333333
+      },
+      "sensor.regular": {
+        "s": "regular",
+        "x": 0.1,
+        "y": 0.2
+      }
+    }
+  }
+}
