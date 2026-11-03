@@ -9,9 +9,9 @@
     {
       "id": "smoke:smoke_canvas_surface_gestures",
       "file": "demo/smoke_canvas_surface_gestures.mjs",
-      "category": "endpoint-fixture-migration",
-      "status": "not-rerun",
-      "reason": "The thickness wire witness records only config/set, but the native operation uses the geometry authority endpoint; its saved-request read is undefined. Update the observed real endpoint without faking ACK or bypassing authority.",
+      "category": "current-graph-fixture-and-legal-input",
+      "status": "passed",
+      "reason": "Publish fixture.model_version with its graph spaces through the actual fixture store; config/set is still the real write endpoint. Use an accepted 2.5 numeric tray probe instead of an overlong 12.5 probe rejected by its three-character field, and positively assert the probe is accepted. Native drag, selection, geometry, history, writes and no-spin guarantees pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -19,15 +19,23 @@
         "originalErrors": [
           "page.evaluate: TypeError: Cannot read properties of undefined (reading 'config')"
         ],
-        "originalTail": "browser-attestation ok (ok) [#900 screen surface input] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of undefined (reading 'config')\n    at eval (eval at evaluate (:311:30), <anonymous>:2:47)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_canvas_surface_gestures.mjs:211:92 {\n  log: []\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "browser-attestation ok (ok) [#900 screen surface input] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of undefined (reading 'config')\n    at eval (eval at evaluate (:311:30), <anonymous>:2:47)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_canvas_surface_gestures.mjs:211:92 {\n  log: []\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_canvas_surface_gestures",
+          "exit": 0,
+          "log": "output/issue1226/ui-canvas-r2.log",
+          "sha256": "91436c3d5dbb4f364ee57466078168f6987bf6f7dfe50f2b8fcebbb7071c5885",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_decor_creation_selection",
       "file": "demo/smoke_decor_creation_selection.mjs",
-      "category": "product-dependency",
-      "status": "not-rerun",
-      "reason": "Redo-delete restores the wrong decor set. Preserve exact object identities and verify the existing shared-history repair on the integrated candidate.",
+      "category": "product-fix-verified",
+      "status": "passed",
+      "reason": "Unmodified original create/delete/Undo/Redo and exact decor snapshots pass after the accepted #1222 fix; no fixture or oracle adjustment here.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -36,16 +44,24 @@
           "FAILED (1):",
           "  - creation.redo_delete: expected [{\"id\":\"dcmw0efc9fy65\",\"kind\":\"line\",\"x1\":0.48333333333333334,\"y1\":0.3,\"x2\":0.6833333333333333,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efcsvxzi\",\"kind\":\"line\",\"x1\":0.49166666666666664,\"y1\":0.3,\"x2\":0.6916666666666667,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efdd8d60\",\"kind\":\"line\",\"x1\":0.5,\"y1\":0.3,\"x2\":0.7,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efeatvbw\",\"kind\":\"rect\",\"x\":0.48333333333333334,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efeyvyws\",\"kind\":\"rect\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0effmxq3p\",\"kind\":\"rect\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efgl6x9u\",\"kind\":\"ellipse\",\"x\":0.48333333333333334,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efh9pwv7\",\"kind\":\"ellipse\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efhxtptk\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efirxbnm\",\"kind\":\"line\",\"x1\":0.48333333333333334,\"y1\":0.3,\"x2\":0.6833333333333333,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efjp9exx\",\"kind\":\"rect\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efkmi969\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efluyvvt\",\"kind\":\"ellipse\",\"x\":0.2,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efmljpao\",\"kind\":\"text\",\"x\":0.5,\"y\":0.2,\"text\":\"Label 0\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efn9ndmd\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efnuv19s\",\"kind\":\"text\",\"x\":0.5,\"y\":0.35,\"text\":\"Label 1\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efoi4j8s\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dimw0efp6v0tu\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1}], got [{\"id\":\"dcmw0efc9fy65\",\"kind\":\"line\",\"x1\":0.48333333333333334,\"y1\":0.3,\"x2\":0.6833333333333333,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efcsvxzi\",\"kind\":\"line\",\"x1\":0.49166666666666664,\"y1\":0.3,\"x2\":0.6916666666666667,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efdd8d60\",\"kind\":\"line\",\"x1\":0.5,\"y1\":0.3,\"x2\":0.7,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efeatvbw\",\"kind\":\"rect\",\"x\":0.48333333333333334,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efeyvyws\",\"kind\":\"rect\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0effmxq3p\",\"kind\":\"rect\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efgl6x9u\",\"kind\":\"ellipse\",\"x\":0.48333333333333334,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efh9pwv7\",\"kind\":\"ellipse\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efhxtptk\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efirxbnm\",\"kind\":\"line\",\"x1\":0.48333333333333334,\"y1\":0.3,\"x2\":0.6833333333333333,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efjp9exx\",\"kind\":\"rect\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efkmi969\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efluyvvt\",\"kind\":\"ellipse\",\"x\":0.2,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efmljpao\",\"kind\":\"text\",\"x\":0.5,\"y\":0.2,\"text\":\"Label 0\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efn9ndmd\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efnuv19s\",\"kind\":\"text\",\"x\":0.5,\"y\":0.35,\"text\":\"Label 1\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efoi4j8s\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dimw0efp6v0tu\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1},{\"id\":\"dimw0efpyl6t7\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1}]"
         ],
-        "originalTail": "\":\"dcmw0efgl6x9u\",\"kind\":\"ellipse\",\"x\":0.48333333333333334,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efh9pwv7\",\"kind\":\"ellipse\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efhxtptk\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efirxbnm\",\"kind\":\"line\",\"x1\":0.48333333333333334,\"y1\":0.3,\"x2\":0.6833333333333333,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efjp9exx\",\"kind\":\"rect\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efkmi969\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efluyvvt\",\"kind\":\"ellipse\",\"x\":0.2,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efmljpao\",\"kind\":\"text\",\"x\":0.5,\"y\":0.2,\"text\":\"Label 0\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efn9ndmd\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efnuv19s\",\"kind\":\"text\",\"x\":0.5,\"y\":0.35,\"text\":\"Label 1\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efoi4j8s\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dimw0efp6v0tu\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1},{\"id\":\"dimw0efpyl6t7\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1}]\n"
+        "originalTail": "\":\"dcmw0efgl6x9u\",\"kind\":\"ellipse\",\"x\":0.48333333333333334,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efh9pwv7\",\"kind\":\"ellipse\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efhxtptk\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efirxbnm\",\"kind\":\"line\",\"x1\":0.48333333333333334,\"y1\":0.3,\"x2\":0.6833333333333333,\"y2\":0.4,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efjp9exx\",\"kind\":\"rect\",\"x\":0.49166666666666664,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efkmi969\",\"kind\":\"ellipse\",\"x\":0.5,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efluyvvt\",\"kind\":\"ellipse\",\"x\":0.2,\"y\":0.3,\"w\":0.2,\"h\":0.1,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6,\"fill\":false,\"fill_color\":\"#607d8b\",\"fill_opacity\":0.25},{\"id\":\"dcmw0efmljpao\",\"kind\":\"text\",\"x\":0.5,\"y\":0.2,\"text\":\"Label 0\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efn9ndmd\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0efnuv19s\",\"kind\":\"text\",\"x\":0.5,\"y\":0.35,\"text\":\"Label 1\",\"color\":\"#607d8b\",\"opacity\":1,\"size_cm\":24},{\"id\":\"dfmw0efoi4j8s\",\"kind\":\"furniture\",\"symbol\":\"armchair\",\"x\":0.7625,\"y\":0.1125,\"w\":0.075,\"h\":0.075,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dimw0efp6v0tu\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1},{\"id\":\"dimw0efpyl6t7\",\"kind\":\"image\",\"asset_id\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"x\":0.6583333333333333,\"y\":0.2791666666666667,\"w\":0.08333333333333333,\"h\":0.041666666666666664,\"opacity\":1}]\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_decor_creation_selection",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_decor_creation_selection.log",
+          "sha256": "f2700e3d471c055fd2e2354cbba748abddd57152f4b0c7067cc2ac2a3282bb45",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       },
       "dependencyIssue": 1222
     },
     {
       "id": "smoke:smoke_canvas_frame",
       "file": "demo/smoke_canvas_frame.mjs",
-      "category": "business-invariant-investigation",
-      "status": "not-rerun",
-      "reason": "The distant stray room is rejected from the frame, but marker paint changes from27.66px to44.17px. Establish the current minimum-target/size authority before changing the visual-size invariant.",
+      "category": "fixture-store-authority",
+      "status": "passed",
+      "reason": "config/get and layout/get return detached snapshots. Publish replacements through setServerConfig/setLayout so independent static cards read the same actual server authority. Original exact icon paint-size/frame/outlier contracts pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -54,7 +70,15 @@
           "FAILED (1):",
           "  - strayRoomDoesNotInflateTheIcons: expected true, got false"
         ],
-        "originalTail": "icon px { px: 27.66, outliers: 0, frameW: 495 } { px: 44.17, outliers: 1, frameW: 495 }\n{\n \"visibleMarkerIsDrawn\": true,\n \"visibleMarkerWidensTheFrame\": true,\n \"hiddenMarkerNotDrawn\": true,\n \"hiddenMarkerStillBuilt\": true,\n \"frameIsTheVisibleRoom\": true,\n \"roomFillsTheStage\": true,\n \"staticCardHidesTheMarker\": true,\n \"staticFrameIsTheVisibleRoom\": true,\n \"viewFrameBefore\": true,\n \"editorFrameOnlyGrows\": true,\n \"viewFrameFollowsTheRoomAgain\": true,\n \"reenteringTheEditorDoesNotResurrectTheUnion\": true,\n \"strayRoomIsRejectedFromTheFrame\": true,\n \"strayRoomDoesNotInflateTheIcons\": false\n}\n\nFAILED (1):\n  - strayRoomDoesNotInflateTheIcons: expected true, got false\n"
+        "originalTail": "icon px { px: 27.66, outliers: 0, frameW: 495 } { px: 44.17, outliers: 1, frameW: 495 }\n{\n \"visibleMarkerIsDrawn\": true,\n \"visibleMarkerWidensTheFrame\": true,\n \"hiddenMarkerNotDrawn\": true,\n \"hiddenMarkerStillBuilt\": true,\n \"frameIsTheVisibleRoom\": true,\n \"roomFillsTheStage\": true,\n \"staticCardHidesTheMarker\": true,\n \"staticFrameIsTheVisibleRoom\": true,\n \"viewFrameBefore\": true,\n \"editorFrameOnlyGrows\": true,\n \"viewFrameFollowsTheRoomAgain\": true,\n \"reenteringTheEditorDoesNotResurrectTheUnion\": true,\n \"strayRoomIsRejectedFromTheFrame\": true,\n \"strayRoomDoesNotInflateTheIcons\": false\n}\n\nFAILED (1):\n  - strayRoomDoesNotInflateTheIcons: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_canvas_frame",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_canvas_frame.log",
+          "sha256": "81562a0ec6d4f59079030611db17f45ac0a4beee64b62689c5c5a43746e00223",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -104,9 +128,9 @@
     {
       "id": "smoke:smoke_daycycle_raster",
       "file": "demo/smoke_daycycle_raster.mjs",
-      "category": "performance-failure",
-      "status": "not-rerun",
-      "reason": "A measured performance bound failed. Keep the original budget and measurement; no fixture-only result may be reported as performance PASS.",
+      "category": "clean-material-performance-verification",
+      "status": "passed",
+      "reason": "No smoke or threshold change. Dirty-material diagnostic correctly refused measurement; the addressed clean a5aa896cd run is valid and passes all raster/paint guarantees: ratio 1.028321378909411 against unchanged ceiling 2.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -116,15 +140,24 @@
           "  - measurementValid: expected true, got false",
           "  - rasterRatioWithinBudget: expected true, got false"
         ],
-        "originalTail": "ect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":773},\"type\":\"WheelEventHandler\"}]},{\"layerId\":\"11\",\"parentLayerId\":\"6\",\"backendNodeId\":160,\"offsetX\":0,\"offsetY\":0,\"width\":780,\"height\":119,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,310,8,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":1,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":119},\"type\":\"TouchEventHandler\"},{\"rect\":{\"x\":325,\"y\":64,\"width\":87,\"height\":44},\"type\":\"WheelEventHandler\"}],\"stickyPositionConstraint\":{\"stickyBoxRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":119},\"containingBlockRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":892}}},{\"layerId\":\"13\",\"parentLayerId\":\"6\",\"backendNodeId\":209,\"offsetX\":0,\"offsetY\":0,\"width\":283,\"height\":166,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,676,497,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":63,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":36,\"y\":29,\"width\":210,\"height\":92},\"type\":\"TouchEventHandler\"}]},{\"layerId\":\"5\",\"parentLayerId\":\"6\",\"offsetX\":0,\"offsetY\":0,\"width\":1400,\"height\":900,\"paintCount\":0,\"drawsContent\":false}]}]},\"clockAlignment\":{\"status\":\"available\",\"source\":\"same page performance.mark and trace user-timing event\",\"marker\":\"hp-daycycle-daynight-2-5\",\"traceTsMicros\":1233885659,\"pageAtMs\":28136.300000000047,\"traceOriginMicros\":1205749359},\"rasterCpuClock\":\"tdur retained where provided\",\"layerNodes\":[{\"role\":\"stage\",\"status\":\"available\",\"backendNodeId\":4},{\"role\":\"paper\",\"status\":\"available\",\"backendNodeId\":31},{\"role\":\"plan\",\"status\":\"available\",\"backendNodeId\":29},{\"role\":\"outline\",\"status\":\"absent\",\"backendNodeId\":null}]}}],\"problems\":[\"measurement inputs differ from committed material\"],\"measurementValid\":false,\"rasterRatioWithinBudget\":false}\n{\n \"dayCycleClassOn\": true,\n \"dayCycleOutlineRemoved\": true,\n \"idlePaperUnfiltered\": true,\n \"staticClassOff\": true,\n \"staticOutlineAbsent\": true,\n \"staticOutlineUnfiltered\": true,\n \"staticOutlineNotPromoted\": true,\n \"cameraKeepsSafePlanLayer\": true,\n \"dayCycleOutlineRemainsAbsent\": true,\n \"dayCycleOutlineNotPromoted\": true,\n \"dayCyclePaperStaysUnfiltered\": true,\n \"safePlanLayerIsExplicit\": true,\n \"rasterTasksObserved\": true,\n \"measurementValid\": false,\n \"rasterRatioWithinBudget\": false\n}\n"
+        "originalTail": "ect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":773},\"type\":\"WheelEventHandler\"}]},{\"layerId\":\"11\",\"parentLayerId\":\"6\",\"backendNodeId\":160,\"offsetX\":0,\"offsetY\":0,\"width\":780,\"height\":119,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,310,8,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":1,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":0,\"y\":0,\"width\":780,\"height\":119},\"type\":\"TouchEventHandler\"},{\"rect\":{\"x\":325,\"y\":64,\"width\":87,\"height\":44},\"type\":\"WheelEventHandler\"}],\"stickyPositionConstraint\":{\"stickyBoxRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":119},\"containingBlockRect\":{\"x\":310,\"y\":8,\"width\":780,\"height\":892}}},{\"layerId\":\"13\",\"parentLayerId\":\"6\",\"backendNodeId\":209,\"offsetX\":0,\"offsetY\":0,\"width\":283,\"height\":166,\"transform\":[1,0,0,0,0,1,0,0,0,0,1,0,676,497,0,1],\"anchorX\":0,\"anchorY\":0,\"anchorZ\":0,\"paintCount\":63,\"drawsContent\":true,\"scrollRects\":[{\"rect\":{\"x\":36,\"y\":29,\"width\":210,\"height\":92},\"type\":\"TouchEventHandler\"}]},{\"layerId\":\"5\",\"parentLayerId\":\"6\",\"offsetX\":0,\"offsetY\":0,\"width\":1400,\"height\":900,\"paintCount\":0,\"drawsContent\":false}]}]},\"clockAlignment\":{\"status\":\"available\",\"source\":\"same page performance.mark and trace user-timing event\",\"marker\":\"hp-daycycle-daynight-2-5\",\"traceTsMicros\":1233885659,\"pageAtMs\":28136.300000000047,\"traceOriginMicros\":1205749359},\"rasterCpuClock\":\"tdur retained where provided\",\"layerNodes\":[{\"role\":\"stage\",\"status\":\"available\",\"backendNodeId\":4},{\"role\":\"paper\",\"status\":\"available\",\"backendNodeId\":31},{\"role\":\"plan\",\"status\":\"available\",\"backendNodeId\":29},{\"role\":\"outline\",\"status\":\"absent\",\"backendNodeId\":null}]}}],\"problems\":[\"measurement inputs differ from committed material\"],\"measurementValid\":false,\"rasterRatioWithinBudget\":false}\n{\n \"dayCycleClassOn\": true,\n \"dayCycleOutlineRemoved\": true,\n \"idlePaperUnfiltered\": true,\n \"staticClassOff\": true,\n \"staticOutlineAbsent\": true,\n \"staticOutlineUnfiltered\": true,\n \"staticOutlineNotPromoted\": true,\n \"cameraKeepsSafePlanLayer\": true,\n \"dayCycleOutlineRemainsAbsent\": true,\n \"dayCycleOutlineNotPromoted\": true,\n \"dayCyclePaperStaysUnfiltered\": true,\n \"safePlanLayerIsExplicit\": true,\n \"rasterTasksObserved\": true,\n \"measurementValid\": false,\n \"rasterRatioWithinBudget\": false\n}\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_daycycle_raster",
+          "exit": 0,
+          "log": "output/issue1226/ui-daycycle-clean.log",
+          "sha256": "0f5eed395438b1d865a695b0ba8fd2785b1cea3ce5a2ef6f920a1b0535974bdc",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd",
+          "report": "artifacts/diagnostics/863/issue1226-clean-a5aa896cd.json"
+        }
       }
     },
     {
       "id": "smoke:smoke_decor",
       "file": "demo/smoke_decor.mjs",
-      "category": "product-dependency",
-      "status": "not-rerun",
-      "reason": "Decor shared-history redo fails exact object/group restoration. Preserve the red Undo/Redo oracle and verify again after the existing product fix.",
+      "category": "product-fix-verified",
+      "status": "passed",
+      "reason": "Unmodified original decor geometry and Undo/Redo assertions pass after the accepted product fix.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -133,7 +166,15 @@
           "FAILED (1):",
           "  - lineStyleUndoRedo: expected true, got false"
         ],
-        "originalTail": "latRectSkipped\": true,\n \"noBadgeBeforeTheDrag\": true,\n \"lineBadgeShown\": true,\n \"lineBadgeText\": \"0.60 m · 0°\",\n \"lineBadgeMatchesGeometry\": true,\n \"lineBadgeAtTheMiddle\": true,\n \"badgeGreenOnAxis\": true,\n \"obliqueBadge\": true,\n \"obliqueNotGreen\": true,\n \"rectBadgeHasSizeAndArea\": true,\n \"badgeGoneAfterRelease\": true,\n \"stillThreeShapes\": true,\n \"textSaved\": true,\n \"textRendered\": true,\n \"moveKeepsSize\": true,\n \"probeRendered\": true,\n \"shapeInertUnderLineTool\": true,\n \"lineToolStartsDraft\": true,\n \"draftStartsAtTheEnd\": true,\n \"lineToolNoSelect\": true,\n \"lineToolNoMove\": true,\n \"rectToolStartsDraft\": true,\n \"ellipseToolStartsDraft\": true,\n \"textToolOpensDialog\": true,\n \"shapeLiveUnderSelect\": true,\n \"selectStillSelects\": true,\n \"selectStillGrabs\": true,\n \"selectMakesNoDraft\": true,\n \"selectionActionsUseContextTray\": true,\n \"deleteDoesNotFallThroughContextTray\": true,\n \"staleContextActionIsIgnored\": true,\n \"doubleClickOpensObjectDialog\": true,\n \"lineStyleDefaultsSolid\": true,\n \"angleInputKeepsWorkingPrecision\": true,\n \"lineStyleAbsentFromToolbar\": true,\n \"objectDialogSavesStyle\": true,\n \"objectDialogRefreshesMainDefault\": true,\n \"dashedLineRendered\": true,\n \"lineStyleUndoRedo\": false,\n \"dashedLineSelectableAcrossGaps\": true,\n \"eraseHairlineHasWideHitTarget\": true,\n \"eraseWideHitOpensConfirmation\": true,\n \"decorRestored\": true,\n \"keyboardSetupHasNoBackdropGesture\": true,\n \"arrowMovesFurnitureOneCellWithoutMagnet\": true,\n \"arrowIsOneHistoryAndSaveTransaction\": true,\n \"shiftArrowKeepsTheSameOneCellStep\": true,\n \"arrowUndoRedoIsExactlyOneStep\": true,\n \"imageAndOrdinaryDecorUseTheSameArrowPath\": true,\n \"arrowLeavesFormControlsAlone\": true,\n \"arrowRespectsToolbarDialogAndGestureGuards\": true,\n \"modifiedArrowsRemainBrowserCommands\": true,\n \"boundaryNoopIsConsumedButNotSaved\": true,\n \"modeSwitchCancelsLiveDecor\": true,\n \"eraseAsksConfirmation\": true,\n \"eraseWorks\": true,\n \"escTool\": true,\n \"escExit\": true,\n \"visibleInView\": true,\n \"inertInView\": true,\n \"deleteKey\": true,\n \"narrowToolbarKeepsToolsAndCloseApart\": true,\n \"narrowToolbarKeepsDefaultPickerUsable\": true,\n \"defaultPickerReadableInLightAndDark\": true\n}\n\nFAILED (1):\n  - lineStyleUndoRedo: expected true, got false\n"
+        "originalTail": "latRectSkipped\": true,\n \"noBadgeBeforeTheDrag\": true,\n \"lineBadgeShown\": true,\n \"lineBadgeText\": \"0.60 m · 0°\",\n \"lineBadgeMatchesGeometry\": true,\n \"lineBadgeAtTheMiddle\": true,\n \"badgeGreenOnAxis\": true,\n \"obliqueBadge\": true,\n \"obliqueNotGreen\": true,\n \"rectBadgeHasSizeAndArea\": true,\n \"badgeGoneAfterRelease\": true,\n \"stillThreeShapes\": true,\n \"textSaved\": true,\n \"textRendered\": true,\n \"moveKeepsSize\": true,\n \"probeRendered\": true,\n \"shapeInertUnderLineTool\": true,\n \"lineToolStartsDraft\": true,\n \"draftStartsAtTheEnd\": true,\n \"lineToolNoSelect\": true,\n \"lineToolNoMove\": true,\n \"rectToolStartsDraft\": true,\n \"ellipseToolStartsDraft\": true,\n \"textToolOpensDialog\": true,\n \"shapeLiveUnderSelect\": true,\n \"selectStillSelects\": true,\n \"selectStillGrabs\": true,\n \"selectMakesNoDraft\": true,\n \"selectionActionsUseContextTray\": true,\n \"deleteDoesNotFallThroughContextTray\": true,\n \"staleContextActionIsIgnored\": true,\n \"doubleClickOpensObjectDialog\": true,\n \"lineStyleDefaultsSolid\": true,\n \"angleInputKeepsWorkingPrecision\": true,\n \"lineStyleAbsentFromToolbar\": true,\n \"objectDialogSavesStyle\": true,\n \"objectDialogRefreshesMainDefault\": true,\n \"dashedLineRendered\": true,\n \"lineStyleUndoRedo\": false,\n \"dashedLineSelectableAcrossGaps\": true,\n \"eraseHairlineHasWideHitTarget\": true,\n \"eraseWideHitOpensConfirmation\": true,\n \"decorRestored\": true,\n \"keyboardSetupHasNoBackdropGesture\": true,\n \"arrowMovesFurnitureOneCellWithoutMagnet\": true,\n \"arrowIsOneHistoryAndSaveTransaction\": true,\n \"shiftArrowKeepsTheSameOneCellStep\": true,\n \"arrowUndoRedoIsExactlyOneStep\": true,\n \"imageAndOrdinaryDecorUseTheSameArrowPath\": true,\n \"arrowLeavesFormControlsAlone\": true,\n \"arrowRespectsToolbarDialogAndGestureGuards\": true,\n \"modifiedArrowsRemainBrowserCommands\": true,\n \"boundaryNoopIsConsumedButNotSaved\": true,\n \"modeSwitchCancelsLiveDecor\": true,\n \"eraseAsksConfirmation\": true,\n \"eraseWorks\": true,\n \"escTool\": true,\n \"escExit\": true,\n \"visibleInView\": true,\n \"inertInView\": true,\n \"deleteKey\": true,\n \"narrowToolbarKeepsToolsAndCloseApart\": true,\n \"narrowToolbarKeepsDefaultPickerUsable\": true,\n \"defaultPickerReadableInLightAndDark\": true\n}\n\nFAILED (1):\n  - lineStyleUndoRedo: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_decor",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_decor.log",
+          "sha256": "bab8ca96e9da1b718a24017ccf81bf0649011974186094cd50f51b5bdf8bf60e",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       },
       "dependencyIssue": 1222
     },
@@ -162,9 +203,9 @@
     {
       "id": "smoke:smoke_decor_line_click",
       "file": "demo/smoke_decor_line_click.mjs",
-      "category": "product-dependency",
-      "status": "not-rerun",
-      "reason": "Decor shared-history redo fails exact object/group restoration. Preserve the red Undo/Redo oracle and verify again after the existing product fix.",
+      "category": "product-fix-verified",
+      "status": "passed",
+      "reason": "Unmodified original native line selection/edit and exact geometry/history assertions pass after the accepted product fix.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -175,16 +216,24 @@
           "  - line.active_redo_exact: expected [{\"id\":\"dcmw0ert65ixq\",\"kind\":\"line\",\"x1\":0.2,\"y1\":0.25,\"x2\":0.45,\"y2\":0.3,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0ertnesmj\",\"kind\":\"line\",\"x1\":0.45,\"y1\":0.3,\"x2\":0.7,\"y2\":0.45,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6}], got [{\"id\":\"dcmw0ert65ixq\",\"kind\":\"line\",\"x1\":0.2,\"y1\":0.25,\"x2\":0.45,\"y2\":0.3,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6}]",
           "TypeError: Cannot read properties of undefined (reading 'x2')"
         ],
-        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n\nFAILED (2):\n  - line.active_redo_one: expected 2, got 1\n  - line.active_redo_exact: expected [{\"id\":\"dcmw0ert65ixq\",\"kind\":\"line\",\"x1\":0.2,\"y1\":0.25,\"x2\":0.45,\"y2\":0.3,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0ertnesmj\",\"kind\":\"line\",\"x1\":0.45,\"y1\":0.3,\"x2\":0.7,\"y2\":0.45,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6}], got [{\"id\":\"dcmw0ert65ixq\",\"kind\":\"line\",\"x1\":0.2,\"y1\":0.25,\"x2\":0.45,\"y2\":0.3,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6}]\nfile:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_decor_line_click.mjs:71\n  check('line.active_redo_anchor',closePoint(s.anchor,[s.decor[1].x2*1000,s.decor[1].y2*1000]));\n                                                                  ^\n\nTypeError: Cannot read properties of undefined (reading 'x2')\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_decor_line_click.mjs:71:67\n\nNode.js v22.23.4\n"
+        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n\nFAILED (2):\n  - line.active_redo_one: expected 2, got 1\n  - line.active_redo_exact: expected [{\"id\":\"dcmw0ert65ixq\",\"kind\":\"line\",\"x1\":0.2,\"y1\":0.25,\"x2\":0.45,\"y2\":0.3,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6},{\"id\":\"dcmw0ertnesmj\",\"kind\":\"line\",\"x1\":0.45,\"y1\":0.3,\"x2\":0.7,\"y2\":0.45,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6}], got [{\"id\":\"dcmw0ert65ixq\",\"kind\":\"line\",\"x1\":0.2,\"y1\":0.25,\"x2\":0.45,\"y2\":0.3,\"color\":\"#607d8b\",\"opacity\":1,\"width_cm\":3.6}]\nfile:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_decor_line_click.mjs:71\n  check('line.active_redo_anchor',closePoint(s.anchor,[s.decor[1].x2*1000,s.decor[1].y2*1000]));\n                                                                  ^\n\nTypeError: Cannot read properties of undefined (reading 'x2')\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_decor_line_click.mjs:71:67\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_decor_line_click",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_decor_line_click.log",
+          "sha256": "591d7fe23050cf998845a1b20942e6bea814e2a42b56d2971abe0be1f661980f",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       },
       "dependencyIssue": 1222
     },
     {
       "id": "smoke:smoke_decor_multiselect",
       "file": "demo/smoke_decor_multiselect.mjs",
-      "category": "product-dependency",
-      "status": "not-rerun",
-      "reason": "Decor shared-history redo fails exact object/group restoration. Preserve the red Undo/Redo oracle and verify again after the existing product fix.",
+      "category": "product-fix-verified",
+      "status": "passed",
+      "reason": "Unmodified original multi-selection and exact history snapshots pass after the accepted product fix.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -193,7 +242,15 @@
           "FAILED (1):",
           "  - group.shared_redo_complete: expected [{\"id\":\"line\",\"kind\":\"line\",\"x1\":0.189166667,\"y1\":0.2,\"x2\":0.389166667,\"y2\":0.27,\"color\":\"#ff0000\",\"opacity\":0.2,\"line_style\":\"dashed\",\"width_cm\":3},{\"id\":\"rect\",\"kind\":\"rect\",\"x\":0.469166667,\"y\":0.19,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":0,\"width_cm\":2,\"future\":{\"keep\":[\"rect\",true]}},{\"id\":\"ellipse\",\"kind\":\"ellipse\",\"x\":0.7291666666666666,\"y\":0.2,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":24,\"width_cm\":2,\"future\":{\"keep\":[\"ellipse\",true]}},{\"id\":\"text\",\"kind\":\"text\",\"x\":0.269166667,\"y\":0.52,\"text\":\"Room {sensor.group_temperature}\",\"color\":\"#334455\",\"size_cm\":16,\"angle\":17},{\"id\":\"furniture\",\"kind\":\"furniture\",\"x\":0.469166667,\"y\":0.44,\"w\":0.18,\"h\":0.13,\"symbol\":\"sofa\",\"color\":\"#116633\",\"opacity\":0.7,\"angle\":22,\"flip_h\":true},{\"id\":\"image\",\"kind\":\"image\",\"x\":0.739166667,\"y\":0.44,\"w\":0.16,\"h\":0.12,\"asset_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"opacity\":0.6,\"angle\":-15,\"flip_v\":true}], got [{\"id\":\"line\",\"kind\":\"line\",\"x1\":0.12,\"y1\":0.16,\"x2\":0.32,\"y2\":0.23,\"color\":\"#ff0000\",\"opacity\":0.2,\"line_style\":\"dashed\",\"width_cm\":3},{\"id\":\"rect\",\"kind\":\"rect\",\"x\":0.4,\"y\":0.15,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":0,\"width_cm\":2,\"future\":{\"keep\":[\"rect\",true]}},{\"id\":\"ellipse\",\"kind\":\"ellipse\",\"x\":0.66,\"y\":0.16,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":24,\"width_cm\":2,\"future\":{\"keep\":[\"ellipse\",true]}},{\"id\":\"text\",\"kind\":\"text\",\"x\":0.2,\"y\":0.48,\"text\":\"Room {sensor.group_temperature}\",\"color\":\"#334455\",\"size_cm\":16,\"angle\":17},{\"id\":\"furniture\",\"kind\":\"furniture\",\"x\":0.4,\"y\":0.4,\"w\":0.18,\"h\":0.13,\"symbol\":\"sofa\",\"color\":\"#116633\",\"opacity\":0.7,\"angle\":22,\"flip_h\":true},{\"id\":\"image\",\"kind\":\"image\",\"x\":0.67,\"y\":0.4,\"w\":0.16,\"h\":0.12,\"asset_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"opacity\":0.6,\"angle\":-15,\"flip_v\":true}]"
         ],
-        "originalTail": "y\":562.1,\"tag\":\"svg\",\"classes\":\"plan-svg\",\"stage\":true}}]\n\nFAILED (1):\n  - group.shared_redo_complete: expected [{\"id\":\"line\",\"kind\":\"line\",\"x1\":0.189166667,\"y1\":0.2,\"x2\":0.389166667,\"y2\":0.27,\"color\":\"#ff0000\",\"opacity\":0.2,\"line_style\":\"dashed\",\"width_cm\":3},{\"id\":\"rect\",\"kind\":\"rect\",\"x\":0.469166667,\"y\":0.19,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":0,\"width_cm\":2,\"future\":{\"keep\":[\"rect\",true]}},{\"id\":\"ellipse\",\"kind\":\"ellipse\",\"x\":0.7291666666666666,\"y\":0.2,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":24,\"width_cm\":2,\"future\":{\"keep\":[\"ellipse\",true]}},{\"id\":\"text\",\"kind\":\"text\",\"x\":0.269166667,\"y\":0.52,\"text\":\"Room {sensor.group_temperature}\",\"color\":\"#334455\",\"size_cm\":16,\"angle\":17},{\"id\":\"furniture\",\"kind\":\"furniture\",\"x\":0.469166667,\"y\":0.44,\"w\":0.18,\"h\":0.13,\"symbol\":\"sofa\",\"color\":\"#116633\",\"opacity\":0.7,\"angle\":22,\"flip_h\":true},{\"id\":\"image\",\"kind\":\"image\",\"x\":0.739166667,\"y\":0.44,\"w\":0.16,\"h\":0.12,\"asset_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"opacity\":0.6,\"angle\":-15,\"flip_v\":true}], got [{\"id\":\"line\",\"kind\":\"line\",\"x1\":0.12,\"y1\":0.16,\"x2\":0.32,\"y2\":0.23,\"color\":\"#ff0000\",\"opacity\":0.2,\"line_style\":\"dashed\",\"width_cm\":3},{\"id\":\"rect\",\"kind\":\"rect\",\"x\":0.4,\"y\":0.15,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":0,\"width_cm\":2,\"future\":{\"keep\":[\"rect\",true]}},{\"id\":\"ellipse\",\"kind\":\"ellipse\",\"x\":0.66,\"y\":0.16,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":24,\"width_cm\":2,\"future\":{\"keep\":[\"ellipse\",true]}},{\"id\":\"text\",\"kind\":\"text\",\"x\":0.2,\"y\":0.48,\"text\":\"Room {sensor.group_temperature}\",\"color\":\"#334455\",\"size_cm\":16,\"angle\":17},{\"id\":\"furniture\",\"kind\":\"furniture\",\"x\":0.4,\"y\":0.4,\"w\":0.18,\"h\":0.13,\"symbol\":\"sofa\",\"color\":\"#116633\",\"opacity\":0.7,\"angle\":22,\"flip_h\":true},{\"id\":\"image\",\"kind\":\"image\",\"x\":0.67,\"y\":0.4,\"w\":0.16,\"h\":0.12,\"asset_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"opacity\":0.6,\"angle\":-15,\"flip_v\":true}]\n"
+        "originalTail": "y\":562.1,\"tag\":\"svg\",\"classes\":\"plan-svg\",\"stage\":true}}]\n\nFAILED (1):\n  - group.shared_redo_complete: expected [{\"id\":\"line\",\"kind\":\"line\",\"x1\":0.189166667,\"y1\":0.2,\"x2\":0.389166667,\"y2\":0.27,\"color\":\"#ff0000\",\"opacity\":0.2,\"line_style\":\"dashed\",\"width_cm\":3},{\"id\":\"rect\",\"kind\":\"rect\",\"x\":0.469166667,\"y\":0.19,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":0,\"width_cm\":2,\"future\":{\"keep\":[\"rect\",true]}},{\"id\":\"ellipse\",\"kind\":\"ellipse\",\"x\":0.7291666666666666,\"y\":0.2,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":24,\"width_cm\":2,\"future\":{\"keep\":[\"ellipse\",true]}},{\"id\":\"text\",\"kind\":\"text\",\"x\":0.269166667,\"y\":0.52,\"text\":\"Room {sensor.group_temperature}\",\"color\":\"#334455\",\"size_cm\":16,\"angle\":17},{\"id\":\"furniture\",\"kind\":\"furniture\",\"x\":0.469166667,\"y\":0.44,\"w\":0.18,\"h\":0.13,\"symbol\":\"sofa\",\"color\":\"#116633\",\"opacity\":0.7,\"angle\":22,\"flip_h\":true},{\"id\":\"image\",\"kind\":\"image\",\"x\":0.739166667,\"y\":0.44,\"w\":0.16,\"h\":0.12,\"asset_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"opacity\":0.6,\"angle\":-15,\"flip_v\":true}], got [{\"id\":\"line\",\"kind\":\"line\",\"x1\":0.12,\"y1\":0.16,\"x2\":0.32,\"y2\":0.23,\"color\":\"#ff0000\",\"opacity\":0.2,\"line_style\":\"dashed\",\"width_cm\":3},{\"id\":\"rect\",\"kind\":\"rect\",\"x\":0.4,\"y\":0.15,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":0,\"width_cm\":2,\"future\":{\"keep\":[\"rect\",true]}},{\"id\":\"ellipse\",\"kind\":\"ellipse\",\"x\":0.66,\"y\":0.16,\"w\":0.13,\"h\":0.09,\"fill\":true,\"fill_color\":\"#778899\",\"fill_opacity\":0.6,\"color\":\"#ff0000\",\"opacity\":0.2,\"angle\":24,\"width_cm\":2,\"future\":{\"keep\":[\"ellipse\",true]}},{\"id\":\"text\",\"kind\":\"text\",\"x\":0.2,\"y\":0.48,\"text\":\"Room {sensor.group_temperature}\",\"color\":\"#334455\",\"size_cm\":16,\"angle\":17},{\"id\":\"furniture\",\"kind\":\"furniture\",\"x\":0.4,\"y\":0.4,\"w\":0.18,\"h\":0.13,\"symbol\":\"sofa\",\"color\":\"#116633\",\"opacity\":0.7,\"angle\":22,\"flip_h\":true},{\"id\":\"image\",\"kind\":\"image\",\"x\":0.67,\"y\":0.4,\"w\":0.16,\"h\":0.12,\"asset_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"opacity\":0.6,\"angle\":-15,\"flip_v\":true}]\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_decor_multiselect",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_decor_multiselect.log",
+          "sha256": "e910709bedd2c222f6fd393c6fae32a907ddf86ddaad73bb8441a95ac11ee541",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       },
       "dependencyIssue": 1222
     },
@@ -401,9 +458,9 @@
     {
       "id": "smoke:smoke_e2e_hooks",
       "file": "demo/smoke_e2e_hooks.mjs",
-      "category": "native-target-investigation",
-      "status": "not-rerun",
-      "reason": "The original sweep reaches contactGroup but times out finding the row-designer-0 device in its final contact/designer section. Earlier hooks are green; locate the missing visible fixture target before changing selectors.",
+      "category": "native-visible-dom-observers",
+      "status": "passed",
+      "reason": "Use native summary close, viewport scroll and double-tap Fit, then select an actually visible virtual marker with a normal Playwright click. Assert that same stable marker ID in selection/Properties/catalogue. Resolve the current floor from the public compact settings hook when tabs are absent. All original hook/action/data-preservation checks run and pass; no camera/runtime/selection fields are seeded.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -413,15 +470,23 @@
           "FAILED (1):",
           "  - completed: expected true, got false"
         ],
-        "originalTail": " '      - scrolling into view if needed',\n    '      - done scrolling',\n    '      - element is outside of the viewport',\n    '    - retrying click action',\n    '    - waiting 20ms',\n    '    2 × waiting for element to be visible, enabled and stable',\n    '      - element is visible, enabled and stable',\n    '      - scrolling into view if needed',\n    '      - done scrolling',\n    '      - element is outside of the viewport',\n    '    - retrying click action',\n    '      - waiting 100ms',\n    '    58 × waiting for element to be visible, enabled and stable',\n    '       - element is visible, enabled and stable',\n    '       - scrolling into view if needed',\n    '       - done scrolling',\n    '       - element is outside of the viewport',\n    '     - retrying click action',\n    '       - waiting 500ms'\n  ],\n  name: 'TimeoutError'\n}\n{\n \"releaseDoesNotInstallFacade\": true,\n \"spaceIdentity\": true,\n \"retiredWallFillAbsent\": true,\n \"general:allControlsHooked\": true,\n \"colourFields\": true,\n \"general:inputUsesControl\": true,\n \"general:cancelDiscards\": true,\n \"spaceColourIdentities\": true,\n \"space:allControlsHooked\": true,\n \"space:inputUsesControl\": true,\n \"spaceDeleteHook\": true,\n \"space:cancelDiscards\": true,\n \"roomCustomColour\": true,\n \"roomCaptionOwnHook\": true,\n \"room:allControlsHooked\": true,\n \"room:inputUsesControl\": true,\n \"room:cancelDiscards\": true,\n \"markerRippleColour\": true,\n \"manualStateInput\": true,\n \"marker:allControlsHooked\": true,\n \"marker:inputUsesControl\": true,\n \"marker:cancelDiscards\": true,\n \"settingsDraftsNotSaved\": true,\n \"gridUsesRealCoordinates\": true,\n \"nodeIdentity\": true,\n \"nodeState\": true,\n \"resizeIdentity\": true,\n \"deviceTools\": true,\n \"historyActions\": true,\n \"catalogIdentity\": true,\n \"catalogSelection\": true,\n \"pdfOption\": true,\n \"supportFields\": true,\n \"supportPreview\": true,\n \"feedbackNotSent\": true,\n \"summaryResult\": true,\n \"summarySettings\": true,\n \"backdrop\": true,\n \"decorKinds\": true,\n \"vacuumResult\": true,\n \"glowIdentity\": true,\n \"furnitureIdentity\": true,\n \"imageUpload\": true,\n \"vacuumCalibration\": true,\n \"calibrationCancel\": true,\n \"contactGroup\": true,\n \"completed\": false\n}\n\nFAILED (1):\n  - completed: expected true, got false\n"
+        "originalTail": " '      - scrolling into view if needed',\n    '      - done scrolling',\n    '      - element is outside of the viewport',\n    '    - retrying click action',\n    '    - waiting 20ms',\n    '    2 × waiting for element to be visible, enabled and stable',\n    '      - element is visible, enabled and stable',\n    '      - scrolling into view if needed',\n    '      - done scrolling',\n    '      - element is outside of the viewport',\n    '    - retrying click action',\n    '      - waiting 100ms',\n    '    58 × waiting for element to be visible, enabled and stable',\n    '       - element is visible, enabled and stable',\n    '       - scrolling into view if needed',\n    '       - done scrolling',\n    '       - element is outside of the viewport',\n    '     - retrying click action',\n    '       - waiting 500ms'\n  ],\n  name: 'TimeoutError'\n}\n{\n \"releaseDoesNotInstallFacade\": true,\n \"spaceIdentity\": true,\n \"retiredWallFillAbsent\": true,\n \"general:allControlsHooked\": true,\n \"colourFields\": true,\n \"general:inputUsesControl\": true,\n \"general:cancelDiscards\": true,\n \"spaceColourIdentities\": true,\n \"space:allControlsHooked\": true,\n \"space:inputUsesControl\": true,\n \"spaceDeleteHook\": true,\n \"space:cancelDiscards\": true,\n \"roomCustomColour\": true,\n \"roomCaptionOwnHook\": true,\n \"room:allControlsHooked\": true,\n \"room:inputUsesControl\": true,\n \"room:cancelDiscards\": true,\n \"markerRippleColour\": true,\n \"manualStateInput\": true,\n \"marker:allControlsHooked\": true,\n \"marker:inputUsesControl\": true,\n \"marker:cancelDiscards\": true,\n \"settingsDraftsNotSaved\": true,\n \"gridUsesRealCoordinates\": true,\n \"nodeIdentity\": true,\n \"nodeState\": true,\n \"resizeIdentity\": true,\n \"deviceTools\": true,\n \"historyActions\": true,\n \"catalogIdentity\": true,\n \"catalogSelection\": true,\n \"pdfOption\": true,\n \"supportFields\": true,\n \"supportPreview\": true,\n \"feedbackNotSent\": true,\n \"summaryResult\": true,\n \"summarySettings\": true,\n \"backdrop\": true,\n \"decorKinds\": true,\n \"vacuumResult\": true,\n \"glowIdentity\": true,\n \"furnitureIdentity\": true,\n \"imageUpload\": true,\n \"vacuumCalibration\": true,\n \"calibrationCancel\": true,\n \"contactGroup\": true,\n \"completed\": false\n}\n\nFAILED (1):\n  - completed: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_e2e_hooks",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_e2e_hooks.log",
+          "sha256": "790eda133bb982045c1200138e6131a70f1543aa27be572b18adf2fab53657cb",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_edit_walk",
       "file": "demo/smoke_edit_walk.mjs",
-      "category": "graph-fixture-or-product-investigation",
-      "status": "not-rerun",
-      "reason": "Raw projection fixtures and current graph authority diverge: edit-walk reports partition/room-role invariants; grid-snap gets no resize preview. Canonicalize authored inputs with the shared graph fixture and retain exact geometric invariants.",
+      "category": "retained-edit-sequence-invariant",
+      "status": "failed",
+      "reason": "Three deterministic original 24-step walks remain red: second-floor seeds 2/3 and first-floor seed 2. Current outputs violate the original exact model invariant/debt oracle. Preserve the saved failing configs and chains; no expected-debt acceptance or geometry rounding.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -432,8 +497,17 @@
           "  - walk_second_floor_seed3: expected true, got false",
           "  - walk_first_floor_seed2: expected true, got false"
         ],
-        "originalTail": "\nОбход нашёл нарушения:\n\n  real-plan-second-floor.json, семя 2, шаг 1: удаление комнаты room-f с сохранением стен\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0 · 197 шагов по стене room-e\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0~1 · 207 шагов по стене room-d\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0~2 · 220 шагов по стене room-c\n    цепочка жестов:\n      0. ресайз room-b#2 на -3 (предпросмотр не сдвинулся)\n      1. удаление комнаты room-f с сохранением стен\n    конфиг сохранён: artifacts/edit-walk-real-plan-second-floor.json-seed2.json\n\n  real-plan-second-floor.json, семя 3, шаг 1: удаление комнаты room-d с сохранением стен\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0 · 197 шагов по стене room-e\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0~2 · 220 шагов по стене room-c\n    цепочка жестов:\n      0. ресайз room-a#2 на -1 (предпросмотр не сдвинулся)\n      1. удаление комнаты room-d с сохранением стен\n    конфиг сохранён: artifacts/edit-walk-real-plan-second-floor.json-seed3.json\n\n  real-plan-first-floor.json, семя 2, шаг 3: удаление комнаты room-b с сохранением стен\n    partition_over_room_wall · real-first-floor:ge-1750b98a8c3a7b4c · 6 шагов по стене room-d\n    partition_over_room_wall · real-first-floor:ge-63da00563817c8bc · 50 шагов по стене room-a\n    mixed_role_record · real-first-floor:0.220833,0.645833@0.0000 · 20 см\n    цепочка жестов:\n      0. ресайз room-b#0 на -3 (предпросмотр не сдвинулся)\n      1. удаление комнаты room-f с сохранением стен\n      2. ресайз room-b#0 на 1 (предпросмотр не сдвинулся)\n      3. удаление комнаты room-b с сохранением стен\n    конфиг сохранён: artifacts/edit-walk-real-plan-first-floor.json-seed2.json\n{\n \"walk_second_floor_seed1\": true,\n \"walk_second_floor_seed2\": false,\n \"walk_second_floor_seed3\": false,\n \"walk_first_floor_seed1\": true,\n \"walk_first_floor_seed2\": false,\n \"walk_first_floor_seed3\": true\n}\n\nFAILED (3):\n  - walk_second_floor_seed2: expected true, got false\n  - walk_second_floor_seed3: expected true, got false\n  - walk_first_floor_seed2: expected true, got false\n"
-      }
+        "originalTail": "\nОбход нашёл нарушения:\n\n  real-plan-second-floor.json, семя 2, шаг 1: удаление комнаты room-f с сохранением стен\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0 · 197 шагов по стене room-e\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0~1 · 207 шагов по стене room-d\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0~2 · 220 шагов по стене room-c\n    цепочка жестов:\n      0. ресайз room-b#2 на -3 (предпросмотр не сдвинулся)\n      1. удаление комнаты room-f с сохранением стен\n    конфиг сохранён: artifacts/edit-walk-real-plan-second-floor.json-seed2.json\n\n  real-plan-second-floor.json, семя 3, шаг 1: удаление комнаты room-d с сохранением стен\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0 · 197 шагов по стене room-e\n    partition_over_room_wall · real-second-floor:partition-mt2on9ou-0~2 · 220 шагов по стене room-c\n    цепочка жестов:\n      0. ресайз room-a#2 на -1 (предпросмотр не сдвинулся)\n      1. удаление комнаты room-d с сохранением стен\n    конфиг сохранён: artifacts/edit-walk-real-plan-second-floor.json-seed3.json\n\n  real-plan-first-floor.json, семя 2, шаг 3: удаление комнаты room-b с сохранением стен\n    partition_over_room_wall · real-first-floor:ge-1750b98a8c3a7b4c · 6 шагов по стене room-d\n    partition_over_room_wall · real-first-floor:ge-63da00563817c8bc · 50 шагов по стене room-a\n    mixed_role_record · real-first-floor:0.220833,0.645833@0.0000 · 20 см\n    цепочка жестов:\n      0. ресайз room-b#0 на -3 (предпросмотр не сдвинулся)\n      1. удаление комнаты room-f с сохранением стен\n      2. ресайз room-b#0 на 1 (предпросмотр не сдвинулся)\n      3. удаление комнаты room-b с сохранением стен\n    конфиг сохранён: artifacts/edit-walk-real-plan-first-floor.json-seed2.json\n{\n \"walk_second_floor_seed1\": true,\n \"walk_second_floor_seed2\": false,\n \"walk_second_floor_seed3\": false,\n \"walk_first_floor_seed1\": true,\n \"walk_first_floor_seed2\": false,\n \"walk_first_floor_seed3\": true\n}\n\nFAILED (3):\n  - walk_second_floor_seed2: expected true, got false\n  - walk_second_floor_seed3: expected true, got false\n  - walk_first_floor_seed2: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_edit_walk",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_edit_walk.log",
+          "sha256": "61dfb78e81ebea686409ba462d03472a7688613aa8537134589460f2f2aeefd6",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
+      },
+      "dependencyIssue": 1224
     },
     {
       "id": "smoke:smoke_editor_command_latency",
@@ -460,9 +534,9 @@
     {
       "id": "smoke:smoke_editor_nudge",
       "file": "demo/smoke_editor_nudge.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "current-graph-fixture-stable-ids",
+      "status": "passed",
+      "reason": "Construct explicit authored legacy input through the canonical graph fixture producer. Graph projection sorts named objects, so observe the named free partition/hosted opening/door by stable ID rather than array position. All exact step, opaque metadata, host atomicity, Undo/Redo and write/history counts remain strict.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -475,15 +549,23 @@
           "  - nudge.wall_undo: expected true, got false",
           "  - nudge.wall_redo: expected true, got false"
         ],
-        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n\nFAILED (5):\n  - nudge.wall_full_segment_exact_step: expected true, got false\n  - nudge.wall_offset_identity_unknown: expected true, got false\n  - nudge.hosted_opening_atomic: expected true, got false\n  - nudge.wall_undo: expected true, got false\n  - nudge.wall_redo: expected true, got false\n"
+        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n\nFAILED (5):\n  - nudge.wall_full_segment_exact_step: expected true, got false\n  - nudge.wall_offset_identity_unknown: expected true, got false\n  - nudge.hosted_opening_atomic: expected true, got false\n  - nudge.wall_undo: expected true, got false\n  - nudge.wall_redo: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_editor_nudge",
+          "exit": 0,
+          "log": "output/issue1226/ui-nudge-r2.log",
+          "sha256": "956e38a1a298de59b36641235967f049857b08f080d654bc3b25985617c25e48",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_editor_styles_lazy",
       "file": "demo/smoke_editor_styles_lazy.mjs",
-      "category": "style-cascade-investigation",
-      "status": "not-rerun",
-      "reason": "The cold shared context-menu sheet is not immediately after its declared eager dialogs anchor. Other first-frame lazy-style oracles pass. Keep exact ownership/order until the current cascade is independently traced.",
+      "category": "first-use-lazy-style-ownership",
+      "status": "passed",
+      "reason": "Cold View legitimately has zero menu sheets. Add that positive laziness assertion, open the real View device context menu natively, and require exactly one shared sheet immediately after the eager dialogs anchor while the editor is still unloaded. All existing order/retry/editor lifetime assertions pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -492,7 +574,15 @@
           "FAILED (1):",
           "  - sharedMenuIsSingleAfterDialogs: expected true, got false"
         ],
-        "originalTail": "SingleAfterDialogs\": false,\n \"coldHostsHaveNoTrayTokens\": true,\n \"settingsFirstFrameStyled\": true,\n \"editorSheetsCarryTheMovedRules\": true,\n \"coldRootsMatchNoMovedSelector\": true,\n \"coldRootIsCardStylesPlusLaterNonEditorSheets\": true,\n \"sheetsInCanonicalSlotsOnce\": true,\n \"trayTokensArriveWithTheRuntime\": true,\n \"kioskAndSpaceCardStayWithoutEditorSheets\": true,\n \"editorOpenRequestsOnlyKnownGraphs\": true,\n \"viewAfterEditorUntouchedByEditorSheets\": true,\n \"secondCardOwnRootSharedSheets\": true,\n \"warmRemountRevivedDialogStyled\": true,\n \"support: .supportsection styled in its first frame\": true,\n \"support: editor sheets adopted once, canonical slots\": true,\n \"plan: .editor-secondary-host styled in its first frame\": true,\n \"plan: hp-dialog .alignmsg styled in its first frame\": true,\n \"plan: hp-dialog .backupbody .srcrow styled in its first frame\": true,\n \"plan: hp-dialog.roomdialog styled in its first frame\": true,\n \"plan: .wallthick-dlg styled in its first frame\": true,\n \"plan: editor sheets adopted once, canonical slots\": true,\n \"devices: .editor-secondary-host styled in its first frame\": true,\n \"devices: .device-inbox-row styled in its first frame\": true,\n \"devices: .rtest styled in its first frame\": true,\n \"devices: .hpf-settings-pane:not([hidden]) .radarcoordinates styled in its first frame\": true,\n \"devices: .radarsetup styled in its first frame\": true,\n \"devices: .hpf-settings-pane:not([hidden]) .vacdiag styled in its first frame\": true,\n \"devices: .vacfit styled in its first frame\": true,\n \"devices: editor sheets adopted once, canonical slots\": true,\n \"decor: .editor-secondary-host styled in its first frame\": true,\n \"decor: .furnpalette styled in its first frame\": true,\n \"decor: .imageupload input styled in its first frame\": true,\n \"decor: editor sheets adopted once, canonical slots\": true,\n \"phoneColdViewWithoutEditorSheets\": true,\n \"onboardingWithoutEditorAndItsSheets\": true,\n \"onboardingSharedRowsStyledWithoutEditor\": true,\n \"phoneNoEditorChunkRequested\": true,\n \"disconnectDuringImportAdoptsOnce\": true,\n \"retryAfterFailedAttemptAdoptsOnce\": true,\n \"foreignBuildAdoptsNothing\": true\n}\n\nFAILED (1):\n  - sharedMenuIsSingleAfterDialogs: expected true, got false\n"
+        "originalTail": "SingleAfterDialogs\": false,\n \"coldHostsHaveNoTrayTokens\": true,\n \"settingsFirstFrameStyled\": true,\n \"editorSheetsCarryTheMovedRules\": true,\n \"coldRootsMatchNoMovedSelector\": true,\n \"coldRootIsCardStylesPlusLaterNonEditorSheets\": true,\n \"sheetsInCanonicalSlotsOnce\": true,\n \"trayTokensArriveWithTheRuntime\": true,\n \"kioskAndSpaceCardStayWithoutEditorSheets\": true,\n \"editorOpenRequestsOnlyKnownGraphs\": true,\n \"viewAfterEditorUntouchedByEditorSheets\": true,\n \"secondCardOwnRootSharedSheets\": true,\n \"warmRemountRevivedDialogStyled\": true,\n \"support: .supportsection styled in its first frame\": true,\n \"support: editor sheets adopted once, canonical slots\": true,\n \"plan: .editor-secondary-host styled in its first frame\": true,\n \"plan: hp-dialog .alignmsg styled in its first frame\": true,\n \"plan: hp-dialog .backupbody .srcrow styled in its first frame\": true,\n \"plan: hp-dialog.roomdialog styled in its first frame\": true,\n \"plan: .wallthick-dlg styled in its first frame\": true,\n \"plan: editor sheets adopted once, canonical slots\": true,\n \"devices: .editor-secondary-host styled in its first frame\": true,\n \"devices: .device-inbox-row styled in its first frame\": true,\n \"devices: .rtest styled in its first frame\": true,\n \"devices: .hpf-settings-pane:not([hidden]) .radarcoordinates styled in its first frame\": true,\n \"devices: .radarsetup styled in its first frame\": true,\n \"devices: .hpf-settings-pane:not([hidden]) .vacdiag styled in its first frame\": true,\n \"devices: .vacfit styled in its first frame\": true,\n \"devices: editor sheets adopted once, canonical slots\": true,\n \"decor: .editor-secondary-host styled in its first frame\": true,\n \"decor: .furnpalette styled in its first frame\": true,\n \"decor: .imageupload input styled in its first frame\": true,\n \"decor: editor sheets adopted once, canonical slots\": true,\n \"phoneColdViewWithoutEditorSheets\": true,\n \"onboardingWithoutEditorAndItsSheets\": true,\n \"onboardingSharedRowsStyledWithoutEditor\": true,\n \"phoneNoEditorChunkRequested\": true,\n \"disconnectDuringImportAdoptsOnce\": true,\n \"retryAfterFailedAttemptAdoptsOnce\": true,\n \"foreignBuildAdoptsNothing\": true\n}\n\nFAILED (1):\n  - sharedMenuIsSingleAfterDialogs: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_editor_styles_lazy",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_editor_styles_lazy.log",
+          "sha256": "f0cb889d7b5c903af839affc9045428eca88bc30b27c69d233684af41fbee5a0",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -521,9 +611,9 @@
     {
       "id": "smoke:smoke_floor_cache_reuse",
       "file": "demo/smoke_floor_cache_reuse.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "retained-current-graph-undo-resize",
+      "status": "failed",
+      "reason": "All other original cache/fresh-card/held-ACK checks pass. After native Undo, the next trusted Resize begins but accepts no preview: unions 0 versus required 1, no live areas, geometry-safe-refusal toast. Full history/cache contracts stay red; do not bless no-op gestures or relax quotas.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -532,7 +622,15 @@
           "FAILED (1):",
           "  - gestureAfterUndo: expected {\"dragged\":true,\"unions\":1,\"steps\":true,\"areas\":{\"rooms\":2,\"wrong\":[],\"ready\":true,\"index\":true},\"cleared\":true}, got {\"dragged\":true,\"unions\":0,\"steps\":false,\"areas\":{\"error\":\"no held preview\"},\"cleared\":true}"
         ],
-        "originalTail": "  \"movedPartitionBuildsTheLoftBodiesOnce\": 1,\n  \"movedPartitionIsTheFreshCards\": [],\n  \"poolsStayWithinEight\": true\n },\n \"ac3\": {\n  \"cancelledGesture\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"otherFloorGesture\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"serverPushMidDrag\": {\n   \"held\": true,\n   \"endsTheGesture\": true,\n   \"dropsTheUnion\": true\n  },\n  \"gestureAfterServerPush\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"committedGesture\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"committedIsTheFreshCards\": [],\n  \"commitMovesTheWall\": true,\n  \"undoRetainsForeignPoolKeys\": true,\n  \"undoForeignSwitchUnionBuilds\": 0,\n  \"undoRestoresTheWall\": true,\n  \"undoIsTheFreshCards\": [],\n  \"gestureAfterUndo\": {\n   \"dragged\": true,\n   \"unions\": 0,\n   \"steps\": false,\n   \"areas\": {\n    \"error\": \"no held preview\"\n   },\n   \"cleared\": true\n  },\n  \"redoMovesTheWallAgain\": true,\n  \"redoIsTheFreshCards\": []\n },\n \"ac7\": {\n  \"replacementIsTheFreshCards\": [],\n  \"replacementPoolsWithinEight\": true,\n  \"modeRoundTripBuildsNoBodiesOrTunnels\": {\n   \"physicalBodies\": 0,\n   \"openingTunnel\": 0\n  },\n  \"modeRoundTripIsTheFreshCards\": [],\n  \"reconnectBuildsNoBodiesOrTunnels\": {\n   \"physicalBodies\": 0,\n   \"openingTunnel\": 0\n  },\n  \"reconnectIsTheFreshCards\": [],\n  \"pushAfterReconnectIsTheFreshCards\": [],\n  \"reconnectPoolsWithinEight\": true,\n  \"remountBoots\": true,\n  \"remountHasItsOwnBoundedPools\": true,\n  \"remountIsTheFreshCards\": []\n }\n}\n\nFAILED (1):\n  - gestureAfterUndo: expected {\"dragged\":true,\"unions\":1,\"steps\":true,\"areas\":{\"rooms\":2,\"wrong\":[],\"ready\":true,\"index\":true},\"cleared\":true}, got {\"dragged\":true,\"unions\":0,\"steps\":false,\"areas\":{\"error\":\"no held preview\"},\"cleared\":true}\n"
+        "originalTail": "  \"movedPartitionBuildsTheLoftBodiesOnce\": 1,\n  \"movedPartitionIsTheFreshCards\": [],\n  \"poolsStayWithinEight\": true\n },\n \"ac3\": {\n  \"cancelledGesture\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"otherFloorGesture\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"serverPushMidDrag\": {\n   \"held\": true,\n   \"endsTheGesture\": true,\n   \"dropsTheUnion\": true\n  },\n  \"gestureAfterServerPush\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"committedGesture\": {\n   \"dragged\": true,\n   \"unions\": 1,\n   \"steps\": true,\n   \"areas\": {\n    \"rooms\": 2,\n    \"wrong\": [],\n    \"ready\": true,\n    \"index\": true\n   },\n   \"cleared\": true\n  },\n  \"committedIsTheFreshCards\": [],\n  \"commitMovesTheWall\": true,\n  \"undoRetainsForeignPoolKeys\": true,\n  \"undoForeignSwitchUnionBuilds\": 0,\n  \"undoRestoresTheWall\": true,\n  \"undoIsTheFreshCards\": [],\n  \"gestureAfterUndo\": {\n   \"dragged\": true,\n   \"unions\": 0,\n   \"steps\": false,\n   \"areas\": {\n    \"error\": \"no held preview\"\n   },\n   \"cleared\": true\n  },\n  \"redoMovesTheWallAgain\": true,\n  \"redoIsTheFreshCards\": []\n },\n \"ac7\": {\n  \"replacementIsTheFreshCards\": [],\n  \"replacementPoolsWithinEight\": true,\n  \"modeRoundTripBuildsNoBodiesOrTunnels\": {\n   \"physicalBodies\": 0,\n   \"openingTunnel\": 0\n  },\n  \"modeRoundTripIsTheFreshCards\": [],\n  \"reconnectBuildsNoBodiesOrTunnels\": {\n   \"physicalBodies\": 0,\n   \"openingTunnel\": 0\n  },\n  \"reconnectIsTheFreshCards\": [],\n  \"pushAfterReconnectIsTheFreshCards\": [],\n  \"reconnectPoolsWithinEight\": true,\n  \"remountBoots\": true,\n  \"remountHasItsOwnBoundedPools\": true,\n  \"remountIsTheFreshCards\": []\n }\n}\n\nFAILED (1):\n  - gestureAfterUndo: expected {\"dragged\":true,\"unions\":1,\"steps\":true,\"areas\":{\"rooms\":2,\"wrong\":[],\"ready\":true,\"index\":true},\"cleared\":true}, got {\"dragged\":true,\"unions\":0,\"steps\":false,\"areas\":{\"error\":\"no held preview\"},\"cleared\":true}\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_floor_cache_reuse",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_floor_cache_reuse.log",
+          "sha256": "967beb6a9c9beb3ac92ee1984987d255dbc415eab89f4489092cbf6cbb4faae3",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -606,9 +704,9 @@
     {
       "id": "smoke:smoke_geometry_cleanup_842",
       "file": "demo/smoke_geometry_cleanup_842.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "retained-explicit-delete-and-legacy-cleanup",
+      "status": "failed",
+      "reason": "Two original assertions remain red: explicit named partition plus hosted opening deletion sends zero writes instead of one, and a malformed legacy metadata/decor save emits wall_model_migration_blocked instead of the original K3-only path. Preserve source bytes, cleanup confirmation, atomicity and write counts. The metadata guard itself may be intentional under #1216; explicit deletion still needs diagnosis.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -618,15 +716,23 @@
           "  - AC6: the explicit delete writes once, without K3: expected {\"writes\":1,\"k3\":null,\"partitions\":\"p-free\",\"openings\":\"o-room\"}, got {\"writes\":0,\"k3\":null,\"partitions\":\"\",\"openings\":\"\"}",
           "  - AC7: refused by itself — no config/set, the edit and every object stay, no toast: expected {\"writes\":0,\"decor\":1,\"keeps\":true,\"toast\":\"\"}, got {\"writes\":0,\"decor\":1,\"keeps\":true,\"toast\":\"The wall model could not be updated: invalid room contour. The plan was not changed. Run “Optimize plans”; if the error repeats, fix the conflicting wall geometry.\"}"
         ],
-        "originalTail": "{\n \"done\": true\n}\n\nFAILED (2):\n  - AC6: the explicit delete writes once, without K3: expected {\"writes\":1,\"k3\":null,\"partitions\":\"p-free\",\"openings\":\"o-room\"}, got {\"writes\":0,\"k3\":null,\"partitions\":\"\",\"openings\":\"\"}\n  - AC7: refused by itself — no config/set, the edit and every object stay, no toast: expected {\"writes\":0,\"decor\":1,\"keeps\":true,\"toast\":\"\"}, got {\"writes\":0,\"decor\":1,\"keeps\":true,\"toast\":\"The wall model could not be updated: invalid room contour. The plan was not changed. Run “Optimize plans”; if the error repeats, fix the conflicting wall geometry.\"}\n"
+        "originalTail": "{\n \"done\": true\n}\n\nFAILED (2):\n  - AC6: the explicit delete writes once, without K3: expected {\"writes\":1,\"k3\":null,\"partitions\":\"p-free\",\"openings\":\"o-room\"}, got {\"writes\":0,\"k3\":null,\"partitions\":\"\",\"openings\":\"\"}\n  - AC7: refused by itself — no config/set, the edit and every object stay, no toast: expected {\"writes\":0,\"decor\":1,\"keeps\":true,\"toast\":\"\"}, got {\"writes\":0,\"decor\":1,\"keeps\":true,\"toast\":\"The wall model could not be updated: invalid room contour. The plan was not changed. Run “Optimize plans”; if the error repeats, fix the conflicting wall geometry.\"}\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_geometry_cleanup_842",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_geometry_cleanup_842.log",
+          "sha256": "2983d6fdb41848f36904b677afb096af0ac6e8c34a5117b27c5dc40c16f48454",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_geometry_corpus",
       "file": "demo/smoke_geometry_corpus.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "complete-current-graph-fixture-authority",
+      "status": "passed",
+      "reason": "Load each corpus as a complete canonical graph config and switch to its explicit floor through the fixture facade. The old loader overlaid new room/wall projections on the preceding corpus graph. Render, physical thickness, resize, hit-frame and layout assertions remain unchanged.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -636,15 +742,23 @@
           "  - corpus.c4.rooms_rendered: expected 2, got 3",
           "  - corpus.c4.rooms_after_reload: expected 2, got 3"
         ],
-        "originalTail": "{\n \"c2view\": {\n  \"rooms\": 3,\n  \"roomsInsideViewBox\": true,\n  \"openings\": 0,\n  \"wallFills\": 1,\n  \"strokeWidths\": 1\n },\n \"c2thickness\": \"20,20,20,20,20,20,20,22,33,33\",\n \"c2after\": \"20,20,20,20,20,20,20,22,33,33\",\n \"c4view\": {\n  \"rooms\": 3,\n  \"roomsInsideViewBox\": true,\n  \"openings\": 1,\n  \"wallFills\": 1,\n  \"strokeWidths\": 1\n },\n \"c4reloaded\": {\n  \"rooms\": 3,\n  \"roomsInsideViewBox\": true,\n  \"openings\": 1,\n  \"wallFills\": 1,\n  \"strokeWidths\": 1\n }\n}\n\nFAILED (2):\n  - corpus.c4.rooms_rendered: expected 2, got 3\n  - corpus.c4.rooms_after_reload: expected 2, got 3\n"
+        "originalTail": "{\n \"c2view\": {\n  \"rooms\": 3,\n  \"roomsInsideViewBox\": true,\n  \"openings\": 0,\n  \"wallFills\": 1,\n  \"strokeWidths\": 1\n },\n \"c2thickness\": \"20,20,20,20,20,20,20,22,33,33\",\n \"c2after\": \"20,20,20,20,20,20,20,22,33,33\",\n \"c4view\": {\n  \"rooms\": 3,\n  \"roomsInsideViewBox\": true,\n  \"openings\": 1,\n  \"wallFills\": 1,\n  \"strokeWidths\": 1\n },\n \"c4reloaded\": {\n  \"rooms\": 3,\n  \"roomsInsideViewBox\": true,\n  \"openings\": 1,\n  \"wallFills\": 1,\n  \"strokeWidths\": 1\n }\n}\n\nFAILED (2):\n  - corpus.c4.rooms_rendered: expected 2, got 3\n  - corpus.c4.rooms_after_reload: expected 2, got 3\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_geometry_corpus",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_geometry_corpus.log",
+          "sha256": "ccdb3289d67cb40c36e139f746d1d3a0528fe64786c754d033535963dc566bab",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_grid_snap",
       "file": "demo/smoke_grid_snap.mjs",
-      "category": "graph-fixture-or-product-investigation",
-      "status": "not-rerun",
-      "reason": "Raw projection fixtures and current graph authority diverge: edit-walk reports partition/room-role invariants; grid-snap gets no resize preview. Canonicalize authored inputs with the shared graph fixture and retain exact geometric invariants.",
+      "category": "retained-legacy-optimize-refusal",
+      "status": "failed",
+      "reason": "The deliberately detuned original legacy fixture cannot open Optimize under the current graph preflight; wall_model_migration_blocked is retained, not accepted. Make the second-run observer null-safe while keeping its expected no-op false, so later own-floor centimetre-bound and angle-only cases execute (both pass). Original movement, atomic-write, exact lattice and fixed-point contracts remain red.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -652,7 +766,15 @@
         "originalErrors": [
           "page.evaluate: TypeError: Cannot read properties of null (reading 'report')"
         ],
-        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'report')\n    at eval (eval at evaluate (:311:30), <anonymous>:253:44)\n    at async <anonymous>:337:30\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_grid_snap.mjs:14:24 {\n  log: []\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'report')\n    at eval (eval at evaluate (:311:30), <anonymous>:253:44)\n    at async <anonymous>:337:30\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_grid_snap.mjs:14:24 {\n  log: []\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_grid_snap",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_grid_snap.log",
+          "sha256": "184773418aa84cc9bf46565848dbea5baf5f80f7860b5daced0b423dc878c8c1",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -680,9 +802,9 @@
     {
       "id": "smoke:smoke_hide_layers",
       "file": "demo/smoke_hide_layers.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "retained-zero-thickness-paint",
+      "status": "failed",
+      "reason": "The real Thickness workflow opens its dialog, but no zero-wall paint appears in View or any of the three editors. Existing hide/opening/decor/geometry/handle-size checks otherwise pass. Selectors still exist in current renderers; no visibility assertion or zero-thickness semantics changed.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -694,15 +816,23 @@
           "  - zeroWallsVisibleInDevicesEditor: expected true, got false",
           "  - zeroWallsVisibleInDecorEditor: expected true, got false"
         ],
-        "originalTail": "\nFAILED (4):\n  - zeroWallsDrawnWithBorders: expected true, got false\n  - zeroWallsVisibleInPlanEditor: expected true, got false\n  - zeroWallsVisibleInDevicesEditor: expected true, got false\n  - zeroWallsVisibleInDecorEditor: expected true, got false\n"
+        "originalTail": "\nFAILED (4):\n  - zeroWallsDrawnWithBorders: expected true, got false\n  - zeroWallsVisibleInPlanEditor: expected true, got false\n  - zeroWallsVisibleInDevicesEditor: expected true, got false\n  - zeroWallsVisibleInDecorEditor: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_hide_layers",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_hide_layers.log",
+          "sha256": "b5e45ac379f7087fc1d3a475371b4f165af1eae972c26aec9cc5dcc4fc965497",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_houseplan_panel",
       "file": "demo/smoke_houseplan_panel.mjs",
-      "category": "panel-lifecycle-investigation",
-      "status": "not-rerun",
-      "reason": "The original native panel lifecycle scenario times out at line444. Its failed phase must be isolated; no setup or permission guarantee has been removed.",
+      "category": "retired-hook-absence-observer",
+      "status": "passed",
+      "reason": "The retired standalone general-settings gear may now be absent entirely instead of present with zero width. Keep the visible compact floor picker and every rotation/menu/scrollbar/lifecycle guarantee; tolerate only absent-or-zero retired hook.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -710,7 +840,15 @@
         "originalErrors": [
           "  name: 'TimeoutError'"
         ],
-        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.waitForFunction: Timeout 30000ms exceeded.\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_houseplan_panel.mjs:444:12 {\n  log: [],\n  name: 'TimeoutError'\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.waitForFunction: Timeout 30000ms exceeded.\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_houseplan_panel.mjs:444:12 {\n  log: [],\n  name: 'TimeoutError'\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_houseplan_panel",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_houseplan_panel.log",
+          "sha256": "9dedc991df2eb5153dd0f2dc1aebd8ef7b1a0ece3c6e60ff45a47dc81a90ac7c",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -784,9 +922,9 @@
     {
       "id": "smoke:smoke_lattice_write_barrier",
       "file": "demo/smoke_lattice_write_barrier.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "accepted-metadata-authority-contract",
+      "status": "passed",
+      "reason": "Under #1216 an ordinary legacy metadata Save must preserve structural bytes, rather than globally snapping old rooms/walls/openings/drafts/partitions/spans. Assert exact equality of all six legacy structural collections, exact lattice column/decor/layout results and no increase in inherited noise. Preserve exact adopted payload, unknown metadata and far coordinates. This does not weaken a current graph writer.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -799,7 +937,15 @@
           "  - scalarFieldsKeepNineDecimalContract: expected true, got false",
           "  - latticeProfileNoiseZeroAfterEveryCommittedPair: expected true, got false"
         ],
-        "originalTail": "{\n \"configWriterAdoptsExactPayload\": true,\n \"roomAndWallCoordinatesCanonical\": false,\n \"openingAndDecorCoordinatesCanonical\": false,\n \"draftPartitionColumnSpanCoordinatesCanonical\": false,\n \"authoredOffGridAndUnknownSurvive\": true,\n \"scalarFieldsKeepNineDecimalContract\": false,\n \"layoutWritersAllCanonical\": true,\n \"layoutMetadataSurvives\": true,\n \"latticeProfileNoiseZeroAfterEveryCommittedPair\": false\n}\n\nFAILED (5):\n  - roomAndWallCoordinatesCanonical: expected true, got false\n  - openingAndDecorCoordinatesCanonical: expected true, got false\n  - draftPartitionColumnSpanCoordinatesCanonical: expected true, got false\n  - scalarFieldsKeepNineDecimalContract: expected true, got false\n  - latticeProfileNoiseZeroAfterEveryCommittedPair: expected true, got false\n"
+        "originalTail": "{\n \"configWriterAdoptsExactPayload\": true,\n \"roomAndWallCoordinatesCanonical\": false,\n \"openingAndDecorCoordinatesCanonical\": false,\n \"draftPartitionColumnSpanCoordinatesCanonical\": false,\n \"authoredOffGridAndUnknownSurvive\": true,\n \"scalarFieldsKeepNineDecimalContract\": false,\n \"layoutWritersAllCanonical\": true,\n \"layoutMetadataSurvives\": true,\n \"latticeProfileNoiseZeroAfterEveryCommittedPair\": false\n}\n\nFAILED (5):\n  - roomAndWallCoordinatesCanonical: expected true, got false\n  - openingAndDecorCoordinatesCanonical: expected true, got false\n  - draftPartitionColumnSpanCoordinatesCanonical: expected true, got false\n  - scalarFieldsKeepNineDecimalContract: expected true, got false\n  - latticeProfileNoiseZeroAfterEveryCommittedPair: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_lattice_write_barrier",
+          "exit": 0,
+          "log": "output/issue1226/ui-lattice-r2.log",
+          "sha256": "bfa392fde4647f240e923307c4f99cd8dbe84714d3dfc85617c46af910262860",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -850,9 +996,9 @@
     {
       "id": "smoke:smoke_marker_shadow_transitions",
       "file": "demo/smoke_marker_shadow_transitions.mjs",
-      "category": "paint-transition-investigation",
-      "status": "not-rerun",
-      "reason": "The native hover first-frame oracle sees shadow where none was expected. Preserve animation timing and inspect actual paint; do not accept a new baseline.",
+      "category": "marker-scoped-transition-observer",
+      "status": "passed",
+      "reason": "Scope no-box-shadow to the actual marker, matching the adjacent marker border-animation witness. UI Kit button focus shadows outside the marker are unrelated. Every marker shadow, core colour, resize and real transition assertion remains strict.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -861,7 +1007,15 @@
           "FAILED (1):",
           "  - hoverStartsNoShadow: expected true, got false"
         ],
-        "originalTail": "\nFAILED (1):\n  - hoverStartsNoShadow: expected true, got false\n"
+        "originalTail": "\nFAILED (1):\n  - hoverStartsNoShadow: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_marker_shadow_transitions",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_marker_shadow_transitions.log",
+          "sha256": "a12b7cb43c9d9134b5bb1b35e9096b66775d9e92e7611d1cc92b02edd6782a87",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -914,9 +1068,9 @@
     {
       "id": "smoke:smoke_opening_drag",
       "file": "demo/smoke_opening_drag.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "retained-current-graph-local-drag-route",
+      "status": "failed",
+      "reason": "The original valid-host trusted pointer drag invokes one canonical full-geometry fallback where zero is required before the first Escape witness. Keep local paint/shoulder/cut, source immutability, cancelled-tail, writes/history and fixed budgets strict; no fallback allowance added.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -924,15 +1078,23 @@
         "originalErrors": [
           "AssertionError [ERR_ASSERTION]: valid host uses local route"
         ],
-        "originalTail": "266.1775756090345 789.792826143552 L 266.4989020439121 789.1916666666666 L 266.8588582051818 788.6128100727125 L 267.2559027052996 788.0587351144925 L 267.6883353387606 787.5318144260409 L 268.1543043626401 787.0343043626401 L 268.6518144260409 786.5683353387607 L 269.1787351144925 786.1359027052996 L 269.7328100727125 785.7388582051818 L 270.31166666666667 785.378902043912 L 270.912826143552 785.0575756090345 L 271.53371424619695 784.7762548696741 L 272.17167223642537 784.5361444844259 L 272.82396828018204 784.3382726428222 L 273.4878091456653 784.1834866624663 L 274.16035216437444 784.0724493606895 L 274.8387174038527 784.0056362162645 L 275.52 783.9833333333333 L 276.2012825961473 784.0056362162645 L 276.8796478356255 784.0724493606895 L 277.55219085433464 784.1834866624663 L 278.2160317198179 784.3382726428222 L 278.8683277635746 784.5361444844259 L 279.506285753803 784.7762548696741 L 280.1271738564479 785.0575756090344 L 280.7283333333333 785.378902043912 L 281.3071899272875 785.7388582051818 L 281.86126488550747 786.1359027052996 L 282.38818557395905 786.5683353387607 L 282.88569563735985 787.0343043626401 L 283.35166466123934 787.5318144260409 L 283.78409729470036 788.0587351144925 L 284.1811417948182 788.6128100727125 L 284.54109795608787 789.1916666666666 L 284.8624243909655 789.792826143552 L 285.1437451303259 790.413714246197 L 285.383855515574 791.0516722364254 L 285.5817273571778 791.703968280182 L 285.7365133375336 792.3678091456653 L 285.8475506393105 793.0403521643744 L 285.91436378373544 793.7187174038527 Z M 899.641165235168 779.0906891076052 L 923.7893108923947 785.5611652351681 L 917.3188347648318 809.7093108923948 L 893.1706891076051 803.2388347648318 Z\"}}}\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: valid host uses local route\n\n1 !== 0\n\n    at unchanged (file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_opening_drag.mjs:53:12)\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_opening_drag.mjs:127:5 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: 1,\n  expected: 0,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "266.1775756090345 789.792826143552 L 266.4989020439121 789.1916666666666 L 266.8588582051818 788.6128100727125 L 267.2559027052996 788.0587351144925 L 267.6883353387606 787.5318144260409 L 268.1543043626401 787.0343043626401 L 268.6518144260409 786.5683353387607 L 269.1787351144925 786.1359027052996 L 269.7328100727125 785.7388582051818 L 270.31166666666667 785.378902043912 L 270.912826143552 785.0575756090345 L 271.53371424619695 784.7762548696741 L 272.17167223642537 784.5361444844259 L 272.82396828018204 784.3382726428222 L 273.4878091456653 784.1834866624663 L 274.16035216437444 784.0724493606895 L 274.8387174038527 784.0056362162645 L 275.52 783.9833333333333 L 276.2012825961473 784.0056362162645 L 276.8796478356255 784.0724493606895 L 277.55219085433464 784.1834866624663 L 278.2160317198179 784.3382726428222 L 278.8683277635746 784.5361444844259 L 279.506285753803 784.7762548696741 L 280.1271738564479 785.0575756090344 L 280.7283333333333 785.378902043912 L 281.3071899272875 785.7388582051818 L 281.86126488550747 786.1359027052996 L 282.38818557395905 786.5683353387607 L 282.88569563735985 787.0343043626401 L 283.35166466123934 787.5318144260409 L 283.78409729470036 788.0587351144925 L 284.1811417948182 788.6128100727125 L 284.54109795608787 789.1916666666666 L 284.8624243909655 789.792826143552 L 285.1437451303259 790.413714246197 L 285.383855515574 791.0516722364254 L 285.5817273571778 791.703968280182 L 285.7365133375336 792.3678091456653 L 285.8475506393105 793.0403521643744 L 285.91436378373544 793.7187174038527 Z M 899.641165235168 779.0906891076052 L 923.7893108923947 785.5611652351681 L 917.3188347648318 809.7093108923948 L 893.1706891076051 803.2388347648318 Z\"}}}\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: valid host uses local route\n\n1 !== 0\n\n    at unchanged (file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_opening_drag.mjs:53:12)\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_opening_drag.mjs:127:5 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: 1,\n  expected: 0,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_opening_drag",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_opening_drag.log",
+          "sha256": "3017e2f946c7031146f29352d8f31d7768fdbe1672ee466e7ec752635353503a",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_opening_measure",
       "file": "demo/smoke_opening_measure.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "current-graph-fixture-with-retained-ruler-defect",
+      "status": "failed",
+      "reason": "Retire graph-bearing forged legacy resets, clear history with its actual API, re-read the atomically migrated space, and publish authored openings through the current graph producer after migration writes settle. Use the real SVG screen CTM. All original numeric shoulder/centre/Shift/commit assertions remain; existing-opening drags still produce zero rulers/ticks (21 original assertions fail), while new-opening placement checks run.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -940,15 +1102,23 @@
         "originalErrors": [
           "page.evaluate: TypeError: Cannot read properties of null (reading 'x')"
         ],
-        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'x')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:36)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_opening_measure.mjs:320:54 {\n  log: []\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'x')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:36)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_opening_measure.mjs:320:54 {\n  log: []\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_opening_measure",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_opening_measure.log",
+          "sha256": "ea7e99edaa32f58801c137caccdbe91b619799731f066efd2f7e9265bc0a44c5",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_opening_preview",
       "file": "demo/smoke_opening_preview.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "graph-partition-fixture",
+      "status": "passed",
+      "reason": "The independent partition-target subcase formerly assigned an ignored partition projection on top of graph authority. After finishing the opening save/preview journey, explicitly author a clean independent baseline and add/remove only the named partition using canonical intent. All original visible preview/commit equality, hover, host, column exclusion and no-write preview guarantees pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -957,15 +1127,23 @@
           "FAILED (1):",
           "  - partitionIsOpeningTarget: expected true, got false"
         ],
-        "originalTail": "{\n \"oneLauncher\": true,\n \"oneSecondaryHost\": true,\n \"launcherDoesNotArm\": true,\n \"menuHasFourTypes\": true,\n \"launcherStillDoesNotArm\": true,\n \"menuDoesNotResizeStage\": true,\n \"windowChoice\": true,\n \"windowDefault\": true,\n \"doorChoice\": true,\n \"doorDefault\": true,\n \"passageChoice\": true,\n \"passageDefault\": true,\n \"launcherReflectsActivePreset\": true,\n \"gateChoice\": true,\n \"gateDefault\": true,\n \"typeChoicesDoNotMutateGeometry\": true,\n \"windowPreviewGeometry\": true,\n \"passagePreviewGeometry\": true,\n \"passagePreviewTheme\": true,\n \"passagePreviewInert\": true,\n \"passagePreviewKeepsRulers\": true,\n \"passagePreviewHasNoCommittedSymbolParts\": true,\n \"otherPreviewHasNoPassageGeometry\": true,\n \"passageDialogMatchesPreview\": true,\n \"passageSaveMatchesCandidate\": true,\n \"committedPassageHasNoPreviewSymbol\": true,\n \"gatePreviewGeometry\": true,\n \"previewExists\": true,\n \"previewIsDoor\": true,\n \"previewHasFullSymbol\": true,\n \"previewHalfTransparent\": true,\n \"previewPointerInert\": true,\n \"previewAriaHidden\": true,\n \"previewHasNoPersistentIdentity\": true,\n \"previewPaintedAfterWall\": true,\n \"clickWithoutHoverOpensDialog\": true,\n \"clickDialogMatchesResolver\": true,\n \"previewGoneWhileDialogOpen\": true,\n \"saveMatchesResolver\": true,\n \"previewAndCommittedShareVisibleGeometry\": true,\n \"saveKeepsPreset\": true,\n \"existingOpeningHitBoxIsBounded\": true,\n \"noPreviewOverExisting\": true,\n \"cancelCreateDialogOpened\": true,\n \"cancelKeepsPreset\": true,\n \"previewBeforeZoom\": true,\n \"zoomClearsStalePreview\": true,\n \"noPreviewAwayFromWalls\": true,\n \"partitionIsOpeningTarget\": false,\n \"columnIsNotOpeningTarget\": true,\n \"leavingToolClearsPreset\": true\n}\n\nFAILED (1):\n  - partitionIsOpeningTarget: expected true, got false\n"
+        "originalTail": "{\n \"oneLauncher\": true,\n \"oneSecondaryHost\": true,\n \"launcherDoesNotArm\": true,\n \"menuHasFourTypes\": true,\n \"launcherStillDoesNotArm\": true,\n \"menuDoesNotResizeStage\": true,\n \"windowChoice\": true,\n \"windowDefault\": true,\n \"doorChoice\": true,\n \"doorDefault\": true,\n \"passageChoice\": true,\n \"passageDefault\": true,\n \"launcherReflectsActivePreset\": true,\n \"gateChoice\": true,\n \"gateDefault\": true,\n \"typeChoicesDoNotMutateGeometry\": true,\n \"windowPreviewGeometry\": true,\n \"passagePreviewGeometry\": true,\n \"passagePreviewTheme\": true,\n \"passagePreviewInert\": true,\n \"passagePreviewKeepsRulers\": true,\n \"passagePreviewHasNoCommittedSymbolParts\": true,\n \"otherPreviewHasNoPassageGeometry\": true,\n \"passageDialogMatchesPreview\": true,\n \"passageSaveMatchesCandidate\": true,\n \"committedPassageHasNoPreviewSymbol\": true,\n \"gatePreviewGeometry\": true,\n \"previewExists\": true,\n \"previewIsDoor\": true,\n \"previewHasFullSymbol\": true,\n \"previewHalfTransparent\": true,\n \"previewPointerInert\": true,\n \"previewAriaHidden\": true,\n \"previewHasNoPersistentIdentity\": true,\n \"previewPaintedAfterWall\": true,\n \"clickWithoutHoverOpensDialog\": true,\n \"clickDialogMatchesResolver\": true,\n \"previewGoneWhileDialogOpen\": true,\n \"saveMatchesResolver\": true,\n \"previewAndCommittedShareVisibleGeometry\": true,\n \"saveKeepsPreset\": true,\n \"existingOpeningHitBoxIsBounded\": true,\n \"noPreviewOverExisting\": true,\n \"cancelCreateDialogOpened\": true,\n \"cancelKeepsPreset\": true,\n \"previewBeforeZoom\": true,\n \"zoomClearsStalePreview\": true,\n \"noPreviewAwayFromWalls\": true,\n \"partitionIsOpeningTarget\": false,\n \"columnIsNotOpeningTarget\": true,\n \"leavingToolClearsPreset\": true\n}\n\nFAILED (1):\n  - partitionIsOpeningTarget: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_opening_preview",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_opening_preview.log",
+          "sha256": "6be184822925db3455c8ed8560dc224accbba35abbba5b4cb473ed13010d799e",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_orphan_space_references",
       "file": "demo/smoke_orphan_space_references.mjs",
-      "category": "optimize-report-investigation",
-      "status": "not-rerun",
-      "reason": "After atomic cleanup the report still offers Apply where the witness expects warning-only/no-change state. Root separately tracks the confirmed Optimize/report-clear behavior; preserve the no-write/Undo/owner protections.",
+      "category": "confirmed-product-report-reset",
+      "status": "failed",
+      "reason": "Original remaining-only-warning/no-Apply assertion remains red after the current product base. Preserve the strict report, no-write, Undo and owner checks; covered by the root-confirmed Optimize report-reset bug.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -974,8 +1152,17 @@
           "FAILED (1):",
           "  - remainingOnlyWarningHasNoApply: expected true, got false"
         ],
-        "originalTail": "{\n \"previewSeparatesRepairCleanupAndDebt\": true,\n \"previewPreservesMarkerSettings\": true,\n \"nestedImportLineageRepairsToOneCanonicalOwner\": true,\n \"idsExistOnlyInClosedDetails\": true,\n \"previewOffersOneApplyWithoutWriting\": true,\n \"cancelWritesNothing\": true,\n \"explicitCleanupRebuildsPreviewWithoutWriting\": true,\n \"applyUsesExactAtomicEndpoint\": true,\n \"applyRestoresMarkerToView\": true,\n \"remainingOnlyWarningHasNoApply\": false,\n \"undoRestoresDeadRefs\": true,\n \"deleteExplainsBlockerWithoutConfirmOrWrite\": true,\n \"editorKeepsRawInvalidDefault\": true\n}\n\nFAILED (1):\n  - remainingOnlyWarningHasNoApply: expected true, got false\n"
-      }
+        "originalTail": "{\n \"previewSeparatesRepairCleanupAndDebt\": true,\n \"previewPreservesMarkerSettings\": true,\n \"nestedImportLineageRepairsToOneCanonicalOwner\": true,\n \"idsExistOnlyInClosedDetails\": true,\n \"previewOffersOneApplyWithoutWriting\": true,\n \"cancelWritesNothing\": true,\n \"explicitCleanupRebuildsPreviewWithoutWriting\": true,\n \"applyUsesExactAtomicEndpoint\": true,\n \"applyRestoresMarkerToView\": true,\n \"remainingOnlyWarningHasNoApply\": false,\n \"undoRestoresDeadRefs\": true,\n \"deleteExplainsBlockerWithoutConfirmOrWrite\": true,\n \"editorKeepsRawInvalidDefault\": true\n}\n\nFAILED (1):\n  - remainingOnlyWarningHasNoApply: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_orphan_space_references",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_orphan_space_references.log",
+          "sha256": "9976fca54eae58386b67e92c0f42983853b13d360e52489d90351a60fd0dcbc4",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
+      },
+      "dependencyIssue": 1229
     },
     {
       "id": "smoke:smoke_plan_rotation",
@@ -1024,9 +1211,9 @@
     {
       "id": "smoke:smoke_room_device_discovery",
       "file": "demo/smoke_room_device_discovery.mjs",
-      "category": "accepted-write-investigation",
-      "status": "not-rerun",
-      "reason": "The multi-room sequence does not complete and delayed discovery does not persist both acknowledgements. Keep accepted persistence and rejection/cancel oracles; investigate current native dialog and graph transaction ownership.",
+      "category": "retained-native-multi-room-dialog-lifecycle",
+      "status": "failed",
+      "reason": "Delayed ACK/both-room persistence now pass after #1220. The multi-room native Save remains blocked because the SVG stage intercepts the dialog button. Keep the real click and config/room persistence oracle; no forced click or synthetic dialog Save.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1036,8 +1223,17 @@
           "  - multi: completed: expected true, got false",
           "  - delayed: persistedBoth: expected true, got false"
         ],
-        "originalTail": "lling\n      - <svg data-hp=\"stage\" class=\"plan-svg\" data-hp-layer=\"plan\" data-hp-live-viewbox=\"floor\" data-grid-step=\"4.166666666666667\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"-50 -52.82051282051282 1100 1105.6410256410256\">…</svg> from <slot></slot> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    - waiting for element to be visible, enabled and stable\n    - element is not stable\n  - retrying click action\n    - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n  - element was detached from the DOM, retrying\n\n    at save (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:35:82)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:114:25\n    at async scenario (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:85:17)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:112:52\n{ toast: '', path: [], batch: null }\n{\n \"batch\": {\n  \"roomCreated\": true,\n  \"deviceVisible\": true,\n  \"devicePlaced\": true,\n  \"noNewDot\": true,\n  \"notNew\": true,\n  \"groupNotNew\": true,\n  \"acceptedKnown\": true,\n  \"atomicPayload\": true,\n  \"oldAttentionRetained\": true,\n  \"catalogNotNew\": true\n },\n \"ordinary\": {\n  \"roomCreated\": true,\n  \"deviceVisible\": true,\n  \"devicePlaced\": true,\n  \"noNewDot\": true,\n  \"notNew\": true,\n  \"groupNotNew\": true,\n  \"acceptedKnown\": true,\n  \"atomicPayload\": true,\n  \"oldAttentionRetained\": true,\n  \"catalogNotNew\": true\n },\n \"multi\": {\n  \"completed\": false\n },\n \"cancel\": {\n  \"notAcknowledged\": true,\n  \"noRoom\": true\n },\n \"undo-before-write\": {\n  \"noSavedRoom\": true,\n  \"notAcknowledged\": true\n },\n \"reject\": {\n  \"noSavedRoom\": true,\n  \"notAcknowledged\": true,\n  \"oldMarksRetained\": true,\n  \"retryQuiet\": true\n },\n \"delayed\": {\n  \"firstQuiet\": true,\n  \"lateFlagged\": true,\n  \"persistedBoth\": false\n },\n \"reload-layout-failure\": {\n  \"reloadQuiet\": true,\n  \"secondQuiet\": true,\n  \"readerNoWrites\": true,\n  \"durableBaseline\": true\n }\n}\n\nFAILED (2):\n  - multi: completed: expected true, got false\n  - delayed: persistedBoth: expected true, got false\n"
-      }
+        "originalTail": "lling\n      - <svg data-hp=\"stage\" class=\"plan-svg\" data-hp-layer=\"plan\" data-hp-live-viewbox=\"floor\" data-grid-step=\"4.166666666666667\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"-50 -52.82051282051282 1100 1105.6410256410256\">…</svg> from <slot></slot> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    - waiting for element to be visible, enabled and stable\n    - element is not stable\n  - retrying click action\n    - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n  - element was detached from the DOM, retrying\n\n    at save (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:35:82)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:114:25\n    at async scenario (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:85:17)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_room_device_discovery.mjs:112:52\n{ toast: '', path: [], batch: null }\n{\n \"batch\": {\n  \"roomCreated\": true,\n  \"deviceVisible\": true,\n  \"devicePlaced\": true,\n  \"noNewDot\": true,\n  \"notNew\": true,\n  \"groupNotNew\": true,\n  \"acceptedKnown\": true,\n  \"atomicPayload\": true,\n  \"oldAttentionRetained\": true,\n  \"catalogNotNew\": true\n },\n \"ordinary\": {\n  \"roomCreated\": true,\n  \"deviceVisible\": true,\n  \"devicePlaced\": true,\n  \"noNewDot\": true,\n  \"notNew\": true,\n  \"groupNotNew\": true,\n  \"acceptedKnown\": true,\n  \"atomicPayload\": true,\n  \"oldAttentionRetained\": true,\n  \"catalogNotNew\": true\n },\n \"multi\": {\n  \"completed\": false\n },\n \"cancel\": {\n  \"notAcknowledged\": true,\n  \"noRoom\": true\n },\n \"undo-before-write\": {\n  \"noSavedRoom\": true,\n  \"notAcknowledged\": true\n },\n \"reject\": {\n  \"noSavedRoom\": true,\n  \"notAcknowledged\": true,\n  \"oldMarksRetained\": true,\n  \"retryQuiet\": true\n },\n \"delayed\": {\n  \"firstQuiet\": true,\n  \"lateFlagged\": true,\n  \"persistedBoth\": false\n },\n \"reload-layout-failure\": {\n  \"reloadQuiet\": true,\n  \"secondQuiet\": true,\n  \"readerNoWrites\": true,\n  \"durableBaseline\": true\n }\n}\n\nFAILED (2):\n  - multi: completed: expected true, got false\n  - delayed: persistedBoth: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_room_device_discovery",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_room_device_discovery.log",
+          "sha256": "9fc25f545b4cf8370f1de2190afa2a96fd1534428a1e9d65b605b0f281fd0274",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
+      },
+      "dependencyIssue": 1220
     },
     {
       "id": "smoke:smoke_room_metrics_alignment",
@@ -1064,9 +1260,9 @@
     {
       "id": "smoke:smoke_room_opening_host",
       "file": "demo/smoke_room_opening_host.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "current-graph-history-and-face-recreation",
+      "status": "failed",
+      "reason": "Canonicalize the authored baseline before exact native delete/Undo/Redo comparisons and convert plan coordinates with SVG CTM. These full physical/history snapshots now pass. Native Draw at the retained enclosure still never opens the recreation room dialog. Keep all host/promotion/room/Undo/Redo/wire checks; do not synthesize a room or accept lost graph identity.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1074,7 +1270,15 @@
         "originalErrors": [
           "AssertionError [ERR_ASSERTION]: accepted Undo restores the exact physical snapshot"
         ],
-        "originalTail": "    name: 'Room',\n        area: null,\n        poly: [ [ 0.2, 0.2 ], [ 0.8, 0.2 ], [ 0.8, 0.7 ], [ 0.2, 0.7 ] ],\n        wall_ids: [ 'wall-2', 'wall-4', 'wall-3', 'wall-1' ]\n      },\n      {\n        id: 'neighbor',\n        name: 'Neighbor',\n        area: null,\n        poly: [ [ 0.8, 0.2 ], [ 1.2, 0.2 ], [ 1.2, 0.7 ], [ 0.8, 0.7 ] ],\n        wall_ids: [ 'wall-5', 'wall-7', 'wall-6', 'wall-4' ]\n      }\n    ],\n    wall_segments: [\n      { id: 'wall-1', a: [ 0.2, 0.2 ], b: [ 0.2, 0.7 ], cm: 15 },\n      { id: 'wall-2', a: [ 0.2, 0.2 ], b: [ 0.8, 0.2 ], cm: 15 },\n      { id: 'wall-3', a: [ 0.2, 0.7 ], b: [ 0.8, 0.7 ], cm: 15 },\n      { id: 'wall-4', a: [ 0.8, 0.2 ], b: [ 0.8, 0.7 ], cm: 15 },\n      { id: 'wall-5', a: [ 0.8, 0.2 ], b: [ 1.2, 0.2 ], cm: 15 },\n      { id: 'wall-6', a: [ 0.8, 0.7 ], b: [ 1.2, 0.7 ], cm: 15 },\n      { id: 'wall-7', a: [ 1.2, 0.2 ], b: [ 1.2, 0.7 ], cm: 15 }\n    ],\n    openings: [\n      {\n        id: 'opening',\n        type: 'door',\n        x: 0.4,\n        y: 0.2,\n        angle: 0,\n        length: 0.1,\n        contact: 'binary_sensor.synthetic_contact',\n        lock: 'lock.synthetic_lock',\n        flip_h: true,\n        flip_v: true,\n        host: { kind: 'wall', id: 'wall-2', t: 0.333333333 }\n      }\n    ],\n    walls: [\n      {\n        key: '0.200000,0.450000@1.5706',\n        cm: 15,\n        a: [ 0.2, 0.2 ],\n        b: [ 0.2, 0.7 ]\n      },\n      {\n        key: '0.500000,0.200000@0.0000',\n        cm: 15,\n        a: [ 0.2, 0.2 ],\n        b: [ 0.8, 0.2 ]\n      },\n      {\n        key: '0.500000,0.700000@0.0000',\n        cm: 15,\n        a: [ 0.2, 0.7 ],\n        b: [ 0.8, 0.7 ]\n      },\n      {\n        key: '0.800000,0.450000@1.5706',\n        cm: 15,\n        a: [ 0.8, 0.2 ],\n        b: [ 0.8, 0.7 ]\n      },\n      {\n        key: '1.000000,0.200000@0.0000',\n        cm: 15,\n        a: [ 0.8, 0.2 ],\n        b: [ 1.2, 0.2 ]\n      },\n      {\n        key: '1.000000,0.700000@0.0000',\n        cm: 15,\n        a: [ 0.8, 0.7 ],\n        b: [ 1.2, 0.7 ]\n      },\n      {\n        key: '1.200000,0.450000@1.5706',\n        cm: 15,\n        a: [ 1.2, 0.2 ],\n        b: [ 1.2, 0.7 ]\n      }\n    ]\n  },\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "    name: 'Room',\n        area: null,\n        poly: [ [ 0.2, 0.2 ], [ 0.8, 0.2 ], [ 0.8, 0.7 ], [ 0.2, 0.7 ] ],\n        wall_ids: [ 'wall-2', 'wall-4', 'wall-3', 'wall-1' ]\n      },\n      {\n        id: 'neighbor',\n        name: 'Neighbor',\n        area: null,\n        poly: [ [ 0.8, 0.2 ], [ 1.2, 0.2 ], [ 1.2, 0.7 ], [ 0.8, 0.7 ] ],\n        wall_ids: [ 'wall-5', 'wall-7', 'wall-6', 'wall-4' ]\n      }\n    ],\n    wall_segments: [\n      { id: 'wall-1', a: [ 0.2, 0.2 ], b: [ 0.2, 0.7 ], cm: 15 },\n      { id: 'wall-2', a: [ 0.2, 0.2 ], b: [ 0.8, 0.2 ], cm: 15 },\n      { id: 'wall-3', a: [ 0.2, 0.7 ], b: [ 0.8, 0.7 ], cm: 15 },\n      { id: 'wall-4', a: [ 0.8, 0.2 ], b: [ 0.8, 0.7 ], cm: 15 },\n      { id: 'wall-5', a: [ 0.8, 0.2 ], b: [ 1.2, 0.2 ], cm: 15 },\n      { id: 'wall-6', a: [ 0.8, 0.7 ], b: [ 1.2, 0.7 ], cm: 15 },\n      { id: 'wall-7', a: [ 1.2, 0.2 ], b: [ 1.2, 0.7 ], cm: 15 }\n    ],\n    openings: [\n      {\n        id: 'opening',\n        type: 'door',\n        x: 0.4,\n        y: 0.2,\n        angle: 0,\n        length: 0.1,\n        contact: 'binary_sensor.synthetic_contact',\n        lock: 'lock.synthetic_lock',\n        flip_h: true,\n        flip_v: true,\n        host: { kind: 'wall', id: 'wall-2', t: 0.333333333 }\n      }\n    ],\n    walls: [\n      {\n        key: '0.200000,0.450000@1.5706',\n        cm: 15,\n        a: [ 0.2, 0.2 ],\n        b: [ 0.2, 0.7 ]\n      },\n      {\n        key: '0.500000,0.200000@0.0000',\n        cm: 15,\n        a: [ 0.2, 0.2 ],\n        b: [ 0.8, 0.2 ]\n      },\n      {\n        key: '0.500000,0.700000@0.0000',\n        cm: 15,\n        a: [ 0.2, 0.7 ],\n        b: [ 0.8, 0.7 ]\n      },\n      {\n        key: '0.800000,0.450000@1.5706',\n        cm: 15,\n        a: [ 0.8, 0.2 ],\n        b: [ 0.8, 0.7 ]\n      },\n      {\n        key: '1.000000,0.200000@0.0000',\n        cm: 15,\n        a: [ 0.8, 0.2 ],\n        b: [ 1.2, 0.2 ]\n      },\n      {\n        key: '1.000000,0.700000@0.0000',\n        cm: 15,\n        a: [ 0.8, 0.7 ],\n        b: [ 1.2, 0.7 ]\n      },\n      {\n        key: '1.200000,0.450000@1.5706',\n        cm: 15,\n        a: [ 1.2, 0.2 ],\n        b: [ 1.2, 0.7 ]\n      }\n    ]\n  },\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_room_opening_host",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_room_opening_host.log",
+          "sha256": "fce6e5d804ec33c1f65176ad4e4e56719d559e01688d07bb8034a96d304fc717",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1140,23 +1344,31 @@
     {
       "id": "smoke:smoke_selective_invalidation_inactive",
       "file": "demo/smoke_selective_invalidation_inactive.mjs",
-      "category": "performance-failure",
-      "status": "not-rerun",
-      "reason": "A measured performance bound failed. Keep the original budget and measurement; no fixture-only result may be reported as performance PASS.",
+      "category": "unchanged-performance-verification",
+      "status": "passed",
+      "reason": "Unmodified original 40-sample inactive-floor invalidation witness passes with no threshold, cache or workload change.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
         "originalLog": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_selective_invalidation_inactive.log",
         "originalErrors": [],
-        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n{\"output\":\"artifacts/browser-selected/1093/inactive.json\",\"profile\":\"inactive\",\"samples\":40,\"failures\":[\"large/DPR1/inactive-paint/0ms: long task=118 >117\"]}\n"
+        "originalTail": "browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n{\"output\":\"artifacts/browser-selected/1093/inactive.json\",\"profile\":\"inactive\",\"samples\":40,\"failures\":[\"large/DPR1/inactive-paint/0ms: long task=118 >117\"]}\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_selective_invalidation_inactive",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_selective_invalidation_inactive.log",
+          "sha256": "04e7a1fec7b533ddf163bf644ddf39a931699712d3fc2fd471217298d87b9890",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
       "id": "smoke:smoke_settings_polish_radar_vacuum_955",
       "file": "demo/smoke_settings_polish_radar_vacuum_955.mjs",
-      "category": "painted-help-bounds-investigation",
-      "status": "not-rerun",
-      "reason": "Only the vacuum1280x900/light appearance-help1 alignment/bounds oracle fails among the full form sweep. Preserve the geometry tolerance and capture the specific help target.",
+      "category": "unchanged-full-form-sweep",
+      "status": "passed",
+      "reason": "Unmodified full vacuum/radar sweep passes all viewport/theme/help alignment, footer, height, draft and discard checks. The initial addressed runner timed out during the explicit official HA-wheel download; a separately completed full run exits zero. No golden, bounds tolerance or help target changed.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1165,7 +1377,15 @@
           "FAILED (1):",
           "  - vacuum_1280x900_light_appearance_help_1: expected true, got false"
         ],
-        "originalTail": "rance_help_alignment\": true,\n \"radar_1280x480_custom_appearance_led_single_separator\": true,\n \"radar_1280x480_custom_actions_fit\": true,\n \"radar_1280x480_custom_actions_compact_temperature_fields\": true,\n \"radar_1280x480_custom_actions_body_action_targets\": true,\n \"radar_1280x480_custom_actions_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_actions_toggle_alignment\": true,\n \"radar_1280x480_custom_actions_help_alignment\": true,\n \"radar_1280x480_custom_light_fit\": true,\n \"radar_1280x480_custom_light_compact_temperature_fields\": true,\n \"radar_1280x480_custom_light_body_action_targets\": true,\n \"radar_1280x480_custom_light_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_light_toggle_alignment\": true,\n \"radar_1280x480_custom_light_help_alignment\": true,\n \"radar_1280x480_custom_details_fit\": true,\n \"radar_1280x480_custom_details_compact_temperature_fields\": true,\n \"radar_1280x480_custom_details_body_action_targets\": true,\n \"radar_1280x480_custom_details_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_details_toggle_alignment\": true,\n \"radar_1280x480_custom_details_help_alignment\": true,\n \"radar_1280x480_custom_alarms_fit\": true,\n \"radar_1280x480_custom_alarms_compact_temperature_fields\": true,\n \"radar_1280x480_custom_alarms_body_action_targets\": true,\n \"radar_1280x480_custom_alarms_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_alarms_toggle_alignment\": true,\n \"radar_1280x480_custom_alarms_help_alignment\": true,\n \"radar_1280x480_custom_radar_fit\": true,\n \"radar_1280x480_custom_radar_compact_temperature_fields\": true,\n \"radar_1280x480_custom_radar_body_action_targets\": true,\n \"radar_1280x480_custom_radar_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_radar_toggle_alignment\": true,\n \"radar_1280x480_custom_radar_help_alignment\": true,\n \"radar_1280x480_custom_stable_height\": true,\n \"radar_1280x480_custom_footer_0\": true,\n \"radar_1280x480_custom_footer_1\": true,\n \"radar_1280x480_custom_footer_2\": true,\n \"radar_discard_hover_0\": true,\n \"radar_discard_hover_1\": true,\n \"radar_keep_returns_draft\": true,\n \"radar_cancel_preserves_config\": true\n}\n\nFAILED (1):\n  - vacuum_1280x900_light_appearance_help_1: expected true, got false\n"
+        "originalTail": "rance_help_alignment\": true,\n \"radar_1280x480_custom_appearance_led_single_separator\": true,\n \"radar_1280x480_custom_actions_fit\": true,\n \"radar_1280x480_custom_actions_compact_temperature_fields\": true,\n \"radar_1280x480_custom_actions_body_action_targets\": true,\n \"radar_1280x480_custom_actions_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_actions_toggle_alignment\": true,\n \"radar_1280x480_custom_actions_help_alignment\": true,\n \"radar_1280x480_custom_light_fit\": true,\n \"radar_1280x480_custom_light_compact_temperature_fields\": true,\n \"radar_1280x480_custom_light_body_action_targets\": true,\n \"radar_1280x480_custom_light_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_light_toggle_alignment\": true,\n \"radar_1280x480_custom_light_help_alignment\": true,\n \"radar_1280x480_custom_details_fit\": true,\n \"radar_1280x480_custom_details_compact_temperature_fields\": true,\n \"radar_1280x480_custom_details_body_action_targets\": true,\n \"radar_1280x480_custom_details_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_details_toggle_alignment\": true,\n \"radar_1280x480_custom_details_help_alignment\": true,\n \"radar_1280x480_custom_alarms_fit\": true,\n \"radar_1280x480_custom_alarms_compact_temperature_fields\": true,\n \"radar_1280x480_custom_alarms_body_action_targets\": true,\n \"radar_1280x480_custom_alarms_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_alarms_toggle_alignment\": true,\n \"radar_1280x480_custom_alarms_help_alignment\": true,\n \"radar_1280x480_custom_radar_fit\": true,\n \"radar_1280x480_custom_radar_compact_temperature_fields\": true,\n \"radar_1280x480_custom_radar_body_action_targets\": true,\n \"radar_1280x480_custom_radar_heading_to_toggle_spacing\": true,\n \"radar_1280x480_custom_radar_toggle_alignment\": true,\n \"radar_1280x480_custom_radar_help_alignment\": true,\n \"radar_1280x480_custom_stable_height\": true,\n \"radar_1280x480_custom_footer_0\": true,\n \"radar_1280x480_custom_footer_1\": true,\n \"radar_1280x480_custom_footer_2\": true,\n \"radar_discard_hover_0\": true,\n \"radar_discard_hover_1\": true,\n \"radar_keep_returns_draft\": true,\n \"radar_cancel_preserves_config\": true\n}\n\nFAILED (1):\n  - vacuum_1280x900_light_appearance_help_1: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_settings_polish_radar_vacuum_955",
+          "exit": 0,
+          "log": "output/issue1226/ui-settings-r2.log",
+          "sha256": "0eed7645c7a9f139d203bdd4e1ffe9462723a4e2796e8a535aec8b89dca3d3f8",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1266,9 +1486,9 @@
     {
       "id": "smoke:smoke_sun",
       "file": "demo/smoke_sun.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "legacy-fixture-reset-and-explicit-resize-intent",
+      "status": "passed",
+      "reason": "An explicit raw legacy seed must not retain an earlier plan_graph under model_version 9. Late room edits use the real editor runtime commit with explicit resize scope; the card bridge accepts only three arguments and discarded the old intent. Exact rays/window/revision/late-ACK assertions pass.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1277,7 +1497,15 @@
           "FAILED (1):",
           "  - b701_room_reclips_ray: expected true, got false"
         ],
-        "originalTail": "{\n \"silentWithoutNorth\": true,\n \"noBackgroundWhenStatic\": true,\n \"morningEast\": true,\n \"morningDomDrawn\": true,\n \"noonSouth\": true,\n \"noonShorter\": true,\n \"eveningWest\": true,\n \"wedgeClippedToRoom\": true,\n \"nightEmpty\": true,\n \"rotatedCompass\": true,\n \"memoSurvivesTick\": true,\n \"memoFollowsSun\": true,\n \"staticBgAtNoon\": true,\n \"daynightNoonBg\": true,\n \"daynightClass\": true,\n \"daynightNightBg\": true,\n \"nightPlanUnchanged\": true,\n \"staticNightKeepsTheme\": true,\n \"spaceOverridesOff\": true,\n \"spaceNorthOverride\": true,\n \"rainDoesNotHideRays\": true,\n \"cloudsDoNotDimRays\": true,\n \"offDrawsNothing\": true,\n \"editorNoRays\": true,\n \"editorNoDaynight\": true,\n \"viewRaysBack\": true,\n \"compassDragSets180\": true,\n \"dialogHasBgSegment\": true,\n \"dialogHasRaysToggle\": true,\n \"dialogHasOriginSegment\": true,\n \"originDefaultsInner\": true,\n \"originAvailableWhenRaysOff\": true,\n \"dialogHasNoWeatherList\": true,\n \"dialogNumberMatches\": true,\n \"originPendingRekeysGeometry\": true,\n \"originSavedOuter\": true,\n \"originRoundTripsToDialog\": true,\n \"originSavedInner\": true,\n \"aboveThresholdDrawn\": true,\n \"fadeInTakesTwoSeconds\": true,\n \"fullAlphaWellAboveThreshold\": true,\n \"fullAlphaJustAboveThreshold\": true,\n \"belowThresholdDissolves\": true,\n \"belowThresholdGoneAfterFade\": true,\n \"coldStartBelowThresholdEmpty\": true,\n \"backAboveThreshold\": true\n}\n\nFAILED (1):\n  - b701_room_reclips_ray: expected true, got false\n"
+        "originalTail": "{\n \"silentWithoutNorth\": true,\n \"noBackgroundWhenStatic\": true,\n \"morningEast\": true,\n \"morningDomDrawn\": true,\n \"noonSouth\": true,\n \"noonShorter\": true,\n \"eveningWest\": true,\n \"wedgeClippedToRoom\": true,\n \"nightEmpty\": true,\n \"rotatedCompass\": true,\n \"memoSurvivesTick\": true,\n \"memoFollowsSun\": true,\n \"staticBgAtNoon\": true,\n \"daynightNoonBg\": true,\n \"daynightClass\": true,\n \"daynightNightBg\": true,\n \"nightPlanUnchanged\": true,\n \"staticNightKeepsTheme\": true,\n \"spaceOverridesOff\": true,\n \"spaceNorthOverride\": true,\n \"rainDoesNotHideRays\": true,\n \"cloudsDoNotDimRays\": true,\n \"offDrawsNothing\": true,\n \"editorNoRays\": true,\n \"editorNoDaynight\": true,\n \"viewRaysBack\": true,\n \"compassDragSets180\": true,\n \"dialogHasBgSegment\": true,\n \"dialogHasRaysToggle\": true,\n \"dialogHasOriginSegment\": true,\n \"originDefaultsInner\": true,\n \"originAvailableWhenRaysOff\": true,\n \"dialogHasNoWeatherList\": true,\n \"dialogNumberMatches\": true,\n \"originPendingRekeysGeometry\": true,\n \"originSavedOuter\": true,\n \"originRoundTripsToDialog\": true,\n \"originSavedInner\": true,\n \"aboveThresholdDrawn\": true,\n \"fadeInTakesTwoSeconds\": true,\n \"fullAlphaWellAboveThreshold\": true,\n \"fullAlphaJustAboveThreshold\": true,\n \"belowThresholdDissolves\": true,\n \"belowThresholdGoneAfterFade\": true,\n \"coldStartBelowThresholdEmpty\": true,\n \"backAboveThreshold\": true\n}\n\nFAILED (1):\n  - b701_room_reclips_ray: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_sun",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_sun.log",
+          "sha256": "d9435a69516847d758304359c224c7413807d1fbf3b930cc7ab5bce2f5fc9f5b",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1394,9 +1622,9 @@
     {
       "id": "smoke:smoke_ui_polish_963_touch",
       "file": "demo/smoke_ui_polish_963_touch.mjs",
-      "category": "responsive-native-control-investigation",
-      "status": "not-rerun",
-      "reason": "The phone scenario assumes hidden desktop zoom buttons exist as touch targets. Retain the genuine touch action/no-tooltip/data-preservation contract using a currently visible equivalent control or clarify the specific zoom requirement; no force click.",
+      "category": "accepted-responsive-controls",
+      "status": "passed",
+      "reason": "Responsive #1184 hides desktop zoom controls and replaces the fixed 56px header with intrinsic wrapping. Warm the real keyboard tooltip on visible summary settings, then perform a trusted touch on visible summary toggle. Require the action, no touch tooltip, byte-equivalent config/layout, no horizontal overflow and containment of every visible header target. Do not force hidden zoom controls or impose an unsupported row-count ceiling.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1404,7 +1632,15 @@
         "originalErrors": [
           "TypeError: Cannot read properties of null (reading 'x')"
         ],
-        "originalTail": "file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_ui_polish_963_touch.mjs:22\n const r=await zoom.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);\n                                                               ^\n\nTypeError: Cannot read properties of null (reading 'x')\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_ui_polish_963_touch.mjs:22:64\n\nNode.js v22.23.4\n"
+        "originalTail": "file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_ui_polish_963_touch.mjs:22\n const r=await zoom.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);\n                                                               ^\n\nTypeError: Cannot read properties of null (reading 'x')\n    at file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_ui_polish_963_touch.mjs:22:64\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_ui_polish_963_touch",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_ui_polish_963_touch.log",
+          "sha256": "3f8db0cd144a4e62713420359e2d5491c83bac8b8a336b49a996cd810eeaaa75",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1432,9 +1668,9 @@
     {
       "id": "smoke:smoke_view_runtime_recovery",
       "file": "demo/smoke_view_runtime_recovery.mjs",
-      "category": "runtime-recovery-investigation",
-      "status": "not-rerun",
-      "reason": "The retained summary retry remains terminal error. The imported module exposes minified exports a/s/w and the diagnostic named fingerprint is undefined. Distinguish loader-contract failure from a stale fixture before changing retry expectations.",
+      "category": "confirmed-product-minified-retry-export-contract",
+      "status": "failed",
+      "reason": "Real summary-root 404 followed by native Retry loads the real nonce asset, but the loader reads module.SUMMARY_RUNTIME_FINGERPRINT/LoadedSummaryPanelRuntime while that asset exports only a/s/w. The named namespace is wrapped as w; source retry bypasses Rollup namespace mapping. It therefore stays terminal error with undefined fingerprint. This is a loader/build contract defect, not a fixture extractor: no mock unwrap or retry expectation weakening.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1442,7 +1678,15 @@
         "originalErrors": [
           "  name: 'TimeoutError'"
         ],
-        "originalTail": "browser-attestation ok (ok) [848 optional View recovery] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\nbrowser-attestation ok (ok) [848 optional View recovery] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\nrecovery diagnostics summary [ 'plain', '?hp_retry=view-1' ] {\n  state: 'error',\n  terminal: true,\n  exports: [ 'a', 's', 'w' ],\n  fingerprint: undefined\n}\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.waitForFunction: Timeout 30000ms exceeded.\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_view_runtime_recovery.mjs:134:20 {\n  log: [],\n  name: 'TimeoutError'\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "browser-attestation ok (ok) [848 optional View recovery] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\nbrowser-attestation ok (ok) [848 optional View recovery] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell → /home/runner/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\nrecovery diagnostics summary [ 'plain', '?hp_retry=view-1' ] {\n  state: 'error',\n  terminal: true,\n  exports: [ 'a', 's', 'w' ],\n  fingerprint: undefined\n}\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.waitForFunction: Timeout 30000ms exceeded.\n    at /home/runner/work/houseplan-card/houseplan-card/demo/smoke_view_runtime_recovery.mjs:134:20 {\n  log: [],\n  name: 'TimeoutError'\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_view_runtime_recovery",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_view_runtime_recovery.log",
+          "sha256": "eaaf7523ebfb79ea9f4e601cdda1d2b418fe191027f1fe521d541fc5b04116f4",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1495,9 +1739,9 @@
     {
       "id": "smoke:smoke_writer_fixed_point",
       "file": "demo/smoke_writer_fixed_point.mjs",
-      "category": "coordinate-fixture-investigation",
-      "status": "not-rerun",
-      "reason": "The witness edits legacy room/wall projections or compares pre-model11 fixtures. Determine whether a canonical graph migration is missing in setup or an actual product invariant fails; do not bless rounded geometry, identity loss or writes.",
+      "category": "retained-current-graph-writer-fixed-point",
+      "status": "failed",
+      "reason": "The finished Draw chain and its Undo/Redo each still require additional Optimize changes; three original no-op/fixed-point assertions fail. Exact named partition count, clear references, geometry/reference Undo/Redo and unrelated metadata checks pass. Keep the graph writer fixed-point guarantee.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1508,15 +1752,24 @@
           "  - finishedChainUndoOptimizeNoop: expected true, got false",
           "  - finishedChainRedoOptimizeNoop: expected true, got false"
         ],
-        "originalTail": "{\n \"finishedChainMerged\": true,\n \"finishedChainOptimizeNoop\": false,\n \"finishUsesOneBoundedCheck\": true,\n \"finishAddsNoHistory\": true,\n \"finishedChainUndoOptimizeNoop\": false,\n \"finishedChainUndoHasOnePartition\": true,\n \"finishedChainRedoOptimizeNoop\": false,\n \"finishedChainRedoHasOnePartition\": true,\n \"deleteClearsExactReferences\": true,\n \"undoRestoresGeometryAndReferences\": true,\n \"redoReappliesGeometryAndReferences\": true,\n \"unrelatedMarkerFieldsSurvive\": true\n}\n\nFAILED (3):\n  - finishedChainOptimizeNoop: expected true, got false\n  - finishedChainUndoOptimizeNoop: expected true, got false\n  - finishedChainRedoOptimizeNoop: expected true, got false\n"
-      }
+        "originalTail": "{\n \"finishedChainMerged\": true,\n \"finishedChainOptimizeNoop\": false,\n \"finishUsesOneBoundedCheck\": true,\n \"finishAddsNoHistory\": true,\n \"finishedChainUndoOptimizeNoop\": false,\n \"finishedChainUndoHasOnePartition\": true,\n \"finishedChainRedoOptimizeNoop\": false,\n \"finishedChainRedoHasOnePartition\": true,\n \"deleteClearsExactReferences\": true,\n \"undoRestoresGeometryAndReferences\": true,\n \"redoReappliesGeometryAndReferences\": true,\n \"unrelatedMarkerFieldsSurvive\": true\n}\n\nFAILED (3):\n  - finishedChainOptimizeNoop: expected true, got false\n  - finishedChainUndoOptimizeNoop: expected true, got false\n  - finishedChainRedoOptimizeNoop: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_writer_fixed_point",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_writer_fixed_point.log",
+          "sha256": "ba60f5cf38669ada4f5d0ebab20976a2afcacc0ea85fbb8eb299ab7b1e0507e2",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
+      },
+      "dependencyIssue": 1224
     },
     {
       "id": "smoke:smoke_zigbee_enable_refresh",
       "file": "demo/smoke_zigbee_enable_refresh.mjs",
-      "category": "settings-lifecycle-investigation",
-      "status": "not-rerun",
-      "reason": "Repeated translated narrow-component setup finds no topology owner after reopening settings. Keep save-before-start/refusal/no-write contracts and isolate the retired/opening dialog lifecycle.",
+      "category": "unchanged-product-verification",
+      "status": "passed",
+      "reason": "Unmodified native enable/refresh lifecycle assertions pass on the current product base; no wire or route fixture change.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1524,7 +1777,15 @@
         "originalErrors": [
           "page.evaluate: TypeError: Cannot read properties of null (reading 'querySelector')"
         ],
-        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'querySelector')\n    at eval (eval at evaluate (:311:30), <anonymous>:39:12)\n    at async <anonymous>:337:30\n    at setup (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_zigbee_enable_refresh.mjs:35:14)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_zigbee_enable_refresh.mjs:266:5 {\n  log: []\n}\n\nNode.js v22.23.4\n"
+        "originalTail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.evaluate: TypeError: Cannot read properties of null (reading 'querySelector')\n    at eval (eval at evaluate (:311:30), <anonymous>:39:12)\n    at async <anonymous>:337:30\n    at setup (/home/runner/work/houseplan-card/houseplan-card/demo/smoke_zigbee_enable_refresh.mjs:35:14)\n    at async file:///home/runner/work/houseplan-card/houseplan-card/demo/smoke_zigbee_enable_refresh.mjs:266:5 {\n  log: []\n}\n\nNode.js v22.23.4\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_zigbee_enable_refresh",
+          "exit": 0,
+          "log": "output/issue1226/ui-addressed/smoke_zigbee_enable_refresh.log",
+          "sha256": "1f7205ffa7755e86d5c519aabcd631625da62df4e92fb463499f9d2a01b34264",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1552,9 +1813,9 @@
     {
       "id": "smoke:smoke_zigbee_tooltip_layout",
       "file": "demo/smoke_zigbee_tooltip_layout.mjs",
-      "category": "diagnostics-and-layout-investigation",
-      "status": "not-rerun",
-      "reason": "The diagnostic stale/partial text and narrow ordinary-tooltip fallback assertions fail. Current route-diagnostic changes require a contract comparison; preserve placement, hidden/focus and pointer-transparent controls.",
+      "category": "accepted-status-copy-with-retained-resize-hover",
+      "status": "failed",
+      "reason": "Update only the accepted #1158 diagnostic: unknown outgoing route shows No route data plus stale/provider error, without redundant Incomplete data. Three strict 95px-container stationary-hover assertions still fail: all badges disappear, clearing badges does not restore the ordinary tip, and restoring badges does not restore fallback. Preserve pointer transparency, text safety, route/anchor geometry and all normal-width placement checks.",
       "evidence": {
         "originalRun": 41598951489,
         "originalStatus": "failed",
@@ -1566,7 +1827,15 @@
           "  - removingBadgesRestoresHiddenTipWithoutNewHover: expected true, got false",
           "  - z2m_returningBadgesReappliesNarrowFallback: expected true, got false"
         ],
-        "originalTail": "e_true_dark_remote-count\": true,\n \"actualProjection_true_dark_remote-count\": true,\n \"remoteCount_true_dark\": true,\n \"z2m_iso_dark_status-only\": true,\n \"actualProjection_true_dark_status-only\": true,\n \"statusOnlyHasNoEndpoint_true_dark\": true,\n \"z2m_runtimeErrorStaleNoPointerMove\": true,\n \"runtimeIncludesPartialStaleError\": false,\n \"z2m_longName\": true,\n \"longNameWrapsInsideStage\": true,\n \"z2m_narrowHidesOnlyOrdinaryTip\": false,\n \"removingBadgesRestoresHiddenTipWithoutNewHover\": false,\n \"z2m_returningBadgesReappliesNarrowFallback\": false,\n \"z2m_resizeRestoresWithoutNewHover\": true,\n \"resizePreservesSourceAndRoute\": true,\n \"removingDiagnosticsRestoresOrdinaryTip\": true,\n \"pointerMotionNeverFetches\": true,\n \"pointerLeaveImmediatelyClearsAuthority\": true,\n \"pointerLeaveClearsBoth\": true,\n \"nonZigbeeRetainsOrdinaryTooltip\": true,\n \"z2m_edgeCaption\": true,\n \"edgeCaptionInsideWorkingArea\": true,\n \"z2m_cameraZoomWithoutNewHover\": true,\n \"cameraActuallyChangesGeometry\": true,\n \"secondCardKeyboardTipDoesNotActivateTopology\": true,\n \"secondCardUnmountDoesNotClearFirstHover\": true,\n \"touchImmediatelyClearsAuthority\": true,\n \"touchClearsTooltipAndTopology\": true,\n \"z2m_mouseRestoresAfter_touch\": true,\n \"penImmediatelyClearsAuthority\": true,\n \"penClearsTooltipAndTopology\": true,\n \"z2m_mouseRestoresAfter_pen\": true,\n \"focusAloneShowsOrdinaryTipWithoutTopology\": true,\n \"z2m_focusedDeviceMouseDiagnostics\": true,\n \"pointerLeaveRestoresKeyboardTipAfterDiagnostics\": true,\n \"z2m_transformedContainingAncestor\": true,\n \"ancestorScaleReallyAppliesToFixedTooltip\": true,\n \"transformedBadgesInsideVisibleStage\": true,\n \"z2m_ancestorScrollWithoutNewHover\": true,\n \"scrollActuallyMovesScreenGeometry\": true,\n \"z2m_transformedAncestorAfterPageScroll\": true,\n \"largePageScrollKeepsBadgesInsideVisibleStage\": true,\n \"zha_remoteCaption\": true,\n \"zha_firstMouseHover\": true,\n \"zha_safeTextAndPointerTransparent\": true\n}\n\nFAILED (4):\n  - runtimeIncludesPartialStaleError: expected true, got false\n  - z2m_narrowHidesOnlyOrdinaryTip: expected true, got false\n  - removingBadgesRestoresHiddenTipWithoutNewHover: expected true, got false\n  - z2m_returningBadgesReappliesNarrowFallback: expected true, got false\n"
+        "originalTail": "e_true_dark_remote-count\": true,\n \"actualProjection_true_dark_remote-count\": true,\n \"remoteCount_true_dark\": true,\n \"z2m_iso_dark_status-only\": true,\n \"actualProjection_true_dark_status-only\": true,\n \"statusOnlyHasNoEndpoint_true_dark\": true,\n \"z2m_runtimeErrorStaleNoPointerMove\": true,\n \"runtimeIncludesPartialStaleError\": false,\n \"z2m_longName\": true,\n \"longNameWrapsInsideStage\": true,\n \"z2m_narrowHidesOnlyOrdinaryTip\": false,\n \"removingBadgesRestoresHiddenTipWithoutNewHover\": false,\n \"z2m_returningBadgesReappliesNarrowFallback\": false,\n \"z2m_resizeRestoresWithoutNewHover\": true,\n \"resizePreservesSourceAndRoute\": true,\n \"removingDiagnosticsRestoresOrdinaryTip\": true,\n \"pointerMotionNeverFetches\": true,\n \"pointerLeaveImmediatelyClearsAuthority\": true,\n \"pointerLeaveClearsBoth\": true,\n \"nonZigbeeRetainsOrdinaryTooltip\": true,\n \"z2m_edgeCaption\": true,\n \"edgeCaptionInsideWorkingArea\": true,\n \"z2m_cameraZoomWithoutNewHover\": true,\n \"cameraActuallyChangesGeometry\": true,\n \"secondCardKeyboardTipDoesNotActivateTopology\": true,\n \"secondCardUnmountDoesNotClearFirstHover\": true,\n \"touchImmediatelyClearsAuthority\": true,\n \"touchClearsTooltipAndTopology\": true,\n \"z2m_mouseRestoresAfter_touch\": true,\n \"penImmediatelyClearsAuthority\": true,\n \"penClearsTooltipAndTopology\": true,\n \"z2m_mouseRestoresAfter_pen\": true,\n \"focusAloneShowsOrdinaryTipWithoutTopology\": true,\n \"z2m_focusedDeviceMouseDiagnostics\": true,\n \"pointerLeaveRestoresKeyboardTipAfterDiagnostics\": true,\n \"z2m_transformedContainingAncestor\": true,\n \"ancestorScaleReallyAppliesToFixedTooltip\": true,\n \"transformedBadgesInsideVisibleStage\": true,\n \"z2m_ancestorScrollWithoutNewHover\": true,\n \"scrollActuallyMovesScreenGeometry\": true,\n \"z2m_transformedAncestorAfterPageScroll\": true,\n \"largePageScrollKeepsBadgesInsideVisibleStage\": true,\n \"zha_remoteCaption\": true,\n \"zha_firstMouseHover\": true,\n \"zha_safeTextAndPointerTransparent\": true\n}\n\nFAILED (4):\n  - runtimeIncludesPartialStaleError: expected true, got false\n  - z2m_narrowHidesOnlyOrdinaryTip: expected true, got false\n  - removingBadgesRestoresHiddenTipWithoutNewHover: expected true, got false\n  - z2m_returningBadgesReappliesNarrowFallback: expected true, got false\n",
+        "targetedRerun": {
+          "id": "smoke:smoke_zigbee_tooltip_layout",
+          "exit": 1,
+          "log": "output/issue1226/ui-addressed/smoke_zigbee_tooltip_layout.log",
+          "sha256": "19ff90df0402587cab340a40c5ae9d4b0df7256119a42bda063da9eadeba7914",
+          "productSource": "96ffe5444",
+          "fixturePatch": "a5aa896cd"
+        }
       }
     },
     {
@@ -1593,9 +1862,9 @@
     }
   ],
   "targetedSummary": {
-    "passed": 36,
-    "failed": 9,
-    "not-rerun": 33
+    "passed": 56,
+    "failed": 22,
+    "not-rerun": 0
   },
-  "notRerunPolicy": "Unchanged original failures were not rerun just to duplicate evidence. Existing product dependencies and owner decisions remain explicit; the parent runs the full integrated stable audit."
+  "notRerunPolicy": "Every one of the 33 previously not-rerun UI rows now has addressed local execution evidence. The preceding 45 classifications are unchanged; full integrated stable/HA audit remains the parent task."
 }
