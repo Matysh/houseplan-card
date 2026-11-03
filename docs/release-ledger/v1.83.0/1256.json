@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1256,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Accept semantically equal model11 projections after Python writes; exact graph projection validation was introduced on the 1.84 line. Retain strict value and array-order checks.",
+  "summary": {
+    "ru": "После сохранения переноса узла сохраняются курсор захвата и контекстное меню.",
+    "en": "Node grab cursors and context menus remain available after saving a node move."
+  }
+}

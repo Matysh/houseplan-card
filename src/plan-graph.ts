@@ -4,6 +4,7 @@ import { wallKey, thicknessCmAt, wallAngleMatches } from './wall-thickness';
 import { resolveOpenCuts, sanitizeOpenSpans } from './open-spans';
 import { storedWallContact } from './stored-wall-contact';
 import { compareCodePoints } from './codepoint-order';
+import { jsonValueEqual } from './json-value-equal';
 import {
   type Exact, type ExactPoint, type ExactRational, type GraphPoint,
   PlanExactError, ZERO, ONE, exact, parseDecimal, decodePoint, encodePoint, readSourcePoint,
@@ -236,7 +237,7 @@ export function projectGraphSpace<T extends Record<string, any>>(base: T, graph:
 export function verifyGraphProjection(space: Record<string, any>, graph: PlanGraph): void {
   const { space: projected } = projectGraphSpace(space, graph);
   for (const key of ['rooms', 'wall_segments', 'partitions', 'walls', 'openings']) {
-    if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || [])) fail('projection', key);
+    if (!jsonValueEqual(space[key] || [], projected[key] || [])) fail('projection', key);
   }
 }
 export type TargetPointRef =

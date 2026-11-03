@@ -17,6 +17,11 @@ hosts; support uses a closed pseudonymous geometry projection, never the source
 backup. Config and portable limits are 16/32 MiB; oversized normal writes use
 upload/token without changing HA's WS limit. See [PLAN-GRAPH.md](PLAN-GRAPH.md).
 
+Projection equality ignores JSON object-key order, including nested opaque
+properties, so Python write replies remain usable by the frontend (#1256/#1257).
+Array order, fields and scalar values remain strict; reading a projection never
+repairs a disagreement with its authoritative graph.
+
 #1216 keeps model/store/envelope versions unchanged. `graph_change` v2 replaces
 the repeated diagnostic base with a structural digest; v1 retains its former
 server-authoritative behavior, including when client/server baselines differ.

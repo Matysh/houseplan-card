@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep node grab cursors, context menus and endpoint movement after accepted Python integration writes by comparing graph projections independently of JSON object-key order; retain strict checks for changed values and array order. Cover consecutive saves, Undo/Redo and reload through the production Python node-write path. [#1256](https://github.com/Matysh/houseplan-card/issues/1256) [#1257](https://github.com/Matysh/houseplan-card/issues/1257)
+
 - Limit coordinator and CI-status checkout to process tools and their imports, preserving Git ancestry and fetching other file contents only when needed. [#1252](https://github.com/Matysh/houseplan-card/issues/1252)
 - Thick-wall opening fills follow the floor's shared Plan-editor transition in both directions, preventing a white flash on dark floors while retaining contact animations. [#1244](https://github.com/Matysh/houseplan-card/issues/1244)
 - Keep toasts with their originating card/dialog action, including late async results; opening another dialog no longer inherits old messages, while its own errors remain visible in the HA modal. [#1246](https://github.com/Matysh/houseplan-card/issues/1246)

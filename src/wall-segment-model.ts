@@ -11,6 +11,7 @@ import {
   canonicalizeConfigGeometryInPlace, canonicalizeLatticeCoordinate, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
 import { compareCodePoints } from './codepoint-order';
+import { jsonValueEqual } from './json-value-equal';
 import { assertFiniteColumnInputs } from './column-input';
 import { roomPoly, samePoint } from './logic';
 import { resolveOpenCuts, sanitizeOpenSpans } from './open-spans';
@@ -995,7 +996,7 @@ export function commitWallSegmentModel<T>(
         }
         const projected = projectGraphSpace(space, graph).space;
         if (!operation) for (const key of ['rooms', 'wall_segments', 'walls', 'partitions']) {
-          if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || []))
+          if (!jsonValueEqual(space[key] || [], projected[key] || []))
             throw new Error('projection-only-write');
         }
         config.spaces[i] = projected;

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1257,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "The same model11 projection equality fix as #1256 retains node ownership after the first Python reply, preventing a subsequent endpoint drag from falling through to whole-wall movement.",
+  "summary": {
+    "ru": "Повторное перемещение узла после сохранения не превращается в перенос всей стены.",
+    "en": "Moving a node again after saving no longer falls through to moving the whole wall."
+  }
+}
