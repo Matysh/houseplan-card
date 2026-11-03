@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1463,
+  "revision": 1464,
   "nextTicket": 100,
   "nextFence": 100,
   "tasks": {
@@ -1755,7 +1755,16 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.83.0/1228.json",
         "tests_backend/test_opening_repair_legacy10.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T135038026-3c2ea254",
+        "name": "Тесты для задачи #1228 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261103T135038026-3c2ea254/report.json",
+        "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
+        "status": "passed",
+        "finishedAt": "2026-11-03T13:51:15.354Z",
+        "failures": []
+      }
     },
     "1229": {
       "issue": 1229,
@@ -1904,9 +1913,9 @@
     "fence": 99,
     "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
     "expectedBase": "938aaded6e44786cd821456d1113916d9bf35bb6",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793713824451,
-    "expiresAt": 1793714134144,
+    "expiresAt": 1793717476533,
     "patchId": "9811643c473cc496c8bcefe13e2cd155f5d14ed4"
   },
   "events": {
@@ -1949,6 +1958,29 @@
         "materialSha": "ab0354fa6f0e2f4c9518046dee20cc7c6fe52871",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:f0c375e0-c8c0-452a-b1ef-d175bc411dd6:finish:3:s6-complete": {
+      "digest": "35a41664cdbe38c0af970b4cced5c62f55683c1e02b65db4447baba772d29b9c",
+      "issue": 1228,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1228,
+        "at": 1793713876533,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261103T135038026-3c2ea254",
+          "name": "Тесты для задачи #1228 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261103T135038026-3c2ea254/report.json",
+          "materialSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
+          "status": "passed",
+          "finishedAt": "2026-11-03T13:51:15.354Z",
+          "failures": []
+        }
       }
     }
   },
