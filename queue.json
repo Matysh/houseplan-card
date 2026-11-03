@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2106,
+  "revision": 2107,
   "nextTicket": 133,
   "nextFence": 133,
   "tasks": {
@@ -2410,7 +2410,7 @@
         "entry": 4,
         "eventId": "return:1246:131:reuse-base-update:return:1246"
       },
-      "patchId": "e16d571207d9fcb85eed06b1381f7fed5e89e164",
+      "patchId": "3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf",
       "changedFiles": [
         "demo/smoke_modal_toast_956.mjs",
         "demo/smoke_toast_ownership_1246.mjs",
@@ -2449,6 +2449,7 @@
         "src/vacuum-calibration-write.ts",
         "src/vacuum-dock-restart-write.ts",
         "src/wall-node-card-adapter.ts",
+        "test/layout-write-reload.test.mjs",
         "test/optimize-plans-dialog.test.mjs",
         "test/room-save-946.test.mjs",
         "test/toast-node-action.test.mjs",
@@ -2673,10 +2674,11 @@
     "token": "132:admit:1246:0bdcf608eb29c774c6160fcedb0399bba4e4290b:reuse-critical",
     "fence": 132,
     "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "082f99ccf9c9667cb17edae74f529e9e7695872a",
+    "phase": "testing",
     "admittedAt": 1793733767952,
-    "expiresAt": 1793734067952
+    "expiresAt": 1793734075615,
+    "patchId": "3d8854fb534e5e85d23eaea7ce0c9282bce1d3cf"
   },
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
@@ -2757,6 +2759,10 @@
     },
     "github:41702081061:1:completions:message:c04240bf7cb4a213ca8abe2a3cba5e4f3f5f3f591968038b04703e9533f8e152": {
       "digest": "df1205370fde195d36cda8e716f8223d7342fc655cd7e134fc3b747504f65b2f",
+      "issue": 1246
+    },
+    "sync:1246:132:0bdcf608eb29c774c6160fcedb0399bba4e4290b:reuse-critical": {
+      "digest": "480226f152cbce571e82b1fc218dc0e373989f93d1ff69a962b3897a119115fa",
       "issue": 1246
     },
     "finish:1b75cc5e-3140-429d-a0da-d863cbd17c5c": {
