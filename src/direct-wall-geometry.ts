@@ -279,6 +279,12 @@ export function directWallGeometry(source:WallGraphSource,cellCm:number,gridPitc
   const failures=failedExtras+failedComponents;
   return{status:failures?'degraded-extra':'ok',...(failures?{failurePhase:failedComponents?'direct-arrangement' as const:'direct-extra' as const}:{}),coordinateScale:source.scale,geom,components:geom.length?[{id:'primary',geom}]:[],roomGeom,roomComponents:roomGeom.length?[{id:'room-primary',geom:roomGeom}]:[],paperGeom,depthUnits:structure.depth,openingIndex:null,multiWallNodes:structure.nodes,degradedExtraCount:failures};
 }
+/** Inner floors use the same exact material domains as direct masonry. Feeding
+ * their rounded boundary back into a floating boolean can invent intersections. */
+export function directRoomFloor(source:WallGraphSource,cellCm:number,gridPitch:number,room:readonly (readonly number[])[]):number[][][][] {
+  const structure=directStructure(source,cellCm,gridPitch);
+  return A.arrange([A.polygon(room)],structure.materials.filter(m=>m.room).map(m=>m.poly));
+}
 export function directRecut(roomGeom:object,openings:DirectOpening[],extraBodies:number[][][]):{status:'ok'|'degraded-extra';geom:any;components:any[]}|null {
   const base=retained.get(roomGeom);if(!base)return null;
   const extra=extras.get(extraBodies)||{columns:extraBodies,partitionCuts:[]};

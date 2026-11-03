@@ -17,7 +17,7 @@ import { unionClippedWallCornersSequential, subtractWallOpeningCuts } from './wa
 import { applyWallLocalReplacements, type WallLocalReplacement } from './wall-local-replacements';
 import { hasPaintableRingArea } from './polygon-paint';
 import { wallGraphSource } from './wall-graph-source';
-import { directWallGeometry, directRecut, directStructure } from './direct-wall-geometry';
+import { directWallGeometry, directRecut, directStructure, directRoomFloor } from './direct-wall-geometry';
 
 export interface WallEntry {
   key: string;
@@ -2821,7 +2821,7 @@ export function innerContourForRoom(
   sharedRoomWallGeometry?: unknown,
   /** Canonical junction topology from the same wall-geometry pass. */
   sharedMultiWallNodes?: MultiWallNodeMap | null,
-  /** Optional exact subtraction; ordinary View uses the historical operation. */
+  /** Optional proof subtraction; ordinary current View uses exact material domains. */
   subtractRoomMasonry: typeof subtractLocalWallGeometry = subtractLocalWallGeometry,
 ): number[][] | null {
   const room = (rooms || []).find((r) => r?.id === roomId);
@@ -2829,13 +2829,11 @@ export function innerContourForRoom(
   if (!poly || poly.length < 3) return null;
   const graphSource=wallGraphSource(rooms);
   if(graphSource){
-    const geometry=sharedRoomWallGeometry==null
-      ? directWallGeometry(graphSource,cellCm,gridPitch,[],[]).roomGeom : sharedRoomWallGeometry;
-    if(geometry){
-      const floor=subtractRoomMasonry(closedRing(poly),geometry as any);
-      return largestOuterContour(floor);
+    if(subtractRoomMasonry!==subtractLocalWallGeometry){
+      const geometry=sharedRoomWallGeometry??directWallGeometry(graphSource,cellCm,gridPitch,[],[]).roomGeom;
+      return largestOuterContour(subtractRoomMasonry(closedRing(poly),geometry as any));
     }
-    return poly.map(p=>[p[0],p[1]]);
+    return largestOuterContour(directRoomFloor(graphSource,cellCm,gridPitch,poly));
   }
   if (!walls?.length) return poly.map((p) => [p[0], p[1]]);
   const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);

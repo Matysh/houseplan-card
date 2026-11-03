@@ -127,8 +127,9 @@ export function angleCompare(a:Point,b:Point):number {
 interface Segment {a:Point;b:Point;box:Box;cuts:Map<string,Point>;index:number}
 /** Union membership of analytic domains; intersections node boundary segments,
  * not offset polygons passed through a repair/union/difference pipeline. */
-export function arrangeExact(input:Polygon[]):Polygon[][] {
-  const polys=input.filter(p=>p.length>=3),segments:Segment[]=[];
+export function arrangeExact(input:Polygon[],excluded:Polygon[]=[]):Polygon[][] {
+  const polys=[...input,...excluded].filter(p=>p.length>=3),segments:Segment[]=[];
+  const masks=new Set(excluded);
   const keys=new WeakMap<Point,string>();
   const keyOf=(point:Point):string=>{let key=keys.get(point);if(key===undefined){key=pointKey(point);keys.set(point,key);}return key;};
   const groups=new Map<string,Map<string,{point:Point;delta:number}>>();
@@ -185,8 +186,13 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
     // endpoint projections avoids arbitrary-precision rounding of every new
     // midpoint; all membership decisions below remain exact.
     const pointBox=bounds([a,b]),candidates=query(polyTree,pointBox).filter(p=>overlaps(boxes.get(p)!,pointBox));
-    let l=false,r=false;
-    for(const poly of candidates){const sides=containsSides(poly,mid,left);l||=sides[0];r||=sides[1];if(l&&r)break;}
+    let l=false,r=false,ml=false,mr=false;
+    for(const poly of candidates){
+      const sides=containsSides(poly,mid,left);
+      if(masks.has(poly)){ml||=sides[0];mr||=sides[1];}else{l||=sides[0];r||=sides[1];}
+      if((ml&&mr)||(!masks.size&&l&&r))break;
+    }
+    l&&=!ml;r&&=!mr;
     if(l!==r)edges.push({a:l?a:b,b:l?b:a,used:false});
   }
   const outgoing=new Map<string,typeof edges>();
@@ -220,8 +226,8 @@ export function arrangeExact(input:Polygon[]):Polygon[][] {
   }
   return polygons;
 }
-export function arrange(input:Polygon[]):number[][][][] {
-  return arrangeExact(input).map(p=>p.map(r=>{
+export function arrange(input:Polygon[],excluded:Polygon[]=[]):number[][][][] {
+  return arrangeExact(input,excluded).map(p=>p.map(r=>{
     const ring=r.map(pointNumbers),closed=[...ring,ring[0].slice()];
     registerExactPaintRing(closed,area(ring.map(numericPoint)).n!==0n);return closed;
   }));

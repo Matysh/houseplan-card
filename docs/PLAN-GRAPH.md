@@ -159,7 +159,12 @@ AABB candidate search, exact intersections, symbolic infinitesimal side tests
 and directed boundary tracing. Computed binary64 offset vertices enter once
 as exact dyadics; intersection/topology predicates never use a sample epsilon.
 No polygon union/difference or legacy repair path builds model-11 masonry.
-Independent floor/decor/area operations can still use their own polygon tools.
+Current room inner floors classify those same exact material boundaries against
+room membership (`room && !roomMasonry`). They never feed rounded masonry rings
+back into polyclip: almost coincident converted vertices can break its output
+ring. Empty floors remain empty, and no numeric exception is converted into an
+uncut floor. Explicit proof subtraction ports keep their own unit contract.
+Independent decor/area operations can still use their own polygon tools.
 
 Readonly graph authority follows ephemeral room/partition projections. View,
 Static/ISO/PDF, previews, inner contours, fit, contact, light and physical guards

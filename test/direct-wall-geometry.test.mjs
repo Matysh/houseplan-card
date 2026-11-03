@@ -181,3 +181,13 @@ test('invalid independent component cannot blank healthy masonry or become a suc
  assert.equal(result.status,'degraded-extra');assert.equal(result.failurePhase,'direct-extra');assert.equal(result.degradedExtraCount,1);
  assert.equal(area(result.geom),20);assert.equal(result.components.length,1);
 });
+
+test('exact floor membership subtracts overlapping masks, preserves holes and positive dyadic gaps',()=>{
+ const subject=rectangle(0,0,10,10);
+ assert.equal(area(A.arrange([subject],[rectangle(1,1,4,4),rectangle(3,3,4,4)])),72);
+ const holed=A.arrange([subject],[rectangle(2,2,6,6)]);assert.equal(area(holed),64);assert.equal(holed[0].length,2);
+ const gap=2**-40,split=A.arrange([rectangle(0,0,2,1)],[rectangle(-1,-1,2,3),rectangle(1+gap,-1,2,3)]);
+ assert.equal(split.length,1);assert.equal(area(split),gap,'real positive gap is never merged or deleted');
+ assert.deepEqual(A.arrange([subject],[rectangle(-1,-1,12,12)]),[],'fully covered floor is honestly empty');
+ assert.equal(area(A.arrange([subject],[rectangle(10,0,1,10)])),100,'touching mask cannot remove floor area');
+});
