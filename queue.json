@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1531,
-  "nextTicket": 106,
+  "revision": 1532,
+  "nextTicket": 107,
   "nextFence": 103,
   "tasks": {
     "1126": {
@@ -1942,6 +1942,20 @@
         "scripts/bundle-manifest.mjs",
         "test/bundle-assets.test.mjs"
       ]
+    },
+    "1238": {
+      "issue": 1238,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1238-import-opening-repair",
+      "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 106,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793714561571,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -2049,7 +2063,8 @@
   "waiting": [
     1232,
     1230,
-    1231
+    1231,
+    1238
   ],
   "active": {
     "issue": 1235,
@@ -2331,6 +2346,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "d9b720a099fae6d77423cff816d0b911ef4b7fdc"
+      }
+    },
+    "finish:77e533ec-2487-47ce-8588-91720bf59172": {
+      "digest": "540611d957fb705140afa1631f4301aeef825ce6b55ad2123a7b35229eeb2ea4",
+      "issue": 1238,
+      "message": {
+        "kind": "queued",
+        "issue": 1238,
+        "at": 1793714561571,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8dd4be4fd5b288e238459e42570ca32c839b58ee"
       }
     }
   },
