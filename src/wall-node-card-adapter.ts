@@ -15,6 +15,7 @@ import { commitHouseplanEditor } from './live-editor';
 import type { JunctionSharedGeometry } from './junction-limits';
 import { withWallBooleanBaseline } from './wall-boolean-cache';
 import { WallBooleanBaseline } from './wall-boolean-baseline';
+import { captureToast, type ToastContext } from './toast-presentation';
 
 interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _mode: string; readonly _tool: string;
@@ -30,7 +31,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   _baseVb(): number[];
   _viewOr(vb: number[]): { w: number };
   _t(key: I18nKey, params?: Record<string, string | number>): string;
-  _showToast(text: string, id?: string): void;
+  _showToast(text: string, id?: string, context?: ToastContext): void;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _geometryHistory: NodeHistoryStack<TState> & { push(command: { name: string; before: TState; after: TState }): void };
   readonly _fillColors: { wall_fill: { c: string; a: number } };
@@ -71,7 +72,9 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_') || key.startsWith('node_delete')
     ? toolsT(language(), key as ToolsI18nKey, params || { reason: host._t('toast.geometry_unsafe') })
     : host._t(key as I18nKey, params);
-  const toast = (message: string, id?: string): void => host._showToast(message, id);
+  // Move/Delete are canvas-owned actions even when their result arrives after
+  // a modal opens. This long-lived adapter must not infer an owner at delivery.
+  const toast = (message: string, id?: string): void => host._showToast(message, id, { owner: null });
   const write = (history: NodeCommandHistory, basis: NodeWriteBasis | null,
     current: () => boolean = () => true): Promise<ServerConfig> => {
     retire();
@@ -167,7 +170,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       enabled: () => ['plan', 'decor'].includes(host._mode) && writer(),
       api: history => history.kind === 'delete' ? host._haWallNodeDeleteApi === 1 : api(),
       epoch: () => nodeAdoptionEpoch(host), stack: () => host._geometryHistory,
-      canShow: callbacks.canShow, show: callbacks.show, write, text, toast,
+      canShow: callbacks.canShow, show: callbacks.show, write, text, toast: captureToast(host),
     }, direction),
   });
   return editor;
