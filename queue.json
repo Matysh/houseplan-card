@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1945,
+  "revision": 1946,
   "nextTicket": 124,
   "nextFence": 123,
   "tasks": {
@@ -2223,14 +2223,37 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1242-summary-camera",
-      "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
+      "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 122,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793728670029,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951",
+      "changedFiles": [
+        "custom_components/houseplan/validation.py",
+        "demo/smoke_screen_camera_1165.mjs",
+        "demo/smoke_summary_camera.mjs",
+        "demo/smoke_summary_camera_cold.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.83.0/1242.json",
+        "src/editors/general-settings-dialog.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/settings/de.json",
+        "src/i18n/settings/en.json",
+        "src/i18n/settings/fr.json",
+        "src/i18n/settings/ru.json",
+        "src/summary-panel-runtime-loaded.ts",
+        "src/types.ts",
+        "tests_backend/test_summary_camera_settings.py"
+      ]
     },
     "1243": {
       "issue": 1243,
@@ -2506,13 +2529,18 @@
     "worker": "finish",
     "token": "122:finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:1:admit",
     "fence": 122,
-    "materialSha": "3b0267a13f8dfa458b7e84f3a44c05202bf07a8a",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "79ab89c2792f0bc5d80a25089f74825a533905df",
+    "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+    "phase": "testing",
     "admittedAt": 1793729464816,
-    "expiresAt": 1793729764816
+    "expiresAt": 1793729775541,
+    "patchId": "86219eb8ba1da836e04c97f6315a71ea56044951"
   },
   "events": {
+    "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
+      "digest": "b74717bbe91c3148655850e19950fd1870a581195fa1ce207e74475c2abb5959",
+      "issue": 1242
+    },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
       "digest": "7ae0445b4f408dcc2643a585996f20bdc4631d9251a788ee2aa7197cad484e2b",
       "issue": 1242,
