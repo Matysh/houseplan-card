@@ -1,7 +1,14 @@
 /** Issue #173/#478: Walls use canonical partitions and session-only chains. */
 import { launch, checkAll, finish } from './serve.mjs';
+import { isDeepStrictEqual } from 'node:util';
 
 const { page, browser } = await launch({ width: 1100, height: 820 }, 1);
+// Restoring an object can change its property insertion order. Compare every
+// field strictly, including all ordered arrays, rather than JSON key order.
+await page.exposeFunction('sameWallToolState', (before, after) => isDeepStrictEqual(before, after));
+page.on('console', message => {
+  if (message.text().startsWith('ROOM_PROOF_ROLLBACK ')) console.log(message.text());
+});
 
 const result = await page.evaluate(async () => {
   const out = {};
@@ -50,6 +57,26 @@ const result = await page.evaluate(async () => {
       card._drawWallField = String(cms[index - 1] ?? 15);
       await click(...points[index]);
     }
+  };
+  const rejectCreatedRoomProof = async action => {
+    // Room commits now prove their explicit graph candidate directly, rather
+    // than asking the host's old render-model cache for a nullable model.
+    // Invoke the actual physical checker first, then inject a producer failure
+    // at that supported boundary. Never fabricate a successful proof.
+    const original = card._checkSpacePhysicalGeometry;
+    const observed = { calls: 0, otherwiseValid: true };
+    card._checkSpacePhysicalGeometry = function (config, id, capture) {
+      const actual = original.call(this, config, id, capture);
+      if (config.spaces.find(space => space.id === id)?.rooms.length) {
+        observed.calls++;
+        observed.otherwiseValid &&= actual.ok === true;
+        throw Error('injected current physical-producer failure');
+      }
+      return actual;
+    };
+    try { await action(); await update(); }
+    finally { card._checkSpacePhysicalGeometry = original; }
+    return observed;
   };
 
   await reset();
@@ -115,32 +142,36 @@ const result = await page.evaluate(async () => {
 
   await reset();
   await draw([[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]]);
-  const geometryBeforeNullModel = JSON.stringify(space());
-  const originalSpaceModel = card._spaceModel.bind(card);
-  card._spaceModel = () => space().rooms.length ? null : originalSpaceModel();
-  try {
-    card._nameSel = 'Must roll back'; card._saveRoom(); await update();
-  } finally {
-    card._spaceModel = originalSpaceModel;
-  }
-  out.nullModelRollsBackWholeRoomMutation = JSON.stringify(space()) === geometryBeforeNullModel
+  const geometryBeforeNullModel = structuredClone(space());
+  const faceHistoryBeforeProof = card._geometryHistory.size;
+  const faceProof = await rejectCreatedRoomProof(() => {
+    card._nameSel = 'Must roll back'; card._saveRoom();
+  });
+  out.roomFailureReachesCurrentPhysicalProof = faceProof.calls === 1 && faceProof.otherwiseValid;
+  out.nullModelRollsBackWholeRoomMutation = await window.sameWallToolState(space(), geometryBeforeNullModel)
     && space().rooms.length === 0 && card._path.length === 0
     && card._activeWallChainPartitionIds.length === 0
-    && !card._roomDialog && !card._wallFaceBatch;
+    && !card._roomDialog && !card._wallFaceBatch
+    && card._geometryHistory.size === faceHistoryBeforeProof;
+  if (!out.nullModelRollsBackWholeRoomMutation) console.log('ROOM_PROOF_ROLLBACK', JSON.stringify({ phase: 'face', before: geometryBeforeNullModel, after: space(),
+    path: card._path, chainIds: card._activeWallChainPartitionIds, dialog: card._roomDialog,
+    batch: !!card._wallFaceBatch, historyBefore: faceHistoryBeforeProof, historyAfter: card._geometryHistory.size }));
 
   await reset();
   card._path = [[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]];
   card._wallChainSegmentCms = [15, 15, 15]; card._closingWallCm = 15;
-  const classicBeforeNullModel = JSON.stringify(space());
-  const originalClassicSpaceModel = card._spaceModel.bind(card);
-  card._spaceModel = () => space().rooms.length ? null : originalClassicSpaceModel();
-  try {
-    card._nameSel = 'Classic must roll back'; card._commitRoom(); await update();
-  } finally {
-    card._spaceModel = originalClassicSpaceModel;
-  }
-  out.classicNullModelRollsBackWholeRoomMutation = JSON.stringify(space()) === classicBeforeNullModel
-    && space().rooms.length === 0 && card._path.length === 5;
+  const classicBeforeNullModel = structuredClone(space());
+  const classicHistoryBeforeProof = card._geometryHistory.size;
+  const classicProof = await rejectCreatedRoomProof(() => {
+    card._nameSel = 'Classic must roll back'; card._commitRoom();
+  });
+  out.classicFailureReachesCurrentPhysicalProof = classicProof.calls === 1 && classicProof.otherwiseValid;
+  out.classicNullModelRollsBackWholeRoomMutation = await window.sameWallToolState(space(), classicBeforeNullModel)
+    && space().rooms.length === 0 && card._path.length === 5
+    && card._geometryHistory.size === classicHistoryBeforeProof;
+  if (!out.classicNullModelRollsBackWholeRoomMutation) console.log('ROOM_PROOF_ROLLBACK', JSON.stringify({ phase: 'classic', before: classicBeforeNullModel, after: space(),
+    path: card._path, chainIds: card._activeWallChainPartitionIds, dialog: card._roomDialog,
+    batch: !!card._wallFaceBatch, historyBefore: classicHistoryBeforeProof, historyAfter: card._geometryHistory.size }));
 
   await reset();
   space().partitions = [{

@@ -5,7 +5,12 @@
  * degrade/rekey, safe Resize rejects a mixed-thickness shared wall.
  */
 import { launch, checkAll, finish } from './serve.mjs';
+import { normalizeLegacyGeometryInPlace } from '../test-build/geometry-cleanup.js';
 const { page, browser } = await launch();
+await page.exposeFunction('legacyThicknessCleanup', source => {
+  normalizeLegacyGeometryInPlace(source);
+  return source;
+});
 
 const res = await page.evaluate(async () => {
   const out = {};
@@ -13,6 +18,16 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; };
   const sp = () => c._serverCfg.spaces.find((s) => s.id === c._space);
+  const opaque = { nested: ['preserve', { scalar: 7, optional: null }] };
+  const authored = async (intent, change) => {
+    const before = c._geometrySnapshot();
+    change(sp());
+    if (!c._editorRuntime._commitPhysicalGeometry('Wall-thickness fixture setup', before, [], false, intent))
+      throw Error(`explicit fixture ${intent.kind} refused: ${JSON.stringify(c._toast)}`);
+    await window.__hpTest.waitForWrites(); await upd();
+    if (JSON.stringify(sp().future_wall_thickness) !== JSON.stringify(opaque))
+      throw Error('explicit fixture writer lost opaque space metadata');
+  };
   const hostContourOpenings = () => {
     for (const opening of sp().openings || []) {
       if (opening.host) continue;
@@ -40,6 +55,13 @@ const res = await page.evaluate(async () => {
         opening.host = { kind: 'wall', id: segment.id, t };
       }
     }
+  };
+  const replaceOpenings = async (openings) => {
+    const ids = [...new Set([...(sp().openings || []).map(o => o.id), ...openings.map(o => o.id)])];
+    await authored({ kind: 'openings', ids }, space => {
+      space.openings = structuredClone(openings);
+      hostContourOpenings();
+    });
   };
   const floorAreaOf = (id) => {
     const rooms = c._spaceModel().rooms;
@@ -70,6 +92,7 @@ const res = await page.evaluate(async () => {
   };
 
   sp().settings = { ...(sp().settings || {}), show_borders: true, hide_openings: undefined };
+  sp().future_wall_thickness = structuredClone(opaque);
   delete sp().walls;
   delete sp().openings;
   for (const r of sp().rooms || []) delete r.open_to;
@@ -101,10 +124,9 @@ const res = await page.evaluate(async () => {
 
   // A sun shaft starts at the two room-side corners of a thick opening, not
   // on the wall centreline and not at an incidence-narrowed pseudo-aperture.
-  sp().openings = [{
+  await replaceOpenings([{
     id: 'wtSun', type: 'window', x: 0.04, y: 0.25, angle: 90, length: 0.09,
-  }];
-  hostContourOpenings();
+  }]);
   sp().settings = { ...(sp().settings || {}), north_deg: 0, sun_rays: true };
   c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
     entity_id: 'sun.sun', state: 'above_horizon',
@@ -133,10 +155,10 @@ const res = await page.evaluate(async () => {
   const shared = [...sr().querySelectorAll('[data-hp="wall"]')];
   out.sharedOnce = shared.length === 1;
 
-  sp().openings = [{
+  await replaceOpenings([{
     id: 'wt1', type: 'door', x: 0.55, y: 0.25, angle: 90, length: 0.09, flip_v: false,
-  }];
-  hostContourOpenings();
+    future_opening: structuredClone(opaque),
+  }]);
   await upd();
   out.doorDrawn = !!sr().querySelector('[data-hp="opening"][data-kind="door"]');
   const bodyD = shared[0]?.getAttribute('d') || sr().querySelector('[data-hp="wall"]')?.getAttribute('d') || '';
@@ -147,8 +169,8 @@ const res = await page.evaluate(async () => {
       + ' > g[transform^="translate("]')
     ?.getAttribute('transform') || '';
   out.doorDefaultCentered = /^translate\(0 0\)$/.test(doorBodyTransform());
-  sp().openings[0].flip_v = true;
-  await upd();
+  await authored({ kind: 'openings', ids: ['wt1'] }, space => { space.openings[0].flip_v = true; });
+  out.openingMetadataPreserved = JSON.stringify(sp().openings[0].future_opening) === JSON.stringify(opaque);
   out.doorSavedFlipStaysCentered = /^translate\(\s*0\s+0\s*\)$/.test(doorBodyTransform());
 
   const firstGateTurn = (id) => {
@@ -157,39 +179,43 @@ const res = await page.evaluate(async () => {
     )?.style?.transform || '';
     return Number(transform.match(/rotate\(([-+0-9.eE]+)deg\)/)?.[1]);
   };
-  sp().openings = [
+  await replaceOpenings([
     { id: 'wtGateDefault', type: 'gate', x: 0.55, y: 0.20, angle: 90, length: 0.08,
       flip_v: false },
     { id: 'wtGateFlipped', type: 'gate', x: 0.55, y: 0.30, angle: 90, length: 0.08,
       flip_v: true },
-  ];
-  hostContourOpenings();
+  ]);
   await upd();
   const sharedGateDefault = firstGateTurn('wtGateDefault');
   const sharedGateFlipped = firstGateTurn('wtGateFlipped');
   out.sharedGateFlipReversesTurn = Math.abs(sharedGateDefault) === 10
     && sharedGateFlipped === -sharedGateDefault;
 
-  const partitionsBefore = structuredClone(sp().partitions || []);
-  sp().partitions = [...partitionsBefore, {
-    id: 'wt-gate-partition', a: [0.15, 0.75], b: [0.45, 0.75], cm: 25,
-  }];
-  sp().openings = [
+  await authored({ kind: 'partitions', ids: ['wt-gate-partition'] }, space => {
+    space.partitions = [...(space.partitions || []), {
+      id: 'wt-gate-partition', a: [0.15, 0.75], b: [0.45, 0.75], cm: 25,
+      future_partition: structuredClone(opaque),
+    }];
+  });
+  await replaceOpenings([
     { id: 'wtPartGateDefault', type: 'gate', x: 0.25, y: 0.75, angle: 0, length: 0.08,
       flip_v: false, host: { kind: 'partition', id: 'wt-gate-partition', t: 1 / 3 } },
     { id: 'wtPartGateFlipped', type: 'gate', x: 0.35, y: 0.75, angle: 0, length: 0.08,
       flip_v: true, host: { kind: 'partition', id: 'wt-gate-partition', t: 2 / 3 } },
-  ];
+  ]);
   await upd();
   const partitionGateDefault = firstGateTurn('wtPartGateDefault');
   const partitionGateFlipped = firstGateTurn('wtPartGateFlipped');
   out.partitionGateFlipReversesTurn = Math.abs(partitionGateDefault) === 10
     && partitionGateFlipped === -partitionGateDefault;
-  sp().partitions = partitionsBefore;
-  sp().openings = [{
+  out.partitionMetadataPreserved = JSON.stringify(sp().partitions.find(p => p.id === 'wt-gate-partition').future_partition) === JSON.stringify(opaque);
+  await replaceOpenings([]);
+  await authored({ kind: 'partitions', ids: ['wt-gate-partition'] }, space => {
+    space.partitions = space.partitions.filter(p => p.id !== 'wt-gate-partition');
+  });
+  await replaceOpenings([{
     id: 'wt1', type: 'door', x: 0.55, y: 0.25, angle: 90, length: 0.09, flip_v: true,
-  }];
-  hostContourOpenings();
+  }]);
   await upd();
 
   sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: false };
@@ -220,9 +246,16 @@ const res = await page.evaluate(async () => {
   await upd();
   out.zeroApplied = c._intervalCm([40, 180, 40, 420]) === 0;
 
-  sp().walls = [...(sp().walls || []), { key: '9.99,9.99@1.5708', cm: 15 }];
-  c._dropLegacySegments();
-  out.degrade = !(sp().walls || []).some((w) => w.key.startsWith('9.99'));
+  // This named legacy key-cleanup witness has no graph authority. Do not
+  // inject a stale walls[] ledger into the live accepted current graph.
+  const currentBeforeDegrade = JSON.stringify(c._serverCfg);
+  const legacy = { model_version: 7, spaces: [{ id: 'legacy-key', rooms: [{
+    id: 'old-room', poly: [[.1, .1], [.9, .1], [.9, .9], [.1, .9]],
+  }], walls: [{ key: '9.99,9.99@1.5708', cm: 15 }], future_wall_thickness: structuredClone(opaque) }], markers: [], settings: {} };
+  const cleanedLegacy = await window.legacyThicknessCleanup(legacy);
+  out.degrade = !(cleanedLegacy.spaces[0].walls || []).some((w) => w.key.startsWith('9.99'));
+  out.degradePreservesOpaque = JSON.stringify(cleanedLegacy.spaces[0].future_wall_thickness) === JSON.stringify(opaque);
+  out.degradeNeverChangesCurrentAuthority = JSON.stringify(c._serverCfg) === currentBeforeDegrade;
 
   // The current door is hosted by the shared wall. Turning that carrier into
   // a zero wall is rejected atomically; after removing the opening, zero and
@@ -236,7 +269,7 @@ const res = await page.evaluate(async () => {
   await upd();
   out.openingBlocksZero = !!c._wallDialog && !!c._toast
     && c._intervalCm([550, 200, 550, 300]) === 25;
-  delete sp().openings;
+  await replaceOpenings([]);
   c._wallDialog = { ...c._wallDialog, value: '0' };
   c._wallThickApply(false);
   await upd();
@@ -310,17 +343,21 @@ const res = await page.evaluate(async () => {
   // hatch must be suppressed in full and static views; at 20 cm both restore
   // it. The static card measures its actual stage width via ResizeObserver.
   c._setMode('view');
-  const parityCfg = JSON.parse(JSON.stringify(c._serverCfg));
-  const paritySp = parityCfg.spaces.find((x) => x.id === c._space);
-  paritySp.settings = { ...(paritySp.settings || {}), show_borders: true };
-  paritySp.walls = (paritySp.walls || []).map((w) => ({ ...w, cm: 1 }));
-  c._serverCfg = parityCfg;
+  sp().settings = { ...(sp().settings || {}), show_borders: true };
+  const positiveEdges = sp().plan_graph.edges.filter(edge => edge.cm > 0).map(({ kind, id }) => ({ kind, id }));
+  const parityThickness = async cm => authored({ kind: 'thickness', edges: positiveEdges, cm }, space => {
+    const selected = new Set(positiveEdges.map(edge => `${edge.kind}:${edge.id}`));
+    for (const [kind, key] of [['wall', 'wall_segments'], ['partition', 'partitions']])
+      for (const edge of space[key] || []) if (selected.has(`${kind}:${edge.id}`)) edge.cm = cm;
+    for (const wall of space.walls || []) wall.cm = cm;
+  });
+  await parityThickness(1);
   await upd();
 
   await customElements.whenDefined('houseplan-space-card');
   const baseCall = c.hass.callWS.bind(c.hass);
   const staticHass = { ...c.hass, callWS: async (m) => {
-    if (m.type === 'houseplan/config/get') return { config: parityCfg, rev: 1 };
+    if (m.type === 'houseplan/config/get') return { config: structuredClone(c._serverCfg), rev: c._cfgRev };
     if (m.type === 'houseplan/layout/get') return { layout: c._layout || {}, rev: 1 };
     return baseCall(m);
   } };
@@ -337,7 +374,12 @@ const res = await page.evaluate(async () => {
   out.thinWallFullSolid = !!sr().querySelector('.wallbody.solid');
   out.thinWallStaticSolid = !!staticCard.renderRoot?.querySelector('.wallbody.solid');
 
-  for (const w of paritySp.walls || []) w.cm = 20;
+  await parityThickness(20);
+  const thickReadStart = Date.now();
+  while (staticCard._snap?.rev !== c._cfgRev && Date.now() - thickReadStart < 6000)
+    await new Promise(resolve => setTimeout(resolve, 30));
+  out.staticThickReadsAcceptedGraph = JSON.stringify(staticCard._snap?.config.spaces.find(s => s.id === c._space)?.plan_graph)
+    === JSON.stringify(sp().plan_graph);
   c._cfgEpoch++;
   c.requestUpdate();
   staticCard.requestUpdate();

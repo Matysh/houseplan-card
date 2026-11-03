@@ -1,0 +1,26 @@
+[
+  {
+    "id": "smoke:smoke_wall_thickness",
+    "file": "demo/smoke_wall_thickness.mjs",
+    "name": "smoke_wall_thickness",
+    "category": "explicit-current-intents-and-isolated-legacy-preparation",
+    "status": "passed",
+    "reason": "All36 controls pass. Every post-graph opening/partition/thickness fixture change uses the real explicit current geometry writer; opaque space/partition/opening fields are preserved. The old key degradation is tested on a separate authored literal7 fixture through real legacy preparation. Static thick phase awaits actual accepted revision/graph, rather than repainting an old saved snapshot.",
+    "evidence": "output/issue1226/ac1-two-ports/wall-thickness-r2.log",
+    "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_wall_thickness.log",
+    "relatedIssue": null,
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66"
+  },
+  {
+    "id": "smoke:smoke_unified_wall_tool",
+    "file": "demo/smoke_unified_wall_tool.mjs",
+    "name": "smoke_unified_wall_tool",
+    "category": "current-proof-seam-ported-foreign-overlap-unresolved",
+    "status": "failed",
+    "reason": "Both original atomic rollback controls pass at the actual physical-candidate boundary, with original checker proving otherwise-valid candidates before injected failure. Full deep strict equality preserves all fields, numbers, metadata and array order while ignoring object insertion order; history/session controls remain. Only original acceptSplitsOnlyCoincidentForeignInterval stays RED and is not waived.",
+    "evidence": "output/issue1226/ac1-two-ports/unified-wall-final.log; output/issue1226/ac1-two-ports/rollback-details.json",
+    "originalEvidence": "artifacts/process-next/.state/runs/20261103T075210949-1e77d135/smoke_smoke_unified_wall_tool.log",
+    "relatedIssue": null,
+    "base": "0bda944e3244a142449c30c5f802c14833af8c66"
+  }
+]
