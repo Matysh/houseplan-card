@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2197,
+  "revision": 2198,
   "nextTicket": 136,
   "nextFence": 136,
   "tasks": {
@@ -450,31 +450,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "24ae8ff93c46d3370879530d083b5aadfa6d5189"
-      }
-    },
-    "1176": {
-      "issue": 1176,
-      "branch": "codex/1176-room-candidates",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-      "mergedAt": 1793554750329,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentDigest": "4df8966caa7a4e168869"
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "ce45c22f574810a9cde0467b1158affc0b03063e"
       }
     },
     "1179": {
@@ -1725,20 +1700,17 @@
       "reviewRequest": "review:1226:3:a1bbee5b993ff2a5121ae77034003ca279c2505e:f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": "not-required",
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
-        "classificationAt": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "34c7bc28ce5c545336ab",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": "not-required",
           "target": null
         }
       },
