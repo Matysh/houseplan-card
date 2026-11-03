@@ -1,0 +1,1 @@
+{"schema":1,"issue":1247,"baseStable":"v1.83.0","category":"stable-fix","rationale":"Restore single ownership of transient Draw previews after an interleaved host render, without hiding persisted masonry or changing geometry.","summary":{"ru":"Рисование стен не оставляет отпечатков старого превью.","en":"Wall drawing no longer leaves stale preview ink."}}

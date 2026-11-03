@@ -396,6 +396,10 @@ export function paintHouseplanEditor(value: object): void {
   makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
   makeTransparent(state, root, '.hp-prop-selection');
   if (host._mode === 'plan') {
+    // A full host render temporarily owns Draw ink. The next live frame must
+    // reclaim every transient part, including when the new preview is empty.
+    // Stored wall bodies, nodes, grid and hit targets remain in the main SVG.
+    hide(state, root, '.hp-plan-only-layer :is(.drawwall-preview-fill,.drawwall-preview,.drawwall-zero-preview,.pathline,.vertex,.active-axis,.active-vertex)');
     if (host._editorRuntime?.stairs?.live) {
       hide(state, root, '.hp-stairs-layer');
       hide(state, root, '.hp-stair-frame');
