@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 2134,
+  "revision": 2135,
   "nextTicket": 135,
-  "nextFence": 134,
+  "nextFence": 135,
   "tasks": {
     "1126": {
       "issue": 1126,
@@ -2657,7 +2657,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 134,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793735515982,
       "reviewEntry": 6,
@@ -2962,10 +2962,18 @@
       "runId": 41705603244
     }
   },
-  "waiting": [
-    1246
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1246,
+    "worker": "finish",
+    "token": "134:finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:1:admit",
+    "fence": 134,
+    "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793735519935,
+    "expiresAt": 1793735819935
+  },
   "events": {
     "finish:bc8f9eea-7523-470d-8d1d-8a85d334e695:finish:1:return": {
       "digest": "4c1fd30ea9cbcdc6bda395358161e765c5e83bd949bf4c29d90f30e79034db8b",
@@ -3514,6 +3522,30 @@
         "track": "show",
         "layer": "product",
         "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
+        "evidence": {
+          "id": "20261103T192450682-1b9ff2d9",
+          "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
+          "runId": 41702741150,
+          "materialSha": "0bdcf608eb29c774c6160fcedb0399bba4e4290b",
+          "status": "passed",
+          "finishedAt": "2026-11-03T19:25:52.962Z",
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41702741150",
+          "execution": "github"
+        }
+      }
+    },
+    "finish:d3256a6b-b11b-463f-b233-6159b4f9ba5e:finish:1:admit": {
+      "digest": "94828c8c7b6793e52d88d90cf00ef2136079ec1c4139f17332c42b667ff698eb",
+      "issue": 1246,
+      "message": {
+        "kind": "admitted",
+        "issue": 1246,
+        "at": 1793735519935,
+        "entry": 6,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f3dfb5cb627ce462d959cc4d825e42bd464db1a4",
+        "phase": "sync",
         "evidence": {
           "id": "20261103T192450682-1b9ff2d9",
           "requestId": "s6:1246:fbaa2ca01c5aedc3d21878e03f1a85e5",
