@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1235,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "The current 1.84 summary weather widget shares leaves with the nested summary editor; Rollup moved them into the View root and mangled its raw-URL retry exports. Keep those shared leaves outside the root and validate the existing View retry ABI during bundle generation.",
+  "summary": {
+    "ru": "Retry сводной панели восстанавливает настоящий чанк после временной ошибки загрузки.",
+    "en": "Summary Retry recovers the production chunk after a temporary load failure."
+  }
+}

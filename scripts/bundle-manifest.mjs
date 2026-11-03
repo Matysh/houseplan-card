@@ -18,12 +18,18 @@ const LED_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_RETRY_ASSET__';
 const LED_FIELD_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_FIELD_RETRY_ASSET__';
 const LED_EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_EDITOR_RETRY_ASSET__';
 export const VIEW_RUNTIME_RETRY_CHUNKS = [
-  { module: '/src/view-device-menu.ts', token: '__HOUSEPLAN_DEVICE_MENU_RETRY_ASSET__' },
-  { module: '/src/live-interaction-runtime.ts', token: '__HOUSEPLAN_LIVE_RETRY_ASSET__' },
-  { module: '/src/summary-panel-runtime-entry.ts', token: '__HOUSEPLAN_SUMMARY_RETRY_ASSET__' },
-  { module: '/src/hp-zigbee-topology-overlay.ts', token: '__HOUSEPLAN_ZIGBEE_OVERLAY_RETRY_ASSET__' },
-  { module: '/src/hp-plan-converter-info.ts', token: '__HOUSEPLAN_CONVERTER_INFO_RETRY_ASSET__' },
-  { module: '/src/marker-alert-view-runtime.ts', token: '__HOUSEPLAN_MARKER_ALERT_RETRY_ASSET__' },
+  { module: '/src/view-device-menu.ts', token: '__HOUSEPLAN_DEVICE_MENU_RETRY_ASSET__',
+    exports: ['VIEW_DEVICE_MENU_FINGERPRINT', 'ViewDeviceMenu'] },
+  { module: '/src/live-interaction-runtime.ts', token: '__HOUSEPLAN_LIVE_RETRY_ASSET__',
+    exports: ['LIVE_RUNTIME_FINGERPRINT', 'LiveRuntime'] },
+  { module: '/src/summary-panel-runtime-entry.ts', token: '__HOUSEPLAN_SUMMARY_RETRY_ASSET__',
+    exports: ['SUMMARY_RUNTIME_FINGERPRINT', 'LoadedSummaryPanelRuntime'] },
+  { module: '/src/hp-zigbee-topology-overlay.ts', token: '__HOUSEPLAN_ZIGBEE_OVERLAY_RETRY_ASSET__',
+    exports: ['ZIGBEE_OVERLAY_FINGERPRINT', 'installZigbeeTopologyOverlay'] },
+  { module: '/src/hp-plan-converter-info.ts', token: '__HOUSEPLAN_CONVERTER_INFO_RETRY_ASSET__',
+    exports: ['CONVERTER_INFO_FINGERPRINT', 'installPlanConverterInfo'] },
+  { module: '/src/marker-alert-view-runtime.ts', token: '__HOUSEPLAN_MARKER_ALERT_RETRY_ASSET__',
+    exports: ['MARKER_ALERT_FINGERPRINT', 'MarkerAlertViewRuntime'] },
 ];
 
 /**
@@ -447,6 +453,11 @@ export function editorRuntimeRetryUrlPlugin({ coverage = coverageMapsEnabled() }
         const target = chunks.find(chunk => Object.keys(chunk.modules)
           .some(id => normalizedId(id).endsWith(entry.module)));
         if (count !== 1 || !target) throw new Error(`invalid View retry root: ${entry.module} (${count})`);
+        // Like the editor above, these roots are also imported as raw URLs.
+        // A literal import can hide mangled exports behind Rollup's wrapper.
+        for (const name of entry.exports) {
+          if (!target.exports?.includes(name)) throw new Error(`${entry.module} raw-URL retry missing named export ${name}`);
+        }
         const owner = owners[0];
         let asset = posix.relative(posix.dirname(owner.fileName), target.fileName);
         if (!asset.startsWith('.')) asset = `./${asset}`;

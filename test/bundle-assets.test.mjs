@@ -869,7 +869,7 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
   };
   for (const [index, entry] of VIEW_RUNTIME_RETRY_CHUNKS.entries()) {
     const path = `houseplan-assets/view-runtime-${index}-HASH.js`;
-    bundle[path] = { type: 'chunk', fileName: path, modules: { [`/repo${entry.module}`]: {} }, code: '' };
+    bundle[path] = { type: 'chunk', fileName: path, modules: { [`/repo${entry.module}`]: {} }, code: '', exports: [...entry.exports] };
   }
   const original = structuredClone(bundle);
   const duplicate = structuredClone(original);
@@ -878,6 +878,16 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
   const missing = structuredClone(original);
   delete missing['houseplan-assets/view-runtime-1-HASH.js'];
   assert.throws(() => editorRuntimeRetryUrlPlugin().generateBundle({}, missing), /invalid View retry root/);
+  // #1235: Rollup's literal-import wrapper must not conceal a broken raw-URL
+  // retry ABI, whether a fingerprint or a constructor/install export is lost.
+  for (const [index, entry] of VIEW_RUNTIME_RETRY_CHUNKS.entries()) {
+    for (const name of entry.exports) {
+      const mangled = structuredClone(original);
+      mangled[`houseplan-assets/view-runtime-${index}-HASH.js`].exports = entry.exports.filter(key => key !== name);
+      assert.throws(() => editorRuntimeRetryUrlPlugin().generateBundle({}, mangled),
+        new RegExp(`raw-URL retry missing named export ${name}`));
+    }
+  }
   plugin.generateBundle({}, bundle);
   assert.equal(bundle['houseplan-assets/view-owner.js'].code,
     VIEW_RUNTIME_RETRY_CHUNKS.map((_, index) => `import("./view-runtime-${index}-HASH.js")`).join(';'));
@@ -1539,11 +1549,11 @@ test('#1018 AC3 actual raw retry URL plugin keeps sentinels before/after differe
   const bundle = { [owner.fileName]: owner, [`${owner.fileName}.map`]: { type: 'asset', source: '' } };
   const targets = [...modules.map((module, n) => ({ module: `/src/${module}.ts`, name: names[n] })),
     ...NAMESPACE_LOCALE_CHUNKS.map((entry, n) => ({ module: entry.module, name: `locale${n}` })),
-    ...VIEW_RUNTIME_RETRY_CHUNKS.map((entry, n) => ({ module: entry.module, name: `view${n}` }))];
+    ...VIEW_RUNTIME_RETRY_CHUNKS.map((entry, n) => ({ module: entry.module, name: `view${n}`, exports: entry.exports }))];
   for (const target of targets) {
     const fileName = `houseplan-assets/${target.name}-different-length-HASH.js`;
     bundle[fileName] = { type: 'chunk', fileName, modules: { [`/repo${target.module}`]: {} }, code: '',
-      exports: target.name === 'EDITOR' ? ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'] : [] };
+      exports: target.name === 'EDITOR' ? ['EDITOR_RUNTIME_FINGERPRINT', 'EDITOR_LANGUAGE_RUNTIME', 'HouseplanEditorRuntime'] : target.exports || [] };
   }
   editorRuntimeRetryUrlPlugin({ coverage: true }).generateBundle({}, bundle);
   expectMapAt1018(owner, source, '114466'); expectMapAt1018(owner, source, '339977');

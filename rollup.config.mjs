@@ -42,7 +42,11 @@ export default {
       // #848: these leaves are also used by the nested summary editor. Keep
       // them out of its View root, whose named exports are consumed by the
       // immutable-URL retry as well as Rollup's literal dynamic import.
-      if (['/src/summary-panel-picker.ts', '/src/summary-panel-icons.ts']
+      // #1235: weather rendering and the nested settings dialog share these
+      // leaves too. Otherwise Rollup folds them into the View root and turns
+      // its public retry exports into an internal namespace wrapper.
+      if (['/src/summary-panel-picker.ts', '/src/summary-panel-icons.ts',
+        '/src/summary-weather.ts', '/src/summary-weather-i18n.ts']
         .some((suffix) => path.endsWith(suffix))) return 'summary-shared';
       // #866: the newly lazy Optimize boundary must not statically import
       // leaves housed in the runtime facade: that mangles its raw-URL ABI.
