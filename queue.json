@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1665,
-  "nextTicket": 111,
+  "revision": 1666,
+  "nextTicket": 112,
   "nextFence": 110,
   "tasks": {
     "1126": {
@@ -2066,14 +2066,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1237-native-grid-provenance",
-      "materialSha": "782be555e96df025025139eff8c9ff93c29d9607",
+      "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 107,
-      "queued": false,
+      "ticket": 111,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793714995417,
-      "reviewEntry": 1,
+      "readyAt": 1793716265561,
+      "reviewEntry": 2,
       "patchId": "9abfdf0500ffa3f24ce0a196c10873d7f2d4c50c",
       "changedFiles": [
         "demo/smoke_native_grid_draw.mjs",
@@ -2084,7 +2084,6 @@
         "src/houseplan-editor-runtime.ts",
         "test/native-grid-draw.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2264,7 +2263,8 @@
     }
   },
   "waiting": [
-    1236
+    1236,
+    1237
   ],
   "active": {
     "issue": 1234,
@@ -2627,6 +2627,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc": {
+      "digest": "42151cb7dcb8bfc0a92c77b45d31b7c5959c36ac60c2885056af1770c2a08363",
+      "issue": 1237,
+      "message": {
+        "kind": "queued",
+        "issue": 1237,
+        "at": 1793716265561,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03"
       }
     }
   },
