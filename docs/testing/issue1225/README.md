@@ -98,3 +98,17 @@ ordinary foreign-transfer rule still clears known_devices/new_device_ids.
 Current common diagnostic41679296259 pins product1f3a0f343f881ef59446c664baace3df8e72a635
 and this exact companion827fb417858e10e2362092e26960f7c8ae4c5ac0. It is running
 when this packet is refreshed. Do not infer a PASS of its77 scenarios or of#1226.
+## Final actual HA evidence (supersedes earlier pending boundary)
+
+Run41679296259 completed with product1f3a0f343f881ef59446c664baace3df8e72a635
+and exact companion827fb417858e10e2362092e26960f7c8ae4c5ac0:
+77/77 business PASS,10/10 setup PASS,0 failed/timedOut/skipped/unexecuted.
+All raw Playwright JSON was independently translated with exact selected identities;
+every published summary agrees. Empty first-run/upgrade remainders remain not-required.
+`HA-41679296259.json.txt` contains per-case primary paths and counts. The older
+pending/73PASS snapshots above are historical evidence, superseded by this run.
+
+The shared diagnostic itself remains RED:539steps=504passed+33failed+2not-required,
+0reused, duration4453695ms. Matching build/test-build fingerprints and output hashes
+were nevertheless executed again; the source of zero reuse is a separate recorded
+observation, not a fix or rerun added to#1225. This does not claim#1226allgreen.
