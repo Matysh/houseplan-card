@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 1989,
-  "nextTicket": 128,
+  "revision": 1990,
+  "nextTicket": 129,
   "nextFence": 127,
   "tasks": {
     "1126": {
@@ -2485,15 +2485,15 @@
       "issue": 1246,
       "track": "show",
       "layer": "product",
-      "branch": "issue/1246-toast-action-ownership",
-      "materialSha": "c4779c99782afec7016e38ef302371738c25536c",
+      "branch": "issue/1246-toast-context-recovery",
+      "materialSha": "59288b2550e8269193aad2272536c14915f7978e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 125,
-      "queued": false,
+      "ticket": 128,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793730555484,
-      "reviewEntry": 2,
+      "readyAt": 1793730843511,
+      "reviewEntry": 3,
       "notice": {
         "key": "2:rebase-conflict-recovery",
         "reason": "rebase-conflict-recovery",
@@ -2502,11 +2502,7 @@
         "at": 1793730816509,
         "entry": 2,
         "eventId": "return:1246:125:rebase-conflict-recovery:return:1246"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793730567371,
-      "automationDetail": "Local branch changed after ready; do not overwrite the remote task",
-      "reason": "rebase-conflict-recovery"
+      }
     },
     "1247": {
       "issue": 1247,
@@ -2706,7 +2702,8 @@
     }
   },
   "waiting": [
-    1242
+    1242,
+    1246
   ],
   "active": {
     "issue": 1225,
@@ -3072,6 +3069,19 @@
         "layer": "infra",
         "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
         "phase": "sync"
+      }
+    },
+    "finish:df291976-35e5-4b0d-be41-42d771b7587d": {
+      "digest": "372b10852380640fc03f990364fcd9cf8d0fd9a08b3f46bd27da99d7c5d23958",
+      "issue": 1246,
+      "message": {
+        "kind": "queued",
+        "issue": 1246,
+        "at": 1793730843511,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "59288b2550e8269193aad2272536c14915f7978e"
       }
     }
   },
