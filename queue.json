@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1993,
+  "revision": 1994,
   "nextTicket": 129,
   "nextFence": 127,
   "tasks": {
@@ -1830,6 +1830,13 @@
         "status": "passed",
         "finishedAt": "2026-11-03T18:34:10.848Z",
         "failures": []
+      },
+      "reviewRound": null,
+      "reviewRequest": "review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+      "reviewMaterial": {
+        "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
+        "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+        "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5"
       }
     },
     "1227": {
@@ -2708,6 +2715,19 @@
         }
       },
       "runId": 41692081808
+    },
+    "code:1225:review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab": {
+      "issue": 1225,
+      "kind": "code",
+      "requestId": "review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+      "materialSha": "a649fc3251d7a115d93eb6f0817024d04ab8b577",
+      "expectedBase": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
+      "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5",
+      "status": "pending",
+      "presentation": {
+        "round": null,
+        "occurredAt": "2026-11-03T18:34:20.659Z"
+      }
     }
   },
   "waiting": [
@@ -2724,7 +2744,8 @@
     "phase": "review",
     "admittedAt": 1793730839519,
     "expiresAt": 1793734451569,
-    "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5"
+    "patchId": "69657d6c52d5e5e789d1c66e9e691649a735f1c5",
+    "reviewRequest": "review:1225:2:69657d6c52d5e5e789d1c66e9e691649a735f1c5:ad46b790228f0b2e7ae37f7905a63843043cf2ab"
   },
   "events": {
     "finish:69bf792f-2f34-42ff-b76b-f6d5d9802e0a:finish:2:synchronized": {
@@ -2825,6 +2846,10 @@
     },
     "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:3:s6-label": {
       "digest": "4fa6a4ac32b00c18587f19c0f79c0b51ee6d803f53823215bba21b97bb202b24",
+      "issue": 1225
+    },
+    "finish:87b4da84-4437-4907-9c78-424490d13d7a:finish:4:review-requested": {
+      "digest": "031e53d98102aeb64fe5bd90082f2424133d4aeaa060568404de9fc9e378c8c2",
       "issue": 1225
     },
     "finish:8e2329cb-3365-4e1e-ba52-e65fb3f64a48": {
