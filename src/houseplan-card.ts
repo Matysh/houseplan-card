@@ -12143,8 +12143,8 @@ export class HouseplanCard extends LitElement {
           ${this._summary?.renderMeasure()}
           ${this._summary?.renderPanel()}
           ${this._renderKioskNavigation()}
-          ${this._booting || this._bootFading || isoFirstFramePending || this._hasScreenProfile && !this._screenReference
-            ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending || this._hasScreenProfile && !this._screenReference ? '' : 'off'}" aria-hidden="true">
+          ${this._booting || this._bootFading || isoFirstFramePending || this._usesScreenCamera && !this._screenReference
+            ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending || this._usesScreenCamera && !this._screenReference ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
               </div>`
             : nothing}
