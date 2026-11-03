@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1555,
+  "revision": 1556,
   "nextTicket": 107,
   "nextFence": 104,
   "tasks": {
@@ -1873,7 +1873,16 @@
         "docs/CHANGELOG.ru.md",
         "test/helpers/geometry-commit-harness.mjs",
         "test/shared-wall-split.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261103T140741035-581a759a",
+        "name": "Тесты для задачи #1231 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1101-space-delete-20261028/.git/process-next/runs/20261103T140741035-581a759a/report.json",
+        "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+        "status": "passed",
+        "finishedAt": "2026-11-03T14:08:17.788Z",
+        "failures": []
+      }
     },
     "1232": {
       "issue": 1232,
@@ -2092,9 +2101,9 @@
     "fence": 103,
     "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
     "expectedBase": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793714810839,
-    "expiresAt": 1793715197225,
+    "expiresAt": 1793718500640,
     "patchId": "b177a0539f976fb0ee0c27e5ed62b86a245999ee"
   },
   "events": {
@@ -2337,6 +2346,29 @@
         "materialSha": "714f20de41ec28af167c9b42b28dbf524521b943",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:29271098-0fc9-4ccb-b71d-be101786d33f:finish:2:s6-complete": {
+      "digest": "186398f128c4b19c9486479b760d3ac0f39291071c3edbd7af07eecb2eeb1b09",
+      "issue": 1231,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1231,
+        "at": 1793714900640,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+        "phase": "ready-to-merge",
+        "evidence": {
+          "id": "20261103T140741035-581a759a",
+          "name": "Тесты для задачи #1231 (перед слиянием)",
+          "reportPath": "/home/matysh/hp-1101-space-delete-20261028/.git/process-next/runs/20261103T140741035-581a759a/report.json",
+          "materialSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8",
+          "status": "passed",
+          "finishedAt": "2026-11-03T14:08:17.788Z",
+          "failures": []
+        }
       }
     }
   },
