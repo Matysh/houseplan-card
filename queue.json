@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1699,
+  "revision": 1700,
   "nextTicket": 113,
   "nextFence": 112,
   "tasks": {
@@ -2062,7 +2062,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1237-native-grid-provenance",
-      "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03",
+      "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 111,
@@ -2070,7 +2070,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793716265561,
       "reviewEntry": 2,
-      "patchId": "9abfdf0500ffa3f24ce0a196c10873d7f2d4c50c",
+      "patchId": "9a9c0f509c760b03750fd5a825312ab3e4df6c60",
       "changedFiles": [
         "demo/smoke_native_grid_draw.mjs",
         "docs/CHANGELOG.md",
@@ -2260,11 +2260,12 @@
     "worker": "finish",
     "token": "111:finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:2:admit",
     "fence": 111,
-    "materialSha": "a0a53ebf2b289aebc9f2e29de630ca1b1970bb03",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
+    "expectedBase": "d92890e9d0ff2f48a44f19a10097c886a712e9b7",
+    "phase": "testing",
     "admittedAt": 1793716948823,
-    "expiresAt": 1793717248823
+    "expiresAt": 1793717260411,
+    "patchId": "9a9c0f509c760b03750fd5a825312ab3e4df6c60"
   },
   "events": {
     "github:41652536903:1:completions:message:16ad318389214f40399b917de3c7fe8d952ec8f2513b23883a3470daa9e8f8b5": {
@@ -2341,6 +2342,10 @@
     },
     "github:41653599639:1:completions:notice:bb00588bb4ef72dcd44c1fd46209a3b117c84248df138ea13f67ee6ccad633e8": {
       "digest": "24b5097c8984a2971b0396590f79b819db0532ee552bff92d4856e610f97d705",
+      "issue": 1237
+    },
+    "finish:bf36fd03-ec3c-4a6f-889a-2acc1be903bc:finish:3:synchronized": {
+      "digest": "7d192162d8e5106ec33ad97cbbd9ee5e384f6dd2723eb784d1d231520ea103db",
       "issue": 1237
     },
     "finish:77e533ec-2487-47ce-8588-91720bf59172": {
