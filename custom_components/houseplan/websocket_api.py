@@ -250,6 +250,7 @@ async def _discard_optimizer_snapshot(rt: HouseplanData) -> None:
 
 async def _release_space_delete_snapshot(
     rt: HouseplanData, previous_metadata: dict, config: dict, metadata: dict,
+    pending_history_config: dict | None = None,
 ) -> None:
     """Release only expired space-delete pins after their replacement is durable.
 
@@ -265,6 +266,10 @@ async def _release_space_delete_snapshot(
     try:
         from .plans import attachment_refs
         refs = attachment_refs(config)
+        # The new marker-history command is accepted only after _commit_pair
+        # returns. Its source files already belong to this pending Undo.
+        if pending_history_config is not None:
+            refs |= attachment_refs(pending_history_config)
         if isinstance(replacement, dict):
             refs |= attachment_refs(replacement.get("config") or {})
         if rt.marker_history is not None:
@@ -543,7 +548,8 @@ async def _commit_pair(
         await _persist_pair_intent(rt, pending)
         await _converge_pair(rt, pending)
         await _release_space_delete_snapshot(rt, rollback.get("final_metadata") or {},
-                                            pending.get("config") or {}, pending.get("final_metadata") or {})
+                                            pending.get("config") or {}, pending.get("final_metadata") or {},
+                                            rollback.get("config") if pending.get("kind") == "marker_history" else None)
         return
     except Exception:  # noqa: BLE001 - one retry handles fail-after-write too
         _LOGGER.warning("House Plan pair write failed; retrying target", exc_info=True)
@@ -551,7 +557,8 @@ async def _commit_pair(
         await _persist_pair_intent(rt, pending)
         await _converge_pair(rt, pending)
         await _release_space_delete_snapshot(rt, rollback.get("final_metadata") or {},
-                                            pending.get("config") or {}, pending.get("final_metadata") or {})
+                                            pending.get("config") or {}, pending.get("final_metadata") or {},
+                                            rollback.get("config") if pending.get("kind") == "marker_history" else None)
         return
     except Exception:  # noqa: BLE001 - target is no longer the recovery policy
         _LOGGER.exception("House Plan target retry failed; restoring previous pair")
@@ -1757,6 +1764,10 @@ async def ws_files_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any])
     async with rt.write_lock:
         stored = await rt.config_store.async_load() or {}
         refs = attachment_refs(stored.get("config") or {})
+        layout_data = await rt.store.async_load() or {}
+        backup = layout_data.get(_OPTIMIZE_BACKUP)
+        if isinstance(backup, dict) and backup.get("kind") == "space_delete":
+            refs |= attachment_refs(backup.get("config") or {})
         if rt.marker_history is not None:
             refs |= rt.marker_history.refs()
         removed, kept = await hass.async_add_executor_job(

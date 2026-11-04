@@ -351,9 +351,9 @@ class MarkerHistory:
         if session_bytes > MAX_SESSION_BYTES or total > MAX_HISTORY_BYTES:
             raise HistoryError("device_history_unavailable")
 
-    def collect(self, root: Path, config: dict) -> None:
+    def collect(self, root: Path, config: dict, *, pinned: set[str] | None = None) -> None:
         """Only previously authorized files, unchanged bytes, no other live pin."""
-        refs = attachment_refs(config) | self.refs()
+        refs = attachment_refs(config) | self.refs() | (pinned or set())
         for ref, digest in list(self.retired_files.items()):
             if ref in refs:
                 continue

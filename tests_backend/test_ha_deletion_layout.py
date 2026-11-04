@@ -143,6 +143,15 @@ async def test_space_delete_and_one_deep_undo_restore_all_owned_positions_and_at
     assert after[1]["layout"]["unverified"] == before[1]["layout"]["unverified"]
     if with_devices:
         assert file.read_bytes() == b"keep this manual"
+        cleanup = await send(client, {"type": "houseplan/files/cleanup", "marker_id": "m"})
+        assert cleanup["success"], cleanup
+        assert file.is_file(), "a late legacy cleanup must respect the live space-delete Undo pin"
+        from hashlib import sha256
+        from custom_components.houseplan.marker_history_websocket import history
+        runtime = get_data(hass)
+        history(runtime).retired_files["m/manual.pdf"] = sha256(file.read_bytes()).hexdigest()
+        await runtime.sweep()
+        assert file.is_file(), "daily collection of expired device history must honor the durable space Undo"
     undone = await send(client, {"type": "houseplan/plan/optimize_undo", "expected_config_rev": after[0]["rev"],
         "expected_layout_rev": after[1]["rev"]})
     assert undone["success"], undone
@@ -170,7 +179,7 @@ async def test_marker_config_delete_removes_position_atomically_for_drop_and_tom
     assert after[1]["layout"]["rl_a"] == before[1]["layout"]["rl_a"]
 
 
-@pytest.mark.parametrize("next_edit", ["config", "config_shared", "layout", "point", "layout_delete", "optimize", "optimize_failed"])
+@pytest.mark.parametrize("next_edit", ["config", "config_shared", "history_delete_shared", "layout", "point", "layout_delete", "optimize", "optimize_failed"])
 async def test_expired_space_delete_undo_releases_its_attachment_pins(hass, hass_ws_client, monkeypatch, next_edit):
     client, _, before = await seed(hass, hass_ws_client)
     file = Path(hass.config.path(FILES_DIR)) / "m" / "manual.pdf"
@@ -178,7 +187,7 @@ async def test_expired_space_delete_undo_releases_its_attachment_pins(hass, hass
     file.write_bytes(b"held only while space deletion can be undone")
     config = copy.deepcopy(before[0]["config"])
     config["markers"][0]["pdfs"] = [{"name": "Manual", "url": "/api/houseplan/content/files/m/manual.pdf"}]
-    if next_edit == "config_shared":
+    if next_edit in ("config_shared", "history_delete_shared"):
         config["markers"].append({"id": "other", "binding": "virtual", "space": "g",
                                   "pdfs": copy.deepcopy(config["markers"][0]["pdfs"])})
     assert (await send(client, {"type": "houseplan/config/set", "config": config,
@@ -206,6 +215,10 @@ async def test_expired_space_delete_undo_releases_its_attachment_pins(hass, hass
                 await save(value)
 
             monkeypatch.setattr(store, "async_save", fail_target)
+    elif next_edit == "history_delete_shared":
+        request = {"type": "houseplan/marker/history", "action": "delete", "history_session": "history_1287_expiry_session",
+            "operation_id": "operation_1287_delete_other", "targets": [{"id": "other", "binding": "virtual"}],
+            "expected_config_rev": after[0]["rev"], "expected_layout_rev": after[1]["rev"]}
     elif next_edit == "layout":
         layout = copy.deepcopy(after[1]["layout"])
         layout["unverified"]["x"] = .3
@@ -222,6 +235,13 @@ async def test_expired_space_delete_undo_releases_its_attachment_pins(hass, hass
         assert file.is_file(), "a rolled-back replacement must not release the still-current Undo pin"
         return
     assert saved["success"], saved
-    assert file.exists() == (next_edit == "config_shared"), "expired Undo releases only unreferenced files"
+    assert file.exists() == (next_edit in ("config_shared", "history_delete_shared")), "expired Undo releases only unreferenced files"
     current = await pair(client)
     assert current[0]["undo_kind"] != "space_delete"
+    if next_edit == "history_delete_shared":
+        restored = await send(client, {"type": "houseplan/marker/history", "action": "undo",
+            "history_session": "history_1287_expiry_session", "operation_id": "operation_1287_restore_other",
+            "token": saved["result"]["history_token"], "expected_config_rev": current[0]["rev"],
+            "expected_layout_rev": current[1]["rev"]})
+        assert restored["success"], restored
+        assert file.is_file()

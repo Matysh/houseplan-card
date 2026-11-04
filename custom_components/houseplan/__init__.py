@@ -242,15 +242,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             async with data.write_lock:
                 stored = await data.config_store.async_load() or {}
                 cfg = stored.get("config") or {}
+                from .plans import attachment_refs
+                from .store import OPTIMIZE_BACKUP
+                layout_data = await data.store.async_load() or {}
+                backup = layout_data.get(OPTIMIZE_BACKUP)
+                undo_pins = (attachment_refs(backup.get("config") or {})
+                             if isinstance(backup, dict) and backup.get("kind") == "space_delete" else set())
 
                 def _collect() -> int:
                     n = sweep_upload_temps(files_dir)
                     # same config on both sides: nothing is superseded, so this
                     # only ever collects what the shared rules call abandoned
                     if data.marker_history is not None:
-                        data.marker_history.collect(files_dir, cfg)
+                        data.marker_history.collect(files_dir, cfg, pinned=undo_pins)
                     n += collect_attachments(files_dir, cfg, cfg,
-                        pinned=data.marker_history.refs() if data.marker_history is not None else set(),
+                        pinned=undo_pins | (data.marker_history.refs() if data.marker_history is not None else set()),
                         sweep_staging=True)
                     n += collect_plans(plans_dir, cfg, cfg)
                     return n
