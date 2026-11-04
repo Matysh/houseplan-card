@@ -1809,6 +1809,13 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
       const roomLabelKeys = [...new Set(strictEntries.flatMap(([, accepted]) =>
         Object.keys(this.physicalWriteHistory.roomLabels(accepted.before))))];
       const roomLabels = roomLabelKeys.length ? captureRoomLabelPositions(this.host._layout, roomLabelKeys) : undefined;
+      if (roomLabels) {
+        // A layout-only refresh can still contain the last position of a room
+        // removed by this pending gesture. Its topology intent owns null even
+        // then; otherwise the server would refuse an attempted dead-label restore.
+        const liveLabels = new Set(candidate.spaces.flatMap(space => (space.rooms || []).map(room => 'rl_' + room.id)));
+        for (const key of roomLabelKeys) if (!liveLabels.has(key)) roomLabels[key] = null;
+      }
       for (const [spaceId, accepted] of strictEntries) {
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
         const exactFingerprint = spacePhysicalGeometryFingerprint(candidateSpace);

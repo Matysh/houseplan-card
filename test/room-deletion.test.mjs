@@ -132,3 +132,22 @@ test('#1287 a rejected queued two-room deletion restores both bounded label delt
   assert.deepEqual(h.host._serverCfg, input);
   assert.equal(h.host._geometryHistory.size, 0);
 });
+
+test('#1287 a layout refresh before deferred Delete cannot turn its null label patch into a restore', async () => {
+  const h = runtimeHistory(), key = 'rl_f-r';
+  h.host._layout = { [key]: { s: 'f', x: .25, y: .25 } };
+  const before = h.runtime._geometrySnapshot('f');
+  h.host._serverCfg.spaces[0].rooms = [];
+  assert.equal(h.runtime._commitPhysicalGeometry('Delete', before, [], true,
+    { kind: 'delete-room', room: 'f-r', keepWalls: false }), true);
+  // The layout-only reload has seen another writer's last label position while
+  // the corresponding room still existed in the not-yet-updated server config.
+  h.host._layout[key] = { s: 'f', x: .75, y: .75 };
+  h.host._writesPending = 0; h.host._writeChain = Promise.resolve();
+  h.host._configWriteGuard = () => () => true;
+  h.host._adoption = { stageConfigCandidate() {}, snapshot: () => ({ config: h.host._serverCfg, layout: h.host._layout }) };
+  let labels;
+  h.host._sendConfigCandidate = async (_config, _contact, _current, patch) => { labels = patch; };
+  await h.runtime._writeConfig();
+  assert.deepEqual(labels, { [key]: null }, 'a removed room always owns a deletion, never an illegal restoration');
+});
