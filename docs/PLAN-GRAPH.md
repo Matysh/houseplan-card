@@ -30,6 +30,15 @@ its physical edge is split. The DAG evaluates supports before dependents.
 `on-edge` has one support and rational parameter; `intersection` has two.
 Explicit moves/deletions must update or retire affected constraints.
 
+Explicit numeric editor targets recognize a lattice coordinate within the
+existing `1e-4`-step coordinate-noise allowance. Nudge, body translation,
+axial opening movement and safe Resize add proven lattice origins/offsets as
+integer indices before projecting them. Unchanged axes stay unchanged; raw
+source decoding, graph validation, metadata-only writes and exact dependent
+intersections do not round existing `q` points. Legacy optional normalization
+prefers a lattice anchor within that noise allowance and the original movement
+radius; subsequent contact projection retains that accepted anchor.
+
 Opening hosts retain `{kind,id,t}` and add exact `tq:[numerator,denominator]`.
 `t` is its correctly rounded numeric projection. Metadata edits preserve `tq`;
 explicit moves/rehosting update it. Splitting or reversing an edge remaps the

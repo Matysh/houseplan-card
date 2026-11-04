@@ -9,13 +9,14 @@ import {
   DECOR_BOX_KINDS,
   type DecorBoxKind,
 } from './editors/decor/types';
+import { LATTICE_NOISE_STEPS } from './canvas-constants';
 
 export { DECOR_BOX_KINDS };
 
 export const COORDINATE_DECIMALS = 9;
 export const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS;
 export const LATTICE_GRID_N = 240;
-export const LATTICE_NOISE_STEPS = 1e-4;
+export { LATTICE_NOISE_STEPS };
 
 type JsonRecord = Record<string, any>;
 

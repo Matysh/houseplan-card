@@ -2,6 +2,7 @@
 import type { PlanGraph, TargetPointRef, GraphEdgeRef } from './plan-graph';
 import type { PlanSnapCandidate } from './plan-snap-overlay';
 import * as Q from './plan-exact';
+import { authoredLatticeIndex } from './authored-grid';
 let sequence=0;
 function allocated(kind:'node'|'edge',seed:string|undefined,edge?:GraphEdgeRef):string{
   if(seed===undefined){
@@ -13,14 +14,7 @@ function allocated(kind:'node'|'edge',seed:string|undefined,edge?:GraphEdgeRef):
     hash=BigInt.asUintN(64,(hash^BigInt(byte))*0x100000001b3n);
   return 'draw-'+kind+'-'+hash.toString(16).padStart(16,'0');
 }
-function authoredPoint(point:readonly number[]):Q.ExactPoint{
-  const raw=Q.readSourcePoint(point);
-  const axis=(q:Q.Exact,n:number):Q.Exact=>{
-    const grid=Q.exact(Q.nearestInteger(Q.mul(q,Q.exact(240n))),240n);
-    return Q.toNumber(grid)===n?grid:q;
-  };
-  return[axis(raw[0],point[0]),axis(raw[1],point[1])];
-}
+const authoredPoint=Q.readAuthoredPoint;
 /** Retain a known exact anchor while the UI projects it to render coordinates. */
 export function graphDrawTargetPoint(graph:PlanGraph|undefined|null,target:TargetPointRef|undefined):Q.GraphPoint|undefined{
   if(!target)return undefined;
@@ -42,8 +36,8 @@ export function graphDrawGridPoint(point:readonly number[],snapped:readonly numb
   const p=[...authoredPoint(point.map(n=>n/1000))]as [Q.Exact,Q.Exact];
   const anchorPoint=anchor&&Q.decodePoint(anchor.p);let retained=false;
   for(const axis of [0,1]as const){
-    const index=snapped?Math.round(snapped[axis]/pitch):NaN;
-    if(snapped&&point[axis]===snapped[axis]&&Number.isSafeInteger(index)&&index*pitch===snapped[axis]){
+    const index=snapped?authoredLatticeIndex(snapped[axis],1000):undefined;
+    if(snapped&&point[axis]===snapped[axis]&&index!==undefined){
       p[axis]=Q.exact(BigInt(index),240n);retained=true;
     }else if(anchor&&anchorPoint&&point[axis]===anchor.point[axis]){
       p[axis]=anchorPoint[axis];retained=true;

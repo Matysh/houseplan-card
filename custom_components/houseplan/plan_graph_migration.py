@@ -24,6 +24,7 @@ from .wall_segment_model import (
     _angle_matches, _legacy_thickness_at, _shared_boundaries, _wall_key,
 )
 from .junction_limits import _stored_wall_contact
+from .coordinate_canonicalization import LATTICE_NOISE_STEPS
 
 
 def _json(value):
@@ -210,6 +211,7 @@ def migrate_graph_space(space, options=None):
     source_by_key = {_key(s): s for s in sources}
 
     def run(optional, terminal=False):
+        lattice_noise = Q(str(LATTICE_NOISE_STEPS)) / 240
         graph = dict(version=1, nodes=[], edges=[], rooms=[], dependencies=[])
         nodes, origins, point_node, source_node, endpoints, buckets, cuts = {}, {}, {}, {}, {}, {}, {}
         mapping, bends = dict(nodes={}, edges={}, hosts={}), 0
@@ -270,6 +272,7 @@ def migrate_graph_space(space, options=None):
         for owner in owners:
             bx, by = bucket(owner["p"])
             candidates = []
+            lattice_target = None
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     for identity in sorted(buckets.get((bx+dx, by+dy), ())):
@@ -280,12 +283,16 @@ def migrate_graph_space(space, options=None):
                 grid = P(Q(round(owner["p"].x*240), 240), Q(round(owner["p"].y*240), 240))
                 identity = point_node.get(_pk(grid))
                 if _near(owner["p"], grid, radius) and (identity is None or compatible(owner, identity, grid)):
+                    # Same 1e-4-step coordinate-noise policy as the TS writer.
+                    if all(abs(a-b) < lattice_noise for a, b in zip(_xy(owner["p"]), _xy(grid))):
+                        lattice_target = grid
                     candidates.append((identity, grid))
             identity = point_node.get(_pk(owner["p"]))
             if identity and compatible(owner, identity, owner["p"]):
                 candidates.append((identity, owner["p"]))
             candidates = [c for c in candidates if optional or c[1] == owner["p"]]
-            candidates.sort(key=lambda c: (squared_distance(owner["p"], c[1]), *_xy(c[1]), c[0] or ""))
+            candidates.sort(key=lambda c: (0 if c[1] == lattice_target else 1,
+                squared_distance(owner["p"], c[1]), *_xy(c[1]), c[0] or ""))
             identity, p = candidates[0] if candidates else (None, owner["p"])
             identity = identity or source_node_id(owner["ref"])
             place(identity, p, [*origins.get(identity, []), owner])
@@ -381,7 +388,7 @@ def migrate_graph_space(space, options=None):
                     continue
                 ends = cuts[_key(host)]
                 a, b = frozen_host_endpoints[_key(host)]
-                t = project_parameter(p0, a, b)
+                t = project_parameter(decode_point(nodes[identity]["p"]), a, b)
                 if not 0 <= t <= 1:
                     continue
                 p, group = p0 if terminal else point_at(a, b, t), origins[identity]

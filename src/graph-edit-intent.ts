@@ -35,15 +35,7 @@ const codepoint=compareCodePoints;
 const rational=(host:any):Q.Exact=>host.tq?Q.decodeRational(host.tq):Q.parseDecimal(host.t);
 const canonicalHost=(host:any,t:Q.Exact):any=>({...host,tq:Q.encodeRational(t),t:Q.toNumber(t)});
 const emptyMapping=():GraphMapping=>({nodes:Object.create(null),edges:Object.create(null),hosts:Object.create(null)});
-/** Decode a UI lattice projection only when it is the identical IEEE754 value. */
-function authoredPoint(input:readonly number[]):Q.ExactPoint {
-  const p=Q.readSourcePoint(input);
-  const decodeAxis=(q:Q.Exact,n:number):Q.Exact=>{
-    const grid=Q.exact(Q.nearestInteger(Q.mul(q,Q.exact(240n))),240n);
-    return Q.toNumber(grid)===n?grid:q;
-  };
-  return[decodeAxis(p[0],input[0]),decodeAxis(p[1],input[1])];
-}
+const authoredPoint=Q.readAuthoredPoint;
 function opaque(entry:any,skip:string[]):Record<string,unknown>|undefined{
   const entries=Object.entries(entry||{}).filter(([key,value])=>!skip.includes(key)&&value!==undefined);
   return entries.length?Object.fromEntries(entries.map(([key,value])=>[key,clone(value)])):undefined;

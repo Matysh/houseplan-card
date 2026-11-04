@@ -7,6 +7,7 @@ import { resolveRoomOpeningHost } from '../wall-segment-model';
 import { annotateSpaceGraphOpeningRuns, annotateGraphOpeningRuns, graphOpeningRun, graphOpeningRunCenter, graphOpeningRunTarget } from '../graph-opening-run';
 import type { PlanGraph } from '../plan-graph';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry } from '../types';
+import { translateAuthoredCoordinate } from '../authored-grid';
 
 export interface NudgeSpace {
   plan_graph?: PlanGraph;
@@ -32,7 +33,9 @@ function translateWall<T extends NudgeSpace>(space: T, selection: NudgeSelection
   });
   const walls = [...space.partitions ?? [], ...space.wall_segments ?? [], ...roomEdges];
   if (!freePartitionEnds(wall, walls).every(Boolean)) return null;
-  const moved = { ...structuredClone(wall), a: [wall.a[0] + dx, wall.a[1] + dy], b: [wall.b[0] + dx, wall.b[1] + dy] };
+  const moved = { ...structuredClone(wall),
+    a: [translateAuthoredCoordinate(wall.a[0], dx), translateAuthoredCoordinate(wall.a[1], dy)],
+    b: [translateAuthoredCoordinate(wall.b[0], dx), translateAuthoredCoordinate(wall.b[1], dy)] };
   if (!bounded([moved.a, moved.b]) || !freePartitionEnds(moved, walls).every(Boolean)) return null;
   const kind = selection.kind === 'partition' ? 'partition' : 'wall';
   const openings: OpeningCfg[] = [];
@@ -45,7 +48,8 @@ function translateWall<T extends NudgeSpace>(space: T, selection: NudgeSelection
       if (!resolved) return null;
       openings.push(materializePartitionOpening(candidate, resolved, NORM_W));
     } else {
-      candidate.x += dx; candidate.y += dy;
+      candidate.x = translateAuthoredCoordinate(candidate.x, dx);
+      candidate.y = translateAuthoredCoordinate(candidate.y, dy);
       const host = resolveRoomOpeningHost(candidate, [moved]);
       if (!host || host.id !== wall.id) return null;
       openings.push(candidate);
@@ -69,7 +73,8 @@ function translateGraphOpening<T extends NudgeSpace>(space: T, id: string, dx: n
   const horizontal = Math.abs(wx) + EPS >= Math.abs(wy);
   if (horizontal ? !dx || !!dy : !dy || !!dx) return null;
   const along = horizontal ? dx * Math.sign(wx) : dy * Math.sign(wy);
-  const desired: [number,number] = [current[0] + wx / length * along, current[1] + wy / length * along];
+  const desired: [number,number] = [translateAuthoredCoordinate(current[0], wx / length * along),
+    translateAuthoredCoordinate(current[1], wy / length * along)];
   const target = graphOpeningRunTarget(carriers, host.id, desired);
   // Keyboard movement is a complete authored step, never an endpoint clamp.
   if (!target || Math.hypot(target.center[0]-desired[0], target.center[1]-desired[1]) > EPS) return null;

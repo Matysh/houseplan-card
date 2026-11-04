@@ -18,6 +18,33 @@ def _enable(enable_custom_integrations):
 
 
 @pytest.mark.asyncio
+async def test_1282_first_structural_ws_preserves_decimal_lattice_room_anchors(
+    hass, hass_client, hass_access_token,
+):
+    _, socket, _ = await _setup(hass, hass_client, hass_access_token)
+    runtime = get_data(hass)
+    source = {"model_version": 10, "markers": [], "settings": {}, "spaces": [{
+        "id": "floor", "title": "Synthetic", "cell_cm": 5, "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "r", "name": "R", "poly": [[0, 0], [72 / 240, 44 / 240],
+            [72 / 240, 120 / 240], [0, 120 / 240]]}], "partitions": [],
+    }]}
+    await runtime.config_store.async_save({"config": source, "rev": 9})
+    await runtime.store.async_save({"layout": {}, "rev": 3})
+    before = await socket.pair()
+    edit = copy.deepcopy(before[0]["config"])
+    edit["spaces"][0]["partitions"] = [{"id": "new", "a": [1, 1], "b": [2, 1], "cm": 10}]
+    reply = await socket.send({"type": TYPE, "config": edit, "expected_rev": before[0]["rev"]})
+    assert reply["success"], reply
+    accepted = await socket.pair()
+    assert accepted[0]["config"]["model_version"] == 11
+    assert accepted[0]["config"] == reply["result"]["config"]
+    assert all(node["p"][0] == "l" for node in accepted[0]["config"]["spaces"][0]["plan_graph"]["nodes"])
+    assert (await runtime.config_store.async_load())["config"] == accepted[0]["config"]
+    stored = await runtime.store.async_load()
+    assert (await load_source(hass, stored[BACKUP_KEY]))["config"] == source
+
+
+@pytest.mark.asyncio
 async def test_legacy_read_metadata_and_first_structural_pair(hass, hass_client, hass_access_token):
     _, socket, _ = await _setup(hass, hass_client, hass_access_token)
     runtime = get_data(hass)

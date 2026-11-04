@@ -7,6 +7,7 @@ import { projectGraphSpace, validateGraph, type PlanGraph, type TargetPointRef }
 import { graphDrawTargetRef, graphDrawTargetPoint, graphDrawGridPoint, graphDrawIndependentTarget } from './graph-draw-binding';
 import { decodePoint, pointToNumbers, microRadius, toNumber } from './plan-exact';
 import { graphOpeningRun, graphOpeningRunTarget } from './graph-opening-run';
+import { translateAuthoredCoordinate } from './authored-grid';
 import { sendHouseplanWrite } from './large-write-transport';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
@@ -6287,7 +6288,8 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
         : Math.round(along / this.host._gridPitch) * this.host._gridPitch;
       along = Math.max(shoulder, Math.min(length - shoulder, along));
       const target = graphOpeningRunTarget(carriers, cfg.host.id,
-        [run.a[0] + ux * along, run.a[1] + uy * along]);
+        [translateAuthoredCoordinate(run.a[0], ux * along, NORM_W),
+          translateAuthoredCoordinate(run.a[1], uy * along, NORM_W)]);
       if (!target) return;
       const changed = cfg.x !== target.normalized[0] || cfg.y !== target.normalized[1]
         || cfg.angle !== angle || cfg.host.id !== target.host.id || cfg.host.t !== target.host.t;

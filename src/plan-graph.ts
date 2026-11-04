@@ -5,6 +5,7 @@ import { resolveOpenCuts, sanitizeOpenSpans } from './open-spans';
 import { storedWallContact } from './stored-wall-contact';
 import { compareCodePoints } from './codepoint-order';
 import { jsonValueEqual } from './json-value-equal';
+import { LATTICE_NOISE_STEPS } from './canvas-constants';
 import {
   type Exact, type ExactPoint, type ExactRational, type GraphPoint,
   PlanExactError, ZERO, ONE, exact, parseDecimal, decodePoint, encodePoint, readSourcePoint,
@@ -820,6 +821,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
   const sourceVersion=options.sourceModelVersion??(Array.isArray(space.wall_segments)&&space.wall_segments.length?10:0);
   if(!Number.isInteger(sourceVersion)||sourceVersion<0||sourceVersion>10)fail('source-version');
   const canonicalSegments=new Set((space.wall_segments||[]).map((e:any)=>e.id));
+  const latticeNoise=div(parseDecimal(LATTICE_NOISE_STEPS),exact(240n));
   if(source.sources.length>limits.edges || (space.rooms||[]).length>limits.rooms) fail('resource');
   const run=(optional:boolean,terminal=false):MigratedGraphSpace<T>=>{
     const graph:PlanGraph={version:1,nodes:[],edges:[],rooms:[],dependencies:[]};
@@ -857,6 +859,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
     };
     for(const owner of source.points) {
       const b=bucket(owner.p),candidates:Array<{id?:string;p:ExactPoint}>=[];
+      let latticeTarget:ExactPoint|undefined;
       for(let x=-1n;x<=1n;x++)for(let y=-1n;y<=1n;y++)
         for(const id of buckets.get((b[0]+x)+','+(b[1]+y))||[]) {
           const p=decodePoint(nodes.get(id)!.p);
@@ -866,13 +869,17 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         const grid:ExactPoint=[exact(nearestInteger(mul(owner.p[0],exact(240n))),240n),exact(nearestInteger(mul(owner.p[1],exact(240n))),240n)];
         if(withinRadius(owner.p,grid,radius)) {
           const id=pointNode.get(pointKey(grid));
-          if(!id || compatible(owner,id,grid)) candidates.push({id,p:grid});
+          if(!id || compatible(owner,id,grid)) {
+            if(owner.p.every((q,i)=>cmp(sub(q,grid[i]),latticeNoise)<0&&cmp(sub(grid[i],q),latticeNoise)<0))latticeTarget=grid;
+            candidates.push({id,p:grid});
+          }
         }
       }
       const exactExisting=pointNode.get(pointKey(owner.p));
       if(exactExisting && compatible(owner,exactExisting,owner.p)) candidates.push({id:exactExisting,p:owner.p});
       const ranked=candidates.filter(c=>optional || pointEq(c.p,owner.p)).sort((a,b)=>
-        cmp(squaredDistance(owner.p,a.p),squaredDistance(owner.p,b.p))||pointCmp(a.p,b.p)||order(a.id||'',b.id||''));
+        Number(!!latticeTarget&&pointEq(b.p,latticeTarget))-Number(!!latticeTarget&&pointEq(a.p,latticeTarget))
+        ||cmp(squaredDistance(owner.p,a.p),squaredDistance(owner.p,b.p))||pointCmp(a.p,b.p)||order(a.id||'',b.id||''));
       const selected=ranked[0]||{p:owner.p},id=selected.id||sourceNodeId(owner.ref);
       const group=origins.get(id)||[];place(id,selected.p,[...group,owner]);sourcePointNode.set(owner.ref,id);
       for(const endpoint of owner.endpoints) endpointNode.set(endpoint,id);
@@ -947,7 +954,10 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         if(!withinRadius(p0,rawContact,radius)) continue;
         if(!optional&&!storedWallContact(pointToNumbers(p0),pointToNumbers(host.a),pointToNumbers(host.b),1,true))continue;
         const ends=cutMap.get(edgeKey(host))!,[a,b]=frozenHostEndpoints.get(edgeKey(host))!;
-        const t=projectParameter(p0,a,b);if(!between(t)) continue;
+        // Keep the already accepted optional lattice anchor through required
+        // contact projection; reusing its decimal source reintroduces q noise.
+        const target=decodePoint(nodes.get(node)!.p);
+        const t=projectParameter(target,a,b);if(!between(t)) continue;
         let p=terminal?p0:pointAt(a,b,t),group=origins.get(node)!;
         if(terminal&&!pointEq(p,pointAt(a,b,t)))bends++;
         if(!group.every(o=>withinRadius(o.p,p,radius))) {

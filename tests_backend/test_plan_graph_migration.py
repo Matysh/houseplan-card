@@ -14,6 +14,17 @@ from custom_components.houseplan.plan_graph_migration import migrate_graph_space
 CORPUS = json.loads((Path(__file__).parents[1] / "test/fixtures/plan-graph-corpus.json").read_text())
 
 
+def test_1282_decimal_lattice_alias_retains_optional_grid_anchor_through_contacts():
+    from custom_components.houseplan.plan_graph import validate_graph
+    source = {"id": "floor", "cell_cm": 5, "rooms": [{"id": "r", "name": "R",
+        "poly": [[0, 0], [72 / 240, 44 / 240], [72 / 240, 120 / 240], [0, 120 / 240]]}]}
+    original = copy.deepcopy(source)
+    result = migrate_graph_space(source, {"source_model_version": 10})
+    assert all(node["p"][0] == "l" for node in result["graph"]["nodes"])
+    assert source == original
+    validate_graph(result["graph"])
+
+
 @pytest.mark.parametrize("case", CORPUS["exact"], ids=lambda c: c["id"])
 def test_correct_binary64(case):
     assert struct.pack(">d", float(decode_rational(case["q"]))).hex() == case["hex"]

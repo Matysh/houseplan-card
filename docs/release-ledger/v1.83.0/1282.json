@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1282,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Model11 writers introduced in the 1.84 line lost exact lattice targets through ordinary floating-point arithmetic. Preserve authored grid provenance and mirrored optional migration anchors without rounding current stored graph data.",
+  "summary": {
+    "ru": "После сдвига стены, Resize и переноса проёма решёточный план остаётся точным и не требует Optimize.",
+    "en": "Grid-authored wall moves, Resize and opening moves preserve exact geometry without leaving work for Optimize."
+  }
+}

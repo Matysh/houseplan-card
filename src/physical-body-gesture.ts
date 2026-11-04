@@ -1,5 +1,6 @@
 /** The transient body-move/column-rotation owner; persistence stays with the editor. */
 import { CANVAS_LIMIT, NORM_W } from './canvas-constants';
+import { translateAuthoredCoordinate } from './authored-grid';
 import type { SpaceGeometryState } from './geometry-history-state';
 import {
   canonicalColumnAngle, columnBody, partitionBody, pointInPhysicalBody, sameColumnPlacement,
@@ -123,9 +124,9 @@ export class PhysicalBodyGestureRuntime {
     const xs = points.map((point) => point[0]), ys = points.map((point) => point[1]);
     const delta = [
       Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...xs),
-        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...xs), target[0] - anchor[0])),
+        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...xs), translateAuthoredCoordinate(target[0], -anchor[0], NORM_W))),
       Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...ys),
-        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...ys), target[1] - anchor[1])),
+        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...ys), translateAuthoredCoordinate(target[1], -anchor[1], NORM_W))),
     ];
     this._drag = {
       ...drag, delta,
@@ -156,8 +157,8 @@ export class PhysicalBodyGestureRuntime {
       if (partition) {
         const moved: PartitionCfg = {
           ...base,
-          a: [base.a[0] + drag.delta[0], base.a[1] + drag.delta[1]],
-          b: [base.b[0] + drag.delta[0], base.b[1] + drag.delta[1]],
+          a: [translateAuthoredCoordinate(base.a[0], drag.delta[0], NORM_W), translateAuthoredCoordinate(base.a[1], drag.delta[1], NORM_W)],
+          b: [translateAuthoredCoordinate(base.b[0], drag.delta[0], NORM_W), translateAuthoredCoordinate(base.b[1], drag.delta[1], NORM_W)],
         };
         partition.a = [moved.a[0] / NORM_W, moved.a[1] / NORM_W];
         partition.b = [moved.b[0] / NORM_W, moved.b[1] / NORM_W];
@@ -173,7 +174,8 @@ export class PhysicalBodyGestureRuntime {
       const column = stored.wall_columns?.find((item) => item.id === drag.id);
       const base = drag.base as WallColumnCfg;
       const candidate: WallColumnCfg = {
-        ...base, center: [base.center[0] + drag.delta[0], base.center[1] + drag.delta[1]],
+        ...base, center: [translateAuthoredCoordinate(base.center[0], drag.delta[0], NORM_W),
+          translateAuthoredCoordinate(base.center[1], drag.delta[1], NORM_W)],
       };
       if (model.wall_columns.some((item) => item.id !== drag.id
           && sameColumnPlacement(item, candidate, gridPitch * 0.02))) {
@@ -181,8 +183,8 @@ export class PhysicalBodyGestureRuntime {
         return;
       }
       if (column) column.center = [
-        (base.center[0] + drag.delta[0]) / NORM_W,
-        (base.center[1] + drag.delta[1]) / NORM_W,
+        candidate.center[0] / NORM_W,
+        candidate.center[1] / NORM_W,
       ];
     }
     this.port.commit('history.physical_move', drag.before, { kind: drag.kind, id: drag.id });

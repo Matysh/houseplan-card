@@ -15,6 +15,8 @@ import {
   polygonArea, segmentsProperlyCross, polyContainsPoly, roomsOverlap, polyIsSimple,
 } from './logic';
 import { classifyNearAxisSegment } from './near-axis';
+import { NORM_W } from './canvas-constants';
+import { translateAuthoredCoordinate } from './authored-grid';
 export { areaM2, formatArea } from './area-format';
 export { polyIsSimple } from './logic';
 
@@ -1054,15 +1056,16 @@ export function applySafeResize(
     if (!room || edge == null) continue;
     const next = (edge + 1) % room.poly.length;
     result.polys[roomId] = room.poly.map((point, index) => (
-      index === edge || index === next ? add2(point, D) : [...point]
+      index === edge || index === next ? point.map((v, i) => translateAuthoredCoordinate(v, D[i], NORM_W)) : [...point]
     ));
     result.movedSpans[roomId] = [[
-      add2(room.poly[edge], D), add2(room.poly[next], D),
+      [...result.polys[roomId][edge]], [...result.polys[roomId][next]],
     ]];
   }
   for (const opening of openings) {
     if (plan.movingOpeningIds.includes(opening.id)) {
-      result.openings[opening.id] = [opening.x + D[0], opening.y + D[1]];
+      result.openings[opening.id] = [translateAuthoredCoordinate(opening.x, D[0], NORM_W),
+        translateAuthoredCoordinate(opening.y, D[1], NORM_W)];
     }
   }
   return result;

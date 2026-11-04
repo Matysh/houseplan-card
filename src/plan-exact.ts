@@ -1,4 +1,5 @@
 /** Exact structural arithmetic. Floats are source decoders / render projections only. */
+import { authoredLatticeIndex } from './authored-grid';
 export const EXACT_BITS = 4096;
 export type ExactRational = [string, string];
 export interface Exact { readonly n: bigint; readonly d: bigint }
@@ -103,13 +104,13 @@ export function readSourcePoint(p: readonly number[]): ExactPoint {
   if (!Array.isArray(p) || p.length !== 2) throw new PlanExactError('format', 'point');
   return checkedPoint([parseDecimal(p[0]), parseDecimal(p[1])]);
 }
-/** Explicit editor targets already snapped to the public grid carry its exact
- * index. Raw legacy decoding must continue to use readSourcePoint instead. */
+/** Explicit editor targets retain the public grid through bounded arithmetic
+ * noise. Raw legacy decoding must continue to use readSourcePoint instead. */
 export function readAuthoredPoint(p: readonly number[]): ExactPoint {
   if (!Array.isArray(p) || p.length !== 2) throw new PlanExactError('format', 'point');
   const coordinate = (value: number): Exact => {
-    const index = Math.round(value * 240);
-    return Number.isSafeInteger(index) && value === index / 240
+    const index = authoredLatticeIndex(value);
+    return index !== undefined
       ? exact(BigInt(index), 240n) : parseDecimal(value);
   };
   return checkedPoint([coordinate(p[0]), coordinate(p[1])]);
