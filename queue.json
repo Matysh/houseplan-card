@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2844,
+  "revision": 2845,
   "nextTicket": 172,
   "nextFence": 172,
   "tasks": {
@@ -2837,7 +2837,7 @@
       "ownerDecision": null,
       "ticket": 171,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793803795516,
       "reviewEntry": 1,
       "patchId": "d97d6a78e8ac5eece01644e1980e7c21244a5530",
@@ -3106,6 +3106,20 @@
         "at": 1793803869986,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
+        "at": 1793804076042
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793804076042,
+        "entry": 1,
+        "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89"
       }
     },
     "1278": {
@@ -3332,19 +3346,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1277,
-    "worker": "finish",
-    "token": "171:finish:c239caf7-af26-4d29-b88a-b50d79172cc2:finish:1:admit",
-    "fence": 171,
-    "materialSha": "8df06807fef1a95325898b77aff9235e94eff871",
-    "expectedBase": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-    "phase": "review",
-    "admittedAt": 1793803800116,
-    "expiresAt": 1793807460182,
-    "patchId": "d97d6a78e8ac5eece01644e1980e7c21244a5530",
-    "reviewRequest": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89"
-  },
+  "active": null,
   "events": {
     "github:41851492311:1:completions:message:ee734eda2b0276c31f348cbbb94fdcb053025c00d449f377dff9ea2589684881": {
       "digest": "6c3ceda1b08830ea3a37cdbbd089b158d6b4cb7400b4300127d822b3e4a34fcb",
@@ -3380,6 +3382,10 @@
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2:finish:7:review-presentation": {
       "digest": "08df762356e21b3ffd0a7bf3d67bada1f9439398548f6c89015f3eaa85bdeb76",
+      "issue": 1277
+    },
+    "finish:c239caf7-af26-4d29-b88a-b50d79172cc2:finish:7:return": {
+      "digest": "346103fb812497ad6474cc048b6c658dd830fe0eda45b828489bac28331b60d9",
       "issue": 1277
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2": {
