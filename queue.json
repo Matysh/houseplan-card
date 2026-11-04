@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2472,
+  "revision": 2473,
   "nextTicket": 152,
   "nextFence": 152,
   "tasks": {
@@ -2547,7 +2547,7 @@
       "ownerDecision": null,
       "ticket": 151,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793781497747,
       "reviewEntry": 1,
       "patchId": "43910d3e92fbbbe669102b726569975a5da5b939",
@@ -2557,7 +2557,16 @@
         "docs/release-ledger/v1.83.0/1269.json",
         "src/decor-history-restore.ts",
         "test/decor-history-restore.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261104T083830988-3fda6329",
+        "name": "Тесты для задачи #1269 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083830988-3fda6329/report.json",
+        "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+        "status": "passed",
+        "finishedAt": "2026-11-04T08:39:17.643Z",
+        "failures": []
+      }
     },
     "1270": {
       "issue": 1270,
@@ -2853,9 +2862,9 @@
     "fence": 151,
     "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
     "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793781501417,
-    "expiresAt": 1793781807391,
+    "expiresAt": 1793785158770,
     "patchId": "43910d3e92fbbbe669102b726569975a5da5b939"
   },
   "events": {
@@ -2902,6 +2911,34 @@
         "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:85400028-c694-48ae-861c-127a9bef569d:finish:3:s6-complete": {
+      "digest": "89446ece98f37e6d9a601603847e891961979e495bfc2bdec6914e0cd4d5a53a",
+      "issue": 1269,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1269,
+        "at": 1793781558770,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T083830988-3fda6329",
+          "name": "Тесты для задачи #1269 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083830988-3fda6329/report.json",
+          "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+          "status": "passed",
+          "finishedAt": "2026-11-04T08:39:17.643Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Выявлена узкая legacy/current развилка: restoreDecorOnlyHistory допускает сохранение legacy носителя только для decor; restoreNonPhysicalHistory включает stairs, но отказывает любой legacy версии. Undo лестницы попадает в structural restore, мигрирует стеновой носитель, и прежний Redo больше не соответствует ему. Поздние current-model stair cases поэтому проходят.\n\nРешение — допуск legacy только для строго stairs-only snapshot при равенстве всех остальных полей и сохранении существующих guards node/chain/references/mixed/future/invalid model. Не расширять generic legacy presentation authority для plan_transform, декора вместе с лестницей или физических изменений. Реальный history cursor и нативный ранний сценарий должны доказать Undo/Redo без смены модели/ID.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
