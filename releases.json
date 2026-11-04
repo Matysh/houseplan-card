@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 115,
+  "revision": 116,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -5639,6 +5639,69 @@
         "assetName": "houseplan.zip",
         "bytes": 2031676,
         "observedAt": "2026-11-04T04:45:13.881Z"
+      },
+      "completion": {
+        "issues": {
+          "status": "running",
+          "eligible": [
+            1126,
+            1127,
+            1130,
+            1157,
+            1158,
+            1165,
+            1167,
+            1174,
+            1179,
+            1206,
+            1207,
+            1208,
+            1210,
+            1211,
+            1212,
+            1213,
+            1214,
+            1215,
+            1216,
+            1217,
+            1218,
+            1219,
+            1220,
+            1221,
+            1222,
+            1223,
+            1224,
+            1225,
+            1226,
+            1227,
+            1228,
+            1229,
+            1230,
+            1231,
+            1232,
+            1233,
+            1234,
+            1235,
+            1236,
+            1237,
+            1238,
+            1240,
+            1241,
+            1242,
+            1243,
+            1244,
+            1246,
+            1247,
+            1248,
+            1252,
+            1256,
+            1257
+          ],
+          "waitingForS8": [
+            1260
+          ],
+          "completed": []
+        }
       }
     }
   },
@@ -6119,7 +6182,8 @@
     "release:1b72e109-62d0-4f84-9f78-34258faa1c92:prepared:2ec71075-9f2e-48ac-a495-1708492cdeb7": "845063cf89231a3f6d169ecac8b26067b2c38bed74df395f94e2401f18b73d5d",
     "release:1b72e109-62d0-4f84-9f78-34258faa1c92:started:112": "f925dafd5fc1635bf20dee8da3ca8328f3207c0c3fc4d0d1feec0adc520bce3e",
     "release:1b72e109-62d0-4f84-9f78-34258faa1c92:published": "a0586b11557b89713d8a4280c6fa99aa225ba44d8669e1f6f55537fa51e5b6ba",
-    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:35de1c36-9903-458c-8883-7faf29c623b6": "cbe33652af0f09d4cd1d6f64418426fb2e571efdcc7beb119ff895f4df0c60b4"
+    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:35de1c36-9903-458c-8883-7faf29c623b6": "cbe33652af0f09d4cd1d6f64418426fb2e571efdcc7beb119ff895f4df0c60b4",
+    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:acb118f3-d451-4af2-b253-7f6aac750d52": "40ae308fb7790fc402b92dc59b4058c10ca61e96a567e421e6aa8db995a63e3d"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
