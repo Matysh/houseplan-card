@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2931,
-  "nextTicket": 176,
+  "revision": 2932,
+  "nextTicket": 177,
   "nextFence": 176,
   "tasks": {
     "1126": {
@@ -3015,11 +3015,11 @@
       "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 174,
-      "queued": false,
+      "ticket": 176,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793816293634,
-      "reviewEntry": 1,
+      "readyAt": 1793816532719,
+      "reviewEntry": 2,
       "patchId": "430d04899e69a329918cb0740f7d6142b79fd350",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -3031,10 +3031,6 @@
         "test/graph-edit-intent.test.mjs",
         "test/graph-edit-seams.test.mjs"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1793816320438,
-      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1099-geometry-commit-20261028/test/plan-graph.test.mjs'",
-      "reason": "request-correction",
       "notice": {
         "key": "1:request-correction",
         "reason": "request-correction",
@@ -3178,7 +3174,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1283
+  ],
   "active": {
     "issue": 1284,
     "worker": "finish",
@@ -3303,6 +3301,19 @@
         "layer": "product",
         "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
         "phase": "sync"
+      }
+    },
+    "finish:7f3acfa1-3bcd-4a49-9221-77c7e6fabef5": {
+      "digest": "7d23209b78bf5f1ba8068e7041c7ebf47ffd04a8c75c0d409ca97fe763a2d71c",
+      "issue": 1283,
+      "message": {
+        "kind": "queued",
+        "issue": 1283,
+        "at": 1793816532719,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5"
       }
     }
   },
