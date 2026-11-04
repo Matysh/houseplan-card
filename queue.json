@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3096,
+  "revision": 3097,
   "nextTicket": 186,
   "nextFence": 184,
   "tasks": {
@@ -3129,7 +3129,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793818133308,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1793818969522,
+      "automationDetail": "Queue remained busy; retry the same event ID"
     },
     "1288": {
       "issue": 1288,
@@ -3578,6 +3581,10 @@
     },
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
       "digest": "d2218a76b2bb7033a7444da93d1bce7e71c9114f6dfbb04bbc0d89657b18aa24",
+      "issue": 1287
+    },
+    "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9:finish:1:automation-pending": {
+      "digest": "6f2bff1148e5944d31bc8e8549780c5eb92b13f04f28497176d14fa9acdacc5f",
       "issue": 1287
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
