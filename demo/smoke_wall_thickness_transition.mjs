@@ -3,8 +3,10 @@
  * exterior breakpoint in every consumer of canonical wall geometry.
  */
 import { launch, checkAll, finish } from './serve.mjs';
+import { isDeepStrictEqual } from 'node:util';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
+await page.exposeFunction('sameSplitHistory', isDeepStrictEqual);
 
 const result = await page.evaluate(async () => {
   const out = {};
@@ -76,6 +78,12 @@ const result = await page.evaluate(async () => {
     return !best || meanX < best.meanX ? { room, meanX } : best;
   }, null)?.room;
   out.splitCommitted = rooms.length === 2 && !!left;
+  const canonicalRooms = card._curSpaceCfg.rooms;
+  const sharedIds = canonicalRooms[0].wall_ids.filter(id => canonicalRooms[1].wall_ids.includes(id));
+  out.splitHasOneSharedPhysicalCarrier = sharedIds.length === 1
+    && card._curSpaceCfg.wall_segments.filter(w => w.a[0] === .5 && w.b[0] === .5).length === 1;
+  await window.__hpTest.waitForWrites();
+  const beforeThickness = structuredClone(card._curSpaceCfg);
 
   card._tool = 'wallthick';
   card._wallThickClick([300, 100]);
@@ -83,6 +91,12 @@ const result = await page.evaluate(async () => {
   card._wallDialog = { ...card._wallDialog, value: '10' };
   card._wallThickApply(true);
   await settle();
+  await window.__hpTest.waitForWrites();
+  const afterThickness = structuredClone(card._curSpaceCfg);
+  card._undoGeometry(); await settle(); await window.__hpTest.waitForWrites();
+  out.undoRestoresExactSplitGeometry = await window.sameSplitHistory(card._curSpaceCfg, beforeThickness);
+  card._redoGeometry(); await settle(); await window.__hpTest.waitForWrites();
+  out.redoRestoresExactThicknessAndOwnership = await window.sameSplitHistory(card._curSpaceCfg, afterThickness);
 
   out.savedIntervals = card._intervalCm([100, 100, 500, 100]) === 10
     && card._intervalCm([500, 100, 900, 100]) === 0

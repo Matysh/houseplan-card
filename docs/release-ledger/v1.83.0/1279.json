@@ -1,0 +1,5 @@
+{
+  "schema": 1, "issue": 1279, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Reuse the exact divider created within the same model11 face batch instead of allocating two overlapping carriers for a classic Split. No old carrier coalescing or coordinate tolerance is added. Native HA E2E before the next beta is tracked in houseplan-e2e#26.",
+  "summary": {"ru":"После разделения комнаты общая стена имеет один ID и одну толщину у обеих частей.","en":"A split room shares one divider identity and thickness between its two parts."}
+}

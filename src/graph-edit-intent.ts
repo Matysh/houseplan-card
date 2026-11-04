@@ -587,7 +587,11 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
       for(let i=0;i+1<cuts.length;i++){
         const a=cuts[i],b=cuts[i+1];if(Q.eq(a.t,b.t))continue;
         const from=nodeFor(a.p,['face',room,line.slot,i],a.id),to=nodeFor(b.p,['face',room,line.slot,i+1],b.id);
-        const candidates=[...pieces.values()].flat().map(p=>p.edge).filter(e=>
+        // A new divider can be shared by two faces even when it had no source
+        // partition. The second cycle must reuse the first cycle's exact wall.
+        const available=new Map([...pieces.values()].flat().map(p=>[edgeKey(p.edge),p.edge]as const));
+        for(const key of retained){const edge=plan.newEdges.get(key);if(edge)available.set(key,edge);}
+        const candidates=[...available.values()].filter(e=>
           Q.pointEq(plan.nodePoints.get(e.from)!,a.p)&&Q.pointEq(plan.nodePoints.get(e.to)!,b.p)
           ||Q.pointEq(plan.nodePoints.get(e.from)!,b.p)&&Q.pointEq(plan.nodePoints.get(e.to)!,a.p))
           .sort((a,b)=>Number(a.kind==='partition')-Number(b.kind==='partition')

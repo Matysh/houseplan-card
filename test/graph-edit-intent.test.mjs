@@ -7,6 +7,23 @@ const copy=structuredClone;
 const rectangle=(id,x0=0,x1=1)=>({id,name:id,poly:[[x0,0],[x1,0],[x1,1],[x0,1]],custom:{keep:id}});
 const migrate=space=>G.migrateGraphSpace(space).space;
 const base=()=>migrate({id:'floor',rooms:[rectangle('a')],extra:{keep:1}});
+test('#1279 a new Split divider is one physical carrier owned by both room cycles',()=>{
+  const before=base(),draft=copy(before);
+  draft.rooms[0].poly=[[0,0],[.5,0],[.5,1],[0,1]];
+  draft.rooms.push({id:'b',name:'B',poly:[[.5,0],[1,0],[1,1],[.5,1]],custom:{keep:'b'}});
+  const split=commitGraphEdit(before,draft,{kind:'faces',rooms:['a','b']});
+  const [a,b]=split.rooms,shared=a.wall_ids.filter(id=>b.wall_ids.includes(id));
+  assert.equal(shared.length,1);
+  assert.equal(split.plan_graph.edges.length,7);
+  assert.equal(G.validateGraph(split.plan_graph).ok,true);
+  assert.deepEqual(a.custom,{keep:'a'});assert.deepEqual(b.custom,{keep:'b'});
+  const thick=commitGraphEdit(split,copy(split),{kind:'thickness',rooms:['a'],cm:10});
+  const common=thick.wall_segments.find(e=>e.id===shared[0]);
+  assert.equal(common.cm,10);
+  assert.deepEqual(thick.rooms.map(r=>r.wall_ids),split.rooms.map(r=>r.wall_ids));
+  assert.equal(thick.wall_segments.filter(e=>e.a[0]===.5&&e.b[0]===.5).length,1);
+  assert.deepEqual(before,base());
+});
 test('room acceptance follows connected exact source atoms hidden by numeric collinearity',()=>{
   const graph={version:1,nodes:[{id:'a',p:['l','0','0']},{id:'b',p:['l','480','0']},
     {id:'c',p:['l','480','240']},{id:'d',p:['q','1','1','100000000000000001','100000000000000000']},
