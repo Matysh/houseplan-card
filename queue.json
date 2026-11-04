@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2544,
+  "revision": 2545,
   "nextTicket": 157,
   "nextFence": 157,
   "tasks": {
@@ -2496,7 +2496,18 @@
         "src/houseplan-editor-runtime.ts",
         "src/wall-face-graph.ts",
         "test/wall-face-graph.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793783558867,
+        "entry": 1,
+        "detail": "Браузер: draw wall thickness: failed; Браузер: room opening host: failed; Браузер: unified wall tool: failed; Браузер: wall face overlap: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed",
+        "eventId": "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:3:return:return:1265"
+      }
     },
     "1267": {
       "issue": 1267,
@@ -2861,18 +2872,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1265,
-    "worker": "finish",
-    "token": "156:finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:1:admit",
-    "fence": 156,
-    "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213",
-    "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
-    "phase": "testing",
-    "admittedAt": 1793783406040,
-    "expiresAt": 1793783825511,
-    "patchId": "c9b189c8d581c7810826071af6803bc8b0679389"
-  },
+  "active": null,
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
       "digest": "74a074154277b6f2ff5344289e612c0201e98208c04ad7ad2174eef8095878f3",
@@ -2896,6 +2896,10 @@
     },
     "finish:65d6b177-63bf-4f05-857f-c40d29b63d24": {
       "digest": "a94e9336dbb67733d4e8198ae0ed8e261c08d21d75845d507bd2f23ed61e52cd",
+      "issue": 1265
+    },
+    "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:3:return": {
+      "digest": "818c4be63ccf774781533b5be765685c4cfe01d4e6d5320a2b03039f4f23b283",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
@@ -2925,6 +2929,26 @@
         "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:3:return:return:1265": {
+      "digest": "818c4be63ccf774781533b5be765685c4cfe01d4e6d5320a2b03039f4f23b283",
+      "issue": 1265,
+      "message": {
+        "kind": "return",
+        "issue": 1265,
+        "at": 1793783558867,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793783558867,
+          "entry": 1,
+          "detail": "Браузер: draw wall thickness: failed; Браузер: room opening host: failed; Браузер: unified wall tool: failed; Браузер: wall face overlap: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed",
+          "eventId": "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:3:return:return:1265"
+        }
       }
     }
   },
