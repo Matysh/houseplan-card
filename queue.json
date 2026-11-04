@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2482,
-  "nextTicket": 152,
+  "revision": 2483,
+  "nextTicket": 153,
   "nextFence": 152,
   "tasks": {
     "1126": {
@@ -2542,14 +2542,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1269-legacy-stairs-history",
-      "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+      "materialSha": "09a06bef493f020473dd3a694568b30369969daa",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 151,
-      "queued": false,
+      "ticket": 152,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793781497747,
-      "reviewEntry": 1,
+      "readyAt": 1793782309066,
+      "reviewEntry": 2,
       "patchId": "43910d3e92fbbbe669102b726569975a5da5b939",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -2568,13 +2568,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1269:1:43910d3e92fbbbe669102b726569975a5da5b939:477af68e102d42f95372f7e50f8974565a15b6e6",
-      "reviewMaterial": {
-        "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
-        "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
-        "patchId": "43910d3e92fbbbe669102b726569975a5da5b939"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1269:1:43910d3e92fbbbe669102b726569975a5da5b939:477af68e102d42f95372f7e50f8974565a15b6e6",
         "at": 1793781841099
@@ -2876,7 +2869,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1269
+  ],
   "active": null,
   "events": {
     "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
@@ -2988,6 +2983,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:834f2030-795d-4b83-a2ab-20ac415481f8": {
+      "digest": "35f40773a4c2ab9176e75e121a80f89c5fc84c50ec8b93570b6b2b3cafb48041",
+      "issue": 1269,
+      "message": {
+        "kind": "queued",
+        "issue": 1269,
+        "at": 1793782309066,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "09a06bef493f020473dd3a694568b30369969daa",
+        "evidence": {
+          "id": "20261104T083830988-3fda6329",
+          "name": "Тесты для задачи #1269 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083830988-3fda6329/report.json",
+          "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+          "status": "passed",
+          "finishedAt": "2026-11-04T08:39:17.643Z",
+          "failures": []
+        }
       }
     }
   },
