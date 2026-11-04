@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3104,
+  "revision": 3105,
   "nextTicket": 187,
   "nextFence": 185,
   "tasks": {
@@ -2919,7 +2919,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1282-exact-writers",
-      "materialSha": "11965d122b76158c4b67ec4cb91114deb25d7520",
+      "materialSha": "17e6123a5b26645e7601229b611145d16bab794b",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 183,
@@ -2927,19 +2927,29 @@
       "status": "S6-in-progress",
       "readyAt": 1793818514107,
       "reviewEntry": 2,
-      "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50",
+      "patchId": "036e2763fcc1a4cf16af968ba8708cecf6bc516e",
       "changedFiles": [
         "custom_components/houseplan/plan_graph_migration.py",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/PLAN-GRAPH.md",
         "docs/release-ledger/v1.83.0/1282.json",
+        "scripts/mutation-registry.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
+        "scripts/sh3d-convert/golden/awkward.space-1.json",
+        "scripts/sh3d-convert/golden/easy-content.space-1.json",
+        "scripts/sh3d-convert/golden/easy-public-demo.space-2.json",
+        "scripts/sh3d-convert/golden/flat-two-rooms.space-1.json",
+        "scripts/sh3d-convert/golden/two-levels.space-1.json",
+        "scripts/sh3d-convert/golden/two-levels.space-2.json",
         "src/authored-grid.ts",
         "src/canvas-constants.ts",
         "src/coordinate-canonicalization.ts",
         "src/editors/plan-nudge.ts",
         "src/graph-draw-binding.ts",
         "src/graph-edit-intent.ts",
+        "src/graph-optimize.ts",
         "src/houseplan-editor-runtime.ts",
         "src/physical-body-gesture.ts",
         "src/plan-exact.ts",
@@ -2947,6 +2957,7 @@
         "src/resize.ts",
         "test/graph-draw-binding.test.mjs",
         "test/graph-writer-lattice.test.mjs",
+        "test/sh3d-convert.test.mjs",
         "tests_backend/test_ha_plan_graph.py",
         "tests_backend/test_plan_graph_migration.py"
       ],
@@ -3341,11 +3352,12 @@
     "worker": "finish",
     "token": "184:finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:2:admit",
     "fence": 184,
-    "materialSha": "11965d122b76158c4b67ec4cb91114deb25d7520",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "17e6123a5b26645e7601229b611145d16bab794b",
+    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
+    "phase": "testing",
     "admittedAt": 1793819074652,
-    "expiresAt": 1793819374652
+    "expiresAt": 1793819384120,
+    "patchId": "036e2763fcc1a4cf16af968ba8708cecf6bc516e"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3635,6 +3647,10 @@
     "author-return-1287-19c1ad73-e929-44c5-b7a5-41994f0234de": {
       "digest": "5a4c9421d6cd391edfaea609e340cb3d77a71b01eceaee6ae3163132f5ce9671",
       "issue": 1287
+    },
+    "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:3:synchronized": {
+      "digest": "683dc2b8dc302e9eb515a3951977903e1801564594a9358f905feae3b0d347a1",
+      "issue": 1282
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
