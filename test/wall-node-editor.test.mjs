@@ -170,9 +170,20 @@ test('sub-epsilon free-axis changes cannot retarget a previously proved candidat
   s.editor.guardEvent(s.ev('pointermove', 1, .3000000009)); s.flushFrame();
   assert.notEqual(s.editor.preview.sp, original);
   assert.equal(s.validations.length, 2, 'the new free-axis coordinate receives its own proof');
-  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [1, .3000000009], 'current exact authored target is not rounded back to an old storage quantum');
+  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [1, .3], '#1282 restores the lattice within arithmetic-noise tolerance');
   s.editor.guardEvent(s.ev('pointerup')); await settle();
-  assert.deepEqual(s.writes[0].intent.target, [1, .3000000009]);
+  assert.deepEqual(s.writes[0].intent.target, [1, .3], 'write commits the same canonical point that was previewed');
+  assert.deepEqual(s.writes[0].intent.target_p, ['l', '240', '72']);
+  s.editor.dispose();
+});
+
+test('free-axis changes beyond lattice-noise tolerance preserve their exact off-grid target', async () => {
+  const s = setup(); s.holdFrames(); s.editor.guardEvent(s.ev('pointerdown'));
+  s.editor.guardEvent(s.ev('pointermove', 1, .300001)); s.flushFrame();
+  assert.deepEqual(s.editor.preview.sp.partitions[0].a, [1, .300001]);
+  s.editor.guardEvent(s.ev('pointerup')); await settle();
+  assert.deepEqual(s.writes[0].intent.target, [1, .300001]);
+  assert.deepEqual(s.writes[0].intent.target_p, ['q', '1', '1', '300001', '1000000']);
   s.editor.dispose();
 });
 

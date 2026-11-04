@@ -8,6 +8,8 @@ import {identityProjection,loadWallIdentityCorpus,loadCompleteWallIdentityCorpus
   from './helpers/wall-identity-corpus.mjs';
 
 const historical=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-identities.json',import.meta.url),'utf8'));
+// #1290: reviewed current migration coordinate deltas are documented in
+// docs/testing/beta5-wall-passports; the frozen v10 source/oracle stays separate.
 const expected=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-current-identities.json',import.meta.url),'utf8'));
 const compare=(actual,baseline)=>assert.deepEqual(actual,baseline,
   'wall corpus current identities/outcomes differ; full source membership and the original legacy oracle are retained');

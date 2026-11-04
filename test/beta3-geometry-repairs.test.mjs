@@ -66,9 +66,11 @@ test('1166 Optimize reaches the declared lattice targets while preserving named 
 
   const cavity=roomContactCases().find(c=>c.name==='existing-wall-cavity').config;
   const cavityBefore=structuredClone(cavity),original=cavity.spaces[0].plan_graph;
+  // #1282's migration writers already restore these .3 arithmetic echoes to
+  // exact lattice points; Optimize must retain their identities and incidence.
   const targets=[
-    {p:['q','1','2','7500000000000001','25000000000000000'],target:['l','120','72']},
-    {p:['q','3','10','7500000000000001','25000000000000000'],target:['l','72','72']},
+    {p:['l','120','72'],target:['l','120','72']},
+    {p:['l','72','72'],target:['l','72','72']},
   ];
   const fixed=optimizePlans(cavity,{}),out=fixed.config.spaces[0].plan_graph;
   for(const {p,target} of targets) {

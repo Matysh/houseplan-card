@@ -570,14 +570,34 @@ async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
     })
     config_set = await client.receive_json()
     assert config_set["success"]
+    assert config_set["result"]["layout_changes"] == {"device": None}
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    before_delete_config = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    before_delete_layout = (await client.receive_json())["result"]
+    assert before_delete_layout["rev"] == unchanged_layout["result"]["rev"] + 1
+    assert before_delete_layout["layout"] == {"rl_r1": {"s": "f1", "x": 0.5, "y": 0.5}}
+    # Tombstoning is now a paired cleanup. The former revision must still
+    # refuse Delete, rather than letting a stale writer overwrite that pair.
     await client.send_json_auto_id({
         "type": "houseplan/space/delete", "space_id": "f1",
         "expected_config_rev": config_set["result"]["rev"],
         "expected_layout_rev": unchanged_layout["result"]["rev"],
     })
+    stale = await client.receive_json()
+    assert not stale["success"] and stale["error"]["code"] == "conflict"
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await client.receive_json())["result"] == before_delete_config
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await client.receive_json())["result"] == before_delete_layout
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1",
+        "expected_config_rev": before_delete_config["rev"],
+        "expected_layout_rev": before_delete_layout["rev"],
+    })
     deleted = await client.receive_json()
     assert deleted["success"]
-    assert deleted["result"]["removed_layout"] == 2
+    assert deleted["result"]["removed_layout"] == 1
 
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     final_config = (await client.receive_json())["result"]
@@ -589,6 +609,25 @@ async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
         "name": "Kept tombstone",
     }
     assert final_layout["layout"] == {}
+    assert final_config["rev"] == before_delete_config["rev"] + 1
+    assert final_layout["rev"] == before_delete_layout["rev"] + 1
+    assert final_config["can_optimize_undo"] is True
+    assert final_config["undo_kind"] == "space_delete"
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo", "expected_config_rev": final_config["rev"],
+        "expected_layout_rev": final_layout["rev"],
+    })
+    restored = await client.receive_json()
+    assert restored["success"], restored
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    restored_config = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    restored_layout = (await client.receive_json())["result"]
+    assert restored_config["config"] == before_delete_config["config"]
+    assert restored_layout["layout"] == before_delete_layout["layout"]
+    assert restored_config["rev"] == final_config["rev"] + 1
+    assert restored_layout["rev"] == final_layout["rev"] + 1
+    assert restored_config["can_optimize_undo"] is False
 
 
 async def test_issue_244_last_occupied_space_delete_preserves_marker_records(
@@ -741,6 +780,8 @@ async def test_issue_819_space_delete_with_markers_is_one_authoritative_write(
     blocked = await client.receive_json()
     assert not blocked["success"] and blocked["error"]["code"] == "space_in_use"
     assert "4 active marker" in blocked["error"]["message"]
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    before_delete_config = (await client.receive_json())["result"]
 
     events: list[str] = []
     service_calls: list[object] = []
@@ -800,9 +841,61 @@ async def test_issue_819_space_delete_with_markers_is_one_authoritative_write(
         name: (files / name).exists()
         for name in ("by_space", "by_layout", "keeper/wiring.pdf")
     })
-    assert exists == {"by_space": False, "by_layout": False, "keeper/wiring.pdf": True}
+    assert exists == {"by_space": True, "by_layout": False, "keeper/wiring.pdf": True}
+    assert final["can_optimize_undo"] is True and final["undo_kind"] == "space_delete"
     recorder = hass.data[DOMAIN]["trail_recorder"]
     assert set(recorder.book.data) == {"keeper"}
+
+    # #1287 retains referenced attachments while the one-deep Undo is live;
+    # unrelated leftovers are still cleaned immediately. Undo restores the
+    # accepted pair and its PDF, never the previous runtime cleaning trail.
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo", "expected_config_rev": final["rev"],
+        "expected_layout_rev": final_layout["rev"],
+    })
+    restored = await client.receive_json()
+    assert restored["success"], restored
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    restored_config = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    restored_layout = (await client.receive_json())["result"]
+    assert restored_config["config"] == before_delete_config["config"]
+    assert restored_layout["layout"] == stored_layout
+    assert restored_config["rev"] == final["rev"] + 1
+    assert restored_layout["rev"] == final_layout["rev"] + 1
+    assert restored_config["can_optimize_undo"] is False
+    assert await hass.async_add_executor_job((files / "by_space/manual.pdf").is_file)
+    assert set(recorder.book.data) == {"keeper"}
+
+    # A later ordinary edit expires a second Delete's Undo and releases only
+    # its no-longer-referenced PDF, preserving the surviving device's file.
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1", "remove_markers": True,
+        "expected_config_rev": restored_config["rev"], "expected_layout_rev": restored_layout["rev"],
+    })
+    deleted_again = await client.receive_json()
+    assert deleted_again["success"], deleted_again
+    assert deleted_again["result"]["config_rev"] == restored_config["rev"] + 1
+    assert deleted_again["result"]["layout_rev"] == restored_layout["rev"] + 1
+    assert await hass.async_add_executor_job((files / "by_space/manual.pdf").is_file)
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    expiring = (await client.receive_json())["result"]
+    edit = copy.deepcopy(expiring["config"])
+    edit["spaces"][0]["title"] += " edited"
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": edit, "expected_rev": expiring["rev"],
+    })
+    saved = await client.receive_json()
+    assert saved["success"], saved
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    expired = (await client.receive_json())["result"]
+    assert expired["can_optimize_undo"] is False
+    assert expired["config"] == edit
+    exists = await hass.async_add_executor_job(lambda: {
+        name: (files / name).exists()
+        for name in ("by_space/manual.pdf", "by_layout", "keeper/wiring.pdf")
+    })
+    assert exists == {"by_space/manual.pdf": False, "by_layout": False, "keeper/wiring.pdf": True}
 
 
 async def test_issue_819_space_delete_with_markers_conflict_deletes_nothing(

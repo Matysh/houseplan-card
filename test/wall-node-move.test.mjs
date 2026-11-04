@@ -52,7 +52,14 @@ test('#845 frozen v10 physical goldens and current graph identities retain safe 
     assert.deepEqual(source, frozen, c.name + ': never mutate the baseline');
     assert.ok(prepared.node.nodeId, c.name + ': graph-owned node identity');
     const movedNode = moved.space.plan_graph.nodes.find(n => n.id === prepared.node.nodeId);
-    assert.deepEqual(pointToNumbers(decodePoint(movedNode.p)), c.intent.target, c.name + ': actual target');
+    const indices = c.intent.target.map(value => value * 240);
+    // #1282 writes an authored grid target as integer indices. The frozen v10
+    // float (23 * (1/240)) is one ULP below the correctly rounded 23/240;
+    // it stays literal in the legacy golden above, not in current graph wire.
+    const gridTarget = indices.every(Number.isInteger);
+    if (gridTarget) assert.deepEqual(movedNode.p, ['l', ...indices.map(String)], c.name + ': exact authored lattice wire');
+    const currentTarget = gridTarget ? indices.map(index => index / 240) : c.intent.target;
+    assert.deepEqual(pointToNumbers(decodePoint(movedNode.p)), currentTarget, c.name + ': actual target');
     const after = commitWallSegmentModel({ ...base, spaces: [moved.space] }).config;
     assert.deepEqual(after.spaces[0].plan_graph.edges.map(e => [e.kind, e.id]),
       source.plan_graph.edges.map(e => [e.kind, e.id]), c.name + ': current edge IDs persist');

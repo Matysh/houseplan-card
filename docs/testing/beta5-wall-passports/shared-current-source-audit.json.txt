@@ -1,0 +1,277 @@
+{
+  "sourceCommit": "9effdf165bbb45f495142ea90ba15699b2b79923",
+  "file": "test/fixtures/optimize-storage-roundtrip-current.json",
+  "label": "test/fixtures/optimize-storage-roundtrip-current.json/expected/config",
+  "provenance": "Deliberate current facade target correction; separate from unchanged-input runtime migration passports.",
+  "oldRow": {
+    "label": "test/fixtures/optimize-storage-roundtrip-current.json/expected/config",
+    "fingerprint": "ff6e546ec0b23a1207b95a7a47fdca5d91c3af0a97649b3372ba42ed27780826",
+    "ok": true,
+    "identity": [
+      {
+        "space": "fine",
+        "catalogue": [
+          "wall-4aynx5ho42xjmcir2ssg",
+          "wall-e7etdmx7xg3mahu4avma",
+          "wall-o7jeq4zbgcylrx4nbesz",
+          "wall-z5phvtyh5tgfg6vrsa4o"
+        ],
+        "rooms": [
+          {
+            "id": "fine-room",
+            "walls": [
+              "wall-o7jeq4zbgcylrx4nbesz",
+              "wall-e7etdmx7xg3mahu4avma",
+              "wall-4aynx5ho42xjmcir2ssg",
+              "wall-z5phvtyh5tgfg6vrsa4o"
+            ]
+          }
+        ],
+        "openings": [],
+        "partitions": []
+      },
+      {
+        "space": "regular",
+        "catalogue": [
+          "wall-5cpegapcqzk7z5qvqfwx",
+          "wall-6ydgelnzulo4kyloww6i",
+          "wall-min22n7bdn65nharmwrq",
+          "wall-wkjdgvxkdvycd7r7vch3"
+        ],
+        "rooms": [
+          {
+            "id": "regular-room",
+            "walls": [
+              "wall-wkjdgvxkdvycd7r7vch3",
+              "wall-5cpegapcqzk7z5qvqfwx",
+              "wall-min22n7bdn65nharmwrq",
+              "wall-6ydgelnzulo4kyloww6i"
+            ]
+          }
+        ],
+        "openings": [],
+        "partitions": []
+      }
+    ],
+    "fullConfigSha256": "00618ca132a44dadd02e3bb387e2ec81a7dd91e493eb963a2d174dd895d19ba0"
+  },
+  "newRow": {
+    "label": "test/fixtures/optimize-storage-roundtrip-current.json/expected/config",
+    "fingerprint": "7371db2dfa9b254f92ddccd050b0722dfb60c5b3a43bf7abae028e8da3b24b88",
+    "ok": true,
+    "identity": [
+      {
+        "space": "fine",
+        "catalogue": [
+          "wall-4aynx5ho42xjmcir2ssg",
+          "wall-e7etdmx7xg3mahu4avma",
+          "wall-o7jeq4zbgcylrx4nbesz",
+          "wall-z5phvtyh5tgfg6vrsa4o"
+        ],
+        "rooms": [
+          {
+            "id": "fine-room",
+            "walls": [
+              "wall-o7jeq4zbgcylrx4nbesz",
+              "wall-e7etdmx7xg3mahu4avma",
+              "wall-4aynx5ho42xjmcir2ssg",
+              "wall-z5phvtyh5tgfg6vrsa4o"
+            ]
+          }
+        ],
+        "openings": [],
+        "partitions": []
+      },
+      {
+        "space": "regular",
+        "catalogue": [
+          "wall-5cpegapcqzk7z5qvqfwx",
+          "wall-6ydgelnzulo4kyloww6i",
+          "wall-min22n7bdn65nharmwrq",
+          "wall-wkjdgvxkdvycd7r7vch3"
+        ],
+        "rooms": [
+          {
+            "id": "regular-room",
+            "walls": [
+              "wall-wkjdgvxkdvycd7r7vch3",
+              "wall-5cpegapcqzk7z5qvqfwx",
+              "wall-min22n7bdn65nharmwrq",
+              "wall-6ydgelnzulo4kyloww6i"
+            ]
+          }
+        ],
+        "openings": [],
+        "partitions": []
+      }
+    ],
+    "fullConfigSha256": "e9955aab9aab5af7eb310512ce5cae98a8a3988e6c15fba1b638bb02b1e76108"
+  },
+  "qToL": 5,
+  "maxNorm": 1.0000000033333333e-10,
+  "changes": [
+    {
+      "path": "/spaces/0/rooms/0/poly/0/0",
+      "old": 0.004166666766666667,
+      "new": 0.004166666666666667
+    },
+    {
+      "path": "/spaces/0/rooms/0/poly/2/0",
+      "old": 0.008333333233333334,
+      "new": 0.008333333333333333
+    },
+    {
+      "path": "/spaces/0/rooms/0/poly/3/0",
+      "old": 0.004166666766666667,
+      "new": 0.004166666666666667
+    },
+    {
+      "path": "/spaces/0/wall_segments/0/a/0",
+      "old": 0.004166666766666667,
+      "new": 0.004166666666666667
+    },
+    {
+      "path": "/spaces/0/wall_segments/0/b/0",
+      "old": 0.008333333233333334,
+      "new": 0.008333333333333333
+    },
+    {
+      "path": "/spaces/0/wall_segments/1/b/0",
+      "old": 0.008333333233333334,
+      "new": 0.008333333333333333
+    },
+    {
+      "path": "/spaces/0/wall_segments/2/a/0",
+      "old": 0.004166666766666667,
+      "new": 0.004166666666666667
+    },
+    {
+      "path": "/spaces/0/wall_segments/3/a/0",
+      "old": 0.004166666766666667,
+      "new": 0.004166666666666667
+    },
+    {
+      "path": "/spaces/0/wall_segments/3/b/0",
+      "old": 0.004166666766666667,
+      "new": 0.004166666666666667
+    },
+    {
+      "path": "/spaces/0/plan_graph/nodes/1/p",
+      "old": [
+        "q",
+        "4166666616666667",
+        "500000000000000000",
+        "1",
+        "120"
+      ],
+      "new": [
+        "l",
+        "2",
+        "2"
+      ]
+    },
+    {
+      "path": "/spaces/0/plan_graph/nodes/2/p",
+      "old": [
+        "q",
+        "4166666766666667",
+        "1000000000000000000",
+        "0",
+        "1"
+      ],
+      "new": [
+        "l",
+        "1",
+        "0"
+      ]
+    },
+    {
+      "path": "/spaces/0/plan_graph/nodes/3/p",
+      "old": [
+        "q",
+        "4166666766666667",
+        "1000000000000000000",
+        "1",
+        "120"
+      ],
+      "new": [
+        "l",
+        "1",
+        "2"
+      ]
+    },
+    {
+      "path": "/spaces/1/rooms/0/poly/2/0",
+      "old": 0.1999999999,
+      "new": 0.2
+    },
+    {
+      "path": "/spaces/1/rooms/0/poly/3/0",
+      "old": 0.1000000001,
+      "new": 0.1
+    },
+    {
+      "path": "/spaces/1/wall_segments/0/b/0",
+      "old": 0.1999999999,
+      "new": 0.2
+    },
+    {
+      "path": "/spaces/1/wall_segments/1/b/0",
+      "old": 0.1000000001,
+      "new": 0.1
+    },
+    {
+      "path": "/spaces/1/wall_segments/2/a/0",
+      "old": 0.1000000001,
+      "new": 0.1
+    },
+    {
+      "path": "/spaces/1/wall_segments/2/b/0",
+      "old": 0.1999999999,
+      "new": 0.2
+    },
+    {
+      "path": "/spaces/1/plan_graph/nodes/1/p",
+      "old": [
+        "q",
+        "1000000001",
+        "10000000000",
+        "1",
+        "5"
+      ],
+      "new": [
+        "l",
+        "24",
+        "48"
+      ]
+    },
+    {
+      "path": "/spaces/1/plan_graph/nodes/3/p",
+      "old": [
+        "q",
+        "1999999999",
+        "10000000000",
+        "1",
+        "5"
+      ],
+      "new": [
+        "l",
+        "48",
+        "48"
+      ]
+    }
+  ],
+  "frozenHistoricalSource": {
+    "file": "test/fixtures/optimize-storage-roundtrip.json",
+    "sha256": "a148f394de4d063357252a0600214bb13eccb31c6a2fcbaab25fde24a370cd88",
+    "bytesUnchanged": true
+  },
+  "composedTests": {
+    "files": [
+      "test/wall-identity-corpus.test.mjs",
+      "test/wall-node-move.test.mjs"
+    ],
+    "passed": 27,
+    "failed": 0
+  }
+}

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reconcile lattice and wall-identity test passports, canonical writer assertions and deletion/Undo oracles with the accepted model11 behavior. Preserve historical sources, genuine off-grid cases, CAS refusals and file cleanup after Undo expires. [#1290](https://github.com/Matysh/houseplan-card/issues/1290)
+
 - Preserve exact lattice targets through wall nudges/body moves, Resize and opening movement; tolerate existing coordinate noise only at authored targets and retain accepted lattice anchors in mirrored TS/Python legacy normalization. Write affected opening angles from the normalized graph projection, synchronize the offline converter and its semantic fixtures, and retain the existing threshold mutation anchors. [#1282](https://github.com/Matysh/houseplan-card/issues/1282)
 - Remove safe collinear seams exposed by completed graph edits, preserving exact opening hosts, topology/support contacts, material boundaries and unrelated components. Optimize shares the protection of seams crossed by an opening footprint. Live Draw endpoints remain until chain finish. [#1283](https://github.com/Matysh/houseplan-card/issues/1283)
 - Keep the summary panel's On/Off choice and View scales across HA route navigation and reload, using a stable panel identity with conservative legacy preference recovery. [#1286](https://github.com/Matysh/houseplan-card/issues/1286)
