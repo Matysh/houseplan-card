@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3110,
+  "revision": 3111,
   "nextTicket": 187,
   "nextFence": 186,
   "tasks": {
@@ -3080,7 +3080,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1286-summary-visibility",
-      "materialSha": "b5a3fe5dfd74443f8a9151a80277876a82b24f45",
+      "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 185,
@@ -3351,11 +3351,12 @@
     "worker": "finish",
     "token": "185:finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:2:admit",
     "fence": 185,
-    "materialSha": "b5a3fe5dfd74443f8a9151a80277876a82b24f45",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
+    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
+    "phase": "testing",
     "admittedAt": 1793819132785,
-    "expiresAt": 1793819432785
+    "expiresAt": 1793819441861,
+    "patchId": "dd17aff87944a598164ac20f578ffb1c7a6a84be"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3665,6 +3666,10 @@
     "author-changelog:21537643-6874-419c-80e9-8bea519ba89e": {
       "digest": "966e79310ffeb9f1081889add7b4d596c1246f4ea8da474ab4d431fc78ea111a",
       "issue": 1282
+    },
+    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:3:synchronized": {
+      "digest": "7cc29ce95ba0e4b405de270769017dcfab003f3ba58361357a3fae77f45922f0",
+      "issue": 1286
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
