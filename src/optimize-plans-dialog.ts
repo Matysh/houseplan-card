@@ -357,7 +357,7 @@ export class OptimizePlansDialog {
           + d.report.coordsCanonicalized + d.report.latticeCoordinatesCanonicalized
           + d.report.wallsMerged + d.report.spansMerged
           + d.report.partitionsMerged + d.report.partitionsReconciled
-          + d.report.openingsRehosted + d.report.wallsStraightened),
+          + d.report.openingsRehosted + (d.report.openingParametersCanonicalized || 0) + d.report.wallsStraightened),
         r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
           + d.report.positionsRemapped + d.report.markersDetached
           + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
@@ -603,6 +603,9 @@ export class OptimizePlansDialog {
                 )}</p>` : nothing}
               ${r.openingsRehosted ? html`<p class="alignmsg">${this.port.t(
                   'gs.optimize_openings_rehosted', { n: String(r.openingsRehosted) },
+                )}</p>` : nothing}
+              ${r.openingParametersCanonicalized ? html`<p class="alignmsg">${this.port.t(
+                  'gs.optimize_opening_parameters', { n: String(r.openingParametersCanonicalized) },
                 )}</p>` : nothing}
               ${r.wallsStraightened ? html`<p class="alignmsg">${this.port.t(
                   'gs.optimize_walls_straightened', {

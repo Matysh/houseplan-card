@@ -1085,6 +1085,7 @@
   "gs.optimize_lattice_summary": "Rauschen in den Koordinatenwerten kanonisiert: {n}; maximale Bewegung: {cm} cm.",
   "gs.optimize_lattice_space": "{space}: Koordinatenwerte kanonisiert: {n}; außerhalb des Rasters liegende Werte unverändert gelassen: {far}.",
   "gs.optimize_coincident_partitions": "Versteckte unabhängige Wandabschnitte in Raumwände integriert: {n}.",
+  "gs.optimize_opening_parameters": "Exakte Öffnungsparameter kanonisiert: {n}.",
   "gs.optimize_openings_rehosted": "Öffnungen wieder an Raumwände angebracht: {n}.",
   "gs.optimize_walls_straightened": "Wände begradigt: {n}; maximale Bewegung: {cm} cm.",
   "gs.optimize_walls_straightened_where": "Größte Wandkorrektur: {s}.",

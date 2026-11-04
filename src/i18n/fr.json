@@ -1085,6 +1085,7 @@
   "gs.optimize_lattice_summary": "Valeurs de coordonnées parasites normalisées : {n} ; déplacement maximal : {cm} cm.",
   "gs.optimize_lattice_space": "{space} : valeurs de coordonnées normalisées : {n} ; valeurs hors grille laissées inchangées : {far}.",
   "gs.optimize_coincident_partitions": "Sections de murs indépendants masquées absorbées dans les murs des pièces : {n}.",
+  "gs.optimize_opening_parameters": "Paramètres exacts des ouvertures normalisés : {n}.",
   "gs.optimize_openings_rehosted": "Ouvertures rattachées aux murs des pièces : {n}.",
   "gs.optimize_walls_straightened": "Murs redressés : {n} ; déplacement maximal : {cm} cm.",
   "gs.optimize_walls_straightened_where": "Plus grande correction de mur : {s}.",

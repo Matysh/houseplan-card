@@ -1085,6 +1085,7 @@
   "gs.optimize_lattice_summary": "Noisy coordinate values canonicalized: {n}; maximum movement: {cm} cm.",
   "gs.optimize_lattice_space": "{space}: coordinate values canonicalized: {n}; off-grid values left unchanged: {far}.",
   "gs.optimize_coincident_partitions": "Hidden independent wall sections absorbed into room walls: {n}.",
+  "gs.optimize_opening_parameters": "Exact opening parameters canonicalized: {n}.",
   "gs.optimize_openings_rehosted": "Openings reattached to room walls: {n}.",
   "gs.optimize_walls_straightened": "Walls straightened: {n}; maximum movement: {cm} cm.",
   "gs.optimize_walls_straightened_where": "Largest wall correction: {s}.",

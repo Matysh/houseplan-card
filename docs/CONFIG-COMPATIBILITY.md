@@ -1749,6 +1749,17 @@ still be renamed, exported and inspected.
 
 ### The report is a promise
 
+For current model 11, the numerical engine proposes repairs; its counters are
+not the report. Movement is measured between the accepted input and final graph,
+once per surviving node identity, plus actual opening ends, columns, decor and
+retained layout positions. A rejected off-grid dependency target contributes
+nothing. Near-axis counts include only proposals that became exact axes in the
+written graph. Changes within `1e-4` of a grid step are coordinate maintenance,
+separate from visible movement. Actual wall/partition `collapse-node` operations
+count as merges; exact opening `tq` rewrites without movement have their own
+line. A compatibility/scalar-only rewrite is still explained as representation
+maintenance. Legacy migration counters retain their previous meaning.
+
 The confirmation is the decision gate in front of a geometry rewrite, so
 `maxShift`/`maxShiftCm` must never be smaller than what the run does:
 

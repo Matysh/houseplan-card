@@ -38,6 +38,7 @@ import { annotateGraphOpeningRuns } from './graph-opening-run';
 
 import { migrateGraphSpace, projectGraphSpace, PlanGraphError } from './plan-graph';
 import { optimizeGraphTargets, graphOptimizeRoomProfile, graphOptimizeTopologyPoints } from './graph-optimize';
+import { measureGraphOptimizeEffects, measureGraphStraightening } from './graph-optimize-report';
 /** Bump when a new lossless maintenance pass is added. */
 export const PLAN_MODEL_VERSION = 11;
 const DEFAULT_CELL_CM = 5;
@@ -77,6 +78,8 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   partitionsReconciled: number;
   /** Hosted openings materialised onto the coincident shared room wall. */
   openingsRehosted: number;
+  /** Exact opening host parameters rewritten without a geometric move. */
+  openingParametersCanonicalized: number;
   /** Unique physical near-axis walls accepted for explicit straightening. */
   wallsStraightened: number;
   /** Near-axis walls found but rejected by structural safety checks. */
@@ -476,7 +479,7 @@ function optimizePlanDraft(
   context: SpaceReferenceRepairContext = {},
   dependencies: OptimizeDependencies = {},
   graphDraft = false,
-): OptimizeResult {
+): OptimizeResult & { graphStraightening: ReturnType<typeof measureGraphStraightening>[] } {
   const reconcilePartitions = dependencies.reconcileCoincidentPartitions
     ?? reconcileCoincidentPartitions;
   const references = repairSpaceReferences(configIn, layoutIn, {
@@ -562,6 +565,9 @@ function optimizePlanDraft(
   config.spaces = graphDraft
     ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(realignmentSpaces[i], space, true).space)
     : finalAligned.spaces;
+  const graphStraightening = graphDraft
+    ? config.spaces.map((space: any, i: number) => measureGraphStraightening(
+      aligned.spaces[i], straightenedSpaces[i], space)) : [];
 
   const alignReport: AlignReport = wallsStraightened ? {
     ...aligned.report,
@@ -784,6 +790,7 @@ function optimizePlanDraft(
     liveMissingPositionsRemoved: 0,
   };
   return {
+    graphStraightening,
     config: persistedConfig,
     layout: persistedLayout,
     report: {
@@ -803,6 +810,7 @@ function optimizePlanDraft(
       partitionsMerged: changed ? partitionsMerged : 0,
       partitionsReconciled: changed ? partitionsReconciled : 0,
       openingsRehosted: changed ? openingsRehosted : 0,
+      openingParametersCanonicalized: 0,
       wallsStraightened: changed ? wallsStraightened : 0,
       wallsStraightenSkipped,
       maxStraightenShiftCm: changed ? maxStraightenShiftCm : 0,
@@ -880,10 +888,30 @@ export function optimizePlans(
   report.partitionsMerged = stats.partitionsMerged;
   report.partitionsReconciled = stats.partitionsReconciled;
   report.openingsRehosted = stats.openingsRehosted;
-  // The report counts removed compatibility wall records, not invisible
-  // graph seams compacted while their material/owner profile stays unchanged.
+  // Legacy reports retain their compatibility-record semantics. Current graph
+  // reports below count the actual structural operations instead.
   report.wallsMerged = (configIn.spaces||[]).reduce((total:number,space:any,index:number)=>total
     +Math.max(0,(space.walls||[]).length-(result.config.spaces[index]?.walls||[]).length),0);
+  if (modelFrom === PLAN_MODEL_VERSION) {
+    Object.assign(report, measureGraphOptimizeEffects(baseline, result.config.spaces,
+      references.layout, result.layout));
+    report.wallsMerged = stats.wallsMerged;
+    report.spansMerged = 0; // Current zero-wall atoms are graph walls, counted by collapse-node.
+    report.wallsStraightened = result.graphStraightening.reduce((sum, item) => sum + item.wallsStraightened, 0);
+    report.maxStraightenShiftCm = 0; report.maxStraightenSpace = '';
+    for (const item of result.graphStraightening) if (item.maxStraightenShiftCm > report.maxStraightenShiftCm) {
+      report.maxStraightenShiftCm = item.maxStraightenShiftCm;
+      report.maxStraightenSpace = item.maxStraightenSpace;
+    }
+    // A stale compatibility projection or scalar/metadata normalization is also
+    // real maintenance. Count changed representations, not the numerical proposal.
+    report.canonicalized = (configIn.spaces || []).reduce((sum: number, space: any, i: number) => sum
+      + Number(contentJson({ walls: space.walls, wall_segments: space.wall_segments, rooms: space.rooms,
+        partitions: space.partitions, open_spans: space.open_spans }) !== contentJson({
+        walls: result.config.spaces[i]?.walls, wall_segments: result.config.spaces[i]?.wall_segments,
+        rooms: result.config.spaces[i]?.rooms, partitions: result.config.spaces[i]?.partitions,
+        open_spans: result.config.spaces[i]?.open_spans })), 0);
+  }
   Object.assign(report, references.report);
   if (!changed) {
     // No persisted change cancels effect counters, not observations or the
@@ -900,5 +928,17 @@ export function optimizePlans(
       (report as any)[key] = Array.isArray(value) ? [] : typeof value === 'string' ? '' : 0;
     }
   }
-  return { ...result, changed, report };
+  // A metadata-only canonical rewrite must still have an explanation, including
+  // when no physical point, host or reference changed. Never offer a blank Apply.
+  if (modelFrom === PLAN_MODEL_VERSION && changed && !report.moved && !report.rotated && !report.latticeCoordinatesCanonicalized
+      && !report.migrated && !report.canonicalized && !report.wallSegmentsMigrated
+      && !report.roomDraftsMigrated && !report.roomDraftSegmentsMigrated && !report.legacyZeroWallsMigrated
+      && !report.wallsMerged && !report.spansMerged && !report.partitionsMerged
+      && !report.partitionsReconciled && !report.openingsRehosted && !report.openingParametersCanonicalized
+      && !report.wallsStraightened && !report.spaceRefsRemapped && !report.roomRefsRemapped
+      && !report.positionsRemapped && !report.markersDetached && !report.orphanRoomLabelsRemoved
+      && !report.orphanDevicePositionsRemoved && !report.orphanGroupPositionsRemoved
+      && !report.invalidPositionsRemoved.length) report.canonicalized = 1;
+  const { graphStraightening: _graphStraightening, ...publicResult } = result;
+  return { ...publicResult, changed, report };
 }

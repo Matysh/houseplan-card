@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1284,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "The discrepancy is in the new model11 graph/numerical Optimize bridge introduced after the stable base; report final accepted graph movement and real seam collapses, keeping legacy migration counters unchanged.",
+  "summary": {
+    "ru": "Отчёт оптимизации модели 11 отражает записанные изменения графа и объясняет канонизацию параметров проёмов.",
+    "en": "Model11 Optimize reports persisted graph effects and explains exact opening parameter maintenance."
+  }
+}
