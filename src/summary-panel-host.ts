@@ -32,6 +32,7 @@ export interface SummaryPanelHost extends Node {
   readonly _modeTransitionBusy?: boolean;
   hass?: SummaryHass;
   panelHost: boolean;
+  readonly panelRoutePrefix?: string | null;
   narrow: boolean | null;
   renderRoot: ShadowRoot;
   ownerDocument: Document;

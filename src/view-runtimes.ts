@@ -17,7 +17,7 @@ import { summaryRuntimeLoader } from './summary-runtime-loader';
 import { ViewRuntimeBoundary, guardedViewRuntimeReload } from './view-runtime-boundary';
 import { zigbeeTopologyOverlayRequested } from './zigbee-topology-overlay-bridge';
 import { effectiveSummaryVisible, parseSummaryLocal, summaryPanelOf } from './summary-panel';
-import { summaryPreferenceKey, type SummaryPreferenceHost } from './summary-panel-identity';
+import { readSummaryPreference, summaryPreferenceKey, type SummaryPreferenceHost } from './summary-panel-identity';
 
 export interface ViewRuntimeHost extends SummaryPreferenceHost {
   readonly isConnected: boolean;
@@ -53,7 +53,7 @@ export function summaryRecoveryRequested(host: ViewRuntimeHost): boolean {
   const key = summaryPreferenceKey(host);
   if (!key) return false;
   try {
-    const raw = JSON.parse(host.ownerDocument.defaultView?.localStorage.getItem(key) || 'null');
+    const raw = readSummaryPreference(host, host.ownerDocument.defaultView?.localStorage);
     const config = summaryPanelOf(host._settings, key => key).config;
     return !!config && effectiveSummaryVisible({ view: true, localShow: parseSummaryLocal(raw, null).show,
       showOnMobile: config.show_on_mobile, narrow: host.narrow, fits: true });

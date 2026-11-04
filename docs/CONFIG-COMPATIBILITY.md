@@ -655,6 +655,15 @@ choices may need to be set again. While the canonical array or matching ancestor
 is not available yet, preferences stay session-only and no guessed persistent
 key is read or written (`summary-panel-identity.ts`).
 
+The main HA panel uses a `panel-root-v2` slot at the route prefix supplied by
+its shell (#1286), not a resolver DOM position or the currently visited foreign
+HA page. If the canonical record is absent, readable version-1 legacy panel
+records for this exact user/route/host can seed it only when their normalized
+preferences agree. Reading does not rewrite or delete them; the next explicit
+edit writes the canonical record. Conflicting historical records have no
+recency evidence: they remain untouched and require choosing the preference
+once again. Lovelace cards, other users/routes and future records are excluded.
+
 The writer authority is explicit:
 
 | Writer | Summary-panel authority |

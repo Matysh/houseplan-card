@@ -943,6 +943,8 @@ export class HouseplanCard extends LitElement {
   }
   public hass?: any;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
+  /** Stable owner supplied by the HA shell, even while another route is active. */
+  public panelRoutePrefix: string | null = null;
   private readonly _panelHeaderMemo = new PanelHeaderMemo();
   private _panelHeaderChoice: PanelHeaderMeasurement = { phase: 0, phone: false, height: 0 };
   private _panelHeaderObservedContent = '';

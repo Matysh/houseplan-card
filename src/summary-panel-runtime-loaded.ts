@@ -24,7 +24,7 @@ import { summaryIcon } from './summary-panel-icons';
 import { ControlSurfacePresentation } from './control-surface-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
-import { stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-panel-identity';
+import { readSummaryPreference, stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-panel-identity';
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
@@ -531,7 +531,7 @@ export class LoadedSummaryPanelRuntime {
     let raw: unknown = null;
     let legacy: unknown = null;
     let storageAvailable = true;
-    try { raw = JSON.parse(localStorage.getItem(key) || 'null'); } catch { storageAvailable = false; }
+    try { raw = readSummaryPreference(this.host, localStorage); } catch { storageAvailable = false; }
     try { legacy = JSON.parse(localStorage.getItem(SUMMARY_PANEL_LEGACY_SCALE_KEY) || 'null'); } catch { storageAvailable = false; }
     this.storageKey = key;
     this.storageUnavailable = !storageAvailable;
@@ -540,13 +540,16 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private saveLocal(patch: Partial<SummaryPanelLocalPreferences>): void {
+    // A click may precede the host's next update after user/route replacement.
+    // Never persist through the previous identity's remembered storage key.
+    this.loadLocal();
+    this.storageKey = this.preferenceKey();
     this.local = {
       ...this.local, ...patch, version: 1,
       icon_scale: normalizeSummaryScale(patch.icon_scale ?? this.local.icon_scale),
       font_scale: normalizeSummaryScale(patch.font_scale ?? this.local.font_scale),
     };
     this.host._kioskScale = { icon: this.local.icon_scale, font: this.local.font_scale };
-    this.storageKey ||= this.preferenceKey();
     let stored = false;
     try {
       if (this.storageKey) {

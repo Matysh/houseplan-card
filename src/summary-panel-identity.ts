@@ -3,15 +3,16 @@
  *
  * Home Assistant may move a card element between visual Masonry columns
  * without changing its logical position in the dashboard. Native Masonry
- * therefore uses the canonical `cards` array; other hosts retain the
- * structural fallback introduced with the summary panel.
+ * therefore uses the canonical `cards` array. The main panel owns one slot
+ * at its registered route; other card hosts retain their structural fallback.
  */
-import { summaryLocalKey } from './summary-panel';
+import { parseSummaryLocal, summaryLocalKey } from './summary-panel';
 import { presentationRouteOwner } from './route-kiosk';
 
 export interface SummaryPreferenceHost {
   readonly hass?: { user?: { id?: string; name?: string } };
   readonly panelHost: boolean;
+  readonly panelRoutePrefix?: string | null;
   readonly ownerDocument: Document;
 }
 
@@ -19,13 +20,54 @@ export interface SummaryPreferenceHost {
 export function summaryPreferenceKey(host: SummaryPreferenceHost): string | null {
   return summaryLocalKey({
     userId: host.hass?.user?.id || host.hass?.user?.name,
-    // Preserve the established preference address used before sharing this
-    // reader with the cold-runtime notice. Do not invent a '/' key when a
-    // detached/synthetic host has no owning Window.
-    path: presentationRouteOwner(location.pathname, host.panelHost),
+    // The shell owns the panel route even while HA visits another page;
+    // Lovelace retains the full dashboard/view path used by existing cards.
+    path: host.panelHost && host.panelRoutePrefix
+      ? host.panelRoutePrefix : presentationRouteOwner(location.pathname, host.panelHost),
     host: host.panelHost ? 'panel' : 'lovelace',
-    slot: stableSummaryPlacementSlot(host),
+    // HA caches/reorders whole panels when visiting other routes. A panel is
+    // already uniquely owned by its route, not by its resolver's DOM index.
+    slot: host.panelHost ? 'panel-root-v2' : stableSummaryPlacementSlot(host),
   });
+}
+
+/** Read legacy panel preferences only when every eligible record agrees.
+ * No writes or deletions: the next explicit user edit owns the canonical key.
+ * Lovelace/Masonry records never participate in panel recovery (#1286). */
+export function readSummaryPreference(
+  host: SummaryPreferenceHost,
+  storage: Pick<Storage, 'getItem' | 'key' | 'length'> | undefined,
+): unknown {
+  const key = summaryPreferenceKey(host);
+  if (!key || !storage) return null;
+  const current = storage.getItem(key);
+  if (current !== null) return JSON.parse(current);
+  if (!host.panelHost) return null;
+  const prefix = key.slice(0, key.lastIndexOf(':') + 1);
+  let inherited: ReturnType<typeof parseSummaryLocal> | undefined;
+  for (let i = 0; i < storage.length; i++) {
+    const oldKey = storage.key(i);
+    if (!oldKey?.startsWith(prefix) || oldKey === key) continue;
+    let slot: string;
+    let value: unknown;
+    try {
+      slot = decodeURIComponent(oldKey.slice(prefix.length));
+      if (slot !== 'houseplan-card' && !(/(?:^|\/)houseplan-panel:\d+\//.test(slot)
+        && /(?:^|\/)houseplan-card:\d+$/.test(slot))) continue;
+      value = JSON.parse(storage.getItem(oldKey) || 'null');
+    } catch { continue; }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+    const row = value as Record<string, unknown>;
+    if (row.version !== 1 || typeof row.show !== 'boolean'
+      || typeof row.icon_scale !== 'number' || !Number.isFinite(row.icon_scale)
+      || typeof row.font_scale !== 'number' || !Number.isFinite(row.font_scale)) continue;
+    const candidate = parseSummaryLocal(row, null);
+    // Historical keys have no timestamp. Conflicting choices cannot safely
+    // be ordered; leave them untouched instead of guessing which was last.
+    if (inherited && JSON.stringify(candidate) !== JSON.stringify(inherited)) return null;
+    inherited = candidate;
+  }
+  return inherited ?? null;
 }
 
 type PlacementNode = {

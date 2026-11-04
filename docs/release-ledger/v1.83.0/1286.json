@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1286,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Persist the main panel summary preference independently of HA resolver DOM order and the currently visited route, without merging independent card preferences.",
+  "summary": {
+    "ru": "Сводная панель запоминает состояние после переходов по HA и перезагрузки.",
+    "en": "The summary panel remembers its visibility across HA navigation and reload."
+  }
+}

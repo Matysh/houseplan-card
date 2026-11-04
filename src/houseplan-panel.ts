@@ -11,6 +11,7 @@ interface PanelRoute { prefix?: string; path?: string; }
 interface HouseplanCardElement extends HTMLElement {
   hass?: unknown;
   panelHost: boolean;
+  panelRoutePrefix: string | null;
   narrow: boolean | null;
   routeKiosk: RouteKiosk;
   setConfig(config: { type: 'custom:houseplan-card' }): void;
@@ -108,6 +109,7 @@ export class HouseplanPanel extends HTMLElement {
     if (!this._card) return;
     const route = this._route as PanelRoute | undefined;
     const prefix = route?.prefix || location.pathname.split('/').slice(0, 2).join('/');
+    this._card.panelRoutePrefix = prefix;
     // The fallback also accepts the older demo's full-path route shape.
     let path = route?.path ?? location.pathname.slice(prefix.length);
     if (path === prefix || path.startsWith(prefix + '/')) path = path.slice(prefix.length);

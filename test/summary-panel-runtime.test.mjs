@@ -5,6 +5,7 @@ import { nothing } from 'lit';
 import { SUMMARY_PANEL_API_VERSION } from '../test-build/summary-panel-api.js';
 import { SUMMARY_PANEL_LEGACY_SCALE_KEY, resolveSummaryLayout, summaryLocalKey } from '../test-build/summary-panel.js';
 import { LoadedSummaryPanelRuntime } from '../test-build/summary-panel-runtime-loaded.js';
+import { summaryPreferenceKey } from '../test-build/summary-panel-identity.js';
 
 const installBrowserGlobals = () => {
   const previous = {
@@ -20,6 +21,8 @@ const installBrowserGlobals = () => {
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
     value: {
+      get length() { return values.size; },
+      key: (index) => [...values.keys()][index] ?? null,
       getItem: (key) => { reads.push(key); return values.get(key) ?? null; },
       setItem: (key, value) => { writes.push(key); values.set(key, value); },
     },
@@ -75,6 +78,46 @@ const hostFixture = () => {
     _cacheSnapshot: () => undefined,
   };
 };
+
+test('#1286 runtime restores legacy On, persists explicit Off, and cold-restores after late user identity', () => {
+  const browser = installBrowserGlobals();
+  let runtime;
+  try {
+    const legacy = summaryLocalKey({ userId: 'alice', path: '/dashboard', host: 'panel',
+      slot: 'ha-panel-custom:0/houseplan-panel:0/main:0/houseplan-card:0' });
+    browser.values.set(legacy, JSON.stringify({ version: 1, show: true, icon_scale: 1.4, font_scale: 0.8 }));
+    const first = hostFixture(); first.panelRoutePrefix = '/dashboard';
+    runtime = new LoadedSummaryPanelRuntime(first); runtime.connect();
+    assert.deepEqual(runtime.local, { version: 1, show: true, icon_scale: 1.4, font_scale: 0.8 });
+    assert.equal(browser.writes.length, 0);
+    runtime.saveLocal({ show: false });
+    const canonical = summaryPreferenceKey(first);
+    assert.deepEqual(browser.writes, [canonical]);
+    assert.equal(JSON.parse(browser.values.get(legacy)).show, true, 'legacy is retained');
+    runtime.disconnect();
+    const next = hostFixture(); next.panelRoutePrefix = '/dashboard'; next.hass.user = undefined;
+    runtime = new LoadedSummaryPanelRuntime(next); runtime.connect();
+    next.hass.user = { id: 'alice', is_admin: true }; runtime.updated();
+    assert.deepEqual(runtime.local, { version: 1, show: false, icon_scale: 1.4, font_scale: 0.8 });
+    assert.equal(browser.writes.length, 1, 'restoring does not write a default');
+  } finally { runtime?.disconnect(); browser.restore(); }
+});
+
+test('#1286 a click with temporarily missing user cannot write to the prior user key', () => {
+  const browser = installBrowserGlobals();
+  let runtime;
+  try {
+    const host = hostFixture();
+    runtime = new LoadedSummaryPanelRuntime(host); runtime.connect();
+    runtime.saveLocal({ show: true });
+    const originalKey = summaryPreferenceKey(host);
+    host.hass.user = undefined;
+    runtime.saveLocal({ show: false });
+    assert.deepEqual(browser.writes, [originalKey]);
+    assert.equal(JSON.parse(browser.values.get(originalKey)).show, true);
+    assert.equal(runtime.storageUnavailable, true, 'a session-only edit is not persistent success');
+  } finally { runtime?.disconnect(); browser.restore(); }
+});
 
 test('#660/#1132 summary controls stay in ordinary editors but are never rendered in kiosk', () => {
   const host = hostFixture();
@@ -194,7 +237,7 @@ test('#493 same-key scale remains authoritative and identity changes discard the
   try {
     const host = hostFixture();
     const key = summaryLocalKey({
-      userId: 'alice', path: '/dashboard', host: 'panel', slot: 'houseplan-card', // #1113 panel-root identity
+      userId: 'alice', path: '/dashboard', host: 'panel', slot: 'panel-root-v2', // #1286 route-owned panel identity
     });
     browser.values.set(key, JSON.stringify({
       version: 1, show: true, icon_scale: 2, font_scale: 1.5,
