@@ -1,0 +1,5 @@
+{
+  "schema": 1, "issue": 1264, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Restore exact shared-room incidence after model11 Resize without whole-plan normalization. Original connected source runs prove the scope; material conflicts refuse. Native HA Resize/Undo/Redo/reload and subsequent Keep-walls deletion require E2E before the next beta.",
+  "summary": {"ru":"Перенос общей границы сохраняет узлы соседей, физические стены и точный host проёмов.","en":"Moving a shared boundary retains neighbour incidence, physical walls and exact opening hosts."}
+}

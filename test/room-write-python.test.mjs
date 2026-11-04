@@ -2,6 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validateOrdinaryRoomWrite, ordinaryRoomWriteReply } from '../demo/helpers/room-write-python.mjs';
+import { incidentResizeFixture, incidentResizeDraft, incidentResizeOpening } from './helpers/resize-incident-fixture.mjs';
+import { commitGraphEdit } from '../test-build/graph-edit-intent.js';
+
+test('#1264 ordinary production validation accepts the exact Resize child host and rejects an orphan', () => {
+  const source = incidentResizeOpening(incidentResizeFixture());
+  const target = commitGraphEdit(source, incidentResizeDraft(source), { kind: 'resize', rooms: ['upper-left','upper-right'] });
+  const previous = { model_version: 11, spaces: [source], markers: [], settings: {} };
+  const candidate = { ...structuredClone(previous), spaces: [target] };
+  const accepted = validateOrdinaryRoomWrite(previous, { type: 'houseplan/config/set', config: candidate });
+  assert.deepEqual(accepted.spaces[0].openings, candidate.spaces[0].openings);
+  assert.notEqual(accepted.spaces[0].openings[0].host.id, source.openings[0].host.id);
+  const invalid = structuredClone(candidate);
+  invalid.spaces[0].openings[0].host.id = 'missing-wall';
+  const refused = ordinaryRoomWriteReply(previous, { type: 'houseplan/config/set', config: invalid });
+  assert.equal(refused.ok, false);
+  assert.equal(refused.error.code, 'invalid_format');
+});
 
 // Synthetic #804 source and the exact candidate emitted by native Select/Save.
 // It promotes the fully consumed atomic child, never the old carrier's tails.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Resize nodes incident fixed room walls and reuses their exact shared atoms, preserving physical identity, independent material and opening child hosts; conflicting material still refuses atomically. Split/conversion lineage now composes across the full original source. [#1264](https://github.com/Matysh/houseplan-card/issues/1264)
+
 - Reuse one exact physical divider for both rooms created by Split, so their shared wall has one identity and thickness through Undo/Redo. [#1279](https://github.com/Matysh/houseplan-card/issues/1279)
 
 - Separate Optimize browser success fixtures from overlapping components and pre-existing decimal maintenance debt; retain conservative refusal coverage and full Draw/Undo/Redo fixed-point checks. [#1272](https://github.com/Matysh/houseplan-card/issues/1272)

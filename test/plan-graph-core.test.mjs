@@ -164,6 +164,35 @@ test('convert-edge remaps exact opening hosts and preserves opaque source proper
   assert.deepEqual(result.graph.edges[0].props,{partition:'keep',wall:'keep'});
   assert.deepEqual(result.mapping.hosts.o,{kind:'wall',id:'wall',tq:['3','4'],t:0.75});
 });
+test('#1264 split then reversed conversion retains the complete original source mapping',()=>{
+  const graph={version:1,nodes:[node('a',0,0),node('b',1,0),node('c',.5,0)],
+    edges:[edge('source','a','b','partition'),edge('target','c','a')],rooms:[],dependencies:[]};
+  const before=structuredClone(graph);
+  const result=G.applyGraphOperation(graph,{kind:'batch',operations:[
+    {kind:'insert-on-edge',edge:{kind:'partition',id:'source'},t:['1','2'],node:'c',newEdgeId:'tail'},
+    {kind:'convert-edge',edge:{kind:'partition',id:'source'},target:{kind:'wall',id:'target'}},
+  ]},{hosts:[{id:'left',host:{kind:'partition',id:'source',t:.25,tq:['1','4']}},
+    {id:'right',host:{kind:'partition',id:'source',t:.75,tq:['3','4']}}]});
+  assert.deepEqual(result.mapping.edges['partition:source'],[
+    {ref:{kind:'wall',id:'target'},sourceInterval:[['0','1'],['1','2']],reverse:true},
+    {ref:{kind:'partition',id:'tail'},sourceInterval:[['1','2'],['1','1']],reverse:false},
+  ]);
+  assert.deepEqual(result.mapping.hosts.left,{kind:'wall',id:'target',t:.5,tq:['1','2']});
+  assert.deepEqual(result.mapping.hosts.right,{kind:'partition',id:'tail',t:.5,tq:['1','2']});
+  assert.deepEqual(graph,before);
+});
+test('#1264 conversion preserves equivalent opaque JSON despite object key order and still refuses conflicts',()=>{
+  const graph={version:1,nodes:[node('a',0,0),node('b',1,0)],rooms:[],dependencies:[],edges:[
+    {...edge('source','a','b'),props:{custom:{a:1,b:2}}},
+    {...edge('target','a','b'),props:{custom:{b:2,a:1}}}]};
+  const operation={kind:'convert-edge',edge:{kind:'wall',id:'source'},target:{kind:'wall',id:'target'}};
+  const result=G.applyGraphOperation(graph,operation);
+  assert.deepEqual(result.graph.edges[0].props,{custom:{a:1,b:2}});
+  const bad=structuredClone(graph);bad.edges[1].props.custom.b=3;
+  const before=structuredClone(bad);
+  assert.throws(()=>G.applyGraphOperation(bad,operation),/props-conflict/);
+  assert.deepEqual(bad,before);
+});
 test('current authoritative cm ignores stale legacy open spans; source version is explicit',()=>{
   const initial=G.migrateGraphSpace(corpus.migrations.find(r=>r.id==='shared-room-only').space);
   const source=structuredClone(initial.space);

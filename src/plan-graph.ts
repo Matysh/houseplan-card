@@ -534,7 +534,7 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
           else if(pointEq(a,d)&&pointEq(b,c))reverse=true;
           else fail('convert-geometry');
           for(const[k,value]of Object.entries(source.props||{}))
-            if(k in (target.props||{})&&JSON.stringify(target.props![k])!==JSON.stringify(value))fail('props-conflict',k);
+            if(k in (target.props||{})&&!jsonValueEqual(target.props![k],value))fail('props-conflict',k);
           const props={...(source.props||{}),...(target.props||{})};
           if(Object.keys(props).length)target.props=props;
           if(op.cm!==undefined)target.cm=op.cm;
@@ -545,7 +545,13 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
         for(const room of graph.rooms)room.edges=room.edges.map(ref=>edgeKey(ref)===edgeKey(old)
           ?{...op.target,reverse:ref.reverse!==reverse}:ref);
         const ranges:EdgeRange[]=[{ref:targetRef(op.target),sourceInterval:[['0','1'],['1','1']],reverse}];
-        mapping.edges[edgeKey(old)]=ranges;remapHosts(old,ranges);return;
+        // Compose a conversion with earlier splits of the same original source.
+        // The direct old key can already describe its full pre-split domain.
+        const hadMapping=Object.prototype.hasOwnProperty.call(mapping.edges,edgeKey(old));
+        for(const list of Object.values(mapping.edges))for(const range of list)if(edgeKey(range.ref)===edgeKey(old)){
+          range.ref=targetRef(op.target);range.reverse=range.reverse!==reverse;
+        }
+        if(!hadMapping)mapping.edges[edgeKey(old)]=ranges;remapHosts(old,ranges);return;
       }
       case 'set-thickness': for (const ref of op.edges) findEdge(ref).cm = op.cm; return;
       case 'rehost-opening': {

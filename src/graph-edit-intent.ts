@@ -5,6 +5,7 @@ import {
   applyGraphOperation, projectGraphSpace, PlanGraphError,
 } from './plan-graph';
 import * as Q from './plan-exact';
+import { jsonValueEqual } from './json-value-equal';
 import { wallKey, thicknessCmAt } from './wall-thickness';
 import { compareCodePoints } from './codepoint-order';
 import { contentFingerprint } from './visual-continuity';
@@ -194,6 +195,110 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     edges:cycle.edges.map(e=>({...refByRoomEdge.get(JSON.stringify([cycle.room,edgeKey(e)]))!,reverse:e.reverse}))});
   plan.operations.push(...cloneDeps.values());
 }
+/** Node only the selected Resize's original room-wall incidence/run cohort. */
+function settleResizePlan(graph:PlanGraph,index:ReturnType<typeof graphIndex>,rooms:readonly string[],
+  allocation:Allocation,plan:Plan):void{
+  const selectedRooms=new Set(rooms),origins=new Map<string,Set<string>>();
+  for(const edge of graph.edges)origins.set(edgeKey(edge),new Set([edgeKey(edge)]));
+  for(const[key,variants]of plan.variants)for(const variant of variants){
+    const values=origins.get(edgeKey(variant))||new Set<string>();values.add(key);origins.set(edgeKey(variant),values);
+  }
+  const owned=graph.edges.filter(e=>e.kind==='wall'&&(index.owners.get(edgeKey(e))||[]).length);
+  const roots=new Map(owned.map(e=>[edgeKey(e),edgeKey(e)]));
+  const root=(key:string):string=>{const p=roots.get(key);if(!p)return key;if(p===key)return key;const r=root(p);roots.set(key,r);return r;};
+  const sameMaterial=(a:GraphEdge,b:GraphEdge)=>a.cm===b.cm&&jsonValueEqual(a.props||null,b.props||null);
+  for(const incident of index.incident.values()){
+    const walls=incident.filter(e=>roots.has(edgeKey(e)));
+    for(let i=0;i<walls.length;i++)for(let j=i+1;j<walls.length;j++){
+      const a=walls[i],b=walls[j],pa=index.points.get(a.from)!,pb=index.points.get(a.to)!;
+      if(!Q.orientation(pa,pb,index.points.get(b.from)!).n&&!Q.orientation(pa,pb,index.points.get(b.to)!).n)
+        roots.set(root(edgeKey(b)),root(edgeKey(a)));
+    }
+  }
+  const sourcePairs=(a:string,b:string,predicate:(a:GraphEdge,b:GraphEdge)=>boolean):boolean=>{
+    for(const x of origins.get(a)||[])for(const y of origins.get(b)||[]){
+      const left=index.edges.get(x),right=index.edges.get(y);
+      if(left&&right&&roots.has(x)&&roots.has(y)&&predicate(left,right))return true;
+    }
+    return false;
+  };
+  const sameRun=(a:string,b:string)=>sourcePairs(a,b,(x,y)=>root(edgeKey(x))===root(edgeKey(y)));
+  const incidentBefore=(a:string,b:string)=>sourcePairs(a,b,(x,y)=>[x.from,x.to].some(n=>n===y.from||n===y.to));
+  const changed=new Set<string>();
+  const edges=[...plan.newEdges.values()].filter(e=>e.kind==='wall').sort((a,b)=>codepoint(edgeKey(a),edgeKey(b)));
+  for(const edge of edges){
+    const key=edgeKey(edge),old=index.edges.get(key);
+    const selected=[...(origins.get(key)||[])].some(source=>(index.owners.get(source)||[]).some(room=>selectedRooms.has(room)));
+    if(selected&&(!old||old.from!==edge.from||old.to!==edge.to
+      ||!Q.pointEq(index.points.get(old.from)!,plan.nodePoints.get(edge.from)!)
+      ||!Q.pointEq(index.points.get(old.to)!,plan.nodePoints.get(edge.to)!)))changed.add(key);
+  }
+  if(!changed.size)return;
+  type Cut={t:Q.Exact;node:string};
+  const tables=new Map<string,Cut[]>();
+  const put=(edge:GraphEdge,node:string):void=>{
+    const a=plan.nodePoints.get(edge.from)!,b=plan.nodePoints.get(edge.to)!,point=plan.nodePoints.get(node)!;
+    if(Q.orientation(a,b,point).n)return;
+    const t=Q.projectParameter(point,a,b);if(Q.cmp(t,Q.ZERO)<=0||Q.cmp(t,Q.ONE)>=0)return;
+    const key=edgeKey(edge),cuts=tables.get(key)||[{t:Q.ZERO,node:edge.from},{t:Q.ONE,node:edge.to}];
+    const old=cuts.find(c=>Q.eq(c.t,t));if(old&&old.node!==node)failure('resize-incidence-node',node);
+    if(!old)cuts.push({t,node});tables.set(key,cuts);
+  };
+  const selectedIndices=edges.flatMap((edge,i)=>changed.has(edgeKey(edge))?[i]:[]);
+  const pairs=function*():Generator<readonly[number,number]>{
+    for(let i=0;i<edges.length;i++){
+      if(changed.has(edgeKey(edges[i])))for(let j=i+1;j<edges.length;j++)yield[i,j];
+      else for(const j of selectedIndices)if(j>i)yield[i,j];
+    }
+  };
+  for(const[i,j]of pairs()){
+    const a=edges[i],b=edges[j],ka=edgeKey(a),kb=edgeKey(b);
+    if(!sameRun(ka,kb)&&!incidentBefore(ka,kb))continue;
+    for(const node of[a.from,a.to])put(b,node);
+    for(const node of[b.from,b.to])put(a,node);
+  }
+  const dependencies=new Map(graph.dependencies.map(d=>[d.node,d]));
+  for(const op of plan.operations){
+    if(op.kind==='set-dependency')dependencies.set(op.dependency.node,op.dependency);
+    else if(op.kind==='retire-dependency'||op.kind==='move-node'&&op.detachDependency)dependencies.delete(op.node);
+  }
+  const pieces:Array<{edge:GraphEdge;source:string}>=[],bySource=new Map<string,GraphEdge[]>();
+  for(const edge of edges){
+    const key=edgeKey(edge),cuts=(tables.get(key)||[{t:Q.ZERO,node:edge.from},{t:Q.ONE,node:edge.to}]).sort((a,b)=>Q.cmp(a.t,b.t));
+    const children:GraphEdge[]=cuts.slice(0,-1).map((cut,i)=>({...clone(edge),from:cut.node,to:cuts[i+1].node,
+      id:i===0?edge.id:allocation.id('wall',['resize-incidence',key,Q.encodeRational(cut.t)])}));
+    for(let i=cuts.length-2;i>0;i--){
+      plan.operations.push({kind:'insert-on-edge',edge:ref(edge),node:cuts[i].node,
+        t:Q.encodeRational(Q.div(cuts[i].t,cuts[i+1].t)),newEdgeId:children[i].id});
+      const dependency=dependencies.get(cuts[i].node);
+      plan.operations.push(dependency?{kind:'set-dependency',dependency:clone(dependency)}:{kind:'retire-dependency',node:cuts[i].node});
+    }
+    bySource.set(key,children);
+    for(const child of children){plan.newEdges.set(edgeKey(child),child);pieces.push({edge:child,source:key});}
+  }
+  const outside=(source:string)=>Number((index.owners.get(source)||[]).some(room=>!selectedRooms.has(room)));
+  pieces.sort((a,b)=>outside(b.source)-outside(a.source)||Number(index.edges.has(b.source))-Number(index.edges.has(a.source))
+    ||codepoint(edgeKey(a.edge),edgeKey(b.edge)));
+  const aliases=new Map<string,GraphEdgeRef>(),kept:typeof pieces=[];
+  for(const piece of pieces){
+    const a=piece.edge,matches=kept.filter(p=>{
+      if(!changed.has(piece.source)&&!changed.has(p.source)||!sameRun(piece.source,p.source))return false;
+      const b=p.edge;
+      return Q.pointEq(plan.nodePoints.get(a.from)!,plan.nodePoints.get(b.from)!)&&Q.pointEq(plan.nodePoints.get(a.to)!,plan.nodePoints.get(b.to)!)
+        ||Q.pointEq(plan.nodePoints.get(a.from)!,plan.nodePoints.get(b.to)!)&&Q.pointEq(plan.nodePoints.get(a.to)!,plan.nodePoints.get(b.from)!);
+    });
+    const target=matches.find(p=>sameMaterial(a,p.edge));
+    if(!target&&matches.length)failure('resize-incidence-material',edgeKey(a));
+    if(!target){kept.push(piece);continue;}
+    plan.operations.push({kind:'convert-edge',edge:ref(a),target:ref(target.edge)});
+    aliases.set(edgeKey(a),ref(target.edge));plan.newEdges.delete(edgeKey(a));
+  }
+  for(const[key,variants]of plan.variants){
+    const refs=variants.flatMap(r=>(bySource.get(edgeKey(r))||[r]).map(e=>aliases.get(edgeKey(e))||ref(e)));
+    plan.variants.set(key,[...new Map(refs.map(r=>[edgeKey(r),r])).values()]);
+  }
+}
+
 function legacyPartitionTargets(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'partitions'}>,source:any,namespace:'wall'|'partition'='partition'):
  {draft:any;intent:Extract<GraphEditIntent,{kind:'partitions'}>}{
   if(!source?.graphMapping)return{draft,intent};
@@ -665,7 +770,7 @@ function openingTargets(before:any,draft:any,intent:GraphEditIntent,sourceBefore
       const original=(sourceBefore?.openings||[]).find((o:any)=>o.id===opening.id);
       const input=[Number(opening.x),Number(opening.y)];
       const p=unchanged(input,oldPoint,original&&[original.x,original.y])?oldPoint:authoredPoint(input);
-      const candidates=(variants.get(edgeKey(oldHost))||[ref(currentHost)]).map(r=>index.edges.get(edgeKey(r))).filter((e):e is GraphEdge=>!!e);
+      const candidates=[...new Map([ref(currentHost),...(mapping.edges[edgeKey(oldHost)]||[]).map(range=>range.ref),...(variants.get(edgeKey(oldHost))||[])].map(r=>[edgeKey(r),r])).values()].map(r=>index.edges.get(edgeKey(r))).filter((e):e is GraphEdge=>!!e);
       const choices=candidates.map(edge=>({edge,t:Q.projectParameter(p,index.points.get(edge.from)!,index.points.get(edge.to)!)}))
         .filter(({edge,t})=>Q.cmp(t,Q.ZERO)>=0&&Q.cmp(t,Q.ONE)<=0&&numericNear(input,Q.pointToNumbers(Q.pointAt(index.points.get(edge.from)!,index.points.get(edge.to)!,t))))
         .sort((a,b)=>Q.cmp(Q.squaredDistance(p,Q.pointAt(index.points.get(a.edge.from)!,index.points.get(a.edge.to)!,a.t)),
@@ -737,7 +842,7 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
       }
       break;
     }
-    case'resize':resizePlan(before,draft,intent,sourceBefore,graph,index,allocation,plan);break;
+    case'resize':resizePlan(before,draft,intent,sourceBefore,graph,index,allocation,plan);settleResizePlan(graph,index,intent.rooms,allocation,plan);break;
     case'thickness':{
       const selected=new Map((intent.edges||[]).map(e=>[edgeKey(e),e]));
       for(const room of graph.rooms)if(intent.rooms?.includes(room.room))for(const e of room.edges)selected.set(edgeKey(e),e);

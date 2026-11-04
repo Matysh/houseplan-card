@@ -220,7 +220,9 @@ const dragHandle = (roomId, edge, mid, steps) => page.evaluate(
     card._rszUp(ev(clientX + dx, clientY + dy));
     card.requestUpdate();
     await card.updateComplete;
-    return moved ? null : 'предпросмотр не сдвинулся';
+    // pointerup flushes the queued RAF move, so this pre-release observation
+    // cannot claim that the final committed gesture did not move anything.
+    return moved ? null : 'нет синхронного предпросмотра до отпускания';
   }, { roomId, edge, mid, steps },
 );
 

@@ -3,10 +3,57 @@ import assert from 'node:assert/strict';
 import * as G from '../test-build/plan-graph.js';
 import * as Q from '../test-build/plan-exact.js';
 import {commitGraphEdit,commitGraphEditResult} from '../test-build/graph-edit-intent.js';
+import { incidentResizeFixture as incidentFixture, incidentResizeDraft as incidentDraft } from './helpers/resize-incident-fixture.mjs';
 const copy=structuredClone;
 const rectangle=(id,x0=0,x1=1)=>({id,name:id,poly:[[x0,0],[x1,0],[x1,1],[x0,1]],custom:{keep:id}});
 const migrate=space=>G.migrateGraphSpace(space).space;
 const base=()=>migrate({id:'floor',rooms:[rectangle('a')],extra:{keep:1}});
+test('#1264 Resize nodes the fixed neighbour and reuses its exact shared source atoms',()=>{
+  const before=incidentFixture(),snapshot=copy(before),result=commitGraphEditResult(before,incidentDraft(before),
+    {kind:'resize',rooms:['upper-left','upper-right']}),space=result.space;
+  assert.deepEqual(space.rooms.find(r=>r.id==='lower-left').poly,[[.1,.5],[.45,.5],[.5,.5],[.5,.85],[.1,.85]]);
+  const spans=space.wall_segments.filter(w=>w.a[1]===.5&&w.b[1]===.5)
+    .map(w=>[Math.min(w.a[0],w.b[0]),Math.max(w.a[0],w.b[0]),w.cm]).sort((a,b)=>a[0]-b[0]);
+  assert.deepEqual(spans,[[.1,.45,37],[.45,.5,37],[.5,.9,37]]);
+  const middle=space.wall_segments.find(w=>w.a[1]===.5&&w.b[1]===.5
+    &&Math.min(w.a[0],w.b[0])===.45&&Math.max(w.a[0],w.b[0])===.5);
+  assert.deepEqual(G.graphIndex(result.graph).owners.get('wall:'+middle.id).slice().sort(),['lower-left','upper-right']);
+  assert.deepEqual(space.partitions,before.partitions,'no coincident independent material is consumed');
+  assert.deepEqual(space.rooms.find(r=>r.id==='remote'),before.rooms.find(r=>r.id==='remote'));
+  assert.deepEqual(space.decor,before.decor);assert.deepEqual(space.extra,before.extra);
+  assert.equal(G.validateGraph(result.graph).ok,true);assert.deepEqual(before,snapshot);
+  const keys=new Set(result.graph.edges.map(G.edgeKey));
+  for(const ranges of Object.values(result.mapping.edges))for(const range of ranges)assert.ok(keys.has(G.edgeKey(range.ref)));
+  const permuted=copy(before);permuted.plan_graph.nodes.reverse();permuted.plan_graph.edges.reverse();permuted.plan_graph.rooms.reverse();
+  const again=commitGraphEdit(permuted,incidentDraft(permuted),{kind:'resize',rooms:['upper-right','upper-left']});
+  assert.deepEqual(again.plan_graph,result.graph);
+});
+test('#1264 Resize retains opening fields and binds the unchanged centre to its exact residual child',()=>{
+  let before=incidentFixture();
+  const host=before.wall_segments.find(w=>w.a[1]===.5&&w.b[1]===.5
+    &&Math.min(w.a[0],w.b[0])===.1&&Math.max(w.a[0],w.b[0])===.5);
+  const draft=copy(before);draft.openings=[{id:'window',type:'window',x:.475,y:.5,length:.02,angle:0,
+    host:{kind:'wall',id:host.id,t:(.475-host.a[0])/(host.b[0]-host.a[0])},contact:'binary_sensor.synthetic',custom:{keep:true}}];
+  before=commitGraphEdit(before,draft,{kind:'openings',ids:['window']});
+  const after=commitGraphEdit(before,incidentDraft(before),{kind:'resize',rooms:['upper-left','upper-right']});
+  const child=after.wall_segments.find(w=>w.id===after.openings[0].host.id);
+  assert.notEqual(child.id,host.id);assert.equal(child.cm,37);
+  assert.deepEqual(after.openings,[{...before.openings[0],host:{...before.openings[0].host,id:child.id,t:.5,tq:['1','2']}}]);
+  assert.equal(Math.min(child.a[0],child.b[0]),.45);assert.equal(Math.max(child.a[0],child.b[0]),.5);
+  assert.ok(after.wall_segments.filter(w=>w.a[0]===w.b[0]).every(w=>w.cm===0));
+});
+for(const conflict of ['thickness','metadata'])test('#1264 conflicting incident '+conflict+' refuses Resize atomically',()=>{
+  let before=incidentFixture();
+  const right=before.wall_segments.find(w=>w.a[1]===.5&&w.b[1]===.5&&Math.min(w.a[0],w.b[0])===.5);
+  if(conflict==='thickness')before=commitGraphEdit(before,copy(before),{kind:'thickness',edges:[{kind:'wall',id:right.id}],cm:43});
+  else{
+    const draft=copy(before);draft.wall_segments.find(w=>w.id===right.id).custom={keep:'exclusive source'};
+    before=commitGraphEdit(before,draft,{kind:'metadata'});
+  }
+  const snapshot=copy(before);
+  assert.throws(()=>commitGraphEdit(before,incidentDraft(before),{kind:'resize',rooms:['upper-left','upper-right']}),/resize-incidence-material/);
+  assert.deepEqual(before,snapshot);
+});
 test('#1279 a new Split divider is one physical carrier owned by both room cycles',()=>{
   const before=base(),draft=copy(before);
   draft.rooms[0].poly=[[0,0],[.5,0],[.5,1],[0,1]];
