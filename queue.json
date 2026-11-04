@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2851,
+  "revision": 2852,
   "nextTicket": 173,
   "nextFence": 173,
   "tasks": {
@@ -2837,7 +2837,7 @@
       "ownerDecision": null,
       "ticket": 172,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793804356625,
       "reviewEntry": 2,
       "patchId": "1c4c94c1f047301129fe029a856a87115b2b0a50",
@@ -3085,19 +3085,15 @@
         "test/golden-active-pan-frame.test.mjs"
       ],
       "s6": {
-        "id": "20261104T145020677-5367d51a",
+        "id": "20261104T145933715-eca95c3a",
         "name": "Тесты для задачи #1277 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T145020677-5367d51a/report.json",
-        "materialSha": "8df06807fef1a95325898b77aff9235e94eff871",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T145933715-eca95c3a/report.json",
+        "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
         "status": "passed",
-        "finishedAt": "2026-11-04T14:50:51.090Z",
+        "finishedAt": "2026-11-04T14:59:35.784Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-        "at": 1793804076042
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -3326,9 +3322,9 @@
     "fence": 172,
     "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
     "expectedBase": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793804361570,
-    "expiresAt": 1793804669164,
+    "expiresAt": 1793807976631,
     "patchId": "1c4c94c1f047301129fe029a856a87115b2b0a50"
   },
   "events": {
@@ -3490,6 +3486,34 @@
           "finishedAt": "2026-11-04T14:50:51.090Z",
           "failures": []
         }
+      }
+    },
+    "finish:9e366bdd-d682-4b81-b0c3-65d18377486d:finish:3:s6-complete": {
+      "digest": "52dda7f2b385d7172ab7796b408e9a631d2a985a4ccfeb7ecc1cf5b6e56d8518",
+      "issue": 1277,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1277,
+        "at": 1793804376631,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T145933715-eca95c3a",
+          "name": "Тесты для задачи #1277 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T145933715-eca95c3a/report.json",
+          "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
+          "status": "passed",
+          "finishedAt": "2026-11-04T14:59:35.784Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "До: статический active-pan зависел от случайной фазы compositor-опоры с бюджетом обновления 100 ms/15%; прочие кадры требовали проверки ранее принятой компоновки UI.\n\nПосле: после прежних восьми native mouse moves запрашивается один нормальный полный Lit-кадр. Мышь остаётся зажата; строго проверяются identity исходного `_panStart`, `lock=pan` и равенство camera/config до и после рендера. SVG- и HTML-основы соответствуют полному кадру, как при обычном обновлении UI во время активного жеста. Производственный runtime, screenshot flags, thresholds, masks и timeouts не менялись. Динамическую плавность проверяют отдельные native smokes.\n\nИсследованы и отвергнуты покадровые движения, ожидание 100 ms refresh и округление client coordinates: они не обеспечили стабильность. Финальный полный Lit-кадр дал по пять независимых native captures каждой темы: внутри темы все PNG побайтно одинаковы, все 20 попарных сравнений имеют ratio 0. Две официальные сцены на `16f87f914` совпали с ними.\n\nСветлый SHA: `25bf2c25fe8d4c85c025e05edb2f8ee82a37247e7399d85a25980d01fc263da7`. Тёмный: `c9ad9ea55ba7…`. Полное сравнение сохранено в `artifacts/grid-full-frame-comparison.json`.\n\n### Проверки\n\n- 12 адресных unit PASS: восемь новых (сохранность snapshot; отказ при release/replacement/swipe/camera/config mutation; распространение render failure) и четыре существующих repaint-теста.\n- Product build с TypeScript PASS для подготовки канонического захвата.\n- Контрольный stable-rest после приёмки: **251/251 PASS**, 0 skipped/errors, прежние thresholds. Источник `45465cc05d14daeffd92ee0e636d45e14d737991`, Chromium `151.0.7922.34`, matrix v110; SHA256 полного отчёта `873ae4d58e7b35d18df1ba6a5d8d0dfc38e070f011e23ea0ba354f515d2acc79`. Полные report/log/evidence сохранены в `C:/Users/Sergey/Documents/Houseplan/beta3-stable-golden-review-20261104/verification/` и `artifacts/issue1277-verified-evidence.json`. Проход занял 294.0 s.\n- S6 `20261104T145020677-5367d51a` прошёл 6/6 шагов: build/typecheck, подготовка test-build/demo-assets, стартовый View, 12 адресных unit; 151 проверка критичных данных/прав зачтена по сохранённому применимому результату. По фактическому diff механизм выбрал product-профиль. После документационной правки будет выполнена штатная повторная передача через finish.\n\nНовый полный профиль из 548 шагов не повторяется: это адресный ремонт Golden и его эталонов.\n\nРиски: нельзя подменить активный pan отпусканием мыши, скрыть ошибку повторным скриншотом или потерять stored config. Новые отрицательные unit отказывают при этих условиях; native cases сохраняют mouse-down.\n\nHA E2E для этого ремонта не требуется: пользовательский runtime, HA и wire не меняются. Решение записано в companion [Matysh/houseplan-e2e#26](https://github.com/Matysh/houseplan-e2e/issues/26). Публикация новой версии этой задачей не выполняется.\n\n<!-- beta3-stable-triage:golden-stable -->\n\n\n### Ремонт блокера завершения\n\nПервый finish остановился до входа в очередь на чтении 67 MB бинарного diff. Причина вынесена в #1280 и исправлена отдельным штатным ship-слиянием `cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89`; S6 `20261104T144609971-61c0f1c6`: 53/53 поведенческих теста и синтаксис PASS. Бинарные тела больше не читаются в JS при вычислении patch-id, сама identity сохранена.\n\nЗависимость перенесена в подготовительную ветку #1277, чтобы исправленный клиент смог выполнить pre-admission. Финальный rebase/S6/review/merge остаются внутри finish. Ремонт касается только чтения Git и документации, поэтому успешный Golden 251/251 на неизменённом UI/capture не повторяется.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1, workflow 41851701660](https://github.com/Matysh/houseplan-card/actions/runs/41851701660) подтвердил механизм захвата и provenance, вернул один блокер: дубли в EN/RU changelog после переноса зависимости и rebase. В `c8216bb11` оставлены по одной существующей записи #1280 и одной итоговой записи #1277 с принятием 236 кадров. Промежуточная запись #1277 удалена; отдельный документационный дублирующий коммит `8df06807` исключён из ветки, очистка включена в коммит эталонов.\n\nПроверка локальным Git: diff `8df06807` → новый HEAD затрагивает только два changelog. Код захвата, tests, все PNG и index полностью идентичны проверенному материалу. Blob helper `410d9b263499e7a0f3b9bb3bc938d3354c1cfe22` совпадает с исходным `16f87f914:demo/golden/ui-lab-1081.mjs`. Поэтому Golden 251/251 и решение владельца относятся к тем же байтам UI/capture; повтор изображений ради документации не выполняется. Новое содержательное ревью — на очищенном diff.\n\nВторой служебный дублирующий workflow того же первого request, ожидавший запуска, отменён после получения настоящего отчёта. Реальный первый отчёт с вердиктом changes_requested сохранён; он не подменяется отменой или успехом.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
