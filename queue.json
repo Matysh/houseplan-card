@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2380,
+  "revision": 2381,
   "nextTicket": 148,
   "nextFence": 148,
   "tasks": {
@@ -2536,7 +2536,14 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793780163092,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "39d21a64c917e4f8c47ef54493dd23ee65f9823e",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1267.json",
+        "src/houseplan-editor-runtime.ts"
+      ]
     },
     "1270": {
       "issue": 1270,
@@ -2758,12 +2765,17 @@
     "token": "147:finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:1:admit",
     "fence": 147,
     "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
+    "phase": "testing",
     "admittedAt": 1793780166914,
-    "expiresAt": 1793780466914
+    "expiresAt": 1793780473331,
+    "patchId": "39d21a64c917e4f8c47ef54493dd23ee65f9823e"
   },
   "events": {
+    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:2:synchronized": {
+      "digest": "b64767016c8aa02a8e15a8597739c2380064016cf264d86ae7cf118f4660d041",
+      "issue": 1267
+    },
     "dev-build:41797715902:1:1270": {
       "digest": "786e052094f3b87eeea8b1e953fd9f39512872816be0e66bd642e38ce5e0a8e4",
       "issue": 1270,
