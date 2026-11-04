@@ -42,8 +42,8 @@ test('#1286 a full panel remount after another HA route retains its preference k
     const returned = summaryPreferenceKey(panel(true));
     assert.equal(returned, first);
     for (const show of [true, false]) {
-      const storage = new Map([[first, JSON.stringify({ version: 1, show, icon_scale: 1.4, font_scale: 0.8 })]]);
-      assert.deepEqual(JSON.parse(storage.get(returned)), { version: 1, show, icon_scale: 1.4, font_scale: 0.8 });
+      const store = storage([[first, JSON.stringify(saved(show))]]);
+      assert.deepEqual(readSummaryPreference(panel(true), store), saved(show));
     }
   } finally { env.restore(); }
 });

@@ -4,12 +4,12 @@
 
 - Preserve exact lattice targets through wall nudges/body moves, Resize and opening movement; tolerate existing coordinate noise only at authored targets and retain accepted lattice anchors in mirrored TS/Python legacy normalization. Write affected opening angles from the normalized graph projection, synchronize the offline converter and its semantic fixtures, and retain the existing threshold mutation anchors. [#1282](https://github.com/Matysh/houseplan-card/issues/1282)
 - Remove safe collinear seams exposed by completed graph edits, preserving exact opening hosts, topology/support contacts, material boundaries and unrelated components. Optimize shares the protection of seams crossed by an opening footprint. Live Draw endpoints remain until chain finish. [#1283](https://github.com/Matysh/houseplan-card/issues/1283)
+- Keep the summary panel's On/Off choice and View scales across HA route navigation and reload, using a stable panel identity with conservative legacy preference recovery. [#1286](https://github.com/Matysh/houseplan-card/issues/1286)
 
 - Inspect release membership sequentially to avoid GitHub's concurrent-request limit on large releases, retaining resumable closure and comment bookkeeping. [#1289](https://github.com/Matysh/houseplan-card/issues/1289)
 
 - Measure model11 Optimize movement and near-axis repair on the accepted graph, count actual wall seam collapses, and explain exact opening parameter rewrites without claiming a visible move. Legacy migration reports retain their previous counters. [#1284](https://github.com/Matysh/houseplan-card/issues/1284)
 ## v1.84.0-beta.4 — 2026-11-04
-- Keep the summary panel's On/Off choice and View scales across HA route navigation and reload, using a stable panel identity with conservative legacy preference recovery. [#1286](https://github.com/Matysh/houseplan-card/issues/1286)
 
 - Reconcile Split and full-corpus test passports with independently verified stored documents, update native drag Escape expectations, and measure current summary controls after UI-kit paint while retaining the exact 44px bound and an undersize negative control. [#1281](https://github.com/Matysh/houseplan-card/issues/1281)
 
