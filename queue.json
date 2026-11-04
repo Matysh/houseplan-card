@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 3275,
+  "revision": 3276,
   "nextTicket": 193,
-  "nextFence": 192,
+  "nextFence": 193,
   "tasks": {
     "1126": {
       "issue": 1126,
@@ -2974,7 +2974,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 192,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793822057348,
       "reviewEntry": 4,
@@ -3212,10 +3212,18 @@
       }
     }
   },
-  "waiting": [
-    1287
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1287,
+    "worker": "finish",
+    "token": "192:finish:f788980b-c18f-4133-94e3-b836f87bf477:finish:1:admit",
+    "fence": 192,
+    "materialSha": "e012e64784fd144759274602a32d035725d760eb",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793822061835,
+    "expiresAt": 1793822361835
+  },
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
       "digest": "d2218a76b2bb7033a7444da93d1bce7e71c9114f6dfbb04bbc0d89657b18aa24",
@@ -3511,6 +3519,29 @@
         "track": "show",
         "layer": "product",
         "materialSha": "e012e64784fd144759274602a32d035725d760eb",
+        "evidence": {
+          "id": "20261104T194007707-23e80e77",
+          "name": "Тесты для задачи #1287 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T194007707-23e80e77/report.json",
+          "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
+          "status": "passed",
+          "finishedAt": "2026-11-04T19:40:19.979Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:f788980b-c18f-4133-94e3-b836f87bf477:finish:1:admit": {
+      "digest": "5d2c432aa5b91bd723aeb77830cd70df4d16ce86f12dd3bc9ec414d59409fcef",
+      "issue": 1287,
+      "message": {
+        "kind": "admitted",
+        "issue": 1287,
+        "at": 1793822061835,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e012e64784fd144759274602a32d035725d760eb",
+        "phase": "sync",
         "evidence": {
           "id": "20261104T194007707-23e80e77",
           "name": "Тесты для задачи #1287 (перед ревью)",
