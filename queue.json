@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2552,
+  "revision": 2553,
   "nextTicket": 159,
   "nextFence": 159,
   "tasks": {
@@ -2487,22 +2487,27 @@
       "status": "S6-in-progress",
       "readyAt": 1793786438022,
       "reviewEntry": 3,
-      "patchId": "1f8c6098fe227541786f8138beee75fe89327fa1",
+      "patchId": "b73016b59fec64febc81e17b628b7ee8b8d91162",
       "changedFiles": [
         "demo/helpers/room-write-python.mjs",
         "demo/helpers/room-write-python.py",
+        "demo/smoke_draw_wall_thickness.mjs",
         "demo/smoke_room_device_discovery.mjs",
         "demo/smoke_room_opening_host.mjs",
         "demo/smoke_wall_face_lineage.mjs",
+        "demo/smoke_wall_face_overlap.mjs",
         "demo/smoke_wall_face_room_split.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.83.0/1265.json",
         "process-next/lib/catalog.mjs",
         "process-next/test/catalog.test.mjs",
+        "src/graph-edit-intent.ts",
         "src/houseplan-editor-runtime.ts",
+        "src/plan-graph.ts",
         "src/wall-face-graph.ts",
         "test/fixtures/room-host-promotion.json",
+        "test/graph-edit-intent.test.mjs",
         "test/room-write-python.test.mjs",
         "test/wall-face-graph.test.mjs"
       ],
@@ -2886,10 +2891,11 @@
     "token": "158:finish:943ada1e-90fb-4bcb-b0f6-2fca431ce8d8:finish:1:admit",
     "fence": 158,
     "materialSha": "30c54e9df96c7dd520d9a3d59e7fd1500398ecc4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+    "phase": "testing",
     "admittedAt": 1793786442704,
-    "expiresAt": 1793786742704
+    "expiresAt": 1793786750612,
+    "patchId": "b73016b59fec64febc81e17b628b7ee8b8d91162"
   },
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -2930,6 +2936,10 @@
     },
     "finish:e2f7305a-5176-4862-801e-09685b8dfec7:finish:3:return": {
       "digest": "283ee66a994334682595a3671b7661d90fdf7005c3bdedbcada95dd132e59cc6",
+      "issue": 1265
+    },
+    "finish:943ada1e-90fb-4bcb-b0f6-2fca431ce8d8:finish:2:synchronized": {
+      "digest": "fd9d687774f65cf798587749bc82fd9cae46dbc526a0d59450eb283f7a397064",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
