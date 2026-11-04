@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3105,
+  "revision": 3106,
   "nextTicket": 187,
   "nextFence": 185,
   "tasks": {
@@ -3166,7 +3166,7 @@
       "notice": {
         "key": "1:dependency-not-merged",
         "reason": "dependency-not-merged",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793819069594,
         "entry": 1,
@@ -3651,6 +3651,10 @@
     "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:3:synchronized": {
       "digest": "683dc2b8dc302e9eb515a3951977903e1801564594a9358f905feae3b0d347a1",
       "issue": 1282
+    },
+    "github:41893398123:1:completions:notice:e7ef205907e5b56f5ac7e654750040bd2af8be4059378de92973c2a604f4145c": {
+      "digest": "251ce52d9a22c1ee6ecef57ee940d424ca1e224a526fdc1797b8f2546e0302b8",
+      "issue": 1287
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
