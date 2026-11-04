@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2620,
+  "revision": 2621,
   "nextTicket": 162,
   "nextFence": 162,
   "tasks": {
@@ -2732,7 +2732,16 @@
         "demo/smoke_geometry_cleanup_842.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261104T103411810-b9435bab",
+        "name": "Тесты для задачи #1275 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T103411810-b9435bab/report.json",
+        "materialSha": "56872284363b3821aec59b5b5bcb046f3cc7ba57",
+        "status": "passed",
+        "finishedAt": "2026-11-04T10:34:33.585Z",
+        "failures": []
+      }
     },
     "1278": {
       "issue": 1278,
@@ -2882,9 +2891,9 @@
     "fence": 161,
     "materialSha": "56872284363b3821aec59b5b5bcb046f3cc7ba57",
     "expectedBase": "bc7c230157200797a0439bdd1e64800c2871f522",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793788431835,
-    "expiresAt": 1793788747212,
+    "expiresAt": 1793792074811,
     "patchId": "0de17e29bdc23cbc430ddba5a6eaac7376075720"
   },
   "events": {
@@ -2902,6 +2911,10 @@
     },
     "finish:e1c55811-566a-4fb8-8f5b-d7855cb110d4:finish:2:synchronized": {
       "digest": "582a9d1367532d4b94bc6a701f0dad49067b5e425a33d5b9961778afd6c85810",
+      "issue": 1275
+    },
+    "finish:e1c55811-566a-4fb8-8f5b-d7855cb110d4:finish:3:s6-complete": {
+      "digest": "674be91015ab8f90cbe2079b2c7d8b1b8485a95e200ad3e6e94b0c9b0c970d06",
       "issue": 1275
     },
     "finish:e1c55811-566a-4fb8-8f5b-d7855cb110d4": {
