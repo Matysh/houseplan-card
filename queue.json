@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2417,
-  "nextTicket": 149,
+  "revision": 2418,
+  "nextTicket": 150,
   "nextFence": 149,
   "tasks": {
     "1126": {
@@ -2610,6 +2610,20 @@
         "sourceSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72"
       }
     },
+    "1274": {
+      "issue": 1274,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1274-camera-smoke-readiness",
+      "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 149,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793780832934,
+      "reviewEntry": 1
+    },
     "1278": {
       "issue": 1278,
       "branch": "fix/1278-opening-escape",
@@ -2750,7 +2764,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1274
+  ],
   "active": null,
   "events": {
     "dev-build:41799157092:1:1267": {
@@ -2763,6 +2779,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec"
+      }
+    },
+    "finish:fb1c352e-0910-477a-81e1-028affdea30b": {
+      "digest": "6dcf3468cf6fc7e5f3984ce0b72711fb23dbb8ce4eb6fa409c6e380c145efc93",
+      "issue": 1274,
+      "message": {
+        "kind": "queued",
+        "issue": 1274,
+        "at": 1793780832934,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63"
       }
     }
   },
