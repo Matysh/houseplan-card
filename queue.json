@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2400,
+  "revision": 2401,
   "nextTicket": 149,
   "nextFence": 149,
   "tasks": {
@@ -2526,165 +2526,25 @@
     },
     "1267": {
       "issue": 1267,
+      "branch": "fix/1267-opening-rulers",
       "track": "show",
       "layer": "product",
-      "branch": "fix/1267-opening-rulers",
-      "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 148,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793780256768,
-      "reviewEntry": 2,
-      "patchId": "1251e8df09d0c24803cb9522ebc4364ae2243e93",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.83.0/1267.json",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793780188356,
-        "entry": 1,
-        "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно",
-        "eventId": "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267"
-      },
-      "s6": {
-        "id": "20261104T081749911-5fb8b4ad",
-        "name": "Тесты для задачи #1267 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T081749911-5fb8b4ad/report.json",
-        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "status": "passed",
-        "finishedAt": "2026-11-04T08:18:47.338Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
+      "mergedSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
+      "mergedAt": 1793780613775,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1267:2:1251e8df09d0c24803cb9522ebc4364ae2243e93:bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-      "reviewMaterial": {
-        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-        "patchId": "1251e8df09d0c24803cb9522ebc4364ae2243e93"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1267:2:1251e8df09d0c24803cb9522ebc4364ae2243e93:bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-        "eventId": "github:41798544331:1:tick:0:review-retry",
-        "at": 1793780345769,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1267,
-        "requestId": "review:1267:2:1251e8df09d0c24803cb9522ebc4364ae2243e93:bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-        "kind": "code",
-        "base": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "patchId": "1251e8df09d0c24803cb9522ebc4364ae2243e93",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1267,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1267",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина локализована: current graph branch в _opPointerMoveNow возвращается с _opMeasure=null и вообще не вызывает _opRuler/openingShoulders. Legacy room branch ниже сохраняет линейки и center magnet. Восстанавливаю этот принятый механизм для wall host, затем применяю exact graph target/domain. Подписи должны измерять именно окончательный допустимый target, а не предложенный центр, если соседний проём запрещает его. Partition path и его jamb/domain guard сохраняются. Исходные числовые оракулы собственных границ комнаты не меняются."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление устраняет первопричину и подходит для задачи. В ветке current graph функция `_opPointerMoveNow` больше не обнуляет `_opMeasure` без расчёта: для проёма на стене (`host.kind === 'wall'`) снова используется принятый механизм `_opRuler`/`openingShoulders`. Сначала по нему выбирается предложенная позиция: центровой магнит или квантование вдоль собственного ребра комнаты. Затем позиция ограничивается допустимым участком run, после чего `graphOpeningRunTarget` вычисляет точные host/t/tq. Подписи пересчитываются для итоговой позиции; центральный маркер показывается только при точном попадании в центр. Ветка partition, её отступ от торца (jamb), путь Escape/Cancel и транзакция записи не менялись. Тестовые оракулы не ослаблены: smoke не входит в изменённые файлы. Набор S6 для #1267 прошёл на `f2df186`. Блокеров нет. Есть два необязательных замечания: комментарий в коде говорит больше, чем код делает (проверки соседнего проёма нет), а необходимость HA E2E перед бетой автор явно не отметил.",
-          "understanding": "Проблема: после перехода на model 11 перенос существующего проёма идёт через ветку `space.plan_graph && cfg.host`. До исправления она округляла позицию к сетке вдоль run, ограничивала её участком run, вычисляла точный target и сразу ставила `_opMeasure = null`. Поэтому не было ни линеек плеч, ни центрового тика, ни магнита. Legacy-ветка ниже, которая работает через `snapToWall` и `_opRuler`, по-прежнему всё это показывала, но для графовых планов не выполнялась.\n\nПосле исправления (`src/houseplan-editor-runtime.ts:6260-6287`) угол вычисляется раньше. Проекция указателя на run передаётся в `_opRuler`, и тот выбирает одно ребро комнаты по правилу `openingShoulders`: ближайшее коллинеарное ребро, при равенстве — первое в `roomEdges`, без слияния со смежной комнатой. Если центр ребра в пределах gridPitch/2, позиция притягивается к нему; иначе позиция квантуется к шагу сетки от начала ребра. Полученная точка проецируется обратно на run. Если ребро комнаты не найдено (`measure === null`), используется прежнее округление к сетке. Затем срабатывают прежнее ограничение участком run и `graphOpeningRunTarget`, который выбирает точный дочерний carrier и tq. Для итоговых cfg.x/cfg.y `_opRuler` вызывается повторно с `snapPosition=false` и только измеряет. Условие для guide ужесточено: тик рисуется лишь при |позиция − центр ребра| < 1e-9, чтобы маркер не появлялся, когда домен run сдвинул проём с центра.\n\nРазобранные пути: графовая ветка для wall и partition, legacy-ветка с изменённым условием guide, `_opRuler` (других вызовов нет: превью размещения использует `resolveOpeningDimensions`, `src/houseplan-editor-runtime.ts:6039-6051`), `openingShoulders` (`src/logic.ts:271-310`), `graphOpeningRunTarget` и `readAuthoredPoint` (точная проекция и обратное преобразование в double), `_opPointerUp` и `_cancelOpeningDrag` (сброс `_opMeasure`, условия записи), а также `demo/smoke_opening_measure.mjs` с обычной стеной 40..550, общей границей, Shift и коммитом x=0.295.",
-          "analysis": [
-            {
-              "topic": "Первопричина и выбор механизма",
-              "assessment": "Исправление восстанавливает тот механизм, который уже принят для legacy-ветки, а не добавляет параллельный. Важно, что авторитетной остаётся точная графовая часть: линейка только предлагает позицию, а host/t/tq по-прежнему вычисляет `graphOpeningRunTarget`, который проецирует точку на точную линию anchor и выбирает дочерний carrier. Атомарность записи и identity не затронуты: изменения касаются только `drag.preview`.",
-              "evidence": "`src/houseplan-editor-runtime.ts:6264-6285`; база `bdb7c83`: в ветке было `this.host._opMeasure = null` без вызова `_opRuler`; `src/graph-opening-run.ts:217-246`."
-            },
-            {
-              "topic": "Собственное ребро комнаты против полного run",
-              "assessment": "Run в графе может быть длиннее ребра комнаты: он продолжается через коллинеарные узлы при одинаковых cm/props. Линейка и магнит при этом берутся от одного ребра комнаты, поэтому смежная комната не удлиняет измеряемую стену, как и требует приёмка (40..550, центр 295). На общей границе при равенстве расстояний выбирается первое ребро в `roomEdges`, как в legacy. Сценарий со смещёнными фрагментами на общей границе (140..460 против 140..580) есть в smoke. Побочный эффект: при квантовании в `_opRuler` проём ограничивается собственным ребром, поэтому теперь он не может перекрывать стык двух рёбер внутри одного run, хотя до исправления графовая ветка это позволяла. Это совпадает с прежним legacy-контрактом и физически корректно, так что регрессией не считаю.",
-              "evidence": "`src/logic.ts:281-292` (выбор ребра, eps=1.0); `src/houseplan-editor-runtime.ts:6364-6375` (ограничение `half..len-half` по ребру); `demo/smoke_opening_measure.mjs:101-118, 186-235`."
-            },
-            {
-              "topic": "Подписи и тик для итоговой, а не предложенной позиции",
-              "assessment": "Второй вызов `_opRuler(..., false)` с итоговыми cfg.x/cfg.y и строгий guide дают нужную семантику. Если ограничение участком run (например, run короче ребра комнаты из-за смены толщины стены) сдвинет проём с центра, подписи покажут реальные плечи, а тика не будет. Порог 1e-9 корректен: итоговая точка — это double, ближайший к точной проекции, а координаты в рендер-единицах не превышают ~1000, так что ошибка порядка 1e-13. S6 подтверждает это фактически (`tick_at_center`, `shared_wall_tick_at_own_center`).",
-              "evidence": "`src/houseplan-editor-runtime.ts:6283-6285, 6385-6387`; `src/plan-exact.ts:108-116` (`readAuthoredPoint`), `src/graph-opening-run.ts:229-242`; `_spaceH` равен NORM_W (`src/houseplan-card.ts:8384`)."
-            },
-            {
-              "topic": "Изменение guide в legacy-ветке",
-              "assessment": "Более строгое условие guide действует и для legacy-переноса. Единственный случай, где поведение меняется: в первой проверке проём не центрирован, после квантования попадает в пределы tol от центра, но не точно в центр. Раньше тик показывался у проёма, смещённого с центра, теперь не показывается. Это согласуется с документированным смыслом тика («when the opening is exactly in the middle») и не трогает превью размещения, где `_opRuler` не используется.",
-              "evidence": "`src/houseplan-editor-runtime.ts:6355-6376, 6385`; комментарий у `openingShoulders` `src/logic.ts:258-262`; поиск `opRuler` по `src` нашёл только вызовы при переносе."
-            },
-            {
-              "topic": "Partition, Cancel/Escape, запись",
-              "assessment": "Для partition `ruler` равен null, поэтому прежние округление к сетке и ограничение с учётом `partitionOpeningJambMargin` сохраняются, а `_opMeasure` остаётся null. `_cancelOpeningDrag` и `_opPointerUp` сбрасывают `_opMeasure` и пишут конфигурацию только при `moved && dirty`, совпадающих epoch и source; эта логика не менялась. При ранних `return` (указатель далеко от run, `!target`) остаётся последняя корректная подпись, как и в legacy-ветке при `snap === null`.",
-              "evidence": "`src/houseplan-editor-runtime.ts:6256-6258, 6153-6163, 6392-6419`."
-            },
-            {
-              "topic": "Проверки",
-              "assessment": "Исходный `smoke_opening_measure` не изменён и покрывает обычную стену, живое обновление, магнит, перпендикулярный пунктирный тик, коммит x, Shift и общую границу. Набор S6 «Тесты для задачи #1267 (перед ревью)» прошёл на `f2df18637a…` без отказов. Отдельной новой регрессии не добавлено, но адресный smoke, который ранее давал 21 нарушение, сам по себе служит регрессией для этой ветки.",
-              "evidence": "`demo/smoke_opening_measure.mjs:101-235`; receipt `20261104T081749911-5fb8b4ad`, status passed, failures []."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Комментарий в `src/houseplan-editor-runtime.ts:6264-6266` (`the domain remains authoritative when another opening blocks it`) и контекст автора («если соседний проём запрещает его») описывают ограничение, которого в этой ветке нет. Здесь домен — это только ограничение участком run и точная проекция в `graphOpeningRunTarget`; соседние проёмы не проверяются ни здесь, ни в `_opPointerUp`. Стоит переформулировать комментарий: «run clamp/exact host are authoritative; labels re-measure the final target». Иначе следующий читатель будет полагаться на несуществующую защиту от наложения проёмов. Цена — одна строка.",
-            "Приёмка требует «перед бетой отдельно отметить необходимость HA E2E». В материалах задачи такой отметки не видно (ни в контексте исполнителя, ни в комментариях). Её стоит оставить в issue до сборки беты: изменение затрагивает живой перенос в редакторе, а локальный smoke не заменяет HA."
-          ],
-          "boundaries": "Ревью выполнено по исходникам на `f2df186` и базе `bdb7c83`: графовая и legacy-ветки `_opPointerMoveNow`, `_opRuler`, `openingShoulders`, `graphOpeningRun*`, `readAuthoredPoint`, `_opPointerUp`/`_cancelOpeningDrag`, а также `demo/smoke_opening_measure.mjs` (строки 1-260). Сам я ничего не запускал. Как доказательство использован только receipt S6 `20261104T081749911-5fb8b4ad` (passed, без отказов). Его содержимое (`report.json`) я не видел и не могу перечислить, какие именно браузерные сценарии в него вошли; по истории возврата это opening measure, opening drag, opening escape wide и проверки данных. Не проверены вручную: диагональные стены в графовой модели, run короче ребра комнаты, live- и settled-слои `OpeningDragWalls` во время переноса, Undo/Redo/reload — по ним полагаюсь на S6 и на то, что эти пути diff не затрагивает. HA E2E не выполнялся и в материалах отсутствует.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 38,
-          "cache_creation_input_tokens": 83799,
-          "cache_read_input_tokens": 944542,
-          "output_tokens": 13929,
-          "output_tokens_details": {
-            "thinking_tokens": 6977
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 83799,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 947,
-              "cache_read_input_tokens": 73212,
-              "cache_creation_input_tokens": 14791,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14791
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление устраняет первопричину и подходит для задачи. В ветке current graph функция `_opPointerMoveNow` больше не обнуляет `_opMeasure` без расчёта: для проёма на стене (`host.kind === 'wall'`) снова используется принятый механизм `_opRuler`/`openingShoulders`. Сначала по нему выбирается предложенная позиция: центровой магнит или квантование вдоль собственного ребра комнаты. Затем позиция ограничивается допустимым участком run, после чего `graphOpeningRunTarget` вычисляет точные host/t/tq. Подписи пересчитываются для итоговой позиции; центральный маркер показывается только при точном попадании в центр. Ветка partition, её отступ от торца (jamb), путь Escape/Cancel и транзакция записи не менялись. Тестовые оракулы не ослаблены: smoke не входит в изменённые файлы. Набор S6 для #1267 прошёл на `f2df186`. Блокеров нет. Есть два необязательных замечания: комментарий в коде говорит больше, чем код делает (проверки соседнего проёма нет), а необходимость HA E2E перед бетой автор явно не отметил.\n\n## Понимание решения\n\nПроблема: после перехода на model 11 перенос существующего проёма идёт через ветку `space.plan_graph && cfg.host`. До исправления она округляла позицию к сетке вдоль run, ограничивала её участком run, вычисляла точный target и сразу ставила `_opMeasure = null`. Поэтому не было ни линеек плеч, ни центрового тика, ни магнита. Legacy-ветка ниже, которая работает через `snapToWall` и `_opRuler`, по-прежнему всё это показывала, но для графовых планов не выполнялась.\n\nПосле исправления (`src/houseplan-editor-runtime.ts:6260-6287`) угол вычисляется раньше. Проекция указателя на run передаётся в `_opRuler`, и тот выбирает одно ребро комнаты по правилу `openingShoulders`: ближайшее коллинеарное ребро, при равенстве — первое в `roomEdges`, без слияния со смежной комнатой. Если центр ребра в пределах gridPitch/2, позиция притягивается к нему; иначе позиция квантуется к шагу сетки от начала ребра. Полученная точка проецируется обратно на run. Если ребро комнаты не найдено (`measure === null`), используется прежнее округление к сетке. Затем срабатывают прежнее ограничение участком run и `graphOpeningRunTarget`, который выбирает точный дочерний carrier и tq. Для итоговых cfg.x/cfg.y `_opRuler` вызывается повторно с `snapPosition=false` и только измеряет. Условие для guide ужесточено: тик рисуется лишь при |позиция − центр ребра| < 1e-9, чтобы маркер не появлялся, когда домен run сдвинул проём с центра.\n\nРазобранные пути: графовая ветка для wall и partition, legacy-ветка с изменённым условием guide, `_opRuler` (других вызовов нет: превью размещения использует `resolveOpeningDimensions`, `src/houseplan-editor-runtime.ts:6039-6051`), `openingShoulders` (`src/logic.ts:271-310`), `graphOpeningRunTarget` и `readAuthoredPoint` (точная проекция и обратное преобразование в double), `_opPointerUp` и `_cancelOpeningDrag` (сброс `_opMeasure`, условия записи), а также `demo/smoke_opening_measure.mjs` с обычной стеной 40..550, общей границей, Shift и коммитом x=0.295.\n\n## Разбор решения\n\n### Первопричина и выбор механизма\n\nИсправление восстанавливает тот механизм, который уже принят для legacy-ветки, а не добавляет параллельный. Важно, что авторитетной остаётся точная графовая часть: линейка только предлагает позицию, а host/t/tq по-прежнему вычисляет `graphOpeningRunTarget`, который проецирует точку на точную линию anchor и выбирает дочерний carrier. Атомарность записи и identity не затронуты: изменения касаются только `drag.preview`.\n\nОснование: `src/houseplan-editor-runtime.ts:6264-6285`; база `bdb7c83`: в ветке было `this.host._opMeasure = null` без вызова `_opRuler`; `src/graph-opening-run.ts:217-246`.\n\n### Собственное ребро комнаты против полного run\n\nRun в графе может быть длиннее ребра комнаты: он продолжается через коллинеарные узлы при одинаковых cm/props. Линейка и магнит при этом берутся от одного ребра комнаты, поэтому смежная комната не удлиняет измеряемую стену, как и требует приёмка (40..550, центр 295). На общей границе при равенстве расстояний выбирается первое ребро в `roomEdges`, как в legacy. Сценарий со смещёнными фрагментами на общей границе (140..460 против 140..580) есть в smoke. Побочный эффект: при квантовании в `_opRuler` проём ограничивается собственным ребром, поэтому теперь он не может перекрывать стык двух рёбер внутри одного run, хотя до исправления графовая ветка это позволяла. Это совпадает с прежним legacy-контрактом и физически корректно, так что регрессией не считаю.\n\nОснование: `src/logic.ts:281-292` (выбор ребра, eps=1.0); `src/houseplan-editor-runtime.ts:6364-6375` (ограничение `half..len-half` по ребру); `demo/smoke_opening_measure.mjs:101-118, 186-235`.\n\n### Подписи и тик для итоговой, а не предложенной позиции\n\nВторой вызов `_opRuler(..., false)` с итоговыми cfg.x/cfg.y и строгий guide дают нужную семантику. Если ограничение участком run (например, run короче ребра комнаты из-за смены толщины стены) сдвинет проём с центра, подписи покажут реальные плечи, а тика не будет. Порог 1e-9 корректен: итоговая точка — это double, ближайший к точной проекции, а координаты в рендер-единицах не превышают ~1000, так что ошибка порядка 1e-13. S6 подтверждает это фактически (`tick_at_center`, `shared_wall_tick_at_own_center`).\n\nОснование: `src/houseplan-editor-runtime.ts:6283-6285, 6385-6387`; `src/plan-exact.ts:108-116` (`readAuthoredPoint`), `src/graph-opening-run.ts:229-242`; `_spaceH` равен NORM_W (`src/houseplan-card.ts:8384`).\n\n### Изменение guide в legacy-ветке\n\nБолее строгое условие guide действует и для legacy-переноса. Единственный случай, где поведение меняется: в первой проверке проём не центрирован, после квантования попадает в пределы tol от центра, но не точно в центр. Раньше тик показывался у проёма, смещённого с центра, теперь не показывается. Это согласуется с документированным смыслом тика («when the opening is exactly in the middle») и не трогает превью размещения, где `_opRuler` не используется.\n\nОснование: `src/houseplan-editor-runtime.ts:6355-6376, 6385`; комментарий у `openingShoulders` `src/logic.ts:258-262`; поиск `opRuler` по `src` нашёл только вызовы при переносе.\n\n### Partition, Cancel/Escape, запись\n\nДля partition `ruler` равен null, поэтому прежние округление к сетке и ограничение с учётом `partitionOpeningJambMargin` сохраняются, а `_opMeasure` остаётся null. `_cancelOpeningDrag` и `_opPointerUp` сбрасывают `_opMeasure` и пишут конфигурацию только при `moved && dirty`, совпадающих epoch и source; эта логика не менялась. При ранних `return` (указатель далеко от run, `!target`) остаётся последняя корректная подпись, как и в legacy-ветке при `snap === null`.\n\nОснование: `src/houseplan-editor-runtime.ts:6256-6258, 6153-6163, 6392-6419`.\n\n### Проверки\n\nИсходный `smoke_opening_measure` не изменён и покрывает обычную стену, живое обновление, магнит, перпендикулярный пунктирный тик, коммит x, Shift и общую границу. Набор S6 «Тесты для задачи #1267 (перед ревью)» прошёл на `f2df18637a…` без отказов. Отдельной новой регрессии не добавлено, но адресный smoke, который ранее давал 21 нарушение, сам по себе служит регрессией для этой ветки.\n\nОснование: `demo/smoke_opening_measure.mjs:101-235`; receipt `20261104T081749911-5fb8b4ad`, status passed, failures [].\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Комментарий в `src/houseplan-editor-runtime.ts:6264-6266` (`the domain remains authoritative when another opening blocks it`) и контекст автора («если соседний проём запрещает его») описывают ограничение, которого в этой ветке нет. Здесь домен — это только ограничение участком run и точная проекция в `graphOpeningRunTarget`; соседние проёмы не проверяются ни здесь, ни в `_opPointerUp`. Стоит переформулировать комментарий: «run clamp/exact host are authoritative; labels re-measure the final target». Иначе следующий читатель будет полагаться на несуществующую защиту от наложения проёмов. Цена — одна строка.\n- Приёмка требует «перед бетой отдельно отметить необходимость HA E2E». В материалах задачи такой отметки не видно (ни в контексте исполнителя, ни в комментариях). Её стоит оставить в issue до сборки беты: изменение затрагивает живой перенос в редакторе, а локальный smoke не заменяет HA.\n\n## Границы анализа\n\nРевью выполнено по исходникам на `f2df186` и базе `bdb7c83`: графовая и legacy-ветки `_opPointerMoveNow`, `_opRuler`, `openingShoulders`, `graphOpeningRun*`, `readAuthoredPoint`, `_opPointerUp`/`_cancelOpeningDrag`, а также `demo/smoke_opening_measure.mjs` (строки 1-260). Сам я ничего не запускал. Как доказательство использован только receipt S6 `20261104T081749911-5fb8b4ad` (passed, без отказов). Его содержимое (`report.json`) я не видел и не могу перечислить, какие именно браузерные сценарии в него вошли; по истории возврата это opening measure, opening drag, opening escape wide и проверки данных. Не проверены вручную: диагональные стены в графовой модели, run короче ребра комнаты, live- и settled-слои `OpeningDragWalls` во время переноса, Undo/Redo/reload — по ним полагаюсь на S6 и на то, что эти пути diff не затрагивает. HA E2E не выполнялся и в материалах отсутствует.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: bdb7c83edfea4c3c963b31dba21dc36752f5414a → f2df18637a7bbf87d95c598692156fa49211c6ec\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1267, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина локализована: current graph branch в _opPointerMoveNow возвращается с _opMeasure=null и вообще не вызывает _opRuler/openingShoulders. Legacy room branch ниже сохраняет линейки и center magnet. Восстанавливаю этот принятый механизм для wall host, затем применяю exact graph target/domain. Подписи должны измерять именно окончательный допустимый target, а не предложенный центр, если соседний проём запрещает его. Partition path и его jamb/domain guard сохраняются. Исходные числовые оракулы собственных границ комнаты не меняются.\n```\n\n</details>\n",
-        "createdAt": "2026-11-04T08:22:18.874Z",
-        "artifactId": 13306507634,
-        "runId": 41798564020,
-        "runAttempt": 1,
-        "completedAt": "2026-11-04T08:22:25Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41798564020",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1270": {
@@ -2915,198 +2775,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1267,
-    "worker": "finish",
-    "token": "148:finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:1:admit",
-    "fence": 148,
-    "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-    "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793780260528,
-    "expiresAt": 1793784208445,
-    "patchId": "1251e8df09d0c24803cb9522ebc4364ae2243e93",
-    "reviewRequest": "review:1267:2:1251e8df09d0c24803cb9522ebc4364ae2243e93:bdb7c83edfea4c3c963b31dba21dc36752f5414a"
-  },
-  "events": {
-    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:2:synchronized": {
-      "digest": "b64767016c8aa02a8e15a8597739c2380064016cf264d86ae7cf118f4660d041",
-      "issue": 1267
-    },
-    "github:41798177962:1:completions:message:09c18d49f0a0d35d6a7884db24824df7ca96fdff86c8a762568cb9735a7db7dc": {
-      "digest": "fa98a1f821c2082cd95b136a00aa7f0746bcb44e68ffb069265b60353e0a17c7",
-      "issue": 1267
-    },
-    "github:41798177962:1:completions:message:1a6e69762c1e49a5c5a43ff9b5329401079b6f2ffbd9db0fe5698fd601b809a3": {
-      "digest": "462ae13df3c35af650d33faf1f8fa0a58242ce3682f10bb07d820485b5cd19c5",
-      "issue": 1267
-    },
-    "github:41798177962:1:completions:message:f193b0480f17c774f0a85e079ae560f25af5e69125c4d30bf6dcdf7fcb3a7b66": {
-      "digest": "d80aefec98b6f8ba8d5d9c4bb0e5c09e34d0986b596f37cd954ddc48f4b6249e",
-      "issue": 1267
-    },
-    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return": {
-      "digest": "5398c2857b905544c0d9f54ab0368f8248ae930cb29ea9434cc4eb1318195846",
-      "issue": 1267
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:2:synchronized": {
-      "digest": "885d318c28f57721224124781a2cc65a991b9244a86e963fe1afe7be011c6c52",
-      "issue": 1267
-    },
-    "finish:5e34f63d-bc7e-4295-af90-36119a5aa704": {
-      "digest": "e252bb0f4e10fb10ddfc5b5231feb725414b380ef2fc52b01a7914bf0781a436",
-      "issue": 1267
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:3:s6-label": {
-      "digest": "0b44f3315c1d6eada6dfe1caad5e25da838675f05af3f77411566bc412e10af4",
-      "issue": 1267
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:4:review-requested": {
-      "digest": "08a439c1ac82502af73c0209f391128c01e2328e5da6b4962a9d773fd86b2735",
-      "issue": 1267
-    },
-    "github:41798544331:1:tick:0:review-retry": {
-      "digest": "6fc6256e14b929b94286e14e2d594688d53d73a5e3e1d4e7d15c6412f3295bf5",
-      "issue": 1267
-    },
-    "github:41798544331:1:completions:notice:117c5fcb5d4101b6d2d06b18c1f30aed400b2af77b7cf18d13aa35268d1ad711": {
-      "digest": "0cadc284db97fa5d2ead964f016d9a1d0b33156c200d8f5d18dd8c6fe21d8fb8",
-      "issue": 1267
-    },
-    "github:41798544331:1:completions:message:117c5fcb5d4101b6d2d06b18c1f30aed400b2af77b7cf18d13aa35268d1ad711": {
-      "digest": "be0c25d1da899a164804b183fe7c6172d4582b66a0164f31f90e88181b3f2de7",
-      "issue": 1267
-    },
-    "github:41798544331:1:completions:message:c8d4797fd7ece3d05e20d816523460d648714adc018f70e0765039801ff71913": {
-      "digest": "e8b4ec3c5ca494246e016497e3e790c24894656e0ecd17f6dcb0aac46fa758ff",
-      "issue": 1267
-    },
-    "github:41798544331:1:completions:message:541c4712de2797548964d71dd7d47ddb9736d421304eac2ac895a567f92395ec": {
-      "digest": "45f54d0f3e56ac5db6dab756683ba2dbff2cd399f4d3ef1ca0e26e1d6232d780",
-      "issue": 1267
-    },
-    "github:41798544331:1:completions:message:e393be8d330f173c2cd16caa336cb16806ea2f23b288233b7b2997e49e94b94a": {
-      "digest": "3572514d406e4ba76e399c2da14f5a0640aba403e56621ac1bee5a6af1cac930",
-      "issue": 1267
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:8:review-presentation": {
-      "digest": "ebb5f346c3816b17ee48d73ba721ee24162cefe4e6becd1b53507127a2309421",
-      "issue": 1267
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:8:review-complete": {
-      "digest": "643930bf07b3f3d7b64ac9efea8a22a9eafca4032d9b00ca522e53ef438aad63",
-      "issue": 1267
-    },
-    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0": {
-      "digest": "1c9e8576ca6026734c4b243ccec36d8e141a862eedfef71ada2dea654147ee79",
-      "issue": 1267,
-      "message": {
-        "kind": "queued",
-        "issue": 1267,
-        "at": 1793780163092,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
-        "delivered": true
-      }
-    },
-    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:1:admit": {
-      "digest": "f1a9683f4146b91d73be6e76f1badf84854a4c7c0cb2722f1c5ca0e912b8da04",
-      "issue": 1267,
-      "message": {
-        "kind": "admitted",
-        "issue": 1267,
-        "at": 1793780166914,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267": {
-      "digest": "5398c2857b905544c0d9f54ab0368f8248ae930cb29ea9434cc4eb1318195846",
-      "issue": 1267,
-      "message": {
-        "kind": "return",
-        "issue": 1267,
-        "at": 1793780188356,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793780188356,
-          "entry": 1,
-          "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно",
-          "eventId": "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267"
-        },
-        "delivered": true
-      }
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d": {
-      "digest": "7e79e61c64239df7ccb8cc44fa5e6bb08d75e3cfc6bab860fee0d1b167704047",
-      "issue": 1267,
-      "message": {
-        "kind": "queued",
-        "issue": 1267,
-        "at": 1793780256768,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "delivered": true
-      }
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:1:admit": {
-      "digest": "0a6fbda18158050e3ff13a9ffd522efbd72f3b3ca7736c63be0a0ab22a7cdbfc",
-      "issue": 1267,
-      "message": {
-        "kind": "admitted",
-        "issue": 1267,
-        "at": 1793780260528,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:3:s6-complete": {
-      "digest": "8e7665e40f33749d29c1692c5d384f208ded14aa6fd37ce312ab3e308f935830",
-      "issue": 1267,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1267,
-        "at": 1793780328470,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "phase": "review",
-        "evidence": {
-          "id": "20261104T081749911-5fb8b4ad",
-          "name": "Тесты для задачи #1267 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T081749911-5fb8b4ad/report.json",
-          "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-          "status": "passed",
-          "finishedAt": "2026-11-04T08:18:47.338Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина локализована: current graph branch в _opPointerMoveNow возвращается с _opMeasure=null и вообще не вызывает _opRuler/openingShoulders. Legacy room branch ниже сохраняет линейки и center magnet. Восстанавливаю этот принятый механизм для wall host, затем применяю exact graph target/domain. Подписи должны измерять именно окончательный допустимый target, а не предложенный центр, если соседний проём запрещает его. Partition path и его jamb/domain guard сохраняются. Исходные числовые оракулы собственных границ комнаты не меняются.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "c347b44d10fa57238008f06e9fc741329a91c492",
     "status": "delivered",
