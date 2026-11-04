@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3002,
+  "revision": 3003,
   "nextTicket": 181,
   "nextFence": 179,
   "tasks": {
@@ -3260,25 +3260,6 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
-    },
-    "code:1282:review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096": {
-      "issue": 1282,
-      "kind": "code",
-      "requestId": "review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096",
-      "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
-      "expectedBase": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-      "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50",
-      "status": "pending",
-      "presentation": {
-        "round": 1,
-        "occurredAt": "2026-11-04T18:37:28.685Z",
-        "transition": {
-          "from": "S7-code-review",
-          "to": "S6-in-progress",
-          "confirmed": true
-        }
-      },
-      "runId": 41889001206
     }
   },
   "waiting": [
@@ -3431,6 +3412,10 @@
     },
     "finish:e5a44c29-62c3-41c3-b487-69da6579fe0d:finish:10:return-label": {
       "digest": "47863598b54492a49fe3e717dac6f52ad56dfd13093c0aacffab63ce3aaaa572",
+      "issue": 1282
+    },
+    "github:41890099991:1:completions:report:73480d3f5dbe034a6603b8df52e0ab64552ccdd79d652f31f17568a7e80e7e33": {
+      "digest": "029c42a7df657a39e30ead454aac000b806e91f39277aac82f520aaa52ec44b5",
       "issue": 1282
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
