@@ -19,8 +19,30 @@ export async function uiLab1081CaptureEvidence(page) {
   });
 }
 
+/** Static goldens own a complete frame while the native pan stays held. */
+export async function prepareActivePanGoldenFrame(page) {
+  return page.evaluate(async () => {
+    const card = window.__goldenCard, press = card._panStart;
+    if (!press || card._panLock !== 'pan') throw Error('Golden requires an active native pan');
+    const view = JSON.stringify(card._view), config = JSON.stringify(card._serverCfg);
+    // Viewport anchors refresh on a 100ms/15% budget, so an arbitrary
+    // compositor projection is timing-dependent even at the same endpoint.
+    // A normal full Lit frame reconciles SVG and HTML camera bases while
+    // retaining the held gesture's promoted layer. No pointer release,
+    // forced viewport assignment or replacement screenshot is used.
+    card.requestUpdate();
+    await card.updateComplete;
+    if (card._panStart !== press || card._panLock !== 'pan'
+        || JSON.stringify(card._view) !== view || JSON.stringify(card._serverCfg) !== config)
+      throw Error('Golden full frame changed the active pan, camera or configuration');
+    return { phase: 'complete-active-pan-frame', pointerHeld: true,
+      cameraUnchanged: true, configUnchanged: true };
+  });
+}
+
 export async function prepareUiLab1081(page, scenario) {
   const card = page.locator('houseplan-card');
+  let panFrame;
   await page.waitForFunction(mode => window.__goldenCard._mode === mode, scenario.mode);
   if (scenario.uiLab1081 === 'new-space') {
     await card.locator('[data-hp="space-add"]').click();
@@ -38,6 +60,7 @@ export async function prepareUiLab1081(page, scenario) {
   } else if (scenario.uiLab1081 === 'grid-pan') {
     const rect = await card.locator('.stage').boundingBox(), x = rect.x + rect.width * .3, y = rect.y + rect.height * .7;
     await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + rect.width * .22, y + 30, { steps: 8 });
+    panFrame = await prepareActivePanGoldenFrame(page);
   } else {
     await card.locator('[data-hp="device"][data-id="ui1081-device"]').click({ button: 'right' });
     await card.locator('[data-hp="device-context-menu"]').waitFor();
@@ -48,5 +71,5 @@ export async function prepareUiLab1081(page, scenario) {
   }
   if (scenario.uiLab1081 !== 'grid-pan') await page.mouse.move(4, 4);
   await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
-  return { surface: scenario.uiLab1081 };
+  return { surface: scenario.uiLab1081, ...(panFrame ? { panFrame } : {}) };
 }

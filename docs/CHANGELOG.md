@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Compute queue material identity from full blob IDs instead of buffering binary patch payloads, so large reviewed screenshot updates can complete through the normal queue. [#1280](https://github.com/Matysh/houseplan-card/issues/1280)
+- Capture the Background editor's held pan after a complete UI frame, preserving its native pointer, camera and configuration; static golden checks no longer compare arbitrary intermediate viewport anchors. Pixel thresholds remain unchanged. [#1277](https://github.com/Matysh/houseplan-card/issues/1277)
 
 - Resize nodes incident fixed room walls and reuses their exact shared atoms, preserving physical identity, independent material and opening child hosts; conflicting material still refuses atomically. Derived T seams slide on uniform fixed runs without stale short atoms; exact source-material proof accepts legitimate noding after Undo. Split/conversion lineage now composes across the full original source. [#1264](https://github.com/Matysh/houseplan-card/issues/1264)
 
