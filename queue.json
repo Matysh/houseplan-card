@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2558,
+  "revision": 2559,
   "nextTicket": 160,
   "nextFence": 160,
   "tasks": {
@@ -2487,7 +2487,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793787220908,
       "reviewEntry": 4,
-      "patchId": "b73016b59fec64febc81e17b628b7ee8b8d91162",
+      "patchId": "03f35abe6226af4434610cadadcd80516fc006c4",
       "changedFiles": [
         "demo/helpers/room-write-python.mjs",
         "demo/helpers/room-write-python.py",
@@ -2509,7 +2509,8 @@
         "test/fixtures/room-host-promotion.json",
         "test/graph-edit-intent.test.mjs",
         "test/room-write-python.test.mjs",
-        "test/wall-face-graph.test.mjs"
+        "test/wall-face-graph.test.mjs",
+        "test/wall-face-room-split.test.mjs"
       ],
       "notice": {
         "key": "3:executor-admission-expired",
@@ -2890,10 +2891,11 @@
     "token": "159:finish:b4d7395d-f9d5-412c-b259-dc04b14be29b:finish:1:admit",
     "fence": 159,
     "materialSha": "9f582f8950c249a8793616f640b011b5da44bc9e",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+    "phase": "testing",
     "admittedAt": 1793787225107,
-    "expiresAt": 1793787525107
+    "expiresAt": 1793787531853,
+    "patchId": "03f35abe6226af4434610cadadcd80516fc006c4"
   },
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -2946,6 +2948,10 @@
     },
     "finish:83a47d63-4e86-431a-b037-bc7293009885": {
       "digest": "d5919d615c28ce79ad201198fe404c3d3a6167e2cb66d2e6857de9f7870ee7e8",
+      "issue": 1265
+    },
+    "finish:b4d7395d-f9d5-412c-b259-dc04b14be29b:finish:2:synchronized": {
+      "digest": "4172cf716ad6eda6c0d84c71706e1e71fe79e28834754095270cf7e82faaa005",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
