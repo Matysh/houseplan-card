@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2224,
+  "revision": 2225,
   "nextTicket": 138,
   "nextFence": 138,
   "tasks": {
@@ -2603,7 +2603,16 @@
         "test/plan-optimizer.test.mjs",
         "tests_backend/test_ha_plan_graph.py",
         "tests_backend/test_plan_graph_migration.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261104T045539623-80e490f1",
+        "name": "Тесты для задачи #1261 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T045539623-80e490f1/report.json",
+        "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
+        "status": "passed",
+        "finishedAt": "2026-11-04T04:56:10.622Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -2716,9 +2725,9 @@
     "fence": 137,
     "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
     "expectedBase": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793768125558,
-    "expiresAt": 1793768434040,
+    "expiresAt": 1793771771631,
     "patchId": "95a424721b4b2b0527f368468a3e7a9f6319b35b"
   },
   "events": {
@@ -2732,6 +2741,10 @@
     },
     "release-return-finish:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340:finish:2:synchronized": {
       "digest": "70385cfade037ce5f2ddcc0c1e7b4e9e142ef866f3a8c68fcb571ea64546e756",
+      "issue": 1261
+    },
+    "release-return-finish:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340:finish:3:s6-complete": {
+      "digest": "848f1111f303c511aa212885801030d0a17daaca73bef194d08aec8f0d8e9a9a",
       "issue": 1261
     },
     "release-return:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340": {
