@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2832,
-  "nextTicket": 171,
+  "revision": 2833,
+  "nextTicket": 172,
   "nextFence": 171,
   "tasks": {
     "1126": {
@@ -2827,6 +2827,20 @@
         "sourceSha": "c7da27c4970522f9865018f9bf17f196727de739"
       }
     },
+    "1277": {
+      "issue": 1277,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1277-golden-active-pan",
+      "materialSha": "e1017ccc9d3bbcce74c425900a029b78fa996f1a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 171,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793803795516,
+      "reviewEntry": 1
+    },
     "1278": {
       "issue": 1278,
       "branch": "fix/1278-opening-escape",
@@ -3036,9 +3050,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1277
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:c239caf7-af26-4d29-b88a-b50d79172cc2": {
+      "digest": "4d7036367eabf81ee02b8d6504f92e30e2e16d6d9377854e348fce21eab7dbee",
+      "issue": 1277,
+      "message": {
+        "kind": "queued",
+        "issue": 1277,
+        "at": 1793803795516,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e1017ccc9d3bbcce74c425900a029b78fa996f1a"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "99c83e17f1222ebfc61dcd07099fdaa9ccff525b",
     "status": "delivered",
