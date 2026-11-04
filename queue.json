@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2994,
+  "revision": 2995,
   "nextTicket": 181,
   "nextFence": 178,
   "tasks": {
@@ -3387,6 +3387,10 @@
       "digest": "5a82ce806b79f20c289933bebd342dcf6acd9031c006a6dce0af45537ac326d0",
       "issue": 1283
     },
+    "github:41889323688:1:completions:message:39b9f4a6895f5e0d23c4e44eac6b33c7b68bf7a7a7990e358819e16629efd1d0": {
+      "digest": "dd37c7a5cfe4fd2c621b096dc6ad15b0dc815e80674544b938a536361a0be753",
+      "issue": 1282
+    },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
       "issue": 1283,
@@ -3528,7 +3532,8 @@
           "requestId": "review:1283:2:26e542184afe832d9eff2e81eafb8b496a11bcb1:ad60cc9da89a002c7474eda65eb359eb7de30096",
           "detail": "Author found Optimize still collapses an opening-crossed seam deliberately preserved by the editor, violating the shared #1283/#1285 invariant. Returning frozen material to S6 to share the same protection before merge.",
           "eventId": "return-910de05d-2085-4b7c-a700-65131c3669d6:return:1283"
-        }
+        },
+        "delivered": true
       }
     },
     "github:41888770951:1:tick:0:admit": {
