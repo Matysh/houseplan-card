@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2498,
-  "nextTicket": 155,
+  "revision": 2499,
+  "nextTicket": 156,
   "nextFence": 155,
   "tasks": {
     "1126": {
@@ -2542,14 +2542,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1269-legacy-stairs-history",
-      "materialSha": "2e571e3cbf6600f7d431dc4fb7db7634cd8c4ead",
+      "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 154,
-      "queued": false,
+      "ticket": 155,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793782615556,
-      "reviewEntry": 4,
+      "readyAt": 1793782964070,
+      "reviewEntry": 5,
       "patchId": "c3009f7649abd9ae2141c1a5a47b64500da952de",
       "changedFiles": [
         "demo/smoke_stairs.mjs",
@@ -2582,8 +2582,7 @@
         "entry": 4,
         "detail": "Браузер: stairs: failed",
         "eventId": "finish:c8a16bb3-9e08-4e7a-bbc1-f725d333974f:finish:3:return:return:1269"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1270": {
       "issue": 1270,
@@ -2871,7 +2870,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1269
+  ],
   "active": null,
   "events": {
     "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
@@ -3208,6 +3209,28 @@
           "entry": 4,
           "detail": "Браузер: stairs: failed",
           "eventId": "finish:c8a16bb3-9e08-4e7a-bbc1-f725d333974f:finish:3:return:return:1269"
+        }
+      }
+    },
+    "finish:5fe263a1-a363-43b8-9675-fd78e68a1b97": {
+      "digest": "199f69619569aa8daa22fd49bde629b8e4f78054e2252c977b32e8dbe938d1e6",
+      "issue": 1269,
+      "message": {
+        "kind": "queued",
+        "issue": 1269,
+        "at": 1793782964070,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+        "evidence": {
+          "id": "20261104T083830988-3fda6329",
+          "name": "Тесты для задачи #1269 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083830988-3fda6329/report.json",
+          "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+          "status": "passed",
+          "finishedAt": "2026-11-04T08:39:17.643Z",
+          "failures": []
         }
       }
     }
