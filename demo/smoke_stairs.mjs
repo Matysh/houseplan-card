@@ -289,8 +289,8 @@ const out = await page.evaluate(async () => {
   const stairMoveBefore = stairHistoryState();
   const start = { x: straight.x, y: straight.y };
   const stairScreenPoint = (x, y) => {
-    const p = new DOMPoint(x, y).matrixTransform(stage().getScreenCTM());
-    return { x: p.x, y: p.y };
+    const point = screen([x, y]);
+    return { x: point.clientX, y: point.clientY };
   };
   await window.__stairHistoryNative({ kind: 'click', at: stairScreenPoint(start.x * 1000, start.y * 1000) });
   await settled();
