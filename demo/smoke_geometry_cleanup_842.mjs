@@ -40,6 +40,11 @@ await ev(() => {
   } };
   /** The stored plan of f1, optionally with one defect. */
   state.plan = (defect) => (cfg) => {
+    // This suite authors a legacy stored carrier. Earlier scenarios can save
+    // model11; leaving that graph while changing only its projections would
+    // not put the next defect on the authoritative write path at all.
+    cfg.model_version = 10;
+    for (const item of cfg.spaces) delete item.plan_graph;
     const space = cfg.spaces.find((item) => item.id === 'f1');
     delete space.segments;
     space.partitions = [
@@ -201,6 +206,12 @@ check('AC6: the explicit delete writes once, without K3', await ev(() => {
 
 // ---------------- AC7: a background write asks by itself ----------------
 await pushPlan('degenerate');
+check('AC7 precondition: the malformed carrier is legacy authority', await ev(() => ({
+  model: window.__card._serverCfg.model_version,
+  graph: !!window.__card._curSpaceCfg.plan_graph,
+  zero: window.__card._curSpaceCfg.partitions.some(p => p.id === 'p-zero'
+    && JSON.stringify(p.a) === JSON.stringify(p.b)),
+})), { model: 10, graph: false, zero: true });
 await ev(async () => { await window.__hpTest.setMode('decor'); await window.__hpTest.setTool('rect'); });
 const drawRect = async (dx) => {
   const [x, y] = await toScreen(640 + dx * 1000, 640); // inside r3, plan render units
