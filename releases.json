@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 241,
+  "revision": 242,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -8878,6 +8878,11 @@
         "issues": {
           "status": "pending",
           "reason": "fetch failed"
+        },
+        "retire-beta": {
+          "status": "completed",
+          "branch": "release/v1.84.0-beta.3-20261104-nodes",
+          "sha": "b3058111c193f0cff02d0ba2cc632e13e945abb6"
         }
       }
     }
@@ -9522,7 +9527,8 @@
     "beta1844-20261104-publication:started:237": "c899997d3c9aea0987f6f876ba4c2054c8184c4422c05baf2b6b7346e5462fd5",
     "beta1844-20261104-publication:published": "fd25c0367a2fe088c47b1ad5421a165bfb6013e2e47bb591f58a00ace995a139",
     "beta1844-20261104-publication:completion:686c32af-08e9-4abd-9ca1-71c7d77ddeba": "b2d0e056b09b5d0a37fbc20b035b217a9ac4cf2c2eb38a0d1eb68dc0eb0e20a4",
-    "beta1844-20261104-publication:completion:71471cbb-effd-4673-bd87-65aaa004dafc": "04b244c8be53cc78181fbeb2ad5eccfe7159c664703f1cac2180fd62740166a0"
+    "beta1844-20261104-publication:completion:71471cbb-effd-4673-bd87-65aaa004dafc": "04b244c8be53cc78181fbeb2ad5eccfe7159c664703f1cac2180fd62740166a0",
+    "beta1844-20261104-publication:completion:b5a32435-0c72-49d0-a202-ff219b911526": "17c689a5dc1d0a11b5f45db00ba487d19695984a33ee802b1e1663e09d210515"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
