@@ -152,6 +152,7 @@ test('#1282 diagonal hosted opening has no angle debt after thickness, body move
   space = commitGraphEdit(space, nudged, { kind: 'partitions', ids: ['free'] });
   noWork(space, 'nudge after diagonal opening body move');
   assert.deepEqual(space.openings[0].host.tq, tq);
+  assert.ok(space.plan_graph.nodes.every(n => n.p[0] === 'l'));
 });
 
 test('#1282 an authored off-grid free endpoint keeps its original non-lattice translation', () => {
