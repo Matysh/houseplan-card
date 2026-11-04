@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2256,
+  "revision": 2257,
   "nextTicket": 139,
   "nextFence": 139,
   "tasks": {
@@ -482,31 +482,6 @@
       },
       "devBuild": {
         "status": "not-required"
-      }
-    },
-    "1184": {
-      "issue": 1184,
-      "branch": "issue/1184-unified-header",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6",
-      "mergedAt": 1793559099097,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentDigest": "3124aef3e21aa7f4dd77"
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6"
       }
     },
     "1190": {
@@ -2543,10 +2518,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
