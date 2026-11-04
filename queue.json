@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2752,
+  "revision": 2753,
   "nextTicket": 168,
   "nextFence": 168,
   "tasks": {
@@ -2456,7 +2456,18 @@
         "test/helpers/resize-incident-fixture.mjs",
         "test/plan-graph-core.test.mjs",
         "test/room-write-python.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793792630438,
+        "entry": 1,
+        "detail": "Браузер: floor cache reuse: failed; Браузер: resize pointer real plan: failed",
+        "eventId": "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return:return:1264"
+      }
     },
     "1265": {
       "issue": 1265,
@@ -3040,18 +3051,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1264,
-    "worker": "finish",
-    "token": "167:finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:1:admit",
-    "fence": 167,
-    "materialSha": "a69afaecbe7079d3feac4ee62a937f7e7062d4a2",
-    "expectedBase": "5d0af8bc304275882b185db7f336293075950205",
-    "phase": "testing",
-    "admittedAt": 1793792533699,
-    "expiresAt": 1793792892508,
-    "patchId": "b40078efb21825490da5dc35c6ed3c4a2a521e2e"
-  },
+  "active": null,
   "events": {
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:2:synchronized": {
       "digest": "7609019331e9a220e474dbdfc4b5d2daf17b922b86bef5a9c87729dc7f86d2ae",
@@ -3067,6 +3067,10 @@
     },
     "finish:aeac635c-849e-4674-bd6e-3fea3741b5b8": {
       "digest": "31171fae5ac516df67a1f067cf665506794c06215341c4571fac6fc76502f6d1",
+      "issue": 1264
+    },
+    "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return": {
+      "digest": "56b2e30433a57f7682acfb3209256970d7b434a43f510855bce993f160694471",
       "issue": 1264
     },
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6": {
@@ -3096,6 +3100,26 @@
         "materialSha": "a69afaecbe7079d3feac4ee62a937f7e7062d4a2",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return:return:1264": {
+      "digest": "56b2e30433a57f7682acfb3209256970d7b434a43f510855bce993f160694471",
+      "issue": 1264,
+      "message": {
+        "kind": "return",
+        "issue": 1264,
+        "at": 1793792630438,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793792630438,
+          "entry": 1,
+          "detail": "Браузер: floor cache reuse: failed; Браузер: resize pointer real plan: failed",
+          "eventId": "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return:return:1264"
+        }
       }
     }
   },
