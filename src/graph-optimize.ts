@@ -13,6 +13,7 @@ import {
 } from './plan-exact';
 import { mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { canonicalizeLatticeCoordinate } from './coordinate-canonicalization';
+import { graphSeamCrossedByOpening } from './graph-seam-opening';
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const ref = (edge: GraphEdge) => ({ kind: edge.kind, id: edge.id });
@@ -175,7 +176,8 @@ export function optimizeGraphTargets(
   const canCollapse = (a: GraphEdge, b: GraphEdge, node: string) => (
     a.kind === b.kind && a.cm === b.cm && same(a.props || {}, b.props || {})
     && graph.edges.filter(e => e.from === node || e.to === node).length === 2
-    && !supportedSeam(node));
+    && !supportedSeam(node)
+    && !graphSeamCrossedByOpening(node,[a,b],graphIndex(graph),space.openings||[]));
   const shared = (a: GraphEdge, b: GraphEdge) => [a.from, a.to].find(n => n === b.from || n === b.to);
   const covers = (row: any, a: number[], b: number[]) => {
     if (!Array.isArray(row.a) || !Array.isArray(row.b)) return false;

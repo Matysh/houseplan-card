@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1283,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Remove safe degree-two seams left by model11 editor commands in the unreleased 1.84 line; preserve graph identities, exact hosted openings and all protected or unrelated boundaries.",
+  "summary": {
+    "ru": "После завершённых правок редактора безопасные прямые швы убираются сразу, без дополнительной оптимизации плана.",
+    "en": "Completed editor edits remove safe straight seams without a separate plan optimization."
+  }
+}

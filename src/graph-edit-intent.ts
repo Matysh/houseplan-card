@@ -10,6 +10,7 @@ import { wallKey, thicknessCmAt } from './wall-thickness';
 import { compareCodePoints } from './codepoint-order';
 import { contentFingerprint } from './visual-continuity';
 import { assertFiniteColumnInputs } from './column-input';
+import { graphSeamCrossedByOpening } from './graph-seam-opening';
 import type { GraphWallRecordProof } from './wall-record-preservation';
 export type GraphEditIntent =
   | { kind: 'metadata' }
@@ -837,6 +838,52 @@ function mergeEdgeMetadata(graph:PlanGraph,before:any,draft:any):PlanGraph {
   }
   return result;
 }
+/** Compact only seams exposed by this command, without aligning any coordinates.
+ * A graph read/save is never permission to sweep another component's old seams. */
+function compactEditSeams(graph:PlanGraph,seeds:ReadonlySet<string>,openings:readonly any[],named:ReadonlySet<string>):GraphOperation[]{
+  const operations:GraphOperation[]=[],hosts=clone(openings) as any[];
+  const pending=[...seeds].sort(codepoint);
+  let current=graph,progress=true;
+  while(progress){
+    progress=false;
+    const index=graphIndex(current);
+    for(const node of pending){
+      const incident=index.incident.get(node);
+      if(incident?.length!==2)continue;
+      // Properties and physical-selection save guards still name this ID.
+      // Retain the explicitly edited carrier before applying a stable tie-break.
+      const [a,b]=incident.slice().sort((a,b)=>Number(named.has(edgeKey(b)))-Number(named.has(edgeKey(a)))
+        ||codepoint(edgeKey(a),edgeKey(b)));
+      if(a.kind!==b.kind||a.cm!==b.cm||!jsonValueEqual(a.props||null,b.props||null))continue;
+      if(current.dependencies.some(d=>d.node!==node&&d.refs.some(r=>r.from===node||r.to===node)))continue;
+      const owners=(edge:GraphEdge)=>(index.owners.get(edgeKey(edge))||[]).slice().sort(codepoint);
+      if(!jsonValueEqual(owners(a),owners(b)))continue;
+      const p=index.points.get(node)!,left=index.points.get(a.from===node?a.to:a.from)!,right=index.points.get(b.from===node?b.to:b.from)!;
+      if(Q.pointEq(left,right)||Q.orientation(left,p,right).n)continue;
+      const t=Q.projectParameter(p,left,right);
+      if(Q.cmp(t,Q.ZERO)<=0||Q.cmp(t,Q.ONE)>=0)continue;
+      // Distinct node identities can deliberately meet the same physical
+      // point. Do not erase a knot that makes another carrier's contact valid.
+      if(current.edges.some(edge=>{
+        if(edge===a||edge===b)return false;
+        const from=index.points.get(edge.from)!,to=index.points.get(edge.to)!;
+        if(Q.orientation(from,p,to).n)return false;
+        const t=Q.projectParameter(p,from,to);return Q.cmp(t,Q.ZERO)>=0&&Q.cmp(t,Q.ONE)<=0;
+      }))continue;
+      // A seam inside an opening remains meaningful: its continuous host may
+      // span several atoms, so the opening's centre alone is not a safe test.
+      if(graphSeamCrossedByOpening(node,[a,b],index,hosts))continue;
+      const operation:GraphOperation={kind:'collapse-node',node,retained:ref(a),removed:ref(b)};
+      const result=applyGraphOperation(current,operation,{hosts});
+      current=result.graph;
+      for(const opening of hosts)if(Object.prototype.hasOwnProperty.call(result.mapping.hosts,opening.id)){
+        const host=result.mapping.hosts[opening.id];if(host)opening.host=clone(host);else delete opening.host;
+      }
+      operations.push(operation);progress=true;break;
+    }
+  }
+  return operations;
+}
 export function commitGraphEditResult<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
   sourceBefore?:Record<string,any>):GraphEditResult<T>{
   assertFiniteColumnInputs(draftSpace);
@@ -895,8 +942,44 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
     default:{const exhaustive:never=intent;failure('intent',String(exhaustive));}
   }
   if(intent.kind==='partitions'||intent.kind==='segments')planarizeSegmentTargets(graph,allocation,plan);
-  const result=plan.operations.length?applyGraphOperation(graph,{kind:'batch',operations:plan.operations},{hosts:before.openings||[]})
+  let result=plan.operations.length?applyGraphOperation(graph,{kind:'batch',operations:plan.operations},{hosts:before.openings||[]})
     :{graph,mapping:emptyMapping()};
+  // A live Draw chain still names the last created endpoint for its next click;
+  // its own finish already compacts creation seams. Detach/delete are complete
+  // edits and can compact their abandoned incidence immediately.
+  const compact=intent.kind==='partitions'||intent.kind==='segments'
+    ?plan.operations.some(op=>op.kind==='retarget-edge'||op.kind==='delete-edge')
+    :['faces','delete-room','merge-rooms','thickness'].includes(intent.kind);
+  if(compact&&plan.operations.length){
+    const nextIndex=graphIndex(result.graph),seeds=new Set<string>();
+    for(const operation of plan.operations){
+      if(operation.kind==='create-node')seeds.add(operation.node.id);
+      if(operation.kind==='move-node')seeds.add(operation.node);
+      if('edge'in operation){
+        for(const model of[index,nextIndex]){
+          const edge=model.edges.get(edgeKey(operation.edge));if(edge){seeds.add(edge.from);seeds.add(edge.to);}
+        }
+      }
+      if(operation.kind==='set-thickness')for(const ref of operation.edges){
+        const edge=nextIndex.edges.get(edgeKey(ref));if(edge){seeds.add(edge.from);seeds.add(edge.to);}
+      }
+      if(operation.kind==='replace-room-cycle'||operation.kind==='delete-face'){
+        for(const model of[graph,result.graph])for(const cycle of model.rooms)if(cycle.room===operation.room)
+          for(const ref of cycle.edges){const edge=(model===graph?index:nextIndex).edges.get(edgeKey(ref))!;seeds.add(edge.from);seeds.add(edge.to);}
+      }
+    }
+    const hosts=(before.openings||[]).flatMap((opening:any)=>{
+      const host=Object.prototype.hasOwnProperty.call(result.mapping.hosts,opening.id)?result.mapping.hosts[opening.id]:opening.host;
+      return host?[{...opening,host}]:[];
+    });
+    const named=new Set<string>(intent.kind==='partitions'?intent.ids.map(id=>'partition:'+id)
+      :intent.kind==='segments'?intent.edges.map(edgeKey):intent.kind==='thickness'?(intent.edges||[]).map(edgeKey):[]);
+    const cleanup=compactEditSeams(result.graph,seeds,hosts,named);
+    if(cleanup.length){
+      plan.operations.push(...cleanup);
+      result=applyGraphOperation(graph,{kind:'batch',operations:plan.operations},{hosts:before.openings||[]});
+    }
+  }
   if(intent.kind==='metadata')result.graph=mergeEdgeMetadata(result.graph,before,draft);
   const operations=plan.operations.slice(),mapping=result.mapping;
   openingTargets(before,draft,intent,sourceBefore,result.graph,plan.variants,mapping,operations);

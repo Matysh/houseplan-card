@@ -109,6 +109,23 @@ Numeric drafts provide targets only. A changed polygon is never permission to
 reconstruct a current graph. The backend independently validates the graph,
 projections, hosts, physical geometry, ACL, context and expected revisions.
 
+Completed detach/delete, face acceptance, room merge/deletion and thickness edits
+compact only their affected degree-two collinear seams. Neighbours must have the
+same kind, thickness, opaque properties and room owners. A support for another
+dependency, another carrier's exact physical contact, a material breakpoint or
+an opening footprint crossing the seam keeps it structural. Hosted openings on
+either remaining span retain their physical positions through exact `tq` remaps;
+split/conversion lineage continues to name live edges. Unrelated components are
+not swept. The full opening-footprint protection is shared with Optimize so it
+cannot later remove a seam deliberately retained by the editor. A live Draw
+chain keeps its last named endpoint for the next click;
+its existing finish performs the chain's own compaction.
+When one carrier is explicitly named by the edit, it survives compaction so
+Properties and physical-selection guards can still resolve the user's target.
+Only ties between equally named/background carriers use the stable edge-key order.
+This also covers completed edits to an existing named partition, including a
+properties-only thickness change whose endpoints remain unchanged.
+
 The first legacy write carries `graph_change` version 2: per-space
 `{space_id,base_digest,patch}`. SHA256 covers UTF-8 compact tuple arrays of
 codepoint-sorted nodes/edges/room cycles/dependencies; numeric thickness is

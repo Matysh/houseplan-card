@@ -589,7 +589,14 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
         graph.edges = graph.edges.filter(e => e !== remove);
         graph.dependencies = graph.dependencies.filter(d => d.node !== p.id && !d.refs.some(r => r.from === p.id || r.to === p.id));
         graph.nodes = graph.nodes.filter(n => n !== p); mapping.nodes[p.id] = [];
-        mapping.edges[edgeKey(remove)] = [{ ref: targetRef(keep), sourceInterval: [['0','1'],['1','1']], reverse: false }];
+        // A command can split/promote a source and then remove its new seam.
+        // Keep every earlier lineage reference live, including edge reversal.
+        const reverse=(oldKeep.from===p.id)===(oldRemove.from===p.id);
+        const hadMapping=Object.prototype.hasOwnProperty.call(mapping.edges,edgeKey(remove));
+        for(const list of Object.values(mapping.edges))for(const range of list)if(edgeKey(range.ref)===edgeKey(remove)){
+          range.ref=targetRef(keep);range.reverse=range.reverse!==reverse;
+        }
+        if(!hadMapping)mapping.edges[edgeKey(remove)] = [{ ref: targetRef(keep), sourceInterval: [['0','1'],['1','1']], reverse }];
         void left; return;
       }
       case 'normalize-current': return; // Canonical serialization only: preserve intentional detach.

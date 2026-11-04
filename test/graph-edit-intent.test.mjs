@@ -244,8 +244,10 @@ test('#1264 a derived T seam slides twice on the fixed uniform neighbour without
 test('#1264 sliding a T seam never moves a dependent corner of fixed rooms',()=>{
   const rect=(id,x0,y0,x1,y1)=>({id,poly:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]});
   let before=migrate({id:'dependent-seam',cell_cm:20,rooms:[rect('a',0,0,.5,.5),rect('b',.5,0,1,.5),
-    {id:'fixed-left',poly:[[0,.5],[.3,.5],[.3,.7],[.3,1],[0,1]]},
-    {id:'fixed-right',poly:[[.3,.5],[1,.5],[1,1],[.3,1],[.3,.7]]}]});
+    // The protected dependent is a real corner, not a redundant straight seam
+    // which a same-material thickness command now correctly removes (#1283).
+    {id:'fixed-left',poly:[[0,.5],[.3,.5],[.3,.7],[.25,1],[0,1]]},
+    {id:'fixed-right',poly:[[.3,.5],[1,.5],[1,1],[.25,1],[.3,.7]]}]});
   before=commitGraphEdit(before,copy(before),{kind:'thickness',rooms:before.rooms.map(r=>r.id),cm:20});
   const index=G.graphIndex(before.plan_graph),at=(x,y)=>before.plan_graph.nodes.find(n=>Q.pointEq(index.points.get(n.id),Q.readSourcePoint([x,y]))).id;
   const x=at(.5,.5),w=at(.3,.7),left=at(0,.5),right=at(1,.5),anchor=at(0,1);
@@ -289,7 +291,7 @@ test('Merge rooms removes the shared divider using the named existing boundary',
   draft.rooms=[rectangle('a',0,2)];
   const result=commitGraphEdit(before,draft,{kind:'merge-rooms',keep:'a',drop:'b',sourceEdges:before.plan_graph.edges});
   assert.equal(result.rooms.length,1);assert.equal(result.rooms[0].id,'a');
-  assert.equal(result.plan_graph.edges.length,6);
+  assert.equal(result.plan_graph.edges.length,4,'the two abandoned divider endpoints are compacted (#1283)');
   assert.equal(G.validateGraph(result.plan_graph).ok,true);
 });
 

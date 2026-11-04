@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Preserve exact lattice targets through wall nudges/body moves, Resize and opening movement; tolerate existing coordinate noise only at authored targets and retain accepted lattice anchors in mirrored TS/Python legacy normalization. Write affected opening angles from the normalized graph projection, synchronize the offline converter and its semantic fixtures, and retain the existing threshold mutation anchors. [#1282](https://github.com/Matysh/houseplan-card/issues/1282)
+- Remove safe collinear seams exposed by completed graph edits, preserving exact opening hosts, topology/support contacts, material boundaries and unrelated components. Optimize shares the protection of seams crossed by an opening footprint. Live Draw endpoints remain until chain finish. [#1283](https://github.com/Matysh/houseplan-card/issues/1283)
 
 - Inspect release membership sequentially to avoid GitHub's concurrent-request limit on large releases, retaining resumable closure and comment bookkeeping. [#1289](https://github.com/Matysh/houseplan-card/issues/1289)
 
