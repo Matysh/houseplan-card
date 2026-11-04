@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2584,
+  "revision": 2585,
   "nextTicket": 161,
   "nextFence": 161,
   "tasks": {
@@ -2487,7 +2487,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793787912769,
       "reviewEntry": 5,
-      "patchId": "03f35abe6226af4434610cadadcd80516fc006c4",
+      "patchId": "f91f670ca4434663f3f1f7d18fb7fdcf23049746",
       "changedFiles": [
         "demo/helpers/room-write-python.mjs",
         "demo/helpers/room-write-python.py",
@@ -2502,6 +2502,8 @@
         "docs/release-ledger/v1.83.0/1265.json",
         "process-next/lib/catalog.mjs",
         "process-next/test/catalog.test.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
         "src/graph-edit-intent.ts",
         "src/houseplan-editor-runtime.ts",
         "src/plan-graph.ts",
@@ -2906,10 +2908,11 @@
     "token": "160:finish:1f5d9fb9-096c-46b9-91fc-3e06bcb0f5e2:finish:1:admit",
     "fence": 160,
     "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+    "phase": "testing",
     "admittedAt": 1793787918753,
-    "expiresAt": 1793788218753
+    "expiresAt": 1793788225273,
+    "patchId": "f91f670ca4434663f3f1f7d18fb7fdcf23049746"
   },
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -3054,6 +3057,10 @@
     },
     "github:41813733163:1:completions:metadata:aab0a489-6a7b-4ec0-82c7-fcdeadd67dac:task-notice:1265::": {
       "digest": "1a8161dedc1ddd8c3f5b9a85b468db81cea7a2f850374b9d2d960bc66e93a679",
+      "issue": 1265
+    },
+    "finish:1f5d9fb9-096c-46b9-91fc-3e06bcb0f5e2:finish:2:synchronized": {
+      "digest": "e3bac9c18e2c8adb26ea0d63cba614efe8f264ecbfe018f9918e1c17f9dc6386",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
