@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3287,
+  "revision": 3288,
   "nextTicket": 194,
   "nextFence": 194,
   "tasks": {
@@ -2978,9 +2978,11 @@
       "status": "S6-in-progress",
       "readyAt": 1793822376554,
       "reviewEntry": 5,
-      "patchId": "8bc87f499ce994b2fd04096e1831c5fc73d8fcef",
+      "patchId": "e0531a705cdb6fa16cd746f0ecc4f3e7041b8b16",
       "changedFiles": [
+        "custom_components/houseplan/__init__.py",
         "custom_components/houseplan/deletion_layout.py",
+        "custom_components/houseplan/marker_history.py",
         "custom_components/houseplan/websocket_api.py",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -3229,10 +3231,11 @@
     "token": "193:finish:04a8fcab-5889-4a3b-ac6c-20b98b1283c1:finish:1:admit",
     "fence": 193,
     "materialSha": "a51c3432653e84a990e0cc74d1bf39ccb0bebe70",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
+    "phase": "testing",
     "admittedAt": 1793822380460,
-    "expiresAt": 1793822680460
+    "expiresAt": 1793822686357,
+    "patchId": "e0531a705cdb6fa16cd746f0ecc4f3e7041b8b16"
   },
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
@@ -3389,6 +3392,10 @@
     },
     "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443": {
       "digest": "40edee393fe4584c9691bf896fe3c2d47313b56908fbe217c61e918a5b396015",
+      "issue": 1287
+    },
+    "finish:04a8fcab-5889-4a3b-ac6c-20b98b1283c1:finish:2:synchronized": {
+      "digest": "a58bc319394d93e69833cb5c5d8ea67348d92775bcf78044b637cc41b04c6475",
       "issue": 1287
     },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
