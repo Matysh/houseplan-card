@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2545,
-  "nextTicket": 157,
+  "revision": 2546,
+  "nextTicket": 158,
   "nextFence": 157,
   "tasks": {
     "1126": {
@@ -2482,11 +2482,11 @@
       "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 156,
-      "queued": false,
+      "ticket": 157,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793783402144,
-      "reviewEntry": 1,
+      "readyAt": 1793785155492,
+      "reviewEntry": 2,
       "patchId": "c9b189c8d581c7810826071af6803bc8b0679389",
       "changedFiles": [
         "demo/smoke_room_device_discovery.mjs",
@@ -2497,7 +2497,6 @@
         "src/wall-face-graph.ts",
         "test/wall-face-graph.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2871,7 +2870,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1265
+  ],
   "active": null,
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -2949,6 +2950,19 @@
           "detail": "Браузер: draw wall thickness: failed; Браузер: room opening host: failed; Браузер: unified wall tool: failed; Браузер: wall face overlap: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed",
           "eventId": "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:3:return:return:1265"
         }
+      }
+    },
+    "finish:f1d0e608-285e-49d6-9657-2b6fec653d63": {
+      "digest": "a47359f8cbe357d1dd2db10e502fd662951e3beb467ef8bb76cccf31a4f1ff13",
+      "issue": 1265,
+      "message": {
+        "kind": "queued",
+        "issue": 1265,
+        "at": 1793785155492,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213"
       }
     }
   },
