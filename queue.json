@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3127,
+  "revision": 3128,
   "nextTicket": 188,
   "nextFence": 187,
   "tasks": {
@@ -2990,7 +2990,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1283-local-seam-cleanup",
-      "materialSha": "a6f6a97eae345733391deb8848f4d631d7fdd22e",
+      "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 186,
@@ -2998,7 +2998,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793818973489,
       "reviewEntry": 5,
-      "patchId": "59179c9b8213a32d89863dc2f77bb16b50487617",
+      "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd",
       "changedFiles": [
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -3372,11 +3372,12 @@
     "worker": "github-coordinator",
     "token": "186:github:41894403400:1:tick:0:admit",
     "fence": 186,
-    "materialSha": "a6f6a97eae345733391deb8848f4d631d7fdd22e",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
+    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
+    "phase": "testing",
     "admittedAt": 1793819451773,
-    "expiresAt": 1793819751773
+    "expiresAt": 1793819775673,
+    "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3742,6 +3743,10 @@
     "github:41894403400:1:completions:metadata:045642d3-2af7-42f7-b335-db7d140687b6:task-notice:1286::": {
       "digest": "7ff096c8275af2d96cb140f244c49772143a617eb47d89046c9126e98532a694",
       "issue": 1286
+    },
+    "finish:6f68a537-815a-4ecb-bff3-71568545e765:finish:1:synchronized": {
+      "digest": "b72c33966144f2222ea37056639a31d06ed33727a76ecda834820759a5aecf84",
+      "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
