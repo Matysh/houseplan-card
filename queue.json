@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2424,
+  "revision": 2425,
   "nextTicket": 150,
   "nextFence": 150,
   "tasks": {
@@ -2810,6 +2810,10 @@
       "digest": "f682116cecba14838e81327cfec8c6e6c165662c0e56d530ba827790d992eb18",
       "issue": 1274
     },
+    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:3:s6-label": {
+      "digest": "5f8538d97e352ca41b400d4f41e914c5f026b544735ca6b40194886a0ef1d076",
+      "issue": 1274
+    },
     "finish:fb1c352e-0910-477a-81e1-028affdea30b": {
       "digest": "6dcf3468cf6fc7e5f3984ce0b72711fb23dbb8ce4eb6fa409c6e380c145efc93",
       "issue": 1274,
@@ -2864,7 +2868,8 @@
         "resubmission": false,
         "reviewChanges": "Wheel witness получает boundingBox только после завершения текущего mode/camera и queued refit; probe с этим условием подтвердил настоящий SVG event path и zoom1→1.15 вместо потерянного wheel. Hidden-reveal settle раньше не учитывал queued refit/preparing; теперь оба состояния должны завершиться до снимка камеры и нажатия. Точность1e-9 не менялась, при отказе сохраняются конкретные before/after. Все прочие бизнес-assertions (next explicit Fit, hidden flags, editor frame, static card) остаются.\n\nОдин исходный hidden повтор уже проходил с дрейфом2e-13; это не объявляется доказательством починки продукта. Продуктовая камера не меняется; исходный full FAIL сохраняется. S6 использует явный product verification profile для двух нативных browser tests; новые HA E2E для такого тестового порта не нужны.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
