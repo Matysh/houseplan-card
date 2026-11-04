@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2999,
+  "revision": 3000,
   "nextTicket": 181,
   "nextFence": 178,
   "tasks": {
@@ -2986,7 +2986,7 @@
       "ownerDecision": null,
       "ticket": 177,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793816581563,
       "reviewEntry": 1,
       "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50",
@@ -3027,6 +3027,20 @@
         "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
         "expectedBase": "ad60cc9da89a002c7474eda65eb359eb7de30096",
         "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096",
+        "at": 1793817861463
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793817861463,
+        "entry": 1,
+        "requestId": "review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096"
       }
     },
     "1283": {
@@ -3266,19 +3280,7 @@
     1283,
     1286
   ],
-  "active": {
-    "issue": 1282,
-    "worker": "github-coordinator",
-    "token": "177:github:41888770951:1:tick:0:admit",
-    "fence": 177,
-    "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
-    "expectedBase": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-    "phase": "review",
-    "admittedAt": 1793817384499,
-    "expiresAt": 1793821039308,
-    "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50",
-    "reviewRequest": "review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096"
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3406,6 +3408,10 @@
     },
     "finish:e5a44c29-62c3-41c3-b487-69da6579fe0d:finish:10:review-presentation": {
       "digest": "da085e08f9cfa3b051383d031273fdc9a570d929b39ad1f6274a3720407201c2",
+      "issue": 1282
+    },
+    "finish:e5a44c29-62c3-41c3-b487-69da6579fe0d:finish:10:return": {
+      "digest": "e6ed2ab023d89d1252380bc3dc630fc6c7839a524861913cd44977a2b632d49b",
       "issue": 1282
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
