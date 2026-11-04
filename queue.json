@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2935,
-  "nextTicket": 177,
+  "revision": 2936,
+  "nextTicket": 178,
   "nextFence": 176,
   "tasks": {
     "1126": {
@@ -3007,6 +3007,20 @@
         "sourceSha": "659440571bc388d108ec7f0200ce9c407a9ee132"
       }
     },
+    "1282": {
+      "issue": 1282,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1282-exact-writers",
+      "materialSha": "995186629442bc7e29446e9b97fb004ceeea73f1",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 177,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793816581563,
+      "reviewEntry": 1
+    },
     "1283": {
       "issue": 1283,
       "track": "show",
@@ -3184,7 +3198,8 @@
     }
   },
   "waiting": [
-    1283
+    1283,
+    1282
   ],
   "active": {
     "issue": 1284,
@@ -3360,6 +3375,19 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "finish:e5a44c29-62c3-41c3-b487-69da6579fe0d": {
+      "digest": "7a1fa5a4741f542fe5049c48f6ca0969e73ac0696d292a1068be036acd0b3450",
+      "issue": 1282,
+      "message": {
+        "kind": "queued",
+        "issue": 1282,
+        "at": 1793816581563,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "995186629442bc7e29446e9b97fb004ceeea73f1"
       }
     }
   },
