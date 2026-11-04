@@ -263,6 +263,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/room-host-promotion.json",
+      "configs": 2
+    },
+    {
       "file": "test/fixtures/space-delete-with-markers.json",
       "configs": 10
     },
@@ -23879,6 +23883,121 @@
         }
       ],
       "fullConfigSha256": "c12d3973647a3066eaf5c31035bd4c5d11d21743bfc33549513bf4aed5b3958d"
+    },
+    {
+      "label": "test/fixtures/room-host-promotion.json/previous",
+      "fingerprint": "0da95b9ed8e1d2137e9e8c24b76d16a44bbfce7408f2847ef52e9a9f133d697e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "lineage",
+          "catalogue": [
+            "neighbour-bottom",
+            "neighbour-left",
+            "neighbour-right",
+            "neighbour-top"
+          ],
+          "rooms": [
+            {
+              "id": "neighbour",
+              "walls": [
+                "neighbour-top",
+                "neighbour-right",
+                "neighbour-bottom",
+                "neighbour-left"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "retained-opening",
+              "host": {
+                "kind": "partition",
+                "id": "long-source~1"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "long-source~1",
+            "long-source~2",
+            "lower-source",
+            "upper-source"
+          ]
+        },
+        {
+          "space": "other-floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "untouched-wall"
+          ]
+        }
+      ],
+      "fullConfigSha256": "a3f44ac1a3432615418ca5e96ccfbc04a260bde74cf1a2e92793f0f1e25fe4db"
+    },
+    {
+      "label": "test/fixtures/room-host-promotion.json/message/config",
+      "fingerprint": "8348081f91380c176720e9f48efd1f08e8c0fae240bce50b7c1017f1d7269ddf",
+      "ok": true,
+      "identity": [
+        {
+          "space": "lineage",
+          "catalogue": [
+            "long-source~1",
+            "lower-source",
+            "neighbour-bottom",
+            "neighbour-left",
+            "neighbour-right",
+            "neighbour-top",
+            "upper-source"
+          ],
+          "rooms": [
+            {
+              "id": "neighbour",
+              "walls": [
+                "neighbour-top",
+                "neighbour-right",
+                "neighbour-bottom",
+                "neighbour-left"
+              ]
+            },
+            {
+              "id": "rmw1wyl5e-0",
+              "walls": [
+                "long-source~1",
+                "upper-source",
+                "neighbour-left",
+                "lower-source"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "retained-opening",
+              "host": {
+                "kind": "wall",
+                "id": "long-source~1"
+              }
+            }
+          ],
+          "partitions": [
+            "long-source",
+            "long-source~2"
+          ]
+        },
+        {
+          "space": "other-floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "untouched-wall"
+          ]
+        }
+      ],
+      "fullConfigSha256": "463a1b416e1dc1476b7dbfa581789d2293e24fdaa1be398929648659ffd2b394"
     }
   ]
 }

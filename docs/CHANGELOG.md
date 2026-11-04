@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reconcile Split and full-corpus test passports with independently verified stored documents, update native drag Escape expectations, and measure current summary controls after UI-kit paint while retaining the exact 44px bound and an undersize negative control. [#1281](https://github.com/Matysh/houseplan-card/issues/1281)
+
 - Compute queue material identity from full blob IDs instead of buffering binary patch payloads, so large reviewed screenshot updates can complete through the normal queue. [#1280](https://github.com/Matysh/houseplan-card/issues/1280)
 
 - Capture the Background editor's held pan after a complete UI frame, preserving its native pointer, camera and configuration; static golden checks no longer compare arbitrary intermediate viewport anchors. Accept the owner's 236 reviewed layout/capture frames with individual source provenance. Pixel thresholds remain unchanged. [#1277](https://github.com/Matysh/houseplan-card/issues/1277)

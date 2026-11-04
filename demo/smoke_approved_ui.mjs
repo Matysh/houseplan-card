@@ -367,13 +367,15 @@ try {
   const liveBox = await moving.boundingBox();
   assert.ok(Math.hypot(liveBox.x - box.x, liveBox.y - box.y) > 10,
     'the next real drag must visibly move the rotated device');
-  // Existing wide Properties selection consumes the first Escape. Prove that
-  // transition explicitly, then use the next Escape to cancel the live drag.
+  // #1263 gives an active drag the first Escape; idle selection is cleared next.
   assert.ok(await page.evaluate(() => window.__card._editorRuntime.properties.identity));
   await page.keyboard.press('Escape'); await settled();
-  assert.equal(await page.evaluate(() => window.__card._editorRuntime.properties.identity), null);
-  assert.equal(await page.evaluate(() => !!window.__card._deviceDrag), true);
+  assert.equal(await page.evaluate(() => !!window.__card._deviceDrag), false);
+  assert.ok(await page.evaluate(() => window.__card._editorRuntime.properties.identity));
+  assert.deepEqual(await page.evaluate(() => ({ layout: structuredClone(window.__card._layout),
+    history: window.__card._devicePositionHistory.size, writes: window.__1119Writes.length })), beforeDrag);
   await page.keyboard.press('Escape'); await settled();
+  assert.equal(await page.evaluate(() => window.__card._editorRuntime.properties.identity), null);
   assert.equal(await page.evaluate(() => !!window.__card._deviceDrag), false);
   await page.mouse.up(); await settled();
   assert.deepEqual(await page.evaluate(() => ({ layout: structuredClone(window.__card._layout),

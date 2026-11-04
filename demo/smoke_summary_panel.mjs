@@ -1,4 +1,23 @@
 import { launch, checkAll, finish } from './serve.mjs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
+
+// Runs in the browser. Resolve the current form rather than retaining nodes
+// across the repeated open/close timings below; keep the exact 44px bound.
+const measureTouchTargets = () => {
+  const card=window.__card,editor=(card.shadowRoot||card.renderRoot).querySelector('hp-dialog .summary-editor');
+  const targets=editor?[...editor.querySelectorAll("button, input:not([type='checkbox']), select, .summary-drag, .summary-switch")]:[];
+  const rows=targets.map(target=>{
+    // #998 keeps the native select only as the shared picker's value source.
+    const painted=target.matches('hp-settings-select > select')?target.parentElement.shadowRoot?.querySelector('button'):target;
+    const box=painted?.getBoundingClientRect();
+    return {tag:target.tagName,id:target.id,classes:target.className,connected:!!painted?.isConnected,
+      width:box?.width??0,height:box?.height??0};
+  });
+  const invalid=rows.filter(row=>!row.connected||row.width<44||row.height<44);
+  return {count:rows.length,valid:!!editor?.isConnected&&rows.length>0&&!invalid.length,
+    minWidth:Math.min(...rows.map(row=>row.width)),minHeight:Math.min(...rows.map(row=>row.height)),
+    invalidCount:invalid.length,invalid:invalid.slice(0,12)};
+};
 
 const { page, browser } = await launch({ width: 960, height: 640 });
 
@@ -213,8 +232,6 @@ const settings = await page.evaluate(async () => {
   const boundedPicker = refreshedPicker.querySelectorAll('.summary-source-results button').length <= 104;
   exact?.click();
   await card.updateComplete;
-  const cancel = [...root().querySelectorAll('hp-dialog [slot="footer"] button')]
-    .find((button) => button.textContent.trim() === card._t('btn.cancel'));
   const samples = [];
   for (let index = 0; index < 23; index++) {
     card._summary.dialog = null;
@@ -241,18 +258,44 @@ const settings = await page.evaluate(async () => {
     loadedFormOpenP95Under250ms: openP95 <= 250,
     pickerInputP95Under50ms: inputP95 <= 50,
     metrics: { openP95Ms: openP95, inputP95Ms: inputP95, samples: inputSamples.length },
-    editorTouchTargets: [...actionTargets, ...switchTargets].every((target) => {
-      // #998 retains the native select as a hidden value source. Measure the
-      // actual shared-picker button, keeping the original 44px target bound.
-      const painted = target.matches('hp-settings-select > select')
-        ? target.parentElement.shadowRoot?.querySelector('button') : target;
-      const box = painted?.getBoundingClientRect();
-      return !!box && box.width >= 44 && box.height >= 44;
-    }),
+    targetCount: actionTargets.length + switchTargets.length,
   };
-  cancel?.click();
   return result;
 });
+
+// Form timing and painted size are different observations. updateComplete does
+// not finish nested UI-kit rendering or finite presentation animations.
+await waitForUiKitPaint(page);
+const touchTargets=await page.evaluate(measureTouchTargets);
+settings.editorTouchTargets=touchTargets.valid;
+settings.touchTargetInventoryUnchanged=touchTargets.count===settings.targetCount&&touchTargets.count>0;
+
+// A genuinely undersized connected target must still fail this same reader.
+const savedTargetStyle=await page.evaluate(()=>{
+  const target=window.__card.renderRoot.querySelector('hp-dialog .summary-drag');
+  if(!target)throw Error('Missing native summary drag target');
+  const saved=target.getAttribute('style');
+  target.style.setProperty('width','43px','important');
+  target.style.setProperty('min-width','0','important');
+  return saved;
+});
+let undersizedTargets;
+try{undersizedTargets=await page.evaluate(measureTouchTargets);}
+finally{await page.evaluate(saved=>{
+  const target=window.__card.renderRoot.querySelector('hp-dialog .summary-drag');
+  if(saved===null)target.removeAttribute('style');else target.setAttribute('style',saved);
+},savedTargetStyle);}
+settings.touchBoundRejects43px=!undersizedTargets.valid&&undersizedTargets.invalid.some(row=>
+  row.connected&&row.classes.includes('summary-drag')&&row.width===43);
+settings.touchBoundRestored=(await page.evaluate(measureTouchTargets)).valid;
+await page.evaluate(async()=>{
+  const card=window.__card;
+  const cancel=[...card.renderRoot.querySelectorAll('hp-dialog [slot="footer"] button')]
+    .find(button=>button.textContent.trim()===card._t('btn.cancel'));
+  if(!cancel)throw Error('Missing current summary Cancel button');
+  cancel.click();await card.updateComplete;
+});
+await waitForUiKitPaint(page);
 
 await page.evaluate(() => {
   for (const extra of window.__summaryWitnessExtras || []) extra.remove();
@@ -570,7 +613,7 @@ const recovery = await page.evaluate(async () => {
   };
 });
 
-const { metrics: pickerMetrics, ...settingsChecks } = settings;
+const { metrics: pickerMetrics, targetCount: expectedTouchTargetCount, ...settingsChecks } = settings;
 const witness = {
   ...initial,
   bottomOnTallStage,
@@ -594,6 +637,7 @@ checkAll(witness);
 await finish(browser, {
   ...witness,
   pickerTimings: pickerMetrics,
+  touchTargets: { ...touchTargets, expectedCount: expectedTouchTargetCount },
   pickerFixture: pickerWitnessSetup,
   indexRebuilds: indexInvalidation,
   responsive: { admin: responsiveAdmin, household: responsiveHousehold, kiosk: responsiveKiosk },

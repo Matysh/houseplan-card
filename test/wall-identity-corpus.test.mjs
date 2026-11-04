@@ -12,6 +12,19 @@ const expected=JSON.parse(readFileSync(new URL('./fixtures/845-wall-corpus-curre
 const compare=(actual,baseline)=>assert.deepEqual(actual,baseline,
   'wall corpus current identities/outcomes differ; full source membership and the original legacy oracle are retained');
 
+const promotionFixture=JSON.parse(readFileSync(new URL('./fixtures/room-host-promotion.json',import.meta.url),'utf8'));
+for(const [suffix,input] of [['previous',promotionFixture.previous],['message/config',promotionFixture.message.config]])
+test('#1281 room-host promotion corpus passport preserves the complete stored '+suffix,()=>{
+  const row=expected.documents.find(row=>row.label==='test/fixtures/room-host-promotion.json/'+suffix);
+  assert.equal(input.model_version,11);
+  assert.deepEqual(row,{label:'test/fixtures/room-host-promotion.json/'+suffix,
+    fingerprint:createHash('sha256').update(JSON.stringify(input)).digest('hex'),ok:true,
+    identity:identityProjection(input),fullConfigSha256:fullConfigSha256(input)});
+  const frozen=structuredClone(input);
+  assert.deepEqual(commitWallSegmentModel(input).config,frozen,'the independent persisted document is the entire expected output');
+  assert.deepEqual(input,frozen);
+});
+
 test('#845 complete persisted fixture/demo corpus retains baseline identities and byte idempotence',async t=>{
   const corpus=await loadCompleteWallIdentityCorpus(),documents=[],guardFailures=[];
   const reached={inputs:0,readOnly:0,successfulMigrations:0,declines:0,unexpectedErrors:0,
