@@ -31,6 +31,17 @@ assert.equal(corpus.schema,2,'model11 passports hash complete serialized documen
 const documentHash=config=>createHash('sha256').update(JSON.stringify(config)).digest('hex');
 for(const name of historyCases)test('#1100 unchanged exact history outcome: '+name,()=>{
  const expected=corpus.results[name],actual=historyCharacterization(name);
+ if(name==='merge'){
+  // #1283 deliberately removes the two collinear seams. Keep an independent
+  // semantic oracle before accepting the new complete serialized passport.
+  const room=actual.afterEdit.spaces[0].rooms[0],graph=actual.afterEdit.spaces[0].plan_graph;
+  assert.deepEqual(actual.afterEdit.spaces[0].rooms.map(r=>r.id),['left']);
+  assert.deepEqual(room.poly,[[.01,.01],[.07,.01],[.07,.04],[.01,.04]]);
+  assert.equal(graph.nodes.length,4);assert.equal(graph.edges.length,4);
+  assert.ok(graph.edges.every(edge=>edge.cm===10));
+  assert.deepEqual(actual.afterEdit.spaces.slice(1),historyFixture().spaces.slice(1));
+  assert.deepEqual(actual.steps[1].config,actual.afterEdit,'Redo restores every graph/identity/metadata field');
+ }
  assert.equal(documentHash(actual.afterEdit),expected.afterEdit);
  assert.equal(actual.steps.length,expected.steps.length);
  actual.steps.forEach((step,index)=>{

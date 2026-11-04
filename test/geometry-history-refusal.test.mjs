@@ -266,9 +266,15 @@ test('#1166 both public contours cross real room commit/write/history owners in 
   const {findWallFaceAtPoint}=await import('../test-build/wall-face-graph.js');
   const {optimizePlans}=await import('../test-build/plan-optimizer.js');
   const exported=JSON.parse(readFileSync(new URL('./fixtures/1166-two-contours.json',import.meta.url),'utf8'));
+  const legacy=JSON.parse(readFileSync(new URL('./fixtures/1166-room-candidates.json',import.meta.url),'utf8'));
   const {roomContactCases}=await import('./helpers/room-contact-cases.mjs');
   const scenarios=[{name:'public',config:{...clone(exported.payload.config),model_version:exported.model_version},
-    clicks:[[350,400],[-200,1240]]},...roomContactCases()];
+    clicks:[[350,400],[-200,1240]]},...roomContactCases().map(scenario=>({
+      ...scenario,
+      // Keep the complete historical input under test. Re-running migration
+      // here silently replaced q-noise/dependency source IDs after #1282.
+      config:clone(legacy.find(row=>row.scenario===scenario.name).original),
+    }))];
   const receipts=[];
   for(const scenario of scenarios)for(const optimize of [false,true])for(const reverse of [false,true]){
     const raw=clone(scenario.config),initialRooms=raw.spaces[0].rooms.length;
@@ -307,10 +313,42 @@ test('#1166 both public contours cross real room commit/write/history owners in 
     receipts.push({scenario:scenario.name,optimize,reverse,original:raw,source,candidates});
   }
   const actual=stableRoomReceiptIds(receipts,{preserveSourceIdentities:true});
-  const legacy=JSON.parse(readFileSync(new URL('./fixtures/1166-room-candidates.json',import.meta.url),'utf8'));
   assert.deepEqual(actual.map(({scenario,optimize,reverse,original})=>({scenario,optimize,reverse,original})),
     legacy.map(({scenario,optimize,reverse,original})=>({scenario,optimize,reverse,original})),
     'the same complete raw inputs, orders and Optimize modes remain passported');
+  // #1282 now migrates legacy authored anchors onto the exact lattice. Compare
+  // every identity/material/metadata field independently before the full hash;
+  // only coordinate representations and their exact dependency ratios may vary.
+  const numerical=value=>{
+    if(Array.isArray(value))return value.map(item=>numerical(item));
+    if(!value||typeof value!=='object')return value;
+    return Object.fromEntries(Object.entries(value).map(([k,v])=>{
+      if(k==='p'&&Array.isArray(v)&&['l','q'].includes(v[0]))return[k,v[0]==='l'
+        ?[Number(v[1])/240,Number(v[2])/240]
+        :[Number(v[1])/Number(v[2]),Number(v[3])/Number(v[4])]];
+      if(k==='parameters')return[k,v.map(pair=>Number(pair[0])/Number(pair[1]))];
+      return[k,numerical(v)];
+    }));
+  };
+  const equivalent=(a,b,path,epsilon)=>{
+    if(typeof a==='number'&&typeof b==='number'&&
+      /\.(?:poly|a|b|p|parameters)(?:\.\d+)+$/.test(path)){
+      const bound=path.includes('.parameters.')&&epsilon>1e-12?.001:epsilon;
+      assert.ok(Math.abs(a-b)<=bound,`${path}: coordinate/ratio bound ${a} / ${b}`);return;
+    }
+    if(a&&b&&typeof a==='object'&&typeof b==='object'){
+      assert.deepEqual(Object.keys(a),Object.keys(b),`${path}: fields and order`);
+      for(const k of Object.keys(a))equivalent(a[k],b[k],`${path}.${k}`,epsilon);
+    }else assert.deepEqual(a,b,`${path}: identity/material/metadata`);
+  };
+  for(let index=0;index<4;index++){
+    const row=actual[index],old=legacy[index];
+    assert.equal(row.scenario,'public');
+    for(const [part,value]of [['source',row.source],['candidates',row.candidates]])
+      equivalent(numerical(value),numerical(old[part]),part,row.optimize?.0002:1e-12);
+    assert.deepEqual(row.candidates.map(c=>c.spaces[0].rooms.map(r=>r.id)),
+      [['created-room-0'],['created-room-0','created-room-1']]);
+  }
   if(process.env.HP_1166_ROOM_RECEIPT)writeFileSync(process.env.HP_1166_ROOM_RECEIPT,JSON.stringify(actual,null,2)+'\n');
   else {
     const passport=JSON.parse(readFileSync(new URL('./fixtures/1166-room-graph-passports.json',import.meta.url),'utf8'));
