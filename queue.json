@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2972,
+  "revision": 2973,
   "nextTicket": 178,
   "nextFence": 177,
   "tasks": {
@@ -372,37 +372,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "bcdc82d590b99b658f16056438e1e97b7f7f0c46"
-      }
-    },
-    "1194": {
-      "issue": 1194,
-      "branch": "codex/1194-visible-wsl-policy",
-      "track": "ship",
-      "layer": "docs",
-      "status": "S8-merged",
-      "mergedSha": "834850f6fd599551adffbd3e00bd7a4f76cea6df",
-      "mergedAt": 1793571957944,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1195": {
@@ -3090,7 +3059,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "ad60cc9da89a002c7474eda65eb359eb7de30096"
       }
     }
   },
@@ -3351,6 +3321,18 @@
         "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:41887623530:1:1284": {
+      "digest": "eb98538b206490b1d3cb9e69e045f6cbb2eaacdf10387e63f1323e68e2891b87",
+      "issue": 1284,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1284,
+        "at": 1793817097247,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096"
       }
     }
   },
