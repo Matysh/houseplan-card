@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2839,
+  "revision": 2840,
   "nextTicket": 172,
   "nextFence": 172,
   "tasks": {
@@ -3313,7 +3313,7 @@
     "expectedBase": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
     "phase": "review",
     "admittedAt": 1793803800116,
-    "expiresAt": 1793807452138,
+    "expiresAt": 1793807460182,
     "patchId": "d97d6a78e8ac5eece01644e1980e7c21244a5530"
   },
   "events": {
@@ -3331,6 +3331,10 @@
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2:finish:3:s6-label": {
       "digest": "fc75d05292a8505ce876a4f890c4c10db5791854f34c0d81a2a0af51415c7018",
+      "issue": 1277
+    },
+    "finish:896dde6e-68ed-42f5-b386-f42e721f3a1a": {
+      "digest": "aaea7b605c407f9b09d9f9ea2eda84b09fc507eeb8b3ac4b98437cdb679fcb42",
       "issue": 1277
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2": {
