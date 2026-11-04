@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3420,
+  "revision": 3421,
   "nextTicket": 198,
   "nextFence": 198,
   "tasks": {
@@ -3083,47 +3083,24 @@
     "1291": {
       "issue": 1291,
       "branch": "issue/1291-release-return-a4dd940c1190",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "a4dd940c1190ee62581c187fa500db3c73f66d1c",
-      "releaseTag": "v1.84.0-beta.5",
-      "materialSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-      "ownerDecision": null,
-      "ticket": 197,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793829299716,
-      "reviewEntry": 1,
-      "patchId": "9046759c622242263ebbd2d7a7bb8969e64778f3",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "a4dd940c1190ee62581c187fa500db3c73f66d1c",
-        "tag": "v1.84.0-beta.5",
-        "verdict": "accepted",
-        "patchId": "9046759c622242263ebbd2d7a7bb8969e64778f3",
-        "materialSha": "0bba0ce459b95291ffbe590b9827cc412fa85819"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "b08d710df2ee8841573dd6095a181671d1af0436",
+      "mergedSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
+      "mergedAt": 1793829357206,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261104T215516929-e0041e38",
-        "name": "Тесты для задачи #1291 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261104T215516929-e0041e38/report.json",
-        "materialSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-        "status": "passed",
-        "finishedAt": "2026-11-04T21:55:50.759Z",
-        "failures": []
+      "releaseTag": "v1.84.0-beta.5",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3230,27 +3207,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1291,
-    "worker": "finish",
-    "token": "197:release-return-finish:13fd8e88-158d-4b72-a345-824c93d4b56c:finish:1:admit",
-    "fence": 197,
-    "materialSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-    "expectedBase": "b08d710df2ee8841573dd6095a181671d1af0436",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793829304360,
-    "expiresAt": 1793832951951,
-    "patchId": "9046759c622242263ebbd2d7a7bb8969e64778f3"
-  },
+  "active": null,
   "events": {
-    "release-return-finish:13fd8e88-158d-4b72-a345-824c93d4b56c:finish:2:synchronized": {
-      "digest": "38806801884745680a87dae7e72ec0ee39dd9beb11843c7929fa19c9e821fc6d",
-      "issue": 1291
-    },
-    "release-return-finish:13fd8e88-158d-4b72-a345-824c93d4b56c:finish:3:s6-complete": {
-      "digest": "3f2430600c6dcec0674dbbe0f0b925bbab507783b4d0d3a8e328691c65abb6db",
-      "issue": 1291
-    },
     "release-return:13fd8e88-158d-4b72-a345-824c93d4b56c": {
       "digest": "6893ebc157b3bc573ee2bb6c97f59cad630abc1bb9f91ccef8bfffdf44c76051",
       "issue": 1291,
