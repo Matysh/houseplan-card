@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2489,
+  "revision": 2490,
   "nextTicket": 153,
   "nextFence": 153,
   "tasks": {
@@ -3061,7 +3061,8 @@
           "entry": 2,
           "detail": "Браузер: stairs: failed",
           "eventId": "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269"
-        }
+        },
+        "delivered": true
       }
     }
   },
