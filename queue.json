@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2429,
+  "revision": 2430,
   "nextTicket": 150,
   "nextFence": 150,
   "tasks": {
@@ -2612,137 +2612,25 @@
     },
     "1274": {
       "issue": 1274,
+      "branch": "fix/1274-camera-smoke-readiness",
       "track": "show",
       "layer": "product",
-      "branch": "fix/1274-camera-smoke-readiness",
-      "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 149,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793780832934,
-      "reviewEntry": 1,
-      "patchId": "57cc8652314b9694f9c10a1f5f866bd318d8204f",
-      "changedFiles": [
-        "demo/smoke_e2e_hooks.mjs",
-        "demo/smoke_hidden_device_toggle.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261104T082726325-5916c97b",
-        "name": "Тесты для задачи #1274 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T082726325-5916c97b/report.json",
-        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-        "status": "passed",
-        "finishedAt": "2026-11-04T08:27:42.953Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "f2df18637a7bbf87d95c598692156fa49211c6ec",
+      "mergedSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+      "mergedAt": 1793781081640,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1274:1:57cc8652314b9694f9c10a1f5f866bd318d8204f:f2df18637a7bbf87d95c598692156fa49211c6ec",
-      "reviewMaterial": {
-        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-        "expectedBase": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "patchId": "57cc8652314b9694f9c10a1f5f866bd318d8204f"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1274,
-        "requestId": "review:1274:1:57cc8652314b9694f9c10a1f5f866bd318d8204f:f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "kind": "code",
-        "base": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-        "patchId": "57cc8652314b9694f9c10a1f5f866bd318d8204f",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1274,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1274",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Wheel witness получает boundingBox только после завершения текущего mode/camera и queued refit; probe с этим условием подтвердил настоящий SVG event path и zoom1→1.15 вместо потерянного wheel. Hidden-reveal settle раньше не учитывал queued refit/preparing; теперь оба состояния должны завершиться до снимка камеры и нажатия. Точность1e-9 не менялась, при отказе сохраняются конкретные before/after. Все прочие бизнес-assertions (next explicit Fit, hidden flags, editor frame, static card) остаются.\n\nОдин исходный hidden повтор уже проходил с дрейфом2e-13; это не объявляется доказательством починки продукта. Продуктовая камера не меняется; исходный full FAIL сохраняется. S6 использует явный product verification profile для двух нативных browser tests; новые HA E2E для такого тестового порта не нужны."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение затрагивает только тесты. Два браузерных smoke-теста теперь ждут реального завершения перехода режима или камеры и отложенного refit, прежде чем брать координаты для нативного wheel и делать снимок камеры перед eye toggle. Проверки не ослаблены: ожидание изменения viewBox, проверка live CTM/gridStep и допуск 1e-9 остались прежними, force-кликов, подмены камеры и sleep нет. При отказе hidden-reveal теперь печатает before/after. Продукт не меняется. Блокеров нет. Ограничение: исправление подтверждено адресным прогоном двух тестов в S6, а не повторным полным stable-профилем. Для hidden_device_toggle величина исходного расхождения в полном профиле неизвестна, поэтому «починено» здесь означает «устранена известная гонка готовности»; если сбой повторится, новый лог покажет реальный дрейф.",
-          "understanding": "Проблема. `__hpTest.settled()` (demo/helpers/hp-test.mjs:100-115) ждёт только Lit `updateComplete`, закрытия inert-диалогов и нескольких кадров. Анимированный переход режима (`_modeTransitionBusy`/`_modeTransitionPreparing`), переход камеры (`_cameraTransition.active`) и refit, отложенный через rAF (`_refitRaf`/`_pendingRefitSize`, src/houseplan-card.ts:7451-7482), он не учитывает. `setMode('view')` тоже возвращается после `settled()`, поэтому в smoke_e2e_hooks.mjs `boundingBox()` для wheel мог сниматься с ещё движущейся поверхности. Это совпадает с диагнозом из issue: CTM ещё движется, zoom/viewBox неизменны. В hidden_device_toggle `frameBefore` после Fit мог сниматься до отложенного refit, и тогда тот выполнялся уже во время toggle.\n\nЧто стало. (1) В e2e_hooks перед `boundingBox()` добавлен `waitForFunction`, который ждёт, пока переход режима и камеры и отложенный refit станут неактивны; дальше wheel идёт по настоящему пути SVG stage. (2) В hidden_device_toggle `settle()` дополнительно ждёт `_modeTransitionPreparing`, `_refitRaf` и `_pendingRefitSize`, затем повторяет `settled()` и проверку камеры и refit, чтобы поймать refit, поставленный в очередь последним кадром. (3) При провале проверки reveal печатаются конкретные `frameBefore`/`frameAfterReveal`.\n\nРазобранные пути. Обработчик `_onWheel` → `_prepareCameraCommand` (src/houseplan-card.ts:7522-7537, 1452-1460): идущий переход режима он сам принудительно завершает, так что продуктовый guard тест не обходит; wheel теряется только при промахе по stage, и ожидание геометрии это устраняет. `_refitView` и `_holdWarmRefit`/`_releaseWarmRefit` (900-943, 7418-7483): поля, которые проверяют тесты, существуют, и их смысл совпадает с используемым. Хелпер `settled` и `setMode` в hp-test.mjs. Контекст тестов вокруг изменения: e2e_hooks.mjs:322-398, hidden_device_toggle.mjs:1-32 и 215-274.",
-          "analysis": [
-            {
-              "topic": "Wheel: ожидание готовности вместо обхода guard",
-              "assessment": "Подход верный. Продукт сам завершает переход режима при wheel (`_prepareCameraCommand` → `_cancelModeTransition(true)`), поэтому единственное, в чём тест мог ошибаться, — точка попадания, взятая с ещё движущейся поверхности. Ожидание реального состояния карточки перед `boundingBox()` устраняет именно это. Строгое ожидание изменения viewBox и проверка `cameraMetadataIsLive` (CTM round-trip < 1e-7, gridStep > 0) сохранены без изменений. Комментарий с #1274 объясняет неочевидную причину ожидания, а не пересказывает код.",
-              "evidence": "demo/smoke_e2e_hooks.mjs:370-383; src/houseplan-card.ts:1452-1460, 7522-7537; demo/helpers/hp-test.mjs:100-115 (settled не знает о переходах режима и камеры)"
-            },
-            {
-              "topic": "Hidden reveal: settle до снимка и после toggle",
-              "assessment": "Расширенный `settle()` срабатывает и перед `frameBefore` (после Fit), и после `toggle()`. Ожидание после toggle проверку не маскирует, а усиливает: если reveal запустит переход камеры или refit, тест дождётся его конца, и `frameAfterReveal` покажет итоговый сдвиг. Если reveal на самом деле сдвигает камеру, проверка с допуском 1e-9 по-прежнему упадёт. Второй проход `settled()` + проверка refit ловит refit, который ResizeObserver поставил в очередь в последних кадрах первого прохода. Это ограниченная двухпроходная эвристика, а не гарантия стабильности: доставку после второй проверки она не заметит. Для теста это допустимо. Отрицательные свидетели (`nextFitIncludesRevealedFarMarker`, флаги hidden, editor frame, static card) не тронуты.",
-              "evidence": "demo/smoke_hidden_device_toggle.mjs:10-19, 243-259; src/houseplan-card.ts:7438-7482 (refit сохраняет zoom/центр, пересчёт через _applyView даёт шум ~1e-13)"
-            },
-            {
-              "topic": "Соответствие требованиям issue",
-              "assessment": "Требования соблюдены: нет force-кликов, подмены камеры и sleep, допуск не изменён, кадры до/после выводятся при отказе. Пункт «отследить камеру на всём reveal» выполнен частично: фиксируются только конечные состояния, а не покадровый трек. Промежуточное движение, которое вернулось бы в исходную точку, тест не увидит. Для критерия приёмки («eye toggle не вызывает автоподгонку/переезд») это приемлемо: автоподгонка оставила бы итоговое смещение. Автор прямо пишет, что исходный FAIL полного профиля не объявлен исправленным, и это честная формулировка.",
-              "evidence": "Тело issue #1274 (приёмка); demo/smoke_hidden_device_toggle.mjs:249-251"
-            },
-            {
-              "topic": "Доказательства S6",
-              "assessment": "Использован receipt 20261104T082726325-5916c97b (passed) на материале 07492ec. По контексту автора это адресный прогон двух нативных браузерных тестов, а не повтор полного stable-профиля, где воспроизводился сбой. Для wheel это подкрепляет диагностическая проба из issue (zoom 1→1.15 при том же условии готовности). Для hidden reveal величина исходного расхождения неизвестна, поэтому окончательное подтверждение даст только следующий полный профиль. Новый диагностический вывод как раз для этого и нужен.",
-              "evidence": "receipts[0]; authorContext; тело issue: «Один адресный повтор ... 2e-13..5e-13»"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Одинаковый предикат готовности камеры (`!_modeTransitionBusy && !_modeTransitionPreparing && !_cameraTransition.active && !_refitRaf && !_pendingRefitSize`) теперь вписан вручную в несколько smoke-тестов. Если вынести его в `__hpTest`, например как `cameraSettled()` рядом с `settled()`, то при переименовании приватных полей или появлении нового источника движения камеры правка понадобится в одном месте, и тесты не начнут незаметно расходиться. Цена — небольшое расширение тестового фасада; на текущую задачу это не влияет.",
-            "Для диагностики hidden reveal можно при отказе собирать короткий трек `_view` по кадрам между кликом и окончанием settle, а не только две крайние точки. Тогда при повторе сбоя в полном профиле сразу будет видно, кто двигал камеру: refit, переход или округление. Стоит делать, только если сбой повторится."
-          ],
-          "boundaries": "Код изучен по исходникам: diff, контекст обоих smoke-тестов, хелпер hp-test.mjs (settled/setMode) и пути продукта для wheel, refit и warm refit в src/houseplan-card.ts. Сам ничего не запускал. Опирался на receipt S6 20261104T082726325-5916c97b (passed), который по контексту автора покрывает адресный прогон двух тестов. Повтор полного stable-профиля с этим изменением не предоставлен, поэтому устранение исходного сбоя hidden_device_toggle в полном профиле подтвердить нельзя: величина того расхождения в материалах не приведена. Диагностическая проба wheel из issue известна только по описанию. Пользовательский HA, опубликованный тег и HA E2E не затронуты. Согласен с автором: для тестового порта новые HA E2E не нужны."
-        },
-        "usage": {
-          "input_tokens": 26,
-          "cache_creation_input_tokens": 40682,
-          "cache_read_input_tokens": 250403,
-          "output_tokens": 8228,
-          "output_tokens_details": {
-            "thinking_tokens": 2121
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 40682,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 958,
-              "cache_read_input_tokens": 33027,
-              "cache_creation_input_tokens": 11859,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11859
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение затрагивает только тесты. Два браузерных smoke-теста теперь ждут реального завершения перехода режима или камеры и отложенного refit, прежде чем брать координаты для нативного wheel и делать снимок камеры перед eye toggle. Проверки не ослаблены: ожидание изменения viewBox, проверка live CTM/gridStep и допуск 1e-9 остались прежними, force-кликов, подмены камеры и sleep нет. При отказе hidden-reveal теперь печатает before/after. Продукт не меняется. Блокеров нет. Ограничение: исправление подтверждено адресным прогоном двух тестов в S6, а не повторным полным stable-профилем. Для hidden_device_toggle величина исходного расхождения в полном профиле неизвестна, поэтому «починено» здесь означает «устранена известная гонка готовности»; если сбой повторится, новый лог покажет реальный дрейф.\n\n## Понимание решения\n\nПроблема. `__hpTest.settled()` (demo/helpers/hp-test.mjs:100-115) ждёт только Lit `updateComplete`, закрытия inert-диалогов и нескольких кадров. Анимированный переход режима (`_modeTransitionBusy`/`_modeTransitionPreparing`), переход камеры (`_cameraTransition.active`) и refit, отложенный через rAF (`_refitRaf`/`_pendingRefitSize`, src/houseplan-card.ts:7451-7482), он не учитывает. `setMode('view')` тоже возвращается после `settled()`, поэтому в smoke_e2e_hooks.mjs `boundingBox()` для wheel мог сниматься с ещё движущейся поверхности. Это совпадает с диагнозом из issue: CTM ещё движется, zoom/viewBox неизменны. В hidden_device_toggle `frameBefore` после Fit мог сниматься до отложенного refit, и тогда тот выполнялся уже во время toggle.\n\nЧто стало. (1) В e2e_hooks перед `boundingBox()` добавлен `waitForFunction`, который ждёт, пока переход режима и камеры и отложенный refit станут неактивны; дальше wheel идёт по настоящему пути SVG stage. (2) В hidden_device_toggle `settle()` дополнительно ждёт `_modeTransitionPreparing`, `_refitRaf` и `_pendingRefitSize`, затем повторяет `settled()` и проверку камеры и refit, чтобы поймать refit, поставленный в очередь последним кадром. (3) При провале проверки reveal печатаются конкретные `frameBefore`/`frameAfterReveal`.\n\nРазобранные пути. Обработчик `_onWheel` → `_prepareCameraCommand` (src/houseplan-card.ts:7522-7537, 1452-1460): идущий переход режима он сам принудительно завершает, так что продуктовый guard тест не обходит; wheel теряется только при промахе по stage, и ожидание геометрии это устраняет. `_refitView` и `_holdWarmRefit`/`_releaseWarmRefit` (900-943, 7418-7483): поля, которые проверяют тесты, существуют, и их смысл совпадает с используемым. Хелпер `settled` и `setMode` в hp-test.mjs. Контекст тестов вокруг изменения: e2e_hooks.mjs:322-398, hidden_device_toggle.mjs:1-32 и 215-274.\n\n## Разбор решения\n\n### Wheel: ожидание готовности вместо обхода guard\n\nПодход верный. Продукт сам завершает переход режима при wheel (`_prepareCameraCommand` → `_cancelModeTransition(true)`), поэтому единственное, в чём тест мог ошибаться, — точка попадания, взятая с ещё движущейся поверхности. Ожидание реального состояния карточки перед `boundingBox()` устраняет именно это. Строгое ожидание изменения viewBox и проверка `cameraMetadataIsLive` (CTM round-trip < 1e-7, gridStep > 0) сохранены без изменений. Комментарий с #1274 объясняет неочевидную причину ожидания, а не пересказывает код.\n\nОснование: demo/smoke_e2e_hooks.mjs:370-383; src/houseplan-card.ts:1452-1460, 7522-7537; demo/helpers/hp-test.mjs:100-115 (settled не знает о переходах режима и камеры)\n\n### Hidden reveal: settle до снимка и после toggle\n\nРасширенный `settle()` срабатывает и перед `frameBefore` (после Fit), и после `toggle()`. Ожидание после toggle проверку не маскирует, а усиливает: если reveal запустит переход камеры или refit, тест дождётся его конца, и `frameAfterReveal` покажет итоговый сдвиг. Если reveal на самом деле сдвигает камеру, проверка с допуском 1e-9 по-прежнему упадёт. Второй проход `settled()` + проверка refit ловит refit, который ResizeObserver поставил в очередь в последних кадрах первого прохода. Это ограниченная двухпроходная эвристика, а не гарантия стабильности: доставку после второй проверки она не заметит. Для теста это допустимо. Отрицательные свидетели (`nextFitIncludesRevealedFarMarker`, флаги hidden, editor frame, static card) не тронуты.\n\nОснование: demo/smoke_hidden_device_toggle.mjs:10-19, 243-259; src/houseplan-card.ts:7438-7482 (refit сохраняет zoom/центр, пересчёт через _applyView даёт шум ~1e-13)\n\n### Соответствие требованиям issue\n\nТребования соблюдены: нет force-кликов, подмены камеры и sleep, допуск не изменён, кадры до/после выводятся при отказе. Пункт «отследить камеру на всём reveal» выполнен частично: фиксируются только конечные состояния, а не покадровый трек. Промежуточное движение, которое вернулось бы в исходную точку, тест не увидит. Для критерия приёмки («eye toggle не вызывает автоподгонку/переезд») это приемлемо: автоподгонка оставила бы итоговое смещение. Автор прямо пишет, что исходный FAIL полного профиля не объявлен исправленным, и это честная формулировка.\n\nОснование: Тело issue #1274 (приёмка); demo/smoke_hidden_device_toggle.mjs:249-251\n\n### Доказательства S6\n\nИспользован receipt 20261104T082726325-5916c97b (passed) на материале 07492ec. По контексту автора это адресный прогон двух нативных браузерных тестов, а не повтор полного stable-профиля, где воспроизводился сбой. Для wheel это подкрепляет диагностическая проба из issue (zoom 1→1.15 при том же условии готовности). Для hidden reveal величина исходного расхождения неизвестна, поэтому окончательное подтверждение даст только следующий полный профиль. Новый диагностический вывод как раз для этого и нужен.\n\nОснование: receipts[0]; authorContext; тело issue: «Один адресный повтор ... 2e-13..5e-13»\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Одинаковый предикат готовности камеры (`!_modeTransitionBusy && !_modeTransitionPreparing && !_cameraTransition.active && !_refitRaf && !_pendingRefitSize`) теперь вписан вручную в несколько smoke-тестов. Если вынести его в `__hpTest`, например как `cameraSettled()` рядом с `settled()`, то при переименовании приватных полей или появлении нового источника движения камеры правка понадобится в одном месте, и тесты не начнут незаметно расходиться. Цена — небольшое расширение тестового фасада; на текущую задачу это не влияет.\n- Для диагностики hidden reveal можно при отказе собирать короткий трек `_view` по кадрам между кликом и окончанием settle, а не только две крайние точки. Тогда при повторе сбоя в полном профиле сразу будет видно, кто двигал камеру: refit, переход или округление. Стоит делать, только если сбой повторится.\n\n## Границы анализа\n\nКод изучен по исходникам: diff, контекст обоих smoke-тестов, хелпер hp-test.mjs (settled/setMode) и пути продукта для wheel, refit и warm refit в src/houseplan-card.ts. Сам ничего не запускал. Опирался на receipt S6 20261104T082726325-5916c97b (passed), который по контексту автора покрывает адресный прогон двух тестов. Повтор полного stable-профиля с этим изменением не предоставлен, поэтому устранение исходного сбоя hidden_device_toggle в полном профиле подтвердить нельзя: величина того расхождения в материалах не приведена. Диагностическая проба wheel из issue известна только по описанию. Пользовательский HA, опубликованный тег и HA E2E не затронуты. Согласен с автором: для тестового порта новые HA E2E не нужны.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: f2df18637a7bbf87d95c598692156fa49211c6ec → 07492ec135e83bb6bc79114d9a7005e2820d2e63\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1274, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nWheel witness получает boundingBox только после завершения текущего mode/camera и queued refit; probe с этим условием подтвердил настоящий SVG event path и zoom1→1.15 вместо потерянного wheel. Hidden-reveal settle раньше не учитывал queued refit/preparing; теперь оба состояния должны завершиться до снимка камеры и нажатия. Точность1e-9 не менялась, при отказе сохраняются конкретные before/after. Все прочие бизнес-assertions (next explicit Fit, hidden flags, editor frame, static card) остаются.\n\nОдин исходный hidden повтор уже проходил с дрейфом2e-13; это не объявляется доказательством починки продукта. Продуктовая камера не меняется; исходный full FAIL сохраняется. S6 использует явный product verification profile для двух нативных browser tests; новые HA E2E для такого тестового порта не нужны.\n```\n\n</details>\n",
-        "createdAt": "2026-11-04T08:30:08.859Z",
-        "artifactId": 13306642754,
-        "runId": 41799703856,
-        "runAttempt": 1,
-        "completedAt": "2026-11-04T08:30:12Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41799703856",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "f2df18637a7bbf87d95c598692156fa49211c6ec"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1278": {
@@ -2900,116 +2788,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1274,
-    "worker": "finish",
-    "token": "149:finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:1:admit",
-    "fence": 149,
-    "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-    "expectedBase": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793780836548,
-    "expiresAt": 1793784676513,
-    "patchId": "57cc8652314b9694f9c10a1f5f866bd318d8204f",
-    "reviewRequest": "review:1274:1:57cc8652314b9694f9c10a1f5f866bd318d8204f:f2df18637a7bbf87d95c598692156fa49211c6ec"
-  },
-  "events": {
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:2:synchronized": {
-      "digest": "a971e074c2709ac5b401ee62e53fa964cf05144724b49084cb6a79e171359843",
-      "issue": 1274
-    },
-    "github:41799608798:1:completions:message:55a0d09d07f255670d0c401074d7bc5986baf4127ecf072f872d4039439f6c7e": {
-      "digest": "11adf96084d9939dd1c18aadc805789764837cf6bf1b78c381624c9457d8864a",
-      "issue": 1274
-    },
-    "github:41799608798:1:completions:message:817e9a47e81877289e5e94948f8cf50b66be50eea55333127f6ebbc61cec1bdb": {
-      "digest": "03a2ff81ca4ff2e2736715017f2bafd2a2604b988f9a022668d58127514a6cc3",
-      "issue": 1274
-    },
-    "github:41799608798:1:completions:message:1f978fc07d241e8ef85fcdfa1cd3d09a6607e44a7522b73becaf1d3e3e274109": {
-      "digest": "f682116cecba14838e81327cfec8c6e6c165662c0e56d530ba827790d992eb18",
-      "issue": 1274
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:3:s6-label": {
-      "digest": "5f8538d97e352ca41b400d4f41e914c5f026b544735ca6b40194886a0ef1d076",
-      "issue": 1274
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:4:review-requested": {
-      "digest": "4def02638451e5a8ef57dd6489e417edaa557ea056b4b4c355f075b14cc993ef",
-      "issue": 1274
-    },
-    "github:41799687018:1:completions:message:0b7c3a744e9d7f95a36dca53bde0ca277bee077afcb8937752da5a0a39dde1b2": {
-      "digest": "73635214c17db4827a8e3a66aa59edeb1eaa378772537f16683f173016135e0f",
-      "issue": 1274
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:7:review-presentation": {
-      "digest": "b5ef83f52d892b86e508b53b99b0aae17a872ba732610a51ec52a575a2c06fc4",
-      "issue": 1274
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:7:review-complete": {
-      "digest": "8f5127cfb1d03c256aeff0c8a00b88669bedb12897d3a51fdf40e8187f854215",
-      "issue": 1274
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b": {
-      "digest": "6dcf3468cf6fc7e5f3984ce0b72711fb23dbb8ce4eb6fa409c6e380c145efc93",
-      "issue": 1274,
-      "message": {
-        "kind": "queued",
-        "issue": 1274,
-        "at": 1793780832934,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-        "delivered": true
-      }
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:1:admit": {
-      "digest": "e371c3f014ad21258fef5080ef2d2bcc702807bd481b391433ba2f6d8a785a4c",
-      "issue": 1274,
-      "message": {
-        "kind": "admitted",
-        "issue": 1274,
-        "at": 1793780836548,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:3:s6-complete": {
-      "digest": "c850e2e547ea2260e67c23f6350164157057b9e11f31b139d65a2a2e0f908a8a",
-      "issue": 1274,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1274,
-        "at": 1793780863941,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-        "phase": "review",
-        "evidence": {
-          "id": "20261104T082726325-5916c97b",
-          "name": "Тесты для задачи #1274 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T082726325-5916c97b/report.json",
-          "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-          "status": "passed",
-          "finishedAt": "2026-11-04T08:27:42.953Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Wheel witness получает boundingBox только после завершения текущего mode/camera и queued refit; probe с этим условием подтвердил настоящий SVG event path и zoom1→1.15 вместо потерянного wheel. Hidden-reveal settle раньше не учитывал queued refit/preparing; теперь оба состояния должны завершиться до снимка камеры и нажатия. Точность1e-9 не менялась, при отказе сохраняются конкретные before/after. Все прочие бизнес-assertions (next explicit Fit, hidden flags, editor frame, static card) остаются.\n\nОдин исходный hidden повтор уже проходил с дрейфом2e-13; это не объявляется доказательством починки продукта. Продуктовая камера не меняется; исходный full FAIL сохраняется. S6 использует явный product verification profile для двух нативных browser tests; новые HA E2E для такого тестового порта не нужны.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
     "status": "delivered",
