@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2585,
+  "revision": 2586,
   "nextTicket": 161,
   "nextFence": 161,
   "tasks": {
@@ -2484,7 +2484,7 @@
       "ownerDecision": null,
       "ticket": 160,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793787912769,
       "reviewEntry": 5,
       "patchId": "f91f670ca4434663f3f1f7d18fb7fdcf23049746",
@@ -2525,19 +2525,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261104T101356875-478de70f",
+        "id": "20261104T102531686-e5a1650d",
         "name": "Тесты для задачи #1265 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T101356875-478de70f/report.json",
-        "materialSha": "9f582f8950c249a8793616f640b011b5da44bc9e",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T102531686-e5a1650d/report.json",
+        "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522",
         "status": "passed",
-        "finishedAt": "2026-11-04T10:16:06.313Z",
+        "finishedAt": "2026-11-04T10:25:44.281Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1265:4:03f35abe6226af4434610cadadcd80516fc006c4:16a8c1c990e6e74422524700fe69ef4ee2c59f67",
-        "at": 1793787734589
-      }
+      "reviewRound": null
     },
     "1267": {
       "issue": 1267,
@@ -2909,9 +2905,9 @@
     "fence": 160,
     "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522",
     "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793787918753,
-    "expiresAt": 1793788225273,
+    "expiresAt": 1793791545372,
     "patchId": "f91f670ca4434663f3f1f7d18fb7fdcf23049746"
   },
   "events": {
@@ -3314,6 +3310,34 @@
           "finishedAt": "2026-11-04T10:16:06.313Z",
           "failures": []
         }
+      }
+    },
+    "finish:1f5d9fb9-096c-46b9-91fc-3e06bcb0f5e2:finish:3:s6-complete": {
+      "digest": "e0ed582ac3cfb33fb3dfd8285447a55efd33315752349b3117037b8e778ec24c",
+      "issue": 1265,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1265,
+        "at": 1793787945372,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T102531686-e5a1650d",
+          "name": "Тесты для задачи #1265 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T102531686-e5a1650d/report.json",
+          "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522",
+          "status": "passed",
+          "finishedAt": "2026-11-04T10:25:44.281Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Первая правка child-source offers: unit и весь native room_device_discovery PASS (теперь два кандидата и обе комнаты), четыре batch-lineage сценария также прошли. Остальные отказы первого S6 сохранены и разбираются, не объявлены зелёными.\n\nДальнейшие подтверждённые тестовые порты:\n- room_opening_host: готовый контур открывается Select по принятому #1176 (UX-MODES:291, USER-GUIDE.ru:1041), а не началом новой стены Draw; полный host/Undo/Redo target сохраняется.\n- same-residual: current fixture уже атомизировала long-source по112/133, window101 остаётся на том же90..112 child с исходным унаследованным рациональным t/tq; прежняя проверка изменения t относилась к ещё не мигрированному110-step carrier. Теперь сравнивается полный host, kind/id и exact tq.\n- duplicate rollback: проверяется стабильный toast key wall_model_migration_blocked вместо старой английской подстроки, с прежними exact no-mutation/no-write/history controls.\n- absorbed opening: тот же запрос, отвергнутый старым fake guard «любой host.kind change запрещён», пропущен через actual Python prepare_graph_candidate/CONFIG_SCHEMA/opening+host+junction validation. Он **принят**: полностью потреблённый атом long-source~1 меняет только namespace partition→wall с прежним ID/геометрией/t/tq; оригинальные tails сохраняются. Это существующее same_partition_wall_promotion, не новое разрешение Optimize.\n\nДва room browser transports теперь используют общий CPU-only production validator (без HA I/O), сохраняя controlled отказ/ревизии/ACK и исходные бизнес-оракулы. Независимый точный captured synthetic request включён в fixture;4 прямых boundary checks PASS: разрешённое same-ID promotion, запрещённый foreign valid host, скрытая смена длины, будущая модель. Окружение Python при ошибке не превращается в обычный validation PASS. Python-backed browser/Node checks включают backend dependencies в reuse; малая behavioral проверка catalog выбрана в S6. Авторский native expected для absorbed допускает только namespace того же полностью потреблённого child и проверяет полный matching source record/room ownership. Остальные scalar/opaque поля и хвосты строгие.\n\nСостав следующего S6 явно:5 geometry unit files + Python-boundary unit + catalog behavior + все7 исходных browser witnesses. Результат до выполнения не заявляется; дополнительные старые оракулы/реальные баги ещё могут проявиться.\n\n### Уточнение реализации и рисков перед повторным S6\n\nДополнительно подтверждены реальные дефекты `facePlan`: (1) пересечение бесконечных продолжений сторон добавляло ложный узел и новое нарушение 1,5 см < 5 см; обе конечные стороны теперь обязаны содержать пересечение; (2) повторное использование существующего endpoint перезаписывало его зависимость и создавало цикл — восстанавливается исходная независимость/зависимость источника; (3) совпадающие источники не получали общий набор атомарных разрезов, а consumedPartitionIds не использовался. Поглощаются только явно названные, полностью представленные атомы с идентичными толщиной/props, без host; хвосты и независимый материал сохраняются. Mapping удаления больше не ссылается на удалённые части. Добавлены отдельные unit-контроли L-контура, DAG, непричастных/других материалов и корректности lineage.\n\nПорты тестов: после появления диалога нельзя вызывать внутренний click сквозь него (ложный stale отказ соседней комнаты); текущий граф закономерно добавляет коллинеарные T-узлы в старый контур — проверяется вся независимая ожидаемая граница и метаданные; same-residual сохраняет исходный рациональный host целиком, без искусственного округления к 1/2. Во второй синтетический этаж добавлен обязательный view_box: настоящий Python отвергал неполную фикстуру до геометрической проверки. Отрицательные проверки не удалены. 28/28 адресных unit сейчас PASS; весь S6 и browser-группа запускаются заново для нового SHA, прежние неуспешные результаты сохранены.\n\n### Повторный S6 и точный source walk\n\nS6 `20261104T100056166-947fc513`: все browser кроме room_split PASS, unit выявил ещё одну ошибку фикстуры — canonical room-ID order делал rooms[0] соседом, а unit менял его вместо parent. Выбор в unit/browser исправлен по ID, отдельно проверяется сохранность соседа; additive third-owner negative оставлен.\n\nProduction Python в native room_split отверг microscopic wall: прежний fake guard её пропускал. Численный split-контур опускал почти коллинеарный узел, чьи точные q-координаты не лежат на одной прямой; прежний bridge заменял исходные атомы прямой хордой, пересекающей соседнюю стену в 1,5e-17 от её конца. Новый facePlan сначала ищет связный монотонный путь **по именованным исходным graph edges с исходными node ID**, представляющий ограниченную сторону, и сохраняет все точные атомы. Произвольного объединения близких узлов нет. Отдельный unit проверяет невидимую в double точную ломаную и полное сохранение её узлов/пяти носителей. 41/41 адресных intent/split unit PASS.\n\nСинхронный отказ room_split теперь инъецируется после настоящего успешного physical proof, с проверкой достижения этой границы и прежними exact rollback/no-write/no-history/retry. Прежняя вставка дубля только в projection model11 не повреждала authoritative graph и не являлась таким отказом; реальный legacy duplicate negative остаётся в lineage. Async retry проверяет полное opening-array с единственным доказанным same-ID partition→wall и полное совпадение promoted source. Cold-card тест не ослаблен: его timeout следовал за реальным Python отказом, который этот source-walk устраняет. Новый S6 пока не объявлен успешным.\n\n### Ответ на код-ревью 41813083525\n\nОбязательное замечание принято: `node scripts/sh3d-convert/build-page.mjs` перегенерировал canonical geometry runtime и автономную страницу. Оба артефакта включены в коммит, test/sh3d-convert-page.test.mjs явно добавлен к повторному S6 через существующую адресную выборку; нового обязательного гейта нет. Полная генерация отражает всё текущее каноническое замыкание исходников, поэтому diff runtime шире трёх строк delete-edge. Ledger дополнен всей семантикой face acceptance, зависимостями T-узлов и обязательным HA E2E из companion #26 (пункт создан до ревью; не выполнен). Продуктовый код после принятого в целом анализа не менялся. Ранее S6 20261104T101356875-478de70f PASS 13/13; свежесть конвертера теперь будет проверена отдельным выбранным тестом, результат до запуска не заявлен.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
