@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2645,
+  "revision": 2646,
   "nextTicket": 163,
   "nextFence": 163,
   "tasks": {
@@ -2558,7 +2558,10 @@
         "status": "passed",
         "finishedAt": "2026-11-04T10:42:19.363Z",
         "failures": []
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793788985871,
+      "automationDetail": "Git push failed (exit 1)"
     },
     "1269": {
       "issue": 1269,
@@ -2952,6 +2955,10 @@
     },
     "finish:a9df72d1-eacf-4123-875b-900572d8b977:finish:3:s6-complete": {
       "digest": "afa8fcdee2cf9ebd10f07af4c5e5b98706dd0c747a9b3f6409ed6daf4f703a93",
+      "issue": 1268
+    },
+    "finish:a9df72d1-eacf-4123-875b-900572d8b977:finish:4:automation-pending": {
+      "digest": "3ef8cbc6c8b6946ab6cdfc7cbfbf52f4b605c5e901d2af7b36016484c2fc63f0",
       "issue": 1268
     },
     "finish:a9df72d1-eacf-4123-875b-900572d8b977": {
