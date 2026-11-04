@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2281,
+  "revision": 2282,
   "nextTicket": 142,
   "nextFence": 142,
   "tasks": {
@@ -2664,28 +2664,7 @@
   },
   "waiting": [],
   "active": null,
-  "events": {
-    "finish:757cd21c-b191-434e-a78f-9b37a3719d88:finish:4:return:return:1263": {
-      "digest": "e2d61f4050e56ecf9c627a9ef38a73facf408b4119a07a53b18a9cbab3dd9a0a",
-      "issue": 1263,
-      "message": {
-        "kind": "return",
-        "issue": 1263,
-        "at": 1793778660065,
-        "entry": 2,
-        "notice": {
-          "key": "2:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793778660065,
-          "entry": 2,
-          "detail": "Поведение изменённой области: failed",
-          "eventId": "finish:757cd21c-b191-434e-a78f-9b37a3719d88:finish:4:return:return:1263"
-        }
-      }
-    }
-  },
+  "events": {},
   "devWebhook": {
     "sourceSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
     "status": "delivered",
