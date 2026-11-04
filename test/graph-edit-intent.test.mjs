@@ -241,6 +241,30 @@ test('#1264 a derived T seam slides twice on the fixed uniform neighbour without
   assert.ok(held.plan_graph.edges.length>original.plan_graph.edges.length);
 });
 
+test('#1264 sliding a T seam never moves a dependent corner of fixed rooms',()=>{
+  const rect=(id,x0,y0,x1,y1)=>({id,poly:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]});
+  let before=migrate({id:'dependent-seam',cell_cm:20,rooms:[rect('a',0,0,.5,.5),rect('b',.5,0,1,.5),
+    {id:'fixed-left',poly:[[0,.5],[.3,.5],[.3,.7],[.3,1],[0,1]]},
+    {id:'fixed-right',poly:[[.3,.5],[1,.5],[1,1],[.3,1],[.3,.7]]}]});
+  before=commitGraphEdit(before,copy(before),{kind:'thickness',rooms:before.rooms.map(r=>r.id),cm:20});
+  const index=G.graphIndex(before.plan_graph),at=(x,y)=>before.plan_graph.nodes.find(n=>Q.pointEq(index.points.get(n.id),Q.readSourcePoint([x,y]))).id;
+  const x=at(.5,.5),w=at(.3,.7),left=at(0,.5),right=at(1,.5),anchor=at(0,1);
+  before=G.projectGraphSpace(before,G.applyGraphOperation(before.plan_graph,{kind:'batch',operations:[
+    {kind:'set-dependency',dependency:{node:x,kind:'on-edge',refs:[{from:left,to:right}],parameters:[['1','2']]}},
+    {kind:'set-dependency',dependency:{node:w,kind:'on-edge',refs:[{from:anchor,to:x}],parameters:[['3','5']]}}
+  ]}).graph).space;
+  const source=copy(before),draft=copy(before);
+  for(const room of draft.rooms)if(['a','b'].includes(room.id))room.poly=room.poly.map(([u,v])=>[u===.5?.51:u,v]);
+  const result=commitGraphEdit(before,draft,{kind:'resize',rooms:['a','b']}),after=G.graphIndex(result.plan_graph);
+  assert.deepEqual(Q.pointToNumbers(after.points.get(w)),[.3,.7],'fixed corner must not follow its dependent seam');
+  assert.deepEqual(result.rooms.find(r=>r.id==='fixed-left'),source.rooms.find(r=>r.id==='fixed-left'));
+  for(const ref of source.plan_graph.rooms.filter(r=>r.room.startsWith('fixed-')).flatMap(r=>r.edges)){
+    const edge=G.graphIndex(source.plan_graph).edges.get(G.edgeKey(ref));
+    for(const node of[edge.from,edge.to])assert.ok(Q.pointEq(after.points.get(node),G.graphIndex(source.plan_graph).points.get(node)));
+  }
+  assert.equal(G.validateGraph(result.plan_graph).ok,true);assert.deepEqual(before,source);
+});
+
 test('named partition arrangement promotes the selected face and remaps its hosted opening',()=>{
   const before=migrate({id:'n',rooms:[],partitions:[
     {id:'a',a:[0,0],b:[1,0],cm:15,custom:'safe'},{id:'b',a:[1,0],b:[1,1],cm:15},

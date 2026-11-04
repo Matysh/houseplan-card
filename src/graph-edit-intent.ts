@@ -141,6 +141,7 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
       ||(index.owners.get(edgeKey(e))||[]).some(room=>!selected.has(room)));
     const seamMaySlide=(point:Q.ExactPoint):boolean=>{
       if(groups.length!==1||outsideEdges.length!==2)return false;
+      if(graph.dependencies.some(d=>d.node!==id&&d.refs.some(r=>r.from===id||r.to===id)))return false;
       const dep=graph.dependencies.find(d=>d.node===id),[a,b]=outsideEdges;
       if(dep?.kind!=='on-edge'||dep.refs.length!==1||a.kind!=='wall'||b.kind!=='wall'
         ||!(index.owners.get(edgeKey(a))||[]).length||!(index.owners.get(edgeKey(b))||[]).length
@@ -216,7 +217,8 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     edges:cycle.edges.map(e=>({...refByRoomEdge.get(JSON.stringify([cycle.room,edgeKey(e)]))!,reverse:e.reverse}))});
   plan.operations.push(...cloneDeps.values());
 }
-/** Node only the selected Resize's original room-wall incidence/run cohort. */
+/** Node only the selected Resize's original room-wall incidence/run cohort.
+ * A foreign run with no original incidence remains an independent body. */
 function settleResizePlan(graph:PlanGraph,index:ReturnType<typeof graphIndex>,rooms:readonly string[],
   allocation:Allocation,plan:Plan):void{
   const selectedRooms=new Set(rooms),origins=new Map<string,Set<string>>();
