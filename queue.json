@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3035,
+  "revision": 3036,
   "nextTicket": 181,
   "nextFence": 181,
   "tasks": {
@@ -3468,6 +3468,10 @@
       "digest": "edb0be34373833dbd246901de08a78887c61029a04c8bd86a904ca7d4a05fc4f",
       "issue": 1283
     },
+    "github:41890328065:1:completions:message:42eae34732b263666de82a1baae454a038be628ee07cc8360ca700fdc9d7b419": {
+      "digest": "8b10d7ef5260051d4f59128ccb5907cd161cfe94460bc3a66d6eac2ced9b2923",
+      "issue": 1286
+    },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
       "issue": 1283,
@@ -3736,7 +3740,8 @@
           "entry": 3,
           "detail": "The prior frozen review has now published a blocker: compaction must retain the edge explicitly selected by a Properties/thickness edit, otherwise its save guard reports a false conflict. Return the not-yet-tested admission to S6 to fix that blocker.",
           "eventId": "return-5ca69424-c3a7-4410-bd1b-b39fb1264920:return:1283"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:eb9b6749-5164-42dc-8833-959f7cc24f40:finish:2:admit": {
