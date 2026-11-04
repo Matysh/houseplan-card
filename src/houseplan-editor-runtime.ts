@@ -2751,6 +2751,18 @@ public _activeWallSourceKey(index: number): string {
     return segment ? `static:${segment.key}` : `active:${this.host._activeWallChainId || 'session'}:${index}`;
   }
 
+/** One logical Draw segment may have several exact graph children after noding. */
+private _activeWallSourceKeys(index: number): readonly string[] {
+    const id = this.host._activeWallChainPartitionIds[index];
+    if (!id) return [this._activeWallSourceKey(index)];
+    const ranges = this._lastGraphEditResult?.mapping.edges[`partition:${id}`] || [];
+    const ids = new Set([id, ...ranges.filter(range => range.ref.kind === 'partition').map(range => range.ref.id)]);
+    const keys = this._planStructuralGeometrySnapshot().value.segments
+      .filter(segment => segment.sourceKind === 'partition' && ids.has(segment.sourceId))
+      .map(segment => `static:${segment.key}`);
+    return keys.length ? keys : [this._activeWallSourceKey(index)];
+  }
+
 public _wallGraphSources(_path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
     const staticGeometry = this._planStructuralGeometrySnapshot().value;
     return staticGeometry.segments.map((segment) => ({
@@ -2786,6 +2798,7 @@ public _offerWallFaces(
     const space = this.host._spaceModel();
     if (!space) return;
     const addedSourceKey = this._activeWallSourceKey(addedSegmentIndex);
+    const addedSourceKeys = this._activeWallSourceKeys(addedSegmentIndex);
     const epsilon = this.host._gridPitch * 0.0002;
     let faces: WallGraphFace[];
     let after: WallGraphSourceSegment[];
@@ -2794,7 +2807,7 @@ public _offerWallFaces(
       after = this._wallGraphSources(this.host._path);
       faces = findNewWallFacesInGraphs(
         this._wallFaceGraph(before, epsilon), this._wallFaceGraph(after, epsilon),
-        addedSourceKey,
+        addedSourceKeys,
       );
     } catch {
       // Topology is advisory. The just-persisted draft remains the source of

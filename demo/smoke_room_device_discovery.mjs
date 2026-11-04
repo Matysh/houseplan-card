@@ -110,6 +110,8 @@ const outcome = page => page.evaluate(() => {
   };
 });
 for (const kind of ['batch', 'ordinary', 'multi']) await scenario(kind, kind, async page => {
+  if (kind === 'multi') check('multi offers both closed faces before Save', await page.evaluate(() =>
+    window.__card._wallFaceBatch?.candidates.length), 2);
   await save(page, 'kitchen');
   if (kind === 'multi') await save(page, 'bedroom', 'Created bedroom');
   await settled(page);

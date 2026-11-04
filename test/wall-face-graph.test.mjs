@@ -183,6 +183,28 @@ test('one segment may create several faces in stable area order', () => {
   assert.deepEqual(first.map((face) => face.key), second.map((face) => face.key));
 });
 
+test('#1265 every exact child of the accepted segment can close a new face', () => {
+  const unrelated = rectangle.map(item => ({ ...item, key: `old-${item.key}`,
+    a: [item.a[0] + 200, item.a[1]], b: [item.b[0] + 200, item.b[1]] }));
+  const open = [...rectangle.slice(0, -1), edge('middle', [0, 50], [100, 50]), ...unrelated];
+  const before = buildWallFaceGraph(open);
+  const after = buildWallFaceGraph([...open,
+    edge('draw-original-child', [0, 100], [0, 50]),
+    edge('draw-second-child', [0, 50], [0, 0]),
+  ]);
+  assert.equal(findNewWallFacesInGraphs(before, after, 'draw-original-child').length, 1,
+    'the former single-key filter loses the second face');
+  const found = findNewWallFacesInGraphs(before, after, ['draw-original-child', 'draw-second-child']);
+  assert.deepEqual(found.map(face => face.area), [5000, 5000]);
+  assert.equal(new Set(found.map(face => face.key)).size, 2, 'distinct faces retain their identity');
+  assert.deepEqual(findNewWallFacesInGraphs(before, after,
+    ['draw-original-child', 'draw-second-child', 'draw-original-child']), found);
+  assert.deepEqual(findNewWallFacesInGraphs(before, after, []), []);
+  assert.deepEqual(findNewWallFacesInGraphs(before, after, ['unknown-source']), []);
+  assert.equal(found.some(face => face.sourceKeys.some(key => key.startsWith('old-'))), false,
+    'an unrelated old face never acquires the new segment authority');
+});
+
 test('a large sparse plan stays deterministic without pairwise topology explosion', () => {
   const sparse = Array.from({ length: 2000 }, (_, index) =>
     edge(`s${index}`, [index * 10, 0], [index * 10 + 5, 0]));

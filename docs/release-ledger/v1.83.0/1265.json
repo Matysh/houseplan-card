@@ -1,0 +1,5 @@
+{
+  "schema": 1, "issue": 1265, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Preserve accepted Draw-source lineage after model11 graph noding when discovering new room faces.",
+  "summary": {"ru":"Один нарисованный отрезок может корректно предложить несколько замкнутых комнат.","en":"A drawn wall segment can correctly offer every newly closed room after graph splitting."}
+}

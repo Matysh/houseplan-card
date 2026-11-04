@@ -660,11 +660,12 @@ export function findNewWallFaces(
 export function findNewWallFacesInGraphs(
   before: WallFaceGraph,
   after: WallFaceGraph,
-  addedSourceKey: string,
+  addedSourceKey: string | readonly string[],
 ): WallGraphFace[] {
   const beforeKeys = new Set(before.faces.map((face) => face.key));
+  const addedKeys = new Set(typeof addedSourceKey === 'string' ? [addedSourceKey] : addedSourceKey);
   return after.faces.filter((face) =>
-    !beforeKeys.has(face.key) && face.sourceKeys.includes(addedSourceKey));
+    !beforeKeys.has(face.key) && face.sourceKeys.some(key => addedKeys.has(key)));
 }
 
 function pointOnFaceEdge(
