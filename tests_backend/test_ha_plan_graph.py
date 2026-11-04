@@ -1,5 +1,7 @@
 """Actual HA first structural write publishes graph+bounded source reference."""
 import copy
+import json
+from pathlib import Path
 
 import pytest
 
@@ -50,6 +52,37 @@ async def test_legacy_read_metadata_and_first_structural_pair(hass, hass_client,
     stale["spaces"][0]["partitions"][0]["a"][0] += .1
     refused = await socket.send({"type": TYPE, "config": stale, "expected_rev": accepted[0]["rev"]})
     assert not refused["success"]
+    assert await socket.pair() == accepted
+
+
+@pytest.mark.asyncio
+async def test_first_write_keeps_coincident_legacy_zero_and_positive_carriers(
+    hass, hass_client, hass_access_token,
+):
+    _, socket, _ = await _setup(hass, hass_client, hass_access_token)
+    runtime = get_data(hass)
+    case = json.loads((Path(__file__).parents[1] / "test/fixtures/478-room-draft-migration-vectors.json").read_text())["accepted"]
+    source = copy.deepcopy(case["input"])
+    # The CPU fixture omits presentation fields required at the WS boundary.
+    source["spaces"][0].update(view_box=[0, 0, 4, 1], cell_cm=5)
+    await runtime.config_store.async_save({"config": source, "rev": 51})
+    await runtime.store.async_save({"layout": {}, "rev": 7})
+    before = await socket.pair()
+    edit = copy.deepcopy(before[0]["config"])
+    edit["spaces"][0]["partitions"][0]["b"] = [3, .25]
+    saved = await socket.send({"type": TYPE, "config": edit, "expected_rev": before[0]["rev"]})
+    assert saved["success"], saved
+    accepted = await socket.pair()
+    assert saved["result"]["config"] == accepted[0]["config"]
+    assert accepted[0]["config"]["model_version"] == 11
+    space = accepted[0]["config"]["spaces"][0]
+    expected = copy.deepcopy(case["expected_partitions"])
+    expected[0]["b"] = [3, .25]
+    expected = [dict(p, a=min(p["a"], p["b"]), b=max(p["a"], p["b"])) for p in expected]
+    assert space["partitions"] == sorted(expected, key=lambda p: p["id"])
+    assert "room_drafts" not in space
+    stored = await runtime.store.async_load()
+    assert (await load_source(hass, stored[BACKUP_KEY]))["config"] == source
     assert await socket.pair() == accepted
 
 

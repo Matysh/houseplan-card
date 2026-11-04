@@ -562,7 +562,11 @@ def migrate_graph_space(space, options=None):
                         cm = 0
                 gid = (s["kind"], *sorted((a[1], b[1])))
                 props = {k: copy.deepcopy(v) for k, v in s["raw"].items() if k not in ("id", "a", "b", "cm")}
-                edge = next((e for e in by_geometry.get(gid, []) if all(k not in props or e["props"][k] == props[k] for k in e.get("props", {}))), None)
+                # Independent legacy partitions can occupy the same span with
+                # different material. Preserve them instead of forcing a merge.
+                edge = next((e for e in by_geometry.get(gid, []) if
+                             (s["kind"] != "partition" or e["cm"] == cm)
+                             and all(k not in props or e["props"][k] == props[k] for k in e.get("props", {}))), None)
                 if edge is None and s["kind"] == "wall" and by_geometry.get(gid):
                     raise GraphError("props_conflict")
                 reverse = False

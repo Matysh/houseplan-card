@@ -3,7 +3,7 @@
  * the previous graph supplies every identity, incidence and exact host.
  */
 import {
-  applyGraphOperation, edgeKey, graphIndex, projectGraphSpace, PlanGraphError,
+  applyGraphOperation, edgeKey, graphIndex, graphSplitId, projectGraphSpace, PlanGraphError,
   type GraphOperation, type GraphResult, type GraphEdge, type PlanGraph,
 } from './plan-graph';
 import {
@@ -12,13 +12,14 @@ import {
   type ExactPoint,
 } from './plan-exact';
 import { mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
+import { canonicalizeLatticeCoordinate } from './coordinate-canonicalization';
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const ref = (edge: GraphEdge) => ({ kind: edge.kind, id: edge.id });
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const targetPoint = (p: number[]): ExactPoint => [0, 1].map(axis => {
-  const n = Math.round(p[axis] * 240);
-  return p[axis] === n / 240 ? exact(BigInt(n), 240n) : parseDecimal(p[axis]);
+  const value = Number(canonicalizeLatticeCoordinate(p[axis])), n = Math.round(value * 240);
+  return value === n / 240 ? exact(BigInt(n), 240n) : parseDecimal(value);
 }) as unknown as ExactPoint;
 
 export interface GraphOptimizeResult {
@@ -35,6 +36,7 @@ interface GraphOptimizeOptions {
   compactWalls?: boolean;
   alignOpenings?: boolean;
   metadataFromBefore?: boolean;
+  retargetDependencies?: boolean;
 }
 
 export function optimizeGraphTargets(
@@ -69,12 +71,15 @@ export function optimizeGraphTargets(
   };
   const numericalPartitions = new Map<string, any>((draft.partitions || []).map((p: any) => [p.id, p]));
   if (options.moves !== false) {
-  const dependent = new Set(graph.dependencies.map(d => d.node));
+  const dependent = new Set(graph.dependencies.map(d=>d.node));
   const targets = new Map<string, ExactPoint>();
   const setTarget = (id: string, p: number[]) => {
-    if (dependent.has(id)) return; // Core evaluates the exact support DAG.
     if (!p || !p.every(Number.isFinite)) throw new PlanGraphError('optimize-target', id);
     const next = targetPoint(p), old = targets.get(id);
+    // Keep exact affine incidence when the numerical reader only supplies an
+    // approximate off-grid echo. A literal lattice target (or explicit axis
+    // repair) can deliberately update the support parameter during Optimize.
+    if(dependent.has(id)&&!options.retargetDependencies&&encodePoint(next)[0]!=='l')return;
     if (old && !same(encodePoint(old), encodePoint(next))) throw new PlanGraphError('optimize-target-conflict', id);
     targets.set(id, next);
   };
@@ -85,17 +90,23 @@ export function optimizeGraphTargets(
     cycle.edges.forEach((_edge, i) => setTarget(
       projected.bindings.vertices[JSON.stringify([cycle.room, i])], room.poly[i]));
   }
-  const alignment = movesOnly ? draft : projectGraphSpace({ ...draft, openings: [] }, draft.plan_graph).space;
+  const alignment=movesOnly?draft:projectGraphSpace({...draft,openings:[]},draft.plan_graph).space;
   const alignedPartitions = new Map<string, any>((alignment.partitions || []).map((p: any) => [p.id, p]));
   for (const edge of graph.edges) if (edge.kind === 'partition') {
     const p = alignedPartitions.get(edge.id);
-    if (p) { setTarget(edge.from, p.a); setTarget(edge.to, p.b); }
+    if (p) {
+      // Room targets already name shared graph nodes. A stale independent
+      // projection cannot put the same node back at its pre-repair point.
+      if(!targets.has(edge.from))setTarget(edge.from, p.a);
+      if(!targets.has(edge.to))setTarget(edge.to, p.b);
+    }
   }
 
   const initialIndex = graphIndex(graph), nodes = initialIndex.nodes;
   const dependencies = new Map(graph.dependencies.map(d => [d.node, d]));
   const supportNodes = new Set(graph.dependencies.flatMap(d => d.refs.flatMap(r => [r.from, r.to])));
   const proposed = (id: string): ExactPoint => {
+    if (targets.has(id)) return targets.get(id)!;
     const dependency = dependencies.get(id);
     if (!dependency) return targets.get(id) || decodePoint(nodes.get(id)!.p);
     if (dependency.kind === 'on-edge') {
@@ -139,8 +150,21 @@ export function optimizeGraphTargets(
       targets.set(id, pointAt(nextA, nextB, projectParameter(decodePoint(nodes.get(id)!.p), a, b)));
     }
   }
-  apply([...targets].filter(([id, p]) => !same(nodes.get(id)!.p, encodePoint(p)))
-    .map(([id, p]): GraphOperation => ({ kind: 'move-node', node: id, target: encodePoint(p) })));
+  const moves: GraphOperation[] = [];
+  for(const [id,p] of targets) {
+    const dependency=dependencies.get(id);
+    if(dependency) {
+      const parameters=dependency.refs.map(r=>projectParameter(p,proposed(r.from),proposed(r.to)));
+      const supported=dependency.refs.every((r,i)=>cmp(parameters[i],ZERO)>=0&&cmp(parameters[i],ONE)<=0
+        && same(encodePoint(p),encodePoint(pointAt(proposed(r.from),proposed(r.to),parameters[i]))));
+      if(supported) moves.push({kind:'set-dependency',dependency:{...dependency,parameters:parameters.map(encodeRational)}});
+      else {
+        moves.push({kind:'retire-dependency',node:id});
+        moves.push({kind:'move-node',node:id,target:encodePoint(p)});
+      }
+    } else if(!same(nodes.get(id)!.p,encodePoint(p))) moves.push({kind:'move-node',node:id,target:encodePoint(p)});
+  }
+  apply(moves);
   }
   if (movesOnly) return { space: projectGraphSpace(space, graph).space, ...stats };
 
@@ -206,10 +230,37 @@ export function optimizeGraphTargets(
     if (numericalPartitions.has(partition.id)) continue;
     const a = numberPoint(partition.from), b = numberPoint(partition.to);
     if ((draft.partitions || []).some((p: any) => covers(p, a, b))) continue;
+    const exactCovers=(edge:GraphEdge,id:string)=>{
+      const a=point(edge.from),b=point(edge.to),p=point(id),t=projectParameter(p,a,b);
+      return cmp(t,ZERO)>=0&&cmp(t,ONE)<=0&&cmp(orientation(a,b,p),ZERO)===0;
+    };
+    // Reconciliation already proved this entire physical span redundant.
+    // An unsplit T contact may still lie inside one named room carrier. Split
+    // that carrier explicitly at the existing partition nodes before convert;
+    // never infer identity from a nearby point or reconstruct a room cycle.
+    if(graph.edges.some(e=>e.kind==='wall'&&exactCovers(e,partition.from)&&exactCovers(e,partition.to))) {
+      for(const node of [partition.from,partition.to]) {
+        const carrier=graph.edges.find(e=>e.kind==='wall'&&exactCovers(e,partition.from)
+          &&exactCovers(e,partition.to)&&exactCovers(e,node)
+          &&cmp(projectParameter(point(node),point(e.from),point(e.to)),ZERO)>0
+          &&cmp(projectParameter(point(node),point(e.from),point(e.to)),ONE)<0);
+        if(!carrier)continue;
+        const t=encodeRational(projectParameter(point(node),point(carrier.from),point(carrier.to)));
+        let index=1,id=graphSplitId('wall',carrier.id,index,t,encodeRational(ONE));
+        while(graph.edges.some(e=>e.kind==='wall'&&e.id===id))id=graphSplitId('wall',carrier.id,++index,t,encodeRational(ONE));
+        apply([{kind:'insert-on-edge',edge:ref(carrier),t,node,newEdgeId:id}]);
+      }
+    }
     const wall = graph.edges.find(e => e.kind === 'wall' && (
-      (e.from === partition.from && e.to === partition.to)
-      || (e.from === partition.to && e.to === partition.from)));
-    if (!wall) throw new PlanGraphError('optimize-convert-target', partition.id);
+      (same(encodePoint(point(e.from)),encodePoint(point(partition.from)))
+        &&same(encodePoint(point(e.to)),encodePoint(point(partition.to))))
+      ||(same(encodePoint(point(e.from)),encodePoint(point(partition.to)))
+        &&same(encodePoint(point(e.to)),encodePoint(point(partition.from))))));
+    // The numerical proof can remove a subspan whose graph still has a
+    // structural boundary. Without a complete named target, preserve the
+    // authoritative carrier rather than guessing a different host or failing
+    // the whole lossless migration.
+    if (!wall) continue;
     const hosted = (space.openings || []).filter((o: any) => o.host?.kind === 'partition' && o.host.id === partition.id);
     apply([{ kind: 'convert-edge', edge: ref(partition), target: ref(wall) }]);
     stats.partitionsReconciled++; stats.openingsRehosted += hosted.length;
@@ -236,7 +287,7 @@ export function optimizeGraphTargets(
   for (const opening of space.openings || []) {
     const original = originalOpenings.get(opening.id);
     if (options.alignOpenings === false) continue;
-    if (!original?.host || original.host.kind !== 'wall' || opening.host?.kind !== 'wall') continue;
+    if (!original?.host || opening.host?.kind !== 'wall') continue;
     const target = (draft.openings || []).find((o: any) => o.id === opening.id);
     const edge = graph.edges.find(e => edgeKey(e) === edgeKey(opening.host));
     if (!target || !edge) continue;

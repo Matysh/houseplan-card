@@ -10,6 +10,7 @@ import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js'
 import { reconcileCoincidentPartitions } from '../test-build/coincident-partitions.js';
 import { GRID_PITCH, GRID_STEP_N as S } from '../test-build/space-geometry.js';
 import { wallIntervals } from '../test-build/wall-thickness.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
 const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/276-coincident-partition.json', import.meta.url),
@@ -220,6 +221,12 @@ test('#478 migrates a legacy saved chain and preserves ambiguous overlapping wal
     segments: [{ cm: 15 }],
   }];
   const before = clone(input);
-  assert.throws(() => optimize(input), { code: 'thickness-conflict' });
-  assert.deepEqual(input, before, 'conflicting coincident thickness stays intact, never partially migrated');
+  const migrated = commitWallSegmentModel(input).config.spaces[0];
+  const result = optimize(input);
+  assert.deepEqual(input, before, 'independent coincident thickness stays intact in the source');
+  const current = result.config.spaces[0];
+  assert.equal(result.report.partitionsReconciled, 0);
+  assert.deepEqual(current.partitions, migrated.partitions,
+    'Optimize retains every source-derived atom and both material profiles');
+  assert.deepEqual(current.openings[0].host, migrated.openings[0].host);
 });

@@ -67,6 +67,23 @@ The existing whole-plan Optimize may deliberately align geometry farther than
 R. Its existing preview/confirmation and Undo cover that broader operation;
 there is no additional micro-repair confirmation.
 
+Coincident legacy partitions with different thickness remain independent
+carriers, including a zero/positive pair. Compatible same-material atoms can
+still share the existing migration mapping; differing material is not a reason
+to reject an otherwise valid legacy plan.
+
+Optimize's numerical maintenance readers use their actual draft projections,
+without projecting the previous graph back over proposed changes. Opening
+continuity still comes from named graph runs. Literal lattice targets and
+explicit near-axis repair may update a support parameter; approximate off-grid
+echoes retain exact affine incidence. Already-applied move/support operations
+remain the baseline for subsequent structural maintenance. Room targets own
+shared nodes, while numerical partition compaction cannot move detached graph
+endpoints. A conversion requires a complete exact room carrier; an unsplit
+contact can be split explicitly at existing named nodes. Unproved subspans
+retain their source carrier. Reconciliation protects a hosted opening's full
+footprint and independent overlapping material, including across graph seams.
+
 ## Writers and authority
 
 TS/Python use the same exact graph contract. Editor commands name stable IDs

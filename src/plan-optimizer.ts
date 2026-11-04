@@ -12,7 +12,7 @@ import { alignAllToGrid, type AlignReport } from './align-grid';
 import { contactPositionExceptions } from './device-contact-maintenance';
 import {
   canonicalizeConfigGeometryInPlace, canonicalizeLayoutGeometryInPlace,
-  latticeCanonicalizationReport, type LatticeSpaceReport,
+  canonicalizeLatticeCoordinate, latticeCanonicalizationReport, type LatticeSpaceReport,
 } from './coordinate-canonicalization';
 import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
@@ -34,6 +34,7 @@ import {
   commitWallSegmentModelInPlace, migrateLegacyRoomDraftsToPartitionsInPlace,
 } from './wall-segment-model';
 import { legacyZeroContourLines } from './zero-walls';
+import { annotateGraphOpeningRuns } from './graph-opening-run';
 
 import { migrateGraphSpace, projectGraphSpace, PlanGraphError } from './plan-graph';
 import { optimizeGraphTargets, graphOptimizeRoomProfile, graphOptimizeTopologyPoints } from './graph-optimize';
@@ -119,9 +120,18 @@ const clamp = (value: number, min: number, max: number): number => (
   Math.min(max, Math.max(min, value))
 );
 
-const modelOf = (space: any): any => (
-  spaceModels({ spaces: [space], markers: [], settings: {} } as any)[0]
-);
+const modelOf = (space: any): any => {
+  // These maintenance passes propose numeric targets. A graph-bound reader
+  // would silently restore the old projections over the edited draft.
+  const { plan_graph: _graph, ...draft } = space;
+  const model=spaceModels({ spaces: [draft], markers: [], settings: {} } as any)[0];
+  if(space.plan_graph&&model) {
+    // Host continuity is still derived from named graph incidence. Unlike a
+    // graph-bound room reader it never overwrites numerical target geometry.
+    annotateGraphOpeningRuns(space.plan_graph,model.partitions,'partition',NORM_W);
+  }
+  return model;
+};
 
 /** Canonical physical identity for a segment, independent of endpoint order. */
 const optimizerSpanKey = (a: number[], b: number[], coordScale: number): string => {
@@ -453,6 +463,13 @@ function optimizePlanDraft(
   // config/layout clone merely to remove sub-pixel storage tails (#291).
   canonicalizeConfigGeometryInPlace(config);
   canonicalizeLayoutGeometryInPlace(references.layout);
+  if(graphDraft)for(const space of config.spaces||[]) {
+    const point=(p:number[])=>p.map(value=>Number(canonicalizeLatticeCoordinate(value)));
+    for(const room of space.rooms||[])if(room.poly)room.poly=room.poly.map(point);
+    for(const key of ['wall_segments','partitions','walls'])for(const edge of space[key]||[]) {
+      if(edge.a)edge.a=point(edge.a);if(edge.b)edge.b=point(edge.b);
+    }
+  }
   const original = contentJson(configIn || {});
   const originalLayout = contentJson(layoutIn || {});
   const modelFrom = Number.isInteger(Number(config.model_version))
@@ -503,13 +520,14 @@ function optimizePlanDraft(
   // before alignment reads both carriers: stale segments would look like
   // extra incident axes, freeze the component and restore decimal tails.
   const realignmentSpaces = graphDraft && wallsStraightened
-    ? straightenedSpaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true).space)
+    ? straightenedSpaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true,
+      {retargetDependencies:true}).space)
     : straightenedSpaces;
   const finalAligned = wallsStraightened
     ? alignAllToGrid(realignmentSpaces, aligned.layout, exactContacts)
     : { ...aligned, spaces: realignmentSpaces };
   config.spaces = graphDraft
-    ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true).space)
+    ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(realignmentSpaces[i], space, true).space)
     : finalAligned.spaces;
 
   const alignReport: AlignReport = wallsStraightened ? {
@@ -786,13 +804,15 @@ export function optimizePlans(
   });
   const config = references.config;
   const migration = migrateLosslessly(config);
-  let migratedSegments = 0, migratedDrafts = 0, migratedDraftSegments = 0;
+  let migratedSegments = 0, migratedDrafts = 0, migratedDraftSegments = 0, migratedZeros = 0;
   config.spaces = (config.spaces || []).map((space: any) => {
     if (modelFrom === PLAN_MODEL_VERSION) {
       if (!space.plan_graph) throw new PlanGraphError('graph-missing', String(space.id || ''));
       return projectGraphSpace(space, space.plan_graph).space;
     }
     if (space.plan_graph) throw new PlanGraphError('model-version', String(space.id || ''));
+    const legacyModel=modelOf(space);
+    if(legacyModel&&modelFrom<9)migratedZeros+=legacyZeroContourLines(space,legacyModel.rooms,NORM_W,GRID_PITCH*.02).length;
     const drafts = migrateLegacyRoomDraftsToPartitionsInPlace(space);
     migratedDrafts += drafts.drafts; migratedDraftSegments += drafts.segments;
     const result = migrateGraphSpace(space, { sourceModelVersion: modelFrom });
@@ -806,7 +826,10 @@ export function optimizePlans(
   const result = optimizePlanDraft(config, references.layout, context, dependencies, true);
   const stats = { partitionsMerged: 0, partitionsReconciled: 0, wallsMerged: 0, openingsRehosted: 0 };
   result.config.spaces = result.config.spaces.map((draft: any, index: number) => {
-    const next = optimizeGraphTargets(baseline[index], draft);
+    // The numerical engine already applied named moves and any explicit
+    // near-axis support repair. Keep that graph for structural maintenance;
+    // rebuilding the old dependency parameters would undo the first repair.
+    const next = optimizeGraphTargets({...baseline[index],plan_graph:draft.plan_graph}, draft);
     for (const key of Object.keys(stats) as (keyof typeof stats)[]) stats[key] += next[key];
     return next.space;
   });
@@ -820,10 +843,14 @@ export function optimizePlans(
   report.wallSegmentsMigrated += migratedSegments;
   report.roomDraftsMigrated += migratedDrafts;
   report.roomDraftSegmentsMigrated += migratedDraftSegments;
+  report.legacyZeroWallsMigrated += migratedZeros;
   report.partitionsMerged = stats.partitionsMerged;
   report.partitionsReconciled = stats.partitionsReconciled;
   report.openingsRehosted = stats.openingsRehosted;
-  report.wallsMerged = Math.max(report.wallsMerged, stats.wallsMerged);
+  // The report counts removed compatibility wall records, not invisible
+  // graph seams compacted while their material/owner profile stays unchanged.
+  report.wallsMerged = (configIn.spaces||[]).reduce((total:number,space:any,index:number)=>total
+    +Math.max(0,(space.walls||[]).length-(result.config.spaces[index]?.walls||[]).length),0);
   Object.assign(report, references.report);
   if (!changed) {
     // No persisted change cancels effect counters, not observations or the
