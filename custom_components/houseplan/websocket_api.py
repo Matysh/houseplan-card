@@ -244,6 +244,42 @@ async def _discard_optimizer_snapshot(rt: HouseplanData) -> None:
         int(data.get("rev", 0)),
         remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
     )
+    config_data = await rt.config_store.async_load() or {}
+    await _release_space_delete_snapshot(rt, data, config_data.get("config") or {}, {})
+
+
+async def _release_space_delete_snapshot(
+    rt: HouseplanData, previous_metadata: dict, config: dict, metadata: dict,
+) -> None:
+    """Release only expired space-delete pins after their replacement is durable.
+
+    Preserve files referenced by the accepted plan, the replacement Undo, or
+    another device-history command. Never turn post-commit housekeeping into a
+    failed write or run it while the target pair can still roll back.
+    """
+    previous = previous_metadata.get(_OPTIMIZE_BACKUP)
+    replacement = metadata.get(_OPTIMIZE_BACKUP)
+    if (not isinstance(previous, dict) or previous.get("kind") != "space_delete"
+            or previous == replacement or getattr(rt, "hass", None) is None):
+        return
+    try:
+        from .plans import attachment_refs
+        refs = attachment_refs(config)
+        if isinstance(replacement, dict):
+            refs |= attachment_refs(replacement.get("config") or {})
+        if rt.marker_history is not None:
+            refs |= rt.marker_history.refs()
+        live = {marker["id"] for marker in config.get("markers") or [] if not marker.get("removed")}
+        retired = {marker["id"] for marker in previous.get("config", {}).get("markers") or []} - live
+        files_dir = Path(rt.hass.config.path(FILES_DIR))
+
+        def collect() -> None:
+            for marker_id in retired:
+                _drop_unreferenced_marker_files(files_dir, marker_id, refs)
+
+        await rt.hass.async_add_executor_job(collect)
+    except Exception:  # noqa: BLE001 - the accepting transaction is already durable
+        _LOGGER.exception("House Plan: releasing expired space-delete attachments failed")
 
 
 class PairCommitFailure(Exception):
@@ -506,12 +542,16 @@ async def _commit_pair(
     try:
         await _persist_pair_intent(rt, pending)
         await _converge_pair(rt, pending)
+        await _release_space_delete_snapshot(rt, rollback.get("final_metadata") or {},
+                                            pending.get("config") or {}, pending.get("final_metadata") or {})
         return
     except Exception:  # noqa: BLE001 - one retry handles fail-after-write too
         _LOGGER.warning("House Plan pair write failed; retrying target", exc_info=True)
     try:
         await _persist_pair_intent(rt, pending)
         await _converge_pair(rt, pending)
+        await _release_space_delete_snapshot(rt, rollback.get("final_metadata") or {},
+                                            pending.get("config") or {}, pending.get("final_metadata") or {})
         return
     except Exception:  # noqa: BLE001 - target is no longer the recovery policy
         _LOGGER.exception("House Plan target retry failed; restoring previous pair")
@@ -1158,6 +1198,7 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             rt, data, layout, new_rev,
             remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
         )
+        await _release_space_delete_snapshot(rt, data, config_data.get("config") or {}, {})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
@@ -1234,6 +1275,7 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
             rt, data, layout, new_rev,
             remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
         )
+        await _release_space_delete_snapshot(rt, data, config, {})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
@@ -1795,6 +1837,7 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
                 rt, data, layout, new_rev,
                 remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
             )
+            await _release_space_delete_snapshot(rt, data, resolved.config_data.get("config") or {}, {})
     if new_rev is not None:
         hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})

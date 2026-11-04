@@ -168,3 +168,60 @@ async def test_marker_config_delete_removes_position_atomically_for_drop_and_tom
     after = await pair(client)
     assert "m" not in after[1]["layout"]
     assert after[1]["layout"]["rl_a"] == before[1]["layout"]["rl_a"]
+
+
+@pytest.mark.parametrize("next_edit", ["config", "config_shared", "layout", "point", "layout_delete", "optimize", "optimize_failed"])
+async def test_expired_space_delete_undo_releases_its_attachment_pins(hass, hass_ws_client, monkeypatch, next_edit):
+    client, _, before = await seed(hass, hass_ws_client)
+    file = Path(hass.config.path(FILES_DIR)) / "m" / "manual.pdf"
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_bytes(b"held only while space deletion can be undone")
+    config = copy.deepcopy(before[0]["config"])
+    config["markers"][0]["pdfs"] = [{"name": "Manual", "url": "/api/houseplan/content/files/m/manual.pdf"}]
+    if next_edit == "config_shared":
+        config["markers"].append({"id": "other", "binding": "virtual", "space": "g",
+                                  "pdfs": copy.deepcopy(config["markers"][0]["pdfs"])})
+    assert (await send(client, {"type": "houseplan/config/set", "config": config,
+                              "expected_rev": before[0]["rev"]}))["success"]
+    before = await pair(client)
+    assert (await send(client, {"type": "houseplan/space/delete", "space_id": "f", "remove_markers": True,
+        "expected_config_rev": before[0]["rev"], "expected_layout_rev": before[1]["rev"]}))["success"]
+    after = await pair(client)
+    assert after[0]["undo_kind"] == "space_delete"
+    assert file.is_file(), "the live Undo snapshot must still own the attachment"
+    if next_edit in ("config", "config_shared", "optimize", "optimize_failed"):
+        config = copy.deepcopy(after[0]["config"])
+        config["spaces"][0]["title"] += " edited"
+        request = {"type": "houseplan/config/set", "config": config, "expected_rev": after[0]["rev"]}
+        if next_edit.startswith("optimize"):
+            request = {"type": "houseplan/plan/optimize", "config": config, "layout": after[1]["layout"],
+                "expected_config_rev": after[0]["rev"], "expected_layout_rev": after[1]["rev"]}
+        if next_edit == "optimize_failed":
+            store = get_data(hass).config_store
+            save = store.async_save
+
+            async def fail_target(value):
+                if value.get("rev") == after[0]["rev"] + 1:
+                    raise OSError("replacement target cannot become durable")
+                await save(value)
+
+            monkeypatch.setattr(store, "async_save", fail_target)
+    elif next_edit == "layout":
+        layout = copy.deepcopy(after[1]["layout"])
+        layout["unverified"]["x"] = .3
+        request = {"type": "houseplan/layout/set", "layout": layout, "expected_rev": after[1]["rev"]}
+    elif next_edit == "point":
+        request = {"type": "houseplan/layout/update", "device_id": "unverified",
+                   "pos": {"s": "g", "x": .3, "y": .5}}
+    else:
+        request = {"type": "houseplan/layout/delete", "device_id": "unverified"}
+    saved = await send(client, request)
+    if next_edit == "optimize_failed":
+        assert saved["error"]["code"] == "commit_failed"
+        assert await pair(client) == after
+        assert file.is_file(), "a rolled-back replacement must not release the still-current Undo pin"
+        return
+    assert saved["success"], saved
+    assert file.exists() == (next_edit == "config_shared"), "expired Undo releases only unreferenced files"
+    current = await pair(client)
+    assert current[0]["undo_kind"] != "space_delete"

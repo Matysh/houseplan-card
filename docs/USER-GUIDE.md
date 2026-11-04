@@ -884,7 +884,8 @@ plan, its position and robot trail are removed, and its binding
 appears in **Devices → Available again**. Nothing changes in Home Assistant.
 Until the next plan or layout edit, **General settings → Undo space deletion**
 restores the space, devices and their saved positions. Device attachments are
-retained during that interval; the previous recorded robot cleanup trail is
+retained during that interval, then removed if no remaining device uses them;
+the previous recorded robot cleanup trail is
 not restored. Cancel in the confirmation writes nothing. After another edit,
 restore the original plan from a [backup](#20-storage-multiple-cards-and-backups).
 If the plan changed after the
