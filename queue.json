@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2564,
+  "revision": 2565,
   "nextTicket": 160,
   "nextFence": 160,
   "tasks": {
@@ -2536,7 +2536,10 @@
         "materialSha": "9f582f8950c249a8793616f640b011b5da44bc9e",
         "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
         "patchId": "03f35abe6226af4434610cadadcd80516fc006c4"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793787390565,
+      "automationDetail": "GitHub PUT failed (502)"
     },
     "1267": {
       "issue": 1267,
@@ -2998,6 +3001,10 @@
     },
     "github:41813042933:1:tick:0:review-requested": {
       "digest": "0344fd4016b15fdccb0b3e0c0ba72490a4fde5d763f00c40d9a522aef9c13f74",
+      "issue": 1265
+    },
+    "finish:b4d7395d-f9d5-412c-b259-dc04b14be29b:finish:4:automation-pending": {
+      "digest": "126274200a8e1b032257340be08afaafdcf5cc7821d8dd8994be50cd1eeed527",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
