@@ -286,7 +286,7 @@ const out = await page.evaluate(async () => {
     record: structuredClone(stairs().find(stair => stair.id === straight.id)),
     count: stairs().length, carrier: stairCarrier(),
   });
-  const historyBefore = stairHistoryState();
+  const stairMoveBefore = stairHistoryState();
   const start = { x: straight.x, y: straight.y };
   const stairScreenPoint = (x, y) => {
     const p = new DOMPoint(x, y).matrixTransform(stage().getScreenCTM());
@@ -300,19 +300,19 @@ const out = await page.evaluate(async () => {
   await settled();
   const moveAckIdle = await writesIdle();
   const moved = structuredClone(stairs().find((stair) => stair.id === straight.id));
-  const historyMoved = stairHistoryState();
+  const stairMoveAccepted = stairHistoryState();
   result.moveUsesContinuousTransform = !!moved
     && (!closeTo(moved.x, start.x) || !closeTo(moved.y, start.y));
   await window.__stairHistoryNative({ kind: 'key', key: 'Control+z' });
   await settled();
   const undoAckIdle = await writesIdle();
   const undone = structuredClone(stairs().find((stair) => stair.id === straight.id));
-  const historyUndone = stairHistoryState();
+  const stairMoveUndone = stairHistoryState();
   await window.__stairHistoryNative({ kind: 'key', key: 'Control+Shift+z' });
   await settled();
   const redoAckIdle = await writesIdle();
   const redone = structuredClone(stairs().find((stair) => stair.id === straight.id));
-  const historyRedone = stairHistoryState();
+  const stairMoveRedone = stairHistoryState();
   result.moveUndoRedo = !!undone && !!redone
     && closeTo(undone.x, start.x) && closeTo(undone.y, start.y)
     && closeTo(redone.x, moved.x) && closeTo(redone.y, moved.y);
@@ -322,11 +322,11 @@ const out = await page.evaluate(async () => {
   await card._reloadConfigOnly(true);
   await settled();
   const reloadAckIdle = await writesIdle();
-  const historyReloaded = stairHistoryState();
+  const stairMoveReloaded = stairHistoryState();
   const stored = (await card.hass.callWS({ type: 'houseplan/config/get' })).config;
   const storedStairs = stored.spaces.find(space => space.id === 'f1').stairs;
-  window.__stairHistory1269 = { before: historyBefore, moved: historyMoved,
-    undone: historyUndone, redone: historyRedone, reloaded: historyReloaded,
+  window.__stairHistory1269 = { before: stairMoveBefore, moved: stairMoveAccepted,
+    undone: stairMoveUndone, redone: stairMoveRedone, reloaded: stairMoveReloaded,
     server: { record: storedStairs.find(stair => stair.id === straight.id),
       count: storedStairs.length, carrier: stairCarrier(stored) },
     ackIdle: moveAckIdle && undoAckIdle && redoAckIdle && reloadAckIdle };
