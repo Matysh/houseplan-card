@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2845,
+  "revision": 2846,
   "nextTicket": 172,
   "nextFence": 172,
   "tasks": {
@@ -3119,7 +3119,8 @@
         "fromStatus": "S7-code-review",
         "at": 1793804076042,
         "entry": 1,
-        "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89"
+        "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
+        "transitionConfirmed": true
       }
     },
     "1278": {
@@ -3340,7 +3341,12 @@
       "status": "pending",
       "presentation": {
         "round": 1,
-        "occurredAt": "2026-11-04T14:51:02.715Z"
+        "occurredAt": "2026-11-04T14:51:02.715Z",
+        "transition": {
+          "from": "S7-code-review",
+          "to": "S6-in-progress",
+          "confirmed": true
+        }
       },
       "runId": 41851701660
     }
@@ -3386,6 +3392,10 @@
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2:finish:7:return": {
       "digest": "346103fb812497ad6474cc048b6c658dd830fe0eda45b828489bac28331b60d9",
+      "issue": 1277
+    },
+    "finish:c239caf7-af26-4d29-b88a-b50d79172cc2:finish:7:return-label": {
+      "digest": "492c662a9f900b7b09e3a7ab1456837ddf8ee23b993dc1d53386cf31d8ed0e16",
       "issue": 1277
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2": {
