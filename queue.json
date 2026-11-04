@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3326,
+  "revision": 3327,
   "nextTicket": 195,
   "nextFence": 195,
   "tasks": {
@@ -2906,7 +2906,24 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793822834897,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "55de761a8cf043462f31f187c0c68e25c58ac2b4",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/release-ledger/v1.83.0/1285.json",
+        "src/graph-optimize.ts",
+        "src/plan-optimizer.ts",
+        "test/fixtures/1285-editor-sequences.json",
+        "test/geometry-corpus.test.mjs",
+        "test/graph-dependent-optimize.test.mjs",
+        "test/graph-editor-invariant.test.mjs",
+        "test/graph-editor-layout-invariant.test.mjs",
+        "test/helpers/graph-editor-layout-sequences.mjs",
+        "test/helpers/graph-editor-sequences.mjs",
+        "test/near-axis.test.mjs"
+      ]
     },
     "1286": {
       "issue": 1286,
@@ -3160,12 +3177,17 @@
     "token": "194:finish:26ceded9-b616-4afd-a63d-85347099f9b5:finish:1:admit",
     "fence": 194,
     "materialSha": "620d2b58891e92fa2820ba743a1e38799ce7a825",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "a51c3432653e84a990e0cc74d1bf39ccb0bebe70",
+    "phase": "testing",
     "admittedAt": 1793822839160,
-    "expiresAt": 1793823139160
+    "expiresAt": 1793823145336,
+    "patchId": "55de761a8cf043462f31f187c0c68e25c58ac2b4"
   },
   "events": {
+    "finish:26ceded9-b616-4afd-a63d-85347099f9b5:finish:2:synchronized": {
+      "digest": "a3a52014360a8a70b923dd9e66d45fde35e3e5a4b88b792b53e4635c463d5e8b",
+      "issue": 1285
+    },
     "dev-build:41903011631:1:1287": {
       "digest": "3494cacc85e3a29598f3047ad4710c8e42110f6c3b8069d74b6adaf8f13b3e3f",
       "issue": 1287,
