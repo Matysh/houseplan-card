@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2612,
+  "revision": 2613,
   "nextTicket": 161,
   "nextFence": 161,
   "tasks": {
@@ -403,26 +403,6 @@
         "status": "complete",
         "errors": {},
         "commentDigest": "e0a69e282d8b0741771a"
-      },
-      "devBuild": {
-        "status": "not-required"
-      }
-    },
-    "1191": {
-      "issue": 1191,
-      "branch": "codex/golden-checkout-source",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-      "mergedAt": 1793568558408,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "commentDigest": "32d91a044d4437669f39"
       },
       "devBuild": {
         "status": "not-required"
@@ -2508,7 +2488,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "bc7c230157200797a0439bdd1e64800c2871f522"
       }
     },
     "1267": {
@@ -2875,7 +2856,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:41814765162:1:1265": {
+      "digest": "3c7d6bace0b95746603bd1d7b9d40130d5c107fdaf8d7b32529b57f847d6ca20",
+      "issue": 1265,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1265,
+        "at": 1793788412073,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "bc7c230157200797a0439bdd1e64800c2871f522",
     "status": "pending",
