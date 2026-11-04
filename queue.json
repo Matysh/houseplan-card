@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2493,
+  "revision": 2494,
   "nextTicket": 154,
   "nextFence": 154,
   "tasks": {
@@ -2574,15 +2574,16 @@
         "at": 1793781841099
       },
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793782334911,
-        "entry": 2,
+        "at": 1793782473034,
+        "entry": 3,
         "detail": "Браузер: stairs: failed",
-        "eventId": "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269"
-      }
+        "eventId": "finish:484efed6-ebea-4f73-9c0f-6c20194408f2:finish:3:return:return:1269"
+      },
+      "reason": "checks-failed"
     },
     "1270": {
       "issue": 1270,
@@ -2871,18 +2872,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1269,
-    "worker": "finish",
-    "token": "153:finish:484efed6-ebea-4f73-9c0f-6c20194408f2:finish:1:admit",
-    "fence": 153,
-    "materialSha": "485b7c528e2706188b58b807eb8d0d88c09b47eb",
-    "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "phase": "testing",
-    "admittedAt": 1793782455524,
-    "expiresAt": 1793782761810,
-    "patchId": "f63139a375b591e6a9ff8f8e3d846be61ffd84c2"
-  },
+  "active": null,
   "events": {
     "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
       "digest": "147a95c6a25693081a7257baf111607c32aaa43d7092ce2529d58cde5d52a9cc",
@@ -2950,6 +2940,10 @@
     },
     "finish:484efed6-ebea-4f73-9c0f-6c20194408f2:finish:2:synchronized": {
       "digest": "c1de70baa6f08815c50db1d4b4c8170927eddeb9560926493383879879e48299",
+      "issue": 1269
+    },
+    "finish:484efed6-ebea-4f73-9c0f-6c20194408f2:finish:3:return": {
+      "digest": "a6cbf761945ee7216d047e6234319f6ffe6630182997033e7de1d7a8b7627417",
       "issue": 1269
     },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
@@ -3121,6 +3115,26 @@
           "status": "passed",
           "finishedAt": "2026-11-04T08:39:17.643Z",
           "failures": []
+        }
+      }
+    },
+    "finish:484efed6-ebea-4f73-9c0f-6c20194408f2:finish:3:return:return:1269": {
+      "digest": "a6cbf761945ee7216d047e6234319f6ffe6630182997033e7de1d7a8b7627417",
+      "issue": 1269,
+      "message": {
+        "kind": "return",
+        "issue": 1269,
+        "at": 1793782473034,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793782473034,
+          "entry": 3,
+          "detail": "Браузер: stairs: failed",
+          "eventId": "finish:484efed6-ebea-4f73-9c0f-6c20194408f2:finish:3:return:return:1269"
         }
       }
     }
