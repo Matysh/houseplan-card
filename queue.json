@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3040,
-  "nextTicket": 181,
+  "revision": 3041,
+  "nextTicket": 182,
   "nextFence": 181,
   "tasks": {
     "1126": {
@@ -3018,14 +3018,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1283-local-seam-cleanup",
-      "materialSha": "1e34eecae4de8ae0fd9f1bca20743ddf2cebd9a5",
+      "materialSha": "25873e84a1aef490586536d6f90eea4b198e1791",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 179,
-      "queued": false,
+      "ticket": 181,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793817516459,
-      "reviewEntry": 3,
+      "readyAt": 1793818105259,
+      "reviewEntry": 4,
       "patchId": "26e542184afe832d9eff2e81eafb8b496a11bcb1",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -3056,8 +3056,7 @@
         "finishedAt": "2026-11-04T18:32:08.205Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reason": "author-addressing-published-review"
+      "reviewRound": null
     },
     "1284": {
       "issue": 1284,
@@ -3264,7 +3263,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1283
+  ],
   "active": {
     "issue": 1286,
     "worker": "finish",
@@ -3751,6 +3752,28 @@
         "track": "show",
         "layer": "product",
         "materialSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
+      }
+    },
+    "finish:c34ccff4-faec-48ad-ab7e-80181df458c4": {
+      "digest": "b168f10e026757fc2a4ae1435908b787dc335b664afaab16787e2897147e9872",
+      "issue": 1283,
+      "message": {
+        "kind": "queued",
+        "issue": 1283,
+        "at": 1793818105259,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "25873e84a1aef490586536d6f90eea4b198e1791",
+        "evidence": {
+          "id": "20261104T183134558-85935cb3",
+          "name": "Тесты для задачи #1283 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261104T183134558-85935cb3/report.json",
+          "materialSha": "ff6700c4536c9a4d7ccb2d82abd37cf47182040f",
+          "status": "passed",
+          "finishedAt": "2026-11-04T18:32:08.205Z",
+          "failures": []
+        }
       }
     }
   },
