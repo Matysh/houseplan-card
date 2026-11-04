@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3446,
+  "revision": 3447,
   "nextTicket": 198,
   "nextFence": 198,
   "tasks": {
@@ -3198,7 +3198,7 @@
   },
   "devWebhook": {
     "sourceSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-    "status": "pending",
+    "status": "delivered",
     "integrationTree": "dd8c846c42ac6dd38ef490a11aa0a2050c07871c"
   }
 }
