@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2680,
+  "revision": 2681,
   "nextTicket": 165,
   "nextFence": 165,
   "tasks": {
@@ -2951,25 +2951,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276": {
-      "digest": "145906e6bac9260892c68f327e31c4c58df4229b6e4df4d437e09ec207467a78",
-      "issue": 1276,
-      "message": {
-        "kind": "return",
-        "issue": 1276,
-        "at": 1793789898045,
-        "entry": 1,
-        "notice": {
-          "key": "1:executor-admission-expired",
-          "reason": "executor-admission-expired",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793789898045,
-          "entry": 1,
-          "eventId": "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276"
-        }
-      }
-    },
     "finish:7f34f282-8e88-42d1-a1d7-1786dcb2cea9": {
       "digest": "18adec09724f9b01647a566af4c9386cef1bee2913d1a64cd91485b6774ee080",
       "issue": 1276,
