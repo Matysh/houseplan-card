@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2675,
+  "revision": 2676,
   "nextTicket": 165,
   "nextFence": 165,
   "tasks": {
@@ -2816,7 +2816,10 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "test/daycycle-material.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1793790011471,
+      "automationDetail": "GitHub PUT failed (500)"
     },
     "1278": {
       "issue": 1278,
@@ -2998,6 +3001,10 @@
     },
     "finish:1dd0e6ba-509f-4d30-8761-c479b02fbd25": {
       "digest": "487a8d7a8a94e5b6d8a1f4802a4db7193d447e73614b78f4dc07f213b9ded17c",
+      "issue": 1276
+    },
+    "finish:7f34f282-8e88-42d1-a1d7-1786dcb2cea9:finish:3:automation-pending": {
+      "digest": "df5dbf6f185200d4acbc27ae2325dce7e6b40d8e09896bdcbf33c37892ab5339",
       "issue": 1276
     },
     "finish:592f0c29-4332-46f8-839a-6fbde55d9cf3": {
