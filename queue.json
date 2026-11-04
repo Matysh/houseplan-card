@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2490,
-  "nextTicket": 153,
+  "revision": 2491,
+  "nextTicket": 154,
   "nextFence": 153,
   "tasks": {
     "1126": {
@@ -2542,14 +2542,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1269-legacy-stairs-history",
-      "materialSha": "09a06bef493f020473dd3a694568b30369969daa",
+      "materialSha": "485b7c528e2706188b58b807eb8d0d88c09b47eb",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 152,
-      "queued": false,
+      "ticket": 153,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793782309066,
-      "reviewEntry": 2,
+      "readyAt": 1793782451839,
+      "reviewEntry": 3,
       "patchId": "78ca53ee75cb5f367d98601f4c976caed120d61b",
       "changedFiles": [
         "demo/smoke_stairs.mjs",
@@ -2582,8 +2582,7 @@
         "entry": 2,
         "detail": "Браузер: stairs: failed",
         "eventId": "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1270": {
       "issue": 1270,
@@ -2871,7 +2870,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1269
+  ],
   "active": null,
   "events": {
     "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
@@ -3063,6 +3064,28 @@
           "eventId": "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269"
         },
         "delivered": true
+      }
+    },
+    "finish:484efed6-ebea-4f73-9c0f-6c20194408f2": {
+      "digest": "a5c90b86ca043769dba94eb8a220f8c3ee2f08a8062b175f910f26e3c25de6ad",
+      "issue": 1269,
+      "message": {
+        "kind": "queued",
+        "issue": 1269,
+        "at": 1793782451839,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "485b7c528e2706188b58b807eb8d0d88c09b47eb",
+        "evidence": {
+          "id": "20261104T083830988-3fda6329",
+          "name": "Тесты для задачи #1269 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083830988-3fda6329/report.json",
+          "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+          "status": "passed",
+          "finishedAt": "2026-11-04T08:39:17.643Z",
+          "failures": []
+        }
       }
     }
   },
