@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2363,
+  "revision": 2364,
   "nextTicket": 147,
   "nextFence": 147,
   "tasks": {
@@ -2542,7 +2542,16 @@
         "demo/smoke_summary_weather.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261104T081204213-acd4665e",
+        "name": "Тесты для задачи #1270 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T081204213-acd4665e/report.json",
+        "materialSha": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
+        "status": "passed",
+        "finishedAt": "2026-11-04T08:12:09.711Z",
+        "failures": []
+      }
     },
     "1273": {
       "issue": 1273,
@@ -2728,9 +2737,9 @@
     "fence": 146,
     "materialSha": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
     "expectedBase": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793779913514,
-    "expiresAt": 1793780220753,
+    "expiresAt": 1793783530725,
     "patchId": "6ba363a4284638a7b8ddb244bdd0c91f99c0837f"
   },
   "events": {
@@ -2744,6 +2753,10 @@
     },
     "github:41797637202:1:completions:message:54ee23f8298623758cb6098ceef96c8b4fff27eea696bcb870171560b1ffe16f": {
       "digest": "399d36ad26ae07646cf991000374d34bbf3b085e2791fc405f7cbf3be8b372ff",
+      "issue": 1270
+    },
+    "finish:f630afd0-8593-4f37-bb37-e031784b968a:finish:3:s6-complete": {
+      "digest": "7823c4045f0e07ea5acc2a177640ea03020d66b45b5ffd11f3eaed586e575ecf",
       "issue": 1270
     },
     "finish:f630afd0-8593-4f37-bb37-e031784b968a": {
