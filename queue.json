@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2302,
+  "revision": 2303,
   "nextTicket": 143,
   "nextFence": 143,
   "tasks": {
@@ -2570,7 +2570,18 @@
         "demo/smoke_warm_mode_adoption.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793779092191,
+        "entry": 1,
+        "detail": "Браузер: opening drag: failed",
+        "eventId": "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:3:return:return:1273"
+      }
     }
   },
   "ownerDecisions": {},
@@ -2676,18 +2687,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1273,
-    "worker": "finish",
-    "token": "142:finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:1:admit",
-    "fence": 142,
-    "materialSha": "48c34a2a5072d836b17fda01875488b021fed3d6",
-    "expectedBase": "2e6497a3132034024391dbf7b217e51908ccda0e",
-    "phase": "testing",
-    "admittedAt": 1793779028764,
-    "expiresAt": 1793779387890,
-    "patchId": "915ac9c05ce46fcab17a8bffed391608a7171222"
-  },
+  "active": null,
   "events": {
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:2:synchronized": {
       "digest": "843f9ee77168ad970c6908f84839db6260f3baabbd705c7cffc50a16ff1685b9",
@@ -2707,6 +2707,10 @@
     },
     "finish:7bb2ada6-adf2-4da0-8009-98c2ab261d03": {
       "digest": "b10279c11fca5a00814715d58e0b23068e13edc5a93c67d5e7f2e19f2a69ed42",
+      "issue": 1273
+    },
+    "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:3:return": {
+      "digest": "403221a3da30e4e53be3ef0235d06f99479f5feb4dd6ab5fbabb1c475c1aa625",
       "issue": 1273
     },
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96": {
@@ -2736,6 +2740,26 @@
         "materialSha": "48c34a2a5072d836b17fda01875488b021fed3d6",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:3:return:return:1273": {
+      "digest": "403221a3da30e4e53be3ef0235d06f99479f5feb4dd6ab5fbabb1c475c1aa625",
+      "issue": 1273,
+      "message": {
+        "kind": "return",
+        "issue": 1273,
+        "at": 1793779092191,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793779092191,
+          "entry": 1,
+          "detail": "Браузер: opening drag: failed",
+          "eventId": "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:3:return:return:1273"
+        }
       }
     }
   },
