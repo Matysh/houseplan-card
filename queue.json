@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2501,
+  "revision": 2502,
   "nextTicket": 156,
   "nextFence": 156,
   "tasks": {
@@ -2547,7 +2547,7 @@
       "ownerDecision": null,
       "ticket": 155,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793782964070,
       "reviewEntry": 5,
       "patchId": "f1eb882a9042e6d5c617e435dcebf4fdea39fadc",
@@ -2560,19 +2560,15 @@
         "test/decor-history-restore.test.mjs"
       ],
       "s6": {
-        "id": "20261104T083830988-3fda6329",
+        "id": "20261104T090259677-4b40dc27",
         "name": "Тесты для задачи #1269 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083830988-3fda6329/report.json",
-        "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T090259677-4b40dc27/report.json",
+        "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
         "status": "passed",
-        "finishedAt": "2026-11-04T08:39:17.643Z",
+        "finishedAt": "2026-11-04T09:03:19.964Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1269:1:43910d3e92fbbbe669102b726569975a5da5b939:477af68e102d42f95372f7e50f8974565a15b6e6",
-        "at": 1793781841099
-      },
       "notice": {
         "key": "4:checks-failed",
         "reason": "checks-failed",
@@ -2878,9 +2874,9 @@
     "fence": 155,
     "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
     "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793782969733,
-    "expiresAt": 1793783275758,
+    "expiresAt": 1793786601022,
     "patchId": "f1eb882a9042e6d5c617e435dcebf4fdea39fadc"
   },
   "events": {
@@ -3268,6 +3264,34 @@
           "finishedAt": "2026-11-04T08:39:17.643Z",
           "failures": []
         }
+      }
+    },
+    "finish:5fe263a1-a363-43b8-9675-fd78e68a1b97:finish:3:s6-complete": {
+      "digest": "1380e6b19eec70058863c915dca3da2826b3ae26e8b407cf451018b03ffc0bf2",
+      "issue": 1269,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1269,
+        "at": 1793783001022,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T090259677-4b40dc27",
+          "name": "Тесты для задачи #1269 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T090259677-4b40dc27/report.json",
+          "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+          "status": "passed",
+          "finishedAt": "2026-11-04T09:03:19.964Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Выявлена узкая legacy/current развилка: restoreDecorOnlyHistory допускает сохранение legacy носителя только для decor; restoreNonPhysicalHistory включает stairs, но отказывает любой legacy версии. Undo лестницы попадает в structural restore, мигрирует стеновой носитель, и прежний Redo больше не соответствует ему. Поздние current-model stair cases поэтому проходят.\n\nРешение — допуск legacy только для строго stairs-only snapshot при равенстве всех остальных полей и сохранении существующих guards node/chain/references/mixed/future/invalid model. Не расширять generic legacy presentation authority для plan_transform, декора вместе с лестницей или физических изменений. Реальный history cursor и нативный ранний сценарий должны доказать Undo/Redo без смены модели/ID.\n\n### Исправления по предыдущему ревью\n\nРаунд1, workflow41801202242: код признан корректным; возвращено на S6 для более полного native свидетельства и явного состава доказательств.\n\n- Полные record/count/model/carrier/reload: ранний smoke_stairs теперь сохраняет весь объект до жеста и после ACK каждого Move/Undo/Redo. Node-side isDeepStrictEqual сравнивает все поля (включая ID, стиль, размеры, target_space_id), число лестниц и весь конфиг кроме stairs выбранного этажа. После Redo вызывается настоящий _reloadConfigOnly(true) и отдельно config/get принятого fake integration; сравниваются полный объект, carrier и count. Другие этажи/лестницы также входят в полный carrier snapshot.\n- Настоящий ввод: этот ранний случай переведён с dispatchEvent на page.mouse/page.keyboard через test binding, не подменяющий product handlers/writer. Armed Stair tool остаётся выбранным, увеличение числа лестниц явно запрещено.\n- Отрицательные случаи расширены на version undefined и10. Product restore не менялся после принятого ревью механизма.\n- Состав S6 указан явно: request artifacts/issue1269-task.json передаёт areaTests=[test/decor-history-restore.test.mjs,test/geometry-history-restore.test.mjs,test/stairs-editor-live.test.mjs,demo/smoke_stairs.mjs]. Это полный browser файл с новыми checks legacyStair*, не только unit-файл. Предыдущий локальный S6 20261104T083830988-3fda6329 на ecb24f0e2 действительно включал result id=smoke:smoke_stairs, status=passed,durationMs=17352. Новый S6 на итоговом SHA будет передан штатной квитанцией после выполнения; его успех заранее не заявляется.\n\nДополнительная диагностика до исправления воспроизвела model undefined/graph=false → Undo model11/graph=true → Redo toast Cannot redo Move stairs, history entry removed. Лог triage-stairs-model.log сохранён. Необязательная гипотеза ревью о plan_transform пока не включена в этот stairs-only fix; при подтверждении нужна отдельная задача.\n\nПри усилении native carrier oracle обнаружено ровно одно допустимое ACK изменение: удаляются пустые retired spaces[].segments у двух исходных этажей. Это existing derived-segments decoder (inventory untilv1.21.3, geometry-cleanup.ts), не graph/model migration. Проба triage-stairs-carrier.log сохранила все10 leaf-отличий по пяти фазам. Полный expected carrier независимо учитывает только удаление **пустых** segments; все другие поля, версии, непустые коллекции и порядок массивов остаются строгими. Реальный pointer/key, full record/count, reload/wire readback уже достигнуты; новый S6 проверяет этот точный expected. Технические отказы усиленного теста (имя переменной/SVG helper) исправлены, исходные логи сохранены; они не маскировались как продуктовые баги.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
