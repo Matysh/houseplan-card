@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 109,
+  "revision": 110,
   "active": "v1.84.0-beta.3-20261104-nodes",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -4631,7 +4631,8 @@
     "ship-review:prepare:1e12fbc2-e0ac-414a-b5db-d7018215e218": "cc7ef96726be5f5d4a8245fdfe11b486527a998afdbcb3f4547c9c62746a699f",
     "ship-review:result:8c0772ab-5fce-49d4-8cbb-1bc27993b7ec": "09a45aa3f7b8c2345d05a326de3da834b6c64f5081e3c68ba9e7c64227a5142c",
     "beta1843-nodes-final-report-20261104": "eeff81d82d222076362bc1a57d75764273b18572ce62fb57e86561da3e328dab",
-    "beta1843-nodes-1260-r2-accepted-20261104": "9c8a5b3814a12775e86d8f5948eb9b17947c6cd0ba62be7b8afd7b09d29e372c"
+    "beta1843-nodes-1260-r2-accepted-20261104": "9c8a5b3814a12775e86d8f5948eb9b17947c6cd0ba62be7b8afd7b09d29e372c",
+    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:runner-report": "3b747eb48247d3f6aa5589dfa868f089e16c8373ec75e06b0110d3195659cef5"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
