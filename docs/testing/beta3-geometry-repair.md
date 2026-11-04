@@ -101,3 +101,28 @@ checks and is not the release selection; the subsequent selection comes from
 The 31 accepted PNGs retain captured CI41726660162/source f36cb76 provenance and
 the explicit owner decision in baselines-index.json. No new screenshot was
 generated during their acceptance. Later changes require their own comparison.
+
+## Review R1: scope the near-axis dependency grant
+
+Independent review41771475681 accepted the remaining approach and test targets,
+but found a substantial scope defect in7ad20a3: a global `retargetDependencies`
+boolean could rewrite an unrelated affine dependency whenever a near-axis
+repair ran anywhere. Four new witnesses all failed on that pinned code:
+inclined and horizontal t=1/3 supports, on the same floor and on another floor.
+The inclined dependency was retired; the frozen horizontal component's exact
+parameter was replaced by a decimal echo.
+
+The correction compares each space's numerical targets before/after its actual
+near-axis repair. Changed room-cycle vertices and partition endpoints map back
+to their named graph node IDs. Only those IDs may consume a non-lattice repair
+target; spaces without a repair receive no such grant. Ordinary exact affine
+echo filtering and the already-applied graph baseline remain in place. The four
+witnesses now pass, including exact p/parameters, immutable input, second-pass
+no-op and a later parent move carrying the T node at its exact third. Addressed
+graph/Optimize/near-axis/availability controls plus the new cases:62/62 PASS.
+
+The full beta profile of7ad20a3 completed successfully in CI41771483802:
+Node4450 tests/4449 PASS/one pre-existing private-fixture skip, backend2917/
+2916 PASS/one existing skip, browser13/13, golden75/75 and HA E2E13/13.
+It is retained as applicable evidence; R1 still prevents publishing that SHA.
+The scoped correction requires its own candidate, review and affected checks.

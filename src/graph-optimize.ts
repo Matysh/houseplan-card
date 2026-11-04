@@ -36,7 +36,7 @@ interface GraphOptimizeOptions {
   compactWalls?: boolean;
   alignOpenings?: boolean;
   metadataFromBefore?: boolean;
-  retargetDependencies?: boolean;
+  retargetNodes?: ReadonlySet<string>;
 }
 
 export function optimizeGraphTargets(
@@ -79,7 +79,7 @@ export function optimizeGraphTargets(
     // Keep exact affine incidence when the numerical reader only supplies an
     // approximate off-grid echo. A literal lattice target (or explicit axis
     // repair) can deliberately update the support parameter during Optimize.
-    if(dependent.has(id)&&!options.retargetDependencies&&encodePoint(next)[0]!=='l')return;
+    if(dependent.has(id)&&!options.retargetNodes?.has(id)&&encodePoint(next)[0]!=='l')return;
     if (old && !same(encodePoint(old), encodePoint(next))) throw new PlanGraphError('optimize-target-conflict', id);
     targets.set(id, next);
   };

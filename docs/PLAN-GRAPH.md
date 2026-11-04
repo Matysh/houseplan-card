@@ -76,7 +76,10 @@ Optimize's numerical maintenance readers use their actual draft projections,
 without projecting the previous graph back over proposed changes. Opening
 continuity still comes from named graph runs. Literal lattice targets and
 explicit near-axis repair may update a support parameter; approximate off-grid
-echoes retain exact affine incidence. Already-applied move/support operations
+echoes retain exact affine incidence. The near-axis grant names only graph nodes
+whose numerical room vertices or partition endpoints that repair actually
+changed, within their own space; it never applies to another component or floor.
+Already-applied move/support operations
 remain the baseline for subsequent structural maintenance. Room targets own
 shared nodes, while numerical partition compaction cannot move detached graph
 endpoints. A conversion requires a complete exact room carrier; an unsplit

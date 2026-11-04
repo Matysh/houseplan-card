@@ -133,6 +133,35 @@ const modelOf = (space: any): any => {
   return model;
 };
 
+/** Only numerical points actually changed by near-axis repair may retarget
+ * an off-grid dependency. Room indices and partition IDs still refer to the
+ * frozen graph; no coordinate matching grants authority to an unrelated node.
+ */
+const nearAxisChangedNodes = (before: any, after: any): ReadonlySet<string> => {
+  const changed = new Set<string>(), graph = before.plan_graph;
+  if (!graph) return changed;
+  const edges = new Map<string, any>(graph.edges.map((edge: any) => [edge.kind + ':' + edge.id, edge]));
+  const oldRooms = new Map<string, any>((before.rooms || []).map((room: any) => [room.id, room]));
+  const nextRooms = new Map<string, any>((after.rooms || []).map((room: any) => [room.id, room]));
+  const moved = (a: number[], b: number[]) => a && b && (a[0] !== b[0] || a[1] !== b[1]);
+  for (const cycle of graph.rooms) {
+    const old = oldRooms.get(cycle.room), next = nextRooms.get(cycle.room);
+    cycle.edges.forEach((reference: any, index: number) => {
+      if (!moved(old?.poly?.[index], next?.poly?.[index])) return;
+      const edge = edges.get(reference.kind + ':' + reference.id);
+      changed.add(reference.reverse ? edge.to : edge.from);
+    });
+  }
+  const nextPartitions = new Map<string, any>((after.partitions || []).map((part: any) => [part.id, part]));
+  for (const part of before.partitions || []) {
+    const next = nextPartitions.get(part.id), edge = edges.get('partition:' + part.id);
+    if (!next || !edge) continue;
+    if (moved(part.a, next.a)) changed.add(edge.from);
+    if (moved(part.b, next.b)) changed.add(edge.to);
+  }
+  return changed;
+};
+
 /** Canonical physical identity for a segment, independent of endpoint order. */
 const optimizerSpanKey = (a: number[], b: number[], coordScale: number): string => {
   const scale = coordScale > 0 ? coordScale : 1;
@@ -500,8 +529,11 @@ function optimizePlanDraft(
   let wallsStraightenSkipped = 0;
   let maxStraightenShiftCm = 0;
   let maxStraightenSpace = '';
+  const repairTargets = new Map<string, ReadonlySet<string>>();
   const straightenedSpaces = aligned.spaces.map((space: any) => {
     const repaired = repairNearAxisRoomWalls(space);
+    if (repaired.report.wallsStraightened > 0)
+      repairTargets.set(String(space.id), nearAxisChangedNodes(space, repaired.space));
     wallsStraightened += repaired.report.wallsStraightened;
     wallsStraightenSkipped += repaired.report.wallsStraightenSkipped;
     const cellCm = Number(space?.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM;
@@ -520,8 +552,9 @@ function optimizePlanDraft(
   // before alignment reads both carriers: stale segments would look like
   // extra incident axes, freeze the component and restore decimal tails.
   const realignmentSpaces = graphDraft && wallsStraightened
-    ? straightenedSpaces.map((space: any, i: number) => optimizeGraphTargets(beforeSpaces[i], space, true,
-      {retargetDependencies:true}).space)
+    ? straightenedSpaces.map((space: any, i: number) => repairTargets.has(String(space.id))
+      ? optimizeGraphTargets(beforeSpaces[i], space, true,
+        {retargetNodes:repairTargets.get(String(space.id))}).space : space)
     : straightenedSpaces;
   const finalAligned = wallsStraightened
     ? alignAllToGrid(realignmentSpaces, aligned.layout, exactContacts)
