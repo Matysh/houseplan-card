@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2755,
+  "revision": 2756,
   "nextTicket": 169,
   "nextFence": 169,
   "tasks": {
@@ -2442,7 +2442,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793793333079,
       "reviewEntry": 2,
-      "patchId": "b40078efb21825490da5dc35c6ed3c4a2a521e2e",
+      "patchId": "c6ab0136f87633f3dcb579ad2be173bd40d81cb1",
       "changedFiles": [
         "demo/smoke_edit_walk.mjs",
         "docs/CHANGELOG.md",
@@ -2451,11 +2451,17 @@
         "scripts/sh3d-convert/dist/index.html",
         "scripts/sh3d-convert/geometry-runtime.generated.mjs",
         "src/graph-edit-intent.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
         "src/plan-graph.ts",
+        "src/resize-controller.ts",
+        "src/wall-record-preservation.ts",
         "test/graph-edit-intent.test.mjs",
         "test/helpers/resize-incident-fixture.mjs",
         "test/plan-graph-core.test.mjs",
-        "test/room-write-python.test.mjs"
+        "test/resize-controller.test.mjs",
+        "test/room-write-python.test.mjs",
+        "test/wall-record-preservation.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -3056,10 +3062,11 @@
     "token": "168:finish:aa4a5764-c50b-48cf-8e5d-83985a2be774:finish:1:admit",
     "fence": 168,
     "materialSha": "04a84d09af5d9c412d3c9f0ae71314ddac369546",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5d0af8bc304275882b185db7f336293075950205",
+    "phase": "testing",
     "admittedAt": 1793793336787,
-    "expiresAt": 1793793636787
+    "expiresAt": 1793793642693,
+    "patchId": "c6ab0136f87633f3dcb579ad2be173bd40d81cb1"
   },
   "events": {
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:2:synchronized": {
@@ -3080,6 +3087,10 @@
     },
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return": {
       "digest": "56b2e30433a57f7682acfb3209256970d7b434a43f510855bce993f160694471",
+      "issue": 1264
+    },
+    "finish:aa4a5764-c50b-48cf-8e5d-83985a2be774:finish:2:synchronized": {
+      "digest": "083bf76d71a833f5df804d4c2c64acc8553d99fa14bffc44a28ccd5e081f02ae",
       "issue": 1264
     },
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6": {
