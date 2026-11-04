@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2556,
-  "nextTicket": 159,
+  "revision": 2557,
+  "nextTicket": 160,
   "nextFence": 159,
   "tasks": {
     "1126": {
@@ -2479,14 +2479,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1265-room-face-lineage",
-      "materialSha": "30c54e9df96c7dd520d9a3d59e7fd1500398ecc4",
+      "materialSha": "9f582f8950c249a8793616f640b011b5da44bc9e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 158,
-      "queued": false,
+      "ticket": 159,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793786438022,
-      "reviewEntry": 3,
+      "readyAt": 1793787220908,
+      "reviewEntry": 4,
       "patchId": "b73016b59fec64febc81e17b628b7ee8b8d91162",
       "changedFiles": [
         "demo/helpers/room-write-python.mjs",
@@ -2519,8 +2519,7 @@
         "at": 1793787190554,
         "entry": 3,
         "eventId": "finish:cf16c80c-efae-427f-8382-49ee9b5e79bb:finish:1:expire:return:1265"
-      },
-      "reason": "executor-admission-expired"
+      }
     },
     "1267": {
       "issue": 1267,
@@ -2884,7 +2883,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1265
+  ],
   "active": null,
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -3079,6 +3080,19 @@
           "entry": 3,
           "eventId": "finish:cf16c80c-efae-427f-8382-49ee9b5e79bb:finish:1:expire:return:1265"
         }
+      }
+    },
+    "finish:b4d7395d-f9d5-412c-b259-dc04b14be29b": {
+      "digest": "5e742f835aebf286af1aea3e5020fa383b5167e0847cbe9953a8b0597a02b9e0",
+      "issue": 1265,
+      "message": {
+        "kind": "queued",
+        "issue": 1265,
+        "at": 1793787220908,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9f582f8950c249a8793616f640b011b5da44bc9e"
       }
     }
   },
