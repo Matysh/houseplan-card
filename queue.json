@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2342,
+  "revision": 2343,
   "nextTicket": 146,
   "nextFence": 146,
   "tasks": {
@@ -2813,6 +2813,10 @@
       "digest": "4a4f111f16f2ec782e37a8f5c8754231a80e502b190f9adcc11dbee02545f938",
       "issue": 1273
     },
+    "github:41797040495:1:completions:message:6cc8fdf20ed2ed84693a774619bc550728c2fd0b42872f2ac5c0cac8343f5201": {
+      "digest": "7bda4ec92c7f0dd591d4fa2cd6c822cc00fd788044469e073100573d01e7b435",
+      "issue": 1273
+    },
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96": {
       "digest": "b14efffd643002321431361ce7ef3023b5a16c1e8000ea7cd109eb3bde569498",
       "issue": 1273,
@@ -2968,7 +2972,8 @@
         "reviewChanges": "Порт сохраняет исходный JSON oracle #1097 без изменения. Полный current opening target выводится из архивных ID/полей, конечного pointer .181 на host [.04,.224] и 34 шагов сетки; tq сохранён как точные строки. Начальная диагностика прошла full accepted target, trusted touch cancel, negative cut response и дошла до позднего camera witness: старый фиксированный 780px embed скрывает Fit. Только перед camera-фазой подключена существующая подготовка реальной широкой встройки, без force/DOM-click.\n\nAlias Undo/Redo сравнивает полный snapshot строго структурно, включая array order. Optimize проверяет 0 grid-pass и ровно 3 lattice canonicalizations; полный target/reload/Undo остаётся независимым. Warm exit сравнивает physical pixels-per-world-unit и world centre с рабочей камерой редактора (CANVAS #1207); сохранены все пять warm/permission/touch/intermediate scenarios. Продуктовый код/эталоны не меняются.\n\nДля S6 явно выбран product verification profile, поскольку проверяются настоящие браузерные сценарии поверх готового bundle, а infra-профиль запрещает demo checks. Это обоснованная адресная проверка тестовых оракулов, не новая продуктовая функциональность. Результаты текущего S6 ещё не заявлены. Новые HA E2E не нужны — изменение только fake-hass оракулов, исходные требования не меняются.\n\n### Обнаруженная продуктовая зависимость\nПосле порта full current target smoke дошёл до позднего wide camera case и выявил настоящий Escape commit проёма. Он оформлен в #1278; точные проверки отмены в #1273 сохранены. Завершить эту задачу после исправления #1278 и повторить только затронутое. Первый S6: alias, Optimize и warm-mode уже прошли, opening не считается PASS. Расширение camera phase до настоящего viewport2200 позволяет показать существующие native controls без обхода CSS.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     },
     "dev-build:41796762905:1:1278": {
