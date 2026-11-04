@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2753,
-  "nextTicket": 168,
+  "revision": 2754,
+  "nextTicket": 169,
   "nextFence": 168,
   "tasks": {
     "1126": {
@@ -2434,14 +2434,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1264-resize-incident-carriers",
-      "materialSha": "a69afaecbe7079d3feac4ee62a937f7e7062d4a2",
+      "materialSha": "04a84d09af5d9c412d3c9f0ae71314ddac369546",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 167,
-      "queued": false,
+      "ticket": 168,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793792529834,
-      "reviewEntry": 1,
+      "readyAt": 1793793333079,
+      "reviewEntry": 2,
       "patchId": "b40078efb21825490da5dc35c6ed3c4a2a521e2e",
       "changedFiles": [
         "demo/smoke_edit_walk.mjs",
@@ -2457,7 +2457,6 @@
         "test/plan-graph-core.test.mjs",
         "test/room-write-python.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -3050,7 +3049,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1264
+  ],
   "active": null,
   "events": {
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:2:synchronized": {
@@ -3120,6 +3121,19 @@
           "detail": "Браузер: floor cache reuse: failed; Браузер: resize pointer real plan: failed",
           "eventId": "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return:return:1264"
         }
+      }
+    },
+    "finish:aa4a5764-c50b-48cf-8e5d-83985a2be774": {
+      "digest": "fa6f562c2f2baba42e016988597af51c2e1ae0b2b0dc6033810adeb2c7d0534b",
+      "issue": 1264,
+      "message": {
+        "kind": "queued",
+        "issue": 1264,
+        "at": 1793793333079,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "04a84d09af5d9c412d3c9f0ae71314ddac369546"
       }
     }
   },
