@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2450,
+  "revision": 2451,
   "nextTicket": 151,
   "nextFence": 151,
   "tasks": {
@@ -2575,31 +2575,24 @@
     },
     "1271": {
       "issue": 1271,
+      "branch": "fix/1271-zigbee-narrow-fixture",
       "track": "ship",
       "layer": "product",
-      "branch": "fix/1271-zigbee-narrow-fixture",
-      "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 150,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793781178325,
-      "reviewEntry": 1,
-      "patchId": "273908b5442fb69e623fd36790fa81f1dc3f1653",
-      "changedFiles": [
-        "demo/smoke_zigbee_tooltip_layout.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261104T083312568-d228e139",
-        "name": "Тесты для задачи #1271 (перед слиянием)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T083312568-d228e139/report.json",
-        "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
-        "status": "passed",
-        "finishedAt": "2026-11-04T08:33:29.366Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+      "mergedSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
+      "mergedAt": 1793781222819,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1273": {
@@ -2817,64 +2810,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1271,
-    "worker": "finish",
-    "token": "150:finish:d46e17a4-df02-4920-80a1-2a06989a035c:finish:1:admit",
-    "fence": 150,
-    "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "expectedBase": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793781182702,
-    "expiresAt": 1793784810478,
-    "patchId": "273908b5442fb69e623fd36790fa81f1dc3f1653"
-  },
+  "active": null,
   "events": {
-    "finish:d46e17a4-df02-4920-80a1-2a06989a035c:finish:2:synchronized": {
-      "digest": "06ee5fde4ed4cfbae4c67872441f8e47b7de8d6f5d87ff291ec02ce703483345",
-      "issue": 1271
-    },
-    "github:41800346707:1:completions:message:d88973d7e781a1e1718fd5013af962a772628ac3a37a3d5f65c605f4ec5c3953": {
-      "digest": "b46d3983caa332d84c7673016a2ef544dbd773e9c31d8d577fc1b27ca2a4cc5f",
-      "issue": 1271
-    },
-    "github:41800346707:1:completions:message:24bc3e859246c32ed8e3b9e3ef3d5abfbbf40fa971a63cac24f4d01bd7d69612": {
-      "digest": "99d2aa1f5982986100a237102554522e5dedb90aaac6fc7abc6b3e7f79fd5a85",
-      "issue": 1271
-    },
-    "finish:d46e17a4-df02-4920-80a1-2a06989a035c:finish:3:s6-complete": {
-      "digest": "ae14bc0ea55f1291a8151adff696b365249c387ae8ac5a572bc951cc75dd3b30",
-      "issue": 1271
-    },
-    "finish:d46e17a4-df02-4920-80a1-2a06989a035c": {
-      "digest": "ae5058254f8786585618b7183b6e0f5386344c5a37e58a826b4014dae1e2c71c",
-      "issue": 1271,
-      "message": {
-        "kind": "queued",
-        "issue": 1271,
-        "at": 1793781178325,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
-        "delivered": true
-      }
-    },
-    "finish:d46e17a4-df02-4920-80a1-2a06989a035c:finish:1:admit": {
-      "digest": "0719484cd39cf165de53ed70e4cfb052c6ae357f15c87b27c046be6297276e38",
-      "issue": 1271,
-      "message": {
-        "kind": "admitted",
-        "issue": 1271,
-        "at": 1793781182702,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "dev-build:41800165015:1:1274": {
       "digest": "c8fd9c6ac27f19e2a7c1165a17583eb032a07af282ec20d836d1e20982a7595d",
       "issue": 1274,
