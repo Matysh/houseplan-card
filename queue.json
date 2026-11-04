@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2883,
-  "nextTicket": 173,
+  "revision": 2884,
+  "nextTicket": 174,
   "nextFence": 173,
   "tasks": {
     "1126": {
@@ -2969,6 +2969,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1281": {
+      "issue": 1281,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1281-stable-test-repairs",
+      "materialSha": "659440571bc388d108ec7f0200ce9c407a9ee132",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 173,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793810272225,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3073,9 +3087,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1281
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:1acb4b71-7815-4fd3-bc5d-f741611f8aa5": {
+      "digest": "5cc7fb895b98f2096dfef46bfffdff916bb5b3f6a01850596f107d8303f10990",
+      "issue": 1281,
+      "message": {
+        "kind": "queued",
+        "issue": 1281,
+        "at": 1793810272225,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "659440571bc388d108ec7f0200ce9c407a9ee132"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
     "status": "delivered",
