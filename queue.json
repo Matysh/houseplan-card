@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3049,
+  "revision": 3050,
   "nextTicket": 184,
   "nextFence": 182,
   "tasks": {
@@ -3011,7 +3011,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1283-local-seam-cleanup",
-      "materialSha": "25873e84a1aef490586536d6f90eea4b198e1791",
+      "materialSha": "717b34467857dd83d0ce898b05402b3b463a1093",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 181,
@@ -3019,13 +3019,15 @@
       "status": "S6-in-progress",
       "readyAt": 1793818105259,
       "reviewEntry": 4,
-      "patchId": "26e542184afe832d9eff2e81eafb8b496a11bcb1",
+      "patchId": "59179c9b8213a32d89863dc2f77bb16b50487617",
       "changedFiles": [
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/PLAN-GRAPH.md",
         "docs/release-ledger/v1.83.0/1283.json",
         "src/graph-edit-intent.ts",
+        "src/graph-optimize.ts",
+        "src/graph-seam-opening.ts",
         "src/plan-graph.ts",
         "test/graph-edit-intent.test.mjs",
         "test/graph-edit-seams.test.mjs"
@@ -3289,11 +3291,12 @@
     "worker": "finish",
     "token": "181:finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:1:admit",
     "fence": 181,
-    "materialSha": "25873e84a1aef490586536d6f90eea4b198e1791",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "717b34467857dd83d0ce898b05402b3b463a1093",
+    "expectedBase": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2",
+    "phase": "testing",
     "admittedAt": 1793818518140,
-    "expiresAt": 1793818818140
+    "expiresAt": 1793818845138,
+    "patchId": "59179c9b8213a32d89863dc2f77bb16b50487617"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3491,6 +3494,10 @@
     "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:track-observed": {
       "digest": "2f24db3a715b7b6ce13ceedfb77041781d918a943cb860232e619b7cfcc6e0b2",
       "issue": 1282
+    },
+    "finish:c34ccff4-faec-48ad-ab7e-80181df458c4:finish:1:synchronized": {
+      "digest": "1d896d6bca0c3260f41abc2e269aadc3ec31ec8d761a48a98f0ce42121a00a6e",
+      "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
