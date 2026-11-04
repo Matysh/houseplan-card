@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 224,
+  "revision": 225,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -4573,19 +4573,22 @@
           "from": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
           "to": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "b3058111c193f0cff02d0ba2cc632e13e945abb6"
         },
         {
           "from": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
           "to": "7ad20a3eb7418ba81bfe05d9a1359d27595cf718",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "b3058111c193f0cff02d0ba2cc632e13e945abb6"
         },
         {
           "from": "7ad20a3eb7418ba81bfe05d9a1359d27595cf718",
           "to": "b3058111c193f0cff02d0ba2cc632e13e945abb6",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "1f97c6e294fddf4531995802365d2904edbbcacf"
         }
       ],
       "diagnostics": [
@@ -5815,7 +5818,8 @@
           "sha": "783d427d2a571cd89a972c8cc922d52d1fdb6a6b"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
           "issue": 1261,
           "branch": "issue/1261-release-return-b3058111c193",
           "worktree": "/home/sergey/houseplan-1227/artifacts/process-next/return-worktrees/b3058111c193"
@@ -6409,7 +6413,8 @@
     "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:b46c7497-48ed-4958-9f6f-5a47a9cbf430": "8420b42d85e15fc1d91c5c4411dbb9f30c2fad835b1988230a0ec32c802b7404",
     "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:3e3e5cf7-8e63-43dc-83ef-9079fdd38a65": "56dbd94305186fd4743654ee4db38db5dd2049d446eb187f93210f160d9f0611",
     "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:89c946ce-4d67-42da-94f3-98801f9db7f5": "4cd1d02f6efd6a134e1080901447ede9e6d2ae20cdb374675d5f4c61b5486c51",
-    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:24b74e8f-bcc5-43cc-b87e-1cde42d89330": "f0271c78daca0f1f826a18776c7a5b740b7b7168a73403921f36cab66c9a18e7"
+    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:24b74e8f-bcc5-43cc-b87e-1cde42d89330": "f0271c78daca0f1f826a18776c7a5b740b7b7168a73403921f36cab66c9a18e7",
+    "release:1b72e109-62d0-4f84-9f78-34258faa1c92:completion:1760f47f-d64c-4c16-ad0d-81d3a132fd2c": "847083f39e909cb084abd62c2cdb25b116bf4e887de18f529fa6514be9269374"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
