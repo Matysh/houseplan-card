@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3224,
+  "revision": 3225,
   "nextTicket": 191,
   "nextFence": 190,
   "tasks": {
@@ -2961,163 +2961,25 @@
     },
     "1286": {
       "issue": 1286,
+      "branch": "codex/issue-1286-summary-visibility",
       "track": "show",
       "layer": "product",
-      "branch": "codex/issue-1286-summary-visibility",
-      "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 189,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793819690669,
-      "reviewEntry": 3,
-      "patchId": "cbb567e8b40c425c6def82dbcb8878be703a50b8",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/release-ledger/v1.83.0/1286.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-panel.ts",
-        "src/summary-panel-host.ts",
-        "src/summary-panel-identity.ts",
-        "src/summary-panel-runtime-loaded.ts",
-        "src/view-runtimes.ts",
-        "test/summary-panel-preferences.test.mjs",
-        "test/summary-panel-presentation.test.mjs",
-        "test/summary-panel-runtime.test.mjs"
-      ],
-      "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793819437018,
-        "entry": 2,
-        "requestId": "review:1286:2:dd17aff87944a598164ac20f578ffb1c7a6a84be:f1d2fa8d0cf80adfb755531220deeb02391f8105",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261104T192353404-e9d7895d",
-        "name": "Тесты для задачи #1286 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T192353404-e9d7895d/report.json",
-        "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "status": "passed",
-        "finishedAt": "2026-11-04T19:24:28.888Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "7acb943e7ddfbf339c5181307f495d81ef6d3712",
+      "mergedSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
+      "mergedAt": 1793820431046,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1286:3:cbb567e8b40c425c6def82dbcb8878be703a50b8:7acb943e7ddfbf339c5181307f495d81ef6d3712",
-      "reviewMaterial": {
-        "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "expectedBase": "7acb943e7ddfbf339c5181307f495d81ef6d3712",
-        "patchId": "cbb567e8b40c425c6def82dbcb8878be703a50b8"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1286:3:cbb567e8b40c425c6def82dbcb8878be703a50b8:7acb943e7ddfbf339c5181307f495d81ef6d3712",
-        "eventId": "github:41896648940:1:tick:0:review-retry",
-        "at": 1793820287508,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1286,
-        "requestId": "review:1286:3:cbb567e8b40c425c6def82dbcb8878be703a50b8:7acb943e7ddfbf339c5181307f495d81ef6d3712",
-        "kind": "code",
-        "base": "7acb943e7ddfbf339c5181307f495d81ef6d3712",
-        "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "patchId": "cbb567e8b40c425c6def82dbcb8878be703a50b8",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1286,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1286",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\nОсновная панель должна восстанавливать явный On/Off после нативной навигации по HA, reload другой страницы и возврата. Текущий этап — S6; первоначальная аналитика выше описывает состояние до реализации. Выбран show: нужен независимый взгляд на совместимость старых локальных записей, а не только на замену строки ключа.\n\n### Решение и альтернативы\nПервоначальный материал реализации: `511dec567`, ветка `codex/issue-1286-summary-visibility`, база `659440571bc388d108ec7f0200ce9c407a9ee132`. После штатной актуализации — `b5a3fe5dfd74443f8a9151a80277876a82b24f45`, тот же diff.\nОсновной panel-host использует слот `panel-root-v2`. Shell передаёт свой зарегистрированный route prefix карточке до её подключения; текущий адрес другой страницы HA не становится владельцем настройки. Логическая идентификация Lovelace/Masonry не меняется.\nЗагрузка runtime и cold-runtime recovery используют один reader. Существующая canonical-запись, в том числе Off, приоритетна. Если её нет, старые version-1 записи берутся только из точного user/route/panel namespace и узнаваемого старого panel slot, если нормализованные значения согласованы. Чтение ничего не записывает/удаляет; следующая явная правка сохраняется в canonical key.\nИсторические записи без timestamp могут противоречить друг другу: выбирать «последнюю» по DOM-индексу или порядку localStorage нельзя. Такие записи сохраняются, выбор требуется задать один раз. Не переносим данные между пользователями/route/Lovelace и не интерпретируем future legacy records.\n`saveLocal` заново разрешает текущую identity перед записью: временно пропавший пользователь не даёт писать в прежний пользовательский ключ. Серверная конфигурация, модель данных, API, стиль/анимации панели и overrides профилей не меняются.\n\n### Риски и места для внимания\n- Однозначное восстановление старого выбора и отсутствие необоснованной миграции неоднозначных записей.\n- Раннее подключение/поздний hass.user, сохранённый HA panel во время чужого route, параллельные карточки Lovelace.\n- Отдельно сохраняются icon/font scales той же локальной записи.\n- Изменены ключи двух unit fixtures, которые должны стартовать с уже сохранённым canonical состоянием; их проверки анимаций/lifecycle не ослаблены.\n- Локальное окружение: Ubuntu WSL. Первый S6 на NTFS прошёл, но синхронная обработка файлов задержала heartbeat и допуск очереди истёк. Та же неизменённая ветка `b5a3fe5df` перенесена в native Linux worktree `/home/sergey/houseplan-1286-summary-visibility`; артефакты и общий кеш сохранены, общие настройки Git и чужие worktrees не менялись. Истечение допуска не объявляется дефектом продукта или падением тестов.\n\n### Проверки и ограничения\nДо фикса две новые регрессии упали: смена DOM resolver index меняла ключ; смена текущего URL меняла namespace сохранённой панели. После исправления адресные preference/runtime проверки — 23 PASS, presentation — 22 PASS; существующие pure summary/Masonry проверки — 21 PASS на тех же значимых входах. Сборка/типы debug — PASS.\nНастоящий HA `2026.10.4` в отдельном Docker-контейнере с синтетическим seed и свежим frontend: оба сценария show=true/false прошли через native sidebar → другую HA страницу → reload → native sidebar обратно. Проверены aria-pressed, фактическая видимость overlay и точное сохранение localStorage record. Это адресная проверка, НЕ полный HA E2E/релизный профиль. Контейнер с уникальной ownership label удалён после проверки; реальный HA владельца не использовался.\nЛокальные receipts: `artifacts/1286-ha-result.json`, `artifacts/1286-ha-regression.log`, `artifacts/1286-addressed.log`, `artifacts/1286-summary-fixed.log`; диагностический сценарий `artifacts/1286-ha-regression.mjs`. Итог native HA:\n```json\n{\"haVersion\":\"2026.10.4\",\"showTrueRouteReloadReturn\":\"passed\",\"showFalseRouteReloadReturn\":\"passed\",\"exactPreferencesRetained\":true,\"ownedContainerRemoved\":true}\n```\nОфициальный S6 выполняет штатный finish после допуска в общую очередь: build/types, critical-data-rights, startup View, четыре адресных unit файла и existing summary browser smoke. До его завершения это не заявляется как пройденный финальный S6. Golden, полный stable/beta профиль и выпуск не запускались.\nПервый официальный local S6 `20261104T184718230-7e8a1b6a` завершён PASS на `b5a3fe5df`: materialClean=true, build/types, critical 151/151, affected 68/68, startup и browser summary — PASS. Receipt не успел быть передан в очередь из-за истёкшего допуска. Выполняется новый явный `finish` из native worktree с зачётом применимых успешных результатов; прежний отчёт не подменяется ручным PASS.\nПостоянная HA E2E-регрессия перед ближайшей бетой отмечена как «надо»: https://github.com/Matysh/houseplan-e2e/issues/28 .\n\n### Исправления по предыдущему ревью\nПредыдущий отчёт: https://github.com/Matysh/houseplan-card/issues/1286#issuecomment-6639646132 (run 41893647138). Вердикт changes_requested: один блокер в выпускаемых материалах; блокеров в исходниках продукта ревьюер не нашёл.\n\n- Запись #1286 после rebase попала в уже опубликованную beta.4 → обе строки RU/EN перенесены в текущий раздел Unreleased/«Не выпущено»; beta.4 больше не приписывается исправление, которого в ней не было.\n- Необязательное замечание к тавтологичному Map в первом тесте → вместо чтения Map самой из себя тест теперь вызывает настоящий `readSummaryPreference` на заново созданной панели с другой структурой resolver. Адресный файл — 7/7 PASS.\n- Необязательный вариант независимо смешивать show и масштабы из противоречивых старых записей не применён: сохраняем задокументированное консервативное правило одной согласованной записи; ревью признало его допустимым.\n\nМатериал исправления: `fd6c55d1e`; изменены только два changelog и тест. Product src не менялся. Применимы принятые результаты S6 `20261104T190546061-93f3f63a`: 151 критичная проверка, 68 адресных, build/startup/browser PASS. Новый явный finish выполнит необходимую выборку с обычным reuse; ручного присвоения PASS и повторного HA/Golden/релизного профиля нет."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Единственный блокер прошлого раунда устранён: записи #1286 в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` теперь стоят в `## Unreleased` / `## Не выпущено`, рядом с #1282 и #1283. Опубликованной beta.4 исправление больше не приписывается, а `technicalChangelogSection` возьмёт его в ближайший выпуск, где оно действительно появится. Код продукта с прошлого раунда не менялся. Исправление по существу по-прежнему верное. Ключ основной панели строится из пользователя, зарегистрированного route prefix из shell и фиксированного слота `panel-root-v2`. От индекса DOM в resolver и от адреса чужой страницы HA он больше не зависит. Старые записи восстанавливаются консервативно и без записи в storage. `saveLocal` не пишет под ключом прежней identity. Блокеров нет, работу можно принимать.",
-          "understanding": "Проблема: у основной панели ключ локальной настройки сводной панели строился из двух нестабильных частей. Первая — `structuralPath` с индексами предков (`ha-panel-custom:N`), а их порядок HA меняет после посещения других страниц и reload. Вторая — первый сегмент текущего `location`, хотя сохранённая панель продолжает жить при чужом route. Когда ключ менялся, запись под ним не находилась, и `parseSummaryLocal` давал `show:false`.\n\nПосле изменения:\n- `HouseplanPanel._applyRouteKiosk` передаёт карточке `panelRoutePrefix` до её подключения.\n- `summaryPreferenceKey` для панели использует этот prefix и слот `panel-root-v2`; для Lovelace/Masonry ничего не меняется.\n- `readSummaryPreference` отдаёт приоритет канонической записи, в том числе Off. Если её нет, он использует согласованные version-1 записи того же user/route/panel из узнаваемых старых слотов. Ничего не записывает и не удаляет.\n- Этот reader общий для тёплого `loadLocal` и холодного `summaryRecoveryRequested`.\n- `saveLocal` перед записью заново вычисляет ключ.\n\nВ этом раунде разобрано, что изменилось в ответ на прошлое ревью. Changelog: обе записи перенесены в нужные разделы. Тест: первый тест в `summary-panel-preferences.test.mjs` теперь вызывает настоящий `readSummaryPreference` на заново созданной панели с другой структурой resolver, а не сравнивает Map саму с собой. Отдельно сверено, что файл ledger `docs/release-ledger/v1.83.0/1286.json` лежит там же, где ledger-файлы соседних невыпущенных задач (#1282, #1283, #1284). Разбор продуктового кода из прошлого раунда сохраняет силу: в этом раунде src не менялся, и src-hunks в diff совпадают с теми, что были разобраны ранее.",
-          "analysis": [
-            {
-              "topic": "Блокер прошлого раунда: раздел CHANGELOG",
-              "assessment": "Устранён. Запись #1286 в обоих файлах стоит в разделе невыпущенных изменений, выше заголовка `## v1.84.0-beta.4 — 2026-11-04`. Опубликованной бете исправление больше не приписывается, и в технические заметки будущего выпуска оно попадёт.",
-              "evidence": "docs/CHANGELOG.md:3-12 (строка 7 — #1286, строка 12 — заголовок beta.4); docs/CHANGELOG.ru.md:9-18 (строка 13 — #1286, строка 18 — заголовок beta.4)"
-            },
-            {
-              "topic": "Необязательное замечание о тавтологичном тесте",
-              "assessment": "Учтено. Теперь цикл по show=true/false сохраняет запись под ключом исходной панели и читает её через `readSummaryPreference(panel(true), store)`, то есть через панель с лишним соседом в resolver. Так проверяется реальный путь чтения после remount, а не содержимое Map. Тест по-прежнему не воспроизводит HA, но адресно закрывает регрессию смены DOM-позиции.",
-              "evidence": "test/summary-panel-preferences.test.mjs:38-49"
-            },
-            {
-              "topic": "Продуктовый код (без изменений с прошлого раунда)",
-              "assessment": "Выводы прошлого ревью в силе. Ключ панели стабилен, потому что владелец панели — зарегистрированный route, а не позиция в DOM. Восстановление старых записей консервативно: тот же namespace, только узнаваемые слоты панели, строгая проверка version-1, при расхождении значений — null, побочных записей нет. `saveLocal` при пропавшем пользователе не пишет в прежний ключ и выставляет `storageUnavailable`. Ошибки storage передаются вызывающему и обрабатываются там, как раньше. Удачные решения, которые стоит сохранить: чтение без миграции и отказ угадывать «последнюю» из противоречивых записей без timestamp.",
-              "evidence": "src/summary-panel-identity.ts (summaryPreferenceKey, readSummaryPreference); src/houseplan-panel.ts:108-112; src/summary-panel-runtime-loaded.ts:530-563; src/view-runtimes.ts:52-61; docs/CONFIG-COMPATIBILITY.md:658-666"
-            },
-            {
-              "topic": "Release ledger",
-              "assessment": "Файл `v1.83.0/1286.json` с категорией `stable-fix` лежит рядом с ledger-файлами соседних невыпущенных задач того же цикла. Описание соответствует изменению.",
-              "evidence": "docs/release-ledger/v1.83.0/1282.json, 1283.json, 1284.json, 1286.json"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Остаётся в силе необязательный вариант из прошлого раунда: при противоречивых legacy-записях сравнивать `show` отдельно от масштабов. Исполнитель обоснованно сохранил правило «одна согласованная запись»; оно задокументировано в CONFIG-COMPATIBILITY. Повторно настаивать не нужно.",
-            "Постоянную HA E2E-регрессию сценария «другая страница → reload → возврат» стоит довести до конца в houseplan-e2e#28 перед ближайшей бетой. Unit-тесты моделируют дерево resolver синтетически, а единственное прохождение в настоящем HA было разовой проверкой исполнителя."
-          ],
-          "boundaries": "Ревью выполнено только чтением pinned-материала (base `7acb943e`, head `339c044b`): diff, начало обоих CHANGELOG, список release-ledger. С учётом выводов прошлого раунда по продуктовым исходникам (src не менялся) заново код целиком не перечитывал. Сборку, тесты и HA не запускал. Опирался на receipt S6 `20261104T192353404-e9d7895d` (passed на `339c044b`) и на заявление исполнителя о разовой проверке в HA 2026.10.4 (show=true/false); её артефакты мне недоступны и приняты как заявление автора. Реальный DOM и поведение `partial-panel-resolver` у владельца не проверялись. Полный HA E2E, golden и релизный профиль не запускались."
-        },
-        "usage": {
-          "input_tokens": 8,
-          "cache_creation_input_tokens": 68913,
-          "cache_read_input_tokens": 180545,
-          "output_tokens": 4309,
-          "output_tokens_details": {
-            "thinking_tokens": 478
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 68913,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 840,
-              "cache_read_input_tokens": 64721,
-              "cache_creation_input_tokens": 8396,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 8396
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nЕдинственный блокер прошлого раунда устранён: записи #1286 в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` теперь стоят в `## Unreleased` / `## Не выпущено`, рядом с #1282 и #1283. Опубликованной beta.4 исправление больше не приписывается, а `technicalChangelogSection` возьмёт его в ближайший выпуск, где оно действительно появится. Код продукта с прошлого раунда не менялся. Исправление по существу по-прежнему верное. Ключ основной панели строится из пользователя, зарегистрированного route prefix из shell и фиксированного слота `panel-root-v2`. От индекса DOM в resolver и от адреса чужой страницы HA он больше не зависит. Старые записи восстанавливаются консервативно и без записи в storage. `saveLocal` не пишет под ключом прежней identity. Блокеров нет, работу можно принимать.\n\n## Понимание решения\n\nПроблема: у основной панели ключ локальной настройки сводной панели строился из двух нестабильных частей. Первая — `structuralPath` с индексами предков (`ha-panel-custom:N`), а их порядок HA меняет после посещения других страниц и reload. Вторая — первый сегмент текущего `location`, хотя сохранённая панель продолжает жить при чужом route. Когда ключ менялся, запись под ним не находилась, и `parseSummaryLocal` давал `show:false`.\n\nПосле изменения:\n- `HouseplanPanel._applyRouteKiosk` передаёт карточке `panelRoutePrefix` до её подключения.\n- `summaryPreferenceKey` для панели использует этот prefix и слот `panel-root-v2`; для Lovelace/Masonry ничего не меняется.\n- `readSummaryPreference` отдаёт приоритет канонической записи, в том числе Off. Если её нет, он использует согласованные version-1 записи того же user/route/panel из узнаваемых старых слотов. Ничего не записывает и не удаляет.\n- Этот reader общий для тёплого `loadLocal` и холодного `summaryRecoveryRequested`.\n- `saveLocal` перед записью заново вычисляет ключ.\n\nВ этом раунде разобрано, что изменилось в ответ на прошлое ревью. Changelog: обе записи перенесены в нужные разделы. Тест: первый тест в `summary-panel-preferences.test.mjs` теперь вызывает настоящий `readSummaryPreference` на заново созданной панели с другой структурой resolver, а не сравнивает Map саму с собой. Отдельно сверено, что файл ledger `docs/release-ledger/v1.83.0/1286.json` лежит там же, где ledger-файлы соседних невыпущенных задач (#1282, #1283, #1284). Разбор продуктового кода из прошлого раунда сохраняет силу: в этом раунде src не менялся, и src-hunks в diff совпадают с теми, что были разобраны ранее.\n\n## Разбор решения\n\n### Блокер прошлого раунда: раздел CHANGELOG\n\nУстранён. Запись #1286 в обоих файлах стоит в разделе невыпущенных изменений, выше заголовка `## v1.84.0-beta.4 — 2026-11-04`. Опубликованной бете исправление больше не приписывается, и в технические заметки будущего выпуска оно попадёт.\n\nОснование: docs/CHANGELOG.md:3-12 (строка 7 — #1286, строка 12 — заголовок beta.4); docs/CHANGELOG.ru.md:9-18 (строка 13 — #1286, строка 18 — заголовок beta.4)\n\n### Необязательное замечание о тавтологичном тесте\n\nУчтено. Теперь цикл по show=true/false сохраняет запись под ключом исходной панели и читает её через `readSummaryPreference(panel(true), store)`, то есть через панель с лишним соседом в resolver. Так проверяется реальный путь чтения после remount, а не содержимое Map. Тест по-прежнему не воспроизводит HA, но адресно закрывает регрессию смены DOM-позиции.\n\nОснование: test/summary-panel-preferences.test.mjs:38-49\n\n### Продуктовый код (без изменений с прошлого раунда)\n\nВыводы прошлого ревью в силе. Ключ панели стабилен, потому что владелец панели — зарегистрированный route, а не позиция в DOM. Восстановление старых записей консервативно: тот же namespace, только узнаваемые слоты панели, строгая проверка version-1, при расхождении значений — null, побочных записей нет. `saveLocal` при пропавшем пользователе не пишет в прежний ключ и выставляет `storageUnavailable`. Ошибки storage передаются вызывающему и обрабатываются там, как раньше. Удачные решения, которые стоит сохранить: чтение без миграции и отказ угадывать «последнюю» из противоречивых записей без timestamp.\n\nОснование: src/summary-panel-identity.ts (summaryPreferenceKey, readSummaryPreference); src/houseplan-panel.ts:108-112; src/summary-panel-runtime-loaded.ts:530-563; src/view-runtimes.ts:52-61; docs/CONFIG-COMPATIBILITY.md:658-666\n\n### Release ledger\n\nФайл `v1.83.0/1286.json` с категорией `stable-fix` лежит рядом с ledger-файлами соседних невыпущенных задач того же цикла. Описание соответствует изменению.\n\nОснование: docs/release-ledger/v1.83.0/1282.json, 1283.json, 1284.json, 1286.json\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Остаётся в силе необязательный вариант из прошлого раунда: при противоречивых legacy-записях сравнивать `show` отдельно от масштабов. Исполнитель обоснованно сохранил правило «одна согласованная запись»; оно задокументировано в CONFIG-COMPATIBILITY. Повторно настаивать не нужно.\n- Постоянную HA E2E-регрессию сценария «другая страница → reload → возврат» стоит довести до конца в houseplan-e2e#28 перед ближайшей бетой. Unit-тесты моделируют дерево resolver синтетически, а единственное прохождение в настоящем HA было разовой проверкой исполнителя.\n\n## Границы анализа\n\nРевью выполнено только чтением pinned-материала (base `7acb943e`, head `339c044b`): diff, начало обоих CHANGELOG, список release-ledger. С учётом выводов прошлого раунда по продуктовым исходникам (src не менялся) заново код целиком не перечитывал. Сборку, тесты и HA не запускал. Опирался на receipt S6 `20261104T192353404-e9d7895d` (passed на `339c044b`) и на заявление исполнителя о разовой проверке в HA 2026.10.4 (show=true/false); её артефакты мне недоступны и приняты как заявление автора. Реальный DOM и поведение `partial-panel-resolver` у владельца не проверялись. Полный HA E2E, golden и релизный профиль не запускались.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 7acb943e7ddfbf339c5181307f495d81ef6d3712 → 339c044b8252da1585003d2fbfad6bc1f0889e17\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1286, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n````text\n### Цель и результат\nОсновная панель должна восстанавливать явный On/Off после нативной навигации по HA, reload другой страницы и возврата. Текущий этап — S6; первоначальная аналитика выше описывает состояние до реализации. Выбран show: нужен независимый взгляд на совместимость старых локальных записей, а не только на замену строки ключа.\n\n### Решение и альтернативы\nПервоначальный материал реализации: `511dec567`, ветка `codex/issue-1286-summary-visibility`, база `659440571bc388d108ec7f0200ce9c407a9ee132`. После штатной актуализации — `b5a3fe5dfd74443f8a9151a80277876a82b24f45`, тот же diff.\nОсновной panel-host использует слот `panel-root-v2`. Shell передаёт свой зарегистрированный route prefix карточке до её подключения; текущий адрес другой страницы HA не становится владельцем настройки. Логическая идентификация Lovelace/Masonry не меняется.\nЗагрузка runtime и cold-runtime recovery используют один reader. Существующая canonical-запись, в том числе Off, приоритетна. Если её нет, старые version-1 записи берутся только из точного user/route/panel namespace и узнаваемого старого panel slot, если нормализованные значения согласованы. Чтение ничего не записывает/удаляет; следующая явная правка сохраняется в canonical key.\nИсторические записи без timestamp могут противоречить друг другу: выбирать «последнюю» по DOM-индексу или порядку localStorage нельзя. Такие записи сохраняются, выбор требуется задать один раз. Не переносим данные между пользователями/route/Lovelace и не интерпретируем future legacy records.\n`saveLocal` заново разрешает текущую identity перед записью: временно пропавший пользователь не даёт писать в прежний пользовательский ключ. Серверная конфигурация, модель данных, API, стиль/анимации панели и overrides профилей не меняются.\n\n### Риски и места для внимания\n- Однозначное восстановление старого выбора и отсутствие необоснованной миграции неоднозначных записей.\n- Раннее подключение/поздний hass.user, сохранённый HA panel во время чужого route, параллельные карточки Lovelace.\n- Отдельно сохраняются icon/font scales той же локальной записи.\n- Изменены ключи двух unit fixtures, которые должны стартовать с уже сохранённым canonical состоянием; их проверки анимаций/lifecycle не ослаблены.\n- Локальное окружение: Ubuntu WSL. Первый S6 на NTFS прошёл, но синхронная обработка файлов задержала heartbeat и допуск очереди истёк. Та же неизменённая ветка `b5a3fe5df` перенесена в native Linux worktree `/home/sergey/houseplan-1286-summary-visibility`; артефакты и общий кеш сохранены, общие настройки Git и чужие worktrees не менялись. Истечение допуска не объявляется дефектом продукта или падением тестов.\n\n### Проверки и ограничения\nДо фикса две новые регрессии упали: смена DOM resolver index меняла ключ; смена текущего URL меняла namespace сохранённой панели. После исправления адресные preference/runtime проверки — 23 PASS, presentation — 22 PASS; существующие pure summary/Masonry проверки — 21 PASS на тех же значимых входах. Сборка/типы debug — PASS.\nНастоящий HA `2026.10.4` в отдельном Docker-контейнере с синтетическим seed и свежим frontend: оба сценария show=true/false прошли через native sidebar → другую HA страницу → reload → native sidebar обратно. Проверены aria-pressed, фактическая видимость overlay и точное сохранение localStorage record. Это адресная проверка, НЕ полный HA E2E/релизный профиль. Контейнер с уникальной ownership label удалён после проверки; реальный HA владельца не использовался.\nЛокальные receipts: `artifacts/1286-ha-result.json`, `artifacts/1286-ha-regression.log`, `artifacts/1286-addressed.log`, `artifacts/1286-summary-fixed.log`; диагностический сценарий `artifacts/1286-ha-regression.mjs`. Итог native HA:\n```json\n{\"haVersion\":\"2026.10.4\",\"showTrueRouteReloadReturn\":\"passed\",\"showFalseRouteReloadReturn\":\"passed\",\"exactPreferencesRetained\":true,\"ownedContainerRemoved\":true}\n```\nОфициальный S6 выполняет штатный finish после допуска в общую очередь: build/types, critical-data-rights, startup View, четыре адресных unit файла и existing summary browser smoke. До его завершения это не заявляется как пройденный финальный S6. Golden, полный stable/beta профиль и выпуск не запускались.\nПервый официальный local S6 `20261104T184718230-7e8a1b6a` завершён PASS на `b5a3fe5df`: materialClean=true, build/types, critical 151/151, affected 68/68, startup и browser summary — PASS. Receipt не успел быть передан в очередь из-за истёкшего допуска. Выполняется новый явный `finish` из native worktree с зачётом применимых успешных результатов; прежний отчёт не подменяется ручным PASS.\nПостоянная HA E2E-регрессия перед ближайшей бетой отмечена как «надо»: https://github.com/Matysh/houseplan-e2e/issues/28 .\n\n### Исправления по предыдущему ревью\nПредыдущий отчёт: https://github.com/Matysh/houseplan-card/issues/1286#issuecomment-6639646132 (run 41893647138). Вердикт changes_requested: один блокер в выпускаемых материалах; блокеров в исходниках продукта ревьюер не нашёл.\n\n- Запись #1286 после rebase попала в уже опубликованную beta.4 → обе строки RU/EN перенесены в текущий раздел Unreleased/«Не выпущено»; beta.4 больше не приписывается исправление, которого в ней не было.\n- Необязательное замечание к тавтологичному Map в первом тесте → вместо чтения Map самой из себя тест теперь вызывает настоящий `readSummaryPreference` на заново созданной панели с другой структурой resolver. Адресный файл — 7/7 PASS.\n- Необязательный вариант независимо смешивать show и масштабы из противоречивых старых записей не применён: сохраняем задокументированное консервативное правило одной согласованной записи; ревью признало его допустимым.\n\nМатериал исправления: `fd6c55d1e`; изменены только два changelog и тест. Product src не менялся. Применимы принятые результаты S6 `20261104T190546061-93f3f63a`: 151 критичная проверка, 68 адресных, build/startup/browser PASS. Новый явный finish выполнит необходимую выборку с обычным reuse; ручного присвоения PASS и повторного HA/Golden/релизного профиля нет.\n````\n\n</details>\n",
-        "createdAt": "2026-11-04T19:26:20.022Z",
-        "artifactId": 13357335411,
-        "runId": 41896678340,
-        "runAttempt": 1,
-        "completedAt": "2026-11-04T19:26:26Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41896678340",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "7acb943e7ddfbf339c5181307f495d81ef6d3712"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1287": {
@@ -3365,60 +3227,8 @@
   "waiting": [
     1287
   ],
-  "active": {
-    "issue": 1286,
-    "worker": "github-coordinator",
-    "token": "189:github:41896314781:1:tick:0:admit",
-    "fence": 189,
-    "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-    "expectedBase": "7acb943e7ddfbf339c5181307f495d81ef6d3712",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793820160456,
-    "expiresAt": 1793824025260,
-    "patchId": "cbb567e8b40c425c6def82dbcb8878be703a50b8",
-    "reviewRequest": "review:1286:3:cbb567e8b40c425c6def82dbcb8878be703a50b8:7acb943e7ddfbf339c5181307f495d81ef6d3712"
-  },
+  "active": null,
   "events": {
-    "finish:eb9b6749-5164-42dc-8833-959f7cc24f40:finish:3:synchronized": {
-      "digest": "1b28af33ede14f1c94d9d38de8f41593f4d394e4df893ea777dc2866b2ad689f",
-      "issue": 1286
-    },
-    "github:41890328065:1:completions:message:42eae34732b263666de82a1baae454a038be628ee07cc8360ca700fdc9d7b419": {
-      "digest": "8b10d7ef5260051d4f59128ccb5907cd161cfe94460bc3a66d6eac2ced9b2923",
-      "issue": 1286
-    },
-    "github:41890328065:1:completions:message:7e6bc5486438915428737a71fc1a1e7dde95de8bff403e9e787017a824eba925": {
-      "digest": "8f73265496ae43ba241ef477b18bc8e54b05dc6b4771ccb601ee3ea94ee2f0b8",
-      "issue": 1286
-    },
-    "dev-build:41890312737:1:webhook": {
-      "digest": "01549aee1aeafc635419638867dbe553d3b8fc1e8f89946ab320e5b202792901",
-      "issue": 1286
-    },
-    "dev-build:41890312737:1:webhook:420a8e95-406f-467b-adf4-7ed0874685e0:delivered": {
-      "digest": "9163dfe19e4e1b1cccf7ecb1a050b0660d77c40e6b03c2c01f320ef5578b9bbf",
-      "issue": 1286
-    },
-    "github:41890816680:1:completions:message:6c4c8ffabe393806844acf22138b6deb215197dea3d95b5dbedd6f035f8b4cf3": {
-      "digest": "1910891b1a666a15eb62a48c9ac85e53c2f0b6c0882aa59b3e374ae063594954",
-      "issue": 1286
-    },
-    "github:41890816680:1:completions:message:0e83683b1e762e7286bfe62ec9a135641675973e8c1eac4f3772946909d9e1a7": {
-      "digest": "199dd4acb1ddec05f78b89af1733e764e4a2e9ef338e69f11eaa20ebe907c491",
-      "issue": 1286
-    },
-    "github:41890816680:1:completions:message:ddeedd5a9968ba16d8799628c63d68a12fd5c352033d13c50ce7bd89d0baba88": {
-      "digest": "71843d5ae3013fc4a93bdffa004435695af8589c692b462cb61dc56c6dc09c4e",
-      "issue": 1286
-    },
-    "finish:8a65720f-7762-44d4-93de-7439a96fcc87": {
-      "digest": "3ffbfdd474c1a7364652dcc40ac8dd49900cfed05c52f2141ac38aa0f45334a8",
-      "issue": 1286
-    },
-    "github:41892055866:1:completions:notice:25331b67d196a2428bbdbd0b47e9aa9a84438e1803db836fcceec563a859429b": {
-      "digest": "b9f7807d27122954d5d0146273ad9e4a93d4713327151f578bde22a46bfd7b02",
-      "issue": 1286
-    },
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
       "digest": "d2218a76b2bb7033a7444da93d1bce7e71c9114f6dfbb04bbc0d89657b18aa24",
       "issue": 1287
@@ -3451,135 +3261,6 @@
       "digest": "251ce52d9a22c1ee6ecef57ee940d424ca1e224a526fdc1797b8f2546e0302b8",
       "issue": 1287
     },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:3:synchronized": {
-      "digest": "7cc29ce95ba0e4b405de270769017dcfab003f3ba58361357a3fae77f45922f0",
-      "issue": 1286
-    },
-    "github:41893524159:1:completions:message:54001202a9054d709f69c97202f0093fb61ce2813800d275a4146514609563e6": {
-      "digest": "71735500f17d413323c4b0f7c2bb7a36f56c6eb24f08116bd8d62326cdadbb77",
-      "issue": 1286
-    },
-    "github:41893524159:1:completions:message:44cf1fe993423d677424c3baaaeaf8f14aa6aad7d213251e1fb82332d386269a": {
-      "digest": "f2368a456f692037c4e4eeffb80059e580ae4c6eae116cc220e803e0304827d5",
-      "issue": 1286
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:4:s6-label": {
-      "digest": "33bd2640e640a52c454ea10d8d767dc11c7a6f260206f347dc63325babb43602",
-      "issue": 1286
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:5:review-requested": {
-      "digest": "afe2a9955623df946d342f76081741274926bb3c0c9f065c26208209d46736d7",
-      "issue": 1286
-    },
-    "github:41893621896:1:completions:message:f3c3db3d4163fe36fc811f64dcee6c71d7045f84948e2ba0917d2912e8fefa12": {
-      "digest": "54013b6232fffa795c7b590d9379541f950e1434e56a49f9628636322e5f796f",
-      "issue": 1286
-    },
-    "github:41893852804:1:completions:message:7c61ce688ca8b2a66d8ea2d703553d5e59eac2ed2a5bec70cba50fc8381fcfc7": {
-      "digest": "cbefa8da72678d0fb0e99e300f245af8ae839e3a01849ea0835ad33e8504a0ba",
-      "issue": 1286
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:9:review-presentation": {
-      "digest": "ead789b70cb432640764698737469b63fa3e312ef57e3ae332d98bad6780a281",
-      "issue": 1286
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:9:return": {
-      "digest": "ffdee746acccc844d6034b2c9d790b103bbb0c565f86e2df3df4928a3c7f4999",
-      "issue": 1286
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:9:return-label": {
-      "digest": "edcc3a99c5971d56fb1d767b1c789ab9b438957372f358f2b3f0a621908b3b23",
-      "issue": 1286
-    },
-    "github:41894403400:1:completions:report:bd3cb6b66b39154f837cdda1c49385e4993957151e1810d2b474381deb1527ec": {
-      "digest": "b36b1b2e853853610a0f6acfda6a8a4a179ec4446cc1fb4da7c2ec0aaff48eff",
-      "issue": 1286
-    },
-    "github:41894403400:1:completions:metadata:045642d3-2af7-42f7-b335-db7d140687b6:task-notice:1286::": {
-      "digest": "7ff096c8275af2d96cb140f244c49772143a617eb47d89046c9126e98532a694",
-      "issue": 1286
-    },
-    "github:41896314781:1:completions:message:721f5c32542b753975bde66a2cb6bf5a0b8c3537f26fbb1a91c42e31482ade2a": {
-      "digest": "e8549f63b29ea685867a2981e7a86d5665c99016ca44f424a2e0ffdc46a47e9a",
-      "issue": 1286
-    },
-    "github:41896314781:1:completions:message:547450305dbf26eae6d33e07fb857804bb778f67f591dd1dc73ba0d27010f076": {
-      "digest": "54a9ab5c8bd8d33ee332c7ce0eda95dd97cab45fbe569961055de92b2a534f2f",
-      "issue": 1286
-    },
-    "finish:b72d7a0c-f2e3-4f2b-b90b-45a1f554b65d:finish:1:synchronized": {
-      "digest": "1ba8543e0e23f469040355a890ec3cfee58c1e0929301897b6dde54085d2d4fb",
-      "issue": 1286
-    },
-    "github:41896316300:1:completions:message:a52ad96744aca4bc0808285a9eb134dace6fa40f9aefc985b3d0cb06ad2fe248": {
-      "digest": "b21227c499eb8d646077dd1a7805afd38adfc3f63a11b23cedcac50bf519224b",
-      "issue": 1286
-    },
-    "finish:b72d7a0c-f2e3-4f2b-b90b-45a1f554b65d:finish:2:s6-label": {
-      "digest": "0fb78863f8987dca9d07c6e2302cfd9eba181f841a46a72d9210a1fed7eff0d8",
-      "issue": 1286
-    },
-    "finish:b72d7a0c-f2e3-4f2b-b90b-45a1f554b65d:finish:3:review-requested": {
-      "digest": "92864bf0ffa5d2a59d5d70d2c61ae1d9edc20e138cd603f4115eb47a98d03bcc",
-      "issue": 1286
-    },
-    "github:41896648940:1:tick:0:review-retry": {
-      "digest": "d514b533da82e2bd22666b020a25ba78f344edd47f9526099f73ff4dcfe9c40c",
-      "issue": 1286
-    },
-    "github:41896648940:1:completions:message:cec24ec15cb98513a4ed7094b1a9cb8dab418bc2227f67705589a130896a3ce9": {
-      "digest": "cb5adcd010ec0ceed55a508c2535a3335165d55fe2ccdd0994766fd58c5ffdcc",
-      "issue": 1286
-    },
-    "dev-build:41896314781:1:webhook": {
-      "digest": "a1b65b7a21b0f5d818d3ad255c68a4de9eb13ea2c1d029a875789fea34229547",
-      "issue": 1286
-    },
-    "github:41896653669:1:completions:message:ec0f7cde0ace0abd4534f9aac362785bdc0371880b3001199ec8159b15f85def": {
-      "digest": "f3c2aeb7495e4625decc8a0f5e0be0ca9b96250d0b700068033af6829c2c56f7",
-      "issue": 1286
-    },
-    "github:41896653669:1:dev-webhook:cc325ece-5f53-4143-b0b2-2928b3b4dc71:delivered": {
-      "digest": "f034900abdb2871fafa1987e3a317dcb3134004501b0d459ed8e058ee7bf0b90",
-      "issue": 1286
-    },
-    "finish:b72d7a0c-f2e3-4f2b-b90b-45a1f554b65d:finish:5:review-presentation": {
-      "digest": "c5619bb70803098da6fe16cfea8404d84cf8157ec1f312d6ae58b960e11c7cb9",
-      "issue": 1286
-    },
-    "finish:b72d7a0c-f2e3-4f2b-b90b-45a1f554b65d:finish:5:review-complete": {
-      "digest": "0842539701ec8bbb47c1d5048c27f07c560518c861790f394aed0fb3ff3cb64b",
-      "issue": 1286
-    },
-    "finish:eb9b6749-5164-42dc-8833-959f7cc24f40": {
-      "digest": "429196bdf935fe85b0513dc4fd10c0f768fd0e9d37e2e73117e3b2735d314314",
-      "issue": 1286,
-      "message": {
-        "kind": "queued",
-        "issue": 1286,
-        "at": 1793817576551,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "511dec5675d1742b8ed480003cf6d2b954fd612e",
-        "delivered": true
-      }
-    },
-    "finish:eb9b6749-5164-42dc-8833-959f7cc24f40:finish:2:admit": {
-      "digest": "dd00004fc0f2f7d87129ffc4b8cc39e0600b645c4dbd8d498c29809bf9f71656",
-      "issue": 1286,
-      "message": {
-        "kind": "admitted",
-        "issue": 1286,
-        "at": 1793818015836,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "511dec5675d1742b8ed480003cf6d2b954fd612e",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
       "digest": "afebff1b95fdb3fa6a9f751d94fc3f6fc21d30e5705e7a1b452b92475a0baf28",
       "issue": 1287,
@@ -3591,40 +3272,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "ccce90344a843d96fd49e73fca0390de24eb9f51",
-        "delivered": true
-      }
-    },
-    "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:track-observed:return:1286": {
-      "digest": "2f24db3a715b7b6ce13ceedfb77041781d918a943cb860232e619b7cfcc6e0b2",
-      "issue": 1286,
-      "message": {
-        "kind": "return",
-        "issue": 1286,
-        "at": 1793818510120,
-        "entry": 1,
-        "notice": {
-          "key": "1:executor-admission-expired",
-          "reason": "executor-admission-expired",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793818510120,
-          "entry": 1,
-          "eventId": "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:track-observed:return:1286"
-        },
-        "delivered": true
-      }
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4": {
-      "digest": "10fdee80ae5e927b52f659b8681cb669a9dd78a316dd877b556510b6d6694bb1",
-      "issue": 1286,
-      "message": {
-        "kind": "queued",
-        "issue": 1286,
-        "at": 1793818817435,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b5a3fe5dfd74443f8a9151a80277876a82b24f45",
         "delivered": true
       }
     },
@@ -3664,98 +3311,6 @@
         "delivered": true
       }
     },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:2:admit": {
-      "digest": "1302968b181a54888922eae86efbd82bf6d3749e9631c3e603c164906a657bb3",
-      "issue": 1286,
-      "message": {
-        "kind": "admitted",
-        "issue": 1286,
-        "at": 1793819132785,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b5a3fe5dfd74443f8a9151a80277876a82b24f45",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:4:s6-complete": {
-      "digest": "c4f168121ed8a2d2195fbe2367873af85764991bd6256dc095473cdbd933c90a",
-      "issue": 1286,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1286,
-        "at": 1793819151725,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
-        "phase": "review",
-        "evidence": {
-          "id": "20261104T190546061-93f3f63a",
-          "name": "Тесты для задачи #1286 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T190546061-93f3f63a/report.json",
-          "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
-          "status": "passed",
-          "finishedAt": "2026-11-04T19:05:48.609Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\nОсновная панель должна восстанавливать явный On/Off после нативной навигации по HA, reload другой страницы и возврата. Текущий этап — S6; первоначальная аналитика выше описывает состояние до реализации. Выбран show: нужен независимый взгляд на совместимость старых локальных записей, а не только на замену строки ключа.\n\n### Решение и альтернативы\nПервоначальный материал реализации: `511dec567`, ветка `codex/issue-1286-summary-visibility`, база `659440571bc388d108ec7f0200ce9c407a9ee132`. После штатной актуализации — `b5a3fe5dfd74443f8a9151a80277876a82b24f45`, тот же diff.\nОсновной panel-host использует слот `panel-root-v2`. Shell передаёт свой зарегистрированный route prefix карточке до её подключения; текущий адрес другой страницы HA не становится владельцем настройки. Логическая идентификация Lovelace/Masonry не меняется.\nЗагрузка runtime и cold-runtime recovery используют один reader. Существующая canonical-запись, в том числе Off, приоритетна. Если её нет, старые version-1 записи берутся только из точного user/route/panel namespace и узнаваемого старого panel slot, если нормализованные значения согласованы. Чтение ничего не записывает/удаляет; следующая явная правка сохраняется в canonical key.\nИсторические записи без timestamp могут противоречить друг другу: выбирать «последнюю» по DOM-индексу или порядку localStorage нельзя. Такие записи сохраняются, выбор требуется задать один раз. Не переносим данные между пользователями/route/Lovelace и не интерпретируем future legacy records.\n`saveLocal` заново разрешает текущую identity перед записью: временно пропавший пользователь не даёт писать в прежний пользовательский ключ. Серверная конфигурация, модель данных, API, стиль/анимации панели и overrides профилей не меняются.\n\n### Риски и места для внимания\n- Однозначное восстановление старого выбора и отсутствие необоснованной миграции неоднозначных записей.\n- Раннее подключение/поздний hass.user, сохранённый HA panel во время чужого route, параллельные карточки Lovelace.\n- Отдельно сохраняются icon/font scales той же локальной записи.\n- Изменены ключи двух unit fixtures, которые должны стартовать с уже сохранённым canonical состоянием; их проверки анимаций/lifecycle не ослаблены.\n- Локальное окружение: Ubuntu WSL. Первый S6 на NTFS прошёл, но синхронная обработка файлов задержала heartbeat и допуск очереди истёк. Та же неизменённая ветка `b5a3fe5df` перенесена в native Linux worktree `/home/sergey/houseplan-1286-summary-visibility`; артефакты и общий кеш сохранены, общие настройки Git и чужие worktrees не менялись. Истечение допуска не объявляется дефектом продукта или падением тестов.\n\n### Проверки и ограничения\nДо фикса две новые регрессии упали: смена DOM resolver index меняла ключ; смена текущего URL меняла namespace сохранённой панели. После исправления адресные preference/runtime проверки — 23 PASS, presentation — 22 PASS; существующие pure summary/Masonry проверки — 21 PASS на тех же значимых входах. Сборка/типы debug — PASS.\nНастоящий HA `2026.10.4` в отдельном Docker-контейнере с синтетическим seed и свежим frontend: оба сценария show=true/false прошли через native sidebar → другую HA страницу → reload → native sidebar обратно. Проверены aria-pressed, фактическая видимость overlay и точное сохранение localStorage record. Это адресная проверка, НЕ полный HA E2E/релизный профиль. Контейнер с уникальной ownership label удалён после проверки; реальный HA владельца не использовался.\nЛокальные receipts: `artifacts/1286-ha-result.json`, `artifacts/1286-ha-regression.log`, `artifacts/1286-addressed.log`, `artifacts/1286-summary-fixed.log`; диагностический сценарий `artifacts/1286-ha-regression.mjs`. Итог native HA:\n```json\n{\"haVersion\":\"2026.10.4\",\"showTrueRouteReloadReturn\":\"passed\",\"showFalseRouteReloadReturn\":\"passed\",\"exactPreferencesRetained\":true,\"ownedContainerRemoved\":true}\n```\nОфициальный S6 выполняет штатный finish после допуска в общую очередь: build/types, critical-data-rights, startup View, четыре адресных unit файла и existing summary browser smoke. До его завершения это не заявляется как пройденный финальный S6. Golden, полный stable/beta профиль и выпуск не запускались.\nПервый официальный local S6 `20261104T184718230-7e8a1b6a` завершён PASS на `b5a3fe5df`: materialClean=true, build/types, critical 151/151, affected 68/68, startup и browser summary — PASS. Receipt не успел быть передан в очередь из-за истёкшего допуска. Выполняется новый явный `finish` из native worktree с зачётом применимых успешных результатов; прежний отчёт не подменяется ручным PASS.\nПостоянная HA E2E-регрессия перед ближайшей бетой отмечена как «надо»: https://github.com/Matysh/houseplan-e2e/issues/28 .",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:462d7049-18fe-41ef-8899-ce9efa7e3a47": {
-      "digest": "d0b03795033fa8d505b78ed905636d5439c981b883344e8d1da5e05a6be4af06",
-      "issue": 1286,
-      "message": {
-        "kind": "queued",
-        "issue": 1286,
-        "at": 1793819690669,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fd6c55d1e5942dbb5cb1dd90ae81814adcc4900f",
-        "evidence": {
-          "id": "20261104T190546061-93f3f63a",
-          "name": "Тесты для задачи #1286 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T190546061-93f3f63a/report.json",
-          "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
-          "status": "passed",
-          "finishedAt": "2026-11-04T19:05:48.609Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "github:41896314781:1:tick:0:admit": {
-      "digest": "788657c258e4291397f71ca091407145d3ff8b3723d5bc55e88415209b27f02a",
-      "issue": 1286,
-      "message": {
-        "kind": "admitted",
-        "issue": 1286,
-        "at": 1793820160456,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "fd6c55d1e5942dbb5cb1dd90ae81814adcc4900f",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261104T190546061-93f3f63a",
-          "name": "Тесты для задачи #1286 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T190546061-93f3f63a/report.json",
-          "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
-          "status": "passed",
-          "finishedAt": "2026-11-04T19:05:48.609Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:76ef964d-bd10-4fd4-8b42-885791ff6163": {
       "digest": "65814122e8e9118eea449452884979434eb60bcb16c7989614a2e0c4ca3bfb34",
       "issue": 1287,
@@ -3767,36 +3322,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "81752197642b05c1bd4de3510f4f1ffc6de7fccd",
-        "delivered": true
-      }
-    },
-    "finish:b72d7a0c-f2e3-4f2b-b90b-45a1f554b65d:finish:2:s6-complete": {
-      "digest": "83ec8680a3973ea28639aa1f7e8247f31955d0303c718ca06d338701dec60a93",
-      "issue": 1286,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1286,
-        "at": 1793820270103,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "phase": "review",
-        "evidence": {
-          "id": "20261104T192353404-e9d7895d",
-          "name": "Тесты для задачи #1286 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T192353404-e9d7895d/report.json",
-          "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-          "status": "passed",
-          "finishedAt": "2026-11-04T19:24:28.888Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Цель и результат\nОсновная панель должна восстанавливать явный On/Off после нативной навигации по HA, reload другой страницы и возврата. Текущий этап — S6; первоначальная аналитика выше описывает состояние до реализации. Выбран show: нужен независимый взгляд на совместимость старых локальных записей, а не только на замену строки ключа.\n\n### Решение и альтернативы\nПервоначальный материал реализации: `511dec567`, ветка `codex/issue-1286-summary-visibility`, база `659440571bc388d108ec7f0200ce9c407a9ee132`. После штатной актуализации — `b5a3fe5dfd74443f8a9151a80277876a82b24f45`, тот же diff.\nОсновной panel-host использует слот `panel-root-v2`. Shell передаёт свой зарегистрированный route prefix карточке до её подключения; текущий адрес другой страницы HA не становится владельцем настройки. Логическая идентификация Lovelace/Masonry не меняется.\nЗагрузка runtime и cold-runtime recovery используют один reader. Существующая canonical-запись, в том числе Off, приоритетна. Если её нет, старые version-1 записи берутся только из точного user/route/panel namespace и узнаваемого старого panel slot, если нормализованные значения согласованы. Чтение ничего не записывает/удаляет; следующая явная правка сохраняется в canonical key.\nИсторические записи без timestamp могут противоречить друг другу: выбирать «последнюю» по DOM-индексу или порядку localStorage нельзя. Такие записи сохраняются, выбор требуется задать один раз. Не переносим данные между пользователями/route/Lovelace и не интерпретируем future legacy records.\n`saveLocal` заново разрешает текущую identity перед записью: временно пропавший пользователь не даёт писать в прежний пользовательский ключ. Серверная конфигурация, модель данных, API, стиль/анимации панели и overrides профилей не меняются.\n\n### Риски и места для внимания\n- Однозначное восстановление старого выбора и отсутствие необоснованной миграции неоднозначных записей.\n- Раннее подключение/поздний hass.user, сохранённый HA panel во время чужого route, параллельные карточки Lovelace.\n- Отдельно сохраняются icon/font scales той же локальной записи.\n- Изменены ключи двух unit fixtures, которые должны стартовать с уже сохранённым canonical состоянием; их проверки анимаций/lifecycle не ослаблены.\n- Локальное окружение: Ubuntu WSL. Первый S6 на NTFS прошёл, но синхронная обработка файлов задержала heartbeat и допуск очереди истёк. Та же неизменённая ветка `b5a3fe5df` перенесена в native Linux worktree `/home/sergey/houseplan-1286-summary-visibility`; артефакты и общий кеш сохранены, общие настройки Git и чужие worktrees не менялись. Истечение допуска не объявляется дефектом продукта или падением тестов.\n\n### Проверки и ограничения\nДо фикса две новые регрессии упали: смена DOM resolver index меняла ключ; смена текущего URL меняла namespace сохранённой панели. После исправления адресные preference/runtime проверки — 23 PASS, presentation — 22 PASS; существующие pure summary/Masonry проверки — 21 PASS на тех же значимых входах. Сборка/типы debug — PASS.\nНастоящий HA `2026.10.4` в отдельном Docker-контейнере с синтетическим seed и свежим frontend: оба сценария show=true/false прошли через native sidebar → другую HA страницу → reload → native sidebar обратно. Проверены aria-pressed, фактическая видимость overlay и точное сохранение localStorage record. Это адресная проверка, НЕ полный HA E2E/релизный профиль. Контейнер с уникальной ownership label удалён после проверки; реальный HA владельца не использовался.\nЛокальные receipts: `artifacts/1286-ha-result.json`, `artifacts/1286-ha-regression.log`, `artifacts/1286-addressed.log`, `artifacts/1286-summary-fixed.log`; диагностический сценарий `artifacts/1286-ha-regression.mjs`. Итог native HA:\n```json\n{\"haVersion\":\"2026.10.4\",\"showTrueRouteReloadReturn\":\"passed\",\"showFalseRouteReloadReturn\":\"passed\",\"exactPreferencesRetained\":true,\"ownedContainerRemoved\":true}\n```\nОфициальный S6 выполняет штатный finish после допуска в общую очередь: build/types, critical-data-rights, startup View, четыре адресных unit файла и existing summary browser smoke. До его завершения это не заявляется как пройденный финальный S6. Golden, полный stable/beta профиль и выпуск не запускались.\nПервый официальный local S6 `20261104T184718230-7e8a1b6a` завершён PASS на `b5a3fe5df`: materialClean=true, build/types, critical 151/151, affected 68/68, startup и browser summary — PASS. Receipt не успел быть передан в очередь из-за истёкшего допуска. Выполняется новый явный `finish` из native worktree с зачётом применимых успешных результатов; прежний отчёт не подменяется ручным PASS.\nПостоянная HA E2E-регрессия перед ближайшей бетой отмечена как «надо»: https://github.com/Matysh/houseplan-e2e/issues/28 .\n\n### Исправления по предыдущему ревью\nПредыдущий отчёт: https://github.com/Matysh/houseplan-card/issues/1286#issuecomment-6639646132 (run 41893647138). Вердикт changes_requested: один блокер в выпускаемых материалах; блокеров в исходниках продукта ревьюер не нашёл.\n\n- Запись #1286 после rebase попала в уже опубликованную beta.4 → обе строки RU/EN перенесены в текущий раздел Unreleased/«Не выпущено»; beta.4 больше не приписывается исправление, которого в ней не было.\n- Необязательное замечание к тавтологичному Map в первом тесте → вместо чтения Map самой из себя тест теперь вызывает настоящий `readSummaryPreference` на заново созданной панели с другой структурой resolver. Адресный файл — 7/7 PASS.\n- Необязательный вариант независимо смешивать show и масштабы из противоречивых старых записей не применён: сохраняем задокументированное консервативное правило одной согласованной записи; ревью признало его допустимым.\n\nМатериал исправления: `fd6c55d1e`; изменены только два changelog и тест. Product src не менялся. Применимы принятые результаты S6 `20261104T190546061-93f3f63a`: 151 критичная проверка, 68 адресных, build/startup/browser PASS. Новый явный finish выполнит необходимую выборку с обычным reuse; ручного присвоения PASS и повторного HA/Golden/релизного профиля нет.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
