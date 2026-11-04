@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2358,
-  "nextTicket": 146,
+  "revision": 2359,
+  "nextTicket": 147,
   "nextFence": 146,
   "tasks": {
     "1126": {
@@ -2524,6 +2524,20 @@
         "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
       }
     },
+    "1270": {
+      "issue": 1270,
+      "track": "ship",
+      "layer": "product",
+      "branch": "fix/1270-weather-smoke-readiness",
+      "materialSha": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 146,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793779909595,
+      "reviewEntry": 1
+    },
     "1273": {
       "issue": 1273,
       "branch": "fix/1273-current-smoke-oracles",
@@ -2700,9 +2714,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1270
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:f630afd0-8593-4f37-bb37-e031784b968a": {
+      "digest": "bd93a68256111ebcf9026ad7092cec1f5194951c5197ac414c260b4b240a56da",
+      "issue": 1270,
+      "message": {
+        "kind": "queued",
+        "issue": 1270,
+        "at": 1793779909595,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "bdb7c83edfea4c3c963b31dba21dc36752f5414a"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c347b44d10fa57238008f06e9fc741329a91c492",
     "status": "delivered",
