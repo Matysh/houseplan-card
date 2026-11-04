@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 293,
+  "revision": 294,
   "active": "v1.84.0-beta.5-20261104",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -10055,7 +10055,7 @@
         "sha": "d33a8e42c0beb4c547a426d5c81d077834ab9fe5",
         "requestId": "ship-review:fb29ccd5168b5c52f4287d92af789b6afa417ecdfc537f8633550c38f77e4749",
         "selectionDigest": "3c94db09a94a52b8f69b66b4155b4e7f79d11fc9aecd12a11a0868430d991e93",
-        "status": "pending",
+        "status": "incomplete",
         "inventoryComplete": true
       }
     }
@@ -10752,7 +10752,8 @@
     "release-beta5-create-20261104-ff650ec58": "6d89d9e94b60fa1f480d1283ac09756a0e9b0d0a5c176b3d407d82769643d864",
     "release-beta5-prepared-d33a8e42c": "3c5ea02924398cef57229fea33de74a5298275b75067b4f21997f7292cc2da43",
     "release-beta5-testing-d33a8e42c": "b52e49081bfd0ccecc528adfdd86283031527ac1a5005a67a0fab6e8c2cb59e6",
-    "ship-review:prepare:371b36c2-ebcb-484c-b57c-5feea2c27a7f": "d78da19f4dcbe7dd946fbc0168f513f4d2ec561e246b62b2d731bf8a11e4493a"
+    "ship-review:prepare:371b36c2-ebcb-484c-b57c-5feea2c27a7f": "d78da19f4dcbe7dd946fbc0168f513f4d2ec561e246b62b2d731bf8a11e4493a",
+    "ship-review:result:9376712b-cebe-4c74-a372-9727f4040928": "c867fac8a9d7fd74c25b61470eff3b838deccac70494512c4882820121724617"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -14995,7 +14996,19 @@
           1257
         ]
       },
-      "result": null
+      "result": {
+        "kind": "ship-batch",
+        "requestId": "ship-review:fb29ccd5168b5c52f4287d92af789b6afa417ecdfc537f8633550c38f77e4749",
+        "candidateId": "v1.84.0-beta.5-20261104",
+        "materialSha": "d33a8e42c0beb4c547a426d5c81d077834ab9fe5",
+        "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+        "selectionDigest": "3c94db09a94a52b8f69b66b4155b4e7f79d11fc9aecd12a11a0868430d991e93",
+        "verdict": "incomplete",
+        "runId": 41910511872,
+        "runAttempt": 1,
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41910511872",
+        "markdown": "Workflow завершился без отчёта модели. Это технический сбой, а не принятие изменений."
+      }
     }
   }
 }
