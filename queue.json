@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3095,
+  "revision": 3096,
   "nextTicket": 186,
   "nextFence": 184,
   "tasks": {
@@ -532,37 +532,6 @@
         "status": "complete",
         "errors": {},
         "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
-      }
-    },
-    "1201": {
-      "issue": 1201,
-      "branch": "codex/catalog-negative-metadata",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "bcd8773e35660bde4b207118371c19aa8a36da5e",
-      "mergedAt": 1793573329849,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
         "removedToRelease": false,
         "commentCurrent": true,
         "commentDigest": "34c7bc28ce5c545336ab",
@@ -3209,10 +3178,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
