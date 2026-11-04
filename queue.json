@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2989,
-  "nextTicket": 178,
+  "revision": 2990,
+  "nextTicket": 179,
   "nextFence": 178,
   "tasks": {
     "1126": {
@@ -3126,6 +3126,23 @@
         "status": "published",
         "sourceSha": "ad60cc9da89a002c7474eda65eb359eb7de30096"
       }
+    },
+    "1288": {
+      "issue": 1288,
+      "branch": "issue/1288-release-return-7af907c34e0b",
+      "layer": "product",
+      "track": "show",
+      "ownerAssigned": false,
+      "syncMode": "merge",
+      "mergeSourceSha": "7af907c34e0bc19a5f3215b6003023b2a96aaa5f",
+      "releaseTag": "v1.84.0-beta.4",
+      "materialSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2",
+      "ownerDecision": null,
+      "ticket": 178,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793817507532,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3256,7 +3273,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1288
+  ],
   "active": {
     "issue": 1282,
     "worker": "github-coordinator",
@@ -3558,6 +3577,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "release-return:e7909f01-b9e9-4cc6-8dd7-b8c2ebb04a19": {
+      "digest": "2f7acd7462fcbf7588628215b3263945b2dc3837d9b15438ee6dce5472a1ded7",
+      "issue": 1288,
+      "message": {
+        "kind": "queued",
+        "issue": 1288,
+        "at": 1793817507532,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
       }
     }
   },
