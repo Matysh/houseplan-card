@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2443,
-  "nextTicket": 150,
+  "revision": 2444,
+  "nextTicket": 151,
   "nextFence": 150,
   "tasks": {
     "1126": {
@@ -2573,6 +2573,20 @@
         "sourceSha": "bdb7c83edfea4c3c963b31dba21dc36752f5414a"
       }
     },
+    "1271": {
+      "issue": 1271,
+      "track": "ship",
+      "layer": "product",
+      "branch": "fix/1271-zigbee-narrow-fixture",
+      "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 150,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793781178325,
+      "reviewEntry": 1
+    },
     "1273": {
       "issue": 1273,
       "branch": "fix/1273-current-smoke-oracles",
@@ -2786,9 +2800,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1271
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:d46e17a4-df02-4920-80a1-2a06989a035c": {
+      "digest": "ae5058254f8786585618b7183b6e0f5386344c5a37e58a826b4014dae1e2c71c",
+      "issue": 1271,
+      "message": {
+        "kind": "queued",
+        "issue": 1271,
+        "at": 1793781178325,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
     "status": "delivered",
