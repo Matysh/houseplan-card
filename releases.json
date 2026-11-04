@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 237,
+  "revision": 238,
   "active": "v1.84.0-beta.4-20261104",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -6211,7 +6211,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.84.0-beta.4",
@@ -8500,7 +8500,8 @@
           "en": "## v1.84.0-beta.4 — 2026-11-04\n\n- Reconcile Split and full-corpus test passports with independently verified stored documents, update native drag Escape expectations, and measure current summary controls after UI-kit paint while retaining the exact 44px bound and an undersize negative control. [#1281](https://github.com/Matysh/houseplan-card/issues/1281)\n\n- Compute queue material identity from full blob IDs instead of buffering binary patch payloads, so large reviewed screenshot updates can complete through the normal queue. [#1280](https://github.com/Matysh/houseplan-card/issues/1280)\n\n- Capture the Background editor's held pan after a complete UI frame, preserving its native pointer, camera and configuration; static golden checks no longer compare arbitrary intermediate viewport anchors. Accept the owner's 236 reviewed layout/capture frames with individual source provenance. Pixel thresholds remain unchanged. [#1277](https://github.com/Matysh/houseplan-card/issues/1277)\n\n- Resize nodes incident fixed room walls and reuses their exact shared atoms, preserving physical identity, independent material and opening child hosts; conflicting material still refuses atomically. Derived T seams slide on uniform fixed runs without stale short atoms; exact source-material proof accepts legitimate noding after Undo. Split/conversion lineage now composes across the full original source. [#1264](https://github.com/Matysh/houseplan-card/issues/1264)\n\n- Reuse one exact physical divider for both rooms created by Split, so their shared wall has one identity and thickness through Undo/Redo. [#1279](https://github.com/Matysh/houseplan-card/issues/1279)\n\n- Separate Optimize browser success fixtures from overlapping components and pre-existing decimal maintenance debt; retain conservative refusal coverage and full Draw/Undo/Redo fixed-point checks. [#1272](https://github.com/Matysh/houseplan-card/issues/1272)\n\n- Verify prepared demo icon bytes and their source digest when attesting daycycle measurements; generated icons alone no longer invalidate a clean run, while source edits and stale or altered assets still do. [#1276](https://github.com/Matysh/houseplan-card/issues/1276)\n\n- Repair Draw snap browser expectations for the 5cm node, hidden settled ink and exact T-junction splitting; retain the acute-angle refusal and full source-span metadata checks. [#1268](https://github.com/Matysh/houseplan-card/issues/1268)\n\n- Keep the cleanup browser suite's malformed legacy carrier authoritative after earlier model11 saves; retain K3 cancellation, retry, explicit removal and teardown checks. [#1275](https://github.com/Matysh/houseplan-card/issues/1275)\n\n- Promote room faces using finite-side intersections, preserving reused node dependencies and consuming only named duplicate boundary atoms with identical material; keep residuals, foreign bodies and opening hosts. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)\n\n- Preserve connected exact source atoms when numeric room faces omit a nearly collinear vertex, avoiding spurious microscopic boundary pieces rejected by the ordinary backend. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)\n\n- Offer newly closed rooms from every exact child of a drawn wall segment after graph splitting, preserving the logical drawing chain and unrelated face identities. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)\n\n- Exercise ordinary room-write geometry/host validation through the production Python CPU path in room browser fixtures, retaining negative host/resize/model controls and binding backend changes to their test inputs. Port existing-face selection and exact atomic-host expectations to the accepted contracts. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)\n\n- Keep legacy wall carriers unchanged during stairs-only Undo/Redo, so moving a stair can be redone without an incidental model migration. Mixed and structural restore guards remain strict. [#1269](https://github.com/Matysh/houseplan-card/issues/1269)\n\n- Isolate the 95px Zigbee tooltip scene from header controls and retain a real stationary hover, with explicit stage-width and hit-target preconditions. [#1271](https://github.com/Matysh/houseplan-card/issues/1271)\n\n- Wait for mode-camera and queued refit completion before browser wheel/reveal camera observations; retain exact camera and live metadata assertions. [#1274](https://github.com/Matysh/houseplan-card/issues/1274)\n\n- Restore shoulder rulers and room-wall centre snapping while dragging model-11 wall openings, measuring the final allowed exact host position. [#1267](https://github.com/Matysh/houseplan-card/issues/1267)\n\n- Start the weather-only parent-render assertion after the preceding scene finishes its continuity commit, retaining the strict zero-render check for the measured weather update. [#1270](https://github.com/Matysh/houseplan-card/issues/1270)\n\n- Keep opening-drag Escape cancellation ahead of wide Properties selection dismissal; a late pointer release cannot save the cancelled opening move. [#1278](https://github.com/Matysh/houseplan-card/issues/1278)\n- Port four browser oracles to exact model-11 opening hosts, strict structural history equality, current maintenance counters and the accepted working-camera exit contract. Retain archived expectations and full behavioral checks. [#1273](https://github.com/Matysh/houseplan-card/issues/1273)\n\n- Escape cancels an active device drag before Properties clears its selection, restoring contacts and placement without saving the cancelled gesture. [#1263](https://github.com/Matysh/houseplan-card/issues/1263)\n\n- Read toolchain runtime pins from the active `.nvmrc` and `.python-version` files instead of the retired Validate workflow; retain launched-browser attestation and reject invalid pins. [#1262](https://github.com/Matysh/houseplan-card/issues/1262)"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.84.0-beta.4"
     }
   },
   "published": {
@@ -9102,7 +9103,8 @@
     "beta1844-20261104-official-start": "928e75d96fff91a187216efd98765832d45f6d5bbb085d188ffdf0ef39953bc6",
     "beta1844-20261104-publication:runner-report": "3a51c83d1e0cad648c86aa1ec3aba1cc0924127bc9257534cbe6b189d0847c96",
     "beta1844-20261104-publication:metrics": "ba44123974f3b99afa33eec66b71e96b8e123cd1f8f10f34981105152bd3b63c",
-    "beta1844-20261104-publication:prepared:b8523a60-2386-483e-98b3-45d700f3b273": "681894ba87c61a537114ee08d7f9f2bf0e6bc72d7a8d58d80c7ac5a14071d401"
+    "beta1844-20261104-publication:prepared:b8523a60-2386-483e-98b3-45d700f3b273": "681894ba87c61a537114ee08d7f9f2bf0e6bc72d7a8d58d80c7ac5a14071d401",
+    "beta1844-20261104-publication:started:237": "c899997d3c9aea0987f6f876ba4c2054c8184c4422c05baf2b6b7346e5462fd5"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
