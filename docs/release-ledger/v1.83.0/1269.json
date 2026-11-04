@@ -1,0 +1,5 @@
+{
+  "schema": 1, "issue": 1269, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Avoid incidental model11 migration of a legacy physical carrier during strictly stairs-only history restoration on the 1.84 line.",
+  "summary": {"ru":"После отмены переноса лестницы повтор снова восстанавливает её позицию.","en":"Redo restores a stair's moved position after Undo on legacy plans."}
+}

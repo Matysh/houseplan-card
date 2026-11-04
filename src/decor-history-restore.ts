@@ -5,6 +5,7 @@ import { contentFingerprint } from './visual-continuity';
 import { WALL_SEGMENT_MODEL_VERSION } from './wall-segment-model';
 
 const withoutDecor = ({ decor: _decor, decorLineSession: _session, ...physical }: SpaceGeometryState) => physical;
+const withoutStairs = ({ stairs: _stairs, ...unchanged }: SpaceGeometryState) => unchanged;
 const guarded = (state: SpaceGeometryState) => state.nodeMove || state.wallChainSeedIds || state.roomReferences;
 const withoutPresentation = ({ decor: _decor, decorLineSession: _session,
   stairs: _stairs, plan_transform: _plan, ...physical }: SpaceGeometryState) => physical;
@@ -12,10 +13,10 @@ const planKeys = ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_
 
 /** Presentation history owns no migration: its unchanged source may still be legacy. */
 function restorableSpace(config: ServerConfig, before: SpaceGeometryState, target: SpaceGeometryState,
-  legacyDecor = false) {
+  legacyPresentation = false) {
   if (guarded(before) || guarded(target)) return;
   const version = config.model_version === undefined ? 0 : config.model_version;
-  if (version !== WALL_SEGMENT_MODEL_VERSION && (!legacyDecor || !Number.isInteger(version)
+  if (version !== WALL_SEGMENT_MODEL_VERSION && (!legacyPresentation || !Number.isInteger(version)
       || version < 0 || version > WALL_SEGMENT_MODEL_VERSION)) return;
   const space = config.spaces.find(item => item.id === target.spaceId);
   if (!space) return;
@@ -44,7 +45,10 @@ export function restoreDecorOnlyHistory(config: ServerConfig, before: SpaceGeome
 /** Nonphysical history retains physical record identities, including foreign floors. */
 export function restoreNonPhysicalHistory(config: ServerConfig, before: SpaceGeometryState, target: SpaceGeometryState): boolean {
   if (contentFingerprint(withoutPresentation(before)) !== contentFingerprint(withoutPresentation(target))) return false;
-  const space = restorableSpace(config, before, target);
+  // #1269: like decor-only history, a strictly stairs-only step owns no wall
+  // migration. Mixed presentation/physical steps retain the current-only lane.
+  const stairsOnly = contentFingerprint(withoutStairs(before)) === contentFingerprint(withoutStairs(target));
+  const space = restorableSpace(config, before, target, stairsOnly);
   if (!space || ['decor', 'stairs'].some(key => Object.prototype.hasOwnProperty.call(target, key)
       && !Array.isArray(target[key as 'decor' | 'stairs']))) return false;
   const plan = target.plan_transform || {};

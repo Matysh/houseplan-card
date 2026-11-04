@@ -56,6 +56,55 @@ const legacyFixture = version => {
  return{config,before,target};
 };
 
+const legacyStairsFixture=version=>{
+ const {config,before}=legacyFixture(version);
+ config.spaces[0].stairs=[{id:'stair',kind:'straight',x:.3,y:.4,width:.08,length:.2,angle:0,
+  direction:'forward',target_space_id:'foreign',future:{keep:[1,null,true]}}];
+ before.stairs=structuredClone(config.spaces[0].stairs);
+ const target=structuredClone(before);target.stairs[0].x=.65;target.stairs[0].y=.7;
+ return{config,before,target};
+};
+for(const version of [undefined,5,9,10])test(`#1269 legacy ${version} stair Undo/Redo preserves model and physical carriers`,()=>{
+ const {config,before,target}=legacyStairsFixture(version),original=structuredClone(config);
+ const space=config.spaces[0],refs=[space.rooms,space.walls,space.open_spans,config.spaces[1],config.markers,config.settings];
+ assert.equal(restoreDecorOnlyHistory(config,before,target),false,'stairs never gain decor-only authority');
+ assert.equal(restoreNonPhysicalHistory(config,before,target),true);
+ const expected=structuredClone(original);expected.spaces[0].stairs=structuredClone(target.stairs);
+ assert.deepEqual(config,expected);assert.equal(config.model_version,version);
+ [space.rooms,space.walls,space.open_spans,config.spaces[1],config.markers,config.settings].forEach((value,i)=>assert.equal(value,refs[i]));
+ assert.equal(restoreNonPhysicalHistory(config,target,before),true);assert.deepEqual(config,original);
+});
+for(const kind of ['physical','references','node','chain','mixed','future','invalid-version','decor','plan','session','unknown','invalid-stairs'])
+ test(`#1269 legacy stair restore refuses ${kind} without changing the candidate`,()=>{
+  const {config,before,target}=legacyStairsFixture(10);
+  if(kind==='physical')target.rooms[0].poly[0][0]=.1;
+  if(kind==='references')target.roomReferences=[];
+  if(kind==='node')target.nodeMove={kind:'delete'};
+  if(kind==='chain')target.wallChainSeedIds=[];
+  if(kind==='mixed')config.spaces[1].plan_graph={version:1,nodes:[],edges:[],rooms:[],dependencies:[]};
+  if(kind==='future')config.model_version=12;
+  if(kind==='invalid-version')config.model_version='10';
+  if(kind==='decor')target.decor=[];
+  if(kind==='plan')target.plan_transform.plan_x=.2;
+  if(kind==='session')target.decorLineSession.anchor=[123,456];
+  if(kind==='unknown')target.futurePhysical={changed:true};
+  if(kind==='invalid-stairs')target.stairs=null;
+  const original=structuredClone(config);
+  assert.equal(restoreNonPhysicalHistory(config,before,target),false);assert.deepEqual(config,original);
+ });
+test('#1269 the real history cursor moves a legacy stair Undo/Redo without migrating walls',async()=>{
+ const {historyHarness}=await import('./helpers/geometry-history-harness.mjs');
+ const {config}=legacyStairsFixture(undefined),h=historyHarness(config),root=h.host._serverCfg,space=root.spaces[0];
+ const original=structuredClone(root),before=h.runtime._geometrySnapshot('a');
+ space.stairs[0].x=.65;space.stairs[0].y=.7;
+ h.runtime._recordGeometry('Move stairs',before);
+ const accepted=structuredClone(root);
+ assert.equal(h.runtime._stepGeometryHistory('undo'),true);assert.deepEqual(h.host._serverCfg,original);
+ assert.equal(h.runtime._stepGeometryHistory('redo'),true);assert.deepEqual(h.host._serverCfg,accepted);
+ assert.equal(h.host._serverCfg,root);assert.equal(h.counts.preflight,0);
+ assert.equal(h.host._geometryHistory.peekRedo(),null);
+});
+
 for(const version of [undefined,5,9,10])test(`#1222 legacy ${version} decor Undo/Redo retains the exact source carrier`,()=>{
  const {config,before,target}=legacyFixture(version),original=structuredClone(config),space=config.spaces[0];
  const physical=[space.rooms,space.walls,space.open_spans,config.spaces[1]];
