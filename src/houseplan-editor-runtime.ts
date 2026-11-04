@@ -238,7 +238,8 @@ import {
   buildWallFaceGraph, findNewWallFacesInGraphs, findWallFaceAtPoint, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
-import { parameterOnPartition, planRoomDeletion } from './room-deletion';
+import { parameterOnPartition, planRoomDeletion, roomTopologyLayoutCandidate,
+  captureRoomLabelPositions, restoreRoomLabelPositions, type RoomLabelPositions } from './room-deletion';
 import {
   planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
 } from './wall-face-repair';
@@ -844,7 +845,7 @@ export interface HouseplanEditorHostPort {
   _toggleMarkerDialogVisibility: () => void;
   _toggleStateText: (entityId: string, fallback: string) => string;
   _tool: MarkupTool;
-  _undoKind: "optimize" | "import" | null;
+  _undoKind: "optimize" | "import" | "space_delete" | null;
   _undoPoint: () => void;
   _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[]; } | null;
   _vacAllCamerasFor: string | null;
@@ -884,7 +885,7 @@ export interface HouseplanEditorHostPort {
   _wallUnionPool: Map<string, { key: string; value: ReturnType<typeof wallBodiesUnionPath>; }>;
   _writeChain: Promise<void>;
   _writesPending: number;
-  _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean) => Promise<void>;
+  _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean, roomLabels?: RoomLabelPositions) => Promise<void>;
   _configWriteGuard: (pendingOnly?: boolean) => () => boolean;
   _writeConfig: (attempt?: OptimisticAttempt<ServerConfig> | null, showToast?: ToastCallback) => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
@@ -1762,6 +1763,7 @@ public _rollbackRejectedPhysicalWrites(
       if (!live) continue;
       restored = this._restoreGeometryStateInConfig(this.host._serverCfg,
         physicalRollbackState(live, pending.before)) || restored;
+      restoreRoomLabelPositions(this.host._layout, this.physicalWriteHistory.roomLabels(pending.before));
       this.physicalWriteHistory.reject(this.host._geometryHistory, pending.before, proof);
       this.host._pendingPhysicalWrites.delete(spaceId);
     }
@@ -1804,6 +1806,9 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
       if (attempt && liveFingerprint === attempt.attemptedFingerprint) Object.assign(attempt, { revision: this.host._cfgRev, attempted: candidate, attemptedFingerprint: candidateFingerprint });
       const strictEntries = [...this.host._pendingPhysicalWrites.entries()];
       const strictCommands = strictEntries.map(([, accepted]) => this.physicalWriteHistory.capture(accepted.before));
+      const roomLabelKeys = [...new Set(strictEntries.flatMap(([, accepted]) =>
+        Object.keys(this.physicalWriteHistory.roomLabels(accepted.before))))];
+      const roomLabels = roomLabelKeys.length ? captureRoomLabelPositions(this.host._layout, roomLabelKeys) : undefined;
       for (const [spaceId, accepted] of strictEntries) {
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
         const exactFingerprint = spacePhysicalGeometryFingerprint(candidateSpace);
@@ -1828,7 +1833,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
         const contactLayout=discoveryWrite?.placements.length ? undefined
           : await contactConfigPatch(this.host,discoveryWrite?.config || candidate);
         if (candidateCurrent && !candidateCurrent()) throw Object.assign(new Error('candidate changed before dispatch'), { code: 'conflict' });
-        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent);
+        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent,roomLabels);
       } catch (error) {
         if (!isCurrent()) throw error;
         if (discoveryWrite?.placements.length) {
@@ -1855,6 +1860,9 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
         if (nextBaseline && pending) {
           const markerIds = this.physicalWriteHistory.roomReferenceIds(accepted.before);
           if (markerIds.length) nextBaseline.roomReferences = captureMarkerRoomReferences(candidate.markers || [], markerIds);
+          const labelKeys = Object.keys(this.physicalWriteHistory.roomLabels(accepted.before));
+          if (labelKeys.length) nextBaseline.roomLabelPositions = captureRoomLabelPositions(
+            this.host._adoption.snapshot(null)?.layout || this.host._layout, labelKeys);
           // The next refusal owns only work newer than this accepted send, not
           // its old physical baseline. Keep the newer live candidate untouched.
           this.host._pendingPhysicalWrites.set(spaceId, { ...pending, before: nextBaseline });
@@ -1929,6 +1937,8 @@ public _recordGeometry(name: string, before: SpaceGeometryState | null, decorLin
         before.roomReferences.map((reference) => reference.markerId),
       );
     }
+    if (before.roomLabelPositions) after.roomLabelPositions = captureRoomLabelPositions(
+      this.host._layout, Object.keys(before.roomLabelPositions));
     const command = { name, before, after };
     this.host._geometryHistory.push(command);
     if (physicalHistoryChanged(before, after))
@@ -2022,11 +2032,13 @@ public _canonicalWallChainHistoryState(state: SpaceGeometryState): SpaceGeometry
     if (!normalized) return 'state';
     normalized.wallChainSeedIds = [...state.wallChainSeedIds];
     if (state.roomReferences) normalized.roomReferences = JSON.parse(JSON.stringify(state.roomReferences));
+    if (state.roomLabelPositions) normalized.roomLabelPositions = structuredClone(state.roomLabelPositions);
     return normalized;
   }
 
 public _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
     if (!this._restoreGeometryStateInConfig(this.host._serverCfg, state)) return false;
+    if (state.roomLabelPositions) restoreRoomLabelPositions(this.host._layout, state.roomLabelPositions);
     this.host._cfgEpoch++;
     this.host._modelCache = null;
     // Content keys select this floor's restored geometry; foreign LRU entries remain warm.
@@ -2178,6 +2190,7 @@ public _commitPhysicalGeometry(
     let graphEdit: GraphEditResult<any> | null = null;
     let candidateProof: PhysicalCandidateProof | null = null;
     const resizeProof = this._resizePhysicalProof;
+    let labelCandidate: ReturnType<typeof roomTopologyLayoutCandidate> | undefined;
     this._resizePhysicalProof = null;
     try {
       // Prepared graph previews also retain independent column geometry.
@@ -2212,6 +2225,8 @@ public _commitPhysicalGeometry(
       // The live gesture still carries its raw source key; do not reintroduce it
       // when projecting that gesture onto the migrated graph.
       if (legacy) delete editedSpace.room_drafts;
+      if (intent.kind === 'delete-room' || intent.kind === 'merge-rooms') labelCandidate = roomTopologyLayoutCandidate(
+        baseSpace, editedSpace, this.host._layout);
       committedCandidate = { ...baseline, ...liveCandidate, model_version: WALL_SEGMENT_MODEL_VERSION,
         spaces: baseline.spaces.map(space => space.id === before.spaceId ? editedSpace : space) };
       candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,
@@ -2238,6 +2253,10 @@ public _commitPhysicalGeometry(
       return false;
     }
     adoptEditedSpaceModelInPlace(liveCandidate, committedCandidate, before.spaceId);
+    if (labelCandidate && Object.keys(labelCandidate.roomLabelPositions.before).length) {
+      historyBefore.roomLabelPositions = labelCandidate.roomLabelPositions.before;
+      restoreRoomLabelPositions(this.host._layout, labelCandidate.roomLabelPositions.after);
+    }
     this._lastGraphEditResult = graphEdit;
     this._legacyDrawBaseline = null;
     if (recordHistory) this._recordGeometry(name, historyBefore);
@@ -2357,6 +2376,8 @@ public _applyGeometryState(
       if (target === 'state') return target;
       before = this._geometrySnapshot(target.spaceId);
       if (!before) return 'space';
+      if (target.roomLabelPositions) before.roomLabelPositions = captureRoomLabelPositions(
+        host._layout, Object.keys(target.roomLabelPositions));
       const physicalChanged = spacePhysicalGeometryFingerprint(before)
         !== spacePhysicalGeometryFingerprint(target);
       const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);

@@ -880,11 +880,14 @@ press **Delete space with devices** in the warning. One confirmation names the
 space and the number of devices (and, when there are any, how many of them are
 hidden); after it the space and those devices are deleted in a single write.
 Each device goes exactly as with **Delete** in its own dialog: it leaves the
-plan, its position, attachments and robot trail are removed, and its binding
+plan, its position and robot trail are removed, and its binding
 appears in **Devices → Available again**. Nothing changes in Home Assistant.
-Cancel writes nothing; there is no undo after the write — only a
-[backup](#20-storage-multiple-cards-and-backups) brings the space and the
-devices back. If the plan changed after the
+Until the next plan or layout edit, **General settings → Undo space deletion**
+restores the space, devices and their saved positions. Device attachments are
+retained during that interval; the previous recorded robot cleanup trail is
+not restored. Cancel in the confirmation writes nothing. After another edit,
+restore the original plan from a [backup](#20-storage-multiple-cards-and-backups).
+If the plan changed after the
 confirmation, nothing is deleted and the warning shows the current number.
 
 The sole remaining space can still be deleted after confirmation: affected

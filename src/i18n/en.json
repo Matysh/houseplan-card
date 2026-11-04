@@ -445,6 +445,7 @@
   "toast.space_added": "Space added",
   "toast.space_copied": "Space “{name}” created",
   "toast.space_saved": "Space saved",
+  "toast.space_delete_undone": "Space deletion undone",
   "toast.space_deleted": "Space deleted",
   "toast.delete_failed": "Delete failed: {err}",
   "toast.error": "Error: {err}",

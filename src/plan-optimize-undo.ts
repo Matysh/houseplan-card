@@ -80,7 +80,9 @@ export class PlanOptimizationUndo {
       host._maybeRebuildDevices();
       host._cacheSnapshot();
       host.requestUpdate();
-      showToast(host._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'), undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone');
+      const toastKey = undoKind === 'import' ? 'backup.import_undone'
+        : undoKind === 'space_delete' ? 'toast.space_delete_undone' : 'gs.optimize_undone';
+      showToast(host._t(toastKey), toastKey);
     } catch (error) {
       if (!isCurrent()) return;
       host._canOptimizeUndo = false;

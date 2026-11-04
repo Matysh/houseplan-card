@@ -11,11 +11,13 @@ import type { DeviceInboxRow } from './device-inbox';
 import { inboxT } from './device-inbox-i18n';
 import { langOf } from './i18n';
 import { toolsT } from './i18n/tools';
+import type { DeviceLayout } from './device-position-history';
 
 export interface MarkerDeletionTarget { id: string; binding: string }
 
-export function markerDeletionCandidate(config: ServerConfig, targets: readonly MarkerDeletionTarget[]) {
+export function markerDeletionCandidate(config: ServerConfig, targets: readonly MarkerDeletionTarget[], layout: DeviceLayout = {}) {
   const candidate: ServerConfig = structuredClone(config);
+  const positions = structuredClone(layout);
   const cleanupIds = new Set<string>();
   for (const target of targets) {
     const deletion = deletePlanMarkerRecords(candidate.markers || [], target.id, target.binding, target.binding === 'virtual');
@@ -28,7 +30,8 @@ export function markerDeletionCandidate(config: ServerConfig, targets: readonly 
   }
   if (candidate.settings?.marker_area_snapshot) candidate.settings.marker_area_snapshot =
     removeMarkerAreaSnapshots(candidate.settings.marker_area_snapshot, cleanupIds);
-  return { candidate, cleanupIds };
+  for (const id of cleanupIds) delete positions[id];
+  return { candidate, cleanupIds, layout: positions };
 }
 
 /** Throws on config refusal; housekeeping is best effort only after durable success. */
@@ -80,7 +83,7 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
     }
     return;
   }
-  const { candidate, cleanupIds } = markerDeletionCandidate(cfg, targets);
+  const { candidate, cleanupIds } = markerDeletionCandidate(cfg, targets, host._layout);
   const attempt = runtime._stageOptimisticConfig(cfg, runtime._prepareConfigCandidate(candidate));
   const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
   try {

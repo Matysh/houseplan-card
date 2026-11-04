@@ -93,6 +93,7 @@
   "space.error_temp_range": "The maximum must be higher than the minimum.",
   "space.error_north": "Enter a whole number between 0° and 359°.",
   "space.delete_with_devices": "Delete space with devices",
+  "space.undo_delete": "Undo space deletion",
   "space.delete_devices_body": "Its devices will be deleted too: {n}.",
   "space.delete_devices_hidden": "Including hidden: {k}.",
   "dialog.review_fields": "Review {n} field(s)",

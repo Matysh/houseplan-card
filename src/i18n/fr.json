@@ -445,6 +445,7 @@
   "toast.space_added": "Espace ajouté",
   "toast.space_copied": "Espace « {name} » créé",
   "toast.space_saved": "Espace enregistré",
+  "toast.space_delete_undone": "Suppression de l’espace annulée",
   "toast.space_deleted": "Espace supprimé",
   "toast.delete_failed": "Échec de la suppression : {err}",
   "toast.error": "Erreur : {err}",

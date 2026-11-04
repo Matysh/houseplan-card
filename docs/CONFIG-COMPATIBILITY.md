@@ -1769,6 +1769,26 @@ count as merges; exact opening `tq` rewrites without movement have their own
 line. A compatibility/scalar-only rewrite is still explained as representation
 maintenance. Legacy migration counters retain their previous meaning.
 
+Delete/Merge room removes only the absorbed/deleted rooms' `rl_<id>` layout
+records. Those bounded positions (including absence and opaque metadata) belong
+to the same local geometry-history command as the room topology; Undo/Redo and
+refused queued writes restore their own deltas. `config/set` persists this
+cleanup as a recoverable config/layout pair and returns point-wise
+`layout_changes`. The optional `room_label_layout` patch restores only labels
+whose rooms exist in the source/target configurations, with `expected_layout_rev`
+CAS and capability `room_label_layout_api: 1`. A foreign or unverified owner is
+not permission for unrelated cleanup. Explicit marker removal/tombstoning also
+removes its owned position in the configuration transaction.
+
+Space deletion already removed all layout records naming that space, in either
+deletion mode. Its existing one-deep paired Undo slot now retains the complete
+source pair until the next ordinary edit, reports `undo_kind: space_delete`, and
+pins deleted markers' attachments for that interval. General settings exposes
+the same Undo control with the space-delete label; no extra confirmation is
+introduced. The Devices editor retains its existing session-local structural
+Delete/Undo/Redo history. Optimize's imported/legacy orphan diagnostics and
+explicit cleanup rules remain unchanged.
+
 The confirmation is the decision gate in front of a geometry rewrite, so
 `maxShift`/`maxShiftCm` must never be smaller than what the run does:
 

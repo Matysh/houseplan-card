@@ -81,6 +81,7 @@ from .junction_limits import JunctionLimitError, validate_junction_limits
 from .led_strips import led_strip_link_report, preserve_led_strips
 from .marker_copy import marker_copy_candidate
 from .marker_history import HistoryError
+from .deletion_layout import deletion_layout_candidate
 from .marker_history_websocket import HISTORY_FIELDS
 from .plans import (
     QuotaError,
@@ -130,6 +131,7 @@ from .vacuum_paths import public_trails
 from .validation import (
     CONFIG_SCHEMA,
     LAYOUT_SCHEMA,
+    MAX_LAYOUT,
     MAX_CONFIG_BYTES,
     MAX_PLAN_BYTES,
     PLAN_EXTENSIONS,
@@ -1884,6 +1886,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "device_contact_api": 1,
             "device_history_api": 1,
             "plan_graph_api": 1,
+            "room_label_layout_api": 1,
             "graph_change_api": 2,
             "structural_upload_api": 1,
             **({"graph_migration": {"version": 1, "source_available": True}}
@@ -2082,6 +2085,7 @@ def _readable_entity_ids(
         vol.Required("config"): dict,
         vol.Optional("expected_rev"): int,
         vol.Optional("contact_layout"): LAYOUT_SCHEMA,
+        vol.Optional("room_label_layout"): vol.All(vol.Schema({str: vol.Any(None, POS_SCHEMA)}), vol.Length(max=MAX_LAYOUT)),
         vol.Optional("expected_layout_rev"): int,
         vol.Optional("graph_change"): dict,
     }
@@ -2119,16 +2123,17 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         contact_layout = None
         layout_data = resolved.layout_data
         layout_rev = int(layout_data.get("rev", 0))
-        if "contact_layout" in msg or "expected_layout_rev" in msg:
-            if "contact_layout" not in msg or msg.get("expected_layout_rev") != layout_rev:
+        if "contact_layout" in msg or "room_label_layout" in msg or "expected_layout_rev" in msg:
+            if not ("contact_layout" in msg or "room_label_layout" in msg) or msg.get("expected_layout_rev") != layout_rev:
                 connection.send_error(msg["id"], "conflict", "Device layout changed elsewhere")
                 return
             try:
-                validate_contact_bases(msg["contact_layout"], layout_data.get("layout", {}))
+                if "contact_layout" in msg:
+                    validate_contact_bases(msg["contact_layout"], layout_data.get("layout", {}))
             except vol.Invalid as err:
                 connection.send_error(msg["id"], "invalid_format", str(err))
                 return
-            contact_layout = {**(layout_data.get("layout") or {}), **msg["contact_layout"]}
+            contact_layout = {**(layout_data.get("layout") or {}), **msg.get("contact_layout", {})}
         if "expected_rev" not in msg and current_rev:
             # #340: a request without the revision it read is indistinguishable
             # from a stale writer.  Keep the schema field optional only for an
@@ -2267,8 +2272,21 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                 "Plan file no longer exists: " + ", ".join(sorted(missing)),
             )
             return
-        if contact_layout is not None:
+        if "contact_layout" in msg:
             contact_layout = _live_layout(msg["config"], contact_layout)
+        try:
+            owned_layout, layout_changes = await hass.async_add_executor_job(deletion_layout_candidate,
+                data.get("config") or {}, msg["config"],
+                contact_layout if contact_layout is not None else layout_data.get("layout") or {},
+                msg.get("room_label_layout"))
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], "invalid_format", str(err))
+            return
+        if layout_changes or "room_label_layout" in msg:
+            if len(owned_layout) > MAX_LAYOUT:
+                connection.send_error(msg["id"], "invalid_format", "Too many saved layout positions")
+                return
+            contact_layout = owned_layout
         if (msg["config"] == data.get("config")
                 and (contact_layout is None or contact_layout == layout_data.get("layout", {}))):
             # A semantic no-op still has to reconcile Repairs with external
@@ -2282,7 +2300,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             unchanged: dict[str, Any] = {"ok": True, "rev": int(current_rev)}
             if contact_layout is not None:
                 unchanged["layout_rev"] = layout_rev
-                unchanged["contact_layout"] = {key: contact_layout.get(key) for key in msg["contact_layout"]}
+                unchanged["contact_layout"] = {key: contact_layout.get(key) for key in msg.get("contact_layout", {})}
             connection.send_result(msg["id"], unchanged)
             return
         new_rev = current_rev + (msg["config"] != data.get("config"))
@@ -2306,10 +2324,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                                   if k not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING}}
                 next_layout_rev = layout_rev + (contact_layout != layout_data.get("layout", {}))
                 await _commit_pair(rt, {
-                    "kind": "device_contact", "config": msg["config"], "layout": contact_layout,
+                    "kind": "config_layout", "config": msg["config"], "layout": contact_layout,
                     "config_rev": new_rev, "layout_rev": next_layout_rev, "final_metadata": final_metadata,
                 }, {
-                    "kind": "device_contact_rollback", "config": data.get("config") or DEFAULT_CONFIG,
+                    "kind": "config_layout_rollback", "config": data.get("config") or DEFAULT_CONFIG,
                     "layout": layout_data.get("layout") or {}, "config_rev": current_rev,
                     "layout_rev": layout_rev, "final_metadata": original_metadata,
                 }, authorize=_write_authority(hass, connection))
@@ -2320,7 +2338,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             connection.send_error(msg["id"], err.code, str(err))
             return
         except PairCommitFailure:
-            connection.send_error(msg["id"], "commit_failed", "Device contact save failed; reload the plan")
+            connection.send_error(msg["id"], "commit_failed", "Configuration/layout save failed; reload the plan")
             return
         # The candidate just became the stored document: its counts are the
         # next write's baseline (#330 §4.2), and it is the validated output of
@@ -2369,7 +2387,8 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                       config_rev=new_rev, layout_rev=int(accepted_layout.get("rev", 0)))
     if contact_layout is not None:
         result["layout_rev"] = next_layout_rev
-        result["contact_layout"] = {key: contact_layout.get(key) for key in msg["contact_layout"]}
+        result["contact_layout"] = {key: contact_layout.get(key) for key in msg.get("contact_layout", {})}
+        result["layout_changes"] = layout_changes
     if any(led_report.values()):
         result["led_strips"] = led_report
     connection.send_result(msg["id"], result)
@@ -2753,8 +2772,18 @@ async def _forget_deleted_markers(
     """
     from .plans import attachment_refs
 
-    refs = attachment_refs(config)
     rt = get_data(hass)
+    refs = attachment_refs(config)
+    # A reversible whole-space delete retains the attachments owned by its
+    # one-deep snapshot until that snapshot expires on a later ordinary edit.
+    try:
+        stored = (await rt.store.async_load() or {}) if rt is not None else {}
+    except Exception:  # noqa: BLE001 - unavailable pin evidence must preserve files
+        _LOGGER.exception("House Plan: reading space-delete attachment pins failed")
+        return
+    backup = stored.get(_OPTIMIZE_BACKUP)
+    if isinstance(backup, dict) and backup.get("kind") == "space_delete":
+        refs |= attachment_refs(backup.get("config") or {})
     if rt is not None and rt.marker_history is not None:
         refs |= rt.marker_history.refs()
     files_dir = Path(hass.config.path(FILES_DIR))
@@ -2841,6 +2870,11 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                     key: value for key, value in original_metadata.items()
                     if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"}
                 }
+                final_metadata[_OPTIMIZE_BACKUP] = {
+                    "kind": "space_delete", "config": copy.deepcopy(current_config),
+                    "layout": copy.deepcopy(current_layout), "created": int(time.time()),
+                    "after_config_rev": new_config_rev, "after_layout_rev": new_layout_rev,
+                }
                 pending = {
                     "kind": "space_delete",
                     "config": canonicalize_config_geometry(target_config),
@@ -2904,6 +2938,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         "layout_rev": new_layout_rev,
         "removed_layout": removed_layout,
         "removed_markers": removed_markers,
+        "can_undo": True,
         "config": pending["config"], "layout": pending["layout"],
     })
 

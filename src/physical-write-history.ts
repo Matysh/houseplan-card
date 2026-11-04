@@ -18,6 +18,7 @@ export function physicalRollbackState(live: SpaceGeometryState, baseline: SpaceG
     if (baseline[key] !== undefined) Object.assign(restored, { [key]: JSON.parse(JSON.stringify(baseline[key])) });
   }
   if (baseline.roomReferences) restored.roomReferences = baseline.roomReferences;
+  if (baseline.roomLabelPositions) restored.roomLabelPositions = baseline.roomLabelPositions;
   return restored;
 }
 
@@ -43,6 +44,13 @@ export class PhysicalWriteHistory {
   public roomReferenceIds(baseline: SpaceGeometryState): string[] {
     return [...new Set([baseline, ...[...(this.batches.get(baseline) || [])].map(entry => entry.command.before)]
       .flatMap(state => (state.roomReferences || []).map(reference => reference.markerId)))];
+  }
+  public roomLabels(baseline: SpaceGeometryState): NonNullable<SpaceGeometryState['roomLabelPositions']> {
+    const positions: NonNullable<SpaceGeometryState['roomLabelPositions']> = {};
+    for (const state of [baseline, ...[...(this.batches.get(baseline) || [])].map(entry => entry.command.before)])
+      for (const [id, position] of Object.entries(state.roomLabelPositions || {}))
+        if (!Object.prototype.hasOwnProperty.call(positions, id)) positions[id] = structuredClone(position);
+    return positions;
   }
   public accept(baseline: SpaceGeometryState, accepted: ReadonlySet<Entry>, nextBaseline?: SpaceGeometryState): void {
     const batch = this.batches.get(baseline);

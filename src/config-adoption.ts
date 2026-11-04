@@ -410,7 +410,7 @@ export interface ConfigAdoptionHostPort {
     commands?: () => readonly {before: DeviceEditorHistoryState; after: DeviceEditorHistoryState}[] };
   _pendingPhysicalWrites: Clearable;
   _canOptimizeUndo: boolean;
-  _undoKind: 'optimize' | 'import' | null;
+  _undoKind: 'optimize' | 'import' | 'space_delete' | null;
   _serverCanWrite: boolean | null;
   _regSignature: string;
   _continuity: {
@@ -485,7 +485,7 @@ export function adoptStructuralResponses(
   // A durable ordinary profile write invalidates the one-deep Optimize/Import undo.
   host._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
   if (!screenEvent) host._adoptConfigCapabilities(cfgResp);
-  host._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as 'optimize' | 'import' | null;
+  host._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as 'optimize' | 'import' | 'space_delete' | null;
   if (typeof cfgResp?.can_write === 'boolean') host._serverCanWrite = cfgResp.can_write;
   if (configChanged) host._continuity.note('config-candidate', { configRev: adoption.configRev });
   if (layoutChanged) host._continuity.note('layout-candidate', { layoutRev: adoption.layoutRev });

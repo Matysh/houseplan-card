@@ -445,6 +445,7 @@
   "toast.space_added": "Bereich hinzugefügt",
   "toast.space_copied": "Bereich „{name}“ erstellt",
   "toast.space_saved": "Bereich gespeichert",
+  "toast.space_delete_undone": "Bereichslöschung rückgängig gemacht",
   "toast.space_deleted": "Bereich gelöscht",
   "toast.delete_failed": "Löschen fehlgeschlagen: {err}",
   "toast.error": "Fehler: {err}",

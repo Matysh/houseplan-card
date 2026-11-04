@@ -1,3 +1,37 @@
+import type { DeviceLayout } from './device-position-history';
+
+export type RoomLabelPositions = Record<string, DeviceLayout[string] | null>;
+
+/** A topology gesture owns only the labels of rooms it removes. */
+export function roomTopologyLayoutCandidate(
+  beforeSpace: { id: string; rooms?: readonly { id: string }[] },
+  afterSpace: { id: string; rooms?: readonly { id: string }[] },
+  layout: DeviceLayout = {},
+): { layout: DeviceLayout; roomLabelPositions: { before: RoomLabelPositions; after: RoomLabelPositions } } {
+  const result = structuredClone(layout), before: RoomLabelPositions = {}, after: RoomLabelPositions = {};
+  const retained = new Set((afterSpace.rooms || []).map(room => room.id));
+  if (beforeSpace.id !== afterSpace.id) return { layout: result, roomLabelPositions: { before, after } };
+  for (const room of beforeSpace.rooms || []) {
+    if (retained.has(room.id)) continue;
+    const key = 'rl_' + room.id, position = result[key];
+    // A misplaced/foreign record is not proof of ownership. Leave it to the
+    // explicit Optimize diagnostics instead of deleting unrelated coordinates.
+    if (!position || position.s && position.s !== beforeSpace.id) continue;
+    before[key] = structuredClone(position); after[key] = null; delete result[key];
+  }
+  return { layout: result, roomLabelPositions: { before, after } };
+}
+
+export function captureRoomLabelPositions(layout: DeviceLayout, keys: readonly string[]): RoomLabelPositions {
+  return Object.fromEntries(keys.map(key => [key, layout[key] ? structuredClone(layout[key]) : null]));
+}
+
+export function restoreRoomLabelPositions(layout: DeviceLayout, positions: RoomLabelPositions): void {
+  for (const [key, position] of Object.entries(positions)) {
+    if (position === null) delete layout[key]; else layout[key] = structuredClone(position);
+  }
+}
+
 export interface DeletionWallInterval {
   a: readonly number[];
   b: readonly number[];

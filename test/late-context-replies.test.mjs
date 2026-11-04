@@ -127,6 +127,16 @@ function undoHarness(kind = 'optimize', seam = 'write') {
     blockWrite: () => { blocked = 'write'; assetBlocked = false; } };
 }
 
+test('#1287 space-delete Undo uses the existing paired adoption and its own success message', async () => {
+  const h = undoHarness('space_delete', null);
+  await h.undo.run();
+  assert.deepEqual(h.toasts, ['toast.space_delete_undone']);
+  assert.equal(h.host._cfgRev, 11);
+  assert.equal(h.host._layoutRev, 12);
+  assert.equal(h.host._canOptimizeUndo, false);
+  assert.equal(h.host._undoKind, null);
+});
+
 // The optional immutable material path is for a baseline diagnostic only. The
 // ordinary gate always executes this checkout's compiled exported classes.
 globalThis.window ??= {};

@@ -12,6 +12,7 @@ import type { OpeningCfg, PartitionCfg, WallColumnCfg } from './types';
 import type { PlanGraph } from './plan-graph';
 import type { NodeCommandHistory } from './wall-node-editor';
 import type { WallEntry } from './wall-thickness';
+import type { RoomLabelPositions } from './room-deletion';
 
 /** Everything whose topology or wall association changes in the plan editor. */
 export interface SpaceGeometryState {
@@ -40,6 +41,8 @@ export interface SpaceGeometryState {
   decorLineSession?: DecorLineSession;
   /** Session-only: exact room fields touched by Delete/Merge room. */
   roomReferences?: MarkerRoomReferenceSnapshot[];
+  /** Session-only bounded label delta owned by Delete/Merge and their Undo. */
+  roomLabelPositions?: RoomLabelPositions;
 }
 
 /** #843: the next history step is a node command, applied by its server transaction. */

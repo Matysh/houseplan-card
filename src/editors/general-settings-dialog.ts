@@ -297,7 +297,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             </button>
             ${undo.optimization ? html`
               <button data-hp="action" data-action="plan-optimization-undo" class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
-                ${st('gs.optimize_undo')}
+                ${st(host._undoKind === 'space_delete' ? 'space.undo_delete' : 'gs.optimize_undo')}
               </button>` : nothing}
           </div>`,
           html`<div class="hpf-converter"><p class="hpf-hint">${st('gs.converter_description', { formats: planConverterFormats() })}</p>

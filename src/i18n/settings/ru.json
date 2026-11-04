@@ -93,6 +93,7 @@
   "space.error_temp_range": "Максимум должен быть больше минимума.",
   "space.error_north": "Введите целое число от 0° до 359°.",
   "space.delete_with_devices": "Удалить пространство вместе с устройствами",
+  "space.undo_delete": "Отменить удаление пространства",
   "space.delete_devices_body": "Устройства в нём тоже будут удалены: {n}.",
   "space.delete_devices_hidden": "В том числе скрытые: {k}.",
   "dialog.review_fields": "Проверьте поля: {n}",

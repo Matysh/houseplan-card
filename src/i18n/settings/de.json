@@ -93,6 +93,7 @@
   "space.error_temp_range": "Das Maximum muss über dem Minimum liegen.",
   "space.error_north": "Geben Sie eine ganze Zahl zwischen 0° und 359° ein.",
   "space.delete_with_devices": "Bereich mit Geräten löschen",
+  "space.undo_delete": "Bereichslöschung rückgängig machen",
   "space.delete_devices_body": "Seine Geräte werden ebenfalls gelöscht: {n}.",
   "space.delete_devices_hidden": "Davon versteckt: {k}.",
   "dialog.review_fields": "{n} Feld(er) prüfen",

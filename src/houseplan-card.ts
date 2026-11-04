@@ -1132,7 +1132,7 @@ export class HouseplanCard extends LitElement {
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
-  private _undoKind: 'optimize' | 'import' | null = null;
+  private _undoKind: 'optimize' | 'import' | 'space_delete' | null = null;
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _deviceBuildKey = '';
@@ -2513,6 +2513,7 @@ export class HouseplanCard extends LitElement {
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
   private _haPlanGraphApi: number | null = null;
+  private _haRoomLabelLayoutApi: number | null = null;
   private _haGraphChangeApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
@@ -8647,8 +8648,11 @@ export class HouseplanCard extends LitElement {
    * this boundary makes View-owned metadata writes and strict editor writes
    * converge on the same payload contract without making View load the editor.
    */
-  private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean): Promise<void> {
+  private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean,
+    roomLabels?: Record<string, DeviceLayout[string] | null>): Promise<void> {
     if (Number(candidate.model_version || 0) >= 11 && this._haPlanGraphApi !== 1)
+      throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
+    if (roomLabels && this._haRoomLabelLayoutApi !== 1)
       throw Object.assign(new Error('wall_model_client_outdated'), { code: 'wall_model_client_outdated' });
     const isCurrent = this._configWriteGuard();
     if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
@@ -8658,22 +8662,35 @@ export class HouseplanCard extends LitElement {
     const graph_change = Number(canonicalCandidate.model_version) === 11 && Number(accepted?.model_version || 0) < 11
       ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, canonicalCandidate, this._haGraphChangeApi===2?2:1) : undefined;
     if (!isCurrent()) throw Object.assign(new Error('config authority changed'), {code:'context-changed'});
-    const finish=contactLayout?this._layoutIO.begin():()=>undefined;
+    const finish=contactLayout || roomLabels ? this._layoutIO.begin():()=>undefined;
+    const layoutBeforeSend = structuredClone(this._layout);
     try {
       const writeHass = this.hass;
       const response = await sendHouseplanWrite<any>(writeHass, {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
         ...(graph_change ? {graph_change} : {}),
-        ...(contactLayout?{contact_layout:contactLayout,expected_layout_rev:this._layoutRev}:{}),
+        ...(contactLayout?{contact_layout:contactLayout}:{}),
+        ...(roomLabels?{room_label_layout:roomLabels}:{}),
+        ...(contactLayout || roomLabels ? {expected_layout_rev:this._layoutRev}:{}),
       }, { isCurrent: () => isCurrent()
         && (!acknowledgementCurrent || acknowledgementCurrent()) });
       if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       this._adoption.acceptConfigWrite(canonicalCandidate, response);
+      for (const [id, position] of Object.entries((response as {layout_changes?:Record<string,DeviceLayout[string]|null>})?.layout_changes || {})) {
+        // A later local edit owns its fresh draft, while the accepted cache still
+        // records the exact position/deletion confirmed by this older response.
+        if (contentFingerprint(this._layout[id] ?? null) === contentFingerprint(layoutBeforeSend[id] ?? null)) {
+          const next = { ...this._layout };
+          if (position === null) delete next[id]; else next[id] = structuredClone(position);
+          this._layout = next;
+        }
+        this._adoption.acceptLayoutPosition(id, position, response?.layout_rev);
+      }
       if(contactLayout)for(const [id,pos] of Object.entries((response as {contact_layout?:DeviceLayout})?.contact_layout??{})) {
         this._previewDevicePlacement(id,pos);
         this._adoption.acceptLayoutPosition(id,pos,(response as {layout_rev?:number}).layout_rev);
       }
-      if(contactLayout)this._adoption.refreshLayoutFingerprint();
+      if(contactLayout || response?.layout_changes)this._adoption.refreshLayoutFingerprint();
       this._cacheSnapshot();
     } finally {finish();}
   }

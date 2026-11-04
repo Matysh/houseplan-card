@@ -445,6 +445,7 @@
   "toast.space_added": "Пространство добавлено",
   "toast.space_copied": "Пространство «{name}» создано",
   "toast.space_saved": "Пространство сохранено",
+  "toast.space_delete_undone": "Удаление пространства отменено",
   "toast.space_deleted": "Пространство удалено",
   "toast.delete_failed": "Ошибка удаления: {err}",
   "toast.error": "Ошибка: {err}",

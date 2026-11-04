@@ -23,7 +23,7 @@ export interface PlanOptimizeWriteHost {
   _devicePositionHistory: Clearable;
   _cancelDeviceDrag(): boolean;
   _canOptimizeUndo: boolean;
-  _undoKind: 'optimize' | 'import' | null;
+  _undoKind: 'optimize' | 'import' | 'space_delete' | null;
   _dirtyPos: Set<string>;
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _cfgEpoch: number;

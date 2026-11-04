@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1287,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Deleting or merging a room could leave its positioned label in layout on the stable base as well. Couple owned cleanup/restoration to native history and the durable config/layout transaction; preserve foreign/unverified records and retain the source pair for one-deep space-delete Undo.",
+  "summary": {
+    "ru": "Удаление и объединение убирают принадлежащие им позиции; Undo восстанавливает план и подписи вместе.",
+    "en": "Deletion and merging clean their owned positions; Undo restores the plan and labels together."
+  }
+}
