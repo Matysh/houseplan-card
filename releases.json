@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 326,
+  "revision": 327,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -10640,13 +10640,15 @@
           "from": "ff650ec58838a85767e15fbb5de9193c336f9034",
           "to": "d33a8e42c0beb4c547a426d5c81d077834ab9fe5",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "a4dd940c1190ee62581c187fa500db3c73f66d1c"
         },
         {
           "from": "d33a8e42c0beb4c547a426d5c81d077834ab9fe5",
           "to": "a4dd940c1190ee62581c187fa500db3c73f66d1c",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "0bba0ce459b95291ffbe590b9827cc412fa85819"
         }
       ],
       "diagnostics": [],
@@ -12193,7 +12195,8 @@
           "sha": "7af907c34e0bc19a5f3215b6003023b2a96aaa5f"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
           "issue": 1291,
           "branch": "issue/1291-release-return-a4dd940c1190",
           "worktree": "/home/matysh/hp-beta4-release-20261029/artifacts/process-next/return-worktrees/a4dd940c1190"
@@ -12901,7 +12904,8 @@
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:a931a8d7-fde6-4285-908e-f99410ac6844": "58bef8c4296060bc96b40d9167a1fe24d22f2fc37dceb76ee5bec129ca422f9c",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:c32bd068-f188-4426-9a32-5f4e09df6dfb": "b330c4e33d6d7b9a295d2cd4d93e863e2e2a39d7780a87c32587f8f364f2e18b",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:551d02bd-8e0a-428c-bf31-c958bebecd42": "ec7412e237bdff3109583b414ca6477f9520cbe5d8984f7f6be4610f65a5f841",
-    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:c77edc47-27db-4054-a51f-2714373faba1": "b1ec08647eb1a485f0d59331fdb5f8519883b2c1ce89c2f00eeabdccbc4c9194"
+    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:c77edc47-27db-4054-a51f-2714373faba1": "b1ec08647eb1a485f0d59331fdb5f8519883b2c1ce89c2f00eeabdccbc4c9194",
+    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:9b132ce6-b2fd-4d39-bced-afa1cae8668f": "0b2edcbae0f2aaf979fa9418c07699f77a56c7ad9232a7ffb1cae5da4f648f14"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
