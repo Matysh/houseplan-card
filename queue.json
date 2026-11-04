@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3210,
-  "nextTicket": 190,
+  "revision": 3211,
+  "nextTicket": 191,
   "nextFence": 190,
   "tasks": {
     "1126": {
@@ -3049,14 +3049,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1287-delete-layout-ownership",
-      "materialSha": "8d476063f7e27e62894b2196a4e9bad17e4f8948",
+      "materialSha": "81752197642b05c1bd4de3510f4f1ffc6de7fccd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 182,
-      "queued": false,
+      "ticket": 190,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793818133308,
-      "reviewEntry": 1,
+      "readyAt": 1793820220908,
+      "reviewEntry": 2,
       "patchId": "4c66a29bd3c69b900a63b87a39bffce9a8be87a9",
       "changedFiles": [
         "custom_components/houseplan/deletion_layout.py",
@@ -3092,7 +3092,6 @@
         "tests_backend/test_deletion_layout.py",
         "tests_backend/test_ha_deletion_layout.py"
       ],
-      "reason": "dependency-not-merged",
       "notice": {
         "key": "1:dependency-not-merged",
         "reason": "dependency-not-merged",
@@ -3273,7 +3272,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1287
+  ],
   "active": {
     "issue": 1286,
     "worker": "github-coordinator",
@@ -3617,6 +3618,19 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:76ef964d-bd10-4fd4-8b42-885791ff6163": {
+      "digest": "65814122e8e9118eea449452884979434eb60bcb16c7989614a2e0c4ca3bfb34",
+      "issue": 1287,
+      "message": {
+        "kind": "queued",
+        "issue": 1287,
+        "at": 1793820220908,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "81752197642b05c1bd4de3510f4f1ffc6de7fccd"
       }
     }
   },
