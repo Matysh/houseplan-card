@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3181,
+  "revision": 3182,
   "nextTicket": 190,
   "nextFence": 189,
   "tasks": {
@@ -407,43 +407,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "fe4fde1517af322b75aff1bbc2db08fd1c574ebb"
-      }
-    },
-    "1197": {
-      "issue": 1197,
-      "branch": "codex/ci-b-node-contracts",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-      "mergedAt": 1793573592577,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1197:1:33052548f46b6ea625390a56ca00555d6638c9d1:bcd8773e35660bde4b207118371c19aa8a36da5e",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
       }
     },
     "1198": {
@@ -2948,7 +2911,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672"
       }
     },
     "1283": {
@@ -4342,6 +4306,18 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:41895373999:1:1282": {
+      "digest": "d9751fba43d99a06312144925c8c1e290a6647b82b3db886a6aae90567aa34eb",
+      "issue": 1282,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1282,
+        "at": 1793819964688,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672"
       }
     }
   },
