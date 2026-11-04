@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2932,
+  "revision": 2933,
   "nextTicket": 177,
   "nextFence": 176,
   "tasks": {
@@ -3052,7 +3052,7 @@
       "ownerDecision": null,
       "ticket": 175,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793816333799,
       "reviewEntry": 1,
       "patchId": "c0e98b921b246386a15955bb204111ef156f673f",
@@ -3069,7 +3069,16 @@
         "src/optimize-plans-dialog.ts",
         "src/plan-optimizer.ts",
         "test/graph-optimize-report.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261104T182213103-daa88f0a",
+        "name": "Тесты для задачи #1284 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T182213103-daa88f0a/report.json",
+        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+        "status": "passed",
+        "finishedAt": "2026-11-04T18:22:48.784Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3184,9 +3193,9 @@
     "fence": 175,
     "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
     "expectedBase": "659440571bc388d108ec7f0200ce9c407a9ee132",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793816522441,
-    "expiresAt": 1793816829038,
+    "expiresAt": 1793820170180,
     "patchId": "c0e98b921b246386a15955bb204111ef156f673f"
   },
   "events": {
@@ -3314,6 +3323,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5"
+      }
+    },
+    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:3:s6-complete": {
+      "digest": "5bf9ff7d7087b1ae2f1191643b37675eaaffb64d05bceb1a0e06d382c52fac36",
+      "issue": 1284,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1284,
+        "at": 1793816570180,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T182213103-daa88f0a",
+          "name": "Тесты для задачи #1284 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T182213103-daa88f0a/report.json",
+          "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+          "status": "passed",
+          "finishedAt": "2026-11-04T18:22:48.784Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Модель 11: измерение эффектов вынесено в `graph-optimize-report.ts`. Отчёт сравнивает исходный и окончательно принятый граф по устойчивым ID узлов, реальные концы проёмов, колонки, декор (четыре угла) и сохранённые layout-позиции. Порог невидимой координатной канонизации — существующие `1e-4` шага. Дедупликация по узлу исключает повторный подсчёт общей стены. `collapse-node` берётся из фактических счётчиков графового движка; `tq` без геометрического сдвига получает отдельный счётчик/строку, включая RU/EN/DE/FR и итоговый toast. Числовой движок и решения Optimize о допустимости не меняются. Near-axis отчёт сверяет предложенные рёбра с реально записанной точной осью; отвергнутые q-цели не учитываются. Счётчики legacy-входов сохранены, текущая канонизация проекций/скаляров объясняется даже без перемещённого узла.\n\nПроверено до очереди: адресные 7/7; существующие `plan-optimizer`, `plan-graph-optimize`, `near-axis`, `optimize-plans-dialog`, `optimize-cleanup-892` — 102/102 без изменения legacy-ожиданий. RED на исходном dev `659440571`: три заявленные регрессии (десятичный tq, коллинеарный шов, ULP + точный диагональный T) воспроизведены на production-модулях, остальные два контроля прошли; после исправления все проходят. Input не мутируется, `validateGraph`, `verifyGraphProjection` и повторный Optimize/no-op проверяются в адресном тесте. Полный выпуск, golden и реальные HA E2E здесь не запускались; до следующей беты нужно актуализировать существующий Optimize journey: строки отчёта → Apply → reload → Undo. Метаданные E2E сопровождает координатор пакета задач.\n\nРиски для внимания: точное сопоставление и диагностика графа/проекций, сохранение legacy-семантики, консервативный максимум для позиций отсутствующего этажа. Новая геометрия или иной выбор целей оптимизации не вводятся.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
