@@ -15,6 +15,10 @@ test('#248 original canonical reader and current exact migration verify reviewed
  assert.deepEqual(decodeLegacyWallSegmentModel(canonicalizeConfigGeometry(original.input.config)).config,original.expected.config);
  const actual=commitWallSegmentModel(original.input.config).config;
  assert.deepEqual(actual,current.expected.config);
+ const latticeTargets={fine:[['l','1','0'],['l','1','2'],['l','2','0'],['l','2','2']],
+  regular:[['l','24','24'],['l','24','48'],['l','48','24'],['l','48','48']]};
+ for(const space of actual.spaces) assert.deepEqual(space.plan_graph.nodes.map(n=>n.p).sort(),latticeTargets[space.id],
+  '#1282 migration arithmetic echoes restore the declared lattice, independently of the shared fixture');
  assert.deepEqual(canonicalizeLayoutGeometry(original.input.layout),current.expected.layout);
  assert.deepEqual(original.input,before,'neither facade may mutate the original full source');
  for(const space of actual.spaces){
@@ -37,4 +41,15 @@ test('#248 original canonical reader and current exact migration verify reviewed
  }
  // Original Optimize/no-op tests remain separate: this import/facade witness
  // deliberately cannot be used as an automatically generated Optimize oracle.
+});
+
+test('#1282 migration still preserves genuine off-grid source coordinates beyond arithmetic noise',()=>{
+ const source={model_version:10,markers:[],settings:{},spaces:[{id:'offgrid',rooms:[],partitions:[
+  {id:'p',a:[.22501,.39585],b:[.723456789,.564738291],cm:15}]}]};
+ const frozen=structuredClone(source),actual=commitWallSegmentModel(source).config.spaces[0];
+ assert.deepEqual(actual.partitions[0].a,[.22501,.39585]);
+ assert.deepEqual(actual.partitions[0].b,[.723456789,.564738291]);
+ assert.deepEqual(actual.plan_graph.nodes.map(n=>n.p).sort(),[
+  ['q','22501','100000','7917','20000'],['q','723456789','1000000000','564738291','1000000000']]);
+ assert.deepEqual(source,frozen);
 });

@@ -122,11 +122,39 @@ def test_optimize_roundtrip_fixture_has_one_backend_canonical_target(target) -> 
             "optimize-storage-roundtrip-current.json").read_text(encoding="utf-8"))
         expected = current["expected"]
         migrated, _count = commit_wall_segment_model(source["config"])
+        # Independent literals protect the shared current target from merely
+        # accepting a newly generated facade output. The historical reader's
+        # model10 oracle above remains unchanged.
+        lattice_targets = {
+            "fine": [["l", "1", "0"], ["l", "1", "2"], ["l", "2", "0"], ["l", "2", "2"]],
+            "regular": [["l", "24", "24"], ["l", "24", "48"], ["l", "48", "24"], ["l", "48", "48"]],
+        }
+        for space in migrated["spaces"]:
+            assert sorted(node["p"] for node in space["plan_graph"]["nodes"]) == lattice_targets[space["id"]]
     assert migrated == expected["config"]
     assert canonicalize_layout_geometry(source["layout"]) == expected["layout"]
     assert CONFIG_SCHEMA(source["config"]) == canonical_source
     assert CONFIG_SCHEMA(migrated) == expected["config"]
     assert LAYOUT_SCHEMA(source["layout"]) == expected["layout"]
+
+
+def test_current_migration_preserves_genuine_offgrid_coordinates() -> None:
+    """#1282 permits bounded arithmetic recovery, not general grid snapping."""
+    source = {"model_version": 10, "markers": [], "settings": {}, "spaces": [{
+        "id": "offgrid", "rooms": [], "partitions": [{
+            "id": "p", "a": [.22501, .39585], "b": [.723456789, .564738291], "cm": 15,
+        }],
+    }]}
+    frozen = deepcopy(source)
+    migrated, _count = commit_wall_segment_model(source)
+    space = migrated["spaces"][0]
+    assert space["partitions"][0]["a"] == [.22501, .39585]
+    assert space["partitions"][0]["b"] == [.723456789, .564738291]
+    assert sorted(node["p"] for node in space["plan_graph"]["nodes"]) == [
+        ["q", "22501", "100000", "7917", "20000"],
+        ["q", "723456789", "1000000000", "564738291", "1000000000"],
+    ]
+    assert source == frozen
 
 
 @pytest.mark.asyncio

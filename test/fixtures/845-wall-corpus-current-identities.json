@@ -51,6 +51,10 @@
       "configs": 257
     },
     {
+      "file": "test/fixtures/1285-editor-sequences.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -4078,7 +4082,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/0/source",
@@ -4109,7 +4113,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/0/candidates/0",
@@ -4154,7 +4158,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "cacaa9bf43bdb0320e4276311e0f587751f5808f0fece5f8b9a96dc34ca6abb3"
+      "fullConfigSha256": "2a9640d29db12ec305aa26de4907277edcb247f2a34ca98a0added6a6b681f5e"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/0/candidates/1",
@@ -4208,7 +4212,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "8e9d20d50f0df1419cc633e4dacbceb30282439a7cfd620160dc6941d08ce27f"
+      "fullConfigSha256": "ca7fe355fc67b644ee9f9a0180e97d7e2e7fca78327ad8a239989cf3fece358b"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/1/original",
@@ -4239,7 +4243,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/1/source",
@@ -4270,7 +4274,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/1/candidates/0",
@@ -4312,7 +4316,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "a7f7e3f344254c9b9ac45c3db801e0b652d19ca98d14f40cc0118cea564da045"
+      "fullConfigSha256": "9af7aa7125b8c21b67152cdfb43a087dd7584bcfa5e9fbc901f96cb4ef09ca21"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/1/candidates/1",
@@ -4366,7 +4370,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "641e9bc0aaacfcfe182148e5b793af55a0d6e45f228e458f317796fc453ef04e"
+      "fullConfigSha256": "ec7f33a1ef5e7d39b394324fc21c125af00cf0ba61248426d1bc8109a5d7d24c"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/2/original",
@@ -4397,7 +4401,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/2/source",
@@ -4428,7 +4432,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "610ee04dbac0419fa33dd388155f0897bac88ea71166336feb5c8466bbae3638"
+      "fullConfigSha256": "10b265794b72ea50f160c060a4579ffff55cbcedddab7d549b159678b3d7e754"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/2/candidates/0",
@@ -4473,7 +4477,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "9f15f1200539ff1ddd2cb17e52d32321ed3bb4a0d6a74629412271d26dc799e9"
+      "fullConfigSha256": "75222e77a570b3e31b7f66d07b5ff542854ddb406020d047109552b043c4541e"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/2/candidates/1",
@@ -4527,7 +4531,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "670d438bf18de581cf02a0926c702e569404ce77f6d1cab82958ac75618d37e6"
+      "fullConfigSha256": "46d32c23620bf61de9fa7d68d98623eed9e763ed34fb1be55a99384b36a385e8"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/3/original",
@@ -4558,7 +4562,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/3/source",
@@ -4589,7 +4593,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "610ee04dbac0419fa33dd388155f0897bac88ea71166336feb5c8466bbae3638"
+      "fullConfigSha256": "10b265794b72ea50f160c060a4579ffff55cbcedddab7d549b159678b3d7e754"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/3/candidates/0",
@@ -4631,7 +4635,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "fd8034408bc162d58aef76226a6f574145daf212b1a590ad672a68be240ecc32"
+      "fullConfigSha256": "68c01437fe164992b7d17453b881adcf9e25f537c469466cb2ffa5a7f57e7de0"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/3/candidates/1",
@@ -4685,7 +4689,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "960b04cb79fed247c80a6e1e31dd7b8662b3f07ad7c777412e18a49cbf39d1bd"
+      "fullConfigSha256": "bc2534643a22a0167ad5ca105d00981915cf509151aaff04c1130518abcf7877"
     },
     {
       "label": "test/fixtures/1166-room-candidates.json/4/original",
@@ -6892,7 +6896,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "1729ae710c6e4f4eb593bd323a04e27d1c62dd594318d1d30f91e9b5bbefc849"
+      "fullConfigSha256": "d5f8c19b0a90598d03885a818365b4ea8f97009f41d552047529b1ddc9c1d7ab"
     },
     {
       "label": "test/fixtures/197-junction-patch.json",
@@ -7201,7 +7205,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "ae81d81526f5e09529e3fdc7d07e6e876882c7e89559adcdd9285ee478306839"
+      "fullConfigSha256": "f74be893126a6beb96b2e45195bba4ae923b442818374fcf87a989aabc5324e3"
     },
     {
       "label": "test/fixtures/276-coincident-partition.json",
@@ -7261,7 +7265,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "9714f01618315cbdab79264bfd1cdeb7f3deb43a82e9b06830a6133410ed2909"
+      "fullConfigSha256": "92561c8f29ef18123372caaab7e7938ae4604418df7fd5167f6a4951a2e48b5f"
     },
     {
       "label": "test/fixtures/278-wall-union-isolation.json/config",
@@ -7303,7 +7307,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "6491e538b3b627a9c462f2c43122bb9cc04858288565dcaa22b3f03a5ec5e09f"
+      "fullConfigSha256": "e53cb34dad9075f275d25c6ce2239db7673208a1db990561c2f79b5a48c2a673"
     },
     {
       "label": "test/fixtures/280-optimize-rehost-candidate.json",
@@ -7361,7 +7365,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "d4732f4a6bd64334a3a5135ec180bfc3ec54c114cdbf8a426c8907713cf1e284"
+      "fullConfigSha256": "77443d34f796684b447a539c6f19db6b46365542043dccc5ec23be76b1de4a3d"
     },
     {
       "label": "test/fixtures/281-resize-outer-candidate.json",
@@ -7788,7 +7792,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "51d6f39fd1bea5d8599dd5391119d4436689d8f548a6e831e48a595ab273ba12"
+      "fullConfigSha256": "eeae6bb8a4f6b8c0f1e75d3341f32a9325ee5b478b99644e10df84f0d9626f95"
     },
     {
       "label": "test/fixtures/560-corpus/c2-t-junction-thicknesses.json",
@@ -7958,7 +7962,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "6eccaf3f72e7ce5a9670572c25a3ae1721654b89172a36b855702974b145a7c7"
+      "fullConfigSha256": "111003eba49327ce0a4a95300983760d2c815a94a391f9ec889077ec647f5787"
     },
     {
       "label": "test/fixtures/560-corpus/c5-node-noise-near-axis.json",
@@ -8001,7 +8005,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "54962074f740a0a009693604f10f4fc436b9d1bb05bfa58e5126a26d7a5b9f2a"
+      "fullConfigSha256": "eae4398297870fbce49610759b4dcfb50482b81ee673e15d3a6aa3df56529fb5"
     },
     {
       "label": "test/fixtures/560-corpus/c6-stale-layout.json/config",
@@ -8031,7 +8035,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "366441a09bd0bb24befd5cc1eec0e4261f1802dfb29589c391da9ffde0f20e06"
+      "fullConfigSha256": "a57281540b51c6c4f274fa8f47e37aea7eaedccc56014823ff317cceb22c1666"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/0/before",
@@ -8074,7 +8078,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "7fe078dede9b7cc1195f63dad9d2fdcad1f50fa57250449a78266008511d0259"
+      "fullConfigSha256": "87857210b211b033b79fddfe4349017d90cfcf2713ea27155c63659c6bfd6a32"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/0/after",
@@ -8126,7 +8130,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "2079be9397309a0ebf12bc91535964c4aeb39875838902de406288b0227b2417"
+      "fullConfigSha256": "f63deb81feaaa730c5cff37a747e28b8849bc48b2177d35fa09ae20a75c8a3c6"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/1/before",
@@ -8168,7 +8172,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "b02336be27db1dac5617bc4e344eb2f6de906752c097e784f7830c4f5978f5fa"
+      "fullConfigSha256": "f8b5d73a83a326eb4fa14df7eb1e3c50f73650cafbfa86b84fd63c8f53bcd33e"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/1/after",
@@ -8219,7 +8223,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "6e7b7b2a1b5c479708ae03fbbee8b1a96a18a4c849db5b792a4c9a9cba70a40d"
+      "fullConfigSha256": "b8b1a00d08e3e310e5e0c8ad94c16ee84291df3a604d18b9306f2342b1775aa5"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/2/before",
@@ -8261,7 +8265,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "a6cc92a70e2db0d0b5477fb11b3fec185902b9b58f232dab1e4547c39095a708"
+      "fullConfigSha256": "ebd3cc8aa563e2471d48b802c9dab551df6950d1219d22a8def3d799d44363aa"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/2/after",
@@ -8312,7 +8316,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "ad3b851c1e2b1defec4b13bb11aaa5dac79a44a240f9576a01a48b328f3e335b"
+      "fullConfigSha256": "5aef78cbd0e5c77c1063978eaf254b88f831e24165d6d36fc4a95d5fb27f24c3"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/3/before",
@@ -8353,7 +8357,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "865870f35e8ec0773ce553acac4fb1f711d0ba8c7959d63ec7316d4b5fd4beb4"
+      "fullConfigSha256": "6f6d6c87b6bca953012f4d924813a3def59610b8091d83af47595a0c7b503faa"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/3/after",
@@ -8402,7 +8406,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "e0512d4920ae568240cc8d2cfacadb818e6fd1b5cab484924e49d0c0cda0a0ab"
+      "fullConfigSha256": "078566451aab27d7156b251a7beb9b313dc51332ba5eef4f80ff9d981ff75430"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/4/before",
@@ -8445,7 +8449,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "7fe078dede9b7cc1195f63dad9d2fdcad1f50fa57250449a78266008511d0259"
+      "fullConfigSha256": "87857210b211b033b79fddfe4349017d90cfcf2713ea27155c63659c6bfd6a32"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/4/after",
@@ -8497,7 +8501,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "a9c51d8ae770b724f2ac4391e5f728feecbbd5f5225058d0a036fc5038c85f05"
+      "fullConfigSha256": "f23140a90016a56edfad09e8aae200f28f1fe7c8fee3c4cc89a8ebd394b799c0"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/5/before",
@@ -8540,7 +8544,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "08ce2c14b0527bc8dc2501a6f39ecef92c795bad3950aee69071d5e16859cd2d"
+      "fullConfigSha256": "0c3c1f3db6c3821471415a4b2d2e979447df755306693b1300e729aa44c92640"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/5/after",
@@ -8592,7 +8596,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "546525bb9edbfb3e5fef393e1da31316081b8b7d635c14e65cdfc661effed90b"
+      "fullConfigSha256": "366874f3cf9ffdecd8c052543283f2de83975678bdb2c144eaebc3c45040bf2a"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/6/before",
@@ -8635,7 +8639,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "480e357cba3bd9696e4a65b5c898098bb80012661136d670c5e82bc6bd8ab8b4"
+      "fullConfigSha256": "c89cdf8a5ec54dc9bc8a72d931a6c4a29c63ab9a843d0c0fe656eeaf374c08b3"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/6/after",
@@ -8687,7 +8691,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "d81121e41bfec82ab6ea336a7ba8e99c746db289bbb48ece31897b145352c772"
+      "fullConfigSha256": "2c8ba2c48a51e5f4e7714b952200c5d06f22421dbd276961f0fa0dd4a5947e75"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/7/before",
@@ -8728,7 +8732,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "e46114478a8023757e833451bfb700cda74bfd96a5e79c169738d6cef3819022"
+      "fullConfigSha256": "4011c34e7772206f53f20ff9a8478c8cdb0d21c2c5e24b6bd297a46fcacd3803"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/7/after",
@@ -8777,7 +8781,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "87a5069dfde9b4e213314651f21256051f84504fddb000d9197027a5a504583a"
+      "fullConfigSha256": "ad28e95db032ace68bf9b411b4affc7a252468187c54b31cccb486cc1580e39c"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/8/before",
@@ -8828,7 +8832,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "9674d73015b6e0140f28a99620db12ebad3a37b49c7d775025a38f7436c0f07d"
+      "fullConfigSha256": "0c12dc5ad8e51bef1505e2c37bb95d271aab9d010e6bfcfcbf85749c8125f081"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/8/after",
@@ -8888,7 +8892,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "cd95d2910c1c248e2ee5721b6d7cc0d7fa78a7c52a84ecf7c804d44ab0fc6a1a"
+      "fullConfigSha256": "06fed792045155905bd5e7392c6840c91a675f0aac078dec9fb640a26be1b2f1"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/9/before",
@@ -8939,7 +8943,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "fcd38a37f763547053ce9bfddc2d17e643cb37e1f167ffc4ac62ed40fecb1d38"
+      "fullConfigSha256": "300c9daf85f2f1804431b61224f173ed2938fc4df6f74ffdca242ecc77a76898"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/9/after",
@@ -8999,7 +9003,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "8b46d4a68ce85c7c20523c8ba8efbd9d4a90992516de0dc86f577910750eccc3"
+      "fullConfigSha256": "3d50d8b4a1b06ca280c74b3485a413c492803035d2540c387d050d7b100e0198"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/10/before",
@@ -9050,7 +9054,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "065a0f57efd833bbf05cd4b6027da9b0fc3378dada7f190457e568a8e904d359"
+      "fullConfigSha256": "954ad4b1603a73ad225da513af1a7516c6c1578ed5e0c44fc4a1594b39590070"
     },
     {
       "label": "test/fixtures/804-wall-face-lineage-backend.json/10/after",
@@ -9110,7 +9114,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "eced9292d7c1091c6199a09d32c07cb83a1bf59773012ce599866513f07e17c7"
+      "fullConfigSha256": "cb8af991209a4cbc363c685c0e0cb2126e35317204a333fbb9e20ded68add4f4"
     },
     {
       "label": "test/fixtures/834-node-connected.json",
@@ -9342,7 +9346,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "72cc3173ecdd4adbd1e83bc479b5d9463b4991ef19d765c7b76fb3c103f94e50"
+      "fullConfigSha256": "6214fd81417eeb1a218c2f97d957df22dd3ae86e04a7ea051a2f6eed6e491c6a"
     },
     {
       "label": "test/fixtures/842-geometry-cleanup.json/before",
@@ -10655,7 +10659,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "00618ca132a44dadd02e3bb387e2ec81a7dd91e493eb963a2d174dd895d19ba0"
+      "fullConfigSha256": "e9955aab9aab5af7eb310512ce5cae98a8a3988e6c15fba1b638bb02b1e76108"
     },
     {
       "label": "test/fixtures/optimize-storage-roundtrip.json/expected/config",
@@ -10707,7 +10711,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "7f6d66a99f4c51bbdf7b38aa4c8527e42bbf5ac0c16b79401d9451d46e33922d"
+      "fullConfigSha256": "e94bb813e0137a81049bf273dd80e39b80dfced7fc0a8b2d3a774e2f15f9dcc5"
     },
     {
       "label": "test/fixtures/real-plan-first-floor.json/space",
@@ -14116,7 +14120,7 @@
           ]
         }
       ],
-      "fullConfigSha256": "8809bb0e21e47c1e2fe675d6e19d768c0c3cb4c5994214eb238c921e8182e081"
+      "fullConfigSha256": "374094f89218fc31a9a7ee51563b05b88c5f00655c21574f3b5f16d09a4f68e5"
     },
     {
       "label": "demo/fixtures/visual-matrix.mjs:makeVisualMatrixFixture/config",
@@ -14500,7 +14504,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "05acb88472aad8f07de0e578693abf139e0b65e8afc62097ec9adf9e55ff5a95"
+      "fullConfigSha256": "3a1996dddabae2b3fd61a60f47c2318789ef0e48c2db47275b5028104f70560c"
     },
     {
       "label": "demo/srv/demo.html:CFG",
@@ -23424,7 +23428,7 @@
     },
     {
       "label": "test/fixtures/optimize-storage-roundtrip-current.json/expected/config",
-      "fingerprint": "ff6e546ec0b23a1207b95a7a47fdca5d91c3af0a97649b3372ba42ed27780826",
+      "fingerprint": "7371db2dfa9b254f92ddccd050b0722dfb60c5b3a43bf7abae028e8da3b24b88",
       "ok": true,
       "identity": [
         {
@@ -23472,7 +23476,7 @@
           "partitions": []
         }
       ],
-      "fullConfigSha256": "00618ca132a44dadd02e3bb387e2ec81a7dd91e493eb963a2d174dd895d19ba0"
+      "fullConfigSha256": "e9955aab9aab5af7eb310512ce5cae98a8a3988e6c15fba1b638bb02b1e76108"
     },
     {
       "label": "test/fixtures/plan-graph-corpus.json/migrations/0/space",

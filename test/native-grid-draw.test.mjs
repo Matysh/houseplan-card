@@ -28,12 +28,22 @@ test('#1237 native grid producer retains exact indices through graph intent, inc
   assert.deepEqual(r.graph.nodes.find(n=>n.id==='end').p,['l','102','95']);
 });
 
-test('#1237 grid provenance does not round an arbitrary authored off-grid endpoint',()=>{
+test('#1282 numeric authored lattice noise is restored without a native grid annotation',()=>{
   const sp=runtime().host._curSpaceCfg,draft=structuredClone(sp);
   draft.partitions=[{id:'p',a:[.22500000000000003,.39583333333333337],b:[.723456789,.564738291],cm:15}];
   const result=commitGraphEditResult(sp,draft,{kind:'partitions',ids:['p']});
+  assert.deepEqual(result.graph.nodes.find(n=>n.id===result.graph.edges[0].from).p,['l','54','95']);
+});
+
+test('#1237 genuinely off-grid authored endpoints retain exact decimal coordinates',()=>{
+  const sp=runtime().host._curSpaceCfg,draft=structuredClone(sp);
+  // Both offsets exceed #1282's 1e-4-step arithmetic-noise tolerance.
+  draft.partitions=[{id:'p',a:[.22501,.39585],b:[.723456789,.564738291],cm:15}];
+  const result=commitGraphEditResult(sp,draft,{kind:'partitions',ids:['p']});
   assert.deepEqual(result.graph.nodes.find(n=>n.id===result.graph.edges[0].from).p,
-    ['q','22500000000000003','100000000000000000','39583333333333337','100000000000000000']);
+    ['q','22501','100000','7917','20000']);
+  assert.deepEqual(result.graph.nodes.find(n=>n.id===result.graph.edges[0].to).p,
+    ['q','723456789','1000000000','564738291','1000000000']);
 });
 
 test('#1237 near-axis retirement of an endpoint snap retains the exact chain anchor',()=>{
