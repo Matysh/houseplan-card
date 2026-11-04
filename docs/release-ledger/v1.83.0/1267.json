@@ -1,0 +1,5 @@
+{
+  "schema": 1, "issue": 1267, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Restore the existing opening drag ruler/centre contract in the new model11 branch without changing partition hosts or graph safety domains.",
+  "summary": {"ru":"При переносе проёмов снова видны расстояния до краёв и привязка к центру стены.","en":"Dragging openings again shows shoulder dimensions and snaps to the room wall centre."}
+}

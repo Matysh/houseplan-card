@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore shoulder rulers and room-wall centre snapping while dragging model-11 wall openings, measuring the final allowed exact host position. [#1267](https://github.com/Matysh/houseplan-card/issues/1267)
+
 - Start the weather-only parent-render assertion after the preceding scene finishes its continuity commit, retaining the strict zero-render check for the measured weather update. [#1270](https://github.com/Matysh/houseplan-card/issues/1270)
 
 - Keep opening-drag Escape cancellation ahead of wide Properties selection dismissal; a late pointer release cannot save the cancelled opening move. [#1278](https://github.com/Matysh/houseplan-card/issues/1278)

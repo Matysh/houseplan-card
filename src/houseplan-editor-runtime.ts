@@ -6257,22 +6257,32 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
         ? partitionOpeningJambMargin(anchor, this.host._cellCm, this.host._gridPitch) : 0;
       const shoulder = cfg.length * NORM_W / 2 + jamb;
       if (length < shoulder * 2 - 1e-9) return;
-      let along = (raw[0] - run.a[0]) * ux + (raw[1] - run.a[1]) * uy;
-      along = Math.max(shoulder, Math.min(length - shoulder,
-        Math.round(along / this.host._gridPitch) * this.host._gridPitch));
-      const target = graphOpeningRunTarget(carriers, cfg.host.id,
-        [run.a[0] + ux * along, run.a[1] + uy * along]);
-      if (!target) return;
       let angle = Math.atan2(dy, dx) * 180 / Math.PI;
       if (angle >= 90) angle -= 180;
       else if (angle < -90) angle += 180;
+      let along = (raw[0] - run.a[0]) * ux + (raw[1] - run.a[1]) * uy;
+      // #1267: a graph host still uses one room edge for shoulders and its
+      // centre magnet. Resolve that proposal before the exact host domain;
+      // the domain remains authoritative when another opening blocks it.
+      const ruler = cfg.host.kind === 'wall' ? this._opRuler({
+        x: run.a[0] + ux * along, y: run.a[1] + uy * along, angle,
+      }, cfg.length * NORM_W) : null;
+      along = ruler?.measure
+        ? (ruler.x - run.a[0]) * ux + (ruler.y - run.a[1]) * uy
+        : Math.round(along / this.host._gridPitch) * this.host._gridPitch;
+      along = Math.max(shoulder, Math.min(length - shoulder, along));
+      const target = graphOpeningRunTarget(carriers, cfg.host.id,
+        [run.a[0] + ux * along, run.a[1] + uy * along]);
+      if (!target) return;
       const changed = cfg.x !== target.normalized[0] || cfg.y !== target.normalized[1]
         || cfg.angle !== angle || cfg.host.id !== target.host.id || cfg.host.t !== target.host.t;
       drag.moved = true;
       if (changed) drag.dirty = true;
       cfg.host = target.host;
       cfg.x = target.normalized[0]; cfg.y = target.normalized[1]; cfg.angle = angle;
-      this.host._opMeasure = null;
+      this.host._opMeasure = cfg.host.kind === 'wall' ? this._opRuler({
+        x: cfg.x * NORM_W, y: cfg.y * this.host._spaceH, angle,
+      }, cfg.length * NORM_W, false).measure : null;
       this.host.requestUpdate();
       return;
     }
@@ -6336,15 +6346,16 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
 public _opRuler(
     snap: { x: number; y: number; angle: number },
     rlen: number,
+    snapPosition = true,
   ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
     const rooms = this.host._spaceModel()?.rooms || [];
     const tol = this.host._gridPitch / 2;
     let cx = snap.x, cy = snap.y;
     let sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
-    if (sh && sh.centered && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
+    if (snapPosition && sh && sh.centered && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
       [cx, cy] = sh.wallCenter;
       sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
-    } else if (sh) {
+    } else if (snapPosition && sh) {
       // Not centred: quantise the offset ALONG the wall to the grid step
       // (docs/CANVAS.md §9.3). Grid-BOUND would lift the opening off a diagonal
       // wall, so the wall stays the master and the grid only says WHERE on it.
@@ -6371,7 +6382,7 @@ public _opRuler(
       x: cx, y: cy, angle: snap.angle,
       measure: {
         labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
-        guide: sh.centered
+        guide: sh.centered && Math.hypot(cx - sh.wallCenter[0], cy - sh.wallCenter[1]) < 1e-9
           ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
           : null,
       },
