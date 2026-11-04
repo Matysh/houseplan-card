@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2761,
+  "revision": 2762,
   "nextTicket": 169,
   "nextFence": 169,
   "tasks": {
@@ -3139,6 +3139,10 @@
       "digest": "8b762a2788eb02552f1dfc02d8cfffa2a6c56bdd0e02574a20338115c7232f61",
       "issue": 1264
     },
+    "github:41825132832:1:completions:message:a403630a16aafb4b74624238522febb37de2c61ecfc054babe6fb0934f48d91e": {
+      "digest": "f2a72db0e85719eab83a556af7298bcfc7b34c7870f087b77fbc0ed9649f2bcf",
+      "issue": 1264
+    },
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6": {
       "digest": "970db07f4b5151d3c373f21e064f04126a7fd55e25f2a6778045d563e0bad2d4",
       "issue": 1264,
@@ -3185,7 +3189,8 @@
           "entry": 1,
           "detail": "Браузер: floor cache reuse: failed; Браузер: resize pointer real plan: failed",
           "eventId": "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return:return:1264"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:aa4a5764-c50b-48cf-8e5d-83985a2be774": {
