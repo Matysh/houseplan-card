@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3117,
+  "revision": 3118,
   "nextTicket": 187,
   "nextFence": 186,
   "tasks": {
@@ -3721,6 +3721,10 @@
       "digest": "afe2a9955623df946d342f76081741274926bb3c0c9f065c26208209d46736d7",
       "issue": 1286
     },
+    "github:41893621896:1:completions:message:f3c3db3d4163fe36fc811f64dcee6c71d7045f84948e2ba0917d2912e8fefa12": {
+      "digest": "54013b6232fffa795c7b590d9379541f950e1434e56a49f9628636322e5f796f",
+      "issue": 1286
+    },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
       "issue": 1283,
@@ -4300,7 +4304,8 @@
         "reviewChanges": "### Цель и результат\nОсновная панель должна восстанавливать явный On/Off после нативной навигации по HA, reload другой страницы и возврата. Текущий этап — S6; первоначальная аналитика выше описывает состояние до реализации. Выбран show: нужен независимый взгляд на совместимость старых локальных записей, а не только на замену строки ключа.\n\n### Решение и альтернативы\nПервоначальный материал реализации: `511dec567`, ветка `codex/issue-1286-summary-visibility`, база `659440571bc388d108ec7f0200ce9c407a9ee132`. После штатной актуализации — `b5a3fe5dfd74443f8a9151a80277876a82b24f45`, тот же diff.\nОсновной panel-host использует слот `panel-root-v2`. Shell передаёт свой зарегистрированный route prefix карточке до её подключения; текущий адрес другой страницы HA не становится владельцем настройки. Логическая идентификация Lovelace/Masonry не меняется.\nЗагрузка runtime и cold-runtime recovery используют один reader. Существующая canonical-запись, в том числе Off, приоритетна. Если её нет, старые version-1 записи берутся только из точного user/route/panel namespace и узнаваемого старого panel slot, если нормализованные значения согласованы. Чтение ничего не записывает/удаляет; следующая явная правка сохраняется в canonical key.\nИсторические записи без timestamp могут противоречить друг другу: выбирать «последнюю» по DOM-индексу или порядку localStorage нельзя. Такие записи сохраняются, выбор требуется задать один раз. Не переносим данные между пользователями/route/Lovelace и не интерпретируем future legacy records.\n`saveLocal` заново разрешает текущую identity перед записью: временно пропавший пользователь не даёт писать в прежний пользовательский ключ. Серверная конфигурация, модель данных, API, стиль/анимации панели и overrides профилей не меняются.\n\n### Риски и места для внимания\n- Однозначное восстановление старого выбора и отсутствие необоснованной миграции неоднозначных записей.\n- Раннее подключение/поздний hass.user, сохранённый HA panel во время чужого route, параллельные карточки Lovelace.\n- Отдельно сохраняются icon/font scales той же локальной записи.\n- Изменены ключи двух unit fixtures, которые должны стартовать с уже сохранённым canonical состоянием; их проверки анимаций/lifecycle не ослаблены.\n- Локальное окружение: Ubuntu WSL. Первый S6 на NTFS прошёл, но синхронная обработка файлов задержала heartbeat и допуск очереди истёк. Та же неизменённая ветка `b5a3fe5df` перенесена в native Linux worktree `/home/sergey/houseplan-1286-summary-visibility`; артефакты и общий кеш сохранены, общие настройки Git и чужие worktrees не менялись. Истечение допуска не объявляется дефектом продукта или падением тестов.\n\n### Проверки и ограничения\nДо фикса две новые регрессии упали: смена DOM resolver index меняла ключ; смена текущего URL меняла namespace сохранённой панели. После исправления адресные preference/runtime проверки — 23 PASS, presentation — 22 PASS; существующие pure summary/Masonry проверки — 21 PASS на тех же значимых входах. Сборка/типы debug — PASS.\nНастоящий HA `2026.10.4` в отдельном Docker-контейнере с синтетическим seed и свежим frontend: оба сценария show=true/false прошли через native sidebar → другую HA страницу → reload → native sidebar обратно. Проверены aria-pressed, фактическая видимость overlay и точное сохранение localStorage record. Это адресная проверка, НЕ полный HA E2E/релизный профиль. Контейнер с уникальной ownership label удалён после проверки; реальный HA владельца не использовался.\nЛокальные receipts: `artifacts/1286-ha-result.json`, `artifacts/1286-ha-regression.log`, `artifacts/1286-addressed.log`, `artifacts/1286-summary-fixed.log`; диагностический сценарий `artifacts/1286-ha-regression.mjs`. Итог native HA:\n```json\n{\"haVersion\":\"2026.10.4\",\"showTrueRouteReloadReturn\":\"passed\",\"showFalseRouteReloadReturn\":\"passed\",\"exactPreferencesRetained\":true,\"ownedContainerRemoved\":true}\n```\nОфициальный S6 выполняет штатный finish после допуска в общую очередь: build/types, critical-data-rights, startup View, четыре адресных unit файла и existing summary browser smoke. До его завершения это не заявляется как пройденный финальный S6. Golden, полный stable/beta профиль и выпуск не запускались.\nПервый официальный local S6 `20261104T184718230-7e8a1b6a` завершён PASS на `b5a3fe5df`: materialClean=true, build/types, critical 151/151, affected 68/68, startup и browser summary — PASS. Receipt не успел быть передан в очередь из-за истёкшего допуска. Выполняется новый явный `finish` из native worktree с зачётом применимых успешных результатов; прежний отчёт не подменяется ручным PASS.\nПостоянная HA E2E-регрессия перед ближайшей бетой отмечена как «надо»: https://github.com/Matysh/houseplan-e2e/issues/28 .",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
