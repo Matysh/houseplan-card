@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3106,
+  "revision": 3107,
   "nextTicket": 187,
   "nextFence": 185,
   "tasks": {
@@ -3656,6 +3656,10 @@
       "digest": "251ce52d9a22c1ee6ecef57ee940d424ca1e224a526fdc1797b8f2546e0302b8",
       "issue": 1287
     },
+    "github:41893398123:1:completions:message:e7ef205907e5b56f5ac7e654750040bd2af8be4059378de92973c2a604f4145c": {
+      "digest": "a41edfb79e8a295774db9efa18d10fe2c359503a8e867a82f84cc2be4e0d0e6f",
+      "issue": 1282
+    },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
       "issue": 1283,
@@ -4146,7 +4150,8 @@
           "entry": 1,
           "detail": "Финальный Merge/no-op требует #1283; её код-ревью вернуло только changelog, исправление ещё не слито. Автор возвращает свой слот до S6, чтобы не запускать заведомо неприменимую проверку. Работа и rebase8d476063f сохранены; повторный finish после S8 #1283.",
           "eventId": "author-return-1287-19c1ad73-e929-44c5-b7a5-41994f0234de:return:1287"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:2:admit": {
