@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2445,
+  "revision": 2446,
   "nextTicket": 151,
   "nextFence": 151,
   "tasks": {
@@ -2585,7 +2585,13 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793781178325,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "273908b5442fb69e623fd36790fa81f1dc3f1653",
+      "changedFiles": [
+        "demo/smoke_zigbee_tooltip_layout.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     },
     "1273": {
       "issue": 1273,
@@ -2807,12 +2813,17 @@
     "token": "150:finish:d46e17a4-df02-4920-80a1-2a06989a035c:finish:1:admit",
     "fence": 150,
     "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+    "phase": "testing",
     "admittedAt": 1793781182702,
-    "expiresAt": 1793781482702
+    "expiresAt": 1793781488794,
+    "patchId": "273908b5442fb69e623fd36790fa81f1dc3f1653"
   },
   "events": {
+    "finish:d46e17a4-df02-4920-80a1-2a06989a035c:finish:2:synchronized": {
+      "digest": "06ee5fde4ed4cfbae4c67872441f8e47b7de8d6f5d87ff291ec02ce703483345",
+      "issue": 1271
+    },
     "finish:d46e17a4-df02-4920-80a1-2a06989a035c": {
       "digest": "ae5058254f8786585618b7183b6e0f5386344c5a37e58a826b4014dae1e2c71c",
       "issue": 1271,
