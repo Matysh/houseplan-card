@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2293,
+  "revision": 2294,
   "nextTicket": 142,
   "nextFence": 142,
   "tasks": {
@@ -78,31 +78,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "4f895343407cd730222fa3b47c188703332f16ce"
-      }
-    },
-    "1128": {
-      "issue": 1128,
-      "branch": "issue/1128-touch-room-link",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-      "mergedAt": 1793563792935,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentDigest": "83cedc45bb09593229c1"
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "3da8f630e25f42d43cce35deec3fd3c292c7610e"
       }
     },
     "1130": {
@@ -2570,7 +2545,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
       }
     }
   },
@@ -2678,7 +2654,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:41795369580:1:1263": {
+      "digest": "3b5abacf331cb5278e013fa83e5e323cff586b170c6b01323bd1a9e4dc51f5fe",
+      "issue": 1263,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1263,
+        "at": 1793778926660,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e",
     "status": "pending",
