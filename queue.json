@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2850,
+  "revision": 2851,
   "nextTicket": 173,
   "nextFence": 173,
   "tasks": {
@@ -2840,7 +2840,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793804356625,
       "reviewEntry": 2,
-      "patchId": "d97d6a78e8ac5eece01644e1980e7c21244a5530",
+      "patchId": "1c4c94c1f047301129fe029a856a87115b2b0a50",
       "changedFiles": [
         "demo/golden/baselines/approved-ui-contacts-270-1119.png",
         "demo/golden/baselines/approved-ui-contacts-90-1119.png",
@@ -3325,10 +3325,11 @@
     "token": "172:finish:9e366bdd-d682-4b81-b0c3-65d18377486d:finish:1:admit",
     "fence": 172,
     "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
+    "phase": "testing",
     "admittedAt": 1793804361570,
-    "expiresAt": 1793804661570
+    "expiresAt": 1793804669164,
+    "patchId": "1c4c94c1f047301129fe029a856a87115b2b0a50"
   },
   "events": {
     "github:41851492311:1:completions:message:ee734eda2b0276c31f348cbbb94fdcb053025c00d449f377dff9ea2589684881": {
@@ -3381,6 +3382,10 @@
     },
     "github:41852290769:1:completions:metadata:91ab3ac8-4166-4ae9-a50b-5fc866046667:task-notice:1277::": {
       "digest": "4f8bfbe6127b5436f63ef937561974d172ebb19de18b6593aa2d82dc99b3dcbf",
+      "issue": 1277
+    },
+    "finish:9e366bdd-d682-4b81-b0c3-65d18377486d:finish:2:synchronized": {
+      "digest": "36d22b84262f4b96d0f38c61f4ec1c2cab4febd4f9c43a999afaa7cde962d745",
       "issue": 1277
     },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2": {
