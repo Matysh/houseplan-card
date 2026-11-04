@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2513,
+  "revision": 2514,
   "nextTicket": 156,
   "nextFence": 156,
   "tasks": {
@@ -3035,6 +3035,10 @@
       "digest": "2cb281aace8063c0ba451a4cd2ad913e5a02fb3f1b82788f39f9f2a43fe9b1dd",
       "issue": 1269
     },
+    "github:41804306573:1:completions:message:aa15d6d944d17f82045c85a09361bdf8bb9b0bfde4a823a0382a64967c678fad": {
+      "digest": "86f4ff25b893152cc8a2715c47330f1ded325a8984a218d32fbd97a593dc6082",
+      "issue": 1269
+    },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
       "digest": "77d31853002f912be355305ed434a307b3beac91cc08907685cf80195b98b33b",
       "issue": 1269,
@@ -3294,7 +3298,8 @@
           "entry": 4,
           "detail": "Браузер: stairs: failed",
           "eventId": "finish:c8a16bb3-9e08-4e7a-bbc1-f725d333974f:finish:3:return:return:1269"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5fe263a1-a363-43b8-9675-fd78e68a1b97": {
