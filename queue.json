@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2334,
+  "revision": 2335,
   "nextTicket": 146,
   "nextFence": 146,
   "tasks": {
@@ -2562,7 +2562,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793779547468,
       "reviewEntry": 3,
-      "patchId": "5d2ad1f81458a9e5f381f48edad9ba81f96bdc6f",
+      "patchId": "6ef0475c648a02daa90993181f0a063256c6badc",
       "changedFiles": [
         "demo/smoke_opening_drag.mjs",
         "demo/smoke_optimize_coordinate_canonicalization.mjs",
@@ -2728,10 +2728,11 @@
     "token": "145:finish:78d51ae5-1835-4a8f-9df8-f06bf0fec118:finish:1:admit",
     "fence": 145,
     "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c347b44d10fa57238008f06e9fc741329a91c492",
+    "phase": "testing",
     "admittedAt": 1793779551131,
-    "expiresAt": 1793779851131
+    "expiresAt": 1793779860792,
+    "patchId": "6ef0475c648a02daa90993181f0a063256c6badc"
   },
   "events": {
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:2:synchronized": {
@@ -2780,6 +2781,10 @@
     },
     "github:41796764201:1:completions:message:31a9de402361effb513cb1494a3cfe3719d83edfaa36e744acddb72bf8c9ee0a": {
       "digest": "8e3ef7b42b8d79bdbbeccd76b359705511c9880dbb99bf4367db63679691d4df",
+      "issue": 1273
+    },
+    "finish:78d51ae5-1835-4a8f-9df8-f06bf0fec118:finish:2:synchronized": {
+      "digest": "dc7db34138eaac43ce8870161c0118a034984a093e9148762a71d1aaeb0c84de",
       "issue": 1273
     },
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96": {
