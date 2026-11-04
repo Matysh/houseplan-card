@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2923,
+  "revision": 2924,
   "nextTicket": 175,
   "nextFence": 175,
   "tasks": {
@@ -3030,7 +3030,10 @@
         "src/plan-graph.ts",
         "test/graph-edit-intent.test.mjs",
         "test/graph-edit-seams.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1793816320438,
+      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1099-geometry-commit-20261028/test/plan-graph.test.mjs'"
     }
   },
   "ownerDecisions": {},
@@ -3159,6 +3162,10 @@
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12:finish:2:synchronized": {
       "digest": "ed56921a2b256ec0a192069990320b7a1f4eaddae16121db9d83b1f0b9fa9d5a",
+      "issue": 1283
+    },
+    "finish:b49a6255-b452-4889-9227-a02aa0ae1c12:finish:3:automation-pending": {
+      "digest": "46ccb6edc6fd15e8fb31f598cb3464723a426c51328c02cbe67563634a34fec6",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
