@@ -12,6 +12,28 @@ function fixture(kind = 'beta', issues = [1]) {
     state = reduceRelease(state, { ...event, id: `event-${++count}` });
   } };
 }
+test('large release membership completes through a capacity-limited GitHub transport', async () => {
+  const numbers = Array.from({ length: 114 }, (_, index) => index + 1), f = fixture('beta', numbers);
+  f.candidate.delivery = { hacsAvailable: true };
+  let active = 0, peak = 0;
+  const closed = [], comments = [];
+  const api = { owner: 'o', repo: 'r',
+    getIssue: async number => {
+      active++; peak = Math.max(peak, active);
+      try {
+        if (active > 8) throw Error('transport concurrent-request limit');
+        await new Promise(resolve => setImmediate(resolve));
+        return { number, state: [1, 114].includes(number) ? 'open' : 'closed', labels: ['S8-merged'] };
+      } finally { active--; }
+    },
+    listIssueComments: async () => [], removeLabel: async () => {},
+    updateIssue: async number => { closed.push(number); }, comment: async number => { comments.push(number); },
+  };
+  const result = await completePublishedRelease({ candidate: f.candidate, api, onUpdate: f.onUpdate });
+  assert.equal(result.status, 'completed');
+  assert.deepEqual(closed, [1, 114]); assert.deepEqual(comments, [1, 114]);
+  assert.ok(peak <= 8, 'membership inspection must respect transport capacity');
+});
 test('partial issue completion resumes after S8 removal without duplicate comment, tests or publication', async () => {
   const f = fixture(), issue = { number: 1, state: 'open', labels: ['S8-merged', 'track:show', 'bug'] }, comments = [];
   let closeAttempts = 0, hacs = 0, reads = [];

@@ -41,7 +41,10 @@ export async function completePublishedRelease({ candidate: input, api, git, ver
     let work = candidate.completion.issues;
     try {
       if (!work?.eligible) {
-        const issues = await Promise.all(included.map(number => api.getIssue(number)));
+        // A full release can exceed GitHub's shared concurrent-request limit.
+        // Inspect in order before recording eligibility; closure remains resumable.
+        const issues = [];
+        for (const number of included) issues.push(await api.getIssue(number));
         const open = issues.filter(issue => issue.state !== 'closed');
         work = { status: 'running', eligible: open.filter(issue => labelNames(issue).includes('S8-merged')).map(issue => issue.number),
           waitingForS8: open.filter(issue => !labelNames(issue).includes('S8-merged')).map(issue => issue.number), completed: [] };
