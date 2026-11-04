@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3274,
-  "nextTicket": 192,
+  "revision": 3275,
+  "nextTicket": 193,
   "nextFence": 192,
   "tasks": {
     "1126": {
@@ -2970,14 +2970,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1287-delete-layout-ownership",
-      "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
+      "materialSha": "e012e64784fd144759274602a32d035725d760eb",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 191,
-      "queued": false,
+      "ticket": 192,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793821192826,
-      "reviewEntry": 3,
+      "readyAt": 1793822057348,
+      "reviewEntry": 4,
       "patchId": "fc46dde3aa37a627d744b96d5fd5804c546c09dc",
       "changedFiles": [
         "custom_components/houseplan/deletion_layout.py",
@@ -3038,20 +3038,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1287:3:fc46dde3aa37a627d744b96d5fd5804c546c09dc:339c044b8252da1585003d2fbfad6bc1f0889e17",
-      "reviewMaterial": {
-        "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
-        "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "patchId": "fc46dde3aa37a627d744b96d5fd5804c546c09dc"
-      },
-      "reviewRetry": {
-        "requestId": "review:1287:3:fc46dde3aa37a627d744b96d5fd5804c546c09dc:339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "eventId": "github:41899198978:1:tick:0:review-retry",
-        "at": 1793821239838,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1287:3:fc46dde3aa37a627d744b96d5fd5804c546c09dc:339c044b8252da1585003d2fbfad6bc1f0889e17",
         "at": 1793821712520
@@ -3226,7 +3212,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1287
+  ],
   "active": null,
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
@@ -3510,6 +3498,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:f788980b-c18f-4133-94e3-b836f87bf477": {
+      "digest": "c9d61828ab37d33dad307dd7e0afb34c306f8a8d7d71b19c6db6c7f9101df29d",
+      "issue": 1287,
+      "message": {
+        "kind": "queued",
+        "issue": 1287,
+        "at": 1793822057348,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e012e64784fd144759274602a32d035725d760eb",
+        "evidence": {
+          "id": "20261104T194007707-23e80e77",
+          "name": "Тесты для задачи #1287 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T194007707-23e80e77/report.json",
+          "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
+          "status": "passed",
+          "finishedAt": "2026-11-04T19:40:19.979Z",
+          "failures": []
+        }
       }
     }
   },
