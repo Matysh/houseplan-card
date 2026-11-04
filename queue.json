@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2993,
+  "revision": 2994,
   "nextTicket": 181,
   "nextFence": 178,
   "tasks": {
@@ -3056,7 +3056,7 @@
       "notice": {
         "key": "2:author-found-opening-seam",
         "reason": "author-found-opening-seam",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1793817355103,
         "entry": 2,
@@ -3381,6 +3381,10 @@
     },
     "github:41889323688:1:completions:report:dff8e849bcd6969d758d6b667dd69d9c153d7c230b34fa92c564d369689c675a": {
       "digest": "cb67d383610ae51b49c5a78758f4ba9b7cd7d41ab04325a27c6d2a2fac364b96",
+      "issue": 1283
+    },
+    "github:41889323688:1:completions:notice:39b9f4a6895f5e0d23c4e44eac6b33c7b68bf7a7a7990e358819e16629efd1d0": {
+      "digest": "5a82ce806b79f20c289933bebd342dcf6acd9031c006a6dce0af45537ac326d0",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
