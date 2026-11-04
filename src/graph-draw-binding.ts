@@ -67,8 +67,12 @@ export function graphDrawTargetRef(
   const edge=graph.edges.find(e=>e.kind===reference.kind&&e.id===reference.id);if(!edge)return undefined;
   const from=graph.nodes.find(n=>n.id===edge.from),to=graph.nodes.find(n=>n.id===edge.to);
   if(!from||!to)return undefined;
-  const a=Q.decodePoint(from.p),b=Q.decodePoint(to.p),point=authoredPoint([candidate.point[0]/1000,candidate.point[1]/1000]);
-  const t=Q.projectParameter(point,a,b);
+  const a=Q.decodePoint(from.p),b=Q.decodePoint(to.p),input=[candidate.point[0]/1000,candidate.point[1]/1000];
+  let t=Q.projectParameter(authoredPoint(input),a,b);
+  // An explicit support is stronger than grid proximity. If tolerant decoding
+  // would move the proven line target, retain its raw exact projection instead.
+  if(!sameProjection(candidate.point,Q.pointToNumbers(Q.pointAt(a,b,t)).map(n=>n*1000)))
+    t=Q.projectParameter(Q.readSourcePoint(input),a,b);
   if(!sameProjection(candidate.point,Q.pointToNumbers(Q.pointAt(a,b,t)).map(n=>n*1000)))return undefined;
   if(Q.cmp(t,Q.ZERO)<=0){
     return sameProjection(candidate.point,Q.pointToNumbers(a).map(n=>n*1000))?{kind:'existing-node',node:from.id}:undefined;

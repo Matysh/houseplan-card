@@ -57,6 +57,14 @@ test('line target at one third uses lattice decoding and retained IDs are stable
   assert.notEqual(graphDrawTargetRef(current,candidate,'segment-2').node,one.node);
   assert.ok(one.splitIds[0].length<=64);
 });
+
+test('#1282 a proven line target within grid noise retains its explicit on-edge binding',()=>{
+  const current=simple(),segment=buildPlanSnapGeometry({space:space(current)}).segments[0];
+  const candidate={kind:'line',point:[100.0001,0],key:'presentation-key',distance:0,segment};
+  const target=graphDrawTargetRef(current,candidate,'near-grid-line');
+  assert.equal(target?.kind,'on-edge');
+  assert.notDeepEqual(target.t,['1','10'],'a support-proven target is not a new independent lattice point');
+});
 test('line ends reuse existing nodes; unknown keys and stale geometry never manufacture graph references',()=>{
   const current=simple(),segment=buildPlanSnapGeometry({space:space(current)}).segments[0];
   const endpointLine={kind:'line',point:[0,0],key:'fake',distance:0,segment};
