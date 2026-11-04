@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2336,
+  "revision": 2337,
   "nextTicket": 146,
   "nextFence": 146,
   "tasks": {
@@ -2559,7 +2559,7 @@
       "ownerDecision": null,
       "ticket": 145,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793779547468,
       "reviewEntry": 3,
       "patchId": "6ef0475c648a02daa90993181f0a063256c6badc",
@@ -2580,6 +2580,15 @@
         "entry": 2,
         "detail": "Браузер: opening drag: failed",
         "eventId": "finish:f99f65d4-d459-499d-872d-34f718de49d8:finish:3:return:return:1273"
+      },
+      "s6": {
+        "id": "20261104T080604829-6f66359b",
+        "name": "Тесты для задачи #1273 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T080604829-6f66359b/report.json",
+        "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
+        "status": "passed",
+        "finishedAt": "2026-11-04T08:06:57.651Z",
+        "failures": []
       }
     },
     "1278": {
@@ -2729,9 +2738,9 @@
     "fence": 145,
     "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
     "expectedBase": "c347b44d10fa57238008f06e9fc741329a91c492",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793779551131,
-    "expiresAt": 1793779910261,
+    "expiresAt": 1793783218758,
     "patchId": "6ef0475c648a02daa90993181f0a063256c6badc"
   },
   "events": {
@@ -2918,6 +2927,34 @@
         "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:78d51ae5-1835-4a8f-9df8-f06bf0fec118:finish:3:s6-complete": {
+      "digest": "89563b9c96e707892fe13788015684de7a819c05b004e29205790880ea580aad",
+      "issue": 1273,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1273,
+        "at": 1793779618758,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T080604829-6f66359b",
+          "name": "Тесты для задачи #1273 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T080604829-6f66359b/report.json",
+          "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
+          "status": "passed",
+          "finishedAt": "2026-11-04T08:06:57.651Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Порт сохраняет исходный JSON oracle #1097 без изменения. Полный current opening target выводится из архивных ID/полей, конечного pointer .181 на host [.04,.224] и 34 шагов сетки; tq сохранён как точные строки. Начальная диагностика прошла full accepted target, trusted touch cancel, negative cut response и дошла до позднего camera witness: старый фиксированный 780px embed скрывает Fit. Только перед camera-фазой подключена существующая подготовка реальной широкой встройки, без force/DOM-click.\n\nAlias Undo/Redo сравнивает полный snapshot строго структурно, включая array order. Optimize проверяет 0 grid-pass и ровно 3 lattice canonicalizations; полный target/reload/Undo остаётся независимым. Warm exit сравнивает physical pixels-per-world-unit и world centre с рабочей камерой редактора (CANVAS #1207); сохранены все пять warm/permission/touch/intermediate scenarios. Продуктовый код/эталоны не меняются.\n\nДля S6 явно выбран product verification profile, поскольку проверяются настоящие браузерные сценарии поверх готового bundle, а infra-профиль запрещает demo checks. Это обоснованная адресная проверка тестовых оракулов, не новая продуктовая функциональность. Результаты текущего S6 ещё не заявлены. Новые HA E2E не нужны — изменение только fake-hass оракулов, исходные требования не меняются.\n\n### Обнаруженная продуктовая зависимость\nПосле порта full current target smoke дошёл до позднего wide camera case и выявил настоящий Escape commit проёма. Он оформлен в #1278; точные проверки отмены в #1273 сохранены. Завершить эту задачу после исправления #1278 и повторить только затронутое. Первый S6: alias, Optimize и warm-mode уже прошли, opening не считается PASS. Расширение camera phase до настоящего viewport2200 позволяет показать существующие native controls без обхода CSS.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
