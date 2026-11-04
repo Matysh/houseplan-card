@@ -744,6 +744,13 @@ const out = await page.evaluate(async () => {
   return result;
 });
 const earlyHistory = await page.evaluate(() => window.__stairHistory1269);
+// The accepted writer drops the retired derived-segments field (#1015,
+// compatibility inventory: until v1.21.3). This fixture has empty arrays only.
+// Account for exactly that known ACK canonicalization; all real carriers,
+// model version, foreign-floor data and unknown fields remain strict.
+const expectedStairCarrier = structuredClone(earlyHistory.before.carrier);
+for (const space of expectedStairCarrier.spaces)
+  if (Array.isArray(space.segments) && space.segments.length === 0) delete space.segments;
 checkAll({
   legacyStairMovePreservesAllOtherFields: isDeepStrictEqual({ ...earlyHistory.moved.record,
     x: earlyHistory.before.record.x, y: earlyHistory.before.record.y }, earlyHistory.before.record),
@@ -753,8 +760,8 @@ checkAll({
   legacyStairWireReadbackMatchesRedo: isDeepStrictEqual(earlyHistory.server.record, earlyHistory.moved.record),
   legacyStairArmedToolNeverDuplicates: ['moved','undone','redone','reloaded','server']
     .every(phase => earlyHistory[phase].count === earlyHistory.before.count),
-  legacyStairModelAndAllOtherDataStayExact: ['moved','undone','redone','reloaded','server']
-    .every(phase => isDeepStrictEqual(earlyHistory[phase].carrier, earlyHistory.before.carrier)),
+  legacyStairModelAndCanonicalCarrierStayExact: ['moved','undone','redone','reloaded','server']
+    .every(phase => isDeepStrictEqual(earlyHistory[phase].carrier, expectedStairCarrier)),
   legacyStairMoveUndoRedoReloadWaitForAck: earlyHistory.ackIdle,
 });
 
