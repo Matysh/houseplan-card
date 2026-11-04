@@ -61,11 +61,13 @@ test('#827 AC1: ожидание — пин headless shell из browsers.json, �
     { name: 'chromium-headless-shell', revision: '78', browserVersion: '400.1.2.4' },
   ] };
   const pins = pinsFromSources({
-    validateYml: 'node-version: 22\npython-version: "3.14"\n',
+    nodeVersion: '24\n', pythonVersion: '3.15\n',
     requirements: 'homeassistant==2026.8.3\npytest-homeassistant-custom-component==0.13.357\n',
     packageLock: { packages: { 'node_modules/playwright': { version: '1.2.3' } } },
     browsers,
   });
+  assert.equal(pins.node, '24');
+  assert.equal(pins.python, '3.15');
   assert.deepEqual(pins.chromium, { revision: '77', version: '400.1.2.3' });
   assert.deepEqual(pins.chromiumHeadlessShell, { revision: '78', version: '400.1.2.4' });
   assert.deepEqual(expectedBrowser(pins), { name: 'chromium-headless-shell', revision: '78', version: '400.1.2.4' },
@@ -76,6 +78,13 @@ test('#827 AC1: ожидание — пин headless shell из browsers.json, �
   const live = pinsFromSources();
   assert.match(expectedBrowser(live).version, /^\d+\.\d+\.\d+\.\d+$/);
   assert.equal(expectedBrowser(live).name, 'chromium-headless-shell');
+});
+
+test('#1262: toolchain refuses missing, floating or multiple runtime pins', () => {
+  for (const nodeVersion of ['', 'lts/*', '22\n24', '22.1'])
+    assert.throws(() => pinsFromSources({ nodeVersion }), /\.nvmrc/);
+  for (const pythonVersion of ['', '3', '3.14\n3.15', 'latest'])
+    assert.throws(() => pinsFromSources({ pythonVersion }), /\.python-version/);
 });
 
 test('#827 AC1: совпавший запущенный Chromium проходит; отчёт различает ожидание, факт и путь', () => {
@@ -241,7 +250,7 @@ test('#827/#942: declared pinned-browser smokes have no environment bypass', () 
     .filter((name) => /^smoke_.*\.mjs$/.test(name))
     .filter((name) => /requirePinnedBrowser\('smoke_/.test(readFileSync(new URL(`../demo/${name}`, import.meta.url), 'utf8')))
     .sort();
-  assert.deepEqual(declaring, ['smoke_device_settings_action.mjs', 'smoke_editor_styles_lazy.mjs', 'smoke_interior_window_light.mjs', 'smoke_room_co2.mjs', 'smoke_support_diagnostics.mjs', 'smoke_support_feedback.mjs', 'smoke_ui_1051.mjs', 'smoke_view_device_menu.mjs', 'smoke_view_device_menu_lifecycle.mjs', 'smoke_wall_smooth_joint.mjs', 'smoke_zigbee_hidden_placement.mjs', 'smoke_zigbee_incomplete_reasons.mjs', 'smoke_zigbee_led_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs']);
+  assert.deepEqual(declaring, ['smoke_device_settings_action.mjs', 'smoke_editor_styles_lazy.mjs', 'smoke_interior_window_light.mjs', 'smoke_kiosk_space_navigation.mjs', 'smoke_room_co2.mjs', 'smoke_signal_low_only.mjs', 'smoke_stair_arrival.mjs', 'smoke_support_diagnostics.mjs', 'smoke_support_feedback.mjs', 'smoke_ui_1051.mjs', 'smoke_view_device_menu.mjs', 'smoke_view_device_menu_lifecycle.mjs', 'smoke_wall_smooth_joint.mjs', 'smoke_zigbee_hidden_placement.mjs', 'smoke_zigbee_incomplete_reasons.mjs', 'smoke_zigbee_led_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs']);
   for (const name of declaring) {
     const source = readFileSync(new URL(`../demo/${name}`, import.meta.url), 'utf8');
     assert.ok(source.indexOf("requirePinnedBrowser('") < source.search(/await launch(?:ColdView)?\(/),

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-// Пины toolchain — один источник, тот же, что у CI (#496).
+// Пины toolchain — общие исходные файлы локального контура и CI (#496).
 //
 // Локальный контур расходился с CI молча: Node 24 против 22, Python 3.13 в
 // документах против 3.14 в workflow, Home Assistant «какой поставился». Здесь
 // пины НЕ объявляются — они ЧИТАЮТСЯ из файлов, которыми живёт CI:
-//   Node      — `node-version` в .github/workflows/validate.yml
-//   Python    — `python-version` там же
+//   Node      — .nvmrc
+//   Python    — .python-version
 //   HA-стек   — tests_backend/requirements.txt (homeassistant==, плагин pytest)
 //   Playwright — package-lock.json, Chromium — browsers.json самого Playwright
 //                (и `chromium`, и `chromium-headless-shell`: стандартный
 //                headless-запуск поднимает второй, #827)
-// Второго словаря версий не появляется; `.nvmrc` и `.python-version` обязаны
-// совпадать с этим чтением (тест), чтобы nvm/uv/pyenv подхватывали их сами.
+// Второго словаря версий не появляется: те же файлы читают nvm/uv/pyenv и
+// действующие workflows. Удалённый Validate не является источником пинов.
 //
 //   node scripts/toolchain-pins.mjs            # таблица пинов
 //   node scripts/toolchain-pins.mjs --json     # для скриптов установки
@@ -41,13 +41,16 @@ function single(values, what) {
 }
 
 export function pinsFromSources({
-  validateYml = read('.github/workflows/validate.yml'),
+  nodeVersion = read('.nvmrc'),
+  pythonVersion = read('.python-version'),
   requirements = read('tests_backend/requirements.txt'),
   packageLock = JSON.parse(read('package-lock.json')),
   browsers = JSON.parse(read('node_modules/playwright-core/browsers.json')),
 } = {}) {
-  const node = single([...validateYml.matchAll(/node-version:\s*['"]?(\d+)['"]?/g)].map((m) => m[1]), 'node-version');
-  const python = single([...validateYml.matchAll(/python-version:\s*['"]?([\d.]+)['"]?/g)].map((m) => m[1]), 'python-version');
+  const node = nodeVersion.trim();
+  const python = pythonVersion.trim();
+  if (!/^\d+$/.test(node)) throw new Error('.nvmrc: expected one pinned Node major');
+  if (!/^\d+\.\d+(?:\.\d+)?$/.test(python)) throw new Error('.python-version: expected one pinned Python version');
   const req = (name) => single([...requirements.matchAll(new RegExp(`^${name.replace(/-/g, '\\-')}==([^\\s#]+)`, 'gm'))].map((m) => m[1]), name);
   return {
     node,

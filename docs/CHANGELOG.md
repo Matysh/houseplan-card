@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Read toolchain runtime pins from the active `.nvmrc` and `.python-version` files instead of the retired Validate workflow; retain launched-browser attestation and reject invalid pins. [#1262](https://github.com/Matysh/houseplan-card/issues/1262)
+
 ## v1.84.0-beta.3 — 2026-11-04
 
 - Repair beta geometry blockers: preserve independent coincident legacy material, unbound openings during unrelated edits, exact Optimize support/lattice targets, full opening footprints and conservative reconciliation. Restore the bounded legacy Resize split materializer and accurate maintenance counters. Retain source-derived graph identities in complete regression targets; accept the 31 visual frames explicitly reviewed by the owner.
