@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2671,
-  "nextTicket": 164,
+  "revision": 2672,
+  "nextTicket": 165,
   "nextFence": 164,
   "tasks": {
     "1126": {
@@ -2794,15 +2794,11 @@
       "materialSha": "c7da27c4970522f9865018f9bf17f196727de739",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 163,
-      "queued": false,
+      "ticket": 164,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793789415128,
-      "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793789440125,
-      "automationDetail": "GitHub PUT failed (502)",
-      "reason": "executor-admission-expired",
+      "readyAt": 1793789927990,
+      "reviewEntry": 2,
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -2953,7 +2949,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1276
+  ],
   "active": null,
   "events": {
     "github:41816817017:1:completions:message:7a946e0fb397e12c4f2dd8bb1f262a42b8008098c029a878501bc9224d717bfa": {
@@ -3022,6 +3020,19 @@
           "entry": 1,
           "eventId": "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276"
         }
+      }
+    },
+    "finish:7f34f282-8e88-42d1-a1d7-1786dcb2cea9": {
+      "digest": "18adec09724f9b01647a566af4c9386cef1bee2913d1a64cd91485b6774ee080",
+      "issue": 1276,
+      "message": {
+        "kind": "queued",
+        "issue": 1276,
+        "at": 1793789927990,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c7da27c4970522f9865018f9bf17f196727de739"
       }
     }
   },
