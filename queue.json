@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3147,
+  "revision": 3148,
   "nextTicket": 190,
   "nextFence": 189,
   "tasks": {
@@ -2966,7 +2966,7 @@
       "notice": {
         "key": "5:changelog-rebase-correction",
         "reason": "changelog-rebase-correction",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1793819507969,
         "entry": 5,
@@ -3633,6 +3633,10 @@
     },
     "github:41895373999:1:completions:report:7e6de4363fa90ef635fbe5b02f69de73ec8a1f3a345067e69252e27ba9ea71d2": {
       "digest": "72e6eb7d90bd88a828820009517e48f8f3072116cccf1ea98d5d5071d5cddcbd",
+      "issue": 1283
+    },
+    "github:41895373999:1:completions:notice:140dd474db8b4d7af9472624d0809f8e11b015f5d955563e966f9b7206384c5e": {
+      "digest": "3ed13afcd99d1cd61e9ad2f6a758df1f44831d943da67909e4162736806cd815",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
