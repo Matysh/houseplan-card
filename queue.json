@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3285,
-  "nextTicket": 193,
+  "revision": 3286,
+  "nextTicket": 194,
   "nextFence": 193,
   "tasks": {
     "1126": {
@@ -2970,14 +2970,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1287-delete-layout-ownership",
-      "materialSha": "e012e64784fd144759274602a32d035725d760eb",
+      "materialSha": "a51c3432653e84a990e0cc74d1bf39ccb0bebe70",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 192,
-      "queued": false,
+      "ticket": 193,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793822057348,
-      "reviewEntry": 4,
+      "readyAt": 1793822376554,
+      "reviewEntry": 5,
       "patchId": "8bc87f499ce994b2fd04096e1831c5fc73d8fcef",
       "changedFiles": [
         "custom_components/houseplan/deletion_layout.py",
@@ -3038,21 +3038,7 @@
         "finishedAt": "2026-11-04T19:54:48.051Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewRequest": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17",
-      "reviewMaterial": {
-        "materialSha": "e012e64784fd144759274602a32d035725d760eb",
-        "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "patchId": "8bc87f499ce994b2fd04096e1831c5fc73d8fcef"
-      },
-      "reviewRetry": {
-        "requestId": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "eventId": "github:41901529101:1:tick:0:review-retry",
-        "at": 1793822109153,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "author-fix"
+      "reviewRound": null
     },
     "1288": {
       "issue": 1288,
@@ -3236,7 +3222,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1287
+  ],
   "active": null,
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
@@ -3649,6 +3637,28 @@
           "requestId": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17",
           "detail": "Автор обнаружил границу собственного expiry-fix: новый marker-history Delete закрепляет общий файл только после paired commit. Возвращает свой допуск для адресного pending-pin regression/fix; обычные expiry tests и S6 e0127/7 PASS, новый finish после исправления.",
           "eventId": "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443:return:1287"
+        }
+      }
+    },
+    "finish:04a8fcab-5889-4a3b-ac6c-20b98b1283c1": {
+      "digest": "be03a065dabbf3be225758100ed578b3d6f88c4f4f3e9ccc330225d437c0c6b6",
+      "issue": 1287,
+      "message": {
+        "kind": "queued",
+        "issue": 1287,
+        "at": 1793822376554,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a51c3432653e84a990e0cc74d1bf39ccb0bebe70",
+        "evidence": {
+          "id": "20261104T195431968-1fea9692",
+          "name": "Тесты для задачи #1287 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T195431968-1fea9692/report.json",
+          "materialSha": "e012e64784fd144759274602a32d035725d760eb",
+          "status": "passed",
+          "finishedAt": "2026-11-04T19:54:48.051Z",
+          "failures": []
         }
       }
     }
