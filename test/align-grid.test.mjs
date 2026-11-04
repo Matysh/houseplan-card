@@ -4,9 +4,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alignAllToGrid, snapN } from '../test-build/align-grid.js';
 import { GRID_N, GRID_STEP_N } from '../test-build/space-geometry.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
 const S = GRID_STEP_N;               // 1/240 of the plan width
 const onGrid = (v) => Math.abs(v * GRID_N - Math.round(v * GRID_N)) < 1e-9;
+
+test('#1272 preserve an unprovable overlapping current component while aligning independent geometry', () => {
+  const d = S / 3;
+  const current = commitWallSegmentModel({ spaces: [{ id: 'overlap',
+    rooms: [{ id: 'a', poly: [[.2+d,.2],[.5,.2-d],[.5+d,.5],[.2,.5]] },
+      { id: 'b', x: .5, y: .2, w: .3+d, h: .3 }],
+    walls: [{ key: 'top', a: [.2+d,.2], b: [.5,.2-d], cm: 15 }],
+    decor: [{ id: 'independent', kind: 'line', x1: .1+d, y1: .7, x2: .9, y2: .7-d }],
+  }], markers: [], settings: {} }).config;
+  const before = structuredClone(current);
+  const result = alignAllToGrid(current.spaces, {});
+  assert.deepEqual(result.spaces[0].rooms, before.spaces[0].rooms);
+  assert.deepEqual(result.spaces[0].decor, [{ id: 'independent', kind: 'line', x1: .1, y1: .7, x2: .9, y2: .7 }]);
+  assert.ok(result.report.moved > 0);
+  assert.deepEqual(current, before, 'alignment does not mutate the original authority');
+});
 
 /** A plan deliberately knocked off the grid in every direction. */
 const detuned = () => ({

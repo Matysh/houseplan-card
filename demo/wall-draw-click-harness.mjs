@@ -77,8 +77,8 @@ export async function installWallDrawClickHarness(page) {
   });
 }
 
-export async function resetWallDrawClickHarness(page, remoteVariant = false) {
-  const fixture = makeWallDrawClickFixture(remoteVariant);
+export async function resetWallDrawClickHarness(page, remoteVariant = false,
+  fixture = makeWallDrawClickFixture(remoteVariant)) {
   return page.evaluate(async (config) => {
     const card = window.__card;
     card._clearGeometryGesture();

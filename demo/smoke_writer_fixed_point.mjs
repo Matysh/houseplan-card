@@ -1,12 +1,30 @@
 /** #477 production-bundle wall finish and room-reference transaction smoke. */
 import { launch, checkAll, finish } from './serve.mjs';
+import { optimizePlans } from '../test-build/plan-optimizer.js';
+import { makeWallDrawClickFixture } from './fixtures/wall-draw-click.mjs';
 import {
   installWallDrawClickHarness, resetWallDrawClickHarness, runWallDrawFinishProfile,
 } from './wall-draw-click-harness.mjs';
 
 const { page, browser } = await launch({ width: 1100, height: 850 }, 1);
 await installWallDrawClickHarness(page);
-await resetWallDrawClickHarness(page, false);
+// Imported decimal echoes have legitimate maintenance debt before any Draw.
+// This fixed-point witness starts from an explicitly prepared current fixture;
+// all other harness users retain their original untouched legacy input.
+const legacyFixture = makeWallDrawClickFixture();
+const originalFixture = JSON.stringify(legacyFixture);
+const prepared = optimizePlans(legacyFixture, {});
+const preparationMovesNoGeometry = prepared.report.moved === 0
+  && prepared.report.wallsStraightened === 0 && prepared.report.partitionsMerged === 0
+  && originalFixture === JSON.stringify(legacyFixture);
+await resetWallDrawClickHarness(page, false, prepared.config);
+const fixtureIsAlreadyFixedPoint = await page.evaluate(async () => {
+  const card = window.__card;
+  await card._editorRuntime.optimizePlans.preview(false);
+  const unchanged = card._alignDialog?.changed === false;
+  card._alignDialog = null;
+  return unchanged;
+});
 const chain = await runWallDrawFinishProfile(page);
 
 const chainHistory = await page.evaluate(async (chainIds) => {
@@ -35,7 +53,7 @@ const chainHistory = await page.evaluate(async (chainIds) => {
   return { afterUndo, afterRedo };
 }, chain.chainIds);
 
-await resetWallDrawClickHarness(page, false);
+await resetWallDrawClickHarness(page, false, prepared.config);
 const references = await page.evaluate(async () => {
   const card = window.__card;
   card._serverCfg.markers = [
@@ -65,6 +83,8 @@ const references = await page.evaluate(async () => {
 });
 
 const result = {
+  preparationMovesNoGeometry,
+  fixtureIsAlreadyFixedPoint,
   finishedChainMerged: chain.chainIds.length === 3 && chain.surviving.length === 1,
   finishedChainOptimizeNoop: chain.optimizeChanged === false,
   finishUsesOneBoundedCheck: chain.terminal.fullSpacePhysicalChecks === 0

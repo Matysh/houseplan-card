@@ -208,12 +208,14 @@ const out = await page.evaluate(async () => {
   await hp.waitForWrites();
   // a deliberately detuned fixture: a third of a step off, everywhere
   const D = 1 / GRID_N / 3;
+  // Keep the detuned rooms disjoint: noded overlaps can deliberately freeze
+  // an unprovable component (covered separately by align-grid's negative).
   const FIX = { spaces: [{
     id: 'g1', title: 'Grid test', view_box: [0, 0, 1, 1],
     rooms: [
       { id: 'r1', name: 'A', area: 'living_room',
         poly: [[0.2 + D, 0.2], [0.5, 0.2 - D], [0.5 + D, 0.5], [0.2, 0.5]] },
-      { id: 'r2', name: 'B', area: 'kitchen', x: 0.5, y: 0.2, w: 0.3 + D, h: 0.3 },
+      { id: 'r2', name: 'B', area: 'kitchen', x: 0.6, y: 0.2, w: 0.3 + D, h: 0.3 },
     ],
     openings: [{ id: 'o1', type: 'window', x: 0.3 + D, y: 0.2 + D / 2, angle: 0, length: 0.06 }],
     walls: [{
@@ -247,13 +249,15 @@ const out = await page.evaluate(async () => {
   o.alignUsedAtomicConfigLayoutWrite = sent.filter((t) => t === 'houseplan/plan/optimize').length === 1;
 
   const g = c._serverCfg.spaces[0];
-  o.alignedRoomPoly = g.rooms[0].poly.every((p) => onGridN(p[0]) && onGridN(p[1]));
-  o.alignedRoomRect = onGridN(g.rooms[1].x) && onGridN(g.rooms[1].x + g.rooms[1].w);
+  const alignedPoly = g.rooms.find(room=>room.id==='r1');
+  const alignedRect = g.rooms.find(room=>room.id==='r2');
+  o.alignedRoomPoly = alignedPoly.poly.every((p) => onGridN(p[0]) && onGridN(p[1]));
+  o.alignedRoomRect = JSON.stringify(alignedRect.poly) === JSON.stringify([[.6,.2],[.9,.2],[.9,.5],[.6,.5]]);
   o.alignedDecor = onGridN(g.decor[0].x1) && onGridN(g.decor[0].y1)
     && onGridN(g.decor[0].x2) && onGridN(g.decor[0].y2);
   o.alignedLayout = onGridN(c._layout.d_light1.x) && onGridN(c._layout.rl_r1.x);
   // the opening stayed ON the top wall of r1 rather than being rounded off it
-  const w0 = g.rooms[0].poly[0], w1 = g.rooms[0].poly[1];
+  const w0 = alignedPoly.poly[0], w1 = alignedPoly.poly[1];
   const tt = ((g.openings[0].x - w0[0]) * (w1[0] - w0[0]) + (g.openings[0].y - w0[1]) * (w1[1] - w0[1]))
     / ((w1[0] - w0[0]) ** 2 + (w1[1] - w0[1]) ** 2);
   o.alignedOpeningStaysOnItsWall = Math.hypot(
