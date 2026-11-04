@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3118,
-  "nextTicket": 187,
+  "revision": 3119,
+  "nextTicket": 188,
   "nextFence": 186,
   "tasks": {
     "1126": {
@@ -2919,14 +2919,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1282-exact-writers",
-      "materialSha": "17e6123a5b26645e7601229b611145d16bab794b",
+      "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 183,
-      "queued": false,
+      "ticket": 187,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793818514107,
-      "reviewEntry": 2,
+      "readyAt": 1793819236971,
+      "reviewEntry": 3,
       "patchId": "036e2763fcc1a4cf16af968ba8708cecf6bc516e",
       "changedFiles": [
         "custom_components/houseplan/plan_graph_migration.py",
@@ -2983,8 +2983,7 @@
         "at": 1793819114383,
         "entry": 2,
         "eventId": "author-changelog:21537643-6874-419c-80e9-8bea519ba89e:return:1282"
-      },
-      "reason": "author-changelog-rebase: move own #1282 entries back to Unreleased before S7"
+      }
     },
     "1283": {
       "issue": 1283,
@@ -3373,7 +3372,8 @@
     }
   },
   "waiting": [
-    1283
+    1283,
+    1282
   ],
   "active": {
     "issue": 1286,
@@ -4306,6 +4306,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:f45d8991-45a7-4a4c-9566-cae94548ff8c": {
+      "digest": "342cc54c52be05bf42fdeaba3e3a943d2d71ef95db7c538064ab0db6ccaa9227",
+      "issue": 1282,
+      "message": {
+        "kind": "queued",
+        "issue": 1282,
+        "at": 1793819236971,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672",
+        "evidence": {
+          "id": "20261104T183642722-6a1e22d0",
+          "name": "Тесты для задачи #1282 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261104T183642722-6a1e22d0/report.json",
+          "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
+          "status": "passed",
+          "finishedAt": "2026-11-04T18:37:18.050Z",
+          "failures": []
+        }
       }
     }
   },
