@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3219,
+  "revision": 3220,
   "nextTicket": 191,
   "nextFence": 190,
   "tasks": {
@@ -442,38 +442,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5"
-      }
-    },
-    "1199": {
-      "issue": 1199,
-      "branch": "codex/ha-lab-stable-loopback",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-      "mergedAt": 1793573928448,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1199:1:a4048749979905d38c37ee06eea3bb09ff564066:485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1200": {
@@ -2949,7 +2917,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "7acb943e7ddfbf339c5181307f495d81ef6d3712"
       }
     },
     "1284": {
@@ -3714,6 +3683,18 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:41896314781:1:1283": {
+      "digest": "4422b2d97ee49f43b85e2a65ccd562e2d56d3bca2fb79841f62acf755a244156",
+      "issue": 1283,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1283,
+        "at": 1793820303741,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7acb943e7ddfbf339c5181307f495d81ef6d3712"
       }
     }
   },
