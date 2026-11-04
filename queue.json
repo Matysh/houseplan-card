@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2502,
+  "revision": 2503,
   "nextTicket": 156,
   "nextFence": 156,
   "tasks": {
@@ -2964,6 +2964,10 @@
       "digest": "a8832e32e7ddaaaad1eb7143b4f68d3003470714956b55a5bdf2d3521880c158",
       "issue": 1269
     },
+    "finish:5fe263a1-a363-43b8-9675-fd78e68a1b97:finish:3:s6-label": {
+      "digest": "5dfd02943ae916794d69d1b12f6995a083a2a882b06c57351512a151eb050553",
+      "issue": 1269
+    },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
       "digest": "77d31853002f912be355305ed434a307b3beac91cc08907685cf80195b98b33b",
       "issue": 1269,
@@ -3291,7 +3295,8 @@
         "resubmission": true,
         "reviewChanges": "Выявлена узкая legacy/current развилка: restoreDecorOnlyHistory допускает сохранение legacy носителя только для decor; restoreNonPhysicalHistory включает stairs, но отказывает любой legacy версии. Undo лестницы попадает в structural restore, мигрирует стеновой носитель, и прежний Redo больше не соответствует ему. Поздние current-model stair cases поэтому проходят.\n\nРешение — допуск legacy только для строго stairs-only snapshot при равенстве всех остальных полей и сохранении существующих guards node/chain/references/mixed/future/invalid model. Не расширять generic legacy presentation authority для plan_transform, декора вместе с лестницей или физических изменений. Реальный history cursor и нативный ранний сценарий должны доказать Undo/Redo без смены модели/ID.\n\n### Исправления по предыдущему ревью\n\nРаунд1, workflow41801202242: код признан корректным; возвращено на S6 для более полного native свидетельства и явного состава доказательств.\n\n- Полные record/count/model/carrier/reload: ранний smoke_stairs теперь сохраняет весь объект до жеста и после ACK каждого Move/Undo/Redo. Node-side isDeepStrictEqual сравнивает все поля (включая ID, стиль, размеры, target_space_id), число лестниц и весь конфиг кроме stairs выбранного этажа. После Redo вызывается настоящий _reloadConfigOnly(true) и отдельно config/get принятого fake integration; сравниваются полный объект, carrier и count. Другие этажи/лестницы также входят в полный carrier snapshot.\n- Настоящий ввод: этот ранний случай переведён с dispatchEvent на page.mouse/page.keyboard через test binding, не подменяющий product handlers/writer. Armed Stair tool остаётся выбранным, увеличение числа лестниц явно запрещено.\n- Отрицательные случаи расширены на version undefined и10. Product restore не менялся после принятого ревью механизма.\n- Состав S6 указан явно: request artifacts/issue1269-task.json передаёт areaTests=[test/decor-history-restore.test.mjs,test/geometry-history-restore.test.mjs,test/stairs-editor-live.test.mjs,demo/smoke_stairs.mjs]. Это полный browser файл с новыми checks legacyStair*, не только unit-файл. Предыдущий локальный S6 20261104T083830988-3fda6329 на ecb24f0e2 действительно включал result id=smoke:smoke_stairs, status=passed,durationMs=17352. Новый S6 на итоговом SHA будет передан штатной квитанцией после выполнения; его успех заранее не заявляется.\n\nДополнительная диагностика до исправления воспроизвела model undefined/graph=false → Undo model11/graph=true → Redo toast Cannot redo Move stairs, history entry removed. Лог triage-stairs-model.log сохранён. Необязательная гипотеза ревью о plan_transform пока не включена в этот stairs-only fix; при подтверждении нужна отдельная задача.\n\nПри усилении native carrier oracle обнаружено ровно одно допустимое ACK изменение: удаляются пустые retired spaces[].segments у двух исходных этажей. Это existing derived-segments decoder (inventory untilv1.21.3, geometry-cleanup.ts), не graph/model migration. Проба triage-stairs-carrier.log сохранила все10 leaf-отличий по пяти фазам. Полный expected carrier независимо учитывает только удаление **пустых** segments; все другие поля, версии, непустые коллекции и порядок массивов остаются строгими. Реальный pointer/key, full record/count, reload/wire readback уже достигнуты; новый S6 проверяет этот точный expected. Технические отказы усиленного теста (имя переменной/SVG helper) исправлены, исходные логи сохранены; они не маскировались как продуктовые баги.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
