@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2594,
+  "revision": 2595,
   "nextTicket": 161,
   "nextFence": 161,
   "tasks": {
@@ -2632,7 +2632,10 @@
         "runStatus": "completed",
         "publicationPending": true,
         "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793788206982,
+      "automationDetail": "Git push failed (exit 1)"
     },
     "1267": {
       "issue": 1267,
@@ -3203,6 +3206,10 @@
     },
     "finish:1f5d9fb9-096c-46b9-91fc-3e06bcb0f5e2:finish:7:review-complete": {
       "digest": "f73037693d59fffe1e3bb9247e80b6e8f398e12379ea59458483e63fbe2905c9",
+      "issue": 1265
+    },
+    "finish:1f5d9fb9-096c-46b9-91fc-3e06bcb0f5e2:finish:8:automation-pending": {
+      "digest": "01ef1cc3541149b3c6078c26043d0e3a6a555c49d810d68be15ed5ecf38ee547",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
