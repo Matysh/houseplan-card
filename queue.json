@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2237,
+  "revision": 2238,
   "nextTicket": 138,
   "nextFence": 138,
   "tasks": {
@@ -507,26 +507,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "0f01d68e923e57e68c08b4ba5c0328a82916c7c6"
-      }
-    },
-    "1189": {
-      "issue": 1189,
-      "branch": "codex/issue-1189-review-russian",
-      "track": "ship",
-      "layer": "docs",
-      "status": "S8-merged",
-      "mergedSha": "5cc253e20227415209b314bda63ff71f2a3a2655",
-      "mergedAt": 1793555724621,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "commentDigest": "e3884419fc79a19ce522"
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1190": {
@@ -2546,7 +2526,8 @@
       },
       "releaseTag": "v1.84.0-beta.3",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "1f97c6e294fddf4531995802365d2904edbbcacf"
       }
     }
   },
@@ -2654,7 +2635,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:41776184048:1:1261": {
+      "digest": "fb2826112dc2e719ddf1f3136d129fcba8676b055f52b0ce3c599231fab47086",
+      "issue": 1261,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1261,
+        "at": 1793768278191,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
     "status": "pending",
