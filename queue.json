@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2547,
+  "revision": 2548,
   "nextTicket": 158,
   "nextFence": 158,
   "tasks": {
@@ -2479,7 +2479,7 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1265-room-face-lineage",
-      "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213",
+      "materialSha": "2f38a4021538ab39dabbe75732ffab813c59af8e",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 157,
@@ -2487,14 +2487,23 @@
       "status": "S6-in-progress",
       "readyAt": 1793785155492,
       "reviewEntry": 2,
-      "patchId": "c9b189c8d581c7810826071af6803bc8b0679389",
+      "patchId": "1f8c6098fe227541786f8138beee75fe89327fa1",
       "changedFiles": [
+        "demo/helpers/room-write-python.mjs",
+        "demo/helpers/room-write-python.py",
         "demo/smoke_room_device_discovery.mjs",
+        "demo/smoke_room_opening_host.mjs",
+        "demo/smoke_wall_face_lineage.mjs",
+        "demo/smoke_wall_face_room_split.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.83.0/1265.json",
+        "process-next/lib/catalog.mjs",
+        "process-next/test/catalog.test.mjs",
         "src/houseplan-editor-runtime.ts",
         "src/wall-face-graph.ts",
+        "test/fixtures/room-host-promotion.json",
+        "test/room-write-python.test.mjs",
         "test/wall-face-graph.test.mjs"
       ],
       "notice": {
@@ -2876,11 +2885,12 @@
     "worker": "finish",
     "token": "157:finish:e2f7305a-5176-4862-801e-09685b8dfec7:finish:1:admit",
     "fence": 157,
-    "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "2f38a4021538ab39dabbe75732ffab813c59af8e",
+    "expectedBase": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+    "phase": "testing",
     "admittedAt": 1793785665976,
-    "expiresAt": 1793785965976
+    "expiresAt": 1793785974384,
+    "patchId": "1f8c6098fe227541786f8138beee75fe89327fa1"
   },
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -2909,6 +2919,10 @@
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:3:return": {
       "digest": "818c4be63ccf774781533b5be765685c4cfe01d4e6d5320a2b03039f4f23b283",
+      "issue": 1265
+    },
+    "finish:e2f7305a-5176-4862-801e-09685b8dfec7:finish:2:synchronized": {
+      "digest": "ec4e9f0396cd3209144cbaaf826a8092946ee84da0166c4963ddf136ebe07bc1",
       "issue": 1265
     },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
