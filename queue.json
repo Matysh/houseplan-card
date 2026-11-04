@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2673,
+  "revision": 2674,
   "nextTicket": 165,
   "nextFence": 165,
   "tasks": {
@@ -2807,7 +2807,16 @@
         "at": 1793789898045,
         "entry": 1,
         "eventId": "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276"
-      }
+      },
+      "patchId": "dfbf3ca1ef558c083b7ca6255e18b05bb9ef2077",
+      "changedFiles": [
+        "demo/gen_icons.mjs",
+        "demo/helpers/daycycle-material.mjs",
+        "demo/smoke_daycycle_raster.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "test/daycycle-material.test.mjs"
+      ]
     },
     "1278": {
       "issue": 1278,
@@ -2956,10 +2965,11 @@
     "token": "164:finish:7f34f282-8e88-42d1-a1d7-1786dcb2cea9:finish:1:admit",
     "fence": 164,
     "materialSha": "c7da27c4970522f9865018f9bf17f196727de739",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c8d8e8548d0135db5e46bcc409d06f8a3aba8532",
+    "phase": "testing",
     "admittedAt": 1793789932621,
-    "expiresAt": 1793790232621
+    "expiresAt": 1793790239669,
+    "patchId": "dfbf3ca1ef558c083b7ca6255e18b05bb9ef2077"
   },
   "events": {
     "github:41816817017:1:completions:message:7a946e0fb397e12c4f2dd8bb1f262a42b8008098c029a878501bc9224d717bfa": {
@@ -2980,6 +2990,10 @@
     },
     "finish:409b6b5c-8e20-4836-8e13-f9b887b86530": {
       "digest": "a148fe279b4bc1eccba2e8823a36958d7d9491d53a62dad438c2e1f6d58e7f38",
+      "issue": 1276
+    },
+    "finish:7f34f282-8e88-42d1-a1d7-1786dcb2cea9:finish:2:synchronized": {
+      "digest": "8d758c6c5e4da2892e383a688fc1ded4c2592bbf6197138c3875c56222bd2e67",
       "issue": 1276
     },
     "finish:592f0c29-4332-46f8-839a-6fbde55d9cf3": {
