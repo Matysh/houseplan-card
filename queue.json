@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3284,
+  "revision": 3285,
   "nextTicket": 193,
   "nextFence": 193,
   "tasks": {
@@ -2975,7 +2975,7 @@
       "ownerDecision": null,
       "ticket": 192,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793822057348,
       "reviewEntry": 4,
       "patchId": "8bc87f499ce994b2fd04096e1831c5fc73d8fcef",
@@ -3019,14 +3019,15 @@
         "tests_backend/test_ha_deletion_layout.py"
       ],
       "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
+        "key": "4:author-fix",
+        "reason": "author-fix",
+        "status": "pending",
         "fromStatus": "S7-code-review",
-        "at": 1793821712520,
-        "entry": 3,
-        "requestId": "review:1287:3:fc46dde3aa37a627d744b96d5fd5804c546c09dc:339c044b8252da1585003d2fbfad6bc1f0889e17",
-        "transitionConfirmed": true
+        "at": 1793822127459,
+        "entry": 4,
+        "requestId": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17",
+        "detail": "Автор обнаружил границу собственного expiry-fix: новый marker-history Delete закрепляет общий файл только после paired commit. Возвращает свой допуск для адресного pending-pin regression/fix; обычные expiry tests и S6 e0127/7 PASS, новый finish после исправления.",
+        "eventId": "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443:return:1287"
       },
       "s6": {
         "id": "20261104T195431968-1fea9692",
@@ -3050,7 +3051,8 @@
         "at": 1793822109153,
         "runId": null,
         "runAttempt": null
-      }
+      },
+      "reason": "author-fix"
     },
     "1288": {
       "issue": 1288,
@@ -3235,19 +3237,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1287,
-    "worker": "finish",
-    "token": "192:finish:f788980b-c18f-4133-94e3-b836f87bf477:finish:1:admit",
-    "fence": 192,
-    "materialSha": "e012e64784fd144759274602a32d035725d760eb",
-    "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-    "phase": "review",
-    "admittedAt": 1793822061835,
-    "expiresAt": 1793825689290,
-    "patchId": "8bc87f499ce994b2fd04096e1831c5fc73d8fcef",
-    "reviewRequest": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17"
-  },
+  "active": null,
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
       "digest": "d2218a76b2bb7033a7444da93d1bce7e71c9114f6dfbb04bbc0d89657b18aa24",
@@ -3399,6 +3389,10 @@
     },
     "github:41901529101:1:completions:message:4660980935246b6c1d6495420f1b9c63170f4d4b40334083c5fff2a898db6069": {
       "digest": "f33bbb00ec98f2ff368b7df2982f4a4927195bd35decea8274a0b01abfc6880d",
+      "issue": 1287
+    },
+    "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443": {
+      "digest": "40edee393fe4584c9691bf896fe3c2d47313b56908fbe217c61e918a5b396015",
       "issue": 1287
     },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
@@ -3635,6 +3629,27 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443:return:1287": {
+      "digest": "40edee393fe4584c9691bf896fe3c2d47313b56908fbe217c61e918a5b396015",
+      "issue": 1287,
+      "message": {
+        "kind": "return",
+        "issue": 1287,
+        "at": 1793822127459,
+        "entry": 4,
+        "notice": {
+          "key": "4:author-fix",
+          "reason": "author-fix",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1793822127459,
+          "entry": 4,
+          "requestId": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17",
+          "detail": "Автор обнаружил границу собственного expiry-fix: новый marker-history Delete закрепляет общий файл только после paired commit. Возвращает свой допуск для адресного pending-pin regression/fix; обычные expiry tests и S6 e0127/7 PASS, новый finish после исправления.",
+          "eventId": "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443:return:1287"
+        }
       }
     }
   },
