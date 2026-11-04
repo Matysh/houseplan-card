@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3255,
+  "revision": 3256,
   "nextTicket": 191,
   "nextFence": 191,
   "tasks": {
@@ -3014,15 +3014,16 @@
         "tests_backend/test_ha_deletion_layout.py"
       ],
       "notice": {
-        "key": "1:dependency-not-merged",
-        "reason": "dependency-not-merged",
-        "status": "delivered",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793819069594,
-        "entry": 1,
-        "detail": "Финальный Merge/no-op требует #1283; её код-ревью вернуло только changelog, исправление ещё не слито. Автор возвращает свой слот до S6, чтобы не запускать заведомо неприменимую проверку. Работа и rebase8d476063f сохранены; повторный finish после S8 #1283.",
-        "eventId": "author-return-1287-19c1ad73-e929-44c5-b7a5-41994f0234de:return:1287"
-      }
+        "at": 1793820606114,
+        "entry": 2,
+        "detail": "Поведение изменённой области: failed",
+        "eventId": "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return:return:1287"
+      },
+      "reason": "checks-failed"
     },
     "1288": {
       "issue": 1288,
@@ -3194,18 +3195,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1287,
-    "worker": "github-coordinator",
-    "token": "190:github:41897088319:1:tick:0:admit",
-    "fence": 190,
-    "materialSha": "700eee71bb23eded9813420e1fc5a83ed7598e80",
-    "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-    "phase": "testing",
-    "admittedAt": 1793820450842,
-    "expiresAt": 1793820884053,
-    "patchId": "e1f18960ceeecf20af74993c3c984200ad5d5646"
-  },
+  "active": null,
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
       "digest": "d2218a76b2bb7033a7444da93d1bce7e71c9114f6dfbb04bbc0d89657b18aa24",
@@ -3265,6 +3255,10 @@
     },
     "dev-build:41897088319:1:webhook:df898a00-a959-4244-8b2a-e426e5378843:delivered": {
       "digest": "129e385bffac8e48cfb45319811423dd9ec0ebdff42464773fdd6ff870147bb8",
+      "issue": 1287
+    },
+    "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return": {
+      "digest": "b9e18d75f17e0422b5fa9bd31cac6968fddffb55dcc045ebc9783402e64627ac",
       "issue": 1287
     },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
@@ -3356,6 +3350,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17"
+      }
+    },
+    "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return:return:1287": {
+      "digest": "b9e18d75f17e0422b5fa9bd31cac6968fddffb55dcc045ebc9783402e64627ac",
+      "issue": 1287,
+      "message": {
+        "kind": "return",
+        "issue": 1287,
+        "at": 1793820606114,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793820606114,
+          "entry": 2,
+          "detail": "Поведение изменённой области: failed",
+          "eventId": "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return:return:1287"
+        }
       }
     }
   },
