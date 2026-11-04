@@ -100,7 +100,13 @@ const joinedFrom = await client('contact-m'), cancelBefore = await state();
 await page.mouse.move(joinedFrom.x,joinedFrom.y); await page.mouse.down();
 await page.mouse.move(joinedFrom.x+140,joinedFrom.y+80,{steps:8}); await settle();
 check('individual-detach-preview', (await state()).components[2], null);
-await page.keyboard.press('Escape'); await page.mouse.up(); await settle();
+await page.keyboard.press('Escape'); await settle();
+const escaped = await state();
+checkAll({ escapeImmediatelyRestoresPosition: isDeepStrictEqual(escaped.layout,cancelBefore.layout),
+  escapeImmediatelyRestoresContact: escaped.components.every(id=>id==='contact-a'),
+  escapeImmediatelyRetiresDrag: !escaped.drag && !escaped.guides.length,
+  escapeImmediatelyHasNoWriteOrHistory: escaped.writes===cancelBefore.writes && escaped.history===cancelBefore.history });
+await page.mouse.up(); await settle();
 const cancelled = await state();
 checkAll({ cancelRestoresContact: cancelled.components.every(id=>id==='contact-a'), cancelNoWrite: cancelled.writes===cancelBefore.writes,
   cancelExactPosition: isDeepStrictEqual(cancelled.layout,cancelBefore.layout), cancelNoGuide: cancelled.guides.length===0,

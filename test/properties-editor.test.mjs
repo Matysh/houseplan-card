@@ -79,6 +79,22 @@ test('#1047 Properties yields Escape to the active native drawing gesture',()=>{
   assert.equal(prevented,false);assert.equal(h.editor.identity.objectId,'shape');
 });
 
+test('#1263 Properties yields Escape to device drag without retiring its selection',()=>{
+  const h=harness('device');
+  h.host._deviceDrag={id:'light'};
+  let prevented=0;
+  const event={key:'Escape',preventDefault(){prevented++;}};
+  assert.equal(h.editor.escape(event),false);
+  assert.equal(prevented,0,'the drag owner must receive the cancellation key');
+  assert.equal(h.editor.identity.objectId,'light');
+  assert.deepEqual(h.state.writes,[]);
+  assert.equal(h.host._devicePositionHistory.size,0);
+  h.host._deviceDrag=null;
+  assert.equal(h.editor.escape(event),true,'idle selection can still be dismissed');
+  assert.equal(prevented,1);
+  assert.equal(h.editor.identity,null);
+});
+
 test('#1047 only the current wide text owner supplies a Properties text measurement',()=>{
   const h=harness();
   Object.defineProperty(h.host,'_decorList',{get:()=>h.host._curSpaceCfg.decor});

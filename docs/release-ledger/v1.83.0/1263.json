@@ -1,0 +1,8 @@
+{
+  "schema": 1, "issue": 1263, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Properties Escape interception affects device dragging on the 1.84 editor-toolbar line.",
+  "summary": {
+    "ru": "Escape отменяет перенос устройства без изменения позиции и контактов.",
+    "en": "Escape cancels device dragging without changing placement or contacts."
+  }
+}
