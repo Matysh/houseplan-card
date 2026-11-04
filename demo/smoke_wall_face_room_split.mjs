@@ -152,11 +152,13 @@ await scenario('Native reported drawing and Undo Redo', seed(), async page => {
   const out = {
     smallerRoomCreated: !!child && space.rooms.length === 3 && polygonArea(parent.poly) > polygonArea(child.poly),
     areaConserved: !!child && Math.abs(polygonArea(parent.poly) + polygonArea(child.poly) - polygonArea(fixture.parent)) < 1e-8,
-    parentBindingRetained: parent.area === 'synthetic-parent' && equal(parent.settings, before.config.spaces[0].rooms[0].settings),
+    parentBindingRetained: parent.area === 'synthetic-parent'
+      && equal(parent.settings, before.config.spaces[0].rooms.find(r => r.id === 'parent').settings),
     positionsAndOtherFloorRetained: equal(after.layout, before.layout) && equal(after.config.markers, before.config.markers)
       && equal(after.config.spaces[1], before.config.spaces[1]),
     neighborGeometryRetained: (() => {
-      const old = before.config.spaces[0].rooms[1].poly, next = space.rooms.find(r => r.id === 'neighbor').poly;
+      const old = before.config.spaces[0].rooms.find(r => r.id === 'neighbor').poly,
+        next = space.rooms.find(r => r.id === 'neighbor').poly;
       return Math.abs(polygonArea(old) - polygonArea(next)) < 1e-9 && next.every(p => old.some((a, i) =>
         distToSegment(p, [...a, ...old[(i + 1) % old.length]]) < 1e-9))
         && old.every(p => next.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < 1e-9));
@@ -233,13 +235,27 @@ for (const via of ['cancel', 'x', 'escape', 'keep']) await scenario(`Cancel ${vi
     noHistoryEntry: after.history === before.history, closed: !after.dialog };
 });
 
-await scenario('Synchronous refusal does not leave inert Save', seed({ added: true, duplicate: true }), async page => {
+await scenario('Synchronous refusal does not leave inert Save', seed({ added: true }), async page => {
+  await page.evaluate(() => {
+    const card = window.__card, original = card._checkSpacePhysicalGeometry;
+    window.__closureSmoke.proof = { calls: 0, otherwiseValid: true };
+    card._checkSpacePhysicalGeometry = function (...args) {
+      const actual = original.apply(this, args);
+      if (args[0].spaces.find(s => s.id === 'closure').rooms.length === 3) {
+        window.__closureSmoke.proof.calls++;
+        window.__closureSmoke.proof.otherwiseValid &&= actual.ok === true;
+        throw Error('injected synchronous room-producer failure');
+      }
+      return actual;
+    };
+  });
   const before = await snapshot(page);
   await click(page, [.5, -.8]); await save(page);
   const after = await snapshot(page);
   await click(page, [.5, -.8]);
   const retry = await snapshot(page);
-  return { geometryRolledBack: equal(geometry(after.config), geometry(before.config)),
+  return { actualProofReachedBeforeInjectedFailure: after.server.proof.calls === 1 && after.server.proof.otherwiseValid,
+    geometryRolledBack: equal(geometry(after.config), geometry(before.config)),
     noWriteOrHistory: after.server.writes === before.server.writes && after.history === before.history,
     noInertDialog: !after.dialog && !after.batch && !after.path,
     explicitClickOffersFreshDraft: retry.dialog && retry.batch };
@@ -252,13 +268,20 @@ await scenario('Controlled asynchronous refusal restores split parent and openin
   const after = await snapshot(page);
   await click(page, [.5, -.8]); await save(page);
   const retried = await snapshot(page);
+  const expectedOpenings = structuredClone(before.config.spaces[0].openings);
+  // The entire current atomic source is promoted with its same ID. This is
+  // the ordinary Python-proved #996 exception, not a foreign/residual rehost.
+  expectedOpenings[0].host.kind = 'wall';
+  const promotedId = expectedOpenings[0].host.id;
   return { backendRefused: after.server.rejected === 1,
     noGhostRoomOrLostOpening: equal(geometry(after.config), geometry(before.config)),
     noAcceptedWriteOrHistory: after.server.writes === 0 && after.history === before.history,
     dialogClosed: !after.dialog && !after.batch,
     safeRetryCreatesRoom: retried.config.spaces[0].rooms.length === before.config.spaces[0].rooms.length+1
       && retried.server.writes === 1,
-    safeRetryRetainsOpeningHost: equal(retried.config.spaces[0].openings,before.config.spaces[0].openings) };
+    safeRetryRetainsOpeningHost: equal(retried.config.spaces[0].openings, expectedOpenings)
+      && equal(retried.config.spaces[0].wall_segments.find(w=>w.id===promotedId),
+        before.config.spaces[0].partitions.find(p=>p.id===promotedId)) };
 });
 
 await scenario('Residual opening remains on its original carrier', seed({ added: true, opening: 'residual' }), async page => {

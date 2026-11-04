@@ -34,7 +34,7 @@ test('#874 exact exported face refuses an additive third owner but a composite s
   assert.ok(Math.abs(polygonArea(result.split.mainPoly) + polygonArea(result.split.newPoly)
     - polygonArea(fixture.parent)) < 1e-9);
   const next = structuredClone(config);
-  next.spaces[0].rooms[0].poly = result.split.mainPoly;
+  next.spaces[0].rooms.find(room => room.id === 'parent').poly = result.split.mainPoly;
   next.spaces[0].rooms.push({ id: 'child', poly: result.split.newPoly });
   const committed = { ...next, spaces: [commitGraphEditResult(config.spaces[0], next.spaces[0],
     { kind: 'faces', rooms: ['parent', 'child'] }).space] };
@@ -42,6 +42,8 @@ test('#874 exact exported face refuses an additive third owner but a composite s
   const parent = committed.spaces[0].rooms.find(room => room.id === 'parent');
   assert.equal(parent.area, 'synthetic-parent');
   assert.deepEqual(parent.settings, before.spaces[0].rooms.find(room => room.id === 'parent').settings);
+  assert.deepEqual(committed.spaces[0].rooms.find(room => room.id === 'neighbor'),
+    before.spaces[0].rooms.find(room => room.id === 'neighbor'));
   assert.deepEqual(config, before, 'classification does not mutate the input');
   const owners = new Map();
   for (const r of committed.spaces[0].rooms) for (const id of r.wall_ids) owners.set(id, (owners.get(id) || 0) + 1);

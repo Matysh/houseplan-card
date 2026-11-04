@@ -7,6 +7,20 @@ const copy=structuredClone;
 const rectangle=(id,x0=0,x1=1)=>({id,name:id,poly:[[x0,0],[x1,0],[x1,1],[x0,1]],custom:{keep:id}});
 const migrate=space=>G.migrateGraphSpace(space).space;
 const base=()=>migrate({id:'floor',rooms:[rectangle('a')],extra:{keep:1}});
+test('room acceptance follows connected exact source atoms hidden by numeric collinearity',()=>{
+  const graph={version:1,nodes:[{id:'a',p:['l','0','0']},{id:'b',p:['l','480','0']},
+    {id:'c',p:['l','480','240']},{id:'d',p:['q','1','1','100000000000000001','100000000000000000']},
+    {id:'e',p:['l','0','240']}],edges:['a','b','c','d','e'].map((from,i,list)=>({id:'p'+i,
+      kind:'partition',from,to:list[(i+1)%list.length],cm:15})),rooms:[],dependencies:[]};
+  const before=G.projectGraphSpace({id:'s',rooms:[]},graph).space,draft=copy(before);
+  draft.rooms.push({id:'r',poly:[[0,0],[2,0],[2,1],[0,1]]});
+  const result=commitGraphEditResult(before,draft,{kind:'faces',rooms:['r'],
+    consumedPartitionIds:graph.edges.map(e=>e.id),sourceEdges:graph.edges});
+  assert.deepEqual(result.graph.nodes,graph.nodes);
+  assert.equal(result.graph.edges.length,5);
+  assert.deepEqual(result.space.rooms[0].poly,[[0,0],[2,0],[2,1],[1,1],[0,1]]);
+  assert.equal(result.space.partitions.length,0);
+});
 test('room promotion intersects finite sides, never their distant extensions',()=>{
   const poly=[[0,0],[1,0],[1,.5],[2,.5],[2,1],[0,1]];
   const before=migrate({id:'s',rooms:[],partitions:poly.map((a,i)=>({id:'p'+i,a,b:poly[(i+1)%poly.length],cm:5}))});

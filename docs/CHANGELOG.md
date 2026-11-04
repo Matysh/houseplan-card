@@ -4,6 +4,8 @@
 
 - Promote room faces using finite-side intersections, preserving reused node dependencies and consuming only named duplicate boundary atoms with identical material; keep residuals, foreign bodies and opening hosts. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)
 
+- Preserve connected exact source atoms when numeric room faces omit a nearly collinear vertex, avoiding spurious microscopic boundary pieces rejected by the ordinary backend. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)
+
 - Offer newly closed rooms from every exact child of a drawn wall segment after graph splitting, preserving the logical drawing chain and unrelated face identities. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)
 
 - Exercise ordinary room-write geometry/host validation through the production Python CPU path in room browser fixtures, retaining negative host/resize/model controls and binding backend changes to their test inputs. Port existing-face selection and exact atomic-host expectations to the accepted contracts. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)

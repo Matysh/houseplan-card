@@ -421,11 +421,38 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
       rawA:original?.a||Q.pointToNumbers(index.points.get(edge.from)!),
       rawB:original?.b||Q.pointToNumbers(index.points.get(edge.to)!)}];
   });
-  const numericOn=(p:number[],s:FaceSupport):boolean=>{
+  const numericOn=(p:number[],s:Pick<FaceSupport,'rawA'|'rawB'>):boolean=>{
     const a=s.rawA,b=s.rawB,dx=b[0]-a[0],dy=b[1]-a[1],n=dx*dx+dy*dy;
     if(!n)return false;
     const t=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/n;
     return t>=-1e-9&&t<=1+1e-9&&numericNear(p,[a[0]+dx*t,a[1]+dy*t]);
+  };
+  const supportedSide=(p:number[],q:number[],a:Q.ExactPoint,b:Q.ExactPoint):FaceSupport[]|undefined=>{
+    const dx=q[0]-p[0],dy=q[1]-p[1],length2=dx*dx+dy*dy;
+    const parameter=(point:number[])=>((point[0]-p[0])*dx+(point[1]-p[1])*dy)/length2;
+    const starts=new Set<string>(),ends=new Set<string>();
+    for(const[id,point]of index.points){if(Q.pointEq(point,a))starts.add(id);if(Q.pointEq(point,b))ends.add(id);}
+    const adjacency=new Map<string,Array<{next:string;support:FaceSupport}>>();
+    for(const s of supports){
+      if(!numericOn(s.rawA,{rawA:p,rawB:q})||!numericOn(s.rawB,{rawA:p,rawB:q}))continue;
+      const forward=parameter(s.rawB)>parameter(s.rawA),backward=parameter(s.rawA)>parameter(s.rawB);
+      if(!forward&&!backward)continue;
+      const edge=s.edge!,from=forward?edge.from:edge.to,next=forward?edge.to:edge.from;
+      const list=adjacency.get(from)||[];
+      list.push({next,support:forward?s:{...s,a:s.b,b:s.a,rawA:s.rawB,rawB:s.rawA}});adjacency.set(from,list);
+    }
+    const dead=new Set<string>(),active=new Set<string>();
+    const walk=(node:string):FaceSupport[]|undefined=>{
+      if(ends.has(node))return[];
+      if(dead.has(node)||active.has(node))return;
+      active.add(node);
+      const choices=(adjacency.get(node)||[]).sort((a,b)=>Number(a.support.edge!.kind==='partition')-Number(b.support.edge!.kind==='partition')
+        ||Number(consumedSet.has(b.support.edge!.id))-Number(consumedSet.has(a.support.edge!.id))
+        ||codepoint(edgeKey(a.support.edge!),edgeKey(b.support.edge!)));
+      for(const choice of choices){const tail=walk(choice.next);if(tail){active.delete(node);return[choice.support,...tail];}}
+      active.delete(node);dead.add(node);return;
+    };
+    for(const start of starts){const path=walk(start);if(path?.length)return path;}
   };
   const lines:FaceLine[]=[],roomLines=new Map<string,FaceLine[]>();
   for(const id of rooms){
@@ -464,6 +491,18 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
     });
     const own:FaceLine[]=[];
     for(let i=0;i<poly.length;i++){
+      // A numeric room face can omit collinear atoms whose exact source points
+      // differ below double precision. Follow the connected named source path
+      // instead of replacing it with a straight chord through foreign walls.
+      const path=supportedSide(poly[i],poly[(i+1)%poly.length],exactVertices[i],exactVertices[(i+1)%poly.length]);
+      if(path){
+        for(const support of path){
+          const line:FaceLine={room:id,slot:i,a:support.a,b:support.b,support,
+            cuts:[{t:Q.ZERO,p:support.a},{t:Q.ONE,p:support.b}]};
+          own.push(line);lines.push(line);
+        }
+        continue;
+      }
       const line:FaceLine={room:id,slot:i,a:exactVertices[i],b:exactVertices[(i+1)%poly.length],support:candidates[i],
         cuts:[{t:Q.ZERO,p:exactVertices[i]},{t:Q.ONE,p:exactVertices[(i+1)%poly.length]}]};
       if(Q.pointEq(line.a,line.b))failure('face-zero',id);
