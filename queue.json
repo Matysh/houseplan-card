@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2743,
+  "revision": 2744,
   "nextTicket": 167,
   "nextFence": 167,
   "tasks": {
@@ -266,31 +266,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "efa1b130fc69da8277de8bb013b08ea65b581010"
-      }
-    },
-    "1169": {
-      "issue": 1169,
-      "branch": "codex/1169-wall-corner-seam",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "37f59faef16f6efad06387486943d51202c7d57c",
-      "mergedAt": 1793569570259,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentDigest": "5a36c115531e77de87c5"
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "37f59faef16f6efad06387486943d51202c7d57c"
       }
     },
     "1172": {
@@ -2928,7 +2903,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "5d0af8bc304275882b185db7f336293075950205"
       }
     }
   },
@@ -3036,7 +3012,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:41820414084:1:1279": {
+      "digest": "ecd0e1d31afb7667a0b6be8f3fd78e5a2075cb33da7b65127f7e081dc7385b38",
+      "issue": 1279,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1279,
+        "at": 1793791557547,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "5d0af8bc304275882b185db7f336293075950205"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "5d0af8bc304275882b185db7f336293075950205",
     "status": "pending",
