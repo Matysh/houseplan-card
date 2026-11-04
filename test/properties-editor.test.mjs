@@ -79,7 +79,7 @@ test('#1047 Properties yields Escape to the active native drawing gesture',()=>{
   assert.equal(prevented,false);assert.equal(h.editor.identity.objectId,'shape');
 });
 
-test('#1263 Properties yields Escape to device drag without retiring its selection',()=>{
+test('#1263 Properties yields Escape to device drag without retiring its selection',async()=>{
   const h=harness('device');
   h.host._deviceDrag={id:'light'};
   let prevented=0;
@@ -92,6 +92,7 @@ test('#1263 Properties yields Escape to device drag without retiring its selecti
   h.host._deviceDrag=null;
   assert.equal(h.editor.escape(event),true,'idle selection can still be dismissed');
   assert.equal(prevented,1);
+  await h.editor.fields.finishThen(()=>{});
   assert.equal(h.editor.identity,null);
 });
 
