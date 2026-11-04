@@ -9970,7 +9970,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a threshold below the measured nine-decimal tail leaves the real 1/240 noise '
       + 'population intact while nominal exact nodes continue to pass (#291)',
     patches: [{
-      file: 'src/coordinate-canonicalization.ts',
+      file: 'src/canvas-constants.ts',
       find: 'export const LATTICE_NOISE_STEPS = 1e-4;',
       replace: 'export const LATTICE_NOISE_STEPS = 1e-9;',
     }],
@@ -9983,7 +9983,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a broad threshold silently attracts authored off-grid geometry instead of only '
       + 'removing the measured storage tail (#291)',
     patches: [{
-      file: 'src/coordinate-canonicalization.ts',
+      file: 'src/canvas-constants.ts',
       find: 'export const LATTICE_NOISE_STEPS = 1e-4;',
       replace: 'export const LATTICE_NOISE_STEPS = 0.5;',
     }],

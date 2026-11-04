@@ -10,6 +10,15 @@ export const CONVERTER_LIMITS = Object.freeze({"MAX_ROOMS":400,"MAX_MARKERS":200
 const DECOR_BOX_KINDS = ['rect', 'ellipse', 'furniture', 'image'];
 
 /**
+ * Dependency-free coordinate constants shared by low-level geometry modules.
+ * Keep this leaf free of model/render imports: modules such as stairs are
+ * consumed by space-geometry itself and must not form an ESM initialisation
+ * cycle through that higher-level facade.
+ */
+/** Existing persisted-coordinate noise allowance, measured in lattice steps. */
+const LATTICE_NOISE_STEPS = 1e-4;
+
+/**
  * Stable, allow-listed persisted geometry.
  *
  * Mirrored by custom_components/houseplan/coordinate_canonicalization.py.
@@ -18,7 +27,6 @@ const DECOR_BOX_KINDS = ['rect', 'ellipse', 'furniture', 'image'];
 const COORDINATE_DECIMALS = 9;
 const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS;
 const LATTICE_GRID_N = 240;
-const LATTICE_NOISE_STEPS = 1e-4;
 /** Existing scalar contract for transforms, angles, lengths and ratios. */
 function canonicalizeNumber(value) {
     if (typeof value !== 'number' || !Number.isFinite(value))
@@ -4892,6 +4900,7 @@ function migrateGraphSpace(space, options = {}) {
     if (!Number.isInteger(sourceVersion) || sourceVersion < 0 || sourceVersion > 10)
         fail('source-version');
     const canonicalSegments = new Set((space.wall_segments || []).map((e) => e.id));
+    const latticeNoise = div(parseDecimal(LATTICE_NOISE_STEPS), exact$1(240n));
     if (source.sources.length > limits.edges || (space.rooms || []).length > limits.rooms)
         fail('resource');
     const run = (optional, terminal = false) => {
@@ -4949,6 +4958,7 @@ function migrateGraphSpace(space, options = {}) {
         };
         for (const owner of source.points) {
             const b = bucket(owner.p), candidates = [];
+            let latticeTarget;
             for (let x = -1n; x <= 1n; x++)
                 for (let y = -1n; y <= 1n; y++)
                     for (const id of buckets.get((b[0] + x) + ',' + (b[1] + y)) || []) {
@@ -4960,14 +4970,18 @@ function migrateGraphSpace(space, options = {}) {
                 const grid = [exact$1(nearestInteger(mul(owner.p[0], exact$1(240n))), 240n), exact$1(nearestInteger(mul(owner.p[1], exact$1(240n))), 240n)];
                 if (withinRadius(owner.p, grid, radius)) {
                     const id = pointNode.get(pointKey$1(grid));
-                    if (!id || compatible(owner, id, grid))
+                    if (!id || compatible(owner, id, grid)) {
+                        if (owner.p.every((q, i) => cmp(sub(q, grid[i]), latticeNoise) < 0 && cmp(sub(grid[i], q), latticeNoise) < 0))
+                            latticeTarget = grid;
                         candidates.push({ id, p: grid });
+                    }
                 }
             }
             const exactExisting = pointNode.get(pointKey$1(owner.p));
             if (exactExisting && compatible(owner, exactExisting, owner.p))
                 candidates.push({ id: exactExisting, p: owner.p });
-            const ranked = candidates.filter(c => optional || pointEq(c.p, owner.p)).sort((a, b) => cmp(squaredDistance(owner.p, a.p), squaredDistance(owner.p, b.p)) || pointCmp(a.p, b.p) || order(a.id || '', b.id || ''));
+            const ranked = candidates.filter(c => optional || pointEq(c.p, owner.p)).sort((a, b) => Number(!!latticeTarget && pointEq(b.p, latticeTarget)) - Number(!!latticeTarget && pointEq(a.p, latticeTarget))
+                || cmp(squaredDistance(owner.p, a.p), squaredDistance(owner.p, b.p)) || pointCmp(a.p, b.p) || order(a.id || '', b.id || ''));
             const selected = ranked[0] || { p: owner.p }, id = selected.id || sourceNodeId(owner.ref);
             const group = origins.get(id) || [];
             place(id, selected.p, [...group, owner]);
@@ -5071,7 +5085,12 @@ function migrateGraphSpace(space, options = {}) {
                 if (!optional && !storedWallContact(pointToNumbers(p0), pointToNumbers(host.a), pointToNumbers(host.b), 1, true))
                     continue;
                 const ends = cutMap.get(edgeKey(host)), [a, b] = frozenHostEndpoints.get(edgeKey(host));
-                const t = projectParameter(p0, a, b);
+                // Keep the already accepted optional lattice anchor through required
+                // contact projection; reusing its decimal source reintroduces q noise.
+                const accepted = nodes.get(node), current = decodePoint(accepted.p);
+                const target = optional && accepted.p[0] === 'l'
+                    && owner.p.every((q, i) => cmp(sub(q, current[i]), latticeNoise) < 0 && cmp(sub(current[i], q), latticeNoise) < 0) ? current : p0;
+                const t = projectParameter(target, a, b);
                 if (!between(t))
                     continue;
                 let p = terminal ? p0 : pointAt(a, b, t), group = origins.get(node);

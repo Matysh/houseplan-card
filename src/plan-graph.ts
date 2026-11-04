@@ -956,7 +956,9 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         const ends=cutMap.get(edgeKey(host))!,[a,b]=frozenHostEndpoints.get(edgeKey(host))!;
         // Keep the already accepted optional lattice anchor through required
         // contact projection; reusing its decimal source reintroduces q noise.
-        const target=decodePoint(nodes.get(node)!.p);
+        const accepted=nodes.get(node)!,current=decodePoint(accepted.p);
+        const target=optional&&accepted.p[0]==='l'
+          &&owner.p.every((q,i)=>cmp(sub(q,current[i]),latticeNoise)<0&&cmp(sub(current[i],q),latticeNoise)<0)?current:p0;
         const t=projectParameter(target,a,b);if(!between(t)) continue;
         let p=terminal?p0:pointAt(a,b,t),group=origins.get(node)!;
         if(terminal&&!pointEq(p,pointAt(a,b,t)))bends++;

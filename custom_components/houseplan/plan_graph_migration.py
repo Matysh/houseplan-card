@@ -388,7 +388,11 @@ def migrate_graph_space(space, options=None):
                     continue
                 ends = cuts[_key(host)]
                 a, b = frozen_host_endpoints[_key(host)]
-                t = project_parameter(decode_point(nodes[identity]["p"]), a, b)
+                current = decode_point(nodes[identity]["p"])
+                target = current if optional and nodes[identity]["p"][0] == "l" and all(
+                    abs(u-v) < lattice_noise for u, v in zip(_xy(owner["p"]), _xy(current))
+                ) else p0
+                t = project_parameter(target, a, b)
                 if not 0 <= t <= 1:
                     continue
                 p, group = p0 if terminal else point_at(a, b, t), origins[identity]

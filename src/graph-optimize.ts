@@ -9,7 +9,7 @@ import {
 import {
   cmp, decodePoint, decodeRational, encodePoint, encodeRational, exact, intersection,
   orientation, parseDecimal, pointAt, pointToNumbers, projectParameter, ZERO, ONE,
-  type ExactPoint,
+  projectedAxisAngle, type ExactPoint,
 } from './plan-exact';
 import { mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { canonicalizeLatticeCoordinate } from './coordinate-canonicalization';
@@ -306,10 +306,7 @@ export function optimizeGraphTargets(
   for (const opening of space.openings || []) if (opening.host
       && (options.alignOpenings !== false || changedHosts.has(opening.id))) {
     const edge = graph.edges.find(e => edgeKey(e) === edgeKey(opening.host))!;
-    const a = numberPoint(edge.from), b = numberPoint(edge.to);
-    let angle = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
-    if (angle >= 90) angle -= 180; else if (angle < -90) angle += 180;
-    opening.angle = angle;
+    opening.angle = projectedAxisAngle(point(edge.from), point(edge.to));
   }
   return { space, ...stats };
 }

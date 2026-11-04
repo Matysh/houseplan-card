@@ -38,6 +38,10 @@ source decoding, graph validation, metadata-only writes and exact dependent
 intersections do not round existing `q` points. Legacy optional normalization
 prefers a lattice anchor within that noise allowance and the original movement
 radius; subsequent contact projection retains that accepted anchor.
+New/explicitly moved openings and openings on changed graph carriers also use
+the normalized graph projection for their angle, matching Optimize rather than
+subtracting separately scaled render endpoints. Unrelated hosts and metadata
+writes preserve their existing angle fields.
 
 Opening hosts retain `{kind,id,t}` and add exact `tq:[numerator,denominator]`.
 `t` is its correctly rounded numeric projection. Metadata edits preserve `tq`;

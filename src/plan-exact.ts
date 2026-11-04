@@ -163,3 +163,12 @@ export const microRadius = (cellCm: number): Exact => {
   return min(exact(1n, 1200000n), div(exact(1n, 10n), mul(exact(240n), parseDecimal(cellCm))));
 };
 export const pointToNumbers = (p: ExactPoint): [number, number] => [toNumber(p[0]), toNumber(p[1])];
+/** Hosted opening orientation uses the accepted normalized graph projection,
+ * never separately scaled render endpoints (whose subtraction has other ULPs). */
+export function projectedAxisAngle(a: ExactPoint, b: ExactPoint): number {
+  const start = pointToNumbers(a), end = pointToNumbers(b);
+  let angle = Math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / Math.PI;
+  if (angle >= 90) angle -= 180;
+  else if (angle < -90) angle += 180;
+  return angle;
+}

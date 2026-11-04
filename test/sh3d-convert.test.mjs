@@ -29,6 +29,15 @@ const golden = (name) => JSON.parse(readFileSync(fileURLToPath(
 const convert = async (name) =>
   convertHome(await readSh3d(bytes(name)), { now: NOW, toolVersion: TOOL });
 
+test('#1282 shipped offline geometry runtime keeps repeated-decimal lattice migration exact', async () => {
+  const { commitWallSegmentModel } = await import('../scripts/sh3d-convert/geometry-runtime.generated.mjs');
+  const source = { model_version: 10, markers: [], settings: {}, spaces: [{ id: 'floor', cell_cm: 5,
+    rooms: [{ id: 'r', name: 'R', poly: [[0, 0], [72 / 240, 44 / 240], [72 / 240, 120 / 240], [0, 120 / 240]] }] }] };
+  const frozen = structuredClone(source), { config } = commitWallSegmentModel(source);
+  assert.ok(config.spaces[0].plan_graph.nodes.every(n => n.p[0] === 'l'));
+  assert.deepEqual(source, frozen);
+});
+
 test('#446 квартира из двух комнат: контуры по граням стен становятся общей стеной', async () => {
   // Главное геометрическое решение конвертера. Sweet Home 3D обводит комнаты по
   // внутренним граням, поэтому «как есть» две комнаты дали бы две параллельные

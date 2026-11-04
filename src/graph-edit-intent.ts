@@ -907,6 +907,20 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
     const host=mapping.hosts[opening.id];if(host)opening.host=clone(host);else delete opening.host;
   }
   const projected=projectGraphSpace(draft,result.graph);
+  if(intent.kind!=='metadata'){
+    const previousOpenings=new Map<string,any>((before.openings||[]).map((o:any)=>[o.id,o]));
+    const current=prepareGraph(result.graph).index;
+    for(const opening of (projected.space as any).openings||[]){
+      if(!opening.host)continue;
+      const edge=current.edges.get(edgeKey(opening.host));if(!edge)continue;
+      const previous=previousOpenings.get(opening.id),old=previous?.host&&index.edges.get(edgeKey(previous.host));
+      const explicit=intent.kind==='openings'&&intent.ids.includes(opening.id);
+      if(!previous||explicit||!old||edgeKey(old)!==edgeKey(edge)
+          ||!Q.pointEq(index.points.get(old.from)!,current.points.get(edge.from)!)
+          ||!Q.pointEq(index.points.get(old.to)!,current.points.get(edge.to)!))
+        opening.angle=Q.projectedAxisAngle(current.points.get(edge.from)!,current.points.get(edge.to)!);
+    }
+  }
   let resizeWallRecords:GraphWallRecordProof|undefined;
   if(intent.kind==='resize'){
     const actual=new Set(result.graph.edges.map(edgeKey)),descendants:Record<string,string[]>=Object.create(null);

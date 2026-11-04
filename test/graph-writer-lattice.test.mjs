@@ -27,6 +27,26 @@ const noWork = (space, message) => {
   const optimized = optimizePlans({ model_version: 11, spaces: [space], markers: [], settings: {} }, {});
   assert.equal(optimized.changed, false, message);
 };
+const bodyRelease = (before, dx, dy) => {
+  const stored = clone(before), frozen = clone(before), id = before.partitions[0].id;
+  const render = { ...before, wall_columns: [], partitions: before.partitions.map(p => ({ ...p,
+    a: p.a.map(v => v * NORM_W), b: p.b.map(v => v * NORM_W) })) };
+  let result, writes = 0;
+  const owner = new PhysicalBodyGestureRuntime({ queueTarget: {}, space: () => render,
+    storedGeometry: () => stored, units: () => ({ cellCm: 5, gridPitch: GRID_PITCH }),
+    point: e => e.point, snap: p => p.map(v => Math.round(v / GRID_PITCH) * GRID_PITCH),
+    snapshot: () => null, select: () => true, publish() {}, now: () => 0, openDialog() {}, toast() {},
+    commit() { writes++; result = commitGraphEdit(before, stored, { kind: 'partitions', ids: [id] }); } });
+  const event = (point, clientX) => ({ point, clientX, clientY: 0, pointerId: 1, stopPropagation() {}, target: {} });
+  const start = render.partitions[0].a, end = [start[0] + dx * GRID_PITCH, start[1] + dy * GRID_PITCH];
+  owner.begin(event(start, 0), 'partition', id);
+  owner.move(event(end, 10));
+  assert.deepEqual(stored, frozen, 'queued/held movement never mutates persisted geometry');
+  owner.end(event(end, 10));
+  assert.equal(writes, 1);
+  assert.deepEqual(before, frozen);
+  return result;
+};
 
 test('#1282 nudge commits every lattice origin/direction as exact l nodes and leaves Optimize no work', () => {
   for (let k = 0; k < 240; k++) for (const delta of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -104,26 +124,46 @@ test('#1282 authored noise tolerance has an explicit boundary and never changes 
 
 test('#1282 physical body release preserves exact grid nodes after the real transient drag owner', () => {
   for (let k = 0; k < 240; k++) {
-    const before = free(k), stored = clone(before), frozen = clone(before);
-    const render = { ...before, wall_columns: [], partitions: before.partitions.map(p => ({ ...p,
-      a: p.a.map(v => v * NORM_W), b: p.b.map(v => v * NORM_W) })) };
-    let result, writes = 0;
-    const owner = new PhysicalBodyGestureRuntime({ queueTarget: {}, space: () => render,
-      storedGeometry: () => stored, units: () => ({ cellCm: 5, gridPitch: GRID_PITCH }),
-      point: e => e.point, snap: p => p.map(v => Math.round(v / GRID_PITCH) * GRID_PITCH),
-      snapshot: () => null, select: () => true, publish() {}, now: () => 0, openDialog() {}, toast() {},
-      commit() { writes++; result = commitGraphEdit(before, stored, { kind: 'partitions', ids: ['p'] }); } });
-    const event = (point, clientX) => ({ point, clientX, clientY: 0, pointerId: 1, stopPropagation() {}, target: {} });
-    const start = render.partitions[0].a;
-    owner.begin(event(start, 0), 'partition', 'p');
-    owner.move(event([start[0] + GRID_PITCH, start[1]], 10));
-    assert.deepEqual(stored, frozen, 'queued/held movement never mutates persisted geometry');
-    owner.end(event([start[0] + GRID_PITCH, start[1]], 10));
-    assert.equal(writes, 1);
+    const result = bodyRelease(free(k), 1, 0);
     assert.ok(result.plan_graph.nodes.every(n => n.p[0] === 'l'), `physical k=${k}`);
-    assert.deepEqual(before, frozen);
     noWork(result, `physical k=${k}`);
   }
+});
+
+test('#1282 diagonal hosted opening has no angle debt after thickness, body move and nudge', () => {
+  let space = graphSpace([['a', 82, 50], ['b', 112, 70]], [['free', 'a', 'b']]);
+  space = commitGraphEdit(space, clone(space), { kind: 'thickness', edges: [{ kind: 'partition', id: 'free' }], cm: 15 });
+  const carriers = space.partitions.map(w => ({ ...w, a: w.a.map(v => v * NORM_W), b: w.b.map(v => v * NORM_W) }));
+  annotateGraphOpeningRuns(space.plan_graph, carriers, 'partition', NORM_W);
+  const wall = carriers[0], dx = wall.b[0] - wall.a[0], dy = wall.b[1] - wall.a[1], length = Math.hypot(dx, dy);
+  const target = graphOpeningRunTarget(carriers, 'free', [wall.a[0] + dx / length * 18 * GRID_PITCH,
+    wall.a[1] + dy / length * 18 * GRID_PITCH]);
+  const draft = clone(space);
+  draft.openings = [{ id: 'diagonal-door', type: 'door', length: 6 / 240,
+    angle: Math.atan2(dy, dx) * 180 / Math.PI, x: target.normalized[0], y: target.normalized[1], host: target.host }];
+  space = commitGraphEdit(space, draft, { kind: 'openings', ids: ['diagonal-door'] });
+  noWork(space, 'diagonal opening creation');
+  const tq = clone(space.openings[0].host.tq);
+  space = commitGraphEdit(space, clone(space), { kind: 'thickness', edges: [{ kind: 'partition', id: 'free' }], cm: 10 });
+  noWork(space, 'thickness');
+  space = bodyRelease(space, 1, 0);
+  noWork(space, 'physical release');
+  const nudged = nudgePlan(space, { kind: 'partition', id: 'free' }, 0, 1 / 240, 5);
+  space = commitGraphEdit(space, nudged, { kind: 'partitions', ids: ['free'] });
+  noWork(space, 'nudge after diagonal opening body move');
+  assert.deepEqual(space.openings[0].host.tq, tq);
+});
+
+test('#1282 an authored off-grid free endpoint keeps its original non-lattice translation', () => {
+  const graph = { version: 1, nodes: [{ id: 'a', p: ['q', '1', '7', '1', '5'] }, { id: 'b', p: ['l', '120', '48'] }],
+    edges: [{ id: 'p', kind: 'partition', from: 'a', to: 'b', cm: 10 }], rooms: [], dependencies: [] };
+  const before = G.projectGraphSpace({ id: 'floor', rooms: [] }, graph).space;
+  const draft = nudgePlan(before, { kind: 'partition', id: 'p' }, 1 / 240, 0, 5);
+  assert.equal(draft.partitions[0].a[0], before.partitions[0].a[0] + 1 / 240);
+  const moved = commitGraphEdit(before, draft, { kind: 'partitions', ids: ['p'] });
+  assert.equal(moved.plan_graph.nodes.find(n => n.id === 'a').p[0], 'q');
+  const metadata = clone(before); metadata.title = 'Metadata only';
+  assert.deepEqual(commitGraphEdit(before, metadata, { kind: 'metadata' }).plan_graph, before.plan_graph);
 });
 
 test('#1282 native Draw accepts ULP grid tails only with the actual snap producer', () => {
