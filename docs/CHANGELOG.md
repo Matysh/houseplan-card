@@ -4,6 +4,8 @@
 
 - Offer newly closed rooms from every exact child of a drawn wall segment after graph splitting, preserving the logical drawing chain and unrelated face identities. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)
 
+- Exercise ordinary room-write geometry/host validation through the production Python CPU path in room browser fixtures, retaining negative host/resize/model controls and binding backend changes to their test inputs. Port existing-face selection and exact atomic-host expectations to the accepted contracts. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)
+
 - Keep legacy wall carriers unchanged during stairs-only Undo/Redo, so moving a stair can be redone without an incidental model migration. Mixed and structural restore guards remain strict. [#1269](https://github.com/Matysh/houseplan-card/issues/1269)
 
 - Isolate the 95px Zigbee tooltip scene from header controls and retain a real stationary hover, with explicit stage-width and hit-target preconditions. [#1271](https://github.com/Matysh/houseplan-card/issues/1271)

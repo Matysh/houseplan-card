@@ -24,6 +24,8 @@ export const PUBLIC_PRODUCT_INPUTS = [...buildInputs.filter(path => path !== 'pa
 const browserInputs = [...buildInputs, 'demo/**/*.mjs', 'demo/fixtures/**/*.json', 'demo/srv/demo.html', 'demo/srv/assets/*.svg',
   'scripts/browser-attestation.mjs', 'scripts/toolchain-pins.mjs', 'scripts/capture-environment.mjs'];
 const pythonInputs = ['custom_components/houseplan/**/*.py', 'custom_components/houseplan/manifest.json', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];
+const pythonBackedTests = new Set(['demo/smoke_wall_node_python_roundtrip.mjs',
+  'demo/smoke_wall_face_lineage.mjs', 'demo/smoke_wall_face_room_split.mjs', 'test/room-write-python.test.mjs']);
 export function discoverReleaseTests(root) {
   const known = new Map(inventory.entries.map(row => [row.path, row]));
   const candidates = [
@@ -159,12 +161,15 @@ function preparations(steps, { build = false, tests = false, browser = false } =
 function nodeStep(id, name, files, requires = []) {
   return step(id, name, ['node', '--test', '--test-reporter=tap', ...files],
     ['package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.test.json', 'scripts/fix-test-build.mjs',
-      'scripts/coverage-maps.mjs', 'test/fixtures/**', 'demo/fixtures/**', 'demo/srv/demo.html', ...files],
+      'scripts/coverage-maps.mjs', 'test/fixtures/**', 'demo/fixtures/**', 'demo/srv/demo.html', ...files,
+      ...(files.some(file => pythonBackedTests.has(file)) ? [...pythonInputs, '.python-version'] : [])],
     requires, { expectedNonempty: true, preparationOnlyRequires: requires.filter(id => id === 'test-build') });
 }
 function smokeStep(smoke) {
+  const pythonBacked = pythonBackedTests.has(smoke.file);
   return step(`smoke:${smoke.file.replace(/^demo\//, '').replace(/\.mjs$/, '')}`, `Браузер: ${smoke.name || smoke.file.replace('demo/smoke_', '').replace('.mjs', '').replaceAll('_', ' ')}`,
-    ['node', smoke.file, ...smoke.args], browserInputs, ['demo-assets', 'test-build'], { timeoutMs: 600000,
+    ['node', smoke.file, ...smoke.args], pythonBacked ? [...browserInputs, ...pythonInputs, '.python-version'] : browserInputs,
+    ['demo-assets', 'test-build'], { timeoutMs: 600000,
       ...(smoke.file.endsWith('smoke_editor_draft_exit.mjs') ? { env: { HP_SMOKE_WIDTH: '1100' } } : {}) });
 }
 /** Pure planning: never installs dependencies, starts HA, builds, or executes a test. */

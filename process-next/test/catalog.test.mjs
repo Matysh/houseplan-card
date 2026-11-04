@@ -10,6 +10,21 @@ import { prepareGoldenSelection, goldenHarnessScenario, goldenRunSelection } fro
 import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+test('Python-backed browser witnesses bind backend changes without adding HA or pytest gates', async () => {
+  for (const file of ['demo/smoke_wall_node_python_roundtrip.mjs', 'demo/smoke_wall_face_lineage.mjs', 'demo/smoke_wall_face_room_split.mjs']) {
+    const plan = await planProfile({ root, event: 'task', layer: 'product', areaTests: [file] });
+    const smoke = plan.steps.find(step => step.id.startsWith('smoke:'));
+    assert.ok(smoke.inputs.includes('custom_components/houseplan/**/*.py'));
+    assert.ok(smoke.inputs.includes('.python-version'));
+    assert.deepEqual(smoke.command, ['node', file]);
+    assert.deepEqual(smoke.requires, ['demo-assets', 'test-build']);
+    assert.equal(plan.steps.some(step => /backend|e2e/.test(step.id)), false);
+  }
+  const ordinary = await planProfile({ root, event: 'task', layer: 'product', areaTests: ['demo/smoke_summary_weather.mjs'] });
+  assert.equal(ordinary.steps.find(step => step.id.startsWith('smoke:')).inputs.includes('custom_components/houseplan/**/*.py'), false);
+  const unit = await planProfile({ root, event: 'task', layer: 'product', areaTests: ['test/room-write-python.test.mjs'] });
+  assert.ok(unit.steps.find(step => step.id === 'affected-node').inputs.includes('custom_components/houseplan/**/*.py'));
+});
 test('pure docs creates no preparation, test or unavailable gate, including after-review', async () => {
   const plan = await planProfile({ root, event: 'fix', layer: 'docs', issue: 1105, areaTests: ['not-a-file'] });
   assert.deepEqual(plan.steps, []);

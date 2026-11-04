@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { isDeepStrictEqual as equal } from 'node:util';
 import { launch, check, finish } from './serve.mjs';
+import { ordinaryRoomWriteReply } from './helpers/room-write-python.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { setWallThickness } from '../test-build/wall-thickness.js';
 import { polygonArea, distToSegment } from '../test-build/logic.js';
@@ -45,6 +46,7 @@ async function scenario(name, config, body) {
   lastBrowser = browser;
   page.setDefaultTimeout(10000);
   try {
+    await page.exposeFunction('__validateClosureWrite', ordinaryRoomWriteReply);
     await page.evaluate(async config => {
       await window.__hpTest.setServerConfig(config);
       await window.__hpTest.setLayout({ 'virtual-parent': { s: 'closure', x: -.5, y: -2 } });
@@ -74,15 +76,13 @@ async function scenario(name, config, body) {
           await new Promise(resolve => setTimeout(resolve, 30));
           throw Object.assign(new Error('controlled split config/set refusal'), { code: 'invalid_format' });
         }
-        for (const oldSpace of state.saved.spaces) for (const opening of oldSpace.openings || []) {
-          const next = message.config.spaces.find(s => s.id === oldSpace.id)?.openings?.find(o => o.id === opening.id);
-          if (opening.host?.kind === 'partition' && next
-              && (next.host?.kind !== 'partition' || next.host.id !== opening.host.id)) {
-            state.rejected++;
-            throw Object.assign(new Error('surviving partition opening cannot change its host'), { code: 'invalid_format' });
-          }
+        try {
+          const reply = await window.__validateClosureWrite(state.saved, message);
+          if (!reply.ok) throw Object.assign(new Error(reply.error.message), { code: reply.error.code });
+          state.saved = reply.config;
         }
-        state.saved = structuredClone(message.config); state.writes++;
+        catch (error) { state.rejected++; throw error; }
+        state.writes++;
         return { ok: true, rev: ++state.rev };
       } };
       window.__closureSmoke = state;

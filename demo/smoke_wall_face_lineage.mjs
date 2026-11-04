@@ -2,6 +2,7 @@
 import { launch, check, finish } from './serve.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { currentGraphFixture } from './helpers/graph-fixture.mjs';
+import { ordinaryRoomWriteReply } from './helpers/room-write-python.mjs';
 
 const point = (x, y) => [x / 240, y / 240];
 const partition = (id, x1, y1, x2, y2, cm) => ({
@@ -84,6 +85,7 @@ async function scenario(name, config, body) {
   page.setDefaultTimeout(10000);
   lastBrowser = browser;
   try {
+    await page.exposeFunction('__validateLineageWrite', ordinaryRoomWriteReply);
     await page.evaluate(async (config) => {
       await window.__hpTest.setServerConfig(config);
       await window.__hpTest.setLayout({});
@@ -107,21 +109,14 @@ async function scenario(name, config, body) {
           return { config: structuredClone(state.saved), rev: state.revision, can_write: true, plan_graph_api: 1 };
         }
         if (message.type !== 'houseplan/config/set') return fallback(message);
-        const candidate = structuredClone(message.config);
+        let candidate = structuredClone(message.config);
         state.attempts.push(candidate);
-        for (const oldSpace of state.saved.spaces || []) {
-          const nextSpace = candidate.spaces.find((item) => item.id === oldSpace.id);
-          for (const oldOpening of oldSpace.openings || []) {
-            if (oldOpening.host?.kind !== 'partition') continue;
-            const next = nextSpace?.openings?.find((item) => item.id === oldOpening.id);
-            if (next && (next.host?.kind !== 'partition' || next.host.id !== oldOpening.host.id)) {
-              state.rejected.push({ opening: oldOpening.id, code: 'invalid_format' });
-              throw Object.assign(new Error('surviving partition opening cannot change its host'), {
-                code: 'invalid_format',
-              });
-            }
-          }
+        try {
+          const reply = await window.__validateLineageWrite(state.saved, message);
+          if (!reply.ok) throw Object.assign(new Error(reply.error.message), { code: reply.error.code });
+          candidate = reply.config;
         }
+        catch (error) { state.rejected.push({ code: 'invalid_format', message: error.message }); throw error; }
         state.saved = candidate;
         state.accepted.push(candidate);
         return { ok: true, rev: ++state.revision };
@@ -185,6 +180,7 @@ async function snapshot(page) {
     config: structuredClone(window.__card._serverCfg),
     history: window.__card._geometryHistory.size,
     toast: window.__card._toast,
+    toastId: window.__card.renderRoot.querySelector('[data-hp="toast"]')?.dataset.id,
     server: structuredClone(window.__lineageSmoke),
     pendingRooms: window.__card._wallFaceBatch?.candidates.length || 0,
   }));
@@ -308,7 +304,7 @@ await scenario('true duplicate rollback', garderoba({ duplicate: true }), async 
   await settleWrites(page);
   const after = await snapshot(page);
   return {
-    duplicateStillRejected: String(after.toast).includes('wall identifiers'),
+    duplicateStillRejected: after.toastId === 'toast.wall_model_migration_blocked',
     noPartialMutation: equal(geometry(after.config), geometry(before.config)),
     noHistoryOrServerWrite: after.history === before.history && after.server.attempts.length === 0,
   };
@@ -321,14 +317,29 @@ for (const opening of ['same-residual', 'absorbed', 'new-residual']) {
     await decide(page, 'Opening room');
     await settleWrites(page);
     const after = await snapshot(page);
-    if (opening !== 'same-residual') return {
+    if (opening !== 'same-residual') {
+      const expectedOpenings = structuredClone(before.config.spaces[0].openings);
+      if (opening === 'absorbed') {
+        // This current fixture already atomized the source at112/133. The
+        // fully consumed child's same-ID role change is proved by ordinary
+        // Python validation; it is not a rehost of the original full carrier.
+        expectedOpenings[0].host.kind = 'wall';
+      }
+      const oldHost = before.config.spaces[0].openings[0].host;
+      const promoted = opening !== 'absorbed' || equal(
+        after.config.spaces[0].wall_segments.find(wall => wall.id === oldHost.id),
+        before.config.spaces[0].partitions.find(partition => partition.id === oldHost.id),
+      ) && after.config.spaces[0].rooms.some(room => room.wall_ids.includes(oldHost.id));
+      return {
       ordinaryWriteAccepted: after.server.attempts.length === 1 && after.server.accepted.length === 1
         && after.server.rejected.length === 0,
       roomCreated: after.config.spaces[0].rooms.length === before.config.spaces[0].rooms.length+1,
-      openingAndOriginalCarrierPreserved: equal(after.config.spaces[0].openings,before.config.spaces[0].openings)
+      exactOpeningAndSourceIdentityPreserved: equal(after.config.spaces[0].openings,expectedOpenings)
         && equal(after.config.spaces[0].partitions.find(p=>p.id==='long-source'),before.config.spaces[0].partitions.find(p=>p.id==='long-source')),
+      consumedChildPromotedWithExactIdentityAndGeometry: promoted,
       oneAcceptedHistoryStep: after.history === before.history+1,
-    };
+      };
+    }
     const oldOpening = before.config.spaces[0].openings[0];
     const newOpening = after.config.spaces[0].openings[0];
     const { host: _oldHost, ...oldFields } = oldOpening;
@@ -336,8 +347,13 @@ for (const opening of ['same-residual', 'absorbed', 'new-residual']) {
     return {
       sameResidualAccepted: after.server.accepted.length === 1 && after.server.rejected.length === 0,
       openingGeometryAndMetadataPreserved: equal(oldFields, newFields),
-      originalPartitionHostRetained: newOpening.host.kind === 'partition'
-        && newOpening.host.id === oldOpening.host.id && newOpening.host.t !== oldOpening.host.t,
+      // Model11's authored fixture already split the source at y=112: this
+      // window at101 owns the same90..112 child before and after promotion.
+      // The legacy full-carrier t=.1→.5 transition happened during fixture
+      // migration, so the accepted operation must retain the complete host.
+      originalPartitionHostRetained: equal(newOpening.host, oldOpening.host)
+        && newOpening.host.kind === 'partition' && newOpening.host.t === .5
+        && equal(newOpening.host.tq, ['1', '2']),
     };
   });
 }

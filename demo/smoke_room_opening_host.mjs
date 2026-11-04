@@ -99,7 +99,8 @@ try {
       await history('redo').click(); await settleWrites(3 + cycle * 2);
       assert.deepEqual(await page.evaluate(() => window.__roomHost.saved.spaces[0]), deleted);
     }
-    await page.evaluate(() => window.__hpTest.setTool('draw'));
+    // #1176: completed free faces are offered by Select; Walls starts drawing.
+    await page.evaluate(() => window.__hpTest.setTool('select'));
     await clickPlan(0.3, 0.3);
     const room = page.locator('[data-hp="dialog"][data-kind="room"]');
     await room.locator('#room-name').fill('Recreated');
