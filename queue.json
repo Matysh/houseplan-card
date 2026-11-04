@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2842,
+  "revision": 2843,
   "nextTicket": 172,
   "nextFence": 172,
   "tasks": {
@@ -3373,6 +3373,10 @@
       "digest": "98de156c933762d310650aa7d497a9637f60024b8b45763ea9bf6ba3544065e7",
       "issue": 1277
     },
+    "github:41851664949:1:completions:message:cf4d5d09d478897c0b215d8a39981eef4f86c3975c8a820985edf3cb11d0fc11": {
+      "digest": "fdd83d0748b38c671d3f27ee3324f84739827177cc9ab3e9c4366c7d32d9316e",
+      "issue": 1277
+    },
     "finish:c239caf7-af26-4d29-b88a-b50d79172cc2": {
       "digest": "4d7036367eabf81ee02b8d6504f92e30e2e16d6d9377854e348fce21eab7dbee",
       "issue": 1277,
@@ -3428,7 +3432,8 @@
         "reviewChanges": "До: статический active-pan зависел от случайной фазы compositor-опоры с бюджетом обновления 100 ms/15%; прочие кадры требовали проверки ранее принятой компоновки UI.\n\nПосле: после прежних восьми native mouse moves запрашивается один нормальный полный Lit-кадр. Мышь остаётся зажата; строго проверяются identity исходного `_panStart`, `lock=pan` и равенство camera/config до и после рендера. SVG- и HTML-основы соответствуют полному кадру, как при обычном обновлении UI во время активного жеста. Производственный runtime, screenshot flags, thresholds, masks и timeouts не менялись. Динамическую плавность проверяют отдельные native smokes.\n\nИсследованы и отвергнуты покадровые движения, ожидание 100 ms refresh и округление client coordinates: они не обеспечили стабильность. Финальный полный Lit-кадр дал по пять независимых native captures каждой темы: внутри темы все PNG побайтно одинаковы, все 20 попарных сравнений имеют ratio 0. Две официальные сцены на `16f87f914` совпали с ними.\n\nСветлый SHA: `25bf2c25fe8d4c85c025e05edb2f8ee82a37247e7399d85a25980d01fc263da7`. Тёмный: `c9ad9ea55ba7…`. Полное сравнение сохранено в `artifacts/grid-full-frame-comparison.json`.\n\n### Проверки\n\n- 12 адресных unit PASS: восемь новых (сохранность snapshot; отказ при release/replacement/swipe/camera/config mutation; распространение render failure) и четыре существующих repaint-теста.\n- Product build с TypeScript PASS для подготовки канонического захвата.\n- Контрольный stable-rest после приёмки: **251/251 PASS**, 0 skipped/errors, прежние thresholds. Источник `45465cc05d14daeffd92ee0e636d45e14d737991`, Chromium `151.0.7922.34`, matrix v110; SHA256 полного отчёта `873ae4d58e7b35d18df1ba6a5d8d0dfc38e070f011e23ea0ba354f515d2acc79`. Полные report/log/evidence сохранены в `C:/Users/Sergey/Documents/Houseplan/beta3-stable-golden-review-20261104/verification/` и `artifacts/issue1277-verified-evidence.json`. Проход занял 294.0 s.\n- Финальные S6 (infra: синтаксис и два тестовых файла), code review и merge выполняются через общую очередь; до их фактического завершения успех не заявляется.\n\nНовый полный профиль из 548 шагов не повторяется: это адресный ремонт Golden и его эталонов.\n\nРиски: нельзя подменить активный pan отпусканием мыши, скрыть ошибку повторным скриншотом или потерять stored config. Новые отрицательные unit отказывают при этих условиях; native cases сохраняют mouse-down.\n\nHA E2E для этого ремонта не требуется: пользовательский runtime, HA и wire не меняются. Решение записано в companion [Matysh/houseplan-e2e#26](https://github.com/Matysh/houseplan-e2e/issues/26). Публикация новой версии этой задачей не выполняется.\n\n<!-- beta3-stable-triage:golden-stable -->\n\n\n### Ремонт блокера завершения\n\nПервый finish остановился до входа в очередь на чтении 67 MB бинарного diff. Причина вынесена в #1280 и исправлена отдельным штатным ship-слиянием `cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89`; S6 `20261104T144609971-61c0f1c6`: 53/53 поведенческих теста и синтаксис PASS. Бинарные тела больше не читаются в JS при вычислении patch-id, сама identity сохранена.\n\nЗависимость перенесена в подготовительную ветку #1277, чтобы исправленный клиент смог выполнить pre-admission. Финальный rebase/S6/review/merge остаются внутри finish. Ремонт касается только чтения Git и документации, поэтому успешный Golden 251/251 на неизменённом UI/capture не повторяется.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
