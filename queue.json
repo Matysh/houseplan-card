@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2485,
+  "revision": 2486,
   "nextTicket": 153,
   "nextFence": 153,
   "tasks": {
@@ -2574,15 +2574,16 @@
         "at": 1793781841099
       },
       "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793781841099,
-        "entry": 1,
-        "requestId": "review:1269:1:43910d3e92fbbbe669102b726569975a5da5b939:477af68e102d42f95372f7e50f8974565a15b6e6",
-        "transitionConfirmed": true
-      }
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793782334911,
+        "entry": 2,
+        "detail": "Браузер: stairs: failed",
+        "eventId": "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269"
+      },
+      "reason": "checks-failed"
     },
     "1270": {
       "issue": 1270,
@@ -2871,18 +2872,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1269,
-    "worker": "finish",
-    "token": "152:finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:1:admit",
-    "fence": 152,
-    "materialSha": "09a06bef493f020473dd3a694568b30369969daa",
-    "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "phase": "testing",
-    "admittedAt": 1793782313161,
-    "expiresAt": 1793782619244,
-    "patchId": "78ca53ee75cb5f367d98601f4c976caed120d61b"
-  },
+  "active": null,
   "events": {
     "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
       "digest": "147a95c6a25693081a7257baf111607c32aaa43d7092ce2529d58cde5d52a9cc",
@@ -2938,6 +2928,10 @@
     },
     "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:2:synchronized": {
       "digest": "d349e9896ab1fcd78278d851acf21838003a4c744497334d266559ca5216e305",
+      "issue": 1269
+    },
+    "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return": {
+      "digest": "72b2332560a4c3612e00f15d138131d54e70e398629799fd44b767afd53d0580",
       "issue": 1269
     },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
@@ -3041,6 +3035,26 @@
           "status": "passed",
           "finishedAt": "2026-11-04T08:39:17.643Z",
           "failures": []
+        }
+      }
+    },
+    "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269": {
+      "digest": "72b2332560a4c3612e00f15d138131d54e70e398629799fd44b767afd53d0580",
+      "issue": 1269,
+      "message": {
+        "kind": "return",
+        "issue": 1269,
+        "at": 1793782334911,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793782334911,
+          "entry": 2,
+          "detail": "Браузер: stairs: failed",
+          "eventId": "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:3:return:return:1269"
         }
       }
     }
