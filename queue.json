@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3111,
+  "revision": 3112,
   "nextTicket": 187,
   "nextFence": 186,
   "tasks": {
@@ -2978,7 +2978,7 @@
       "notice": {
         "key": "2:author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
         "reason": "author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793819114383,
         "entry": 2,
@@ -3670,6 +3670,10 @@
     "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:3:synchronized": {
       "digest": "7cc29ce95ba0e4b405de270769017dcfab003f3ba58361357a3fae77f45922f0",
       "issue": 1286
+    },
+    "github:41893524159:1:completions:notice:54001202a9054d709f69c97202f0093fb61ce2813800d275a4146514609563e6": {
+      "digest": "00e4da205cda1237d0c4927971466b7147f5499ef4b1452d69071f72e0d6de71",
+      "issue": 1282
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
