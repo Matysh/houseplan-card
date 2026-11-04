@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 302,
+  "revision": 303,
   "active": "v1.84.0-beta.5-20261104",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -9316,7 +9316,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.84.0-beta.5",
@@ -11741,7 +11741,8 @@
           "en": "## v1.84.0-beta.5 — 2026-11-04\n- Reconcile lattice and wall-identity test passports, canonical writer assertions and deletion/Undo oracles with the accepted model11 behavior. Preserve historical sources, genuine off-grid cases, CAS refusals and file cleanup after Undo expires. [#1290](https://github.com/Matysh/houseplan-card/issues/1290)\n\n- Preserve exact lattice targets through wall nudges/body moves, Resize and opening movement; tolerate existing coordinate noise only at authored targets and retain accepted lattice anchors in mirrored TS/Python legacy normalization. Write affected opening angles from the normalized graph projection, synchronize the offline converter and its semantic fixtures, and retain the existing threshold mutation anchors. [#1282](https://github.com/Matysh/houseplan-card/issues/1282)\n- Remove safe collinear seams exposed by completed graph edits, preserving exact opening hosts, topology/support contacts, material boundaries and unrelated components. Optimize shares the protection of seams crossed by an opening footprint. Live Draw endpoints remain until chain finish. [#1283](https://github.com/Matysh/houseplan-card/issues/1283)\n- Keep the summary panel's On/Off choice and View scales across HA route navigation and reload, using a stable panel identity with conservative legacy preference recovery. [#1286](https://github.com/Matysh/houseplan-card/issues/1286)\n- Preserve valid diagonal dependent junctions during current-model Optimize while retaining safe lattice repair along exact axial supports. Add reproducible native editor/layout sequences, real Resize fixed-point checks and minimized counterexamples. [#1285](https://github.com/Matysh/houseplan-card/issues/1285)\n\n- Inspect release membership sequentially to avoid GitHub's concurrent-request limit on large releases, retaining resumable closure and comment bookkeeping. [#1289](https://github.com/Matysh/houseplan-card/issues/1289)\n- Couple deleted/merged room labels to geometry history and recoverable config/layout writes; clean positions of explicitly deleted markers atomically. Space deletion retains its source pair and attachment pins for the existing one-deep Undo control. Foreign and unverified layout records remain untouched. [#1287](https://github.com/Matysh/houseplan-card/issues/1287)\n\n- Measure model11 Optimize movement and near-axis repair on the accepted graph, count actual wall seam collapses, and explain exact opening parameter rewrites without claiming a visible move. Legacy migration reports retain their previous counters. [#1284](https://github.com/Matysh/houseplan-card/issues/1284)"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.84.0-beta.5"
     }
   },
   "published": {
@@ -12445,7 +12446,8 @@
     "ship-review:result:69d545db-f2ea-4866-8dfa-056c744f6116": "2bfdec14e903b48fd8a10f7860d70172458a4cc8b8950957cedd68612bbed56b",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:runner-report": "c073b72d2737ee805722e55797994a343ba3fe8a902eecc19c4df593c1ae3417",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:metrics": "12c0ef3991fcce43b9f93dcf83a2deda230bdcbed1216d11b042bb53e719e0c0",
-    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:prepared:6d5de143-0004-4a6c-8919-c272f33dd059": "1dd0f5bf0905ab107a6b983246e4d1c6b75dd8e23900d659dc02eb90e1980caa"
+    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:prepared:6d5de143-0004-4a6c-8919-c272f33dd059": "1dd0f5bf0905ab107a6b983246e4d1c6b75dd8e23900d659dc02eb90e1980caa",
+    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:started:302": "af47225c76235b86917c2011a2d2ab4274b6c38fbbc7ffd789848c5d54ff8a28"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
