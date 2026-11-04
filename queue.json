@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3259,
+  "revision": 3260,
   "nextTicket": 192,
   "nextFence": 192,
   "tasks": {
@@ -2975,7 +2975,7 @@
       "ownerDecision": null,
       "ticket": 191,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793821192826,
       "reviewEntry": 3,
       "patchId": "fc46dde3aa37a627d744b96d5fd5804c546c09dc",
@@ -3027,6 +3027,15 @@
         "entry": 2,
         "detail": "Поведение изменённой области: failed",
         "eventId": "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return:return:1287"
+      },
+      "s6": {
+        "id": "20261104T194007707-23e80e77",
+        "name": "Тесты для задачи #1287 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T194007707-23e80e77/report.json",
+        "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
+        "status": "passed",
+        "finishedAt": "2026-11-04T19:40:19.979Z",
+        "failures": []
       }
     },
     "1288": {
@@ -3206,9 +3215,9 @@
     "fence": 191,
     "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
     "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793821196996,
-    "expiresAt": 1793821503732,
+    "expiresAt": 1793824821154,
     "patchId": "fc46dde3aa37a627d744b96d5fd5804c546c09dc"
   },
   "events": {
@@ -3416,6 +3425,34 @@
         "layer": "product",
         "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
         "phase": "sync"
+      }
+    },
+    "finish:d622d9f7-12e5-46f7-a997-af0378802d20:finish:3:s6-complete": {
+      "digest": "4d4bb66080f5231f1ab9792e0886cf963201b1ca5c5ec23b736c3df916dd97e8",
+      "issue": 1287,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1287,
+        "at": 1793821221154,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T194007707-23e80e77",
+          "name": "Тесты для задачи #1287 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T194007707-23e80e77/report.json",
+          "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
+          "status": "passed",
+          "finishedAt": "2026-11-04T19:40:19.979Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Подтверждённая граница дефекта и решение\n\nНа текущем dev `createSpaceDeletionCandidate` и серверный `_space_delete_candidate` уже убирают **все** записи с `s === spaceId`; утверждение исходного анализа об их уборке только «с устройствами» не подтвердилось. Существующая marker-history также атомарно убирает позицию и восстанавливает её по Undo. Эти пути сохраняются и закрепляются тестами. Подтверждённый пробел — подпись комнаты при Delete/Merge, её local geometry Undo/Redo и fallback config/set удаления маркера. Удаление пространства раньше не имело Undo; буквальный AC реализован через существующий one-deep paired Undo, с отдельной подписью прежней кнопки в Общих настройках, без нового диалога.\n\n`roomTopologyLayoutCandidate(beforeSpace, afterSpace, layout)` в `room-deletion.ts` выделяет только удалённые room-ID и возвращает очищенный layout + ограниченные before/after positions. `_commitPhysicalGeometry` применяет их после принятия графа/ограничений; геометрическая история хранит только эти ключи, отказ queued batch возвращает и их. Два Delete до отправки объединяют область rollback без потери второй подписи. `markerDeletionCandidate(config, targets, layout={})` совместимо добавляет paired layout к прежнему результату.\n\nСерверный `config/set` определяет владельцев, удалённых этим жестом, и проводит уборку через существующий recoverable `_commit_pair`; `layout_changes` возвращает точечную принятую дельту. `room_label_layout` — ограниченный label patch для geometry Undo, допускает только известные исходные/целевые room-ID, проверяет пространство и `expected_layout_rev` CAS. Capability `room_label_layout_api: 1` не позволяет новому клиенту обещать атомарный label Undo со старым сервером. Принятый layout-cache обновляется даже при более новом локальном draft, который ответ старой отправки не перезаписывает. Общая замена layout и `repairSpaceReferences` не добавлены/не изменены.\n\n`space/delete` сохраняет исходную пару в прежнем one-deep слоте (`undo_kind: space_delete`), до следующего изменения; вложения удалённых маркеров закреплены этой копией, runtime-след уборки не восстанавливается. Используются прежние revision-guard, Undo endpoint и контрол Общих настроек. Оптимизация импортов и legacy остаётся прежней.\n\n### Проверки и ограничения\n\nДо финальной очереди: новые backend pure/real HA — 11/11, реальные space-delete routes/executor/marker-history — 24/24, scoped config/set — 30/30, contact-парный путь — 9/9, config-migrations — 36/36. Есть настоящий authenticated WS, disk-backed Stores, reload интеграции, CAS-отказ без изменения пары, persistent target-write failure → восстановление config+подписи, space delete/Undo обоих режимов и сохранность PDF, marker tombstone/full drop. Связанная Node-история/space/device — 203/203; native room Delete/Undo/Redo, отказ preflight и rollback двух queued Delete проверяют точные позиции/метаданные. Дополнительный контроль прежнего Undo подтверждает отдельный space-delete toast. Merge no-op по геометрии требует ещё не слитой #1283; строгая проверка не ослаблена и должна пройти после финального rebase.\n\n#1285 отдельно добавляет property-инвариант текущей пары с layout, использует эти production helper и существующие кандидаты удаления. Root уже выполнил read-only подготовительный прогон 210 paired sequences без ожидающих Resize/Merge; это не окончательный S6 задачи #1287. Полный релиз, golden и реальные browser HA journeys не запускались. До беты нужен existing editor/deletion journey: перенести подпись → Delete/Merge → Undo/Redo/reload; удалить пространство обоими режимами → прежний Undo возвращает labels/groups/positions; Devices Delete/Undo сохраняет существующее поведение. Метаданные E2E ведёт root.\n\n### Риски\n\nСогласованность config/layout при отказе/устаревшем ответе и при двух queued удалениях; границы чужих и непроверенных владельцев; сохранение compatibility Device contact patch; attachment pins и истечение one-deep Undo. Нужен финальный rebase после #1282/#1283. Отдельных вопросов владельцу не требуется.\n\nДополнительная адресная проверка deferred boundary: layout-only reload до отправки Delete может снова принести последнюю позицию уже удалённой локально комнаты. На исходной подготовленной реализации writer ошибочно пытался отправить её как восстановление (RED); теперь room-label patch выводит `null` из окончательного room-ownership кандидата, а не из этого устаревшего layout echo (GREEN). Backend продолжает использовать свежую пару под lock и тот же CAS. Это не изменение чужих layout-записей.\n\nПервый финальный rebase произошёл до S8 #1283 (её product-код принят, но рецензент вернул placement changelog). Автор вернул свой допуск для ожидания зависимости. Параллельно finish успел выполнить S6 `20261104T190401145-9453c9a0`: 6/7 групп зелёные, backend 110/110, Node 211/212 — единственный ожидаемый отказ строгого Merge/no-op без #1283. Проверка не ослабляется; новый finish будет только после реального S8 зависимости. RU/EN запись #1287 проверена именно в Unreleased, вне опубликованной beta.4.\n\nПосле фактического S8 #1282/#1283 финальный rebase на `339c044b8` получил S6 `20261104T192924108-9f08c90e`: 6/7, backend 110/110, Node 211/213. Все новые native Delete/Merge/Undo/Redo, deferred-layout и server paired-write проверки зелёные. Два отказа — старые exact паспорта #1166 и #1100, изменившиеся вследствие принятой миграции authored anchors #1282 и удаления швов Merge #1283. Исправление адресное: исторический полный receipt #1166 byte-identical; synthetic inputs зафиксированы из него, 12 synthetic hashes неизменны; только четыре public legacy rows обновлены после независимой проверки всех ID/material/metadata и ограничений координат/отношений. Для Merge изменены лишь after/Redo hashes, Undo и вся metadata прежние; добавлен literal semantic oracle `left`, прямоугольник, четыре 10cm edges, чужие этажи и точный Redo. Обоснование — `docs/testing/1287-history-passports.md`. Оба полных history suite — 73/73 PASS; это не обход/исключение тестов. Новый finish повторит затронутый Node gate. Все продуктовые изменения удаления неизменны относительно предыдущего S6.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
