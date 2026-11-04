@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2378,
-  "nextTicket": 147,
+  "revision": 2379,
+  "nextTicket": 148,
   "nextFence": 147,
   "tasks": {
     "1126": {
@@ -2524,6 +2524,20 @@
         "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
       }
     },
+    "1267": {
+      "issue": 1267,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1267-opening-rulers",
+      "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 147,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793780163092,
+      "reviewEntry": 1
+    },
     "1270": {
       "issue": 1270,
       "branch": "fix/1270-weather-smoke-readiness",
@@ -2737,7 +2751,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1267
+  ],
   "active": null,
   "events": {
     "dev-build:41797715902:1:1270": {
@@ -2750,6 +2766,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "bdb7c83edfea4c3c963b31dba21dc36752f5414a"
+      }
+    },
+    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0": {
+      "digest": "1c9e8576ca6026734c4b243ccec36d8e141a862eedfef71ada2dea654147ee79",
+      "issue": 1267,
+      "message": {
+        "kind": "queued",
+        "issue": 1267,
+        "at": 1793780163092,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30"
       }
     }
   },
