@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.84.0-beta.3 — 2026-11-04
+
+- Repair beta geometry blockers: preserve independent coincident legacy material, unbound openings during unrelated edits, exact Optimize support/lattice targets, full opening footprints and conservative reconciliation. Restore the bounded legacy Resize split materializer and accurate maintenance counters. Retain source-derived graph identities in complete regression targets; accept the 31 visual frames explicitly reviewed by the owner.
+
 - Keep node grab cursors, context menus and endpoint movement after accepted Python integration writes by comparing graph projections independently of JSON object-key order; retain strict checks for changed values and array order. Cover consecutive saves, Undo/Redo and reload through the production Python node-write path. [#1256](https://github.com/Matysh/houseplan-card/issues/1256) [#1257](https://github.com/Matysh/houseplan-card/issues/1257)
 
 - Limit coordinator and CI-status checkout to process tools and their imports, preserving Git ancestry and fetching other file contents only when needed. [#1252](https://github.com/Matysh/houseplan-card/issues/1252)

@@ -1,7 +1,9 @@
 """Shared exact-wire and legacy migration corpus, independent Python reader."""
 import json
 import struct
+import copy
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 
@@ -30,6 +32,42 @@ def test_shared_legacy_migration(case):
         assert len(result["graph"][key]) == expected
     assert json.dumps(case["space"], sort_keys=True) == original
     assert result["migrationReport"]["maxDisplacementCm"] <= .001000001
+
+
+def test_478_independent_zero_and_positive_material_have_the_complete_ts_target():
+    from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+    from custom_components.houseplan.plan_graph import validate_graph
+
+    case = json.loads((Path(__file__).parents[1] / "test/fixtures/478-room-draft-migration-vectors.json").read_text())["accepted"]
+    frozen = copy.deepcopy(case["input"])
+    existing, free, zero, reverse = case["expected_partitions"]
+
+    def node(identity, side):
+        return "n:" + quote(json.dumps(["partition", identity, side], separators=(",", ":")), safe="~()*!.'-_")
+
+    start, end = node(zero["id"], 0), node(zero["id"], 1)
+    graph = dict(version=1, nodes=[
+        dict(id=node(existing["id"], 0), p=["l", "480", "0"]),
+        dict(id=node(existing["id"], 1), p=["l", "720", "0"]),
+        dict(id=start, p=["l", "60", "0"]), dict(id=end, p=["l", "120", "0"]),
+        dict(id=node(free["id"], 0), p=["l", "0", "0"]),
+    ], edges=[
+        dict(id=existing["id"], kind="partition", **{"from": node(existing["id"], 0), "to": node(existing["id"], 1)}, cm=10),
+        dict(id=zero["id"], kind="partition", **{"from": start, "to": end}, cm=0),
+        dict(id=free["id"], kind="partition", **{"from": node(free["id"], 0), "to": start}, cm=15),
+        dict(id=reverse["id"], kind="partition", **{"from": start, "to": end}, cm=22),
+    ], rooms=[], dependencies=[])
+    graph["nodes"].sort(key=lambda n: n["id"])
+    graph["edges"].sort(key=lambda e: e["id"])
+    partitions = [dict(p, a=min(p["a"], p["b"]), b=max(p["a"], p["b"])) for p in case["expected_partitions"]]
+    partitions.sort(key=lambda p: p["id"])
+    target = dict(model_version=11, markers=[], settings={}, spaces=[dict(
+        id="floor", title="Floor", rooms=[], wall_segments=[], partitions=partitions, walls=[], plan_graph=graph)])
+    validate_graph(graph)
+    actual, _ = commit_wall_segment_model(case["input"])
+    assert actual == target
+    assert case["input"] == frozen
+    assert commit_wall_segment_model(target)[0] == target
 
 
 def test_real_plan_contact_constraints_have_finite_free_anchors():

@@ -6,6 +6,7 @@ import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { reconcileCoincidentPartitions } from '../test-build/coincident-partitions.js';
 import { GRID_PITCH, GRID_STEP_N as S } from '../test-build/space-geometry.js';
 import { wallIntervals, wallKey } from '../test-build/wall-thickness.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
 const clone = (value) => structuredClone(value);
 const fixture = JSON.parse(readFileSync(
@@ -139,11 +140,14 @@ test('issue 296 an opening across a structural breakpoint keeps the source parti
       host: { kind: 'partition', id: 'host', t: 0.5 },
     }],
   };
+  const baseline = commitWallSegmentModel(configOf(space)).config.spaces[0];
   const result = optimizePlans(configOf(space), {});
   assert.equal(result.report.partitionsReconciled, 0);
-  assert.deepEqual(result.config.spaces[0].partitions, space.partitions);
-  assert.equal(result.config.spaces[0].openings[0].host.id, 'host');
-  assert.equal(result.config.spaces[0].openings[0].host.t, 0.5);
+  assert.deepEqual(result.config.spaces[0].partitions, baseline.partitions,
+    'both named migration children survive across the full opening footprint');
+  assert.deepEqual(result.config.spaces[0].openings, baseline.openings,
+    'the whole opening, exact child host and physical centre remain unchanged');
+  assert.equal(result.config.spaces[0].openings[0].x, .5);
 });
 
 test('issue 296 keeps an opening wholly on a residual with exact absolute geometry', () => {
@@ -199,16 +203,23 @@ test('#478 applies column blockers and treats migrated legacy work as ordinary w
       { id: 'left', name: 'left', area: null, poly: [[0, 0], [1, 0], [1, 1], [0, 1]] },
       { id: 'right', name: 'right', area: null, poly: [[2, 0], [3, 0], [3, 1], [2, 1]] },
     ],
-    walls: [], partitions: [{ id: 'split', a: [0, 0], b: [3, 0], cm: 15 }],
+    // Actual positive masonry is required for a hidden-body proof. In model11
+    // an absent legacy overlay becomes an explicit zero contour, not material.
+    walls: [
+      {key:wallKey([0,0],[1,0],S),a:[0,0],b:[1,0],cm:15},
+      {key:wallKey([2,0],[3,0],S),a:[2,0],b:[3,0],cm:15},
+    ], partitions: [{ id: 'split', a: [0, 0], b: [3, 0], cm: 15 }],
     wall_columns: [{ id: 'column', shape: 'circle', center: [0.5, 0], cm: 20 }],
   };
   const columnResult = optimizePlans(configOf(base), {});
   assert.equal(columnResult.report.partitionsReconciled, 1);
-  assert.deepEqual(columnResult.config.spaces[0].partitions[0].a, [0, 0]);
-  assert.deepEqual(columnResult.config.spaces[0].partitions[0].b, [2, 0]);
+  const baseline = commitWallSegmentModel(configOf(base)).config.spaces[0];
+  assert.deepEqual(columnResult.config.spaces[0].partitions,baseline.partitions.filter(p=>p.a[0]<2),
+    'the column-blocked [0,1] and uncovered [1,2] atoms both remain byte-identical');
 
   const draftSpace = clone(base);
   delete draftSpace.wall_columns;
+  draftSpace.walls = [];
   draftSpace.rooms = [base.rooms[0]];
   draftSpace.partitions = [{ id: 'blocked', a: [0, 0], b: [1, 0], cm: 15 }];
   draftSpace.room_drafts = [{
@@ -218,12 +229,9 @@ test('#478 applies column blockers and treats migrated legacy work as ordinary w
   assert.equal(draftResult.report.roomDraftsMigrated, 1);
   assert.equal(draftResult.report.partitionsReconciled, 0);
   assert.equal(draftResult.config.spaces[0].room_drafts, undefined);
-  assert.deepEqual(draftResult.config.spaces[0].partitions.map((partition) => [
-    partition.a, partition.b, partition.cm,
-  ]), [
-    [[0, 0], [1, 0], 15],
-    [[0, 0], [0.5, 0], 30],
-  ]);
+  assert.deepEqual(draftResult.config.spaces[0].partitions,
+    commitWallSegmentModel(configOf(draftSpace)).config.spaces[0].partitions,
+    'all split source atoms retain the independent 15cm and 30cm materials');
 });
 
 test('issue 296 fails closed at MAX_PARTITIONS and MAX_WALLS', () => {

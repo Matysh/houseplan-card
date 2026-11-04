@@ -47,6 +47,13 @@ const pointKey = (p: ExactPoint): string => JSON.stringify(encodePoint(p));
 const hostParameter=(host:any):Exact=>host.tq ? decodeRational(host.tq)
   : Array.isArray(host.t) ? decodeRational(host.t) : parseDecimal(host.t);
 const canonicalHost=(host:any,q:Exact):any=>({...host,tq:encodeRational(q),t:toNumber(q)});
+// Contexts accept bare hosts or complete openings. An unbound positioned
+// opening is not a host reference to an edge named by the opening's own ID.
+const contextHost=(item:any):any=>{
+  if(item&&'host'in item)return item.host;
+  if(item&&('t'in item||'tq'in item||item.kind==='wall'||item.kind==='partition'))return item;
+  return item&&'x'in item&&'y'in item&&'length'in item?undefined:item;
+};
 export interface GraphIndex {
   nodes: Map<string, GraphNode>; points: Map<string, ExactPoint>; edges: Map<string, GraphEdge>;
   incident: Map<string, GraphEdge[]>; owners: Map<string, string[]>;
@@ -156,7 +163,7 @@ export function validateGraph(input: unknown, context: ValidationContext = {}):
     }
     dependencyOrder(graph);
     for (const item of context.hosts || []) {
-      const host = item && 'host' in item ? item.host : item;
+      const host = contextHost(item);
       if (!host) continue;
       const e = index.edges.get(edgeKey(host)); if (!e) fail('host');
       const t = hostParameter(host);
@@ -331,7 +338,7 @@ function preparedMove(before:PlanGraph,op:Extract<GraphOperation,{kind:'move-nod
     return{graph:before,changed:false,mapping:emptyMapping(),touched:{nodes:[],edges:[],rooms:[],hosts:[]},diagnostics:[]};
   if(before.dependencies.some(d=>d.node===op.node)&&!op.detachDependency)fail('dependent-move',op.node);
   for(const item of context.hosts||[]){
-    const host=item&&'host'in item?item.host:item;if(!host)continue;
+    const host=contextHost(item);if(!host)continue;
     if(!index.edges.has(edgeKey(host))||!between(hostParameter(host)))fail('host');
     if(host.tq&&host.t!==toNumber(hostParameter(host)))fail('host-projection');
   }
@@ -374,9 +381,10 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
   const originalIndex=assertGraph(before, { ...context, projection: undefined });
   const originalRooms=new Map(before.rooms.map(r=>[r.room,r]));
   let graph = clone(before);
-  const mapping = emptyMapping(), hostRecords = (context.hosts || []).map((item, i) => ({
-    id: String(item.id ?? i), host: clone(item && 'host' in item ? item.host : item),
-  })).filter(item=>item.host);
+  const mapping = emptyMapping(), hostRecords = (context.hosts || []).flatMap((item, i) => {
+    const host=contextHost(item);
+    return host ? [{ id: String(item.id ?? i), host: clone(host) }] : [];
+  });
   const findEdge = (ref: EdgeRef): GraphEdge => graph.edges.find(e => edgeKey(e) === edgeKey(ref)) || fail('edge-missing', edgeKey(ref));
   const findNode = (id: string): GraphNode => graph.nodes.find(n => n.id === id) || fail('node-missing', id);
   const addNode = (node: GraphNode): void => {
@@ -1086,6 +1094,7 @@ export function migrateGraphSpace<T extends Record<string, any>>(space: T, optio
         const gkey=s.kind+':'+pair.join('|'),props=metadataProps(s.raw,['id','a','b','cm']);
         const stable=(v:any):string=>JSON.stringify(v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort(order).map(k=>[k,JSON.parse(stable(v[k]))])):v);
         const existing=(byGeometry.get(gkey)||[]).find(e=>{
+          if(s.kind==='partition'&&e.cm!==cm)return false;
           const a=e.props||{},b=props||{};return Object.keys(a).every(k=>!(k in b)||stable(a[k])===stable(b[k]));
         });
         if(!existing&&s.kind==='wall'&&(byGeometry.get(gkey)||[]).length)fail('props-conflict',gkey);

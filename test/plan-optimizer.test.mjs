@@ -16,6 +16,7 @@ import {
 } from '../test-build/wall-thickness.js';
 import { checkMixedRoleRecords, checkWallKeys } from '../scripts/model-invariants.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { projectGraphSpace, validateGraph } from '../test-build/plan-graph.js';
 
 const room = (id, x0, x1, openTo) => ({
   id,
@@ -379,7 +380,31 @@ test('issue 248 Optimize stays a no-op across the lattice storage round-trip', (
   assert.deepEqual(storageRoundtripFixture.input, inputBefore, 'preview must keep fixture input');
   assert.equal(first.changed, true);
   assert.ok(first.report.latticeCoordinatesCanonicalized > 0);
-  assert.deepEqual(first.config, commitWallSegmentModel(storageRoundtripFixture.expected.config).config);
+  // The historical literal supplies the complete intended points; graph
+  // authority comes from the immutable raw source, before Optimize. Migrating
+  // that old target would instead invent new coordinate-derived source IDs.
+  const target = commitWallSegmentModel(storageRoundtripFixture.input.config).config;
+  for(const space of target.spaces) {
+    const literal=storageRoundtripFixture.expected.config.spaces.find(s=>s.id===space.id);
+    const points=new Map();
+    assert.deepEqual(space.plan_graph.dependencies,[], 'this literal has no support constraints');
+    for(const cycle of space.plan_graph.rooms) {
+      const poly=literal.rooms.find(r=>r.id===cycle.room).poly;
+      assert.equal(cycle.edges.length,poly.length);
+      cycle.edges.forEach((reference,index)=>{
+        const edge=space.plan_graph.edges.find(e=>e.kind===reference.kind&&e.id===reference.id);
+        const id=reference.reverse?edge.to:edge.from;
+        const p=['l',...poly[index].map(v=>String(Math.round(v*240)))];
+        if(points.has(id))assert.deepEqual(points.get(id),p);
+        points.set(id,p);
+      });
+    }
+    space.plan_graph.nodes=space.plan_graph.nodes.map(node=>({...node,p:points.get(node.id)}));
+    assert.equal(validateGraph(space.plan_graph).ok,true);
+    Object.assign(space,projectGraphSpace(space,space.plan_graph).space);
+    assert.deepEqual(space.rooms.map(r=>r.poly),literal.rooms.map(r=>r.poly));
+  }
+  assert.deepEqual(first.config, target);
   assert.deepEqual(first.layout, storageRoundtripFixture.expected.layout);
   assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
   assert.deepEqual(canonicalizeLayoutGeometry(first.layout), first.layout);
@@ -884,6 +909,9 @@ test('issue 229 a node on the side of a room survives the sweep', () => {
     spaces: [{
       id: 'f1', title: 'Floor', cell_cm: 5, view_box: [0, 0, 1, 1],
       rooms: [{ id: 'r1', x: 0.1, y: 0.1, w: 0.4, h: 0.4 }],
+      // Reconciliation requires material hiding the two positive partitions;
+      // an explicit zero room contour is not an occluding wall in model11.
+      walls: [exactWall([.1,.5],[.5,.5],15)],
       partitions: [
         partition('p1', 0.1, 0.5, 0.3, 0.5),
         partition('p2', 0.3, 0.5, 0.5, 0.5),

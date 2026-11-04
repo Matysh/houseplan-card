@@ -13,11 +13,15 @@ import assert from 'node:assert/strict';
 
 const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 const previousFrame = globalThis.requestAnimationFrame;
+const previousDOM = new Map(['ShadowRoot', 'HTMLElement'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
 globalThis.window = { customCards: [] };
 globalThis.requestAnimationFrame = callback => setImmediate(() => callback(0));
 after(() => {
   if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow); else delete globalThis.window;
   globalThis.requestAnimationFrame = previousFrame;
+  for (const [key, descriptor] of previousDOM) {
+    if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+  }
 });
 const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-runtime.js');
 const { createConfigAdoption, adoptStructuralResponses } = await import('../test-build/config-adoption.js');
@@ -29,6 +33,8 @@ const { commitWallSegmentModel } = await import('../test-build/wall-segment-mode
 const { LiveRuntime } = await import('../test-build/live-interaction-runtime.js');
 const { cardInteractionIdleSnapshot } = await import('../test-build/version-recovery-card.js');
 const { authoredChange } = await import('./helpers/geometry-commit-harness.mjs');
+globalThis.ShadowRoot = class ShadowRoot {};
+globalThis.HTMLElement = class HTMLElement {};
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const square = id => {

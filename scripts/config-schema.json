@@ -378,6 +378,10 @@
       ],
       "required": false
     },
+    "config.settings.center_summary": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.decor_default_style": {
       "required": false
     },

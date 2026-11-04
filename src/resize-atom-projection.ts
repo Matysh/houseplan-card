@@ -1,4 +1,4 @@
-import { commitWallSegmentModel } from './wall-segment-model';
+import { decodeLegacyWallSegmentModel } from './wall-segment-model';
 import { GRID_STEP_N } from './space-geometry';
 import { wallKey, type WallEntry } from './wall-thickness';
 import type { OpeningCfg } from './types';
@@ -176,7 +176,10 @@ export function projectResizeStoredAtoms<T extends {
     const openings = (space.openings || []).filter(opening => opening.host?.kind === 'wall' && ids.has(opening.host.id));
     const candidate = { id: space.id, cell_cm: space.cell_cm, rooms: localRooms, walls, openings,
       wall_segments: localSegments };
-    const materialized = commitWallSegmentModel({ spaces: [candidate] }).config.spaces[0];
+    // This retained pre-graph path receives edited legacy atoms. Only the
+    // legacy materializer can perform its local split; it cannot grant graph
+    // authority. Current graph resize has its own explicit writer.
+    const materialized = decodeLegacyWallSegmentModel({ spaces: [candidate] }).config.spaces[0];
     const replacement = new Map(materialized.wall_segments.map(segment => [segment.id, segment]));
     const original = new Map((space.wall_segments || []).map(segment => [segment.id, segment]));
     // A local unchanged atom can also serve an owner outside the closure.

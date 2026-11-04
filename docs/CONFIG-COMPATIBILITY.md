@@ -22,6 +22,13 @@ properties, so Python write replies remain usable by the frontend (#1256/#1257).
 Array order, fields and scalar values remain strict; reading a projection never
 repairs a disagreement with its authoritative graph.
 
+The beta.3 release repair preserves coincident legacy partitions with different
+cm instead of merging them by their endpoint pair. The historical #478 source
+keeps all four IDs and its separate 0/22cm carriers; TS, Python and the first HA
+structural write share a complete independently constructed target. The retained
+pre-graph Resize atom splitter uses the legacy materializer on its bounded
+edited projection; current graph Resize keeps its explicit graph writer.
+
 #1216 keeps model/store/envelope versions unchanged. `graph_change` v2 replaces
 the repeated diagnostic base with a structural digest; v1 retains its former
 server-authoritative behavior, including when client/server baselines differ.

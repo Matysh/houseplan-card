@@ -23,6 +23,7 @@ import {
   type WallInterval,
 } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, SpaceModel } from './types';
+import { graphOpeningRun } from './graph-opening-run';
 
 export interface CoincidentPartitionResult {
   walls: WallEntry[];
@@ -132,7 +133,7 @@ const openingGeometry = (
   opening: OpeningCfg, partitions: readonly PartitionCfg[],
   options: CoincidentPartitionOptions,
 ): { center: [number, number]; angle: number; length: number } | null => {
-  if (opening.host) {
+  if (opening.host?.kind === 'partition') {
     const resolved = resolvePartitionOpeningCompat(
       opening, partitions, options.coordScale, options.cellCm, options.gridPitch,
     ).resolved;
@@ -296,7 +297,9 @@ export function reconcileCoincidentPartitions(
     const currentModelPartitions = partitions.map((partition) => scaledPartition(
       partition, options.coordScale,
     ));
-    const otherPartitions = currentModelPartitions.filter((item) => item.id !== source.id);
+    const sourceRun=graphOpeningRun(source);
+    const otherPartitions = currentModelPartitions.filter((item) => item.id !== source.id
+      && !sourceRun?.members.includes(item.id));
     const pieces: AtomicPiece[] = [];
     for (let index = 0; index + 1 < sortedBreakpoints.length; index++) {
       const lo = sortedBreakpoints[index], hi = sortedBreakpoints[index + 1];
@@ -321,10 +324,16 @@ export function reconcileCoincidentPartitions(
           || (kind === 'shared' && roomIds.length === 2));
       const piecePartition: PartitionCfg = { id: source.id, a, b, cm: source.cm };
       const blockedByPartition = otherPartitions.some((other) => (
-        !!collinearRange(a, b, other.a, other.b, eps)
+        !!collinearRange(sourceRun?.a||a, sourceRun?.b||b, other.a, other.b, eps)
       ));
+      const blockedByOpening = openings.some(opening => {
+        if(opening.host?.kind!=='partition'||opening.host.id===source.id)return false;
+        const geometry=openingGeometry(opening,model.partitions,options);
+        return geometry&&openingsOverlap({center:[(a[0]+b[0])/2,(a[1]+b[1])/2],
+          angle:Math.atan2(uy,ux)*180/Math.PI,length:hi-lo},geometry,eps);
+      });
       const safe = proofOk && (options.allowCoincidentPartitions || !blockedByPartition)
-        && !columnBlocks(piecePartition, model.wall_columns, options, eps);
+        && !blockedByOpening && !columnBlocks(piecePartition, model.wall_columns, options, eps);
       const roomCm = proofOk
         ? (options.allowCoincidentPartitions
             ? solid[0].cm
