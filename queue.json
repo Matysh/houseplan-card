@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2924,
-  "nextTicket": 175,
+  "revision": 2925,
+  "nextTicket": 176,
   "nextFence": 175,
   "tasks": {
     "1126": {
@@ -3034,6 +3034,20 @@
       "automationError": "automation-error",
       "automationSince": 1793816320438,
       "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1099-geometry-commit-20261028/test/plan-graph.test.mjs'"
+    },
+    "1284": {
+      "issue": 1284,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1284-actual-optimize-report",
+      "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 175,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793816333799,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3138,7 +3152,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1284
+  ],
   "active": {
     "issue": 1283,
     "worker": "finish",
@@ -3195,6 +3211,19 @@
         "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3": {
+      "digest": "aa806db99935ec492d1e412ab568f1a47bbbac59b6c6a74ed8df0f984e804392",
+      "issue": 1284,
+      "message": {
+        "kind": "queued",
+        "issue": 1284,
+        "at": 1793816333799,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096"
       }
     }
   },
