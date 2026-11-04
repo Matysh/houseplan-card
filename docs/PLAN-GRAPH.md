@@ -150,9 +150,28 @@ prefixes are checked, so a later deletion cannot conceal earlier repair debt.
 The existing geometry corpus also commits actual graph Resize targets, proves
 source-material lineage and requires the first Optimize to be a no-op; it no
 longer permits several repair passes over a projection-only numeric draft.
-The selected mechanism tests for
-graph-edit-intent, graph-optimize, plan-optimizer and the changed writers should
-include these files. They add no mandatory gate to unrelated product tasks.
+For changes to graph-edit-intent, graph-optimize, plan-optimizer and these writers,
+the author selects the mechanism through the ordinary task request's `areaTests`
+(`process-next/lib/catalog.mjs`), rather than a new global gate. The selection used
+for #1285 is:
+
+```json
+{
+"areaTests": [
+  "test/graph-editor-invariant.test.mjs",
+  "test/graph-editor-layout-invariant.test.mjs",
+  "test/graph-dependent-optimize.test.mjs",
+  "test/graph-edit-intent.test.mjs",
+  "test/plan-graph-optimize.test.mjs",
+  "test/geometry-corpus.test.mjs",
+  "test/near-axis.test.mjs",
+  "test/plan-optimizer.test.mjs"
+]
+}
+```
+
+Both 210-sequence tests run in the affected-node step of that request. These
+files add no mandatory gate to unrelated product tasks.
 
 ### Stable identity and transport
 
