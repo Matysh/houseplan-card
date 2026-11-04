@@ -1,3 +1,5 @@
+import { jsonValueEqual } from './json-value-equal';
+
 /**
  * One wall-record preservation invariant for product transactions and the
  * offline model audit (#264).
@@ -5,10 +7,44 @@
  * The broad audit answers whether a physical thickness class disappeared
  * completely; an exact fixed-topology transaction additionally proves the
  * whole `cm` multiset, including meaningful zero-thickness walls (#306).
+ * Current graph Resize proves every source and target material by identity:
+ * exact incident noding can split one stored record into several children.
  */
 
 export interface WallRecordLike {
   cm?: unknown;
+}
+
+interface GraphMaterialRecord extends WallRecordLike {
+  kind: string;
+  id: string;
+  props?: unknown;
+}
+
+/** Exact source identities, including one-to-many incident cuts and aliases. */
+export interface GraphWallRecordProof {
+  before: readonly GraphMaterialRecord[];
+  after: readonly GraphMaterialRecord[];
+  descendants: Readonly<Record<string, readonly string[]>>;
+}
+
+/** Graph noding may change atom counts, but may never lose a source material. */
+export function graphWallRecordsPreserved(proof: GraphWallRecordProof): boolean {
+  const key = (edge: GraphMaterialRecord) => edge.kind + ':' + edge.id;
+  const after = new Map(proof.after.map(edge => [key(edge), edge]));
+  if (after.size !== proof.after.length) return false;
+  const covered = new Set<string>();
+  for (const source of proof.before) {
+    const children = proof.descendants[key(source)];
+    if (!children?.length) return false;
+    for (const child of children) {
+      const target = after.get(child);
+      if (!target || target.kind !== source.kind || target.cm !== source.cm
+          || !jsonValueEqual(source.props || null, target.props || null)) return false;
+      covered.add(child);
+    }
+  }
+  return covered.size === after.size;
 }
 
 export interface WallRecordPreservationOptions {

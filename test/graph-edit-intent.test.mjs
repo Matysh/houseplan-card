@@ -211,6 +211,36 @@ test('new independent face is an explicit graph construction, not current migrat
   assert.equal(G.validateGraph(result.graph).ok,true);
   assert.ok(result.operations.some(op=>op.kind==='replace-room-cycle'));
 });
+test('#1264 a derived T seam slides twice on the fixed uniform neighbour without leaving short atoms',()=>{
+  const rect=(id,x0,y0,x1,y1)=>({id,poly:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]});
+  let before=migrate({id:'t-slide',cell_cm:20,rooms:[rect('a',0,0,.5,.5),rect('b',.5,0,1,.5),rect('fixed',0,.5,1,1)]});
+  before=commitGraphEdit(before,copy(before),{kind:'thickness',rooms:['a','b','fixed'],cm:20});
+  const at=(x,y)=>before.plan_graph.nodes.find(n=>Q.pointEq(G.graphIndex(before.plan_graph).points.get(n.id),Q.readSourcePoint([x,y])));
+  const node=at(.5,.5);
+  // This witness names a derived seam, as the imported real-plan fixture does.
+  before=G.projectGraphSpace(before,G.applyGraphOperation(before.plan_graph,{kind:'set-dependency',dependency:{
+    node:node.id,kind:'on-edge',refs:[{from:at(0,.5).id,to:at(1,.5).id}],parameters:[['1','2']]}}).graph).space;
+  const original=copy(before);
+  assert.ok(before.plan_graph.dependencies.some(d=>d.node===node.id&&d.kind==='on-edge'));
+  for(const [from,to]of[[.5,.51],[.51,.52]]){
+    const draft=copy(before);
+    for(const room of draft.rooms)if(['a','b'].includes(room.id))room.poly=room.poly.map(([x,y])=>[x===from?to:x,y]);
+    const next=commitGraphEdit(before,draft,{kind:'resize',rooms:['a','b']});
+    assert.equal(next.plan_graph.nodes.length,original.plan_graph.nodes.length);
+    assert.deepEqual(next.plan_graph.edges,original.plan_graph.edges,'stored carrier IDs and endpoints stay shared');
+    assert.deepEqual(Q.pointToNumbers(G.graphIndex(next.plan_graph).points.get(node.id)),[to,.5]);
+    assert.deepEqual(next.rooms.find(r=>r.id==='fixed').poly,[[0,.5],[to,.5],[1,.5],[1,1],[0,1]]);
+    assert.equal(G.validateGraph(next.plan_graph).ok,true);before=next;
+  }
+  const authored=copy(original);authored.plan_graph.dependencies=authored.plan_graph.dependencies.filter(d=>d.node!==node.id);
+  const draft=copy(authored);
+  for(const room of draft.rooms)if(['a','b'].includes(room.id))room.poly=room.poly.map(([x,y])=>[x===.5?.51:x,y]);
+  const held=commitGraphEdit(authored,draft,{kind:'resize',rooms:['a','b']});
+  assert.deepEqual(Q.pointToNumbers(G.graphIndex(held.plan_graph).points.get(node.id)),[.5,.5],
+    'an authored outside vertex never inherits the derived seam exception');
+  assert.ok(held.plan_graph.edges.length>original.plan_graph.edges.length);
+});
+
 test('named partition arrangement promotes the selected face and remaps its hosted opening',()=>{
   const before=migrate({id:'n',rooms:[],partitions:[
     {id:'a',a:[0,0],b:[1,0],cm:15,custom:'safe'},{id:'b',a:[1,0],b:[1,1],cm:15},

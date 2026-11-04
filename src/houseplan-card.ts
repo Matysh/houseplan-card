@@ -404,7 +404,7 @@ type ResizeLiveLabel = {
   text: string;
   placement: ResizeAreaPlacement;
 };
-type ResizePreview = { space: string; sp: any };
+type ResizePreview = { space: string; sp: any; roomIds: readonly string[] };
 type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */

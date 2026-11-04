@@ -389,7 +389,7 @@ type ResizeLiveLabel = {
   text: string;
   placement: ResizeAreaPlacement;
 };
-type ResizePreview = { space: string; sp: any; graphBase?: PlanGraph };
+type ResizePreview = { space: string; sp: any; roomIds: readonly string[]; graphBase?: PlanGraph };
 type StructuralEditIntent = GraphEditIntent | { kind: 'prepared'; base: PlanGraph };
 type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
@@ -3329,9 +3329,10 @@ public _rszProjectPreview(
       }
     }
     let atomCandidate;
+    let graphProjection: GraphEditResult<any> | undefined;
     try {
       atomCandidate = graphBaseSpace
-        ? commitGraphEdit(graphBaseSpace, sp, { kind: 'resize', rooms: [...changedRoomIds] })
+        ? (graphProjection = commitGraphEditResult(graphBaseSpace, sp, { kind: 'resize', rooms: [...changedRoomIds] })).space
         : projectResizeStoredAtoms(sp, this._resizeAtomMap, new Set(changedRoomIds), atomEps);
     } catch { return { ok: false, reason: 'wall-metadata' }; }
     if (!atomCandidate) return { ok: false, reason: 'wall-metadata' };
@@ -3411,9 +3412,10 @@ public _rszProjectPreview(
     return {
       ok: true,
       value: {
-        preview: { space: this.host._space, sp, ...(graphBaseSpace ? { graphBase: graphBaseSpace.plan_graph } : {}) },
+        preview: { space: this.host._space, sp, roomIds: [...changedRoomIds], ...(graphBaseSpace ? { graphBase: graphBaseSpace.plan_graph } : {}) },
         beforeWalls: s.walls || [],
         afterWalls: sp.walls || [], artifact: null,
+        ...(graphProjection ? { graphWallRecords: graphProjection.resizeWallRecords } : {}),
       },
     };
   }
@@ -3615,7 +3617,7 @@ public _rszUp(ev: PointerEvent): void {
     setTimeout(() => (this.host._suppressClick = false), 0);
     this._commitPhysicalGeometry(this.host._t('history.resize_room'), result.before, [], true,
       preview.graphBase ? { kind: 'prepared', base: preview.graphBase }
-        : { kind: 'resize', rooms: preview.sp.rooms.map(room => room.id) });
+        : { kind: 'resize', rooms: preview.roomIds });
     this.host.requestUpdate();
   }
 

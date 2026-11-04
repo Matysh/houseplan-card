@@ -10,6 +10,7 @@ import { wallKey, thicknessCmAt } from './wall-thickness';
 import { compareCodePoints } from './codepoint-order';
 import { contentFingerprint } from './visual-continuity';
 import { assertFiniteColumnInputs } from './column-input';
+import type { GraphWallRecordProof } from './wall-record-preservation';
 export type GraphEditIntent =
   | { kind: 'metadata' }
   | { kind: 'openings'; ids: readonly string[] }
@@ -23,7 +24,8 @@ export type GraphEditIntent =
       consumedPartitionIds?: readonly string[]; sourceEdges?: readonly GraphEdgeRef[] }
   | { kind: 'delete-room'; room: string; keepWalls: boolean }
   | { kind: 'merge-rooms'; keep: string; drop: string | readonly string[]; sourceEdges?: readonly GraphEdgeRef[] };
-export interface GraphEditResult<T> { space: T; graph: PlanGraph; mapping: GraphMapping; operations: GraphOperation[] }
+export interface GraphEditResult<T> { space: T; graph: PlanGraph; mapping: GraphMapping; operations: GraphOperation[];
+  resizeWallRecords?: GraphWallRecordProof }
 const clone=<T>(value:T):T=>JSON.parse(JSON.stringify(value));
 const ref=(edge:GraphEdgeRef):GraphEdgeRef=>({kind:edge.kind,id:edge.id});
 const sameNumbers=(a:readonly number[]|undefined,b:readonly number[]|undefined):boolean=>
@@ -131,8 +133,27 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     const outside=incident.some(e=>(index.owners.get(edgeKey(e))||[]).length===0
       ||(index.owners.get(edgeKey(e))||[]).some(room=>!selected.has(room)));
     const moveShared=intent.shared===true;
+    // A derived T seam may slide on an unchanged, uniform outside run. Keep
+    // its identity instead of leaving a second seam a few centimetres behind.
+    // An authored corner, independent body or material breakpoint cannot move
+    // this way; those still use the explicit incidence settlement below.
+    const outsideEdges=incident.filter(e=>(index.owners.get(edgeKey(e))||[]).length===0
+      ||(index.owners.get(edgeKey(e))||[]).some(room=>!selected.has(room)));
+    const seamMaySlide=(point:Q.ExactPoint):boolean=>{
+      if(groups.length!==1||outsideEdges.length!==2)return false;
+      const dep=graph.dependencies.find(d=>d.node===id),[a,b]=outsideEdges;
+      if(dep?.kind!=='on-edge'||dep.refs.length!==1||a.kind!=='wall'||b.kind!=='wall'
+        ||!(index.owners.get(edgeKey(a))||[]).length||!(index.owners.get(edgeKey(b))||[]).length
+        ||a.cm!==b.cm||!jsonValueEqual(a.props||null,b.props||null))return false;
+      const ends=outsideEdges.map(e=>e.from===id?e.to:e.from);
+      if(ends.some(n=>[...(targets.get(n)?.values()||[])].some(p=>!Q.pointEq(p,index.points.get(n)!))))return false;
+      const start=index.points.get(ends[0])!,end=index.points.get(ends[1])!;
+      if(Q.pointEq(start,end)||Q.orientation(start,end,old).n||Q.orientation(start,end,point).n)return false;
+      const t=Q.projectParameter(point,start,end);
+      return Q.cmp(t,Q.ZERO)>0&&Q.cmp(t,Q.ONE)<0;
+    };
     for(const group of groups){
-      const keep=Q.pointEq(group.p,old)||groups.length===1&&(!outside||moveShared);
+      const keep=Q.pointEq(group.p,old)||groups.length===1&&(!outside||moveShared)||seamMaySlide(group.p);
       group.id=keep?id:allocation.id('node',['resize',id,group.rooms.slice().sort(codepoint)]);
       if(group.id!==id)addNode(plan,group.id,group.p);
       for(const room of group.rooms){const map=roomNodes.get(room)||new Map();map.set(id,group.id);roomNodes.set(room,map);}
@@ -892,7 +913,17 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
     const host=mapping.hosts[opening.id];if(host)opening.host=clone(host);else delete opening.host;
   }
   const projected=projectGraphSpace(draft,result.graph);
-  return{space:projected.space as T,graph:result.graph,mapping,operations};
+  let resizeWallRecords:GraphWallRecordProof|undefined;
+  if(intent.kind==='resize'){
+    const actual=new Set(result.graph.edges.map(edgeKey)),descendants:Record<string,string[]>=Object.create(null);
+    for(const edge of graph.edges){
+      const key=edgeKey(edge);
+      descendants[key]=[...new Set([key,...(mapping.edges[key]||[]).map(r=>edgeKey(r.ref)),
+        ...(plan.variants.get(key)||[]).map(edgeKey)])].filter(key=>actual.has(key));
+    }
+    resizeWallRecords={before:graph.edges,after:result.graph.edges,descendants};
+  }
+  return{space:projected.space as T,graph:result.graph,mapping,operations,...(resizeWallRecords?{resizeWallRecords}:{})};
 }
 export function commitGraphEdit<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
   sourceBefore?:Record<string,any>):T{

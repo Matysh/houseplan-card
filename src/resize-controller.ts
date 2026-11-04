@@ -6,6 +6,8 @@ import {
 } from './resize';
 import {
   checkWallRecordsPreserved,
+  graphWallRecordsPreserved,
+  type GraphWallRecordProof,
   type WallRecordLike,
 } from './wall-record-preservation';
 
@@ -20,6 +22,14 @@ export interface ResizeProjection<TPreview, TArtifact> {
   beforeWalls: readonly WallRecordLike[];
   afterWalls: readonly WallRecordLike[];
   artifact: TArtifact | null;
+  graphWallRecords?: GraphWallRecordProof;
+}
+
+function wallRecordsPreserved(projection: Pick<ResizeProjection<unknown, unknown>,
+  'beforeWalls' | 'afterWalls' | 'graphWallRecords'>): boolean {
+  if (projection.graphWallRecords) return graphWallRecordsPreserved(projection.graphWallRecords);
+  return checkWallRecordsPreserved(projection.beforeWalls, projection.afterWalls,
+    { exactMultiplicity: true }).length === 0;
 }
 
 export type ResizeProjectionResult<TPreview, TArtifact> =
@@ -63,6 +73,7 @@ interface AcceptedPreview<TPreview, TLabels, TArtifact> {
   artifact: TArtifact | null;
   beforeWalls: readonly WallRecordLike[];
   afterWalls: readonly WallRecordLike[];
+  graphWallRecords?: GraphWallRecordProof;
 }
 
 interface ResizeSession<TPreview, TLabels, TBefore, TWallUnion, TArtifact> {
@@ -197,10 +208,7 @@ export class ResizeController<TPreview, TLabels, TBefore, TWallUnion, TArtifact>
         session.changedRoomIds, session.rooms,
       );
       if (!projected.ok) return this._projectionRejected(session);
-      if (checkWallRecordsPreserved(
-        projected.value.beforeWalls, projected.value.afterWalls,
-        { exactMultiplicity: true },
-      ).length) return this._projectionRejected(session);
+      if (!wallRecordsPreserved(projected.value)) return this._projectionRejected(session);
     } catch {
       return this._projectionRejected(session);
     }
@@ -212,6 +220,7 @@ export class ResizeController<TPreview, TLabels, TBefore, TWallUnion, TArtifact>
       artifact: projected.value.artifact,
       beforeWalls: projected.value.beforeWalls,
       afterWalls: projected.value.afterWalls,
+      graphWallRecords: projected.value.graphWallRecords,
     };
     // Expose the exact candidate while the host derives labels from its normal
     // render model. Both assignments are synchronous; a failed adapter rolls
@@ -251,9 +260,7 @@ export class ResizeController<TPreview, TLabels, TBefore, TWallUnion, TArtifact>
       session.rooms, session.openings, session.plan, session.delta, session.options,
     )) {
       outcome = { kind: 'rejected', reason: 'invalid-topology' };
-    } else if (checkWallRecordsPreserved(
-      accepted.beforeWalls, accepted.afterWalls, { exactMultiplicity: true },
-    ).length) {
+    } else if (!wallRecordsPreserved(accepted)) {
       outcome = { kind: 'rejected', reason: 'wall-records' };
     } else {
       let valid = false;

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Resize nodes incident fixed room walls and reuses their exact shared atoms, preserving physical identity, independent material and opening child hosts; conflicting material still refuses atomically. Split/conversion lineage now composes across the full original source. [#1264](https://github.com/Matysh/houseplan-card/issues/1264)
+- Resize nodes incident fixed room walls and reuses their exact shared atoms, preserving physical identity, independent material and opening child hosts; conflicting material still refuses atomically. Derived T seams slide on uniform fixed runs without stale short atoms; exact source-material proof accepts legitimate noding after Undo. Split/conversion lineage now composes across the full original source. [#1264](https://github.com/Matysh/houseplan-card/issues/1264)
 
 - Reuse one exact physical divider for both rooms created by Split, so their shared wall has one identity and thickness through Undo/Redo. [#1279](https://github.com/Matysh/houseplan-card/issues/1279)
 

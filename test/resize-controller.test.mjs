@@ -102,6 +102,23 @@ test('#264 failed projection retains the last complete preview and notifies once
   });
 });
 
+test('#1264 graph source proof permits noding and is rechecked on finish',()=>{
+  const run=()=>{
+    const h=setup(),edge=id=>({kind:'wall',id,cm:0,props:{keep:true}});
+    const proof={before:[edge('source')],after:[edge('left'),edge('right')],descendants:{'wall:source':['wall:left','wall:right']}};
+    const project=()=>({ok:true,value:{preview:{},artifact:null,beforeWalls:[{cm:0}],afterWalls:[{cm:0},{cm:0}],graphWallRecords:proof}});
+    return {...h,proof,project};
+  };
+  for(const corrupt of [false,true]){
+    const h=run();assert.equal(move(h.controller,h.beforeWalls,{project:h.project}).kind,'accepted');
+    if(corrupt)h.proof.after[1].cm=30;
+    const result=h.controller.finish({pointerId:7,currentSnapshotIdentity:'snapshot-a',validatePreview:()=>true});
+    assert.equal(result.kind,corrupt?'rejected':'commit');if(corrupt)assert.equal(result.reason,'wall-records');
+  }
+  const bad=run();bad.proof.after[1].props.keep=false;
+  assert.equal(move(bad.controller,bad.beforeWalls,{project:bad.project}).kind,'rejected');
+});
+
 test('#264 exact wall profile fails closed on preview and is rechecked on finish', () => {
   const first = setup();
   assert.deepEqual(move(first.controller, first.beforeWalls, {
