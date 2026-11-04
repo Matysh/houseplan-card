@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3100,
+  "revision": 3101,
   "nextTicket": 187,
   "nextFence": 184,
   "tasks": {
@@ -3108,7 +3108,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1287-delete-layout-ownership",
-      "materialSha": "ccce90344a843d96fd49e73fca0390de24eb9f51",
+      "materialSha": "8d476063f7e27e62894b2196a4e9bad17e4f8948",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 182,
@@ -3116,9 +3116,41 @@
       "status": "S6-in-progress",
       "readyAt": 1793818133308,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793818969522,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "4c66a29bd3c69b900a63b87a39bffce9a8be87a9",
+      "changedFiles": [
+        "custom_components/houseplan/deletion_layout.py",
+        "custom_components/houseplan/websocket_api.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.83.0/1287.json",
+        "src/config-adoption.ts",
+        "src/editors/general-settings-dialog.ts",
+        "src/geometry-history-state.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/i18n/settings/de.json",
+        "src/i18n/settings/en.json",
+        "src/i18n/settings/fr.json",
+        "src/i18n/settings/ru.json",
+        "src/marker-deletion.ts",
+        "src/physical-write-history.ts",
+        "src/plan-optimize-undo.ts",
+        "src/plan-optimize-write.ts",
+        "src/room-deletion.ts",
+        "src/version-recovery-card.ts",
+        "test/late-context-replies.test.mjs",
+        "test/marker-deletion.test.mjs",
+        "test/room-deletion.test.mjs",
+        "tests_backend/test_deletion_layout.py",
+        "tests_backend/test_ha_deletion_layout.py"
+      ]
     },
     "1288": {
       "issue": 1288,
@@ -3299,11 +3331,12 @@
     "worker": "github-coordinator",
     "token": "183:github:41892847332:1:tick:1:admit",
     "fence": 183,
-    "materialSha": "ccce90344a843d96fd49e73fca0390de24eb9f51",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "8d476063f7e27e62894b2196a4e9bad17e4f8948",
+    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
+    "phase": "testing",
     "admittedAt": 1793818922846,
-    "expiresAt": 1793819278574
+    "expiresAt": 1793819337208,
+    "patchId": "4c66a29bd3c69b900a63b87a39bffce9a8be87a9"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3580,6 +3613,10 @@
     },
     "github:41892974536:1:completions:message:24c43835b7041f333f45a13f979038d07c6afc2cf77516988836152067a8928b": {
       "digest": "918971bb93f0677dc45d5583b0b779fca10cea17f3f042d143175e80fe82695a",
+      "issue": 1287
+    },
+    "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9:finish:2:synchronized": {
+      "digest": "6ef76dc881fedd4dd8737b85d5f98be07c9ef9bdfb15f9c835a6db94227ef727",
       "issue": 1287
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
