@@ -6280,7 +6280,7 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
       if (changed) drag.dirty = true;
       cfg.host = target.host;
       cfg.x = target.normalized[0]; cfg.y = target.normalized[1]; cfg.angle = angle;
-      this.host._opMeasure = cfg.host.kind === 'wall' ? this._opRuler({
+      this.host._opMeasure = cfg.host?.kind === 'wall' ? this._opRuler({
         x: cfg.x * NORM_W, y: cfg.y * this.host._spaceH, angle,
       }, cfg.length * NORM_W, false).measure : null;
       this.host.requestUpdate();
