@@ -10,6 +10,15 @@ const res = await page.evaluate(async () => {
   const root = (c) => c.shadowRoot || c.renderRoot;
   const rect = (c) => c._view && [c._view.x, c._view.y, c._view.w, c._view.h];
   const camera = (c) => ({ zoom: c._zoom, view: rect(c) });
+  const physicalCamera = (c) => {
+    const view = rect(c), matrix = root(c).querySelector('.plan-svg').getScreenCTM();
+    return { scale: Math.hypot(matrix.a, matrix.b), center: [view[0] + view[2] / 2, view[1] + view[3] / 2] };
+  };
+  const keepsWorkingCamera = (c, expected) => {
+    const actual = physicalCamera(c);
+    return Math.abs(actual.scale - expected.scale) < 1e-8
+      && actual.center.every((value, i) => Math.abs(value - expected.center[i]) < .001);
+  };
   const points = (c) => {
     const matrix = root(c).querySelector('.plan-svg')?.getScreenCTM();
     return matrix && [[300, 300], [500, 500]].map(([x, y]) => {
@@ -73,7 +82,7 @@ const res = await page.evaluate(async () => {
     await wait(() => !c._modeTransitionBusy, 'source editor');
     c._applyView(3.4, 430, 380); c.requestUpdate();
     await stable(c);
-    return { view, editor: camera(c), points: points(c) };
+    return { view, editor: camera(c), physical: physicalCamera(c), points: points(c) };
   };
   const remount = async (options) => {
     c.remove(); await sleep(20); c = mk(options);
@@ -115,9 +124,9 @@ const res = await page.evaluate(async () => {
     await stable(c);
     out[`ac2-mode-${delayed}`] = c._mode === 'devices';
     await window.__hpTest.setMode('view'); await stable(c);
-    const center = (view) => [view[0] + view[2] / 2, view[1] + view[3] / 2];
-    out[`ac1-view-${delayed}`] = c._zoom === ref.view.zoom
-      && center(rect(c)).every((value, i) => Math.abs(value - center(ref.view.view)[i]) < 0.001);
+    // #1207/#1273: exiting saves the working physical camera, not entry View.
+    // Relative zoom can rebase when the editor frame/toolbar disappears.
+    out[`ac1-view-${delayed}`] = keepsWorkingCamera(c, ref.physical);
   }
 
   // AC3: observe each memo publication, not just a later already-correct pair.
@@ -178,12 +187,12 @@ const res = await page.evaluate(async () => {
   permission.resolve(); await sleep(700); await stable(c);
   out.ac5SpaceWins = c._space === other && c._mode === 'view' && !c._markerDialog;
 
-  // AC6: immediate adoption still returns to the source View.
+  // AC6: immediate adoption retains the working camera on exit as well.
   const immediate = await source();
   await remount(); await wait(() => c._mode === 'devices', 'immediate mode'); await stable(c);
   out.ac6ImmediateCamera = JSON.stringify(camera(c)) === JSON.stringify(immediate.editor);
   await window.__hpTest.setMode('view'); await stable(c);
-  out.ac6ImmediateView = c._zoom === immediate.view.zoom;
+  out.ac6ImmediateView = keepsWorkingCamera(c, immediate.physical);
 
   await source();
   const denied = gate();

@@ -8,8 +8,20 @@ import { bundledProducers, callsFor } from './performance/opening-drag-coverage.
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 const fixture = openingDragFixture();
 const baseline = JSON.parse(readFileSync(new URL('../test/data/1097-opening-drag-baseline.json', import.meta.url)));
+// #1273: retain the archived rounded oracle, but compare the complete current
+// document. The final pointer at .181 snaps 34 host-relative 1/240 steps from
+// .04. Its decimal coordinate projected onto [.04,.224] gives the exact tq below.
+// This target is source/gesture-derived; no production drag/host helper supplies it.
+const expectedOpenings = baseline.openings.map((opening, index) => {
+    assert.equal(opening.host.t, index === 0 ? .769927538 : .5, 'archived host contract');
+    return index === 0 ? { ...opening, x: .04 + 34 * (1000 / 240) / 1000,
+        host: { ...opening.host, t: 1416666666666667 / 1840000000000000,
+            tq: ['1416666666666667', '1840000000000000'] } }
+        : { ...opening, host: { ...opening.host, tq: ['1', '2'] } };
+});
 const { page, browser } = await launch({ width: 1280, height: 1000 }, Number(process.env.HP_OPENING_DPR || 1));
 const out = {}, trace = [];
 const settle = () => page.evaluate(() => window.__hpTest.settled());
@@ -170,7 +182,7 @@ try {
     assert.equal(released.writes, down.writes + 1);
     assert.equal(released.accepted, down.accepted + 1);
     assert.equal(released.history, down.history + 1);
-    assert.deepEqual(released.openings, baseline.openings, 'same byte-for-byte saved openings[] as the original implementation');
+    assert.deepEqual(released.openings, expectedOpenings, 'complete exact current openings[], including unchanged IDs, fields and rational hosts');
     assert.ok(released.builds.wallUnion - down.builds.wallUnion <= 1, 'at most one saved new floor union');
     out.thirtyNativeFramesHaveLocalCutsStablePoolsAndNoWrites = true;
     out.savedOpeningArrayMatchesOriginalAndOneTransaction = true;
@@ -248,6 +260,9 @@ try {
         await settle();
     };
     await page.evaluate(()=>window.__hpTest.setTool('select'));
+    // The default fixed 780px embed uses compact controls. This phase needs
+    // native desktop Fit/Rotate; resize the actual embed, never reveal buttons.
+    await prepareDesktopControls(page); await cameraSettled();
     const cameraPoint = () => page.evaluate(() => {
         const c=window.__card, opening=c._openingsR.find(o=>o.id==='perf-opening-0-0');
         const frame=c.renderRoot.querySelector('svg.plan-svg > g'),m=frame.getScreenCTM();

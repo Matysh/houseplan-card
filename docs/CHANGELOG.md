@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep opening-drag Escape cancellation ahead of wide Properties selection dismissal; a late pointer release cannot save the cancelled opening move. [#1278](https://github.com/Matysh/houseplan-card/issues/1278)
+- Port four browser oracles to exact model-11 opening hosts, strict structural history equality, current maintenance counters and the accepted working-camera exit contract. Retain archived expectations and full behavioral checks. [#1273](https://github.com/Matysh/houseplan-card/issues/1273)
 
 - Escape cancels an active device drag before Properties clears its selection, restoring contacts and placement without saving the cancelled gesture. [#1263](https://github.com/Matysh/houseplan-card/issues/1263)
 

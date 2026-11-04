@@ -1,6 +1,7 @@
 // #826: real Resize commits materialize every floor. Inject point ownership,
 // not geometry, and prove the untouched floor survives two commits and history.
 import { launch, check, finish } from './serve.mjs';
+import { isDeepStrictEqual } from 'node:util';
 
 const { page, browser } = await launch({ width: 1180, height: 920 });
 const aliasOwnership = !process.argv.includes('--json-model');
@@ -61,7 +62,9 @@ check('alias.setup_changes_only_ownership', await page.evaluate(alias => {
 // Let the pre-existing cold setup write finish before counting gesture writes.
 await page.waitForTimeout(650);
 const writesBefore = await page.evaluate(() => window.__aliasWrites.length);
-const geometry = () => page.evaluate(() => JSON.stringify(window.__card._serverCfg.spaces));
+// #1273/#1256: object-key insertion order is not part of the graph ABI.
+// Preserve all fields, exact scalars, IDs and array order in the full snapshot.
+const geometry = () => page.evaluate(() => window.__card._serverCfg.spaces);
 const unchangedOther = () => page.evaluate(() => {
   const card = window.__card, refs = window.__aliasRefs, other = card._serverCfg.spaces.find(space => space.id === 'other');
   return JSON.stringify(other) === window.__aliasExpectedOther && card._serverCfg === refs.root
@@ -92,15 +95,15 @@ if (process.argv.includes('--red-witness')) { await finish(browser, { done: true
 const first = await geometry(), pitch = await page.evaluate(() => window.__card._gridPitch);
 await move('second', 400 + 10 * pitch, 5);
 const second = await geometry();
-check('alias.second_is_new_valid_saved_commit', second !== first && await page.evaluate(before =>
+check('alias.second_is_new_valid_saved_commit', !isDeepStrictEqual(second, first) && await page.evaluate(before =>
   window.__aliasWrites.length === before + 2 && window.__card._geometryHistory.size === 2, writesBefore));
 check('alias.saved_pair_has_exact_values_and_ids', await page.evaluate(() =>
   JSON.stringify(window.__aliasWrites.at(-1).config.spaces) === JSON.stringify(window.__card._serverCfg.spaces)));
 check('alias.second_preserves_other_floor_and_refs', await unchangedOther());
 check('alias.no_unrelated_opening_host_error', await page.evaluate(() => !/could not|unsafe|host|stopped/i.test(window.__card._toast || '')));
 await page.keyboard.press('Control+z'); await settle(); await page.waitForTimeout(650);
-check('alias.undo_exact_values_and_ids', await geometry(), first);
+check('alias.undo_exact_values_and_ids', isDeepStrictEqual(await geometry(), first));
 await page.keyboard.press('Control+Shift+z'); await settle(); await page.waitForTimeout(650);
-check('alias.redo_exact_values_and_ids', await geometry(), second);
+check('alias.redo_exact_values_and_ids', isDeepStrictEqual(await geometry(), second));
 check('alias.history_keeps_other_floor', await page.evaluate(() => JSON.stringify(window.__card._serverCfg.spaces.find(space => space.id === 'other')) === window.__aliasExpectedOther));
 await finish(browser, { done: true });
