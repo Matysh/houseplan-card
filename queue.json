@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2387,
+  "revision": 2388,
   "nextTicket": 149,
   "nextFence": 149,
   "tasks": {
@@ -2537,7 +2537,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793780256768,
       "reviewEntry": 2,
-      "patchId": "39d21a64c917e4f8c47ef54493dd23ee65f9823e",
+      "patchId": "1251e8df09d0c24803cb9522ebc4364ae2243e93",
       "changedFiles": [
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -2775,10 +2775,11 @@
     "token": "148:finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:1:admit",
     "fence": 148,
     "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
+    "phase": "testing",
     "admittedAt": 1793780260528,
-    "expiresAt": 1793780560528
+    "expiresAt": 1793780566577,
+    "patchId": "1251e8df09d0c24803cb9522ebc4364ae2243e93"
   },
   "events": {
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:2:synchronized": {
@@ -2799,6 +2800,10 @@
     },
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return": {
       "digest": "5398c2857b905544c0d9f54ab0368f8248ae930cb29ea9434cc4eb1318195846",
+      "issue": 1267
+    },
+    "finish:974d92f9-6e68-483f-a419-a042733f6a3d:finish:2:synchronized": {
+      "digest": "885d318c28f57721224124781a2cc65a991b9244a86e963fe1afe7be011c6c52",
       "issue": 1267
     },
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0": {
