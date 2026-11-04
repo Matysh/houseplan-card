@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2536,
-  "nextTicket": 156,
+  "revision": 2537,
+  "nextTicket": 157,
   "nextFence": 156,
   "tasks": {
     "1126": {
@@ -2474,6 +2474,20 @@
         "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
       }
     },
+    "1265": {
+      "issue": 1265,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1265-room-face-lineage",
+      "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 156,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793783402144,
+      "reviewEntry": 1
+    },
     "1267": {
       "issue": 1267,
       "branch": "fix/1267-opening-rulers",
@@ -2836,7 +2850,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1265
+  ],
   "active": null,
   "events": {
     "dev-build:41804817920:1:1269": {
@@ -2849,6 +2865,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67"
+      }
+    },
+    "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
+      "digest": "ce0057ab3e8fdb4beb06483911e9ad95c694c5f063458128729fd8940d7a2d28",
+      "issue": 1265,
+      "message": {
+        "kind": "queued",
+        "issue": 1265,
+        "at": 1793783402144,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "16977d6cacc7fd3b3893d6ee84561b88b302c213"
       }
     }
   },
