@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3064,
+  "revision": 3065,
   "nextTicket": 186,
   "nextFence": 182,
   "tasks": {
@@ -3016,7 +3016,7 @@
       "ownerDecision": null,
       "ticket": 181,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793818105259,
       "reviewEntry": 4,
       "patchId": "59179c9b8213a32d89863dc2f77bb16b50487617",
@@ -3033,14 +3033,13 @@
         "test/graph-edit-seams.test.mjs"
       ],
       "notice": {
-        "key": "3:author-addressing-published-review",
-        "reason": "author-addressing-published-review",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793817974291,
-        "entry": 3,
-        "detail": "The prior frozen review has now published a blocker: compaction must retain the edge explicitly selected by a Properties/thickness edit, otherwise its save guard reports a false conflict. Return the not-yet-tested admission to S6 to fix that blocker.",
-        "eventId": "return-5ca69424-c3a7-4410-bd1b-b39fb1264920:return:1283"
+        "key": "4:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793818875579,
+        "entry": 4,
+        "requestId": "review:1283:4:59179c9b8213a32d89863dc2f77bb16b50487617:d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
       },
       "s6": {
         "id": "20261104T185549547-22061adf",
@@ -3064,6 +3063,11 @@
         "at": 1793818602933,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1283:4:59179c9b8213a32d89863dc2f77bb16b50487617:d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2",
+        "at": 1793818875579
       }
     },
     "1284": {
@@ -3328,19 +3332,7 @@
     1289,
     1286
   ],
-  "active": {
-    "issue": 1283,
-    "worker": "finish",
-    "token": "181:finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:1:admit",
-    "fence": 181,
-    "materialSha": "717b34467857dd83d0ce898b05402b3b463a1093",
-    "expectedBase": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2",
-    "phase": "review",
-    "admittedAt": 1793818518140,
-    "expiresAt": 1793822188057,
-    "patchId": "59179c9b8213a32d89863dc2f77bb16b50487617",
-    "reviewRequest": "review:1283:4:59179c9b8213a32d89863dc2f77bb16b50487617:d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3584,6 +3576,10 @@
     },
     "finish:c34ccff4-faec-48ad-ab7e-80181df458c4:finish:7:review-presentation": {
       "digest": "32dfe9278746d61f56861a68dd60ca6a418d544d5302800cb04901555c45f46c",
+      "issue": 1283
+    },
+    "finish:c34ccff4-faec-48ad-ab7e-80181df458c4:finish:7:return": {
+      "digest": "7e39d18886f26275af0e7ce69717460658c2ee69f85349dcced4bb0f26528c49",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
