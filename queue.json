@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2922,
+  "revision": 2923,
   "nextTicket": 175,
   "nextFence": 175,
   "tasks": {
@@ -3019,7 +3019,18 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793816293634,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "430d04899e69a329918cb0740f7d6142b79fd350",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/release-ledger/v1.83.0/1283.json",
+        "src/graph-edit-intent.ts",
+        "src/plan-graph.ts",
+        "test/graph-edit-intent.test.mjs",
+        "test/graph-edit-seams.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3131,10 +3142,11 @@
     "token": "174:finish:b49a6255-b452-4889-9227-a02aa0ae1c12:finish:1:admit",
     "fence": 174,
     "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "659440571bc388d108ec7f0200ce9c407a9ee132",
+    "phase": "testing",
     "admittedAt": 1793816299874,
-    "expiresAt": 1793816599874
+    "expiresAt": 1793816611835,
+    "patchId": "430d04899e69a329918cb0740f7d6142b79fd350"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3143,6 +3155,10 @@
     },
     "github:41885786785:1:completions:message:a7f444aa12372991820dde1a7978ab243e6c8b5379e1239a3352ae4ac512e983": {
       "digest": "a90c33da69387bcc40180f850e30781b02df869af79cbf273c17be505e64b425",
+      "issue": 1283
+    },
+    "finish:b49a6255-b452-4889-9227-a02aa0ae1c12:finish:2:synchronized": {
+      "digest": "ed56921a2b256ec0a192069990320b7a1f4eaddae16121db9d83b1f0b9fa9d5a",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
