@@ -1,4 +1,5 @@
 /** Issue #137: architectural endpoint/line overlay and exact snap in Plan. */
+import { isDeepStrictEqual } from 'node:util';
 import { launch, checkAll, finish } from './serve.mjs';
 import { currentGraphFixture, editGraphFixture } from './helpers/graph-fixture.mjs';
 
@@ -11,6 +12,7 @@ await page.exposeFunction('snapHiddenPartitionFixture', source => {
   return config;
 });
 
+await page.exposeFunction('sameSnapFixture', isDeepStrictEqual);
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
@@ -49,7 +51,7 @@ const out = await page.evaluate(async () => {
       partitions: [
         { id: 'saved-a', a: [0.1, 0.6], b: [0.3, 0.6], cm: 15 },
         { id: 'saved-b', a: [0.3, 0.6], b: [0.3, 0.7], cm: 15 },
-        { id: 'base-partition', a: [0.6, 0.6], b: [0.9, 0.6], cm: 15 },
+        { id: 'base-partition', a: [0.6, 0.6], b: [0.9, 0.6], cm: 15, note: { keep: 'snap-source' } },
       ],
       wall_columns: [{ id: 'ignored-column', shape: 'square', center: [0.8, 0.35], cm: 25 }],
     }],
@@ -131,10 +133,10 @@ const out = await page.evaluate(async () => {
   // the intentionally legacy/unhosted gap fixtures after their assertions so
   // the v9 fail-closed host barrier does not reject an unrelated wall edit.
   delete card._curSpaceCfg.openings;
+  card._toast = '';
   card._modelCache = null;
   card._cfgEpoch++;
   await update();
-  const cachedGeometry = card._planSnapGeometryCache?.value;
   const staticNodesBefore = [...overlay().querySelectorAll(
     '.plan-snap-line, .plan-snap-node[data-kind="endpoint"]',
   )];
@@ -149,7 +151,7 @@ const out = await page.evaluate(async () => {
   await settlePaint();
   result.endpointHoverIsActive = active()?.getAttribute('data-kind') === 'endpoint'
     && close(+active().getAttribute('cx'), 100) && close(+active().getAttribute('cy'), 100)
-    && close(+active().getAttribute('r'), card._cmToUnits(10));
+    && close(+active().getAttribute('r'), card._cmToUnits(5));
   stage.dispatchEvent(eventAt(735, 606));
   await settlePaint();
   const initialLineActive = active()?.getAttribute('data-kind') === 'line';
@@ -176,11 +178,21 @@ const out = await page.evaluate(async () => {
   // verified above. In v9 that corner is a canonical zero-wall topology node,
   // so a wall from it may legitimately complete a face and open the room flow.
   card._cancelPath();
+  const beforeUnsafeAngle = JSON.stringify(card._curSpaceCfg.partitions);
   card._markupClick(eventAt(504, 654, 'click'));
+  await settlePaint();
+  card._markupClick(eventAt(735, 606, 'click'));
+  await settlePaint();
+  result.unsafeAcuteAngleStillRefused = card._path.length === 1
+    && JSON.stringify(card._curSpaceCfg.partitions) === beforeUnsafeAngle
+    && root().querySelector('[data-hp="toast"]')?.dataset.id === 'junction.limit_angle';
+  card._cancelPath();
+  card._markupClick(eventAt(504, 704, 'click'));
   await settlePaint();
   result.freeStartForLineSnap = card._path.length === 1
     && Number.isFinite(card._path[0][0]) && Number.isFinite(card._path[0][1]);
 
+  const cachedGeometry = card._planSnapGeometryCache?.value;
   stage.dispatchEvent(eventAt(735, 606));
   await settlePaint();
   const lineNode = active();
@@ -191,24 +203,37 @@ const out = await page.evaluate(async () => {
   result.lineNodeStaysWallBound = close(linePoint[1], 600);
   result.lineNodeQuantizesAlongWall = close((linePoint[0] - 600) / card._gridPitch,
     Math.round((linePoint[0] - 600) / card._gridPitch));
-  result.hoverKeepsStaticGeometryCache = !!cachedGeometry
-    && card._planSnapGeometryCache?.value === cachedGeometry;
   const originalPartition = JSON.stringify(card._curSpaceCfg.partitions
     .find((item) => item.id === 'base-partition'));
+  // Hover alone keeps the cache; accepting the junction legitimately nodes
+  // its source and changes static geometry on the following click.
+  result.hoverKeepsStaticGeometryCache = !!cachedGeometry
+    && card._planSnapGeometryCache?.value === cachedGeometry;
   card._markupClick(eventAt(735, 606, 'click'));
   await settlePaint();
   result.drawPathLength = card._path.length;
   result.drawCommitUsesExactLineNode = card._path.length === 2
     && close(card._path[1][0], linePoint[0]) && close(card._path[1][1], linePoint[1]);
-  result.existingPartitionWasNotSplit = card._curSpaceCfg.partitions.length === 4
-    && JSON.stringify(card._curSpaceCfg.partitions.find((item) => item.id === 'base-partition'))
-      === originalPartition;
+  const partitionSpanMatches = async (junctionX) => {
+    const parts = card._curSpaceCfg.partitions;
+    const original = JSON.parse(originalPartition);
+    const left = parts.find(part => part.id === original.id);
+    const right = parts.find(part => part.id !== original.id
+      && part.a[0] === junctionX && part.a[1] === .6 && part.b[0] === .9 && part.b[1] === .6);
+    const saved = parts.filter(part => part.id.startsWith('saved-'))
+      .sort((a, b) => a.id.localeCompare(b.id));
+    return parts.length === 5 && !!right
+      && await window.sameSnapFixture(left, { ...original, b: [junctionX, .6] })
+      && await window.sameSnapFixture(right, { ...original, id: right.id, a: [junctionX, .6] })
+      && await window.sameSnapFixture(saved, cfg.spaces[0].partitions.filter(part => part.id.startsWith('saved-')));
+  };
+  result.existingPartitionNodedAtExactAcceptedJunction = await partitionSpanMatches(linePoint[0] / 1000);
 
-  // Remove the first synthetic active wall before the independent scenario;
-  // accepted walls otherwise correctly survive session cancellation.
-  const firstActiveIds = new Set(card._activeWallChainPartitionIds);
-  card._curSpaceCfg.partitions = card._curSpaceCfg.partitions
-    .filter((partition) => !firstActiveIds.has(partition.id));
+  // Independent authored legacy input. Never delete current graph carriers by
+  // editing their derived partition projection after the first accepted write.
+  card._serverCfg = JSON.parse(JSON.stringify(cfg));
+  delete card._curSpaceCfg.openings;
+  card._toast = '';
   card._modelCache = null;
   card._cfgEpoch++;
 
@@ -246,6 +271,7 @@ const out = await page.evaluate(async () => {
     && close(card._path[0][1], 600)
     && close((card._path[0][0] - 600) / card._gridPitch,
       Math.round((card._path[0][0] - 600) / card._gridPitch));
+  const secondStart = [...card._path[0]];
   card._markupClick(eventAt(896, 496, 'click'));
   await settlePaint();
   result.secondPathLengthBeforeSelect = card._path.length;
@@ -260,12 +286,11 @@ const out = await page.evaluate(async () => {
     (partition) => secondDrawnIds.includes(partition.id),
   );
   result.secondWallsClickFinishesSnappedPartition = card._path.length === 0
-    && card._curSpaceCfg.partitions.length === 4
+    && card._curSpaceCfg.partitions.length === 5
     && !!drawnPartition
     && [drawnPartition.a, drawnPartition.b].some((point) =>
       close(point[0] * 1000, 900) && close(point[1] * 1000, 500));
-  result.originalSegmentStillUnchanged = JSON.stringify(card._curSpaceCfg.partitions
-    .find((item) => item.id === 'base-partition')) === originalPartition;
+  result.secondSourceSpanAndMetadataPreserved = await partitionSpanMatches(secondStart[0] / 1000);
 
   const gestureGeometry = JSON.stringify({ partitions: card._curSpaceCfg.partitions });
   card._activateMarkupTool('draw');
@@ -440,5 +465,5 @@ await finish(browser, checkAll(out, {
   secondPathLengthBeforeSelect: 2,
   secondActiveWallCountBeforeSelect: 1,
   secondToast: '',
-  partitionCountAfterDraw: 4,
+  partitionCountAfterDraw: 5,
 }));

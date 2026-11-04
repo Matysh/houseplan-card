@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Repair Draw snap browser expectations for the 5cm node, hidden settled ink and exact T-junction splitting; retain the acute-angle refusal and full source-span metadata checks. [#1268](https://github.com/Matysh/houseplan-card/issues/1268)
+
 - Keep the cleanup browser suite's malformed legacy carrier authoritative after earlier model11 saves; retain K3 cancellation, retry, explicit removal and teardown checks. [#1275](https://github.com/Matysh/houseplan-card/issues/1275)
 
 - Promote room faces using finite-side intersections, preserving reused node dependencies and consuming only named duplicate boundary atoms with identical material; keep residuals, foreign bodies and opening hosts. [#1265](https://github.com/Matysh/houseplan-card/issues/1265)

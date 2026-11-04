@@ -83,7 +83,10 @@ const preview = await page.evaluate(([d]) => {
   const card = window.__card, root = card.renderRoot, anchor = card._path[card._path.length - 1];
   // The live gesture layer paints the rubber-band; a settled copy, if any, is transparent (#521).
   const visible = [...root.querySelectorAll('.active-axis')].filter(line => {
-    for (let e = line; e?.nodeType === 1; e = e.parentElement) if (+getComputedStyle(e).opacity === 0) return false;
+    for (let e = line; e?.nodeType === 1; e = e.parentElement) {
+      const style = getComputedStyle(e);
+      if (+style.opacity === 0 || style.visibility === 'hidden' || style.display === 'none') return false;
+    }
     return true;
   });
   return {
