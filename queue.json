@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3418,
+  "revision": 3419,
   "nextTicket": 198,
   "nextFence": 198,
   "tasks": {
@@ -3095,7 +3095,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793829299716,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "9046759c622242263ebbd2d7a7bb8969e64778f3",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "a4dd940c1190ee62581c187fa500db3c73f66d1c",
+        "tag": "v1.84.0-beta.5",
+        "verdict": "accepted",
+        "patchId": "9046759c622242263ebbd2d7a7bb8969e64778f3",
+        "materialSha": "0bba0ce459b95291ffbe590b9827cc412fa85819"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3207,12 +3227,17 @@
     "token": "197:release-return-finish:13fd8e88-158d-4b72-a345-824c93d4b56c:finish:1:admit",
     "fence": 197,
     "materialSha": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b08d710df2ee8841573dd6095a181671d1af0436",
+    "phase": "testing",
     "admittedAt": 1793829304360,
-    "expiresAt": 1793829604360
+    "expiresAt": 1793829611117,
+    "patchId": "9046759c622242263ebbd2d7a7bb8969e64778f3"
   },
   "events": {
+    "release-return-finish:13fd8e88-158d-4b72-a345-824c93d4b56c:finish:2:synchronized": {
+      "digest": "38806801884745680a87dae7e72ec0ee39dd9beb11843c7929fa19c9e821fc6d",
+      "issue": 1291
+    },
     "release-return:13fd8e88-158d-4b72-a345-824c93d4b56c": {
       "digest": "6893ebc157b3bc573ee2bb6c97f59cad630abc1bb9f91ccef8bfffdf44c76051",
       "issue": 1291,
