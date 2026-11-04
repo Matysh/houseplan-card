@@ -87,9 +87,14 @@ to reject an otherwise valid legacy plan.
 
 Optimize's numerical maintenance readers use their actual draft projections,
 without projecting the previous graph back over proposed changes. Opening
-continuity still comes from named graph runs. Literal lattice targets and
-explicit near-axis repair may update a support parameter; approximate off-grid
-echoes retain exact affine incidence. The near-axis grant names only graph nodes
+continuity still comes from named graph runs. In a current graph a numerical
+lattice proposal cannot detach a valid dependent junction or bend its exact
+support. Dependents follow support evaluation unless an explicit near-axis
+retarget grant names them; the named carrier must already be near-axis in the
+accepted graph, rather than become so in a numerical alignment draft.
+The first legacy Optimize retains its former literal
+lattice-target policy; approximate off-grid echoes still retain exact affine
+incidence. The near-axis grant names only graph nodes
 whose numerical room vertices or partition endpoints that repair actually
 changed, within their own space; it never applies to another component or floor.
 Already-applied move/support operations
@@ -101,6 +106,55 @@ retain their source carrier. Reconciliation protects a hosted opening's full
 footprint and independent overlapping material, including across graph seams.
 
 ## Writers and authority
+
+### Native editor fixed point (#1285)
+
+A model-11 plan authored from an empty space with the current editor is already
+an Optimize fixed point. Completed chains and sequences of Draw (including
+existing-node/on-edge contacts and diagonal T junctions), room tracing, body
+translation/detach/delete, keyboard nudge, opening placement/movement,
+thickness, Resize, room Merge/Delete and node deletion preserve a valid graph
+and its exact projections. Optimize returns `changed:false` immediately, with
+zero effect counters; it is not a deferred last stage of these gestures.
+This includes a first no-op after native Resize, rather than convergence after
+several Optimize passes. Genuine dependent points on diagonal supports may
+remain rational `q` coordinates: the invariant never snaps them off their
+supports merely to make every point a lattice point.
+
+This includes the config/layout pair: deleting a room or an absorbed Merge room
+removes its moved label, deleting a space removes its owned positions, and
+deleting a marker removes its position in the same candidate. Undo restores
+the corresponding positions. The orphan/remap/dead-space effect counters are
+zero after these native commands (#1287).
+
+Imported sh3d/Easy/picture-elements plans, backups
+from another installation, legacy automatic migration, manually edited JSON
+and writes from a stale cached client are outside it; Optimize remains their
+explicit maintenance path. Positions whose owner is unverified or whose
+registry is unavailable are outside the native-input invariant. They are not
+deleted speculatively. A conservative Optimize no-op also does
+not prove that overlapping material of different thickness or an unverified
+overlap is physically sound.
+
+`test/graph-editor-invariant.test.mjs` exercises production writers without UI
+or HA from an empty current graph, never from an Optimize-prepared fixture.
+It retains the three original pre-fix counterexamples and replays 210 seeded
+sequences of at most twelve commands. `HP_GRAPH_SEQUENCE_SEED` reproduces a
+run; a failure prints that seed and saves a reduced replay under
+`output/1285-sequence-failures/`. The native room-label deletion counterexample
+and `test/graph-editor-layout-invariant.test.mjs` extend this to config/layout:
+another 210 seeded sequences cover moved labels, devices/tombstones, room
+deletion/Merge, blocked space deletion and both permitted deletion modes.
+`HP_GRAPH_LAYOUT_SEQUENCE_SEED` reproduces that paired run. All completed
+prefixes are checked, so a later deletion cannot conceal earlier repair debt.
+The existing geometry corpus also commits actual graph Resize targets, proves
+source-material lineage and requires the first Optimize to be a no-op; it no
+longer permits several repair passes over a projection-only numeric draft.
+The selected mechanism tests for
+graph-edit-intent, graph-optimize, plan-optimizer and the changed writers should
+include these files. They add no mandatory gate to unrelated product tasks.
+
+### Stable identity and transport
 
 TS/Python use the same exact graph contract. Editor commands name stable IDs
 and explicit scope: move or detach, insert on edge/intersection, create/delete

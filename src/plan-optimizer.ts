@@ -29,14 +29,15 @@ import { reconcileCoincidentPartitions } from './coincident-partitions';
 import {
   repairSpaceReferences, type SpaceReferenceRepairContext, type SpaceReferenceReport,
 } from './space-reference-repair';
-import { repairNearAxisRoomWalls } from './near-axis';
+import { classifyNearAxisSegment, repairNearAxisRoomWalls } from './near-axis';
 import {
   commitWallSegmentModelInPlace, migrateLegacyRoomDraftsToPartitionsInPlace,
 } from './wall-segment-model';
 import { legacyZeroContourLines } from './zero-walls';
 import { annotateGraphOpeningRuns } from './graph-opening-run';
 
-import { migrateGraphSpace, projectGraphSpace, PlanGraphError } from './plan-graph';
+import { graphIndex, migrateGraphSpace, projectGraphSpace, PlanGraphError } from './plan-graph';
+import { pointToNumbers } from './plan-exact';
 import { optimizeGraphTargets, graphOptimizeRoomProfile, graphOptimizeTopologyPoints } from './graph-optimize';
 import { measureGraphOptimizeEffects, measureGraphStraightening } from './graph-optimize-report';
 /** Bump when a new lossless maintenance pass is added. */
@@ -140,9 +141,22 @@ const modelOf = (space: any): any => {
  * an off-grid dependency. Room indices and partition IDs still refer to the
  * frozen graph; no coordinate matching grants authority to an unrelated node.
  */
-const nearAxisChangedNodes = (before: any, after: any): ReadonlySet<string> => {
+const nearAxisChangedNodes = (before: any, after: any, sourceBefore?: any): ReadonlySet<string> => {
   const changed = new Set<string>(), graph = before.plan_graph;
   if (!graph) return changed;
+  const source = sourceBefore?.plan_graph && graphIndex(sourceBefore.plan_graph);
+  const dependent = new Set<string>((sourceBefore?.plan_graph?.dependencies || []).map((d: any) => d.node));
+  // Numeric alignment can manufacture a near-axis proposal at a legal q T.
+  // A current constraint may only be overridden by repair of a carrier that
+  // was already near-axis in the accepted graph, not by that manufactured axis.
+  const grant = (node: string, refs: any[]) => {
+    if (source && dependent.has(node) && !refs.some(reference => {
+      const edge = source.edges.get(reference.kind + ':' + reference.id);
+      return edge && classifyNearAxisSegment(pointToNumbers(source.points.get(edge.from)!),
+        pointToNumbers(source.points.get(edge.to)!));
+    })) return;
+    changed.add(node);
+  };
   const edges = new Map<string, any>(graph.edges.map((edge: any) => [edge.kind + ':' + edge.id, edge]));
   const oldRooms = new Map<string, any>((before.rooms || []).map((room: any) => [room.id, room]));
   const nextRooms = new Map<string, any>((after.rooms || []).map((room: any) => [room.id, room]));
@@ -152,15 +166,15 @@ const nearAxisChangedNodes = (before: any, after: any): ReadonlySet<string> => {
     cycle.edges.forEach((reference: any, index: number) => {
       if (!moved(old?.poly?.[index], next?.poly?.[index])) return;
       const edge = edges.get(reference.kind + ':' + reference.id);
-      changed.add(reference.reverse ? edge.to : edge.from);
+      grant(reference.reverse ? edge.to : edge.from, [reference, cycle.edges[(index + cycle.edges.length - 1) % cycle.edges.length]]);
     });
   }
   const nextPartitions = new Map<string, any>((after.partitions || []).map((part: any) => [part.id, part]));
   for (const part of before.partitions || []) {
     const next = nextPartitions.get(part.id), edge = edges.get('partition:' + part.id);
     if (!next || !edge) continue;
-    if (moved(part.a, next.a)) changed.add(edge.from);
-    if (moved(part.b, next.b)) changed.add(edge.to);
+    if (moved(part.a, next.a)) grant(edge.from, [edge]);
+    if (moved(part.b, next.b)) grant(edge.to, [edge]);
   }
   return changed;
 };
@@ -479,7 +493,9 @@ function optimizePlanDraft(
   context: SpaceReferenceRepairContext = {},
   dependencies: OptimizeDependencies = {},
   graphDraft = false,
+  sourceModelVersion = PLAN_MODEL_VERSION,
 ): OptimizeResult & { graphStraightening: ReturnType<typeof measureGraphStraightening>[] } {
+  const graphTargetOptions = { allowDependentGridTargets: sourceModelVersion < PLAN_MODEL_VERSION };
   const reconcilePartitions = dependencies.reconcileCoincidentPartitions
     ?? reconcileCoincidentPartitions;
   const references = repairSpaceReferences(configIn, layoutIn, {
@@ -533,10 +549,11 @@ function optimizePlanDraft(
   let maxStraightenShiftCm = 0;
   let maxStraightenSpace = '';
   const repairTargets = new Map<string, ReadonlySet<string>>();
-  const straightenedSpaces = aligned.spaces.map((space: any) => {
+  const straightenedSpaces = aligned.spaces.map((space: any, i: number) => {
     const repaired = repairNearAxisRoomWalls(space);
     if (repaired.report.wallsStraightened > 0)
-      repairTargets.set(String(space.id), nearAxisChangedNodes(space, repaired.space));
+      repairTargets.set(String(space.id), nearAxisChangedNodes(space, repaired.space,
+        sourceModelVersion === PLAN_MODEL_VERSION ? beforeSpaces[i] : undefined));
     wallsStraightened += repaired.report.wallsStraightened;
     wallsStraightenSkipped += repaired.report.wallsStraightenSkipped;
     const cellCm = Number(space?.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM;
@@ -557,13 +574,13 @@ function optimizePlanDraft(
   const realignmentSpaces = graphDraft && wallsStraightened
     ? straightenedSpaces.map((space: any, i: number) => repairTargets.has(String(space.id))
       ? optimizeGraphTargets(beforeSpaces[i], space, true,
-        {retargetNodes:repairTargets.get(String(space.id))}).space : space)
+        {...graphTargetOptions,retargetNodes:repairTargets.get(String(space.id))}).space : space)
     : straightenedSpaces;
   const finalAligned = wallsStraightened
     ? alignAllToGrid(realignmentSpaces, aligned.layout, exactContacts)
     : { ...aligned, spaces: realignmentSpaces };
   config.spaces = graphDraft
-    ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(realignmentSpaces[i], space, true).space)
+    ? finalAligned.spaces.map((space: any, i: number) => optimizeGraphTargets(realignmentSpaces[i], space, true, graphTargetOptions).space)
     : finalAligned.spaces;
   const graphStraightening = graphDraft
     ? config.spaces.map((space: any, i: number) => measureGraphStraightening(
@@ -864,13 +881,14 @@ export function optimizePlans(
   const baseline = clone(config.spaces);
   // The old geometry passes remain the numerical proposal and nonstructural
   // maintenance engine. Their projection draft never becomes graph authority.
-  const result = optimizePlanDraft(config, references.layout, context, dependencies, true);
+  const result = optimizePlanDraft(config, references.layout, context, dependencies, true, modelFrom);
   const stats = { partitionsMerged: 0, partitionsReconciled: 0, wallsMerged: 0, openingsRehosted: 0 };
   result.config.spaces = result.config.spaces.map((draft: any, index: number) => {
     // The numerical engine already applied named moves and any explicit
     // near-axis support repair. Keep that graph for structural maintenance;
     // rebuilding the old dependency parameters would undo the first repair.
-    const next = optimizeGraphTargets({...baseline[index],plan_graph:draft.plan_graph}, draft);
+    const next = optimizeGraphTargets({...baseline[index],plan_graph:draft.plan_graph}, draft, false,
+      { allowDependentGridTargets: modelFrom < PLAN_MODEL_VERSION });
     for (const key of Object.keys(stats) as (keyof typeof stats)[]) stats[key] += next[key];
     return next.space;
   });

@@ -26,6 +26,8 @@
 // синтетические и воспроизводят названные условия числами, а не планом дома.
 import test from 'node:test';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { commitGraphEditResult } from '../test-build/graph-edit-intent.js';
+import { graphWallRecordsPreserved } from '../test-build/wall-record-preservation.js';
 import { validateGraph } from '../test-build/plan-graph.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -168,7 +170,7 @@ function writeResize(space, moved) {
     const point = moved.openings[opening.id];
     if (point) { opening.x = point[0] / NORM_W; opening.y = point[1] / NORM_W; }
   }
-  return next;
+  return commitGraphEditResult(space, next, { kind: 'resize', rooms: Object.keys(moved.polys) });
 }
 
 /**
@@ -317,13 +319,10 @@ for (const item of CORPUS) {
   });
 
   /**
-   * Граница этой проверки названа прямо: перенос ЗАПИСЕЙ ТОЛЩИНЫ вслед за
-   * сдвинутым ребром делает не `resize.ts`, а хост карточки — `project()` в
-   * `ResizeController.move` возвращает `afterWalls`, и чистой функции для этого
-   * в модуле нет. Поэтому здесь проверяется то, что проверяемо без карточки:
-   * ручка действительно подвижна, геометрия после сдвига согласована, записи
-   * толщины целы, и Optimize сходится за ограниченное число проходов. Полный
-   * путь со штатным writer'ом проверяет браузерный смок корпуса.
+   * #1285: сохраняем настоящий graph Resize с переносом материала и hosts.
+   * Числовой черновик со старым plan_graph не является результатом жеста:
+   * Optimize просто затёр бы его исходной проекцией и скрыл потерянный Resize.
+   * После принятого writer'ом движения Optimize сразу должен быть no-op.
    */
   test(`корпус #560 ${label}: Resize ребра сохраняет согласованность`, (t) => {
     const { config, layout } = load(item.file);
@@ -334,9 +333,16 @@ for (const item of CORPUS) {
 
     const moved = applySafeResize(handle.inputs.rooms, handle.inputs.openings, handle.plan, handle.d);
     const resized = clone(optimized.config);
-    resized.spaces[0] = writeResize(space, moved);
+    const written = writeResize(space, moved);
+    resized.spaces[0] = written.space;
+    assert.ok(written.resizeWallRecords && graphWallRecordsPreserved(written.resizeWallRecords),
+      'штатный Resize доказал сохранность всех исходных материалов и их потомков');
+    assert.notDeepEqual(written.graph, space.plan_graph, 'подвижная ручка действительно изменила сохранённый граф');
 
     const after = optimizePlans(clone(resized), clone(optimized.layout));
+    assert.equal(after.changed, false, 'первый Optimize после принятого Resize — no-op (#1285)');
+    assert.deepEqual(after.config, resized, 'Optimize не затирает записанный Resize прежней проекцией');
+    assert.deepEqual(after.layout, optimized.layout);
     const expected = item.expectedViolations ?? [];
     assert.deepEqual(kinds(violations(after.config, after.layout)), expected.slice().sort(),
       'после Resize и Optimize новых нарушений нет');
@@ -344,20 +350,6 @@ for (const item of CORPUS) {
       checkWallRecordsPreserved(space.walls, after.config.spaces[0].walls),
       [], 'ресайз не потерял ни одной толщины (#253)',
     );
-    // Сходимость, а не «один проход»: вход здесь — рёбра сдвинуты, а записи
-    // толщины остались на прежних координатах, потому что их переносит хост.
-    // Из такого состояния Optimize имеет право убирать остатки в два приёма;
-    // важно, что он ОСТАНАВЛИВАЕТСЯ, а не переписывает план бесконечно.
-    let passes = 0;
-    let current = after;
-    while (current.changed && passes < 5) {
-      current = optimizePlans(clone(current.config), clone(current.layout));
-      passes += 1;
-    }
-    assert.equal(current.changed, false, `Optimize не сошёлся за ${passes} проходов`);
-    assert.ok(passes <= 2, `после Resize Optimize сходится за ${passes} проходов, ожидалось ≤2`);
-    assert.deepEqual(kinds(violations(current.config, current.layout)), expected.slice().sort(),
-      'сошедшийся план согласован');
   });
 
   test(`корпус #560 ${label}: сохранение и перечитывание плана`, () => {

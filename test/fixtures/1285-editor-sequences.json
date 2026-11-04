@@ -1,0 +1,49 @@
+[
+  {
+    "name": "#1282 k=5 keyboard nudge",
+    "operations": [
+      { "kind": "partition", "id": "free", "a": [5, 48], "b": [53, 48], "cm": 10 },
+      { "kind": "nudge", "id": "free", "dx": 1, "dy": 0 }
+    ]
+  },
+  {
+    "name": "#1283 detached T leaves no wall seam",
+    "operations": [
+      { "kind": "face", "id": "r", "poly": [[0, 0], [240, 0], [240, 240], [0, 240]] },
+      { "kind": "thickness", "room": "r", "cm": 10 },
+      { "kind": "on-edge", "id": "branch", "hostRoom": "r", "a": [120, 0], "b": [120, 96], "t": ["1", "2"], "cm": 10 },
+      { "kind": "detach", "id": "branch", "a": [121, 1], "b": [121, 97] }
+    ]
+  },
+  {
+    "name": "#1283 collinear click while tracing a room",
+    "operations": [
+      { "kind": "face", "id": "r", "poly": [[0, 0], [120, 0], [240, 0], [240, 240], [0, 240]] }
+    ]
+  },
+  {
+    "name": "#1283 opening across a retired T seam protects the same seam in Optimize",
+    "operations": [
+      { "kind": "face", "id": "r", "poly": [[0, 0], [240, 0], [240, 240], [0, 240]] },
+      { "kind": "thickness", "room": "r", "cm": 10 },
+      { "kind": "on-edge", "id": "branch", "hostRoom": "r", "a": [120, 0], "b": [120, 96], "t": ["1", "2"], "cm": 10 },
+      { "kind": "opening", "id": "door", "room": "r", "x": 120 },
+      { "kind": "remove-partition", "id": "branch" }
+    ]
+  },
+  {
+    "name": "#1282 nudge preserves diagonal hosted opening orientation without ULP debt",
+    "operations": [
+      { "kind": "partition", "id": "free", "a": [82, 50], "b": [112, 70], "cm": 15 },
+      { "kind": "opening", "id": "diagonal-door", "partition": "free", "alongSteps": 18 },
+      { "kind": "nudge", "id": "free", "dx": 0, "dy": 1 }
+    ]
+  },
+  {
+    "name": "legitimate diagonal T is not independently snapped and detached by Optimize",
+    "operations": [
+      { "kind": "partition", "id": "support", "a": [24, 24], "b": [120, 91], "cm": 25 },
+      { "kind": "on-edge", "id": "branch", "host": "support", "a": [72, 40], "b": [72, 170], "t": ["1", "2"], "cm": 25 }
+    ]
+  }
+]

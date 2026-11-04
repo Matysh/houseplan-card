@@ -38,6 +38,9 @@ interface GraphOptimizeOptions {
   alignOpenings?: boolean;
   metadataFromBefore?: boolean;
   retargetNodes?: ReadonlySet<string>;
+  /** Legacy Optimize keeps its previous whole-grid alignment policy. A
+   * current graph requires an explicit repair grant to override incidence. */
+  allowDependentGridTargets?: boolean;
 }
 
 export function optimizeGraphTargets(
@@ -78,9 +81,11 @@ export function optimizeGraphTargets(
     if (!p || !p.every(Number.isFinite)) throw new PlanGraphError('optimize-target', id);
     const next = targetPoint(p), old = targets.get(id);
     // Keep exact affine incidence when the numerical reader only supplies an
-    // approximate off-grid echo. A literal lattice target (or explicit axis
-    // repair) can deliberately update the support parameter during Optimize.
-    if(dependent.has(id)&&!options.retargetNodes?.has(id)&&encodePoint(next)[0]!=='l')return;
+    // approximate echo. A numerical lattice proposal is not permission to
+    // bend a current support or retire its constraint. Missing dependent
+    // targets are evaluated from their supports by proposed()/the reducer.
+    if(dependent.has(id)&&!options.retargetNodes?.has(id)
+        &&(!options.allowDependentGridTargets||encodePoint(next)[0]!=='l'))return;
     if (old && !same(encodePoint(old), encodePoint(next))) throw new PlanGraphError('optimize-target-conflict', id);
     targets.set(id, next);
   };

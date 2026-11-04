@@ -31,7 +31,7 @@ test('#290 authoring, Optimize and renderer use one near-axis threshold source',
   // #624: импорт живёт в редакторском рантайме — карточка держала мёртвую копию.
   assert.match(sourceOf('houseplan-editor-runtime.ts'), /import \{ snapNearAxisEndpoint \} from '\.\/near-axis';/);
   assert.match(authoring, /snapNearAxisEndpoint\(/);
-  assert.match(optimizer, /import \{ repairNearAxisRoomWalls \} from '\.\/near-axis';/);
+  assert.match(optimizer, /import\s*\{[^}]*\brepairNearAxisRoomWalls\b[^}]*\}\s*from '\.\/near-axis';/);
   assert.match(optimizer, /repairNearAxisRoomWalls\(space\)/);
 });
 

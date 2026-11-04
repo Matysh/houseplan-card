@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1285,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "The new model11 graph optimizer treated a numerical literal-grid proposal as permission to detach a valid dependent T junction from an already exact diagonal support. The native-editor invariant exposed this 1.84-line defect; protect current graph constraints and retain the addressed sequence regressions.",
+  "summary": {
+    "ru": "Optimize сохраняет законные зависимые T-узлы; последовательности редактора и удаления не оставляют работу по геометрии и layout.",
+    "en": "Optimize preserves valid dependent T junctions, with native editor and deletion sequences checked for geometry and layout maintenance debt."
+  }
+}
