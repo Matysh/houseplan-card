@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3014,
+  "revision": 3015,
   "nextTicket": 181,
   "nextFence": 180,
   "tasks": {
@@ -3069,15 +3069,14 @@
         "test/graph-edit-seams.test.mjs"
       ],
       "notice": {
-        "key": "2:author-found-opening-seam",
-        "reason": "author-found-opening-seam",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793817355103,
-        "entry": 2,
-        "requestId": "review:1283:2:26e542184afe832d9eff2e81eafb8b496a11bcb1:ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "detail": "Author found Optimize still collapses an opening-crossed seam deliberately preserved by the editor, violating the shared #1283/#1285 invariant. Returning frozen material to S6 to share the same protection before merge.",
-        "eventId": "return-910de05d-2085-4b7c-a700-65131c3669d6:return:1283"
+        "key": "3:author-addressing-published-review",
+        "reason": "author-addressing-published-review",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793817974291,
+        "entry": 3,
+        "detail": "The prior frozen review has now published a blocker: compaction must retain the edge explicitly selected by a Properties/thickness edit, otherwise its save guard reports a false conflict. Return the not-yet-tested admission to S6 to fix that blocker.",
+        "eventId": "return-5ca69424-c3a7-4410-bd1b-b39fb1264920:return:1283"
       },
       "s6": {
         "id": "20261104T183134558-85935cb3",
@@ -3088,7 +3087,8 @@
         "finishedAt": "2026-11-04T18:32:08.205Z",
         "failures": []
       },
-      "reviewRound": null
+      "reviewRound": null,
+      "reason": "author-addressing-published-review"
     },
     "1284": {
       "issue": 1284,
@@ -3271,17 +3271,7 @@
   "waiting": [
     1286
   ],
-  "active": {
-    "issue": 1283,
-    "worker": "finish",
-    "token": "179:finish:eb9b6749-5164-42dc-8833-959f7cc24f40:finish:1:admit",
-    "fence": 179,
-    "materialSha": "1e34eecae4de8ae0fd9f1bca20743ddf2cebd9a5",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793817948372,
-    "expiresAt": 1793818248372
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3429,6 +3419,10 @@
     },
     "github:41890312737:1:completions:message:3a0aa137add1ac27dfd9ad290f9ec8bbeeb9195f2d8c01d545d4599071ee6a0e": {
       "digest": "802599d3e431183de1bf653a9827a40cc9a675cf361e45b05c790419232eda98",
+      "issue": 1283
+    },
+    "return-5ca69424-c3a7-4410-bd1b-b39fb1264920": {
+      "digest": "4bc335ccc2aec2432a4dc9c6fa0b2e131794bf6d77820b88fe3194c127e7d792",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
@@ -3680,6 +3674,26 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "return-5ca69424-c3a7-4410-bd1b-b39fb1264920:return:1283": {
+      "digest": "4bc335ccc2aec2432a4dc9c6fa0b2e131794bf6d77820b88fe3194c127e7d792",
+      "issue": 1283,
+      "message": {
+        "kind": "return",
+        "issue": 1283,
+        "at": 1793817974291,
+        "entry": 3,
+        "notice": {
+          "key": "3:author-addressing-published-review",
+          "reason": "author-addressing-published-review",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793817974291,
+          "entry": 3,
+          "detail": "The prior frozen review has now published a blocker: compaction must retain the edge explicitly selected by a Properties/thickness edit, otherwise its save guard reports a false conflict. Return the not-yet-tested admission to S6 to fix that blocker.",
+          "eventId": "return-5ca69424-c3a7-4410-bd1b-b39fb1264920:return:1283"
+        }
       }
     }
   },
