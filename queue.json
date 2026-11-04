@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3131,
+  "revision": 3132,
   "nextTicket": 188,
   "nextFence": 187,
   "tasks": {
@@ -2995,7 +2995,7 @@
       "ownerDecision": null,
       "ticket": 186,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793818973489,
       "reviewEntry": 5,
       "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd",
@@ -3012,14 +3012,15 @@
         "test/graph-edit-seams.test.mjs"
       ],
       "notice": {
-        "key": "4:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
+        "key": "5:changelog-rebase-correction",
+        "reason": "changelog-rebase-correction",
+        "status": "pending",
         "fromStatus": "S7-code-review",
-        "at": 1793818875579,
-        "entry": 4,
-        "requestId": "review:1283:4:59179c9b8213a32d89863dc2f77bb16b50487617:d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2",
-        "transitionConfirmed": true
+        "at": 1793819507969,
+        "entry": 5,
+        "requestId": "review:1283:5:04c2dcbf8c4b4d481eb8c470537ada7a62558dbd:f1d2fa8d0cf80adfb755531220deeb02391f8105",
+        "detail": "The clean Git rebase replayed several task changelog commits through union merge and duplicated released beta.4 headings/old entries again. Author caught this before code review, returning to S6 to squash own task history and keep one correct Unreleased entry per language.",
+        "eventId": "return-85f7c7c9-9484-4d9c-b08b-f30c194a809e:return:1283"
       },
       "s6": {
         "id": "20261104T191120292-b0ea8d36",
@@ -3036,7 +3037,8 @@
         "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
         "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
         "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd"
-      }
+      },
+      "reason": "changelog-rebase-correction"
     },
     "1284": {
       "issue": 1284,
@@ -3382,19 +3384,7 @@
   "waiting": [
     1282
   ],
-  "active": {
-    "issue": 1283,
-    "worker": "github-coordinator",
-    "token": "186:github:41894403400:1:tick:0:admit",
-    "fence": 186,
-    "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
-    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
-    "phase": "review",
-    "admittedAt": 1793819451773,
-    "expiresAt": 1793823082602,
-    "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd",
-    "reviewRequest": "review:1283:5:04c2dcbf8c4b4d481eb8c470537ada7a62558dbd:f1d2fa8d0cf80adfb755531220deeb02391f8105"
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3770,6 +3760,10 @@
     },
     "finish:6f68a537-815a-4ecb-bff3-71568545e765:finish:3:review-requested": {
       "digest": "f91f02e050d56c52c061b9c3287a9f71cda3d7388a537486c8c356b869ff0a00",
+      "issue": 1283
+    },
+    "return-85f7c7c9-9484-4d9c-b08b-f30c194a809e": {
+      "digest": "3115a58506a0cfc9efa1fca0e34e585576257c1b9fb74c83ab708e0675f11e04",
       "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
@@ -4429,6 +4423,27 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "return-85f7c7c9-9484-4d9c-b08b-f30c194a809e:return:1283": {
+      "digest": "3115a58506a0cfc9efa1fca0e34e585576257c1b9fb74c83ab708e0675f11e04",
+      "issue": 1283,
+      "message": {
+        "kind": "return",
+        "issue": 1283,
+        "at": 1793819507969,
+        "entry": 5,
+        "notice": {
+          "key": "5:changelog-rebase-correction",
+          "reason": "changelog-rebase-correction",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1793819507969,
+          "entry": 5,
+          "requestId": "review:1283:5:04c2dcbf8c4b4d481eb8c470537ada7a62558dbd:f1d2fa8d0cf80adfb755531220deeb02391f8105",
+          "detail": "The clean Git rebase replayed several task changelog commits through union merge and duplicated released beta.4 headings/old entries again. Author caught this before code review, returning to S6 to squash own task history and keep one correct Unreleased entry per language.",
+          "eventId": "return-85f7c7c9-9484-4d9c-b08b-f30c194a809e:return:1283"
+        }
       }
     }
   },
