@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { commitGraphEdit } from '../test-build/graph-edit-intent.js';
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { optimizeGraphTargets } from '../test-build/graph-optimize.js';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import * as G from '../test-build/plan-graph.js';
 import * as Q from '../test-build/plan-exact.js';
 
@@ -24,6 +25,89 @@ const valid = space => {
   assert.equal(G.validateGraph(space.plan_graph).ok, true);
   G.verifyGraphProjection(space, space.plan_graph);
 };
+const migratedAxialT = vertical => {
+  const xy = (x, y) => (vertical ? [y, x] : [x, y]).map(v => v / 240);
+  const legacy = { model_version: 10, markers: [], settings: {}, spaces: [{
+    id: 'floor', title: 'Synthetic', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [], partitions: [
+      { id: 'support', a: xy(24, 60), b: xy(180, 60), cm: 25 },
+      { id: 'branch', a: xy(100.3, 60), b: xy(100.3, 180), cm: 25 },
+    ],
+  }] };
+  const frozen = structuredClone(legacy), migrated = commitWallSegmentModel(legacy).config;
+  assert.deepEqual(legacy, frozen);
+  assert.equal(migrated.model_version, 11, 'an ordinary writer already migrated the plan before Optimize');
+  assert.equal(migrated.spaces[0].plan_graph.dependencies.length, 1);
+  return migrated;
+};
+
+for (const vertical of [false, true]) test(`#1285 auto-migrated ${vertical ? 'vertical' : 'horizontal'} support accepts exact axial T sliding on the first Optimize`, () => {
+  const before = migratedAxialT(vertical), frozen = structuredClone(before), source = before.spaces[0];
+  const originalDependency = source.plan_graph.dependencies[0], originalNode = source.plan_graph.nodes.find(n => n.id === originalDependency.node);
+  assert.equal(originalNode.p[0], 'q', 'migration preserves the genuine 0.3-step legacy offset');
+  const first = optimizePlans(before, {}), space = first.config.spaces[0];
+  valid(space);
+  assert.equal(first.changed, true, 'explicit Optimize still aligns an already migrated legacy plan');
+  const movedNode = space.plan_graph.nodes.find(n => n.id === originalDependency.node);
+  assert.deepEqual(movedNode.p, vertical ? ['l', '60', '100'] : ['l', '100', '60']);
+  const dependency = space.plan_graph.dependencies.find(d => d.node === originalDependency.node);
+  assert.ok(dependency, 'safe sliding keeps the existing support constraint');
+  assert.deepEqual({ ...dependency, parameters: [] }, { ...originalDependency, parameters: [] });
+  assert.deepEqual(dependency.parameters, [['19', '39']]);
+  const branch = space.partitions.find(p => p.id === 'branch');
+  const axis = vertical ? 1 : 0;
+  assert.equal(branch.a[axis], 100 / 240);
+  assert.equal(branch.b[axis], 100 / 240, 'Optimize must not leave the branch tilted until a second pass');
+  const second = optimizePlans(first.config, first.layout);
+  assert.equal(second.changed, false);
+  assert.deepEqual(second.config, first.config);
+  assert.deepEqual(before, frozen);
+});
+
+test('#1285 a literal grid target on a 45-degree support still preserves its native q junction', () => {
+  let space = empty(), draft = structuredClone(space);
+  draft.partitions = [{ id: 'support', a: [24 / 240, 24 / 240], b: [121 / 240, 121 / 240], cm: 25 }];
+  space = commitGraphEdit(space, draft, { kind: 'partitions', ids: ['support'] });
+  draft = structuredClone(space);
+  draft.partitions.push({ id: 'branch', a: [72.5 / 240, 72.5 / 240], b: [180 / 240, 60 / 240], cm: 25 });
+  space = commitGraphEdit(space, draft, { kind: 'partitions', ids: ['branch'], endpointRefs: { branch: [
+    { kind: 'on-edge', node: 'tee', edge: { kind: 'partition', id: 'support' }, t: ['1', '2'], splitIds: ['support-child'] },
+    undefined,
+  ] } });
+  const before = config(space), result = optimizePlans(before, {});
+  valid(result.config.spaces[0]);
+  assert.equal(result.changed, false, 'rounded coordinates staying on a diagonal do not authorize sliding');
+  assert.deepEqual(result.config, before);
+});
+
+test('#1285 axial sliding rejects a lattice target outside the finite support', () => {
+  const before = migratedAxialT(false).spaces[0], draft = structuredClone(before);
+  const dependency = before.plan_graph.dependencies[0], source = before.plan_graph.nodes.find(n => n.id === dependency.node);
+  const p = Q.pointToNumbers(Q.decodePoint(source.p));
+  for (const part of draft.partitions) for (const key of ['a', 'b'])
+    if (part[key][0] === p[0] && part[key][1] === p[1]) part[key] = [200 / 240, 60 / 240];
+  const result = optimizeGraphTargets(before, draft, true).space;
+  valid(result);
+  assert.deepEqual(result.plan_graph.nodes.find(n => n.id === dependency.node).p, source.p);
+  assert.deepEqual(result.plan_graph.dependencies, before.plan_graph.dependencies);
+});
+
+test('#1285 axial candidate membership uses the proposed support rather than its old position', () => {
+  const before = migratedAxialT(false).spaces[0], draft = structuredClone(before);
+  const dependency = before.plan_graph.dependencies[0], source = before.plan_graph.nodes.find(n => n.id === dependency.node);
+  const p = Q.pointToNumbers(Q.decodePoint(source.p));
+  for (const part of draft.partitions) for (const key of ['a', 'b']) {
+    if (part[key][0] === p[0] && part[key][1] === p[1]) part[key] = [100 / 240, 60 / 240];
+    else if (part[key][1] === 60 / 240) part[key] = [part[key][0], 61 / 240];
+  }
+  const result = optimizeGraphTargets(before, draft, true).space;
+  valid(result);
+  const index = G.graphIndex(result.plan_graph), support = dependency.refs[0];
+  assert.deepEqual(result.plan_graph.dependencies, before.plan_graph.dependencies);
+  assert.deepEqual(index.nodes.get(dependency.node).p, Q.encodePoint(Q.pointAt(index.points.get(support.from),
+    index.points.get(support.to), Q.decodeRational(dependency.parameters[0]))));
+  assert.equal(Q.toNumber(index.points.get(dependency.node)[1]), 61 / 240);
+  assert.equal(index.nodes.get(dependency.node).p[0], 'q', 'the old-line grid proposal was not authorized');
+});
 
 test('#1285 native on-edge q T remains exact when the numeric draft proposes a literal lattice node', () => {
   let space = empty(), draft = structuredClone(space);

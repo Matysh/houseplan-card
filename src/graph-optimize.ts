@@ -38,8 +38,9 @@ interface GraphOptimizeOptions {
   alignOpenings?: boolean;
   metadataFromBefore?: boolean;
   retargetNodes?: ReadonlySet<string>;
-  /** Legacy Optimize keeps its previous whole-grid alignment policy. A
-   * current graph requires an explicit repair grant to override incidence. */
+  /** A source still entering Optimize as legacy keeps its former whole-grid
+   * policy. Model 11 may also contain imported/automigrated off-grid points;
+   * its ungranted grid targets require exact axial support below. */
   allowDependentGridTargets?: boolean;
 }
 
@@ -80,12 +81,9 @@ export function optimizeGraphTargets(
   const setTarget = (id: string, p: number[]) => {
     if (!p || !p.every(Number.isFinite)) throw new PlanGraphError('optimize-target', id);
     const next = targetPoint(p), old = targets.get(id);
-    // Keep exact affine incidence when the numerical reader only supplies an
-    // approximate echo. A numerical lattice proposal is not permission to
-    // bend a current support or retire its constraint. Missing dependent
-    // targets are evaluated from their supports by proposed()/the reducer.
-    if(dependent.has(id)&&!options.retargetNodes?.has(id)
-        &&(!options.allowDependentGridTargets||encodePoint(next)[0]!=='l'))return;
+    // Off-grid echoes never override affine incidence. Literal lattice
+    // candidates are collected before checking their final proposed supports.
+    if(dependent.has(id)&&!options.retargetNodes?.has(id)&&encodePoint(next)[0]!=='l')return;
     if (old && !same(encodePoint(old), encodePoint(next))) throw new PlanGraphError('optimize-target-conflict', id);
     targets.set(id, next);
   };
@@ -112,8 +110,24 @@ export function optimizeGraphTargets(
   const dependencies = new Map(graph.dependencies.map(d => [d.node, d]));
   const supportNodes = new Set(graph.dependencies.flatMap(d => d.refs.flatMap(r => [r.from, r.to])));
   const proposed = (id: string): ExactPoint => {
-    if (targets.has(id)) return targets.get(id)!;
     const dependency = dependencies.get(id);
+    const target = targets.get(id);
+    if (target) {
+      if (!dependency || options.allowDependentGridTargets || options.retargetNodes?.has(id)) return target;
+      // An automatically migrated/imported model11 T may safely slide on an
+      // axial support. Use final proposed supports, not array order or the old
+      // carrier. Diagonal q junctions stay fixed even when rounding lies on
+      // their line; no ungranted target may retire a constraint or bend a run.
+      const axial = encodePoint(target)[0] === 'l' && dependency.refs.every(r => {
+        const a = proposed(r.from), b = proposed(r.to);
+        if ((cmp(a[0], b[0]) === 0) === (cmp(a[1], b[1]) === 0)) return false;
+        const t = projectParameter(target, a, b);
+        return cmp(t, ZERO) >= 0 && cmp(t, ONE) <= 0
+          && same(encodePoint(target), encodePoint(pointAt(a, b, t)));
+      });
+      if (axial) return target;
+      targets.delete(id);
+    }
     if (!dependency) return targets.get(id) || decodePoint(nodes.get(id)!.p);
     if (dependency.kind === 'on-edge') {
       const r = dependency.refs[0];
@@ -124,6 +138,8 @@ export function optimizeGraphTargets(
     if (!hit) throw new PlanGraphError('dependency-intersection', id);
     return pointAt(proposed(a.from), proposed(a.to), hit.t);
   };
+  // Resolve protected candidates support-first before building any move batch.
+  for (const id of dependent) if (targets.has(id)) proposed(id);
   // Thickness breakpoints are exact parameters on known straight runs, not
   // additional authored grid corners. Independently snapping both ends of a
   // short interval would erase a valid edge before the interval cleanup pass.

@@ -89,12 +89,17 @@ Optimize's numerical maintenance readers use their actual draft projections,
 without projecting the previous graph back over proposed changes. Opening
 continuity still comes from named graph runs. In a current graph a numerical
 lattice proposal cannot detach a valid dependent junction or bend its exact
-support. Dependents follow support evaluation unless an explicit near-axis
-retarget grant names them; the named carrier must already be near-axis in the
-accepted graph, rather than become so in a numerical alignment draft.
-The first legacy Optimize retains its former literal
-lattice-target policy; approximate off-grid echoes still retain exact affine
-incidence. The near-axis grant names only graph nodes
+support. Without a repair grant, a dependent lattice target is accepted only
+when it lies exactly within every proposed support's [0,1] interval and each
+support is exactly horizontal or vertical. This safe axial sliding updates the
+dependency parameter; diagonal `q` junctions instead follow support evaluation,
+even when their rounded coordinates would remain on the diagonal. Model 11 is
+a storage format, not provenance: imported or writer-migrated plans can still
+need axial alignment. A source that enters Optimize before model-11 migration
+retains the former legacy literal-target policy. Approximate off-grid echoes
+retain exact affine incidence. An explicit near-axis retarget grant requires
+the named carrier to be near-axis in the accepted graph, rather than become so
+in a numerical alignment draft. The grant names only graph nodes
 whose numerical room vertices or partition endpoints that repair actually
 changed, within their own space; it never applies to another component or floor.
 Already-applied move/support operations
