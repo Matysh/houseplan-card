@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2385,
-  "nextTicket": 148,
+  "revision": 2386,
+  "nextTicket": 149,
   "nextFence": 148,
   "tasks": {
     "1126": {
@@ -2529,14 +2529,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1267-opening-rulers",
-      "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
+      "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 147,
-      "queued": false,
+      "ticket": 148,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793780163092,
-      "reviewEntry": 1,
+      "readyAt": 1793780256768,
+      "reviewEntry": 2,
       "patchId": "39d21a64c917e4f8c47ef54493dd23ee65f9823e",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -2544,7 +2544,6 @@
         "docs/release-ledger/v1.83.0/1267.json",
         "src/houseplan-editor-runtime.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2769,7 +2768,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1267
+  ],
   "active": null,
   "events": {
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:2:synchronized": {
@@ -2839,6 +2840,19 @@
           "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно",
           "eventId": "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267"
         }
+      }
+    },
+    "finish:974d92f9-6e68-483f-a419-a042733f6a3d": {
+      "digest": "7e79e61c64239df7ccb8cc44fa5e6bb08d75e3cfc6bab860fee0d1b167704047",
+      "issue": 1267,
+      "message": {
+        "kind": "queued",
+        "issue": 1267,
+        "at": 1793780256768,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f2df18637a7bbf87d95c598692156fa49211c6ec"
       }
     }
   },
