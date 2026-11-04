@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2484,
+  "revision": 2485,
   "nextTicket": 153,
   "nextFence": 153,
   "tasks": {
@@ -2550,8 +2550,9 @@
       "status": "S6-in-progress",
       "readyAt": 1793782309066,
       "reviewEntry": 2,
-      "patchId": "43910d3e92fbbbe669102b726569975a5da5b939",
+      "patchId": "78ca53ee75cb5f367d98601f4c976caed120d61b",
       "changedFiles": [
+        "demo/smoke_stairs.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.83.0/1269.json",
@@ -2876,10 +2877,11 @@
     "token": "152:finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:1:admit",
     "fence": 152,
     "materialSha": "09a06bef493f020473dd3a694568b30369969daa",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
+    "phase": "testing",
     "admittedAt": 1793782313161,
-    "expiresAt": 1793782613161
+    "expiresAt": 1793782619244,
+    "patchId": "78ca53ee75cb5f367d98601f4c976caed120d61b"
   },
   "events": {
     "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
@@ -2932,6 +2934,10 @@
     },
     "github:41801774603:1:completions:metadata:1339a9e4-4cf7-4fe0-9cc6-cd9ad7b4667d:task-notice:1269::": {
       "digest": "cc2d471e90422b9f3d222840ecc25edef0b2595371ad367e59a970b543876369",
+      "issue": 1269
+    },
+    "finish:834f2030-795d-4b83-a2ab-20ac415481f8:finish:2:synchronized": {
+      "digest": "d349e9896ab1fcd78278d851acf21838003a4c744497334d266559ca5216e305",
       "issue": 1269
     },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
