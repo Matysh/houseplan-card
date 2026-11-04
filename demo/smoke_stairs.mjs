@@ -12,6 +12,16 @@ import { isDeepStrictEqual } from 'node:util';
 
 const { page, browser } = await launch({ width: 2000, height: 850 });
 await prepareDesktopControls(page);
+// Browser-side setup may await these actions, but input comes from Playwright
+// rather than dispatchEvent: the regression exercises actual pointer/key tails.
+await page.exposeFunction('__stairHistoryNative', async action => {
+  if (action.kind === 'click') await page.mouse.click(action.at.x, action.at.y);
+  else if (action.kind === 'move') {
+    await page.mouse.move(action.from.x, action.from.y); await page.mouse.down();
+    await page.mouse.move(action.to.x, action.to.y, { steps: 8 }); await page.mouse.up();
+  } else if (action.kind === 'key') await page.keyboard.press(action.key);
+  else throw new Error('Unknown native stair-history action');
+});
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const hp = window.__hpTest;
@@ -278,28 +288,27 @@ const out = await page.evaluate(async () => {
   });
   const historyBefore = stairHistoryState();
   const start = { x: straight.x, y: straight.y };
-  const straightHit = stairNode(straight.id)?.querySelector('.hp-stair-hit');
-  straightHit?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+  const stairScreenPoint = (x, y) => {
+    const p = new DOMPoint(x, y).matrixTransform(stage().getScreenCTM());
+    return { x: p.x, y: p.y };
+  };
+  await window.__stairHistoryNative({ kind: 'click', at: stairScreenPoint(start.x * 1000, start.y * 1000) });
   await settled();
-  pointer(straightHit, 'pointerdown', [start.x * 1000, start.y * 1000], 6631);
-  pointer(stage(), 'pointermove', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
-  pointer(stage(), 'pointerup', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
+  await window.__stairHistoryNative({ kind: 'move',
+    from: stairScreenPoint(start.x * 1000, start.y * 1000),
+    to: stairScreenPoint(start.x * 1000 - 180, start.y * 1000 - 170) });
   await settled();
   const moveAckIdle = await writesIdle();
   const moved = structuredClone(stairs().find((stair) => stair.id === straight.id));
   const historyMoved = stairHistoryState();
   result.moveUsesContinuousTransform = !!moved
     && (!closeTo(moved.x, start.x) || !closeTo(moved.y, start.y));
-  window.dispatchEvent(new KeyboardEvent('keydown', {
-    key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true, cancelable: true,
-  }));
+  await window.__stairHistoryNative({ kind: 'key', key: 'Control+z' });
   await settled();
   const undoAckIdle = await writesIdle();
   const undone = structuredClone(stairs().find((stair) => stair.id === straight.id));
   const historyUndone = stairHistoryState();
-  window.dispatchEvent(new KeyboardEvent('keydown', {
-    key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
-  }));
+  await window.__stairHistoryNative({ kind: 'key', key: 'Control+Shift+z' });
   await settled();
   const redoAckIdle = await writesIdle();
   const redone = structuredClone(stairs().find((stair) => stair.id === straight.id));
