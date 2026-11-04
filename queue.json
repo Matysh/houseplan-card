@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2939,
+  "revision": 2940,
   "nextTicket": 178,
   "nextFence": 176,
   "tasks": {
@@ -3298,6 +3298,10 @@
       "digest": "b866e9089566b12475671a7b358bd66154e47b038ea2fb8e1164b1ddb2ab1d98",
       "issue": 1283
     },
+    "github:41886583742:1:completions:message:cf38e324ae429b4aad8da1c489e16a74fceb18c2ac6e7e2853855b1590fd8009": {
+      "digest": "74b738aab6a6b5eff1accc80ef610aa6e0c2ac3b4edc721c7f0bb5abfb6fa222",
+      "issue": 1284
+    },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
       "issue": 1283,
@@ -3358,7 +3362,8 @@
           "entry": 1,
           "detail": "Addressed test request named a missing plan-graph.test.mjs. Corrected to existing plan-graph-core.test.mjs before any S6 item ran.",
           "eventId": "return-db854156-49fe-4393-a687-c64988b4ad30:return:1283"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:1:admit": {
