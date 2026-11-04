@@ -33,7 +33,7 @@ function harness(kind='rect') {
     updateComplete:Promise.resolve(),renderRoot:{querySelectorAll:()=>[]},
   };
   context.observe(host.hass);
-  const runtime={host,stairs:{select(){}},keyboardNudge:{retire(){state.nudgeRetirements++;}},_geometrySnapshot:()=>structuredClone(host._curSpaceCfg),
+  const runtime={host,backdropGesture:{active:false},stairs:{select(){}},keyboardNudge:{retire(){state.nudgeRetirements++;}},_geometrySnapshot:()=>structuredClone(host._curSpaceCfg),
     _recordGeometry:(name,before)=>state.records.push({name,before,after:structuredClone(host._curSpaceCfg)}),
     _prepareConfigCandidate:candidate=>{if(state.prepareError)throw Error('preflight');return candidate;},
     _stageOptimisticConfig:(previous,candidate)=>{const attempt=adoption.beginOptimistic(previous,candidate);adoption.stageLocalConfig(candidate);return attempt;},
