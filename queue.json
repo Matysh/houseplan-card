@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2397,
+  "revision": 2398,
   "nextTicket": 149,
   "nextFence": 149,
   "tasks": {
@@ -2875,6 +2875,10 @@
       "digest": "45f54d0f3e56ac5db6dab756683ba2dbff2cd399f4d3ef1ca0e26e1d6232d780",
       "issue": 1267
     },
+    "github:41798544331:1:completions:message:e393be8d330f173c2cd16caa336cb16806ea2f23b288233b7b2997e49e94b94a": {
+      "digest": "3572514d406e4ba76e399c2da14f5a0640aba403e56621ac1bee5a6af1cac930",
+      "issue": 1267
+    },
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0": {
       "digest": "1c9e8576ca6026734c4b243ccec36d8e141a862eedfef71ada2dea654147ee79",
       "issue": 1267,
@@ -2980,7 +2984,8 @@
         "reviewChanges": "Причина локализована: current graph branch в _opPointerMoveNow возвращается с _opMeasure=null и вообще не вызывает _opRuler/openingShoulders. Legacy room branch ниже сохраняет линейки и center magnet. Восстанавливаю этот принятый механизм для wall host, затем применяю exact graph target/domain. Подписи должны измерять именно окончательный допустимый target, а не предложенный центр, если соседний проём запрещает его. Partition path и его jamb/domain guard сохраняются. Исходные числовые оракулы собственных границ комнаты не меняются.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
