@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3038,
+  "revision": 3039,
   "nextTicket": 181,
   "nextFence": 181,
   "tasks": {
@@ -372,37 +372,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "bcdc82d590b99b658f16056438e1e97b7f7f0c46"
-      }
-    },
-    "1195": {
-      "issue": 1195,
-      "branch": "codex/revert-1194",
-      "track": "ship",
-      "layer": "docs",
-      "status": "S8-merged",
-      "mergedSha": "7cc142bca283b8b244fdf4ea20a9fba6d982f836",
-      "mergedAt": 1793572550682,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1196": {
@@ -3188,7 +3157,8 @@
       },
       "releaseTag": "v1.84.0-beta.4",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
       }
     }
   },
@@ -3765,6 +3735,18 @@
         "materialSha": "511dec5675d1742b8ed480003cf6d2b954fd612e",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:41890312737:1:1288": {
+      "digest": "b4a17d5877970f582eafa0a7b3e296cfce7f986d403c18e5843c8ef6763dbb56",
+      "issue": 1288,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1288,
+        "at": 1793818092902,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
       }
     }
   },
