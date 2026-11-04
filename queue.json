@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2466,
-  "nextTicket": 151,
+  "revision": 2467,
+  "nextTicket": 152,
   "nextFence": 151,
   "tasks": {
     "1126": {
@@ -2537,6 +2537,20 @@
         "sourceSha": "f2df18637a7bbf87d95c598692156fa49211c6ec"
       }
     },
+    "1269": {
+      "issue": 1269,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1269-legacy-stairs-history",
+      "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 151,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793781497747,
+      "reviewEntry": 1
+    },
     "1270": {
       "issue": 1270,
       "branch": "fix/1270-weather-smoke-readiness",
@@ -2823,7 +2837,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1269
+  ],
   "active": null,
   "events": {
     "dev-build:41800471267:1:1271": {
@@ -2836,6 +2852,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "477af68e102d42f95372f7e50f8974565a15b6e6"
+      }
+    },
+    "finish:85400028-c694-48ae-861c-127a9bef569d": {
+      "digest": "77d31853002f912be355305ed434a307b3beac91cc08907685cf80195b98b33b",
+      "issue": 1269,
+      "message": {
+        "kind": "queued",
+        "issue": 1269,
+        "at": 1793781497747,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea"
       }
     }
   },
