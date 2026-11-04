@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2807,
-  "nextTicket": 170,
+  "revision": 2808,
+  "nextTicket": 171,
   "nextFence": 170,
   "tasks": {
     "1126": {
@@ -2920,6 +2920,20 @@
         "status": "published",
         "sourceSha": "5d0af8bc304275882b185db7f336293075950205"
       }
+    },
+    "1280": {
+      "issue": 1280,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "fix/1280-binary-patch-identity",
+      "materialSha": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 170,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793803555564,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3024,9 +3038,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1280
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:916e0a1d-065e-421d-8f7d-01b742edccf3": {
+      "digest": "250ddf7ff2979c027acc98de866b353b2c7bbd45e784c237e5df2fcc787b18ad",
+      "issue": 1280,
+      "message": {
+        "kind": "queued",
+        "issue": 1280,
+        "at": 1793803555564,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "99c83e17f1222ebfc61dcd07099fdaa9ccff525b",
     "status": "delivered",
