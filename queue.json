@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2572,
+  "revision": 2573,
   "nextTicket": 160,
   "nextFence": 160,
   "tasks": {
@@ -3035,6 +3035,10 @@
       "digest": "135316e55d1da7554dcce5d71fe810c0a5b45523926517374b9e654a0fcd244e",
       "issue": 1265
     },
+    "github:41813042933:1:completions:message:cfff452de8ce425f6bfb9565f6115bcb7469b103f4a6a0f9e2c55321b53c3742": {
+      "digest": "f2b9e87aa422cc6a3392555f4e9bff95aab3f874f87ef676acb4d2f214b481f9",
+      "issue": 1265
+    },
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb": {
       "digest": "ce0057ab3e8fdb4beb06483911e9ad95c694c5f063458128729fd8940d7a2d28",
       "issue": 1265,
@@ -3131,7 +3135,8 @@
           "entry": 2,
           "detail": "Браузер: draw wall thickness: failed; Браузер: unified wall tool: failed; Браузер: wall face overlap: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed",
           "eventId": "finish:e2f7305a-5176-4862-801e-09685b8dfec7:finish:3:return:return:1265"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:943ada1e-90fb-4bcb-b0f6-2fca431ce8d8": {
