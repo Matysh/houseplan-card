@@ -179,6 +179,42 @@ function compareCodePoints(a, b) {
     return (i < a.length ? 1 : 0) - (j < b.length ? 1 : 0);
 }
 
+/** Persisted JSON objects are unordered; array order and scalar values are not. */
+function jsonValueEqual(left, right) {
+    if (left === right)
+        return true;
+    if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object')
+        return false;
+    if (Array.isArray(left) || Array.isArray(right)) {
+        return Array.isArray(left) && Array.isArray(right) && left.length === right.length
+            && left.every((value, index) => jsonValueEqual(value, right[index]));
+    }
+    const a = left, b = right;
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && jsonValueEqual(a[key], b[key]));
+}
+
+/** Validate the authored numeric carrier before JSON cloning can turn NaN into null. */
+const finiteNumeric = (value) => Number.isFinite(value)
+    || typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value));
+function assertFiniteColumnInputs(space) {
+    if (space.wall_columns === undefined)
+        return;
+    if (!Array.isArray(space.wall_columns))
+        throw new TypeError('invalid-column-geometry');
+    for (const column of space.wall_columns) {
+        if (!column || !Array.isArray(column.center) || column.center.length !== 2
+            || !finiteNumeric(column.center[0]) || !finiteNumeric(column.center[1])
+            // #842 permits old numeric strings and absent/null defaults. Their
+            // existing write normalization still owns the conversion; coordinates
+            // never get the Number(null) / Number('') shortcut to zero.
+            || (column.cm != null && !finiteNumeric(column.cm))
+            || (column.angle != null && !finiteNumeric(column.angle))) {
+            throw new TypeError('invalid-column-geometry');
+        }
+    }
+}
+
 /*
  *      bignumber.js v9.3.1
  *      A JavaScript library for arbitrary-precision arithmetic.
@@ -3145,6 +3181,208 @@ function sharedBoundary(a, b, eps = 1e-6) {
     return res;
 }
 
+/** Exact structural arithmetic. Floats are source decoders / render projections only. */
+const EXACT_BITS = 4096;
+class PlanExactError extends Error {
+    constructor(code, detail = '') {
+        super('plan-exact:' + code + (detail ? ':' + detail : ''));
+        this.code = code;
+        this.name = 'PlanExactError';
+    }
+}
+const abs = (n) => n < 0n ? -n : n;
+const bitLength = (n) => abs(n).toString(2).length;
+function gcd(a, b) {
+    a = abs(a);
+    b = abs(b);
+    while (b) {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+function exact$1(n, d = 1n) {
+    if (!d)
+        throw new PlanExactError('format', 'zero-denominator');
+    if (d < 0n) {
+        n = -n;
+        d = -d;
+    }
+    const g = gcd(n, d);
+    n /= g;
+    d /= g;
+    if (bitLength(n) > EXACT_BITS || bitLength(d) > EXACT_BITS)
+        throw new PlanExactError('resource');
+    return { n, d };
+}
+const ZERO = exact$1(0n), ONE = exact$1(1n);
+function parseDecimal(value) {
+    if (typeof value === 'number' && !Number.isFinite(value))
+        throw new PlanExactError('format', 'finite');
+    const text = String(value);
+    if (text.length > 2600)
+        throw new PlanExactError('resource');
+    const match = /^([+-]?)(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(text);
+    if (!match)
+        throw new PlanExactError('format', 'decimal');
+    const exponent = Number(match[4] || 0) - (match[3]?.length || 0);
+    if (!Number.isSafeInteger(exponent) || Math.abs(exponent) > 2500)
+        throw new PlanExactError('resource');
+    const digits = BigInt(match[2] + (match[3] || '')) * (match[1] === '-' ? -1n : 1n);
+    return exponent >= 0 ? exact$1(digits * 10n ** BigInt(exponent))
+        : exact$1(digits, 10n ** BigInt(-exponent));
+}
+const integer = (s) => {
+    if (typeof s !== 'string' || !/^(?:0|-?[1-9]\d*)$/.test(s))
+        throw new PlanExactError('format', 'integer');
+    if (s.length > 1235)
+        throw new PlanExactError('resource');
+    return BigInt(s);
+};
+function decodeRational(input) {
+    if (!Array.isArray(input) || input.length !== 2)
+        throw new PlanExactError('format', 'rational');
+    const n = integer(input[0]), d = integer(input[1]);
+    const q = exact$1(n, d);
+    if (q.n !== n || q.d !== d)
+        throw new PlanExactError('format', 'noncanonical-rational');
+    return q;
+}
+const encodeRational = (q) => [q.n.toString(), q.d.toString()];
+const add = (a, b) => exact$1(a.n * b.d + b.n * a.d, a.d * b.d);
+const sub = (a, b) => exact$1(a.n * b.d - b.n * a.d, a.d * b.d);
+const mul = (a, b) => {
+    const g = gcd(a.n, b.d), h = gcd(b.n, a.d);
+    return exact$1((a.n / g) * (b.n / h), (a.d / h) * (b.d / g));
+};
+const div = (a, b) => mul(a, exact$1(b.d, b.n));
+const neg = (a) => ({ n: -a.n, d: a.d });
+const cmp = (a, b) => {
+    const v = a.n * b.d - b.n * a.d;
+    return v < 0n ? -1 : v > 0n ? 1 : 0;
+};
+const eq = (a, b) => a.n === b.n && a.d === b.d;
+const min = (a, b) => cmp(a, b) <= 0 ? a : b;
+const max = (a, b) => cmp(a, b) >= 0 ? a : b;
+function floor(q) {
+    const n = q.n / q.d;
+    return q.n < 0n && q.n % q.d ? n - 1n : n;
+}
+function nearestInteger(q) {
+    const f = floor(q), remainder = sub(q, exact$1(f)), c = cmp(remainder, exact$1(1n, 2n));
+    return c < 0 || c === 0 && f % 2n === 0n ? f : f + 1n;
+}
+const roundRatio = (n, d) => {
+    const v = n / d, r = n % d, twice = r * 2n;
+    return twice > d || twice === d && v % 2n !== 0n ? v + 1n : v;
+};
+/** IEEE754 nearest, ties-to-even; never independently converts huge n and d. */
+function toNumber(q) {
+    if (!q.n)
+        return 0;
+    const sign = q.n < 0n ? 1n << 63n : 0n, n = abs(q.n), d = q.d;
+    let e = bitLength(n) - bitLength(d);
+    if (e >= 0 ? n < (d << BigInt(e)) : (n << BigInt(-e)) < d)
+        e--;
+    let bits;
+    if (e < -1022) {
+        const mantissa = roundRatio(n << 1074n, d);
+        bits = sign | mantissa; // A carry naturally becomes the minimum normal.
+    }
+    else if (e > 1023)
+        bits = sign | (0x7ffn << 52n);
+    else {
+        const shift = 52 - e;
+        let mantissa = shift >= 0 ? roundRatio(n << BigInt(shift), d)
+            : roundRatio(n, d << BigInt(-shift));
+        if (mantissa === 1n << 53n) {
+            mantissa >>= 1n;
+            e++;
+        }
+        bits = e > 1023 ? sign | (0x7ffn << 52n)
+            : sign | (BigInt(e + 1023) << 52n) | (mantissa - (1n << 52n));
+    }
+    const view = new DataView(new ArrayBuffer(8));
+    view.setBigUint64(0, bits, false);
+    return view.getFloat64(0, false);
+}
+function readSourcePoint(p) {
+    if (!Array.isArray(p) || p.length !== 2)
+        throw new PlanExactError('format', 'point');
+    return checkedPoint([parseDecimal(p[0]), parseDecimal(p[1])]);
+}
+function checkedPoint(p) {
+    const limit = exact$1(5000n);
+    if (p.some(q => cmp(q, limit) > 0 || cmp(q, neg(limit)) < 0))
+        throw new PlanExactError('range');
+    return p;
+}
+function encodePoint(p) {
+    checkedPoint(p);
+    const x = mul(p[0], exact$1(240n)), y = mul(p[1], exact$1(240n));
+    return x.d === 1n && y.d === 1n ? ['l', x.n.toString(), y.n.toString()]
+        : ['q', p[0].n.toString(), p[0].d.toString(), p[1].n.toString(), p[1].d.toString()];
+}
+function decodePoint(p) {
+    if (!Array.isArray(p))
+        throw new PlanExactError('format', 'point');
+    let result;
+    if (p.length === 3 && p[0] === 'l')
+        result = [exact$1(integer(p[1]), 240n), exact$1(integer(p[2]), 240n)];
+    else if (p.length === 5 && p[0] === 'q')
+        result = [decodeRational([p[1], p[2]]), decodeRational([p[3], p[4]])];
+    else
+        throw new PlanExactError('format', 'point');
+    checkedPoint(result);
+    if (JSON.stringify(encodePoint(result)) !== JSON.stringify(p))
+        throw new PlanExactError('format', 'noncanonical-point');
+    return result;
+}
+const pointEq = (a, b) => eq(a[0], b[0]) && eq(a[1], b[1]);
+const pointCmp = (a, b) => cmp(a[0], b[0]) || cmp(a[1], b[1]);
+const pointAdd = (a, b) => [add(a[0], b[0]), add(a[1], b[1])];
+const pointSub = (a, b) => [sub(a[0], b[0]), sub(a[1], b[1])];
+const dot = (a, b) => add(mul(a[0], b[0]), mul(a[1], b[1]));
+const cross = (a, b) => sub(mul(a[0], b[1]), mul(a[1], b[0]));
+const squaredDistance = (a, b) => dot(pointSub(a, b), pointSub(a, b));
+const withinRadius = (a, b, r) => cmp(squaredDistance(a, b), mul(r, r)) <= 0;
+const pointAt = (a, b, t) => [add(a[0], mul(sub(b[0], a[0]), t)), add(a[1], mul(sub(b[1], a[1]), t))];
+const projectParameter = (p, a, b) => div(dot(pointSub(p, a), pointSub(b, a)), squaredDistance(a, b));
+function intersection(a, b, c, d) {
+    const ab = pointSub(b, a), cd = pointSub(d, c), den = cross(ab, cd);
+    if (!den.n)
+        return null;
+    const t = div(cross(pointSub(c, a), cd), den), u = div(cross(pointSub(c, a), ab), den);
+    return { p: pointAt(a, b, t), t, u };
+}
+const microRadius = (cellCm) => {
+    if (!Number.isFinite(cellCm) || cellCm <= 0)
+        throw new PlanExactError('range', 'cell');
+    return min(exact$1(1n, 1200000n), div(exact$1(1n, 10n), mul(exact$1(240n), parseDecimal(cellCm))));
+};
+const pointToNumbers = (p) => [toNumber(p[0]), toNumber(p[1])];
+
+/** Unbounded derived arithmetic, never a persisted GraphPoint codec.
+ * A dyadic offset intersection can exceed the graph's integer budget without
+ * representing a larger or less valid physical coordinate.
+ */
+function exact(n, d = 1n) {
+    if (!d)
+        throw new Error('render-exact:zero-denominator');
+    if (!n)
+        return { n: 0n, d: 1n };
+    if (d === 1n)
+        return { n, d };
+    if (d < 0n) {
+        n = -n;
+        d = -d;
+    }
+    const g = gcd(n, d);
+    return { n: n / g, d: d / g };
+}
+exact(0n); exact(1n);
+
 /**
  * Wall thickness — pure geometry (docs/WALL-THICKNESS.md).
  *
@@ -3599,187 +3837,77 @@ function clipOpenSpansToShared(spans, roomsModel, coordScale, eps) {
     return out;
 }
 
-/** Exact structural arithmetic. Floats are source decoders / render projections only. */
-const EXACT_BITS = 4096;
-class PlanExactError extends Error {
-    constructor(code, detail = '') {
-        super('plan-exact:' + code + (detail ? ':' + detail : ''));
-        this.code = code;
-        this.name = 'PlanExactError';
-    }
-}
-const abs = (n) => n < 0n ? -n : n;
-const bitLength = (n) => abs(n).toString(2).length;
-function gcd(a, b) {
-    a = abs(a);
-    b = abs(b);
-    while (b) {
-        const r = a % b;
-        a = b;
-        b = r;
-    }
-    return a;
-}
-function exact(n, d = 1n) {
-    if (!d)
-        throw new PlanExactError('format', 'zero-denominator');
-    if (d < 0n) {
-        n = -n;
-        d = -d;
-    }
-    const g = gcd(n, d);
-    n /= g;
-    d /= g;
-    if (bitLength(n) > EXACT_BITS || bitLength(d) > EXACT_BITS)
-        throw new PlanExactError('resource');
-    return { n, d };
-}
-const ZERO = exact(0n), ONE = exact(1n);
-function parseDecimal(value) {
-    if (typeof value === 'number' && !Number.isFinite(value))
-        throw new PlanExactError('format', 'finite');
-    const text = String(value);
-    if (text.length > 2600)
-        throw new PlanExactError('resource');
-    const match = /^([+-]?)(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(text);
-    if (!match)
-        throw new PlanExactError('format', 'decimal');
-    const exponent = Number(match[4] || 0) - (match[3]?.length || 0);
-    if (!Number.isSafeInteger(exponent) || Math.abs(exponent) > 2500)
-        throw new PlanExactError('resource');
-    const digits = BigInt(match[2] + (match[3] || '')) * (match[1] === '-' ? -1n : 1n);
-    return exponent >= 0 ? exact(digits * 10n ** BigInt(exponent))
-        : exact(digits, 10n ** BigInt(-exponent));
-}
-const integer = (s) => {
-    if (typeof s !== 'string' || !/^(?:0|-?[1-9]\d*)$/.test(s))
-        throw new PlanExactError('format', 'integer');
-    if (s.length > 1235)
-        throw new PlanExactError('resource');
-    return BigInt(s);
-};
-function decodeRational(input) {
-    if (!Array.isArray(input) || input.length !== 2)
-        throw new PlanExactError('format', 'rational');
-    const n = integer(input[0]), d = integer(input[1]);
-    const q = exact(n, d);
-    if (q.n !== n || q.d !== d)
-        throw new PlanExactError('format', 'noncanonical-rational');
-    return q;
-}
-const encodeRational = (q) => [q.n.toString(), q.d.toString()];
-const add = (a, b) => exact(a.n * b.d + b.n * a.d, a.d * b.d);
-const sub = (a, b) => exact(a.n * b.d - b.n * a.d, a.d * b.d);
-const mul = (a, b) => {
-    const g = gcd(a.n, b.d), h = gcd(b.n, a.d);
-    return exact((a.n / g) * (b.n / h), (a.d / h) * (b.d / g));
-};
-const div = (a, b) => mul(a, exact(b.d, b.n));
-const neg = (a) => ({ n: -a.n, d: a.d });
-const cmp = (a, b) => {
-    const v = a.n * b.d - b.n * a.d;
-    return v < 0n ? -1 : v > 0n ? 1 : 0;
-};
-const eq = (a, b) => a.n === b.n && a.d === b.d;
-const min = (a, b) => cmp(a, b) <= 0 ? a : b;
-const max = (a, b) => cmp(a, b) >= 0 ? a : b;
-function floor(q) {
-    const n = q.n / q.d;
-    return q.n < 0n && q.n % q.d ? n - 1n : n;
-}
-function nearestInteger(q) {
-    const f = floor(q), remainder = sub(q, exact(f)), c = cmp(remainder, exact(1n, 2n));
-    return c < 0 || c === 0 && f % 2n === 0n ? f : f + 1n;
-}
-const roundRatio = (n, d) => {
-    const v = n / d, r = n % d, twice = r * 2n;
-    return twice > d || twice === d && v % 2n !== 0n ? v + 1n : v;
-};
-/** IEEE754 nearest, ties-to-even; never independently converts huge n and d. */
-function toNumber(q) {
-    if (!q.n)
-        return 0;
-    const sign = q.n < 0n ? 1n << 63n : 0n, n = abs(q.n), d = q.d;
-    let e = bitLength(n) - bitLength(d);
-    if (e >= 0 ? n < (d << BigInt(e)) : (n << BigInt(-e)) < d)
-        e--;
-    let bits;
-    if (e < -1022) {
-        const mantissa = roundRatio(n << 1074n, d);
-        bits = sign | mantissa; // A carry naturally becomes the minimum normal.
-    }
-    else if (e > 1023)
-        bits = sign | (0x7ffn << 52n);
-    else {
-        const shift = 52 - e;
-        let mantissa = shift >= 0 ? roundRatio(n << BigInt(shift), d)
-            : roundRatio(n, d << BigInt(-shift));
-        if (mantissa === 1n << 53n) {
-            mantissa >>= 1n;
-            e++;
+/** Synchronous UTF-8 SHA256 shared by frozen IDs and diagnostic graph digests. */
+const sha256$1 = (text) => {
+    const bytes = new TextEncoder().encode(text);
+    const bitLength = bytes.length * 8;
+    const size = Math.ceil((bytes.length + 9) / 64) * 64;
+    const data = new Uint8Array(size);
+    data.set(bytes);
+    data[bytes.length] = 0x80;
+    const view = new DataView(data.buffer);
+    view.setUint32(size - 8, Math.floor(bitLength / 0x100000000), false);
+    view.setUint32(size - 4, bitLength >>> 0, false);
+    const k = new Uint32Array([
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
+        0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786,
+        0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147,
+        0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a,
+        0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+    ]);
+    const h = new Uint32Array([
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    ]);
+    const w = new Uint32Array(64);
+    const rotr = (value, bits) => (value >>> bits) | (value << (32 - bits));
+    for (let offset = 0; offset < size; offset += 64) {
+        for (let i = 0; i < 16; i++)
+            w[i] = view.getUint32(offset + i * 4, false);
+        for (let i = 16; i < 64; i++) {
+            const x = w[i - 15], y = w[i - 2];
+            const s0 = rotr(x, 7) ^ rotr(x, 18) ^ (x >>> 3);
+            const s1 = rotr(y, 17) ^ rotr(y, 19) ^ (y >>> 10);
+            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
         }
-        bits = e > 1023 ? sign | (0x7ffn << 52n)
-            : sign | (BigInt(e + 1023) << 52n) | (mantissa - (1n << 52n));
+        let [a, b, c, d, e, f, g, hh] = h;
+        for (let i = 0; i < 64; i++) {
+            const s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+            const ch = (e & f) ^ (~e & g);
+            const t1 = (hh + s1 + ch + k[i] + w[i]) >>> 0;
+            const s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+            const maj = (a & b) ^ (a & c) ^ (b & c);
+            const t2 = (s0 + maj) >>> 0;
+            hh = g;
+            g = f;
+            f = e;
+            e = (d + t1) >>> 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (t1 + t2) >>> 0;
+        }
+        h[0] = (h[0] + a) >>> 0;
+        h[1] = (h[1] + b) >>> 0;
+        h[2] = (h[2] + c) >>> 0;
+        h[3] = (h[3] + d) >>> 0;
+        h[4] = (h[4] + e) >>> 0;
+        h[5] = (h[5] + f) >>> 0;
+        h[6] = (h[6] + g) >>> 0;
+        h[7] = (h[7] + hh) >>> 0;
     }
-    const view = new DataView(new ArrayBuffer(8));
-    view.setBigUint64(0, bits, false);
-    return view.getFloat64(0, false);
-}
-function readSourcePoint(p) {
-    if (!Array.isArray(p) || p.length !== 2)
-        throw new PlanExactError('format', 'point');
-    return checkedPoint([parseDecimal(p[0]), parseDecimal(p[1])]);
-}
-function checkedPoint(p) {
-    const limit = exact(5000n);
-    if (p.some(q => cmp(q, limit) > 0 || cmp(q, neg(limit)) < 0))
-        throw new PlanExactError('range');
-    return p;
-}
-function encodePoint(p) {
-    checkedPoint(p);
-    const x = mul(p[0], exact(240n)), y = mul(p[1], exact(240n));
-    return x.d === 1n && y.d === 1n ? ['l', x.n.toString(), y.n.toString()]
-        : ['q', p[0].n.toString(), p[0].d.toString(), p[1].n.toString(), p[1].d.toString()];
-}
-function decodePoint(p) {
-    if (!Array.isArray(p))
-        throw new PlanExactError('format', 'point');
-    let result;
-    if (p.length === 3 && p[0] === 'l')
-        result = [exact(integer(p[1]), 240n), exact(integer(p[2]), 240n)];
-    else if (p.length === 5 && p[0] === 'q')
-        result = [decodeRational([p[1], p[2]]), decodeRational([p[3], p[4]])];
-    else
-        throw new PlanExactError('format', 'point');
-    checkedPoint(result);
-    if (JSON.stringify(encodePoint(result)) !== JSON.stringify(p))
-        throw new PlanExactError('format', 'noncanonical-point');
-    return result;
-}
-const pointEq = (a, b) => eq(a[0], b[0]) && eq(a[1], b[1]);
-const pointCmp = (a, b) => cmp(a[0], b[0]) || cmp(a[1], b[1]);
-const pointAdd = (a, b) => [add(a[0], b[0]), add(a[1], b[1])];
-const pointSub = (a, b) => [sub(a[0], b[0]), sub(a[1], b[1])];
-const dot = (a, b) => add(mul(a[0], b[0]), mul(a[1], b[1]));
-const cross = (a, b) => sub(mul(a[0], b[1]), mul(a[1], b[0]));
-const squaredDistance = (a, b) => dot(pointSub(a, b), pointSub(a, b));
-const withinRadius = (a, b, r) => cmp(squaredDistance(a, b), mul(r, r)) <= 0;
-const pointAt = (a, b, t) => [add(a[0], mul(sub(b[0], a[0]), t)), add(a[1], mul(sub(b[1], a[1]), t))];
-const projectParameter = (p, a, b) => div(dot(pointSub(p, a), pointSub(b, a)), squaredDistance(a, b));
-function intersection(a, b, c, d) {
-    const ab = pointSub(b, a), cd = pointSub(d, c), den = cross(ab, cd);
-    if (!den.n)
-        return null;
-    const t = div(cross(pointSub(c, a), cd), den), u = div(cross(pointSub(c, a), ab), den);
-    return { p: pointAt(a, b, t), t, u };
-}
-const microRadius = (cellCm) => {
-    if (!Number.isFinite(cellCm) || cellCm <= 0)
-        throw new PlanExactError('range', 'cell');
-    return min(exact(1n, 1200000n), div(exact(1n, 10n), mul(exact(240n), parseDecimal(cellCm))));
+    const out = new Uint8Array(32);
+    const outView = new DataView(out.buffer);
+    for (let i = 0; i < h.length; i++)
+        outView.setUint32(i * 4, h[i], false);
+    return out;
 };
-const pointToNumbers = (p) => [toNumber(p[0]), toNumber(p[1])];
 
 /** Existing #331 P4 incidence quantum, in normalized plan coordinates.
  * Mirrors junction_limits.py:_INCIDENT_EPS. This is not a drawing/repair gap. */
@@ -3823,7 +3951,6 @@ function storedWallContact(point, a, b, coordinateScale = 1, allowExistingIncide
     return t >= -along && t <= 1 + along;
 }
 
-/** Persisted structural graph; current mutations are explicit ID operations. */
 class PlanGraphError extends Error {
     constructor(code, subject = '') {
         super('plan-graph:' + code + (subject ? ':' + subject : ''));
@@ -3844,6 +3971,15 @@ const pointKey$1 = (p) => JSON.stringify(encodePoint(p));
 const hostParameter = (host) => host.tq ? decodeRational(host.tq)
     : Array.isArray(host.t) ? decodeRational(host.t) : parseDecimal(host.t);
 const canonicalHost = (host, q) => ({ ...host, tq: encodeRational(q), t: toNumber(q) });
+// Contexts accept bare hosts or complete openings. An unbound positioned
+// opening is not a host reference to an edge named by the opening's own ID.
+const contextHost = (item) => {
+    if (item && 'host' in item)
+        return item.host;
+    if (item && ('t' in item || 'tq' in item || item.kind === 'wall' || item.kind === 'partition'))
+        return item;
+    return item && 'x' in item && 'y' in item && 'length' in item ? undefined : item;
+};
 function graphIndex(graph) {
     const nodes = new Map(graph.nodes.map(n => [n.id, n]));
     const points = new Map(graph.nodes.map(n => [n.id, decodePoint(n.p)]));
@@ -3971,7 +4107,7 @@ function validateGraph(input, context = {}) {
         }
         dependencyOrder(graph);
         for (const item of context.hosts || []) {
-            const host = item && 'host' in item ? item.host : item;
+            const host = contextHost(item);
             if (!host)
                 continue;
             const e = index.edges.get(edgeKey(host));
@@ -4054,7 +4190,7 @@ function projectGraphSpace(base, graph) {
 function verifyGraphProjection(space, graph) {
     const { space: projected } = projectGraphSpace(space, graph);
     for (const key of ['rooms', 'wall_segments', 'partitions', 'walls', 'openings']) {
-        if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || []))
+        if (!jsonValueEqual(space[key] || [], projected[key] || []))
             fail('projection', key);
     }
 }
@@ -4136,7 +4272,7 @@ function preparedMove(before, op, context) {
     if (before.dependencies.some(d => d.node === op.node) && !op.detachDependency)
         fail('dependent-move', op.node);
     for (const item of context.hosts || []) {
-        const host = item && 'host' in item ? item.host : item;
+        const host = contextHost(item);
         if (!host)
             continue;
         if (!index.edges.has(edgeKey(host)) || !between(hostParameter(host)))
@@ -4213,9 +4349,10 @@ function applyGraphOperation(before, operation, context = {}) {
     const originalIndex = assertGraph(before, { ...context, projection: undefined });
     const originalRooms = new Map(before.rooms.map(r => [r.room, r]));
     let graph = clone$1(before);
-    const mapping = emptyMapping(), hostRecords = (context.hosts || []).map((item, i) => ({
-        id: String(item.id ?? i), host: clone$1(item && 'host' in item ? item.host : item),
-    })).filter(item => item.host);
+    const mapping = emptyMapping(), hostRecords = (context.hosts || []).flatMap((item, i) => {
+        const host = contextHost(item);
+        return host ? [{ id: String(item.id ?? i), host: clone$1(host) }] : [];
+    });
     const findEdge = (ref) => graph.edges.find(e => edgeKey(e) === edgeKey(ref)) || fail('edge-missing', edgeKey(ref));
     const findNode = (id) => graph.nodes.find(n => n.id === id) || fail('node-missing', id);
     const addNode = (node) => {
@@ -4392,6 +4529,9 @@ function applyGraphOperation(before, operation, context = {}) {
                     if (edgeKey(host.host) === edgeKey(e) && !op.removeHosts?.includes(host.id))
                         fail('edge-hosted');
                 graph.edges = graph.edges.filter(x => x !== e);
+                for (const key of Object.keys(mapping.edges))
+                    mapping.edges[key] = mapping.edges[key].filter(range => edgeKey(range.ref) !== edgeKey(e));
+                mapping.edges[edgeKey(e)] ||= [];
                 for (const id of op.removeHosts || [])
                     mapping.hosts[id] = null;
                 return;
@@ -4553,77 +4693,6 @@ function applyGraphOperation(before, operation, context = {}) {
     return { graph, changed: JSON.stringify(graph) !== JSON.stringify(before), mapping,
         touched: { nodes: changedNode, edges: changedEdge, rooms: changedRoom, hosts: Object.keys(mapping.hosts) }, diagnostics: [] };
 }
-// Frozen legacy ID codec; kept local to avoid a current-commit -> core import cycle.
-const sha256$1 = (text) => {
-    const bytes = new TextEncoder().encode(text);
-    const bitLength = bytes.length * 8;
-    const size = Math.ceil((bytes.length + 9) / 64) * 64;
-    const data = new Uint8Array(size);
-    data.set(bytes);
-    data[bytes.length] = 0x80;
-    const view = new DataView(data.buffer);
-    view.setUint32(size - 8, Math.floor(bitLength / 0x100000000), false);
-    view.setUint32(size - 4, bitLength >>> 0, false);
-    const k = new Uint32Array([
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
-        0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786,
-        0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147,
-        0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
-        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a,
-        0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
-    ]);
-    const h = new Uint32Array([
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
-    ]);
-    const w = new Uint32Array(64);
-    const rotr = (value, bits) => (value >>> bits) | (value << (32 - bits));
-    for (let offset = 0; offset < size; offset += 64) {
-        for (let i = 0; i < 16; i++)
-            w[i] = view.getUint32(offset + i * 4, false);
-        for (let i = 16; i < 64; i++) {
-            const x = w[i - 15], y = w[i - 2];
-            const s0 = rotr(x, 7) ^ rotr(x, 18) ^ (x >>> 3);
-            const s1 = rotr(y, 17) ^ rotr(y, 19) ^ (y >>> 10);
-            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
-        }
-        let [a, b, c, d, e, f, g, hh] = h;
-        for (let i = 0; i < 64; i++) {
-            const s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-            const ch = (e & f) ^ (~e & g);
-            const t1 = (hh + s1 + ch + k[i] + w[i]) >>> 0;
-            const s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-            const maj = (a & b) ^ (a & c) ^ (b & c);
-            const t2 = (s0 + maj) >>> 0;
-            hh = g;
-            g = f;
-            f = e;
-            e = (d + t1) >>> 0;
-            d = c;
-            c = b;
-            b = a;
-            a = (t1 + t2) >>> 0;
-        }
-        h[0] = (h[0] + a) >>> 0;
-        h[1] = (h[1] + b) >>> 0;
-        h[2] = (h[2] + c) >>> 0;
-        h[3] = (h[3] + d) >>> 0;
-        h[4] = (h[4] + e) >>> 0;
-        h[5] = (h[5] + f) >>> 0;
-        h[6] = (h[6] + g) >>> 0;
-        h[7] = (h[7] + hh) >>> 0;
-    }
-    const out = new Uint8Array(32);
-    const outView = new DataView(out.buffer);
-    for (let i = 0; i < h.length; i++)
-        outView.setUint32(i * 4, h[i], false);
-    return out;
-};
 const base32$1 = (bytes) => {
     const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
     let bits = 0, value = 0, result = '';
@@ -4815,7 +4884,7 @@ function migrateGraphSpace(space, options = {}) {
     const canonicalSegments = new Set((space.wall_segments || []).map((e) => e.id));
     if (source.sources.length > limits.edges || (space.rooms || []).length > limits.rooms)
         fail('resource');
-    const run = (optional) => {
+    const run = (optional, terminal = false) => {
         const graph = { version: 1, nodes: [], edges: [], rooms: [], dependencies: [] };
         const nodes = new Map(), origins = new Map(), pointNode = new Map();
         const sourcePointNode = new Map(), endpointNode = new Map(), buckets = new Map();
@@ -4878,7 +4947,7 @@ function migrateGraphSpace(space, options = {}) {
                             candidates.push({ id, p });
                     }
             if (optional) {
-                const grid = [exact(nearestInteger(mul(owner.p[0], exact(240n))), 240n), exact(nearestInteger(mul(owner.p[1], exact(240n))), 240n)];
+                const grid = [exact$1(nearestInteger(mul(owner.p[0], exact$1(240n))), 240n), exact$1(nearestInteger(mul(owner.p[1], exact$1(240n))), 240n)];
                 if (withinRadius(owner.p, grid, radius)) {
                     const id = pointNode.get(pointKey$1(grid));
                     if (!id || compatible(owner, id, grid))
@@ -4995,7 +5064,9 @@ function migrateGraphSpace(space, options = {}) {
                 const t = projectParameter(p0, a, b);
                 if (!between(t))
                     continue;
-                let p = pointAt(a, b, t), group = origins.get(node);
+                let p = terminal ? p0 : pointAt(a, b, t), group = origins.get(node);
+                if (terminal && !pointEq(p, pointAt(a, b, t)))
+                    bends++;
                 if (!group.every(o => withinRadius(o.p, p, radius))) {
                     p = group.map(o => o.p).find(candidate => group.every(o => withinRadius(o.p, candidate, radius))) || p0;
                     if (!group.every(o => withinRadius(o.p, p, radius)))
@@ -5043,7 +5114,8 @@ function migrateGraphSpace(space, options = {}) {
                     if (node !== from && node !== to)
                         installDependency({ node, kind: 'on-edge', refs: [{ from, to }], parameters: [encodeRational(t)] });
                 }
-                break;
+                if (!terminal)
+                    break;
             }
         }
         // Exact crossings; broad phase is a bounded tree, never an all-pairs scan.
@@ -5096,6 +5168,94 @@ function migrateGraphSpace(space, options = {}) {
                 }
             }
         }
+        if (terminal) {
+            // A required contact can create several cuts at almost the same source
+            // parameter (legacy decimal carriers vs room vertices). Coalesce only
+            // proven same-carrier contacts, choosing an ORIGINAL owner anchor that
+            // satisfies every original bound. Never collapse opposite source ends.
+            const parents = new Map([...nodes.keys()].map(id => [id, id]));
+            const root = (id) => { while (parents.get(id) !== id) {
+                parents.set(id, parents.get(parents.get(id)));
+                id = parents.get(id);
+            } return id; };
+            const groups = new Map([...nodes].map(([id, node]) => [id, { owners: (origins.get(id) || []).slice(), bounds: (origins.get(id) || []).map(o => o.p), point: decodePoint(node.p) }]));
+            for (const s of source.sources)
+                for (const cut of cutMap.get(edgeKey(s)))
+                    groups.get(cut.node).bounds.push(pointAt(s.a, s.b, cut.t));
+            const pairs = new Map();
+            for (const s of source.sources) {
+                const cuts = cutMap.get(edgeKey(s)).slice().sort((a, b) => cmp(a.t, b.t) || order(a.node, b.node));
+                for (let i = 0; i + 1 < cuts.length; i++) {
+                    const a = cuts[i].node, b = cuts[i + 1].node;
+                    if (a === b)
+                        continue;
+                    const distance = squaredDistance(groups.get(a).point, groups.get(b).point);
+                    if (cmp(distance, mul(radius, radius)) > 0)
+                        continue;
+                    const ids = [a, b].sort(order);
+                    pairs.set(ids.join('|'), { a: ids[0], b: ids[1], distance });
+                }
+            }
+            for (const pair of [...pairs.values()].sort((a, b) => cmp(a.distance, b.distance) || order(a.a, b.a) || order(a.b, b.b))) {
+                const a = root(pair.a), b = root(pair.b);
+                if (a === b)
+                    continue;
+                const ga = groups.get(a), gb = groups.get(b), owners = [...ga.owners, ...gb.owners], bounds = [...ga.bounds, ...gb.bounds];
+                const endpoints = new Set(owners.flatMap(o => o.endpoints));
+                if ([...endpoints].some(e => endpoints.has(e.slice(0, -1) + (e.endsWith('0') ? '1' : '0'))))
+                    continue;
+                const candidates = (owners.length ? owners.map(o => o.p) : bounds).slice().sort(pointCmp);
+                const anchor = candidates.find(p => bounds.every(q => withinRadius(p, q, radius)));
+                if (!anchor)
+                    continue;
+                const keep = order(a, b) < 0 ? a : b, drop = keep === a ? b : a;
+                parents.set(drop, keep);
+                groups.set(keep, { owners, bounds, point: anchor });
+                groups.delete(drop);
+            }
+            for (const map of [sourcePointNode, endpointNode])
+                for (const [key, id] of map)
+                    map.set(key, root(id));
+            for (const cuts of cutMap.values())
+                for (const cut of cuts)
+                    cut.node = root(cut.node);
+            graph.nodes = [];
+            nodes.clear();
+            origins.clear();
+            pointNode.clear();
+            buckets.clear();
+            for (const [id, group] of groups)
+                place(id, group.point, group.owners);
+            // Legacy has no persisted graph constraints to lose. Pinned contacts
+            // are free exact anchors rather than cyclic/now-moved affine programs.
+            graph.dependencies = [];
+            // Pin mandatory contacts, then node the ACTUAL bent spans. Splitting a
+            // span does not move it, so one exact pass suffices and cannot drift R.
+            const pieces = source.sources.flatMap(s => {
+                const cuts = cutMap.get(edgeKey(s)).slice().sort((a, b) => cmp(a.t, b.t) || order(a.node, b.node));
+                return cuts.slice(0, -1).flatMap((lo, i) => {
+                    const hi = cuts[i + 1], a = decodePoint(nodes.get(lo.node).p), b = decodePoint(nodes.get(hi.node).p);
+                    return cmp(lo.t, hi.t) < 0 && !pointEq(a, b) ? [{ s, lo: lo.t, hi: hi.t, a, b }] : [];
+                });
+            }).map((piece, index) => ({ ...piece, index }));
+            const actualTree = makeTree(pieces, p => boxPoints(p.a, p.b));
+            for (const left of pieces)
+                for (const right of queryTree(actualTree, boxPoints(left.a, left.b), [])) {
+                    if (right.index <= left.index || edgeKey(left.s) === edgeKey(right.s))
+                        continue;
+                    const hit = intersection(left.a, left.b, right.a, right.b);
+                    if (!hit || cmp(hit.t, ZERO) <= 0 || cmp(hit.t, ONE) >= 0 || cmp(hit.u, ZERO) <= 0 || cmp(hit.u, ONE) >= 0)
+                        continue;
+                    const t = add(left.lo, mul(sub(left.hi, left.lo), hit.t)), u = add(right.lo, mul(sub(right.hi, right.lo), hit.u));
+                    let id = pointNode.get(pointKey$1(hit.p));
+                    if (!id) {
+                        id = sourceNodeId(JSON.stringify(['terminal-intersection', edgeKey(left.s), edgeKey(right.s), encodeRational(t), encodeRational(u)]));
+                        place(id, hit.p, []);
+                    }
+                    addCut(left.s, t, id);
+                    addCut(right.s, u, id);
+                }
+        }
         const byGeometry = new Map(), usedIds = new Set();
         for (const s of source.sources) {
             const cuts = cutMap.get(edgeKey(s)).sort((a, b) => cmp(a.t, b.t) || order(a.node, b.node));
@@ -5105,7 +5265,7 @@ function migrateGraphSpace(space, options = {}) {
                 const a = unique[i], b = unique[i + 1];
                 if (eq(a.t, b.t) || a.node === b.node || pointEq(decodePoint(nodes.get(a.node).p), decodePoint(nodes.get(b.node).p)))
                     continue;
-                const middle = div(add(a.t, b.t), exact(2n));
+                const middle = div(add(a.t, b.t), exact$1(2n));
                 const covered = (runs) => runs.some(([lo, hi]) => cmp(middle, lo) >= 0 && cmp(middle, hi) <= 0);
                 let cm = s.cm;
                 if (s.kind === 'wall' && !(sourceVersion >= 9 && canonicalSegments.has(s.id))) {
@@ -5125,6 +5285,8 @@ function migrateGraphSpace(space, options = {}) {
                 const gkey = s.kind + ':' + pair.join('|'), props = metadataProps(s.raw, ['id', 'a', 'b', 'cm']);
                 const stable = (v) => JSON.stringify(v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort(order).map(k => [k, JSON.parse(stable(v[k]))])) : v);
                 const existing = (byGeometry.get(gkey) || []).find(e => {
+                    if (s.kind === 'partition' && e.cm !== cm)
+                        return false;
                     const a = e.props || {}, b = props || {};
                     return Object.keys(a).every(k => !(k in b) || stable(a[k]) === stable(b[k]));
                 });
@@ -5160,7 +5322,10 @@ function migrateGraphSpace(space, options = {}) {
             const edges = [];
             for (const b of boundaries) {
                 const forward = cmp(b.start, b.end) < 0, lo = min(b.start, b.end), hi = max(b.start, b.end);
-                let ranges = (mapping.edges[b.source] || []).filter(r => cmp(decodeRational(r.sourceInterval[0]), lo) >= 0 && cmp(decodeRational(r.sourceInterval[1]), hi) <= 0);
+                // Every room boundary was inserted as a cut. Equal-coordinate cuts
+                // can collapse to the same node while retaining distinct source t's;
+                // the surviving edge then overlaps, rather than fits inside, [lo,hi].
+                let ranges = (mapping.edges[b.source] || []).filter(r => cmp(decodeRational(r.sourceInterval[1]), lo) > 0 && cmp(decodeRational(r.sourceInterval[0]), hi) < 0);
                 if (!forward)
                     ranges = ranges.slice().reverse();
                 edges.push(...ranges.map(r => ({ ...r.ref, reverse: forward ? r.reverse : !r.reverse })));
@@ -5205,7 +5370,7 @@ function migrateGraphSpace(space, options = {}) {
             return occupied.every(old => {
                 if (old.id === opening.id || old.source !== edgeKey(s))
                     return true;
-                const half = sub(div(add(old.length, parseDecimal(Number(opening.length) || 0)), exact(2n)), parseDecimal('1e-9'));
+                const half = sub(div(add(old.length, parseDecimal(Number(opening.length) || 0)), exact$1(2n)), parseDecimal('1e-9'));
                 return cmp(half, ZERO) <= 0 || cmp(squaredDistance(p, old.p), mul(half, half)) >= 0;
             });
         };
@@ -5266,12 +5431,21 @@ function migrateGraphSpace(space, options = {}) {
             touched: { nodes: result.nodes.map(n => n.id), edges: result.edges.map(targetRef), rooms: result.rooms.map(r => r.room), hosts: Object.keys(mapping.hosts) },
             diagnostics: [], migrationReport: { moved, joined, maxDisplacementCm: maxDistance * 240 * (options.cellCm ?? Number(space.cell_cm || 5)), bends } };
     };
+    const retry = (error) => error instanceof PlanGraphError && ['zero-length', 'self-intersection', 'room-area', 'third-owner', 'open-cycle', 'dependency-value', 'dependency-cycle', 'thickness-conflict', 'unsplit-crossing'].includes(error.code);
     try {
         return run(true);
     }
     catch (error) {
-        if (error instanceof PlanGraphError && ['zero-length', 'self-intersection', 'room-area', 'third-owner', 'open-cycle', 'dependency-value', 'dependency-cycle', 'thickness-conflict'].includes(error.code))
-            return run(false);
+        if (retry(error)) {
+            try {
+                return run(false);
+            }
+            catch (conservativeError) {
+                if (retry(conservativeError))
+                    return run(false, true);
+                throw conservativeError;
+            }
+        }
         throw error;
     }
 }
@@ -5474,6 +5648,14 @@ const migrateRoomDraftsToPartitions = (space) => {
 const migrateLegacyRoomDraftsToPartitionsInPlace = (space) => migrateRoomDraftsToPartitions(space);
 /** Pure, atomic structural candidate. Read paths must never call this helper. */
 function commitWallSegmentModel(input, options = {}) {
+    try {
+        for (const space of input?.spaces || [])
+            assertFiniteColumnInputs(space);
+    }
+    catch {
+        // Hover/history callers distinguish a rejected model from a programming fault.
+        throw new WallSegmentModelError('invalid-room', 'invalid-column-geometry');
+    }
     const before = JSON.stringify(input);
     const config = clone(input);
     const graphMappings = new Map();
@@ -5525,7 +5707,7 @@ function commitWallSegmentModel(input, options = {}) {
                 const projected = projectGraphSpace(space, graph).space;
                 if (!operation)
                     for (const key of ['rooms', 'wall_segments', 'walls', 'partitions']) {
-                        if (JSON.stringify(space[key] || []) !== JSON.stringify(projected[key] || []))
+                        if (!jsonValueEqual(space[key] || [], projected[key] || []))
                             throw new Error('projection-only-write');
                     }
                 config.spaces[i] = projected;

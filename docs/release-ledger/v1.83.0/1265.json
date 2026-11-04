@@ -1,5 +1,5 @@
 {
   "schema": 1, "issue": 1265, "baseStable": "v1.83.0", "category": "line-fix",
-  "rationale": "Preserve accepted Draw-source lineage after model11 graph noding when discovering new room faces.",
-  "summary": {"ru":"Один нарисованный отрезок может корректно предложить несколько замкнутых комнат.","en":"A drawn wall segment can correctly offer every newly closed room after graph splitting."}
+  "rationale": "Restore model11 room-face discovery and acceptance: retain exact connected source paths and existing T-node dependencies, intersect finite sides, and consume only explicitly selected identical unhosted duplicate atoms. Real HA E2E for multi-room Save/ACK/reload, host promotion and complex split is required before the next beta and tracked in houseplan-e2e#26; CPU validation is not that E2E.",
+  "summary": {"ru":"Создание комнат сохраняет точные исходные стены, узлы и проёмы и предлагает все грани после разбиения отрезка.","en":"Room creation preserves exact source walls, nodes and openings and offers every face closed by a split segment."}
 }
