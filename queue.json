@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2946,
+  "revision": 2947,
   "nextTicket": 178,
   "nextFence": 176,
   "tasks": {
@@ -3058,169 +3058,25 @@
     },
     "1284": {
       "issue": 1284,
+      "branch": "codex/1284-actual-optimize-report",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1284-actual-optimize-report",
-      "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 175,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793816333799,
-      "reviewEntry": 1,
-      "patchId": "c0e98b921b246386a15955bb204111ef156f673f",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/release-ledger/v1.83.0/1284.json",
-        "src/graph-optimize-report.ts",
-        "src/i18n/de.json",
-        "src/i18n/en.json",
-        "src/i18n/fr.json",
-        "src/i18n/ru.json",
-        "src/optimize-plans-dialog.ts",
-        "src/plan-optimizer.ts",
-        "test/graph-optimize-report.test.mjs"
-      ],
-      "s6": {
-        "id": "20261104T182213103-daa88f0a",
-        "name": "Тесты для задачи #1284 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T182213103-daa88f0a/report.json",
-        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "status": "passed",
-        "finishedAt": "2026-11-04T18:22:48.784Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "659440571bc388d108ec7f0200ce9c407a9ee132",
+      "mergedSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+      "mergedAt": 1793816942886,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1284:1:c0e98b921b246386a15955bb204111ef156f673f:659440571bc388d108ec7f0200ce9c407a9ee132",
-      "reviewMaterial": {
-        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "expectedBase": "659440571bc388d108ec7f0200ce9c407a9ee132",
-        "patchId": "c0e98b921b246386a15955bb204111ef156f673f"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1284:1:c0e98b921b246386a15955bb204111ef156f673f:659440571bc388d108ec7f0200ce9c407a9ee132",
-        "eventId": "github:41886583742:1:tick:0:review-retry",
-        "at": 1793816590863,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1284,
-        "requestId": "review:1284:1:c0e98b921b246386a15955bb204111ef156f673f:659440571bc388d108ec7f0200ce9c407a9ee132",
-        "kind": "code",
-        "base": "659440571bc388d108ec7f0200ce9c407a9ee132",
-        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "patchId": "c0e98b921b246386a15955bb204111ef156f673f",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1284,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1284",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Модель 11: измерение эффектов вынесено в `graph-optimize-report.ts`. Отчёт сравнивает исходный и окончательно принятый граф по устойчивым ID узлов, реальные концы проёмов, колонки, декор (четыре угла) и сохранённые layout-позиции. Порог невидимой координатной канонизации — существующие `1e-4` шага. Дедупликация по узлу исключает повторный подсчёт общей стены. `collapse-node` берётся из фактических счётчиков графового движка; `tq` без геометрического сдвига получает отдельный счётчик/строку, включая RU/EN/DE/FR и итоговый toast. Числовой движок и решения Optimize о допустимости не меняются. Near-axis отчёт сверяет предложенные рёбра с реально записанной точной осью; отвергнутые q-цели не учитываются. Счётчики legacy-входов сохранены, текущая канонизация проекций/скаляров объясняется даже без перемещённого узла.\n\nПроверено до очереди: адресные 7/7; существующие `plan-optimizer`, `plan-graph-optimize`, `near-axis`, `optimize-plans-dialog`, `optimize-cleanup-892` — 102/102 без изменения legacy-ожиданий. RED на исходном dev `659440571`: три заявленные регрессии (десятичный tq, коллинеарный шов, ULP + точный диагональный T) воспроизведены на production-модулях, остальные два контроля прошли; после исправления все проходят. Input не мутируется, `validateGraph`, `verifyGraphProjection` и повторный Optimize/no-op проверяются в адресном тесте. Полный выпуск, golden и реальные HA E2E здесь не запускались; до следующей беты нужно актуализировать существующий Optimize journey: строки отчёта → Apply → reload → Undo. Метаданные E2E сопровождает координатор пакета задач.\n\nРиски для внимания: точное сопоставление и диагностика графа/проекций, сохранение legacy-семантики, консервативный максимум для позиций отсутствующего этажа. Новая геометрия или иной выбор целей оптимизации не вводятся."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение решает задачу по существу. Отчёт Optimize для модели 11 больше не собирается из счётчиков числового черновика. Перемещения, максимум смещения в сантиметрах, повороты и шумовая канонизация теперь считаются по разнице между исходным и окончательно записанным графом: узлы сопоставляются по устойчивым ID, отдельно учитываются проёмы, колонны, декор и позиции в layout. Выпрямление засчитывается, только если предложенная ось действительно оказалась точной в записанном графе. Слияния стен берутся из фактических `collapse-node`. Переписанный `tq` получил собственную строку диалога и вошёл в итоговый toast. Все три сценария из issue закрыты адресными тестами: угол на 1 ULP с диагональным T, коллинеарный шов и десятичный `tq`. Резервная ветка гарантирует, что при `changed=true` на модели 11 диалог покажет хотя бы одну поясняющую строку. Legacy-путь не изменился, кроме нового нулевого поля. Блокеров нет. Остались неточности в подписях: схлопывание стен нулевой толщины попадает в «реальные стены», а перепривязка хоста после схлопывания или reconcile считается ещё и «канонизацией параметров проёмов». Вместе с несколькими упрощениями они вынесены в improvements. До беты нужно обновить E2E-сценарий Optimize, исполнитель об этом знает.",
-          "understanding": "Проблема. Для модели 11 `optimizePlans` вызывает `optimizePlanDraft(..., graphDraft=true)`. Числовой движок (`alignAllToGrid`, `repairNearAxisRoomWalls`) предлагает цели, а записывается граф после `optimizeGraphTargets`, который часть целей отбрасывает. Например, нерешёточные цели для зависимых q-узлов в строке 82 `graph-optimize.ts`. До исправления отчёт брался из числового движка и обнулялся только при `changed=false`. Поэтому реальное изменение графа сопровождалось отчётом об отвергнутых сдвигах, а изменения, которых числовой движок не видит (`collapse-node` стен, `rehost-opening` с новым `tq`), оставались без строки в диалоге.\n\nПосле исправления:\n1) `graph-optimize-report.ts/measureGraphOptimizeEffects(baseline, result.config.spaces, references.layout, result.layout)`. Здесь `baseline` — проекция входного графа до черновика, а сравнение идёт с финальными пространствами после второго, структурного `optimizeGraphTargets`. Узлы сопоставляются по `node.id`, удалённые (схлопнутые) пропускаются. Для проёмов берутся оба конца с минимумом по двум вариантам сопоставления, для декора — четыре угла, для колонн — центр, для layout — x/y с масштабом своего пространства (для отсутствующего этажа — максимальный `cell_cm`). Порог видимости — `LATTICE_NOISE_STEPS/240` (1e-4 шага). Всё, что ниже порога, идёт в `latticeCoordinatesCanonicalized`.\n2) `measureGraphStraightening(aligned, straightened, draftWritten)` вызывается внутри черновика. Ребро засчитывается, если до выпрямления оно было почти осевым, цель стала точно осевой, записанный граф держит ось точно (`cmp`) и записанные концы совпадают с целью в пределах шума. Именно так отсекается отвергнутый сдвиг T из сценария с ULP.\n3) В `optimizePlans` для `modelFrom === 11` поверх отчёта черновика записываются результаты измерения: `wallsMerged = stats.wallsMerged`, `spansMerged = 0`, `canonicalized` — по числу пространств с изменившейся compat-проекцией. Если `changed=true`, а все объясняющие счётчики нулевые, ставится `canonicalized = 1`.\n4) Диалог и toast показывают и учитывают `openingParametersCanonicalized`, добавлены переводы на RU/EN/DE/FR.\n\nРазобранные пути: `optimizePlans` → `optimizePlanDraft` (выравнивание → выпрямление → перенацеливание → `alignAllToGrid` → `optimizeGraphTargets` в режиме movesOnly) → структурный `optimizeGraphTargets` (set-thickness, слияние перегородок, convert-edge, collapse-node стен, rehost-opening) → измерение → обнуление при `!changed` → резервная ветка. Также `preview` в `optimize-plans-dialog.ts` (cm/where из `maxShiftCm`/`maxSpace`), `render` (условия строк, `modelMaintenance`, `gridWarning`) и `commit` (toast); `graphIndex`/`validateGraph` (`node.p` у зависимого узла совпадает с вычисленной точкой — это проверяет `dependency-value`); `repairNearAxisRoomWalls` (единица подсчёта — сегмент полигона, то есть ребро графа, а также независимые перегородки).",
-          "analysis": [
-            {
-              "topic": "Источник истины для отчёта модели 11",
-              "assessment": "Подход выбран верно. Числовой движок по-прежнему только предлагает цели, а эффекты измеряются по паре «исходная проекция графа → итоговые пространства». Так отчёт по построению не может обещать отвергнутый графом сдвиг. Измерение происходит после второго, структурного прохода, поэтому учитываются и его повторные перемещения, если они есть. Сопоставление по ID, а не по индексам или близости, устойчиво к схлопыванию узлов и вставке новых. Этот принцип стоит сохранить.",
-              "evidence": "`src/plan-optimizer.ts:895-897` — `measureGraphOptimizeEffects(baseline, result.config.spaces, references.layout, result.layout)`; `baseline = clone(config.spaces)` после `projectGraphSpace` (стр. 849-864); `src/graph-optimize-report.ts:107-116` — сопоставление `before.plan_graph.nodes` с `index.nodes.get(node.id)`."
-            },
-            {
-              "topic": "Верхняя граница сдвига (обещание диалога)",
-              "assessment": "Для модели 11 обещание стало точнее: максимум считается по фактическим узлам в масштабе своего пространства, а диалог по-прежнему округляет вверх (`Math.ceil`). Перечень измеряемых носителей совпадает с тем, что двигает legacy `alignAllToGrid`: полигоны и перегородки (теперь это узлы графа), колонны, декор кроме furniture/image, проёмы, layout. Удаление узла через `collapse-node` допустимо только для коллинеарного узла (стр. 278 `graph-optimize.ts`), поэтому пропуск удалённых узлов не скрывает видимых изменений. Новые узлы появляются только через `insert-on-edge` на существующем ребре. Порог 1e-4 шага в 100 раз выше legacy `K = 1e-6·шага`. Смещения в этом диапазоне попадают в строку канонизации со своим максимумом в см и не скрываются, а при `cell_cm = 5` это около 5 мкм.",
-              "evidence": "`graph-optimize-report.ts:72-80` (`note`), `:118-161`; `optimize-plans-dialog.ts:251`; `coordinate-canonicalization.ts:18`."
-            },
-            {
-              "topic": "Выпрямление почти осевых стен",
-              "assessment": "Проверка «цель осевая → записанный граф держит ось точно → записанные концы совпадают с целью» корректно отсекает отвергнутые q-цели из сценария issue и сохраняет принятые (тест с fixture 279: 1 стена, 1 см). Единица подсчёта — ребро графа, что совпадает с legacy: там это сегмент полигона, общий для двух комнат и дедуплицированный по ключу. У механизма есть граница. Если после выпрямления второй `alignAllToGrid` дополнительно сдвинет конец и запись разойдётся с целью из `straightenedSpaces`, выпрямление не будет засчитано, хотя ось записана. Это возможно лишь при нерешёточной цели выпрямления. Тогда счётчик выпрямления занижается, но перемещение всё равно попадёт в `moved`/`maxShiftCm`, так что обещание не нарушается. Кроме того, `shift` считается от выровненной, а не от исходной позиции. Для `maxStraightenShiftCm` это та же семантика, что у legacy.",
-              "evidence": "`graph-optimize-report.ts:33-57`; `plan-optimizer.ts:568-570` (измерение на графе черновика), `:900-905`; `near-axis.ts:183-220` (дедупликация по `segmentKey`)."
-            },
-            {
-              "topic": "Структурные операции и `tq`",
-              "assessment": "`wallsMerged` теперь берётся из `stats.wallsMerged`, то есть из фактических `collapse-node` стен структурного прохода, и закрывает пустой диалог для шва. Черновик работает в режиме movesOnly, поэтому двойного счёта схлопываний нет. `openingParametersCanonicalized` засчитывается, если смещение ≤ шума, поворота нет, а `host.tq` изменился. Это закрывает случай с десятичным `tq`. Условие шире формулировки «канонизация»: `tq` меняется и тогда, когда хост перепривязан из-за `collapse-node` или `convert-edge`. Такие проёмы попадут в строку «точные параметры проёмов», а при reconcile — ещё и в `openingsRehosted`, и в toast-сумму `m` дважды. Это неточность подписи, а не ложное обещание сдвига (см. improvements).",
-              "evidence": "`graph-optimize.ts:59-71` (перепривязка host при apply), `:229-267`, `:269-282`, `:286-304`; `graph-optimize-report.ts:134-137`; `plan-optimizer.ts:898`."
-            },
-            {
-              "topic": "Гарантия непустого диалога при changed=true",
-              "assessment": "Резервная ветка `report.canonicalized = 1` перебирает все счётчики, у которых в `render` есть своя строка, а `moved` покрывает и перемещённые позиции layout. Если ничего не нашлось, гарантированно появляется строка `gs.optimize_changes` («обновлено пространств: 1»). Это выполняет критерий приёмки, хотя конкретную причину такая строка не называет. Тот же `canonicalized` для модели 11 теперь считает пространства с изменившейся compat-проекцией (walls/wall_segments/rooms/partitions/open_spans), в том числе при видимых сдвигах. Подпись «обновлено пространств» под это подходит.",
-              "evidence": "`plan-optimizer.ts:906-913`, `:931-941`; `optimize-plans-dialog.ts:467-471`, `:596-600`; тест `stale compatibility-only projection repair...`."
-            },
-            {
-              "topic": "Сохранение legacy-семантики",
-              "assessment": "Для `modelFrom < 11` поведение прежнее: отчёт черновика, `wallsMerged` по compat-записям, `openingParametersCanonicalized: 0`. `graphStraightening` вычисляется и для legacy, но не используется и вырезается из публичного результата. Расхождение отчёта и записи для legacy-входа (тоже `graphDraft=true`) сохраняется — по ТЗ это вне объёма.",
-              "evidence": "`plan-optimizer.ts:813`, `:891-894`, `:942-943`; критерий приёмки №3 в задаче."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Семь адресных тестов работают на production-модулях. Они проверяют три регрессии issue, сдвиг одного узла через собственный `cell_cm`, сохранение принятого выпрямления, четыре угла декора, позицию на отсутствующем этаже и случай устаревшей проекции. Есть рендер диалога через реальный `OptimizePlansDialog`, проверка неизменности входа, `validateGraph`/`verifyGraphProjection` и повторного Optimize как no-op (`settled`). Не проверяется отдельно, что `partitionsMerged` из `collapse-node` перегородок соответствует записи, но этот счётчик уже существовал и не менялся.",
-              "evidence": "`test/graph-optimize-report.test.mjs` целиком; receipt `20261104T182213103-daa88f0a` (passed) на `ad60cc9`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Схлопывание стены нулевой толщины на модели 11 попадает в `wallsMerged` и показывается как «объединено отрезков реальных стен», а `spansMerged` принудительно равен 0. Если в `graph-optimize.ts:279-280` считать `cm === 0` отдельно (например, `stats.zeroWallsMerged`) и записывать это в `spansMerged`, подписи диалога останутся верными без нового ключа i18n. Цена — одно поле в `GraphOptimizeResult` и в агрегации `stats`.",
-            "`openingParametersCanonicalized` стоит засчитывать только при неизменном `host.kind/id` (`same(opening.host?.id, written.host?.id) && opening.host?.kind === written.host?.kind`). Тогда перепривязка после `collapse-node` или `convert-edge` не будет называться «канонизацией параметров», а при reconcile проём не попадёт в toast-сумму `m` дважды. Перепривязку из-за схлопывания уже объясняет `wallsMerged`, а reconcile — `openingsRehosted`.",
-            "Резервное `report.canonicalized = 1` гарантирует строку, но не называет причину. Перечень из 25 условий в `plan-optimizer.ts:933-941` дублирует логику диалога и легко разойдётся с ней при добавлении нового счётчика. Надёжнее выделить общую функцию «есть ли у отчёта видимая строка» и использовать её и в оптимизаторе, и в `render`: так новое поле нельзя будет забыть в одном из мест.",
-            "Подсказка для сопровождения: `measureGraphStraightening` опирается на то, что `numericalNodes` сопоставляет `room.poly[i]` с i-м ребром цикла без проверки длины. Сейчас это безопасно, потому что `optimizeGraphTargets` раньше бросает `optimize-cycle` при несовпадении. Короткая проверка `poly.length === cycle.edges.length` с пропуском сделает функцию самодостаточной на случай повторного использования."
-          ],
-          "boundaries": "Сборку, тесты и E2E я не запускал. Использован только receipt S6 «Тесты для задачи #1284 (перед ревью)» `20261104T182213103-daa88f0a` со статусом passed на `ad60cc9`, а также описание исполнителя: адресные 7/7, связанные наборы 102/102, RED на `659440571`. Независимо их не подтверждал. По исходникам на head изучены: `src/graph-optimize-report.ts`, `src/plan-optimizer.ts` (`optimizePlanDraft`, `optimizePlans`, тип `OptimizeReport`), `src/graph-optimize.ts` целиком, `src/near-axis.ts` (`repairNearAxisRoomWalls`), `src/coordinate-canonicalization.ts` (`latticeCanonicalizationReport`), `src/plan-graph.ts` (`graphIndex`, `validateGraph`), `src/optimize-plans-dialog.ts` (`preview`, `commit`, `render`), i18n-ключи и новый тест. Полный выпуск, golden-снимки и реальный HA Optimize journey (строки отчёта → Apply → reload → Undo) не проверялись. По словам исполнителя, сценарий нужно обновить до следующей беты. Внешний эксперимент `expF-tdetach.mjs` недоступен: сценарии issue оценены по их воспроизведению в адресных тестах."
-        },
-        "usage": {
-          "input_tokens": 44,
-          "cache_creation_input_tokens": 130816,
-          "cache_read_input_tokens": 1764151,
-          "output_tokens": 25045,
-          "output_tokens_details": {
-            "thinking_tokens": 16012
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 130816,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 966,
-              "cache_read_input_tokens": 109957,
-              "cache_creation_input_tokens": 20859,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 20859
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение решает задачу по существу. Отчёт Optimize для модели 11 больше не собирается из счётчиков числового черновика. Перемещения, максимум смещения в сантиметрах, повороты и шумовая канонизация теперь считаются по разнице между исходным и окончательно записанным графом: узлы сопоставляются по устойчивым ID, отдельно учитываются проёмы, колонны, декор и позиции в layout. Выпрямление засчитывается, только если предложенная ось действительно оказалась точной в записанном графе. Слияния стен берутся из фактических `collapse-node`. Переписанный `tq` получил собственную строку диалога и вошёл в итоговый toast. Все три сценария из issue закрыты адресными тестами: угол на 1 ULP с диагональным T, коллинеарный шов и десятичный `tq`. Резервная ветка гарантирует, что при `changed=true` на модели 11 диалог покажет хотя бы одну поясняющую строку. Legacy-путь не изменился, кроме нового нулевого поля. Блокеров нет. Остались неточности в подписях: схлопывание стен нулевой толщины попадает в «реальные стены», а перепривязка хоста после схлопывания или reconcile считается ещё и «канонизацией параметров проёмов». Вместе с несколькими упрощениями они вынесены в improvements. До беты нужно обновить E2E-сценарий Optimize, исполнитель об этом знает.\n\n## Понимание решения\n\nПроблема. Для модели 11 `optimizePlans` вызывает `optimizePlanDraft(..., graphDraft=true)`. Числовой движок (`alignAllToGrid`, `repairNearAxisRoomWalls`) предлагает цели, а записывается граф после `optimizeGraphTargets`, который часть целей отбрасывает. Например, нерешёточные цели для зависимых q-узлов в строке 82 `graph-optimize.ts`. До исправления отчёт брался из числового движка и обнулялся только при `changed=false`. Поэтому реальное изменение графа сопровождалось отчётом об отвергнутых сдвигах, а изменения, которых числовой движок не видит (`collapse-node` стен, `rehost-opening` с новым `tq`), оставались без строки в диалоге.\n\nПосле исправления:\n1) `graph-optimize-report.ts/measureGraphOptimizeEffects(baseline, result.config.spaces, references.layout, result.layout)`. Здесь `baseline` — проекция входного графа до черновика, а сравнение идёт с финальными пространствами после второго, структурного `optimizeGraphTargets`. Узлы сопоставляются по `node.id`, удалённые (схлопнутые) пропускаются. Для проёмов берутся оба конца с минимумом по двум вариантам сопоставления, для декора — четыре угла, для колонн — центр, для layout — x/y с масштабом своего пространства (для отсутствующего этажа — максимальный `cell_cm`). Порог видимости — `LATTICE_NOISE_STEPS/240` (1e-4 шага). Всё, что ниже порога, идёт в `latticeCoordinatesCanonicalized`.\n2) `measureGraphStraightening(aligned, straightened, draftWritten)` вызывается внутри черновика. Ребро засчитывается, если до выпрямления оно было почти осевым, цель стала точно осевой, записанный граф держит ось точно (`cmp`) и записанные концы совпадают с целью в пределах шума. Именно так отсекается отвергнутый сдвиг T из сценария с ULP.\n3) В `optimizePlans` для `modelFrom === 11` поверх отчёта черновика записываются результаты измерения: `wallsMerged = stats.wallsMerged`, `spansMerged = 0`, `canonicalized` — по числу пространств с изменившейся compat-проекцией. Если `changed=true`, а все объясняющие счётчики нулевые, ставится `canonicalized = 1`.\n4) Диалог и toast показывают и учитывают `openingParametersCanonicalized`, добавлены переводы на RU/EN/DE/FR.\n\nРазобранные пути: `optimizePlans` → `optimizePlanDraft` (выравнивание → выпрямление → перенацеливание → `alignAllToGrid` → `optimizeGraphTargets` в режиме movesOnly) → структурный `optimizeGraphTargets` (set-thickness, слияние перегородок, convert-edge, collapse-node стен, rehost-opening) → измерение → обнуление при `!changed` → резервная ветка. Также `preview` в `optimize-plans-dialog.ts` (cm/where из `maxShiftCm`/`maxSpace`), `render` (условия строк, `modelMaintenance`, `gridWarning`) и `commit` (toast); `graphIndex`/`validateGraph` (`node.p` у зависимого узла совпадает с вычисленной точкой — это проверяет `dependency-value`); `repairNearAxisRoomWalls` (единица подсчёта — сегмент полигона, то есть ребро графа, а также независимые перегородки).\n\n## Разбор решения\n\n### Источник истины для отчёта модели 11\n\nПодход выбран верно. Числовой движок по-прежнему только предлагает цели, а эффекты измеряются по паре «исходная проекция графа → итоговые пространства». Так отчёт по построению не может обещать отвергнутый графом сдвиг. Измерение происходит после второго, структурного прохода, поэтому учитываются и его повторные перемещения, если они есть. Сопоставление по ID, а не по индексам или близости, устойчиво к схлопыванию узлов и вставке новых. Этот принцип стоит сохранить.\n\nОснование: `src/plan-optimizer.ts:895-897` — `measureGraphOptimizeEffects(baseline, result.config.spaces, references.layout, result.layout)`; `baseline = clone(config.spaces)` после `projectGraphSpace` (стр. 849-864); `src/graph-optimize-report.ts:107-116` — сопоставление `before.plan_graph.nodes` с `index.nodes.get(node.id)`.\n\n### Верхняя граница сдвига (обещание диалога)\n\nДля модели 11 обещание стало точнее: максимум считается по фактическим узлам в масштабе своего пространства, а диалог по-прежнему округляет вверх (`Math.ceil`). Перечень измеряемых носителей совпадает с тем, что двигает legacy `alignAllToGrid`: полигоны и перегородки (теперь это узлы графа), колонны, декор кроме furniture/image, проёмы, layout. Удаление узла через `collapse-node` допустимо только для коллинеарного узла (стр. 278 `graph-optimize.ts`), поэтому пропуск удалённых узлов не скрывает видимых изменений. Новые узлы появляются только через `insert-on-edge` на существующем ребре. Порог 1e-4 шага в 100 раз выше legacy `K = 1e-6·шага`. Смещения в этом диапазоне попадают в строку канонизации со своим максимумом в см и не скрываются, а при `cell_cm = 5` это около 5 мкм.\n\nОснование: `graph-optimize-report.ts:72-80` (`note`), `:118-161`; `optimize-plans-dialog.ts:251`; `coordinate-canonicalization.ts:18`.\n\n### Выпрямление почти осевых стен\n\nПроверка «цель осевая → записанный граф держит ось точно → записанные концы совпадают с целью» корректно отсекает отвергнутые q-цели из сценария issue и сохраняет принятые (тест с fixture 279: 1 стена, 1 см). Единица подсчёта — ребро графа, что совпадает с legacy: там это сегмент полигона, общий для двух комнат и дедуплицированный по ключу. У механизма есть граница. Если после выпрямления второй `alignAllToGrid` дополнительно сдвинет конец и запись разойдётся с целью из `straightenedSpaces`, выпрямление не будет засчитано, хотя ось записана. Это возможно лишь при нерешёточной цели выпрямления. Тогда счётчик выпрямления занижается, но перемещение всё равно попадёт в `moved`/`maxShiftCm`, так что обещание не нарушается. Кроме того, `shift` считается от выровненной, а не от исходной позиции. Для `maxStraightenShiftCm` это та же семантика, что у legacy.\n\nОснование: `graph-optimize-report.ts:33-57`; `plan-optimizer.ts:568-570` (измерение на графе черновика), `:900-905`; `near-axis.ts:183-220` (дедупликация по `segmentKey`).\n\n### Структурные операции и `tq`\n\n`wallsMerged` теперь берётся из `stats.wallsMerged`, то есть из фактических `collapse-node` стен структурного прохода, и закрывает пустой диалог для шва. Черновик работает в режиме movesOnly, поэтому двойного счёта схлопываний нет. `openingParametersCanonicalized` засчитывается, если смещение ≤ шума, поворота нет, а `host.tq` изменился. Это закрывает случай с десятичным `tq`. Условие шире формулировки «канонизация»: `tq` меняется и тогда, когда хост перепривязан из-за `collapse-node` или `convert-edge`. Такие проёмы попадут в строку «точные параметры проёмов», а при reconcile — ещё и в `openingsRehosted`, и в toast-сумму `m` дважды. Это неточность подписи, а не ложное обещание сдвига (см. improvements).\n\nОснование: `graph-optimize.ts:59-71` (перепривязка host при apply), `:229-267`, `:269-282`, `:286-304`; `graph-optimize-report.ts:134-137`; `plan-optimizer.ts:898`.\n\n### Гарантия непустого диалога при changed=true\n\nРезервная ветка `report.canonicalized = 1` перебирает все счётчики, у которых в `render` есть своя строка, а `moved` покрывает и перемещённые позиции layout. Если ничего не нашлось, гарантированно появляется строка `gs.optimize_changes` («обновлено пространств: 1»). Это выполняет критерий приёмки, хотя конкретную причину такая строка не называет. Тот же `canonicalized` для модели 11 теперь считает пространства с изменившейся compat-проекцией (walls/wall_segments/rooms/partitions/open_spans), в том числе при видимых сдвигах. Подпись «обновлено пространств» под это подходит.\n\nОснование: `plan-optimizer.ts:906-913`, `:931-941`; `optimize-plans-dialog.ts:467-471`, `:596-600`; тест `stale compatibility-only projection repair...`.\n\n### Сохранение legacy-семантики\n\nДля `modelFrom < 11` поведение прежнее: отчёт черновика, `wallsMerged` по compat-записям, `openingParametersCanonicalized: 0`. `graphStraightening` вычисляется и для legacy, но не используется и вырезается из публичного результата. Расхождение отчёта и записи для legacy-входа (тоже `graphDraft=true`) сохраняется — по ТЗ это вне объёма.\n\nОснование: `plan-optimizer.ts:813`, `:891-894`, `:942-943`; критерий приёмки №3 в задаче.\n\n### Тесты\n\nСемь адресных тестов работают на production-модулях. Они проверяют три регрессии issue, сдвиг одного узла через собственный `cell_cm`, сохранение принятого выпрямления, четыре угла декора, позицию на отсутствующем этаже и случай устаревшей проекции. Есть рендер диалога через реальный `OptimizePlansDialog`, проверка неизменности входа, `validateGraph`/`verifyGraphProjection` и повторного Optimize как no-op (`settled`). Не проверяется отдельно, что `partitionsMerged` из `collapse-node` перегородок соответствует записи, но этот счётчик уже существовал и не менялся.\n\nОснование: `test/graph-optimize-report.test.mjs` целиком; receipt `20261104T182213103-daa88f0a` (passed) на `ad60cc9`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Схлопывание стены нулевой толщины на модели 11 попадает в `wallsMerged` и показывается как «объединено отрезков реальных стен», а `spansMerged` принудительно равен 0. Если в `graph-optimize.ts:279-280` считать `cm === 0` отдельно (например, `stats.zeroWallsMerged`) и записывать это в `spansMerged`, подписи диалога останутся верными без нового ключа i18n. Цена — одно поле в `GraphOptimizeResult` и в агрегации `stats`.\n- `openingParametersCanonicalized` стоит засчитывать только при неизменном `host.kind/id` (`same(opening.host?.id, written.host?.id) && opening.host?.kind === written.host?.kind`). Тогда перепривязка после `collapse-node` или `convert-edge` не будет называться «канонизацией параметров», а при reconcile проём не попадёт в toast-сумму `m` дважды. Перепривязку из-за схлопывания уже объясняет `wallsMerged`, а reconcile — `openingsRehosted`.\n- Резервное `report.canonicalized = 1` гарантирует строку, но не называет причину. Перечень из 25 условий в `plan-optimizer.ts:933-941` дублирует логику диалога и легко разойдётся с ней при добавлении нового счётчика. Надёжнее выделить общую функцию «есть ли у отчёта видимая строка» и использовать её и в оптимизаторе, и в `render`: так новое поле нельзя будет забыть в одном из мест.\n- Подсказка для сопровождения: `measureGraphStraightening` опирается на то, что `numericalNodes` сопоставляет `room.poly[i]` с i-м ребром цикла без проверки длины. Сейчас это безопасно, потому что `optimizeGraphTargets` раньше бросает `optimize-cycle` при несовпадении. Короткая проверка `poly.length === cycle.edges.length` с пропуском сделает функцию самодостаточной на случай повторного использования.\n\n## Границы анализа\n\nСборку, тесты и E2E я не запускал. Использован только receipt S6 «Тесты для задачи #1284 (перед ревью)» `20261104T182213103-daa88f0a` со статусом passed на `ad60cc9`, а также описание исполнителя: адресные 7/7, связанные наборы 102/102, RED на `659440571`. Независимо их не подтверждал. По исходникам на head изучены: `src/graph-optimize-report.ts`, `src/plan-optimizer.ts` (`optimizePlanDraft`, `optimizePlans`, тип `OptimizeReport`), `src/graph-optimize.ts` целиком, `src/near-axis.ts` (`repairNearAxisRoomWalls`), `src/coordinate-canonicalization.ts` (`latticeCanonicalizationReport`), `src/plan-graph.ts` (`graphIndex`, `validateGraph`), `src/optimize-plans-dialog.ts` (`preview`, `commit`, `render`), i18n-ключи и новый тест. Полный выпуск, golden-снимки и реальный HA Optimize journey (строки отчёта → Apply → reload → Undo) не проверялись. По словам исполнителя, сценарий нужно обновить до следующей беты. Внешний эксперимент `expF-tdetach.mjs` недоступен: сценарии issue оценены по их воспроизведению в адресных тестах.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 659440571bc388d108ec7f0200ce9c407a9ee132 → ad60cc9da89a002c7474eda65eb359eb7de30096\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1284, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nМодель 11: измерение эффектов вынесено в `graph-optimize-report.ts`. Отчёт сравнивает исходный и окончательно принятый граф по устойчивым ID узлов, реальные концы проёмов, колонки, декор (четыре угла) и сохранённые layout-позиции. Порог невидимой координатной канонизации — существующие `1e-4` шага. Дедупликация по узлу исключает повторный подсчёт общей стены. `collapse-node` берётся из фактических счётчиков графового движка; `tq` без геометрического сдвига получает отдельный счётчик/строку, включая RU/EN/DE/FR и итоговый toast. Числовой движок и решения Optimize о допустимости не меняются. Near-axis отчёт сверяет предложенные рёбра с реально записанной точной осью; отвергнутые q-цели не учитываются. Счётчики legacy-входов сохранены, текущая канонизация проекций/скаляров объясняется даже без перемещённого узла.\n\nПроверено до очереди: адресные 7/7; существующие `plan-optimizer`, `plan-graph-optimize`, `near-axis`, `optimize-plans-dialog`, `optimize-cleanup-892` — 102/102 без изменения legacy-ожиданий. RED на исходном dev `659440571`: три заявленные регрессии (десятичный tq, коллинеарный шов, ULP + точный диагональный T) воспроизведены на production-модулях, остальные два контроля прошли; после исправления все проходят. Input не мутируется, `validateGraph`, `verifyGraphProjection` и повторный Optimize/no-op проверяются в адресном тесте. Полный выпуск, golden и реальные HA E2E здесь не запускались; до следующей беты нужно актуализировать существующий Optimize journey: строки отчёта → Apply → reload → Undo. Метаданные E2E сопровождает координатор пакета задач.\n\nРиски для внимания: точное сопоставление и диагностика графа/проекций, сохранение legacy-семантики, консервативный максимум для позиций отсутствующего этажа. Новая геометрия или иной выбор целей оптимизации не вводятся.\n```\n\n</details>\n",
-        "createdAt": "2026-11-04T18:28:23.028Z",
-        "artifactId": 13350948575,
-        "runId": 41886624855,
-        "runAttempt": 1,
-        "completedAt": "2026-11-04T18:28:27Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41886624855",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "659440571bc388d108ec7f0200ce9c407a9ee132"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3344,19 +3200,7 @@
     1283,
     1282
   ],
-  "active": {
-    "issue": 1284,
-    "worker": "finish",
-    "token": "175:finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:1:admit",
-    "fence": 175,
-    "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-    "expectedBase": "659440571bc388d108ec7f0200ce9c407a9ee132",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793816522441,
-    "expiresAt": 1793820534065,
-    "patchId": "c0e98b921b246386a15955bb204111ef156f673f",
-    "reviewRequest": "review:1284:1:c0e98b921b246386a15955bb204111ef156f673f:659440571bc388d108ec7f0200ce9c407a9ee132"
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3390,57 +3234,9 @@
       "digest": "2d4e5139be7f270e45f9f3b76d9248a5cab4a154d912ab986b2bf85bb6a90d6f",
       "issue": 1283
     },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:2:synchronized": {
-      "digest": "af414fb82a54bd49ea1385b8d0d15abe0e7fc82d22cea1393d395dfbe24a0b78",
-      "issue": 1284
-    },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:3:s6-label": {
-      "digest": "b0701a09b6d45d8554a93d0f804c77ba64f1fbb692be91d862609ecba3506977",
-      "issue": 1284
-    },
-    "finish:a65eb57b-a5cc-4671-9b0c-f70dd350c23c": {
-      "digest": "09b821d926d2d850ee3934c9ac49b16d9af56fa85071110cd57f7950dc97016c",
-      "issue": 1284
-    },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:4:review-requested": {
-      "digest": "aed1e8da7ae21d676b318fbc0838474f736d7d302fb05d786aa4f8ab39076f61",
-      "issue": 1284
-    },
-    "github:41886583742:1:tick:0:review-retry": {
-      "digest": "9804a78050efd4b3a99b777909d0b677ea993b611034c9550d7b9c28e07d6465",
-      "issue": 1284
-    },
     "github:41886583742:1:completions:notice:cf38e324ae429b4aad8da1c489e16a74fceb18c2ac6e7e2853855b1590fd8009": {
       "digest": "b866e9089566b12475671a7b358bd66154e47b038ea2fb8e1164b1ddb2ab1d98",
       "issue": 1283
-    },
-    "github:41886583742:1:completions:message:cf38e324ae429b4aad8da1c489e16a74fceb18c2ac6e7e2853855b1590fd8009": {
-      "digest": "74b738aab6a6b5eff1accc80ef610aa6e0c2ac3b4edc721c7f0bb5abfb6fa222",
-      "issue": 1284
-    },
-    "github:41886583742:1:completions:message:c7e39fcebe3b51347f589263b368310507c49916afb9dfa8aa571096e8ceee96": {
-      "digest": "babbe8491f6f285d29bcadf7bcb1338aa4f44f1968d2aad88d015d583b0a49ad",
-      "issue": 1284
-    },
-    "github:41886583742:1:completions:message:c0e59c21ae631fbf63803a2e60a44de5508b53425e16a27317f41770d22e281b": {
-      "digest": "688ee0e495f5612e9f58cdf0945550ced93b6da911a0078636ab94efc2f76429",
-      "issue": 1284
-    },
-    "github:41886583742:1:completions:message:a8478501480803f437dfb77ec3e19dbdfa2e02f16215282eaa11ced653521e54": {
-      "digest": "b0705c8ac84107e9b8785c1a40bbffa8d585f8f0ad56e2552060c64d303ab5bb",
-      "issue": 1284
-    },
-    "github:41886583742:1:completions:message:851bb1fbbc4545ab7ecd99eb049635c73e98527ad66b18edb5003059d7b2a718": {
-      "digest": "69954741aef68b6229e5955d1ff9605f5e5e35dd09ccece858df3151566cda2b",
-      "issue": 1284
-    },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:9:review-presentation": {
-      "digest": "14c06b5ab7bd10a87a54ed2a1405131d70c59d70f05964a7167a8db853bc2c3f",
-      "issue": 1284
-    },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:9:review-complete": {
-      "digest": "ba9004272c6110a49c14c973b8f73daf16cf23e92e8993957d264fe4ddaa17d1",
-      "issue": 1284
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
@@ -3471,20 +3267,6 @@
         "delivered": true
       }
     },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3": {
-      "digest": "aa806db99935ec492d1e412ab568f1a47bbbac59b6c6a74ed8df0f984e804392",
-      "issue": 1284,
-      "message": {
-        "kind": "queued",
-        "issue": 1284,
-        "at": 1793816333799,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "delivered": true
-      }
-    },
     "return-db854156-49fe-4393-a687-c64988b4ad30:return:1283": {
       "digest": "2d4e5139be7f270e45f9f3b76d9248a5cab4a154d912ab986b2bf85bb6a90d6f",
       "issue": 1283,
@@ -3506,21 +3288,6 @@
         "delivered": true
       }
     },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:1:admit": {
-      "digest": "0b3cb1508a457b9cb85e5acb523dfc5b1fb98438a28e040e6bd2200fb01e15f5",
-      "issue": 1284,
-      "message": {
-        "kind": "admitted",
-        "issue": 1284,
-        "at": 1793816522441,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:7f3acfa1-3bcd-4a49-9221-77c7e6fabef5": {
       "digest": "7d23209b78bf5f1ba8068e7041c7ebf47ffd04a8c75c0d409ca97fe763a2d71c",
       "issue": 1283,
@@ -3532,36 +3299,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5",
-        "delivered": true
-      }
-    },
-    "finish:355fad0e-aad1-44b5-9caf-bb4b42359ff3:finish:3:s6-complete": {
-      "digest": "5bf9ff7d7087b1ae2f1191643b37675eaaffb64d05bceb1a0e06d382c52fac36",
-      "issue": 1284,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1284,
-        "at": 1793816570180,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "phase": "review",
-        "evidence": {
-          "id": "20261104T182213103-daa88f0a",
-          "name": "Тесты для задачи #1284 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1100-geometry-history-20261028/.git/process-next/runs/20261104T182213103-daa88f0a/report.json",
-          "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-          "status": "passed",
-          "finishedAt": "2026-11-04T18:22:48.784Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Модель 11: измерение эффектов вынесено в `graph-optimize-report.ts`. Отчёт сравнивает исходный и окончательно принятый граф по устойчивым ID узлов, реальные концы проёмов, колонки, декор (четыре угла) и сохранённые layout-позиции. Порог невидимой координатной канонизации — существующие `1e-4` шага. Дедупликация по узлу исключает повторный подсчёт общей стены. `collapse-node` берётся из фактических счётчиков графового движка; `tq` без геометрического сдвига получает отдельный счётчик/строку, включая RU/EN/DE/FR и итоговый toast. Числовой движок и решения Optimize о допустимости не меняются. Near-axis отчёт сверяет предложенные рёбра с реально записанной точной осью; отвергнутые q-цели не учитываются. Счётчики legacy-входов сохранены, текущая канонизация проекций/скаляров объясняется даже без перемещённого узла.\n\nПроверено до очереди: адресные 7/7; существующие `plan-optimizer`, `plan-graph-optimize`, `near-axis`, `optimize-plans-dialog`, `optimize-cleanup-892` — 102/102 без изменения legacy-ожиданий. RED на исходном dev `659440571`: три заявленные регрессии (десятичный tq, коллинеарный шов, ULP + точный диагональный T) воспроизведены на production-модулях, остальные два контроля прошли; после исправления все проходят. Input не мутируется, `validateGraph`, `verifyGraphProjection` и повторный Optimize/no-op проверяются в адресном тесте. Полный выпуск, golden и реальные HA E2E здесь не запускались; до следующей беты нужно актуализировать существующий Optimize journey: строки отчёта → Apply → reload → Undo. Метаданные E2E сопровождает координатор пакета задач.\n\nРиски для внимания: точное сопоставление и диагностика графа/проекций, сохранение legacy-семантики, консервативный максимум для позиций отсутствующего этажа. Новая геометрия или иной выбор целей оптимизации не вводятся.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
