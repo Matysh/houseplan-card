@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3108,
+  "revision": 3109,
   "nextTicket": 187,
   "nextFence": 185,
   "tasks": {
@@ -2976,15 +2976,15 @@
         "at": 1793817861463
       },
       "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793817861463,
-        "entry": 1,
-        "requestId": "review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "transitionConfirmed": true
-      }
+        "key": "2:author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
+        "reason": "author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793819114383,
+        "entry": 2,
+        "eventId": "author-changelog:21537643-6874-419c-80e9-8bea519ba89e:return:1282"
+      },
+      "reason": "author-changelog-rebase: move own #1282 entries back to Unreleased before S7"
     },
     "1283": {
       "issue": 1283,
@@ -3347,18 +3347,7 @@
     1286,
     1283
   ],
-  "active": {
-    "issue": 1282,
-    "worker": "finish",
-    "token": "184:finish:dcac400b-86ba-48f7-a437-a24c761abb4b:finish:2:admit",
-    "fence": 184,
-    "materialSha": "17e6123a5b26645e7601229b611145d16bab794b",
-    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
-    "phase": "testing",
-    "admittedAt": 1793819074652,
-    "expiresAt": 1793819384120,
-    "patchId": "036e2763fcc1a4cf16af968ba8708cecf6bc516e"
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3662,6 +3651,10 @@
     },
     "github:41893398123:1:completions:message:bbe329203e220a0799a8b9143cbe15153d0dde1db6828eba26d6bc5cee26c9af": {
       "digest": "f9453d59866a0b7013288cf3bb916085e1a5508627688cf6d83d9191745822f9",
+      "issue": 1282
+    },
+    "author-changelog:21537643-6874-419c-80e9-8bea519ba89e": {
+      "digest": "966e79310ffeb9f1081889add7b4d596c1246f4ea8da474ab4d431fc78ea111a",
       "issue": 1282
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
@@ -4180,6 +4173,25 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "author-changelog:21537643-6874-419c-80e9-8bea519ba89e:return:1282": {
+      "digest": "966e79310ffeb9f1081889add7b4d596c1246f4ea8da474ab4d431fc78ea111a",
+      "issue": 1282,
+      "message": {
+        "kind": "return",
+        "issue": 1282,
+        "at": 1793819114383,
+        "entry": 2,
+        "notice": {
+          "key": "2:author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
+          "reason": "author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793819114383,
+          "entry": 2,
+          "eventId": "author-changelog:21537643-6874-419c-80e9-8bea519ba89e:return:1282"
+        }
       }
     }
   },
