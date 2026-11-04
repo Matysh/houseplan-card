@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3135,
+  "revision": 3136,
   "nextTicket": 188,
   "nextFence": 188,
   "tasks": {
@@ -2924,7 +2924,7 @@
       "ownerDecision": null,
       "ticket": 187,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793819236971,
       "reviewEntry": 3,
       "patchId": "0628763f1427d2fb7ad553a5d3b1a6583c6941e9",
@@ -2962,19 +2962,15 @@
         "tests_backend/test_plan_graph_migration.py"
       ],
       "s6": {
-        "id": "20261104T183642722-6a1e22d0",
+        "id": "20261104T191237958-ce8434e0",
         "name": "Тесты для задачи #1282 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261104T183642722-6a1e22d0/report.json",
-        "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261104T191237958-ce8434e0/report.json",
+        "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672",
         "status": "passed",
-        "finishedAt": "2026-11-04T18:37:18.050Z",
+        "finishedAt": "2026-11-04T19:12:39.265Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1282:1:f6b28734c7465fdc28b6ea70c55941f3d1e47d50:ad60cc9da89a002c7474eda65eb359eb7de30096",
-        "at": 1793817861463
-      },
       "notice": {
         "key": "2:author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
         "reason": "author-changelog-rebase: move own #1282 entries back to Unreleased before S7",
@@ -3389,9 +3385,9 @@
     "fence": 187,
     "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672",
     "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793819548104,
-    "expiresAt": 1793819854139,
+    "expiresAt": 1793823159869,
     "patchId": "0628763f1427d2fb7ad553a5d3b1a6583c6941e9"
   },
   "events": {
@@ -4481,6 +4477,34 @@
           "finishedAt": "2026-11-04T18:37:18.050Z",
           "failures": []
         }
+      }
+    },
+    "finish:f45d8991-45a7-4a4c-9566-cae94548ff8c:finish:3:s6-complete": {
+      "digest": "ced30ef47944ee5281e0b4754dad9907c0ea9ff03ed681aa3796a686f2e05cde",
+      "issue": 1282,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1282,
+        "at": 1793819559869,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T191237958-ce8434e0",
+          "name": "Тесты для задачи #1282 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261104T191237958-ce8434e0/report.json",
+          "materialSha": "c61beb96cfb44b8c0e495f6a7d5c347799da9672",
+          "status": "passed",
+          "finishedAt": "2026-11-04T19:12:39.265Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Числовые цели редактора используют прежний допуск `LATTICE_NOISE_STEPS = 1e-4`; доказанные решёточные начала и смещения складываются в целых индексах. Нулевая ось сохраняется буквально. Сырые декодеры, текущий граф при чтении/metadata Save, точные T-зависимости и правило Optimize для нерешёточной цели зависимого узла не округляются. `q` вне допуска сохраняет старую арифметику. Для доказанного `on-edge` Draw target близость к сетке не отменяет известную опору: при расхождении projection используется raw exact projection на названное ребро.\n\nМиграция TS/Python зеркальна: optional lattice-кандидат имеет приоритет только внутри прежнего координатного шума и R; контакт сохраняет принятую `l`-опору только если она всё ещё в том же шумовом допуске исходного владельца. Остальные принятые позиции и fallback/terminal используют прежний `p0`. R и исходный backup не расширяются/не переписываются.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [замечания](https://github.com/Matysh/houseplan-card/issues/1282#issuecomment-6639057106), материал `2398a63155`, [workflow 41889001206](https://github.com/Matysh/houseplan-card/actions/runs/41889001206).\n\n1. **Устаревшая среда конвертера →** выполнен `node scripts/sh3d-convert/build-page.mjs`: обновлены оба генерируемых артефакта. `sh3d-convert-page.test.mjs` проверяет `build-page.mjs --check`. Новая регрессия импортирует фактически поставляемый runtime и проверяет `(72,44)/240` → только `l`. Три converter Node-файла: **23/23 PASS**. После исправления реального дефекта шесть semantic JSON-fixtures обновлены через существующий CLI. До обновления отдельно разобран diff: только `q→l`, соответствующие микроскопические проекции carrier/room/opening и один host.tq; ID, число/ownership рёбер, метаданные, loss reports не изменены. Это semantic import fixtures, не визуальные эталоны. Python schema/реальные HA converter WS/preview/apply/export и миграция: **82/82 PASS**.\n2. **Устаревшие якоря мутантов →** оба прежних threshold-mutant патчат уникальную строку в `src/canvas-constants.ts`. Адресный `checkMutationRegistry` обоих определений: **PASS**, execution=0 (ночной прогон не изображается выполненным). Сохранилось прежнее общее диагностическое предупреждение browser-guard inventory 568/200; оно не относится к этим двум Node-guard.\n3. **Более широкая contact-проекция →** сужена до принятой `l`-опоры в шумовом допуске исходного владельца; любые остальные кандидаты снова проецируются из исходного `p0`. Исправление одинаково в TS и Python.\n4. **Негативный off-grid контроль →** добавлен реальный nudge/commit свободной точки `1/7`: сохраняется прежняя нерешёточная арифметика и `q`; metadata-only запись оставляет исходный граф буквально.\n\n### Дополнительная находка теста последовательностей #1285\n\nКомбинация: диагональная перегородка `[82,50]→[112,70]`, проём на 18-м шаге, толщина 15→10, body move X+1, nudge Y+1. Рёбра/host.tq уже были точными, но nudge материализовал угол из отдельно масштабированных render-точек: `33.69006752597978` вместо нормализованной graph projection `33.69006752597979`; Optimize находил `rotated:1`. Исправлен writer: новые/явно редактируемые проёмы и проёмы на изменившихся носителях записывают угол из принятой нормализованной проекции графа. Общий helper `projectedAxisAngle` сохраняет прежнюю формулу Optimize без смены её семантики. Metadata и чужие неизменённые hosts не нормализуются. Адресная регрессия через настоящий transient body-owner и nudge/commit проверяет no-op после каждого шага, сохранение tq и всех l-узлов; trace #1285 тоже GREEN.\n\n### Проверки и границы\n\nИсходный dev `659440571`: пять начальных адресных групп RED. Базовая матрица после исправления: 240 начал ×4 направления nudge (960 commit/Optimize), 73 host-параметра проёма/67 полных записей, 124 Resize, 240 физических release, граница 0.00009/0.00011 шага и raw decoder, миграция TS/Python и реальный HA first structural write/store/source backup. Первый финальный S6 на `2398a63155`: **7/7 PASS**, Node **191/191**, backend **45/45**, critical **151/151**, build/types и startup View OK; receipt `20261104T183642722-6a1e22d0`. После новых правок адресные graphEdit/Optimize **55/55**, новая writer-группа **9/9**, converter Node **23/23**, backend **82/82**, static mutation anchors **2/2**. Повторный финальный S6 выполнит finish на актуализированном SHA, результат пока не заявлен.\n\nПеред следующей бетой нужен существующий реальный HA browser-сценарий: Draw → nudge/body drag/Resize/opening drag, включая диагональ с hosted opening → reload/export exact wire → Optimize no-op → Undo/Redo. Полный release-аудит, пользовательский HA и публикация/деплой сайта не выполнялись.\n\n\nФинальная актуализация на возврат опубликованной beta.4 прошла чисто по коду, но Git перенёс/продублировал собственные строки changelog под опубликованным заголовком. Это обнаружено автором на S6 до запроса второго ревью: свой admission штатно возвращён, исходники тестов/продукта не изменены. Обе RU/EN записи теперь единственные и находятся в Unreleased; проверены фактические заголовки файлов после rebase, опубликованный раздел beta.4 не содержит #1282. Содержательный повтор ревью ещё не запускался. Уже завершённый S6 `20261104T190448400-93c61334` на коде `17e6123a5b`: **7/7 PASS**, Node **216/216**, backend **82/82**, critical **151/151**, build/types, startup View и converter-page --check PASS. Коммит `c61beb96cf` меняет только расположение этих строк changelog; следующий finish сохранит применимые результаты.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
