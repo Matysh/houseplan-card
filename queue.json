@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3258,
+  "revision": 3259,
   "nextTicket": 192,
   "nextFence": 192,
   "tasks": {
@@ -2978,7 +2978,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793821192826,
       "reviewEntry": 3,
-      "patchId": "e1f18960ceeecf20af74993c3c984200ad5d5646",
+      "patchId": "fc46dde3aa37a627d744b96d5fd5804c546c09dc",
       "changedFiles": [
         "custom_components/houseplan/deletion_layout.py",
         "custom_components/houseplan/websocket_api.py",
@@ -2988,6 +2988,7 @@
         "docs/USER-GUIDE.md",
         "docs/USER-GUIDE.ru.md",
         "docs/release-ledger/v1.83.0/1287.json",
+        "docs/testing/1287-history-passports.md",
         "src/config-adoption.ts",
         "src/editors/general-settings-dialog.ts",
         "src/geometry-history-state.ts",
@@ -3007,6 +3008,10 @@
         "src/plan-optimize-write.ts",
         "src/room-deletion.ts",
         "src/version-recovery-card.ts",
+        "test/fixtures/1100-history-characterization.json",
+        "test/fixtures/1166-room-graph-passports.json",
+        "test/geometry-history-refusal.test.mjs",
+        "test/geometry-history-restore.test.mjs",
         "test/late-context-replies.test.mjs",
         "test/marker-deletion.test.mjs",
         "test/room-deletion.test.mjs",
@@ -3200,10 +3205,11 @@
     "token": "191:finish:d622d9f7-12e5-46f7-a997-af0378802d20:finish:1:admit",
     "fence": 191,
     "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
+    "phase": "testing",
     "admittedAt": 1793821196996,
-    "expiresAt": 1793821496996
+    "expiresAt": 1793821503732,
+    "patchId": "fc46dde3aa37a627d744b96d5fd5804c546c09dc"
   },
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
@@ -3268,6 +3274,10 @@
     },
     "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return": {
       "digest": "b9e18d75f17e0422b5fa9bd31cac6968fddffb55dcc045ebc9783402e64627ac",
+      "issue": 1287
+    },
+    "finish:d622d9f7-12e5-46f7-a997-af0378802d20:finish:2:synchronized": {
+      "digest": "46a5d31ae165412cf51b3dff2e8048f514a7c9eaa895d89cec60449133877f09",
       "issue": 1287
     },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
