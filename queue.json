@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2384,
+  "revision": 2385,
   "nextTicket": 148,
   "nextFence": 148,
   "tasks": {
@@ -2543,7 +2543,18 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.83.0/1267.json",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793780188356,
+        "entry": 1,
+        "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно",
+        "eventId": "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267"
+      }
     },
     "1270": {
       "issue": 1270,
@@ -2759,18 +2770,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1267,
-    "worker": "finish",
-    "token": "147:finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:1:admit",
-    "fence": 147,
-    "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
-    "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-    "phase": "testing",
-    "admittedAt": 1793780166914,
-    "expiresAt": 1793780473331,
-    "patchId": "39d21a64c917e4f8c47ef54493dd23ee65f9823e"
-  },
+  "active": null,
   "events": {
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:2:synchronized": {
       "digest": "b64767016c8aa02a8e15a8597739c2380064016cf264d86ae7cf118f4660d041",
@@ -2786,6 +2786,10 @@
     },
     "github:41798177962:1:completions:message:f193b0480f17c774f0a85e079ae560f25af5e69125c4d30bf6dcdf7fcb3a7b66": {
       "digest": "d80aefec98b6f8ba8d5d9c4bb0e5c09e34d0986b596f37cd954ddc48f4b6249e",
+      "issue": 1267
+    },
+    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return": {
+      "digest": "5398c2857b905544c0d9f54ab0368f8248ae930cb29ea9434cc4eb1318195846",
       "issue": 1267
     },
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0": {
@@ -2815,6 +2819,26 @@
         "materialSha": "fd4fe67f7528c8736779440eb39f88341960ef30",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267": {
+      "digest": "5398c2857b905544c0d9f54ab0368f8248ae930cb29ea9434cc4eb1318195846",
+      "issue": 1267,
+      "message": {
+        "kind": "return",
+        "issue": 1267,
+        "at": 1793780188356,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793780188356,
+          "entry": 1,
+          "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно",
+          "eventId": "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267"
+        }
       }
     }
   },
