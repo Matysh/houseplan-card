@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2468,
+  "revision": 2469,
   "nextTicket": 152,
   "nextFence": 152,
   "tasks": {
@@ -2549,7 +2549,15 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793781497747,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "43910d3e92fbbbe669102b726569975a5da5b939",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1269.json",
+        "src/decor-history-restore.ts",
+        "test/decor-history-restore.test.mjs"
+      ]
     },
     "1270": {
       "issue": 1270,
@@ -2844,12 +2852,17 @@
     "token": "151:finish:85400028-c694-48ae-861c-127a9bef569d:finish:1:admit",
     "fence": 151,
     "materialSha": "ecb24f0e22402afeda904682119ce5c02f1934ea",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
+    "phase": "testing",
     "admittedAt": 1793781501417,
-    "expiresAt": 1793781801417
+    "expiresAt": 1793781807391,
+    "patchId": "43910d3e92fbbbe669102b726569975a5da5b939"
   },
   "events": {
+    "finish:85400028-c694-48ae-861c-127a9bef569d:finish:2:synchronized": {
+      "digest": "147a95c6a25693081a7257baf111607c32aaa43d7092ce2529d58cde5d52a9cc",
+      "issue": 1269
+    },
     "dev-build:41800471267:1:1271": {
       "digest": "c72ff957e6bd34e54a79b57909b841130b6342d4ff19af8face39326aa393ee0",
       "issue": 1271,
