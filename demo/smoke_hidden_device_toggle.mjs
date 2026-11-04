@@ -10,7 +10,11 @@ let card = page.locator('houseplan-card').first();
 const settle = async () => {
   await page.evaluate(() => window.__hpTest.settled());
   await page.waitForFunction(() => !window.__card._modeTransitionBusy && !window.__card._devicePositionBusy
-    && !window.__card._cameraTransition.active && !window.__card._viewportGestureDirty);
+    && !window.__card._modeTransitionPreparing && !window.__card._cameraTransition.active
+    && !window.__card._viewportGestureDirty && !window.__card._refitRaf && !window.__card._pendingRefitSize);
+  await page.evaluate(() => window.__hpTest.settled());
+  await page.waitForFunction(() => !window.__card._cameraTransition.active
+    && !window.__card._refitRaf && !window.__card._pendingRefitSize);
 };
 const toggle = async () => { await card.locator('[data-hp="hidden-devices"]').click(); await settle(); };
 const state = () => page.evaluate(() => {
@@ -242,7 +246,9 @@ const frameBefore = await page.evaluate(() => ({ ...window.__card._view }));
 await toggle();
 const frameAfterReveal = await page.evaluate(() => ({ ...window.__card._view }));
 // Ignore object insertion order and sub-picounit camera round-trip noise.
-check('farRevealDoesNotMoveCamera', ['x','y','w','h'].every(key=>Math.abs(frameAfterReveal[key]-frameBefore[key])<=1e-9));
+const revealKeepsCamera = ['x','y','w','h'].every(key=>Math.abs(frameAfterReveal[key]-frameBefore[key])<=1e-9);
+if (!revealKeepsCamera) console.error('hidden-device reveal camera', { frameBefore, frameAfterReveal });
+check('farRevealDoesNotMoveCamera', revealKeepsCamera);
 await prepareDesktopControls(page);
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 const fitted = await page.evaluate(() => ({ ...window.__card._view }));

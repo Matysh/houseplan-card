@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Wait for mode-camera and queued refit completion before browser wheel/reveal camera observations; retain exact camera and live metadata assertions. [#1274](https://github.com/Matysh/houseplan-card/issues/1274)
+
 - Restore shoulder rulers and room-wall centre snapping while dragging model-11 wall openings, measuring the final allowed exact host position. [#1267](https://github.com/Matysh/houseplan-card/issues/1267)
 
 - Start the weather-only parent-render assertion after the preceding scene finishes its continuity commit, retaining the strict zero-render check for the measured weather update. [#1270](https://github.com/Matysh/houseplan-card/issues/1270)

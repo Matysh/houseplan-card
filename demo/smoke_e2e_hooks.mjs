@@ -367,6 +367,11 @@ try {
   }, selectedId));
   const card = page.locator('houseplan-card');
   const stage = card.locator('[data-hp="stage"]');
+  // #1274: compute the native hit point after the preceding mode's surface
+  // has stopped moving; a pre-transition bounding box can send wheel elsewhere.
+  await page.waitForFunction(() => !window.__card._modeTransitionBusy
+    && !window.__card._modeTransitionPreparing && !window.__card._cameraTransition.active
+    && !window.__card._refitRaf && !window.__card._pendingRefitSize);
   const beforeCamera = await stage.getAttribute('viewBox'), box = await stage.boundingBox();
   await page.mouse.move(box.x + box.width * .2, box.y + box.height * .2);
   await page.mouse.wheel(0, -300);
