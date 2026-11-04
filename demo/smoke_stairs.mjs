@@ -8,6 +8,7 @@ import { launch, checkAll, finish } from './serve.mjs';
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { fixtureWallKey } from './fixtures/wall-key.mjs';
+import { isDeepStrictEqual } from 'node:util';
 
 const { page, browser } = await launch({ width: 2000, height: 850 });
 await prepareDesktopControls(page);
@@ -264,6 +265,18 @@ const out = await page.evaluate(async () => {
   await chooseStair('straight');
 
   // Select and move the straight stair through its actual hit target.
+  // #1269: observe the complete accepted record and unchanged carrier at each
+  // boundary, including a real reload, rather than only comparing x/y.
+  const stairCarrier = (config = card._serverCfg) => {
+    const copy = structuredClone(config);
+    delete copy.spaces.find(space => space.id === 'f1').stairs;
+    return copy;
+  };
+  const stairHistoryState = () => ({
+    record: structuredClone(stairs().find(stair => stair.id === straight.id)),
+    count: stairs().length, carrier: stairCarrier(),
+  });
+  const historyBefore = stairHistoryState();
   const start = { x: straight.x, y: straight.y };
   const straightHit = stairNode(straight.id)?.querySelector('.hp-stair-hit');
   straightHit?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
@@ -272,25 +285,42 @@ const out = await page.evaluate(async () => {
   pointer(stage(), 'pointermove', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   pointer(stage(), 'pointerup', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   await settled();
-  await writesIdle();
+  const moveAckIdle = await writesIdle();
   const moved = structuredClone(stairs().find((stair) => stair.id === straight.id));
+  const historyMoved = stairHistoryState();
   result.moveUsesContinuousTransform = !!moved
     && (!closeTo(moved.x, start.x) || !closeTo(moved.y, start.y));
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
-  await writesIdle();
+  const undoAckIdle = await writesIdle();
   const undone = structuredClone(stairs().find((stair) => stair.id === straight.id));
+  const historyUndone = stairHistoryState();
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
-  await writesIdle();
+  const redoAckIdle = await writesIdle();
   const redone = structuredClone(stairs().find((stair) => stair.id === straight.id));
+  const historyRedone = stairHistoryState();
   result.moveUndoRedo = !!undone && !!redone
     && closeTo(undone.x, start.x) && closeTo(undone.y, start.y)
     && closeTo(redone.x, moved.x) && closeTo(redone.y, moved.y);
+
+  // Read through the actual reload/adoption path after ACK, then independently
+  // read the fake integration's accepted wire document. Do not reseed config.
+  await card._reloadConfigOnly(true);
+  await settled();
+  const reloadAckIdle = await writesIdle();
+  const historyReloaded = stairHistoryState();
+  const stored = (await card.hass.callWS({ type: 'houseplan/config/get' })).config;
+  const storedStairs = stored.spaces.find(space => space.id === 'f1').stairs;
+  window.__stairHistory1269 = { before: historyBefore, moved: historyMoved,
+    undone: historyUndone, redone: historyRedone, reloaded: historyReloaded,
+    server: { record: storedStairs.find(stair => stair.id === straight.id),
+      count: storedStairs.length, carrier: stairCarrier(stored) },
+    ackIdle: moveAckIdle && undoAckIdle && redoAckIdle && reloadAckIdle };
 
   // Resize and Shift-rotate through the visible handles of the overlay frame.
   // The Stairs tool is still armed: the click after the gesture must not
@@ -703,6 +733,20 @@ const out = await page.evaluate(async () => {
   result.isoHitTargetNavigates = activeSpace() === 'garden';
 
   return result;
+});
+const earlyHistory = await page.evaluate(() => window.__stairHistory1269);
+checkAll({
+  legacyStairMovePreservesAllOtherFields: isDeepStrictEqual({ ...earlyHistory.moved.record,
+    x: earlyHistory.before.record.x, y: earlyHistory.before.record.y }, earlyHistory.before.record),
+  legacyStairUndoRestoresFullRecord: isDeepStrictEqual(earlyHistory.undone.record, earlyHistory.before.record),
+  legacyStairRedoRestoresFullRecord: isDeepStrictEqual(earlyHistory.redone.record, earlyHistory.moved.record),
+  legacyStairReloadRestoresFullRecord: isDeepStrictEqual(earlyHistory.reloaded.record, earlyHistory.moved.record),
+  legacyStairWireReadbackMatchesRedo: isDeepStrictEqual(earlyHistory.server.record, earlyHistory.moved.record),
+  legacyStairArmedToolNeverDuplicates: ['moved','undone','redone','reloaded','server']
+    .every(phase => earlyHistory[phase].count === earlyHistory.before.count),
+  legacyStairModelAndAllOtherDataStayExact: ['moved','undone','redone','reloaded','server']
+    .every(phase => isDeepStrictEqual(earlyHistory[phase].carrier, earlyHistory.before.carrier)),
+  legacyStairMoveUndoRedoReloadWaitForAck: earlyHistory.ackIdle,
 });
 
 // #686: a focused stair link paints no focus frame — neither the browser's

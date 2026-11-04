@@ -74,9 +74,9 @@ for(const version of [undefined,5,9,10])test(`#1269 legacy ${version} stair Undo
  [space.rooms,space.walls,space.open_spans,config.spaces[1],config.markers,config.settings].forEach((value,i)=>assert.equal(value,refs[i]));
  assert.equal(restoreNonPhysicalHistory(config,target,before),true);assert.deepEqual(config,original);
 });
-for(const kind of ['physical','references','node','chain','mixed','future','invalid-version','decor','plan','session','unknown','invalid-stairs'])
- test(`#1269 legacy stair restore refuses ${kind} without changing the candidate`,()=>{
-  const {config,before,target}=legacyStairsFixture(10);
+for(const version of [undefined,10])for(const kind of ['physical','references','node','chain','mixed','future','invalid-version','decor','plan','session','unknown','invalid-stairs'])
+ test(`#1269 legacy ${version} stair restore refuses ${kind} without changing the candidate`,()=>{
+  const {config,before,target}=legacyStairsFixture(version);
   if(kind==='physical')target.rooms[0].poly[0][0]=.1;
   if(kind==='references')target.roomReferences=[];
   if(kind==='node')target.nodeMove={kind:'delete'};
