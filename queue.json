@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2423,
+  "revision": 2424,
   "nextTicket": 150,
   "nextFence": 150,
   "tasks": {
@@ -2620,7 +2620,7 @@
       "ownerDecision": null,
       "ticket": 149,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793780832934,
       "reviewEntry": 1,
       "patchId": "57cc8652314b9694f9c10a1f5f866bd318d8204f",
@@ -2629,7 +2629,16 @@
         "demo/smoke_hidden_device_toggle.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261104T082726325-5916c97b",
+        "name": "Тесты для задачи #1274 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T082726325-5916c97b/report.json",
+        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+        "status": "passed",
+        "finishedAt": "2026-11-04T08:27:42.953Z",
+        "failures": []
+      }
     },
     "1278": {
       "issue": 1278,
@@ -2779,9 +2788,9 @@
     "fence": 149,
     "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
     "expectedBase": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793780836548,
-    "expiresAt": 1793781142630,
+    "expiresAt": 1793784463941,
     "patchId": "57cc8652314b9694f9c10a1f5f866bd318d8204f"
   },
   "events": {
@@ -2828,6 +2837,34 @@
         "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:fb1c352e-0910-477a-81e1-028affdea30b:finish:3:s6-complete": {
+      "digest": "c850e2e547ea2260e67c23f6350164157057b9e11f31b139d65a2a2e0f908a8a",
+      "issue": 1274,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1274,
+        "at": 1793780863941,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T082726325-5916c97b",
+          "name": "Тесты для задачи #1274 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T082726325-5916c97b/report.json",
+          "materialSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63",
+          "status": "passed",
+          "finishedAt": "2026-11-04T08:27:42.953Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Wheel witness получает boundingBox только после завершения текущего mode/camera и queued refit; probe с этим условием подтвердил настоящий SVG event path и zoom1→1.15 вместо потерянного wheel. Hidden-reveal settle раньше не учитывал queued refit/preparing; теперь оба состояния должны завершиться до снимка камеры и нажатия. Точность1e-9 не менялась, при отказе сохраняются конкретные before/after. Все прочие бизнес-assertions (next explicit Fit, hidden flags, editor frame, static card) остаются.\n\nОдин исходный hidden повтор уже проходил с дрейфом2e-13; это не объявляется доказательством починки продукта. Продуктовая камера не меняется; исходный full FAIL сохраняется. S6 использует явный product verification profile для двух нативных browser tests; новые HA E2E для такого тестового порта не нужны.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
