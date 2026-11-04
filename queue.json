@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2225,
+  "revision": 2226,
   "nextTicket": 138,
   "nextFence": 138,
   "tasks": {
@@ -2519,99 +2519,24 @@
     "1261": {
       "issue": 1261,
       "branch": "issue/1261-release-return-b3058111c193",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "b3058111c193f0cff02d0ba2cc632e13e945abb6",
-      "releaseTag": "v1.84.0-beta.3",
-      "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
-      "ownerDecision": null,
-      "ticket": 137,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793768121116,
-      "reviewEntry": 1,
-      "patchId": "95a424721b4b2b0527f368468a3e7a9f6319b35b",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "b3058111c193f0cff02d0ba2cc632e13e945abb6",
-        "tag": "v1.84.0-beta.3",
-        "verdict": "accepted",
-        "patchId": "95a424721b4b2b0527f368468a3e7a9f6319b35b",
-        "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
+      "mergedSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
+      "mergedAt": 1793768177027,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "custom_components/houseplan/plan_graph_migration.py",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-alarm-flat.png",
-        "demo/golden/baselines/device-alert-form-numeric.png",
-        "demo/golden/baselines/device-alert-maintenance-iso.png",
-        "demo/golden/baselines/device-battery-mobile-dark.png",
-        "demo/golden/baselines/first-space-floors-narrow-dark.png",
-        "demo/golden/baselines/geometry-plan-editor-dark.png",
-        "demo/golden/baselines/geometry-view-light-fit.png",
-        "demo/golden/baselines/panel-approved-ui-summary-light-1119.png",
-        "demo/golden/baselines/panel-backup-full-preview-desktop-en.png",
-        "demo/golden/baselines/panel-backup-space-preview-mobile-ru.png",
-        "demo/golden/baselines/panel-decor-multiselect-dark.png",
-        "demo/golden/baselines/panel-device-dialog-mobile-ru.png",
-        "demo/golden/baselines/panel-device-inbox-narrow-ru-dark.png",
-        "demo/golden/baselines/panel-device-state-source-unknown-en.png",
-        "demo/golden/baselines/panel-furniture-placement-preview-light.png",
-        "demo/golden/baselines/panel-geometry-decor-editor-dark.png",
-        "demo/golden/baselines/panel-geometry-devices-editor-dark.png",
-        "demo/golden/baselines/panel-lighting-opaque-glow-two-doorways-dark.png",
-        "demo/golden/baselines/panel-more-info-dialog-mobile-ru.png",
-        "demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png",
-        "demo/golden/baselines/panel-plan-snap-endpoint-light.png",
-        "demo/golden/baselines/panel-room-label-parity-plan-dark.png",
-        "demo/golden/baselines/panel-room-temperature-dialog-desktop-en.png",
-        "demo/golden/baselines/panel-support-relay-error-light-en.png",
-        "demo/golden/baselines/panel-toggle-entity-dialog-mobile-ru.png",
-        "demo/golden/baselines/panel-tray-narrow-tool-ru.png",
-        "demo/golden/baselines/panel-vacuum-history-seconds-narrow.png",
-        "demo/golden/baselines/panel-vacuum-live-tail-pending-dialog-dark.png",
-        "demo/golden/baselines/panel-wide-plan-editor-dark-en.png",
-        "demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
-        "demo/golden/baselines/safe-resize-handles-clamp-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/PLAN-GRAPH.md",
-        "docs/RELEASE-NOTES.md",
-        "docs/testing/beta3-geometry-repair.md",
-        "package-lock.json",
-        "package.json",
-        "scripts/config-schema.json",
-        "src/coincident-partitions.ts",
-        "src/graph-optimize.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/plan-graph.ts",
-        "src/plan-optimizer.ts",
-        "src/resize-atom-projection.ts",
-        "test/beta3-geometry-repairs.test.mjs",
-        "test/coincident-partitions.test.mjs",
-        "test/fixtures/1166-room-graph-passports.json",
-        "test/fixtures/845-wall-corpus-current-identities.json",
-        "test/geometry-history-refusal.test.mjs",
-        "test/optimize-affine-scope.test.mjs",
-        "test/optimize-hidden-obstacles.test.mjs",
-        "test/plan-optimizer.test.mjs",
-        "tests_backend/test_ha_plan_graph.py",
-        "tests_backend/test_plan_graph_migration.py"
-      ],
-      "s6": {
-        "id": "20261104T045539623-80e490f1",
-        "name": "Тесты для задачи #1261 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T045539623-80e490f1/report.json",
-        "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
-        "status": "passed",
-        "finishedAt": "2026-11-04T04:56:10.622Z",
-        "failures": []
+      "releaseTag": "v1.84.0-beta.3",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -2718,65 +2643,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1261,
-    "worker": "finish",
-    "token": "137:release-return-finish:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340:finish:1:admit",
-    "fence": 137,
-    "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
-    "expectedBase": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793768125558,
-    "expiresAt": 1793771771631,
-    "patchId": "95a424721b4b2b0527f368468a3e7a9f6319b35b"
-  },
-  "events": {
-    "github:41776058796:1:completions:message:5712837d7ba18a9ad794e6fa181c71f7717327881b3edab76f5f41bcb31a4cac": {
-      "digest": "43e9e0d4d216d6fe4372f5ffba4f57732f322417df7dfb1c7dd607480a1da00e",
-      "issue": 1261
-    },
-    "github:41776058796:1:completions:message:3a095e02ea7258a57699f1b6d0aa573387f0edf22f47d7f1835df5421102cfd2": {
-      "digest": "fb650414ee65ea341eb91bd8cc0277772c938b5ea3750e09369c4a63c4862228",
-      "issue": 1261
-    },
-    "release-return-finish:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340:finish:2:synchronized": {
-      "digest": "70385cfade037ce5f2ddcc0c1e7b4e9e142ef866f3a8c68fcb571ea64546e756",
-      "issue": 1261
-    },
-    "release-return-finish:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340:finish:3:s6-complete": {
-      "digest": "848f1111f303c511aa212885801030d0a17daaca73bef194d08aec8f0d8e9a9a",
-      "issue": 1261
-    },
-    "release-return:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340": {
-      "digest": "9eb6fdfca81be5d720fa31182bc5b1b2354807cf55cf16907af2721b7e69b297",
-      "issue": 1261,
-      "message": {
-        "kind": "queued",
-        "issue": 1261,
-        "at": 1793768121116,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
-        "delivered": true
-      }
-    },
-    "release-return-finish:ea1c3e1c-457b-4ec7-bed1-d18cd34f6340:finish:1:admit": {
-      "digest": "e8f6b6a224359c6febdd6c4eb2585ea66146c4e7b2ea50e8d5e2f4dad3dae993",
-      "issue": 1261,
-      "message": {
-        "kind": "admitted",
-        "issue": 1261,
-        "at": 1793768125558,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
-        "phase": "sync",
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
     "status": "delivered",
