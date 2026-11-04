@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2273,
+  "revision": 2274,
   "nextTicket": 142,
   "nextFence": 142,
   "tasks": {
@@ -2542,7 +2542,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "fix/1263-device-escape",
-      "materialSha": "3dd492c788dd701da4054a6296741700eb27e151",
+      "materialSha": "2e6497a3132034024391dbf7b217e51908ccda0e",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 141,
@@ -2550,7 +2550,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793778682581,
       "reviewEntry": 3,
-      "patchId": "56952eb99d9ab2bd5ff1be8b4598b3baf0f1618a",
+      "patchId": "391a892b662ac115063acb52f33ca760304391fc",
       "changedFiles": [
         "demo/smoke_device_contacts.mjs",
         "docs/CHANGELOG.md",
@@ -2568,10 +2568,7 @@
         "entry": 2,
         "detail": "Поведение изменённой области: failed",
         "eventId": "finish:757cd21c-b191-434e-a78f-9b37a3719d88:finish:4:return:return:1263"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793778691152,
-      "automationDetail": "Commit tracked task changes before finish"
+      }
     }
   },
   "ownerDecisions": {},
@@ -2682,11 +2679,12 @@
     "worker": "finish",
     "token": "141:finish:c9ce69a8-d0d7-45a3-a2c5-30b12192429d:finish:1:admit",
     "fence": 141,
-    "materialSha": "3dd492c788dd701da4054a6296741700eb27e151",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "2e6497a3132034024391dbf7b217e51908ccda0e",
+    "expectedBase": "93051bf3c8e4d1ea7f448b8af4bc0d9b3c374127",
+    "phase": "testing",
     "admittedAt": 1793778686386,
-    "expiresAt": 1793779045278
+    "expiresAt": 1793779073885,
+    "patchId": "391a892b662ac115063acb52f33ca760304391fc"
   },
   "events": {
     "finish:7436f42e-cc43-4996-97ae-855aee24c758:finish:2:synchronized": {
@@ -2727,6 +2725,10 @@
     },
     "finish:579135c6-3f51-4257-a660-851454e90195": {
       "digest": "74b78b8db6d3a9bdb53dbbe939ad95230f59631daecea89d186682ec161a94b7",
+      "issue": 1263
+    },
+    "finish:2b63c964-b7e7-4a1e-956e-5e167df84462:finish:1:synchronized": {
+      "digest": "04e308b4a1098a30b5b2d6b3bc99b717323396505d486ff2809fd9cd8d6a4628",
       "issue": 1263
     },
     "finish:7436f42e-cc43-4996-97ae-855aee24c758": {
