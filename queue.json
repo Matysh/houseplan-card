@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2303,
-  "nextTicket": 143,
+  "revision": 2304,
+  "nextTicket": 144,
   "nextFence": 143,
   "tasks": {
     "1126": {
@@ -2554,14 +2554,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1273-current-smoke-oracles",
-      "materialSha": "48c34a2a5072d836b17fda01875488b021fed3d6",
+      "materialSha": "2edc5958fbad10603a4b94e0491bd0a48121010c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 142,
-      "queued": false,
+      "ticket": 143,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793779024887,
-      "reviewEntry": 1,
+      "readyAt": 1793779133391,
+      "reviewEntry": 2,
       "patchId": "915ac9c05ce46fcab17a8bffed391608a7171222",
       "changedFiles": [
         "demo/smoke_opening_drag.mjs",
@@ -2571,7 +2571,6 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2686,7 +2685,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1273
+  ],
   "active": null,
   "events": {
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:2:synchronized": {
@@ -2760,6 +2761,19 @@
           "detail": "Браузер: opening drag: failed",
           "eventId": "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:3:return:return:1273"
         }
+      }
+    },
+    "finish:f99f65d4-d459-499d-872d-34f718de49d8": {
+      "digest": "edb5e03edcc7ca0087436e76a0ac2817ad36e73220ab23b32f8313a306657c25",
+      "issue": 1273,
+      "message": {
+        "kind": "queued",
+        "issue": 1273,
+        "at": 1793779133391,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "2edc5958fbad10603a4b94e0491bd0a48121010c"
       }
     }
   },
