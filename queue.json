@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2983,
+  "revision": 2984,
   "nextTicket": 178,
   "nextFence": 178,
   "tasks": {
@@ -2981,14 +2981,37 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1282-exact-writers",
-      "materialSha": "995186629442bc7e29446e9b97fb004ceeea73f1",
+      "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 177,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793816581563,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50",
+      "changedFiles": [
+        "custom_components/houseplan/plan_graph_migration.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/release-ledger/v1.83.0/1282.json",
+        "src/authored-grid.ts",
+        "src/canvas-constants.ts",
+        "src/coordinate-canonicalization.ts",
+        "src/editors/plan-nudge.ts",
+        "src/graph-draw-binding.ts",
+        "src/graph-edit-intent.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/physical-body-gesture.ts",
+        "src/plan-exact.ts",
+        "src/plan-graph.ts",
+        "src/resize.ts",
+        "test/graph-draw-binding.test.mjs",
+        "test/graph-writer-lattice.test.mjs",
+        "tests_backend/test_ha_plan_graph.py",
+        "tests_backend/test_plan_graph_migration.py"
+      ]
     },
     "1283": {
       "issue": 1283,
@@ -3210,11 +3233,12 @@
     "worker": "github-coordinator",
     "token": "177:github:41888770951:1:tick:0:admit",
     "fence": 177,
-    "materialSha": "995186629442bc7e29446e9b97fb004ceeea73f1",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "2398a631553cc6b5b4b5469298af1ff4bdaae795",
+    "expectedBase": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+    "phase": "testing",
     "admittedAt": 1793817384499,
-    "expiresAt": 1793817684499
+    "expiresAt": 1793817698769,
+    "patchId": "f6b28734c7465fdc28b6ea70c55941f3d1e47d50"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3295,6 +3319,10 @@
     },
     "github:41888770951:1:completions:message:90a095f0206be5da66d83dac24190ab3e2bfa7751daacdaad549fdaa0aff9c37": {
       "digest": "acb1fb20305dbf875fa9a727f399afbbc8a04c4138d54e589b21fcf5f0e6d1cd",
+      "issue": 1282
+    },
+    "finish:e5a44c29-62c3-41c3-b487-69da6579fe0d:finish:2:synchronized": {
+      "digest": "0d15af4f0bdca3fdcdb47b0e1de24dbbee070ab1ae069df4a47b13fafd2ceb71",
       "issue": 1282
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
