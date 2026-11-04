@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2516,
+  "revision": 2517,
   "nextTicket": 156,
   "nextFence": 156,
   "tasks": {
@@ -2591,6 +2591,110 @@
         "at": 1793783019850,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1269,
+        "requestId": "review:1269:5:f1eb882a9042e6d5c617e435dcebf4fdea39fadc:477af68e102d42f95372f7e50f8974565a15b6e6",
+        "kind": "code",
+        "base": "477af68e102d42f95372f7e50f8974565a15b6e6",
+        "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
+        "patchId": "f1eb882a9042e6d5c617e435dcebf4fdea39fadc",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1269,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1269",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Выявлена узкая legacy/current развилка: restoreDecorOnlyHistory допускает сохранение legacy носителя только для decor; restoreNonPhysicalHistory включает stairs, но отказывает любой legacy версии. Undo лестницы попадает в structural restore, мигрирует стеновой носитель, и прежний Redo больше не соответствует ему. Поздние current-model stair cases поэтому проходят.\n\nРешение — допуск legacy только для строго stairs-only snapshot при равенстве всех остальных полей и сохранении существующих guards node/chain/references/mixed/future/invalid model. Не расширять generic legacy presentation authority для plan_transform, декора вместе с лестницей или физических изменений. Реальный history cursor и нативный ранний сценарий должны доказать Undo/Redo без смены модели/ID.\n\n### Исправления по предыдущему ревью\n\nРаунд1, workflow41801202242: код признан корректным; возвращено на S6 для более полного native свидетельства и явного состава доказательств.\n\n- Полные record/count/model/carrier/reload: ранний smoke_stairs теперь сохраняет весь объект до жеста и после ACK каждого Move/Undo/Redo. Node-side isDeepStrictEqual сравнивает все поля (включая ID, стиль, размеры, target_space_id), число лестниц и весь конфиг кроме stairs выбранного этажа. После Redo вызывается настоящий _reloadConfigOnly(true) и отдельно config/get принятого fake integration; сравниваются полный объект, carrier и count. Другие этажи/лестницы также входят в полный carrier snapshot.\n- Настоящий ввод: этот ранний случай переведён с dispatchEvent на page.mouse/page.keyboard через test binding, не подменяющий product handlers/writer. Armed Stair tool остаётся выбранным, увеличение числа лестниц явно запрещено.\n- Отрицательные случаи расширены на version undefined и10. Product restore не менялся после принятого ревью механизма.\n- Состав S6 указан явно: request artifacts/issue1269-task.json передаёт areaTests=[test/decor-history-restore.test.mjs,test/geometry-history-restore.test.mjs,test/stairs-editor-live.test.mjs,demo/smoke_stairs.mjs]. Это полный browser файл с новыми checks legacyStair*, не только unit-файл. Предыдущий локальный S6 20261104T083830988-3fda6329 на ecb24f0e2 действительно включал result id=smoke:smoke_stairs, status=passed,durationMs=17352. Новый S6 на итоговом SHA будет передан штатной квитанцией после выполнения; его успех заранее не заявляется.\n\nДополнительная диагностика до исправления воспроизвела model undefined/graph=false → Undo model11/graph=true → Redo toast Cannot redo Move stairs, history entry removed. Лог triage-stairs-model.log сохранён. Необязательная гипотеза ревью о plan_transform пока не включена в этот stairs-only fix; при подтверждении нужна отдельная задача.\n\nПри усилении native carrier oracle обнаружено ровно одно допустимое ACK изменение: удаляются пустые retired spaces[].segments у двух исходных этажей. Это existing derived-segments decoder (inventory untilv1.21.3, geometry-cleanup.ts), не graph/model migration. Проба triage-stairs-carrier.log сохранила все10 leaf-отличий по пяти фазам. Полный expected carrier независимо учитывает только удаление **пустых** segments; все другие поля, версии, непустые коллекции и порядок массивов остаются строгими. Реальный pointer/key, full record/count, reload/wire readback уже достигнуты; новый S6 проверяет этот точный expected. Технические отказы усиленного теста (имя переменной/SVG helper) исправлены, исходные логи сохранены; они не маскировались как продуктовые баги."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокер первого раунда снят, задачу можно принимать.\n\nПродуктовая правка в `src/decor-history-restore.ts` с прошлого раунда не менялась. Тогда она признана корректной: Undo/Redo, где меняются только лестницы, идёт по presentation-дорожке и больше не мигрирует старый стеновой носитель. Запреты для структурных, смешанных, будущих и некорректных состояний остались строгими.\n\nПрошлый раунд вернул задачу из-за слабой нативной регрессии. Ранний сценарий `demo/smoke_stairs.mjs` теперь покрывает приёмку целиком:\n- ввод идёт через настоящие `page.mouse`/`page.keyboard`: клик, перетаскивание, Ctrl+Z, Ctrl+Shift+Z;\n- при выбранном инструменте «Лестница» проверяется, что число лестниц не растёт;\n- полная запись лестницы сравнивается через `isDeepStrictEqual` в фазах move/undo/redo, после настоящего `_reloadConfigOnly(true)` и после чтения с сервера через `houseplan/config/get`;\n- весь конфиг, кроме `stairs` этажа f1, сверяется строго. Поэтому миграция модели — появление `model_version`/`plan_graph`, изменение стен — уронит тест.\n\nКвитанция S6 `20261104T090259677-4b40dc27` на итоговом SHA `16a8c1c` — passed. Ранее события «Браузер: stairs: failed» на этом же наборе показывают, что браузерный `smoke_stairs` в него входит. Остались только необязательные улучшения.",
+          "understanding": "**Проблема.** На плане со старым носителем `model_version` отсутствует, а стены хранятся в `walls`/`partitions`. Пользователь перемещает лестницу и нажимает Undo. Шаг уходил в структурное восстановление, которое попутно мигрировало документ в model 11. После этого Redo не совпадал с текущим состоянием, шаг удалялся из истории, и лестница оставалась на исходной позиции.\n\n**После правки.** `restoreNonPhysicalHistory` вычисляет `stairsOnly`: снимки равны везде, кроме `stairs`. Только в этом случае `restorableSpace` допускает старую версию модели (целое число от 0 до 11) и при этом по-прежнему отклоняет node/chain/references, смешанный документ с `plan_graph`, будущую и строковую версию. Код не менялся с раунда 1, где механизм уже разобран и принят.\n\n**Что изменилось в этом раунде.** Только `demo/smoke_stairs.mjs`:\n- `page.exposeFunction('__stairHistoryNative')` передаёт клик, drag и клавиши в Playwright, без подмены обработчиков продукта;\n- `stairHistoryState()` снимает полную запись лестницы, число лестниц и весь `_serverCfg` без `f1.stairs` до жеста и после ACK каждой фазы;\n- после Redo вызывается `card._reloadConfigOnly(true)` (`src/config-reload-authority.ts:232-276`: принудительное чтение `_getAuthoritativeConfig` → `_adoptAuthoritative`), затем отдельно `houseplan/config/get`;\n- на стороне Node всё сравнивается через `isDeepStrictEqual` с ожидаемым носителем. Единственная допустимая разница — удаление пустых `segments`.\n\n**Разобранные пути:**\n- новый блок smoke (`demo/smoke_stairs.mjs:11-24, 277-332, 745-767`) и его вспомогательные функции `writesIdle`/`screen`/`stairs` (строки 39-77);\n- `setServerConfig` в `demo/helpers/hp-test.mjs:307-318`: конфиг передаётся как есть, без миграции;\n- `reloadConfigOnly` с `force=true`.",
+          "analysis": [
+            {
+              "topic": "Закрытие блокера раунда 1: нативная регрессия",
+              "assessment": "Все четыре пункта прошлого блокера закрыты.\n1. Число лестниц и носитель снимаются до жеста.\n2. Полная запись сравнивается с `before`/`moved` после move, undo, redo и reload, а также с данными сервера.\n3. Носитель сверяется строго. Сценарий воспроизводит и первопричину: до правки Undo добавлял `model_version: 11` и `plan_graph`, и `legacyStairModelAndCanonicalCarrierStayExact` упал бы уже на фазе `undone`.\n4. Есть прогон на итоговом SHA.\nПрежняя проверка `result.moveUndoRedo` по x/y сохранена. Ранний сценарий не удалён, а усилен, как требует ТЗ.",
+              "evidence": "`demo/smoke_stairs.mjs:280-332` — сбор фаз; `:745-767` — `checkAll` с `legacyStair*`; квитанция `20261104T090259677-4b40dc27` на `16a8c1c`: passed, failures=[]."
+            },
+            {
+              "topic": "Настоящий ввод и инструмент лестницы",
+              "assessment": "Клик и drag идут через `page.mouse`, клавиши — через `page.keyboard.press`. Значит, маршрутизация Ctrl+Shift+Z, о которой просит issue, проверяется на настоящем keydown. Регистр `key` при нажатом Shift тоже не важен: если бы Redo не сработал, `redone.record` совпал бы с `before`, и `legacyStairRedoRestoresFullRecord` упал бы. Инструмент лестницы выбран заранее (`chooseStair('straight')`). Реальный клик по центру лестницы покрывает сценарий «armed tool не создаёт лишнюю лестницу» точнее прежнего `dispatchEvent` на `.hp-stair-hit`. Поздние сценарии (resize/rotate и т. д.) по-прежнему используют синтетические события; это вне объёма задачи.",
+              "evidence": "`demo/smoke_stairs.mjs:17-24, 295-311`; проверка `legacyStairArmedToolNeverDuplicates` по пяти фазам."
+            },
+            {
+              "topic": "Поправка на удаление пустых `segments`",
+              "assessment": "Исключение узкое и обоснованное. Удаляются только пустые массивы `segments` в ожидаемом значении, остальное (версия модели, стены, другие этажи, неизвестные поля, порядок) сравнивается строго. Ожидаемое значение строится от `before.carrier` независимо от фактического, поэтому реальные изменения оно не маскирует. Комментарий в коде объясняет, откуда берётся это допущение (retired derived-segments, #1015), — полезный, а не пересказ.",
+              "evidence": "`demo/smoke_stairs.mjs:745-751`."
+            },
+            {
+              "topic": "Продуктовая правка",
+              "assessment": "Без изменений с раунда 1. Условие `stairsOnly` строже, чем «нефизический шаг», и переиспользует общий `restorableSpace` из #1222. При текущей модели поведение прежнее. Отрицательные unit-случаи теперь проверяются и для `version` undefined; именно эта версия воспроизводила исходный баг. Так закрыто прошлое необязательное улучшение.",
+              "evidence": "`src/decor-history-restore.ts:8, 15-31, 45-52`; `test/decor-history-restore.test.mjs:59-107` (цикл `for(const version of [undefined,10])`)."
+            },
+            {
+              "topic": "Документы",
+              "assessment": "CHANGELOG (en/ru) и ledger `line-fix` соответствуют объёму правки и не обещают лишнего.",
+              "evidence": "`docs/CHANGELOG.md:5`, `docs/CHANGELOG.ru.md:11`, `docs/release-ledger/v1.83.0/1269.json`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Добавить в smoke явное предусловие, что фикстура действительно старая: в `before.carrier` нет `model_version` и ни на одном этаже нет `plan_graph`. Сейчас ранний сценарий доказывает отсутствие миграции только потому, что демо-фикстура старая (это следует из диагностики исполнителя, а не из самого теста). Если базовую фикстуру когда-нибудь переведут на model 11, проверки `legacyStair*` продолжат проходить, но перестанут покрывать #1269. Цена — одна строка в `checkAll`.",
+            "Гипотеза из раунда 1 о таком же дефекте для шага, где меняется только `plan_transform` (жест подложки), остаётся непроверенной. Исполнитель обоснованно не включил её в эту задачу. Если её подтвердит тест на настоящем cursor, понадобится отдельный issue."
+          ],
+          "boundaries": "По исходникам на head изучены:\n- diff целиком;\n- `demo/smoke_stairs.mjs`, строки 1-340, и итоговый блок `checkAll` по diff;\n- `demo/helpers/hp-test.mjs:307-318` (`setServerConfig`);\n- `src/config-reload-authority.ts:232-281` (`reloadConfigOnly`).\n\nПродуктовый механизм подробно разобран в раунде 1, и `src/decor-history-restore.ts` с тех пор не менялся. Реализацию `houseplan/config/get` в фейковой интеграции целиком не читал (поиск вернул слишком большой результат). То, что демо-фикстура старая (`model_version` отсутствует), принято по диагностике исполнителя и по отсутствию `model_version` в `demo/serve.mjs`; собственную проверку на это smoke не делает.\n\nСборку, тесты и smoke я не запускал. Использована квитанция S6 `20261104T090259677-4b40dc27` (passed на `16a8c1c`). То, что в набор входит браузерный `smoke_stairs`, следует из перечня areaTests исполнителя и из предшествующих событий «Браузер: stairs: failed» на этом же наборе; сам `report.json` недоступен. HA E2E перед бетой по ТЗ отмечается отдельно и в эту проверку не входит.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 20,
+          "cache_creation_input_tokens": 75348,
+          "cache_read_input_tokens": 528498,
+          "output_tokens": 7729,
+          "output_tokens_details": {
+            "thinking_tokens": 2303
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 75348,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 700,
+              "cache_read_input_tokens": 68578,
+              "cache_creation_input_tokens": 10974,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 10974
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер первого раунда снят, задачу можно принимать.\n\nПродуктовая правка в `src/decor-history-restore.ts` с прошлого раунда не менялась. Тогда она признана корректной: Undo/Redo, где меняются только лестницы, идёт по presentation-дорожке и больше не мигрирует старый стеновой носитель. Запреты для структурных, смешанных, будущих и некорректных состояний остались строгими.\n\nПрошлый раунд вернул задачу из-за слабой нативной регрессии. Ранний сценарий `demo/smoke_stairs.mjs` теперь покрывает приёмку целиком:\n- ввод идёт через настоящие `page.mouse`/`page.keyboard`: клик, перетаскивание, Ctrl+Z, Ctrl+Shift+Z;\n- при выбранном инструменте «Лестница» проверяется, что число лестниц не растёт;\n- полная запись лестницы сравнивается через `isDeepStrictEqual` в фазах move/undo/redo, после настоящего `_reloadConfigOnly(true)` и после чтения с сервера через `houseplan/config/get`;\n- весь конфиг, кроме `stairs` этажа f1, сверяется строго. Поэтому миграция модели — появление `model_version`/`plan_graph`, изменение стен — уронит тест.\n\nКвитанция S6 `20261104T090259677-4b40dc27` на итоговом SHA `16a8c1c` — passed. Ранее события «Браузер: stairs: failed» на этом же наборе показывают, что браузерный `smoke_stairs` в него входит. Остались только необязательные улучшения.\n\n## Понимание решения\n\n**Проблема.** На плане со старым носителем `model_version` отсутствует, а стены хранятся в `walls`/`partitions`. Пользователь перемещает лестницу и нажимает Undo. Шаг уходил в структурное восстановление, которое попутно мигрировало документ в model 11. После этого Redo не совпадал с текущим состоянием, шаг удалялся из истории, и лестница оставалась на исходной позиции.\n\n**После правки.** `restoreNonPhysicalHistory` вычисляет `stairsOnly`: снимки равны везде, кроме `stairs`. Только в этом случае `restorableSpace` допускает старую версию модели (целое число от 0 до 11) и при этом по-прежнему отклоняет node/chain/references, смешанный документ с `plan_graph`, будущую и строковую версию. Код не менялся с раунда 1, где механизм уже разобран и принят.\n\n**Что изменилось в этом раунде.** Только `demo/smoke_stairs.mjs`:\n- `page.exposeFunction('__stairHistoryNative')` передаёт клик, drag и клавиши в Playwright, без подмены обработчиков продукта;\n- `stairHistoryState()` снимает полную запись лестницы, число лестниц и весь `_serverCfg` без `f1.stairs` до жеста и после ACK каждой фазы;\n- после Redo вызывается `card._reloadConfigOnly(true)` (`src/config-reload-authority.ts:232-276`: принудительное чтение `_getAuthoritativeConfig` → `_adoptAuthoritative`), затем отдельно `houseplan/config/get`;\n- на стороне Node всё сравнивается через `isDeepStrictEqual` с ожидаемым носителем. Единственная допустимая разница — удаление пустых `segments`.\n\n**Разобранные пути:**\n- новый блок smoke (`demo/smoke_stairs.mjs:11-24, 277-332, 745-767`) и его вспомогательные функции `writesIdle`/`screen`/`stairs` (строки 39-77);\n- `setServerConfig` в `demo/helpers/hp-test.mjs:307-318`: конфиг передаётся как есть, без миграции;\n- `reloadConfigOnly` с `force=true`.\n\n## Разбор решения\n\n### Закрытие блокера раунда 1: нативная регрессия\n\nВсе четыре пункта прошлого блокера закрыты.\n1. Число лестниц и носитель снимаются до жеста.\n2. Полная запись сравнивается с `before`/`moved` после move, undo, redo и reload, а также с данными сервера.\n3. Носитель сверяется строго. Сценарий воспроизводит и первопричину: до правки Undo добавлял `model_version: 11` и `plan_graph`, и `legacyStairModelAndCanonicalCarrierStayExact` упал бы уже на фазе `undone`.\n4. Есть прогон на итоговом SHA.\nПрежняя проверка `result.moveUndoRedo` по x/y сохранена. Ранний сценарий не удалён, а усилен, как требует ТЗ.\n\nОснование: `demo/smoke_stairs.mjs:280-332` — сбор фаз; `:745-767` — `checkAll` с `legacyStair*`; квитанция `20261104T090259677-4b40dc27` на `16a8c1c`: passed, failures=[].\n\n### Настоящий ввод и инструмент лестницы\n\nКлик и drag идут через `page.mouse`, клавиши — через `page.keyboard.press`. Значит, маршрутизация Ctrl+Shift+Z, о которой просит issue, проверяется на настоящем keydown. Регистр `key` при нажатом Shift тоже не важен: если бы Redo не сработал, `redone.record` совпал бы с `before`, и `legacyStairRedoRestoresFullRecord` упал бы. Инструмент лестницы выбран заранее (`chooseStair('straight')`). Реальный клик по центру лестницы покрывает сценарий «armed tool не создаёт лишнюю лестницу» точнее прежнего `dispatchEvent` на `.hp-stair-hit`. Поздние сценарии (resize/rotate и т. д.) по-прежнему используют синтетические события; это вне объёма задачи.\n\nОснование: `demo/smoke_stairs.mjs:17-24, 295-311`; проверка `legacyStairArmedToolNeverDuplicates` по пяти фазам.\n\n### Поправка на удаление пустых `segments`\n\nИсключение узкое и обоснованное. Удаляются только пустые массивы `segments` в ожидаемом значении, остальное (версия модели, стены, другие этажи, неизвестные поля, порядок) сравнивается строго. Ожидаемое значение строится от `before.carrier` независимо от фактического, поэтому реальные изменения оно не маскирует. Комментарий в коде объясняет, откуда берётся это допущение (retired derived-segments, #1015), — полезный, а не пересказ.\n\nОснование: `demo/smoke_stairs.mjs:745-751`.\n\n### Продуктовая правка\n\nБез изменений с раунда 1. Условие `stairsOnly` строже, чем «нефизический шаг», и переиспользует общий `restorableSpace` из #1222. При текущей модели поведение прежнее. Отрицательные unit-случаи теперь проверяются и для `version` undefined; именно эта версия воспроизводила исходный баг. Так закрыто прошлое необязательное улучшение.\n\nОснование: `src/decor-history-restore.ts:8, 15-31, 45-52`; `test/decor-history-restore.test.mjs:59-107` (цикл `for(const version of [undefined,10])`).\n\n### Документы\n\nCHANGELOG (en/ru) и ledger `line-fix` соответствуют объёму правки и не обещают лишнего.\n\nОснование: `docs/CHANGELOG.md:5`, `docs/CHANGELOG.ru.md:11`, `docs/release-ledger/v1.83.0/1269.json`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить в smoke явное предусловие, что фикстура действительно старая: в `before.carrier` нет `model_version` и ни на одном этаже нет `plan_graph`. Сейчас ранний сценарий доказывает отсутствие миграции только потому, что демо-фикстура старая (это следует из диагностики исполнителя, а не из самого теста). Если базовую фикстуру когда-нибудь переведут на model 11, проверки `legacyStair*` продолжат проходить, но перестанут покрывать #1269. Цена — одна строка в `checkAll`.\n- Гипотеза из раунда 1 о таком же дефекте для шага, где меняется только `plan_transform` (жест подложки), остаётся непроверенной. Исполнитель обоснованно не включил её в эту задачу. Если её подтвердит тест на настоящем cursor, понадобится отдельный issue.\n\n## Границы анализа\n\nПо исходникам на head изучены:\n- diff целиком;\n- `demo/smoke_stairs.mjs`, строки 1-340, и итоговый блок `checkAll` по diff;\n- `demo/helpers/hp-test.mjs:307-318` (`setServerConfig`);\n- `src/config-reload-authority.ts:232-281` (`reloadConfigOnly`).\n\nПродуктовый механизм подробно разобран в раунде 1, и `src/decor-history-restore.ts` с тех пор не менялся. Реализацию `houseplan/config/get` в фейковой интеграции целиком не читал (поиск вернул слишком большой результат). То, что демо-фикстура старая (`model_version` отсутствует), принято по диагностике исполнителя и по отсутствию `model_version` в `demo/serve.mjs`; собственную проверку на это smoke не делает.\n\nСборку, тесты и smoke я не запускал. Использована квитанция S6 `20261104T090259677-4b40dc27` (passed на `16a8c1c`). То, что в набор входит браузерный `smoke_stairs`, следует из перечня areaTests исполнителя и из предшествующих событий «Браузер: stairs: failed» на этом же наборе; сам `report.json` недоступен. HA E2E перед бетой по ТЗ отмечается отдельно и в эту проверку не входит.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 477af68e102d42f95372f7e50f8974565a15b6e6 → 16a8c1c990e6e74422524700fe69ef4ee2c59f67\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1269, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nВыявлена узкая legacy/current развилка: restoreDecorOnlyHistory допускает сохранение legacy носителя только для decor; restoreNonPhysicalHistory включает stairs, но отказывает любой legacy версии. Undo лестницы попадает в structural restore, мигрирует стеновой носитель, и прежний Redo больше не соответствует ему. Поздние current-model stair cases поэтому проходят.\n\nРешение — допуск legacy только для строго stairs-only snapshot при равенстве всех остальных полей и сохранении существующих guards node/chain/references/mixed/future/invalid model. Не расширять generic legacy presentation authority для plan_transform, декора вместе с лестницей или физических изменений. Реальный history cursor и нативный ранний сценарий должны доказать Undo/Redo без смены модели/ID.\n\n### Исправления по предыдущему ревью\n\nРаунд1, workflow41801202242: код признан корректным; возвращено на S6 для более полного native свидетельства и явного состава доказательств.\n\n- Полные record/count/model/carrier/reload: ранний smoke_stairs теперь сохраняет весь объект до жеста и после ACK каждого Move/Undo/Redo. Node-side isDeepStrictEqual сравнивает все поля (включая ID, стиль, размеры, target_space_id), число лестниц и весь конфиг кроме stairs выбранного этажа. После Redo вызывается настоящий _reloadConfigOnly(true) и отдельно config/get принятого fake integration; сравниваются полный объект, carrier и count. Другие этажи/лестницы также входят в полный carrier snapshot.\n- Настоящий ввод: этот ранний случай переведён с dispatchEvent на page.mouse/page.keyboard через test binding, не подменяющий product handlers/writer. Armed Stair tool остаётся выбранным, увеличение числа лестниц явно запрещено.\n- Отрицательные случаи расширены на version undefined и10. Product restore не менялся после принятого ревью механизма.\n- Состав S6 указан явно: request artifacts/issue1269-task.json передаёт areaTests=[test/decor-history-restore.test.mjs,test/geometry-history-restore.test.mjs,test/stairs-editor-live.test.mjs,demo/smoke_stairs.mjs]. Это полный browser файл с новыми checks legacyStair*, не только unit-файл. Предыдущий локальный S6 20261104T083830988-3fda6329 на ecb24f0e2 действительно включал result id=smoke:smoke_stairs, status=passed,durationMs=17352. Новый S6 на итоговом SHA будет передан штатной квитанцией после выполнения; его успех заранее не заявляется.\n\nДополнительная диагностика до исправления воспроизвела model undefined/graph=false → Undo model11/graph=true → Redo toast Cannot redo Move stairs, history entry removed. Лог triage-stairs-model.log сохранён. Необязательная гипотеза ревью о plan_transform пока не включена в этот stairs-only fix; при подтверждении нужна отдельная задача.\n\nПри усилении native carrier oracle обнаружено ровно одно допустимое ACK изменение: удаляются пустые retired spaces[].segments у двух исходных этажей. Это existing derived-segments decoder (inventory untilv1.21.3, geometry-cleanup.ts), не graph/model migration. Проба triage-stairs-carrier.log сохранила все10 leaf-отличий по пяти фазам. Полный expected carrier независимо учитывает только удаление **пустых** segments; все другие поля, версии, непустые коллекции и порядок массивов остаются строгими. Реальный pointer/key, full record/count, reload/wire readback уже достигнуты; новый S6 проверяет этот точный expected. Технические отказы усиленного теста (имя переменной/SVG helper) исправлены, исходные логи сохранены; они не маскировались как продуктовые баги.\n```\n\n</details>\n",
+        "createdAt": "2026-11-04T09:05:51.723Z",
+        "artifactId": 13308987222,
+        "runId": 41804329009,
+        "runAttempt": 1,
+        "completedAt": "2026-11-04T09:05:57Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41804329009",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6"
       }
     },
     "1270": {
@@ -2901,9 +3005,9 @@
     "fence": 155,
     "materialSha": "16a8c1c990e6e74422524700fe69ef4ee2c59f67",
     "expectedBase": "477af68e102d42f95372f7e50f8974565a15b6e6",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793782969733,
-    "expiresAt": 1793786601022,
+    "expiresAt": 1793786817915,
     "patchId": "f1eb882a9042e6d5c617e435dcebf4fdea39fadc",
     "reviewRequest": "review:1269:5:f1eb882a9042e6d5c617e435dcebf4fdea39fadc:477af68e102d42f95372f7e50f8974565a15b6e6"
   },
@@ -3046,6 +3150,10 @@
     },
     "finish:5fe263a1-a363-43b8-9675-fd78e68a1b97:finish:7:review-presentation": {
       "digest": "ddcbb1bd0ff5f1bc3bb54bf366dc739b6a9aef7638f74602e8b72fafef56efdd",
+      "issue": 1269
+    },
+    "finish:5fe263a1-a363-43b8-9675-fd78e68a1b97:finish:7:review-complete": {
+      "digest": "d68a8d706528adb585ec7b17da3a3dc733e6d5001d15c697a44c1f0b0b4ecf83",
       "issue": 1269
     },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
