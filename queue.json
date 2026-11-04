@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2677,
+  "revision": 2678,
   "nextTicket": 165,
   "nextFence": 165,
   "tasks": {
@@ -2817,9 +2817,15 @@
         "docs/CHANGELOG.ru.md",
         "test/daycycle-material.test.mjs"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1793790011471,
-      "automationDetail": "GitHub PUT failed (500)"
+      "s6": {
+        "id": "20261104T110117746-50c6b041",
+        "name": "Тесты для задачи #1276 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T110117746-50c6b041/report.json",
+        "materialSha": "c7da27c4970522f9865018f9bf17f196727de739",
+        "status": "passed",
+        "finishedAt": "2026-11-04T11:01:19.947Z",
+        "failures": []
+      }
     },
     "1278": {
       "issue": 1278,
@@ -2969,9 +2975,9 @@
     "fence": 164,
     "materialSha": "c7da27c4970522f9865018f9bf17f196727de739",
     "expectedBase": "c8d8e8548d0135db5e46bcc409d06f8a3aba8532",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793789932621,
-    "expiresAt": 1793790351880,
+    "expiresAt": 1793793680572,
     "patchId": "dfbf3ca1ef558c083b7ca6255e18b05bb9ef2077"
   },
   "events": {
@@ -3009,6 +3015,10 @@
     },
     "finish:dcd589de-3632-4170-9bad-075968fec203": {
       "digest": "51f713bc83615762ebde293aa637a170b4abf728d47a0a39a95cbb61e8d4d4cc",
+      "issue": 1276
+    },
+    "finish:7f34f282-8e88-42d1-a1d7-1786dcb2cea9:finish:4:s6-complete": {
+      "digest": "f576063b9d358f2c82ca6cba0bb61b58a249d21d6f48a3ccf80b31258e7465e1",
       "issue": 1276
     },
     "finish:592f0c29-4332-46f8-839a-6fbde55d9cf3": {
