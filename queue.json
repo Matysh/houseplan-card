@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3062,
-  "nextTicket": 185,
+  "revision": 3063,
+  "nextTicket": 186,
   "nextFence": 182,
   "tasks": {
     "1126": {
@@ -3112,11 +3112,11 @@
       "materialSha": "b5a3fe5dfd74443f8a9151a80277876a82b24f45",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 180,
-      "queued": false,
+      "ticket": 185,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793817576551,
-      "reviewEntry": 1,
+      "readyAt": 1793818817435,
+      "reviewEntry": 2,
       "patchId": "dd17aff87944a598164ac20f578ffb1c7a6a84be",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -3133,7 +3133,6 @@
         "test/summary-panel-presentation.test.mjs",
         "test/summary-panel-runtime.test.mjs"
       ],
-      "reason": "executor-admission-expired",
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -3325,7 +3324,8 @@
   "waiting": [
     1287,
     1282,
-    1289
+    1289,
+    1286
   ],
   "active": {
     "issue": 1283,
@@ -4014,6 +4014,19 @@
         "layer": "infra",
         "materialSha": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
         "delivered": true
+      }
+    },
+    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4": {
+      "digest": "10fdee80ae5e927b52f659b8681cb669a9dd78a316dd877b556510b6d6694bb1",
+      "issue": 1286,
+      "message": {
+        "kind": "queued",
+        "issue": 1286,
+        "at": 1793818817435,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b5a3fe5dfd74443f8a9151a80277876a82b24f45"
       }
     }
   },
