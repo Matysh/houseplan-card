@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2918,
-  "nextTicket": 174,
+  "revision": 2919,
+  "nextTicket": 175,
   "nextFence": 174,
   "tasks": {
     "1126": {
@@ -3006,6 +3006,20 @@
         "status": "published",
         "sourceSha": "659440571bc388d108ec7f0200ce9c407a9ee132"
       }
+    },
+    "1283": {
+      "issue": 1283,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1283-local-seam-cleanup",
+      "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 174,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793816293634,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3110,9 +3124,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1283
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
+      "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
+      "issue": 1283,
+      "message": {
+        "kind": "queued",
+        "issue": 1283,
+        "at": 1793816293634,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "41b10f32e0ab6daf926781c5bdffd165d2aa60a5"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
     "status": "delivered",
