@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2668,
+  "revision": 2669,
   "nextTicket": 164,
   "nextFence": 164,
   "tasks": {
@@ -2798,7 +2798,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793789415128,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1793789440125,
+      "automationDetail": "GitHub PUT failed (502)"
     },
     "1278": {
       "issue": 1278,
@@ -2963,6 +2966,10 @@
     },
     "github:41816817017:1:completions:message:e7d9a1a24c686a092f3391bb58ca02a32299f8f208ef4d20232ccc84e7ca57fa": {
       "digest": "8f8e47a7fc9c96d123d980c8acec6577b4f71936973faa0d8453bf280a50d692",
+      "issue": 1276
+    },
+    "finish:592f0c29-4332-46f8-839a-6fbde55d9cf3:finish:2:automation-pending": {
+      "digest": "67a4f1c091ab3b1d176b0d4117b6be76a149276a596c2cf1d8f7595cadf5d791",
       "issue": 1276
     },
     "finish:592f0c29-4332-46f8-839a-6fbde55d9cf3": {
