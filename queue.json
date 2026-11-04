@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3041,
-  "nextTicket": 182,
+  "revision": 3042,
+  "nextTicket": 183,
   "nextFence": 181,
   "tasks": {
     "1126": {
@@ -3126,6 +3126,20 @@
         "test/summary-panel-runtime.test.mjs"
       ]
     },
+    "1287": {
+      "issue": 1287,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1287-delete-layout-ownership",
+      "materialSha": "ccce90344a843d96fd49e73fca0390de24eb9f51",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 182,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793818133308,
+      "reviewEntry": 1
+    },
     "1288": {
       "issue": 1288,
       "branch": "issue/1288-release-return-7af907c34e0b",
@@ -3264,7 +3278,8 @@
     }
   },
   "waiting": [
-    1283
+    1283,
+    1287
   ],
   "active": {
     "issue": 1286,
@@ -3774,6 +3789,19 @@
           "finishedAt": "2026-11-04T18:32:08.205Z",
           "failures": []
         }
+      }
+    },
+    "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
+      "digest": "afebff1b95fdb3fa6a9f751d94fc3f6fc21d30e5705e7a1b452b92475a0baf28",
+      "issue": 1287,
+      "message": {
+        "kind": "queued",
+        "issue": 1287,
+        "at": 1793818133308,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ccce90344a843d96fd49e73fca0390de24eb9f51"
       }
     }
   },
