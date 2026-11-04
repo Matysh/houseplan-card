@@ -52,7 +52,7 @@ const result = await page.evaluate(async () => {
 
   await reset([roomAt('base', base)]);
   const roomShape = () => (space().rooms || []).map(({ wall_ids: _wallIds, ...room }) => room);
-  const configBefore = JSON.stringify(roomShape());
+  const configBefore = structuredClone(roomShape());
   const drawnRing = ring(300, 300, 500, 500);
   await draw(closed(drawnRing));
   const offered = card._wallFaceBatch?.candidates || [];
@@ -66,7 +66,16 @@ const result = await page.evaluate(async () => {
     offered.reduce((sum, candidate) => sum + candidate.area
       + (candidate.split ? 30000 : 0), 0) - 70000,
   ) < 1;
-  out.partialOverlapKeepsRoomsUntilDecision = JSON.stringify(roomShape()) === configBefore;
+  // Accepted Draw edges node the existing graph at each T-incidence. These
+  // two collinear vertices do not move its boundary or accept a room decision.
+  const expectedPoly = [[.2,.2],[.4,.2],[.4,.3],[.4,.4],[.3,.4],[.2,.4]];
+  const currentRooms = roomShape();
+  const metadata = rooms => rooms.map(({ poly: _poly, ...room }) => room);
+  out.partialOverlapKeepsParentBoundaryUntilDecision = currentRooms.length === 1
+    && JSON.stringify(metadata(currentRooms)) === JSON.stringify(metadata(configBefore))
+    && currentRooms[0].poly.length === expectedPoly.length
+    && currentRooms[0].poly.every((point, i) => point.length === 2
+      && point.every((value, axis) => Math.abs(value - expectedPoly[i][axis]) < 1e-12));
 
   await reset([roomAt('outer', ring(100, 100, 600, 600))]);
   await draw(closed(ring(200, 200, 300, 300)));

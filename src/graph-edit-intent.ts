@@ -495,8 +495,17 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
   }
   for(let i=0;i<lines.length;i++)for(let j=i+1;j<lines.length;j++){
     const a=lines[i],b=lines[j],hit=Q.intersection(a.a,a.b,b.a,b.b);
-    if(hit){add(a.cuts,hit.t,hit.p);add(b.cuts,hit.u,hit.p);}
+    if(hit&&Q.cmp(hit.t,Q.ZERO)>=0&&Q.cmp(hit.t,Q.ONE)<=0
+      &&Q.cmp(hit.u,Q.ZERO)>=0&&Q.cmp(hit.u,Q.ONE)<=0){
+      add(a.cuts,hit.t,hit.p);add(b.cuts,hit.u,hit.p);
+    }
   }
+  // All coincident sources need the same atomic cuts. A shorter foreign
+  // support can divide the room side even when it does not cross its longer
+  // drawn support; otherwise the longer source cannot represent either atom.
+  for(const line of lines)for(const support of uniqueSupports)
+    if(!Q.orientation(support.a,support.b,line.a).n&&!Q.orientation(support.a,support.b,line.b).n)
+      for(const cut of line.cuts)add(cutsFor(support),Q.projectParameter(cut.p,support.a,support.b),cut.p,cut.id);
   const pointIds=new Map<string,string>();
   for(const s of uniqueSupports){pointIds.set(JSON.stringify(Q.encodePoint(s.a)),s.edge!.from);pointIds.set(JSON.stringify(Q.encodePoint(s.b)),s.edge!.to);}
   const nodeFor=(point:Q.ExactPoint,seed:unknown,preferred?:string):string=>{
@@ -515,8 +524,19 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
         from:cuts[i].id!,to:cuts[i+1].id!};
       refs.push(edge);plan.newEdges.set(edgeKey(edge),edge);
     }
-    for(let i=cuts.length-2;i>0;i--)plan.operations.push({kind:'insert-on-edge',edge:ref(support.edge!),node:cuts[i].id!,
-      t:Q.encodeRational(Q.div(cuts[i].t,cuts[i+1].t)),newEdgeId:refs[i].id});
+    for(let i=cuts.length-2;i>0;i--){
+      const node=cuts[i].id!;
+      plan.operations.push({kind:'insert-on-edge',edge:ref(support.edge!),node,
+        t:Q.encodeRational(Q.div(cuts[i].t,cuts[i+1].t)),newEdgeId:refs[i].id});
+      // Reusing a proved source node introduces incidence, not a new position
+      // dependency. In particular, an existing endpoint may already support
+      // the new edge's start: reversing that relation would create a cycle.
+      if(index.nodes.has(node)){
+        const dependency=graph.dependencies.find(d=>d.node===node);
+        plan.operations.push(dependency?{kind:'set-dependency',dependency:clone(dependency)}
+          :{kind:'retire-dependency',node});
+      }
+    }
     pieces.set(edgeKey(support.edge!),refs.map((edge,i)=>({edge,lo:cuts[i].t,hi:cuts[i+1].t})));
     plan.variants.set(edgeKey(support.edge!),refs.map(ref));
   }
@@ -531,7 +551,9 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
         const candidates=[...pieces.values()].flat().map(p=>p.edge).filter(e=>
           Q.pointEq(plan.nodePoints.get(e.from)!,a.p)&&Q.pointEq(plan.nodePoints.get(e.to)!,b.p)
           ||Q.pointEq(plan.nodePoints.get(e.from)!,b.p)&&Q.pointEq(plan.nodePoints.get(e.to)!,a.p))
-          .sort((a,b)=>Number(a.kind==='partition')-Number(b.kind==='partition')||codepoint(edgeKey(a),edgeKey(b)));
+          .sort((a,b)=>Number(a.kind==='partition')-Number(b.kind==='partition')
+            ||Number(b.id===line.support?.edge?.id)-Number(a.id===line.support?.edge?.id)
+            ||Number(consumedSet.has(b.id))-Number(consumedSet.has(a.id))||codepoint(edgeKey(a),edgeKey(b)));
         let edge=candidates[0],target:GraphEdgeRef;
         if(edge){
           if(edge.kind==='partition'){
@@ -557,9 +579,18 @@ function facePlan(before:any,draft:any,rooms:readonly string[],removeRooms:reado
     plan.operations.push({kind:'replace-room-cycle',room,edges:cycle});
   }
   for(const room of removeRooms)if(!rooms.includes(room)){plan.operations.push({kind:'delete-face',room});plan.removedRooms.add(room);}
-  // Consumed named partitions are promoted exactly where the new cycles use
-  // them; unrelated branches remain ordinary independent physical walls.
-  void consumedSet;return retained;
+  // A drawn interval may overlap another named source. After selecting its
+  // room carrier, consume only explicitly accepted, identical unhosted pieces
+  // represented by that carrier; preserve tails and independent material.
+  for(const id of consumedSet)for(const{edge}of pieces.get('partition:'+id)||[]){
+    if(promoted.has(edgeKey(edge))||(before.openings||[]).some((o:any)=>o.host?.kind==='partition'&&o.host.id===id))continue;
+    const covered=[...retained].map(key=>plan.newEdges.get(key)!).some(wall=>wall&&wall.cm===edge.cm
+      &&JSON.stringify(wall.props||null)===JSON.stringify(edge.props||null)
+      &&(Q.pointEq(plan.nodePoints.get(wall.from)!,plan.nodePoints.get(edge.from)!)&&Q.pointEq(plan.nodePoints.get(wall.to)!,plan.nodePoints.get(edge.to)!)
+        ||Q.pointEq(plan.nodePoints.get(wall.from)!,plan.nodePoints.get(edge.to)!)&&Q.pointEq(plan.nodePoints.get(wall.to)!,plan.nodePoints.get(edge.from)!)));
+    if(covered){plan.operations.push({kind:'delete-edge',edge:ref(edge)});plan.newEdges.delete(edgeKey(edge));}
+  }
+  return retained;
 }
 function openingTargets(before:any,draft:any,intent:GraphEditIntent,sourceBefore:any,graph:PlanGraph,
   variants:Map<string,GraphEdgeRef[]>,mapping:GraphMapping,operations:GraphOperation[]):void{

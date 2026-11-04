@@ -99,7 +99,13 @@ const res = await page.evaluate(async () => {
       bubbles: true,
     }));
     await c.updateComplete; await window.__hpTest.waitForWrites();
+    // The third new edge already closes a face against the existing neighbour.
+    // A real dialog intercepts subsequent clicks; calling _markupClick directly
+    // through it would add a duplicate fourth wall and stale the frozen offer.
+    if (c._wallFaceBatch) break;
   }
+  out.neighbourOfferedBeforeDuplicateClosingEdge = c._wallFaceBatch?.candidates.length === 1
+    && sp().partitions.length === 3;
   c._nameSel = 'Neighbour';
   c._saveRoom();
   await upd();

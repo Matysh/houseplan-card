@@ -508,6 +508,9 @@ export function applyGraphOperation(before: PlanGraph, operation: GraphOperation
         if (graph.rooms.some(r => r.edges.some(ref => edgeKey(ref) === edgeKey(e)))) fail('edge-owned');
         for (const host of hostRecords) if (edgeKey(host.host) === edgeKey(e) && !op.removeHosts?.includes(host.id)) fail('edge-hosted');
         graph.edges = graph.edges.filter(x => x !== e);
+        for(const key of Object.keys(mapping.edges))
+          mapping.edges[key]=mapping.edges[key].filter(range=>edgeKey(range.ref)!==edgeKey(e));
+        mapping.edges[edgeKey(e)] ||= [];
         for (const id of op.removeHosts || []) mapping.hosts[id] = null;
         return;
       }

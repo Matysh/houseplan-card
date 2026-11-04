@@ -7,6 +7,40 @@ const copy=structuredClone;
 const rectangle=(id,x0=0,x1=1)=>({id,name:id,poly:[[x0,0],[x1,0],[x1,1],[x0,1]],custom:{keep:id}});
 const migrate=space=>G.migrateGraphSpace(space).space;
 const base=()=>migrate({id:'floor',rooms:[rectangle('a')],extra:{keep:1}});
+test('room promotion intersects finite sides, never their distant extensions',()=>{
+  const poly=[[0,0],[1,0],[1,.5],[2,.5],[2,1],[0,1]];
+  const before=migrate({id:'s',rooms:[],partitions:poly.map((a,i)=>({id:'p'+i,a,b:poly[(i+1)%poly.length],cm:5}))});
+  const draft=copy(before);draft.rooms.push({id:'r',name:'R',poly,wall_ids:poly.map((_,i)=>'p'+i)});
+  const result=commitGraphEditResult(before,draft,{kind:'faces',rooms:['r'],
+    consumedPartitionIds:poly.map((_,i)=>'p'+i),sourceEdges:before.plan_graph.edges});
+  assert.deepEqual(result.space.rooms[0].poly,poly);
+  assert.equal(result.graph.nodes.length,6);
+  assert.equal(result.graph.edges.length,6);
+  assert.equal(G.validateGraph(result.graph).ok,true);
+});
+test('face promotion reuses source anchors without a dependency cycle and consumes only named duplicate pieces',()=>{
+  const nodes=[[12,24],[24,24],[48,24],[72,24],[72,72],[24,72],[144,120],[168,120]]
+    .map(([x,y],i)=>({id:'n'+i,p:['l',String(x),String(y)]}));
+  const e=(id,from,to,cm=15,props)=>({id,kind:'partition',from:'n'+from,to:'n'+to,cm,...props?{props}:{}});
+  const graph={version:1,nodes,edges:[e('overlap',1,2),e('tail',0,1),e('unrelated',6,7),
+    e('top',1,3),e('right',3,4),e('bottom',4,5),e('left',5,1),
+    e('independent',1,2,15,{keep:'independent'}),e('other-material',1,2,25)],rooms:[],
+    dependencies:[{node:'n1',kind:'on-edge',refs:[{from:'n0',to:'n2'}],parameters:[['1','3']]}]};
+  const before=G.projectGraphSpace({id:'s',rooms:[]},graph).space,draft=copy(before);
+  draft.rooms.push({id:'new',name:'New',poly:[[.1,.1],[.3,.1],[.3,.3],[.1,.3]],wall_ids:['top','right','bottom','left']});
+  const result=commitGraphEditResult(before,draft,{kind:'faces',rooms:['new'],
+    consumedPartitionIds:['overlap','top','right','bottom','left','other-material'],
+    sourceEdges:graph.edges});
+  assert.equal(G.validateGraph(result.graph).ok,true);
+  assert.deepEqual(result.graph.dependencies,graph.dependencies);
+  assert.deepEqual(result.space.partitions.map(p=>p.id).sort(),['independent','other-material','tail','unrelated']);
+  for(const id of ['tail','unrelated','independent','other-material'])
+    assert.deepEqual(result.space.partitions.find(p=>p.id===id),before.partitions.find(p=>p.id===id));
+  const keys=new Set(result.graph.edges.map(G.edgeKey));
+  for(const ranges of Object.values(result.mapping.edges))for(const range of ranges)
+    assert.ok(keys.has(G.edgeKey(range.ref)),'lineage never points to a consumed duplicate');
+  assert.equal(result.space.rooms.length,1);
+});
 test('metadata intent preserves exact graph and opaque room/space properties',()=>{
   const before=base(),draft=copy(before);draft.title='New';draft.rooms[0].name='Renamed';
   const result=commitGraphEdit(before,draft,{kind:'metadata'});

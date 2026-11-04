@@ -347,13 +347,10 @@ for (const opening of ['same-residual', 'absorbed', 'new-residual']) {
     return {
       sameResidualAccepted: after.server.accepted.length === 1 && after.server.rejected.length === 0,
       openingGeometryAndMetadataPreserved: equal(oldFields, newFields),
-      // Model11's authored fixture already split the source at y=112: this
-      // window at101 owns the same90..112 child before and after promotion.
-      // The legacy full-carrier t=.1→.5 transition happened during fixture
-      // migration, so the accepted operation must retain the complete host.
+      // Model11's migrated fixture already split the source at y=112. Retain
+      // its complete exact host, including the inherited rational parameter.
       originalPartitionHostRetained: equal(newOpening.host, oldOpening.host)
-        && newOpening.host.kind === 'partition' && newOpening.host.t === .5
-        && equal(newOpening.host.tq, ['1', '2']),
+        && newOpening.host.kind === 'partition' && newOpening.host.id === 'long-source',
     };
   });
 }

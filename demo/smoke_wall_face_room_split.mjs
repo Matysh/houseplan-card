@@ -31,7 +31,7 @@ function seed({ added = false, duplicate = false, oldCm = 25, newCm = 15, openin
       y: old.a[1], length: .1, angle: 0,
       host: { kind: 'partition', id: old.id, t: (old.a[0] - openingX) / (old.a[0] - old.b[0]) },
       contact: 'binary_sensor.synthetic', future_field: { keep: true } }] : [],
-  }, { id: 'other-floor', title: 'Other', cell_cm: 8, rooms: [], wall_segments: [],
+  }, { id: 'other-floor', title: 'Other', cell_cm: 8, view_box: [0, 0, 1, 1], rooms: [], wall_segments: [],
     partitions: [{ id: 'unrelated', a: [0, 0], b: [1, 0], cm: 15 }] }] }).config;
   if (duplicate) config.spaces[0].wall_segments.push(structuredClone(config.spaces[0].wall_segments[0]));
   return config;
