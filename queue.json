@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2340,
+  "revision": 2341,
   "nextTicket": 146,
   "nextFence": 146,
   "tasks": {
@@ -142,31 +142,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "7f401ed4f334bbdb9dbe3c531b2897e05bf72c40"
-      }
-    },
-    "1156": {
-      "issue": 1156,
-      "branch": "codex/1156-copy-categories",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "mergedAt": 1793566156972,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentDigest": "5e8a6292234dbd4ca1d5"
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "de1043f3a3b45c3aa30016a7181cf227ff352713"
       }
     },
     "1157": {
@@ -2631,7 +2606,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "c347b44d10fa57238008f06e9fc741329a91c492"
       }
     }
   },
@@ -2989,6 +2965,18 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "dev-build:41796762905:1:1278": {
+      "digest": "861419cee4e38abd7e93bec2f79424345bc99f5cf22ebac9a2ee9480cce399e2",
+      "issue": 1278,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1278,
+        "at": 1793779637752,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c347b44d10fa57238008f06e9fc741329a91c492"
       }
     }
   },
