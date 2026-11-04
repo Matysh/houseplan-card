@@ -10,7 +10,7 @@ import * as mdi from '@mdi/js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export { demoIconSourceFiles };
 
-export function generateDemoIcons(root = ROOT) {
+export function renderDemoIcons(root = ROOT) {
   const names = new Set();
   for (const file of demoIconSourceFiles(root)) {
     const txt = readFileSync(resolve(root, file), 'utf8');
@@ -21,10 +21,16 @@ export function generateDemoIcons(root = ROOT) {
     const camel = 'mdi' + n.replace(/(^|-)(\w)/g, (_, __, c) => c.toUpperCase());
     if (mdi[camel]) map['mdi:' + n] = mdi[camel];
   }
+  return { text: 'window.__ICONS=' + JSON.stringify(map) + ';\n',
+    icons: Object.keys(map).length, references: names.size };
+}
+
+export function generateDemoIcons(root = ROOT) {
+  const { text, icons, references } = renderDemoIcons(root);
   const output = resolve(root, 'demo/srv/assets/icons.js');
   mkdirSync(dirname(output), { recursive: true });
-  writeFileSync(output, 'window.__ICONS=' + JSON.stringify(map) + ';\n');
-  return { icons: Object.keys(map).length, references: names.size };
+  writeFileSync(output, text);
+  return { icons, references };
 }
 
 if (isMainModule(import.meta.url)) {

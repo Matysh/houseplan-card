@@ -7,7 +7,7 @@ import { attestLaunchedBrowser } from '../scripts/browser-attestation.mjs';
 import { PAN_STEPS, SAMPLE_ROUNDS, DAYCYCLE_FIXTURE, pairedMeasurementReport } from './helpers/daycycle-measurement.mjs';
 import { installDaycycleObservation, observeDaycycleFrames } from './helpers/daycycle-observation.mjs';
 import { daycycleEnvironment, beginDaycycleLayers, daycycleLayerNodes, daycycleTraceObservation } from './helpers/daycycle-diagnostics.mjs';
-import { execFileSync } from 'node:child_process';
+import { daycycleMaterial } from './helpers/daycycle-material.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,12 +18,8 @@ try {
 const cdp = await page.context().newCDPSession(page);
 const environment = await attestLaunchedBrowser(browser, { reason: '#863 measurement environment', log: () => {} });
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const materialSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
-const materialTree = execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { cwd: ROOT, encoding: 'utf8' }).trim();
 const diagnosticEnvironment = await daycycleEnvironment(browser);
-const materialClean = !execFileSync('git', ['status', '--porcelain', '--untracked-files=normal', '--',
-  'src', 'demo', 'scripts', 'package.json', 'package-lock.json', 'tsconfig.json', 'rollup.config.mjs'],
-{ cwd: ROOT, encoding: 'utf8' }).trim();
+const { materialSha, materialTree, materialClean, materialInputs } = daycycleMaterial(ROOT);
 let currentMode = null;
 
 const setBackground = async (mode) => {
@@ -187,7 +183,7 @@ out.safePlanLayerIsExplicit = (safeDayStyle?.planWillChange || '') === 'opacity'
 
 out.rasterTasksObserved = [...staticSamples, ...dayCycleSamples].every((sample) => sample.tasks > 0);
 const report = pairedMeasurementReport({ materialSha, materialClean, environment,
-  materialTree, diagnosticEnvironment, fixture: DAYCYCLE_FIXTURE, staticSamples, dayCycleSamples });
+  materialTree, materialInputs, diagnosticEnvironment, fixture: DAYCYCLE_FIXTURE, staticSamples, dayCycleSamples });
 out.measurementValid = report.measurementValid;
 out.rasterRatioWithinBudget = report.rasterRatioWithinBudget;
 const ciName = [process.env.GITHUB_RUN_ID || 'ci', process.env.GITHUB_RUN_ATTEMPT || '0',

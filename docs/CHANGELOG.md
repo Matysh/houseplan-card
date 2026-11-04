@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Verify prepared demo icon bytes and their source digest when attesting daycycle measurements; generated icons alone no longer invalidate a clean run, while source edits and stale or altered assets still do. [#1276](https://github.com/Matysh/houseplan-card/issues/1276)
+
 - Repair Draw snap browser expectations for the 5cm node, hidden settled ink and exact T-junction splitting; retain the acute-angle refusal and full source-span metadata checks. [#1268](https://github.com/Matysh/houseplan-card/issues/1268)
 
 - Keep the cleanup browser suite's malformed legacy carrier authoritative after earlier model11 saves; retain K3 cancellation, retry, explicit removal and teardown checks. [#1275](https://github.com/Matysh/houseplan-card/issues/1275)
