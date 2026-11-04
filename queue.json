@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3148,
+  "revision": 3149,
   "nextTicket": 190,
   "nextFence": 189,
   "tasks": {
@@ -3639,6 +3639,10 @@
       "digest": "3ed13afcd99d1cd61e9ad2f6a758df1f44831d943da67909e4162736806cd815",
       "issue": 1283
     },
+    "github:41895373999:1:completions:message:140dd474db8b4d7af9472624d0809f8e11b015f5d955563e966f9b7206384c5e": {
+      "digest": "8882c60bc2008f47f1d99279bf224831d48c21591616854844ff6b73ab51ce26",
+      "issue": 1283
+    },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
       "issue": 1283,
@@ -4168,7 +4172,8 @@
           "requestId": "review:1283:5:04c2dcbf8c4b4d481eb8c470537ada7a62558dbd:f1d2fa8d0cf80adfb755531220deeb02391f8105",
           "detail": "The clean Git rebase replayed several task changelog commits through union merge and duplicated released beta.4 headings/old entries again. Author caught this before code review, returning to S6 to squash own task history and keep one correct Unreleased entry per language.",
           "eventId": "return-85f7c7c9-9484-4d9c-b08b-f30c194a809e:return:1283"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:203be738-9882-4ddd-9f0a-92a8684b3ec7": {
