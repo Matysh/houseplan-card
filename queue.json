@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3005,
+  "revision": 3006,
   "nextTicket": 181,
   "nextFence": 179,
   "tasks": {
@@ -3157,7 +3157,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793817507532,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "224652223448842a470f9555979504df9d2ee27d",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "7af907c34e0bc19a5f3215b6003023b2a96aaa5f",
+        "tag": "v1.84.0-beta.4",
+        "verdict": "accepted",
+        "patchId": "224652223448842a470f9555979504df9d2ee27d",
+        "materialSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3272,10 +3292,11 @@
     "token": "178:github:41890099991:1:tick:0:admit",
     "fence": 178,
     "materialSha": "d4d3d1a429fbcd21bace4b8e3e66c366305b1cf2",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "ad60cc9da89a002c7474eda65eb359eb7de30096",
+    "phase": "testing",
     "admittedAt": 1793817876535,
-    "expiresAt": 1793818176535
+    "expiresAt": 1793818190751,
+    "patchId": "224652223448842a470f9555979504df9d2ee27d"
   },
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
@@ -3425,6 +3446,10 @@
     "github:41890099991:1:completions:metadata:9b979816-26c4-4889-949d-76e7ee408fcf:task-notice:1282::": {
       "digest": "69e9a49e44d4815a3b26e90092f7b31642a62884cbe5c55ac8ca3392a027ce06",
       "issue": 1282
+    },
+    "release-return-finish:e7909f01-b9e9-4cc6-8dd7-b8c2ebb04a19:finish:1:synchronized": {
+      "digest": "b6d40b2e8e31eb817848410be1d36b02e095df243b93b2ae6db7776063baf7bb",
+      "issue": 1288
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
