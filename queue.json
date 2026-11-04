@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2263,
-  "nextTicket": 140,
+  "revision": 2264,
+  "nextTicket": 141,
   "nextFence": 140,
   "tasks": {
     "1126": {
@@ -2542,14 +2542,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "fix/1263-device-escape",
-      "materialSha": "277b95c3e9321d6185a8e5646b62453839498fd6",
+      "materialSha": "3dd492c788dd701da4054a6296741700eb27e151",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 139,
-      "queued": false,
+      "ticket": 140,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793778491518,
-      "reviewEntry": 1,
+      "readyAt": 1793778577182,
+      "reviewEntry": 2,
       "patchId": "7e26ebc4d9496f3195839f05bd6184a02e3e5437",
       "changedFiles": [
         "demo/smoke_device_contacts.mjs",
@@ -2559,7 +2559,6 @@
         "src/editors/properties/editor.ts",
         "test/properties-editor.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -2674,7 +2673,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1263
+  ],
   "active": null,
   "events": {
     "finish:7436f42e-cc43-4996-97ae-855aee24c758:finish:2:synchronized": {
@@ -2740,6 +2741,19 @@
           "detail": "Поведение изменённой области: failed",
           "eventId": "finish:7436f42e-cc43-4996-97ae-855aee24c758:finish:3:return:return:1263"
         }
+      }
+    },
+    "finish:757cd21c-b191-434e-a78f-9b37a3719d88": {
+      "digest": "f0bb429aaa1b6d1d777bb1584e0997656b962dca4dfd86f9830c2996c161ad40",
+      "issue": 1263,
+      "message": {
+        "kind": "queued",
+        "issue": 1263,
+        "at": 1793778577182,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "3dd492c788dd701da4054a6296741700eb27e151"
       }
     }
   },
