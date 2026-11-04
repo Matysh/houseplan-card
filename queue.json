@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2394,
+  "revision": 2395,
   "nextTicket": 149,
   "nextFence": 149,
   "tasks": {
@@ -2863,6 +2863,10 @@
       "digest": "0cadc284db97fa5d2ead964f016d9a1d0b33156c200d8f5d18dd8c6fe21d8fb8",
       "issue": 1267
     },
+    "github:41798544331:1:completions:message:117c5fcb5d4101b6d2d06b18c1f30aed400b2af77b7cf18d13aa35268d1ad711": {
+      "digest": "be0c25d1da899a164804b183fe7c6172d4582b66a0164f31f90e88181b3f2de7",
+      "issue": 1267
+    },
     "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0": {
       "digest": "1c9e8576ca6026734c4b243ccec36d8e141a862eedfef71ada2dea654147ee79",
       "issue": 1267,
@@ -2909,7 +2913,8 @@
           "entry": 1,
           "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно",
           "eventId": "finish:15ea9dcd-7586-492e-8591-d2041f4bd5d0:finish:3:return:return:1267"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:974d92f9-6e68-483f-a419-a042733f6a3d": {
