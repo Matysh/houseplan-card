@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 98,
+  "revision": 99,
   "active": "v1.84.0-beta.3-20261104-nodes",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -3024,8 +3024,11 @@
       "sourceSha": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
       "sha": "7ad20a3eb7418ba81bfe05d9a1359d27595cf718",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "7ad20a3eb7418ba81bfe05d9a1359d27595cf718"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -4042,7 +4045,8 @@
     "repair-beta1843-nodes-run-registration": "a1290b828fbc40641d1a04ea45110b13379ad5bd9889202f96949abca69cb2fc",
     "ship-review:result:8f3fc180-9497-4270-b622-f2e54190d49d": "e7edb9248ed5d5813bf99fff700ae6129f24c831e23d8145e66eb53329e3323c",
     "beta1843-nodes-report-20261104": "7db17e7530f6346baf2edda330ebce5564fdbcc8637ad2928a37ea038d10d0ae",
-    "beta1843-nodes-repairs-1260-20261104": "c5ad39f9f02cc4af945cfe625dedb574cecce97b9e1af29b4232f0e3b5491dee"
+    "beta1843-nodes-repairs-1260-20261104": "c5ad39f9f02cc4af945cfe625dedb574cecce97b9e1af29b4232f0e3b5491dee",
+    "beta1843-nodes-repaired-run-20261104": "96c4eb9b536abe3f2021feb52c9f633078b7bd8ad5aab3eda7ddb21b5cfa7e7d"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
