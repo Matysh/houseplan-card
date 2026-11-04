@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2973,
+  "revision": 2974,
   "nextTicket": 178,
   "nextFence": 177,
   "tasks": {
@@ -3000,7 +3000,7 @@
       "ownerDecision": null,
       "ticket": 176,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793816532719,
       "reviewEntry": 2,
       "patchId": "26e542184afe832d9eff2e81eafb8b496a11bcb1",
@@ -3023,6 +3023,15 @@
         "entry": 1,
         "detail": "Addressed test request named a missing plan-graph.test.mjs. Corrected to existing plan-graph-core.test.mjs before any S6 item ran.",
         "eventId": "return-db854156-49fe-4393-a687-c64988b4ad30:return:1283"
+      },
+      "s6": {
+        "id": "20261104T183134558-85935cb3",
+        "name": "Тесты для задачи #1283 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261104T183134558-85935cb3/report.json",
+        "materialSha": "ff6700c4536c9a4d7ccb2d82abd37cf47182040f",
+        "status": "passed",
+        "finishedAt": "2026-11-04T18:32:08.205Z",
+        "failures": []
       }
     },
     "1284": {
@@ -3176,9 +3185,9 @@
     "fence": 176,
     "materialSha": "ff6700c4536c9a4d7ccb2d82abd37cf47182040f",
     "expectedBase": "ad60cc9da89a002c7474eda65eb359eb7de30096",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793816954276,
-    "expiresAt": 1793817390348,
+    "expiresAt": 1793820729542,
     "patchId": "26e542184afe832d9eff2e81eafb8b496a11bcb1"
   },
   "events": {
@@ -3333,6 +3342,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "ad60cc9da89a002c7474eda65eb359eb7de30096"
+      }
+    },
+    "finish:ba17aba8-f0ac-419d-b124-6f2861b70ae0:finish:2:s6-complete": {
+      "digest": "4c7d8d5318a7e63f30ad29e48a08e8a2bb70502f3f24b59611728e886901e965",
+      "issue": 1283,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1283,
+        "at": 1793817129542,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ff6700c4536c9a4d7ccb2d82abd37cf47182040f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261104T183134558-85935cb3",
+          "name": "Тесты для задачи #1283 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261104T183134558-85935cb3/report.json",
+          "materialSha": "ff6700c4536c9a4d7ccb2d82abd37cf47182040f",
+          "status": "passed",
+          "finishedAt": "2026-11-04T18:32:08.205Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Цель: завершённые правки редактора не оставляют безопасные прямые швы для Optimize. После partitions/segments с retarget/delete, faces, merge-rooms, delete-room и thickness собираются только затронутые ID узлов. Чистое создание сегмента активной Draw-цепочки не запускает уборку: её предыдущий endpoint нужен следующему клику, собственный finish уже уплотняет цепочку.\n\nСхлопывание строго точное: степень 2, один kind/cm/JSON-value props и набор владельцев, коллинеарность и внутренний параметр. Сохраняются опоры чужих зависимостей, отдельные физические контакты с другим носителем, разная толщина/props и проём, чья полная длина пересекает шов. Проёмы на обеих сторонах ремапятся существующим collapse-node без изменения физических полей; lineage предыдущих splits/converts переводится на живой retained edge с учётом направления. Полная оптимизация/выравнивание координат не вызывается.\n\nПроверено: `node process-next/catalog/prepare.mjs tests`; адресная выборка graph-edit-seams, graph-edit-intent, plan-graph-core, plan-graph-optimize, wall-merge, writer-fixed-point — 131/131 PASS. Новые 15 случаев проверяют три исходных дефекта, точные host.tq и физические поля проёмов, защитные границы, удалённую компоненту, thickness/delete-room и жизненный цикл Draw. Существующий Merge теперь ожидает 4 внешних ребра вместо 6 с двумя бывшими T-швами. Фикстура #1264 стала настоящим изломом зависимого угла вместо коллинеарного шва, который новый thickness намеренно удаляет; прежняя проверка защиты зависимого фиксированного угла сохранена. Первый вход в очередь не запустил ни одного элемента S6: в локальном запросе был указан отсутствующий plan-graph.test.mjs. Этот вход штатно возвращён, запрос исправлен на существующий plan-graph-core.test.mjs, все 131 проверки выполнены явно. Обязательный S6 будет выполнен finish после повторного допуска/финального rebase.\n\nРиски для внимания: валидация выполняется на промежуточном результате каждого допустимого collapse и затем на полном batch, host/lineage composition и сохранение раздельной топологии при совпадающих координатах. Native HA и полный релизный прогон на задаче не выполнялись. Перед бетой нужен существующий HA-journey редактора: удалить/оторвать T, обвести комнату с прямым лишним кликом, подтвердить пустой Optimize, сохранение проёмов и Undo/reload; companion-запись ведёт координатор пачки.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
