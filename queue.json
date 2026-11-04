@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3060,
+  "revision": 3061,
   "nextTicket": 185,
   "nextFence": 182,
   "tasks": {
@@ -3137,7 +3137,7 @@
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793818510120,
         "entry": 1,
@@ -3572,6 +3572,10 @@
     "github:41892055110:1:completions:message:eb948d1c463a103a068fb40d723bfe1c7c1c639b1787455c3cad967e5193bf65": {
       "digest": "f44d0272dfa7460277db9d85916fbb869675778030041e8288668bacb1aa5312",
       "issue": 1283
+    },
+    "github:41892055866:1:completions:notice:25331b67d196a2428bbdbd0b47e9aa9a84438e1803db836fcceec563a859429b": {
+      "digest": "b9f7807d27122954d5d0146273ad9e4a93d4713327151f578bde22a46bfd7b02",
+      "issue": 1286
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
