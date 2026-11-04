@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3140,
-  "nextTicket": 188,
+  "revision": 3141,
+  "nextTicket": 189,
   "nextFence": 188,
   "tasks": {
     "1126": {
@@ -2992,14 +2992,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1283-local-seam-cleanup",
-      "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
+      "materialSha": "089792d476c69d3230b4a793b9a69a99453cde9f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 186,
-      "queued": false,
+      "ticket": 188,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793818973489,
-      "reviewEntry": 5,
+      "readyAt": 1793819605935,
+      "reviewEntry": 6,
       "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -3033,14 +3033,7 @@
         "finishedAt": "2026-11-04T19:11:21.570Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewRequest": "review:1283:5:04c2dcbf8c4b4d481eb8c470537ada7a62558dbd:f1d2fa8d0cf80adfb755531220deeb02391f8105",
-      "reviewMaterial": {
-        "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
-        "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
-        "patchId": "04c2dcbf8c4b4d481eb8c470537ada7a62558dbd"
-      },
-      "reason": "changelog-rebase-correction"
+      "reviewRound": null
     },
     "1284": {
       "issue": 1284,
@@ -3396,7 +3389,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1283
+  ],
   "active": {
     "issue": 1282,
     "worker": "finish",
@@ -4544,6 +4539,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:203be738-9882-4ddd-9f0a-92a8684b3ec7": {
+      "digest": "6393f06cff36bcfd06042fc2c8521029606b11a8fff91bbd7ab5924f32508eb0",
+      "issue": 1283,
+      "message": {
+        "kind": "queued",
+        "issue": 1283,
+        "at": 1793819605935,
+        "entry": 6,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "089792d476c69d3230b4a793b9a69a99453cde9f",
+        "evidence": {
+          "id": "20261104T191120292-b0ea8d36",
+          "name": "Тесты для задачи #1283 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1099-geometry-commit-20261028/.git/process-next/runs/20261104T191120292-b0ea8d36/report.json",
+          "materialSha": "a3819f227b9e540bcbbd6215133918e6f73d1d47",
+          "status": "passed",
+          "finishedAt": "2026-11-04T19:11:21.570Z",
+          "failures": []
+        }
       }
     }
   },
