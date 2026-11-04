@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3250,
+  "revision": 3251,
   "nextTicket": 191,
   "nextFence": 191,
   "tasks": {
@@ -3001,7 +3001,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1287-delete-layout-ownership",
-      "materialSha": "81752197642b05c1bd4de3510f4f1ffc6de7fccd",
+      "materialSha": "700eee71bb23eded9813420e1fc5a83ed7598e80",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 190,
@@ -3009,7 +3009,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793820220908,
       "reviewEntry": 2,
-      "patchId": "4c66a29bd3c69b900a63b87a39bffce9a8be87a9",
+      "patchId": "e1f18960ceeecf20af74993c3c984200ad5d5646",
       "changedFiles": [
         "custom_components/houseplan/deletion_layout.py",
         "custom_components/houseplan/websocket_api.py",
@@ -3053,10 +3053,7 @@
         "entry": 1,
         "detail": "Финальный Merge/no-op требует #1283; её код-ревью вернуло только changelog, исправление ещё не слито. Автор возвращает свой слот до S6, чтобы не запускать заведомо неприменимую проверку. Работа и rebase8d476063f сохранены; повторный finish после S8 #1283.",
         "eventId": "author-return-1287-19c1ad73-e929-44c5-b7a5-41994f0234de:return:1287"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793820493224,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      }
     },
     "1288": {
       "issue": 1288,
@@ -3233,11 +3230,12 @@
     "worker": "github-coordinator",
     "token": "190:github:41897088319:1:tick:0:admit",
     "fence": 190,
-    "materialSha": "81752197642b05c1bd4de3510f4f1ffc6de7fccd",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "700eee71bb23eded9813420e1fc5a83ed7598e80",
+    "expectedBase": "339c044b8252da1585003d2fbfad6bc1f0889e17",
+    "phase": "testing",
     "admittedAt": 1793820450842,
-    "expiresAt": 1793820824003
+    "expiresAt": 1793820860524,
+    "patchId": "e1f18960ceeecf20af74993c3c984200ad5d5646"
   },
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
@@ -3282,6 +3280,10 @@
     },
     "finish:901250eb-f29c-47c8-8127-a31f569cba3a": {
       "digest": "a8b6c863ac27c6dfad7a8fba76dfa394524562462b57fb4102682f42c3d105b1",
+      "issue": 1287
+    },
+    "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:2:synchronized": {
+      "digest": "2c7be8ce078affb9a62543eb028f7aa31ceff7b9f3f5668d76f0b7fb148dfdef",
       "issue": 1287
     },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
