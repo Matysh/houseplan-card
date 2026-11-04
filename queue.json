@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2550,
-  "nextTicket": 158,
+  "revision": 2551,
+  "nextTicket": 159,
   "nextFence": 158,
   "tasks": {
     "1126": {
@@ -2479,14 +2479,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1265-room-face-lineage",
-      "materialSha": "2f38a4021538ab39dabbe75732ffab813c59af8e",
+      "materialSha": "30c54e9df96c7dd520d9a3d59e7fd1500398ecc4",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 157,
-      "queued": false,
+      "ticket": 158,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793785155492,
-      "reviewEntry": 2,
+      "readyAt": 1793786438022,
+      "reviewEntry": 3,
       "patchId": "1f8c6098fe227541786f8138beee75fe89327fa1",
       "changedFiles": [
         "demo/helpers/room-write-python.mjs",
@@ -2515,8 +2515,7 @@
         "entry": 2,
         "detail": "Браузер: draw wall thickness: failed; Браузер: unified wall tool: failed; Браузер: wall face overlap: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed",
         "eventId": "finish:e2f7305a-5176-4862-801e-09685b8dfec7:finish:3:return:return:1265"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1267": {
       "issue": 1267,
@@ -2880,7 +2879,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1265
+  ],
   "active": null,
   "events": {
     "finish:5d392e7f-a7dc-46c4-828f-21a50ea5f5cb:finish:2:synchronized": {
@@ -3017,6 +3018,19 @@
           "detail": "Браузер: draw wall thickness: failed; Браузер: unified wall tool: failed; Браузер: wall face overlap: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed",
           "eventId": "finish:e2f7305a-5176-4862-801e-09685b8dfec7:finish:3:return:return:1265"
         }
+      }
+    },
+    "finish:943ada1e-90fb-4bcb-b0f6-2fca431ce8d8": {
+      "digest": "6adc1f8352543d510ccd82f64d9af367520e843fc26b4312eb35cd78eba05db6",
+      "issue": 1265,
+      "message": {
+        "kind": "queued",
+        "issue": 1265,
+        "at": 1793786438022,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "30c54e9df96c7dd520d9a3d59e7fd1500398ecc4"
       }
     }
   },
