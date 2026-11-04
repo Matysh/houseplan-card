@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 249,
+  "revision": 250,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -8877,8 +8877,30 @@
       },
       "completion": {
         "issues": {
-          "status": "pending",
-          "reason": "GitHub GET failed (403)"
+          "status": "running",
+          "eligible": [
+            1262,
+            1263,
+            1264,
+            1265,
+            1267,
+            1268,
+            1269,
+            1270,
+            1271,
+            1272,
+            1273,
+            1274,
+            1275,
+            1276,
+            1277,
+            1278,
+            1279,
+            1280,
+            1281
+          ],
+          "waitingForS8": [],
+          "completed": []
         },
         "retire-beta": {
           "status": "completed",
@@ -9543,7 +9565,8 @@
     "beta1844-complete-1793817997619:completion:bc853a22-2ea1-47a9-a962-9c7345b202ea": "4496da4952d01e1790d23e3fccfe66bf0e34dde708c111cd604e8ccfc7c81f2f",
     "beta1844-complete-1793818114205:completion:82e28e61-2ba3-4469-9640-d65c96be1a68": "a84d25b729cbd15091c3afb1b9bd95d403884265da37007efa757161fc150500",
     "beta1844-complete-1793818221696:completion:db116620-279c-476d-af48-1ae9ab49fe04": "48486b330448bb0c555c79410d768f62cd28bc4e41965019abbe8ba5570e2a6e",
-    "beta1844-complete-1793818307641:completion:d55fec9b-b160-43d4-ba82-82b2ad64d320": "7dfa2bd5e572539201f42ad080f9a3858e40e93342b6baf3bef438cffe478262"
+    "beta1844-complete-1793818307641:completion:d55fec9b-b160-43d4-ba82-82b2ad64d320": "7dfa2bd5e572539201f42ad080f9a3858e40e93342b6baf3bef438cffe478262",
+    "beta1844-complete-1793818953117:completion:05299e2b-f6db-4ee5-af2b-604ec28a5fe6": "373af189eaae4505f884412580524fd71a33e694ad90d440a37bfb1190faa528"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
