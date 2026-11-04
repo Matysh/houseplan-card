@@ -262,6 +262,7 @@ try {
     await page.evaluate(()=>window.__hpTest.setTool('select'));
     // The default fixed 780px embed uses compact controls. This phase needs
     // native desktop Fit/Rotate; resize the actual embed, never reveal buttons.
+    await page.setViewportSize({ width: 2200, height: 1000 });
     await prepareDesktopControls(page); await cameraSettled();
     const cameraPoint = () => page.evaluate(() => {
         const c=window.__card, opening=c._openingsR.find(o=>o.id==='perf-opening-0-0');
