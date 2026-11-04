@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3246,
+  "revision": 3247,
   "nextTicket": 191,
   "nextFence": 191,
   "tasks": {
@@ -3039,7 +3039,10 @@
         "entry": 1,
         "detail": "Финальный Merge/no-op требует #1283; её код-ревью вернуло только changelog, исправление ещё не слито. Автор возвращает свой слот до S6, чтобы не запускать заведомо неприменимую проверку. Работа и rebase8d476063f сохранены; повторный finish после S8 #1283.",
         "eventId": "author-return-1287-19c1ad73-e929-44c5-b7a5-41994f0234de:return:1287"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793820493224,
+      "automationDetail": "Queue remained busy; retry the same event ID"
     },
     "1288": {
       "issue": 1288,
@@ -3271,6 +3274,10 @@
     },
     "github:41897088319:1:completions:message:ed359a0c32aa1f23af658f7779baad481b993a5af7eb0df89402750bb211f97b": {
       "digest": "ab1b03cbb10a89c28342304e9e5dcd6559eb0532cb0a73b4593868f0d7384a82",
+      "issue": 1287
+    },
+    "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:1:automation-pending": {
+      "digest": "d81b0682c5ae2da28a083b0658eaf3ff4efa79e19f5ee3031a02641ebd7d68f1",
       "issue": 1287
     },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
