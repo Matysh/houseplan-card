@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3392,
+  "revision": 3393,
   "nextTicket": 197,
   "nextFence": 197,
   "tasks": {
@@ -3045,174 +3045,25 @@
     },
     "1290": {
       "issue": 1290,
+      "branch": "codex/1290-beta5-validation",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1290-beta5-validation",
-      "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 196,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793828392880,
-      "reviewEntry": 1,
-      "patchId": "7be19cbddc27d7f7976d114810f7116985d38355",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/testing/1290-release-validation.md",
-        "docs/testing/beta5-wall-passports/README.md",
-        "docs/testing/beta5-wall-passports/corpus-coordinate-audit.json.txt",
-        "docs/testing/beta5-wall-passports/shared-current-source-audit.json.txt",
-        "test/beta3-geometry-repairs.test.mjs",
-        "test/coordinate-canonicalization.test.mjs",
-        "test/editor-runtime-loader.test.mjs",
-        "test/fixtures/845-wall-corpus-current-identities.json",
-        "test/fixtures/optimize-storage-roundtrip-current.json",
-        "test/native-grid-draw.test.mjs",
-        "test/storage-current-target.test.mjs",
-        "test/wall-identity-corpus.test.mjs",
-        "test/wall-node-editor.test.mjs",
-        "test/wall-node-move.test.mjs",
-        "tests_backend/test_coordinate_canonicalization.py",
-        "tests_backend/test_ha_websocket.py"
-      ],
-      "s6": {
-        "id": "20261104T214007452-c928d2a3",
-        "name": "Тесты для задачи #1290 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261104T214007452-c928d2a3/report.json",
-        "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-        "status": "passed",
-        "finishedAt": "2026-11-04T21:40:34.359Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "ff650ec58838a85767e15fbb5de9193c336f9034",
+      "mergedSha": "b08d710df2ee8841573dd6095a181671d1af0436",
+      "mergedAt": 1793828661480,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1290:1:7be19cbddc27d7f7976d114810f7116985d38355:ff650ec58838a85767e15fbb5de9193c336f9034",
-      "reviewMaterial": {
-        "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-        "expectedBase": "ff650ec58838a85767e15fbb5de9193c336f9034",
-        "patchId": "7be19cbddc27d7f7976d114810f7116985d38355"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1290:1:7be19cbddc27d7f7976d114810f7116985d38355:ff650ec58838a85767e15fbb5de9193c336f9034",
-        "eventId": "github:41918306521:1:tick:0:review-retry",
-        "at": 1793828455810,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1290,
-        "requestId": "review:1290:1:7be19cbddc27d7f7976d114810f7116985d38355:ff650ec58838a85767e15fbb5de9193c336f9034",
-        "kind": "code",
-        "base": "ff650ec58838a85767e15fbb5de9193c336f9034",
-        "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-        "patchId": "7be19cbddc27d7f7976d114810f7116985d38355",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1290,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1290",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Итоговое решение\n\nМатериал b08d710df2ee8841573dd6095a181671d1af0436, ветка codex/1290-beta5-validation поверх принятого dev ff650ec58. Изменены18 файлов тестов, текущих тестовых данных, доказательств и RU/EN changelog. Продуктовые src/, custom_components/, package и контракт data-hp не менялись. Свои подготовительные коммиты сведены с резервным ref; Git tree до/после идентичен.\n\nЭто необходимая совместимость проверок с уже принятыми #1282–#1287, не разрешение слепо обновить hashes. Подробности: docs/testing/1290-release-validation.md и docs/testing/beta5-wall-passports/README.md. JSON.txt — полевые доказательства; они намеренно не добавляют входные config в corpus.\n\n### Координаты и сохранённые отрицательные случаи\n\nULP и субпороговый numeric шум теперь получают l согласно #1282. Native тест сохраняет исходную ULP-точку как положительный пример, отдельно проверяет настоящие .22501/.39585 и независимый off-grid endpoint. Node editor по-прежнему требует новое доказательство microtarget и совпадение preview/write; оно стало canonical l[240,72], а .300001 остаётся отдельным настоящим off-grid negative. beta3-repairs опознаёт исходные точки через принятое exact lattice кодирование, не по старому виду q.\n\nShared optimize-storage-roundtrip-current.json меняет только5q→l и соответствующие x projections. Оригинальный optimize-storage-roundtrip.json побайтно неизменен, SHA a148f394de4d063357252a0600214bb13eccb31c6a2fcbaab25fde24a370cd88. TS/Python дополнительно сравнивают независимые literal lattice sets и новые настоящие off-grid случаи. ID/material/metadata/layout прежние, не подставлен эталон Optimize вместо исходника.\n\n### Полный паспорт стен\n\nНезависимый старый engine659440571 воспроизвёл575/575 прежних полных current-паспортов. На ff65052 runtime-only строк/46 уникальных источников меняются лишь по exact coordinates/dependency parameters и производным xy. Topology, ordered cycles, IDs, material/opaque props, opening hosts/angles/metadata неизменны; все74 графа валидны и projection-consistent. Max displacement4.714045207910317e-10 norm /1.2e-7cm в исходных допусках. В этой выборке причина #1282, не seam compaction #1283.\n\nРовно52 доказанных fullConfigSha256 обновлены; исходные575 source fingerprints и outcomes сохранялись в первом шаге. Затем отдельно скомпонован новый shared current fixture: изменён один intentional-source row fingerprint+fullSHA, без изменения membership/identity/outcome, с отдельным shared-current-source-audit.json.txt. После композиции оба файла снова27/27 PASS. Frozen v10 goldens, прежний845 паспорт и архив229 inputs неизменны. Новый #1285 replay fixture имеет явную inventory запись configs=0. D4 и4 соседних grid cases требуют exact l wire и index/240 projection; три настоящих off-grid D4-T оставлены literal. Legacy половина теста всё ещё сравнивает исходные float буквально.\n\n### Canonical writer и lazy boundary\n\nSource regex теперь требует четвёртый roomLabels аргумент #1287 после прежних adoption/contact/CAS guards. Он не заменён на wildcard. Старый текстовый any census1123→1154 обновлён по принятому source delta31 слов (в том числе обычные комментарии); eager runtime import prohibition и actual loader/recovery/type portability проверки сохранены. Новых product any/casts в этой задаче нет; требование не растить прежний lexical budget не было основанием менять принятый пользовательский runtime ради счётчика.\n\n### Backend удаления\n\n#244 падал после paired tombstone cleanup: успешный config/set уже поднял layout_rev, а тест посылал старый unchanged_layout.rev. Теперь проверяются исчезновение позиции, новая ревизия, stale CAS refusal без записи, fresh Delete и точный Undo всей пары. #819 сохраняет PDF пока существует space-delete Undo, реально восстанавливает пару/файл, повторно удаляет и истекает Undo обычной правкой — только тогда orphan unlink. Прежние one-write/event/services/trails/CAS и foreign file guards сохранены. Product cleanup/history не менялись.\n\n### Реальные результаты и область S6\n\nАдресная диагностика до очереди: lattice44/44 Node и7/7 backend (HA установлен, zero skip); space deletion14/14 backend; два composed wall suite27/27. Первоначальные отказы воспроизведены до исправления. Итоговый нормальный S6 через finish проверит8 изменённых Node файлов и2 backend файла, сборку/критичные данные/стартовый View; его собственная квитанция передаётся вместе с S7 и не подменяется этими ранними числами.\n\nCompanion080bbbe5d793a10fd9388104874dbbc884edbe6f исправляет только прежний ошибочный visible-canvas precondition нового first-space extension: desktop2000×1100 и45px pattern. Все реальные Draw/q/dependency/export/Optimize no-op/config-layout-rev/reload assertions сохранены. Адресный настоящий изолированный HA2026.10.4 с исходными prepared beta.5 bytes d33a8e42c прошёл2/2+2setup без skip, собственный контейнер очищен. На CI1 device Delete/Undo/Redo extension уже прошёл внутри10 journeys, upgrade1/1 и golden75/75 PASS.\n\nФинальный beta CI2 [41916469593](https://github.com/Matysh/houseplan-card/actions/runs/41916469593) использует a4dd940c1 — cherry-pick ТОГО ЖЕ test patch на подготовленную release-версию5, без изменений runtime. Применимые успехи CI1 зачтены, результат ещё ожидается. S8 этой задачи обязателен перед публикацией, затем владелец отдельно поручил полный stable-профиль на точном опубликованном beta-материале. Stable не публикуется.\n\n### Ограничения\n\nПолный post-publication stable-набор и оставшиеся room/space browser journeys ещё не запускались. Эталоны визуальных сцен CI1 не менялись, все75 прошли. Разрешение владельца на будущие golden acceptance не применяется к функциональным отказам. Результаты до финального S6/CI2 не объявляются общим PASS."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Принимаю. В изменении правятся только тесты, текущие тестовые данные, доказательства и changelog. Код в src/ и custom_components/ не менялся. Каждое изменённое ожидание соответствует уже принятому поведению #1282–#1287, а не слепой подстановке нового вывода. Рядом с каждым обновлённым положительным случаем остался или добавлен отрицательный: настоящие off-grid координаты (.22501/.39585, .300001), отказ CAS по устаревшей ревизии без записи, сохранение чужого файла keeper/wiring.pdf, неизменность исторических v10-оракулов и исходного optimize-storage-roundtrip.json. Backend-тесты удаления я сверил с текущим кодом websocket_api.py: PDF действительно хранится, пока жив снимок space_delete, и освобождается, когда его вытесняет обычная правка. Квитанция S6 по b08d710 — passed. Блокеров нет. Принятие не заменяет результат CI2 (41916469593) и отдельно учитываемый companion-прогон: по ним у меня нет данных.",
-          "understanding": "Проблема: полный beta-прогон 41910290952 на d33a8e42 упал в нескольких группах проверок. Эти проверки ожидали поведение до #1282–#1287: q-кодирование ULP-шума, старые fullConfigSha256, трёхаргументный вызов _sendConfigCandidate, немедленное удаление PDF и старую layout_rev после очистки tombstone. Продукт при этом вёл себя по принятым контрактам.\n\nДо изменения: ULP-точка (.22500000000000003) и .3000000009 считались произвольными off-grid целями и ожидались как q; shared current fixture содержал q-точки и проекции с шумом; #244 отправлял Delete со старой layout_rev, а после paired cleanup она уже выросла; #819 ожидал, что by_space/manual.pdf удалится сразу.\n\nПосле изменения:\n- шум в пределах 1e-4 шага решётки ожидается как l, а настоящие off-grid случаи проверяются отдельно в TS и Python;\n- 52 строки паспорта #845 и одна строка shared current обновлены; полевой разбор приведён в audit;\n- regex canonical writer требует четвёртый аргумент roomLabels;\n- потолок any поднят до 1154;\n- #244 проверяет, что устаревшая ревизия отклоняется с conflict без записи, затем выполняет свежий Delete и точный Undo пары;\n- #819 проверяет полный цикл файла: удержание PDF при живом Undo, восстановление, повторное удаление, истечение Undo обычной правкой и только после этого unlink.\n\nЧто я разобрал по исходникам: diff всех тестовых файлов, fixture optimize-storage-roundtrip-current.json и строки 845-current; тесты #244/#819 целиком; продуктовые _release_space_delete_snapshot (websocket_api.py:251–287), очистку после удаления (2827–2856) и ws_space_delete (2870–2955) с CAS и созданием снимка space_delete.",
-          "analysis": [
-            {
-              "topic": "Граница шума решётки и отрицательные случаи",
-              "assessment": "Порог проверен количественно. .3000000009 отстоит от 72/240 примерно на 2.2e-7 шага, то есть внутри допуска, и становится l[240,72]. .300001 отстоит на 2.4e-4 шага, это вне допуска, и q сохраняется. .22501 и .39585 отстоят на 2.4e-3 и 4e-3 шага. Значит, отрицательные случаи стоят близко к порогу и действительно защищают от общего округления к сетке. Хорошо, что отрицательный off-grid случай продублирован в TS (storage-current-target) и Python (test_coordinate_canonicalization) с одинаковыми литералами. Это и проверка паритета, и защита от того, что fixture примет любой сгенерированный вывод.",
-              "evidence": "test/native-grid-draw.test.mjs (новые тесты #1282/#1237); test/wall-node-editor.test.mjs:168–190 (target_p ['l','240','72'] и ['q','1','1','300001','1000000']); test/storage-current-target.test.mjs (latticeTargets и тест off-grid); tests_backend/test_coordinate_canonicalization.py:120–160."
-            },
-            {
-              "topic": "Shared current fixture и паспорт #845",
-              "assessment": "В optimize-storage-roundtrip-current.json меняются только пять p в q→l и согласованные с ними числовые проекции. ID узлов, построенные из старых q-строк, сохранены, то есть идентичность не переписана. Есть хорошая внутренняя сверка: fullConfigSha256 строки shared-current (e9955aab…) совпадает с новым хешем optimize-storage-roundtrip.json/input/config. Так и должно быть, если current target — идемпотентная миграция того же входа; до изменения хеши тоже совпадали (00618ca…). В строках #845 меняются только fullConfigSha256 у 52 записей, плюс fingerprint и hash одной shared-current строки и запись в inventory 1285-editor-sequences.json с configs:0. Fingerprint исходных источников, identity и ok/refusal не тронуты. Независимые литеральные наборы lattice в TS и Python не дают превратить fixture в самоподтверждающийся эталон.",
-              "evidence": "diff test/fixtures/optimize-storage-roundtrip-current.json; diff test/fixtures/845-wall-corpus-current-identities.json (строки 4080–14502, 23426–23474); docs/testing/beta5-wall-passports/README.md, corpus-coordinate-audit.json.txt."
-            },
-            {
-              "topic": "D4 в wall-node-move",
-              "assessment": "Признак сетки gridTarget вычисляется как value*240 от исторического float. Для 0.09583333333333333 я проверил это вручную: произведение отстоит от 23 ровно на половину ULP (2^-49), округление половины к чётному даёт ровно 23, поэтому Number.isInteger срабатывает. Тест корректен, но держится на тонкой особенности IEEE-арифметики; надёжнее брать литеральные UI-индексы (см. improvements). Первая половина теста по-прежнему сравнивает v10-результат с замороженным эталоном.",
-              "evidence": "test/wall-node-move.test.mjs:50–64."
-            },
-            {
-              "topic": "beta3-geometry-repairs: cavity",
-              "assessment": "Исходные узлы теперь уже l, поэтому эта часть проверяет сохранение идентичности, инцидентности, rooms и no-op при повторном Optimize, а не исправление q→l. Это честное следствие #1282: миграция уже восстанавливает точки, и комментарий это объясняет. Ремонт Optimize по-прежнему покрыт той же проверкой: узел 1166 становится ['l','15','67'], параметры зависимостей — [['2','3']], параметр cavity 1666…/5000… → ['1','3']. Ослабления по существу нет. Массив targets с p===target теперь лишь избыточен по форме.",
-              "evidence": "test/beta3-geometry-repairs.test.mjs:54–87."
-            },
-            {
-              "topic": "Backend #244: CAS после paired cleanup",
-              "assessment": "Тест сначала явно фиксирует новое поведение: config/set возвращает layout_changes {device: None}, layout_rev вырос на 1, позиция device исчезла. Затем проверяется, что Delete со старой layout_rev отклоняется с conflict и что config и layout побайтно не изменились. Этот отказ раньше был скрыт, а теперь проверяется. Свежий Delete даёт removed_layout 1 и обе ревизии +1, Undo через optimize_undo возвращает точную пару и сбрасывает can_optimize_undo. Это соответствует ws_space_delete: CAS по обеим ревизиям под write_lock и снимок space_delete с after_*_rev.",
-              "evidence": "tests_backend/test_ha_websocket.py:562–630; custom_components/houseplan/websocket_api.py:2884–2931."
-            },
-            {
-              "topic": "Backend #819: жизненный цикл файлов при Undo",
-              "assessment": "Ожидания совпадают с продуктовым кодом. Очистка после удаления добавляет attachment_refs(backup.config) снимка space_delete к ссылкам, поэтому manual.pdf остаётся, а неупомянутый leftover в by_layout удаляется сразу. _release_space_delete_snapshot освобождает файлы удалённых маркеров, только когда снимок space_delete заменён другим или исчез и эти файлы не нужны принятому config, новому Undo или marker_history. Тест проходит весь путь: Undo восстанавливает пару и файл, trail recorder не восстанавливается, повторный Delete файл сохраняет, обычная правка config/set истекает Undo, после чего manual.pdf удалён, а keeper/wiring.pdf цел. Прежние проверки one-write, событий, services==[] и trails остались.",
-              "evidence": "tests_backend/test_ha_websocket.py:763–900; custom_components/houseplan/websocket_api.py:251–287, 2827–2856."
-            },
-            {
-              "topic": "Canonical writer regex и any census",
-              "assessment": "Regex не ослаблен до wildcard: вся прежняя цепочка stageConfigCandidate → prepare → contactConfigPatch → candidateCurrent → _sendConfigCandidate осталась, добавлен только точный roomLabels. Порог any — грубая лексическая метрика, в которую попадают и комментарии; поднять его ради принятого #1282–#1287 разумнее, чем трогать runtime ради счётчика. Точное число 31 по исходникам я не пересчитывал: полагаюсь на квитанцию S6. Проверки eager-import и portable types не изменились.",
-              "evidence": "test/coordinate-canonicalization.test.mjs:209–215; test/editor-runtime-loader.test.mjs:118–125."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "wall-node-move: определять gridTarget по литеральным UI-индексам из кейса ([23,144] / [23,24], упомянуты в README), а не через Number.isInteger(value*240). Сейчас D4 проходит потому, что произведение попадает ровно на середину между соседними double и округление половины к чётному даёт 23. Независимый от арифметики источник индексов сделает тест устойчивее к будущим кейсам. Цена — одна строка в fixture или в тесте.",
-            "beta3-geometry-repairs: массив targets для cavity теперь всегда содержит p===target. Можно заменить его списком литеральных l-точек с проверкой «узел найден ровно один раз и Optimize его не сдвинул». Будет короче, и не останется видимости, что здесь проверяется ремонт q→l.",
-            "editor-runtime-loader: лексический счётчик any, в который попадают комментарии, вынуждает подстраивать порог под каждое принятое изменение. Если бюджет нужен, полезнее считать только типовые позиции (`: any`, `as any`, `<any>`) или вести per-file baseline. Это необязательно: текущее обновление обосновано."
-          ],
-          "boundaries": "Сборку, тесты и Validate я не запускал: это S7. Использована квитанция S6 «Тесты для задачи #1290 (перед ревью)» по b08d710 — status passed, без отказов. Ранние адресные числа исполнителя (44/44, 7/7, 14/14, 27/27) как доказательство не учитывались. По исходникам я прочитал diff всех изменённых тестов и fixture, а также продуктовые пути space delete / Undo / file release в websocket_api.py. Не проверены:\n- 7092 строки corpus-coordinate-audit.json.txt (прочитаны только сводка и начало, полевые изменения отдельных групп выборочно) и shared-current-source-audit.json.txt;\n- фактический пересчёт 52 SHA и 31 слова any;\n- companion-коммит 080bbbe5 (внешний для этого репозитория);\n- результат HA 2026.10.4 и финальный beta CI2 41916469593: по нему ещё нет результата.\nПродуктовый runtime в diff не изменён."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 141238,
-          "cache_read_input_tokens": 1328485,
-          "output_tokens": 12459,
-          "output_tokens_details": {
-            "thinking_tokens": 4912
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 141238,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1106,
-              "cache_read_input_tokens": 126548,
-              "cache_creation_input_tokens": 16411,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16411
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nПринимаю. В изменении правятся только тесты, текущие тестовые данные, доказательства и changelog. Код в src/ и custom_components/ не менялся. Каждое изменённое ожидание соответствует уже принятому поведению #1282–#1287, а не слепой подстановке нового вывода. Рядом с каждым обновлённым положительным случаем остался или добавлен отрицательный: настоящие off-grid координаты (.22501/.39585, .300001), отказ CAS по устаревшей ревизии без записи, сохранение чужого файла keeper/wiring.pdf, неизменность исторических v10-оракулов и исходного optimize-storage-roundtrip.json. Backend-тесты удаления я сверил с текущим кодом websocket_api.py: PDF действительно хранится, пока жив снимок space_delete, и освобождается, когда его вытесняет обычная правка. Квитанция S6 по b08d710 — passed. Блокеров нет. Принятие не заменяет результат CI2 (41916469593) и отдельно учитываемый companion-прогон: по ним у меня нет данных.\n\n## Понимание решения\n\nПроблема: полный beta-прогон 41910290952 на d33a8e42 упал в нескольких группах проверок. Эти проверки ожидали поведение до #1282–#1287: q-кодирование ULP-шума, старые fullConfigSha256, трёхаргументный вызов _sendConfigCandidate, немедленное удаление PDF и старую layout_rev после очистки tombstone. Продукт при этом вёл себя по принятым контрактам.\n\nДо изменения: ULP-точка (.22500000000000003) и .3000000009 считались произвольными off-grid целями и ожидались как q; shared current fixture содержал q-точки и проекции с шумом; #244 отправлял Delete со старой layout_rev, а после paired cleanup она уже выросла; #819 ожидал, что by_space/manual.pdf удалится сразу.\n\nПосле изменения:\n- шум в пределах 1e-4 шага решётки ожидается как l, а настоящие off-grid случаи проверяются отдельно в TS и Python;\n- 52 строки паспорта #845 и одна строка shared current обновлены; полевой разбор приведён в audit;\n- regex canonical writer требует четвёртый аргумент roomLabels;\n- потолок any поднят до 1154;\n- #244 проверяет, что устаревшая ревизия отклоняется с conflict без записи, затем выполняет свежий Delete и точный Undo пары;\n- #819 проверяет полный цикл файла: удержание PDF при живом Undo, восстановление, повторное удаление, истечение Undo обычной правкой и только после этого unlink.\n\nЧто я разобрал по исходникам: diff всех тестовых файлов, fixture optimize-storage-roundtrip-current.json и строки 845-current; тесты #244/#819 целиком; продуктовые _release_space_delete_snapshot (websocket_api.py:251–287), очистку после удаления (2827–2856) и ws_space_delete (2870–2955) с CAS и созданием снимка space_delete.\n\n## Разбор решения\n\n### Граница шума решётки и отрицательные случаи\n\nПорог проверен количественно. .3000000009 отстоит от 72/240 примерно на 2.2e-7 шага, то есть внутри допуска, и становится l[240,72]. .300001 отстоит на 2.4e-4 шага, это вне допуска, и q сохраняется. .22501 и .39585 отстоят на 2.4e-3 и 4e-3 шага. Значит, отрицательные случаи стоят близко к порогу и действительно защищают от общего округления к сетке. Хорошо, что отрицательный off-grid случай продублирован в TS (storage-current-target) и Python (test_coordinate_canonicalization) с одинаковыми литералами. Это и проверка паритета, и защита от того, что fixture примет любой сгенерированный вывод.\n\nОснование: test/native-grid-draw.test.mjs (новые тесты #1282/#1237); test/wall-node-editor.test.mjs:168–190 (target_p ['l','240','72'] и ['q','1','1','300001','1000000']); test/storage-current-target.test.mjs (latticeTargets и тест off-grid); tests_backend/test_coordinate_canonicalization.py:120–160.\n\n### Shared current fixture и паспорт #845\n\nВ optimize-storage-roundtrip-current.json меняются только пять p в q→l и согласованные с ними числовые проекции. ID узлов, построенные из старых q-строк, сохранены, то есть идентичность не переписана. Есть хорошая внутренняя сверка: fullConfigSha256 строки shared-current (e9955aab…) совпадает с новым хешем optimize-storage-roundtrip.json/input/config. Так и должно быть, если current target — идемпотентная миграция того же входа; до изменения хеши тоже совпадали (00618ca…). В строках #845 меняются только fullConfigSha256 у 52 записей, плюс fingerprint и hash одной shared-current строки и запись в inventory 1285-editor-sequences.json с configs:0. Fingerprint исходных источников, identity и ok/refusal не тронуты. Независимые литеральные наборы lattice в TS и Python не дают превратить fixture в самоподтверждающийся эталон.\n\nОснование: diff test/fixtures/optimize-storage-roundtrip-current.json; diff test/fixtures/845-wall-corpus-current-identities.json (строки 4080–14502, 23426–23474); docs/testing/beta5-wall-passports/README.md, corpus-coordinate-audit.json.txt.\n\n### D4 в wall-node-move\n\nПризнак сетки gridTarget вычисляется как value*240 от исторического float. Для 0.09583333333333333 я проверил это вручную: произведение отстоит от 23 ровно на половину ULP (2^-49), округление половины к чётному даёт ровно 23, поэтому Number.isInteger срабатывает. Тест корректен, но держится на тонкой особенности IEEE-арифметики; надёжнее брать литеральные UI-индексы (см. improvements). Первая половина теста по-прежнему сравнивает v10-результат с замороженным эталоном.\n\nОснование: test/wall-node-move.test.mjs:50–64.\n\n### beta3-geometry-repairs: cavity\n\nИсходные узлы теперь уже l, поэтому эта часть проверяет сохранение идентичности, инцидентности, rooms и no-op при повторном Optimize, а не исправление q→l. Это честное следствие #1282: миграция уже восстанавливает точки, и комментарий это объясняет. Ремонт Optimize по-прежнему покрыт той же проверкой: узел 1166 становится ['l','15','67'], параметры зависимостей — [['2','3']], параметр cavity 1666…/5000… → ['1','3']. Ослабления по существу нет. Массив targets с p===target теперь лишь избыточен по форме.\n\nОснование: test/beta3-geometry-repairs.test.mjs:54–87.\n\n### Backend #244: CAS после paired cleanup\n\nТест сначала явно фиксирует новое поведение: config/set возвращает layout_changes {device: None}, layout_rev вырос на 1, позиция device исчезла. Затем проверяется, что Delete со старой layout_rev отклоняется с conflict и что config и layout побайтно не изменились. Этот отказ раньше был скрыт, а теперь проверяется. Свежий Delete даёт removed_layout 1 и обе ревизии +1, Undo через optimize_undo возвращает точную пару и сбрасывает can_optimize_undo. Это соответствует ws_space_delete: CAS по обеим ревизиям под write_lock и снимок space_delete с after_*_rev.\n\nОснование: tests_backend/test_ha_websocket.py:562–630; custom_components/houseplan/websocket_api.py:2884–2931.\n\n### Backend #819: жизненный цикл файлов при Undo\n\nОжидания совпадают с продуктовым кодом. Очистка после удаления добавляет attachment_refs(backup.config) снимка space_delete к ссылкам, поэтому manual.pdf остаётся, а неупомянутый leftover в by_layout удаляется сразу. _release_space_delete_snapshot освобождает файлы удалённых маркеров, только когда снимок space_delete заменён другим или исчез и эти файлы не нужны принятому config, новому Undo или marker_history. Тест проходит весь путь: Undo восстанавливает пару и файл, trail recorder не восстанавливается, повторный Delete файл сохраняет, обычная правка config/set истекает Undo, после чего manual.pdf удалён, а keeper/wiring.pdf цел. Прежние проверки one-write, событий, services==[] и trails остались.\n\nОснование: tests_backend/test_ha_websocket.py:763–900; custom_components/houseplan/websocket_api.py:251–287, 2827–2856.\n\n### Canonical writer regex и any census\n\nRegex не ослаблен до wildcard: вся прежняя цепочка stageConfigCandidate → prepare → contactConfigPatch → candidateCurrent → _sendConfigCandidate осталась, добавлен только точный roomLabels. Порог any — грубая лексическая метрика, в которую попадают и комментарии; поднять его ради принятого #1282–#1287 разумнее, чем трогать runtime ради счётчика. Точное число 31 по исходникам я не пересчитывал: полагаюсь на квитанцию S6. Проверки eager-import и portable types не изменились.\n\nОснование: test/coordinate-canonicalization.test.mjs:209–215; test/editor-runtime-loader.test.mjs:118–125.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- wall-node-move: определять gridTarget по литеральным UI-индексам из кейса ([23,144] / [23,24], упомянуты в README), а не через Number.isInteger(value*240). Сейчас D4 проходит потому, что произведение попадает ровно на середину между соседними double и округление половины к чётному даёт 23. Независимый от арифметики источник индексов сделает тест устойчивее к будущим кейсам. Цена — одна строка в fixture или в тесте.\n- beta3-geometry-repairs: массив targets для cavity теперь всегда содержит p===target. Можно заменить его списком литеральных l-точек с проверкой «узел найден ровно один раз и Optimize его не сдвинул». Будет короче, и не останется видимости, что здесь проверяется ремонт q→l.\n- editor-runtime-loader: лексический счётчик any, в который попадают комментарии, вынуждает подстраивать порог под каждое принятое изменение. Если бюджет нужен, полезнее считать только типовые позиции (`: any`, `as any`, `<any>`) или вести per-file baseline. Это необязательно: текущее обновление обосновано.\n\n## Границы анализа\n\nСборку, тесты и Validate я не запускал: это S7. Использована квитанция S6 «Тесты для задачи #1290 (перед ревью)» по b08d710 — status passed, без отказов. Ранние адресные числа исполнителя (44/44, 7/7, 14/14, 27/27) как доказательство не учитывались. По исходникам я прочитал diff всех изменённых тестов и fixture, а также продуктовые пути space delete / Undo / file release в websocket_api.py. Не проверены:\n- 7092 строки corpus-coordinate-audit.json.txt (прочитаны только сводка и начало, полевые изменения отдельных групп выборочно) и shared-current-source-audit.json.txt;\n- фактический пересчёт 52 SHA и 31 слова any;\n- companion-коммит 080bbbe5 (внешний для этого репозитория);\n- результат HA 2026.10.4 и финальный beta CI2 41916469593: по нему ещё нет результата.\nПродуктовый runtime в diff не изменён.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: ff650ec58838a85767e15fbb5de9193c336f9034 → b08d710df2ee8841573dd6095a181671d1af0436\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1290, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Итоговое решение\n\nМатериал b08d710df2ee8841573dd6095a181671d1af0436, ветка codex/1290-beta5-validation поверх принятого dev ff650ec58. Изменены18 файлов тестов, текущих тестовых данных, доказательств и RU/EN changelog. Продуктовые src/, custom_components/, package и контракт data-hp не менялись. Свои подготовительные коммиты сведены с резервным ref; Git tree до/после идентичен.\n\nЭто необходимая совместимость проверок с уже принятыми #1282–#1287, не разрешение слепо обновить hashes. Подробности: docs/testing/1290-release-validation.md и docs/testing/beta5-wall-passports/README.md. JSON.txt — полевые доказательства; они намеренно не добавляют входные config в corpus.\n\n### Координаты и сохранённые отрицательные случаи\n\nULP и субпороговый numeric шум теперь получают l согласно #1282. Native тест сохраняет исходную ULP-точку как положительный пример, отдельно проверяет настоящие .22501/.39585 и независимый off-grid endpoint. Node editor по-прежнему требует новое доказательство microtarget и совпадение preview/write; оно стало canonical l[240,72], а .300001 остаётся отдельным настоящим off-grid negative. beta3-repairs опознаёт исходные точки через принятое exact lattice кодирование, не по старому виду q.\n\nShared optimize-storage-roundtrip-current.json меняет только5q→l и соответствующие x projections. Оригинальный optimize-storage-roundtrip.json побайтно неизменен, SHA a148f394de4d063357252a0600214bb13eccb31c6a2fcbaab25fde24a370cd88. TS/Python дополнительно сравнивают независимые literal lattice sets и новые настоящие off-grid случаи. ID/material/metadata/layout прежние, не подставлен эталон Optimize вместо исходника.\n\n### Полный паспорт стен\n\nНезависимый старый engine659440571 воспроизвёл575/575 прежних полных current-паспортов. На ff65052 runtime-only строк/46 уникальных источников меняются лишь по exact coordinates/dependency parameters и производным xy. Topology, ordered cycles, IDs, material/opaque props, opening hosts/angles/metadata неизменны; все74 графа валидны и projection-consistent. Max displacement4.714045207910317e-10 norm /1.2e-7cm в исходных допусках. В этой выборке причина #1282, не seam compaction #1283.\n\nРовно52 доказанных fullConfigSha256 обновлены; исходные575 source fingerprints и outcomes сохранялись в первом шаге. Затем отдельно скомпонован новый shared current fixture: изменён один intentional-source row fingerprint+fullSHA, без изменения membership/identity/outcome, с отдельным shared-current-source-audit.json.txt. После композиции оба файла снова27/27 PASS. Frozen v10 goldens, прежний845 паспорт и архив229 inputs неизменны. Новый #1285 replay fixture имеет явную inventory запись configs=0. D4 и4 соседних grid cases требуют exact l wire и index/240 projection; три настоящих off-grid D4-T оставлены literal. Legacy половина теста всё ещё сравнивает исходные float буквально.\n\n### Canonical writer и lazy boundary\n\nSource regex теперь требует четвёртый roomLabels аргумент #1287 после прежних adoption/contact/CAS guards. Он не заменён на wildcard. Старый текстовый any census1123→1154 обновлён по принятому source delta31 слов (в том числе обычные комментарии); eager runtime import prohibition и actual loader/recovery/type portability проверки сохранены. Новых product any/casts в этой задаче нет; требование не растить прежний lexical budget не было основанием менять принятый пользовательский runtime ради счётчика.\n\n### Backend удаления\n\n#244 падал после paired tombstone cleanup: успешный config/set уже поднял layout_rev, а тест посылал старый unchanged_layout.rev. Теперь проверяются исчезновение позиции, новая ревизия, stale CAS refusal без записи, fresh Delete и точный Undo всей пары. #819 сохраняет PDF пока существует space-delete Undo, реально восстанавливает пару/файл, повторно удаляет и истекает Undo обычной правкой — только тогда orphan unlink. Прежние one-write/event/services/trails/CAS и foreign file guards сохранены. Product cleanup/history не менялись.\n\n### Реальные результаты и область S6\n\nАдресная диагностика до очереди: lattice44/44 Node и7/7 backend (HA установлен, zero skip); space deletion14/14 backend; два composed wall suite27/27. Первоначальные отказы воспроизведены до исправления. Итоговый нормальный S6 через finish проверит8 изменённых Node файлов и2 backend файла, сборку/критичные данные/стартовый View; его собственная квитанция передаётся вместе с S7 и не подменяется этими ранними числами.\n\nCompanion080bbbe5d793a10fd9388104874dbbc884edbe6f исправляет только прежний ошибочный visible-canvas precondition нового first-space extension: desktop2000×1100 и45px pattern. Все реальные Draw/q/dependency/export/Optimize no-op/config-layout-rev/reload assertions сохранены. Адресный настоящий изолированный HA2026.10.4 с исходными prepared beta.5 bytes d33a8e42c прошёл2/2+2setup без skip, собственный контейнер очищен. На CI1 device Delete/Undo/Redo extension уже прошёл внутри10 journeys, upgrade1/1 и golden75/75 PASS.\n\nФинальный beta CI2 [41916469593](https://github.com/Matysh/houseplan-card/actions/runs/41916469593) использует a4dd940c1 — cherry-pick ТОГО ЖЕ test patch на подготовленную release-версию5, без изменений runtime. Применимые успехи CI1 зачтены, результат ещё ожидается. S8 этой задачи обязателен перед публикацией, затем владелец отдельно поручил полный stable-профиль на точном опубликованном beta-материале. Stable не публикуется.\n\n### Ограничения\n\nПолный post-publication stable-набор и оставшиеся room/space browser journeys ещё не запускались. Эталоны визуальных сцен CI1 не менялись, все75 прошли. Разрешение владельца на будущие golden acceptance не применяется к функциональным отказам. Результаты до финального S6/CI2 не объявляются общим PASS.\n```\n\n</details>\n",
-        "createdAt": "2026-11-04T21:43:58.522Z",
-        "artifactId": 13365209182,
-        "runId": 41918335333,
-        "runAttempt": 1,
-        "completedAt": "2026-11-04T21:44:04Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41918335333",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "ff650ec58838a85767e15fbb5de9193c336f9034"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3333,116 +3184,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1290,
-    "worker": "finish",
-    "token": "196:finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:1:admit",
-    "fence": 196,
-    "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-    "expectedBase": "ff650ec58838a85767e15fbb5de9193c336f9034",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793828397310,
-    "expiresAt": 1793832256317,
-    "patchId": "7be19cbddc27d7f7976d114810f7116985d38355",
-    "reviewRequest": "review:1290:1:7be19cbddc27d7f7976d114810f7116985d38355:ff650ec58838a85767e15fbb5de9193c336f9034"
-  },
-  "events": {
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:2:synchronized": {
-      "digest": "73bf31c40c438f7ae53f6aea1b23ced313fb576c793ca45cf19fb0b072d51e09",
-      "issue": 1290
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:3:s6-label": {
-      "digest": "26ee4d36b328ce6682a78926c5f5f6300df0d4ca66dec5120a0f8c269dd22b4d",
-      "issue": 1290
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:4:review-requested": {
-      "digest": "21140b8c14714830a9c4a51eecb5d94d810381e2d677780e388b56bf86f0759a",
-      "issue": 1290
-    },
-    "github:41918306521:1:tick:0:review-retry": {
-      "digest": "837c0f7145d942bad54a9b5d7601887f7adce84c3426bd4c0e0806e257d4a419",
-      "issue": 1290
-    },
-    "github:41918306521:1:completions:message:4601dd1b5521c2a52b7b0a932a4c082a4db7a6b9a43889358251044346a2dce1": {
-      "digest": "dfd7028e0e50df4173fdf8e43c86be1d3090459f3a2e6e367a1f993439b70b86",
-      "issue": 1290
-    },
-    "github:41918306521:1:completions:message:7e68dbf4357ac61ccb67a8bb8158425dd12c87e6c327838545ca576d8953c60f": {
-      "digest": "f3a1fa8eeeda871b7e9f36b2d761fed579528500abc6074b16fd089e954a98e9",
-      "issue": 1290
-    },
-    "github:41918306521:1:completions:message:6c3d76fd0f1d3b6da5b1b207c61e6b00b876e41f7dfb60b7fa6b787e24b78c6b": {
-      "digest": "b1dd312a42280cd4bbce3dbe8d1399457678de16bbd75d5c7ffd8408970941e7",
-      "issue": 1290
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:7:review-presentation": {
-      "digest": "8d1bd746f91a90a4151cf9a7b7bd1d751c499593214db3246187f0cdf74a603e",
-      "issue": 1290
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:7:review-complete": {
-      "digest": "4fe68a02d96916d32d7304d8d75f3100f6c18c586fa33e9f7cfbaf9822a9953b",
-      "issue": 1290
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea": {
-      "digest": "14e54e13660cc1f1abb6b77f060a9d07209d0bef148ebc8ad6b61ab07730c101",
-      "issue": 1290,
-      "message": {
-        "kind": "queued",
-        "issue": 1290,
-        "at": 1793828392880,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-        "delivered": true
-      }
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:1:admit": {
-      "digest": "7515149dedb0c4600dbfd3e5371f9a8e8b22cf6729e86258cb37ce9692aab9bb",
-      "issue": 1290,
-      "message": {
-        "kind": "admitted",
-        "issue": 1290,
-        "at": 1793828397310,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:34d87edf-08d6-4011-be9a-d9ea65ac9aea:finish:3:s6-complete": {
-      "digest": "d2e26c569ec1de20bfd8bd6cac1f57c09c07c58781de8b1f32fbf8e0aa9926e4",
-      "issue": 1290,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1290,
-        "at": 1793828435646,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-        "phase": "review",
-        "evidence": {
-          "id": "20261104T214007452-c928d2a3",
-          "name": "Тесты для задачи #1290 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261104T214007452-c928d2a3/report.json",
-          "materialSha": "b08d710df2ee8841573dd6095a181671d1af0436",
-          "status": "passed",
-          "finishedAt": "2026-11-04T21:40:34.359Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Итоговое решение\n\nМатериал b08d710df2ee8841573dd6095a181671d1af0436, ветка codex/1290-beta5-validation поверх принятого dev ff650ec58. Изменены18 файлов тестов, текущих тестовых данных, доказательств и RU/EN changelog. Продуктовые src/, custom_components/, package и контракт data-hp не менялись. Свои подготовительные коммиты сведены с резервным ref; Git tree до/после идентичен.\n\nЭто необходимая совместимость проверок с уже принятыми #1282–#1287, не разрешение слепо обновить hashes. Подробности: docs/testing/1290-release-validation.md и docs/testing/beta5-wall-passports/README.md. JSON.txt — полевые доказательства; они намеренно не добавляют входные config в corpus.\n\n### Координаты и сохранённые отрицательные случаи\n\nULP и субпороговый numeric шум теперь получают l согласно #1282. Native тест сохраняет исходную ULP-точку как положительный пример, отдельно проверяет настоящие .22501/.39585 и независимый off-grid endpoint. Node editor по-прежнему требует новое доказательство microtarget и совпадение preview/write; оно стало canonical l[240,72], а .300001 остаётся отдельным настоящим off-grid negative. beta3-repairs опознаёт исходные точки через принятое exact lattice кодирование, не по старому виду q.\n\nShared optimize-storage-roundtrip-current.json меняет только5q→l и соответствующие x projections. Оригинальный optimize-storage-roundtrip.json побайтно неизменен, SHA a148f394de4d063357252a0600214bb13eccb31c6a2fcbaab25fde24a370cd88. TS/Python дополнительно сравнивают независимые literal lattice sets и новые настоящие off-grid случаи. ID/material/metadata/layout прежние, не подставлен эталон Optimize вместо исходника.\n\n### Полный паспорт стен\n\nНезависимый старый engine659440571 воспроизвёл575/575 прежних полных current-паспортов. На ff65052 runtime-only строк/46 уникальных источников меняются лишь по exact coordinates/dependency parameters и производным xy. Topology, ordered cycles, IDs, material/opaque props, opening hosts/angles/metadata неизменны; все74 графа валидны и projection-consistent. Max displacement4.714045207910317e-10 norm /1.2e-7cm в исходных допусках. В этой выборке причина #1282, не seam compaction #1283.\n\nРовно52 доказанных fullConfigSha256 обновлены; исходные575 source fingerprints и outcomes сохранялись в первом шаге. Затем отдельно скомпонован новый shared current fixture: изменён один intentional-source row fingerprint+fullSHA, без изменения membership/identity/outcome, с отдельным shared-current-source-audit.json.txt. После композиции оба файла снова27/27 PASS. Frozen v10 goldens, прежний845 паспорт и архив229 inputs неизменны. Новый #1285 replay fixture имеет явную inventory запись configs=0. D4 и4 соседних grid cases требуют exact l wire и index/240 projection; три настоящих off-grid D4-T оставлены literal. Legacy половина теста всё ещё сравнивает исходные float буквально.\n\n### Canonical writer и lazy boundary\n\nSource regex теперь требует четвёртый roomLabels аргумент #1287 после прежних adoption/contact/CAS guards. Он не заменён на wildcard. Старый текстовый any census1123→1154 обновлён по принятому source delta31 слов (в том числе обычные комментарии); eager runtime import prohibition и actual loader/recovery/type portability проверки сохранены. Новых product any/casts в этой задаче нет; требование не растить прежний lexical budget не было основанием менять принятый пользовательский runtime ради счётчика.\n\n### Backend удаления\n\n#244 падал после paired tombstone cleanup: успешный config/set уже поднял layout_rev, а тест посылал старый unchanged_layout.rev. Теперь проверяются исчезновение позиции, новая ревизия, stale CAS refusal без записи, fresh Delete и точный Undo всей пары. #819 сохраняет PDF пока существует space-delete Undo, реально восстанавливает пару/файл, повторно удаляет и истекает Undo обычной правкой — только тогда orphan unlink. Прежние one-write/event/services/trails/CAS и foreign file guards сохранены. Product cleanup/history не менялись.\n\n### Реальные результаты и область S6\n\nАдресная диагностика до очереди: lattice44/44 Node и7/7 backend (HA установлен, zero skip); space deletion14/14 backend; два composed wall suite27/27. Первоначальные отказы воспроизведены до исправления. Итоговый нормальный S6 через finish проверит8 изменённых Node файлов и2 backend файла, сборку/критичные данные/стартовый View; его собственная квитанция передаётся вместе с S7 и не подменяется этими ранними числами.\n\nCompanion080bbbe5d793a10fd9388104874dbbc884edbe6f исправляет только прежний ошибочный visible-canvas precondition нового first-space extension: desktop2000×1100 и45px pattern. Все реальные Draw/q/dependency/export/Optimize no-op/config-layout-rev/reload assertions сохранены. Адресный настоящий изолированный HA2026.10.4 с исходными prepared beta.5 bytes d33a8e42c прошёл2/2+2setup без skip, собственный контейнер очищен. На CI1 device Delete/Undo/Redo extension уже прошёл внутри10 journeys, upgrade1/1 и golden75/75 PASS.\n\nФинальный beta CI2 [41916469593](https://github.com/Matysh/houseplan-card/actions/runs/41916469593) использует a4dd940c1 — cherry-pick ТОГО ЖЕ test patch на подготовленную release-версию5, без изменений runtime. Применимые успехи CI1 зачтены, результат ещё ожидается. S8 этой задачи обязателен перед публикацией, затем владелец отдельно поручил полный stable-профиль на точном опубликованном beta-материале. Stable не публикуется.\n\n### Ограничения\n\nПолный post-publication stable-набор и оставшиеся room/space browser journeys ещё не запускались. Эталоны визуальных сцен CI1 не менялись, все75 прошли. Разрешение владельца на будущие golden acceptance не применяется к функциональным отказам. Результаты до финального S6/CI2 не объявляются общим PASS.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "ff650ec58838a85767e15fbb5de9193c336f9034",
     "status": "delivered",
