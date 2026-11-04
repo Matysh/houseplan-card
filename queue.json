@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3337,
+  "revision": 3338,
   "nextTicket": 195,
   "nextFence": 195,
   "tasks": {
@@ -2904,7 +2904,7 @@
       "ownerDecision": null,
       "ticket": 194,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793822834897,
       "reviewEntry": 1,
       "patchId": "55de761a8cf043462f31f187c0c68e25c58ac2b4",
@@ -2946,6 +2946,20 @@
         "at": 1793822914983,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1285:1:55de761a8cf043462f31f187c0c68e25c58ac2b4:a51c3432653e84a990e0cc74d1bf39ccb0bebe70",
+        "at": 1793823318809
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793823318809,
+        "entry": 1,
+        "requestId": "review:1285:1:55de761a8cf043462f31f187c0c68e25c58ac2b4:a51c3432653e84a990e0cc74d1bf39ccb0bebe70"
       }
     },
     "1286": {
@@ -3208,19 +3222,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1285,
-    "worker": "finish",
-    "token": "194:finish:26ceded9-b616-4afd-a63d-85347099f9b5:finish:1:admit",
-    "fence": 194,
-    "materialSha": "620d2b58891e92fa2820ba743a1e38799ce7a825",
-    "expectedBase": "a51c3432653e84a990e0cc74d1bf39ccb0bebe70",
-    "phase": "review",
-    "admittedAt": 1793822839160,
-    "expiresAt": 1793826499087,
-    "patchId": "55de761a8cf043462f31f187c0c68e25c58ac2b4",
-    "reviewRequest": "review:1285:1:55de761a8cf043462f31f187c0c68e25c58ac2b4:a51c3432653e84a990e0cc74d1bf39ccb0bebe70"
-  },
+  "active": null,
   "events": {
     "finish:26ceded9-b616-4afd-a63d-85347099f9b5:finish:2:synchronized": {
       "digest": "a3a52014360a8a70b923dd9e66d45fde35e3e5a4b88b792b53e4635c463d5e8b",
@@ -3260,6 +3262,10 @@
     },
     "finish:26ceded9-b616-4afd-a63d-85347099f9b5:finish:10:review-presentation": {
       "digest": "4b39f996e495e64c80957478b6b61e7fc2d537ea614d65556459f24230819b51",
+      "issue": 1285
+    },
+    "finish:26ceded9-b616-4afd-a63d-85347099f9b5:finish:10:return": {
+      "digest": "538c585df18f127be7b7fd5b32bc110e3e4c5ff95bae3f193871e17e1bd25db0",
       "issue": 1285
     },
     "finish:26ceded9-b616-4afd-a63d-85347099f9b5": {
