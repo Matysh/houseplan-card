@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3290,
+  "revision": 3291,
   "nextTicket": 194,
   "nextFence": 194,
   "tasks": {
@@ -3393,6 +3393,10 @@
       "digest": "ae5bb2e439c40fd6085cd204cf5bee81d1707525dc286f712d2dd0a6d65de12f",
       "issue": 1287
     },
+    "github:41902250233:1:completions:message:f3fec86917742a37b238fe2e8d8ec06212bbee163a1dae099d55458cef0ab9fe": {
+      "digest": "34e8f998fca22d98bfa71b84171ea9967b7687722e7e9f6a48ff034c2110c863",
+      "issue": 1287
+    },
     "finish:bf011598-f13e-441e-a17c-fb6e5e70e8c9": {
       "digest": "afebff1b95fdb3fa6a9f751d94fc3f6fc21d30e5705e7a1b452b92475a0baf28",
       "issue": 1287,
@@ -3647,7 +3651,8 @@
           "requestId": "review:1287:4:8bc87f499ce994b2fd04096e1831c5fc73d8fcef:339c044b8252da1585003d2fbfad6bc1f0889e17",
           "detail": "Автор обнаружил границу собственного expiry-fix: новый marker-history Delete закрепляет общий файл только после paired commit. Возвращает свой допуск для адресного pending-pin regression/fix; обычные expiry tests и S6 e0127/7 PASS, новый finish после исправления.",
           "eventId": "author-return-1287-9cee5be5-ba3e-4ca7-81ac-3519bbfde443:return:1287"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:04a8fcab-5889-4a3b-ac6c-20b98b1283c1": {
