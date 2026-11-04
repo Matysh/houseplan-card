@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2330,
-  "nextTicket": 145,
+  "revision": 2331,
+  "nextTicket": 146,
   "nextFence": 145,
   "tasks": {
     "1126": {
@@ -2554,14 +2554,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1273-current-smoke-oracles",
-      "materialSha": "2edc5958fbad10603a4b94e0491bd0a48121010c",
+      "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 143,
-      "queued": false,
+      "ticket": 145,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793779133391,
-      "reviewEntry": 2,
+      "readyAt": 1793779547468,
+      "reviewEntry": 3,
       "patchId": "5d2ad1f81458a9e5f381f48edad9ba81f96bdc6f",
       "changedFiles": [
         "demo/smoke_opening_drag.mjs",
@@ -2580,8 +2580,7 @@
         "entry": 2,
         "detail": "Браузер: opening drag: failed",
         "eventId": "finish:f99f65d4-d459-499d-872d-34f718de49d8:finish:3:return:return:1273"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1278": {
       "issue": 1278,
@@ -2722,7 +2721,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1273
+  ],
   "active": null,
   "events": {
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:2:synchronized": {
@@ -2863,6 +2864,19 @@
           "eventId": "finish:f99f65d4-d459-499d-872d-34f718de49d8:finish:3:return:return:1273"
         },
         "delivered": true
+      }
+    },
+    "finish:78d51ae5-1835-4a8f-9df8-f06bf0fec118": {
+      "digest": "f9cd13f4673348848b22805117ee3fa4c73863534647e8279b68699646fd6a66",
+      "issue": 1273,
+      "message": {
+        "kind": "queued",
+        "issue": 1273,
+        "at": 1793779547468,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0b2f502bb9570bf9b3c68c29beb0d323ce4f4a72"
       }
     }
   },
