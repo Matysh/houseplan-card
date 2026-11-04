@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2295,
-  "nextTicket": 142,
+  "revision": 2296,
+  "nextTicket": 143,
   "nextFence": 142,
   "tasks": {
     "1126": {
@@ -2548,6 +2548,20 @@
         "status": "published",
         "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
       }
+    },
+    "1273": {
+      "issue": 1273,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1273-current-smoke-oracles",
+      "materialSha": "48c34a2a5072d836b17fda01875488b021fed3d6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 142,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793779024887,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -2652,7 +2666,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1273
+  ],
   "active": null,
   "events": {
     "dev-build:41795369580:1:1263": {
@@ -2665,6 +2681,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
+      }
+    },
+    "finish:9d844034-0fb8-4f17-919c-8daffa660e96": {
+      "digest": "b14efffd643002321431361ce7ef3023b5a16c1e8000ea7cd109eb3bde569498",
+      "issue": 1273,
+      "message": {
+        "kind": "queued",
+        "issue": 1273,
+        "at": 1793779024887,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "48c34a2a5072d836b17fda01875488b021fed3d6"
       }
     }
   },
