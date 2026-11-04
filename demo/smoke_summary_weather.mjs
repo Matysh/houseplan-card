@@ -98,6 +98,12 @@ try {
   await page.screenshot({ path: 'output/issue1174/weather-only.png' });
   await page.locator('hp-summary-weather button').click();
   check('weather opens its own HA more-info', await page.evaluate(() => window.__weather1174.opened.at(-1) === 'weather.lab_home'));
+  // #1270: a previous scene's after-paint continuity commit can legitimately
+  // render the parent. Finish that scene before measuring the weather tick;
+  // every render caused during the measured update still counts.
+  await page.waitForFunction(() => window.__card._continuity.state === 'steady'
+    && !window.__card._continuity.overlayVisible, undefined, { timeout: 5000 });
+  await page.evaluate(() => window.__weather1174.settle());
   check('current weather and forecast updates do not rerender the parent plan', await page.evaluate(async () => {
     const f = window.__weather1174, card = f.card;
     const render = card.render; let renders = 0;
