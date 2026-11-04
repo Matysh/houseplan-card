@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3256,
-  "nextTicket": 191,
+  "revision": 3257,
+  "nextTicket": 192,
   "nextFence": 191,
   "tasks": {
     "1126": {
@@ -2970,14 +2970,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1287-delete-layout-ownership",
-      "materialSha": "700eee71bb23eded9813420e1fc5a83ed7598e80",
+      "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 190,
-      "queued": false,
+      "ticket": 191,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793820220908,
-      "reviewEntry": 2,
+      "readyAt": 1793821192826,
+      "reviewEntry": 3,
       "patchId": "e1f18960ceeecf20af74993c3c984200ad5d5646",
       "changedFiles": [
         "custom_components/houseplan/deletion_layout.py",
@@ -3022,8 +3022,7 @@
         "entry": 2,
         "detail": "Поведение изменённой области: failed",
         "eventId": "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return:return:1287"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1288": {
       "issue": 1288,
@@ -3194,7 +3193,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1287
+  ],
   "active": null,
   "events": {
     "github:41892847332:1:completions:message:a23c52458bd9c3fe936da4eb98c66edb1c537a5c5f626459684049fc9f542259": {
@@ -3370,6 +3371,19 @@
           "detail": "Поведение изменённой области: failed",
           "eventId": "finish:76ef964d-bd10-4fd4-8b42-885791ff6163:finish:3:return:return:1287"
         }
+      }
+    },
+    "finish:d622d9f7-12e5-46f7-a997-af0378802d20": {
+      "digest": "4979fdb983be95fc372c4a7ee11129aa3b39312b97fbf3fdfa68d1074bf10e66",
+      "issue": 1287,
+      "message": {
+        "kind": "queued",
+        "issue": 1287,
+        "at": 1793821192826,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c8c8505bffe5c6ba3ea97950ba8f28fd0c01a081"
       }
     }
   },
