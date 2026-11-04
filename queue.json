@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2746,
-  "nextTicket": 167,
+  "revision": 2747,
+  "nextTicket": 168,
   "nextFence": 167,
   "tasks": {
     "1126": {
@@ -2429,6 +2429,20 @@
         "sourceSha": "2e6497a3132034024391dbf7b217e51908ccda0e"
       }
     },
+    "1264": {
+      "issue": 1264,
+      "track": "show",
+      "layer": "product",
+      "branch": "fix/1264-resize-incident-carriers",
+      "materialSha": "a69afaecbe7079d3feac4ee62a937f7e7062d4a2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 167,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793792529834,
+      "reviewEntry": 1
+    },
     "1265": {
       "issue": 1265,
       "branch": "fix/1265-room-face-lineage",
@@ -3010,9 +3024,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1264
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6": {
+      "digest": "970db07f4b5151d3c373f21e064f04126a7fd55e25f2a6778045d563e0bad2d4",
+      "issue": 1264,
+      "message": {
+        "kind": "queued",
+        "issue": 1264,
+        "at": 1793792529834,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a69afaecbe7079d3feac4ee62a937f7e7062d4a2"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "5d0af8bc304275882b185db7f336293075950205",
     "status": "delivered",
