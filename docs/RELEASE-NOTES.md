@@ -1,24 +1,24 @@
-<!-- release: v1.84.0-beta.3 -->
+<!-- release: v1.84.0-beta.4 -->
 ## Основное
 
-- После сохранения переноса узла продолжают работать курсор захвата, контекстное меню и последующие перемещения. Добавлена регрессия с ответом настоящего Python-кода интеграции, Undo/Redo и повторным открытием плана.
-- Optimize корректно обрабатывает почти осевые стыки и привязки проёмов; миграция старых планов сохраняет отдельные совпадающие стены с разной толщиной. Посторонний непривязанный проём больше не мешает удалению стены.
-- Копирование пространства сохраняет принятую геометрию без оптимизации и новых ограничений для проёмов.
-- В общих настройках появилась выключенная по умолчанию опция учитывать сводную панель при центрировании плана. У панели только с погодой остаётся один заголовок «Погода».
-- Сообщения больше не переносятся в новый активный диалог; описания карточек при добавлении на панель следуют языку профиля HA.
-- Исправлены мигание заливки проёмов при переключении редакторов, остающиеся следы предпросмотра стен и дублирующая обводка кнопок после Esc.
-- Доработаны точная геометрия, привязки проёмов, восстановление камеры и проверки совместимости model11. Сохраняются строгие проверки целостности и прав записи.
+- Resize сохраняет общие стены, проёмы на разделённых участках и неподвижные углы соседних комнат, включая Undo/Redo и повторную загрузку.
+- После Split две комнаты используют одну общую физическую стену с одинаковой толщиной. Draw сохраняет исходные участки стен и привязки проёмов при создании комнат на пересечениях.
+- При переносе существующих проёмов снова работают размеры плеч и привязка к центру стены. Первый Escape отменяет перенос проёма или устройства; последующее отпускание мыши не сохраняет отменённое движение.
+- В старых планах перемещение лестницы корректно отменяется и повторяется без изменения старых стен.
+- Исправлены тесты геометрии, измерение кнопок сводной панели и диагностика производительности. Обновлены 236 визуальных эталонов, явно просмотренных и принятых владельцем; пороги сравнения сохранены.
 
-[Подробный список изменений](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.3/docs/CHANGELOG.ru.md)
+Ограничение: известная проблема удаления некоторых коротких стен (#1258) в эту бету не входит.
+
+[Подробный список изменений](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.4/docs/CHANGELOG.ru.md)
 
 ## Highlights
 
-- Node grab cursors, context menus and subsequent endpoint moves remain available after saving. A regression exercises production Python integration replies, Undo/Redo and reopening the plan.
-- Optimize handles near-axis joints and opening bindings correctly; legacy migration preserves independent coincident walls with different thickness. An unrelated unbound opening no longer blocks deleting a wall.
-- Space copying preserves accepted geometry without optimization or new opening restrictions.
-- General settings add an opt-in option to account for the summary panel when centering the plan. A weather-only panel has one Weather heading.
-- Messages no longer move into newly opened dialogs; dashboard card-picker descriptions follow the HA profile language.
-- Fixes cover opening-fill flashes during editor transitions, retained wall previews and duplicate button outlines after Esc.
-- Exact geometry, opening bindings, camera recovery and model11 compatibility checks are improved while retaining strict integrity and write-permission checks.
+- Resize preserves shared walls, openings on split carriers and fixed neighbouring corners through Undo/Redo and reload.
+- Split rooms share one physical divider with consistent thickness. Draw preserves original wall pieces and opening bindings when intersections create new rooms.
+- Existing openings regain shoulder dimensions and wall-centre snapping. The first Escape cancels an opening or device drag; releasing the pointer cannot save the cancelled move.
+- Moving stairs on legacy plans can be undone and redone without changing legacy walls.
+- Repairs cover geometry tests, summary-control measurement and performance diagnostics. The owner explicitly reviewed and accepted 236 visual baselines; comparison thresholds remain unchanged.
 
-[Detailed changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.3/docs/CHANGELOG.md)
+Known limitation: the short-wall deletion issue (#1258) is outside this beta.
+
+[Detailed changelog](https://github.com/Matysh/houseplan-card/blob/v1.84.0-beta.4/docs/CHANGELOG.md)

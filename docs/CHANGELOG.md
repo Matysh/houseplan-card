@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Measure model11 Optimize movement and near-axis repair on the accepted graph, count actual wall seam collapses, and explain exact opening parameter rewrites without claiming a visible move. Legacy migration reports retain their previous counters. [#1284](https://github.com/Matysh/houseplan-card/issues/1284)
+## v1.84.0-beta.4 — 2026-11-04
 
 - Reconcile Split and full-corpus test passports with independently verified stored documents, update native drag Escape expectations, and measure current summary controls after UI-kit paint while retaining the exact 44px bound and an undersize negative control. [#1281](https://github.com/Matysh/houseplan-card/issues/1281)
 
