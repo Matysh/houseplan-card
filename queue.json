@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2694,
+  "revision": 2695,
   "nextTicket": 166,
   "nextFence": 166,
   "tasks": {
@@ -2688,7 +2688,16 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793790501488,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "455b8aeef82bf474bbf1eb332b44f33007680a1f",
+      "changedFiles": [
+        "demo/smoke_grid_snap.mjs",
+        "demo/smoke_writer_fixed_point.mjs",
+        "demo/wall-draw-click-harness.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "test/align-grid.test.mjs"
+      ]
     },
     "1273": {
       "issue": 1273,
@@ -2983,12 +2992,17 @@
     "token": "165:finish:c488d7f5-64f1-4041-a4da-18a8639d8d88:finish:1:admit",
     "fence": 165,
     "materialSha": "4f431be3f244d7537ca9919253d495564f1edb09",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c7da27c4970522f9865018f9bf17f196727de739",
+    "phase": "testing",
     "admittedAt": 1793790506147,
-    "expiresAt": 1793790806147
+    "expiresAt": 1793790812908,
+    "patchId": "455b8aeef82bf474bbf1eb332b44f33007680a1f"
   },
   "events": {
+    "finish:c488d7f5-64f1-4041-a4da-18a8639d8d88:finish:2:synchronized": {
+      "digest": "7bc6e20ad1a9b98206ada25a4abe4b6d2c6a1998668a274e7cf0d1db479b0e56",
+      "issue": 1272
+    },
     "dev-build:41818248893:1:1276": {
       "digest": "2ab1908f3d7b778662c1be628de49ccf2deb1153947b3220e9a448b9cbde109c",
       "issue": 1276,
