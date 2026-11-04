@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3121,
+  "revision": 3122,
   "nextTicket": 188,
   "nextFence": 186,
   "tasks": {
@@ -3084,7 +3084,7 @@
       "ownerDecision": null,
       "ticket": 185,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793818817435,
       "reviewEntry": 2,
       "patchId": "dd17aff87944a598164ac20f578ffb1c7a6a84be",
@@ -3104,13 +3104,13 @@
         "test/summary-panel-runtime.test.mjs"
       ],
       "notice": {
-        "key": "1:executor-admission-expired",
-        "reason": "executor-admission-expired",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793818510120,
-        "entry": 1,
-        "eventId": "finish:dcac400b-86ba-48f7-a437-a24c761abb4b:track-observed:return:1286"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793819437018,
+        "entry": 2,
+        "requestId": "review:1286:2:dd17aff87944a598164ac20f578ffb1c7a6a84be:f1d2fa8d0cf80adfb755531220deeb02391f8105"
       },
       "s6": {
         "id": "20261104T190546061-93f3f63a",
@@ -3127,6 +3127,11 @@
         "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
         "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
         "patchId": "dd17aff87944a598164ac20f578ffb1c7a6a84be"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1286:2:dd17aff87944a598164ac20f578ffb1c7a6a84be:f1d2fa8d0cf80adfb755531220deeb02391f8105",
+        "at": 1793819437018
       }
     },
     "1287": {
@@ -3376,19 +3381,7 @@
     1283,
     1282
   ],
-  "active": {
-    "issue": 1286,
-    "worker": "finish",
-    "token": "185:finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:2:admit",
-    "fence": 185,
-    "materialSha": "70e3bffb0f4838625c577b3e296dc82db111a6fc",
-    "expectedBase": "f1d2fa8d0cf80adfb755531220deeb02391f8105",
-    "phase": "review",
-    "admittedAt": 1793819132785,
-    "expiresAt": 1793822751725,
-    "patchId": "dd17aff87944a598164ac20f578ffb1c7a6a84be",
-    "reviewRequest": "review:1286:2:dd17aff87944a598164ac20f578ffb1c7a6a84be:f1d2fa8d0cf80adfb755531220deeb02391f8105"
-  },
+  "active": null,
   "events": {
     "github:41885786785:1:completions:message:73a0788ef6e9819034b3eb80d28e1908f018f3768397dc80e30db194d72d7e6f": {
       "digest": "26041b355fe72e670a1c2f89344b2d5334e4e64886789e5d9bb77ef807cb5818",
@@ -3732,6 +3725,10 @@
     },
     "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:9:review-presentation": {
       "digest": "ead789b70cb432640764698737469b63fa3e312ef57e3ae332d98bad6780a281",
+      "issue": 1286
+    },
+    "finish:c8fb7fe6-54ac-4e3d-b0e7-d195cadab3e4:finish:9:return": {
+      "digest": "ffdee746acccc844d6034b2c9d790b103bbb0c565f86e2df3df4928a3c7f4999",
       "issue": 1286
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
