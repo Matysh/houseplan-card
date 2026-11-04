@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2670,
+  "revision": 2671,
   "nextTicket": 164,
   "nextFence": 164,
   "tasks": {
@@ -2801,7 +2801,17 @@
       "reviewEntry": 1,
       "automationError": "automation-error",
       "automationSince": 1793789440125,
-      "automationDetail": "GitHub PUT failed (502)"
+      "automationDetail": "GitHub PUT failed (502)",
+      "reason": "executor-admission-expired",
+      "notice": {
+        "key": "1:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793789898045,
+        "entry": 1,
+        "eventId": "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276"
+      }
     },
     "1278": {
       "issue": 1278,
@@ -2944,17 +2954,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1276,
-    "worker": "finish",
-    "token": "163:finish:592f0c29-4332-46f8-839a-6fbde55d9cf3:finish:1:admit",
-    "fence": 163,
-    "materialSha": "c7da27c4970522f9865018f9bf17f196727de739",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793789419270,
-    "expiresAt": 1793789778485
-  },
+  "active": null,
   "events": {
     "github:41816817017:1:completions:message:7a946e0fb397e12c4f2dd8bb1f262a42b8008098c029a878501bc9224d717bfa": {
       "digest": "2b788fbb0a9a089d3a646cc3ba1d181717247a447b1a3bb1aafb6c7bb610476c",
@@ -3003,6 +3003,25 @@
         "materialSha": "c7da27c4970522f9865018f9bf17f196727de739",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276": {
+      "digest": "145906e6bac9260892c68f327e31c4c58df4229b6e4df4d437e09ec207467a78",
+      "issue": 1276,
+      "message": {
+        "kind": "return",
+        "issue": 1276,
+        "at": 1793789898045,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793789898045,
+          "entry": 1,
+          "eventId": "finish:034c0da9-1a36-4771-ab02-02b5034f90ac:finish:1:expire:return:1276"
+        }
       }
     }
   },
