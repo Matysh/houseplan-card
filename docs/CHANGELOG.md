@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep opening-drag Escape cancellation ahead of wide Properties selection dismissal; a late pointer release cannot save the cancelled opening move. [#1278](https://github.com/Matysh/houseplan-card/issues/1278)
+
 - Escape cancels an active device drag before Properties clears its selection, restoring contacts and placement without saving the cancelled gesture. [#1263](https://github.com/Matysh/houseplan-card/issues/1263)
 
 - Read toolchain runtime pins from the active `.nvmrc` and `.python-version` files instead of the retired Validate workflow; retain launched-browser attestation and reject invalid pins. [#1262](https://github.com/Matysh/houseplan-card/issues/1262)

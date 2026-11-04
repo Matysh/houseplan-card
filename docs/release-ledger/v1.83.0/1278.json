@@ -1,0 +1,5 @@
+{
+  "schema": 1, "issue": 1278, "baseStable": "v1.83.0", "category": "line-fix",
+  "rationale": "Wide Properties Escape interception affects opening drags on the 1.84 editor-toolbar line.",
+  "summary": {"ru":"Escape отменяет перенос проёма без сохранения на широком экране.","en":"Escape cancels opening movement without saving on wide screens."}
+}

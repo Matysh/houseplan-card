@@ -387,7 +387,7 @@ export class PropertiesEditor {
   }
   escape(event: KeyboardEvent): boolean {
     if ((!this.wide && !this.decorSelectionCount) || !this.identity || this.host._editorSecondaryDialogBlocked) return false;
-    if (this.host._deviceDrag || this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;
+    if (this.host._deviceDrag || this.host._opDrag || this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;
     if (event.key !== 'Escape') return false;
     event.preventDefault(); this.clear(); return true;
   }
