@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 304,
+  "revision": 305,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -12140,6 +12140,17 @@
           "status": "accepted",
           "inventoryComplete": true
         }
+      },
+      "delivery": {
+        "status": "verified",
+        "attempts": 1,
+        "discoveryAvailable": true,
+        "source": "github-release-feed",
+        "tag": "v1.84.0-beta.5",
+        "artifactDigest": "ec36f4646787976255bdd09adc8d49c32dfbf3bd2f0936e0c64d9ddb7ea6b173",
+        "assetName": "houseplan.zip",
+        "bytes": 2040828,
+        "observedAt": "2026-11-04T21:51:40.379Z"
       }
     }
   },
@@ -12821,7 +12832,8 @@
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:metrics": "12c0ef3991fcce43b9f93dcf83a2deda230bdcbed1216d11b042bb53e719e0c0",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:prepared:6d5de143-0004-4a6c-8919-c272f33dd059": "1dd0f5bf0905ab107a6b983246e4d1c6b75dd8e23900d659dc02eb90e1980caa",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:started:302": "af47225c76235b86917c2011a2d2ab4274b6c38fbbc7ffd789848c5d54ff8a28",
-    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:published": "ceb526b337f92b2897e0559d83b443ce5faf5c0034d282119a43db54b9790088"
+    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:published": "ceb526b337f92b2897e0559d83b443ce5faf5c0034d282119a43db54b9790088",
+    "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:5eb62a9e-0aa5-4033-94f9-7edfffdfe59e": "fd31896d7785999fe539cce9b0ee0789958069ed6d62f2f157521e106ef03c7f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
