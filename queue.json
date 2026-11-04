@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2766,
+  "revision": 2767,
   "nextTicket": 169,
   "nextFence": 169,
   "tasks": {
@@ -2439,7 +2439,7 @@
       "ownerDecision": null,
       "ticket": 168,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793793333079,
       "reviewEntry": 2,
       "patchId": "c6ab0136f87633f3dcb579ad2be173bd40d81cb1",
@@ -2464,14 +2464,13 @@
         "test/wall-record-preservation.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793792630438,
-        "entry": 1,
-        "detail": "Браузер: floor cache reuse: failed; Браузер: resize pointer real plan: failed",
-        "eventId": "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:3:return:return:1264"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793793855442,
+        "entry": 2,
+        "requestId": "review:1264:2:c6ab0136f87633f3dcb579ad2be173bd40d81cb1:5d0af8bc304275882b185db7f336293075950205"
       },
       "s6": {
         "id": "20261104T115546112-b422d7c7",
@@ -2488,6 +2487,11 @@
         "materialSha": "04a84d09af5d9c412d3c9f0ae71314ddac369546",
         "expectedBase": "5d0af8bc304275882b185db7f336293075950205",
         "patchId": "c6ab0136f87633f3dcb579ad2be173bd40d81cb1"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1264:2:c6ab0136f87633f3dcb579ad2be173bd40d81cb1:5d0af8bc304275882b185db7f336293075950205",
+        "at": 1793793855442
       }
     },
     "1265": {
@@ -3086,19 +3090,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1264,
-    "worker": "finish",
-    "token": "168:finish:aa4a5764-c50b-48cf-8e5d-83985a2be774:finish:1:admit",
-    "fence": 168,
-    "materialSha": "04a84d09af5d9c412d3c9f0ae71314ddac369546",
-    "expectedBase": "5d0af8bc304275882b185db7f336293075950205",
-    "phase": "review",
-    "admittedAt": 1793793336787,
-    "expiresAt": 1793797038608,
-    "patchId": "c6ab0136f87633f3dcb579ad2be173bd40d81cb1",
-    "reviewRequest": "review:1264:2:c6ab0136f87633f3dcb579ad2be173bd40d81cb1:5d0af8bc304275882b185db7f336293075950205"
-  },
+  "active": null,
   "events": {
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6:finish:2:synchronized": {
       "digest": "7609019331e9a220e474dbdfc4b5d2daf17b922b86bef5a9c87729dc7f86d2ae",
@@ -3158,6 +3150,10 @@
     },
     "finish:aa4a5764-c50b-48cf-8e5d-83985a2be774:finish:10:review-presentation": {
       "digest": "23f2e27a350fc33412b81a85389d4763dbf7b8229ca7eb9690ca0067349d2e59",
+      "issue": 1264
+    },
+    "finish:aa4a5764-c50b-48cf-8e5d-83985a2be774:finish:10:return": {
+      "digest": "e9313ef81d0232314b2a75e2254f6899e3cb8f2c30bb7d9587c25f6fc7bb41d8",
       "issue": 1264
     },
     "finish:984a649b-0b3c-4b8c-a86a-88ac2ece38b6": {
