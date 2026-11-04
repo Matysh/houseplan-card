@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2476,
+  "revision": 2477,
   "nextTicket": 152,
   "nextFence": 152,
   "tasks": {
@@ -2917,6 +2917,10 @@
       "digest": "33a573fba63da53fb6484dbaa06b217d25762f738cf0626791510042cb336311",
       "issue": 1269
     },
+    "github:41801181254:1:completions:message:0ffbd55180987b4e9b71ffc5919d77f30ca4443f5708893805e73fa5f2c249ee": {
+      "digest": "87300edf5e469d64b2cabf310c2db05b29d561135f8b40e3c49f11d3a3d95ac1",
+      "issue": 1269
+    },
     "finish:85400028-c694-48ae-861c-127a9bef569d": {
       "digest": "77d31853002f912be355305ed434a307b3beac91cc08907685cf80195b98b33b",
       "issue": 1269,
@@ -2972,7 +2976,8 @@
         "reviewChanges": "Выявлена узкая legacy/current развилка: restoreDecorOnlyHistory допускает сохранение legacy носителя только для decor; restoreNonPhysicalHistory включает stairs, но отказывает любой legacy версии. Undo лестницы попадает в structural restore, мигрирует стеновой носитель, и прежний Redo больше не соответствует ему. Поздние current-model stair cases поэтому проходят.\n\nРешение — допуск legacy только для строго stairs-only snapshot при равенстве всех остальных полей и сохранении существующих guards node/chain/references/mixed/future/invalid model. Не расширять generic legacy presentation authority для plan_transform, декора вместе с лестницей или физических изменений. Реальный history cursor и нативный ранний сценарий должны доказать Undo/Redo без смены модели/ID.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
