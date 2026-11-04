@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2311,
+  "revision": 2312,
   "nextTicket": 145,
   "nextFence": 145,
   "tasks": {
@@ -2762,6 +2762,10 @@
       "digest": "6da7d1cba7f96e4b1200273a3e3d95d250ec5c796a97bde0dbadaa0365df4f11",
       "issue": 1278
     },
+    "github:41796629371:1:completions:message:03763c47cc5025799df565356d6bc0ba47ab64a889140de3014577987ac3d865": {
+      "digest": "f663c2cbb62671d48a1429f8145c1df7527baf7fe83379830fe8f02ea48782f9",
+      "issue": 1278
+    },
     "finish:9d844034-0fb8-4f17-919c-8daffa660e96": {
       "digest": "b14efffd643002321431361ce7ef3023b5a16c1e8000ea7cd109eb3bde569498",
       "issue": 1273,
@@ -2808,7 +2812,8 @@
           "entry": 1,
           "detail": "Браузер: opening drag: failed",
           "eventId": "finish:9d844034-0fb8-4f17-919c-8daffa660e96:finish:3:return:return:1273"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:f99f65d4-d459-499d-872d-34f718de49d8": {
