@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3034,
+  "revision": 3035,
   "nextTicket": 181,
   "nextFence": 181,
   "tasks": {
@@ -3071,7 +3071,7 @@
       "notice": {
         "key": "3:author-addressing-published-review",
         "reason": "author-addressing-published-review",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793817974291,
         "entry": 3,
@@ -3463,6 +3463,10 @@
     "finish:eb9b6749-5164-42dc-8833-959f7cc24f40:finish:3:synchronized": {
       "digest": "1b28af33ede14f1c94d9d38de8f41593f4d394e4df893ea777dc2866b2ad689f",
       "issue": 1286
+    },
+    "github:41890328065:1:completions:notice:42eae34732b263666de82a1baae454a038be628ee07cc8360ca700fdc9d7b419": {
+      "digest": "edb0be34373833dbd246901de08a78887c61029a04c8bd86a904ca7d4a05fc4f",
+      "issue": 1283
     },
     "finish:b49a6255-b452-4889-9227-a02aa0ae1c12": {
       "digest": "580339922696e5299a7f0edc7d4c216b324d147c2f4a8c949ac1f68ea34770b9",
