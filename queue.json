@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2848,
-  "nextTicket": 172,
+  "revision": 2849,
+  "nextTicket": 173,
   "nextFence": 172,
   "tasks": {
     "1126": {
@@ -2832,14 +2832,14 @@
       "track": "show",
       "layer": "product",
       "branch": "fix/1277-golden-active-pan",
-      "materialSha": "8df06807fef1a95325898b77aff9235e94eff871",
+      "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 171,
-      "queued": false,
+      "ticket": 172,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793803795516,
-      "reviewEntry": 1,
+      "readyAt": 1793804356625,
+      "reviewEntry": 2,
       "patchId": "d97d6a78e8ac5eece01644e1980e7c21244a5530",
       "changedFiles": [
         "demo/golden/baselines/approved-ui-contacts-270-1119.png",
@@ -3094,20 +3094,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-      "reviewMaterial": {
-        "materialSha": "8df06807fef1a95325898b77aff9235e94eff871",
-        "expectedBase": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-        "patchId": "d97d6a78e8ac5eece01644e1980e7c21244a5530"
-      },
-      "reviewRetry": {
-        "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-        "eventId": "github:41851664949:1:tick:0:review-retry",
-        "at": 1793803869986,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1277:1:d97d6a78e8ac5eece01644e1980e7c21244a5530:cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
         "at": 1793804076042
@@ -3332,7 +3318,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1277
+  ],
   "active": null,
   "events": {
     "github:41851492311:1:completions:message:ee734eda2b0276c31f348cbbb94fdcb053025c00d449f377dff9ea2589684881": {
@@ -3444,6 +3432,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:9e366bdd-d682-4b81-b0c3-65d18377486d": {
+      "digest": "80acf131442202d3f9a7a1f2af83a39bf55b00fce68436bd04ac9d6eba17752a",
+      "issue": 1277,
+      "message": {
+        "kind": "queued",
+        "issue": 1277,
+        "at": 1793804356625,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c",
+        "evidence": {
+          "id": "20261104T145020677-5367d51a",
+          "name": "Тесты для задачи #1277 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261104T145020677-5367d51a/report.json",
+          "materialSha": "8df06807fef1a95325898b77aff9235e94eff871",
+          "status": "passed",
+          "finishedAt": "2026-11-04T14:50:51.090Z",
+          "failures": []
+        }
       }
     }
   },
