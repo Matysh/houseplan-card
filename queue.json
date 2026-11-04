@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2662,
+  "revision": 2663,
   "nextTicket": 163,
   "nextFence": 163,
   "tasks": {
@@ -2562,7 +2562,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "c8d8e8548d0135db5e46bcc409d06f8a3aba8532"
       }
     },
     "1269": {
@@ -2927,7 +2928,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:41816464911:1:1268": {
+      "digest": "df35b1a08574be463d7d1c26bc18352ec06ab861f9edb5985c3fd45120554fcd",
+      "issue": 1268,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1268,
+        "at": 1793789403571,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c8d8e8548d0135db5e46bcc409d06f8a3aba8532"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "bc7c230157200797a0439bdd1e64800c2871f522",
     "status": "delivered",
