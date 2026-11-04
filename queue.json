@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3253,
+  "revision": 3254,
   "nextTicket": 191,
   "nextFence": 191,
   "tasks": {
@@ -442,38 +442,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "0105e9e60594303fa9bf74f89bf82b9fc62d9bf5"
-      }
-    },
-    "1200": {
-      "issue": 1200,
-      "branch": "codex/review-details-order",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "3a5ef0524a6f12ee0382e504c84157f87db300bc",
-      "mergedAt": 1793574238628,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1200:1:b89f9db47b2a3ce17ed8624a353e765d5497c918:c1ab219c12404505ebccb07bf0ddde996a9ce9fd",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1203": {
@@ -2993,7 +2961,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "339c044b8252da1585003d2fbfad6bc1f0889e17"
       }
     },
     "1287": {
@@ -3371,6 +3340,18 @@
         "materialSha": "81752197642b05c1bd4de3510f4f1ffc6de7fccd",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:41897088319:1:1286": {
+      "digest": "87bb81234e4bd701d7e41d0c728f3f462c7d58206d9cb6db64a569a05318ae8f",
+      "issue": 1286,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1286,
+        "at": 1793820588775,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "339c044b8252da1585003d2fbfad6bc1f0889e17"
       }
     }
   },
