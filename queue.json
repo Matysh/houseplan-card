@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 2614,
-  "nextTicket": 161,
+  "revision": 2615,
+  "nextTicket": 162,
   "nextFence": 161,
   "tasks": {
     "1126": {
@@ -2714,6 +2714,20 @@
         "sourceSha": "07492ec135e83bb6bc79114d9a7005e2820d2e63"
       }
     },
+    "1275": {
+      "issue": 1275,
+      "track": "ship",
+      "layer": "product",
+      "branch": "fix/1275-legacy-cleanup-fixture",
+      "materialSha": "56872284363b3821aec59b5b5bcb046f3cc7ba57",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 161,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793788425589,
+      "reviewEntry": 1
+    },
     "1278": {
       "issue": 1278,
       "branch": "fix/1278-opening-escape",
@@ -2854,7 +2868,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1275
+  ],
   "active": null,
   "events": {
     "dev-build:41814765162:1:1265": {
@@ -2867,6 +2883,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "bc7c230157200797a0439bdd1e64800c2871f522"
+      }
+    },
+    "finish:e1c55811-566a-4fb8-8f5b-d7855cb110d4": {
+      "digest": "e5f146f78887f6d6ebd980622f7acab1048c447c55cd1142005f0214359adba9",
+      "issue": 1275,
+      "message": {
+        "kind": "queued",
+        "issue": 1275,
+        "at": 1793788425589,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "56872284363b3821aec59b5b5bcb046f3cc7ba57"
       }
     }
   },
