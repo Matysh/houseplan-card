@@ -372,15 +372,31 @@ for (const provider of ['z2m', 'zha']) {
       await deliver({ name: remoteName });
       await page.evaluate(() => {
         const style = document.createElement('style');
-        style.textContent = '.head{height:100px!important;min-height:100px!important;max-height:100px!important;overflow:hidden}.stage{height:400px!important;min-height:400px!important;max-height:400px!important}';
+        style.textContent = '.stage{height:400px!important;min-height:400px!important;max-height:400px!important}';
         window.__card.shadowRoot.append(style);
       });
       await page.waitForTimeout(150);
+      // #1271: isolate the available plan width from the header's intrinsic
+      // minimum. Centre the authored source so refitting never moves it out
+      // from under the stationary native pointer during this layout witness.
+      await page.evaluate(async () => {
+        const card = window.__card;
+        await window.__hpTest.setLayout({ ...card._layout,
+          d_mower: { ...card._layout.d_mower, x: .5, y: .5 } });
+      });
+      await settle();
       await hover('d_mower');
       const beforeResize = await sample('d_mower');
-      await page.evaluate(() => { document.getElementById('host').style.width = '95px'; });
+      await page.evaluate(() => {
+        const stage = window.__card.shadowRoot.querySelector('.stage');
+        stage.style.width = '95px'; stage.style.marginInline = 'auto';
+      });
       await page.waitForTimeout(150);
-      await witness('narrowHidesOnlyOrdinaryTip', 'd_mower', { hidden: true });
+      out.narrowCursorStillHitsSource = await page.evaluate(pointer =>
+        window.__card.shadowRoot.elementFromPoint(pointer.x, pointer.y)
+          ?.closest('[data-hp="device"]')?.dataset.id === 'd_mower', pointer);
+      const narrow = await witness('narrowHidesOnlyOrdinaryTip', 'd_mower', { hidden: true });
+      out.narrowStageIs95px = Math.abs(narrow.bounds.right - narrow.bounds.left - 95) < .1;
       await page.screenshot({ path: fileURLToPath(new URL('narrow-priority.png', artifacts)) });
       await deliver({ clear: true }); await settle();
       const narrowWithoutBadges = await sample('d_mower');
@@ -388,7 +404,7 @@ for (const provider of ['z2m', 'zha']) {
         && narrowWithoutBadges.badges.length === 0;
       await deliver({ restore: true }); await settle();
       await witness('returningBadgesReappliesNarrowFallback', 'd_mower', { hidden: true });
-      await page.evaluate(() => { document.getElementById('host').style.width = '900px'; });
+      await page.evaluate(() => { window.__card.shadowRoot.querySelector('.stage').style.removeProperty('width'); });
       await page.waitForTimeout(150);
       const restored = await witness('resizeRestoresWithoutNewHover', 'd_mower');
       out.resizePreservesSourceAndRoute = JSON.stringify(restored.source) === JSON.stringify(beforeResize.source)

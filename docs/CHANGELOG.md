@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Isolate the 95px Zigbee tooltip scene from header controls and retain a real stationary hover, with explicit stage-width and hit-target preconditions. [#1271](https://github.com/Matysh/houseplan-card/issues/1271)
+
 - Wait for mode-camera and queued refit completion before browser wheel/reveal camera observations; retain exact camera and live metadata assertions. [#1274](https://github.com/Matysh/houseplan-card/issues/1274)
 
 - Restore shoulder rulers and room-wall centre snapping while dragging model-11 wall openings, measuring the final allowed exact host position. [#1267](https://github.com/Matysh/houseplan-card/issues/1267)
