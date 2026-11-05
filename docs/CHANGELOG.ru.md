@@ -8,6 +8,8 @@
 
 ## Не выпущено
 
+- Публичный CI-бейдж сохраняет идентичность проверенного продукта при изменении golden/process кода; подготовка бандла по-прежнему учитывает все capture inputs. [#1322](https://github.com/Matysh/houseplan-card/issues/1322)
+
 ## v1.84.0-beta.7 — 2026-11-05
 - Калибровка native input timestamp использует полную фиксированную серию из 128 проб вместо 32; порог погрешности 1 мс, бюджеты и отказ при недоступном замере сохранены. [#1318](https://github.com/Matysh/houseplan-card/issues/1318)
 - Кеш сборки и demo учитывает все canonical golden capture inputs и их локальные импорты, встроенные в fingerprint бандла. Изменение проверки больше не переиспользует устаревшую сборку. [#1321](https://github.com/Matysh/houseplan-card/issues/1321)

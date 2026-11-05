@@ -40,6 +40,8 @@ function legacy(f) {
 test('product identity survives docs, tests and renamed test scripts; code, dependencies and build hooks invalidate it', async t => {
   const f = fixture(t), original = await productIdentity(f.git, f.source);
   f.write('README.md', 'documentation'); f.write('test/new.test.mjs', 'new test'); f.write('process-next/lib/queue.mjs', 'new process');
+  for (const name of ['golden-runner', 'golden-selection', 'selections', 'golden-floor-continuity'])
+    f.write(`process-next/catalog/${name}.mjs`, 'changed capture implementation');
   f.pkg.scripts.test = 'new test command'; f.write('package.json', JSON.stringify(f.pkg, null, 2));
   assert.equal(await productIdentity(f.git, f.commit()), original);
   for (const [path, body] of [['src/card.ts', 'changed product'], ['package.json', JSON.stringify({ ...f.pkg, dependencies: { lit: '4.0.0' } })],
@@ -74,7 +76,10 @@ test('legacy proof requires live successful run, job and every mandatory step, n
 
 test('historical equivalence is one exact audited tree bridge; future changes and extra source changes are not excused', async t => {
   const f = fixture(t), l = legacy(f), path = 'scripts/source-fingerprint.mjs';
-  f.write(path, 'new capture metadata'); const anchor = f.commit();
+  f.write(path, 'new capture metadata');
+  f.write('process-next/catalog/golden-runner.mjs', 'new process capture at historical bridge');
+  f.write('process-next/catalog/selections.mjs', 'new process selection at historical bridge');
+  const anchor = f.commit();
   l.evidence.equivalentProductSha = anchor;
   l.evidence.equivalence = { explanation: 'Reviewed metadata migration only', allowedChanges: [{ path,
     before: f.run(['rev-parse', `${f.source}:${path}`]), after: f.run(['rev-parse', `${anchor}:${path}`]) }] };
