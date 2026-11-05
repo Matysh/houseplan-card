@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4588,
+  "revision": 4589,
   "nextTicket": 238,
   "nextFence": 238,
   "tasks": {
@@ -3616,7 +3616,7 @@
       "ownerDecision": null,
       "ticket": 237,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793886430120,
       "reviewEntry": 2,
       "patchId": "97d066c6b5667c369115f18dedcd0816209abe68",
@@ -3635,6 +3635,15 @@
         "entry": 1,
         "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
         "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
+      },
+      "s6": {
+        "id": "20261105T134936364-544be701",
+        "name": "Тесты для задачи #1320 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T134936364-544be701/report.json",
+        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
+        "status": "passed",
+        "finishedAt": "2026-11-05T13:50:36.238Z",
+        "failures": []
       }
     }
   },
@@ -3776,9 +3785,9 @@
     "fence": 237,
     "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
     "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793886434673,
-    "expiresAt": 1793886913348,
+    "expiresAt": 1793890237454,
     "patchId": "97d066c6b5667c369115f18dedcd0816209abe68"
   },
   "events": {
@@ -3882,6 +3891,34 @@
         "layer": "product",
         "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
         "phase": "sync"
+      }
+    },
+    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:5:s6-complete": {
+      "digest": "8633b3aa4ad9b8e70a74f5a1d96fd9d7dd3136aa7d981fe0f600ca7653d6a342",
+      "issue": 1320,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1320,
+        "at": 1793886637454,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T134936364-544be701",
+          "name": "Тесты для задачи #1320 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T134936364-544be701/report.json",
+          "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
+          "status": "passed",
+          "finishedAt": "2026-11-05T13:50:36.238Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Commit `3e9402596333ea619fffad7d7ec9babe8dd77beb`. Сохранены быстрые прежние сравнения строк; различный key order дополняется рекурсивным **точным** сравнением JSON после прежней сериализации. Не используются хеш, сортировка массивов или фильтрация полей. Оба объекта должны иметь тот же набор собственных ключей; значения и элементы сравниваются рекурсивно. Revision/authority/guard/ACK проверки и перезагрузка настоящего отказа не менялись. В обычном неизменном состоянии дополнительного JSON.parse нет.\n\nДо исправления новый positive regression падает `superseded-node-response`. После исправления `node --test test/wall-node-write.test.mjs`: 16/16 PASS, без skip; отрицательные key-order+array/opaque/missing/coordinate/newer-revision случаи отказывают. `npm run build`, test-build и bundle-sync пройдены.\n\nReal HA 2026.10.4, точный пакет commit 3e940259: 3/3 business + 3/3 setup PASS, без skip/unexecuted/retry. Обычный Move, independent Merge на двух пространствах, adjacent Merge с удалением ребра, stale CAS и foreign refusal; настоящий ACK удерживается/выпускается, точные Undo/Redo и reload проверены. Лаборатория `/home/matysh/hp-e2e-29-addressed/hp-e2e-journeys-7XXORy`, сохранены results/trace. Первую диагностическую попытку с пакетом 71905b4c не считаем проверкой исправления: его product build остановился на несовместимом Object.hasOwn; использованная старая сборка не доказывала поведение нового кода. Эта попытка сохранена отдельно, новый валидный пакет пересобран после исправления target compatibility.\n\nРиск для внимания: разрешение только key-order-only echo не должно разрешать чужое содержимое с той же revision. Проверки новых ревизий и всех данных, включая неизвестные поля, остаются строгими. Shared finish повторяет необходимый S6 в своём допуске.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
