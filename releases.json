@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 441,
+  "revision": 442,
   "active": "v1.84.0-beta.8-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -20691,7 +20691,17 @@
         1324
       ],
       "reviewRequired": true,
-      "review": null,
+      "review": {
+        "sha": "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855",
+        "report": {
+          "kind": "ship-batch",
+          "requestId": "ship-review:fdbfa01fd4e5d42a6890c26de97068b74f35acf25b9e4b5dd32cebde9558d2e1",
+          "verdict": "accepted",
+          "materialSha": "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855",
+          "runId": 42099527774,
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42099527774"
+        }
+      },
       "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
@@ -21562,7 +21572,8 @@
     "beta8-20261105-first-failure": "be063af237e66d1975efb3fa88bfc56855e739e00a97a3b2b52697199c693a76",
     "beta8-20261105-node-scale-repair": "1aefa7a5627f117fbac20ad701f2ef838939ebab1103deead6caa665b4110e14",
     "ship-review:prepare:546b241b-b1f8-442e-b800-4bed590d7955": "2da0ddabf5ea177a5e873b6eb62aff1d09d15e3c598cb58998c8f23b0681adce",
-    "ship-review:result:cdb36491-ba6f-4a79-b98b-0cf6542c1fcb": "2128b97a701722e624f31ba7596051aa55395fb3b1cd934bcd507cc65b05c541"
+    "ship-review:result:cdb36491-ba6f-4a79-b98b-0cf6542c1fcb": "2128b97a701722e624f31ba7596051aa55395fb3b1cd934bcd507cc65b05c541",
+    "beta8-20261105-repair-review-accepted": "d67f6c69406f1793bef3ecf6f936c0e74d9aed53d1c962fede343e24fd652299"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
