@@ -1,0 +1,67 @@
+[
+  {
+    "function": "validate_graph",
+    "ms": 335.826,
+    "graph": "584820e497e5"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 325.917,
+    "graph": "584820e497e5"
+  },
+  {
+    "function": "legacy_all_pair_nodes",
+    "ms": 3783.516,
+    "graph": null
+  },
+  {
+    "function": "validate_graph",
+    "ms": 322.638,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 331.405,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 331.758,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 329.76,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 322.869,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 329.183,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 327.924,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 325.609,
+    "graph": "584820e497e5"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 326.7,
+    "graph": "3423b786670f"
+  },
+  {
+    "function": "validate_graph",
+    "ms": 345.877,
+    "graph": "584820e497e5"
+  }
+]

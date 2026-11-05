@@ -1,0 +1,18 @@
+{
+  "error": null,
+  "releaseToAckMs": 10593.219859,
+  "phase": "release",
+  "checks": [
+    {
+      "phase": "held",
+      "ms": 23.099999994039536
+    },
+    {
+      "phase": "release",
+      "ms": 10.200000002980232
+    }
+  ],
+  "toasts": [],
+  "lastValid": true,
+  "writes": 1
+}

@@ -1,0 +1,213 @@
+{
+  "recordedDate": "2026-11-05",
+  "environment": "Ubuntu WSL; Node 22.23.2; Python 3.14.7",
+  "mode": "production ordinary node_move CPU stages; no merge; synthetic; excludes HA executor/lock/Store/network/UI",
+  "first": [
+    {
+      "edges": 100,
+      "totalMs": 65.362,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 29.15
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 4.261
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 12.289
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.002
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 7.248
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 6.569
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 5.843
+        }
+      ]
+    },
+    {
+      "edges": 1000,
+      "totalMs": 964.637,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 491.109
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 62.342
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 191.641
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.006
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 75.482
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 108.842
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 35.215
+        }
+      ]
+    },
+    {
+      "edges": 5000,
+      "totalMs": 8508.089,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 5701.375
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 370.226
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 1090.961
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.007
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 444.681
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 654.567
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 246.272
+        }
+      ]
+    }
+  ],
+  "repeat": [
+    {
+      "edges": 100,
+      "totalMs": 66.636,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 29.576
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 4.444
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 13.197
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.004
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 5.703
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 7.111
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 6.601
+        }
+      ]
+    },
+    {
+      "edges": 1000,
+      "totalMs": 1037.085,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 524.951
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 68.637
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 211.685
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.007
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 78.779
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 114.735
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 38.291
+        }
+      ]
+    },
+    {
+      "edges": 5000,
+      "totalMs": 8804.648,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 5865.396
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 385.684
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 1106.106
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.006
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 454.935
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 681.38
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 311.141
+        }
+      ]
+    }
+  ]
+}

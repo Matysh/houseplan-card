@@ -1,0 +1,2072 @@
+{
+  "measurements": [
+    {
+      "edges": 100,
+      "totalMs": 66.636,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 29.576
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 4.444
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 13.197
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.004
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 5.703
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 7.111
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 6.601
+        }
+      ]
+    },
+    {
+      "edges": 1000,
+      "totalMs": 1037.085,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 524.951
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 68.637
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 211.685
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.007
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 78.779
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 114.735
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 38.291
+        }
+      ]
+    },
+    {
+      "edges": 5000,
+      "totalMs": 8804.648,
+      "stages": [
+        {
+          "stage": "node_move_candidate",
+          "ms": 5865.396
+        },
+        {
+          "stage": "wall_model_transition",
+          "ms": 385.684
+        },
+        {
+          "stage": "CONFIG_SCHEMA",
+          "ms": 1106.106
+        },
+        {
+          "stage": "opening_passages",
+          "ms": 0.006
+        },
+        {
+          "stage": "host_lineage_baseline",
+          "ms": 454.935
+        },
+        {
+          "stage": "opening_hosts",
+          "ms": 681.38
+        },
+        {
+          "stage": "junction_limits_cold",
+          "ms": 311.141
+        }
+      ]
+    }
+  ],
+  "profile": [
+    {
+      "file": "wall_node_move.py",
+      "line": 428,
+      "function": "node_move_candidate",
+      "calls": 1,
+      "selfMs": 5.32,
+      "cumulativeMs": 30595.56,
+      "callers": [
+        {
+          "function": "<lambda>",
+          "file": "/home/matysh/hp-geometry-ci-20261102/artifacts/1305/profile-ordinary.py",
+          "line": 13,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 84,
+      "function": "validate_graph",
+      "calls": 12,
+      "selfMs": 431.53,
+      "cumulativeMs": 27884.13,
+      "callers": [
+        {
+          "function": "project_graph_space",
+          "file": "plan_graph.py",
+          "line": 228,
+          "calls": 6
+        },
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        },
+        {
+          "function": "node_identity",
+          "file": "graph_node_write.py",
+          "line": 14,
+          "calls": 1
+        },
+        {
+          "function": "__init__",
+          "file": "graph_host_continuity.py",
+          "line": 12,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "graph_node_write.py",
+      "line": 73,
+      "function": "move_graph_node_space",
+      "calls": 1,
+      "selfMs": 5.76,
+      "cumulativeMs": 24868.54,
+      "callers": [
+        {
+          "function": "node_move_candidate",
+          "file": "wall_node_move.py",
+          "line": 428,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 145,
+      "function": "move_node_space",
+      "calls": 1,
+      "selfMs": 20.08,
+      "cumulativeMs": 16893.77,
+      "callers": [
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 92,
+      "function": "_nodes",
+      "calls": 1,
+      "selfMs": 1769.85,
+      "cumulativeMs": 16698.57,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 228,
+      "function": "project_graph_space",
+      "calls": 6,
+      "selfMs": 58.34,
+      "cumulativeMs": 16017.72,
+      "callers": [
+        {
+          "function": "verify_projection",
+          "file": "plan_graph.py",
+          "line": 258,
+          "calls": 5
+        },
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 83,
+      "function": "_intersection",
+      "calls": 12502499,
+      "selfMs": 9157.04,
+      "cumulativeMs": 14937.58,
+      "callers": [
+        {
+          "function": "_nodes",
+          "file": "wall_node_move.py",
+          "line": 92,
+          "calls": 12497500
+        },
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 4999
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_spatial.py",
+      "line": 6,
+      "function": "__init__",
+      "calls": 24564,
+      "selfMs": 76.03,
+      "cumulativeMs": 14027.76,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 12
+        },
+        {
+          "function": "__init__",
+          "file": "plan_graph_spatial.py",
+          "line": 6,
+          "calls": 24
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 258,
+      "function": "verify_projection",
+      "calls": 5,
+      "selfMs": 8.77,
+      "cumulativeMs": 13329.62,
+      "callers": [
+        {
+          "function": "validate_wall_model_transition",
+          "file": "validation.py",
+          "line": 314,
+          "calls": 1
+        },
+        {
+          "function": "_config_wall_segment_invariants",
+          "file": "validation.py",
+          "line": 2442,
+          "calls": 1
+        },
+        {
+          "function": "normalize_graph_config",
+          "file": "graph_write.py",
+          "line": 63,
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "file": "graph_host_continuity.py",
+      "line": 12,
+      "function": "__init__",
+      "calls": 4,
+      "selfMs": 3.33,
+      "cumulativeMs": 9179.19,
+      "callers": [
+        {
+          "function": "validate_partition_opening_hosts",
+          "file": "validation.py",
+          "line": 905,
+          "calls": 2
+        },
+        {
+          "function": "_space_geometry_invariants",
+          "file": "validation.py",
+          "line": 2127,
+          "calls": 1
+        },
+        {
+          "function": "_config_wall_segment_invariants",
+          "file": "validation.py",
+          "line": 2442,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_segment_model.py",
+      "line": 966,
+      "function": "commit_wall_segment_model",
+      "calls": 3,
+      "selfMs": 4.63,
+      "cumulativeMs": 8517.03,
+      "callers": [
+        {
+          "function": "node_move_host_baseline",
+          "file": "wall_node_move.py",
+          "line": 325,
+          "calls": 1
+        },
+        {
+          "function": "node_move_candidate",
+          "file": "wall_node_move.py",
+          "line": 428,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "graph_write.py",
+      "line": 63,
+      "function": "normalize_graph_config",
+      "calls": 3,
+      "selfMs": 5.1,
+      "cumulativeMs": 8501.35,
+      "callers": [
+        {
+          "function": "commit_wall_segment_model",
+          "file": "wall_segment_model.py",
+          "line": 966,
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_spatial.py",
+      "line": 18,
+      "function": "query",
+      "calls": 1371144,
+      "selfMs": 1126.31,
+      "cumulativeMs": 7019.93,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 60000
+        },
+        {
+          "function": "query",
+          "file": "plan_graph_spatial.py",
+          "line": 18,
+          "calls": 120000
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 2442,
+      "function": "_config_wall_segment_invariants",
+      "calls": 1,
+      "selfMs": 1.21,
+      "cumulativeMs": 4928.7,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 905,
+      "function": "validate_partition_opening_hosts",
+      "calls": 1,
+      "selfMs": 0.84,
+      "cumulativeMs": 4598.0,
+      "callers": [
+        {
+          "function": "<lambda>",
+          "file": "/home/matysh/hp-geometry-ci-20261102/artifacts/1305/profile-ordinary.py",
+          "line": 18,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 107,
+      "function": "decode_point",
+      "calls": 130001,
+      "selfMs": 258.13,
+      "cumulativeMs": 3749.94,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 120000
+        },
+        {
+          "function": "propagate_dependencies",
+          "file": "plan_graph.py",
+          "line": 282,
+          "calls": 10000
+        },
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 325,
+      "function": "node_move_host_baseline",
+      "calls": 1,
+      "selfMs": 0.87,
+      "cumulativeMs": 2940.69,
+      "callers": [
+        {
+          "function": "<lambda>",
+          "file": "/home/matysh/hp-geometry-ci-20261102/artifacts/1305/profile-ordinary.py",
+          "line": 17,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 314,
+      "function": "validate_wall_model_transition",
+      "calls": 1,
+      "selfMs": 0.74,
+      "cumulativeMs": 2644.29,
+      "callers": [
+        {
+          "function": "<lambda>",
+          "file": "/home/matysh/hp-geometry-ci-20261102/artifacts/1305/profile-ordinary.py",
+          "line": 14,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "graph_node_write.py",
+      "line": 14,
+      "function": "node_identity",
+      "calls": 1,
+      "selfMs": 1.32,
+      "cumulativeMs": 2320.9,
+      "callers": [
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 2127,
+      "function": "_space_geometry_invariants",
+      "calls": 1,
+      "selfMs": 1.34,
+      "cumulativeMs": 2292.96,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 85,
+      "function": "check_point",
+      "calls": 320005,
+      "selfMs": 308.17,
+      "cumulativeMs": 2291.74,
+      "callers": [
+        {
+          "function": "decode_point",
+          "file": "plan_graph_exact.py",
+          "line": 107,
+          "calls": 130001
+        },
+        {
+          "function": "encode_point",
+          "file": "plan_graph_exact.py",
+          "line": 99,
+          "calls": 130002
+        },
+        {
+          "function": "to_numbers",
+          "file": "plan_graph_exact.py",
+          "line": 122,
+          "calls": 60002
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 150,
+      "function": "intersection",
+      "calls": 184896,
+      "selfMs": 235.18,
+      "cumulativeMs": 2058.06,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 184896
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 29,
+      "function": "_sub",
+      "calls": 25064999,
+      "selfMs": 2010.86,
+      "cumulativeMs": 2010.86,
+      "callers": [
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 4
+        },
+        {
+          "function": "_on",
+          "file": "wall_node_move.py",
+          "line": 68,
+          "calls": 20000
+        },
+        {
+          "function": "_intersection",
+          "file": "wall_node_move.py",
+          "line": 83,
+          "calls": 25014996
+        },
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 9998
+        },
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 165,
+          "calls": 1
+        },
+        {
+          "function": "_fraction",
+          "file": "wall_node_move.py",
+          "line": 59,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 99,
+      "function": "encode_point",
+      "calls": 130002,
+      "selfMs": 183.61,
+      "cumulativeMs": 1932.79,
+      "callers": [
+        {
+          "function": "decode_point",
+          "file": "plan_graph_exact.py",
+          "line": 107,
+          "calls": 130001
+        },
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_spatial.py",
+      "line": 14,
+      "function": "<lambda>",
+      "calls": 600000,
+      "selfMs": 241.99,
+      "cumulativeMs": 1205.44,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sorted>",
+          "file": "~",
+          "line": 0,
+          "calls": 600000
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_spatial.py",
+      "line": 8,
+      "function": "<genexpr>",
+      "calls": 684564,
+      "selfMs": 131.43,
+      "cumulativeMs": 1128.12,
+      "callers": [
+        {
+          "function": "<built-in method builtins.max>",
+          "file": "~",
+          "line": 0,
+          "calls": 684564
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_spatial.py",
+      "line": 7,
+      "function": "<genexpr>",
+      "calls": 684564,
+      "selfMs": 134.5,
+      "cumulativeMs": 1124.38,
+      "callers": [
+        {
+          "function": "<built-in method builtins.min>",
+          "file": "~",
+          "line": 0,
+          "calls": 684564
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 37,
+      "function": "_cross",
+      "calls": 12527497,
+      "selfMs": 951.33,
+      "cumulativeMs": 951.33,
+      "callers": [
+        {
+          "function": "_on",
+          "file": "wall_node_move.py",
+          "line": 68,
+          "calls": 10000
+        },
+        {
+          "function": "_intersection",
+          "file": "wall_node_move.py",
+          "line": 83,
+          "calls": 12512497
+        },
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 4999
+        },
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 165,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 31,
+      "function": "checked",
+      "calls": 640130,
+      "selfMs": 416.92,
+      "cumulativeMs": 646.21,
+      "callers": [
+        {
+          "function": "intersection",
+          "file": "plan_graph_exact.py",
+          "line": 150,
+          "calls": 48
+        },
+        {
+          "function": "check_point",
+          "file": "plan_graph_exact.py",
+          "line": 85,
+          "calls": 640010
+        },
+        {
+          "function": "point_at",
+          "file": "plan_graph_exact.py",
+          "line": 135,
+          "calls": 72
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 408,
+      "function": "validate_junction_limits",
+      "calls": 1,
+      "selfMs": 0.28,
+      "cumulativeMs": 642.52,
+      "callers": [
+        {
+          "function": "<lambda>",
+          "file": "/home/matysh/hp-geometry-ci-20261102/artifacts/1305/profile-ordinary.py",
+          "line": 19,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 335,
+      "function": "space_violations",
+      "calls": 2,
+      "selfMs": 10.82,
+      "cumulativeMs": 642.04,
+      "callers": [
+        {
+          "function": "validate_junction_limits",
+          "file": "junction_limits.py",
+          "line": 408,
+          "calls": 1
+        },
+        {
+          "function": "space_violation_counts",
+          "file": "junction_limits.py",
+          "line": 396,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 122,
+      "function": "to_numbers",
+      "calls": 60002,
+      "selfMs": 33.94,
+      "cumulativeMs": 516.28,
+      "callers": [
+        {
+          "function": "project_graph_space",
+          "file": "plan_graph.py",
+          "line": 228,
+          "calls": 60000
+        },
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 265,
+      "function": "check_node_distances",
+      "calls": 2,
+      "selfMs": 207.86,
+      "cumulativeMs": 393.58,
+      "callers": [
+        {
+          "function": "space_violations",
+          "file": "junction_limits.py",
+          "line": 335,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 282,
+      "function": "propagate_dependencies",
+      "calls": 1,
+      "selfMs": 3.95,
+      "cumulativeMs": 368.96,
+      "callers": [
+        {
+          "function": "move_graph_node_space",
+          "file": "graph_node_write.py",
+          "line": 73,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 37,
+      "function": "integer",
+      "calls": 260002,
+      "selfMs": 210.47,
+      "cumulativeMs": 354.09,
+      "callers": [
+        {
+          "function": "decode_point",
+          "file": "plan_graph_exact.py",
+          "line": 107,
+          "calls": 260002
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 396,
+      "function": "space_violation_counts",
+      "calls": 1,
+      "selfMs": 0.17,
+      "cumulativeMs": 318.38,
+      "callers": [
+        {
+          "function": "validate_junction_limits",
+          "file": "junction_limits.py",
+          "line": 408,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 90,
+      "function": "_key",
+      "calls": 110000,
+      "selfMs": 71.84,
+      "cumulativeMs": 199.3,
+      "callers": [
+        {
+          "function": "collinear_run_length_units",
+          "file": "junction_limits.py",
+          "line": 204,
+          "calls": 20000
+        },
+        {
+          "function": "check_nodes",
+          "file": "junction_limits.py",
+          "line": 123,
+          "calls": 20000
+        },
+        {
+          "function": "check_node_distances",
+          "file": "junction_limits.py",
+          "line": 265,
+          "calls": 50000
+        },
+        {
+          "function": "_build_node_index",
+          "file": "junction_limits.py",
+          "line": 196,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 26,
+      "function": "_record",
+      "calls": 180012,
+      "selfMs": 146.21,
+      "cumulativeMs": 195.86,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 180012
+        }
+      ]
+    },
+    {
+      "file": "coordinate_canonicalization.py",
+      "line": 121,
+      "function": "canonicalize_config_geometry",
+      "calls": 1,
+      "selfMs": 0.6,
+      "cumulativeMs": 129.58,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 77,
+      "function": "_quantize_key_coord",
+      "calls": 220000,
+      "selfMs": 81.72,
+      "cumulativeMs": 127.45,
+      "callers": [
+        {
+          "function": "_key",
+          "file": "junction_limits.py",
+          "line": 90,
+          "calls": 220000
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 238,
+      "function": "check_segment_lengths",
+      "calls": 2,
+      "selfMs": 5.28,
+      "cumulativeMs": 122.06,
+      "callers": [
+        {
+          "function": "space_violations",
+          "file": "junction_limits.py",
+          "line": 335,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 32,
+      "function": "_id",
+      "calls": 180000,
+      "selfMs": 58.11,
+      "cumulativeMs": 87.81,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 120000
+        },
+        {
+          "function": "edge_key",
+          "file": "plan_graph.py",
+          "line": 40,
+          "calls": 60000
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 204,
+      "function": "collinear_run_length_units",
+      "calls": 10000,
+      "selfMs": 17.45,
+      "cumulativeMs": 67.35,
+      "callers": [
+        {
+          "function": "check_segment_lengths",
+          "file": "junction_limits.py",
+          "line": 238,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 123,
+      "function": "check_nodes",
+      "calls": 2,
+      "selfMs": 17.39,
+      "cumulativeMs": 62.97,
+      "callers": [
+        {
+          "function": "space_violations",
+          "file": "junction_limits.py",
+          "line": 335,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 40,
+      "function": "edge_key",
+      "calls": 60000,
+      "selfMs": 25.99,
+      "cumulativeMs": 61.34,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 60000
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 102,
+      "function": "limit_segments",
+      "calls": 2,
+      "selfMs": 11.39,
+      "cumulativeMs": 52.6,
+      "callers": [
+        {
+          "function": "space_violations",
+          "file": "junction_limits.py",
+          "line": 335,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 196,
+      "function": "_build_node_index",
+      "calls": 2,
+      "selfMs": 8.03,
+      "cumulativeMs": 47.68,
+      "callers": [
+        {
+          "function": "check_segment_lengths",
+          "file": "junction_limits.py",
+          "line": 238,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "graph_write.py",
+      "line": 15,
+      "function": "check_graph_config_size",
+      "calls": 3,
+      "selfMs": 0.04,
+      "cumulativeMs": 34.26,
+      "callers": [
+        {
+          "function": "normalize_graph_config",
+          "file": "graph_write.py",
+          "line": 63,
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 68,
+      "function": "_finite_point",
+      "calls": 20000,
+      "selfMs": 13.89,
+      "cumulativeMs": 34.01,
+      "callers": [
+        {
+          "function": "limit_segments",
+          "file": "junction_limits.py",
+          "line": 102,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 105,
+      "function": "_classify",
+      "calls": 2,
+      "selfMs": 0.04,
+      "cumulativeMs": 21.84,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 1
+        },
+        {
+          "function": "node_move_host_baseline",
+          "file": "wall_node_move.py",
+          "line": 325,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 106,
+      "function": "<genexpr>",
+      "calls": 4,
+      "selfMs": 1.26,
+      "cumulativeMs": 21.76,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sorted>",
+          "file": "~",
+          "line": 0,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 68,
+      "function": "_on",
+      "calls": 10000,
+      "selfMs": 8.1,
+      "cumulativeMs": 20.5,
+      "callers": [
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 106,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 72,
+      "function": "<genexpr>",
+      "calls": 60000,
+      "selfMs": 11.94,
+      "cumulativeMs": 17.37,
+      "callers": [
+        {
+          "function": "_finite_point",
+          "file": "junction_limits.py",
+          "line": 68,
+          "calls": 60000
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 1448,
+      "function": "_finite",
+      "calls": 25005,
+      "selfMs": 8.31,
+      "cumulativeMs": 8.31,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 25005
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 59,
+      "function": "_fraction",
+      "calls": 10000,
+      "selfMs": 5.12,
+      "cumulativeMs": 8.24,
+      "callers": [
+        {
+          "function": "_on",
+          "file": "wall_node_move.py",
+          "line": 68,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 78,
+      "function": "_walls",
+      "calls": 3,
+      "selfMs": 3.92,
+      "cumulativeMs": 8.07,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 2
+        },
+        {
+          "function": "node_move_host_baseline",
+          "file": "wall_node_move.py",
+          "line": 325,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_segment_model.py",
+      "line": 974,
+      "function": "<genexpr>",
+      "calls": 14997,
+      "selfMs": 4.92,
+      "cumulativeMs": 7.17,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sum>",
+          "file": "~",
+          "line": 0,
+          "calls": 14997
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 46,
+      "function": "_length",
+      "calls": 25008,
+      "selfMs": 4.47,
+      "cumulativeMs": 6.59,
+      "callers": [
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 218,
+          "calls": 1
+        },
+        {
+          "function": "_same",
+          "file": "wall_node_move.py",
+          "line": 50,
+          "calls": 10007
+        },
+        {
+          "function": "_walls",
+          "file": "wall_node_move.py",
+          "line": 78,
+          "calls": 15000
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 94,
+      "function": "_length",
+      "calls": 20000,
+      "selfMs": 3.94,
+      "cumulativeMs": 5.87,
+      "callers": [
+        {
+          "function": "collinear_run_length_units",
+          "file": "junction_limits.py",
+          "line": 204,
+          "calls": 10000
+        },
+        {
+          "function": "limit_segments",
+          "file": "junction_limits.py",
+          "line": 102,
+          "calls": 10000
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 159,
+      "function": "<genexpr>",
+      "calls": 9998,
+      "selfMs": 1.47,
+      "cumulativeMs": 5.34,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 9998
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 74,
+      "function": "_ref",
+      "calls": 40007,
+      "selfMs": 4.16,
+      "cumulativeMs": 4.16,
+      "callers": [
+        {
+          "function": "<method 'sort' of 'list' objects>",
+          "file": "~",
+          "line": 0,
+          "calls": 2
+        },
+        {
+          "function": "<built-in method builtins.sorted>",
+          "file": "~",
+          "line": 0,
+          "calls": 2
+        },
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 2
+        },
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 40000
+        },
+        {
+          "function": "node_move_host_baseline",
+          "file": "wall_node_move.py",
+          "line": 325,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 50,
+      "function": "_same",
+      "calls": 10007,
+      "selfMs": 1.45,
+      "cumulativeMs": 3.89,
+      "callers": [
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 4
+        },
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 166,
+          "calls": 2
+        },
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 3
+        },
+        {
+          "function": "node_move_host_baseline",
+          "file": "wall_node_move.py",
+          "line": 325,
+          "calls": 1
+        },
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 159,
+          "calls": 9997
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 33,
+      "function": "_dot",
+      "calls": 20004,
+      "selfMs": 1.47,
+      "cumulativeMs": 1.47,
+      "callers": [
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 126,
+          "calls": 2
+        },
+        {
+          "function": "<genexpr>",
+          "file": "wall_node_move.py",
+          "line": 127,
+          "calls": 2
+        },
+        {
+          "function": "_fraction",
+          "file": "wall_node_move.py",
+          "line": 59,
+          "calls": 20000
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 1929,
+      "function": "_wall_segment_nonzero",
+      "calls": 4998,
+      "selfMs": 0.71,
+      "cumulativeMs": 0.71,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 4998
+        }
+      ]
+    },
+    {
+      "file": "coordinate_canonicalization.py",
+      "line": 57,
+      "function": "_records",
+      "calls": 13,
+      "selfMs": 0.43,
+      "cumulativeMs": 0.68,
+      "callers": [
+        {
+          "function": "canonicalize_config_geometry",
+          "file": "coordinate_canonicalization.py",
+          "line": 121,
+          "calls": 13
+        }
+      ]
+    },
+    {
+      "file": "plan_graph_exact.py",
+      "line": 135,
+      "function": "point_at",
+      "calls": 24,
+      "selfMs": 0.05,
+      "cumulativeMs": 0.34,
+      "callers": [
+        {
+          "function": "intersection",
+          "file": "plan_graph_exact.py",
+          "line": 150,
+          "calls": 24
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 57,
+      "function": "_dependency_order",
+      "calls": 13,
+      "selfMs": 0.08,
+      "cumulativeMs": 0.16,
+      "callers": [
+        {
+          "function": "validate_graph",
+          "file": "plan_graph.py",
+          "line": 84,
+          "calls": 12
+        },
+        {
+          "function": "propagate_dependencies",
+          "file": "plan_graph.py",
+          "line": 282,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 1592,
+      "function": "_view_box",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.06,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 137,
+      "function": "_point",
+      "calls": 2,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.03,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 346,
+      "function": "_migrated_spaces",
+      "calls": 2,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.02,
+      "callers": [
+        {
+          "function": "validate_junction_limits",
+          "file": "junction_limits.py",
+          "line": 408,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "led_strips.py",
+      "line": 245,
+      "function": "config_led_strip_links",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.02,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 1063,
+      "function": "validate_opening_passages",
+      "calls": 1,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.01,
+      "callers": [
+        {
+          "function": "<lambda>",
+          "file": "/home/matysh/hp-geometry-ci-20261102/artifacts/1305/profile-ordinary.py",
+          "line": 16,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 2915,
+      "function": "normalize_space_display",
+      "calls": 1,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.01,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "config_migrations.py",
+      "line": 153,
+      "function": "_needs_v1",
+      "calls": 1,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.01,
+      "callers": [
+        {
+          "function": "canonical_config",
+          "file": "config_migrations.py",
+          "line": 135,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "led_strips.py",
+      "line": 205,
+      "function": "normalize_led_strip_links",
+      "calls": 1,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.01,
+      "callers": [
+        {
+          "function": "config_led_strip_links",
+          "file": "led_strips.py",
+          "line": 245,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "config_migrations.py",
+      "line": 135,
+      "function": "canonical_config",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.01,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 139,
+      "function": "<genexpr>",
+      "calls": 6,
+      "selfMs": 0.01,
+      "cumulativeMs": 0.01,
+      "callers": [
+        {
+          "function": "_point",
+          "file": "wall_node_move.py",
+          "line": 137,
+          "calls": 6
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 166,
+      "function": "<genexpr>",
+      "calls": 3,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 68,
+      "function": "<genexpr>",
+      "calls": 13,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sorted>",
+          "file": "~",
+          "line": 0,
+          "calls": 13
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 112,
+      "function": "<genexpr>",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.next>",
+          "file": "~",
+          "line": 0,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 126,
+      "function": "<genexpr>",
+      "calls": 4,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 127,
+      "function": "<genexpr>",
+      "calls": 4,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 128,
+      "function": "<genexpr>",
+      "calls": 4,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sum>",
+          "file": "~",
+          "line": 0,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 432,
+      "function": "<genexpr>",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.next>",
+          "file": "~",
+          "line": 0,
+          "calls": 1
+        },
+        {
+          "function": "node_move_candidate",
+          "file": "wall_node_move.py",
+          "line": 428,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 154,
+      "function": "<genexpr>",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "config_migrations.py",
+      "line": 171,
+      "function": "<genexpr>",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_needs_v1",
+          "file": "config_migrations.py",
+          "line": 153,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 165,
+      "function": "<genexpr>",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 218,
+      "function": "<genexpr>",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 353,
+      "function": "<genexpr>",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.next>",
+          "file": "~",
+          "line": 0,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 54,
+      "function": "_unit",
+      "calls": 4,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 120,
+      "function": "<genexpr>",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_classify",
+          "file": "wall_node_move.py",
+          "line": 105,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "plan_graph.py",
+      "line": 265,
+      "function": "<genexpr>",
+      "calls": 5,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "verify_projection",
+          "file": "plan_graph.py",
+          "line": 258,
+          "calls": 5
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 164,
+      "function": "<genexpr>",
+      "calls": 3,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "move_node_space",
+          "file": "wall_node_move.py",
+          "line": 145,
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 1977,
+      "function": "_partition_nonzero",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "validate_callable",
+          "file": "/home/matysh/.cache/houseplan-venv-ci/lib/python3.14/site-packages/voluptuous/schema_builder.py",
+          "line": 777,
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 2140,
+      "function": "<genexpr>",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sum>",
+          "file": "~",
+          "line": 0,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "validation.py",
+      "line": 2463,
+      "function": "<genexpr>",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_config_wall_segment_invariants",
+          "file": "validation.py",
+          "line": 2442,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "led_strip_inventory.py",
+      "line": 9,
+      "function": "iter_led_strips",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "normalize_led_strip_links",
+          "file": "led_strips.py",
+          "line": 205,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "led_strips.py",
+      "line": 147,
+      "function": "_live_markers",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "normalize_led_strip_links",
+          "file": "led_strips.py",
+          "line": 205,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "config_migrations.py",
+      "line": 165,
+      "function": "<genexpr>",
+      "calls": 4,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_needs_v1",
+          "file": "config_migrations.py",
+          "line": 153,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "coordinate_canonicalization.py",
+      "line": 53,
+      "function": "_record",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "canonicalize_config_geometry",
+          "file": "coordinate_canonicalization.py",
+          "line": 121,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "coordinate_canonicalization.py",
+      "line": 63,
+      "function": "_scalar_fields",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "canonicalize_config_geometry",
+          "file": "coordinate_canonicalization.py",
+          "line": 121,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "wall_node_move.py",
+      "line": 129,
+      "function": "<genexpr>",
+      "calls": 4,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "<built-in method builtins.sum>",
+          "file": "~",
+          "line": 0,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "file": "config_migrations.py",
+      "line": 169,
+      "function": "<genexpr>",
+      "calls": 1,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "_needs_v1",
+          "file": "config_migrations.py",
+          "line": 153,
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "file": "junction_limits.py",
+      "line": 98,
+      "function": "cm_to_units",
+      "calls": 2,
+      "selfMs": 0.0,
+      "cumulativeMs": 0.0,
+      "callers": [
+        {
+          "function": "check_node_distances",
+          "file": "junction_limits.py",
+          "line": 265,
+          "calls": 2
+        }
+      ]
+    }
+  ]
+}
