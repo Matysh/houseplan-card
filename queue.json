@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3939,
+  "revision": 3940,
   "nextTicket": 217,
   "nextFence": 217,
   "tasks": {
@@ -3277,7 +3277,7 @@
       "ownerDecision": null,
       "ticket": 216,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793858178925,
       "reviewEntry": 1,
       "patchId": "13c063796f6dd3ce95fdbc385fe6dd560b5aa572",
@@ -3285,7 +3285,16 @@
         "demo/smoke_optimize_unverified.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T055632245-50d1dc38",
+        "name": "Тесты для задачи #1300 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T055632245-50d1dc38/report.json",
+        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+        "status": "passed",
+        "finishedAt": "2026-11-05T05:57:16.755Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3398,9 +3407,9 @@
     "fence": 216,
     "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
     "expectedBase": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793858182896,
-    "expiresAt": 1793858488605,
+    "expiresAt": 1793861837924,
     "patchId": "13c063796f6dd3ce95fdbc385fe6dd560b5aa572"
   },
   "events": {
@@ -3433,6 +3442,34 @@
         "layer": "product",
         "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
         "phase": "sync"
+      }
+    },
+    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:3:s6-complete": {
+      "digest": "99cd72dd0100bc109b26f39cc9335766d8d80ea4c9271ac8000c527df67bf023",
+      "issue": 1300,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1300,
+        "at": 1793858237924,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T055632245-50d1dc38",
+          "name": "Тесты для задачи #1300 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T055632245-50d1dc38/report.json",
+          "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+          "status": "passed",
+          "finishedAt": "2026-11-05T05:57:16.755Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина воспроизведена на неизменном публичном frontend: исходная проверка вернула FALSE при CSS height/min-height=44px и DOMRect.height=43.99993896484375px; шла конечная UI-kit FLIP-анимация. Свидетельство: output/issue-1300/original-5.log (dark), сохранён исходный FAILED stable run. Переносим измерение Retry после существующего bounded waitForUiKitPaint: ожидание fonts/реальных конечных анимаций, без отключения анимаций, sleep или повторов оракула. Точная >=44 и ограничения переполнения не меняются. Тот же оракул дополнительно отвергает реальную кнопку 43px; стиль восстанавливается в finally. Runtime не меняется. Числовые размеры/состояние fonts/animations печатаются с результатом для будущего разбора. Сборка/critical/startup в S6 выбраны потому, что нужен настоящий browser smoke (инфраструктурный профиль browser не выполняет); это не новый постоянный гейт. Остальные клавиатура/clipboard/Retry/zero-write assertions остаются. E2E impact: task-impact/1300.md companion. Финальный S6 и независимое ревью выполняет finish на допущенной очередью базе.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
