@@ -120,9 +120,9 @@ out.runtimeClosedRefreshesOnceAndResubscribes=await page.evaluate(()=>window.__e
 const stage=page.locator('houseplan-card').last().locator('.stage');
 await stage.scrollIntoViewIfNeeded();
 const box=await stage.boundingBox();
+const scaleDialog=page.locator('houseplan-card').last().locator('hp-dialog[data-kind="kiosk"]');
 await page.mouse.move(box.x+15,box.y+15);await page.mouse.down();
-await page.waitForTimeout(3100);await page.mouse.up();
-await page.locator('houseplan-card').last().locator('hp-dialog[data-kind="kiosk"]').waitFor();
+try { await scaleDialog.waitFor({state:'visible'}); } finally { await page.mouse.up(); }
 Object.assign(out,await page.evaluate(async()=>{
   const kiosk=document.querySelector('houseplan-card'), dialog=kiosk.renderRoot.querySelector('hp-dialog[data-kind="kiosk"]');
   const result={profileScaleSlidersLocked:[...dialog.querySelectorAll('input[type="range"]')].length===2&&[...dialog.querySelectorAll('input[type="range"]')].every(input=>input.disabled),
