@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3761,
+  "revision": 3762,
   "nextTicket": 212,
   "nextFence": 212,
   "tasks": {
@@ -3132,7 +3132,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1295-exclusive-perf",
-      "materialSha": "552071c8ad1c085ea1d90f15d09e27b87e18c9dd",
+      "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 211,
@@ -3148,7 +3148,29 @@
         "at": 1793847380927,
         "entry": 1,
         "eventId": "1295-address-ci7763-findings-20261105:return:1295"
-      }
+      },
+      "patchId": "551f82e320b19acf7626d9feca138b8f8ed42a9b",
+      "changedFiles": [
+        ".github/workflows/process-next-fallback.yml",
+        "demo/benchmark_selective_invalidation.mjs",
+        "demo/helpers/README-node-performance.md",
+        "demo/helpers/node-performance-report.mjs",
+        "demo/smoke_selective_invalidation_history0.mjs",
+        "demo/smoke_selective_invalidation_inactive.mjs",
+        "demo/smoke_selective_invalidation_visible.mjs",
+        "demo/smoke_wall_node_connected.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/testing/issue1295-timing-isolation.md",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/runner.mjs",
+        "process-next/lib/storage.mjs",
+        "process-next/templates/fallback.yml",
+        "process-next/test/catalog.test.mjs",
+        "process-next/test/runner.test.mjs",
+        "test/node-performance-report.test.mjs",
+        "test/selective-invalidation-timing.test.mjs"
+      ]
     },
     "1296": {
       "issue": 1296,
@@ -3292,11 +3314,12 @@
     "worker": "finish",
     "token": "211:finish:177f5104-4964-4ff8-adf9-d33f48d9f158:finish:1:admit",
     "fence": 211,
-    "materialSha": "552071c8ad1c085ea1d90f15d09e27b87e18c9dd",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
+    "expectedBase": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
+    "phase": "testing",
     "admittedAt": 1793847550854,
-    "expiresAt": 1793847850854
+    "expiresAt": 1793847860043,
+    "patchId": "551f82e320b19acf7626d9feca138b8f8ed42a9b"
   },
   "events": {
     "github:41958169611:1:completions:message:ed28e223d2325cdaf25e6cc173b6300b36801cfc074d889c8f94918f6d486bea": {
@@ -3309,6 +3332,10 @@
     },
     "1295-address-ci7763-findings-20261105": {
       "digest": "2feed98bb79276794bf7c0bb9382bf7fbaf3aa3e6f0053734e8bafa1d7717ffb",
+      "issue": 1295
+    },
+    "finish:177f5104-4964-4ff8-adf9-d33f48d9f158:finish:2:synchronized": {
+      "digest": "df0845f7a874eca0f3cb51166374a0c91617b3f4a9e7fffb82858936a90a5264",
       "issue": 1295
     },
     "finish:0f3f4b23-226f-4b40-8191-712b215ff58d": {
