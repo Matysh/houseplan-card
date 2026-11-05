@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3473,
-  "nextTicket": 203,
+  "revision": 3474,
+  "nextTicket": 204,
   "nextFence": 201,
   "tasks": {
     "1126": {
@@ -2006,14 +2006,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1258-safe-deletion",
-      "materialSha": "9254b3e4d0583a27f2288efa5f02d9a4f5ed0a35",
+      "materialSha": "d0016fe841837ecc63f60e310f79d8416ccccc30",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 200,
-      "queued": false,
+      "ticket": 203,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793843808020,
-      "reviewEntry": 2,
+      "readyAt": 1793844105215,
+      "reviewEntry": 3,
       "patchId": "e596fd87e9b2993ad8167983519036f342851b5c",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
@@ -2036,8 +2036,7 @@
         "entry": 2,
         "detail": "Backend изменённой области: failed",
         "eventId": "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75:finish:4:return:return:1258"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1261": {
       "issue": 1261,
@@ -3267,7 +3266,8 @@
   },
   "waiting": [
     1294,
-    1254
+    1254,
+    1258
   ],
   "active": null,
   "events": {
@@ -3510,6 +3510,19 @@
           "detail": "Backend изменённой области: failed",
           "eventId": "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75:finish:4:return:return:1258"
         }
+      }
+    },
+    "finish:36c4920c-1f64-49fe-b312-7b1a4f12dd82": {
+      "digest": "1af04c086c806f884b0ada9d89c06ec01028c2eb5c87b07c5fde2250da376bb7",
+      "issue": 1258,
+      "message": {
+        "kind": "queued",
+        "issue": 1258,
+        "at": 1793844105215,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d0016fe841837ecc63f60e310f79d8416ccccc30"
       }
     }
   },
