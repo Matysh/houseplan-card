@@ -5,7 +5,7 @@ import { WallBooleanBaseline } from '../test-build/wall-boolean-baseline.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
-function setup(t) {
+function setup(t, introduced = () => []) {
   const poly = [[0, 0], [2, 0], [2, 2], [0, 2]];
   const segments = poly.map((a, i) => ({ id: `w${i}`, a, b: poly[(i + 1) % 4], cm: 10 }));
   const cfg = { model_version: 10, spaces: [{ id: 'f', cell_cm: 1,
@@ -33,7 +33,7 @@ function setup(t) {
     hass: { callWS: async () => { throw new Error('intentional write refusal'); } } };
   const shown = [];
   const editor = createWallNodeEditor(host, { point: ev => [ev.clientX, ev.clientY], snapshot: () => ({}),
-    introduced: (...args) => { proofs.push(args); return []; }, canShow: () => true, show: space => shown.push(space) });
+    introduced: (...args) => { proofs.push(args); return introduced(...args); }, canShow: () => true, show: space => shown.push(space) });
   editor.paint = () => { paints++; };
   t.after(() => editor.dispose());
   const source = () => commitWallSegmentModel({ ...host._serverCfg, spaces: [host._serverCfg.spaces[0]] }).config.spaces[0];
@@ -142,6 +142,25 @@ test('in-place proof-input changes invalidate even the final candidate identity 
   assert.equal(s.proofs.length, 2); assert.notEqual(s.proofs.at(-1)[1], old);
   assert.equal(s.proofs.at(-1)[1].settings.proof_marker, 'new');
   assert.equal(old.settings.proof_marker, undefined, 'old private config did not alias settings');
+});
+
+test('#1306 in-place candidate changes and adoption epoch invalidate a successful proof', t => {
+  const s = setup(t), { before, next } = s.validate();
+  next.cell_cm = 2;
+  assert.equal(s.editor.port.validate(next, before, true), true);
+  assert.equal(s.proofs.length, 2, 'same object with changed contents is rechecked');
+  s.host._adoption.adoptionEpoch++;
+  assert.equal(s.editor.port.validate(next, before, true), true);
+  assert.equal(s.proofs.length, 3, 'same values under a new authority epoch are rechecked');
+});
+
+test('#1306 cached negative proof retains its specific refusal; no previous success is substituted', t => {
+  const s = setup(t, () => [{ rule: 'valence' }]), before = s.source(), next = s.candidate(before);
+  assert.equal(s.editor.port.validate(next, before, false), false);
+  assert.equal(s.editor.port.refusal(), 'node_merge_valence');
+  assert.equal(s.editor.port.validate(next, before, true), false);
+  assert.equal(s.editor.port.refusal(), 'node_merge_valence');
+  assert.equal(s.proofs.length, 1);
 });
 
 for (const [key, value] of [['_mode', 'view'], ['_tool', 'wall'], ['_canEdit', false], ['_kiosk', true],

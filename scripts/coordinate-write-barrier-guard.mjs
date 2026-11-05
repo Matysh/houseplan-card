@@ -44,13 +44,13 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (configWrites.length !== 1) errors.push(`frontend config writer inventory: ${configWrites.length}`);
   for (const index of configWrites) requireWindow(
     errors, frontend, index,
-    /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate,[\s\S]*expected_rev: this\._cfgRev/,
-    'frontend config/set', 600,
+    /const canonicalCandidate = canonicalizeConfigWrite\(candidate\);[\s\S]*const expectedRev = this\._cfgRev;[\s\S]*config: canonicalCandidate,[\s\S]*expected_rev: expectedRev/,
+    'frontend config/set', 1500,
   );
   // #879 adds lifecycle metadata AFTER staging the canonical geometry.
   // Inventory this exact wrapper without accepting a new unregistered transport.
   // #1025 adds the existing caller's optional late-ACK fence, not a transport.
-  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent)');
+  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent,roomLabels)');
   const ordinaryWrites = occurrences(frontend, '._sendConfigCandidate(candidate)');
   if (ordinaryWrites.length + roomWrites.length !== 2
       || occurrences(frontend, '._sendConfigCandidate(').length !== 2) {
@@ -89,8 +89,8 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (optimizeWrites.length !== 1) errors.push(`frontend Optimize writer inventory: ${optimizeWrites.length}`);
   for (const index of optimizeWrites) requireWindow(
     errors, frontend, index,
-    /config,[\s\S]*layout,[\s\S]*expected_config_rev: (?:guard\?\.source\.configRev \?\? )?this\._cfgRev,[\s\S]*expected_layout_rev: (?:guard\?\.source\.layoutRev \?\? )?this\._layoutRev/,
-    'frontend Optimize transaction', 300,
+    /const expectedConfigRev = guard\?\.source.configRev \?\? this\._cfgRev;[\s\S]*const expectedLayoutRev = guard\?\.source.layoutRev \?\? this\._layoutRev;[\s\S]*config,[\s\S]*layout,[\s\S]*expected_config_rev: expectedConfigRev,[\s\S]*expected_layout_rev: expectedLayoutRev/,
+    'frontend Optimize transaction', 1300,
   );
 
   const componentRoot = resolve(root, 'custom_components/houseplan');
@@ -111,9 +111,8 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (!/canonical_config = canonicalize_config_geometry\(config\)/.test(store)) {
     errors.push('backend async_save_config_state bypasses lattice canonicalization');
   }
-  // #1096: `canonical=True` lets one caller store a document CONFIG_SCHEMA
-  // already canonicalised. Only the ordinary config/set may say so, and only
-  // next to the validated candidate it hands over.
+  // #1096/#1306: the ordinary and node-move writers hand over their schema's
+  // canonical output. Inventory each caller; another writer cannot borrow it.
   const canonicalCallers = pythonFiles.filter((name) => name !== 'store.py'
     && /canonical=True/.test(readFileSync(resolve(componentRoot, name), 'utf8')));
   if (canonicalCallers.join(',') !== 'websocket_api.py') {
@@ -121,11 +120,18 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   } else {
     const api = readFileSync(resolve(componentRoot, 'websocket_api.py'), 'utf8');
     const canonicalWrites = occurrences(api, 'canonical=True');
-    if (canonicalWrites.length !== 1) errors.push(`backend canonical=True call inventory: ${canonicalWrites.length}`);
+    if (canonicalWrites.length !== 2) errors.push(`backend canonical=True call inventory: ${canonicalWrites.length}`);
     for (const index of canonicalWrites) {
-      const window = api.slice(Math.max(0, index - 6000), index);
-      if (!/validate_scoped_candidate\(candidate, stored_config, scope\)/.test(window)
-        || !/msg\["config"\]\.update\(checked\)/.test(window)) {
+      const prefix = api.slice(0, index), caller = [...prefix.matchAll(/^async def (\w+)\(/gm)].at(-1);
+      const window = api.slice(caller?.index ?? index, index);
+      const ordinary = caller?.[1] === 'ws_config_set'
+        && /validate_scoped_candidate\(candidate, stored_config, scope\)/.test(window)
+        && /msg\["config"\]\.update\(checked\)/.test(window);
+      const node = caller?.[1] === 'ws_wall_node_move'
+        && /candidate = validate_scoped_candidate\(candidate, previous, scope\)/.test(window)
+        && /candidate, counts = await hass\.async_add_executor_job\(_validate_node_cpu\)/.test(window)
+        && /async_save_config_state\(rt, candidate, new_rev, previous_rev=rev,/.test(window);
+      if (!ordinary && !node) {
         errors.push('backend canonical=True write is not the validated ordinary candidate');
       }
     }

@@ -119,6 +119,22 @@ try{
   const a=await screen([0,0]),b=await screen([1,1]);
   await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);
   await page.waitForTimeout(60);assert.deepEqual((await inspect()).targets,[]);await page.keyboard.press('Escape');await page.mouse.up();
+  // #1306: observe the real introduced-limit callsite, not just port.validate
+  // invocations. The unchanged ordinary candidate is reused through release.
+  capability=true;server=make(cases[0]);revision++;await boot();
+  await page.evaluate(()=>{
+    const runtime=window.__card._editorRuntime,original=runtime._junctionLimitsIntroduced.bind(runtime);
+    window.__ordinaryGuards=0;
+    runtime._junctionLimitsIntroduced=(...args)=>{window.__ordinaryGuards++;return original(...args);};
+  });
+  const ordinaryCount=writes.length,os=await screen([0,0]),ot=await screen([.25,.25]);
+  await page.mouse.move(os.x,os.y);await page.mouse.down();await page.mouse.move(ot.x,ot.y);
+  await page.waitForFunction(()=>!!window.__card._editorRuntime.nodeMove.preview);
+  assert.equal(await page.evaluate(()=>window.__ordinaryGuards),1);
+  const ordinaryRev=revision+1;await page.mouse.up();await ack(ordinaryRev);
+  assert.equal(await page.evaluate(()=>window.__ordinaryGuards),1,'release reuses the same full proof');
+  assert.equal(writes.length,ordinaryCount+1);assert.equal(writes[ordinaryCount].intent.merge_node_id,undefined);
+  observations.push({case:'ordinary candidate / native release',fullGuards:1,writes:1});
   // Exactly 5000 valid structural edges. Other buildings keep their accepted
   // records while the foreground target changes on every measured frame.
   capability=true;server=make(cases[0]);
@@ -157,6 +173,6 @@ try{
   observations.push({case:'5000 edges / 100 changing target frames',p95,frames:sorted.length,physicalChecks:perf.validations,
     heldWrites:0,releasePhysicalChecks:released.validations,releaseGuardMs:released.releaseMs,releaseToAckMs:ackMs,nodePreview:timings});
   mkdirSync('artifacts/1305',{recursive:true});writeFileSync('artifacts/1305/native-observations.json',JSON.stringify(observations,null,2)+'\n');
-  check('native pointer/Python contraction, deletion, ACK, exact history and held performance',observations.length,5);
+  check('native pointer/Python contraction, deletion, ACK, exact history and held performance',observations.length,6);
 }finally{if(typeof releaseAck==='function')releaseAck();await browser.close();}
 finish();

@@ -83,12 +83,14 @@ def move_graph_node_space(space, intent):
     if not set(intent) <= {"point", "target", "axis", "split_ids", "node_id", "target_p"}:
         raise NodeMoveError()
     identity, index = node_identity(space, intent)
+    if not index.incident[identity]:
+        raise NodeMoveError()
     target = decode_point(intent["target_p"]) if "target_p" in intent else read_source_point(intent.get("target"))
     legacy_intent = {"point": to_numbers(index.points[identity]), "target": to_numbers(target),
                      "axis": intent.get("axis"), "split_ids": intent.get("split_ids", {})}
     # The old operation remains an independent physical preflight. Its
     # projected endpoints never become graph-authoritative coordinates.
-    physical = move_node_space(space, legacy_intent)
+    physical = move_node_space(space, legacy_intent, graph_index=index)
     graph = copy.deepcopy(space["plan_graph"])
     for node in graph["nodes"]:
         if node["id"] == identity:
@@ -121,7 +123,7 @@ def move_graph_node_space(space, intent):
                 break
     graph["dependencies"] = dependencies
     graph = propagate_dependencies(graph)
-    validate_graph(graph, {"room_ids": [r["id"] for r in space.get("rooms", [])]})
+    after_index = validate_graph(graph, {"room_ids": [r["id"] for r in space.get("rooms", [])]})
     base = copy.deepcopy(space)
     proposed_openings = {row["id"]: row for row in physical.get("openings", [])}
     incident = set(index.incident[identity])
@@ -137,7 +139,6 @@ def move_graph_node_space(space, intent):
         old = index.edges[edge_key(host)]
         before_t = decode_rational(host["tq"])
         centre = point_at(index.points[old["from"]], index.points[old["to"]], before_t)
-        after_index = validate_graph(graph)
         a, b = after_index.points[old["from"]], after_index.points[old["to"]]
         projected_t = project_parameter(centre, a, b)
         old_collinear = point_at(a, b, projected_t) == centre

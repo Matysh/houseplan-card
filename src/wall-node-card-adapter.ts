@@ -52,10 +52,11 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   },
 ): WallNodeEditor {
   const language = () => langOf(host.hass, host._config?.language);
-  let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry } | null = null;
+  let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry;
+    signature: string; refusal: string | null } | null = null;
   let ownsLiveLayer = false;
   let refusal: string | null = null;
-  let baselineGeometry: { authority: ServerConfig; revision: number; space: string; signature: string; value: NodePreviewGeometry;
+  let baselineGeometry: { authority: ServerConfig; revision: number; epoch: number; space: string; signature: string; value: NodePreviewGeometry;
     proof: JunctionSharedGeometry | undefined; config: ServerConfig; booleans: WallBooleanBaseline } | null = null;
   const retire = (): void => { geometry = null; baselineGeometry = null; };
   // #843: a writer may apply node history in Plan/Background with any tool;
@@ -68,7 +69,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
       space: host._space, revision: host._cfgRev, api: api(), mergeApi: host._haWallNodeMergeApi === 1 };
     if (!result.enabled || !result.api || (baselineGeometry && (baselineGeometry.authority !== host._serverCfg
-        || baselineGeometry.revision !== result.revision || baselineGeometry.space !== result.space))) retire();
+        || baselineGeometry.revision !== result.revision || baselineGeometry.epoch !== nodeAdoptionEpoch(host)
+        || baselineGeometry.space !== result.space))) retire();
     return result;
   };
   const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_') || key.startsWith('node_merge_') || key.startsWith('node_delete')
@@ -94,6 +96,13 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     const ctx = context(), authority = host._serverCfg;
     if (!(deleting ? deleteEnabled() : ctx.enabled) || !supported || !authority) { retire(); return false; }
     try {
+      // Check content and authority BEFORE rebuilding the local closure. Object
+      // identity alone misses an in-place candidate mutation; the exact source,
+      // selected authoritative space and all global proof inputs own this hit.
+      const candidateSignature = JSON.stringify({ authority: { ...authority,
+        spaces: authority.spaces.filter(s => s.id === before.id) }, before, candidate: space,
+        epoch: nodeAdoptionEpoch(host) });
+      if (geometry?.signature === candidateSignature) { refusal = geometry.refusal; return geometry.next.safe; }
       const [localBefore, localNext] = nodeMoveLocalSpaces(before, space);
       const config = { ...authority, spaces: [localNext] };
       // One bounded immutable baseline may survive an Esc retry. Snapshot
@@ -101,13 +110,12 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       // geometry AND proof inputs, including in-place settings mutations.
       const signature = JSON.stringify({ ...authority, spaces: [localBefore] });
       if (baselineGeometry?.signature !== signature) retire();
-      if (geometry?.candidate === space && geometry.source === before) return geometry.next.safe;
       let baseline = baselineGeometry;
       if (!baseline) {
         const booleans = new WallBooleanBaseline();
         const snapshot = JSON.parse(signature) as ServerConfig;
         const value = withWallBooleanBaseline(booleans, true, () => buildNodePreview(snapshot.spaces[0] as NodeMoveSpace));
-        baseline = { authority, revision: ctx.revision, space: ctx.space, signature, value,
+        baseline = { authority, revision: ctx.revision, epoch: nodeAdoptionEpoch(host), space: ctx.space, signature, value,
           proof: nodePreviewJunctionGeometry(value, false), config: snapshot, booleans };
         // A failed baseline is never carried into another independent retry.
         if (value.safe) baselineGeometry = baseline;
@@ -120,7 +128,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
           nodePreviewJunctionGeometry(next), baseline.proof) as readonly { rule?: string }[];
         if (violations.length) { next.safe = false; refusal = `node_merge_${violations[0].rule || 'check_failed'}`; }
       }
-      geometry = { source: before, candidate: space, before: old, next };
+      geometry = { source: before, candidate: space, before: old, next, signature: candidateSignature, refusal };
       return next.safe;
     }
     catch { refusal = 'node_merge_check_failed'; retire(); return false; }

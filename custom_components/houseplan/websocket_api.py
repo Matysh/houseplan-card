@@ -2483,20 +2483,29 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
         previous = data.get("config", {})
 
         def _validate_node_cpu():
-            candidate = node_move_candidate(previous, msg["space_id"], msg["intent"],
-                                            msg["direction"], msg.get("before_space"))
-            validate_wall_model_transition(candidate, previous)
-            candidate = CONFIG_SCHEMA(candidate)
-            validate_opening_passages(candidate, previous)
-            # A separate original-geometry ledger proves the allowed host IDs;
-            # it never copies authority from the candidate. Then strict jambs.
-            proved_baseline = node_move_host_baseline(previous, candidate, msg["space_id"],
-                msg["intent"], msg["direction"], msg.get("before_space"))
-            validate_partition_opening_hosts(candidate, proved_baseline)
-            inherited = rt.junction_baseline
-            counts = validate_junction_limits(candidate, previous, baseline_counts=(
-                inherited[1] if inherited and inherited[0] == rev else None))
-            return candidate, counts
+            from .graph_validation_scope import graph_validation_scope
+
+            with graph_validation_scope():
+                trusted_current = rt.schema_clean_rev == rev
+                candidate = node_move_candidate(previous, msg["space_id"], msg["intent"],
+                                                msg["direction"], msg.get("before_space"), trusted_current=trusted_current)
+                # Only this runtime's exact-revision schema stamp authorizes
+                # untouched records. A cold/imported/legacy document is full.
+                scope = (ordinary_write_scope(candidate, previous) if trusted_current
+                         else OrdinaryWriteScope(set(), set(), "stored document not stamped"))
+                touched = None if scope.full else scope.touched_spaces
+                validate_wall_model_transition(candidate, previous, touched=touched)
+                candidate = validate_scoped_candidate(candidate, previous, scope)
+                validate_opening_passages(candidate, previous)
+                # Independently derive original host lineage; a cached graph
+                # index never grants authority to candidate or before_space.
+                proved_baseline = node_move_host_baseline(previous, candidate, msg["space_id"],
+                    msg["intent"], msg["direction"], msg.get("before_space"), trusted_current=trusted_current)
+                validate_partition_opening_hosts(candidate, proved_baseline)
+                inherited = rt.junction_baseline
+                counts = validate_junction_limits(candidate, previous, baseline_counts=(
+                    inherited[1] if inherited and inherited[0] == rev else None), touched_spaces=touched)
+                return candidate, counts
 
         try:
             candidate, counts = await hass.async_add_executor_job(_validate_node_cpu)
@@ -2521,12 +2530,16 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
             return
         new_rev = rev + 1
         try:
+            # #1306: candidate is the canonical output of the schema above.
+            # Keep the central durable/ACL/migration barrier, without replaying
+            # graph projection and coordinate normalization in another worker.
             await async_save_config_state(rt, candidate, new_rev, previous_rev=rev,
-                                          authorize=_write_authority(hass, connection))
+                                          previous=data, canonical=True, authorize=_write_authority(hass, connection))
         except ImportFailure as err:
             _send_import_error(connection, msg["id"], err)
             return
         rt.junction_baseline = (new_rev, counts)
+        rt.schema_clean_rev = new_rev
         try:
             await _discard_optimizer_snapshot(rt)
         except Exception:  # noqa: BLE001 - durable write already accepted

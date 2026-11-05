@@ -1,0 +1,710 @@
+{
+  "baselineSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
+  "date": "2026-11-05",
+  "environment": "Ubuntu WSL / Node 22.23.2 / Python 3.14.7",
+  "before": {
+    "root": "artifacts/1306/baseline",
+    "optimized": false,
+    "warmSchema": false,
+    "records": [
+      {
+        "edges": 100,
+        "medianMs": 59.312805999070406,
+        "p95Ms": 64.05341198842507,
+        "samples": [
+          {
+            "ms": 59.30287600494921,
+            "stages": {
+              "node_candidate": 25.39788800640963,
+              "transition": 4.222357005346566,
+              "schema": 12.383417008095421,
+              "passages": 0.004080997314304113,
+              "host_lineage": 5.376839006203227,
+              "hosts": 6.960079990676604,
+              "junction_cold": 4.899703009868972
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 60.32076900009997,
+            "stages": {
+              "node_candidate": 25.47727999626659,
+              "transition": 4.297494000638835,
+              "schema": 11.966581005253829,
+              "passages": 0.002001994289457798,
+              "host_lineage": 5.351595013053156,
+              "hosts": 7.06827400426846,
+              "junction_cold": 6.099753998569213
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 64.05341198842507,
+            "stages": {
+              "node_candidate": 25.281613008701243,
+              "transition": 4.265001000021584,
+              "schema": 12.381609005387872,
+              "passages": 0.0021750020096078515,
+              "host_lineage": 5.3783519979333505,
+              "hosts": 6.57817700994201,
+              "junction_cold": 10.108898000908084
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 59.312805999070406,
+            "stages": {
+              "node_candidate": 25.056660000700504,
+              "transition": 4.376006007078104,
+              "schema": 12.193950999062508,
+              "passages": 0.0018839928088709712,
+              "host_lineage": 5.734450998716056,
+              "hosts": 7.0211749989539385,
+              "junction_cold": 4.872612000326626
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 58.03128899424337,
+            "stages": {
+              "node_candidate": 25.10015500592999,
+              "transition": 4.308896997827105,
+              "schema": 12.044874994899146,
+              "passages": 0.0016590056475251913,
+              "host_lineage": 5.426704999990761,
+              "hosts": 6.529206002596766,
+              "junction_cold": 4.5638410083483905
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          }
+        ]
+      },
+      {
+        "edges": 1000,
+        "medianMs": 962.3868750059046,
+        "p95Ms": 973.3002099965233,
+        "samples": [
+          {
+            "ms": 956.2924170022598,
+            "stages": {
+              "node_candidate": 484.7407020133687,
+              "transition": 63.65536799421534,
+              "schema": 184.74216599133797,
+              "passages": 0.0031109957490116358,
+              "host_lineage": 81.75993799522985,
+              "hosts": 107.95985499862581,
+              "junction_cold": 32.941676006885245
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 973.3002099965233,
+            "stages": {
+              "node_candidate": 491.0460749961203,
+              "transition": 63.397794001502916,
+              "schema": 180.74028599949088,
+              "passages": 0.00376399839296937,
+              "host_lineage": 77.10298300662544,
+              "hosts": 122.59932400775142,
+              "junction_cold": 37.81920799519867
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 962.3868750059046,
+            "stages": {
+              "node_candidate": 481.37131000112277,
+              "transition": 66.61221099784598,
+              "schema": 190.5407200101763,
+              "passages": 0.0033840042306110263,
+              "host_lineage": 82.25200200104155,
+              "hosts": 108.9302259933902,
+              "junction_cold": 32.05770599015523
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 964.240104003693,
+            "stages": {
+              "node_candidate": 489.999823999824,
+              "transition": 64.81698001152836,
+              "schema": 184.4556460127933,
+              "passages": 0.012944001355208457,
+              "host_lineage": 74.25274699926376,
+              "hosts": 110.36194500047714,
+              "junction_cold": 39.77871600363869
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 959.5048710034462,
+            "stages": {
+              "node_candidate": 486.0084050014848,
+              "transition": 64.68491400300991,
+              "schema": 192.4230209988309,
+              "passages": 0.004521993105299771,
+              "host_lineage": 75.48044600116555,
+              "hosts": 108.22473200096283,
+              "junction_cold": 32.07120401202701
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          }
+        ]
+      },
+      {
+        "edges": 5000,
+        "medianMs": 8834.480574005283,
+        "p95Ms": 9008.14372599416,
+        "samples": [
+          {
+            "ms": 8817.629716999363,
+            "stages": {
+              "node_candidate": 5971.644361998187,
+              "transition": 382.7831870003138,
+              "schema": 1092.2163190116407,
+              "passages": 0.005403999239206314,
+              "host_lineage": 457.8643970016856,
+              "hosts": 668.2560000044759,
+              "junction_cold": 240.6292539963033
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 8833.112299995264,
+            "stages": {
+              "node_candidate": 5960.292685995228,
+              "transition": 396.6915780038107,
+              "schema": 1108.1272829906084,
+              "passages": 0.007517999620176852,
+              "host_lineage": 456.84922000509687,
+              "hosts": 668.0367060034769,
+              "junction_cold": 238.87030700279865
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 9008.14372599416,
+            "stages": {
+              "node_candidate": 6043.600464006886,
+              "transition": 412.1897189907031,
+              "schema": 1165.512147010304,
+              "passages": 0.0055810087360441685,
+              "host_lineage": 468.94829800294247,
+              "hosts": 648.3687309955712,
+              "junction_cold": 265.5149159982102
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 8834.480574005283,
+            "stages": {
+              "node_candidate": 5948.929043996031,
+              "transition": 398.1608500034781,
+              "schema": 1112.2435919969575,
+              "passages": 0.005700989277102053,
+              "host_lineage": 474.44015700602904,
+              "hosts": 645.217914992827,
+              "junction_cold": 250.69836399052292
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 8912.724886002252,
+            "stages": {
+              "node_candidate": 6042.5890300102765,
+              "transition": 381.76910000038333,
+              "schema": 1118.6305150040425,
+              "passages": 0.0064250052673742175,
+              "host_lineage": 459.1049400041811,
+              "hosts": 651.2004120013444,
+              "junction_cold": 255.2718100050697
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          }
+        ]
+      }
+    ]
+  },
+  "afterCold": {
+    "root": ".",
+    "optimized": true,
+    "warmSchema": false,
+    "records": [
+      {
+        "edges": 100,
+        "medianMs": 32.777426997199655,
+        "p95Ms": 38.29112400126178,
+        "samples": [
+          {
+            "ms": 32.777426997199655,
+            "stages": {
+              "node_candidate": 18.370663005043752,
+              "transition": 0.7204159919638187,
+              "schema": 5.586369996308349,
+              "passages": 0.004474000888876617,
+              "host_lineage": 1.8024640012299642,
+              "hosts": 0.8031949982978404,
+              "junction_cold": 5.383348005125299
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 32.02509100083262,
+            "stages": {
+              "node_candidate": 18.681927991565317,
+              "transition": 0.7178710075095296,
+              "schema": 4.88581600075122,
+              "passages": 0.002792992745526135,
+              "host_lineage": 1.774576012394391,
+              "hosts": 0.7677819958189502,
+              "junction_cold": 5.09440699534025
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 38.29112400126178,
+            "stages": {
+              "node_candidate": 18.062814997392707,
+              "transition": 0.6963300111237913,
+              "schema": 5.774170000222512,
+              "passages": 0.002549000782892108,
+              "host_lineage": 1.7825910035753623,
+              "hosts": 0.8045399881666526,
+              "junction_cold": 11.065715996664949
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 34.39097099180799,
+            "stages": {
+              "node_candidate": 20.416893996298313,
+              "transition": 0.6928369984962046,
+              "schema": 4.853167003602721,
+              "passages": 0.002840999513864517,
+              "host_lineage": 1.7910789902089164,
+              "hosts": 0.8338519983226433,
+              "junction_cold": 5.688787990948185
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 31.91181599686388,
+            "stages": {
+              "node_candidate": 18.410295000649057,
+              "transition": 0.705382990418002,
+              "schema": 4.862532005063258,
+              "passages": 0.0025080080376937985,
+              "host_lineage": 1.7860869993455708,
+              "hosts": 0.8407949935644865,
+              "junction_cold": 5.196782003622502
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          }
+        ]
+      },
+      {
+        "edges": 1000,
+        "medianMs": 351.60486001404934,
+        "p95Ms": 353.0090440035565,
+        "samples": [
+          {
+            "ms": 352.6374789944384,
+            "stages": {
+              "node_candidate": 226.55761099304073,
+              "transition": 7.012275003944524,
+              "schema": 48.63663099240512,
+              "passages": 0.003636989276856184,
+              "host_lineage": 17.904498003190383,
+              "hosts": 8.355475001735613,
+              "junction_cold": 43.18569200404454
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 353.0090440035565,
+            "stages": {
+              "node_candidate": 228.83874000399373,
+              "transition": 7.253825999214314,
+              "schema": 47.81494999770075,
+              "passages": 0.00330600596498698,
+              "host_lineage": 18.167583999456838,
+              "hosts": 7.716293999692425,
+              "junction_cold": 42.13997999613639
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 347.4626620009076,
+            "stages": {
+              "node_candidate": 222.45745800319128,
+              "transition": 7.059668991132639,
+              "schema": 46.95367399835959,
+              "passages": 0.002840999513864517,
+              "host_lineage": 17.732321997755207,
+              "hosts": 8.075122997979634,
+              "junction_cold": 43.91961600049399
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 351.60486001404934,
+            "stages": {
+              "node_candidate": 225.43883199978154,
+              "transition": 9.388676000526175,
+              "schema": 54.31737699836958,
+              "passages": 0.0027740024961531162,
+              "host_lineage": 18.548476989963092,
+              "hosts": 7.910803004051559,
+              "junction_cold": 34.902547995443456
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 344.4497449963819,
+            "stages": {
+              "node_candidate": 227.72450499178376,
+              "transition": 6.980407997616567,
+              "schema": 46.895243009203114,
+              "passages": 0.0032700045267120004,
+              "host_lineage": 18.034251988865435,
+              "hosts": 9.758748012245633,
+              "junction_cold": 34.01775599922985
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          }
+        ]
+      },
+      {
+        "edges": 5000,
+        "medianMs": 2098.7568979908247,
+        "p95Ms": 2147.267472013482,
+        "samples": [
+          {
+            "ms": 2092.9741019936046,
+            "stages": {
+              "node_candidate": 1363.4349089988973,
+              "transition": 40.271229998325,
+              "schema": 256.0710160032613,
+              "passages": 0.006777001544833183,
+              "host_lineage": 132.01713099260814,
+              "hosts": 41.14225700323004,
+              "junction_cold": 253.02045801072381
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2144.258713000454,
+            "stages": {
+              "node_candidate": 1372.1794549928745,
+              "transition": 38.63211801217403,
+              "schema": 288.45900800661184,
+              "passages": 0.006860005669295788,
+              "host_lineage": 102.08904600585811,
+              "hosts": 44.120157006545924,
+              "junction_cold": 292.1717040007934
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2098.3430570049677,
+            "stages": {
+              "node_candidate": 1332.8291219950188,
+              "transition": 40.6405780086061,
+              "schema": 282.9228539922042,
+              "passages": 0.0062359904404729605,
+              "host_lineage": 100.97226499055978,
+              "hosts": 44.37539799255319,
+              "junction_cold": 289.90829100075644
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2098.7568979908247,
+            "stages": {
+              "node_candidate": 1371.4884890068788,
+              "transition": 39.078172005247325,
+              "schema": 256.51847300468944,
+              "passages": 0.006913993274793029,
+              "host_lineage": 130.0558750081109,
+              "hosts": 44.23554601089563,
+              "junction_cold": 251.0939909989247
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2147.267472013482,
+            "stages": {
+              "node_candidate": 1377.6047850114992,
+              "transition": 37.9049969924381,
+              "schema": 292.6721940020798,
+              "passages": 0.006714995834045112,
+              "host_lineage": 102.23917200346477,
+              "hosts": 42.88479000388179,
+              "junction_cold": 287.16656799952034
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          }
+        ]
+      }
+    ]
+  },
+  "afterWarm": {
+    "root": ".",
+    "optimized": true,
+    "warmSchema": true,
+    "records": [
+      {
+        "edges": 100,
+        "medianMs": 34.015386991086416,
+        "p95Ms": 36.05476100347005,
+        "samples": [
+          {
+            "ms": 32.1731349977199,
+            "stages": {
+              "node_candidate": 18.129055999452248,
+              "transition": 0.692471003276296,
+              "schema": 4.861369001446292,
+              "passages": 0.0028740032576024532,
+              "host_lineage": 2.18634499469772,
+              "hosts": 0.7918540068203583,
+              "junction_cold": 5.349726998247206
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 34.015386991086416,
+            "stages": {
+              "node_candidate": 19.643343999632634,
+              "transition": 0.7083829987095669,
+              "schema": 4.883304995018989,
+              "passages": 0.001976004568859935,
+              "host_lineage": 2.202155999839306,
+              "hosts": 0.7876599993323907,
+              "junction_cold": 5.681701994035393
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 32.06558100646362,
+            "stages": {
+              "node_candidate": 18.20581099309493,
+              "transition": 0.7081069925334305,
+              "schema": 4.90568699024152,
+              "passages": 0.0018279970390722156,
+              "host_lineage": 2.1864069858565927,
+              "hosts": 0.7955430046422407,
+              "junction_cold": 5.166534989257343
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 36.05476100347005,
+            "stages": {
+              "node_candidate": 22.12485500785988,
+              "transition": 0.6996519950916991,
+              "schema": 4.880004998994991,
+              "passages": 0.0016310077626258135,
+              "host_lineage": 2.255284009152092,
+              "hosts": 0.8192509994842112,
+              "junction_cold": 5.1698010065592825
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          },
+          {
+            "ms": 34.903890002169646,
+            "stages": {
+              "node_candidate": 18.605019999085926,
+              "transition": 0.7112199964467436,
+              "schema": 7.226272995467298,
+              "passages": 0.002264001523144543,
+              "host_lineage": 2.1860310080228373,
+              "hosts": 0.8318620093632489,
+              "junction_cold": 5.238842990365811
+            },
+            "acceptedSha256": "71548c39d2ef3b0fe2c0283a43d22c1b31366588f3a8f4a0ca2beafc76992c3a"
+          }
+        ]
+      },
+      {
+        "edges": 1000,
+        "medianMs": 360.5035350046819,
+        "p95Ms": 366.8736660038121,
+        "samples": [
+          {
+            "ms": 366.8736660038121,
+            "stages": {
+              "node_candidate": 232.55012999288738,
+              "transition": 7.226206987979822,
+              "schema": 49.91873900871724,
+              "passages": 0.003082997864112258,
+              "host_lineage": 21.92754800489638,
+              "hosts": 8.190923006623052,
+              "junction_cold": 45.95880300621502
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 354.89920900727157,
+            "stages": {
+              "node_candidate": 226.1533800046891,
+              "transition": 8.39645299129188,
+              "schema": 47.162443996057846,
+              "passages": 0.0035279954317957163,
+              "host_lineage": 22.455367012298666,
+              "hosts": 9.875955001916736,
+              "junction_cold": 39.97115700622089
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 358.0469809967326,
+            "stages": {
+              "node_candidate": 231.35051400458906,
+              "transition": 6.931437004823238,
+              "schema": 48.64922500564717,
+              "passages": 0.003072011168114841,
+              "host_lineage": 22.851544999866746,
+              "hosts": 7.715482002822682,
+              "junction_cold": 39.3823250051355
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 360.5035350046819,
+            "stages": {
+              "node_candidate": 239.25483399943914,
+              "transition": 7.061703989165835,
+              "schema": 48.56292299518827,
+              "passages": 0.003482011379674077,
+              "host_lineage": 22.279566997895017,
+              "hosts": 8.010408011614345,
+              "junction_cold": 34.2049149912782
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          },
+          {
+            "ms": 366.5136540075764,
+            "stages": {
+              "node_candidate": 236.15347500890493,
+              "transition": 6.922928005224094,
+              "schema": 49.566472007427365,
+              "passages": 0.004789995728060603,
+              "host_lineage": 22.29539600375574,
+              "hosts": 7.894056994700804,
+              "junction_cold": 42.48089900647756
+            },
+            "acceptedSha256": "fb39c1cdde56e3e377c4324ee94dd1e59bf51853e3db931cf6fe174e15705173"
+          }
+        ]
+      },
+      {
+        "edges": 5000,
+        "medianMs": 2194.1684570047073,
+        "p95Ms": 2205.315150000388,
+        "samples": [
+          {
+            "ms": 2185.3456440003356,
+            "stages": {
+              "node_candidate": 1390.7121359952725,
+              "transition": 40.329060997464694,
+              "schema": 291.25092100002803,
+              "passages": 0.009518000297248363,
+              "host_lineage": 129.15227300254628,
+              "hosts": 44.032860998413526,
+              "junction_cold": 283.57294799934607
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2202.6420460024383,
+            "stages": {
+              "node_candidate": 1425.1976890082005,
+              "transition": 40.760047995718196,
+              "schema": 260.7188319962006,
+              "passages": 0.007844995707273483,
+              "host_lineage": 157.57982799550518,
+              "hosts": 43.60347100009676,
+              "junction_cold": 267.066011991119
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2194.1684570047073,
+            "stages": {
+              "node_candidate": 1395.4808760026935,
+              "transition": 38.57172001153231,
+              "schema": 298.71620899939444,
+              "passages": 0.009544994099996984,
+              "host_lineage": 124.15225700533483,
+              "hosts": 43.31646900391206,
+              "junction_cold": 286.833090998698
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2185.6535150000127,
+            "stages": {
+              "node_candidate": 1419.1299390076892,
+              "transition": 38.15098099585157,
+              "schema": 260.8176349895075,
+              "passages": 0.007529000868089497,
+              "host_lineage": 157.821517001139,
+              "hosts": 44.30730300373398,
+              "junction_cold": 258.52497199957725
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          },
+          {
+            "ms": 2205.315150000388,
+            "stages": {
+              "node_candidate": 1399.7288719983771,
+              "transition": 39.54952700587455,
+              "schema": 300.57835701154545,
+              "passages": 0.007278009434230626,
+              "host_lineage": 125.09994600259233,
+              "hosts": 46.95992199413013,
+              "junction_cold": 286.6809539991664
+            },
+            "acceptedSha256": "1fc3492ba9ff1eec9c85e4df60f27d61cc2ae5c1a2707c8b9737bf84108c1078"
+          }
+        ]
+      }
+    ]
+  },
+  "nativeBefore": {
+    "error": null,
+    "releaseToAckMs": 10593.219859,
+    "phase": "release",
+    "checks": [
+      {
+        "phase": "held",
+        "ms": 23.099999994039536
+      },
+      {
+        "phase": "release",
+        "ms": 10.200000002980232
+      }
+    ],
+    "toasts": [],
+    "lastValid": true,
+    "writes": 1
+  },
+  "nativeAfter": {
+    "error": null,
+    "releaseToAckMs": 4078.214122999999,
+    "phase": "release",
+    "checks": [
+      {
+        "phase": "held",
+        "ms": 34.80000001192093
+      },
+      {
+        "phase": "release",
+        "ms": 10.200000002980232
+      }
+    ],
+    "toasts": [],
+    "lastValid": true,
+    "writes": 1
+  }
+}

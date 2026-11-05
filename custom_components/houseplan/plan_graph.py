@@ -82,6 +82,13 @@ def _dependency_order(dependencies: dict[str, dict], nodes: dict) -> list[str]:
 
 
 def validate_graph(graph: Any, context: dict | None = None) -> GraphIndex:
+    from .graph_validation_scope import current_graph_validation_scope
+
+    scope = current_graph_validation_scope()
+    return scope.validate(graph, context, _validate_graph) if scope is not None else _validate_graph(graph, context)
+
+
+def _validate_graph(graph: Any, context: dict | None = None) -> GraphIndex:
     context = context or {}
     _record(graph, _GRAPH_KEYS)
     if type(graph["version"]) is not int or graph["version"] != GRAPH_VERSION:
@@ -252,11 +259,20 @@ def project_graph_space(base_space: dict, graph: dict, context: dict | None = No
     if "openings" in out:
         out["openings"] = [project_graph_opening(opening, index) for opening in out["openings"]]
     out.pop("open_spans", None)
+    from .graph_validation_scope import current_graph_validation_scope
+    scope = current_graph_validation_scope()
+    if scope is not None:
+        scope.remember_projection(scope.projection_key(out, out["plan_graph"]))
     return {"space": out, "bindings": index}
 
 
 def verify_projection(space: dict, graph: dict | None = None) -> None:
     graph = graph if graph is not None else space.get("plan_graph")
+    from .graph_validation_scope import current_graph_validation_scope
+    scope = current_graph_validation_scope()
+    key = scope.projection_key(space, graph) if scope is not None else None
+    if scope is not None and scope.proved_projection(key):
+        return
     # project_graph_space also validates room ownership. Classify a bad
     # projection before that context can turn missing IDs into a graph error.
     if isinstance(graph, dict) and isinstance(graph.get("rooms"), list):
@@ -277,6 +293,8 @@ def verify_projection(space: dict, graph: dict | None = None) -> None:
             raise GraphError("projection_mismatch", code="plan_graph_projection_mismatch")
     if space.get("openings", []) != expected.get("openings", []):
         raise GraphError("opening_projection_mismatch", code="plan_graph_projection_mismatch")
+    if scope is not None:
+        scope.remember_projection(key)
 
 
 def propagate_dependencies(graph: dict) -> dict:

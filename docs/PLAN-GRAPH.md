@@ -134,6 +134,44 @@ footprint and independent overlapping material, including across graph seams.
 
 ## Writers and authority
 
+### Node save validation (#1306)
+
+The authenticated node-move writer (including Merge and its inverse) creates
+one executor-local `graph_validation_scope`. Only successful exact JSON-value
+proofs are retained. Hits bind fresh mutable graph records to detached immutable
+point/adjacency facts; input mutations, non-JSON Python container types and
+changed room-owner restrictions cannot borrow a proof. Projection proofs are
+separate and include the complete space/context. The scope is cleared on exit;
+it grants no ACL, CAS, host-lineage or Undo authority.
+
+A verified model11 node uses incident graph vertices instead of the legacy
+all-pairs intersection search for both admission and carrier sweep. Proper
+crossings without a represented node remain invalid. Isolated vertices retain
+the invalid-node refusal. Exact host geometry is indexed once outside the
+opening loop; independent physical, graph, projection, host and limit rules stay.
+
+Only `schema_clean_rev == stored rev` permits the existing scoped schema path
+and local normalization of the target space. Cold/legacy data take the full
+path. The schema-checked canonical candidate crosses the same central durable
+Store barrier with `previous` and `canonical=True`; node and ordinary config
+writes are the registered callers. The node writer re-stamps only after durable
+success. Import/other writers and failed saves invalidate the stamp. Exact-rev
+junction counts and touched spaces protect unchanged floors; visibility never
+exempts potentially affected geometry in the edited floor.
+
+The client caches the complete candidate/source/proof-input signature before
+constructing the local geometry closure again. Revision, authority epoch and
+context changes retire it; in-place edits recheck, and negative hits retain
+their specific refusal. Accepted configuration/history still wait for ACK.
+
+`scripts/benchmark-node-save.mjs` generates the synthetic 100/1000/5000-edge
+inputs; `scripts/benchmark-node-save.py` compares sequential production CPU
+stages against a pinned source root, with warm-up, raw samples, median/p95 and
+accepted-content hashes. It excludes Store/network/executor/UI. Real HA tests
+cover that boundary separately; native pointer smoke observes the actual
+junction guard callsite through release. These diagnostics are not a new
+mandatory global task gate.
+
 ### Native editor fixed point (#1285)
 
 A model-11 plan authored from an empty space with the current editor is already

@@ -142,7 +142,7 @@ def _point(value):
     return value
 
 
-def move_node_space(source: dict[str, Any], intent: dict[str, Any]) -> dict[str, Any]:
+def move_node_space(source: dict[str, Any], intent: dict[str, Any], *, graph_index=None) -> dict[str, Any]:
     """Apply only the proven incident edit. Foreign records are copied intact."""
     if set(intent) != {"point", "target", "axis", "split_ids"}:
         raise NodeMoveError()
@@ -155,7 +155,15 @@ def move_node_space(source: dict[str, Any], intent: dict[str, Any]) -> dict[str,
                    for k, v in split_ids.items()):
         raise NodeMoveError()
     walls = _walls(source)
-    nodes = _nodes(walls)
+    if graph_index is None:
+        nodes = _nodes(walls)
+    else:
+        from .plan_graph_exact import to_numbers
+        # A verified model11 has no unsplit proper crossings. Every legacy
+        # endpoint/T/X is represented by an incident graph vertex. Keep this
+        # same complete set for BOTH admission and the carrier sweep below.
+        nodes = [to_numbers(point) for identity, point in graph_index.points.items()
+                 if graph_index.incident[identity]]
     if not any(_same(p, n) for n in nodes):
         raise NodeMoveError()
     incident, axes, passing = _classify(walls, p)
@@ -322,9 +330,33 @@ def move_node_space(source: dict[str, Any], intent: dict[str, Any]) -> dict[str,
     return out
 
 
+def _node_current_basis(current, space_id, trusted_current):
+    """Only an exact-revision schema stamp permits local current normalization.
+
+    This is an internal writer input, never a WS flag. Cold/legacy documents
+    retain full normalization. Every proposed/undo target is still independently
+    normalized and the envelope/schema proof remains at the writer boundary.
+    """
+    if trusted_current and current.get("model_version") == 11:
+        baseline = copy.deepcopy(current)
+        for i, space in enumerate(baseline.get("spaces", [])):
+            if space.get("id") == space_id:
+                baseline["spaces"][i] = commit_wall_segment_model({"model_version": 11, "spaces": [space]})[0]["spaces"][0]
+        return baseline, True
+    return commit_wall_segment_model(current)[0], False
+
+
+def _node_replace_space(baseline, space_id, space, local):
+    out = copy.deepcopy(baseline)
+    for i, previous in enumerate(out.get("spaces", [])):
+        if previous.get("id") == space_id:
+            out["spaces"][i] = commit_wall_segment_model({"model_version": 11, "spaces": [space]})[0]["spaces"][0] if local else copy.deepcopy(space)
+    return out if local else commit_wall_segment_model(out)[0]
+
+
 def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], space_id: str,
                             intent: dict[str, Any], direction: str = "apply",
-                            before_space: dict[str, Any] | None = None) -> dict[str, Any]:
+                            before_space: dict[str, Any] | None = None, *, trusted_current: bool = False) -> dict[str, Any]:
     """Independent identity ledger; candidate host IDs never authorize themselves.
 
     Only an opening wholly on a transverse whole-X child may change its host ID.
@@ -336,7 +368,7 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
     # The durable legacy record may not yet contain a structural catalogue.
     # Normalize a COPY with the same read-compatible identity model as the first
     # proof; raw legacy absence is not evidence of a missing node or new host.
-    current, _ = commit_wall_segment_model(current)
+    current, _ = _node_current_basis(current, space_id, trusted_current)
     if "merge_node_id" in intent:
         return _merge_host_baseline(current, candidate, space_id, intent, direction, before_space)
     if "node_id" in intent or "target_p" in intent:
@@ -426,9 +458,10 @@ def _merge_host_baseline(current, candidate, space_id, intent, direction, before
 
 
 def node_move_candidate(current: dict[str, Any], space_id: str, intent: dict[str, Any],
-                        direction: str = "apply", before_space: dict[str, Any] | None = None) -> dict[str, Any]:
+                        direction: str = "apply", before_space: dict[str, Any] | None = None, *,
+                        trusted_current: bool = False) -> dict[str, Any]:
     """Independently prove the forward delta; inverse has no broader authority."""
-    baseline, _ = commit_wall_segment_model(current)
+    baseline, local = _node_current_basis(current, space_id, trusted_current)
     space = next((s for s in baseline.get("spaces", []) if s["id"] == space_id), None)
     if space is None or direction not in {"apply", "undo"}:
         raise NodeMoveError()
@@ -437,20 +470,13 @@ def node_move_candidate(current: dict[str, Any], space_id: str, intent: dict[str
     if direction == "undo":
         if before_space is None or before_space.get("id") != space_id:
             raise NodeMoveError()
-        proposed = copy.deepcopy(baseline)
-        proposed["spaces"] = [before_space if s["id"] == space_id else s for s in proposed["spaces"]]
         # Proof has to reach exactly the current canonical document, including
         # every foreign field. A forged baseline cannot move a distal endpoint,
         # rehost another opening, alter metadata or change another floor.
         forward = apply_move(before_space, intent)
-        proof = copy.deepcopy(baseline)
-        proof["spaces"] = [forward if s["id"] == space_id else s for s in proof["spaces"]]
-        proof, _ = commit_wall_segment_model(proof)
+        proof = _node_replace_space(baseline, space_id, forward, local)
         if canonicalize_config_geometry(proof) != canonicalize_config_geometry(baseline):
             raise NodeMoveError()
-        candidate, _ = commit_wall_segment_model(proposed)
-        return candidate
+        return _node_replace_space(baseline, space_id, before_space, local)
     moved = apply_move(space, intent)
-    baseline["spaces"] = [moved if s["id"] == space_id else s for s in baseline["spaces"]]
-    candidate, _ = commit_wall_segment_model(baseline)
-    return candidate
+    return _node_replace_space(baseline, space_id, moved, local)

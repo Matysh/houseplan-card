@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1306,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Removes redundant model11 node-save validation and all-pairs reconstruction in the current graph line; preserves the legacy path and safety/authority contracts.",
+  "summary": {
+    "ru": "Быстрее сохраняются перемещения и объединения узлов без ослабления проверок безопасности.",
+    "en": "Faster node moves and merges without weakening safety checks."
+  }
+}

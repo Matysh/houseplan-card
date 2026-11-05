@@ -37,7 +37,7 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
     const cardPath = resolve(fixtureRoot, 'src/houseplan-card.ts');
     const productionCard = readFileSync(cardPath, 'utf8');
     const withoutRevision = productionCard
-      .replace(', expected_rev: this._cfgRev', '');
+      .replace(', expected_rev: expectedRev', '');
     assert.notEqual(withoutRevision, productionCard, 'fixture must remove the revision field');
     writeFileSync(cardPath, withoutRevision);
 
@@ -65,11 +65,12 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
     writeFileSync(radarPath, radar);
     const apiPath = resolve(fixtureRoot, 'custom_components/houseplan/websocket_api.py');
     const api = readFileSync(apiPath, 'utf8');
-    const moved = api.replace('previous=data, canonical=True,', 'previous=data,')
-      .replace('await async_save_config_state(rt, candidate, new_rev, previous_rev=rev)',
-        'await async_save_config_state(rt, candidate, new_rev, previous_rev=rev, canonical=True)');
-    assert.notEqual(moved, api, 'fixture must move the canonical claim to another writer');
-    writeFileSync(apiPath, moved);
+    const unchecked = api.replace('candidate = validate_scoped_candidate(candidate, previous, scope)', 'candidate = previous');
+    assert.notEqual(unchecked, api, 'negative control removes the node writer schema proof');
+    writeFileSync(apiPath, unchecked);
+    assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
+      .includes('backend canonical=True write is not the validated ordinary candidate'));
+    writeFileSync(apiPath, api.replace('msg["config"].update(checked)', 'msg["config"].update(candidate)'));
     assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
       .includes('backend canonical=True write is not the validated ordinary candidate'));
   } finally {

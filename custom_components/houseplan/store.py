@@ -291,14 +291,14 @@ async def async_save_config_state(
     if canonical or graph_pair:
         # The ordinary write path hands over the output of CONFIG_SCHEMA, which
         # ran `canonicalize_config_geometry` itself (#1096); the coordinate
-        # write-barrier guard pins that `canonical=True` has that one caller.
+        # write-barrier guard pins the two validated ordinary/node callers.
         canonical_config = config
     else:
         canonical_config = canonicalize_config_geometry(config)
     payload = {**previous, "config": canonical_config, "rev": rev}
     # #1096: whatever this writer stores was not validated whole by the
-    # ordinary write path of this runtime; the next ordinary write validates
-    # the whole document again. `ws_config_set` re-stamps after its own commit.
+    # ordinary/node path of this runtime; the next write validates the whole
+    # document again. Those validated writers re-stamp after durable success.
     runtime.schema_clean_rev = None
 
     async def save_config() -> None:

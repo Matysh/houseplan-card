@@ -18,15 +18,17 @@ from custom_components.houseplan.validation import (
     validate_wall_model_transition,
 )
 from custom_components.houseplan.wall_node_move import node_move_candidate, node_move_host_baseline
+from custom_components.houseplan.graph_validation_scope import graph_validation_scope
 
 message = json.load(sys.stdin)
 previous = message["config"]
 args = (previous, message["space_id"], message["intent"], message["direction"], message.get("before_space"))
-candidate = node_move_candidate(*args)
-validate_wall_model_transition(candidate, previous)
-candidate = CONFIG_SCHEMA(candidate)
-validate_opening_passages(candidate, previous)
-proved_baseline = node_move_host_baseline(previous, candidate, *args[1:])
-validate_partition_opening_hosts(candidate, proved_baseline)
-validate_junction_limits(candidate, previous)
+with graph_validation_scope():
+    candidate = node_move_candidate(*args)
+    validate_wall_model_transition(candidate, previous)
+    candidate = CONFIG_SCHEMA(candidate)
+    validate_opening_passages(candidate, previous)
+    proved_baseline = node_move_host_baseline(previous, candidate, *args[1:])
+    validate_partition_opening_hosts(candidate, proved_baseline)
+    validate_junction_limits(candidate, previous)
 json.dump(candidate, sys.stdout, ensure_ascii=False, allow_nan=False, separators=(",", ":"))

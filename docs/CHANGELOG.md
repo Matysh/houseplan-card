@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Speed up node saves by reusing command-local exact graph proofs and checking unchanged spaces selectively, while preserving safety checks, durable ACK, ACL/CAS and exact history. [#1306](https://github.com/Matysh/houseplan-card/issues/1306)
+
 - Merge wall nodes by dragging in Select, with a stationary target magnet, atomic removal of a connecting edge, release-time safety checks and exact Undo/Redo. [#1305](https://github.com/Matysh/houseplan-card/issues/1305)
 
 
