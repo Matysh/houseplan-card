@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4167,
+  "revision": 4168,
   "nextTicket": 223,
   "nextFence": 223,
   "tasks": {
@@ -3690,7 +3690,8 @@
           "at": 1793871526872,
           "entry": 1,
           "eventId": "1250-planner-repair-1793871525582:return:1250"
-        }
+        },
+        "delivered": true
       }
     }
   },
