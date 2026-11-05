@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4170,
+  "revision": 4171,
   "nextTicket": 224,
   "nextFence": 224,
   "tasks": {
@@ -1686,8 +1686,9 @@
       "status": "S6-in-progress",
       "readyAt": 1793871550887,
       "reviewEntry": 2,
-      "patchId": "c773102f2cd84fbd21b2fbf163bfc40d5d020ed1",
+      "patchId": "1424806b7c78bb3e836a6511d4d9781813418529",
       "changedFiles": [
+        "demo/golden/static-wall-openings.mjs",
         "demo/smoke_opening_mode_fill.mjs",
         "demo/smoke_opening_tunnel_fill.mjs",
         "demo/smoke_static_wall_openings.mjs",
@@ -1697,7 +1698,6 @@
         "docs/release-ledger/v1.83.0/1250.json",
         "src/houseplan-card.ts",
         "src/render/opening-tunnels.ts",
-        "src/render/room-floor.ts",
         "src/room-floor-paint.ts",
         "src/space-render.ts",
         "src/styles/plan.styles.ts",
@@ -3551,10 +3551,11 @@
     "token": "223:finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:1:admit",
     "fence": 223,
     "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+    "phase": "testing",
     "admittedAt": 1793871554930,
-    "expiresAt": 1793871854930
+    "expiresAt": 1793871860565,
+    "patchId": "1424806b7c78bb3e836a6511d4d9781813418529"
   },
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3623,6 +3624,10 @@
     },
     "github:42003972947:1:completions:notice:cff349e6beed6e27ea616ae3dfc90cbb473bafd75d3ab3aa7e7e1f42024c7cf7": {
       "digest": "74e265ace5a06a9032921fb5b5b9f0cb4e45ad57bc828b3a587ad05e1421b266",
+      "issue": 1250
+    },
+    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:2:synchronized": {
+      "digest": "ed409ecd3b5eb967b0e4b7b5bf60a3f1594b0638759606dd4f7fe442540379e3",
       "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
