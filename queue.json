@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3976,
+  "revision": 3977,
   "nextTicket": 218,
   "nextFence": 218,
   "tasks": {
@@ -3456,6 +3456,10 @@
       "digest": "22ebf96eab51de7ad5e6a60bf68b45ed58a56b15f9f7bfe611ed9e7939f791c8",
       "issue": 1301
     },
+    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:3:s6-label": {
+      "digest": "d38fd2ca1d7dcae17ed4acd8890fc29cb7f65598791c744ed8bf371337f3c120",
+      "issue": 1301
+    },
     "dev-build:41977639731:1:1300": {
       "digest": "6b145b6c20fba091ac37de4f23551282bcca84286466f324c103ccff7bebdc88",
       "issue": 1300,
@@ -3520,7 +3524,8 @@
         "resubmission": false,
         "reviewChanges": "Исходный CI сохранил первое наведение в polygon комнаты, hoverOwner=null. Координата бралась до завершения RAF-движения камеры; Lit settled не является paint oracle. На актуальном dev наблюдалось изменение первого rect после settled (x=537.66796875 →537.484375), затем стабильный native hit. Новый общий helper только читает fonts/DOMRect/SVG CTM/native hit и ждёт три одинаковых кадра (предел5сек), до единственного настоящего mouse.move. Ожидаемые линии/tooltip/hoverOwner не входят в ожидание. Сохраняются первые samples, направления, touch/pen и старый negative-placement control. Stroked SVG с нулевой fill-высотой допускается по реальной длине; перекрывающий LED hit floor также допускается, поскольку nearest-owner — предмет продуктового ассерта, а не готовности. Tooltip раскладка измеряется после существующего bounded finite-paint helper; допуски не расширены и анимации не подавляются. В evidence сохраняется первая и последние геометрии/hit, исходный FAILED не переписывается. Runtime не меняется. Адресный tooltip diagnostic PASS; в LED diagnostic выявлены и устранены два чрезмерных предусловия нового helper (zero fill-box и перекрывающиеся LED), финальный S6 проверяет полный файл. Browser selection требует product S6 profile (build/critical/startup+2 smoke), это не новый гейт. Companion task-impact/1301.md: дополнительный реальный HA E2E не требуется. Финальная проверка и ревью через finish.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
