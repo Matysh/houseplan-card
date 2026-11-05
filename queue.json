@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4381,
-  "nextTicket": 230,
+  "revision": 4382,
+  "nextTicket": 231,
   "nextFence": 230,
   "tasks": {
     "1126": {
@@ -3389,6 +3389,20 @@
         "status": "published",
         "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2"
       }
+    },
+    "1307": {
+      "issue": 1307,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1307-any-census",
+      "materialSha": "f58821aa97edd2c5df40c8a300de079e30cdb464",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 230,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793882004223,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3521,9 +3535,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1307
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:fc5b3807-1180-48e2-bb43-73f6f41c1ff8": {
+      "digest": "b936967c8f264ce8915b2a52c65663ea74b2993d03ea208bdeeddec7eb1c7a57",
+      "issue": 1307,
+      "message": {
+        "kind": "queued",
+        "issue": 1307,
+        "at": 1793882004223,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f58821aa97edd2c5df40c8a300de079e30cdb464"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
