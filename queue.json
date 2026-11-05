@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4015,
+  "revision": 4016,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -3501,6 +3501,10 @@
       "digest": "76b8d3e663b990a0d47a20c49c8b39c19cb4b9be6f465fd634d3bd2973e519dd",
       "issue": 1302
     },
+    "github:41978619994:1:completions:message:f62ddfe1b2a6a0756f29f9d84bd9d165581debf1a30bc64c9c715c5381ff7887": {
+      "digest": "df16f6989df185cc1877e66c74d7c4781d21f210472a528cef80244709394171",
+      "issue": 1302
+    },
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6": {
       "digest": "e40485629dbf322f3aca6c959ac1a3faa1ae427f2ca046f22ac4e1a8774132d8",
       "issue": 1302,
@@ -3547,7 +3551,8 @@
         "reviewChanges": "Причина установлена по исходному CI trace: snapshot656549.096 содержит четыре Static host — две под HUI-HORIZONTAL-STACK-CARD и две в fixture DIV. После B auth_ok в656416.126 Houseplan GET продолжались с A IDs73/74,75/76; B выполнил registry IDs1/2. Удаление только дочерних карточек оставляло подключённый Lovelace, который пересоздавал A-пару. Исправление companion6452c23857420b43f14789f226ead3a76527049b отсоединяет корень home-assistant только этой тестовой страницы перед созданием пары. Настоящее A остаётся; B — второй реальный authenticated socket. Reload восстанавливает HA. Добавлены проверки ровно двух host и safe receipt в finally с hold-target, без auth/payload. Ни forced reads, ни fake replies/reset/retry, ни увеличение timeout не применялись. Вся старая цепочка real ACK/readback, A high-water/B low-rev, оба paints/reload сохранена. Адресный полный кейс на публичной beta.6 и HA2026.10.4 PASS:business1/1,setup3/3,skip/unexecuted/retry0, собственный AITT9A контейнер удалён адаптером. После HA прогона менялись лишь отступы и unit assertion safe metadata. Синтаксис двух файлов и4/4fixture unit PASS. Полный содержательный diff companion включён в root docs/testing/issue1302-static-handoff.md для независимого ревью; корневая часть документационная, лишних тестов не требует. Companion branch опубликована, main обновится только после принятого ревью; называть задачу завершённой до этой интеграции нельзя. Исходный FAILED stable сохраняется.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
