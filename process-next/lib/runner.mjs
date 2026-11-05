@@ -23,6 +23,7 @@ export function validatePlan(plan) {
     ids.add(step.id);
     if (step.command !== null && (!Array.isArray(step.command) || !step.command.length || step.command.some(x => typeof x !== 'string' || x.includes('\0')))) throw new Error(`Invalid command: ${step.id}`);
     if (step.command === null && !step.unavailable) throw new Error(`Missing command reason: ${step.id}`);
+    if (step.exclusive !== undefined && typeof step.exclusive !== 'boolean') throw Error(`Invalid exclusive flag: ${step.id}`);
     if (!['root', 'e2e', undefined].includes(step.cwd)) throw new Error(`Invalid cwd: ${step.id}`);
     if (step.reusableReports !== undefined) {
       const reports = step.reusableReports;
@@ -172,7 +173,11 @@ export async function runPlan(plan, { root, e2eRoot, stateDir, jobs = 2,
       if (signal?.aborted || dependencies.some(key => !successful(results.get(key)))) {
         pending.delete(stepId); advanced = true; results.set(stepId, { id: stepId, name: step.name, diagnostic: !!step.diagnostic, status: signal?.aborted ? 'cancelled' : 'blocked', reason: 'Подготовка не завершена успешно', durationMs: 0 }); continue;
       }
-      if (running.size >= jobs) break;
+      // Timing budgets must observe this runner without competing steps.
+      // Drain before the first ready exclusive step; do not let later work
+      // overtake it. An unready exclusive step still respects its dependencies.
+      if ([...running.keys()].some(id => plan.steps.find(s => s.id === id).exclusive)
+        || (step.exclusive && running.size) || running.size >= jobs) break;
       pending.delete(stepId);
       const promise = perform(step).catch(error => ({ id: stepId, name: step.name, diagnostic: !!step.diagnostic, status: 'error', error: error.message }))
         .then(result => { results.set(stepId, result); running.delete(stepId); report.results = plan.steps.filter(s => results.has(s.id)).map(s => results.get(s.id)); store.save(report); notify(stepId, result.status); });

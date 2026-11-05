@@ -118,6 +118,8 @@ test('command, explicit environment and generated outputs invalidate reuse', asy
   writeFileSync(join(root, 'built'), 'wrong'); await runPlan(p, { root, execute }); assert.equal(calls.length, 2);
   p.steps[0].env = { FEATURE: 'new' }; await runPlan(p, { root, execute }); assert.equal(calls.length, 3);
   p.steps[0].command.push('changed'); await runPlan(p, { root, execute }); assert.equal(calls.length, 4);
+  p.steps[0].exclusive = true; await runPlan(p, { root, execute }); assert.equal(calls.length, 5);
+  p.steps[0].exclusive = false; await runPlan(p, { root, execute }); assert.equal(calls.length, 5, 'ordinary execution reuses only the earlier ordinary receipt');
 });
 test('preparation dependency identity is part of downstream evidence', async t => {
   const root = fixture(t), p = plan([step('build'), step('consumer', { inputs: [], requires: ['build'] })]);
@@ -240,4 +242,48 @@ test('pytest failures and empty selections cannot pass on exit zero; nonzero exi
       { cwd: root, logPath: join(root, id + '-pytest.log') });
     assert.equal(result.status, expected, id);
   }
+});
+
+for (const exclusiveStatus of ['passed', 'failed']) test(`exclusive steps drain other work, block overtaking and release on ${exclusiveStatus}`, {timeout:5000}, async t => {
+  const root = fixture(t), ids = ['a','b','measure','c','d'];
+  const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
+  const began = Object.fromEntries(ids.map(id => [id, deferred()]));
+  const release = Object.fromEntries(ids.map(id => [id, deferred()]));
+  const ended = Object.fromEntries(ids.map(id => [id, deferred()]));
+  const active = new Set(), events = [];
+  const p = plan(ids.map(id => step(id, id === 'measure' ? { exclusive:true } : {})));
+  p.steps.push(step('descendant', { requires:['measure'] }));
+  const running = runPlan(p, { root, jobs:3, reuse:false,
+    onProgress: ({step:id,state}) => { if (state === 'passed' || state === 'failed') ended[id]?.resolve(); },
+    execute: async s => {
+      if (s.id === 'descendant') return pass();
+      if (s.exclusive) assert.equal(active.size,0);
+      else assert.equal(active.has('measure'),false);
+      active.add(s.id); events.push(s.id); began[s.id].resolve();
+      await release[s.id].promise; active.delete(s.id);
+      return {status:s.exclusive ? exclusiveStatus : 'passed'};
+    } });
+  // Finally releases every gate even if an assertion fails, avoiding a hung test.
+  t.after(() => { for(const gate of Object.values(release))gate.resolve(); });
+  await Promise.all([began.a.promise,began.b.promise]);
+  assert.deepEqual(events,['a','b'],'ordinary work retains parallelism; ready measure drains it');
+  release.a.resolve(); await ended.a.promise;
+  assert.deepEqual(events,['a','b'],'measure waits for the other active step too');
+  release.b.resolve(); await began.measure.promise;
+  assert.deepEqual([...active],['measure']);
+  assert.deepEqual(events,['a','b','measure'],'later work cannot overtake the measurement');
+  release.measure.resolve(); await Promise.all([began.c.promise,began.d.promise]);
+  assert.deepEqual([...active],['c','d'],'ordinary parallelism resumes after measure');
+  release.c.resolve(); release.d.resolve(); const report = await running;
+  assert.equal(report.status,exclusiveStatus);
+  assert.equal(report.results.find(r=>r.id==='descendant').status,exclusiveStatus==='failed'?'blocked':'passed');
+});
+
+test('an unready exclusive step cannot deadlock its prerequisite; only boolean flags are accepted', async t => {
+  const root=fixture(t), events=[];
+  const p=plan([step('measure',{exclusive:true,requires:['prep']}),step('prep')]);
+  assert.equal((await runPlan(p,{root,execute:async s=>{events.push(s.id);return pass();}})).status,'passed');
+  assert.deepEqual(events,['prep','measure']);
+  for(const exclusive of [1,'true',null])assert.throws(()=>validatePlan(plan([step('bad',{exclusive})])),/Invalid exclusive/);
+  assert.doesNotThrow(()=>validatePlan(plan([step('ordinary',{exclusive:false})])));
 });

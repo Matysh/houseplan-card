@@ -112,7 +112,7 @@ export function stepIdentity(root, step, environment = {}, dependencies = []) {
     if (index === 1) return 'process-next/lib/e2e.mjs';
     return arg;
   }) : step.command;
-  return { ...inputs, hash: digest(JSON.stringify({ id: step.id, inputs: inputs.hash, command, cwd: step.cwd, env: step.env, expectedNonempty: step.expectedNonempty, preparations: step.preparationCommands, environment, dependencies })) };
+  return { ...inputs, hash: digest(JSON.stringify({ id: step.id, inputs: inputs.hash, command, cwd: step.cwd, env: step.env, expectedNonempty: step.expectedNonempty, exclusive: step.exclusive === true, preparations: step.preparationCommands, environment, dependencies })) };
 }
 export function outputIdentity(root, outputs = []) {
   if (!outputs.length) return { hash: null, complete: true };

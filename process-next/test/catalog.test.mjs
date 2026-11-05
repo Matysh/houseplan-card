@@ -202,3 +202,16 @@ test('new product/backend/browser tests are discovered without regenerating the 
   const ship = await planProfile({ root, track: 'ship', issue: 1105 });
   assert.match(ship.name, /перед слиянием/);
 });
+
+test('#1295 isolates exactly the four measured profiles in task and stable plans', async () => {
+  // These are planner metadata, not imports/reads of the browser programs.
+  const files=['selective_invalidation_history0','selective_invalidation_inactive',
+    'selective_invalidation_visible','wall_node_connected'].map(name=>'demo/smoke_'+name+'.mjs');
+  const expected=files.map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
+  for(const event of ['task','stable']) {
+    const p=await planProfile({root,event,areaTests:[...files,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
+    assert.deepEqual(p.steps.filter(s=>s.exclusive).map(s=>s.id).sort(),expected);
+    if(event==='task') assert.ok(p.steps.some(s=>s.id==='startup-view'&&!s.exclusive));
+    assert.ok(p.steps.some(s=>s.id.startsWith('smoke:')&&!s.exclusive));
+  }
+});

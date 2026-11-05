@@ -128,6 +128,8 @@ jobs:
             process-next/.state/runs
             artifacts/process-next
             artifacts/process-next-e2e-labs/*/artifacts
+            artifacts/browser-selected/1093/*.json
+            artifacts/834-node/connected.json
           if-no-files-found: ignore
           retention-days: 14
           include-hidden-files: true
