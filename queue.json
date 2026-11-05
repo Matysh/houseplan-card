@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4053,
-  "nextTicket": 219,
+  "revision": 4054,
+  "nextTicket": 220,
   "nextFence": 219,
   "tasks": {
     "1126": {
@@ -3342,6 +3342,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1303": {
+      "issue": 1303,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1303-node-dependency-carrier",
+      "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 219,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793862642505,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3446,9 +3460,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1303
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9": {
+      "digest": "2a1150c412e08eca2ce6a745e3a08f3caccb293d8e7bd9cfbf55d470e1d100f6",
+      "issue": 1303,
+      "message": {
+        "kind": "queued",
+        "issue": 1303,
+        "at": 1793862642505,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
     "status": "delivered",
