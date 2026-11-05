@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.84.0-beta.6 — 2026-11-05
+
 - Keep the external-screen smoke pointer pressed until its kiosk scale dialog is visible, releasing in finally instead of racing a fixed 3100 ms wait. [#1297](https://github.com/Matysh/houseplan-card/issues/1297)
 
 - Keep the native profile hold pressed until its public scale dialog appears in real HA E2E; retain delayed-timer regression evidence and the empty-space Undo readiness fix. [#1296](https://github.com/Matysh/houseplan-card/issues/1296)
