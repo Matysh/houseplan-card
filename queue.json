@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3470,
-  "nextTicket": 202,
+  "revision": 3471,
+  "nextTicket": 203,
   "nextFence": 201,
   "tasks": {
     "1126": {
@@ -1950,6 +1950,20 @@
         "status": "not-required"
       }
     },
+    "1254": {
+      "issue": 1254,
+      "track": "show",
+      "layer": "product",
+      "branch": "issue/1254-summary-camera-animation",
+      "materialSha": "97ab0ee51ddd754d31a018fce54fc26d08ec1ae6",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 202,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793844063097,
+      "reviewEntry": 1
+    },
     "1256": {
       "issue": 1256,
       "branch": "issue/1256-node-projection-equality",
@@ -3254,7 +3268,8 @@
     }
   },
   "waiting": [
-    1294
+    1294,
+    1254
   ],
   "active": {
     "issue": 1258,
@@ -3466,6 +3481,19 @@
         "layer": "product",
         "materialSha": "9254b3e4d0583a27f2288efa5f02d9a4f5ed0a35",
         "phase": "sync"
+      }
+    },
+    "finish:b788cce0-39f3-4ccb-891a-ab46ec76b937": {
+      "digest": "c93c99640ad8f8aaf25aa2b91aefa6a884c42b5a28b119c8d06427ad82a2875d",
+      "issue": 1254,
+      "message": {
+        "kind": "queued",
+        "issue": 1254,
+        "at": 1793844063097,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "97ab0ee51ddd754d31a018fce54fc26d08ec1ae6"
       }
     }
   },
