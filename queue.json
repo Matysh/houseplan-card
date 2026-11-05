@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4250,
+  "revision": 4251,
   "nextTicket": 227,
   "nextFence": 227,
   "tasks": {
@@ -3672,6 +3672,10 @@
       "digest": "e235d14db9a0991dc5494b2ef8f2171a0234a9cf2185685a9c84bb404953df73",
       "issue": 1305
     },
+    "github:42011455109:1:completions:message:3f159a9d9ee5c0e5fd4492541e0b0e85c71ffe0372b82f75cbc6adedeff4f368": {
+      "digest": "b989443c1cd7cafa3a823374686cef0ee86cf720c4cf40d79c9c36539396fb4d",
+      "issue": 1305
+    },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
       "digest": "021ef6863d89bbd22c642800c05bc562bdb14d512963985fc1bcc843907dc6d1",
       "issue": 1305,
@@ -3753,7 +3757,8 @@
         "reviewChanges": "Реализация на базе dev `5588345f1`, ветка `codex/issue-1305-node-merge`. Принятое S4: round 3, [run 42004006001](https://github.com/Matysh/houseplan-card/actions/runs/42004006001). Контракт владельца об удалении непосредственного ребра S–T реализован атомарно.\n\nПодход: дополнительный `merge_node_id` в существующем node_move и независимая capability `wall_node_merge_api:1`; прежняя move API остаётся 1. `wall-node-merge.ts` и `wall_node_merge.py` независимо строят ограниченную композицию по двум IDs, удаляют прямые соединяющие рёбра/source, обновляют room cycles/dependencies/opening t/tq и выполняют существующую lossless compaction. Новый глобальный GraphOperation не вводился: используется разрешённая ТЗ эквивалентная ограниченная композиция существующих операций; generated runtime не меняется. Generic Move, Save и Optimize не получают разрешения на чужие контакты.\n\nВ held-pointer кадрах только admission/outline/кольцо неподвижной цели. На release строится полный candidate и выполняются клиентские physical/junction guards; сервер независимо повторяет graph/hosts/П1–П4, ACL/CAS и durable Store. `node_move_host_baseline` воспроизводит lineage из исходных IDs, включая компактацию с изменением host ID, в обоих направлениях. Нет оптимистичного serverCfg или шага истории до ACK; прежние writer/queue/history остаются владельцами.\n\nАвторские проверки: сборка/типы прошли; 77 Node-тестов затронутой области и 70 backend-тестов PASS (включая 11 новых authenticated HA WS/Store/reload/CAS/Undo/Redo случаев). Семь общих синтетических fixtures: полное TS/Python сравнение конфигурации 7/7 PASS. Native mouse smoke прошёл 4 успешных вида contraction, Escape, delayed ACK, точные Undo/Redo, valence refusal, click с соседом в 10 CSS px и отсутствие магнита на старом backend. На 5000 valid structural edges / 100 меняющихся held кадров: p95 12.9 ms, physicalChecks=0, writes=0, history=0. Это browser wire harness с production Python proof, а не полный HA browser journey; реальные HA ACL/Store отдельно покрыты backend тестами. Финальный S6 и его актуальный head публикует finish в штатной передаче.\n\nРазобраны реальные FAIL до передачи: неверный синтетический view_box/узкий host в smoke; неверная cm=0 opening fixture; тестовый helper pointerup ошибочно прыгал в origin; простой offset-click при новом учёте up мог породить ordinary Move — исправлен явным сохранением отсутствия жеста. Исходные логи сохранены в локальном artifacts/1305; ожидания безопасности не ослаблялись.\n\nОсновные риски для ревью: exact q target/ось и третий совпадающий ID; ограничение допуска только пары IDs и отказ общих соседей/новых пересечений; room degeneration/проём на удаляемом ребре; independent host lineage/inverse legacy baseline; retired capability/ACL/конфликт и история до ACK; неизменность дальних узлов и retire broken supports #1303. Альтернатива отдельного endpoint/истории дублировала бы действующий механизм, глобальный allow-contact ослабил бы его.\n\nE2E вердикт **надо**, причины и конкретные изменения journeys записаны в [houseplan-e2e/task-impact/1305.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1305.md), commit 38cd10ac4771f4d19b9c83a7cead780f97ab1a98. Изменение journeys — перед бетой. Обновлены RU/EN guides/changelog, geometry contracts и release-ledger (major).\n\n### Исправления по предыдущему ревью\n\nS4 r1 (42001092447): passing admission теперь фильтрует недостижимые T/X цели; во время r1 владелец разрешил удаление S–T ребра. Room/opening/dependency refusal и обязательная lossless compaction включены в контракт и код.\n\nS4 r2 (42002995046): захват merge только после raw displacement >3 CSS px и при строгой близости target относительно source. Pointerup учитывает собственные координаты, offset-click не сохраняет ничего. Общий сосед с новым duplicate endpoint pair даёт отказ. R3 принят; рекомендации по независимой host lineage и неоднозначным совпадающим IDs учтены.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
