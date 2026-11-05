@@ -5,12 +5,14 @@
 ## v1.84.0-beta.7 — 2026-11-05
 - Native input timestamp calibration takes one complete fixed series of 128 probes instead of 32, preserving the 1 ms uncertainty limit, timing budgets and unavailable failures. [#1318](https://github.com/Matysh/houseplan-card/issues/1318)
 - Build/demo cache includes canonical golden capture inputs and local imports embedded in the bundle fingerprint, preventing stale preparation reuse after capture changes. [#1321](https://github.com/Matysh/houseplan-card/issues/1321)
+- Accept four additional owner-reviewed opening-floor frames, preserving every other PNG and tolerance. [#1314](https://github.com/Matysh/houseplan-card/issues/1314)
 
 - Settle actual finite UI Kit paint before inspecting settings help, preserving immediate expansion and strict hover/paint assertions instead of a fixed 160-ms wait. [#1317](https://github.com/Matysh/houseplan-card/issues/1317)
 - Sample Zigbee raster coordinates after the camera and overlay layout settle, retaining strict layer/outline pixel checks and coordinate receipts. [#1319](https://github.com/Matysh/houseplan-card/issues/1319)
 
 - Accept a node write ACK after an equal own echo with reordered object keys, retaining exact history and rejection of newer revisions, changed arrays, coordinates and opaque fields. [#1320](https://github.com/Matysh/houseplan-card/issues/1320)
 - Publish verified HA dialog fixture assets atomically from private staging directories, preserving integrity checks and concurrent cold/warm readers without partial extraction or wheel collisions. [#1316](https://github.com/Matysh/houseplan-card/issues/1316)
+- Check opening-floor continuity against the unified room geometry, retaining the pixel tolerance and DPR 1/2 with negative controls for gaps, invisible fills and white seams. [#1314](https://github.com/Matysh/houseplan-card/issues/1314)
 
 - Verify both owning floor halves and actual passage pixels in Static instead of the retired tunnel fill. [#1313](https://github.com/Matysh/houseplan-card/issues/1313)
 
