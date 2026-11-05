@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3570,
-  "nextTicket": 205,
+  "revision": 3571,
+  "nextTicket": 206,
   "nextFence": 204,
   "tasks": {
     "1126": {
@@ -3144,6 +3144,20 @@
       "readyAt": 1793845033042,
       "reviewEntry": 1
     },
+    "1293": {
+      "issue": 1293,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1293-decor-defaults-race",
+      "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 205,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793845321894,
+      "reviewEntry": 1
+    },
     "1294": {
       "issue": 1294,
       "branch": "codex/1294-stable-browser-oracles",
@@ -3298,7 +3312,8 @@
     }
   },
   "waiting": [
-    1292
+    1292,
+    1293
   ],
   "active": {
     "issue": 1258,
@@ -3573,6 +3588,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c": {
+      "digest": "83a32ea617d4f2943b34aa613222bc2f1e6ff2f44d7cbc4b418e38f1eec3d5a6",
+      "issue": 1293,
+      "message": {
+        "kind": "queued",
+        "issue": 1293,
+        "at": 1793845321894,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd"
       }
     }
   },
