@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4952,
+  "revision": 4953,
   "nextTicket": 247,
   "nextFence": 247,
   "tasks": {
@@ -3831,7 +3831,14 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793906797308,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "dacccb2ce7bfbfa4787b3a1694f66af6341d53c3",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/catalog.mjs",
+        "process-next/test/ci-status.test.mjs"
+      ]
     },
     "1323": {
       "issue": 1323,
@@ -3995,12 +4002,17 @@
     "token": "246:finish:ad94e3c9-1826-44f8-999a-586ce7063a63:finish:1:admit",
     "fence": 246,
     "materialSha": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827",
+    "phase": "testing",
     "admittedAt": 1793906801285,
-    "expiresAt": 1793907101285
+    "expiresAt": 1793907107088,
+    "patchId": "dacccb2ce7bfbfa4787b3a1694f66af6341d53c3"
   },
   "events": {
+    "finish:ad94e3c9-1826-44f8-999a-586ce7063a63:finish:2:synchronized": {
+      "digest": "de9082cb060c093aa66e4225dd5df9ddadc2a5142ee08b6491bb3550c09608a8",
+      "issue": 1322
+    },
     "finish:ad94e3c9-1826-44f8-999a-586ce7063a63": {
       "digest": "66ad460179d135d78387c7694ec8b8feb742a6d062fc2efeae07c67c1e9f74e3",
       "issue": 1322,
