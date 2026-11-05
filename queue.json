@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4197,
-  "nextTicket": 225,
+  "revision": 4198,
+  "nextTicket": 226,
   "nextFence": 225,
   "tasks": {
     "1126": {
@@ -1678,14 +1678,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1250-room-floor-openings",
-      "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
+      "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 224,
-      "queued": false,
+      "ticket": 225,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793871838693,
-      "reviewEntry": 3,
+      "readyAt": 1793872616814,
+      "reviewEntry": 4,
       "patchId": "2dcd3dd684a0e14a1a585c3d87436b139fba583a",
       "changedFiles": [
         "demo/golden/static-wall-openings.mjs",
@@ -1724,20 +1724,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-      "reviewMaterial": {
-        "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-        "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "patchId": "2dcd3dd684a0e14a1a585c3d87436b139fba583a"
-      },
-      "reviewRetry": {
-        "requestId": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "eventId": "github:42004979063:1:tick:0:review-retry",
-        "at": 1793871932755,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
         "at": 1793872336749
@@ -3566,7 +3552,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1250
+  ],
   "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3903,6 +3891,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d723d18e-2e66-4198-a099-a3032ae578e7": {
+      "digest": "2fe835136474631a075378908e18fe2bba25016080e2755e46fa1561693bebf0",
+      "issue": 1250,
+      "message": {
+        "kind": "queued",
+        "issue": 1250,
+        "at": 1793872616814,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+        "evidence": {
+          "id": "20261105T094411681-27e3227a",
+          "name": "Тесты для задачи #1250 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T094411681-27e3227a/report.json",
+          "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
+          "status": "passed",
+          "finishedAt": "2026-11-05T09:45:12.040Z",
+          "failures": []
+        }
       }
     }
   },
