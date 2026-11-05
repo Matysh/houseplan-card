@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v1.84.0 — 2026-11-05
+
+- Stable release from tested v1.84.0-beta.8; the user changelog describes changes since v1.83.1. Intermediate beta history is retained below.
+- Exact wall/node graph and direct junction geometry with robust migration, Optimize and history: #1167, #1216. Drag-to-merge nodes and complete painted-marker picking: #1305, #1259.
+- Select-only room creation, continuous opening floors and Static fixes: #1176, #1250, #1171.
+- Per-space external-screen profiles, touch kiosk navigation and summary-aware centring: #1165, #1127, #1242, #1254.
+- Summary weather/forecast, continuous vacuum trails and weak Zigbee filtering: #1174, #1175, #1130.
+- Shared UI Kit, smooth editor transitions, independent furniture/decor copy and faster saves: #1147–#1150, #1153, #1156, #1207, #1306.
+- Public CI identity is separate from capture inputs; node hit radius uses one viewport read and complete test ports: #1322, #1324.
+
+
 ## v1.84.0-beta.8 — 2026-11-05
 - Node hit radius borrows the already measured scale without a second viewport read; history and retained-paint test ports include the visible marker parameters. [#1324](https://github.com/Matysh/houseplan-card/issues/1324)
 
