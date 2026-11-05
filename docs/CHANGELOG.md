@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Native input timestamp calibration takes one complete fixed series of 128 probes instead of 32, preserving the 1 ms uncertainty limit, timing budgets and unavailable failures. [#1318](https://github.com/Matysh/houseplan-card/issues/1318)
+- Build/demo cache includes canonical golden capture inputs and local imports embedded in the bundle fingerprint, preventing stale preparation reuse after capture changes. [#1321](https://github.com/Matysh/houseplan-card/issues/1321)
 
 - Settle actual finite UI Kit paint before inspecting settings help, preserving immediate expansion and strict hover/paint assertions instead of a fixed 160-ms wait. [#1317](https://github.com/Matysh/houseplan-card/issues/1317)
 - Sample Zigbee raster coordinates after the camera and overlay layout settle, retaining strict layer/outline pixel checks and coordinate receipts. [#1319](https://github.com/Matysh/houseplan-card/issues/1319)

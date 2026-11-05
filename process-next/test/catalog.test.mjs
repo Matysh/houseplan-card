@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { inputIdentity } from '../lib/storage.mjs';
+import { GOLDEN_CAPTURE_INPUTS } from '../../scripts/source-fingerprint.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -215,4 +217,29 @@ test('#1295 isolates the complete selective timing family and connected profile 
     if(event==='task') assert.ok(p.steps.some(s=>s.id==='startup-view'&&!s.exclusive));
     assert.ok(p.steps.some(s=>s.id.startsWith('smoke:')&&!s.exclusive));
   }
+});
+
+
+test('capture source changes invalidate build/demo preparation, including local capture imports', async () => {
+  const temp = await mkdtemp(resolve(tmpdir(), 'hp-capture-build-'));
+  try {
+    const runner = 'process-next/catalog/golden-runner.mjs';
+    const child = 'process-next/catalog/floor-probe.mjs';
+    await mkdir(resolve(temp, 'process-next/catalog'), { recursive: true });
+    for (const file of GOLDEN_CAPTURE_INPUTS) await writeFile(resolve(temp, file), 'export const capture = 1;');
+    await writeFile(resolve(temp, runner), "import './floor-probe.mjs';");
+    await writeFile(resolve(temp, child), 'export const probe = 1;');
+    const plan = await planProfile({ root: temp, event: 'task' });
+    for (const id of ['product-build', 'demo-assets']) {
+      const step = plan.steps.find(item => item.id === id);
+      for (const file of [...GOLDEN_CAPTURE_INPUTS, child]) {
+        const before = inputIdentity(temp, step.inputs).hash;
+        await writeFile(resolve(temp, file), `export const changed = '${id}';`);
+        assert.notEqual(inputIdentity(temp, step.inputs).hash, before, `${id} must notice ${file}`);
+      }
+      const before = inputIdentity(temp, step.inputs).hash;
+      await writeFile(resolve(temp, 'process-next/catalog/unrelated-note.mjs'), 'export const note = 3;');
+      assert.equal(inputIdentity(temp, step.inputs).hash, before, 'unrelated process sources do not invalidate preparation');
+    }
+  } finally { await rm(temp, { recursive: true, force: true }); }
 });
