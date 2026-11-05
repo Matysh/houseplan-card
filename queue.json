@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4240,
+  "revision": 4241,
   "nextTicket": 227,
   "nextFence": 227,
   "tasks": {
@@ -3426,7 +3426,10 @@
         "test/wall-node-merge.test.mjs",
         "tests_backend/test_ha_wall_node_merge.py",
         "tests_backend/test_wall_node_merge.py"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1793874533739,
+      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-geometry-ci-20261102/test/wall-node-history.test.mjs'"
     }
   },
   "ownerDecisions": {},
@@ -3597,6 +3600,10 @@
     },
     "finish:263ee478-c6e1-4a51-affb-30ea842ee0e9:finish:2:synchronized": {
       "digest": "4109c8a7b1cbd39616499566e4522bcfb393d55f7ea7f17ed7a1c318a0167b04",
+      "issue": 1305
+    },
+    "finish:263ee478-c6e1-4a51-affb-30ea842ee0e9:finish:3:automation-pending": {
+      "digest": "b96df4ffc37231b5f91b1785540fc54452c0dd738fcdc813c6fece4b8a1700a2",
       "issue": 1305
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
