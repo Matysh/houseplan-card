@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4408,
-  "nextTicket": 231,
+  "revision": 4409,
+  "nextTicket": 232,
   "nextFence": 231,
   "tasks": {
     "1126": {
@@ -3411,6 +3411,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1308": {
+      "issue": 1308,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1308-wall-corpus",
+      "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 231,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793882167930,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3543,9 +3557,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1308
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:1c29c746-151f-4322-96d7-7e535de010d3": {
+      "digest": "640d5b61808992d3a0e76eee4c30fe388861c96c207f6ae4e9558813556ed099",
+      "issue": 1308,
+      "message": {
+        "kind": "queued",
+        "issue": 1308,
+        "at": 1793882167930,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
