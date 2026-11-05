@@ -10,6 +10,7 @@ import { applyGraphOperation, projectGraphSpace, prepareGraph, type PlanGraph, t
 import { decodePoint, encodePoint, readAuthoredPoint, pointToNumbers, parseDecimal, encodeRational,
   projectParameter, pointAt, cmp, ZERO, ONE, decodeRational } from './plan-exact';
 import type { GraphPoint } from './plan-exact';
+import { NodeMoveDependencies } from './wall-node-dependencies';
 
 export type NodePoint = [number, number];
 export interface NodeMoveSpace {
@@ -43,6 +44,7 @@ export interface NodeMovePlan {
   splitIds: Record<string, string>;
   graph?: PlanGraph;
 }
+const dependencyMoves = new WeakMap<NodeMovePlan, NodeMoveDependencies>();
 export type NodeMoveReason = 'unsupported_junction' | 'invalid' | 'opening_blocked';
 export type NodeMoveResult = { ok: true; space: NodeMoveSpace; changed: boolean; affected: string[] }
   | { ok: false; reason: NodeMoveReason };
@@ -151,8 +153,13 @@ export function prepareNodeMove(
   space: NodeMoveSpace, node: WallNode, nodes: readonly WallNode[],
   splitIds: Record<string, string> = {},
 ): NodeMovePlan {
-  return { source: space, node, nodes, splitIds: { ...splitIds },
-    ...(space.plan_graph ? { graph: prepareGraph(space.plan_graph).graph } : {}) };
+  const plan: NodeMovePlan = { source: space, node, nodes, splitIds: { ...splitIds } };
+  if (space.plan_graph && node.nodeId) {
+    const prepared = prepareGraph(space.plan_graph);
+    plan.graph = prepared.graph;
+    dependencyMoves.set(plan, new NodeMoveDependencies(prepared.graph, prepared.index, node.nodeId));
+  }
+  return plan;
 }
 
 /** Screen-space arbitration is kept independent of SVG target stacking. */
@@ -447,14 +454,16 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
   }));
   if (source.plan_graph && n.nodeId) {
     try {
-      const operations: GraphOperation[] = [];
+      const targetPoint = readAuthoredPoint(target), dependencies = dependencyMoves.get(plan);
+      const operations: GraphOperation[] = dependencies?.operations(targetPoint) || [];
       const dependency = source.plan_graph.dependencies.find(d => d.node === n.nodeId);
       let keepDependency = false;
       if (dependency && carrier) {
         const byId = new Map(source.plan_graph.nodes.map(v => [v.id, v]));
         for (const support of dependency.refs) {
+          if (dependencies && !dependencies.hasCarrier(support, n.nodeId, targetPoint)) continue;
           const a = decodePoint(byId.get(support.from)!.p), b = decodePoint(byId.get(support.to)!.p);
-          const targetPoint = readAuthoredPoint(target), t = projectParameter(targetPoint, a, b);
+          const t = projectParameter(targetPoint, a, b);
           const supportDirection = sub(pointToNumbers(b), pointToNumbers(a));
           if (cmp(t, ZERO) < 0 || cmp(t, ONE) > 0
               || !parallel(unit(supportDirection), carrier.direction)) continue;

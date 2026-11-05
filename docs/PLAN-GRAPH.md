@@ -30,6 +30,15 @@ its physical edge is split. The DAG evaluates supports before dependents.
 `on-edge` has one support and rational parameter; `intersection` has two.
 Explicit moves/deletions must update or retire affected constraints.
 
+Select node movement (#1303) owns only its selected node; other graph vertices
+are fixed ends. A retained split-carrier constraint is reparameterized at its
+unchanged exact point. A support that is no longer a connected straight run
+through the dependent, including a bend at an intermediate vertex, is retired
+within the same command. Already-saved broken supports are handled when that
+carrier is explicitly edited; reads do not rewrite the plan. Generic graph
+operations retain affine DAG propagation. The browser preview and server-owned
+node writer apply the same intent, with exact Undo/Redo.
+
 Explicit numeric editor targets recognize a lattice coordinate within the
 existing `1e-4`-step coordinate-noise allowance. Nudge, body translation,
 axial opening movement and safe Resize add proven lattice origins/offsets as

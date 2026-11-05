@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1303,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "summary": {
+    "ru": "Перемещение узла не тянет дальние вершины через устаревший носитель.",
+    "en": "Moving a node no longer pulls distant vertices through a stale carrier."
+  },
+  "rationale": "Fix model11 Select graph dependency maintenance introduced in the 1.84 line; preserve browser/server intent parity and exact history."
+}

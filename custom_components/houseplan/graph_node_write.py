@@ -25,6 +25,51 @@ def node_identity(space, intent):
     return identity, index
 
 
+def _has_node_carrier(index, moved, support, via, target=None):
+    """A finite named straight run through via, including split carriers.
+
+    Native Select fixes every other vertex. A discarded affine constraint
+    must not move a remote vertex through a bend or a detached identity.
+    """
+    def point(node):
+        return target if node == moved and target is not None else index.points[node]
+
+    a, b = point(support["from"]), point(support["to"])
+    if a == b:
+        return False
+    parameters = {}
+
+    def parameter(node):
+        if node not in parameters:
+            p = point(node)
+            t = project_parameter(p, a, b)
+            parameters[node] = t if 0 <= t <= 1 and point_at(a, b, t) == p else None
+        return parameters[node]
+
+    def reaches(start, end):
+        first, last = parameter(start), parameter(end)
+        if first is None or last is None or first > last:
+            return False
+        pending, seen = [start], set()
+        while pending:
+            node = pending.pop()
+            if node == end:
+                return True
+            if node in seen:
+                continue
+            seen.add(node)
+            t = parameter(node)
+            for key in index.incident.get(node, []):
+                edge = index.edges[key]
+                other = edge["to"] if edge["from"] == node else edge["from"]
+                nt = parameter(other)
+                if nt is not None and t < nt <= last:
+                    pending.append(other)
+        return False
+
+    return reaches(support["from"], via) and reaches(via, support["to"])
+
+
 def move_graph_node_space(space, intent):
     from .wall_node_move import move_node_space, NodeMoveError
 
@@ -44,10 +89,24 @@ def move_graph_node_space(space, intent):
     dependencies = []
     for dependency in graph["dependencies"]:
         if dependency["node"] != identity:
+            affected = any(identity in {s["from"], s["to"]}
+                           or _has_node_carrier(index, identity, s, identity)
+                           for s in dependency["refs"])
+            if affected:
+                if not all(_has_node_carrier(index, identity, s, dependency["node"], target)
+                           for s in dependency["refs"]):
+                    continue
+                def point(node):
+                    return target if node == identity else index.points[node]
+                dependency["parameters"] = [encode_rational(project_parameter(
+                    point(dependency["node"]), point(s["from"]), point(s["to"])))
+                    for s in dependency["refs"]]
             dependencies.append(dependency)
             continue
         # A deliberate move retargets a retained support or detaches it.
         for support in dependency["refs"]:
+            if not _has_node_carrier(index, identity, support, identity, target):
+                continue
             a, b = index.points[support["from"]], index.points[support["to"]]
             t = project_parameter(target, a, b)
             if 0 <= t <= 1 and point_at(a, b, t) == target:

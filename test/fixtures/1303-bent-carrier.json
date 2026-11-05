@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "bend",
+      "p": [
+        "q",
+        "2845818359374999877",
+        "1335843749999999952",
+        "2804593749999999937",
+        "1669804687499999940"
+      ]
+    },
+    {
+      "id": "branch-left",
+      "p": [
+        "l",
+        "444",
+        "307"
+      ]
+    },
+    {
+      "id": "carrier-start",
+      "p": [
+        "l",
+        "459",
+        "278"
+      ]
+    },
+    {
+      "id": "drag-end",
+      "p": [
+        "l",
+        "726",
+        "451"
+      ]
+    },
+    {
+      "id": "junction",
+      "p": [
+        "q",
+        "3550903906250000143618749999998911",
+        "1739687499999999737999999999999640",
+        "12960693750000000685437499999995941",
+        "10438124999999998427999999999997840"
+      ]
+    },
+    {
+      "id": "support-bottom",
+      "p": [
+        "l",
+        "499",
+        "421"
+      ]
+    },
+    {
+      "id": "support-top",
+      "p": [
+        "l",
+        "615",
+        "252"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "bend--drag-end",
+      "kind": "partition",
+      "to": "drag-end",
+      "cm": 15,
+      "from": "bend"
+    },
+    {
+      "id": "bend--support-bottom",
+      "kind": "partition",
+      "to": "support-bottom",
+      "cm": 15,
+      "from": "bend"
+    },
+    {
+      "id": "carrier-start--junction",
+      "kind": "partition",
+      "to": "junction",
+      "cm": 15,
+      "from": "carrier-start"
+    },
+    {
+      "id": "junction--bend",
+      "kind": "partition",
+      "to": "bend",
+      "cm": 15,
+      "from": "junction"
+    },
+    {
+      "id": "junction--branch-left",
+      "kind": "partition",
+      "to": "branch-left",
+      "cm": 15,
+      "from": "junction"
+    },
+    {
+      "id": "support-top--bend",
+      "kind": "partition",
+      "to": "bend",
+      "cm": 15,
+      "from": "support-top"
+    }
+  ],
+  "rooms": [],
+  "dependencies": [
+    {
+      "node": "bend",
+      "kind": "on-edge",
+      "parameters": [
+        [
+          "24882812500000000",
+          "27830078124999999"
+        ]
+      ],
+      "refs": [
+        {
+          "from": "support-top",
+          "to": "support-bottom"
+        }
+      ]
+    },
+    {
+      "node": "junction",
+      "kind": "on-edge",
+      "parameters": [
+        [
+          "5028125000000014487499999999991",
+          "43492187499999993449999999999991"
+        ]
+      ],
+      "refs": [
+        {
+          "from": "carrier-start",
+          "to": "drag-end"
+        }
+      ]
+    }
+  ]
+}
