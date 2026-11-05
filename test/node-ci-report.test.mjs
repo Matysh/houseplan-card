@@ -47,7 +47,7 @@ test('#952 unavailable calibration retains phase, partial probes and FAIL in the
     assert.deepEqual(saved.clockFailure.context, context);
     assert.equal(saved.clockFailure.status, 'unavailable');
     assert.equal(saved.clockFailure.receivedProbes, 1);
-    assert.equal(saved.clockFailure.requiredProbes, 32);
+    assert.equal(saved.clockFailure.requiredProbes, 128);
     assert.equal(saved.clockFailure.bestUncertaintyMs, null);
     assert.equal(saved.clockFailure.probes.length, 1);
     assert.equal(saved.raw[0].sourceInputs[0].id, 59);
