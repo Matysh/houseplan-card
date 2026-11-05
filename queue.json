@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3975,
+  "revision": 3976,
   "nextTicket": 218,
   "nextFence": 218,
   "tasks": {
@@ -3314,7 +3314,7 @@
       "ownerDecision": null,
       "ticket": 217,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793858739742,
       "reviewEntry": 1,
       "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1",
@@ -3324,7 +3324,16 @@
         "demo/smoke_zigbee_tooltip_layout.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T060553024-0b75185e",
+        "name": "Тесты для задачи #1301 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T060553024-0b75185e/report.json",
+        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+        "status": "passed",
+        "finishedAt": "2026-11-05T06:06:16.794Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3437,9 +3446,9 @@
     "fence": 217,
     "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
     "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793858743286,
-    "expiresAt": 1793859049297,
+    "expiresAt": 1793862377966,
     "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1"
   },
   "events": {
@@ -3484,6 +3493,34 @@
         "layer": "product",
         "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
         "phase": "sync"
+      }
+    },
+    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:3:s6-complete": {
+      "digest": "ea4513f80efa0fc955f8546b3f29b09f0b30ec13641d173121a6e534bd58b34e",
+      "issue": 1301,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1301,
+        "at": 1793858777966,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T060553024-0b75185e",
+          "name": "Тесты для задачи #1301 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T060553024-0b75185e/report.json",
+          "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+          "status": "passed",
+          "finishedAt": "2026-11-05T06:06:16.794Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Исходный CI сохранил первое наведение в polygon комнаты, hoverOwner=null. Координата бралась до завершения RAF-движения камеры; Lit settled не является paint oracle. На актуальном dev наблюдалось изменение первого rect после settled (x=537.66796875 →537.484375), затем стабильный native hit. Новый общий helper только читает fonts/DOMRect/SVG CTM/native hit и ждёт три одинаковых кадра (предел5сек), до единственного настоящего mouse.move. Ожидаемые линии/tooltip/hoverOwner не входят в ожидание. Сохраняются первые samples, направления, touch/pen и старый negative-placement control. Stroked SVG с нулевой fill-высотой допускается по реальной длине; перекрывающий LED hit floor также допускается, поскольку nearest-owner — предмет продуктового ассерта, а не готовности. Tooltip раскладка измеряется после существующего bounded finite-paint helper; допуски не расширены и анимации не подавляются. В evidence сохраняется первая и последние геометрии/hit, исходный FAILED не переписывается. Runtime не меняется. Адресный tooltip diagnostic PASS; в LED diagnostic выявлены и устранены два чрезмерных предусловия нового helper (zero fill-box и перекрывающиеся LED), финальный S6 проверяет полный файл. Browser selection требует product S6 profile (build/critical/startup+2 smoke), это не новый гейт. Companion task-impact/1301.md: дополнительный реальный HA E2E не требуется. Финальная проверка и ревью через finish.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
