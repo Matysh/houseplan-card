@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4172,
+  "revision": 4173,
   "nextTicket": 224,
   "nextFence": 224,
   "tasks": {
@@ -1705,14 +1705,16 @@
         "test/room-floor-paint.test.mjs"
       ],
       "notice": {
-        "key": "1:correct deleted-path planning failure before S6",
-        "reason": "correct deleted-path planning failure before S6",
-        "status": "delivered",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793871526872,
-        "entry": 1,
-        "eventId": "1250-planner-repair-1793871525582:return:1250"
-      }
+        "at": 1793871625872,
+        "entry": 2,
+        "detail": "Браузер: opening tunnel fill: failed",
+        "eventId": "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250"
+      },
+      "reason": "checks-failed"
     },
     "1252": {
       "issue": 1252,
@@ -3545,18 +3547,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1250,
-    "worker": "finish",
-    "token": "223:finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:1:admit",
-    "fence": 223,
-    "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5",
-    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-    "phase": "testing",
-    "admittedAt": 1793871554930,
-    "expiresAt": 1793871913738,
-    "patchId": "1424806b7c78bb3e836a6511d4d9781813418529"
-  },
+  "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
       "digest": "20f082fa0bf817df866737264ff004773f22a8c32a105dfd0e490928fe7a3c9c",
@@ -3632,6 +3623,10 @@
     },
     "finish:cff1fcfc-1d59-4b66-a513-23570224a5f2": {
       "digest": "8ec14c4f3e2aab054ea7b6320f503df0f7864f1c997e84e12bcfaa2dbfece0a2",
+      "issue": 1250
+    },
+    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return": {
+      "digest": "0589fb21003f7c555c017836c8affb7051b05ded16167753af915a6e72504332",
       "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
@@ -3734,6 +3729,26 @@
         "layer": "product",
         "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5",
         "phase": "sync"
+      }
+    },
+    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250": {
+      "digest": "0589fb21003f7c555c017836c8affb7051b05ded16167753af915a6e72504332",
+      "issue": 1250,
+      "message": {
+        "kind": "return",
+        "issue": 1250,
+        "at": 1793871625872,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793871625872,
+          "entry": 2,
+          "detail": "Браузер: opening tunnel fill: failed",
+          "eventId": "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250"
+        }
       }
     }
   },
