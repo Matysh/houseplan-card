@@ -1,3 +1,4 @@
+import { wallNodeHitRadius } from './grid-scale';
 /** Lazy subsystem port: keeps node transactions out of the View/card core. */
 import { NORM_W } from './canvas-constants';
 import { langOf, type I18nKey } from './i18n';
@@ -25,6 +26,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _haWallNodeMergeApi?: number | null;
   readonly _haPlanGraphApi?: number | null;
   readonly _stageEl: HTMLElement | null;
+  readonly _cellCm: number; readonly _gridPitch: number;
   readonly _config: { language?: string | null } | undefined;
   readonly renderRoot: HTMLElement | DocumentFragment;
   readonly updateComplete: Promise<boolean>;
@@ -144,13 +146,15 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     host._geometryHistory.push({ name: toolsT(language(), history.kind === 'delete' ? 'node_delete_history'
       : history.intent.merge_node_id ? 'node_merge_history' : 'node_move_history'), before, after });
   };
+  const unitsPerPixel = () => host._viewOr(host._baseVb()).w / Math.max(1, host._stageEl?.clientWidth || 1) / NORM_W;
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
     context,
     dispose: retire,
     config: () => host._serverCfg,
     screenPoint: ev => { const p = callbacks.point(ev); return [p[0] / NORM_W, p[1] / NORM_W]; },
-    unitsPerPixel: () => host._viewOr(host._baseVb()).w / Math.max(1, host._stageEl?.clientWidth || 1) / NORM_W,
+    unitsPerPixel,
+    hitRadius: () => wallNodeHitRadius(host._cellCm, host._gridPitch, unitsPerPixel() * NORM_W) / NORM_W,
     stage: () => host._stageEl, root: () => host.renderRoot,
     text, toast,
     freezeViewport: () => host._cancelCameraTransition(false, true),

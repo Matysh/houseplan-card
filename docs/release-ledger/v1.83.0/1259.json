@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1259,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "The released v1.83.1 already paints a physical 5 cm marker but picks only 12 CSS px, allowing a click inside the marker to move the wall body at high zoom. Aligns mouse ownership without changing geometry or writer safety.",
+  "summary": {
+    "ru": "Перетаскивание и правый клик работают по всей видимой площади узла стены при увеличении масштаба.",
+    "en": "Dragging and context menus work across the complete painted wall-node marker at high zoom."
+  }
+}

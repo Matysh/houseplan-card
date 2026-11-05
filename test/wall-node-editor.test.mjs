@@ -6,7 +6,7 @@ import { commitWallSegmentModel, WallSegmentModelError } from '../test-build/wal
 import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 
-function setup({ legacy = false } = {}) {
+function setup({ legacy = false, hitRadius = 0.0012 } = {}) {
   const raw = { model_version: 10, spaces: [{ id: 'f', rooms: [], wall_segments: [],
     partitions: [{ id: 'w', a: [0, 0], b: [1, 0], cm: 0 }] }], markers: [], settings: {} };
   const cfg = legacy ? raw : commitWallSegmentModel(raw).config;
@@ -28,7 +28,7 @@ function setup({ legacy = false } = {}) {
   let fail = null, retireOnWrite = false, validPreview = true;
   const changes = [], validations = [];
   const port = { context: () => context, config: () => cfg,
-    screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001,
+    screenPoint: ev => [ev.clientX, ev.clientY], unitsPerPixel: () => 0.0001, hitRadius: () => hitRadius,
     stage: () => stage, root: () => ({ querySelectorAll: () => [] }),
     document: { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) },
     text: key => key, toast: text => toasts.push(text),
@@ -469,4 +469,20 @@ test('#1305 pointerup consumes its actual final coordinate; an offset click does
   s.editor.guardEvent(s.ev('pointerup', .25, .3)); await settle();
   assert.equal(s.writes.length, 1); assert.deepEqual(s.writes[0].intent.target, [.25, .3]);
   s.editor.dispose();
+});
+
+
+test('visible node edge captures either endpoint before the wall body, and cancel writes nothing (#1259)', () => {
+  for (const x of [0.0019, 1 - 0.0019]) {
+    const f = setup({ hitRadius: 0.002 });
+    const before = structuredClone(f.cfg);
+    assert.equal(f.editor.guardEvent(f.ev('pointerdown', x, 0)), true);
+    assert.equal(f.editor.dragging, true);
+    assert.equal(f.capture.has(1), true);
+    f.editor.cancel();
+    assert.equal(f.editor.dragging, false);
+    assert.equal(f.capture.size, 0);
+    assert.deepEqual(f.writes, []);
+    assert.deepEqual(f.cfg, before);
+  }
 });

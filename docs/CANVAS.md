@@ -841,3 +841,15 @@ The outer card `_modelCache` still refreshes on the config epoch/server adoption
 its `_cfgFingerprint` retains backdrop fields. The other model owner is the
 summary runtime: its read wrappers refresh on the observed config revision and
 its area keys retain stairs. No model cache was narrowed beyond its consumer.
+
+
+## Wall-node mouse ownership (#1259)
+
+In Plan/Select, the transparent handle and the capture-phase node picker share
+one radius: at least 12 CSS px and the physical 5 cm marker radius plus 2 CSS px.
+That allowance covers the non-scaling stroke and integer contextmenu coordinate
+projection on both axes. Rendering keeps the existing marker size. Move and
+right-click arbitration use the same radius, including after an accepted move;
+nearest-node choice and the existing 8 CSS px ambiguity rule remain unchanged.
+This input metric does not alter merge magnets, physical geometry, validation,
+ACL/CAS, history or ACK ownership.

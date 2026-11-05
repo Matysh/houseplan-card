@@ -335,3 +335,13 @@ test('shared-room corner synchronizes catalogue, room references and metadata wi
   assert.deepEqual(material.decor, source.decor); assert.deepEqual(material.future, source.future);
   assert.equal(material.rooms[0].area, 'area.one');
 });
+
+
+test('enlarged visible node radius keeps nearest selection and the original ambiguity rule (#1259)', () => {
+  const nodes = structuralWallNodes(floor([wall('a', [0, 0], [1, 0])]));
+  assert.equal(pickWallNode(nodes, [0.019, 0], 0.001).node, null);
+  assert.deepEqual(pickWallNode(nodes, [0.019, 0], 0.001, 0.02), { node: nodes[0], ambiguous: false });
+  assert.equal(pickWallNode(nodes, [0.021, 0], 0.001, 0.02).node, null);
+  const near = structuralWallNodes(floor([wall('b', [0, 0], [0.004, 0.004])]));
+  assert.deepEqual(pickWallNode(near, [0.016, 0], 0.001, 0.02), { node: null, ambiguous: true });
+});

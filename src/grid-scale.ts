@@ -23,9 +23,16 @@ export function gridVisualUnits(baseUnits: number, cellCm: unknown): number {
 }
 
 /** Visible wall node, shared by existing endpoints and a proposed junction.
- * Picking tolerances are deliberately independent of this paint metric. */
+ * Picking also covers this paint while retaining a screen-space minimum. */
 export function wallNodeRadius(cellCm: number, gridPitch: number): number {
   return wallCmToUnits(5, cellCm, gridPitch);
+}
+
+/** Node handle/picker radius in SVG units. The 2 CSS px allowance covers its
+ * non-scaling stroke and integer contextmenu coordinates (both axes truncate).
+ * The full painted edge must remain actionable for either mouse event (#1259). */
+export function wallNodeHitRadius(cellCm: number, gridPitch: number, unitsPerCssPx: number): number {
+  return Math.max(12 * unitsPerCssPx, wallNodeRadius(cellCm, gridPitch) + 2 * unitsPerCssPx);
 }
 
 /** Half-width of the Plan-editor wall-thickness hover strip, in plan units. */

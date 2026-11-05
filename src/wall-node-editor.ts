@@ -27,6 +27,7 @@ export interface WallNodeEditorPort {
   config(): ServerConfig | null;
   screenPoint(event: PointerEvent): NodePoint;
   unitsPerPixel(): number;
+  hitRadius(): number;
   stage(): HTMLElement | null;
   root(): ParentNode;
   document: Document;
@@ -130,7 +131,7 @@ export class WallNodeEditor {
         && (!(event as PointerEvent).pointerType || (event as PointerEvent).pointerType === 'mouse')
         && event.composedPath().includes(this.port.stage()!)) {
       const data = this.nodes(), ev = event as PointerEvent;
-      const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
+      const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel(), this.port.hitRadius());
       if (hit && (hit.node || hit.ambiguous)) {
         event.preventDefault(); event.stopImmediatePropagation();
         this.deleteMenu.open(ev, hit.node?.point ?? null); return true;
@@ -161,7 +162,7 @@ export class WallNodeEditor {
     if (!stage || !ev.composedPath().includes(stage)) return false;
     if (ev.pointerType === 'mouse' && ev.button === 2 && this.deleteMenu && this.port.delete?.context().enabled) {
       const data = this.nodes();
-      const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
+      const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel(), this.port.hitRadius());
       if (!hit || !hit.node && !hit.ambiguous) return false;
       // The native contextmenu opens separately. Right down never captures,
       // starts Move or reaches the stage's pan owner.
@@ -171,7 +172,7 @@ export class WallNodeEditor {
     if (this.busy) { ev.preventDefault(); ev.stopImmediatePropagation(); return true; }
     if (ev.pointerType !== 'mouse' || ev.button !== 0 || !ev.isPrimary) return false;
     const data = this.nodes(); if (!data) return false;
-    const hit = pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
+    const hit = pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel(), this.port.hitRadius());
     if (!hit.node && !hit.ambiguous) return false;
     ev.preventDefault(); ev.stopImmediatePropagation();
     if (hit.ambiguous) { this.port.toast(this.port.text('node_move_ambiguous'), 'node_move_ambiguous'); return true; }
@@ -380,6 +381,7 @@ export class WallNodeEditor {
     if (!data) return nothing;
     const s = this.session, p = s?.moved ? s.target : null;
     const units = this.port.unitsPerPixel(), unitPx = units * NORM_W;
+    const hitRadius = this.port.hitRadius() * NORM_W;
     const toPath = (points: number[][]): string => `M${points.map(nodePointText).join('L')}Z`;
     const oldAffected = s?.moved ? s.plan.node.walls.filter(w =>
       sameNodePoint(w.a, s.plan.node.point) || sameNodePoint(w.b, s.plan.node.point)
@@ -428,7 +430,7 @@ export class WallNodeEditor {
         const x = point[0] * NORM_W, y = point[1] * NORM_W;
         return svg`<circle class="hp-node-handle" data-hp="wall-node" data-node=${n.key}
         cx=${x} cy=${y}
-        r=${unitPx * 12} fill="transparent" style=${`cursor:${s ? 'grabbing' : n.supported && ctx.api ? 'grab' : 'not-allowed'}`}
+        r=${hitRadius} fill="transparent" style=${`cursor:${s ? 'grabbing' : n.supported && ctx.api ? 'grab' : 'not-allowed'}`}
         data-hp-tooltip=${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}
         aria-label=${this.port.text(!ctx.api ? 'node_move_update_required' : !n.supported ? 'node_move_unsupported_junction' : 'node_move_hint')}></circle>
         <circle data-node=${n.key} pointer-events="none" cx=${x} cy=${y} r=${unitPx * 3}

@@ -22,7 +22,7 @@ function setup(t, introduced = () => []) {
     if (record) recordedOperations++; else candidateOperations++;
     return originalApply.call(this, operation, operands, record);
   });
-  const host = { _serverCfg: cfg, _cfgRev: 1, _space: 'f', _mode: 'plan', _tool: 'select',
+  const host = { _cellCm: 5, _gridPitch: 1000 / 240, _serverCfg: cfg, _cfgRev: 1, _space: 'f', _mode: 'plan', _tool: 'select',
     _canEdit: true, _kiosk: false, isConnected: true, _haWallNodeMoveApi: 1,
     _stageEl: stage, renderRoot: root, _config: { language: 'en' }, updateComplete: Promise.resolve(true),
     _fillColors: { wall_fill: { c: '#aaa', a: 1 } }, _openingAmt: () => 0,

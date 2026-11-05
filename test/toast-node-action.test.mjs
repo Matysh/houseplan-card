@@ -5,7 +5,7 @@ import { nodeFloorFingerprint } from '../test-build/wall-node-write.js';
 
 test('#1246 retained canvas callbacks never infer a later modal; history captures at invocation',async t=>{
   const messages=[],view=new EventTarget();let captures=0;
-  const host={
+  const host={ _cellCm:5,_gridPitch:1000/240,
     _mode:'plan',_tool:'select',_canEdit:true,_kiosk:false,isConnected:true,
     _config:{language:'en'},hass:{},_t:key=>key,
     renderRoot:{ownerDocument:{defaultView:view}},
@@ -27,7 +27,7 @@ test('#1246 a real pending node-history refusal retains its starting action, not
   const gate=new Promise(resolve=>{release=resolve;});
   const command={name:'Delete node',before:{nodeMove:{kind:'delete',beforeSpace:space,
     intent:{point:[0,0]},direction:'undo',floor:nodeFloorFingerprint(space)}},after:{}};
-  const host={
+  const host={ _cellCm:5,_gridPitch:1000/240,
     _mode:'plan',_tool:'select',_canEdit:true,_kiosk:false,isConnected:true,
     _space:'f',_cfgRev:1,_haWallNodeDeleteApi:1,_config:{language:'en'},_t:key=>key,
     _serverCfg:{spaces:[space],markers:[],settings:{}},_adoption:{adoptionEpoch:0},

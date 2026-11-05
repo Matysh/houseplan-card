@@ -166,9 +166,9 @@ export function prepareNodeMove(
 }
 
 /** Screen-space arbitration is kept independent of SVG target stacking. */
-export function pickWallNode(nodes: readonly WallNode[], p: NodePoint, unitsPerPx: number):
+export function pickWallNode(nodes: readonly WallNode[], p: NodePoint, unitsPerPx: number, hitRadius = 12 * unitsPerPx):
   { node: WallNode | null; ambiguous: boolean } {
-  const hits = nodes.filter(n => length(n.point, p) <= 12 * unitsPerPx)
+  const hits = nodes.filter(n => length(n.point, p) <= hitRadius)
     .sort((a, b) => length(a.point, p) - length(b.point, p) || compare(a.key, b.key));
   const first = hits[0];
   return first && hits.slice(1).some(n => length(first.point, n.point) < 8 * unitsPerPx)

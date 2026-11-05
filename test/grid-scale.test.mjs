@@ -9,6 +9,7 @@ import {
   gridVisualUnits,
   newSpaceCellCm,
   wallThickHoverHalfUnits,
+  wallNodeHitRadius, wallNodeRadius,
 } from '../test-build/grid-scale.js';
 
 const GRID_PITCH = 1000 / 240;
@@ -67,4 +68,14 @@ test('imperial field projection is readable while canonical values stay availabl
   assert.equal(gridCellFieldToCm(1, true), 2.54);
   assert.equal(gridCellFieldToCm(1.25, true), 3.175);
   assert.equal(gridCellFieldToCm(1.25, false), 1.25);
+});
+
+
+test('node hit radius includes the complete physical circle/stroke and keeps a 12px minimum (#1259)', () => {
+  for (const cell of [0.1, 1, 2.54, 5, 30, 1000]) for (const units of [0.1, 1, 5, 25]) {
+    const radius = wallNodeHitRadius(cell, GRID_PITCH, units);
+    assert.equal(radius, Math.max(12 * units, wallNodeRadius(cell, GRID_PITCH) + 2 * units));
+    assert.ok(radius >= 12 * units);
+    assert.ok(radius >= wallNodeRadius(cell, GRID_PITCH) + 2 * units);
+  }
 });
