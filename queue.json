@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4193,
+  "revision": 4194,
   "nextTicket": 225,
   "nextFence": 225,
   "tasks": {
@@ -1683,7 +1683,7 @@
       "ownerDecision": null,
       "ticket": 224,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793871838693,
       "reviewEntry": 3,
       "patchId": "2dcd3dd684a0e14a1a585c3d87436b139fba583a",
@@ -1705,14 +1705,13 @@
         "test/room-floor-paint.test.mjs"
       ],
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793871625872,
-        "entry": 2,
-        "detail": "Браузер: opening tunnel fill: failed",
-        "eventId": "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793872336749,
+        "entry": 3,
+        "requestId": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743"
       },
       "s6": {
         "id": "20261105T094411681-27e3227a",
@@ -1736,6 +1735,11 @@
         "at": 1793871932755,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+        "at": 1793872336749
       }
     },
     "1252": {
@@ -3576,19 +3580,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1250,
-    "worker": "finish",
-    "token": "224:finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:1:admit",
-    "fence": 224,
-    "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-    "phase": "review",
-    "admittedAt": 1793871842385,
-    "expiresAt": 1793875513297,
-    "patchId": "2dcd3dd684a0e14a1a585c3d87436b139fba583a",
-    "reviewRequest": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743"
-  },
+  "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
       "digest": "20f082fa0bf817df866737264ff004773f22a8c32a105dfd0e490928fe7a3c9c",
@@ -3724,6 +3716,10 @@
     },
     "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:10:review-presentation": {
       "digest": "c2d35c2fb26df5d7a36e122ca2d2e5e2321447acdd7717b6479ea3ef33df86d7",
+      "issue": 1250
+    },
+    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:10:return": {
+      "digest": "4238b3409c77dc0b3d5ee7a7fde88a4ffd20fda0400ca23aa1a29ee4b3b82b4d",
       "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
