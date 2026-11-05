@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3722,
+  "revision": 3723,
   "nextTicket": 211,
   "nextFence": 210,
   "tasks": {
@@ -3357,6 +3357,10 @@
       "digest": "9a5e62f10a90ec9ea0606d35d22311d7b6bb1caf24f392331b6073b0ca12f942",
       "issue": 1296
     },
+    "finish:8755c871-643f-449c-a884-36b56b352fd4:finish:2:s6-label": {
+      "digest": "0d4d09b77588b521e123a347a3c518754ccc52f149bfed41fc13c8e8ad5a89b3",
+      "issue": 1296
+    },
     "finish:8755c871-643f-449c-a884-36b56b352fd4": {
       "digest": "3553c36b5a799f65b2950bdf85d2d6f4968312288c1508f8ef6ff9ce8da0e625",
       "issue": 1296,
@@ -3416,7 +3420,8 @@
         "resubmission": false,
         "reviewChanges": "Исполняемая правка companion https://github.com/Matysh/houseplan-e2e/commit/ceec9aec155585096880863a076aaf9d2e81a0da : sizeDialog вместо отпускания через3100ms ждёт реальный видимый публичный диалог с pointer down, затем отпускает в finally также при отказе. Сохранён обычный timeout expect, assertions и настоящие pointer events. Просьба содержательно проверить и эту небольшую правку; полный diff helper включён в docs/testing/issue1296-profile-hold.md корневого материала, вместе с ограничениями доказательства. Продуктовый runtime не меняется.\n\nНа точном опубликованном ZIP beta.5 в собственном real HA2026.10.4 диагностически задержан только публичный callback setTimeout(3000) до3600ms в копии lab-теста. Старый helper: business0/1, setup3/3, FAIL именно отсутствующий kiosk dialog. Исправленный: business1/1, setup3/3; полный исходный deletion/new-ID/read-only journey, те же числа масштаба, locked controls и WS assertions; ноль skip/retry. Это доказательство класса гонки, не реконструкция точного исходного CPU/timeline. Companion contract lint57files PASS. Полные raw reports сохранены, собственные контейнеры удалены. Исправление empty-space Undo1736049 и прежний адресный real HA PASS учтены отдельно, не выданы за новый прогон.\n\nКорневой patch — чистая документация и RU/EN changelog; finish --track show выполняет обычное независимое ревью текста/переданного кода без root тестов/build/lint. Реальные проверки companion выполнены отдельно выше; нулевой root набор не называется проверкой внешнего кода. Дополнительного gateway/test-wrapper ради межрепозиторного изменения не добавляется.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
