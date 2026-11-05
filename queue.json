@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4165,
+  "revision": 4166,
   "nextTicket": 223,
   "nextFence": 223,
   "tasks": {
@@ -1706,7 +1706,17 @@
       ],
       "automationError": "automation-error",
       "automationSince": 1793871172498,
-      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1078-sun-transparency-20261025/src/render/opening-tunnels.ts'"
+      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1078-sun-transparency-20261025/src/render/opening-tunnels.ts'",
+      "reason": "correct deleted-path planning failure before S6",
+      "notice": {
+        "key": "1:correct deleted-path planning failure before S6",
+        "reason": "correct deleted-path planning failure before S6",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793871526872,
+        "entry": 1,
+        "eventId": "1250-planner-repair-1793871525582:return:1250"
+      }
     },
     "1252": {
       "issue": 1252,
@@ -3539,18 +3549,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1250,
-    "worker": "finish",
-    "token": "222:finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:1:admit",
-    "fence": 222,
-    "materialSha": "fac27a63eadb90e0304ba524b43586d24349a891",
-    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-    "phase": "testing",
-    "admittedAt": 1793871157736,
-    "expiresAt": 1793871756957,
-    "patchId": "c773102f2cd84fbd21b2fbf163bfc40d5d020ed1"
-  },
+  "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
       "digest": "20f082fa0bf817df866737264ff004773f22a8c32a105dfd0e490928fe7a3c9c",
@@ -3612,6 +3611,10 @@
       "digest": "9bb268e52df3d5c3b772bf1a7803b426e7e849ec8a7a4b301c02bfdb42db719d",
       "issue": 1250
     },
+    "1250-planner-repair-1793871525582": {
+      "digest": "40e0d430d6f0c2c0a850f28032203461bbc635a05090b8f0cebf101a0160f979",
+      "issue": 1250
+    },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
       "digest": "021ef6863d89bbd22c642800c05bc562bdb14d512963985fc1bcc843907dc6d1",
       "issue": 1305,
@@ -3665,6 +3668,25 @@
         "round": 3,
         "reviewChanges": "Анализ исходников dev `5588345f1`: `wall-node-move.ts`/`wall_node_move.py` явно запрещают новый foreign contact; `wall-node-editor.ts` сейчас строит и проверяет move candidate на кадре; `graph_node_write.py` сохраняет graph identity и перепроверяет physical move; `wall-node-write/history` уже дают сериализацию, ACK и доказанный inverse. Поэтому предложено ограниченное именованное merge намерение в существующем node_move, с отдельной capability без изменения прежней move API. Альтернатива — отдельный WS endpoint/третья история — дублирует те же атомарные правила; простой общий allow-contact небезопасен. Stage4 renderer уже доступен, переписывать его не требуется.\n\nГлавные места для внимания: селективное разрешение контакта только двух IDs, точный q-target, T/X и dependent nodes, opening proof, inverse первого legacy жеста, сохранение native Optimize fixed-point, дешёвый preview до full release safety. Продуктовые тесты/билды/реализация до принятия S4 не запускались. Выполнены чтение актуального issue/контрактов и инвентарь текущих writer/validator/capability путей; конкретные замеры ещё впереди.\n\n### Исправления по предыдущему ревью\n\nПервый раунд: [run 42001092447](https://github.com/Matysh/houseplan-card/actions/runs/42001092447), changes_requested. Полный отчёт и исходная редакция сохраняются. Во время первого S4 владелец изменил контракт: «если между двумя объединяемыми узлами уже есть ребро — давай просто корректно удалять его при объединении». Для правок задача возвращена на S3; это новая редакция для следующего раунда.\n\n- Противоречие магнита и заведомо недостижимой passing-цели → введён дешёвый предварительный axis/finite/swept filter. T/X не притягиваются вне допустимой оси; ordinary move сохраняет прежние строгие правила. Прямые соседи теперь допустимы по новому решению владельца: connecting edge удаляется в том же атомарном действии; допускается граница носителя для merge, без прохода через промежуточный узел. Валентность, углы и прочие дорогие проверки по-прежнему на release.\n- Удаление connecting edge → описаны room cycle removal/валидация, отказ при проёме на удаляемом ребре, обработка вырожденных dependencies, native lossless cleanup и точный inverse. Комнаты и проёмы не удаляются ради успеха.\n- Рекомендация явно удалить source → операция TS/Python и generated runtime названа в скоупе; изолированный source не считается выполненным объединением.\n- Неоднозначная ошибка GraphError → перечислены стабильные merge-коды и i18n mapping, разделены topology refusal и временная недоступность.\n- П5 на backend → уточнено, что это действующий клиентский guard, Python сохраняет свой независимый П1–П4/graph/hosts набор без нового порта renderer.\n- UX цены магнита → описаны захват допустимой цели и увеличение масштаба для обычного размещения рядом.\n\nИсходные команды владельца: объединять узлы drag; притягивать магнитом и подсвечивать **неподвижный** узел; на отпускании проверять число стен/длины/углы и отменять весь жест с понятной ошибкой при отказе; при успехе соединять рёбра обоих узлов; непосредственное ребро между ними **удалять**, а не отказывать только из-за его схлопывания. Нового подтверждения микросдвигов/геометрии пользователем не предлагается. Текущая редакция пока не объявляется принятой.\n\n### Исправления после второго раунда\n\nВторой раунд: [run 42002995046](https://github.com/Matysh/houseplan-card/actions/runs/42002995046), changes_requested; его полный отчёт сохраняется. Блокер: сосед в 8–12 CSS px мог захватиться на простом click при обработке pointerup. Добавлены обязательные условия начала merge — смещение сырого указателя >3 CSS px от pointerdown и строгая близость к target по сравнению с исходным source; click/jitter и pointerup без move проверяются AC1 и native browser test. Это не новый жест и не пользовательское подтверждение: обычный drag остаётся обычным drag. Порог применяется к включению merge, не меняет старые правила ordinary move.\n\nРекомендации r2: любой новый дубль пары концов, включая общий сосед S–C/T–C, теперь явно даёт topology refusal без молчаливой склейки; доказанно lossless локальная компактация сформулирована как обязательная, с допустимым исчезновением самого target и точным Undo/Redo. Изменений реализации и продуктовых прогонов до S5 нет. Эта третья редакция подготовлена на S3 после результата r2.",
         "delivered": true
+      }
+    },
+    "1250-planner-repair-1793871525582:return:1250": {
+      "digest": "40e0d430d6f0c2c0a850f28032203461bbc635a05090b8f0cebf101a0160f979",
+      "issue": 1250,
+      "message": {
+        "kind": "return",
+        "issue": 1250,
+        "at": 1793871526872,
+        "entry": 1,
+        "notice": {
+          "key": "1:correct deleted-path planning failure before S6",
+          "reason": "correct deleted-path planning failure before S6",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793871526872,
+          "entry": 1,
+          "eventId": "1250-planner-repair-1793871525582:return:1250"
+        }
       }
     }
   },
