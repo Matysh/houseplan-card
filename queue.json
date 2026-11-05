@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4581,
-  "nextTicket": 237,
+  "revision": 4582,
+  "nextTicket": 238,
   "nextFence": 237,
   "tasks": {
     "1126": {
@@ -3611,14 +3611,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1320-node-echo",
-      "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78",
+      "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 236,
-      "queued": false,
+      "ticket": 237,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793886015425,
-      "reviewEntry": 1,
+      "readyAt": 1793886430120,
+      "reviewEntry": 2,
       "patchId": "d6e5190962468737592f491400619425714b9a0c",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -3626,7 +3626,6 @@
         "src/wall-node-write.ts",
         "test/wall-node-write.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -3769,7 +3768,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1320
+  ],
   "active": null,
   "events": {
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:2:synchronized": {
@@ -3825,6 +3826,19 @@
           "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
           "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
         }
+      }
+    },
+    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d": {
+      "digest": "41909a8d9553e33dcd6ba601cf4710a19656a3a893ee7cede4f1079c09202047",
+      "issue": 1320,
+      "message": {
+        "kind": "queued",
+        "issue": 1320,
+        "at": 1793886430120,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb"
       }
     }
   },
