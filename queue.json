@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3485,
+  "revision": 3486,
   "nextTicket": 204,
   "nextFence": 202,
   "tasks": {
@@ -3422,6 +3422,10 @@
       "digest": "d0e56ba9530b54097471fa47bceea3a539811e04f910a3c331700357a38eba1f",
       "issue": 1294
     },
+    "github:41952798494:1:completions:message:73e937f53d1932bd171f52ede258b2e7e6ac2cb799dee150f53e2d685c6c319f": {
+      "digest": "2f1d10b57c57f52628c8c5d410b890f420024f0311001bdf4e9a266ceb514387",
+      "issue": 1294
+    },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
       "issue": 1258,
@@ -3532,7 +3536,8 @@
           "entry": 1,
           "detail": "Браузер: plan snap overlay: failed",
           "eventId": "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return:return:1294"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:88a1a41a-a918-4bc9-ae1b-4aa41691569f": {
