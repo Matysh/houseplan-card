@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3721,
+  "revision": 3722,
   "nextTicket": 211,
   "nextFence": 210,
   "tasks": {
@@ -3219,7 +3219,7 @@
       "ownerDecision": null,
       "ticket": 209,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793846574846,
       "reviewEntry": 1,
       "patchId": "6bc4a3c8defbd84561915b7bd89b8c5841f73089",
@@ -3227,7 +3227,8 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/testing/issue1296-profile-hold.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -3342,9 +3343,9 @@
     "fence": 209,
     "materialSha": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
     "expectedBase": "644cae87c40425c31fb1b181574f48e434ffb8bd",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793847037148,
-    "expiresAt": 1793847380798,
+    "expiresAt": 1793850684598,
     "patchId": "6bc4a3c8defbd84561915b7bd89b8c5841f73089"
   },
   "events": {
@@ -3397,6 +3398,25 @@
         "materialSha": "fae42e689e2211bc6f9f52b303ce5edcd9ecedaf",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:8755c871-643f-449c-a884-36b56b352fd4:finish:2:s6-complete": {
+      "digest": "25b19fb695566b4c86dde215214e937c639b0e6e2ef32362cfef6e847a65dd49",
+      "issue": 1296,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1296,
+        "at": 1793847084598,
+        "entry": 1,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
+        "phase": "review",
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Исполняемая правка companion https://github.com/Matysh/houseplan-e2e/commit/ceec9aec155585096880863a076aaf9d2e81a0da : sizeDialog вместо отпускания через3100ms ждёт реальный видимый публичный диалог с pointer down, затем отпускает в finally также при отказе. Сохранён обычный timeout expect, assertions и настоящие pointer events. Просьба содержательно проверить и эту небольшую правку; полный diff helper включён в docs/testing/issue1296-profile-hold.md корневого материала, вместе с ограничениями доказательства. Продуктовый runtime не меняется.\n\nНа точном опубликованном ZIP beta.5 в собственном real HA2026.10.4 диагностически задержан только публичный callback setTimeout(3000) до3600ms в копии lab-теста. Старый helper: business0/1, setup3/3, FAIL именно отсутствующий kiosk dialog. Исправленный: business1/1, setup3/3; полный исходный deletion/new-ID/read-only journey, те же числа масштаба, locked controls и WS assertions; ноль skip/retry. Это доказательство класса гонки, не реконструкция точного исходного CPU/timeline. Companion contract lint57files PASS. Полные raw reports сохранены, собственные контейнеры удалены. Исправление empty-space Undo1736049 и прежний адресный real HA PASS учтены отдельно, не выданы за новый прогон.\n\nКорневой patch — чистая документация и RU/EN changelog; finish --track show выполняет обычное независимое ревью текста/переданного кода без root тестов/build/lint. Реальные проверки companion выполнены отдельно выше; нулевой root набор не называется проверкой внешнего кода. Дополнительного gateway/test-wrapper ради межрепозиторного изменения не добавляется.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
