@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 329,
+  "revision": 330,
   "active": "v1.84.0-beta.6-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -12210,8 +12210,11 @@
       "sourceSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
       "sha": "7c2843dab3ba0ad3cf5ca7db18c3b45e09bf5dce",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "7c2843dab3ba0ad3cf5ca7db18c3b45e09bf5dce"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -14073,7 +14076,8 @@
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:c77edc47-27db-4054-a51f-2714373faba1": "b1ec08647eb1a485f0d59331fdb5f8519883b2c1ce89c2f00eeabdccbc4c9194",
     "release:3cb21c5f-3ed3-4fe5-8b59-411353faea61:completion:9b132ce6-b2fd-4d39-bced-afa1cae8668f": "0b2edcbae0f2aaf979fa9418c07699f77a56c7ad9232a7ffb1cae5da4f648f14",
     "release-beta6-create-20261105-4d5bb0451": "f4531309476fda5c0c2a883a75ff00aba6b9608cd7de421f087c9e962471282b",
-    "release-beta6-prepared-7c2843dab": "833f0162958ebe3266f973f88d8bf3ff7e889c83f4f8a802e075f3a6384964be"
+    "release-beta6-prepared-7c2843dab": "833f0162958ebe3266f973f88d8bf3ff7e889c83f4f8a802e075f3a6384964be",
+    "release-beta6-run-started-7c2843dab-ci1": "307e3554f350ece01bbb12d7c05ced2f538120b461d1184fcf404a868508f071"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
