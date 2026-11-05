@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4950,
-  "nextTicket": 246,
+  "revision": 4951,
+  "nextTicket": 247,
   "nextFence": 246,
   "tasks": {
     "1127": {
@@ -3819,6 +3819,20 @@
         "status": "not-required"
       }
     },
+    "1322": {
+      "issue": 1322,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/issue-1322-public-ci",
+      "materialSha": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 246,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793906797308,
+      "reviewEntry": 1
+    },
     "1323": {
       "issue": 1323,
       "branch": "issue/1323-release-return-0f60441385c8",
@@ -3974,9 +3988,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1322
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:ad94e3c9-1826-44f8-999a-586ce7063a63": {
+      "digest": "66ad460179d135d78387c7694ec8b8feb742a6d062fc2efeae07c67c1e9f74e3",
+      "issue": 1322,
+      "message": {
+        "kind": "queued",
+        "issue": 1322,
+        "at": 1793906797308,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827",
     "status": "delivered",
