@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Measure Optimize retry controls after finite UI-kit paint, retaining the exact 44px touch bound and an undersized-target negative control. [#1300](https://github.com/Matysh/houseplan-card/issues/1300)
+
 ## v1.84.0-beta.6 — 2026-11-05
 - Keep deletion characterization aligned with the accepted short-survivor rule: retain frozen-marker angle refusals and separately check accepted length-only deletion with exact marker cleanup/history. Product runtime is unchanged. [#1298](https://github.com/Matysh/houseplan-card/issues/1298)
 

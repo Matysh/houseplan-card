@@ -8,6 +8,7 @@
 // in both themes, keyboard reach, and no config/layout write anywhere.
 import { readFileSync } from 'node:fs';
 import { launch, check, finish } from './serve.mjs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 
 const OPAQUE = '601413c5793c698f73b8af0a0b93cac6';
 const { page, browser } = await launch({ width: 1280, height: 900 });
@@ -281,10 +282,7 @@ for (let step = 0; step < 12; step++) {
 }
 record('tabReachesRetryCopyAndClose', reachedLimited.has(retryLabel)
   && reachedLimited.has(await t('gs.preflight_copy')) && reachedLimited.has(await t('btn.close')));
-for (const theme of ['light', 'dark']) {
-  await page.emulateMedia({ colorScheme: theme });
-  await page.setViewportSize({ width: 360, height: 900 });
-  const m = await page.evaluate(async () => {
+const measureRetry = () => page.evaluate(() => {
     const card = window.__card;
     const dialog = (card.shadowRoot || card.renderRoot).querySelector('hp-dialog[data-kind="settings"]');
     const block = dialog.querySelector('.optimize-unverified');
@@ -292,12 +290,44 @@ for (const theme of ['light', 'dark']) {
     const body = dialog.querySelector('.body');
     const box = (dialog.shadowRoot?.querySelector('.surface, ha-dialog') || dialog).getBoundingClientRect();
     const actions = [...block.querySelectorAll('.optimize-action')];
-    return box.left >= -1 && box.right <= innerWidth + 1 && body.scrollWidth <= body.clientWidth + 1
+    const valid = box.left >= -1 && box.right <= innerWidth + 1 && body.scrollWidth <= body.clientWidth + 1
       && block.scrollWidth <= block.clientWidth + 1 && actions.length === 2
       && actions.every((button) => button.getBoundingClientRect().height >= 44
         && button.getBoundingClientRect().right <= block.getBoundingClientRect().right + 1);
-  });
-  record(`layout_retry_${theme}_ru_360`, m);
+    return { valid, viewport: innerWidth, fonts: document.fonts.status,
+      box: box.toJSON(), body: [body.scrollWidth, body.clientWidth],
+      block: [block.scrollWidth, block.clientWidth],
+      actions: actions.map(button => ({ rect: button.getBoundingClientRect().toJSON(),
+        styles: { height: getComputedStyle(button).height, minHeight: getComputedStyle(button).minHeight },
+        animations: button.getAnimations().map(a => ({ state: a.playState, timing: a.effect?.getComputedTiming() })) })) };
+});
+for (const theme of ['light', 'dark']) {
+  await page.emulateMedia({ colorScheme: theme });
+  await page.setViewportSize({ width: 360, height: 900 });
+  // #1300: a translated 44px button can read as 43.99993896484375 while
+  // UI-kit FLIP motion is running. Observe its actual finite paint first;
+  // retain the exact touch bound rather than rounding or retrying the oracle.
+  await waitForUiKitPaint(page);
+  const m = await measureRetry();
+  console.log('RETRY-WITNESS', theme, JSON.stringify(m));
+  record(`layout_retry_${theme}_ru_360`, m.valid);
+}
+// The same post-paint oracle must still reject a genuinely undersized target.
+const originalRetryStyle = await page.evaluate(() => {
+  const button = window.__card.renderRoot.querySelector('hp-dialog .optimize-retry');
+  const before = button.getAttribute('style');
+  button.style.cssText += ';min-height:43px;height:43px;max-height:43px';
+  return before;
+});
+try {
+  await waitForUiKitPaint(page);
+  const negative = await measureRetry();
+  record('retryUndersizeNegativeControl', !negative.valid && negative.actions[0].rect.height === 43);
+} finally {
+  await page.evaluate(before => {
+    const button = window.__card.renderRoot.querySelector('hp-dialog .optimize-retry');
+    if (before === null) button.removeAttribute('style'); else button.setAttribute('style', before);
+  }, originalRetryStyle);
 }
 await page.setViewportSize({ width: 1280, height: 900 });
 
