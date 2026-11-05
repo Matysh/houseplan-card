@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep deletion characterization aligned with the accepted short-survivor rule: retain frozen-marker angle refusals and separately check accepted length-only deletion with exact marker cleanup/history. Product runtime is unchanged. [#1298](https://github.com/Matysh/houseplan-card/issues/1298)
+
 - Keep the external-screen smoke pointer pressed until its kiosk scale dialog is visible, releasing in finally instead of racing a fixed 3100 ms wait. [#1297](https://github.com/Matysh/houseplan-card/issues/1297)
 
 - Keep the native profile hold pressed until its public scale dialog appears in real HA E2E; retain delayed-timer regression evidence and the empty-space Undo readiness fix. [#1296](https://github.com/Matysh/houseplan-card/issues/1296)

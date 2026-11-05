@@ -1,6 +1,6 @@
 import {harness,fixture,scenarios,clone,authoredChange} from './geometry-commit-harness.mjs';
 import {captureMarkerRoomReferences,rewriteMarkerRoomReferences} from '../../test-build/room-reference-transaction.js';
-function characterizeInput(name, freezeGuards){
+function characterizeInput(name, freezeGuards, junctionRule){
  const cfg=fixture();
  if(name.includes('pre-v9')){delete cfg.model_version;for(const s of cfg.spaces){delete s.plan_graph;delete s.wall_segments;for(const r of s.rooms)delete r.wall_ids;}}
  if(name==='inherited')authoredChange(cfg.spaces[0],{kind:'partitions',ids:['short']},draft=>{draft.partitions=[{id:'short',a:[.5,.5],b:[.51,.5],cm:10}];});
@@ -16,7 +16,13 @@ function characterizeInput(name, freezeGuards){
  if(name==='introduced')authoredChange(host._serverCfg.spaces[0],{kind:'partitions',ids:['short']},draft=>{draft.partitions=[{id:'short',a:[.5,.5],b:[.51,.5],cm:10}];});
  if(name==='migration-blocker')host._serverCfg.spaces[0].wall_segments.push(clone(host._serverCfg.spaces[0].wall_segments[0]));
  if(name.endsWith('-safe-refusal'))host._checkSpacePhysicalGeometry=()=>({ok:false});
- if(name.endsWith('-junction-refusal')){let calls=0;host._junctionLimitViolations=()=>++calls===2?[{rule:'length',subject:'short',actual:1,limit:20}]:[];}
+ if(name.endsWith('-junction-refusal')){
+  // #1258 intentionally permits proved deletion despite a surviving length
+  // violation. Use angle for the general fail-closed/frozen-construction case;
+  // an explicit length sibling below exercises the now accepted operation.
+  const rule=junctionRule??(name.includes('delete')?'angle':'length');
+  let calls=0;host._junctionLimitViolations=()=>++calls===2?[{rule,subject:'short',actual:1,limit:20}]:[];
+ }
  if(freezeGuards){
   const deepFreeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(deepFreeze);Object.freeze(value);}return value;};
   deepFreeze(host._serverCfg.markers);
@@ -31,8 +37,8 @@ export const characterizationCases=['thickness','split','merge','column','unsafe
  ...['merge','delete'].flatMap(k=>['','-safe-refusal','-junction-refusal'].map(t=>'marker-'+k+t)),
  ...['merge','delete'].flatMap(k=>['-safe-refusal','-junction-refusal'].map(t=>'marker-pre-v9-'+k+t))];
 /** Entropy is an input boundary: compare the exact document under the same UUID stream. */
-export function characterize(name, {freezeGuards=false}={}){
+export function characterize(name, {freezeGuards=false,junctionRule}={}){
  const original=globalThis.crypto.randomUUID;let id=0;
  globalThis.crypto.randomUUID=()=>`00000000-0000-4000-8000-${String(++id).padStart(12,'0')}`;
- try{return characterizeInput(name,freezeGuards);}finally{globalThis.crypto.randomUUID=original;}
+ try{return characterizeInput(name,freezeGuards,junctionRule);}finally{globalThis.crypto.randomUUID=original;}
 }

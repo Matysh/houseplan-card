@@ -15,10 +15,14 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {characterize,characterizationCases} from './helpers/geometry-commit-characterization.mjs';
 const baseline=JSON.parse(readFileSync(new URL('./fixtures/1099-commit-characterization.json',import.meta.url),'utf8')).results;
+// The historical #1099 document stays byte-for-byte archived. Only the toast
+// of the two injected general deletion refusals changes from length to angle.
+const deletionRefusals=new Set(['marker-delete-junction-refusal','marker-pre-v9-delete-junction-refusal']);
+const expectedPassport=name=>deletionRefusals.has(name)?{...baseline[name],toasts:['junction.limit_angle']}:baseline[name];
 const exactHash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const passport=result=>({...result,config:exactHash(result.config),history:result.history.map(item=>({...item,before:exactHash(item.before)}))});
 for(const name of characterizationCases)test('#1099 unchanged byte result and refusal: '+name,()=>{
- assert.equal(JSON.stringify(passport(characterize(name))),JSON.stringify(baseline[name]),name);
+ assert.equal(JSON.stringify(passport(characterize(name))),JSON.stringify(expectedPassport(name)),name);
 });
 test('#1099 one baseline per space, repeated equivalent documents hit and cache stays bounded',()=>{
  const h=harness(),original=structuredClone(h.host._serverCfg);let first;
@@ -76,7 +80,7 @@ test('#1099 baseline content and revision changes both retire the per-space slot
  h.runtime._junctionLimitsIntroduced(structuredClone(previous),previous,'f');assert.equal(h.counts.junction,calls+2);
 });
 for(const name of characterizationCases.filter(name=>name.startsWith('marker-')))test('#1099 frozen markers during every approval/migration construction: '+name,()=>{
- assert.equal(JSON.stringify(passport(characterize(name,{freezeGuards:true}))),JSON.stringify(baseline[name]));
+ assert.equal(JSON.stringify(passport(characterize(name,{freezeGuards:true}))),JSON.stringify(expectedPassport(name)));
 });
 test('#1099 current graph previews already have canonical candidate fingerprints',()=>{
  assert.deepEqual([...largeEqualityKinds],[true]);
@@ -107,4 +111,24 @@ test('#1099 preview retirement after '+failure+' never lends an older positive p
  }else assert.equal(h.runtime._rszCandidateRenderable(failure==='missing-preview'?null:{space:'g',sp:candidate}),false);
  assert.equal(h.runtime._commitPhysicalGeometry('after-preview-failure',before),false);
  assert.equal(h.history.length,0,'no history entry after the fresh check throws');
+});
+
+for(const name of deletionRefusals)test('#1298 proved deletion accepts length, retaining marker cleanup and history: '+name,()=>{
+ const result=characterize(name,{junctionRule:'length'});
+ assert.equal(result.ok,true);assert.deepEqual(result.toasts,[]);
+ assert.deepEqual(result.config.markers,[{id:'m',space:'f'}]);
+ const space=result.config.spaces.find(s=>s.id==='f');
+ assert.deepEqual(space.rooms,[]);assert.deepEqual(space.wall_segments,[]);assert.deepEqual(space.partitions,[]);
+ assert.deepEqual(space.plan_graph.edges,[]);assert.deepEqual(space.plan_graph.rooms,[]);
+ assert.equal(result.history.length,1);assert.equal(result.history[0].name,name);
+ const before=result.history[0].before;
+ assert.deepEqual(before.roomReferences,[{markerId:'m',roomIdPresent:true,roomId:'f-r',vacuumPresent:true,segmentMapPresent:true,segmentMap:{one:'f-r'}}]);
+ assert.deepEqual(before.rooms[0].poly,[[0,0],[2,0],[2,2],[0,2]]);
+ for(const [id,x]of [['g',4],['h',8]]){
+  const other=result.config.spaces.find(s=>s.id===id);
+  assert.equal(other.rooms.length,1);assert.equal(other.rooms[0].id,id+'-r');
+  assert.deepEqual(other.rooms[0].poly,[[x,0],[x+2,0],[x+2,2],[x,2]]);
+ }
+ assert.deepEqual(baseline[name].toasts,['junction.limit_length'],'historical passport is preserved');
+ assert.equal(baseline[name].ok,false);
 });
