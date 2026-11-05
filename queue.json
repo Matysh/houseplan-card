@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4820,
-  "nextTicket": 244,
+  "revision": 4821,
+  "nextTicket": 245,
   "nextFence": 244,
   "tasks": {
     "1126": {
@@ -3614,11 +3614,11 @@
       "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 241,
-      "queued": false,
+      "ticket": 244,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793887842881,
-      "reviewEntry": 1,
+      "readyAt": 1793888526834,
+      "reviewEntry": 2,
       "patchId": "e066116d485460bfeb40a799142efc0028f944c8",
       "changedFiles": [
         "demo/golden/baselines/baselines-index.json",
@@ -3632,7 +3632,6 @@
         "process-next/catalog/golden-runner.mjs",
         "process-next/test/golden-floor-continuity.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -3979,7 +3978,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1314
+  ],
   "active": null,
   "events": {
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:2:synchronized": {
@@ -4081,6 +4082,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f"
+      }
+    },
+    "finish:0a08179f-e816-46c6-9ec9-0decd2cf7460": {
+      "digest": "82b2de12d63f48d294496f0732fd0b757a84baa24f1ac094ad0cac7d7b437b7c",
+      "issue": 1314,
+      "message": {
+        "kind": "queued",
+        "issue": 1314,
+        "at": 1793888526834,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0"
       }
     }
   },
