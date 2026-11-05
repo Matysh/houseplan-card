@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4040,
+  "revision": 4041,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -464,37 +464,6 @@
         "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": true,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
-      }
-    },
-    "1212": {
-      "issue": 1212,
-      "branch": "codex/1211-release-metadata-repair",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "16dc19dbd1e6258815c4227d1a6233dadd769236",
-      "mergedAt": 1793629992891,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
         "commentCurrent": true,
         "commentDigest": "34c7bc28ce5c545336ab",
         "commentFacts": {
@@ -3355,10 +3324,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
