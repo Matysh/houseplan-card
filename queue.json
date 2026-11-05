@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4340,
+  "revision": 4341,
   "nextTicket": 230,
   "nextFence": 230,
   "tasks": {
@@ -3697,6 +3697,10 @@
       "digest": "4f1b4833765395983e8dcff14cde711fbbf8329a52428aba952d33c09e250293",
       "issue": 1306
     },
+    "github:42025583045:1:completions:message:1530d6ef8ab94e45bc6ad4e7dcff78c964a33757d1e2e3e0d75437b4138dff8b": {
+      "digest": "f3850a7563ab2112888bd918cd0926ea89a5514e74faf14b3ea6fea1cfb5e2b2",
+      "issue": 1306
+    },
     "finish:cc51110e-5e69-4bbe-b7b6-5d863b35a685": {
       "digest": "4fda2947f3e3b5723a3a71224f2556954b701227ac7e36b9d6d734a23ebc823a",
       "issue": 1306,
@@ -3775,7 +3779,8 @@
           "status": "passed",
           "finishedAt": "2026-11-05T11:48:08.657Z",
           "failures": []
-        }
+        },
+        "delivered": true
       }
     },
     "finish:e032a25c-71d3-4891-b8bd-55057414b9ef:finish:1:admit": {
