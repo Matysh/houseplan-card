@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4105,
+  "revision": 4106,
   "nextTicket": 221,
   "nextFence": 221,
   "tasks": {
@@ -154,44 +154,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c"
-      }
-    },
-    "1165": {
-      "issue": 1165,
-      "branch": "codex/issue-1165-screen-profiles",
-      "track": "ask",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659",
-      "mergedAt": 1793631627059,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": true,
-      "reviewRequest": "review:1165:1:4f5db2ff168fdf45c9fa48e153bd9b83762774a7:16dc19dbd1e6258815c4227d1a6233dadd769236",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": true,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "milestoneTitle": "1.84.0",
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "ef8e4fb6507d5047ad3473d103833ba778ab8659"
       }
     },
     "1174": {
@@ -3377,7 +3339,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373"
       }
     }
   },
@@ -3485,7 +3448,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:41986480887:1:1303": {
+      "digest": "0a1866127f89b98af6e8e0022bc6fbd3578f10853feebd6beedd13dfea8c3790",
+      "issue": 1303,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1303,
+        "at": 1793863342240,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
     "status": "pending",
