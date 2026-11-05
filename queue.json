@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3776,
-  "nextTicket": 212,
+  "revision": 3777,
+  "nextTicket": 213,
   "nextFence": 212,
   "tasks": {
     "1126": {
@@ -3227,6 +3227,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1297": {
+      "issue": 1297,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1297-kiosk-hold-smoke",
+      "materialSha": "0e2f92ff0387f747c65922d1184b780160e9cd1d",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 212,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793847870197,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3344,7 +3358,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1297
+  ],
   "active": {
     "issue": 1295,
     "worker": "finish",
@@ -3521,6 +3537,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:fe2d3c92-81f6-4f9f-a621-e3022fde1d63": {
+      "digest": "0ae2629f4232752354efd6788c366e99127c068105a51770de038d4b18364b2a",
+      "issue": 1297,
+      "message": {
+        "kind": "queued",
+        "issue": 1297,
+        "at": 1793847870197,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "0e2f92ff0387f747c65922d1184b780160e9cd1d"
       }
     }
   },
