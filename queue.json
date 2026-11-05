@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4477,
-  "nextTicket": 233,
+  "revision": 4478,
+  "nextTicket": 234,
   "nextFence": 233,
   "tasks": {
     "1126": {
@@ -3462,6 +3462,20 @@
         "sourceSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48"
       }
     },
+    "1309": {
+      "issue": 1309,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1309-golden",
+      "materialSha": "dc2b12dd9231abb9b6aa037d6ea69314a804a756",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 233,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793882933691,
+      "reviewEntry": 1
+    },
     "1311": {
       "issue": 1311,
       "branch": "codex/issue-1311-decor-floor-smoke",
@@ -3629,9 +3643,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1309
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:681eabc0-7f66-432e-833d-44fae026d2e8": {
+      "digest": "4753809da6bfd2605d8660e5037e77c5e6647f171f2ffc86bb4308239f01b738",
+      "issue": 1309,
+      "message": {
+        "kind": "queued",
+        "issue": 1309,
+        "at": 1793882933691,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "dc2b12dd9231abb9b6aa037d6ea69314a804a756"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
