@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3590,
+  "revision": 3591,
   "nextTicket": 206,
   "nextFence": 206,
   "tasks": {
@@ -3201,14 +3201,20 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1293-decor-defaults-race",
-      "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd",
+      "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 205,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793845321894,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86",
+      "changedFiles": [
+        "demo/smoke_decor_group_style_cache.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     },
     "1294": {
       "issue": 1294,
@@ -3375,11 +3381,12 @@
     "worker": "finish",
     "token": "205:finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:2:admit",
     "fence": 205,
-    "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+    "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+    "phase": "testing",
     "admittedAt": 1793845819727,
-    "expiresAt": 1793846119727
+    "expiresAt": 1793846128489,
+    "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86"
   },
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3533,6 +3540,10 @@
     "finish:db70e95d-6eef-407f-b88b-2af87fdca946:finish:7:return-label": {
       "digest": "5476a25e299d2227e9d767eab34c7a1452c2f9401318cdf6cd914f25fb096afe",
       "issue": 1292
+    },
+    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:3:synchronized": {
+      "digest": "060565f00dce25ba5f2641f4c8bf65f911faa77ff4e56b23c0ddd657806e0404",
+      "issue": 1293
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
