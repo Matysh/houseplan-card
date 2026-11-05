@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4338,
+  "revision": 4339,
   "nextTicket": 230,
   "nextFence": 230,
   "tasks": {
@@ -3399,7 +3399,7 @@
       "ownerDecision": null,
       "ticket": 229,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793880837918,
       "reviewEntry": 2,
       "patchId": "b83f182e6a2ccfa0cd0b0e4b4c2b0e07b3f61484",
@@ -3428,19 +3428,15 @@
         "tests_backend/test_node_save_validation.py"
       ],
       "s6": {
-        "id": "20261105T114706348-66d625bc",
+        "id": "20261105T121414478-8129a8bb",
         "name": "Тесты для задачи #1306 (перед ревью)",
-        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T114706348-66d625bc/report.json",
-        "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T121414478-8129a8bb/report.json",
+        "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
         "status": "passed",
-        "finishedAt": "2026-11-05T11:48:08.657Z",
+        "finishedAt": "2026-11-05T12:15:15.264Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1306:1:969e0be6d0bd3fa44426f838b65cc7a037053e7e:f64fa33c347a8a3fe37789ffc444d74c40daa381",
-        "at": 1793879713701
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -3591,9 +3587,9 @@
     "fence": 229,
     "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "expectedBase": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793880843335,
-    "expiresAt": 1793881209723,
+    "expiresAt": 1793884516034,
     "patchId": "b83f182e6a2ccfa0cd0b0e4b4c2b0e07b3f61484"
   },
   "events": {
@@ -3779,6 +3775,34 @@
           "finishedAt": "2026-11-05T11:48:08.657Z",
           "failures": []
         }
+      }
+    },
+    "finish:e032a25c-71d3-4891-b8bd-55057414b9ef:finish:3:s6-complete": {
+      "digest": "764f18ac55a6115e1edda2550358e0a8d4850dfeb90d49c4c9b436e817bb03b2",
+      "issue": 1306,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1306,
+        "at": 1793880916034,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T121414478-8129a8bb",
+          "name": "Тесты для задачи #1306 (перед ревью)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T121414478-8129a8bb/report.json",
+          "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
+          "status": "passed",
+          "finishedAt": "2026-11-05T12:15:15.264Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Реализован трек ask на ветке `codex/issue-1306-node-save`, база dev f64fa33. S4 r1 принят: [run 42015809948](https://github.com/Matysh/houseplan-card/actions/runs/42015809948); содержательные рекомендации учтены без ослабления принятого ТЗ.\n\nBackend: `graph_validation_scope.py` — executor-local успешные доказательства по точному JSON-содержимому. Hit привязывает новые mutable records к отдельным immutable exact points/adjacency; mutation входа или возвращённого index не отравляет следующий вызов. Room-owner membership проверяется на каждом обращении, в том числе при более строгом контексте. Невалидные/нестандартные Python контейнеры не получают hit; отрицательные proofs не кешируются. Projection proof отдельно включает весь space и graph. Между командами/Store executor ничего не сохраняется; все таблицы очищаются в finally.\n\nModel11 использует все incident graph points вместо legacy all-pairs и для admission, и для carrier sweep; изолированный узел сохраняет node_move_invalid. Физический preflight, foreign contacts и открывания сохранены. После перемещения after_index используется один раз вне opening-loop. Legacy first-write остаётся полным.\n\nWarm source разрешён только существующим точным `rt.schema_clean_rev == rev`: местная нормализация выбранного space плюс ordinary_write_scope/validate_scoped_candidate и touched transition/junction. Cold/stale/legacy — полный путь. Node candidate/Undo proof не получают доверия из клиента: inverse/host lineage по-прежнему независимы и сравнивают точное содержимое. `async_save_config_state` получает schema-checked candidate, previous=data и canonical=True; этот зарегистрированный второй caller не повторяет graph/coordinate normalization в Store. Центральный ACL/durable/migration barrier сохраняется. schema stamp публикуется после durable success; failure/другой writer его сбрасывает. Негативный guard canonical=True обновлён под оба проверенных caller.\n\nКлиент после r1: signature охватывает локальные source/candidate и global proof inputs ПОСЛЕ существующего conservative nodeMoveLocalSpaces. Три полных пространства больше не сериализуются на каждом held miss. Все новые/перемещённые foreign bodies попадают в closure до решения о reuse. In-place значимые изменения и epoch/context вызывают перепроверку; отрицательный hit сохраняет конкретную refusal. Существующий identity reuse уже был в исходниках; первоначальная диагностика слишком широко трактовала каждый validate как новый physical build. Исправление атрибуции опубликовано отдельно, а native smoke теперь наблюдает реальный _junctionLimitsIntroduced: один полный guard на одинаковый ordinary candidate через release.\n\nПроверки автора: build/types и native node/Python smoke PASS; адресно 148 backend tests и отдельная proof-выборка 49 PASS, Node editor/adapter/write-barrier 60 PASS. После добавленных отрицательных случаев и итогового head применимый S6 выполняет finish; его квитанция — окончательный состав/числа, без сложения пересекающихся выборок. Настоящий HA WS/Store покрывает exact/cold/stale stamp, apply→Undo→Redo, отсутствие повторов и hidden-floor proofs в warm-командах, delayed Store/ACK, failed save, forged inverse и offscreen foreign crossing. Новые структурные negative controls действительно возвращают прежний all-pairs call и ловят регрессию. Full stable по команде владельца запускается после S8 отдельно.\n\nПоследовательный CPU benchmark: закреплённый f64fa33, прогрев + 5 samples на каждый размер/режим; Node 22.23.2/Python 3.14.7/WSL, без конкурирующих прогонов. Median 100/1000/5000: база 59.31/962.39/8834.48 ms; candidate cold 32.78/351.60/2098.76 ms, warm schema 34.02/360.50/2194.17 ms. Junction baseline cold в обоих режимах. На 5000 — 4.21x cold / 4.03x warm; все 45 accepted hashes совпали между base/candidate. Raw samples/stages/median/p95 и воспроизведение: `docs/diagnostics/1306/` и `scripts/benchmark-node-save.*`. CPU не включает Store/сеть/executor/UI. Отдельный native ordinary 5000 release→ACK: 10593 → 4078 ms, по одному диагностическому замеру, не median и не live HA. Native merge held p95 11.6 ms, physicalChecks=0; release одна физическая проверка.\n\nРазобранный FAIL подготовки: старый coordinate-write-barrier inventory ожидал прежний canonicalizer/inline revisions/три аргумента room handoff. Обновлён под текущие реальные callsites с отрицательными CAS/schema контролями; ожидания безопасности не отключались. Локальные первоначальные FAIL сохранены в artifacts/1306.\n\nРиски для ревью: точность и типы ключей/room context; immutable facts vs mutable records; первый cold/import/legacy source и доверие stamp только текущего runtime; Store canonical=True/миграция/ACL после await; неизвестные/чужие записи и forged before_space; сохранность hidden-space proofs при reuse без исключения невидимой геометрии. Scope живёт одну синхронную команду, не process-global cache и не новый framework. Явные контекстные параметры являются Python-only результатом runtime stamp, из WS флагов не читаются.\n\nE2E verdict **надо** сохранён в [houseplan-e2e/task-impact/1306.md](https://github.com/Matysh/houseplan-e2e/blob/4e14d3eaf2c5c141f371e086513fa5cf5f8cf6f7/task-impact/1306.md). Реальные journeys дорабатываются перед бетой. По последней команде владельца после S8 требуется полный локальный stable-профиль текущего dev, задачи/исправления по отказам и публикация следующей беты после полностью зелёного применимого набора. Это отдельная следующая стадия работы, не утверждение о уже состоявшемся прогоне/выпуске.\n\n\n### Исправления по предыдущему код-ревью\n\nR1: [run 42021928514](https://github.com/Matysh/houseplan-card/actions/runs/42021928514), changes_requested, S7 → S6. Серверная архитектура/безопасность приняты, один блокер — лишняя full-floor сериализация на пути held miss.\n\n- Замечание → вместо JSON трёх полных пространств теперь подпись ограниченных входов уже существующей conservative closure; baseline/global/epoch invalidation сохранены. Графовая/физическая безопасность и независимый backend не менялись.\n- Новый regression: held miss не сериализует untouched remote-room. Временное возвращение full-floor JSON даёт настоящий FAIL, затем generated module восстановлен и positive PASS. Это проверка реального количества работы на callsite, не изменение лимита времени.\n- Сохранены in-place cell scale/authority epoch/negative refusal tests; добавлен некорректный exact point, который не может получить старый успешный результат. Ошибочная промежуточная тестовая предпосылка cm=101 исправлена: schema-bound thickness не обязан быть самостоятельным отказом локального render guard с mocked introduced callback; реальные backend schema guards не менялись. Первоначальный FAIL остаётся в artifacts.\n- Native current 5000 edges, 5 changing ordinary held points: 24.6 / 15.2 / 19.9 / 13.4 / 16.1 ms, median 16.1; release validate 9.1 ms, release→ACK 3954 ms, одна запись. Baseline client 23.1 ms был единичным historical sample, поэтому не заявляется сравнение распределений. Рост 34.8 ms первого кандидата сохранён как nativeAttempt1 и явно описан в README.\n- Адресно adapter 26 PASS; negative control FAIL ожидаемо; build/types и native mouse/Python probe PASS. Первый финальный S6: 20261105T114706348-66d625bc, 10/10 PASS (148 affected Node, 185 backend, critical/startup/build/3 browser). На новом head c9e396277 нужен применимый S6; неизменные backend/CPU-результаты допускают штатное reuse, с происхождением в квитанции. CPU-исходники после зафиксированного 4.21x/4.03x сравнения не менялись.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
