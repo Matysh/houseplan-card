@@ -1,48 +1,9 @@
 {
   "schema": 1,
-  "revision": 5038,
+  "revision": 5039,
   "nextTicket": 248,
   "nextFence": 248,
   "tasks": {
-    "1130": {
-      "issue": 1130,
-      "branch": "codex/issue-1130-low-signal",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "4f895343407cd730222fa3b47c188703332f16ce",
-      "mergedSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-      "mergedAt": 1793642170712,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1130:2:0fab874a5f395e140568b1b17b63854daf035965:4f895343407cd730222fa3b47c188703332f16ce",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "milestoneTitle": "1.84.0",
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5"
-      }
-    },
     "1174": {
       "issue": 1174,
       "branch": "codex/1174",
@@ -3831,10 +3792,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.84.0-beta.7",
       "devBuild": {
