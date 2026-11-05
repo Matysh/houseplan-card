@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4201,
+  "revision": 4202,
   "nextTicket": 226,
   "nextFence": 226,
   "tasks": {
@@ -1683,7 +1683,7 @@
       "ownerDecision": null,
       "ticket": 225,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793872616814,
       "reviewEntry": 4,
       "patchId": "53280afbe222fc57728431d01848374b0641a79e",
@@ -1718,19 +1718,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261105T094411681-27e3227a",
+        "id": "20261105T095711006-714d8ea0",
         "name": "Тесты для задачи #1250 (перед ревью)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T094411681-27e3227a/report.json",
-        "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T095711006-714d8ea0/report.json",
+        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
         "status": "passed",
-        "finishedAt": "2026-11-05T09:45:12.040Z",
+        "finishedAt": "2026-11-05T09:58:21.244Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "at": 1793872336749
-      }
+      "reviewRound": null
     },
     "1252": {
       "issue": 1252,
@@ -3563,9 +3559,9 @@
     "fence": 225,
     "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
     "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793872620869,
-    "expiresAt": 1793872979872,
+    "expiresAt": 1793876302500,
     "patchId": "53280afbe222fc57728431d01848374b0641a79e"
   },
   "events": {
@@ -3956,6 +3952,34 @@
           "finishedAt": "2026-11-05T09:45:12.040Z",
           "failures": []
         }
+      }
+    },
+    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:3:s6-complete": {
+      "digest": "33fbb6e697d4f356957310d03f53a965358a51b2b1535c840a5cb99233e6aa78",
+      "issue": 1250,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1250,
+        "at": 1793872702500,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T095711006-714d8ea0",
+          "name": "Тесты для задачи #1250 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T095711006-714d8ea0/report.json",
+          "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+          "status": "passed",
+          "finishedAt": "2026-11-05T09:58:21.244Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Установленный show. Сохраняются канонический wall/opening index и прежние границы владения. Его лица теперь предоставляют чистые половинные контуры без прежнего paint-overlap у оси. `room-floor-paint.ts` строит только презентационную геометрию: из прежнего clean floor вычитается весь домен проходов, затем добавляется часть данного владельца и вычитается каноническая кладка/отдельные тела. Это сохраняет чистые препятствия и предотвращает двойную заливку с родительским полом вложенной комнаты. Единственный SVG-path комнаты владеет цветом/alpha/переходами. На Plan geometry-only mask уменьшает покрытие продолжения по прежнему plan weight; отдельная цветная вставка и hard-stop gradient удалены. Начальная область событий комнаты сохраняется прозрачным hit-path; opening symbols/hosts/hitbox и реальные контакты не меняются.\n\nСоседние комнаты имеют непересекающиеся области. В изолированном floor group их antialias coverage складывается через plus-lighter: это устраняет source-over просвет на дробном пикселе общей оси без расширения половин или повторного применения alpha. Glow/солнце/декор и кладка остаются вне этой композиции, с прежним порядком. Plan в установившемся состоянии использует прежний floor; area getter, конфиг и модель не меняются. 2.5D использует тот же пол плана, Static — общий чистый проектор и отдельный ограниченный структурный кэш.\n\nКэш полноценной комнаты живёт по cleanFloorKey + openingWallIndexKey + позиции/длине проёмов. Цвет, состояние HA, zoom/поворот камеры и веса перехода в ключ не входят. При недоказуемой boolean-геометрии остаётся прежний чистый пол без опасной закраски кладки. Проверки S6: адресные geometry/area/nested/foreign-body cases; настоящие screenshot pixel probes через проход на дробных масштабах для одинаковых/разных цветов и alpha, пустых сторон, диагонали/поворота, Static и 2.5D; счётчики кэша при color/HA tick; native mode transitions, reduced motion и реальная 600-ms анимация контакта. Существующая проверка Static заменяет только устаревшее требование DOM .static-opening-tunnels на фактическое покрытие пола. Golden не принимаются автоматически.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
