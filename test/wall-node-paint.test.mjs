@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { svg } from 'lit';
+import { wallNodeHitRadius } from '../test-build/grid-scale.js';
 import { WallNodeEditor } from '../test-build/wall-node-editor.js';
 
 function setup() {
@@ -174,6 +175,7 @@ test('retained node layers read viewport scale before committing paper, rooms or
       reads++; assert.equal(dirty, false, `${mode}: a viewport read after an SVG commit can force layout`);
       return scale;
     };
+    s.editor.port.hitRadius = units => wallNodeHitRadius(1, 1000 / 240, units * 1000) / 1000;
     s.editor.port.text = key => key;
     s.editor.port.scene = () => ({ paper: svg`<path d="M0 0L1 0L1 1Z"/>`,
       rooms: svg`<path d="M0 0L2 0L2 2Z"/>`, walls: svg`<path d="M0 0L3 0L3 3Z"/>`,
