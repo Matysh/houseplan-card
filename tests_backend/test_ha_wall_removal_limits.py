@@ -85,7 +85,11 @@ async def test_native_compacted_deletions_persist_and_restore(hass, hass_ws_clie
         assert any(op["kind"] == "collapse-node" for op in case["operations"])
     entry, client, snapshot = await setup(hass, hass_ws_client, source=case["before"])
     original = snapshot["config"]
-    expected = {**copy.deepcopy(original), "spaces": case["after"]["spaces"]}
+    expected = copy.deepcopy(original)
+    # Apply the native graph delta to the accepted stored record, retaining HA
+    # schema defaults/metadata rather than replacing them with the raw fixture.
+    expected["spaces"][0] = project_graph_space(original["spaces"][0],
+        case["after"]["spaces"][0]["plan_graph"])["space"]
     for candidate in [expected, original, expected]:
         await client.send_json_auto_id({"type": "houseplan/config/set", "config": candidate,
                                        "expected_rev": snapshot["rev"]})
