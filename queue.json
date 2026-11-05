@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3985,
+  "revision": 3986,
   "nextTicket": 218,
   "nextFence": 218,
   "tasks": {
@@ -3306,150 +3306,25 @@
     },
     "1301": {
       "issue": 1301,
+      "branch": "codex/1301-zigbee-pointer-readiness",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1301-zigbee-pointer-readiness",
-      "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 217,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793858739742,
-      "reviewEntry": 1,
-      "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1",
-      "changedFiles": [
-        "demo/helpers/device-pointer-point.mjs",
-        "demo/smoke_zigbee_led_topology.mjs",
-        "demo/smoke_zigbee_tooltip_layout.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261105T060553024-0b75185e",
-        "name": "Тесты для задачи #1301 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T060553024-0b75185e/report.json",
-        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-        "status": "passed",
-        "finishedAt": "2026-11-05T06:06:16.794Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+      "mergedSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+      "mergedAt": 1793859002232,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05",
-      "reviewMaterial": {
-        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-        "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "eventId": "github:41978197482:1:tick:0:review-retry",
-        "at": 1793858795975,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1301,
-        "requestId": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "kind": "code",
-        "base": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-        "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1301,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1301",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Исходный CI сохранил первое наведение в polygon комнаты, hoverOwner=null. Координата бралась до завершения RAF-движения камеры; Lit settled не является paint oracle. На актуальном dev наблюдалось изменение первого rect после settled (x=537.66796875 →537.484375), затем стабильный native hit. Новый общий helper только читает fonts/DOMRect/SVG CTM/native hit и ждёт три одинаковых кадра (предел5сек), до единственного настоящего mouse.move. Ожидаемые линии/tooltip/hoverOwner не входят в ожидание. Сохраняются первые samples, направления, touch/pen и старый negative-placement control. Stroked SVG с нулевой fill-высотой допускается по реальной длине; перекрывающий LED hit floor также допускается, поскольку nearest-owner — предмет продуктового ассерта, а не готовности. Tooltip раскладка измеряется после существующего bounded finite-paint helper; допуски не расширены и анимации не подавляются. В evidence сохраняется первая и последние геометрии/hit, исходный FAILED не переписывается. Runtime не меняется. Адресный tooltip diagnostic PASS; в LED diagnostic выявлены и устранены два чрезмерных предусловия нового helper (zero fill-box и перекрывающиеся LED), финальный S6 проверяет полный файл. Browser selection требует product S6 profile (build/critical/startup+2 smoke), это не новый гейт. Companion task-impact/1301.md: дополнительный реальный HA E2E не требуется. Финальная проверка и ревью через finish."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Изменение затрагивает только тестовую обвязку. Ожидаемый исход (линии, tooltip, hoverOwner) не подгоняется: тест лишь ждёт, пока геометрия наблюдаемой цели устоится и в неё попадает настоящий hit-test. Только после этого выполняется единственный настоящий `mouse.move`. Все прежние ассерты сохранены: первый sample, направления маршрутов, touch/pen, pointer transparency, nearest-owner при перекрытии LED и старый negative-placement control. Допуски не расширены, runtime не менялся. Ожидание ограничено 5 с, при неудаче возникает явная ошибка, и проблема продукта не превращается в PASS. Блокеров нет. По S6 есть только квитанция о прохождении набора, сам отчёт я не видел (см. boundaries).",
-          "understanding": "Проблема. В stable-аудите beta.6 первое наведение `d_lamp` в smoke_zigbee_led_topology попало в polygon комнаты (hoverOwner=null). В smoke_zigbee_tooltip_layout упал первый witness после смены проекции/темы/пространства (`z2m_flat_light_unplaced`). Раньше координату указателя считали один раз сразу после Lit settled: из `getBoundingClientRect`/`boundingBox` или из CTM для LED-path. Камера же анимируется через RAF и после settled продолжает двигаться, поэтому снятая точка могла оказаться вне цели.\n\nКак стало. Новый `demo/helpers/device-pointer-point.mjs` ждёт `document.fonts.ready`. Затем на каждом RAF он заново вычисляет точку (центр rect либо точку на длине LED-path через `getScreenCTM`) и делает `elementFromPoint` в shadow root карточки. Точка возвращается, когда три подряд замера с готовностью дали одинаковые point/rect/matrix. Готовность: `.dev` содержит hit; для LED hit лежит внутри любого `[data-led-strip]`, а сам path имеет ненулевую длину. Для evidence сохраняются первое и три последних наблюдения. Через 5 с без устойчивого попадания выбрасывается ошибка вместе с историей. Оба smoke берут точку из helper. В tooltip-smoke перед каждым `witness` дополнительно вызывается существующий `waitForUiKitPaint`, который ждёт только конечные анимации.\n\nРазобранные пути: все вызовы `hover` в обоих файлах (первые samples, touch/pen, kiosk, wide tube, циклы проекций, nearest-owner с перекрывающимся `led-coordinator`, retired LED → icon, detach/remount; в tooltip — lazy upgrade, fallback имён, narrow/resize, second card, transform/scroll); `waitForUiKitPaint`; `check`/`checkAll` в serve.mjs (записывают отказ, не бросая исключение); селектор `_marker` в overlay (`.dev[data-hp=\"device\"]` — HTML, `.led-hit[data-hp=\"device\"]` — SVG path внутри `[data-led-strip]`).",
-          "analysis": [
-            {
-              "topic": "Готовность теста отделена от реакции продукта",
-              "assessment": "Helper смотрит только на нативную цель: геометрию, CTM и то, какой элемент находится под точкой. Признаки результата наведения в ожидание не входят, поэтому продуктовые ассерты (`lines`, `hoverOwner`, `clean`) по-прежнему проверяют реакцию на одно настоящее событие мыши. Если цель так и не стала hit-testable (например, из-за реального дефекта z-order), smoke упадёт с исключением и историей наблюдений, а не пройдёт молча. Этот подход стоит сохранить.",
-              "evidence": "device-pointer-point.mjs:9-34: в ключ стабильности входят только point/rect/matrix; `ready` проверяет `node.contains(hit)` или `hit.closest('[data-led-strip]')`; строка 36 — throw с историей. smoke_zigbee_led_topology.mjs:72-84: после helper идут один `mouse.move` и прежний sample."
-            },
-            {
-              "topic": "Ослабления предусловия для LED-path обоснованы",
-              "assessment": "Обе поправки, внесённые после диагностики, нужны для корректности, а не маскируют дефект. Hit-path прямой горизонтальной LED-ленты имеет нулевую высоту fill-box, поэтому её готовность определяется по `getTotalLength()`. На шаге nearest-owner более поздний `led-coordinator` сдвинут на 0.008 и перекрывает hit-floor, так что `elementFromPoint` честно возвращает чужой path. Выбор владельца при этом остаётся предметом продуктового ассерта `nearest.hoverOwner === 'd_light1'`. Для иконок (`.dev`) проверка осталась строгой (`node.contains(hit)`), а именно на иконке случился исходный отказ CI.",
-              "evidence": "smoke_zigbee_led_topology.mjs:266 (прямая лента [[.15,.25],[.45,.25]]), 284-289 (перекрытие и ассерт nearest owner); device-pointer-point.mjs:22-27."
-            },
-            {
-              "topic": "Сохранность исходных проверок и negative control",
-              "assessment": "Ассерты, допуски и порядок шагов не изменились. Первый sample `d_lamp` не убран, touch/pen по-прежнему используют `fromLed.point`, который теперь вычисляется после стабилизации. Negative control старой позиции tooltip (cursor+12) вызывает `sample` напрямую, без `witness`, поэтому новое ожидание анимаций его не затрагивает, а проверка пересечения осталась прежней. `waitForUiKitPaint` в `witness` ничего не подавляет и только дожидается конечных CSS-анимаций и переходов. Для ассертов «без нового наведения» (zoom, scroll, resize) дополнительное ожидание лишь делает состояние стабильнее.",
-              "evidence": "smoke_zigbee_tooltip_layout.mjs:145-151 (`witness`), 329-347 (negative control), 440-444 (camera zoom); ui-kit-paint.mjs:3-30."
-            },
-            {
-              "topic": "Диагностика и evidence",
-              "assessment": "Требование 1 issue выполнено в объёме, достаточном для тестовой задачи. Наблюдение (первое и последние rect/CTM/hit) попадает в `samples.json` LED-smoke и в `layout-evidence.json` tooltip-smoke, а при таймауте — в текст исключения. Поскольку `check` не бросает исключение, `samples.json` записывается и при FALSE. Основание гипотезы у автора скромное: сдвиг rect на 0.18 px после settled сам по себе не объясняет попадание в polygon комнаты. Однако hit-гейт закрывает и более широкий класс неготовности цели, а первое наблюдение сохраняется, так что повторное появление отказа можно будет разобрать по артефакту. Исходный FAILED не переписан.",
-              "evidence": "device-pointer-point.mjs:31-33 (history: первое плюс последние); smoke_zigbee_led_topology.mjs:84, 387; smoke_zigbee_tooltip_layout.mjs:84, 548; serve.mjs:71-76."
-            },
-            {
-              "topic": "Сложность и сопровождение",
-              "assessment": "Helper короткий, общий для двух smoke, комментарии объясняют неочевидное: почему Lit settled не подходит и почему допускаются нулевой fill-box и перекрытие LED. Дублирование координатной логики из двух файлов убрано. Цена изменения — до двух roundtrip на кадр и не меньше трёх кадров на каждое наведение, для smoke это несущественно.",
-              "evidence": "device-pointer-point.mjs:1-3, 21-26."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Предел в 5 с проверяется только между итерациями. `locator.evaluate` при исчезновении элемента ждёт по умолчанию до таймаута Playwright, и ошибка придёт уже без истории helper. Можно передавать `{ timeout }` или использовать `elementHandle`, чтобы граница и диагностика были едиными. Выгода небольшая и касается только формы сообщения об ошибке, поэтому это не обязательно.",
-            "Для `strip` готовность принимает hit в любой LED-ленте. Если со временем добавить в evidence `hitStrip` (`data-led-strip` попавшего элемента), по артефакту nearest-owner будет сразу видно, что point лежал на чужом hit-floor и продукт всё равно выбрал правильного владельца. Это бесплатное улучшение диагностики, ассерты оно не меняет."
-          ],
-          "boundaries": "Ревью проведено по исходникам на head 750d351: новый helper, полные файлы обоих smoke, ui-kit-paint.mjs, `check`/`checkAll` в serve.mjs, селекторы и логика `_marker`/nearest-owner в собранном overlay и в led-strip-runtime. Сам ничего не запускал. Из S6 использована только квитанция `20261105T060553024-0b75185e` (status passed, материал 750d351, failures пустой); report.json недоступен, поэтому я не могу независимо подтвердить, что в набор вошли именно оба адресных smoke в pinned Chromium. Это утверждение исполнителя. Локальные диагностические артефакты из issue (output/beta6-20261105/diagnostics, layout-evidence.json) и CI run 41964857128 не просматривал. Причина исходного FAIL остаётся гипотезой автора; принимаю изменение как корректное ограниченное ожидание готовности цели, а не как доказательство этой гипотезы."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 70014,
-          "cache_read_input_tokens": 252015,
-          "output_tokens": 12233,
-          "output_tokens_details": {
-            "thinking_tokens": 6927
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 70014,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1072,
-              "cache_read_input_tokens": 59733,
-              "cache_creation_input_tokens": 14485,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14485
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИзменение затрагивает только тестовую обвязку. Ожидаемый исход (линии, tooltip, hoverOwner) не подгоняется: тест лишь ждёт, пока геометрия наблюдаемой цели устоится и в неё попадает настоящий hit-test. Только после этого выполняется единственный настоящий `mouse.move`. Все прежние ассерты сохранены: первый sample, направления маршрутов, touch/pen, pointer transparency, nearest-owner при перекрытии LED и старый negative-placement control. Допуски не расширены, runtime не менялся. Ожидание ограничено 5 с, при неудаче возникает явная ошибка, и проблема продукта не превращается в PASS. Блокеров нет. По S6 есть только квитанция о прохождении набора, сам отчёт я не видел (см. boundaries).\n\n## Понимание решения\n\nПроблема. В stable-аудите beta.6 первое наведение `d_lamp` в smoke_zigbee_led_topology попало в polygon комнаты (hoverOwner=null). В smoke_zigbee_tooltip_layout упал первый witness после смены проекции/темы/пространства (`z2m_flat_light_unplaced`). Раньше координату указателя считали один раз сразу после Lit settled: из `getBoundingClientRect`/`boundingBox` или из CTM для LED-path. Камера же анимируется через RAF и после settled продолжает двигаться, поэтому снятая точка могла оказаться вне цели.\n\nКак стало. Новый `demo/helpers/device-pointer-point.mjs` ждёт `document.fonts.ready`. Затем на каждом RAF он заново вычисляет точку (центр rect либо точку на длине LED-path через `getScreenCTM`) и делает `elementFromPoint` в shadow root карточки. Точка возвращается, когда три подряд замера с готовностью дали одинаковые point/rect/matrix. Готовность: `.dev` содержит hit; для LED hit лежит внутри любого `[data-led-strip]`, а сам path имеет ненулевую длину. Для evidence сохраняются первое и три последних наблюдения. Через 5 с без устойчивого попадания выбрасывается ошибка вместе с историей. Оба smoke берут точку из helper. В tooltip-smoke перед каждым `witness` дополнительно вызывается существующий `waitForUiKitPaint`, который ждёт только конечные анимации.\n\nРазобранные пути: все вызовы `hover` в обоих файлах (первые samples, touch/pen, kiosk, wide tube, циклы проекций, nearest-owner с перекрывающимся `led-coordinator`, retired LED → icon, detach/remount; в tooltip — lazy upgrade, fallback имён, narrow/resize, second card, transform/scroll); `waitForUiKitPaint`; `check`/`checkAll` в serve.mjs (записывают отказ, не бросая исключение); селектор `_marker` в overlay (`.dev[data-hp=\"device\"]` — HTML, `.led-hit[data-hp=\"device\"]` — SVG path внутри `[data-led-strip]`).\n\n## Разбор решения\n\n### Готовность теста отделена от реакции продукта\n\nHelper смотрит только на нативную цель: геометрию, CTM и то, какой элемент находится под точкой. Признаки результата наведения в ожидание не входят, поэтому продуктовые ассерты (`lines`, `hoverOwner`, `clean`) по-прежнему проверяют реакцию на одно настоящее событие мыши. Если цель так и не стала hit-testable (например, из-за реального дефекта z-order), smoke упадёт с исключением и историей наблюдений, а не пройдёт молча. Этот подход стоит сохранить.\n\nОснование: device-pointer-point.mjs:9-34: в ключ стабильности входят только point/rect/matrix; `ready` проверяет `node.contains(hit)` или `hit.closest('[data-led-strip]')`; строка 36 — throw с историей. smoke_zigbee_led_topology.mjs:72-84: после helper идут один `mouse.move` и прежний sample.\n\n### Ослабления предусловия для LED-path обоснованы\n\nОбе поправки, внесённые после диагностики, нужны для корректности, а не маскируют дефект. Hit-path прямой горизонтальной LED-ленты имеет нулевую высоту fill-box, поэтому её готовность определяется по `getTotalLength()`. На шаге nearest-owner более поздний `led-coordinator` сдвинут на 0.008 и перекрывает hit-floor, так что `elementFromPoint` честно возвращает чужой path. Выбор владельца при этом остаётся предметом продуктового ассерта `nearest.hoverOwner === 'd_light1'`. Для иконок (`.dev`) проверка осталась строгой (`node.contains(hit)`), а именно на иконке случился исходный отказ CI.\n\nОснование: smoke_zigbee_led_topology.mjs:266 (прямая лента [[.15,.25],[.45,.25]]), 284-289 (перекрытие и ассерт nearest owner); device-pointer-point.mjs:22-27.\n\n### Сохранность исходных проверок и negative control\n\nАссерты, допуски и порядок шагов не изменились. Первый sample `d_lamp` не убран, touch/pen по-прежнему используют `fromLed.point`, который теперь вычисляется после стабилизации. Negative control старой позиции tooltip (cursor+12) вызывает `sample` напрямую, без `witness`, поэтому новое ожидание анимаций его не затрагивает, а проверка пересечения осталась прежней. `waitForUiKitPaint` в `witness` ничего не подавляет и только дожидается конечных CSS-анимаций и переходов. Для ассертов «без нового наведения» (zoom, scroll, resize) дополнительное ожидание лишь делает состояние стабильнее.\n\nОснование: smoke_zigbee_tooltip_layout.mjs:145-151 (`witness`), 329-347 (negative control), 440-444 (camera zoom); ui-kit-paint.mjs:3-30.\n\n### Диагностика и evidence\n\nТребование 1 issue выполнено в объёме, достаточном для тестовой задачи. Наблюдение (первое и последние rect/CTM/hit) попадает в `samples.json` LED-smoke и в `layout-evidence.json` tooltip-smoke, а при таймауте — в текст исключения. Поскольку `check` не бросает исключение, `samples.json` записывается и при FALSE. Основание гипотезы у автора скромное: сдвиг rect на 0.18 px после settled сам по себе не объясняет попадание в polygon комнаты. Однако hit-гейт закрывает и более широкий класс неготовности цели, а первое наблюдение сохраняется, так что повторное появление отказа можно будет разобрать по артефакту. Исходный FAILED не переписан.\n\nОснование: device-pointer-point.mjs:31-33 (history: первое плюс последние); smoke_zigbee_led_topology.mjs:84, 387; smoke_zigbee_tooltip_layout.mjs:84, 548; serve.mjs:71-76.\n\n### Сложность и сопровождение\n\nHelper короткий, общий для двух smoke, комментарии объясняют неочевидное: почему Lit settled не подходит и почему допускаются нулевой fill-box и перекрытие LED. Дублирование координатной логики из двух файлов убрано. Цена изменения — до двух roundtrip на кадр и не меньше трёх кадров на каждое наведение, для smoke это несущественно.\n\nОснование: device-pointer-point.mjs:1-3, 21-26.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Предел в 5 с проверяется только между итерациями. `locator.evaluate` при исчезновении элемента ждёт по умолчанию до таймаута Playwright, и ошибка придёт уже без истории helper. Можно передавать `{ timeout }` или использовать `elementHandle`, чтобы граница и диагностика были едиными. Выгода небольшая и касается только формы сообщения об ошибке, поэтому это не обязательно.\n- Для `strip` готовность принимает hit в любой LED-ленте. Если со временем добавить в evidence `hitStrip` (`data-led-strip` попавшего элемента), по артефакту nearest-owner будет сразу видно, что point лежал на чужом hit-floor и продукт всё равно выбрал правильного владельца. Это бесплатное улучшение диагностики, ассерты оно не меняет.\n\n## Границы анализа\n\nРевью проведено по исходникам на head 750d351: новый helper, полные файлы обоих smoke, ui-kit-paint.mjs, `check`/`checkAll` в serve.mjs, селекторы и логика `_marker`/nearest-owner в собранном overlay и в led-strip-runtime. Сам ничего не запускал. Из S6 использована только квитанция `20261105T060553024-0b75185e` (status passed, материал 750d351, failures пустой); report.json недоступен, поэтому я не могу независимо подтвердить, что в набор вошли именно оба адресных smoke в pinned Chromium. Это утверждение исполнителя. Локальные диагностические артефакты из issue (output/beta6-20261105/diagnostics, layout-evidence.json) и CI run 41964857128 не просматривал. Причина исходного FAIL остаётся гипотезой автора; принимаю изменение как корректное ограниченное ожидание готовности цели, а не как доказательство этой гипотезы.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: a92688d9f216be54f499d63739fa4392dc9b6f05 → 750d351f902f30474018b646f5e55e2462ba1b88\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1301, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nИсходный CI сохранил первое наведение в polygon комнаты, hoverOwner=null. Координата бралась до завершения RAF-движения камеры; Lit settled не является paint oracle. На актуальном dev наблюдалось изменение первого rect после settled (x=537.66796875 →537.484375), затем стабильный native hit. Новый общий helper только читает fonts/DOMRect/SVG CTM/native hit и ждёт три одинаковых кадра (предел5сек), до единственного настоящего mouse.move. Ожидаемые линии/tooltip/hoverOwner не входят в ожидание. Сохраняются первые samples, направления, touch/pen и старый negative-placement control. Stroked SVG с нулевой fill-высотой допускается по реальной длине; перекрывающий LED hit floor также допускается, поскольку nearest-owner — предмет продуктового ассерта, а не готовности. Tooltip раскладка измеряется после существующего bounded finite-paint helper; допуски не расширены и анимации не подавляются. В evidence сохраняется первая и последние геометрии/hit, исходный FAILED не переписывается. Runtime не меняется. Адресный tooltip diagnostic PASS; в LED diagnostic выявлены и устранены два чрезмерных предусловия нового helper (zero fill-box и перекрывающиеся LED), финальный S6 проверяет полный файл. Browser selection требует product S6 profile (build/critical/startup+2 smoke), это не новый гейт. Companion task-impact/1301.md: дополнительный реальный HA E2E не требуется. Финальная проверка и ревью через finish.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T06:09:22.061Z",
-        "artifactId": 13393110756,
-        "runId": 41978214989,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T06:09:27Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41978214989",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3570,120 +3445,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1301,
-    "worker": "finish",
-    "token": "217:finish:875a00ee-2190-43df-9805-850184b1a584:finish:1:admit",
-    "fence": 217,
-    "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-    "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793858743286,
-    "expiresAt": 1793862596999,
-    "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1",
-    "reviewRequest": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05"
-  },
-  "events": {
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:2:synchronized": {
-      "digest": "22ebf96eab51de7ad5e6a60bf68b45ed58a56b15f9f7bfe611ed9e7939f791c8",
-      "issue": 1301
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:3:s6-label": {
-      "digest": "d38fd2ca1d7dcae17ed4acd8890fc29cb7f65598791c744ed8bf371337f3c120",
-      "issue": 1301
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:4:review-requested": {
-      "digest": "6bbcdfb093f83817d8ee6c965fbc36c01c1233c53b7b2d81d0d5506854517ad6",
-      "issue": 1301
-    },
-    "github:41978197482:1:tick:0:review-retry": {
-      "digest": "44a5f4f6c2ddf7844b8c13cdf2a0c2ecf312069875718a21c86e0dad50dcb824",
-      "issue": 1301
-    },
-    "github:41978197482:1:completions:message:8791687b1a180bb1a91a58fb39073b754624e39d633e5951964575630d69a6ed": {
-      "digest": "bc7800414c42fea5a8d673c4d486dbfad5ced576034077d06241b120c0a4f401",
-      "issue": 1301
-    },
-    "github:41978197482:1:completions:message:b9bf0e85d4d1a3ebfc779189282326211bc095d02efec6e3887332f06d439bc3": {
-      "digest": "c07022aa70b2c53b5daf24fe2150e59e2a60986fbfa9f82d785f63442c3492bd",
-      "issue": 1301
-    },
-    "github:41978197482:1:completions:message:a8942d36571368870ba7a6dc1c954be3bcfbbf5252ce8536902b45a2a7329a03": {
-      "digest": "5a823143ef2d5fbef50b635c0f5a164cc3a456a03e05151357b9ad09ac6f7be8",
-      "issue": 1301
-    },
-    "github:41978197482:1:completions:message:620db94570ad6d32aa12c90dbfd7e2c9cb0f380a6a5e730025744e24e2174020": {
-      "digest": "273d5627f9f10f901bd1d7d38245f146bae693502408849fffb35470bd6480e1",
-      "issue": 1301
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:7:review-presentation": {
-      "digest": "e9b07860d0bb8eaa0160312e184185e3e526b8bb2cda06b4b4412adc28fa65a6",
-      "issue": 1301
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:7:review-complete": {
-      "digest": "64e6a8cf39a9dba4b7f105f88b10931455adda4a055da4486904bcf50d68314d",
-      "issue": 1301
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584": {
-      "digest": "ad3fe83c6f044dccc02f96910cbcd3a9effd47aa6f0721225d12f5d800f035e4",
-      "issue": 1301,
-      "message": {
-        "kind": "queued",
-        "issue": 1301,
-        "at": 1793858739742,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-        "delivered": true
-      }
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:1:admit": {
-      "digest": "4d2f2568cfbd850e969d36f7ec73ca796b4656d39e0f670a21673627e7c74512",
-      "issue": 1301,
-      "message": {
-        "kind": "admitted",
-        "issue": 1301,
-        "at": 1793858743286,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:3:s6-complete": {
-      "digest": "ea4513f80efa0fc955f8546b3f29b09f0b30ec13641d173121a6e534bd58b34e",
-      "issue": 1301,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1301,
-        "at": 1793858777966,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T060553024-0b75185e",
-          "name": "Тесты для задачи #1301 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T060553024-0b75185e/report.json",
-          "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
-          "status": "passed",
-          "finishedAt": "2026-11-05T06:06:16.794Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Исходный CI сохранил первое наведение в polygon комнаты, hoverOwner=null. Координата бралась до завершения RAF-движения камеры; Lit settled не является paint oracle. На актуальном dev наблюдалось изменение первого rect после settled (x=537.66796875 →537.484375), затем стабильный native hit. Новый общий helper только читает fonts/DOMRect/SVG CTM/native hit и ждёт три одинаковых кадра (предел5сек), до единственного настоящего mouse.move. Ожидаемые линии/tooltip/hoverOwner не входят в ожидание. Сохраняются первые samples, направления, touch/pen и старый negative-placement control. Stroked SVG с нулевой fill-высотой допускается по реальной длине; перекрывающий LED hit floor также допускается, поскольку nearest-owner — предмет продуктового ассерта, а не готовности. Tooltip раскладка измеряется после существующего bounded finite-paint helper; допуски не расширены и анимации не подавляются. В evidence сохраняется первая и последние геометрии/hit, исходный FAILED не переписывается. Runtime не меняется. Адресный tooltip diagnostic PASS; в LED diagnostic выявлены и устранены два чрезмерных предусловия нового helper (zero fill-box и перекрывающиеся LED), финальный S6 проверяет полный файл. Browser selection требует product S6 profile (build/critical/startup+2 smoke), это не новый гейт. Companion task-impact/1301.md: дополнительный реальный HA E2E не требуется. Финальная проверка и ревью через finish.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
     "status": "delivered",
