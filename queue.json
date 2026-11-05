@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4601,
+  "revision": 4602,
   "nextTicket": 238,
   "nextFence": 238,
   "tasks": {
@@ -3608,140 +3608,25 @@
     },
     "1320": {
       "issue": 1320,
+      "branch": "codex/issue-1320-node-echo",
       "track": "show",
       "layer": "product",
-      "branch": "codex/issue-1320-node-echo",
-      "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 237,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793886430120,
-      "reviewEntry": 2,
-      "patchId": "97d066c6b5667c369115f18dedcd0816209abe68",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "src/wall-node-write.ts",
-        "test/wall-node-write.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793886041501,
-        "entry": 1,
-        "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
-        "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
-      },
-      "s6": {
-        "id": "20261105T134936364-544be701",
-        "name": "Тесты для задачи #1320 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T134936364-544be701/report.json",
-        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-        "status": "passed",
-        "finishedAt": "2026-11-05T13:50:36.238Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
+      "mergedSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
+      "mergedAt": 1793886799263,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1320:2:97d066c6b5667c369115f18dedcd0816209abe68:0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-      "reviewMaterial": {
-        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-        "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-        "patchId": "97d066c6b5667c369115f18dedcd0816209abe68"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1320:2:97d066c6b5667c369115f18dedcd0816209abe68:0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-        "eventId": "github:42039382458:1:tick:0:review-retry",
-        "at": 1793886658768,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1320,
-        "requestId": "review:1320:2:97d066c6b5667c369115f18dedcd0816209abe68:0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-        "kind": "code",
-        "base": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-        "patchId": "97d066c6b5667c369115f18dedcd0816209abe68",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1320,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1320",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Commit `3e9402596333ea619fffad7d7ec9babe8dd77beb`. Сохранены быстрые прежние сравнения строк; различный key order дополняется рекурсивным **точным** сравнением JSON после прежней сериализации. Не используются хеш, сортировка массивов или фильтрация полей. Оба объекта должны иметь тот же набор собственных ключей; значения и элементы сравниваются рекурсивно. Revision/authority/guard/ACK проверки и перезагрузка настоящего отказа не менялись. В обычном неизменном состоянии дополнительного JSON.parse нет.\n\nДо исправления новый positive regression падает `superseded-node-response`. После исправления `node --test test/wall-node-write.test.mjs`: 16/16 PASS, без skip; отрицательные key-order+array/opaque/missing/coordinate/newer-revision случаи отказывают. `npm run build`, test-build и bundle-sync пройдены.\n\nReal HA 2026.10.4, точный пакет commit 3e940259: 3/3 business + 3/3 setup PASS, без skip/unexecuted/retry. Обычный Move, independent Merge на двух пространствах, adjacent Merge с удалением ребра, stale CAS и foreign refusal; настоящий ACK удерживается/выпускается, точные Undo/Redo и reload проверены. Лаборатория `/home/matysh/hp-e2e-29-addressed/hp-e2e-journeys-7XXORy`, сохранены results/trace. Первую диагностическую попытку с пакетом 71905b4c не считаем проверкой исправления: его product build остановился на несовместимом Object.hasOwn; использованная старая сборка не доказывала поведение нового кода. Эта попытка сохранена отдельно, новый валидный пакет пересобран после исправления target compatibility.\n\nРиск для внимания: разрешение только key-order-only echo не должно разрешать чужое содержимое с той же revision. Проверки новых ревизий и всех данных, включая неизвестные поля, остаются строгими. Shared finish повторяет необходимый S6 в своём допуске."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Ошибка в том, что `writeWallNode` сверял текущий конфиг с ответом сервера (ACK) побайтно, по строке `JSON.stringify`. Если ранний собственный config/get успевал прийти до ACK с тем же содержимым, но другим порядком ключей, запись объявлялась `superseded-node-response`. ACK не принимался, и Undo пропадал.\n\nИсправление узкое и точное. Сначала сравниваются строки, как раньше. Только если строки различаются, значения сравниваются рекурсивно и строго: порядок элементов массивов значим, у объектов должен совпадать набор собственных ключей, примитивы сравниваются через `===`. Хеширования, сортировки и отбрасывания полей нет. Проверки ревизии, права записи (authority), guard и перезагрузки при отказе не тронуты. Unit-регрессия покрывает положительный случай и пять отрицательных. Результаты исполнителя по реальному HA и квитанция S6 (passed на 3e940259) закрывают сквозной путь, который требует ТЗ. Блокеров нет.",
-          "understanding": "До изменения. После ответа `node_move`/`node_delete` writer читал текущий конфиг `current = JSON.stringify(host._serverCfg)` и принимал ACK в двух случаях: конфиг не менялся с отправки (`current === identity`) или совпадает с ответом (`current === JSON.stringify(response.config)`). При этом `host._cfgRev` не должен превышать `response.rev`. Ранний собственный config/get мог заменить `_serverCfg` на объект, равный `response.config` по значению, но с другим порядком ключей. Строки не совпадали, и запись отвергалась как `superseded-node-response`. Сервер слияние сохранял, а локальная история его не получала: «Nothing to undo».\n\nПосле изменения. Добавлены `sameJsonValue` (строгое рекурсивное равенство JSON-значений) и `sameSerializedJson`: сначала дешёвое `===` по строкам, при расхождении — `JSON.parse` обеих строк и сравнение значений. Так проверяются обе ветки: и неизменность конфига (identity), и совпадение с ответом. Условие `host._cfgRev > response.rev` осталось первым и не изменилось.\n\nЧто разобрал: `src/wall-node-write.ts` целиком, то есть очередь своих записей, `nodeBasisHolds`, отправку через `sendHouseplanWrite`, guard, принятие ответа и перезагрузку при отказе. Посмотрел вызывающий путь из `wall-node-card-adapter.ts` и связь кода ошибки `superseded-node-response` с `wall-node-refusal.ts`. Прочитал фикстуру и новые тесты в `test/wall-node-write.test.mjs`. Проверил, что в `src` других сравнений с `JSON.stringify(response.config)` нет.",
-          "analysis": [
-            {
-              "topic": "Точность нового сравнения",
-              "assessment": "Сравнение строгое и не допускает приблизительности. Обе стороны получаются одним и тем же `JSON.stringify`, поэтому `undefined`, функции, NaN и -0 нормализуются одинаково, а примитивы после `JSON.parse` корректно сравниваются через `===`. Массивы сравниваются по длине и поэлементно по индексу, порядок значим. У объектов совпадение числа ключей вместе с `hasOwnProperty` по каждому ключу даёт равенство множеств ключей: лишнее или пропавшее поле отвергается. Ключ `__proto__` после `JSON.parse` становится собственным свойством и тоже учитывается. Вместо `Object.hasOwn` выбран `Object.prototype.hasOwnProperty.call`, и это согласуется с проблемой target compatibility, о которой пишет автор.",
-              "evidence": "src/wall-node-write.ts:53-63. Тест 'coordinate' сдвигает 0.25 на `Number.EPSILON`; значение 0.2500000000000002 отличается от исходного, то есть отвергается даже минимальное изменение float."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "В медленной ветке `current` может разбираться через `JSON.parse` дважды: при сравнении с `identity` и при сравнении с ответом. Можно разобрать один раз и переиспользовать. Выгода только в мелочи для больших конфигов, сама ветка редкая; на корректность не влияет. Делать необязательно.",
-            "Комментарий на строках 110-111 говорит об «own echo», но не упоминает, что совпадение проверяется по значению, а не по строке. Если в одной строке сослаться на #1320 (порядок ключей при раннем GET), будущий читатель не вернёт `!==`, решив, что так «быстрее». Комментарий над `sameJsonValue` частично это уже объясняет."
-          ],
-          "boundaries": "Сборку, тесты, Validate и E2E я не запускал: это ревью только по исходникам. Прочитал полностью `src/wall-node-write.ts`, diff теста, фикстуру `setup()`, вызывающий адаптер и место, где обрабатывается код отказа. Как результаты проверки использованы квитанция S6 «Тесты для задачи #1320 (перед ревью)» со статусом passed на `3e9402596333ea619fffad7d7ec9babe8dd77beb` и заявленный исполнителем прогон real HA 2026.10.4 на точном пакете (3/3 business + 3/3 setup). Артефакты лаборатории `hp-e2e-journeys-7XXORy` мне недоступны, проверить их содержимое я не мог. Повторяет ли unit-фикстура точную форму реального echo, сверить не удалось: файлы `wire-{57,58,59}` недоступны. Это остаётся за E2E-прогоном исполнителя. Закоммиченный бандл в `custom_components/.../wall-node-card-adapter-*.js` содержит старое сравнение, но этот бандл обновляется только релизными коммитами (последний — 72d99a77, release v1.84.0-beta.1) и устарел и по другим изменениям (#1220). К этой задаче это не относится, но при сборке беты его нужно пересобрать.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 88122,
-          "cache_read_input_tokens": 322344,
-          "output_tokens": 6377,
-          "output_tokens_details": {
-            "thinking_tokens": 2528
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 88122,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 817,
-              "cache_read_input_tokens": 83752,
-              "cache_creation_input_tokens": 6091,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 6091
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОшибка в том, что `writeWallNode` сверял текущий конфиг с ответом сервера (ACK) побайтно, по строке `JSON.stringify`. Если ранний собственный config/get успевал прийти до ACK с тем же содержимым, но другим порядком ключей, запись объявлялась `superseded-node-response`. ACK не принимался, и Undo пропадал.\n\nИсправление узкое и точное. Сначала сравниваются строки, как раньше. Только если строки различаются, значения сравниваются рекурсивно и строго: порядок элементов массивов значим, у объектов должен совпадать набор собственных ключей, примитивы сравниваются через `===`. Хеширования, сортировки и отбрасывания полей нет. Проверки ревизии, права записи (authority), guard и перезагрузки при отказе не тронуты. Unit-регрессия покрывает положительный случай и пять отрицательных. Результаты исполнителя по реальному HA и квитанция S6 (passed на 3e940259) закрывают сквозной путь, который требует ТЗ. Блокеров нет.\n\n## Понимание решения\n\nДо изменения. После ответа `node_move`/`node_delete` writer читал текущий конфиг `current = JSON.stringify(host._serverCfg)` и принимал ACK в двух случаях: конфиг не менялся с отправки (`current === identity`) или совпадает с ответом (`current === JSON.stringify(response.config)`). При этом `host._cfgRev` не должен превышать `response.rev`. Ранний собственный config/get мог заменить `_serverCfg` на объект, равный `response.config` по значению, но с другим порядком ключей. Строки не совпадали, и запись отвергалась как `superseded-node-response`. Сервер слияние сохранял, а локальная история его не получала: «Nothing to undo».\n\nПосле изменения. Добавлены `sameJsonValue` (строгое рекурсивное равенство JSON-значений) и `sameSerializedJson`: сначала дешёвое `===` по строкам, при расхождении — `JSON.parse` обеих строк и сравнение значений. Так проверяются обе ветки: и неизменность конфига (identity), и совпадение с ответом. Условие `host._cfgRev > response.rev` осталось первым и не изменилось.\n\nЧто разобрал: `src/wall-node-write.ts` целиком, то есть очередь своих записей, `nodeBasisHolds`, отправку через `sendHouseplanWrite`, guard, принятие ответа и перезагрузку при отказе. Посмотрел вызывающий путь из `wall-node-card-adapter.ts` и связь кода ошибки `superseded-node-response` с `wall-node-refusal.ts`. Прочитал фикстуру и новые тесты в `test/wall-node-write.test.mjs`. Проверил, что в `src` других сравнений с `JSON.stringify(response.config)` нет.\n\n## Разбор решения\n\n### Точность нового сравнения\n\nСравнение строгое и не допускает приблизительности. Обе стороны получаются одним и тем же `JSON.stringify`, поэтому `undefined`, функции, NaN и -0 нормализуются одинаково, а примитивы после `JSON.parse` корректно сравниваются через `===`. Массивы сравниваются по длине и поэлементно по индексу, порядок значим. У объектов совпадение числа ключей вместе с `hasOwnProperty` по каждому ключу даёт равенство множеств ключей: лишнее или пропавшее поле отвергается. Ключ `__proto__` после `JSON.parse` становится собственным свойством и тоже учитывается. Вместо `Object.hasOwn` выбран `Object.prototype.hasOwnProperty.call`, и это согласуется с проблемой target compatibility, о которой пишет автор.\n\nОснование: src/wall-node-write.ts:53-63. Тест 'coordinate' сдвигает 0.25 на `Number.EPSILON`; значение 0.2500000000000002 отличается от исходного, то есть отвергается даже минимальное изменение float.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В медленной ветке `current` может разбираться через `JSON.parse` дважды: при сравнении с `identity` и при сравнении с ответом. Можно разобрать один раз и переиспользовать. Выгода только в мелочи для больших конфигов, сама ветка редкая; на корректность не влияет. Делать необязательно.\n- Комментарий на строках 110-111 говорит об «own echo», но не упоминает, что совпадение проверяется по значению, а не по строке. Если в одной строке сослаться на #1320 (порядок ключей при раннем GET), будущий читатель не вернёт `!==`, решив, что так «быстрее». Комментарий над `sameJsonValue` частично это уже объясняет.\n\n## Границы анализа\n\nСборку, тесты, Validate и E2E я не запускал: это ревью только по исходникам. Прочитал полностью `src/wall-node-write.ts`, diff теста, фикстуру `setup()`, вызывающий адаптер и место, где обрабатывается код отказа. Как результаты проверки использованы квитанция S6 «Тесты для задачи #1320 (перед ревью)» со статусом passed на `3e9402596333ea619fffad7d7ec9babe8dd77beb` и заявленный исполнителем прогон real HA 2026.10.4 на точном пакете (3/3 business + 3/3 setup). Артефакты лаборатории `hp-e2e-journeys-7XXORy` мне недоступны, проверить их содержимое я не мог. Повторяет ли unit-фикстура точную форму реального echo, сверить не удалось: файлы `wire-{57,58,59}` недоступны. Это остаётся за E2E-прогоном исполнителя. Закоммиченный бандл в `custom_components/.../wall-node-card-adapter-*.js` содержит старое сравнение, но этот бандл обновляется только релизными коммитами (последний — 72d99a77, release v1.84.0-beta.1) и устарел и по другим изменениям (#1220). К этой задаче это не относится, но при сборке беты его нужно пересобрать.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 0a0df98171f2bfff4ca53317f18ec8a176d5fc7f → 3e9402596333ea619fffad7d7ec9babe8dd77beb\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1320, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nCommit `3e9402596333ea619fffad7d7ec9babe8dd77beb`. Сохранены быстрые прежние сравнения строк; различный key order дополняется рекурсивным **точным** сравнением JSON после прежней сериализации. Не используются хеш, сортировка массивов или фильтрация полей. Оба объекта должны иметь тот же набор собственных ключей; значения и элементы сравниваются рекурсивно. Revision/authority/guard/ACK проверки и перезагрузка настоящего отказа не менялись. В обычном неизменном состоянии дополнительного JSON.parse нет.\n\nДо исправления новый positive regression падает `superseded-node-response`. После исправления `node --test test/wall-node-write.test.mjs`: 16/16 PASS, без skip; отрицательные key-order+array/opaque/missing/coordinate/newer-revision случаи отказывают. `npm run build`, test-build и bundle-sync пройдены.\n\nReal HA 2026.10.4, точный пакет commit 3e940259: 3/3 business + 3/3 setup PASS, без skip/unexecuted/retry. Обычный Move, independent Merge на двух пространствах, adjacent Merge с удалением ребра, stale CAS и foreign refusal; настоящий ACK удерживается/выпускается, точные Undo/Redo и reload проверены. Лаборатория `/home/matysh/hp-e2e-29-addressed/hp-e2e-journeys-7XXORy`, сохранены results/trace. Первую диагностическую попытку с пакетом 71905b4c не считаем проверкой исправления: его product build остановился на несовместимом Object.hasOwn; использованная старая сборка не доказывала поведение нового кода. Эта попытка сохранена отдельно, новый валидный пакет пересобран после исправления target compatibility.\n\nРиск для внимания: разрешение только key-order-only echo не должно разрешать чужое содержимое с той же revision. Проверки новых ревизий и всех данных, включая неизвестные поля, остаются строгими. Shared finish повторяет необходимый S6 в своём допуске.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T13:53:05.591Z",
-        "artifactId": 13420467361,
-        "runId": 42039410804,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T13:51:00Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42039410804",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3890,206 +3775,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1320,
-    "worker": "finish",
-    "token": "237:finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:1:admit",
-    "fence": 237,
-    "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-    "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793886434673,
-    "expiresAt": 1793890393984,
-    "patchId": "97d066c6b5667c369115f18dedcd0816209abe68",
-    "reviewRequest": "review:1320:2:97d066c6b5667c369115f18dedcd0816209abe68:0a0df98171f2bfff4ca53317f18ec8a176d5fc7f"
-  },
-  "events": {
-    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:2:synchronized": {
-      "digest": "4dc3cb852069dca24279cffe678b2da48c0e88e82b293ca904572d91f5a477fc",
-      "issue": 1320
-    },
-    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return": {
-      "digest": "84aa860ae0ad1d9133aebf3f4f58b6f6d0ba2fe57cdbe0d68c374926fae3b15b",
-      "issue": 1320
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:2:automation-pending": {
-      "digest": "94f49a416058773f476548c451f648dd3eac215023e55dbfd022723ab5b7ef28",
-      "issue": 1320
-    },
-    "finish:1dbb6558-d29c-4af1-9aaf-8aeb08ad3f27": {
-      "digest": "036729d102cb175c4c51b6670a6cd8d3b7b8c448f8a8e656b8bc8ccbd0380393",
-      "issue": 1320
-    },
-    "finish:41cb9a13-2ed5-485c-9e3f-dddd2b43fb41": {
-      "digest": "aa59f718a74b9cf10896e21fda88d160493aced54117017e004c164b36205f9f",
-      "issue": 1320
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:4:synchronized": {
-      "digest": "0d659070bfa2158204864d110c7e3e0eeac402adcec95de438e80f0afb374552",
-      "issue": 1320
-    },
-    "finish:362ec369-91ab-4092-9ced-453d390b5fea": {
-      "digest": "0935d57bc1d7188df2919486a4ebce2f85c40a96ce60b717e5544e2a7719bf82",
-      "issue": 1320
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:5:s6-label": {
-      "digest": "43d6764ff79010366bfec582106251590cf6ddb70fe70179caf15de97d575d1e",
-      "issue": 1320
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:6:review-requested": {
-      "digest": "846b9a60907baaa3e0828ce7fd2502b352ef752fa2e6d4489ab92ba38d83d32f",
-      "issue": 1320
-    },
-    "github:42039382458:1:tick:0:review-retry": {
-      "digest": "5722c397e0518445cb11c41bc23ce87f0e3a8b92e66cb40e1503e86117c18c64",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:message:898b64cf5f72f131943842def0716c4e66a27de0a12d5d5b22288c1088a8ce77": {
-      "digest": "38a85e63c329344f4fc13cdcf54fb443390fcf69a40f7cff2b96a31f404e7965",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:message:4ebb9a65ed17694c49893e9992829c56bbc83b83f85464079cf1949afacff4c5": {
-      "digest": "b29e8d260e097b354f33288f2d68e385665e583acdbaa64877fa941bfa41cd7f",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:message:82d01b58d5c69f516fe791c9325c790033c3b3e4cc1e019d753acf3d797a87de": {
-      "digest": "abb803257799343a96aae5da7f4339d8848f10f540372358fc0bee8478c8f6e9",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:message:dd3390bb6bb5d2c6c0019983b05710df0e5d4f7e6ef16fe7a38735bbd73f69dd": {
-      "digest": "e9998c2e116177f3480af00b0d1fa4f3186befb8da16151e67f1137441b0a9a7",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:notice:cb6a9e8592526df2a6595c019306682df904ef2421622bc0153d5b8c812fcb0e": {
-      "digest": "a1f270e9686926e24e6ea7f9f768f83adf615fc46d6c4850d27a936c695490bb",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:message:cb6a9e8592526df2a6595c019306682df904ef2421622bc0153d5b8c812fcb0e": {
-      "digest": "fe5e5f7a6a26915b8b8c0c9e0bb4659731916becea7eb3db2d8e43f94c06eefa",
-      "issue": 1320
-    },
-    "github:42039382458:1:completions:message:d8bd22bfdb33be6c801a8f9680b3821707cb443c44a9c5af81d56b55042bd93a": {
-      "digest": "1df4304f5e90022d74caa98fc6e49b7f906217f8dad0b48ef6ab3e993da36744",
-      "issue": 1320
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:8:review-presentation": {
-      "digest": "330deeb5ca09dba2adcf3851f57986776af70c8f5c2ea9fe20fbb73e9bd70b6b",
-      "issue": 1320
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:8:review-complete": {
-      "digest": "236595272568d9cb24b734ebf8b65e63429260e5a7cd1a4fd24f854e74520b1e",
-      "issue": 1320
-    },
-    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6": {
-      "digest": "4ca7ae043aa45ab3db2b72b6a3baad5ec76b2cb872821d84e3a0e29946f5e8e5",
-      "issue": 1320,
-      "message": {
-        "kind": "queued",
-        "issue": 1320,
-        "at": 1793886015425,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78",
-        "delivered": true
-      }
-    },
-    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:1:admit": {
-      "digest": "43b6b0a2223915e642a458727c634d45726b74a57fb429c488099024fbf8012f",
-      "issue": 1320,
-      "message": {
-        "kind": "admitted",
-        "issue": 1320,
-        "at": 1793886019193,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320": {
-      "digest": "84aa860ae0ad1d9133aebf3f4f58b6f6d0ba2fe57cdbe0d68c374926fae3b15b",
-      "issue": 1320,
-      "message": {
-        "kind": "return",
-        "issue": 1320,
-        "at": 1793886041501,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793886041501,
-          "entry": 1,
-          "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
-          "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
-        },
-        "delivered": true
-      }
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d": {
-      "digest": "41909a8d9553e33dcd6ba601cf4710a19656a3a893ee7cede4f1079c09202047",
-      "issue": 1320,
-      "message": {
-        "kind": "queued",
-        "issue": 1320,
-        "at": 1793886430120,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-        "delivered": true
-      }
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:1:admit": {
-      "digest": "eee20a3035452287ee79b31af66080fe95119e5936303b460352318c054c80c4",
-      "issue": 1320,
-      "message": {
-        "kind": "admitted",
-        "issue": 1320,
-        "at": 1793886434673,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:5:s6-complete": {
-      "digest": "8633b3aa4ad9b8e70a74f5a1d96fd9d7dd3136aa7d981fe0f600ca7653d6a342",
-      "issue": 1320,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1320,
-        "at": 1793886637454,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T134936364-544be701",
-          "name": "Тесты для задачи #1320 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T134936364-544be701/report.json",
-          "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-          "status": "passed",
-          "finishedAt": "2026-11-05T13:50:36.238Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Commit `3e9402596333ea619fffad7d7ec9babe8dd77beb`. Сохранены быстрые прежние сравнения строк; различный key order дополняется рекурсивным **точным** сравнением JSON после прежней сериализации. Не используются хеш, сортировка массивов или фильтрация полей. Оба объекта должны иметь тот же набор собственных ключей; значения и элементы сравниваются рекурсивно. Revision/authority/guard/ACK проверки и перезагрузка настоящего отказа не менялись. В обычном неизменном состоянии дополнительного JSON.parse нет.\n\nДо исправления новый positive regression падает `superseded-node-response`. После исправления `node --test test/wall-node-write.test.mjs`: 16/16 PASS, без skip; отрицательные key-order+array/opaque/missing/coordinate/newer-revision случаи отказывают. `npm run build`, test-build и bundle-sync пройдены.\n\nReal HA 2026.10.4, точный пакет commit 3e940259: 3/3 business + 3/3 setup PASS, без skip/unexecuted/retry. Обычный Move, independent Merge на двух пространствах, adjacent Merge с удалением ребра, stale CAS и foreign refusal; настоящий ACK удерживается/выпускается, точные Undo/Redo и reload проверены. Лаборатория `/home/matysh/hp-e2e-29-addressed/hp-e2e-journeys-7XXORy`, сохранены results/trace. Первую диагностическую попытку с пакетом 71905b4c не считаем проверкой исправления: его product build остановился на несовместимом Object.hasOwn; использованная старая сборка не доказывала поведение нового кода. Эта попытка сохранена отдельно, новый валидный пакет пересобран после исправления target compatibility.\n\nРиск для внимания: разрешение только key-order-only echo не должно разрешать чужое содержимое с той же revision. Проверки новых ревизий и всех данных, включая неизвестные поля, остаются строгими. Shared finish повторяет необходимый S6 в своём допуске.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
