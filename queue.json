@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4260,
+  "revision": 4261,
   "nextTicket": 227,
   "nextFence": 227,
   "tasks": {
@@ -3392,7 +3392,7 @@
       "ownerDecision": null,
       "ticket": 226,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793874515112,
       "reviewEntry": 1,
       "patchId": "001c12d84178fb3166216f2e83b2119c692afe33",
@@ -3449,6 +3449,20 @@
         "at": 1793874723133,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1305:1:001c12d84178fb3166216f2e83b2119c692afe33:d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+        "at": 1793875194453
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793875194453,
+        "entry": 1,
+        "requestId": "review:1305:1:001c12d84178fb3166216f2e83b2119c692afe33:d5f9aa516768a8c27281d9c118c10db3ae62fc73"
       }
     }
   },
@@ -3583,19 +3597,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1305,
-    "worker": "finish",
-    "token": "226:finish:263ee478-c6e1-4a51-affb-30ea842ee0e9:finish:1:admit",
-    "fence": 226,
-    "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
-    "expectedBase": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-    "phase": "review",
-    "admittedAt": 1793874519080,
-    "expiresAt": 1793878302529,
-    "patchId": "001c12d84178fb3166216f2e83b2119c692afe33",
-    "reviewRequest": "review:1305:1:001c12d84178fb3166216f2e83b2119c692afe33:d5f9aa516768a8c27281d9c118c10db3ae62fc73"
-  },
+  "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
       "digest": "20f082fa0bf817df866737264ff004773f22a8c32a105dfd0e490928fe7a3c9c",
@@ -3679,6 +3681,10 @@
     },
     "finish:3777f4b4-6b6d-4292-85c1-d08006e508b0:finish:9:review-presentation": {
       "digest": "19574c7c16ffa19c44c6a12fb22df121c77ace8eca27c52488bed4df39f7bd32",
+      "issue": 1305
+    },
+    "finish:3777f4b4-6b6d-4292-85c1-d08006e508b0:finish:9:return": {
+      "digest": "c5579a164e99f033455a09a4cab2f0b4ad898d2e3f089646ceed09251ecc3066",
       "issue": 1305
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
