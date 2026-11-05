@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4743,
+  "revision": 4744,
   "nextTicket": 242,
   "nextFence": 242,
   "tasks": {
@@ -3631,7 +3631,18 @@
         "process-next/catalog/golden-floor-continuity.mjs",
         "process-next/catalog/golden-runner.mjs",
         "process-next/test/golden-floor-continuity.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793887859579,
+        "entry": 1,
+        "detail": "Открытие сохранённого плана в View: failed",
+        "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
+      }
     },
     "1316": {
       "issue": 1316,
@@ -3912,21 +3923,14 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1314,
-    "worker": "finish",
-    "token": "241:finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:1:admit",
-    "fence": 241,
-    "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0",
-    "expectedBase": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
-    "phase": "testing",
-    "admittedAt": 1793887847042,
-    "expiresAt": 1793888152855,
-    "patchId": "e066116d485460bfeb40a799142efc0028f944c8"
-  },
+  "active": null,
   "events": {
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:2:synchronized": {
       "digest": "3343767c227ffccab7fdec9cdef12d5341f905a95bb12bafe9b70f58c9e3b48a",
+      "issue": 1314
+    },
+    "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return": {
+      "digest": "908f313eaa1a7ac4ed82e8cc7c29234deeaaa39025e429299fe7374a8311fc51",
       "issue": 1314
     },
     "dev-build:42041594795:1:1319": {
@@ -3966,6 +3970,26 @@
         "layer": "product",
         "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0",
         "phase": "sync"
+      }
+    },
+    "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314": {
+      "digest": "908f313eaa1a7ac4ed82e8cc7c29234deeaaa39025e429299fe7374a8311fc51",
+      "issue": 1314,
+      "message": {
+        "kind": "return",
+        "issue": 1314,
+        "at": 1793887859579,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793887859579,
+          "entry": 1,
+          "detail": "Открытие сохранённого плана в View: failed",
+          "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
+        }
       }
     }
   },
