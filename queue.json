@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4928,
+  "revision": 4929,
   "nextTicket": 246,
   "nextFence": 246,
   "tasks": {
@@ -3839,7 +3839,8 @@
       },
       "releaseTag": "v1.84.0-beta.7",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827"
       }
     }
   },
@@ -3975,7 +3976,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42052917968:1:1323": {
+      "digest": "15f90fd031c0311a36848e5c56668b7a811be923a94ca4fc2e2d50d9d783f3c0",
+      "issue": 1323,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1323,
+        "at": 1793891792089,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827",
     "status": "pending",
