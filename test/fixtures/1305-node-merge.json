@@ -1,0 +1,9 @@
+[
+  {"name":"independent L","point":[0,0],"target":[1,1],"walls":[{"id":"a","a":[0,0],"b":[1,0],"cm":0},{"id":"b","a":[1,1],"b":[2,1],"cm":0}],"ok":true},
+  {"name":"adjacent contraction","point":[1,0],"target":[2,0],"axis":"partition:a","walls":[{"id":"a","a":[0,0],"b":[1,0],"cm":0},{"id":"b","a":[1,0],"b":[2,0],"cm":0},{"id":"c","a":[2,0],"b":[3,1],"cm":0}],"ok":true},
+  {"name":"compact same material","point":[0,0],"target":[0.5,0],"walls":[{"id":"a","a":[0,0],"b":[-1,0],"cm":0},{"id":"b","a":[0.5,0],"b":[1,0],"cm":0}],"ok":true},
+  {"name":"last edge","point":[0,0],"target":[1,0],"walls":[{"id":"a","a":[0,0],"b":[1,0],"cm":0}],"ok":true},
+  {"name":"shared neighbour duplicate","point":[0,0],"target":[0,1],"walls":[{"id":"a","a":[0,0],"b":[1,0],"cm":0},{"id":"b","a":[0,1],"b":[1,0],"cm":0}],"ok":false,"reason":"merge_topology"},
+  {"name":"foreign crossing","point":[0,0],"target":[1,1],"walls":[{"id":"a","a":[0,0],"b":[1,0],"cm":0},{"id":"b","a":[1,1],"b":[2,1],"cm":0},{"id":"foreign","a":[0.5,0.5],"b":[1.5,0.5],"cm":0}],"ok":false,"reason":"merge_topology"},
+  {"name":"off-axis T","point":[1,0],"target":[2,1],"axis":"partition:a","walls":[{"id":"a","a":[0,0],"b":[1,0],"cm":0},{"id":"b","a":[1,0],"b":[2,0],"cm":0},{"id":"c","a":[1,0],"b":[1,1],"cm":0},{"id":"d","a":[2,1],"b":[3,1],"cm":0}],"ok":false,"reason":"merge_target"}
+]

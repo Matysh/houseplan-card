@@ -217,5 +217,16 @@
   "device.copy_pending": "Copying device…",
   "history.device_unknown": "Saving is not confirmed yet. Check the result of the operation.",
   "history.device_backend_unavailable": "Undo for copying and deletion requires an updated House Plan integration.",
-  "history.device_check_result": "Check result"
+  "history.device_check_result": "Check result",
+  "node_merge_history": "Merge wall nodes",
+  "node_move_merge_target": "Cannot merge: the target node or movement axis is no longer valid.",
+  "node_move_merge_topology": "Cannot merge: the resulting walls intersect, overlap or break a room contour.",
+  "node_move_merge_dependency": "Cannot merge: the resulting node connections are inconsistent.",
+  "node_move_merge_opening": "Cannot merge: an opening is on the removed section or no longer fits its wall.",
+  "node_merge_angle": "Cannot merge: the angle between walls would be less than 15°.",
+  "node_merge_valence": "Cannot merge: more than six walls would meet at the node.",
+  "node_merge_length": "Cannot merge: a remaining wall would be shorter than 20 cm or its own thickness.",
+  "node_merge_distance": "Cannot merge: the clearance to an unrelated node or wall would be less than 5 cm.",
+  "node_merge_clearance": "Cannot merge: the room would have too little interior space.",
+  "node_merge_check_failed": "The safety check could not be completed. Nothing was changed; try again."
 }

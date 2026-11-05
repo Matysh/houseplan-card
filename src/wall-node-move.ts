@@ -36,6 +36,8 @@ export interface WallNode {
 export interface NodeMoveIntent {
   point: NodePoint; target: NodePoint; axis: string | null;
   node_id?: string; target_p?: GraphPoint;
+  /** Explicit contraction into this existing ID; ordinary Move never infers it. */
+  merge_node_id?: string;
   /** Allocated once at pointerdown; no new identities during move/Redo. */
   split_ids: Record<string, string>;
 }
@@ -45,7 +47,8 @@ export interface NodeMovePlan {
   graph?: PlanGraph;
 }
 const dependencyMoves = new WeakMap<NodeMovePlan, NodeMoveDependencies>();
-export type NodeMoveReason = 'unsupported_junction' | 'invalid' | 'opening_blocked';
+export type NodeMoveReason = 'unsupported_junction' | 'invalid' | 'opening_blocked'
+  | 'merge_target' | 'merge_topology' | 'merge_dependency' | 'merge_opening';
 export type NodeMoveResult = { ok: true; space: NodeMoveSpace; changed: boolean; affected: string[] }
   | { ok: false; reason: NodeMoveReason };
 const EPS = 1e-9;

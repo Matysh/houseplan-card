@@ -73,6 +73,13 @@ def _has_node_carrier(index, moved, support, via, target=None):
 def move_graph_node_space(space, intent):
     from .wall_node_move import move_node_space, NodeMoveError
 
+    if "merge_node_id" in intent:
+        from .wall_node_merge import merge_graph_node_space
+        try:
+            return merge_graph_node_space(space, intent)
+        except GraphError as error:
+            raise NodeMoveError("merge_dependency" if "dependenc" in str(error) else "merge_topology") from error
+
     if not set(intent) <= {"point", "target", "axis", "split_ids", "node_id", "target_p"}:
         raise NodeMoveError()
     identity, index = node_identity(space, intent)

@@ -98,6 +98,16 @@ the next baseline is published after durable success (#1075).
 
 ### Select node movement (#803)
 
+Select also supports explicit node merge (#1305). A deliberate drag (>3 CSS
+pixels, raw pointer closer to target than source) captures a named node within
+12 CSS pixels and highlights that stationary target. T/X targets must lie on
+the selected finite carrier. Held frames perform admission only; release
+checks the complete candidate, including valence, angles, lengths and clearance.
+Direct connecting edges are removed atomically; an opening on them, invalid
+room or new foreign contact refuses the whole gesture. Persistence adds one
+exact Undo/Redo command after ACK. Old backends advertise no merge.
+
+
 The node graph is derived once per gesture from structural segments, including
 zero-thickness walls, never opening-cut render spans. Coincident owners do not
 multiply physical rays. End nodes (1–6 rays), straight breakpoints, ordinary T

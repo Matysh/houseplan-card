@@ -2,7 +2,8 @@
 export type NodeWriteRefusal = 'conflict' | 'incompatible' | 'proof' | 'unavailable';
 const PROOF = new Set(['stale-node-snapshot', 'node_move_invalid', 'node_move_opening_blocked',
   'node_move_unsupported_junction', 'invalid_passage_fields', 'invalid_partition_opening_host',
-  'invalid_partition_opening_jamb_margin']);
+  'invalid_partition_opening_jamb_margin', 'node_move_merge_target', 'node_move_merge_topology',
+  'node_move_merge_dependency', 'node_move_merge_opening']);
 export function nodeWriteRefusal(error: unknown, foreign = false): NodeWriteRefusal {
   const code = String((error as { code?: unknown } | null)?.code ?? (error as Error | null)?.message ?? '');
   if (foreign || code === 'conflict') return 'conflict';
@@ -11,7 +12,14 @@ export function nodeWriteRefusal(error: unknown, foreign = false): NodeWriteRefu
   // Backend/transport/unknown codes are not evidence that geometry is unfit.
   return 'unavailable';
 }
-export function nodeDragRefusalKey(error: unknown, foreign = false): string {
+export function nodeDragRefusalKey(error: unknown, foreign = false, merging = false): string {
+  const code = String((error as { code?: unknown } | null)?.code ?? (error as Error | null)?.message ?? '');
+  if (merging && !foreign) {
+    if (/^node_move_merge_(?:target|topology|dependency|opening)$/.test(code)) return code;
+    const rule = /^junction_limit_(angle|valence|length|distance|clearance|check_failed)$/.exec(code)?.[1];
+    if (rule) return `node_merge_${rule}`;
+    if (['invalid_passage_fields', 'invalid_partition_opening_host', 'invalid_partition_opening_jamb_margin'].includes(code)) return 'node_move_merge_opening';
+  }
   const kind = nodeWriteRefusal(error, foreign);
   return kind === 'conflict' ? 'node_move_write_conflict' : kind === 'incompatible' ? 'node_move_update_required'
     : kind === 'proof' ? 'node_move_invalid' : 'node_move_write_unavailable';

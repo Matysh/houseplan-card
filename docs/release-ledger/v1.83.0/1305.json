@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1305,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Adds explicit safe node contraction to Select, with atomic connecting-edge removal and exact history.",
+  "summary": {
+    "ru": "Объединение узлов стен перетаскиванием с магнитом, проверкой безопасности и отменой.",
+    "en": "Merge wall nodes by dragging, with a target magnet, safety checks and Undo."
+  }
+}

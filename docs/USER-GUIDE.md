@@ -1083,6 +1083,15 @@ ambiguous nearby nodes. Node movement is mouse-first in the Plan editor, absent
 in View and kiosk. An older backend shows an integration-update hint instead
 of saving an unsupported edit.
 
+#### Merging wall nodes
+
+In **Select**, drag a node onto another node: the magnet attracts it and the
+stationary target is highlighted. Release to merge. A wall directly connecting
+the pair is removed in the same command. An opening on that wall, a destroyed
+room or unsafe geometry cancels the entire gesture with an explanation.
+Successful persistence creates one Undo/Redo step. A click never merges nodes;
+**Esc** cancels the drag. This requires an updated Home Assistant integration.
+
 #### Deleting a wall node
 
 In the Plan editor with any selected tool, right-click an intermediate node and choose

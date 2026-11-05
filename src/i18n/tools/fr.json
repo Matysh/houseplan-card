@@ -217,5 +217,16 @@
   "device.copy_pending": "Copie de l’appareil…",
   "history.device_unknown": "L’enregistrement n’est pas encore confirmé. Vérifiez le résultat de l’opération.",
   "history.device_backend_unavailable": "Mettez à jour l’intégration House Plan pour annuler la copie et la suppression.",
-  "history.device_check_result": "Vérifier le résultat"
+  "history.device_check_result": "Vérifier le résultat",
+  "node_merge_history": "Fusionner les nœuds de mur",
+  "node_move_merge_target": "Fusion impossible : le nœud cible ou l’axe de déplacement n’est plus valide.",
+  "node_move_merge_topology": "Fusion impossible : les murs se croiseraient, se chevaucheraient ou briseraient le contour de la pièce.",
+  "node_move_merge_dependency": "Fusion impossible : les connexions des nœuds sont contradictoires.",
+  "node_move_merge_opening": "Fusion impossible : une ouverture se trouve sur le segment supprimé ou ne tient plus dans le mur.",
+  "node_merge_angle": "Fusion impossible : l’angle entre les murs serait inférieur à 15°.",
+  "node_merge_valence": "Fusion impossible : plus de six murs se rejoindraient au nœud.",
+  "node_merge_length": "Fusion impossible : un mur serait plus court que 20 cm ou que sa propre épaisseur.",
+  "node_merge_distance": "Fusion impossible : la distance à un autre nœud ou mur serait inférieure à 5 cm.",
+  "node_merge_clearance": "Fusion impossible : il resterait trop peu d’espace dans la pièce.",
+  "node_merge_check_failed": "La vérification de sécurité a échoué. Aucune modification ; réessayez."
 }

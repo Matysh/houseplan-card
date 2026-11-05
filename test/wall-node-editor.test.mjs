@@ -47,9 +47,14 @@ function setup({ legacy = false } = {}) {
       return { ...cfg, spaces: [r.space] };
     }, record: (...args) => recorded.push(args), history: async () => {} };
   const editor = new WallNodeEditor(port);
-  const ev = (type, x = 0, y = 0, patch = {}) => ({ type, pointerId: 1, pointerType: 'mouse',
+  let pointer = [0, 0];
+  // A native up reports the current pointer, not an implicit jump to origin.
+  const ev = (type, x = type === 'pointerup' ? pointer[0] : 0, y = type === 'pointerup' ? pointer[1] : 0, patch = {}) => {
+    pointer = [x, y];
+    return ({ type, pointerId: 1, pointerType: 'mouse',
     isPrimary: true, button: 0, detail: 1, clientX: x, clientY: y, composedPath: () => [stage],
     preventDefault() {}, stopImmediatePropagation() {}, ...patch });
+  };
   return { cfg, context, capture, stage, lifecycle, editor, ev, writes, recorded, toasts, window, listeners, changes, validations, frames,
     holdFrames: () => { autoFrames = false; }, flushFrame,
     refusePreview: () => { validPreview = false; },
@@ -453,4 +458,15 @@ test('#843 node history: one transaction at a time, busy until the port settles'
   gate.resolve(); await settle();
   assert.equal(s.editor.busy, false); assert.deepEqual(s.changes.at(-1), [false, 0]);
   s.editor.history('redo'); assert.deepEqual(calls, ['undo', 'redo']); s.editor.dispose();
+});
+
+test('#1305 pointerup consumes its actual final coordinate; an offset click does not move', async () => {
+  const s = setup();
+  s.editor.guardEvent(s.ev('pointerdown', .0005, 0));
+  s.editor.guardEvent(s.ev('pointerup', .0005, 0)); await settle();
+  assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
+  s.editor.guardEvent(s.ev('pointerdown'));
+  s.editor.guardEvent(s.ev('pointerup', .25, .3)); await settle();
+  assert.equal(s.writes.length, 1); assert.deepEqual(s.writes[0].intent.target, [.25, .3]);
+  s.editor.dispose();
 });

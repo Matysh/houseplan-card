@@ -217,5 +217,16 @@
   "device.copy_pending": "Gerät wird kopiert…",
   "history.device_unknown": "Das Speichern ist noch nicht bestätigt. Prüfen Sie das Ergebnis des Vorgangs.",
   "history.device_backend_unavailable": "Aktualisieren Sie die House Plan-Integration, um Kopieren und Löschen rückgängig zu machen.",
-  "history.device_check_result": "Ergebnis prüfen"
+  "history.device_check_result": "Ergebnis prüfen",
+  "node_merge_history": "Wandknoten verbinden",
+  "node_move_merge_target": "Verbinden nicht möglich: Zielknoten oder Bewegungsachse ist nicht mehr gültig.",
+  "node_move_merge_topology": "Verbinden nicht möglich: Wände würden sich kreuzen, überlappen oder den Raumumriss beschädigen.",
+  "node_move_merge_dependency": "Verbinden nicht möglich: Die Knotenverbindungen widersprechen sich.",
+  "node_move_merge_opening": "Verbinden nicht möglich: Eine Öffnung liegt auf dem entfernten Abschnitt oder passt nicht mehr in die Wand.",
+  "node_merge_angle": "Verbinden nicht möglich: Der Winkel zwischen Wänden wäre kleiner als 15°.",
+  "node_merge_valence": "Verbinden nicht möglich: Mehr als sechs Wände würden am Knoten zusammentreffen.",
+  "node_merge_length": "Verbinden nicht möglich: Eine Wand wäre kürzer als 20 cm oder ihre eigene Dicke.",
+  "node_merge_distance": "Verbinden nicht möglich: Der Abstand zu einem fremden Knoten oder einer Wand wäre kleiner als 5 cm.",
+  "node_merge_clearance": "Verbinden nicht möglich: Im Raum bliebe zu wenig freie Fläche.",
+  "node_merge_check_failed": "Die Sicherheitsprüfung konnte nicht abgeschlossen werden. Nichts wurde geändert. Bitte erneut versuchen."
 }

@@ -337,6 +337,8 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
     # Normalize a COPY with the same read-compatible identity model as the first
     # proof; raw legacy absence is not evidence of a missing node or new host.
     current, _ = commit_wall_segment_model(current)
+    if "merge_node_id" in intent:
+        return _merge_host_baseline(current, candidate, space_id, intent, direction, before_space)
     if "node_id" in intent or "target_p" in intent:
         intent = {key: value for key, value in intent.items() if key in {"point", "target", "axis", "split_ids"}}
     old_spaces = {s["id"]: s for s in current.get("spaces", [])}
@@ -388,6 +390,38 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
                 raise NodeMoveError()
             if expected_new:
                 adjusted_openings[oid]["host"]["id"] = expected_new[1]
+    return baseline
+
+
+def _merge_host_baseline(current, candidate, space_id, intent, direction, before_space):
+    """Reproduce host lineage from original IDs, never grant a candidate host."""
+    from .wall_node_merge import merge_graph_node_space
+
+    previous = next((s for s in current.get("spaces", []) if s["id"] == space_id), None)
+    source = before_space if direction == "undo" else previous
+    if source is None or source.get("id") != space_id or direction not in ("apply", "undo"):
+        raise NodeMoveError("merge_target")
+    forward = merge_graph_node_space(source, intent)
+    old, new = (forward, source) if direction == "undo" else (source, forward)
+    if old != previous:
+        raise NodeMoveError("merge_topology")
+    baseline = copy.deepcopy(current)
+    accepted_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
+    if set(accepted_spaces) != {s["id"] for s in current.get("spaces", [])}:
+        raise NodeMoveError("merge_topology")
+    for original, adjusted in zip(current.get("spaces", []), baseline.get("spaces", []), strict=True):
+        expected = new if original["id"] == space_id else original
+        if accepted_spaces[original["id"]] != expected:
+            raise NodeMoveError("merge_topology")
+        openings = {o["id"]: o for o in expected.get("openings", [])}
+        if set(openings) != {o["id"] for o in adjusted.get("openings", [])}:
+            raise NodeMoveError("merge_opening")
+        for opening in adjusted.get("openings", []):
+            host = openings[opening["id"]].get("host")
+            if bool(host) != bool(opening.get("host")):
+                raise NodeMoveError("merge_opening")
+            if host:
+                opening["host"]["kind"], opening["host"]["id"] = host["kind"], host["id"]
     return baseline
 
 

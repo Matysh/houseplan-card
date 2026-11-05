@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Merge wall nodes by dragging in Select, with a stationary target magnet, atomic removal of a connecting edge, release-time safety checks and exact Undo/Redo. [#1305](https://github.com/Matysh/houseplan-card/issues/1305)
+
+
 - Remove seven obsolete translation keys from all four locales so the clean dead-key guard runs before mutation testing; retain the existing consumer rules and mutation witness. [#1304](https://github.com/Matysh/houseplan-card/issues/1304)
 - Compose opening floors into their owning room fills, with shared color/alpha and mode transitions instead of a separate tunnel patch. Preserve clean-floor area, physical cut-outs and opening hit targets; share cached presentation geometry with Static and 2.5D. [#1250](https://github.com/Matysh/houseplan-card/issues/1250)
 

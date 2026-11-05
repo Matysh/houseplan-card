@@ -22,6 +22,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _space: string; readonly _canEdit: boolean; readonly _kiosk: boolean;
   readonly _haWallNodeMoveApi: number | null;
   readonly _haWallNodeDeleteApi: number | null;
+  readonly _haWallNodeMergeApi?: number | null;
   readonly _haPlanGraphApi?: number | null;
   readonly _stageEl: HTMLElement | null;
   readonly _config: { language?: string | null } | undefined;
@@ -53,6 +54,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   const language = () => langOf(host.hass, host._config?.language);
   let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry } | null = null;
   let ownsLiveLayer = false;
+  let refusal: string | null = null;
   let baselineGeometry: { authority: ServerConfig; revision: number; space: string; signature: string; value: NodePreviewGeometry;
     proof: JunctionSharedGeometry | undefined; config: ServerConfig; booleans: WallBooleanBaseline } | null = null;
   const retire = (): void => { geometry = null; baselineGeometry = null; };
@@ -64,12 +66,12 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   const api = () => host._haWallNodeMoveApi === 1 && host._haPlanGraphApi !== null;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
-      space: host._space, revision: host._cfgRev, api: api() };
+      space: host._space, revision: host._cfgRev, api: api(), mergeApi: host._haWallNodeMergeApi === 1 };
     if (!result.enabled || !result.api || (baselineGeometry && (baselineGeometry.authority !== host._serverCfg
         || baselineGeometry.revision !== result.revision || baselineGeometry.space !== result.space))) retire();
     return result;
   };
-  const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_') || key.startsWith('node_delete')
+  const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_') || key.startsWith('node_merge_') || key.startsWith('node_delete')
     ? toolsT(language(), key as ToolsI18nKey, params || { reason: host._t('toast.geometry_unsafe') })
     : host._t(key as I18nKey, params);
   // Move/Delete are canvas-owned actions even when their result arrives after
@@ -78,15 +80,17 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   const write = (history: NodeCommandHistory, basis: NodeWriteBasis | null,
     current: () => boolean = () => true): Promise<ServerConfig> => {
     retire();
-    const claim = history.kind === 'delete' ? host._configWriteGuard() : null;
+    const merging = history.kind !== 'delete' && !!history.intent.merge_node_id;
+    const claim = history.kind === 'delete' || merging ? host._configWriteGuard() : null;
     const authority = () => host.isConnected && host.hass.connection?.connected !== false && !!claim?.();
     return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id), claim ? {
       send: () => authority() && writer() && ['plan', 'decor'].includes(host._mode)
-        && host._haWallNodeDeleteApi === 1 && current(),
+        && (merging ? host._haWallNodeMergeApi === 1 : host._haWallNodeDeleteApi === 1) && current(),
       accept: authority,
     } : null);
   };
   const validate = (space: NodeMoveSpace, before: NodeMoveSpace, supported: boolean, deleting = false): boolean => {
+    refusal = null;
     const ctx = context(), authority = host._serverCfg;
     if (!(deleting ? deleteEnabled() : ctx.enabled) || !supported || !authority) { retire(); return false; }
     try {
@@ -110,12 +114,16 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       }
       const old = baseline.value;
       const next = withWallBooleanBaseline(baseline.booleans, false, () => buildNodePreview(localNext));
-      next.safe &&= !callbacks.introduced(config, baseline.config, space.id,
-        nodePreviewJunctionGeometry(next), baseline.proof).length;
+      if (!next.safe) refusal = 'node_merge_check_failed';
+      else {
+        const violations = callbacks.introduced(config, baseline.config, space.id,
+          nodePreviewJunctionGeometry(next), baseline.proof) as readonly { rule?: string }[];
+        if (violations.length) { next.safe = false; refusal = `node_merge_${violations[0].rule || 'check_failed'}`; }
+      }
       geometry = { source: before, candidate: space, before: old, next };
       return next.safe;
     }
-    catch { retire(); return false; }
+    catch { refusal = 'node_merge_check_failed'; retire(); return false; }
   };
   const recordCommand = (history: NodeCommandHistory, afterSpace: NodeMoveSpace): void => {
     const before = callbacks.snapshot(history.beforeSpace), after = callbacks.snapshot(afterSpace);
@@ -123,7 +131,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     // The same stack and exact accepted floor serve Move and Delete.
     before.nodeMove = { ...history, direction: 'undo', floor: nodeFloorFingerprint(afterSpace) };
     after.nodeMove = { ...history, direction: 'apply' };
-    host._geometryHistory.push({ name: toolsT(language(), history.kind === 'delete' ? 'node_delete_history' : 'node_move_history'), before, after });
+    host._geometryHistory.push({ name: toolsT(language(), history.kind === 'delete' ? 'node_delete_history'
+      : history.intent.merge_node_id ? 'node_merge_history' : 'node_move_history'), before, after });
   };
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
@@ -143,6 +152,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       editor.paint();
     } else { ownsLiveLayer = false; geometry = null; context(); host.requestUpdate(); } },
     validate: (space, before) => validate(space, before, api()),
+    refusal: () => refusal,
     scene: (space, before) => {
       if (!geometry || geometry.candidate !== space || geometry.source !== before) return null;
       if (geometry.next.geometry.status === 'failed-core' || geometry.next.geometry.status === 'degraded-extra') return null;
@@ -168,7 +178,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     } : undefined,
     history: direction => runNodeHistory<TState>({
       enabled: () => ['plan', 'decor'].includes(host._mode) && writer(),
-      api: history => history.kind === 'delete' ? host._haWallNodeDeleteApi === 1 : api(),
+      api: history => history.kind === 'delete' ? host._haWallNodeDeleteApi === 1
+        : api() && (!history.intent.merge_node_id || host._haWallNodeMergeApi === 1),
       epoch: () => nodeAdoptionEpoch(host), stack: () => host._geometryHistory,
       canShow: callbacks.canShow, show: callbacks.show, write, text, toast: captureToast(host),
     }, direction),

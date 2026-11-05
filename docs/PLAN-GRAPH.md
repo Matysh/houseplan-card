@@ -39,6 +39,16 @@ carrier is explicitly edited; reads do not rewrite the plan. Generic graph
 operations retain affine DAG propagation. The browser preview and server-owned
 node writer apply the same intent, with exact Undo/Redo.
 
+Select node merge (#1305) explicitly names source and stationary target IDs.
+The target's stored exact point survives; source incident edges are rewired to
+it, and direct source–target edges are removed in the same atomic command.
+Room cycles lose those edges but must remain valid. Hosted openings on removed
+edges refuse the command. Compatible degree-two collinear seams use existing
+lossless compaction. Generic Move, Save and Optimize do not merge nearby nodes.
+The server independently reconstructs the intent and proves host lineage,
+junction safety and exact history.
+
+
 Explicit numeric editor targets recognize a lattice coordinate within the
 existing `1e-4`-step coordinate-noise allowance. Nudge, body translation,
 axial opening movement and safe Resize add proven lattice origins/offsets as
