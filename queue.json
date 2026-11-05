@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3632,
+  "revision": 3633,
   "nextTicket": 207,
   "nextFence": 207,
   "tasks": {
@@ -2018,14 +2018,14 @@
         "tests_backend/test_wall_removal_proof.py"
       ],
       "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793845435769,
-        "entry": 3,
-        "requestId": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-        "transitionConfirmed": true
+        "key": "4:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793846212933,
+        "entry": 4,
+        "detail": "Backend изменённой области: failed",
+        "eventId": "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:3:return:return:1258"
       },
       "s6": {
         "id": "20261105T021831901-319ed656",
@@ -2040,7 +2040,8 @@
       "reviewCorrection": {
         "requestId": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
         "at": 1793845435769
-      }
+      },
+      "reason": "checks-failed"
     },
     "1261": {
       "issue": 1261,
@@ -3371,18 +3372,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1258,
-    "worker": "github-coordinator",
-    "token": "206:github:41956087452:1:tick:0:admit",
-    "fence": 206,
-    "materialSha": "5146b134cb24686ee19ec68bb553bea8303f7ffe",
-    "expectedBase": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-    "phase": "testing",
-    "admittedAt": 1793846072222,
-    "expiresAt": 1793846505321,
-    "patchId": "e3e0bf1208548fb77601202aaf2827b2db39cfa5"
-  },
+  "active": null,
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
       "digest": "a3267a6cd7428e3ded61f5b48cd08a5bc3d20e9f699cb2281750a4f1f9f89f6b",
@@ -3566,6 +3556,10 @@
     },
     "finish:2d8ad845-648b-462c-a39a-59ac6b626e3d": {
       "digest": "e72ee6d2bdb88978498313f66e1ce706903c926dabfd7ae73a22ac818b88b060",
+      "issue": 1258
+    },
+    "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:3:return": {
+      "digest": "6e72e9e099f46ae06d291974e91e3dfe980ff44fa0230a10fafdfdaf78e59ba8",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
@@ -3843,6 +3837,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9"
+      }
+    },
+    "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:3:return:return:1258": {
+      "digest": "6e72e9e099f46ae06d291974e91e3dfe980ff44fa0230a10fafdfdaf78e59ba8",
+      "issue": 1258,
+      "message": {
+        "kind": "return",
+        "issue": 1258,
+        "at": 1793846212933,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793846212933,
+          "entry": 4,
+          "detail": "Backend изменённой области: failed",
+          "eventId": "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:3:return:return:1258"
+        }
       }
     }
   },
