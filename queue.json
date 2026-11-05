@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3629,
+  "revision": 3630,
   "nextTicket": 207,
   "nextFence": 207,
   "tasks": {
@@ -1992,7 +1992,7 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1258-safe-deletion",
-      "materialSha": "0112f714c6e8d04f8526872ceb542b4bc80319b2",
+      "materialSha": "5146b134cb24686ee19ec68bb553bea8303f7ffe",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 206,
@@ -2000,18 +2000,22 @@
       "status": "S6-in-progress",
       "readyAt": 1793845962300,
       "reviewEntry": 4,
-      "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5",
+      "patchId": "e3e0bf1208548fb77601202aaf2827b2db39cfa5",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
+        "custom_components/houseplan/wall_removal_proof.py",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/WALL-THICKNESS.md",
         "docs/release-ledger/v1.83.0/1258.json",
         "src/houseplan-editor-runtime.ts",
         "src/junction-limits.ts",
+        "src/wall-removal-proof.ts",
+        "test/helpers/wall-removal-cases.mjs",
         "test/wall-removal-limits.test.mjs",
         "tests_backend/test_ha_wall_removal_limits.py",
-        "tests_backend/test_junction_limits.py"
+        "tests_backend/test_junction_limits.py",
+        "tests_backend/test_wall_removal_proof.py"
       ],
       "notice": {
         "key": "3:review-findings",
@@ -2036,10 +2040,7 @@
       "reviewCorrection": {
         "requestId": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
         "at": 1793845435769
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793846107756,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      }
     },
     "1261": {
       "issue": 1261,
@@ -3374,11 +3375,12 @@
     "worker": "github-coordinator",
     "token": "206:github:41956087452:1:tick:0:admit",
     "fence": 206,
-    "materialSha": "0112f714c6e8d04f8526872ceb542b4bc80319b2",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "5146b134cb24686ee19ec68bb553bea8303f7ffe",
+    "expectedBase": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+    "phase": "testing",
     "admittedAt": 1793846072222,
-    "expiresAt": 1793846445346
+    "expiresAt": 1793846474227,
+    "patchId": "e3e0bf1208548fb77601202aaf2827b2db39cfa5"
   },
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3555,6 +3557,10 @@
     },
     "finish:2c128b05-99db-413a-b157-6243ff2a941a": {
       "digest": "e0498857a5803152d8d0fcf88f2fcddee52a9f9953c88210eb82cfae79449152",
+      "issue": 1258
+    },
+    "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:2:synchronized": {
+      "digest": "a22587076023f15960c6fbcb32f686c59f9edffc078d0ee85248374cfc96b0fc",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
