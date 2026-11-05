@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4071,
+  "revision": 4072,
   "nextTicket": 221,
   "nextFence": 221,
   "tasks": {
@@ -3588,6 +3588,10 @@
       "digest": "dd2e62c50bdd6c8e0672d6bc2d2e653587da67e0d24244ec17241453558ce810",
       "issue": 1303
     },
+    "github:41985757470:1:completions:message:0662d597465b3cdd2b7912bf09d3f25e4ef58f1cad4f883806e8e80df5126cab": {
+      "digest": "a64b0d576fc030937db1ada0495d35381787b4b7bc6e2a3ccf92d14fe2767ef7",
+      "issue": 1303
+    },
     "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9": {
       "digest": "2a1150c412e08eca2ce6a745e3a08f3caccb293d8e7bd9cfbf55d470e1d100f6",
       "issue": 1303,
@@ -3693,7 +3697,8 @@
         "reviewChanges": "Подтверждено: сохранённый on-edge junction ссылается на carrier-start→drag-end, но реальная цепочка имеет излом в bend. Общий affine DAG математически корректно двигает junction; это неверная семантика именно Select, который по #803 сохраняет дальние концы. Исправление ограничено TS Select adapter и зеркальным server-owned graph_node_write.py; generic plan-graph DAG и wire/schema не меняются.\n\nNodeMoveDependencies готовится один раз на жест из уже проверенного graph/index. Затронуты constraints, чьи концы или реальный прежний прямой путь содержат выбранный узел. После явного target проверяется существование конечного связного прямого пути через dependent по точным рациональным параметрам, с реальными IDs, без допусков. Действительная связь получает параметр относительно неизменной дальней точки; связь через излом/разрыв снимается атомарно. Сохраняется настоящая выбранная T/X ось. Python независимо повторяет правило на своих Fraction/index перед propagate_dependencies. Это исправляет уже сохранённый образец при редактировании и предотвращает сохранение новой дальней связи при изгибе X.\n\nРиски: нельзя отключить все зависимости или ослабить графовые/физические guards; нельзя спутать coincident detached IDs с путём; необязательные и далёкие компоненты не переписываются. Перебор dependencies/индекс выполняется при подготовке жеста, pointer-кандидаты работают с отобранными связями. Сохранены opening policy, stable IDs, один node_move writer и история. Никаких пользовательских решений/Optimize/миграции при чтении.\n\nРегрессия: обезличенный структурный компонент 7nodes/6edges из экспорта, без имён/HA entities. Все3новых Node-теста падали до исправления и прошли после: шесть направлений плюс axial target исходного broken support, новый X bend и следующий жест, действительные T/intersection retargets. Сохранены original-reproduction.json и negative.tap; отдельный baseline replay из34631cb подтверждает исходный результат. Python/TS parity на семи целях, точные Undo/Redo и новый X bend —2/2диагностических backend PASS; существующий graph_node_write —3/3. Финальный S6 через finish включает старые node/core/connected проверки, real authenticated HA endpoint/store/reload regression, native pointer/Python-ACK smoke на4направлениях и старый Python-roundtrip smoke. Это описание отбора, фактический итог передаётся runner. Companion d8cff98/task-impact/1303.md отмечает необходимое расширение существующего geometry E2E перед следующей бетой. Продуктовая классификация line-fix (model11/1.84).\n\n\n### Разбор первого S6\n\nПервый допуск:7/9PASS,2FAIL. Обе ошибки новых интеграционных проверок — в обезличенной фикстуре не был указан обязательный view_box; HA config/set и настоящий Python CONFIG_SCHEMA отказали до проверки сохранения. Добавлен исходный hint[0,0,1,1] во все варианты фикстуры. Порог/guards/ассерты не ослаблялись, продуктовый код не менялся. Старые Node/critical/startup/Python-roundtrip успешно прошли. Исходный отрицательный отчёт20261105T071056451-c4542ccc сохранён; повторный finish переиспользует только применимые успехи.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
