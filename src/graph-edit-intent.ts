@@ -83,7 +83,8 @@ function unchanged(raw:readonly number[],exact:Q.ExactPoint,original?:readonly n
   return sameNumbers(raw,Q.pointToNumbers(exact))||sameNumbers(raw,original);
 }
 /** Resize authors only the changed ordinates. Recovering a near-lattice but
- * unchanged legacy ordinate would bend its fixed outside wall by a few ULPs. */
+ * unchanged legacy ordinate would bend its fixed outside wall by a few ULPs.
+ * The projection-identity tolerance also absorbs preview's *NORM /NORM noise. */
 function resizeTarget(raw:readonly number[],point:Q.ExactPoint,original?:readonly number[]):Q.ExactPoint {
   const authored=authoredPoint(raw),before=Q.pointToNumbers(point);
   const same=(a:number,b:number|undefined):boolean=>b!==undefined

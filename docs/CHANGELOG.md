@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Wait for observed server-side decor defaults before the cold-remount cache smoke; avoid treating an async polling predicate as persistence completion and assert the stored style explicitly. [#1293](https://github.com/Matysh/houseplan-card/issues/1293)
+- Preserve unchanged exact ordinates during Resize of imported current graphs, preventing near-lattice decimal recovery from creating micro-crossings against fixed neighbours. [#1292](https://github.com/Matysh/houseplan-card/issues/1292)
 
 - Check snap junctions against their literal lattice wire, exercise Draw chain compaction through native clicks, and pin weather fixture dates across HA midnight. Product geometry and visual baselines remain unchanged. [#1294](https://github.com/Matysh/houseplan-card/issues/1294)
 - Smoothly recenter an automatically fitted plan when the summary panel appears or disappears. Rapid toggles retarget the current camera; manual views and reduced-motion preferences are preserved. [#1254](https://github.com/Matysh/houseplan-card/issues/1254)
@@ -10,7 +11,6 @@
 
 ## v1.84.0-beta.5 — 2026-11-04
 - Reconcile lattice and wall-identity test passports, canonical writer assertions and deletion/Undo oracles with the accepted model11 behavior. Preserve historical sources, genuine off-grid cases, CAS refusals and file cleanup after Undo expires. [#1290](https://github.com/Matysh/houseplan-card/issues/1290)
-- Preserve unchanged exact ordinates during Resize of imported current graphs, preventing near-lattice decimal recovery from creating micro-crossings against fixed neighbours. [#1292](https://github.com/Matysh/houseplan-card/issues/1292)
 
 - Preserve exact lattice targets through wall nudges/body moves, Resize and opening movement; tolerate existing coordinate noise only at authored targets and retain accepted lattice anchors in mirrored TS/Python legacy normalization. Write affected opening angles from the normalized graph projection, synchronize the offline converter and its semantic fixtures, and retain the existing threshold mutation anchors. [#1282](https://github.com/Matysh/houseplan-card/issues/1282)
 - Remove safe collinear seams exposed by completed graph edits, preserving exact opening hosts, topology/support contacts, material boundaries and unrelated components. Optimize shares the protection of seams crossed by an opening footprint. Live Draw endpoints remain until chain finish. [#1283](https://github.com/Matysh/houseplan-card/issues/1283)

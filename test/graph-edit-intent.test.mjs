@@ -389,7 +389,15 @@ test('#1226 current graph deletion and face promotion retain the opening carrier
 
 for(const rotate of [false,true])for(const coalesced of [false,true])
   test(`#1292 Resize preserves an unchanged near-lattice ordinate (${rotate?'x':'y'}, ${coalesced?'corners':'atoms'})`,()=>{
-    const source=incidentFixture(),graph=copy(source.plan_graph);
+    const raw=copy(incidentFixture());
+    delete raw.plan_graph;
+    // Neighbouring caps create genuine T atoms on both selected top edges.
+    // The corner-only draft removes these atoms while graph cycles retain them.
+    raw.rooms.push(
+      {id:'cap-left',poly:[[.3,.05],[.4,.05],[.4,.15],[.3,.15]]},
+      {id:'cap-right',poly:[[.6,.05],[.7,.05],[.7,.15],[.6,.15]]});
+    const source=migrate(raw);
+    const graph=copy(source.plan_graph);
     // A valid imported current graph may retain decimal q from before the
     // native lattice writer. Every room sharing this line has the same exact q.
     for(const node of graph.nodes){
@@ -398,6 +406,7 @@ for(const rotate of [false,true])for(const coalesced of [false,true])
       if(rotate)p=[Q.sub(Q.ONE,p[1]),p[0]];
       node.p=Q.encodePoint(p);
     }
+    assert.equal(G.validateGraph(graph).ok,true);
     const before=G.projectGraphSpace(source,graph).space,snapshot=copy(before),draft=copy(before);
     for(const room of draft.rooms)if(['upper-left','upper-right'].includes(room.id)){
       room.poly=room.poly.map(p=>rotate?[p[0],p[1]===.5?.45:p[1]]:[p[0]===.5?.45:p[0],p[1]]);
@@ -405,13 +414,16 @@ for(const rotate of [false,true])for(const coalesced of [false,true])
         const prev=poly[(i+poly.length-1)%poly.length],next=poly[(i+1)%poly.length];
         return(p[0]-prev[0])*(next[1]-p[1])!==(p[1]-prev[1])*(next[0]-p[0]);
       });
+      const atoms=before.rooms.find(old=>old.id===room.id).poly.length;
+      assert.ok(coalesced ? room.poly.length < atoms : room.poly.length === atoms,
+        room.id+' must exercise the named corners/atoms branch');
     }
     const result=commitGraphEditResult(before,draft,{kind:'resize',rooms:['upper-left','upper-right']});
     const expected=rotate?['q','4999999999','10000000000','9','20']:['q','9','20','5000000001','10000000000'];
     assert.ok(result.graph.nodes.some(node=>JSON.stringify(node.p)===JSON.stringify(expected)),
       'changed ordinate is authored .45; untouched legacy q is not snapped to .5');
     assert.equal(G.validateGraph(result.graph).ok,true,'no micro crossing against the fixed neighbours');
-    for(const id of ['lower-left','lower-right','remote']){
+    for(const id of ['lower-left','lower-right','remote','cap-left','cap-right']){
       const old=before.rooms.find(room=>room.id===id),next=result.space.rooms.find(room=>room.id===id);
       for(const p of old.poly)assert.ok(next.poly.some(q=>JSON.stringify(q)===JSON.stringify(p)),id+' keeps every fixed vertex');
       assert.deepEqual(next.custom,old.custom);
