@@ -1,7 +1,7 @@
 /** #505: authentic, pinned HA assets for explicit native witnesses; no HA host/auth. */
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, createWriteStream, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, createWriteStream, readdirSync, mkdtempSync, renameSync, rmSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pipeline } from 'node:stream/promises';
@@ -69,67 +69,83 @@ export async function prepareHaDialogAssets({
   if (pin === HA_DIALOG_PIN && version !== pin.version) throw new Error(`HA frontend pin changed to ${version}; update and re-verify the authentic fixture`);
   const cache = resolve(cacheDir);
   mkdirSync(cache, { recursive: true });
-  const manifestPath = join(cache, 'manifest.json');
-  if (existsSync(manifestPath)) {
+  // Legacy complete caches remain readable. Cold preparation has a private
+  // staging tree; one atomic rename publishes every verified file together.
+  const readCache = location => {
+    const manifestPath = join(location, 'manifest.json');
     const manifestBytes = readFileSync(manifestPath);
     if (digest(manifestBytes) !== pin.cacheManifestSha256) throw new Error('HA fixture cache manifest hash mismatch');
     const manifest = JSON.parse(manifestBytes);
     if (manifest.version !== pin.version || manifest.sha256 !== pin.sha256
         || !manifest.files?.length || !manifest.modules?.[pin.module]) throw new Error('Invalid HA fixture cache manifest');
     for (const file of manifest.files) {
-      const target = resolve(cache, file.path);
-      if (!allowed(file.path) || !target.startsWith(cache + sep)
+      const target = resolve(location, file.path);
+      if (!allowed(file.path) || !target.startsWith(location + sep)
           || !existsSync(target) || digest(readFileSync(target)) !== file.sha256) {
         throw new Error(`HA fixture cache integrity failed: ${file.path}; choose a new --ha-cache directory`);
       }
     }
-    return { root: join(cache, 'hass_frontend'), manifest };
-  }
-  const savedWheel = join(cache, `home_assistant_frontend-${pin.version}.whl`);
-  const local = wheelPath || (existsSync(savedWheel) ? savedWheel : null);
-  let wheel;
-  if (local) wheel = readFileSync(resolve(local));
-  else {
-    console.log(`Downloading official HA frontend ${pin.version} (${pin.bytes} bytes), only for this explicit diagnostic`);
-    const response = await fetch(pin.url, { redirect: 'error', signal: AbortSignal.timeout(120000) });
-    if (!response.ok || Number(response.headers.get('content-length')) !== pin.bytes) throw new Error(`Unexpected wheel response: ${response.status}`);
-    const parts = []; let size = 0;
-    for await (const part of response.body) {
-      size += part.length;
-      if (size > pin.bytes) throw new Error('Wheel exceeds authenticated size');
-      parts.push(Buffer.from(part));
+    return { root: join(location, 'hass_frontend'), manifest };
+  };
+  if (existsSync(join(cache, 'manifest.json'))) return readCache(cache);
+  const ready = join(cache, 'verified');
+  if (existsSync(ready)) return readCache(ready);
+  const work = mkdtempSync(join(cache, '.prepare-'));
+  try {
+    const savedWheel = join(cache, `home_assistant_frontend-${pin.version}.whl`);
+    const local = wheelPath || (existsSync(savedWheel) ? savedWheel : null);
+    let wheel;
+    if (local) wheel = readFileSync(resolve(local));
+    else {
+      console.log(`Downloading official HA frontend ${pin.version} (${pin.bytes} bytes), only for this explicit diagnostic`);
+      const response = await fetch(pin.url, { redirect: 'error', signal: AbortSignal.timeout(120000) });
+      if (!response.ok || Number(response.headers.get('content-length')) !== pin.bytes) throw new Error(`Unexpected wheel response: ${response.status}`);
+      const parts = []; let size = 0;
+      for await (const part of response.body) {
+        size += part.length;
+        if (size > pin.bytes) throw new Error('Wheel exceeds authenticated size');
+        parts.push(Buffer.from(part));
+      }
+      wheel = Buffer.concat(parts);
     }
-    wheel = Buffer.concat(parts);
-  }
-  if (wheel.length !== pin.bytes || digest(wheel) !== pin.sha256) throw new Error('Official wheel hash/size mismatch; refusing extraction');
-  if (!local) writeFileSync(savedWheel, wheel, { flag: 'wx' });
-  const { yauzl } = require('playwright-core/lib/utilsBundle');
-  const files = [];
-  await new Promise((done, reject) => {
-    yauzl.fromBuffer(wheel, { lazyEntries: true, validateEntrySizes: true }, (error, archive) => {
-      if (error) { reject(error); return; }
-      archive.on('error', reject); archive.on('end', done);
-      archive.on('entry', async (entry) => {
-        try {
-          const name = entry.fileName;
-          if (!allowed(name)) { archive.readEntry(); return; }
-          const target = resolve(cache, name);
-          if (name.includes('\\') || name.split('/').includes('..') || !target.startsWith(cache + sep)
-              || ((entry.externalFileAttributes >>> 16) & 0xf000) === 0xa000) throw new Error(`Unsafe wheel entry ${name}`);
-          mkdirSync(dirname(target), { recursive: true });
-          const stream = await new Promise((accept, fail) => archive.openReadStream(entry, (failure, input) => failure ? fail(failure) : accept(input)));
-          await pipeline(stream, createWriteStream(target));
-          files.push({ path: name, sha256: digest(readFileSync(target)) });
-          archive.readEntry();
-        } catch (failure) { archive.close(); reject(failure); }
+    if (wheel.length !== pin.bytes || digest(wheel) !== pin.sha256) throw new Error('Official wheel hash/size mismatch; refusing extraction');
+    if (!local) writeFileSync(join(work, `home_assistant_frontend-${pin.version}.whl`), wheel, { flag: 'wx' });
+    const { yauzl } = require('playwright-core/lib/utilsBundle');
+    const files = [];
+    await new Promise((done, reject) => {
+      yauzl.fromBuffer(wheel, { lazyEntries: true, validateEntrySizes: true }, (error, archive) => {
+        if (error) { reject(error); return; }
+        archive.on('error', reject); archive.on('end', done);
+        archive.on('entry', async (entry) => {
+          try {
+            const name = entry.fileName;
+            if (!allowed(name)) { archive.readEntry(); return; }
+            const target = resolve(work, name);
+            if (name.includes('\\') || name.split('/').includes('..') || !target.startsWith(work + sep)
+                || ((entry.externalFileAttributes >>> 16) & 0xf000) === 0xa000) throw new Error(`Unsafe wheel entry ${name}`);
+            mkdirSync(dirname(target), { recursive: true });
+            const stream = await new Promise((accept, fail) => archive.openReadStream(entry, (failure, input) => failure ? fail(failure) : accept(input)));
+            await pipeline(stream, createWriteStream(target));
+            files.push({ path: name, sha256: digest(readFileSync(target)) });
+            archive.readEntry();
+          } catch (failure) { archive.close(); reject(failure); }
+        });
+        archive.readEntry();
       });
-      archive.readEntry();
     });
-  });
-  const root = join(cache, 'hass_frontend');
-  const manifest = { version: pin.version, sha256: pin.sha256, url: pin.url,
-    files, modules: haDialogModuleIndex(join(root, 'frontend_latest'), pin.module) };
-  if (digest(JSON.stringify(manifest)) !== pin.cacheManifestSha256) throw new Error('Rebuilt HA manifest differs from verified pin; refusing this cache');
-  writeFileSync(manifestPath, JSON.stringify(manifest));
-  return { root, manifest };
+    const root = join(work, 'hass_frontend');
+    const manifest = { version: pin.version, sha256: pin.sha256, url: pin.url,
+      files, modules: haDialogModuleIndex(join(root, 'frontend_latest'), pin.module) };
+    if (digest(JSON.stringify(manifest)) !== pin.cacheManifestSha256) throw new Error('Rebuilt HA manifest differs from verified pin; refusing this cache');
+    writeFileSync(join(work, 'manifest.json'), JSON.stringify(manifest), { flag: 'wx' });
+    try { renameSync(work, ready); }
+    catch (error) {
+      if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(error.code)
+          || !existsSync(join(ready, 'manifest.json'))) throw error;
+    }
+    // A racing winner receives the same integrity checks as every warm read.
+    return readCache(ready);
+  } finally {
+    if (existsSync(work)) rmSync(work, { recursive: true, force: true });
+  }
 }
