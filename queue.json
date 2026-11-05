@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4148,
+  "revision": 4149,
   "nextTicket": 222,
   "nextFence": 222,
   "tasks": {
@@ -3467,12 +3467,12 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41507608155"
     },
     "1305": {
-      "requestId": "spec:1305:5e0062b8fa31813f09ed1e4a2d832593a768ea58cdd27614fe0ba255c50b6057",
-      "contextDigest": "5e0062b8fa31813f09ed1e4a2d832593a768ea58cdd27614fe0ba255c50b6057",
+      "requestId": "spec:1305:04cc8c9955832edb76af6ac430f38696e6c1abaa1cd1f4a311056b2ab6524bee",
+      "contextDigest": "04cc8c9955832edb76af6ac430f38696e6c1abaa1cd1f4a311056b2ab6524bee",
       "base": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-      "round": 1,
+      "round": 2,
       "status": "pending",
-      "updatedAt": 1793870209081
+      "updatedAt": 1793871046296
     }
   },
   "reviewPublications": {
@@ -3501,6 +3501,19 @@
         "round": 1,
         "occurredAt": "2026-11-05T09:16:49.081Z"
       }
+    },
+    "spec:1305:spec:1305:04cc8c9955832edb76af6ac430f38696e6c1abaa1cd1f4a311056b2ab6524bee": {
+      "issue": 1305,
+      "kind": "spec",
+      "requestId": "spec:1305:04cc8c9955832edb76af6ac430f38696e6c1abaa1cd1f4a311056b2ab6524bee",
+      "materialSha": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+      "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+      "patchId": "04cc8c9955832edb76af6ac430f38696e6c1abaa1cd1f4a311056b2ab6524bee",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-05T09:30:46.296Z"
+      }
     }
   },
   "waiting": [],
@@ -3509,6 +3522,22 @@
     "github:42001043930:1:label:spec-request": {
       "digest": "20f082fa0bf817df866737264ff004773f22a8c32a105dfd0e490928fe7a3c9c",
       "issue": 1305
+    },
+    "github:42002223818:1:label:spec-request": {
+      "digest": "021ef6863d89bbd22c642800c05bc562bdb14d512963985fc1bcc843907dc6d1",
+      "issue": 1305
+    },
+    "github:42002223818:1:label:spec-request:spec-replaced:1305": {
+      "digest": "021ef6863d89bbd22c642800c05bc562bdb14d512963985fc1bcc843907dc6d1",
+      "issue": 1305,
+      "message": {
+        "kind": "spec-replaced",
+        "issue": 1305,
+        "at": 1793871046296,
+        "previousRound": 1,
+        "round": 2,
+        "reviewChanges": "Анализ исходников dev `5588345f1`: `wall-node-move.ts`/`wall_node_move.py` явно запрещают новый foreign contact; `wall-node-editor.ts` сейчас строит и проверяет move candidate на кадре; `graph_node_write.py` сохраняет graph identity и перепроверяет physical move; `wall-node-write/history` уже дают сериализацию, ACK и доказанный inverse. Поэтому предложено ограниченное именованное merge намерение в существующем node_move, с отдельной capability без изменения прежней move API. Альтернатива — отдельный WS endpoint/третья история — дублирует те же атомарные правила; простой общий allow-contact небезопасен. Stage4 renderer уже доступен, переписывать его не требуется.\n\nГлавные места для внимания: селективное разрешение контакта только двух IDs, точный q-target, T/X и dependent nodes, opening proof, inverse первого legacy жеста, сохранение native Optimize fixed-point, дешёвый preview до full release safety. Продуктовые тесты/билды/реализация до принятия S4 не запускались. Выполнены чтение актуального issue/контрактов и инвентарь текущих writer/validator/capability путей; конкретные замеры ещё впереди.\n\n### Исправления по предыдущему ревью\n\nПервый раунд: [run 42001092447](https://github.com/Matysh/houseplan-card/actions/runs/42001092447), changes_requested. Полный отчёт и исходная редакция сохраняются. Во время первого S4 владелец изменил контракт: «если между двумя объединяемыми узлами уже есть ребро — давай просто корректно удалять его при объединении». Для правок задача возвращена на S3; это новая редакция для следующего раунда.\n\n- Противоречие магнита и заведомо недостижимой passing-цели → введён дешёвый предварительный axis/finite/swept filter. T/X не притягиваются вне допустимой оси; ordinary move сохраняет прежние строгие правила. Прямые соседи теперь допустимы по новому решению владельца: connecting edge удаляется в том же атомарном действии; допускается граница носителя для merge, без прохода через промежуточный узел. Валентность, углы и прочие дорогие проверки по-прежнему на release.\n- Удаление connecting edge → описаны room cycle removal/валидация, отказ при проёме на удаляемом ребре, обработка вырожденных dependencies, native lossless cleanup и точный inverse. Комнаты и проёмы не удаляются ради успеха.\n- Рекомендация явно удалить source → операция TS/Python и generated runtime названа в скоупе; изолированный source не считается выполненным объединением.\n- Неоднозначная ошибка GraphError → перечислены стабильные merge-коды и i18n mapping, разделены topology refusal и временная недоступность.\n- П5 на backend → уточнено, что это действующий клиентский guard, Python сохраняет свой независимый П1–П4/graph/hosts набор без нового порта renderer.\n- UX цены магнита → описаны захват допустимой цели и увеличение масштаба для обычного размещения рядом.\n\nИсходные команды владельца: объединять узлы drag; притягивать магнитом и подсвечивать **неподвижный** узел; на отпускании проверять число стен/длины/углы и отменять весь жест с понятной ошибкой при отказе; при успехе соединять рёбра обоих узлов; непосредственное ребро между ними **удалять**, а не отказывать только из-за его схлопывания. Нового подтверждения микросдвигов/геометрии пользователем не предлагается. Вторая редакция пока не объявляется принятой."
+      }
     }
   },
   "devWebhook": {
