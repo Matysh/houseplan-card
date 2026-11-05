@@ -5,6 +5,7 @@ import pytest
 from test_ha_wall_node_delete import setup
 from custom_components.houseplan.plan_graph import project_graph_space
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+from test_wall_removal_proof import native_cases
 
 
 @pytest.fixture(autouse=True)
@@ -75,3 +76,24 @@ async def test_deletion_cannot_hide_a_new_short_changed_wall(hass, hass_ws_clien
     assert response["error"]["code"] == "junction_limit_length", response
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     assert (await client.receive_json())["result"] == snapshot
+
+
+@pytest.mark.parametrize("name", ["t", "room-drop", "room-keep"])
+async def test_native_compacted_deletions_persist_and_restore(hass, hass_ws_client, name):
+    case = native_cases(name)
+    if name != "room-keep":
+        assert any(op["kind"] == "collapse-node" for op in case["operations"])
+    entry, client, snapshot = await setup(hass, hass_ws_client, source=case["before"])
+    original = snapshot["config"]
+    expected = {**copy.deepcopy(original), "spaces": case["after"]["spaces"]}
+    for candidate in [expected, original, expected]:
+        await client.send_json_auto_id({"type": "houseplan/config/set", "config": candidate,
+                                       "expected_rev": snapshot["rev"]})
+        response = await client.receive_json()
+        assert response["success"], response
+        snapshot = response["result"]
+        assert snapshot["config"] == candidate
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await client.receive_json())["result"]["config"] == expected

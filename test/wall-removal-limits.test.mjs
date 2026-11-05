@@ -6,6 +6,8 @@ import { removesOnlyLimitSegments, checkSegmentLengths } from '../test-build/jun
 import { CommandStack } from '../test-build/command-stack.js';
 import { PhysicalWriteHistory } from '../test-build/physical-write-history.js';
 import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
+import { graphOnlyRemovesWallMaterial } from '../test-build/wall-removal-proof.js';
+import { wallRemovalCase, wallRemovalProofCases } from './helpers/wall-removal-cases.mjs';
 
 function source(current = true) {
   const config = { model_version: 10, spaces: [{ id: 'f', cell_cm: 5, rooms: [], partitions: [
@@ -83,4 +85,19 @@ test('#1258 a changed exact q endpoint cannot hide behind an identical Number pr
   assert.equal(removesOnlyLimitSegments(before.spaces[0].partitions, space.partitions, 5, 5,
     before.spaces[0].plan_graph, space.plan_graph), false);
   assert.ok(h.runtime._junctionLimitsIntroduced(next, before, 'f').some(v => v.rule === 'length'));
+});
+
+for (const name of ['t', 'room-drop', 'room-keep']) test(`#1258 native ${name} deletion and seam compaction remain safe`, () => {
+  const c = wallRemovalCase(name), h = harness(c.before), before = h.runtime._geometrySnapshot('f');
+  const live = h.host._serverCfg.spaces[0];
+  if (name.startsWith('room')) live.rooms = []; else live.partitions = live.partitions.filter(p => p.id !== 'long');
+  if (name !== 'room-keep') assert.ok(c.operations.some(op => op.kind === 'collapse-node'), 'must witness native compaction');
+  assert.equal(h.runtime._commitPhysicalGeometry('Delete', before, [], true, c.intent), true, JSON.stringify(h.toasts));
+  assert.deepEqual(h.host._serverCfg, c.after);
+  assert.deepEqual(c.after.spaces[0].partitions.find(p => p.id === 'short'),
+    c.before.spaces[0].partitions.find(p => p.id === 'short'));
+});
+
+for (const c of wallRemovalProofCases()) test(`#1258 shared exact material corpus: ${c.name}`, () => {
+  assert.equal(graphOnlyRemovesWallMaterial(c.before, c.after), c.expected);
 });

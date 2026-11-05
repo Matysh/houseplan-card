@@ -25,6 +25,7 @@ import sys
 from typing import Any
 
 from .coordinate_canonicalization import COORDINATE_FACTOR, LATTICE_GRID_N
+from .wall_removal_proof import graph_only_removes_wall_material
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
@@ -492,22 +493,7 @@ def removes_only_limit_segments(previous: dict[str, Any] | None, candidate: dict
         return False
     old_graph, new_graph = previous.get("plan_graph"), candidate.get("plan_graph")
     if old_graph is not None or new_graph is not None:
-        if old_graph is None or new_graph is None or len(new_graph["edges"]) >= len(old_graph["edges"]):
-            return False
-        old_nodes = {node["id"]: node["p"] for node in old_graph["nodes"]}
-        new_nodes = {node["id"]: node["p"] for node in new_graph["nodes"]}
-        # Exact q points may share a Number projection despite being distinct.
-        old_edges = {}
-        for edge in old_graph["edges"]:
-            old_edges.setdefault(edge["id"], []).append(
-                {key: value for key, value in edge.items() if key != "kind"})
-        for edge in new_graph["edges"]:
-            record = {key: value for key, value in edge.items() if key != "kind"}
-            pool = old_edges.get(edge["id"], [])
-            if record not in pool or any(old_nodes.get(edge[side]) != new_nodes.get(edge[side])
-                                        for side in ("from", "to")):
-                return False
-            pool.remove(record)
+        return old_graph is not None and new_graph is not None and graph_only_removes_wall_material(old_graph, new_graph)
     before, after = limit_segments(previous), limit_segments(candidate)
     if len(after) >= len(before):
         return False

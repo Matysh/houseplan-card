@@ -48,13 +48,18 @@ three-partition fixture is shared by unit, native-browser and golden evidence.
 
 Explicit wall removal (#1258) may expose a short collinear remainder. The
 client and server exempt only the minimum-length rule when every surviving
-carrier retains its exact ID, endpoints and thickness, the grid scale is
-unchanged, and the carrier multiset strictly shrinks. The server proves this
-against exact graph point/edge records, not only their Number projections,
+carrier retains its exact ID, endpoints and thickness, or is the lossless
+straight concatenation of old compatible edges retaining one old ID. All
+internal seams of that chain must be gone. No gap, extension, changed endpoint
+or material/property change qualifies; each old edge is consumed at most once
+and at least one old carrier must actually be removed. The grid scale is
+unchanged. The server proves this against exact graph records and arithmetic,
+not only their Number projections,
 from the stored document even with a cached junction baseline. Actual remaining
 violations stay in that baseline. Graph/reference, opening, physical safety,
-other junction rules, ACL and CAS checks remain in force. Node removal with
-a replacement chord does not qualify; ordinary creation/deformation is strict.
+other junction rules, ACL and CAS checks remain in force. A non-collinear
+replacement chord or pure node joining without removed material does not
+qualify; ordinary creation/deformation is strict.
 
 The native right-click menu is available with every idle Plan tool, including
 before Select has ever been used. It does not change the selected tool or
