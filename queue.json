@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3949,
+  "revision": 3950,
   "nextTicket": 217,
   "nextFence": 217,
   "tasks": {
@@ -3269,153 +3269,25 @@
     },
     "1300": {
       "issue": 1300,
+      "branch": "codex/1300-optimize-layout-readiness",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1300-optimize-layout-readiness",
-      "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 216,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793858178925,
-      "reviewEntry": 1,
-      "patchId": "13c063796f6dd3ce95fdbc385fe6dd560b5aa572",
-      "changedFiles": [
-        "demo/smoke_optimize_unverified.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261105T055632245-50d1dc38",
-        "name": "Тесты для задачи #1300 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T055632245-50d1dc38/report.json",
-        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "status": "passed",
-        "finishedAt": "2026-11-05T05:57:16.755Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
+      "mergedSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+      "mergedAt": 1793858462791,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1300:1:13c063796f6dd3ce95fdbc385fe6dd560b5aa572:a137f4e50531cf5caa432a52f14a4d154aace5e3",
-      "reviewMaterial": {
-        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "expectedBase": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
-        "patchId": "13c063796f6dd3ce95fdbc385fe6dd560b5aa572"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1300:1:13c063796f6dd3ce95fdbc385fe6dd560b5aa572:a137f4e50531cf5caa432a52f14a4d154aace5e3",
-        "eventId": "github:41977229024:1:tick:0:review-retry",
-        "at": 1793858257195,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1300,
-        "requestId": "review:1300:1:13c063796f6dd3ce95fdbc385fe6dd560b5aa572:a137f4e50531cf5caa432a52f14a4d154aace5e3",
-        "kind": "code",
-        "base": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
-        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "patchId": "13c063796f6dd3ce95fdbc385fe6dd560b5aa572",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1300,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1300",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина воспроизведена на неизменном публичном frontend: исходная проверка вернула FALSE при CSS height/min-height=44px и DOMRect.height=43.99993896484375px; шла конечная UI-kit FLIP-анимация. Свидетельство: output/issue-1300/original-5.log (dark), сохранён исходный FAILED stable run. Переносим измерение Retry после существующего bounded waitForUiKitPaint: ожидание fonts/реальных конечных анимаций, без отключения анимаций, sleep или повторов оракула. Точная >=44 и ограничения переполнения не меняются. Тот же оракул дополнительно отвергает реальную кнопку 43px; стиль восстанавливается в finally. Runtime не меняется. Числовые размеры/состояние fonts/animations печатаются с результатом для будущего разбора. Сборка/critical/startup в S6 выбраны потому, что нужен настоящий browser smoke (инфраструктурный профиль browser не выполняет); это не новый постоянный гейт. Остальные клавиатура/clipboard/Retry/zero-write assertions остаются. E2E impact: task-impact/1300.md companion. Финальный S6 и независимое ревью выполняет finish на допущенной очередью базе."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять. Исправление узкое и устраняет вероятную причину ложного FALSE в проверке `layout_retry_*_ru_360`: высоту кнопок измеряли, пока шла конечная анимация с `translate`. Теперь проверка дожидается общего ограниченного по времени `waitForUiKitPaint`. Порог `>= 44`, ограничения переполнения и ширина 360 не изменились. Runtime не трогали, sleep и повторного прогона проверки нет. Добавлен отрицательный контроль: кнопка высотой 43 px должна отклоняться той же проверкой, поэтому ожидание не делает её всегда истинной. Блокеров нет. Остаётся риск: та же причина теоретически может сработать в соседних проверках `layout_${theme}_${lang}_${width}`, и witness-лог видит только анимации самой кнопки, а не её предков. Оба пункта необязательны и вынесены в improvements.",
-          "understanding": "Проблема. На stable-аудите beta.6 smoke `demo/smoke_optimize_unverified.mjs` вернул FALSE для `layout_retry_light_ru_360` и `layout_retry_dark_ru_360`. По словам автора, в воспроизведении у кнопки были CSS `height/min-height=44px`, а `DOMRect.height` равнялся 43.99993896484375. Это похоже на ошибку плавающей точки при дробном `translate` предка или самой кнопки во время анимации.\n\nДо изменения. После `emulateMedia` и `setViewportSize(360)` синхронный `page.evaluate` сразу сравнивал `getBoundingClientRect().height >= 44`. Готовность отрисовки не ожидалась. Перед этим диалог открывали через `openAndRead()` и быстро нажимали Tab 12 раз, поэтому могла ещё идти анимация появления `.surface` (`hp-ui-appear`: `translate 0 -10px → 0`, 180 мс, `src/hp-dialog.ts:220`). Могла идти и FLIP-анимация шапки (`src/header-motion.ts:30`).\n\nПосле изменения. Измерение вынесено в `measureRetry`. В каждой теме перед ним вызывается `waitForUiKitPaint(page)` из `demo/helpers/ui-kit-paint.mjs`. Helper ждёт `document.fonts.ready` и два кадра, затем рекурсивно обходит document и открытые shadow root. Он ждёт конечные анимации в состоянии `running` с таймаутом 4 с на раунд и максимум 5 раундами, бесконечные анимации не трогает. Логическое условие `valid` совпадает с прежним выражением символ в символ. Дополнительно возвращаются числовые размеры, `fonts.status`, вычисленные стили и анимации кнопок; они выводятся строкой `RETRY-WITNESS`. Затем идёт отрицательный контроль: Retry получает inline `min/height/max-height: 43px`, после ожидания проверка должна дать `!valid`, а `rect.height` должен быть ровно 43. В `finally` исходный атрибут `style` восстанавливается. Остальные проверки клавиатуры, clipboard, Retry и отсутствия записей не изменены.\n\nРазобранные пути: `smoke_optimize_unverified.mjs:180-340`, реализация helper, разметка кнопок `src/optimize-plans-dialog.ts:426-435` (Retry идёт первой, поэтому `actions[0]` указывает на неё), CSS `.optimize-action { min-height: 44px }` (`src/styles/editor-dialogs.styles.ts:357`), источники анимаций (`ui-motion.ts`, `ui-motion.styles.ts`, `hp-dialog.ts`, `header-motion.ts`), а также использование helper в других smoke.",
-          "analysis": [
-            {
-              "topic": "Соответствие механизма исправления причине",
-              "assessment": "Подходит. Расхождение возникает из-за дробного translate во время конечной анимации. Helper ждёт завершения всех конечных анимаций в состоянии running по всему документу и через открытые shadow root. Поэтому он покрывает и `.surface` внутри shadowRoot `hp-dialog`, и FLIP шапки карточки, независимо от того, какая из них сработала в CI. Решение не отключает анимации и не округляет оракул, то есть проверяется реальное конечное состояние. Helper уже используется более чем в 15 smoke, нового механизма нет.",
-              "evidence": "`demo/helpers/ui-kit-paint.mjs:7-29`: два кадра, затем ожидание `animation.finished` с таймаутом 4000 мс, до 5 раундов. `src/hp-dialog.ts:220` — `.surface { animation: hp-ui-appear ... both }`. `src/styles/ui-motion.styles.ts:13-16` — translate `0 -10px`. `src/header-motion.ts:30` — FLIP через `element.animate`."
-            },
-            {
-              "topic": "Сохранность оракула и требований приёмки",
-              "assessment": "Выражение `valid` не изменилось: порог `>= 44`, допуск ±1 по переполнению, `actions.length === 2` и правая граница внутри block остались прежними. Обе темы на ширине 360 проверяются, имена записей сохранены. Повторного прогона оракула и sleep нет, допуски не расширены. Требования п.2 и п.3 issue выполнены.",
-              "evidence": "diff `demo/smoke_optimize_unverified.mjs:293-296` в сравнении с базовыми строками того же выражения; цикл `304-314`."
-            },
-            {
-              "topic": "Отрицательный контроль",
-              "assessment": "Удачное дополнение, его стоит сохранить: контроль доказывает, что после ожидания тот же оракул ловит кнопку меньше 44 px. Восстановление в `finally` вернёт исходный `style`, в том числе вариант с `null`, поэтому дальнейшие шаги Retry работают с неизменённой кнопкой. Строгое `rect.height === 43` корректно, потому что после ожидания transform отсутствует. Если `measureRetry` вернёт `false`, обращение `negative.actions[0]` выбросит TypeError. Smoke упадёт явно, а не тихо пройдёт, поэтому это приемлемо.",
-              "evidence": "`demo/smoke_optimize_unverified.mjs:315-331`; порядок кнопок задан в `src/optimize-plans-dialog.ts:427-434`."
-            },
-            {
-              "topic": "Диагностический witness",
-              "assessment": "Полезная фиксация размеров и состояния fonts в момент проверки. Но `button.getAnimations()` без `{subtree}` возвращает только собственные анимации кнопки. Вероятный виновник — translate предка (`.surface` или контейнера шапки), а в witness он не попадёт. Для будущего разбора ложного FALSE лог может оказаться неинформативным. Принять работу это не мешает.",
-              "evidence": "`demo/smoke_optimize_unverified.mjs:302`."
-            },
-            {
-              "topic": "Соседний оракул с тем же механизмом",
-              "assessment": "Цикл `layout_${theme}_${lang}_${width}` вызывает `measure()` сразу после `optimizePlans.open()`, `settled()` и `fonts.ready`. В этот момент анимация появления `.surface` с translate почти наверняка ещё идёт, а условие `tall` тоже использует точное `>= 44`. В CI эти 8 проверок не падали, поэтому это гипотеза о будущей нестабильности, а не установленный дефект. Issue ограничен проверкой Retry, так что это не блокер.",
-              "evidence": "`demo/smoke_optimize_unverified.mjs:182-225`, особенно строки `185-187` и `202`."
-            },
-            {
-              "topic": "CHANGELOG",
-              "assessment": "Записи на двух языках короткие и по содержанию совпадают с соседними записями о стабилизации smoke (#1297).",
-              "evidence": "`docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`, раздел Unreleased."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Добавить `await waitForUiKitPaint(page)` между `open()` и замером в цикле `layout_${theme}_${lang}_${width}` (`demo/smoke_optimize_unverified.mjs:182-225`). Измерение там идёт во время анимации появления `.surface` с тем же точным порогом `>= 44`. Выгода: устраняется вероятный будущий ложный FALSE того же типа. Цена: около 200 мс на каждую из 8 итераций. Сейчас эти проверки не падают, поэтому изменение необязательно.",
-            "В `RETRY-WITNESS` записывать анимации предков, а не только самой кнопки. Например, вызывать `surface.getAnimations({ subtree: true })` или собирать конечные анимации в состоянии running так же, как helper. Если FALSE повторится, лог покажет реальный источник translate. Сейчас в witness будут только собственные анимации кнопки."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам: diff, `demo/smoke_optimize_unverified.mjs` целиком в затронутой области, `demo/helpers/ui-kit-paint.mjs`, источники анимаций в `src/`, разметка и CSS кнопок. Сборку, smoke и тесты я не запускал. Как результат S6 использую receipt «Тесты для задачи #1300 (перед ревью)» со статусом passed на материале a92688d9. По доступному материалу не могу подтвердить, что в него входил именно браузерный прогон `smoke_optimize_unverified` и что отрицательный контроль дал true; это опирается на заявление автора. Логи `output/issue-1300/original-5.log` и диагностика beta6 не отслеживаются в Git, поэтому значение 43.99993896484375 и наличие анимации в момент FALSE я не видел, принимаю их со слов автора. По коду объяснение правдоподобно: translate-анимации `.surface` и FLIP подтверждены в `src/`."
-        },
-        "usage": {
-          "input_tokens": 20,
-          "cache_creation_input_tokens": 53497,
-          "cache_read_input_tokens": 237819,
-          "output_tokens": 8994,
-          "output_tokens_details": {
-            "thinking_tokens": 3444
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 53497,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 761,
-              "cache_read_input_tokens": 40996,
-              "cache_creation_input_tokens": 12501,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 12501
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять. Исправление узкое и устраняет вероятную причину ложного FALSE в проверке `layout_retry_*_ru_360`: высоту кнопок измеряли, пока шла конечная анимация с `translate`. Теперь проверка дожидается общего ограниченного по времени `waitForUiKitPaint`. Порог `>= 44`, ограничения переполнения и ширина 360 не изменились. Runtime не трогали, sleep и повторного прогона проверки нет. Добавлен отрицательный контроль: кнопка высотой 43 px должна отклоняться той же проверкой, поэтому ожидание не делает её всегда истинной. Блокеров нет. Остаётся риск: та же причина теоретически может сработать в соседних проверках `layout_${theme}_${lang}_${width}`, и witness-лог видит только анимации самой кнопки, а не её предков. Оба пункта необязательны и вынесены в improvements.\n\n## Понимание решения\n\nПроблема. На stable-аудите beta.6 smoke `demo/smoke_optimize_unverified.mjs` вернул FALSE для `layout_retry_light_ru_360` и `layout_retry_dark_ru_360`. По словам автора, в воспроизведении у кнопки были CSS `height/min-height=44px`, а `DOMRect.height` равнялся 43.99993896484375. Это похоже на ошибку плавающей точки при дробном `translate` предка или самой кнопки во время анимации.\n\nДо изменения. После `emulateMedia` и `setViewportSize(360)` синхронный `page.evaluate` сразу сравнивал `getBoundingClientRect().height >= 44`. Готовность отрисовки не ожидалась. Перед этим диалог открывали через `openAndRead()` и быстро нажимали Tab 12 раз, поэтому могла ещё идти анимация появления `.surface` (`hp-ui-appear`: `translate 0 -10px → 0`, 180 мс, `src/hp-dialog.ts:220`). Могла идти и FLIP-анимация шапки (`src/header-motion.ts:30`).\n\nПосле изменения. Измерение вынесено в `measureRetry`. В каждой теме перед ним вызывается `waitForUiKitPaint(page)` из `demo/helpers/ui-kit-paint.mjs`. Helper ждёт `document.fonts.ready` и два кадра, затем рекурсивно обходит document и открытые shadow root. Он ждёт конечные анимации в состоянии `running` с таймаутом 4 с на раунд и максимум 5 раундами, бесконечные анимации не трогает. Логическое условие `valid` совпадает с прежним выражением символ в символ. Дополнительно возвращаются числовые размеры, `fonts.status`, вычисленные стили и анимации кнопок; они выводятся строкой `RETRY-WITNESS`. Затем идёт отрицательный контроль: Retry получает inline `min/height/max-height: 43px`, после ожидания проверка должна дать `!valid`, а `rect.height` должен быть ровно 43. В `finally` исходный атрибут `style` восстанавливается. Остальные проверки клавиатуры, clipboard, Retry и отсутствия записей не изменены.\n\nРазобранные пути: `smoke_optimize_unverified.mjs:180-340`, реализация helper, разметка кнопок `src/optimize-plans-dialog.ts:426-435` (Retry идёт первой, поэтому `actions[0]` указывает на неё), CSS `.optimize-action { min-height: 44px }` (`src/styles/editor-dialogs.styles.ts:357`), источники анимаций (`ui-motion.ts`, `ui-motion.styles.ts`, `hp-dialog.ts`, `header-motion.ts`), а также использование helper в других smoke.\n\n## Разбор решения\n\n### Соответствие механизма исправления причине\n\nПодходит. Расхождение возникает из-за дробного translate во время конечной анимации. Helper ждёт завершения всех конечных анимаций в состоянии running по всему документу и через открытые shadow root. Поэтому он покрывает и `.surface` внутри shadowRoot `hp-dialog`, и FLIP шапки карточки, независимо от того, какая из них сработала в CI. Решение не отключает анимации и не округляет оракул, то есть проверяется реальное конечное состояние. Helper уже используется более чем в 15 smoke, нового механизма нет.\n\nОснование: `demo/helpers/ui-kit-paint.mjs:7-29`: два кадра, затем ожидание `animation.finished` с таймаутом 4000 мс, до 5 раундов. `src/hp-dialog.ts:220` — `.surface { animation: hp-ui-appear ... both }`. `src/styles/ui-motion.styles.ts:13-16` — translate `0 -10px`. `src/header-motion.ts:30` — FLIP через `element.animate`.\n\n### Сохранность оракула и требований приёмки\n\nВыражение `valid` не изменилось: порог `>= 44`, допуск ±1 по переполнению, `actions.length === 2` и правая граница внутри block остались прежними. Обе темы на ширине 360 проверяются, имена записей сохранены. Повторного прогона оракула и sleep нет, допуски не расширены. Требования п.2 и п.3 issue выполнены.\n\nОснование: diff `demo/smoke_optimize_unverified.mjs:293-296` в сравнении с базовыми строками того же выражения; цикл `304-314`.\n\n### Отрицательный контроль\n\nУдачное дополнение, его стоит сохранить: контроль доказывает, что после ожидания тот же оракул ловит кнопку меньше 44 px. Восстановление в `finally` вернёт исходный `style`, в том числе вариант с `null`, поэтому дальнейшие шаги Retry работают с неизменённой кнопкой. Строгое `rect.height === 43` корректно, потому что после ожидания transform отсутствует. Если `measureRetry` вернёт `false`, обращение `negative.actions[0]` выбросит TypeError. Smoke упадёт явно, а не тихо пройдёт, поэтому это приемлемо.\n\nОснование: `demo/smoke_optimize_unverified.mjs:315-331`; порядок кнопок задан в `src/optimize-plans-dialog.ts:427-434`.\n\n### Диагностический witness\n\nПолезная фиксация размеров и состояния fonts в момент проверки. Но `button.getAnimations()` без `{subtree}` возвращает только собственные анимации кнопки. Вероятный виновник — translate предка (`.surface` или контейнера шапки), а в witness он не попадёт. Для будущего разбора ложного FALSE лог может оказаться неинформативным. Принять работу это не мешает.\n\nОснование: `demo/smoke_optimize_unverified.mjs:302`.\n\n### Соседний оракул с тем же механизмом\n\nЦикл `layout_${theme}_${lang}_${width}` вызывает `measure()` сразу после `optimizePlans.open()`, `settled()` и `fonts.ready`. В этот момент анимация появления `.surface` с translate почти наверняка ещё идёт, а условие `tall` тоже использует точное `>= 44`. В CI эти 8 проверок не падали, поэтому это гипотеза о будущей нестабильности, а не установленный дефект. Issue ограничен проверкой Retry, так что это не блокер.\n\nОснование: `demo/smoke_optimize_unverified.mjs:182-225`, особенно строки `185-187` и `202`.\n\n### CHANGELOG\n\nЗаписи на двух языках короткие и по содержанию совпадают с соседними записями о стабилизации smoke (#1297).\n\nОснование: `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`, раздел Unreleased.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить `await waitForUiKitPaint(page)` между `open()` и замером в цикле `layout_${theme}_${lang}_${width}` (`demo/smoke_optimize_unverified.mjs:182-225`). Измерение там идёт во время анимации появления `.surface` с тем же точным порогом `>= 44`. Выгода: устраняется вероятный будущий ложный FALSE того же типа. Цена: около 200 мс на каждую из 8 итераций. Сейчас эти проверки не падают, поэтому изменение необязательно.\n- В `RETRY-WITNESS` записывать анимации предков, а не только самой кнопки. Например, вызывать `surface.getAnimations({ subtree: true })` или собирать конечные анимации в состоянии running так же, как helper. Если FALSE повторится, лог покажет реальный источник translate. Сейчас в witness будут только собственные анимации кнопки.\n\n## Границы анализа\n\nРевью выполнено только по исходникам: diff, `demo/smoke_optimize_unverified.mjs` целиком в затронутой области, `demo/helpers/ui-kit-paint.mjs`, источники анимаций в `src/`, разметка и CSS кнопок. Сборку, smoke и тесты я не запускал. Как результат S6 использую receipt «Тесты для задачи #1300 (перед ревью)» со статусом passed на материале a92688d9. По доступному материалу не могу подтвердить, что в него входил именно браузерный прогон `smoke_optimize_unverified` и что отрицательный контроль дал true; это опирается на заявление автора. Логи `output/issue-1300/original-5.log` и диагностика beta6 не отслеживаются в Git, поэтому значение 43.99993896484375 и наличие анимации в момент FALSE я не видел, принимаю их со слов автора. По коду объяснение правдоподобно: translate-анимации `.surface` и FLIP подтверждены в `src/`.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: a137f4e50531cf5caa432a52f14a4d154aace5e3 → a92688d9f216be54f499d63739fa4392dc9b6f05\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1300, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина воспроизведена на неизменном публичном frontend: исходная проверка вернула FALSE при CSS height/min-height=44px и DOMRect.height=43.99993896484375px; шла конечная UI-kit FLIP-анимация. Свидетельство: output/issue-1300/original-5.log (dark), сохранён исходный FAILED stable run. Переносим измерение Retry после существующего bounded waitForUiKitPaint: ожидание fonts/реальных конечных анимаций, без отключения анимаций, sleep или повторов оракула. Точная >=44 и ограничения переполнения не меняются. Тот же оракул дополнительно отвергает реальную кнопку 43px; стиль восстанавливается в finally. Runtime не меняется. Числовые размеры/состояние fonts/animations печатаются с результатом для будущего разбора. Сборка/critical/startup в S6 выбраны потому, что нужен настоящий browser smoke (инфраструктурный профиль browser не выполняет); это не новый постоянный гейт. Остальные клавиатура/clipboard/Retry/zero-write assertions остаются. E2E impact: task-impact/1300.md companion. Финальный S6 и независимое ревью выполняет finish на допущенной очередью базе.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T06:00:07.474Z",
-        "artifactId": 13391824629,
-        "runId": 41977247171,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T06:00:11Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41977247171",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "a137f4e50531cf5caa432a52f14a4d154aace5e3"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3536,120 +3408,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1300,
-    "worker": "finish",
-    "token": "216:finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:1:admit",
-    "fence": 216,
-    "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-    "expectedBase": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793858182896,
-    "expiresAt": 1793862057933,
-    "patchId": "13c063796f6dd3ce95fdbc385fe6dd560b5aa572",
-    "reviewRequest": "review:1300:1:13c063796f6dd3ce95fdbc385fe6dd560b5aa572:a137f4e50531cf5caa432a52f14a4d154aace5e3"
-  },
-  "events": {
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:2:synchronized": {
-      "digest": "fd791bcbb4bab98e5a97d0ddccdbdcb07ced21147080d658366dc01dbe6364fd",
-      "issue": 1300
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:3:s6-label": {
-      "digest": "fad570b1a0407417a400c82749f03cea7ad4c418c369ae8d3124e26d2e709923",
-      "issue": 1300
-    },
-    "finish:fb787726-a850-4ae5-815e-e8f3a1df641b": {
-      "digest": "e9ff70afeef3dca300d84ea440c81b6c69fa67d7fc80571ec0ce6520911fb53d",
-      "issue": 1300
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:4:review-requested": {
-      "digest": "fbcc7e9c764734d549b5e642daaed9a7b1e63c9a1dcbb1b17aac9822f8cffa9f",
-      "issue": 1300
-    },
-    "github:41977229024:1:tick:0:review-retry": {
-      "digest": "9badffa2a21a6a65f6407f5de709f4855bbefd7e62179470f93b3db2c43cf2ac",
-      "issue": 1300
-    },
-    "github:41977229024:1:completions:message:11314bba75c2ec23f1f2b22309756e37af357953ec75b2ae0ace6acf811e5069": {
-      "digest": "6624fcd64c10f8334f3bff26697eebb7037faab32b41a0008f30e175f6d3c71a",
-      "issue": 1300
-    },
-    "github:41977229024:1:completions:message:6af13838bc4603a41cfbdec7aa74bb39a5b5f27433eb6b4f611aca3363cd57f1": {
-      "digest": "3f55eb13adb21067aed39810275e679d5a59de92ed85ba9b317a93e4ff02aa88",
-      "issue": 1300
-    },
-    "github:41977229024:1:completions:message:798c5eb566b96eb704d5d17b88fb6d769fca4bcb03b1eb7ac1de450f2477d629": {
-      "digest": "5b87ed1cee9d364f1d4e2ef79df1415af13490b31dd8ee4124f6a56024aed954",
-      "issue": 1300
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:7:review-presentation": {
-      "digest": "588ae966b3293a5239d6e8b61e167ac95f31a10c54bcfab2944a42a57102ea38",
-      "issue": 1300
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:7:review-complete": {
-      "digest": "f445b16dd4c9a4ca8a5a7c85be4459ecef2b9833a12c7b7ace6badb8fe5b880a",
-      "issue": 1300
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f": {
-      "digest": "73d7c4be7419fbb04920ec71d61755a52d6734dc7cd3b2c2f136461d5ab93794",
-      "issue": 1300,
-      "message": {
-        "kind": "queued",
-        "issue": 1300,
-        "at": 1793858178925,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "delivered": true
-      }
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:1:admit": {
-      "digest": "d05b6a6a9e095ad6a2e410b4ca8a4fc841dfb4fa84ccff05b0037202d98436de",
-      "issue": 1300,
-      "message": {
-        "kind": "admitted",
-        "issue": 1300,
-        "at": 1793858182896,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:3:s6-complete": {
-      "digest": "99cd72dd0100bc109b26f39cc9335766d8d80ea4c9271ac8000c527df67bf023",
-      "issue": 1300,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1300,
-        "at": 1793858237924,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T055632245-50d1dc38",
-          "name": "Тесты для задачи #1300 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T055632245-50d1dc38/report.json",
-          "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05",
-          "status": "passed",
-          "finishedAt": "2026-11-05T05:57:16.755Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина воспроизведена на неизменном публичном frontend: исходная проверка вернула FALSE при CSS height/min-height=44px и DOMRect.height=43.99993896484375px; шла конечная UI-kit FLIP-анимация. Свидетельство: output/issue-1300/original-5.log (dark), сохранён исходный FAILED stable run. Переносим измерение Retry после существующего bounded waitForUiKitPaint: ожидание fonts/реальных конечных анимаций, без отключения анимаций, sleep или повторов оракула. Точная >=44 и ограничения переполнения не меняются. Тот же оракул дополнительно отвергает реальную кнопку 43px; стиль восстанавливается в finally. Runtime не меняется. Числовые размеры/состояние fonts/animations печатаются с результатом для будущего разбора. Сборка/critical/startup в S6 выбраны потому, что нужен настоящий browser smoke (инфраструктурный профиль browser не выполняет); это не новый постоянный гейт. Остальные клавиатура/clipboard/Retry/zero-write assertions остаются. E2E impact: task-impact/1300.md companion. Финальный S6 и независимое ревью выполняет finish на допущенной очередью базе.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
     "status": "delivered",
