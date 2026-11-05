@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4334,
-  "nextTicket": 229,
+  "revision": 4335,
+  "nextTicket": 230,
   "nextFence": 229,
   "tasks": {
     "1126": {
@@ -3394,14 +3394,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/issue-1306-node-save",
-      "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9",
+      "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 228,
-      "queued": false,
+      "ticket": 229,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793879213339,
-      "reviewEntry": 1,
+      "readyAt": 1793880837918,
+      "reviewEntry": 2,
       "patchId": "969e0be6d0bd3fa44426f838b65cc7a037053e7e",
       "changedFiles": [
         "custom_components/houseplan/graph_node_write.py",
@@ -3437,20 +3437,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1306:1:969e0be6d0bd3fa44426f838b65cc7a037053e7e:f64fa33c347a8a3fe37789ffc444d74c40daa381",
-      "reviewMaterial": {
-        "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9",
-        "expectedBase": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
-        "patchId": "969e0be6d0bd3fa44426f838b65cc7a037053e7e"
-      },
-      "reviewRetry": {
-        "requestId": "review:1306:1:969e0be6d0bd3fa44426f838b65cc7a037053e7e:f64fa33c347a8a3fe37789ffc444d74c40daa381",
-        "eventId": "github:42021906498:1:tick:0:review-retry",
-        "at": 1793879309331,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1306:1:969e0be6d0bd3fa44426f838b65cc7a037053e7e:f64fa33c347a8a3fe37789ffc444d74c40daa381",
         "at": 1793879713701
@@ -3597,7 +3583,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1306
+  ],
   "active": null,
   "events": {
     "github:42015730997:1:label:spec-request": {
@@ -3729,6 +3717,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:e032a25c-71d3-4891-b8bd-55057414b9ef": {
+      "digest": "a2ce20bb30621e40866faf7e7d6b92544640cacb7ae5bb5b4f472ef4aecee0cb",
+      "issue": 1306,
+      "message": {
+        "kind": "queued",
+        "issue": 1306,
+        "at": 1793880837918,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
+        "evidence": {
+          "id": "20261105T114706348-66d625bc",
+          "name": "Тесты для задачи #1306 (перед ревью)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T114706348-66d625bc/report.json",
+          "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9",
+          "status": "passed",
+          "finishedAt": "2026-11-05T11:48:08.657Z",
+          "failures": []
+        }
       }
     }
   },
