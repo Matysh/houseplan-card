@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3559,
+  "revision": 3560,
   "nextTicket": 205,
   "nextFence": 204,
   "tasks": {
@@ -2029,7 +2029,7 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1258-safe-deletion",
-      "materialSha": "d0016fe841837ecc63f60e310f79d8416ccccc30",
+      "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 203,
@@ -2037,7 +2037,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793844105215,
       "reviewEntry": 3,
-      "patchId": "e596fd87e9b2993ad8167983519036f342851b5c",
+      "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
         "docs/CHANGELOG.md",
@@ -3313,11 +3313,12 @@
     "worker": "github-coordinator",
     "token": "203:github:41954193995:1:tick:1:admit",
     "fence": 203,
-    "materialSha": "d0016fe841837ecc63f60e310f79d8416ccccc30",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
+    "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+    "phase": "testing",
     "admittedAt": 1793845049323,
-    "expiresAt": 1793845349323
+    "expiresAt": 1793845408454,
+    "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5"
   },
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3374,6 +3375,10 @@
     },
     "github:41954193995:1:completions:message:ba82b9bf01aabbdd3c7eb53b13981b41ee8a634df7a2f9c24d0eb67c5c47ace9": {
       "digest": "cfd3f9a73b68f3b46846060969dde5c0d9f85e78faa7dd8e37a696522eeda640",
+      "issue": 1258
+    },
+    "finish:c5870fc8-4124-46bd-9d08-6d6fbcf99fbd:finish:1:synchronized": {
+      "digest": "cce6513c0ce4de64ed7e0f35d5e8efd1c94b81d7dcf9d29bade9db452fb2e4b3",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
