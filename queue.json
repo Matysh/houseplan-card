@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5132,
+  "revision": 5133,
   "nextTicket": 251,
   "nextFence": 251,
   "tasks": {
@@ -3827,7 +3827,29 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793912430619,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c9dd123f4794f4e13aa45b1f18c77ce2d11caca4",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "626c645948d2f9ecab458b410497641fd3487c69",
+        "tag": "v1.84.0",
+        "verdict": "accepted",
+        "patchId": "c9dd123f4794f4e13aa45b1f18c77ce2d11caca4",
+        "materialSha": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "docs/changelog_user_stable_en.md",
+        "docs/changelog_user_stable_ru.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3967,12 +3989,17 @@
     "token": "250:release-return-finish:4ba8e6ad-aa0b-4e49-98b0-13e88d9e6c4c:finish:1:admit",
     "fence": 250,
     "materialSha": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0ce4286288c285b1def73bacba1aa2bf602ad0e6",
+    "phase": "testing",
     "admittedAt": 1793912436170,
-    "expiresAt": 1793912736170
+    "expiresAt": 1793912742911,
+    "patchId": "c9dd123f4794f4e13aa45b1f18c77ce2d11caca4"
   },
   "events": {
+    "release-return-finish:4ba8e6ad-aa0b-4e49-98b0-13e88d9e6c4c:finish:2:synchronized": {
+      "digest": "9bf7171a07e018bbfa62d74a672301839f1106a55e590efefb01caccb910468b",
+      "issue": 1326
+    },
     "dev-build:42101040694:1:1325": {
       "digest": "d1996f93a24346afc58b797d79f6187fbfd9758ec69425bf7e38d3cc4c4e8bfc",
       "issue": 1325,
