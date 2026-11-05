@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 483,
+  "revision": 484,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -30099,6 +30099,14 @@
           "branch": "issue/1326-release-return-626c645948d2",
           "worktree": "/home/matysh/hp-beta6-release2/artifacts/process-next/return-worktrees/626c645948d2"
         }
+      },
+      "announcement": {
+        "tag": "v1.84.0",
+        "digest": "5bacd9e5fa6c9650d287a25f9e3f9cfe89b3ca05e6c35acf45d8bc7a3ec33e08",
+        "contentDigest": "b18385b6ecb50c23d03e78d0642fae640d641cbdbe652abd350b0ca386ff8fcf",
+        "attempt": 1,
+        "status": "sending",
+        "startedAt": "2026-11-05T21:03:13.443Z"
       }
     }
   },
@@ -34981,7 +34989,8 @@
     "stable1840-20261105-publish-history-corrected:completion:17effea2-ee53-454c-ac93-9756f3b64d2b": "335d869195e819bdc12a1e3096638d5b325b17356ebc0d2897866aa4cd6fc421",
     "stable1840-20261105-publish-history-corrected:completion:e380c719-b218-4108-94cc-09d4f678c240": "ec17124253098cc66022fcdf6864461f3200b431ee58bfdbaded8f4c10474eca",
     "stable1840-20261105-publish-history-corrected:completion:8946bdec-7de2-418c-a18a-ad01cec9906d": "911d47be87b158dc785f293a975f66e4f3e2bbfb3aab7f9651c5f3cafbfbc805",
-    "stable1840-20261105-publish-history-corrected:completion:d5e26fc4-396e-478d-9928-8d056214beaf": "708fe8bb8d81ce62cc2a63850cbf1d54388c1e3144bc371c47ba9534813a3c3b"
+    "stable1840-20261105-publish-history-corrected:completion:d5e26fc4-396e-478d-9928-8d056214beaf": "708fe8bb8d81ce62cc2a63850cbf1d54388c1e3144bc371c47ba9534813a3c3b",
+    "github:42108934342:1:complete:completion:7359e1d5-fd80-41d4-a324-aba0112337b2": "721d5d4e7f8ec4fdb2885510bd9b2e262aba6a53ccf3a8e19f0034567fb6fe94"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
