@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3585,
+  "revision": 3586,
   "nextTicket": 206,
   "nextFence": 205,
   "tasks": {
@@ -3501,6 +3501,10 @@
       "digest": "5dddb5b5383a0b25a13097d1e29c656ddd5e6c7ad836ba4f388f5238d2ef9c43",
       "issue": 1292
     },
+    "github:41955110965:1:completions:message:15991069bf7d4c176ec01deeec865e53a3d9cc3ea491b1f2890593948eee253e": {
+      "digest": "0244f071fc963037a3f5ee034309fb657506a3a8beaa9368a53461969aa80ddc",
+      "issue": 1292
+    },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
       "issue": 1258,
@@ -3729,7 +3733,8 @@
         "reviewChanges": "Исправление `75c6c7fdfcfcf7171e835fd9b51181bd91cfe3e3` сохраняет каждую неизменённую компоненту exact-point по прежнему допуску идентичности числовой проекции (0.5e-9 + machine allowance). Только изменённая компонента проходит `authoredPoint`. Сделано и для полного atom-кольца, и для corner-only target. Прежнее восстановление обеих компонент превращало, например, унаследованный y=0.5000000001 в y=0.5 при изменении x, тогда как неподвижный сосед сохранял q. Новый код не меняет normalizer, допуски графа или физические/junction guards.\n\nКороткая регрессия на независимой incident fixture проверяет обе оси и оба представления контура. Ожидаемые wire буквальны: изменённая .45 рядом с сохранённым q; каждый старый vertex неподвижных комнат, opaque props, вход и валидность графа защищены. Предварительно `graph-edit-intent.test.mjs` 36/36 PASS, включая четыре новые комбинации. Общий финальный S6 выполняется отдельно через finish.\n\nНа частном installable candidate исходника 75c6c7f (version beta.5, ZIP SHA256 `217a3906d84e6bf5ac69696a052c78c2b8c22dbe1fd5dcb8ee33f32a5843c799`) прошёл неизменённый полный HA #1264 first-floor: Resize -3, Keep room-f, Resize +1, Keep room-b, точные Undo/Redo/reload. Business 1/1, setup 3/3, ноль skip/retry, HA2026.10.4, собственная лаборатория `hp-e2e-journeys-8LxcoO`, контейнер удалён. Это исправленный частный пакет, не повторная публикация/перезапись тега beta.5. Исходный FAIL опубликованного пакета сохранён.\n\nНеизменённый `smoke_resize_pointer_real_plan.mjs` на той же исправленной сборке тоже PASS: оба отказа устранились одним исправлением producer. Вторая отдельная правка fake-backend не понадобилась. Локальные файлы доказательств: root `output/issue-1292/fixed/ha-diagnostic-result.json` и clone `output/issue-1292/smoke-fixed.log`.\n\nАльтернатива округлить неподвижные комнаты или отключить `unsplit-crossing` отвергнута: она меняла бы чужую геометрию или принимала недопустимый граф. Риски для ревью: per-ordinate projection-identity tolerance, соответствие corners/atoms и сохранение не-решёточного наследия при новой lattice-координате. Изменение не расширяет допустимые пересечения и не ремонтирует импорт целиком.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
