@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3768,
+  "revision": 3769,
   "nextTicket": 212,
   "nextFence": 212,
   "tasks": {
@@ -3143,7 +3143,7 @@
       "notice": {
         "key": "1:addressed-ci-findings",
         "reason": "addressed-ci-findings",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793847380927,
         "entry": 1,
@@ -3393,6 +3393,10 @@
     },
     "github:41958983965:1:tick:0:review-retry": {
       "digest": "3ee19529f3aee83108b8dd51428989118976e3af356ab050d5aca424ba8ae23d",
+      "issue": 1295
+    },
+    "github:41958983965:1:completions:notice:27b887965e6e2c6d62c562815d72aed316f909516c86b62c3b4a10082e840f3f": {
+      "digest": "57dd86a0f201c75b17717b379e23180cbbb086383735509a7d9e870d67cf7adc",
       "issue": 1295
     },
     "finish:0f3f4b23-226f-4b40-8191-712b215ff58d": {
