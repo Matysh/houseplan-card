@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4074,
+  "revision": 4075,
   "nextTicket": 221,
   "nextFence": 221,
   "tasks": {
@@ -3345,172 +3345,25 @@
     },
     "1303": {
       "issue": 1303,
+      "branch": "codex/1303-node-dependency-carrier",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1303-node-dependency-carrier",
-      "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 220,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793862802707,
-      "reviewEntry": 2,
-      "patchId": "ca5cbb629949df525d280b807b7d8779a7d3c40f",
-      "changedFiles": [
-        "custom_components/houseplan/graph_node_write.py",
-        "demo/smoke_node_dependency_carrier.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/PLAN-GRAPH.md",
-        "docs/release-ledger/v1.83.0/1303.json",
-        "src/wall-node-dependencies.ts",
-        "src/wall-node-move.ts",
-        "test/fixtures/1303-bent-carrier.json",
-        "test/wall-node-dependencies.test.mjs",
-        "tests_backend/test_ha_wall_node_dependency_carrier.py",
-        "tests_backend/test_wall_node_dependency_carrier.py"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793862723564,
-        "entry": 1,
-        "detail": "Backend изменённой области: failed; Браузер: node dependency carrier: failed",
-        "eventId": "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303"
-      },
-      "s6": {
-        "id": "20261105T071335401-47f2f9de",
-        "name": "Тесты для задачи #1303 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T071335401-47f2f9de/report.json",
-        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-        "status": "passed",
-        "finishedAt": "2026-11-05T07:13:47.931Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+      "mergedSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
+      "mergedAt": 1793863189646,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1303:2:ca5cbb629949df525d280b807b7d8779a7d3c40f:34631cb69c7b61327155c33d261811c0a9b66a9c",
-      "reviewMaterial": {
-        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-        "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c",
-        "patchId": "ca5cbb629949df525d280b807b7d8779a7d3c40f"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1303:2:ca5cbb629949df525d280b807b7d8779a7d3c40f:34631cb69c7b61327155c33d261811c0a9b66a9c",
-        "eventId": "github:41985757470:1:tick:0:review-retry",
-        "at": 1793862847236,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1303,
-        "requestId": "review:1303:2:ca5cbb629949df525d280b807b7d8779a7d3c40f:34631cb69c7b61327155c33d261811c0a9b66a9c",
-        "kind": "code",
-        "base": "34631cb69c7b61327155c33d261811c0a9b66a9c",
-        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-        "patchId": "ca5cbb629949df525d280b807b7d8779a7d3c40f",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1303,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1303",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Подтверждено: сохранённый on-edge junction ссылается на carrier-start→drag-end, но реальная цепочка имеет излом в bend. Общий affine DAG математически корректно двигает junction; это неверная семантика именно Select, который по #803 сохраняет дальние концы. Исправление ограничено TS Select adapter и зеркальным server-owned graph_node_write.py; generic plan-graph DAG и wire/schema не меняются.\n\nNodeMoveDependencies готовится один раз на жест из уже проверенного graph/index. Затронуты constraints, чьи концы или реальный прежний прямой путь содержат выбранный узел. После явного target проверяется существование конечного связного прямого пути через dependent по точным рациональным параметрам, с реальными IDs, без допусков. Действительная связь получает параметр относительно неизменной дальней точки; связь через излом/разрыв снимается атомарно. Сохраняется настоящая выбранная T/X ось. Python независимо повторяет правило на своих Fraction/index перед propagate_dependencies. Это исправляет уже сохранённый образец при редактировании и предотвращает сохранение новой дальней связи при изгибе X.\n\nРиски: нельзя отключить все зависимости или ослабить графовые/физические guards; нельзя спутать coincident detached IDs с путём; необязательные и далёкие компоненты не переписываются. Перебор dependencies/индекс выполняется при подготовке жеста, pointer-кандидаты работают с отобранными связями. Сохранены opening policy, stable IDs, один node_move writer и история. Никаких пользовательских решений/Optimize/миграции при чтении.\n\nРегрессия: обезличенный структурный компонент 7nodes/6edges из экспорта, без имён/HA entities. Все3новых Node-теста падали до исправления и прошли после: шесть направлений плюс axial target исходного broken support, новый X bend и следующий жест, действительные T/intersection retargets. Сохранены original-reproduction.json и negative.tap; отдельный baseline replay из34631cb подтверждает исходный результат. Python/TS parity на семи целях, точные Undo/Redo и новый X bend —2/2диагностических backend PASS; существующий graph_node_write —3/3. Финальный S6 через finish включает старые node/core/connected проверки, real authenticated HA endpoint/store/reload regression, native pointer/Python-ACK smoke на4направлениях и старый Python-roundtrip smoke. Это описание отбора, фактический итог передаётся runner. Companion d8cff98/task-impact/1303.md отмечает необходимое расширение существующего geometry E2E перед следующей бетой. Продуктовая классификация line-fix (model11/1.84).\n\n\n### Разбор первого S6\n\nПервый допуск:7/9PASS,2FAIL. Обе ошибки новых интеграционных проверок — в обезличенной фикстуре не был указан обязательный view_box; HA config/set и настоящий Python CONFIG_SCHEMA отказали до проверки сохранения. Добавлен исходный hint[0,0,1,1] во все варианты фикстуры. Порог/guards/ассерты не ослаблялись, продуктовый код не менялся. Старые Node/critical/startup/Python-roundtrip успешно прошли. Исходный отрицательный отчёт20261105T071056451-c4542ccc сохранён; повторный finish переиспользует только применимые успехи."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление решает задачу и подходит для неё. Когда в Select тянут узел, другие зависимости больше не двигают дальние вершины по аффинному DAG. Каждая затронутая связь проверяется заново: идёт ли её носитель от одного конца до другого через зависимый узел прямой цепочкой реальных рёбер, если считать точно на рациональных числах. Если идёт, связь получает новый параметр при той же точке узла. Если нет (излом или разрыв), связь снимается в той же команде. TS (`NodeMoveDependencies`) и сервер на Python (`_has_node_carrier`) делают одно и то же, общий DAG и формат хранения не меняются. Сохранённый план из экспорта исправляется при первом явном перемещении конца носителя, при чтении план не переписывается. Undo восстанавливает исходный граф вместе со старой зависимостью. S6 успешен (`20261105T071335401-47f2f9de`). Блокеров не нашёл. Остались два необязательных замечания: ветку сервера «сохранить связь и пересчитать параметр» не проверяет ни один тест, и быстрый путь `preparedMove` теперь часто заменяется полной проверкой всего графа на каждом кадре; скорость этого пути никто не измерял.",
-          "understanding": "Проблема. В сохранённом графе у `junction` есть on-edge зависимость с носителем `carrier-start→drag-end`. Геометрически `junction` лежит на этой прямой, но настоящая цепочка рёбер `carrier-start–junction–bend–drag-end` изломана в `bend`. До исправления Select-перемещение `drag-end` шло операцией `move-node` через `preparedMove` (`src/plan-graph.ts`:334–378). Этот путь пересчитывает все зависимости, у которых перемещённый узел — конец носителя. В итоге `junction` получал новую точку `pointAt(carrier-start, target, t)`, хотя с `drag-end` его связывает только устаревшая виртуальная связь. Python делал то же через `propagate_dependencies`.\n\nОткуда взялась связь. Скорее всего, узел-пересечение двигали по оси X: разделённый носитель изгибался, а дальняя зависимость на нём не снималась. Это видно по фикстуре (у `bend` своя on-edge зависимость на `support-top→support-bottom`) и по тесту «new X bend».\n\nКак работает теперь (TS). `prepareNodeMove` один раз на жест создаёт `NodeMoveDependencies` по замороженному графу и индексу. Затронутыми считаются чужие зависимости, у которых перемещённый узел — конец ref или лежит на прямом пути ref по исходным точкам. На каждый кандидат `operations(target)` проверяет `hasCarrier(ref, dependent, target)`. Проверка ищет связный путь по реальным рёбрам только через узлы на прямой ref, параметры строго растут, сравнение точное без допусков. Если путь есть у всех ref, параметры пересчитываются для неизменной точки зависимого (`set-dependency`, только если параметр изменился). Если нет — `retire-dependency`. Своя зависимость перемещаемого узла сохраняется, только если по её носителю тоже есть путь через target. Всё уходит одним batch в `applyGraphOperation`, финальный `evaluateDependencies` ставит сохранённые узлы ровно в прежние точки.\n\nPython. `graph_node_write.move_graph_node_space` независимо повторяет то же правило на `Fraction` и `index` до `propagate_dependencies`. Undo в `node_move_candidate` проверяется прямым прогоном от `before_space` и восстанавливает снятую зависимость.\n\nЧто разобрал по коду: `applyNodeMove` (графовая ветка), `prepareNodeMove` и вызов в `wall-node-editor.ts` (pointerdown, кадр, release без перемещения не пишет), `preparedMove`/batch/`evaluateDependencies` в `plan-graph.ts`, Python `move_graph_node_space`, `propagate_dependencies`, `node_move_candidate` (apply/undo). Сценарии прогнал вручную по коду: фикстура (снятие), X-bend на графе `crossing` (снятие `c`, сохранение вертикального носителя `a`), осевое движение `b` (перепараметризация `c` и `a`), движение промежуточного узла вдоль носителя, тап без перемещения.",
-          "analysis": [
-            {
-              "topic": "Правильность правила «прямой связный путь»",
-              "assessment": "Правило точное и закрывает нужные случаи. Узлы с одинаковым параметром не соединяются, потому что параметр должен строго расти: совпадающие по координатам отсоединённые ID не образуют ложный путь, циклы и возвраты исключены. Ответвления допустимы, потому что в обход попадают только соседи на прямой. Дальний зависимый узел никогда не сдвигается: снятие связи геометрию не меняет, а при сохранении параметр считается от неизменной точки зависимого, поэтому `pointAt` возвращает ровно её (коллинеарность проверена через `orientation`/`point_at`). Пересечение после `evaluateDependencies` тоже остаётся в той же точке, ведь обе прямые проходят через неё. Если обе прямые совпадут, получится отказ, а не сдвиг.",
-              "evidence": "`src/wall-node-dependencies.ts`:21–49, `custom_components/houseplan/graph_node_write.py`:28–70 (тот же алгоритм: `t < nt <= last`, `first > last`, `a == b`). Ручной прогон на графе `crossing` из `test/wall-node-dependencies.test.mjs`: `b→(4,0)` даёт `c=[1,4]` и `a=[1/2,1/2]`, X-bend `a→(2,.25)` снимает `c` и оставляет `a` on-edge `d→e`."
-            },
-            {
-              "topic": "Соответствие ТЗ и прежнему контракту Select",
-              "assessment": "Подход соответствует ТЗ: Select меняет только выбранный узел, общий аффинный DAG других операций не тронут. Стабильные ID, opening hosts и один writer `node_move` сохранены. Миграции при чтении нет. Сохранённый план исправляется при явном жесте над концом носителя или узлом на его пути. Видимое изменение поведения: если конец настоящего носителя с T увести с прямой, T-узел теперь остаётся на месте, стена ломается в нём, а зависимость снимается. Раньше T ехал вслед. Это прямо следует из п.1 ТЗ («прочие не затронутые жестом узлы остаются точно») и записано в `docs/PLAN-GRAPH.md`.",
-              "evidence": "`docs/PLAN-GRAPH.md`:33–41; `docs/CANVAS.md`:658–661 (карточные концы и промежуточные узлы — барьеры). Release без перемещения ничего не пишет (`wall-node-editor.ts`:282), поэтому тап не снимет устаревшую зависимость незаметно."
-            },
-            {
-              "topic": "Паритет TS и Python",
-              "assessment": "По чтению кода оба варианта эквивалентны: одинаковы набор затронутых связей, проверка с target, параметризация от точки зависимого, снятие при отказе любого ref и проверка пути для своей зависимости. Различие только в форме: TS пишет `set-dependency`, только если параметр изменился, Python перезаписывает всегда, но каноническая запись рационального числа одна и та же. Сквозными тестами паритет проверен только для снятия: семь целей фикстуры и X-bend. Ветку Python «сохранить и пересчитать параметр» (`graph_node_write.py`:99–103) не вызывает ни один backend- или parity-тест. Осевой случай есть только в Node-тесте TS. Существующий `test_move_retains_on_edge_constraint_and_propagates_dependents` проверяет лишь собственную зависимость перемещаемого T.",
-              "evidence": "`tests_backend/test_wall_node_dependency_carrier.py` (обе проверки ведут к снятию `junction` и `c`); `tests_backend/test_graph_node_write.py`:31–40; `test/wall-node-dependencies.test.mjs`:55–61 (только TS)."
-            },
-            {
-              "topic": "Атомарность, история, хранение",
-              "assessment": "Одна команда `node_move`: снятие или перепараметризация входит в тот же candidate. Undo через `before_space` доказывается прямым прогоном и возвращает исходный граф вместе с устаревшей зависимостью, Redo детерминированно повторяет снятие. Реальный HA-тест проверяет store, события ревизий и reload, smoke — preview, равенство Python ACK, Undo/Redo и холодный mount на четырёх направлениях.",
-              "evidence": "`custom_components/houseplan/wall_node_move.py`:403–422; `tests_backend/test_ha_wall_node_dependency_carrier.py`; `demo/smoke_node_dependency_carrier.mjs`:61–79."
-            },
-            {
-              "topic": "Цена на горячем пути pointer",
-              "assessment": "`NodeMoveDependencies` перебирает зависимости один раз на жест, на кадре проверяются только затронутые связи, это дёшево. Но если список затронутых не пуст (а это любой конец разделённого носителя с T или X, то есть обычный угол комнаты в графе), операций становится больше одной. Тогда `applyGraphOperation` уходит с быстрого `preparedMove` в полный путь: clone, `assertGraph` всего графа дважды, `canonicalGraph` на каждом кадре. Раньше такой путь был только у перемещений T/X с собственной зависимостью. `benchmark_wall_node_drag` работает с фикстурой без `plan_graph` и эту ветку не измеряет. Это гипотеза о регрессии, не установленный дефект.",
-              "evidence": "`src/wall-node-move.ts`:489–490 (`operations.length === 1 ? ... : batch`), `src/plan-graph.ts`:381 (быстрый путь только для одиночного `move-node`) и 619–621; `demo/performance/wall-node-fixture.mjs` не содержит `plan_graph`."
-            },
-            {
-              "topic": "Качество кода",
-              "assessment": "Отдельный маленький модуль с одной ответственностью, комментарии объясняют, почему правило именно такое. `WeakMap` по `plan` не меняет публичную форму `NodeMovePlan`. `plan.graph` теперь создаётся только при `node.nodeId`, и других потребителей у него нет. Дублирование между TS и Python осознанное и следует существующей модели «сервер доказывает независимо».",
-              "evidence": "`src/wall-node-move.ts`:47, 155–163; поиск `plan.graph` в `src` находит только строку 489."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Добавить в `tests_backend/test_wall_node_dependency_carrier.py` осевой случай графа `crossing` (`b→[4,0]`) через `frontend(...)` и `node_move_candidate`, с проверкой `after == reply[\"after\"]` и параметров `c=[1,4]`, `a=[1/2,1/2]`. Сейчас серверную ветку перепараметризации (`graph_node_write.py`:99–103) не проверяет ни один тест, хотя это самый частый реальный сценарий: тянут конец стены с T на ней. Тест дешёвый и закрепляет паритет ACK и preview там, где сейчас уверенность держится только на чтении кода.",
-            "Проверить скорость кадра для графа. Можно добавить в `benchmark_wall_node_drag` вариант с `plan_graph` и T на носителе или замерить вручную на большом этаже. Если полный путь окажется заметным, лучше научить `preparedMove` принимать готовый список снятых и перепараметризованных зависимостей (например, необязательное поле в `move-node`). Тогда перемещение одного узла останется на локальной проверке без полного `assertGraph`. Геометрия при этом не меняется: снятие и перепараметризация по построению оставляют точки на месте."
-          ],
-          "boundaries": "Ревью сделано только чтением кода на pinned head `ba1d05fc`: сборку, тесты и smoke я не запускал. Опирался на итог S6 `20261105T071335401-47f2f9de` (passed, без ошибок) и описание первого отрицательного прогона (две ошибки фикстуры без `view_box`; исправлена фикстура, продуктовый код не менялся). Выводы о паритете TS и Python для ветки перепараметризации получены чтением, а не прогоном. Сам экспорт владельца не видел: исходная воспроизводимость подтверждается только обезличенной фикстурой и утверждением автора о baseline replay на `34631cb`. Широкую матрицу `geometry_parity` и E2E не проверял, автор вынес их в companion `task-impact/1303.md`. Другие операции графа (Resize, translate-edges, Walls), которые тоже могут изогнуть носитель, сознательно оставлены на аффинном DAG и в объём задачи не входят."
-        },
-        "usage": {
-          "input_tokens": 60,
-          "cache_creation_input_tokens": 108225,
-          "cache_read_input_tokens": 1919035,
-          "output_tokens": 23287,
-          "output_tokens_details": {
-            "thinking_tokens": 15002
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 108225,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 970,
-              "cache_read_input_tokens": 90718,
-              "cache_creation_input_tokens": 17507,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 17507
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает задачу и подходит для неё. Когда в Select тянут узел, другие зависимости больше не двигают дальние вершины по аффинному DAG. Каждая затронутая связь проверяется заново: идёт ли её носитель от одного конца до другого через зависимый узел прямой цепочкой реальных рёбер, если считать точно на рациональных числах. Если идёт, связь получает новый параметр при той же точке узла. Если нет (излом или разрыв), связь снимается в той же команде. TS (`NodeMoveDependencies`) и сервер на Python (`_has_node_carrier`) делают одно и то же, общий DAG и формат хранения не меняются. Сохранённый план из экспорта исправляется при первом явном перемещении конца носителя, при чтении план не переписывается. Undo восстанавливает исходный граф вместе со старой зависимостью. S6 успешен (`20261105T071335401-47f2f9de`). Блокеров не нашёл. Остались два необязательных замечания: ветку сервера «сохранить связь и пересчитать параметр» не проверяет ни один тест, и быстрый путь `preparedMove` теперь часто заменяется полной проверкой всего графа на каждом кадре; скорость этого пути никто не измерял.\n\n## Понимание решения\n\nПроблема. В сохранённом графе у `junction` есть on-edge зависимость с носителем `carrier-start→drag-end`. Геометрически `junction` лежит на этой прямой, но настоящая цепочка рёбер `carrier-start–junction–bend–drag-end` изломана в `bend`. До исправления Select-перемещение `drag-end` шло операцией `move-node` через `preparedMove` (`src/plan-graph.ts`:334–378). Этот путь пересчитывает все зависимости, у которых перемещённый узел — конец носителя. В итоге `junction` получал новую точку `pointAt(carrier-start, target, t)`, хотя с `drag-end` его связывает только устаревшая виртуальная связь. Python делал то же через `propagate_dependencies`.\n\nОткуда взялась связь. Скорее всего, узел-пересечение двигали по оси X: разделённый носитель изгибался, а дальняя зависимость на нём не снималась. Это видно по фикстуре (у `bend` своя on-edge зависимость на `support-top→support-bottom`) и по тесту «new X bend».\n\nКак работает теперь (TS). `prepareNodeMove` один раз на жест создаёт `NodeMoveDependencies` по замороженному графу и индексу. Затронутыми считаются чужие зависимости, у которых перемещённый узел — конец ref или лежит на прямом пути ref по исходным точкам. На каждый кандидат `operations(target)` проверяет `hasCarrier(ref, dependent, target)`. Проверка ищет связный путь по реальным рёбрам только через узлы на прямой ref, параметры строго растут, сравнение точное без допусков. Если путь есть у всех ref, параметры пересчитываются для неизменной точки зависимого (`set-dependency`, только если параметр изменился). Если нет — `retire-dependency`. Своя зависимость перемещаемого узла сохраняется, только если по её носителю тоже есть путь через target. Всё уходит одним batch в `applyGraphOperation`, финальный `evaluateDependencies` ставит сохранённые узлы ровно в прежние точки.\n\nPython. `graph_node_write.move_graph_node_space` независимо повторяет то же правило на `Fraction` и `index` до `propagate_dependencies`. Undo в `node_move_candidate` проверяется прямым прогоном от `before_space` и восстанавливает снятую зависимость.\n\nЧто разобрал по коду: `applyNodeMove` (графовая ветка), `prepareNodeMove` и вызов в `wall-node-editor.ts` (pointerdown, кадр, release без перемещения не пишет), `preparedMove`/batch/`evaluateDependencies` в `plan-graph.ts`, Python `move_graph_node_space`, `propagate_dependencies`, `node_move_candidate` (apply/undo). Сценарии прогнал вручную по коду: фикстура (снятие), X-bend на графе `crossing` (снятие `c`, сохранение вертикального носителя `a`), осевое движение `b` (перепараметризация `c` и `a`), движение промежуточного узла вдоль носителя, тап без перемещения.\n\n## Разбор решения\n\n### Правильность правила «прямой связный путь»\n\nПравило точное и закрывает нужные случаи. Узлы с одинаковым параметром не соединяются, потому что параметр должен строго расти: совпадающие по координатам отсоединённые ID не образуют ложный путь, циклы и возвраты исключены. Ответвления допустимы, потому что в обход попадают только соседи на прямой. Дальний зависимый узел никогда не сдвигается: снятие связи геометрию не меняет, а при сохранении параметр считается от неизменной точки зависимого, поэтому `pointAt` возвращает ровно её (коллинеарность проверена через `orientation`/`point_at`). Пересечение после `evaluateDependencies` тоже остаётся в той же точке, ведь обе прямые проходят через неё. Если обе прямые совпадут, получится отказ, а не сдвиг.\n\nОснование: `src/wall-node-dependencies.ts`:21–49, `custom_components/houseplan/graph_node_write.py`:28–70 (тот же алгоритм: `t < nt <= last`, `first > last`, `a == b`). Ручной прогон на графе `crossing` из `test/wall-node-dependencies.test.mjs`: `b→(4,0)` даёт `c=[1,4]` и `a=[1/2,1/2]`, X-bend `a→(2,.25)` снимает `c` и оставляет `a` on-edge `d→e`.\n\n### Соответствие ТЗ и прежнему контракту Select\n\nПодход соответствует ТЗ: Select меняет только выбранный узел, общий аффинный DAG других операций не тронут. Стабильные ID, opening hosts и один writer `node_move` сохранены. Миграции при чтении нет. Сохранённый план исправляется при явном жесте над концом носителя или узлом на его пути. Видимое изменение поведения: если конец настоящего носителя с T увести с прямой, T-узел теперь остаётся на месте, стена ломается в нём, а зависимость снимается. Раньше T ехал вслед. Это прямо следует из п.1 ТЗ («прочие не затронутые жестом узлы остаются точно») и записано в `docs/PLAN-GRAPH.md`.\n\nОснование: `docs/PLAN-GRAPH.md`:33–41; `docs/CANVAS.md`:658–661 (карточные концы и промежуточные узлы — барьеры). Release без перемещения ничего не пишет (`wall-node-editor.ts`:282), поэтому тап не снимет устаревшую зависимость незаметно.\n\n### Паритет TS и Python\n\nПо чтению кода оба варианта эквивалентны: одинаковы набор затронутых связей, проверка с target, параметризация от точки зависимого, снятие при отказе любого ref и проверка пути для своей зависимости. Различие только в форме: TS пишет `set-dependency`, только если параметр изменился, Python перезаписывает всегда, но каноническая запись рационального числа одна и та же. Сквозными тестами паритет проверен только для снятия: семь целей фикстуры и X-bend. Ветку Python «сохранить и пересчитать параметр» (`graph_node_write.py`:99–103) не вызывает ни один backend- или parity-тест. Осевой случай есть только в Node-тесте TS. Существующий `test_move_retains_on_edge_constraint_and_propagates_dependents` проверяет лишь собственную зависимость перемещаемого T.\n\nОснование: `tests_backend/test_wall_node_dependency_carrier.py` (обе проверки ведут к снятию `junction` и `c`); `tests_backend/test_graph_node_write.py`:31–40; `test/wall-node-dependencies.test.mjs`:55–61 (только TS).\n\n### Атомарность, история, хранение\n\nОдна команда `node_move`: снятие или перепараметризация входит в тот же candidate. Undo через `before_space` доказывается прямым прогоном и возвращает исходный граф вместе с устаревшей зависимостью, Redo детерминированно повторяет снятие. Реальный HA-тест проверяет store, события ревизий и reload, smoke — preview, равенство Python ACK, Undo/Redo и холодный mount на четырёх направлениях.\n\nОснование: `custom_components/houseplan/wall_node_move.py`:403–422; `tests_backend/test_ha_wall_node_dependency_carrier.py`; `demo/smoke_node_dependency_carrier.mjs`:61–79.\n\n### Цена на горячем пути pointer\n\n`NodeMoveDependencies` перебирает зависимости один раз на жест, на кадре проверяются только затронутые связи, это дёшево. Но если список затронутых не пуст (а это любой конец разделённого носителя с T или X, то есть обычный угол комнаты в графе), операций становится больше одной. Тогда `applyGraphOperation` уходит с быстрого `preparedMove` в полный путь: clone, `assertGraph` всего графа дважды, `canonicalGraph` на каждом кадре. Раньше такой путь был только у перемещений T/X с собственной зависимостью. `benchmark_wall_node_drag` работает с фикстурой без `plan_graph` и эту ветку не измеряет. Это гипотеза о регрессии, не установленный дефект.\n\nОснование: `src/wall-node-move.ts`:489–490 (`operations.length === 1 ? ... : batch`), `src/plan-graph.ts`:381 (быстрый путь только для одиночного `move-node`) и 619–621; `demo/performance/wall-node-fixture.mjs` не содержит `plan_graph`.\n\n### Качество кода\n\nОтдельный маленький модуль с одной ответственностью, комментарии объясняют, почему правило именно такое. `WeakMap` по `plan` не меняет публичную форму `NodeMovePlan`. `plan.graph` теперь создаётся только при `node.nodeId`, и других потребителей у него нет. Дублирование между TS и Python осознанное и следует существующей модели «сервер доказывает независимо».\n\nОснование: `src/wall-node-move.ts`:47, 155–163; поиск `plan.graph` в `src` находит только строку 489.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить в `tests_backend/test_wall_node_dependency_carrier.py` осевой случай графа `crossing` (`b→[4,0]`) через `frontend(...)` и `node_move_candidate`, с проверкой `after == reply[\"after\"]` и параметров `c=[1,4]`, `a=[1/2,1/2]`. Сейчас серверную ветку перепараметризации (`graph_node_write.py`:99–103) не проверяет ни один тест, хотя это самый частый реальный сценарий: тянут конец стены с T на ней. Тест дешёвый и закрепляет паритет ACK и preview там, где сейчас уверенность держится только на чтении кода.\n- Проверить скорость кадра для графа. Можно добавить в `benchmark_wall_node_drag` вариант с `plan_graph` и T на носителе или замерить вручную на большом этаже. Если полный путь окажется заметным, лучше научить `preparedMove` принимать готовый список снятых и перепараметризованных зависимостей (например, необязательное поле в `move-node`). Тогда перемещение одного узла останется на локальной проверке без полного `assertGraph`. Геометрия при этом не меняется: снятие и перепараметризация по построению оставляют точки на месте.\n\n## Границы анализа\n\nРевью сделано только чтением кода на pinned head `ba1d05fc`: сборку, тесты и smoke я не запускал. Опирался на итог S6 `20261105T071335401-47f2f9de` (passed, без ошибок) и описание первого отрицательного прогона (две ошибки фикстуры без `view_box`; исправлена фикстура, продуктовый код не менялся). Выводы о паритете TS и Python для ветки перепараметризации получены чтением, а не прогоном. Сам экспорт владельца не видел: исходная воспроизводимость подтверждается только обезличенной фикстурой и утверждением автора о baseline replay на `34631cb`. Широкую матрицу `geometry_parity` и E2E не проверял, автор вынес их в companion `task-impact/1303.md`. Другие операции графа (Resize, translate-edges, Walls), которые тоже могут изогнуть носитель, сознательно оставлены на аффинном DAG и в объём задачи не входят.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 34631cb69c7b61327155c33d261811c0a9b66a9c → ba1d05fc7a6eb86594e57cbacd333ededb603373\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1303, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПодтверждено: сохранённый on-edge junction ссылается на carrier-start→drag-end, но реальная цепочка имеет излом в bend. Общий affine DAG математически корректно двигает junction; это неверная семантика именно Select, который по #803 сохраняет дальние концы. Исправление ограничено TS Select adapter и зеркальным server-owned graph_node_write.py; generic plan-graph DAG и wire/schema не меняются.\n\nNodeMoveDependencies готовится один раз на жест из уже проверенного graph/index. Затронуты constraints, чьи концы или реальный прежний прямой путь содержат выбранный узел. После явного target проверяется существование конечного связного прямого пути через dependent по точным рациональным параметрам, с реальными IDs, без допусков. Действительная связь получает параметр относительно неизменной дальней точки; связь через излом/разрыв снимается атомарно. Сохраняется настоящая выбранная T/X ось. Python независимо повторяет правило на своих Fraction/index перед propagate_dependencies. Это исправляет уже сохранённый образец при редактировании и предотвращает сохранение новой дальней связи при изгибе X.\n\nРиски: нельзя отключить все зависимости или ослабить графовые/физические guards; нельзя спутать coincident detached IDs с путём; необязательные и далёкие компоненты не переписываются. Перебор dependencies/индекс выполняется при подготовке жеста, pointer-кандидаты работают с отобранными связями. Сохранены opening policy, stable IDs, один node_move writer и история. Никаких пользовательских решений/Optimize/миграции при чтении.\n\nРегрессия: обезличенный структурный компонент 7nodes/6edges из экспорта, без имён/HA entities. Все3новых Node-теста падали до исправления и прошли после: шесть направлений плюс axial target исходного broken support, новый X bend и следующий жест, действительные T/intersection retargets. Сохранены original-reproduction.json и negative.tap; отдельный baseline replay из34631cb подтверждает исходный результат. Python/TS parity на семи целях, точные Undo/Redo и новый X bend —2/2диагностических backend PASS; существующий graph_node_write —3/3. Финальный S6 через finish включает старые node/core/connected проверки, real authenticated HA endpoint/store/reload regression, native pointer/Python-ACK smoke на4направлениях и старый Python-roundtrip smoke. Это описание отбора, фактический итог передаётся runner. Companion d8cff98/task-impact/1303.md отмечает необходимое расширение существующего geometry E2E перед следующей бетой. Продуктовая классификация line-fix (model11/1.84).\n\n\n### Разбор первого S6\n\nПервый допуск:7/9PASS,2FAIL. Обе ошибки новых интеграционных проверок — в обезличенной фикстуре не был указан обязательный view_box; HA config/set и настоящий Python CONFIG_SCHEMA отказали до проверки сохранения. Добавлен исходный hint[0,0,1,1] во все варианты фикстуры. Порог/guards/ассерты не ослаблялись, продуктовый код не менялся. Старые Node/critical/startup/Python-roundtrip успешно прошли. Исходный отрицательный отчёт20261105T071056451-c4542ccc сохранён; повторный finish переиспользует только применимые успехи.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T07:19:03.502Z",
-        "artifactId": 13396066893,
-        "runId": 41985777362,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T07:19:10Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41985777362",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3631,194 +3484,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1303,
-    "worker": "finish",
-    "token": "220:finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:1:admit",
-    "fence": 220,
-    "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-    "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793862806509,
-    "expiresAt": 1793866784195,
-    "patchId": "ca5cbb629949df525d280b807b7d8779a7d3c40f",
-    "reviewRequest": "review:1303:2:ca5cbb629949df525d280b807b7d8779a7d3c40f:34631cb69c7b61327155c33d261811c0a9b66a9c"
-  },
-  "events": {
-    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:2:synchronized": {
-      "digest": "5c22272d2b28470fe0940b55b946e9166b56b374288ce680ef3eb7fb3bd3e555",
-      "issue": 1303
-    },
-    "finish:3a9f2fcd-6091-4e3d-9922-ab8a4b2f346c": {
-      "digest": "270ed48f2305271b142a9e3ad14f1a6efd232f045fa0a76d61705712ee60fc95",
-      "issue": 1303
-    },
-    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return": {
-      "digest": "62e6a8cae489e6d3669bc1d7db04e48d1da45d6884a56f0bd4414b3708cad3d1",
-      "issue": 1303
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:2:synchronized": {
-      "digest": "61bf1c12e6559bdd982a84ca8ebd7bf67c70e84f726521880007f05556c927cf",
-      "issue": 1303
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:3:s6-label": {
-      "digest": "1f0631cc86d87fb02895f78cec5a33d87e58e5c6a59f9a0a3e6c98acb840b5ec",
-      "issue": 1303
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:4:review-requested": {
-      "digest": "40bc78d88863aa5c7921b83c12b456cbb4379b3526c6a4f1f5a754b65cdcf727",
-      "issue": 1303
-    },
-    "github:41985757470:1:tick:0:review-retry": {
-      "digest": "f3ab7b5631ff23367609088b88b3957c16e210fa6b5015cf448836a3d5cc3736",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:message:f70bc8d619bdeb34cfa532fd782cd438e5652e790778da0ee0d5274fa6e4e6aa": {
-      "digest": "1b93ce72e207d3639c50b6efb8964ac8c70b6254af5f6e8423ed87af6382cb8a",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:message:ac99bf4023409d015aa99d296049dcb189d3ae2343df20a87ceaba34f9a93f52": {
-      "digest": "e148c7423105275aa716f577fa9104bde4e79c8eb8437eb71cbc3ed62a8a0f8a",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:message:86373f42c023323bb1860ad3384cfbb90dbf0bfdc0e40d676142a1f107b06cf8": {
-      "digest": "48859775cfc280be550a00640271776ae1cd8242ad6f30f00d51b17af1c18924",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:message:f0308baf690260d778bf1251d1dc4c9fec66c8c55ee6722bd24a13a7e1168121": {
-      "digest": "115e74b304bc9714abc41a2297acd99a127a451e8f33e4b5711f27fbdd049bbd",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:notice:66b26a6342f1b1c9d05d7b47e834a8f3680e8dc07b33b63f1d0e0e9ba21d117e": {
-      "digest": "6c3f840d62fd1a2ec62f12ab71b89c5955b3a88444f937135caaec92547c84b3",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:message:66b26a6342f1b1c9d05d7b47e834a8f3680e8dc07b33b63f1d0e0e9ba21d117e": {
-      "digest": "dd2e62c50bdd6c8e0672d6bc2d2e653587da67e0d24244ec17241453558ce810",
-      "issue": 1303
-    },
-    "github:41985757470:1:completions:message:0662d597465b3cdd2b7912bf09d3f25e4ef58f1cad4f883806e8e80df5126cab": {
-      "digest": "a64b0d576fc030937db1ada0495d35381787b4b7bc6e2a3ccf92d14fe2767ef7",
-      "issue": 1303
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:9:review-presentation": {
-      "digest": "dc0fbf8a81ed6b3a5c175a558370dfe62023b46e7c2a5e8631c393a7dd789c80",
-      "issue": 1303
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:9:review-complete": {
-      "digest": "e28576a628ffae124004b54af20cbd030e0c11aef395f026e4b8248dcb77ab80",
-      "issue": 1303
-    },
-    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9": {
-      "digest": "2a1150c412e08eca2ce6a745e3a08f3caccb293d8e7bd9cfbf55d470e1d100f6",
-      "issue": 1303,
-      "message": {
-        "kind": "queued",
-        "issue": 1303,
-        "at": 1793862642505,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d",
-        "delivered": true
-      }
-    },
-    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:1:admit": {
-      "digest": "201695efda22bb7409345535b1a7d8c83781effed5c49e0a4ce98b505b82d373",
-      "issue": 1303,
-      "message": {
-        "kind": "admitted",
-        "issue": 1303,
-        "at": 1793862647315,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303": {
-      "digest": "62e6a8cae489e6d3669bc1d7db04e48d1da45d6884a56f0bd4414b3708cad3d1",
-      "issue": 1303,
-      "message": {
-        "kind": "return",
-        "issue": 1303,
-        "at": 1793862723564,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793862723564,
-          "entry": 1,
-          "detail": "Backend изменённой области: failed; Браузер: node dependency carrier: failed",
-          "eventId": "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303"
-        },
-        "delivered": true
-      }
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b": {
-      "digest": "16225c2b7023429eadce4a7d389019123f8f286fe55fade18a4271908fb58b15",
-      "issue": 1303,
-      "message": {
-        "kind": "queued",
-        "issue": 1303,
-        "at": 1793862802707,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-        "delivered": true
-      }
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:1:admit": {
-      "digest": "ee1ce8b3f3b755cd6116928b03d238ae415cd2e91ffaa9186430ad06aa56a1da",
-      "issue": 1303,
-      "message": {
-        "kind": "admitted",
-        "issue": 1303,
-        "at": 1793862806509,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b:finish:3:s6-complete": {
-      "digest": "fb8a87f0ca58efe1a59466fbb5ae0cb2cb4e2105eed01ad5177e22160340b36c",
-      "issue": 1303,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1303,
-        "at": 1793862829188,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T071335401-47f2f9de",
-          "name": "Тесты для задачи #1303 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T071335401-47f2f9de/report.json",
-          "materialSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-          "status": "passed",
-          "finishedAt": "2026-11-05T07:13:47.931Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Подтверждено: сохранённый on-edge junction ссылается на carrier-start→drag-end, но реальная цепочка имеет излом в bend. Общий affine DAG математически корректно двигает junction; это неверная семантика именно Select, который по #803 сохраняет дальние концы. Исправление ограничено TS Select adapter и зеркальным server-owned graph_node_write.py; generic plan-graph DAG и wire/schema не меняются.\n\nNodeMoveDependencies готовится один раз на жест из уже проверенного graph/index. Затронуты constraints, чьи концы или реальный прежний прямой путь содержат выбранный узел. После явного target проверяется существование конечного связного прямого пути через dependent по точным рациональным параметрам, с реальными IDs, без допусков. Действительная связь получает параметр относительно неизменной дальней точки; связь через излом/разрыв снимается атомарно. Сохраняется настоящая выбранная T/X ось. Python независимо повторяет правило на своих Fraction/index перед propagate_dependencies. Это исправляет уже сохранённый образец при редактировании и предотвращает сохранение новой дальней связи при изгибе X.\n\nРиски: нельзя отключить все зависимости или ослабить графовые/физические guards; нельзя спутать coincident detached IDs с путём; необязательные и далёкие компоненты не переписываются. Перебор dependencies/индекс выполняется при подготовке жеста, pointer-кандидаты работают с отобранными связями. Сохранены opening policy, stable IDs, один node_move writer и история. Никаких пользовательских решений/Optimize/миграции при чтении.\n\nРегрессия: обезличенный структурный компонент 7nodes/6edges из экспорта, без имён/HA entities. Все3новых Node-теста падали до исправления и прошли после: шесть направлений плюс axial target исходного broken support, новый X bend и следующий жест, действительные T/intersection retargets. Сохранены original-reproduction.json и negative.tap; отдельный baseline replay из34631cb подтверждает исходный результат. Python/TS parity на семи целях, точные Undo/Redo и новый X bend —2/2диагностических backend PASS; существующий graph_node_write —3/3. Финальный S6 через finish включает старые node/core/connected проверки, real authenticated HA endpoint/store/reload regression, native pointer/Python-ACK smoke на4направлениях и старый Python-roundtrip smoke. Это описание отбора, фактический итог передаётся runner. Companion d8cff98/task-impact/1303.md отмечает необходимое расширение существующего geometry E2E перед следующей бетой. Продуктовая классификация line-fix (model11/1.84).\n\n\n### Разбор первого S6\n\nПервый допуск:7/9PASS,2FAIL. Обе ошибки новых интеграционных проверок — в обезличенной фикстуре не был указан обязательный view_box; HA config/set и настоящий Python CONFIG_SCHEMA отказали до проверки сохранения. Добавлен исходный hint[0,0,1,1] во все варианты фикстуры. Порог/guards/ассерты не ослаблялись, продуктовый код не менялся. Старые Node/critical/startup/Python-roundtrip успешно прошли. Исходный отрицательный отчёт20261105T071056451-c4542ccc сохранён; повторный finish переиспользует только применимые успехи.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
     "status": "delivered",
