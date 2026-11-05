@@ -2181,6 +2181,7 @@ public _junctionLimitsIntroduced(
     const newSpace = candidate.spaces.find(space => space.id === spaceId);
     const removal = oldSpace && newSpace && removesOnlyLimitSegments(
       this._limitSegmentsOf(oldSpace), this._limitSegmentsOf(newSpace), oldSpace.cell_cm, newSpace.cell_cm,
+      oldSpace.plan_graph, newSpace.plan_graph,
     );
     return introduced.filter(item => !removal || item.rule !== 'length');
   }

@@ -70,3 +70,16 @@ test('#1258 a proved removal still refuses non-length limits and physical failur
   assert.deepEqual(h.host._serverCfg, source());
   assert.equal(h.history.length, 0);
 });
+
+test('#1258 a changed exact q endpoint cannot hide behind an identical Number projection', () => {
+  const h = harness(source()), before = h.host._serverCfg, next = structuredClone(before);
+  const space = next.spaces[0]; space.partitions = space.partitions.slice(1);
+  space.plan_graph.edges = space.plan_graph.edges.filter(e => e.id === 'short');
+  const edge = space.plan_graph.edges[0], node = space.plan_graph.nodes.find(n => n.id === edge.to);
+  const almost = ['q', '191666666666666666667', '1000000000000000000000', '1', '10'];
+  assert.equal(Number(almost[1]) / Number(almost[2]), space.partitions[0].b[0]);
+  node.p = almost;
+  assert.equal(removesOnlyLimitSegments(before.spaces[0].partitions, space.partitions, 5, 5,
+    before.spaces[0].plan_graph, space.plan_graph), false);
+  assert.ok(h.runtime._junctionLimitsIntroduced(next, before, 'f').some(v => v.rule === 'length'));
+});

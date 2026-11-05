@@ -51,7 +51,7 @@ async def test_delete_undo_redo_and_reload(hass, hass_ws_client, wall):
     assert (await client.receive_json())["error"]["code"] == "conflict"
 
 
-@pytest.mark.parametrize("change", ["endpoint", "thickness", "grid"])
+@pytest.mark.parametrize("change", ["endpoint", "sub_ulp", "thickness", "grid"])
 async def test_deletion_cannot_hide_a_new_short_changed_wall(hass, hass_ws_client, change):
     _entry, client, snapshot = await setup(hass, hass_ws_client, source=source())
     candidate = remove(snapshot["config"], "long")
@@ -65,7 +65,8 @@ async def test_deletion_cannot_hide_a_new_short_changed_wall(hass, hass_ws_clien
             edge["cm"] = 25
         else:
             node = next(n for n in graph["nodes"] if n["id"] == edge["to"])
-            node["p"] = ["l", "45", "24"]
+            node["p"] = (["q", "191666666666666666667", "1000000000000000000000", "1", "10"]
+                         if change == "sub_ulp" else ["l", "45", "24"])
         candidate["spaces"][0] = project_graph_space(space, graph)["space"]
     await client.send_json_auto_id({"type": "houseplan/config/set", "config": candidate,
                                    "expected_rev": snapshot["rev"]})

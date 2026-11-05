@@ -16,6 +16,8 @@ import { GRID_STEP_N } from './space-geometry';
 import { WALL_INCIDENT_EPS as INCIDENT_EPS } from './wall-incidence';
 import { storedWallContact } from './stored-wall-contact';
 import { graphViewSpace } from './plan-graph-view';
+import type { PlanGraph } from './plan-graph';
+import { jsonValueEqual } from './json-value-equal';
 import {
   innerContourForRoom, multiWallNodesForGeometry, wallBodiesGeometry,
   type MultiWallNodeMap, type WallBodiesGeometryResult, type WallEntry,
@@ -79,9 +81,33 @@ export interface LimitSegment {
 export function removesOnlyLimitSegments(
   previous: readonly LimitSegment[], next: readonly LimitSegment[],
   previousCellCm: unknown, nextCellCm: unknown,
+  previousGraph?: PlanGraph, nextGraph?: PlanGraph,
 ): boolean {
   const scale = (value: unknown) => Number(value) > 0 ? Number(value) : 5;
   if (scale(previousCellCm) !== scale(nextCellCm) || next.length >= previous.length) return false;
+  if (previousGraph || nextGraph) {
+    if (!previousGraph || !nextGraph || nextGraph.edges.length >= previousGraph.edges.length) return false;
+    const nodes = new Map(previousGraph.nodes.map(node => [node.id, node.p]));
+    const nextNodes = new Map(nextGraph.nodes.map(node => [node.id, node.p]));
+    const edges = new Map<string, PlanGraph['edges']>();
+    for (const edge of previousGraph.edges) {
+      const pool = edges.get(edge.id) || [];
+      pool.push(edge); edges.set(edge.id, pool);
+    }
+    // A q point can move below the resolution of its Number projection. Exact
+    // graph records, including compatible future edge fields, remain decisive.
+    for (const edge of nextGraph.edges) {
+      const { kind: _kind, ...record } = edge;
+      const pool = edges.get(edge.id) || [];
+      const index = pool.findIndex(old => {
+        const { kind: _oldKind, ...oldRecord } = old;
+        return jsonValueEqual(record, oldRecord);
+      });
+      if (index < 0 || !jsonValueEqual(nodes.get(edge.from), nextNodes.get(edge.from))
+        || !jsonValueEqual(nodes.get(edge.to), nextNodes.get(edge.to))) return false;
+      pool.splice(index, 1);
+    }
+  }
   const signature = (segment: LimitSegment) => JSON.stringify([
     String(segment.id || ''), segment.a, segment.b, Number(segment.cm || 0),
   ]);

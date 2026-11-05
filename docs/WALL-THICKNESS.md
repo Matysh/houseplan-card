@@ -50,6 +50,7 @@ Explicit wall removal (#1258) may expose a short collinear remainder. The
 client and server exempt only the minimum-length rule when every surviving
 carrier retains its exact ID, endpoints and thickness, the grid scale is
 unchanged, and the carrier multiset strictly shrinks. The server proves this
+against exact graph point/edge records, not only their Number projections,
 from the stored document even with a cached junction baseline. Actual remaining
 violations stay in that baseline. Graph/reference, opening, physical safety,
 other junction rules, ACL and CAS checks remain in force. Node removal with
