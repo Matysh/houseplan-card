@@ -2,6 +2,8 @@
 // light transport. The pure symbol/static/iso guards have dedicated mutants;
 // this browser scenario proves the assembled user flow and rendered geometry.
 import { launch, checkAll, finish } from './serve.mjs';
+import { createRequire } from 'node:module';
+const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 
 const { page, browser } = await launch();
 const out = await page.evaluate(async () => {
@@ -163,7 +165,7 @@ const out = await page.evaluate(async () => {
   staticCard.remove();
 
   // #943: rooms with fill:none no longer add a darkness-filled tunnel.
-  // Keep a separate real data-fill witness instead of deleting tunnel coverage.
+  // Keep actual floor coverage of both halves after #1250 removed tunnel fills.
   await window.__hpTest.setServerConfig(cfg => ({ ...cfg, spaces: cfg.spaces.map(space => space.id !== c._space ? space : ({
     ...space, rooms: space.rooms.map((room, index) => ({ ...room,
       settings: { ...room.settings, fill_mode: 'custom',
@@ -175,24 +177,46 @@ const out = await page.evaluate(async () => {
   dataCard.hass = c.hass;
   document.body.append(dataCard);
   const dataRoot = () => dataCard.shadowRoot || dataCard.renderRoot;
-  const dataTunnel = () => dataRoot()?.querySelector('.static-opening-tunnels[data-layer="data"] [data-kind="passage"]');
+  const roomShape = id => dataRoot()?.querySelector(`[data-hp="room"][data-id="${id}"].filled`);
   const started = performance.now();
-  while (!dataTunnel()) {
+  while (!roomShape('passage-left') || !roomShape('passage-right')) {
     if (performance.now() - started > 3000) throw new Error('Static passage data fill did not load');
     await new Promise(resolve => requestAnimationFrame(resolve));
   }
   await dataCard.updateComplete;
-  const colors = [...dataTunnel().querySelectorAll('stop')].map(stop => [stop.getAttribute('stop-color'), Number(stop.getAttribute('stop-opacity'))]);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const left = roomShape('passage-left'), right = roomShape('passage-right');
+  const color = shape => [shape.style.getPropertyValue('--room-fill'), Number(shape.style.getPropertyValue('--room-fill-op'))];
+  const colors = [color(left), color(right)];
+  const leftPassage = new DOMPoint(496,450), rightPassage = new DOMPoint(504,450);
   const dataWalls = [...dataRoot().querySelectorAll('.wallbodies path')];
   result.staticDataFillStillRepeatsBothRooms = colors.some(([c, a]) => c === '#224466' && a === 0.42)
     && colors.some(([c, a]) => c === '#668822' && a === 0.6)
     && dataWalls.length > 0 && dataWalls.every(path => !path.isPointInFill(passagePoint))
     && dataWalls.some(path => path.isPointInFill(solidWallPoint))
+    && left.isPointInFill(leftPassage) && !left.isPointInFill(rightPassage)
+    && right.isPointInFill(rightPassage) && !right.isPointInFill(leftPassage)
+    && !dataRoot().querySelector('.static-opening-tunnels')
     && !dataRoot().querySelector('.glow-base-layer,.glow-base-tunnels');
-  dataCard.remove();
+  const screenPoint = (shape, point) => {
+    const p = point.matrixTransform(shape.getScreenCTM());return [p.x,p.y];
+  };
+  result.staticDataProbe = {
+    left:screenPoint(left,leftPassage), right:screenPoint(right,rightPassage),
+    leftFloor:screenPoint(left,new DOMPoint(420,450)), rightFloor:screenPoint(right,new DOMPoint(580,450)),
+  };
+  window.__passageDataCard = dataCard;
 
   return result;
 });
 
-checkAll(out);
-await finish(browser, out);
+const { staticDataProbe: probes, ...checks } = out;
+const image = PNG.sync.read(await page.screenshot({fullPage:true}));
+const pixel = ([x,y]) => { const i=(Math.round(y)*image.width+Math.round(x))*4;return [...image.data.subarray(i,i+3)]; };
+const close = (a,b) => a.every((v,i)=>Math.abs(v-b[i])<=5);
+checks.staticPassagePixelsMatchEachOwningFloor = close(pixel(probes.left),pixel(probes.leftFloor))
+  && close(pixel(probes.right),pixel(probes.rightFloor))
+  && !close(pixel(probes.left),pixel(probes.right));
+await page.evaluate(()=>{window.__passageDataCard.remove();delete window.__passageDataCard;});
+checkAll(checks);
+await finish(browser, checks);
