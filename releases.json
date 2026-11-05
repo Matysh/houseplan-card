@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 432,
+  "revision": 433,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -17528,19 +17528,22 @@
           "from": "5dc83437f0ddc0b29b923aea7e077f90b8c283e8",
           "to": "373e56a32ded904352130e0ebb6d8be5f0d18b8e",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "0f60441385c86ca4c107a9d1482ff5510dc6a2c6"
         },
         {
           "from": "373e56a32ded904352130e0ebb6d8be5f0d18b8e",
           "to": "58ba09a0740533fe86535f79a2b8a04db7dc0ce3",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "0f60441385c86ca4c107a9d1482ff5510dc6a2c6"
         },
         {
           "from": "58ba09a0740533fe86535f79a2b8a04db7dc0ce3",
           "to": "0f60441385c86ca4c107a9d1482ff5510dc6a2c6",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827"
         }
       ],
       "diagnostics": [],
@@ -19343,7 +19346,8 @@
           "sha": "15dd2852876f3f95a8c10295b53cfca9a19df600"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827",
           "issue": 1323,
           "branch": "issue/1323-release-return-0f60441385c8",
           "worktree": "/home/matysh/hp-beta6-release2/artifacts/process-next/return-worktrees/0f60441385c8"
@@ -20175,7 +20179,8 @@
     "beta7-20261105-publish-final:completion:0fbd0bfe-ac90-4be7-b026-5cdc4d67f36b": "67d9ebe445bdebc455410d3c902943f88881314f46756bde7b1ed32c78e6a323",
     "beta7-20261105-publish-final:completion:ce10a7cd-b050-4a52-992c-a11e46152b75": "d57fa59575dc7cbd1666ff060351dd10557a7d61d39143550158501c2038a1c2",
     "beta7-20261105-publish-final:completion:9f49380a-5ab0-43c3-989d-78039b9804e9": "5916d122127d7ba2ccabb1e03eb5614fc54a0787d83472db85f8db41a83af328",
-    "beta7-20261105-publish-final:completion:ed95622c-dbeb-4003-8819-09e4b2686cc6": "b6f0d7f18bea4dddad7c8ff26da06033c3c8c72485840fcec3a43c6e93f8d50f"
+    "beta7-20261105-publish-final:completion:ed95622c-dbeb-4003-8819-09e4b2686cc6": "b6f0d7f18bea4dddad7c8ff26da06033c3c8c72485840fcec3a43c6e93f8d50f",
+    "beta7-20261105-publish-final:completion:e1e85a26-cd98-4869-9e4b-5abac0497e47": "15a1080febccccc17ff9a5b3afd839f801dc5bd1c09ee4c70194c97d132e8587"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
