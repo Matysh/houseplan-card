@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4410,
+  "revision": 4411,
   "nextTicket": 232,
   "nextFence": 232,
   "tasks": {
@@ -3424,7 +3424,13 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793882167930,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "e6eca6b0d09ebf9e305a4d6419246d6f31465f23",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "test/fixtures/845-wall-corpus-current-identities.json"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3564,12 +3570,17 @@
     "token": "231:finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:1:admit",
     "fence": 231,
     "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f58821aa97edd2c5df40c8a300de079e30cdb464",
+    "phase": "testing",
     "admittedAt": 1793882171764,
-    "expiresAt": 1793882471764
+    "expiresAt": 1793882477325,
+    "patchId": "e6eca6b0d09ebf9e305a4d6419246d6f31465f23"
   },
   "events": {
+    "finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:2:synchronized": {
+      "digest": "73f2d70e6383c29027ce36a047f8f7623498edd7ee018918ef19ae5bf55a78e3",
+      "issue": 1308
+    },
     "finish:1c29c746-151f-4322-96d7-7e535de010d3": {
       "digest": "640d5b61808992d3a0e76eee4c30fe388861c96c207f6ae4e9558813556ed099",
       "issue": 1308,
