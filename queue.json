@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4772,
+  "revision": 4773,
   "nextTicket": 243,
   "nextFence": 243,
   "tasks": {
@@ -3718,33 +3718,24 @@
     },
     "1318": {
       "issue": 1318,
+      "branch": "codex/issue-1318-clock-probes",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/issue-1318-clock-probes",
-      "materialSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 242,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793888300143,
-      "reviewEntry": 1,
-      "patchId": "ba8f0116854ba353e7a085e398feafebafa8cfed",
-      "changedFiles": [
-        "demo/helpers/node-input-ledger.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "test/node-ci-report.test.mjs",
-        "test/node-input-ledger.test.mjs"
-      ],
-      "s6": {
-        "id": "20261105T141835451-d698c0e1",
-        "name": "Тесты для задачи #1318 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T141835451-d698c0e1/report.json",
-        "materialSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
-        "status": "passed",
-        "finishedAt": "2026-11-05T14:18:54.030Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
+      "mergedSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
+      "mergedAt": 1793888342706,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1319": {
@@ -3953,18 +3944,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1318,
-    "worker": "finish",
-    "token": "242:finish:4abeaf3d-c3a5-4418-a11c-be6c651042b7:finish:1:admit",
-    "fence": 242,
-    "materialSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
-    "expectedBase": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793888304631,
-    "expiresAt": 1793891935229,
-    "patchId": "ba8f0116854ba353e7a085e398feafebafa8cfed"
-  },
+  "active": null,
   "events": {
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:2:synchronized": {
       "digest": "3343767c227ffccab7fdec9cdef12d5341f905a95bb12bafe9b70f58c9e3b48a",
@@ -3977,14 +3957,6 @@
     "github:42042666568:1:completions:notice:7e061d22ddd850d6c2e6c9fc4f53c386e20c5fda63a6b9f7df762431ce910536": {
       "digest": "a00089f04e4cc07352da64aad7b0b72106dcfe84f8ddac372218a55dfa5019c2",
       "issue": 1314
-    },
-    "finish:4abeaf3d-c3a5-4418-a11c-be6c651042b7:finish:2:synchronized": {
-      "digest": "6e328bc5e8321f76b41450be5970930b05c859461d6b6736176ca730a7ed3fd1",
-      "issue": 1318
-    },
-    "finish:4abeaf3d-c3a5-4418-a11c-be6c651042b7:finish:3:s6-complete": {
-      "digest": "890745871f58ad0b2094eaa617d03e0ddb7ce41d730669a21f46fc4c2e10042b",
-      "issue": 1318
     },
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
       "digest": "f66ad94ac29c34fcbf2fb5fb5f672e524702a9d25fd303bdd95fb74f965bf851",
