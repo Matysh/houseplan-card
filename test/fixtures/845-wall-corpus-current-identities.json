@@ -55,6 +55,18 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/1303-bent-carrier.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/1305-node-merge-dependencies.json",
+      "configs": 0
+    },
+    {
+      "file": "test/fixtures/1305-node-merge.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },

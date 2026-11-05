@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Inventory the new partial #1303/#1305 fixtures in the complete wall identity corpus while preserving document passports, the historical oracle and idempotence guards. [#1308](https://github.com/Matysh/houseplan-card/issues/1308)
+
 - Count actual TypeScript `any` types instead of prose in the lazy-runtime guard; preserve the accepted type budget and cover both positive and negative cases. [#1307](https://github.com/Matysh/houseplan-card/issues/1307)
 
 - Speed up node saves by reusing command-local exact graph proofs and checking unchanged spaces selectively, while preserving safety checks, durable ACK, ACL/CAS and exact history. [#1306](https://github.com/Matysh/houseplan-card/issues/1306)
