@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3560,
+  "revision": 3561,
   "nextTicket": 205,
   "nextFence": 204,
   "tasks": {
@@ -2034,7 +2034,7 @@
       "ownerDecision": null,
       "ticket": 203,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793844105215,
       "reviewEntry": 3,
       "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5",
@@ -2059,6 +2059,15 @@
         "entry": 2,
         "detail": "Backend изменённой области: failed",
         "eventId": "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75:finish:4:return:return:1258"
+      },
+      "s6": {
+        "id": "20261105T021831901-319ed656",
+        "name": "Тесты для задачи #1258 (перед ревью)",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T021831901-319ed656/report.json",
+        "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
+        "status": "passed",
+        "finishedAt": "2026-11-05T02:19:06.059Z",
+        "failures": []
       }
     },
     "1261": {
@@ -3315,9 +3324,9 @@
     "fence": 203,
     "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
     "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793845049323,
-    "expiresAt": 1793845408454,
+    "expiresAt": 1793848747219,
     "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5"
   },
   "events": {
@@ -3522,6 +3531,34 @@
         "materialSha": "d0016fe841837ecc63f60e310f79d8416ccccc30",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:c5870fc8-4124-46bd-9d08-6d6fbcf99fbd:finish:2:s6-complete": {
+      "digest": "122a405726655408c34156ad8c208ec35896517fa6252d13460cb12a101052d5",
+      "issue": 1258,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1258,
+        "at": 1793845147219,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T021831901-319ed656",
+          "name": "Тесты для задачи #1258 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T021831901-319ed656/report.json",
+          "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
+          "status": "passed",
+          "finishedAt": "2026-11-05T02:19:06.059Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Выбран show. Исправление ограничено правилом минимальной длины: после общей проверки вводится исключение для строго уменьшившегося мультимножества физических отрезков. Для каждого оставшегося отрезка должны точно совпасть ID, концы и толщина; физический масштаб cell_cm не меняется. В model11 дополнительно сравниваются точные графовые записи точек и рёбер (включая совместимые props), а не только Number-проекция: суб-ULP изменение рационального конца не маскируется удалением. Операционному имени клиента сервер не доверяет. Смена роли room-wall → partition при удалении комнаты не меняет физический носитель. Количество реально оставшихся нарушений сохраняется в серверном baseline; кэш количества не заменяет доказательство по stored config. Добавление/деформация, соединение плеч при удалении узла, структурные/host guards, права и CAS остаются штатными.\n\nПроверки S6: production commit с legacy/current long100+short10, удаление обоих вариантов и точное Undo/Redo; отрицательные новые/изменённые рёбра/толщина/сетка/другое ограничение; настоящее config/set HA, durable reload, CAS и серверные отрицательные случаи. Используется только адресная выборка плюс обязательный короткий продуктовый набор. Исторический edit_walk из комментария уже исправлен #1264; здесь его не объявляем исправлением. Новая мутация/бюджет/golden не нужны.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
