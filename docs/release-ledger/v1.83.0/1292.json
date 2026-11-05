@@ -1,0 +1,11 @@
+{
+  "category": "line-fix",
+  "summary": {
+    "en": "Resize preserves valid edits of imported plans without micro-crossings on the fixed coordinate.",
+    "ru": "Resize сохраняет допустимое изменение импортированного плана без микропересечений на неподвижной координате."
+  },
+  "baseStable": "v1.83.0",
+  "schema": 1,
+  "rationale": "Model11 Resize recovered both numeric ordinates after one changed; preserve unchanged exact legacy ordinates to avoid new unsplit crossings against fixed neighbours.",
+  "issue": 1292
+}

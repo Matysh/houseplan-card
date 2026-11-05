@@ -82,6 +82,17 @@ function addNode(plan:Plan,id:string,p:Q.ExactPoint):void{
 function unchanged(raw:readonly number[],exact:Q.ExactPoint,original?:readonly number[]):boolean{
   return sameNumbers(raw,Q.pointToNumbers(exact))||sameNumbers(raw,original);
 }
+/** Resize authors only the changed ordinates. Recovering a near-lattice but
+ * unchanged legacy ordinate would bend its fixed outside wall by a few ULPs. */
+function resizeTarget(raw:readonly number[],point:Q.ExactPoint,original?:readonly number[]):Q.ExactPoint {
+  const authored=authoredPoint(raw),before=Q.pointToNumbers(point);
+  const same=(a:number,b:number|undefined):boolean=>b!==undefined
+    &&Math.abs(a-b)<=0.5000001e-9+Number.EPSILON*32*Math.max(1,Math.abs(a),Math.abs(b));
+  return [
+    same(raw[0],before[0])||same(raw[0],original?.[0])?point[0]:authored[0],
+    same(raw[1],before[1])||same(raw[1],original?.[1])?point[1]:authored[1],
+  ];
+}
 function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphIndex>,room:string):Map<string,Q.ExactPoint>{
   const cycle=before.plan_graph.rooms.find((r:any)=>r.room===room);if(!cycle)failure('room',room);
   const old=cycle.edges.map((r:any)=>{const e=index.edges.get(edgeKey(r))!;return r.reverse?e.to:e.from;});
@@ -91,7 +102,7 @@ function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphI
   const source=sourcePoly((raw?.rooms||[]).find((r:any)=>r.id===room));
   const result=new Map<string,Q.ExactPoint>();
   if(target.length===old.length){
-    old.forEach((id:string,i:number)=>result.set(id,unchanged(target[i],points[i],source.length===old.length?source[i]:undefined)?points[i]:authoredPoint(target[i])));
+    old.forEach((id:string,i:number)=>result.set(id,resizeTarget(target[i],points[i],source.length===old.length?source[i]:undefined)));
     return result;
   }
   // Fixed-topology Resize can expose only its real corners; stored run atoms
@@ -101,7 +112,9 @@ function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphI
   const targetCorners=targetExact.flatMap((p,i)=>Q.orientation(targetExact[(i+target.length-1)%target.length],p,targetExact[(i+1)%target.length]).n?[i]:[]);
   if(corners.length!==targetCorners.length)failure('resize-topology',room);
   for(let run=0;run<corners.length;run++){
-    const start=corners[run],end=corners[(run+1)%corners.length],a=targetExact[targetCorners[run]],b=targetExact[targetCorners[(run+1)%corners.length]];
+    const start=corners[run],end=corners[(run+1)%corners.length];
+    const a=resizeTarget(target[targetCorners[run]],points[start],source.length===old.length?source[start]:undefined);
+    const b=resizeTarget(target[targetCorners[(run+1)%corners.length]],points[end],source.length===old.length?source[end]:undefined);
     const da=Q.pointSub(a,points[start]),db=Q.pointSub(b,points[end]);
     result.set(old[start],a);
     for(let i=(start+1)%old.length;i!==end;i=(i+1)%old.length)

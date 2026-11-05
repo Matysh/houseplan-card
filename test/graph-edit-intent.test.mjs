@@ -386,3 +386,35 @@ test('#1226 current graph deletion and face promotion retain the opening carrier
   }
   assert.deepEqual(source.rooms,[],'all producers leave the source authority unchanged');
 });
+
+for(const rotate of [false,true])for(const coalesced of [false,true])
+  test(`#1292 Resize preserves an unchanged near-lattice ordinate (${rotate?'x':'y'}, ${coalesced?'corners':'atoms'})`,()=>{
+    const source=incidentFixture(),graph=copy(source.plan_graph);
+    // A valid imported current graph may retain decimal q from before the
+    // native lattice writer. Every room sharing this line has the same exact q.
+    for(const node of graph.nodes){
+      let p=Q.decodePoint(node.p);
+      if(Q.eq(p[1],Q.exact(1n,2n)))p=[p[0],Q.parseDecimal('0.5000000001')];
+      if(rotate)p=[Q.sub(Q.ONE,p[1]),p[0]];
+      node.p=Q.encodePoint(p);
+    }
+    const before=G.projectGraphSpace(source,graph).space,snapshot=copy(before),draft=copy(before);
+    for(const room of draft.rooms)if(['upper-left','upper-right'].includes(room.id)){
+      room.poly=room.poly.map(p=>rotate?[p[0],p[1]===.5?.45:p[1]]:[p[0]===.5?.45:p[0],p[1]]);
+      if(coalesced)room.poly=room.poly.filter((p,i,poly)=>{
+        const prev=poly[(i+poly.length-1)%poly.length],next=poly[(i+1)%poly.length];
+        return(p[0]-prev[0])*(next[1]-p[1])!==(p[1]-prev[1])*(next[0]-p[0]);
+      });
+    }
+    const result=commitGraphEditResult(before,draft,{kind:'resize',rooms:['upper-left','upper-right']});
+    const expected=rotate?['q','4999999999','10000000000','9','20']:['q','9','20','5000000001','10000000000'];
+    assert.ok(result.graph.nodes.some(node=>JSON.stringify(node.p)===JSON.stringify(expected)),
+      'changed ordinate is authored .45; untouched legacy q is not snapped to .5');
+    assert.equal(G.validateGraph(result.graph).ok,true,'no micro crossing against the fixed neighbours');
+    for(const id of ['lower-left','lower-right','remote']){
+      const old=before.rooms.find(room=>room.id===id),next=result.space.rooms.find(room=>room.id===id);
+      for(const p of old.poly)assert.ok(next.poly.some(q=>JSON.stringify(q)===JSON.stringify(p)),id+' keeps every fixed vertex');
+      assert.deepEqual(next.custom,old.custom);
+    }
+    assert.deepEqual(before,snapshot,'input graph remains immutable');
+  });
