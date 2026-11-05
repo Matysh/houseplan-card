@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4239,
+  "revision": 4240,
   "nextTicket": 227,
   "nextFence": 227,
   "tasks": {
@@ -3387,14 +3387,46 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/issue-1305-node-merge",
-      "materialSha": "c7a39ca7747e5fe6619a0ec78e5fa53d67292d10",
+      "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 226,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793874515112,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "001c12d84178fb3166216f2e83b2119c692afe33",
+      "changedFiles": [
+        "custom_components/houseplan/graph_node_write.py",
+        "custom_components/houseplan/wall_node_merge.py",
+        "custom_components/houseplan/wall_node_move.py",
+        "custom_components/houseplan/websocket_api.py",
+        "demo/smoke_wall_node_merge.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/WALL-THICKNESS.md",
+        "docs/release-ledger/v1.83.0/1305.json",
+        "process-next/lib/catalog.mjs",
+        "src/houseplan-card.ts",
+        "src/i18n/tools/de.json",
+        "src/i18n/tools/en.json",
+        "src/i18n/tools/fr.json",
+        "src/i18n/tools/ru.json",
+        "src/version-recovery-card.ts",
+        "src/wall-node-card-adapter.ts",
+        "src/wall-node-editor.ts",
+        "src/wall-node-merge.ts",
+        "src/wall-node-move.ts",
+        "src/wall-node-refusal.ts",
+        "test/fixtures/1305-node-merge.json",
+        "test/wall-node-editor.test.mjs",
+        "test/wall-node-merge.test.mjs",
+        "tests_backend/test_ha_wall_node_merge.py",
+        "tests_backend/test_wall_node_merge.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3519,11 +3551,12 @@
     "worker": "finish",
     "token": "226:finish:263ee478-c6e1-4a51-affb-30ea842ee0e9:finish:1:admit",
     "fence": 226,
-    "materialSha": "c7a39ca7747e5fe6619a0ec78e5fa53d67292d10",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
+    "expectedBase": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+    "phase": "testing",
     "admittedAt": 1793874519080,
-    "expiresAt": 1793874819080
+    "expiresAt": 1793874828435,
+    "patchId": "001c12d84178fb3166216f2e83b2119c692afe33"
   },
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3560,6 +3593,10 @@
     },
     "github:42004557580:1:completions:report:cf84f0d27fb1ffe7095a9c0f68aed7a0b4861492ce232bd7d85dcc98cb17c728": {
       "digest": "2e048a2b2eff58b0f4929fdff176cffe32e08c12d3e5a18d876bfec3646dff2a",
+      "issue": 1305
+    },
+    "finish:263ee478-c6e1-4a51-affb-30ea842ee0e9:finish:2:synchronized": {
+      "digest": "4109c8a7b1cbd39616499566e4522bcfb393d55f7ea7f17ed7a1c318a0167b04",
       "issue": 1305
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
