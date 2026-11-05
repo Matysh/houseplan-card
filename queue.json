@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4153,
+  "revision": 4154,
   "nextTicket": 223,
   "nextFence": 223,
   "tasks": {
@@ -1678,14 +1678,32 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1250-room-floor-openings",
-      "materialSha": "c273405e2eb2513a934e03d993890e40f7385bdd",
+      "materialSha": "fac27a63eadb90e0304ba524b43586d24349a891",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 222,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793871154013,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c773102f2cd84fbd21b2fbf163bfc40d5d020ed1",
+      "changedFiles": [
+        "demo/smoke_opening_mode_fill.mjs",
+        "demo/smoke_opening_tunnel_fill.mjs",
+        "demo/smoke_static_wall_openings.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/WALL-THICKNESS.md",
+        "docs/release-ledger/v1.83.0/1250.json",
+        "src/houseplan-card.ts",
+        "src/render/opening-tunnels.ts",
+        "src/render/room-floor.ts",
+        "src/room-floor-paint.ts",
+        "src/space-render.ts",
+        "src/styles/plan.styles.ts",
+        "src/wall-thickness.ts",
+        "test/room-floor-paint.test.mjs"
+      ]
     },
     "1252": {
       "issue": 1252,
@@ -3523,11 +3541,12 @@
     "worker": "finish",
     "token": "222:finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:1:admit",
     "fence": 222,
-    "materialSha": "c273405e2eb2513a934e03d993890e40f7385bdd",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "fac27a63eadb90e0304ba524b43586d24349a891",
+    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+    "phase": "testing",
     "admittedAt": 1793871157736,
-    "expiresAt": 1793871457736
+    "expiresAt": 1793871466843,
+    "patchId": "c773102f2cd84fbd21b2fbf163bfc40d5d020ed1"
   },
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3541,6 +3560,10 @@
     "github:42002223818:1:completions:report:ad4cd4d6462410263c29e3f42470f250c15ffcc026fb3fe08430dc91e77ccb89": {
       "digest": "3ed356d133e94cfc45c7b879312847af24edbec4215a2369e6db5e62e8b7f8b9",
       "issue": 1305
+    },
+    "finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:2:synchronized": {
+      "digest": "7e4cfe7cce57dd585154ed9b425d004656597b034b841e1e08ec4507609a6f84",
+      "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
       "digest": "021ef6863d89bbd22c642800c05bc562bdb14d512963985fc1bcc843907dc6d1",
