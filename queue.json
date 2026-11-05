@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3772,
+  "revision": 3773,
   "nextTicket": 212,
   "nextFence": 212,
   "tasks": {
@@ -3411,6 +3411,10 @@
       "digest": "7ceb1b1079b2b04d2a4d1487d99e0598f497d71ee95325a2a52a869c65694ad1",
       "issue": 1295
     },
+    "github:41958983965:1:completions:message:d4c27d6c5da207f97b9cb47f582a8c65a170ae61c9b177de581043144b9afe22": {
+      "digest": "32980a77cd05f7a9c16ac3e923ae87637fd3fcc333a4f699c78ed3ac1ef1c749",
+      "issue": 1295
+    },
     "finish:0f3f4b23-226f-4b40-8191-712b215ff58d": {
       "digest": "1b971e35d95fd017e83a4328da486eb4a8295a66b679d18ebb86c1bd9c397132",
       "issue": 1295,
@@ -3515,7 +3519,8 @@
         "reviewChanges": "Финальное решение552071c8ad состоит из изоляции четырёх серий и явного разделения обязательного поведения/качества измерения от диагностических абсолютных бюджетов. Это следует действующему PROCESS.md «Размеры и производительность»: прочие микрозамеры не блокируют публикацию; для семи release-метрик остаются отдельные сопоставимые относительные пороги. Алгоритм release metrics/пороги не менялись; сопоставимого latest stable CI здесь нет. Числа старых абсолютных бюджетов не повышены, красные отчёты не переписаны.\n\nДоказательства: первоначальный стабильный audit41920312716FAILED на опубликованном a4dd940c. Serial41955192150PASS4на том жеruntime, но другаяCPU. Поэтому paired41956366937 выполнил jobs2 затем jobs1 на однойEPYC9V74/4vCPU, тот же чистый a4dd940c: в parallel visible longtask124>117FAIL, serialвсе4PASS/visible70. Все четыре серии реально исполнены дважды,20samples/селективная серия, connected3warmup+5measured/300inputs. Raw JSON обоихфаз сохранён. Фиксированный порядок иhostнагрузка ограничивают причинную точность, это не доказательство единой причины всех старых медленных sample.\n\nEnd-to-end exclusive CI41957439627 на чистом6f8241aa приобычныхjobs2 действительно не перекрывал четыре замера с другими шагами, но другойEPYC7763/4vCPU дал history-copy longtask205>200 иconnected mainThread p9557.2>55. Остальные2PASS. FAIL сохранён; он показал, что одной изоляции мало и абсолютный старый gate зависит отCPU. Этот прогон не объявляется зелёным и не повторяется для случайного PASS. Подробные цифры/ограничения в docs/testing/issue1295-timing-isolation.md.\n\nRunner: первый готовый bool exclusive ждёт окончания активных шагов, не даёт следующим обогнать и работает один; неготовый ждёт prerequisites. Только4профиля отмечены, обычная параллельность сохранена. exclusive включён в receipt identity; измененияrunner/storage естественно инвалидируютстарыйкеш. FAIL блокирует только required descendants.\n\nCatalog передаёт этим4скриптам явный --diagnostic-timing. Без флага standalone strict exit и offline nodeBudgetVerdict/timingFailures сохраняют прежние красные вердикты иточныепороги. В diagnostic режиме только численные превышения отдельно budgetFailures/timingStatus=exceeded; настоящие утверждения геометрии, истории, кэшей, native/persisted/single-write, неполныевыборки, невалидныесэмплы/часы иpageerrors остаются FAIL. Connected raw pass — прежний строгий бюджетный вердикт, отдельный executionPass объясняет исход исполнения; на историческом красном отчёте pass не переписывается. Это не маркировка всего smoke diagnostic, которая могла бы скрыть функциональный отказ.\n\nПроверки: unitдиагностики контрастируют целую медленную серию и untrusted/unpersisted/duplicate-write/пустые/нечисловые/неполныеизмерения, functional/clockerror иincompletechecks. Runner тесты — drain/noovertaking/parallelbeforeafter/успех/отказ/descendants/prerequisites/validation/cacheidentity. Catalog ровно4отмеченных task+stable иточныйdiagflag. Предварительно catalog+verdict24/24PASS, runner+fallback29/29PASS; syntax8изменённых инструментов/YAML PASS. Два раннихразработческихотказаcatalog исправлены безослабленияproductguards: metadataлiterals были ошибочноприняты статическимreaderзаисполнениеsmoke; startup-view нетвstable. Workflow/canonicaltemplateтолькорасширяютuploadrawJSON, parityсохранена.\n\nПосле добавления executable demo кода задача стала product, request скорректирован: обычныйминимум+адресныеrunner/catalog/fallback/verdictNode+4реальныхsmoke. Старыйinfrafinish остановлен, собственныйдопускштатновозвращён дляизмененияматериала; новыйfinishсамвычислитслойпофинальномуdiff. Полногоstableповторноирелизанет. Рискиревью: не потерять обязательныйFAILвdiagnosticрежиме; честно сохранитьstrictpassfalseвraw; отсутствиеперекрытиязамеров; scheduler/cacheсемантика.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
