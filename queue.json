@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4320,
+  "revision": 4321,
   "nextTicket": 229,
   "nextFence": 229,
   "tasks": {
@@ -3401,7 +3401,32 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793879213339,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "969e0be6d0bd3fa44426f838b65cc7a037053e7e",
+      "changedFiles": [
+        "custom_components/houseplan/graph_node_write.py",
+        "custom_components/houseplan/graph_validation_scope.py",
+        "custom_components/houseplan/plan_graph.py",
+        "custom_components/houseplan/store.py",
+        "custom_components/houseplan/wall_node_move.py",
+        "custom_components/houseplan/websocket_api.py",
+        "demo/helpers/wall-node-python.py",
+        "demo/smoke_wall_node_merge.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/diagnostics/1306/README.md",
+        "docs/diagnostics/1306/measurements.json",
+        "docs/release-ledger/v1.83.0/1306.json",
+        "scripts/benchmark-node-save.mjs",
+        "scripts/benchmark-node-save.py",
+        "scripts/coordinate-write-barrier-guard.mjs",
+        "src/wall-node-card-adapter.ts",
+        "test/coordinate-write-barrier-guard.test.mjs",
+        "test/wall-node-card-adapter.test.mjs",
+        "tests_backend/test_ha_node_save_validation.py",
+        "tests_backend/test_node_save_validation.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3541,10 +3566,11 @@
     "token": "228:finish:cc51110e-5e69-4bbe-b7b6-5d863b35a685:finish:1:admit",
     "fence": 228,
     "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
+    "phase": "testing",
     "admittedAt": 1793879216995,
-    "expiresAt": 1793879516995
+    "expiresAt": 1793879522761,
+    "patchId": "969e0be6d0bd3fa44426f838b65cc7a037053e7e"
   },
   "events": {
     "github:42015730997:1:label:spec-request": {
@@ -3565,6 +3591,10 @@
     },
     "github:42016863121:1:completions:report:c312fbe4f38cf20bdd83944aa47978a60420e3c52af390cddbeaba9c431d9de3": {
       "digest": "730d333ded1ea6bb8883242e6f9776cf878097fd580d624d163db15b1cc602e4",
+      "issue": 1306
+    },
+    "finish:cc51110e-5e69-4bbe-b7b6-5d863b35a685:finish:2:synchronized": {
+      "digest": "dad1940b5b147531906165a86df5b4e47456ef515aa2d0f5ce1c1edf8fdcd695",
       "issue": 1306
     },
     "finish:cc51110e-5e69-4bbe-b7b6-5d863b35a685": {
