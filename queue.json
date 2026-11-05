@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3972,
-  "nextTicket": 217,
+  "revision": 3973,
+  "nextTicket": 218,
   "nextFence": 217,
   "tasks": {
     "1126": {
@@ -3303,6 +3303,20 @@
         "status": "published",
         "sourceSha": "a92688d9f216be54f499d63739fa4392dc9b6f05"
       }
+    },
+    "1301": {
+      "issue": 1301,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1301-zigbee-pointer-readiness",
+      "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 217,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793858739742,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3407,7 +3421,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1301
+  ],
   "active": null,
   "events": {
     "dev-build:41977639731:1:1300": {
@@ -3420,6 +3436,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a92688d9f216be54f499d63739fa4392dc9b6f05"
+      }
+    },
+    "finish:875a00ee-2190-43df-9805-850184b1a584": {
+      "digest": "ad3fe83c6f044dccc02f96910cbcd3a9effd47aa6f0721225d12f5d800f035e4",
+      "issue": 1301,
+      "message": {
+        "kind": "queued",
+        "issue": 1301,
+        "at": 1793858739742,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88"
       }
     }
   },
