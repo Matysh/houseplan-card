@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4016,
+  "revision": 4017,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -3362,7 +3362,14 @@
       "s6": null,
       "automationError": "automation-error",
       "automationSince": 1793859097812,
-      "automationDetail": "S6 needs its successful selected set; documentation has no runs"
+      "automationDetail": "S6 needs its successful selected set; documentation has no runs",
+      "reviewRound": 1,
+      "reviewRequest": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88",
+      "reviewMaterial": {
+        "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+        "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88",
+        "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60"
+      }
     }
   },
   "ownerDecisions": {},
@@ -3465,6 +3472,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1302:review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88": {
+      "issue": 1302,
+      "kind": "code",
+      "requestId": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88",
+      "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+      "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88",
+      "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-05T06:11:59.599Z"
+      }
     }
   },
   "waiting": [],
@@ -3478,7 +3498,8 @@
     "phase": "review",
     "admittedAt": 1793859083045,
     "expiresAt": 1793862692785,
-    "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60"
+    "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60",
+    "reviewRequest": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88"
   },
   "events": {
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6:finish:2:synchronized": {
@@ -3503,6 +3524,10 @@
     },
     "github:41978619994:1:completions:message:f62ddfe1b2a6a0756f29f9d84bd9d165581debf1a30bc64c9c715c5381ff7887": {
       "digest": "df16f6989df185cc1877e66c74d7c4781d21f210472a528cef80244709394171",
+      "issue": 1302
+    },
+    "github:41978775017:1:tick:0:review-requested": {
+      "digest": "79e481961f0e2fc58a18d47da98de0693b9ab8130d1658d9de92fb71f22ecf92",
       "issue": 1302
     },
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6": {
