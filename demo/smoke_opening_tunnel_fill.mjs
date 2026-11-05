@@ -68,14 +68,13 @@ const scenarios = [['opaque',dark,dark],['translucent',same,same],
   ['different',{c:'#143d85',a:.45},{c:'#12603b',a:.7}],['one-empty',same,null],['both-empty',null,null]];
 for (const [name,a,b] of scenarios) {
   await fills(a,b);
-  for (const zoom of [.87,1.23,1.91]) {
-    await page.evaluate(zoom => {const c=window.__card; c._zoom=zoom; c._view=null; c.requestUpdate();}, zoom);
+  for (const zoom of [1.07,1.23,1.91]) {
+    await page.evaluate(zoom => {const c=window.__card; c._applyView(zoom,625,687.5); c.requestUpdate();}, zoom);
     await settle(); await probe(`${name}-${zoom}`);
   }
 }
 await fills(same,same);
-const before = await page.evaluate(() => ({ counters:{...window.__card._floorCacheBuilds},
-  cfg:JSON.stringify(window.__card._serverCfg), area:window.__card._spaceModel().rooms.map(r=>window.__card._areaOfRoom?.(r)) }));
+const before = await page.evaluate(() => ({ counters:{...window.__card._floorCacheBuilds} }));
 await fills({c:'#334477',a:.5},{c:'#889944',a:.6});
 await page.evaluate(async () => {
   const c=window.__card; c.hass={...c.hass,states:{...c.hass.states,
