@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4598,
+  "revision": 4599,
   "nextTicket": 238,
   "nextFence": 238,
   "tasks": {
@@ -3883,6 +3883,10 @@
       "digest": "fe5e5f7a6a26915b8b8c0c9e0bb4659731916becea7eb3db2d8e43f94c06eefa",
       "issue": 1320
     },
+    "github:42039382458:1:completions:message:d8bd22bfdb33be6c801a8f9680b3821707cb443c44a9c5af81d56b55042bd93a": {
+      "digest": "1df4304f5e90022d74caa98fc6e49b7f906217f8dad0b48ef6ab3e993da36744",
+      "issue": 1320
+    },
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6": {
       "digest": "4ca7ae043aa45ab3db2b72b6a3baad5ec76b2cb872821d84e3a0e29946f5e8e5",
       "issue": 1320,
@@ -3988,7 +3992,8 @@
         "reviewChanges": "Commit `3e9402596333ea619fffad7d7ec9babe8dd77beb`. Сохранены быстрые прежние сравнения строк; различный key order дополняется рекурсивным **точным** сравнением JSON после прежней сериализации. Не используются хеш, сортировка массивов или фильтрация полей. Оба объекта должны иметь тот же набор собственных ключей; значения и элементы сравниваются рекурсивно. Revision/authority/guard/ACK проверки и перезагрузка настоящего отказа не менялись. В обычном неизменном состоянии дополнительного JSON.parse нет.\n\nДо исправления новый positive regression падает `superseded-node-response`. После исправления `node --test test/wall-node-write.test.mjs`: 16/16 PASS, без skip; отрицательные key-order+array/opaque/missing/coordinate/newer-revision случаи отказывают. `npm run build`, test-build и bundle-sync пройдены.\n\nReal HA 2026.10.4, точный пакет commit 3e940259: 3/3 business + 3/3 setup PASS, без skip/unexecuted/retry. Обычный Move, independent Merge на двух пространствах, adjacent Merge с удалением ребра, stale CAS и foreign refusal; настоящий ACK удерживается/выпускается, точные Undo/Redo и reload проверены. Лаборатория `/home/matysh/hp-e2e-29-addressed/hp-e2e-journeys-7XXORy`, сохранены results/trace. Первую диагностическую попытку с пакетом 71905b4c не считаем проверкой исправления: его product build остановился на несовместимом Object.hasOwn; использованная старая сборка не доказывала поведение нового кода. Эта попытка сохранена отдельно, новый валидный пакет пересобран после исправления target compatibility.\n\nРиск для внимания: разрешение только key-order-only echo не должно разрешать чужое содержимое с той же revision. Проверки новых ревизий и всех данных, включая неизвестные поля, остаются строгими. Shared finish повторяет необходимый S6 в своём допуске.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
