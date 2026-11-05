@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 
-export const NODE_INPUT_CLOCK_PROBES = 32;
+export const NODE_INPUT_CLOCK_PROBES = 128;
 const resolutionMs = .1; // unisolated Chromium performance.now() coarsening
 const maxUncertaintyMs = 1;
 

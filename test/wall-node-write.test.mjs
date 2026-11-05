@@ -37,6 +37,40 @@ function setup() {
   return { host, history, writes, adopted, basis, ownWrite };
 }
 const nodeWrites = s => s.writes.filter(m => m.type === 'houseplan/wall/node_move');
+
+const reversedObjectKeys = value => Array.isArray(value) ? value.map(reversedObjectKeys)
+  : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).reverse()
+    .map(([key,child])=>[key,reversedObjectKeys(child)])) : value;
+const acceptedEcho = () => {
+  const value=cfg();value.settings.after=true;
+  value.spaces[0].future={point:[.25,.3],opaque:{keep:true}};
+  value.markers=[{id:'one'},{id:'two'}];return value;
+};
+test('#1320 an equal own echo with reordered object keys still accepts the exact ACK',async()=>{
+  const s=setup(),pending=deferred(),accepted=acceptedEcho();
+  s.host.hass.callWS=async m=>{s.writes.push(m);return pending.promise;};
+  const done=writeWallNode(s.host,s.history,s.basis());await settle();
+  s.host._serverCfg=reversedObjectKeys(accepted);s.host._cfgRev=4;
+  assert.notEqual(JSON.stringify(s.host._serverCfg),JSON.stringify(accepted));
+  assert.equal(s.adopted.length,0,'no adoption before the real ACK');
+  pending.resolve({config:accepted,rev:4});assert.equal(await done,accepted);
+  assert.equal(s.adopted.length,1);assert.equal(s.host.reloads,0);
+});
+for(const damage of ['array-order','opaque-field','missing-field','coordinate','newer-revision'])
+test('#1320 key-order tolerance still refuses '+damage,async()=>{
+  const s=setup(),pending=deferred(),accepted=acceptedEcho();
+  s.host.hass.callWS=async m=>{s.writes.push(m);return pending.promise;};
+  const done=writeWallNode(s.host,s.history,s.basis());await settle();
+  s.host._serverCfg=reversedObjectKeys(accepted);s.host._cfgRev=4;
+  if(damage==='array-order')s.host._serverCfg.markers.reverse();
+  if(damage==='opaque-field')s.host._serverCfg.spaces[0].future.opaque.keep=false;
+  if(damage==='missing-field')delete s.host._serverCfg.spaces[0].future.opaque;
+  if(damage==='coordinate')s.host._serverCfg.spaces[0].future.point[0]+=Number.EPSILON;
+  if(damage==='newer-revision')s.host._cfgRev=5;
+  const live=structuredClone(s.host._serverCfg);
+  pending.resolve({config:accepted,rev:4});await assert.rejects(done,/superseded-node-response/);
+  assert.deepEqual(s.host._serverCfg,live);assert.equal(s.adopted.length,0);
+});
 test('node writes wait for pending config and never send a provisional candidate', async () => {
   const s = setup(), pending = deferred(); let flushed = false;
   s.host._saveConfigDebounced = { pending: () => !flushed, flush() { flushed = true; s.host._writeChain = pending.promise; } };

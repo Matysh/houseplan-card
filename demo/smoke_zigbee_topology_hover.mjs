@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
 
@@ -801,6 +801,8 @@ const rasterProbe = await page.evaluate(async ({ theme }) => {
   card.requestUpdate();
   await card.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await wait(() => !card._modeTransitionBusy);
+  await card.updateComplete;
   const source = root.querySelector('.dev[data-id="d_light1"]');
   const neighbor = root.querySelector('.dev[data-id="d_lamp"]');
   const known = root.querySelector('.dev[data-id="d_tv"]');
@@ -836,13 +838,30 @@ const rasterProbe = await page.evaluate(async ({ theme }) => {
   overlay.parentElement.insertBefore(label, overlay);
   overlay.viewKey = { raster: true };
   await overlay.updateComplete;
-  const svg = overlay.shadowRoot.querySelector('svg');
-  const line = overlay.shadowRoot.querySelector(
+  let svg = overlay.shadowRoot.querySelector('svg');
+  let line = overlay.shadowRoot.querySelector(
     '[data-hp="zigbee-topology-line"][data-direction="toward-neighbor"]',
   );
-  const arrow = overlay.shadowRoot.querySelector(
+  let arrow = overlay.shadowRoot.querySelector(
     '[data-hp="zigbee-topology-arrow"][data-direction="toward-neighbor"]',
   );
+  // Screenshot(animation:disabled) finishes native finite paint. Read probe
+  // coordinates only after that same camera/overlay layout has really settled.
+  let previousFrame = '', stableFrames = 0;
+  await wait(() => {
+    svg = overlay.shadowRoot.querySelector('svg');
+    line = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line"][data-direction="toward-neighbor"]');
+    arrow = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"][data-direction="toward-neighbor"]');
+    if (!svg?.isConnected || !line?.isConnected || !arrow?.isConnected || card._modeTransitionBusy) return false;
+    const m = svg.getScreenCTM();
+    if (!m) return false;
+    const frame = JSON.stringify({matrix:[m.a,m.b,m.c,m.d,m.e,m.f],
+      nodes:[source,neighbor,known,unrelated,label].filter(Boolean).map(node=>node.getBoundingClientRect().toJSON()),
+      line:['x1','y1','x2','y2'].map(key=>line.getAttribute(key)),arrow:arrow.getAttribute('points'),
+      opacity:[getComputedStyle(overlay).opacity,getComputedStyle(svg).opacity],stroke:getComputedStyle(line).stroke});
+    stableFrames = frame === previousFrame ? stableFrames + 1 : 0; previousFrame = frame;
+    return stableFrames >= 5;
+  });
   const matrix = svg.getScreenCTM();
   const start = new DOMPoint(Number(line.getAttribute('x1')), Number(line.getAttribute('y1')))
     .matrixTransform(matrix);
@@ -970,6 +989,7 @@ const rasterEvidence = await page.evaluate(async ({ active, baseline, probe }) =
   baseline: baselineRaster.toString('base64'),
   probe: rasterProbe,
 });
+writeFileSync(new URL(`raster-probe-${theme}.json`, visualArtifacts), JSON.stringify({probe:rasterProbe,evidence:rasterEvidence},null,2));
 result[`raster_${theme}_labelContainsLine`] = rasterProbe.labelContainsLine;
 for (const [name, value] of Object.entries(rasterEvidence)) {
   result[`raster_${theme}_${name}`] = value;

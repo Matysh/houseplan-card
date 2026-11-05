@@ -6,6 +6,7 @@ import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELA
 import { makeE2ESteps } from './e2e.mjs';
 import { makeConverterStep } from './converters.mjs';
 import { walk } from './storage.mjs';
+import { GOLDEN_CAPTURE_INPUTS } from '../../scripts/source-fingerprint.mjs';
 import { demoIconSourceFiles } from '../../demo/helpers/icon-sources.mjs';
 
 export { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E };
@@ -13,7 +14,7 @@ const here = fileURLToPath(new URL('../catalog/', import.meta.url));
 export const inventory = JSON.parse(await readFile(resolve(here, 'inventory.json'), 'utf8'));
 const productInputs = ['src/**', 'assets/**', 'package.json', 'package-lock.json', 'tsconfig.json', 'rollup.config.mjs'];
 // Rollup embeds these capture inputs. Generated assets/caches are not sources.
-const buildInputs = [...productInputs, 'demo/fixtures/**/*.mjs', 'demo/golden/**/*.mjs', 'demo/fixtures/sun-transparent.json',
+const buildInputs = [...productInputs, ...GOLDEN_CAPTURE_INPUTS, 'demo/fixtures/**/*.mjs', 'demo/golden/**/*.mjs', 'demo/fixtures/sun-transparent.json',
   'demo/helpers/vacuum-history.mjs', 'test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json', 'demo/docs/browser-args.mjs',
   'scripts/source-fingerprint.mjs', 'scripts/css-template-minifier.mjs', 'scripts/bundle-manifest.mjs', 'scripts/coverage-maps.mjs'];
 // Public CI describes the tested product, not the current test/process sources.

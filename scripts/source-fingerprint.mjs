@@ -69,7 +69,7 @@ const POST_CAPTURE_INPUTS = new Set([
   'process-next/catalog/golden-accept.mjs',
 ]);
 
-const GOLDEN_CAPTURE_INPUTS = [
+export const GOLDEN_CAPTURE_INPUTS = [
   'process-next/catalog/golden-runner.mjs',
   'process-next/catalog/golden-selection.mjs',
   'process-next/catalog/selections.mjs',
