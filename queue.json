@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3522,
+  "revision": 3523,
   "nextTicket": 204,
   "nextFence": 203,
   "tasks": {
@@ -1955,7 +1955,7 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1254-summary-camera-animation",
-      "materialSha": "97ab0ee51ddd754d31a018fce54fc26d08ec1ae6",
+      "materialSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 202,
@@ -1963,9 +1963,15 @@
       "status": "S6-in-progress",
       "readyAt": 1793844063097,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793844700362,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "b0076d9317d8d8c1030dc208afdc6d7b753ff231",
+      "changedFiles": [
+        "demo/smoke_summary_camera_motion.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1254.json",
+        "src/houseplan-card.ts"
+      ]
     },
     "1256": {
       "issue": 1256,
@@ -3278,11 +3284,12 @@
     "worker": "github-coordinator",
     "token": "202:github:41953488104:1:tick:0:admit",
     "fence": 202,
-    "materialSha": "97ab0ee51ddd754d31a018fce54fc26d08ec1ae6",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+    "expectedBase": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
+    "phase": "testing",
     "admittedAt": 1793844667541,
-    "expiresAt": 1793845026086
+    "expiresAt": 1793845067110,
+    "patchId": "b0076d9317d8d8c1030dc208afdc6d7b753ff231"
   },
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3343,6 +3350,10 @@
     },
     "finish:68939266-04e9-46b9-a637-b06f10830c7a": {
       "digest": "d1a54d9350dc6ca37a8169b1c63defb8723b15890af1c3835038b1648d6e92e1",
+      "issue": 1254
+    },
+    "finish:b788cce0-39f3-4ccb-891a-ab46ec76b937:finish:2:synchronized": {
+      "digest": "a358680e63cd2fe5e5eadc1e17802a55abd249044ecb94841729fe482c52b8ea",
       "issue": 1254
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
