@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3596,
+  "revision": 3597,
   "nextTicket": 206,
   "nextFence": 206,
   "tasks": {
@@ -3551,6 +3551,10 @@
       "digest": "876a226fd7a432550857ba0252fee023409a0db400751c59a534a7cbfaf95dea",
       "issue": 1293
     },
+    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:4:s6-label": {
+      "digest": "6812d57465c9a14072f6cd31dbd042cddf7e1c27a7dd96914a0391910753d7f3",
+      "issue": 1293
+    },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
       "issue": 1258,
@@ -3823,7 +3827,8 @@
         "resubmission": false,
         "reviewChanges": "Изменяется только ожидание в `smoke_decor_group_style_cache.mjs` и RU/EN технические changelog. Вместо `waitForFunction(async...)` выполняется один awaited page.evaluate с ограниченным 5 сек асинхронным циклом: реальный config/get должен вернуть цвет #abcdef, до этого polling продолжается по rAF; затем прежний settle ждёт обычную очередь/ACK. Добавлен assert сохранённого значения defaults.config.settings.decor_default_style.color, все сравнения полного config, числа записей, истории, чужих стен/кэшей и SVG сохранены.\n\nПервоначально проверено расширение waitForWrites на приватный таймер runtime; прототип отброшен: это добавляло новые приватные чтения тестового фасада и было избыточно для наблюдаемого подтверждения сохранения. Финальное решение не меняет фасад, runtime debounce/lifecycle, права или write protocol. Потери настроек продукта не было; исходное направление diff в описании исправлено после наблюдения временной шкалы.\n\nАдресный исправленный smoke предварительно PASS на исходном runtime, без обновления bundle/PNG. Исходный FAIL и диагностический late-timer результат сохранены в output/issue-1293. Финальный S6 через общую очередь включает обычный продуктовый минимум и этот smoke, поскольку infrastructure profile browser checks не допускает. Отдельный Node-тест, повторяющий локальный polling-код, не добавляется: серверное значение и cold-remount в самом smoke проверяют нужное поведение.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
