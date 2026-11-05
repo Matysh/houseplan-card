@@ -10,6 +10,7 @@ import {checkAll,watchPage} from '../serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {configDifference} from './ci-flake-evidence.mjs';
+import {waitForUiKitPaint} from './ui-kit-paint.mjs';
 
 // Keep every interaction/viewport/theme assertion in one shared implementation.
 export async function runSettingsPolish955(defaultCases, finish) {
@@ -118,8 +119,13 @@ try{
       const helps=d.locator('hp-help').filter({visible:true});
       for(let i=0;i<await helps.count();i++){
        const h=helps.nth(i),trigger=h.locator('button');await trigger.hover();await page.waitForTimeout(30);
-       out[prefix+`_help_immediate_${i}`]=await trigger.getAttribute('aria-expanded')==='true';await page.waitForTimeout(160);
+       out[prefix+`_help_immediate_${i}`]=await trigger.getAttribute('aria-expanded')==='true';await waitForUiKitPaint(page);
        out[prefix+`_help_${i}`]=await h.evaluate(el=>{const b=el.shadowRoot.querySelector('button'),s=getComputedStyle(b),p=el.shadowRoot.querySelector('.tooltip');return b.getAttribute('aria-expanded')==='true'&&s.cursor==='pointer'&&s.backgroundColor!=='rgba(0, 0, 0, 0)'&&p?.getBoundingClientRect().width>0;});
+       if(!out[prefix+`_help_${i}`])diagnostics[prefix+`_help_${i}`]=await h.evaluate(el=>{
+        const b=el.shadowRoot.querySelector('button'),s=getComputedStyle(b),p=el.shadowRoot.querySelector('.tooltip');
+        return{expanded:b.getAttribute('aria-expanded'),cursor:s.cursor,background:s.backgroundColor,
+         hovered:b.matches(':hover'),trigger:b.getBoundingClientRect().toJSON(),popup:p?.getBoundingClientRect().toJSON()};
+       });
        sawHelp++;await page.keyboard.press('Escape');await page.mouse.move(0,0);
       }
       const pickers=d.locator('hp-color-opacity').filter({visible:true});

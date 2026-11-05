@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Settle actual finite UI Kit paint before inspecting settings help, preserving immediate expansion and strict hover/paint assertions instead of a fixed 160-ms wait. [#1317](https://github.com/Matysh/houseplan-card/issues/1317)
+
 - Accept a node write ACK after an equal own echo with reordered object keys, retaining exact history and rejection of newer revisions, changed arrays, coordinates and opaque fields. [#1320](https://github.com/Matysh/houseplan-card/issues/1320)
 - Publish verified HA dialog fixture assets atomically from private staging directories, preserving integrity checks and concurrent cold/warm readers without partial extraction or wheel collisions. [#1316](https://github.com/Matysh/houseplan-card/issues/1316)
 
