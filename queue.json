@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3729,
+  "revision": 3730,
   "nextTicket": 211,
   "nextFence": 210,
   "tasks": {
@@ -268,38 +268,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c"
-      }
-    },
-    "1179": {
-      "issue": 1179,
-      "branch": "codex/1179-converter-e2e",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "70c2c6cfcd8ee755f143890d09e8e60e9d591412",
-      "mergedAt": 1793628312265,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": true,
-      "reviewRequest": "review:1179:1:f35df3bd6b558480650c5932150d9bb1f09bc287:c44ac63846812de2ef18a17489df7fac1b5dad7f",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": true,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1193": {
@@ -3118,7 +3086,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "644cae87c40425c31fb1b181574f48e434ffb8bd"
       }
     },
     "1293": {
@@ -3456,6 +3425,18 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:41957770399:1:1292": {
+      "digest": "011dfc0122009c4f0f984c6d169ea0582164b4fb3988a5b851067ff75be2d6fa",
+      "issue": 1292,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1292,
+        "at": 1793847167182,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "644cae87c40425c31fb1b181574f48e434ffb8bd"
       }
     }
   },
