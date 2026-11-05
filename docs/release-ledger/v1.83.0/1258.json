@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1258,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "The previous stable also rejected explicit wall removal when it exposed a short unchanged collinear remainder. The fix proves an exact physical subset on client and server; it does not relax creation or deformation.",
+  "summary": {
+    "ru": "Удаление стены больше не блокируется из-за короткого неизменного остатка рядом.",
+    "en": "Removing a wall is no longer blocked by an unchanged short neighbouring remainder."
+  }
+}

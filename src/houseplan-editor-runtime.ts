@@ -145,7 +145,7 @@ import {
   type MultiWallNodeMap, innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
-  junctionLimitViolations, increasedViolations,
+  junctionLimitViolations, increasedViolations, removesOnlyLimitSegments,
   type JunctionLimitViolation, type JunctionSharedGeometry, type LimitSegment,
 } from './junction-limits';
 import {
@@ -2173,7 +2173,16 @@ public _junctionLimitsIntroduced(
       // baseline above is allowed to fail open.
       return [{ rule: 'check_failed', subject: spaceId, actual: 0, limit: 0 }];
     }
-    return increasedViolations(next, comparison);
+    const introduced = increasedViolations(next, comparison);
+    if (!introduced.some(item => item.rule === 'length')) return introduced;
+    const baseline = Number(previousConfig.model_version || 0) >= WALL_SEGMENT_MODEL_VERSION
+      ? previousConfig : commitWallSegmentModel(previousConfig).config;
+    const oldSpace = baseline.spaces.find(space => space.id === spaceId);
+    const newSpace = candidate.spaces.find(space => space.id === spaceId);
+    const removal = oldSpace && newSpace && removesOnlyLimitSegments(
+      this._limitSegmentsOf(oldSpace), this._limitSegmentsOf(newSpace), oldSpace.cell_cm, newSpace.cell_cm,
+    );
+    return introduced.filter(item => !removal || item.rule !== 'length');
   }
 
 public _commitPhysicalGeometry(

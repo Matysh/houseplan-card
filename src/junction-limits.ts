@@ -71,6 +71,33 @@ export interface LimitSegment {
   cm?: number;
 }
 
+/** #1258: removing a carrier can expose a short surviving collinear run.
+ * Prove the physical delta, never trust a caller's operation name. This only
+ * exempts the length rule; schema, graph, opening and other limits still run.
+ * Exact coordinates/IDs/thickness and the physical grid scale must survive.
+ */
+export function removesOnlyLimitSegments(
+  previous: readonly LimitSegment[], next: readonly LimitSegment[],
+  previousCellCm: unknown, nextCellCm: unknown,
+): boolean {
+  const scale = (value: unknown) => Number(value) > 0 ? Number(value) : 5;
+  if (scale(previousCellCm) !== scale(nextCellCm) || next.length >= previous.length) return false;
+  const signature = (segment: LimitSegment) => JSON.stringify([
+    String(segment.id || ''), segment.a, segment.b, Number(segment.cm || 0),
+  ]);
+  const remaining = new Map<string, number>();
+  for (const segment of previous) {
+    const key = signature(segment);
+    remaining.set(key, (remaining.get(key) || 0) + 1);
+  }
+  for (const segment of next) {
+    const key = signature(segment), count = remaining.get(key) || 0;
+    if (!count) return false;
+    remaining.set(key, count - 1);
+  }
+  return true;
+}
+
 /** Shared full/affected-room validation used by editor writes and lightweight resize previews. */
 export function junctionLimitViolations(
   config: unknown,

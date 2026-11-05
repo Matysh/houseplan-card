@@ -431,10 +431,12 @@ def validate_junction_limits(
     so its candidate counts ARE its baseline counts and are copied, not
     re-counted. None judges every space, as before.
     """
+    previous_spaces = None
     if baseline_counts is not None:
         old_counts = baseline_counts
     else:
-        old_counts = space_violation_counts(_migrated_spaces(previous))
+        previous_spaces = _migrated_spaces(previous)
+        old_counts = space_violation_counts(previous_spaces)
         touched_spaces = None
     candidate_counts: dict[str, dict[str, int]] = {}
     if touched_spaces is None:
@@ -464,6 +466,41 @@ def validate_junction_limits(
         }
         for rule, items in after.items():
             if len(items) > before.get(rule, 0):
+                if rule == "length" and previous is not None:
+                    # #1258: cached counts do not prove deletion. Inspect the
+                    # actual stored document only when this exception is needed.
+                    if previous_spaces is None:
+                        previous_spaces = _migrated_spaces(previous)
+                    if removes_only_limit_segments(previous_spaces.get(space_id), space):
+                        continue
                 _, subject, actual, limit = items[0]
                 raise JunctionLimitError(space_id, rule, subject, actual, limit)
     return candidate_counts
+
+
+def removes_only_limit_segments(previous: dict[str, Any] | None, candidate: dict[str, Any]) -> bool:
+    """Exact physical subset proof for the length rule, not write authorization.
+
+    Node deletion/merging, additions, moved endpoints, rekeying, thickness and
+    grid-scale edits cannot claim this exception. All other guards still run.
+    """
+    from collections import Counter
+
+    if previous is None:
+        return False
+    if (previous.get("cell_cm") or 5) != (candidate.get("cell_cm") or 5):
+        return False
+    before, after = limit_segments(previous), limit_segments(candidate)
+    if len(after) >= len(before):
+        return False
+
+    def signature(segment):
+        return (segment["id"], tuple(segment["a"]), tuple(segment["b"]), segment["cm"])
+
+    remaining = Counter(signature(segment) for segment in before)
+    for segment in after:
+        key = signature(segment)
+        if remaining[key] <= 0:
+            return False
+        remaining[key] -= 1
+    return True

@@ -30,6 +30,30 @@ jl = load_pure(
 CELL = 5.0
 
 
+@pytest.mark.parametrize("cached", [False, True])
+def test_1258_removal_exposes_short_run_but_keeps_honest_baseline_counts(cached):
+    previous = {"model_version": jl.WALL_SEGMENT_MODEL_VERSION, "spaces": [{
+        "id": "f", "cell_cm": 5, "rooms": [], "partitions": [
+            {"id": "long", "a": [.1, .1], "b": [44 / 240, .1], "cm": 20},
+            {"id": "short", "a": [44 / 240, .1], "b": [46 / 240, .1], "cm": 20},
+        ],
+    }]}
+    import copy
+    candidate = copy.deepcopy(previous)
+    candidate["spaces"][0]["partitions"].pop(0)
+    baseline = jl.validate_junction_limits(previous)
+    assert baseline == {"f": {}}
+    result = jl.validate_junction_limits(candidate, previous,
+        baseline_counts=baseline if cached else None, touched_spaces={"f"} if cached else None)
+    assert result == {"f": {"length": 1}}, "accepted debt must remain visible, not disappear from cache"
+    assert jl.validate_junction_limits(previous, candidate, baseline_counts=result) == baseline
+    for field, value in [("cm", 25), ("id", "new"), ("b", [45 / 240, .1])]:
+        changed = copy.deepcopy(candidate)
+        changed["spaces"][0]["partitions"][0][field] = value
+        with pytest.raises(jl.JunctionLimitError, match="rule=length"):
+            jl.validate_junction_limits(changed, previous, baseline_counts=baseline)
+
+
 def cm(value):
     return jl.cm_to_units(value, CELL)
 

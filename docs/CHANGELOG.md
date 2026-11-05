@@ -6,6 +6,7 @@
 
 - Check snap junctions against their literal lattice wire, exercise Draw chain compaction through native clicks, and pin weather fixture dates across HA midnight. Product geometry and visual baselines remain unchanged. [#1294](https://github.com/Matysh/houseplan-card/issues/1294)
 - Smoothly recenter an automatically fitted plan when the summary panel appears or disappears. Rapid toggles retarget the current camera; manual views and reduced-motion preferences are preserved. [#1254](https://github.com/Matysh/houseplan-card/issues/1254)
+- Allow proved wall removal to leave an unchanged short segment without relaxing creation, movement, graph or opening validation. Preserve exact Undo/Redo and mirrored server acceptance. [#1258](https://github.com/Matysh/houseplan-card/issues/1258)
 
 ## v1.84.0-beta.5 — 2026-11-04
 - Reconcile lattice and wall-identity test passports, canonical writer assertions and deletion/Undo oracles with the accepted model11 behavior. Preserve historical sources, genuine off-grid cases, CAS refusals and file cleanup after Undo expires. [#1290](https://github.com/Matysh/houseplan-card/issues/1290)
