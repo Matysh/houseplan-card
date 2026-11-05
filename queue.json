@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4533,
-  "nextTicket": 235,
+  "revision": 4534,
+  "nextTicket": 236,
   "nextFence": 235,
   "tasks": {
     "1126": {
@@ -3543,6 +3543,20 @@
         "status": "published",
         "sourceSha": "f019def1923379ee8333669eff389f59b92375da"
       }
+    },
+    "1313": {
+      "issue": 1313,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1313-passage-floor-smoke",
+      "materialSha": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 235,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793883309146,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3675,7 +3689,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1313
+  ],
   "active": null,
   "events": {
     "dev-build:42030734652:1:1312": {
@@ -3688,6 +3704,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "f019def1923379ee8333669eff389f59b92375da"
+      }
+    },
+    "finish:c2bad5fe-4f9e-4576-a456-07110175376d": {
+      "digest": "d268c95e258e4d5365c5c9d43cebe4b695dc4375843523a5320bb2fe7424c13b",
+      "issue": 1313,
+      "message": {
+        "kind": "queued",
+        "issue": 1313,
+        "at": 1793883309146,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f"
       }
     }
   },
