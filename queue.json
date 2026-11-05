@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4631,
+  "revision": 4632,
   "nextTicket": 239,
   "nextFence": 239,
   "tasks": {
@@ -3625,7 +3625,16 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "process-next/test/ha-dialog-cache.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T135439676-088d1bab",
+        "name": "Тесты для задачи #1316 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T135439676-088d1bab/report.json",
+        "materialSha": "cc4654b3ca8dd40f4b8238d3b0abb70612829ade",
+        "status": "passed",
+        "finishedAt": "2026-11-05T13:55:31.057Z",
+        "failures": []
+      }
     },
     "1320": {
       "issue": 1320,
@@ -3803,9 +3812,9 @@
     "fence": 238,
     "materialSha": "cc4654b3ca8dd40f4b8238d3b0abb70612829ade",
     "expectedBase": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793886867110,
-    "expiresAt": 1793887224701,
+    "expiresAt": 1793890535067,
     "patchId": "7a27939cab329b765cb24513f4a50847714b4c2a"
   },
   "events": {
@@ -3827,6 +3836,10 @@
     },
     "dev-build:42039793235:1:webhook": {
       "digest": "88dffc10815384d58b92511f90acf495e8509f0984da08c36de319546287dd7b",
+      "issue": 1316
+    },
+    "finish:6c4871c8-fe13-4ad9-915e-896b05bcae1b:finish:3:s6-complete": {
+      "digest": "540f1c32a8f5977919d5d0098c083a86795427d777a433f2e7df50a161b80349",
       "issue": 1316
     },
     "finish:6c4871c8-fe13-4ad9-915e-896b05bcae1b": {
