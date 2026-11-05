@@ -13,7 +13,7 @@ import { launch, finish, requirePinnedBrowser, watchPage } from './serve.mjs';
 import { installNodePaintObserver } from './helpers/node-paint-observer.mjs';
 import { assertNodeClockBounds, assertUniqueNodeInputPositions, calibrateNodeInputClock, installNodeInputObserver, NODE_INPUT_CLOCK_PROBES, settleNodeInputLedger } from './helpers/node-input-ledger.mjs';
 import { writeNodeCiReport } from './helpers/node-ci-report.mjs';
-import { nodeBudgetVerdict, nodeLatencyAttribution, nodeQuantiles as quantiles } from './helpers/node-performance-report.mjs';
+import { nodeBudgetVerdict, nodeExecutionVerdict, nodeLatencyAttribution, nodeQuantiles as quantiles } from './helpers/node-performance-report.mjs';
 import { sendNodeNativeMove } from './helpers/node-native-input.mjs';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
@@ -373,20 +373,21 @@ try {
 
   report.functionalChecks = 'passed';
   report.attribution = nodeLatencyAttribution(report);
-  Object.assign(report, nodeBudgetVerdict(report));
+  Object.assign(report, nodeExecutionVerdict(report,{diagnosticTiming:process.argv.includes('--diagnostic-timing')}));
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ issue: 834, output, fixtureSha256: report.fixtureSha256, chromium: report.chromium,
     mainThread: report.mainThread, inputToPaint: report.inputToPaint, longTasks: report.longTasks,
     validateCalls: report.validateCalls, coalescedInputs: report.coalescedInputs, budgets,
     budgetFailures: report.budgetFailures, failures: report.failures, pass: report.pass,
+    executionPass:report.executionPass,timingDiagnostic:report.timingDiagnostic,timingStatus:report.timingStatus,
     attribution: { ...report.attribution, rows: undefined }, material, harnessSha256, environment }, null, 2));
-  assert.ok(report.pass, '#834 native connected-floor performance budgets');
+  assert.ok(report.executionPass, '#834 native connected-floor correctness and measurement completeness');
   await finish(browser, { writes: writes.length, rawReport: output });
   assert.equal(process.exitCode || 0, 0, 'connected-node harness/page-error verdict');
 } catch (error) {
-  report.pass = false;
+  report.pass = false; report.executionPass = false;
   report.error = { name: error.name, message: error.message,
-    stage: error.clockProbes ? 'clock-calibration' : report.budgetFailures?.length ? 'budget-verdict' : 'smoke' };
+    stage: error.clockProbes ? 'clock-calibration' : report.budgetFailures?.length && !report.functionalFailures?.length ? 'budget-verdict' : 'smoke' };
   if (error.clockProbes) report.clockFailure = { ...error.clockCalibration, message: error.message, probes: error.clockProbes };
   throw error;
 } finally {

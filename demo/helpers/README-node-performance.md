@@ -122,3 +122,12 @@ observations. Missing identity, incomplete functions/clocks, foreign material
 or fewer than three receipts prevent that claim. A red budget outcome remains
 in a complete series. Retain every predeclared run, not retry-until-green;
 the cause remains `unknown` without further evidence.
+
+Shared process (#1295): the catalog runs the connected profile exclusively with
+`--diagnostic-timing`. PROCESS.md makes these absolute microbenchmarks diagnostic,
+while comparable relative release metrics keep their separate publication rules.
+All functional assertions and missing/invalid clock/sample measurements remain
+required. Raw `pass` still represents the strict historical budget verdict;
+`executionPass`, `timingDiagnostic` and `timingStatus` explain the shared run.
+Standalone invocation without this explicit flag retains the strict budget exit.
+No historical report is reinterpreted or overwritten.

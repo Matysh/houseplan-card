@@ -211,6 +211,7 @@ test('#1295 isolates exactly the four measured profiles in task and stable plans
   for(const event of ['task','stable']) {
     const p=await planProfile({root,event,areaTests:[...files,['demo','smoke_summary_weather.mjs'].join('/')],version:'1.84.0'});
     assert.deepEqual(p.steps.filter(s=>s.exclusive).map(s=>s.id).sort(),expected);
+    for(const file of files)assert.deepEqual(p.steps.find(s=>s.command?.[1]===file).command,['node',file,'--diagnostic-timing']);
     if(event==='task') assert.ok(p.steps.some(s=>s.id==='startup-view'&&!s.exclusive));
     assert.ok(p.steps.some(s=>s.id.startsWith('smoke:')&&!s.exclusive));
   }

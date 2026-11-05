@@ -57,3 +57,34 @@ program or runtime hook is introduced. Workflow and canonical template match.
 
 This is an infrastructure correction, not a full repeated stable certification.
 The original failed audit remains failed; addressed runs and S6 are separate.
+## End-to-end isolation alone is insufficient
+
+CI [41957439627](https://github.com/Matysh/houseplan-card/actions/runs/41957439627)
+actually used the permanent exclusive scheduler at ordinary jobs2 on clean source
+6f8241aa3beaad5d3e6821e152ab2adda74f0b62. All four measured steps ran without
+another plan step, but EPYC7763 /4vCPU, image20261026.354.1 was slower:
+history-copy long task205>200ms, connected mainThread p95 57.2>55ms. Inactive and
+visible passed; correctness completed. This FAIL is retained, not retried away.
+It invalidates any claim that runner isolation guarantees the absolute ceilings.
+
+PROCESS.md, section Sizes/performance, explicitly says other microbenchmarks do
+not block publication; only confirmed comparable relative release metrics use
+the listed publication thresholds. These four old absolute ceilings cannot be
+used as machine-independent release gates. No stable reference is available here.
+Therefore the shared catalog explicitly invokes these four scripts with
+`--diagnostic-timing`. Threshold numbers and strict standalone/offline verdicts
+stay unchanged; no CPU scaling or generous new ceiling is introduced.
+
+Only numeric budget excess becomes diagnostic. Empty/malformed observations,
+wrong sample count, native/single-write/persistence proof, functional assertions,
+geometry/history/cache counters, input/clock validity, page errors and incomplete
+work still fail the executed check. Raw connected `pass` remains the strict
+historical budget verdict; `executionPass`, `timingDiagnostic` and `timingStatus`
+separately explain execution. A historical red report is never rewritten as green.
+Selective reports retain budgetFailures separately from required failures.
+
+Regression tests contrast a complete slow series with missing, invalid, untrusted,
+unpersisted and duplicate-write series, functional/clock errors and incomplete
+checks. The release relative-metrics algorithm and its blocking behavior are
+untouched. The task now includes smoke code and uses product S6 plus selected
+runner/catalog/fallback and verdict tests; it is no longer infrastructure-only.

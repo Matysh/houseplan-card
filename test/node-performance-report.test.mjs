@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { nodeBudgetVerdict, nodeLatencyAttribution, nodeQuantiles, nodeSeriesSummary } from '../demo/helpers/node-performance-report.mjs';
+import { nodeBudgetVerdict, nodeExecutionVerdict, nodeLatencyAttribution, nodeQuantiles, nodeSeriesSummary } from '../demo/helpers/node-performance-report.mjs';
 
 function report() {
   return { schema: 'houseplan-connected-node/v1', material: { sha: 'a'.repeat(40), tree: 'b'.repeat(40), dirty: false },
@@ -150,4 +150,18 @@ test('#888 diagnostic CLI is read-only, bounded and retains original red plus it
     assert.equal(readFileSync(path, 'utf8'), raw); assert.deepEqual(readdirSync(dir), ['raw.json']);
     assert.equal(spawnSync(process.execPath, [cli], { encoding: 'utf8' }).status, 2);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+
+test('#1295 diagnostic timing preserves red budgets but cannot green functional, missing-data or clock failures',()=>{
+  const slow=report();slow.mainThread.p95=80.7;slow.inputToPaint.p95=168.69;
+  const snapshot=structuredClone(slow),strict=nodeExecutionVerdict(slow),diagnostic=nodeExecutionVerdict(slow,{diagnosticTiming:true});
+  assert.equal(strict.executionPass,false);assert.equal(diagnostic.executionPass,true);
+  assert.equal(diagnostic.pass,false,'historical budget verdict stays red');
+  assert.equal(diagnostic.timingStatus,'exceeded');assert.equal(diagnostic.budgetFailures.length,2);
+  assert.deepEqual(slow,snapshot);
+  for(const change of [r=>r.failures.push('wrong geometry'),r=>r.error={name:'ClockError',message:'uncertain clock'},
+    r=>r.functionalChecks='incomplete',r=>r.mainThread.p95=NaN,r=>r.inputToPaint.count=0,r=>r.pass=false]){
+    const r=report();change(r);assert.equal(nodeExecutionVerdict(r,{diagnosticTiming:true}).executionPass,false);
+  }
 });

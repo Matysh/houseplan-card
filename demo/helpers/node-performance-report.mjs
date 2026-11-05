@@ -28,6 +28,21 @@ export function nodeBudgetVerdict(report) {
   return { budgetFailures, failures, pass: failures.length === 0 };
 }
 
+/** Call on fresh observations before assigning the strict, historical verdict.
+ * Absolute timing ceilings are diagnostic in the shared release process, while
+ * missing data, incomplete work, functional/clock/page failures remain required. */
+export function nodeExecutionVerdict(report, {diagnosticTiming=false}={}) {
+  const strict=nodeBudgetVerdict(report);
+  const functionalFailures=[...(report.failures||[]),
+    ...(report.error?[`${report.error.name||'Error'}: ${report.error.message||'incomplete smoke'}`]:[]),
+    ...(report.functionalChecks==='passed'?[]:['functional checks incomplete']),
+    ...strict.budgetFailures.filter(f=>f.reason!=='budget-exceeded').map(f=>`${f.metric}: missing/invalid measurement or limit`)];
+  if(report.pass===false&&!functionalFailures.length)functionalFailures.push('original smoke failed');
+  return {...strict,functionalFailures,executionPass:functionalFailures.length===0&&(diagnosticTiming||strict.pass),
+    timingDiagnostic:diagnosticTiming,
+    timingStatus:strict.budgetFailures.some(f=>f.reason!=='budget-exceeded')?'invalid':strict.budgetFailures.length?'exceeded':'within-budgets'};
+}
+
 /** Join by exact source/observation/sample identities, not nearest timestamps.
  * The source->native interval for superseded inputs includes their wait for a
  * later matching native input; it is NOT a pure CDP transport measurement.

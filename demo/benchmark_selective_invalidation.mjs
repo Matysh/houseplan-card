@@ -1,4 +1,4 @@
-// #1093: one bounded native timing gate, shared by task core and the full beta matrix.
+// #1093: bounded native measurement; correctness stays required in diagnostic mode.
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -22,33 +22,38 @@ export function timingStatistics(samples) {
       const values=rows.map(row=>row[field]);return[field,{median:percentile(values,.5),p95:percentile(values,.95),max:Math.max(...values)}];
     })),maxLongTask:Math.max(0,...rows.flatMap(row=>row.longTasks.map(task=>task.duration)))}));
 }
-export function timingFailures(samples,{iterations=20}={}) {
-  const failures=[];
-  if(!samples.length)return ['empty timing matrix'];
+export function timingVerdict(samples,{iterations=20}={}) {
+  const failures=[],budgetFailures=[];
+  if(!samples.length)return {failures:['empty timing matrix'],budgetFailures};
   for(const sample of samples) {
     if(!sample.trusted||!sample.persisted||sample.requests!==1)failures.push(`${sample.case}: native/persisted/single-write proof missing`);
+    if(!Array.isArray(sample.longTasks)||sample.longTasks.some(t=>!Number.isFinite(t.duration)||t.duration<0))failures.push(`${sample.case}: invalid long-task measurements`);
     for(const field of ['inputToRequest','ackToPaint','client'])if(!Number.isFinite(sample[field])||sample[field]<0)failures.push(`${sample.case}: invalid ${field}`);
   }
   for(const row of timingStatistics(samples)) {
     const b=row.case.startsWith('history-'),label=`${row.scene}/DPR${row.dpr}/${row.case}/${row.delay}ms`;
     if(!row.cold&&row.dpr===1&&row.n!==iterations)failures.push(`${label}: expected ${iterations} samples, got ${row.n}`);
     for(const [field,limit] of [['inputToRequest',b?120:100],['ackToPaint',b?180:100],['client',b?300:200]])
-      if(!row.cold&&row.dpr===1&&row[field].p95>limit)failures.push(`${label}: ${field} p95=${row[field].p95} >${limit}`);
-    if(row.client.max>(b?600:400))failures.push(`${label}: client max=${row.client.max} >${b?600:400}`);
+      if(!row.cold&&row.dpr===1&&row[field].p95>limit)budgetFailures.push(`${label}: ${field} p95=${row[field].p95} >${limit}`);
+    if(row.client.max>(b?600:400))budgetFailures.push(`${label}: client max=${row.client.max} >${b?600:400}`);
     // #1145 accepted the observed 117ms paint task; #1153 retains that existing
     // bound for this addressed benchmark in 1.84: a local 3-case/DPR1 subset
     // cannot justify lowering the full CI matrix to 100ms. No threshold changed.
     // History, latency percentiles, maxima and correctness gates stay unchanged.
     const longTaskLimit=b?200:117;
-    if(row.maxLongTask>longTaskLimit)failures.push(`${label}: long task=${row.maxLongTask} >${longTaskLimit}`);
+    if(row.maxLongTask>longTaskLimit)budgetFailures.push(`${label}: long task=${row.maxLongTask} >${longTaskLimit}`);
   }
-  return failures;
+  return {failures,budgetFailures};
 }
-export async function runSelectiveInvalidationGate({profile='visible',iterations=20,output='artifacts/1093/timing.json'}={}) {
+// Keep the historical strict API for direct callers and offline comparisons.
+export function timingFailures(samples,options) {
+  const verdict=timingVerdict(samples,options);return [...verdict.failures,...verdict.budgetFailures];
+}
+export async function runSelectiveInvalidationGate({profile='visible',iterations=20,output='artifacts/1093/timing.json',diagnosticTiming=false}={}) {
   requirePinnedBrowser();
   assert.ok(['visible','inactive','history0','history320','full','paint-probe'].includes(profile));
   assert.ok(Number.isInteger(iterations)&&iterations>0);
-  const samples=[],loads=[],failures=[],browsers=[];
+  const samples=[],loads=[],failures=[],budgetFailures=[],browsers=[];
   const runScene=async({large,dpr,cases,delays,history=false,cold=false})=>{
     const {page,browser}=await launch({width:1440,height:1000},dpr,[],{},undefined,undefined,'/demo.html?device-history=1');
     const scene=large?'large':'small',card=page.locator('houseplan-card');
@@ -83,20 +88,24 @@ export async function runSelectiveInvalidationGate({profile='visible',iterations
     } else await runScene({large:true,dpr:1,
       cases:profile==='visible'?['visible-bg']:profile==='inactive'?['inactive-paint']:profile==='paint-probe'?paintCases:[],
       delays:profile==='history0'?[0]:profile==='history320'?[320]:[0,320],history:profile.startsWith('history')});
-    failures.push(...timingFailures(samples,{iterations}));
+    const verdict=timingVerdict(samples,{iterations});
+    failures.push(...verdict.failures);budgetFailures.push(...verdict.budgetFailures);
+    if(!diagnosticTiming)failures.push(...budgetFailures);
   } catch(error) {failures.push(error.stack||String(error));}
   const sources=['demo/benchmark_selective_invalidation.mjs','demo/fixtures/selective-invalidation.mjs',
     'demo/helpers/selective-invalidation-fixture.mjs','demo/helpers/selective-invalidation-paint.mjs','demo/helpers/selective-invalidation-history.mjs'];
   const report={schema:2,profile,correctnessProbe:iterations!==20,node:process.version,browsers:[...new Set(browsers)],viewport:[1440,1000],
     fixture:'selective-invalidation/v1',
     sources:Object.fromEntries(sources.map(path=>[path,createHash('sha256').update(readFileSync(path)).digest('hex')])),
-    manifest:JSON.parse(readFileSync('dist/houseplan-assets.json','utf8')),loads,samples,statistics:timingStatistics(samples),failures};
+    manifest:JSON.parse(readFileSync('dist/houseplan-assets.json','utf8')),loads,samples,statistics:timingStatistics(samples),failures,budgetFailures,
+    timingDiagnostic:diagnosticTiming,timingStatus:budgetFailures.length?'exceeded':'within-budgets'};
   mkdirSync(resolve(output,'..'),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-  console.log(JSON.stringify({output,profile,samples:samples.length,failures}));
+  console.log(JSON.stringify({output,profile,samples:samples.length,failures,budgetFailures,timingDiagnostic:diagnosticTiming,timingStatus:report.timingStatus}));
   if(failures.length)process.exitCode=1;
   return report;
 }
 if(isMainModule(import.meta.url))await runSelectiveInvalidationGate({
+  diagnosticTiming:process.argv.includes('--diagnostic-timing'),
   profile:process.argv.find(a=>a.startsWith('--profile='))?.slice(10)||'visible',
   iterations:Number(process.argv.find(a=>a.startsWith('--iterations='))?.slice(13)||20),
   output:process.argv.find(a=>a.startsWith('--output='))?.slice(9)||'artifacts/1093/timing.json'});
