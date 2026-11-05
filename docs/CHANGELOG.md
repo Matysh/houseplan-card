@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Isolate the real HA Static handoff fixture from Lovelace's recreated cards and retain safe transport diagnostics on failure; product runtime is unchanged. [#1302](https://github.com/Matysh/houseplan-card/issues/1302)
+
 - Sample native Zigbee hover points after painted target geometry settles; retain SVG overlap arbitration and measure tooltip layout after finite UI paint. [#1301](https://github.com/Matysh/houseplan-card/issues/1301)
 
 - Measure Optimize retry controls after finite UI-kit paint, retaining the exact 44px touch bound and an undersized-target negative control. [#1300](https://github.com/Matysh/houseplan-card/issues/1300)
