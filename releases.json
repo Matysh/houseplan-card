@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 382,
+  "revision": 383,
   "active": "v1.84.0-beta.7-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -15965,7 +15965,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.84.0-beta.7",
@@ -18864,7 +18864,8 @@
           "en": "## v1.84.0-beta.7 — 2026-11-05\n- Native input timestamp calibration takes one complete fixed series of 128 probes instead of 32, preserving the 1 ms uncertainty limit, timing budgets and unavailable failures. [#1318](https://github.com/Matysh/houseplan-card/issues/1318)\n- Build/demo cache includes canonical golden capture inputs and local imports embedded in the bundle fingerprint, preventing stale preparation reuse after capture changes. [#1321](https://github.com/Matysh/houseplan-card/issues/1321)\n- Accept four additional owner-reviewed opening-floor frames, preserving every other PNG and tolerance. [#1314](https://github.com/Matysh/houseplan-card/issues/1314)\n\n- Settle actual finite UI Kit paint before inspecting settings help, preserving immediate expansion and strict hover/paint assertions instead of a fixed 160-ms wait. [#1317](https://github.com/Matysh/houseplan-card/issues/1317)\n- Sample Zigbee raster coordinates after the camera and overlay layout settle, retaining strict layer/outline pixel checks and coordinate receipts. [#1319](https://github.com/Matysh/houseplan-card/issues/1319)\n\n- Accept a node write ACK after an equal own echo with reordered object keys, retaining exact history and rejection of newer revisions, changed arrays, coordinates and opaque fields. [#1320](https://github.com/Matysh/houseplan-card/issues/1320)\n- Publish verified HA dialog fixture assets atomically from private staging directories, preserving integrity checks and concurrent cold/warm readers without partial extraction or wheel collisions. [#1316](https://github.com/Matysh/houseplan-card/issues/1316)\n- Check opening-floor continuity against the unified room geometry, retaining the pixel tolerance and DPR 1/2 with negative controls for gaps, invisible fills and white seams. [#1314](https://github.com/Matysh/houseplan-card/issues/1314)\n\n- Verify both owning floor halves and actual passage pixels in Static instead of the retired tunnel fill. [#1313](https://github.com/Matysh/houseplan-card/issues/1313)\n\n- Check the unified floor below Glow pools after #1250, retaining raster blend oracles, exact fill color/alpha and Flat/Static parity. [#1312](https://github.com/Matysh/houseplan-card/issues/1312)\n\n- Accept the owner's reviewed Static opening-floor frame after #1250, preserving every other baseline and tolerance. [#1309](https://github.com/Matysh/houseplan-card/issues/1309)\n\n- Verify the unified floor and opening coverage in decor layer-order smoke after #1250, retaining raster probes and all layer ordering checks. [#1311](https://github.com/Matysh/houseplan-card/issues/1311)\n\n- Inventory the new partial #1303/#1305 fixtures in the complete wall identity corpus while preserving document passports, the historical oracle and idempotence guards. [#1308](https://github.com/Matysh/houseplan-card/issues/1308)\n\n- Count actual TypeScript `any` types instead of prose in the lazy-runtime guard; preserve the accepted type budget and cover both positive and negative cases. [#1307](https://github.com/Matysh/houseplan-card/issues/1307)\n\n- Speed up node saves by reusing command-local exact graph proofs and checking unchanged spaces selectively, while preserving safety checks, durable ACK, ACL/CAS and exact history. [#1306](https://github.com/Matysh/houseplan-card/issues/1306)\n\n- Merge wall nodes by dragging in Select, with a stationary target magnet, atomic removal of a connecting edge, release-time safety checks and exact Undo/Redo. [#1305](https://github.com/Matysh/houseplan-card/issues/1305)\n\n\n- Remove seven obsolete translation keys from all four locales so the clean dead-key guard runs before mutation testing; retain the existing consumer rules and mutation witness. [#1304](https://github.com/Matysh/houseplan-card/issues/1304)\n- Compose opening floors into their owning room fills, with shared color/alpha and mode transitions instead of a separate tunnel patch. Preserve clean-floor area, physical cut-outs and opening hit targets; share cached presentation geometry with Static and 2.5D. [#1250](https://github.com/Matysh/houseplan-card/issues/1250)\n\n- Keep far vertices fixed during Select node moves: retarget valid split-carrier constraints and retire stale supports through bends in both preview and server proof. Exact Undo/Redo is preserved. [#1303](https://github.com/Matysh/houseplan-card/issues/1303)\n\n- Isolate the real HA Static handoff fixture from Lovelace's recreated cards and retain safe transport diagnostics on failure; product runtime is unchanged. [#1302](https://github.com/Matysh/houseplan-card/issues/1302)\n\n- Sample native Zigbee hover points after painted target geometry settles; retain SVG overlap arbitration and measure tooltip layout after finite UI paint. [#1301](https://github.com/Matysh/houseplan-card/issues/1301)\n\n- Measure Optimize retry controls after finite UI-kit paint, retaining the exact 44px touch bound and an undersized-target negative control. [#1300](https://github.com/Matysh/houseplan-card/issues/1300)"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.84.0-beta.7"
     }
   },
   "published": {
@@ -19636,7 +19637,8 @@
     "ship-review:result:96821087-4402-4dd8-991a-491e9469288b": "04c571f2ca2cd611d3f13a238fce9f3754477aa8c95cc981d702c8f3664dabbc",
     "beta7-20261105-publish-final:runner-report": "f660b0731d0dd501ddaa4d2009fa45c7f858957d28cb11a74d0b13e501863f1e",
     "beta7-20261105-publish-final:metrics": "c66560588f380792c306b12c81dc4e65c38b0cf79205e9fd9fd08ef92b23b5eb",
-    "beta7-20261105-publish-final:prepared:d81c4b94-f9be-49f5-bdc0-30de8b25c783": "2f496e69b9f247337aa066aac824b4f8f4437c8d3d26077c37dde930cf313417"
+    "beta7-20261105-publish-final:prepared:d81c4b94-f9be-49f5-bdc0-30de8b25c783": "2f496e69b9f247337aa066aac824b4f8f4437c8d3d26077c37dde930cf313417",
+    "beta7-20261105-publish-final:started:382": "63604ec7284d22cac12e8b04139b9a45909afacd34df549836703ea73985f367"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
