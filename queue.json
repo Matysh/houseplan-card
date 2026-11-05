@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3764,
+  "revision": 3765,
   "nextTicket": 212,
   "nextFence": 212,
   "tasks": {
@@ -3137,7 +3137,7 @@
       "ownerDecision": null,
       "ticket": 211,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793847547367,
       "reviewEntry": 2,
       "notice": {
@@ -3170,7 +3170,16 @@
         "process-next/test/runner.test.mjs",
         "test/node-performance-report.test.mjs",
         "test/selective-invalidation-timing.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T025923729-e129c073",
+        "name": "Тесты для задачи #1295 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T025923729-e129c073/report.json",
+        "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
+        "status": "passed",
+        "finishedAt": "2026-11-05T03:01:49.676Z",
+        "failures": []
+      }
     },
     "1296": {
       "issue": 1296,
@@ -3316,9 +3325,9 @@
     "fence": 211,
     "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
     "expectedBase": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793847550854,
-    "expiresAt": 1793847970222,
+    "expiresAt": 1793851310824,
     "patchId": "551f82e320b19acf7626d9feca138b8f8ed42a9b"
   },
   "events": {
@@ -3419,6 +3428,34 @@
         "layer": "product",
         "materialSha": "552071c8ad1c085ea1d90f15d09e27b87e18c9dd",
         "phase": "sync"
+      }
+    },
+    "finish:177f5104-4964-4ff8-adf9-d33f48d9f158:finish:3:s6-complete": {
+      "digest": "8849f748b41951939024266bb2e565320863d2f90c7794f56982c6ea7c735379",
+      "issue": 1295,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1295,
+        "at": 1793847710824,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T025923729-e129c073",
+          "name": "Тесты для задачи #1295 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T025923729-e129c073/report.json",
+          "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
+          "status": "passed",
+          "finishedAt": "2026-11-05T03:01:49.676Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Финальное решение552071c8ad состоит из изоляции четырёх серий и явного разделения обязательного поведения/качества измерения от диагностических абсолютных бюджетов. Это следует действующему PROCESS.md «Размеры и производительность»: прочие микрозамеры не блокируют публикацию; для семи release-метрик остаются отдельные сопоставимые относительные пороги. Алгоритм release metrics/пороги не менялись; сопоставимого latest stable CI здесь нет. Числа старых абсолютных бюджетов не повышены, красные отчёты не переписаны.\n\nДоказательства: первоначальный стабильный audit41920312716FAILED на опубликованном a4dd940c. Serial41955192150PASS4на том жеruntime, но другаяCPU. Поэтому paired41956366937 выполнил jobs2 затем jobs1 на однойEPYC9V74/4vCPU, тот же чистый a4dd940c: в parallel visible longtask124>117FAIL, serialвсе4PASS/visible70. Все четыре серии реально исполнены дважды,20samples/селективная серия, connected3warmup+5measured/300inputs. Raw JSON обоихфаз сохранён. Фиксированный порядок иhostнагрузка ограничивают причинную точность, это не доказательство единой причины всех старых медленных sample.\n\nEnd-to-end exclusive CI41957439627 на чистом6f8241aa приобычныхjobs2 действительно не перекрывал четыре замера с другими шагами, но другойEPYC7763/4vCPU дал history-copy longtask205>200 иconnected mainThread p9557.2>55. Остальные2PASS. FAIL сохранён; он показал, что одной изоляции мало и абсолютный старый gate зависит отCPU. Этот прогон не объявляется зелёным и не повторяется для случайного PASS. Подробные цифры/ограничения в docs/testing/issue1295-timing-isolation.md.\n\nRunner: первый готовый bool exclusive ждёт окончания активных шагов, не даёт следующим обогнать и работает один; неготовый ждёт prerequisites. Только4профиля отмечены, обычная параллельность сохранена. exclusive включён в receipt identity; измененияrunner/storage естественно инвалидируютстарыйкеш. FAIL блокирует только required descendants.\n\nCatalog передаёт этим4скриптам явный --diagnostic-timing. Без флага standalone strict exit и offline nodeBudgetVerdict/timingFailures сохраняют прежние красные вердикты иточныепороги. В diagnostic режиме только численные превышения отдельно budgetFailures/timingStatus=exceeded; настоящие утверждения геометрии, истории, кэшей, native/persisted/single-write, неполныевыборки, невалидныесэмплы/часы иpageerrors остаются FAIL. Connected raw pass — прежний строгий бюджетный вердикт, отдельный executionPass объясняет исход исполнения; на историческом красном отчёте pass не переписывается. Это не маркировка всего smoke diagnostic, которая могла бы скрыть функциональный отказ.\n\nПроверки: unitдиагностики контрастируют целую медленную серию и untrusted/unpersisted/duplicate-write/пустые/нечисловые/неполныеизмерения, functional/clockerror иincompletechecks. Runner тесты — drain/noovertaking/parallelbeforeafter/успех/отказ/descendants/prerequisites/validation/cacheidentity. Catalog ровно4отмеченных task+stable иточныйdiagflag. Предварительно catalog+verdict24/24PASS, runner+fallback29/29PASS; syntax8изменённых инструментов/YAML PASS. Два раннихразработческихотказаcatalog исправлены безослабленияproductguards: metadataлiterals были ошибочноприняты статическимreaderзаисполнениеsmoke; startup-view нетвstable. Workflow/canonicaltemplateтолькорасширяютuploadrawJSON, parityсохранена.\n\nПосле добавления executable demo кода задача стала product, request скорректирован: обычныйминимум+адресныеrunner/catalog/fallback/verdictNode+4реальныхsmoke. Старыйinfrafinish остановлен, собственныйдопускштатновозвращён дляизмененияматериала; новыйfinishсамвычислитслойпофинальномуdiff. Полногоstableповторноирелизанет. Рискиревью: не потерять обязательныйFAILвdiagnosticрежиме; честно сохранитьstrictpassfalseвraw; отсутствиеперекрытиязамеров; scheduler/cacheсемантика.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
