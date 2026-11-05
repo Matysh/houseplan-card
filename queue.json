@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3595,
+  "revision": 3596,
   "nextTicket": 206,
   "nextFence": 206,
   "tasks": {
@@ -3206,7 +3206,7 @@
       "ownerDecision": null,
       "ticket": 205,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793845321894,
       "reviewEntry": 1,
       "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86",
@@ -3214,7 +3214,16 @@
         "demo/smoke_decor_group_style_cache.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T023032410-c966f9ef",
+        "name": "Тесты для задачи #1293 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261105T023032410-c966f9ef/report.json",
+        "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+        "status": "passed",
+        "finishedAt": "2026-11-05T02:31:35.419Z",
+        "failures": []
+      }
     },
     "1294": {
       "issue": 1294,
@@ -3364,9 +3373,9 @@
     "fence": 205,
     "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
     "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793845819727,
-    "expiresAt": 1793846165028,
+    "expiresAt": 1793849496634,
     "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86"
   },
   "events": {
@@ -3787,6 +3796,34 @@
         "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:4:s6-complete": {
+      "digest": "e3c7664258eb2f3830720f11611de99a95b0f85323e9b676d64ac00bf5a90f52",
+      "issue": 1293,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1293,
+        "at": 1793845896634,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T023032410-c966f9ef",
+          "name": "Тесты для задачи #1293 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261105T023032410-c966f9ef/report.json",
+          "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+          "status": "passed",
+          "finishedAt": "2026-11-05T02:31:35.419Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Изменяется только ожидание в `smoke_decor_group_style_cache.mjs` и RU/EN технические changelog. Вместо `waitForFunction(async...)` выполняется один awaited page.evaluate с ограниченным 5 сек асинхронным циклом: реальный config/get должен вернуть цвет #abcdef, до этого polling продолжается по rAF; затем прежний settle ждёт обычную очередь/ACK. Добавлен assert сохранённого значения defaults.config.settings.decor_default_style.color, все сравнения полного config, числа записей, истории, чужих стен/кэшей и SVG сохранены.\n\nПервоначально проверено расширение waitForWrites на приватный таймер runtime; прототип отброшен: это добавляло новые приватные чтения тестового фасада и было избыточно для наблюдаемого подтверждения сохранения. Финальное решение не меняет фасад, runtime debounce/lifecycle, права или write protocol. Потери настроек продукта не было; исходное направление diff в описании исправлено после наблюдения временной шкалы.\n\nАдресный исправленный smoke предварительно PASS на исходном runtime, без обновления bundle/PNG. Исходный FAIL и диагностический late-timer результат сохранены в output/issue-1293. Финальный S6 через общую очередь включает обычный продуктовый минимум и этот smoke, поскольку infrastructure profile browser checks не допускает. Отдельный Node-тест, повторяющий локальный polling-код, не добавляется: серверное значение и cold-remount в самом smoke проверяют нужное поведение.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
