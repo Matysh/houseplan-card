@@ -29,7 +29,7 @@ export async function prepareStaticWallOpenings(page, scenario) {
       ||(linePlan?!solid([.26,.5625]):!solid([.16,.1875])))
       throw Error('Static wall-opening painted leaf/cut/control contract failed');
     if(root.querySelectorAll('[data-hp="opening"]').length!==5
-      ||(!linePlan&&!root.querySelector('.static-opening-tunnels [data-id="shared-window"]')))
+      ||(!linePlan&&![...root.querySelectorAll('[data-hp="room"]')].some(node=>node instanceof SVGGeometryElement && node.isPointInFill(new DOMPoint(...turn([.626,.4375]))))))
       throw Error('Static opening neighbor/tunnel missing');
     window.__goldenCard=el;
     return {wallDoorPainted:true,wallDoorCut:true,solidControl:true,visibleSymbols:5,fit,width,diagonal,linePlan:!!linePlan};

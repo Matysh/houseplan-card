@@ -358,7 +358,7 @@ import {
   decorStyleOf, decorUnitsToCm, normalizeAngle, nudgeDecorShape, type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
-import { renderRoomFloorMask } from './render/room-floor';
+import { renderRoomFloorMask } from './render/opening-tunnels';
 import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
   type OpeningFaceOffset, type OpeningVisibleSpec,
