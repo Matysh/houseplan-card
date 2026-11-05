@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3602,
+  "revision": 3603,
   "nextTicket": 207,
   "nextFence": 206,
   "tasks": {
@@ -3191,136 +3191,25 @@
     },
     "1293": {
       "issue": 1293,
+      "branch": "codex/1293-decor-defaults-race",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1293-decor-defaults-race",
-      "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 205,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793845321894,
-      "reviewEntry": 1,
-      "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86",
-      "changedFiles": [
-        "demo/smoke_decor_group_style_cache.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261105T023032410-c966f9ef",
-        "name": "Тесты для задачи #1293 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261105T023032410-c966f9ef/report.json",
-        "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-        "status": "passed",
-        "finishedAt": "2026-11-05T02:31:35.419Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+      "mergedSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+      "mergedAt": 1793846054370,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1293:1:8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-      "reviewMaterial": {
-        "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-        "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-        "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1293,
-        "requestId": "review:1293:1:8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-        "kind": "code",
-        "base": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-        "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-        "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1293,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1293",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Изменяется только ожидание в `smoke_decor_group_style_cache.mjs` и RU/EN технические changelog. Вместо `waitForFunction(async...)` выполняется один awaited page.evaluate с ограниченным 5 сек асинхронным циклом: реальный config/get должен вернуть цвет #abcdef, до этого polling продолжается по rAF; затем прежний settle ждёт обычную очередь/ACK. Добавлен assert сохранённого значения defaults.config.settings.decor_default_style.color, все сравнения полного config, числа записей, истории, чужих стен/кэшей и SVG сохранены.\n\nПервоначально проверено расширение waitForWrites на приватный таймер runtime; прототип отброшен: это добавляло новые приватные чтения тестового фасада и было избыточно для наблюдаемого подтверждения сохранения. Финальное решение не меняет фасад, runtime debounce/lifecycle, права или write protocol. Потери настроек продукта не было; исходное направление diff в описании исправлено после наблюдения временной шкалы.\n\nАдресный исправленный smoke предварительно PASS на исходном runtime, без обновления bundle/PNG. Исходный FAIL и диагностический late-timer результат сохранены в output/issue-1293. Финальный S6 через общую очередь включает обычный продуктовый минимум и этот smoke, поскольку infrastructure profile browser checks не допускает. Отдельный Node-тест, повторяющий локальный polling-код, не добавляется: серверное значение и cold-remount в самом smoke проверяют нужное поведение."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление точно устраняет установленную причину. Smoke раньше делал холодный remount до того, как отложенный на 1000 мс таймер defaults отправлял config/set. Теперь сценарий ждёт, пока реальный config/get вернёт #abcdef, а затем прежний `settle()` ждёт обычной записи и ACK. Ничего не сбрасывается и не отменяется. Runtime, тестовый фасад и протокол записи не изменились. Все прежние сравнения полного config, истории, кэшей, стен, SVG и `cold.no_write` остались, defaults из сравнения не исключены. Блокеров нет. Есть одно необязательное усиление: прямая проверка, что шаг toolbar выполняет ровно одну запись.",
-          "understanding": "Проблема. После подтверждения цвета в toolbar `_updateDecorStyle` запускает таймер `_decorStylePersistTimer` на 1000 мс (src/houseplan-editor-runtime.ts:9868-9876). Только по его срабатыванию `_persistDecorStyle` меняет `_serverCfg` и вызывает обычный `_saveConfig()` (9883-9894). Прежнее ожидание `page.waitForFunction(async ...)` принимало Promise за truthy-значение и завершалось сразу. `__hpTest.waitForWrites` (demo/helpers/hp-test.mjs:162-202) этот таймер не видит: он следит только за `_saveConfigDebounced`, `_persistLayout`, `_writesPending`, `_dirtyPos/_sentPos` и `_writeChain`. Поэтому снимок `defaults` снимался до записи, карточка заменялась, а таймер старого, уже отсоединённого экземпляра позже добавлял стиль. В итоге `cold.writes` оказывался на единицу больше `defaults.writes`, а `cold.config` расходился по `settings.decor_default_style`.\n\nПосле исправления. Один awaited `page.evaluate` повторяет `houseplan/config/get` через обёрнутый `card.hass` (она считает только config/set, поэтому опрос счётчик не меняет), пока сервер не вернёт `#abcdef`. Предел ожидания — 5 с, затем ошибка. Цвет может появиться на сервере только из этой записи defaults, поэтому наблюдение доказывает, что таймер сработал и config/set обработан сервером. Затем `settle()` ждёт `_writeChain` и idle-очередей, то есть ACK и применения ревизии. Только после этого снимаются `defaults` и выполняется remount. Добавлена проверка `toolbar.defaults_are_stored`. Холодная карточка сравнивается с полным `defaults.config` и по `cold.no_write`, так что лишняя или запоздалая запись по-прежнему обнаружится.\n\nРазобраны: весь smoke-файл, путь `_updateDecorStyle → _persistDecorStyle → _saveConfig` и устройство барьера `waitForWrites`.",
-          "analysis": [
-            {
-              "topic": "Корректность нового ожидания",
-              "assessment": "Ожидание стало настоящим: цикл возвращает управление только тогда, когда config/get отражает новое значение. Ошибка по истечении 5 с не позволяет тесту «зелено» пройти без сохранения. Обычной записи после срабатывания таймера с запасом хватает 5 с при debounce 1000 мс. Порядок «наблюдение сервера → `settle()`» нужен: сервер мог применить set раньше, чем клиент обработал ACK и закрыл `_writeChain`, и `settle()` этот промежуток закрывает.",
-              "evidence": "demo/smoke_decor_group_style_cache.mjs:93-102; demo/helpers/hp-test.mjs:189-201"
-            },
-            {
-              "topic": "Отказ от расширения waitForWrites на приватный таймер",
-              "assessment": "Выбор оправдан. Наблюдать серверное состояние надёжнее, чем добавлять в общий фасад ещё одно чтение приватного поля runtime: такое чтение ломается при переименовании и касалось бы всех smoke. Цена решения в том, что другие сценарии с toolbar defaults этот таймер по-прежнему не видят. Новой гонки в этой задаче не доказано, вопрос лучше отложить до появления реального случая.",
-              "evidence": "Контекст исполнителя; список состояний в hp-test.mjs:167-173 без `_decorStylePersistTimer`"
-            },
-            {
-              "topic": "Сохранение полного контроля",
-              "assessment": "Ни одна проверка не ослаблена. `sidebar.cold.saved_config` сравнивает полный config, включая settings. `sidebar.cold.no_write` по-прежнему ловит запись после remount: теперь `defaults.writes` уже включает запись defaults, поэтому любая следующая запись старой или новой карточки обнаружится. Новая проверка `toolbar.defaults_are_stored` дублирует то, что уже проверил цикл, но фиксирует значение в отчёте как именованный результат.",
-              "evidence": "smoke:103-105, 111-113"
-            },
-            {
-              "topic": "Lifecycle продукта",
-              "assessment": "Таймер старого экземпляра записывает уже после отсоединения карточки. С точки зрения продукта это скорее желательно, потому что пользовательское изменение не теряется. Потери настроек по этому пути я не обнаружил. Runtime в задаче не менялся, и это соответствует ТЗ.",
-              "evidence": "src/houseplan-editor-runtime.ts:9872-9875, 9883-9894"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Добавить проверку `check('toolbar.one_write', defaults.writes, cancel.writes+1)` после `state()` на шаге toolbar. Сейчас точное число записей проверяется только для шагов sidebar. Если шаг toolbar начнёт отправлять две записи (например, сломается debounce или `_persistDecorStyle` вызовется повторно), `cold.no_write` этого не заметит, потому что обе записи окажутся до снимка `defaults`. Цена — одна строка. Польза — прямо закрывается требование ТЗ сохранять контроль числа реальных записей.",
-            "Мелочь: опрос через `requestAnimationFrame` за 1 с debounce делает около 60 вызовов config/get. Пауза `setTimeout` примерно на 50 мс снизила бы шум в журналах тестового сервера. На корректность это не влияет."
-          ],
-          "boundaries": "Я разбирал только исходники и историю в pinned-материале. Сборку, smoke и тесты не запускал. В качестве результата S6 использована квитанция «Тесты для задачи #1293 (перед ревью)» по `cef7c01a`, статус passed, без отказов. Её содержимое (report.json) мне недоступно. Исходный FAILED-прогон beta.5 и диагностика в output/issue-1293 — внешние данные исполнителя, я их не проверял. Причину, связанную с `waitForFunction` в Playwright 1.62.0, я принимаю как установленную исполнителем: исходник `coreBundle.js` в материале не смотрел. Мой вывод от неё не зависит, потому что новое ожидание корректно при любом поведении `waitForFunction`. Изменения в changelog согласованы между RU и EN."
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 28970,
-          "cache_read_input_tokens": 116896,
-          "output_tokens": 5713,
-          "output_tokens_details": {
-            "thinking_tokens": 1562
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 28970,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 929,
-              "cache_read_input_tokens": 24147,
-              "cache_creation_input_tokens": 9027,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 9027
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точно устраняет установленную причину. Smoke раньше делал холодный remount до того, как отложенный на 1000 мс таймер defaults отправлял config/set. Теперь сценарий ждёт, пока реальный config/get вернёт #abcdef, а затем прежний `settle()` ждёт обычной записи и ACK. Ничего не сбрасывается и не отменяется. Runtime, тестовый фасад и протокол записи не изменились. Все прежние сравнения полного config, истории, кэшей, стен, SVG и `cold.no_write` остались, defaults из сравнения не исключены. Блокеров нет. Есть одно необязательное усиление: прямая проверка, что шаг toolbar выполняет ровно одну запись.\n\n## Понимание решения\n\nПроблема. После подтверждения цвета в toolbar `_updateDecorStyle` запускает таймер `_decorStylePersistTimer` на 1000 мс (src/houseplan-editor-runtime.ts:9868-9876). Только по его срабатыванию `_persistDecorStyle` меняет `_serverCfg` и вызывает обычный `_saveConfig()` (9883-9894). Прежнее ожидание `page.waitForFunction(async ...)` принимало Promise за truthy-значение и завершалось сразу. `__hpTest.waitForWrites` (demo/helpers/hp-test.mjs:162-202) этот таймер не видит: он следит только за `_saveConfigDebounced`, `_persistLayout`, `_writesPending`, `_dirtyPos/_sentPos` и `_writeChain`. Поэтому снимок `defaults` снимался до записи, карточка заменялась, а таймер старого, уже отсоединённого экземпляра позже добавлял стиль. В итоге `cold.writes` оказывался на единицу больше `defaults.writes`, а `cold.config` расходился по `settings.decor_default_style`.\n\nПосле исправления. Один awaited `page.evaluate` повторяет `houseplan/config/get` через обёрнутый `card.hass` (она считает только config/set, поэтому опрос счётчик не меняет), пока сервер не вернёт `#abcdef`. Предел ожидания — 5 с, затем ошибка. Цвет может появиться на сервере только из этой записи defaults, поэтому наблюдение доказывает, что таймер сработал и config/set обработан сервером. Затем `settle()` ждёт `_writeChain` и idle-очередей, то есть ACK и применения ревизии. Только после этого снимаются `defaults` и выполняется remount. Добавлена проверка `toolbar.defaults_are_stored`. Холодная карточка сравнивается с полным `defaults.config` и по `cold.no_write`, так что лишняя или запоздалая запись по-прежнему обнаружится.\n\nРазобраны: весь smoke-файл, путь `_updateDecorStyle → _persistDecorStyle → _saveConfig` и устройство барьера `waitForWrites`.\n\n## Разбор решения\n\n### Корректность нового ожидания\n\nОжидание стало настоящим: цикл возвращает управление только тогда, когда config/get отражает новое значение. Ошибка по истечении 5 с не позволяет тесту «зелено» пройти без сохранения. Обычной записи после срабатывания таймера с запасом хватает 5 с при debounce 1000 мс. Порядок «наблюдение сервера → `settle()`» нужен: сервер мог применить set раньше, чем клиент обработал ACK и закрыл `_writeChain`, и `settle()` этот промежуток закрывает.\n\nОснование: demo/smoke_decor_group_style_cache.mjs:93-102; demo/helpers/hp-test.mjs:189-201\n\n### Отказ от расширения waitForWrites на приватный таймер\n\nВыбор оправдан. Наблюдать серверное состояние надёжнее, чем добавлять в общий фасад ещё одно чтение приватного поля runtime: такое чтение ломается при переименовании и касалось бы всех smoke. Цена решения в том, что другие сценарии с toolbar defaults этот таймер по-прежнему не видят. Новой гонки в этой задаче не доказано, вопрос лучше отложить до появления реального случая.\n\nОснование: Контекст исполнителя; список состояний в hp-test.mjs:167-173 без `_decorStylePersistTimer`\n\n### Сохранение полного контроля\n\nНи одна проверка не ослаблена. `sidebar.cold.saved_config` сравнивает полный config, включая settings. `sidebar.cold.no_write` по-прежнему ловит запись после remount: теперь `defaults.writes` уже включает запись defaults, поэтому любая следующая запись старой или новой карточки обнаружится. Новая проверка `toolbar.defaults_are_stored` дублирует то, что уже проверил цикл, но фиксирует значение в отчёте как именованный результат.\n\nОснование: smoke:103-105, 111-113\n\n### Lifecycle продукта\n\nТаймер старого экземпляра записывает уже после отсоединения карточки. С точки зрения продукта это скорее желательно, потому что пользовательское изменение не теряется. Потери настроек по этому пути я не обнаружил. Runtime в задаче не менялся, и это соответствует ТЗ.\n\nОснование: src/houseplan-editor-runtime.ts:9872-9875, 9883-9894\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить проверку `check('toolbar.one_write', defaults.writes, cancel.writes+1)` после `state()` на шаге toolbar. Сейчас точное число записей проверяется только для шагов sidebar. Если шаг toolbar начнёт отправлять две записи (например, сломается debounce или `_persistDecorStyle` вызовется повторно), `cold.no_write` этого не заметит, потому что обе записи окажутся до снимка `defaults`. Цена — одна строка. Польза — прямо закрывается требование ТЗ сохранять контроль числа реальных записей.\n- Мелочь: опрос через `requestAnimationFrame` за 1 с debounce делает около 60 вызовов config/get. Пауза `setTimeout` примерно на 50 мс снизила бы шум в журналах тестового сервера. На корректность это не влияет.\n\n## Границы анализа\n\nЯ разбирал только исходники и историю в pinned-материале. Сборку, smoke и тесты не запускал. В качестве результата S6 использована квитанция «Тесты для задачи #1293 (перед ревью)» по `cef7c01a`, статус passed, без отказов. Её содержимое (report.json) мне недоступно. Исходный FAILED-прогон beta.5 и диагностика в output/issue-1293 — внешние данные исполнителя, я их не проверял. Причину, связанную с `waitForFunction` в Playwright 1.62.0, я принимаю как установленную исполнителем: исходник `coreBundle.js` в материале не смотрел. Мой вывод от неё не зависит, потому что новое ожидание корректно при любом поведении `waitForFunction`. Изменения в changelog согласованы между RU и EN.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce → cef7c01a5610be2675165d2ca310cd981e7645c9\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1293, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nИзменяется только ожидание в `smoke_decor_group_style_cache.mjs` и RU/EN технические changelog. Вместо `waitForFunction(async...)` выполняется один awaited page.evaluate с ограниченным 5 сек асинхронным циклом: реальный config/get должен вернуть цвет #abcdef, до этого polling продолжается по rAF; затем прежний settle ждёт обычную очередь/ACK. Добавлен assert сохранённого значения defaults.config.settings.decor_default_style.color, все сравнения полного config, числа записей, истории, чужих стен/кэшей и SVG сохранены.\n\nПервоначально проверено расширение waitForWrites на приватный таймер runtime; прототип отброшен: это добавляло новые приватные чтения тестового фасада и было избыточно для наблюдаемого подтверждения сохранения. Финальное решение не меняет фасад, runtime debounce/lifecycle, права или write protocol. Потери настроек продукта не было; исходное направление diff в описании исправлено после наблюдения временной шкалы.\n\nАдресный исправленный smoke предварительно PASS на исходном runtime, без обновления bundle/PNG. Исходный FAIL и диагностический late-timer результат сохранены в output/issue-1293. Финальный S6 через общую очередь включает обычный продуктовый минимум и этот smoke, поскольку infrastructure profile browser checks не допускает. Отдельный Node-тест, повторяющий локальный polling-код, не добавляется: серверное значение и cold-remount в самом smoke проверяют нужное поведение.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T02:33:50.802Z",
-        "artifactId": 13383206157,
-        "runId": 41955814649,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T02:33:57Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41955814649",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1294": {
@@ -3480,19 +3369,7 @@
   "waiting": [
     1258
   ],
-  "active": {
-    "issue": 1293,
-    "worker": "finish",
-    "token": "205:finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:2:admit",
-    "fence": 205,
-    "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-    "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793845819727,
-    "expiresAt": 1793849649207,
-    "patchId": "8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86",
-    "reviewRequest": "review:1293:1:8ac1aee0bb21e484a0f71c28c83ce9a00f0b4c86:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce"
-  },
+  "active": null,
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
       "digest": "a3267a6cd7428e3ded61f5b48cd08a5bc3d20e9f699cb2281750a4f1f9f89f6b",
@@ -3646,45 +3523,13 @@
       "digest": "5476a25e299d2227e9d767eab34c7a1452c2f9401318cdf6cd914f25fb096afe",
       "issue": 1292
     },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:3:synchronized": {
-      "digest": "060565f00dce25ba5f2641f4c8bf65f911faa77ff4e56b23c0ddd657806e0404",
-      "issue": 1293
-    },
     "github:41955626439:1:completions:report:3bf29b22b763f3400e7730ec7e564452b2a43e2c9438822ac9e152769a4e6e1e": {
       "digest": "1afb09c8d0f88f7b7615e4b6447d1b9dcc11cfa6d95eda71188bd7e1ed135ae2",
       "issue": 1292
     },
-    "github:41955626439:1:completions:message:4d7c126e37692a9419afd08eedf6310f148f2cfbbabaf604b34bc9728fe75787": {
-      "digest": "42fb4da32f1b67959221b44b4f5fdf2ea42406b5edca6722b8d81a228765ecb9",
-      "issue": 1293
-    },
     "github:41955626439:1:completions:metadata:109f3dee-fb8c-49d3-9cfe-f26a0f28df74:task-notice:1292::": {
       "digest": "6c02fc2cdaf7300354f31960c760f71e04614ba785960264c1b6022c66dd4d3a",
       "issue": 1292
-    },
-    "finish:66ed8dfb-2865-4937-a927-6d99496676d7": {
-      "digest": "876a226fd7a432550857ba0252fee023409a0db400751c59a534a7cbfaf95dea",
-      "issue": 1293
-    },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:4:s6-label": {
-      "digest": "6812d57465c9a14072f6cd31dbd042cddf7e1c27a7dd96914a0391910753d7f3",
-      "issue": 1293
-    },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:5:review-requested": {
-      "digest": "b81ac77eeb8984a5caac0e24b56f1ced7bcabc681ea0678f86b99aeb07701744",
-      "issue": 1293
-    },
-    "github:41955795206:1:completions:message:c4ae98abf136e98b349036c6216bdc9d76a0b5ef5e76bcdc2be96df16ed5dc72": {
-      "digest": "da2e813d2b5e4a7d3394b10e4c8fc169d662ddb3170cffc81a9183e28defffc9",
-      "issue": 1293
-    },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:7:review-presentation": {
-      "digest": "bd009dc99497894f90ac5c0655a2f960a3c7d65de885a322d642342977bb7388",
-      "issue": 1293
-    },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:7:review-complete": {
-      "digest": "546fb5cec0b840094e827321553621a837bcad3a84723c54ac58628600c39055",
-      "issue": 1293
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
@@ -3859,20 +3704,6 @@
         "delivered": true
       }
     },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c": {
-      "digest": "83a32ea617d4f2943b34aa613222bc2f1e6ff2f44d7cbc4b418e38f1eec3d5a6",
-      "issue": 1293,
-      "message": {
-        "kind": "queued",
-        "issue": 1293,
-        "at": 1793845321894,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd",
-        "delivered": true
-      }
-    },
     "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:1:admit": {
       "digest": "a4cede973cda2b933e65e9a04323459e906c27e5faf0885447badd02b00476be",
       "issue": 1292,
@@ -3912,51 +3743,6 @@
         "newReview": true,
         "resubmission": false,
         "reviewChanges": "Исправление `75c6c7fdfcfcf7171e835fd9b51181bd91cfe3e3` сохраняет каждую неизменённую компоненту exact-point по прежнему допуску идентичности числовой проекции (0.5e-9 + machine allowance). Только изменённая компонента проходит `authoredPoint`. Сделано и для полного atom-кольца, и для corner-only target. Прежнее восстановление обеих компонент превращало, например, унаследованный y=0.5000000001 в y=0.5 при изменении x, тогда как неподвижный сосед сохранял q. Новый код не меняет normalizer, допуски графа или физические/junction guards.\n\nКороткая регрессия на независимой incident fixture проверяет обе оси и оба представления контура. Ожидаемые wire буквальны: изменённая .45 рядом с сохранённым q; каждый старый vertex неподвижных комнат, opaque props, вход и валидность графа защищены. Предварительно `graph-edit-intent.test.mjs` 36/36 PASS, включая четыре новые комбинации. Общий финальный S6 выполняется отдельно через finish.\n\nНа частном installable candidate исходника 75c6c7f (version beta.5, ZIP SHA256 `217a3906d84e6bf5ac69696a052c78c2b8c22dbe1fd5dcb8ee33f32a5843c799`) прошёл неизменённый полный HA #1264 first-floor: Resize -3, Keep room-f, Resize +1, Keep room-b, точные Undo/Redo/reload. Business 1/1, setup 3/3, ноль skip/retry, HA2026.10.4, собственная лаборатория `hp-e2e-journeys-8LxcoO`, контейнер удалён. Это исправленный частный пакет, не повторная публикация/перезапись тега beta.5. Исходный FAIL опубликованного пакета сохранён.\n\nНеизменённый `smoke_resize_pointer_real_plan.mjs` на той же исправленной сборке тоже PASS: оба отказа устранились одним исправлением producer. Вторая отдельная правка fake-backend не понадобилась. Локальные файлы доказательств: root `output/issue-1292/fixed/ha-diagnostic-result.json` и clone `output/issue-1292/smoke-fixed.log`.\n\nАльтернатива округлить неподвижные комнаты или отключить `unsplit-crossing` отвергнута: она меняла бы чужую геометрию или принимала недопустимый граф. Риски для ревью: per-ordinate projection-identity tolerance, соответствие corners/atoms и сохранение не-решёточного наследия при новой lattice-координате. Изменение не расширяет допустимые пересечения и не ремонтирует импорт целиком.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:2:admit": {
-      "digest": "5801bed353ee05a049e5118ee665ca48b43c24830b7b88e24b2cf990d05591f7",
-      "issue": 1293,
-      "message": {
-        "kind": "admitted",
-        "issue": 1293,
-        "at": 1793845819727,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "e64e19a6cf63a4ba6bd841fc757050bab96c55fd",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:f26dcfa8-1751-4b0b-bcc5-99bed997875c:finish:4:s6-complete": {
-      "digest": "e3c7664258eb2f3830720f11611de99a95b0f85323e9b676d64ac00bf5a90f52",
-      "issue": 1293,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1293,
-        "at": 1793845896634,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T023032410-c966f9ef",
-          "name": "Тесты для задачи #1293 (перед ревью)",
-          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261105T023032410-c966f9ef/report.json",
-          "materialSha": "cef7c01a5610be2675165d2ca310cd981e7645c9",
-          "status": "passed",
-          "finishedAt": "2026-11-05T02:31:35.419Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Изменяется только ожидание в `smoke_decor_group_style_cache.mjs` и RU/EN технические changelog. Вместо `waitForFunction(async...)` выполняется один awaited page.evaluate с ограниченным 5 сек асинхронным циклом: реальный config/get должен вернуть цвет #abcdef, до этого polling продолжается по rAF; затем прежний settle ждёт обычную очередь/ACK. Добавлен assert сохранённого значения defaults.config.settings.decor_default_style.color, все сравнения полного config, числа записей, истории, чужих стен/кэшей и SVG сохранены.\n\nПервоначально проверено расширение waitForWrites на приватный таймер runtime; прототип отброшен: это добавляло новые приватные чтения тестового фасада и было избыточно для наблюдаемого подтверждения сохранения. Финальное решение не меняет фасад, runtime debounce/lifecycle, права или write protocol. Потери настроек продукта не было; исходное направление diff в описании исправлено после наблюдения временной шкалы.\n\nАдресный исправленный smoke предварительно PASS на исходном runtime, без обновления bundle/PNG. Исходный FAIL и диагностический late-timer результат сохранены в output/issue-1293. Финальный S6 через общую очередь включает обычный продуктовый минимум и этот smoke, поскольку infrastructure profile browser checks не допускает. Отдельный Node-тест, повторяющий локальный polling-код, не добавляется: серверное значение и cold-remount в самом smoke проверяют нужное поведение.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
