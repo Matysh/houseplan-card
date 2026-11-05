@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4768,
-  "nextTicket": 242,
+  "revision": 4769,
+  "nextTicket": 243,
   "nextFence": 242,
   "tasks": {
     "1126": {
@@ -3716,6 +3716,20 @@
         "sourceSha": "7cad147df2f62544206406a5c29c67471acd84d9"
       }
     },
+    "1318": {
+      "issue": 1318,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1318-clock-probes",
+      "materialSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 242,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793888300143,
+      "reviewEntry": 1
+    },
     "1319": {
       "issue": 1319,
       "branch": "codex/issue-1319-topology-raster",
@@ -3921,7 +3935,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1318
+  ],
   "active": null,
   "events": {
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:2:synchronized": {
@@ -3984,6 +4000,19 @@
           "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
         },
         "delivered": true
+      }
+    },
+    "finish:4abeaf3d-c3a5-4418-a11c-be6c651042b7": {
+      "digest": "f481328b2906231808a38268955323865cd889cb38139fab5feb744bf4ca4a12",
+      "issue": 1318,
+      "message": {
+        "kind": "queued",
+        "issue": 1318,
+        "at": 1793888300143,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f"
       }
     }
   },
