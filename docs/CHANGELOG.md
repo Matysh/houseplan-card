@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove seven obsolete translation keys from all four locales so the clean dead-key guard runs before mutation testing; retain the existing consumer rules and mutation witness. [#1304](https://github.com/Matysh/houseplan-card/issues/1304)
+
 - Keep far vertices fixed during Select node moves: retarget valid split-carrier constraints and retire stale supports through bends in both preview and server proof. Exact Undo/Redo is preserved. [#1303](https://github.com/Matysh/houseplan-card/issues/1303)
 
 - Isolate the real HA Static handoff fixture from Lovelace's recreated cards and retain safe transport diagnostics on failure; product runtime is unchanged. [#1302](https://github.com/Matysh/houseplan-card/issues/1302)
