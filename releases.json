@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 334,
+  "revision": 335,
   "active": "v1.84.0-beta.6-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -12210,8 +12210,11 @@
       "sourceSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
       "sha": "15dd2852876f3f95a8c10295b53cfca9a19df600",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "15dd2852876f3f95a8c10295b53cfca9a19df600"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -14091,7 +14094,8 @@
     "ship-review:prepare:cd0c4137-7c1a-473a-a2d9-f6fef68c1792": "5902686b4c8a708f11a74f78211e35e6eaaa1c1654b321c6631e2fccc0f812e7",
     "ship-review:result:b8d78df6-4cc5-40f9-bc2e-c59f83866f2d": "353515b78f4a9b491b8cf4a1f2c951db7d627951110672a165cfea33056de4a0",
     "release-beta6-ci1-report-41960782624": "d1fba69246f8d386c6ccb628fa7869f22a93dea5032c5bd9093c04255afebfd8",
-    "release-beta6-testfix-15dd28528": "0bd3fad5dab64800dfb8a39936754eebfb6d07738b866f9a16050fb560c8d22a"
+    "release-beta6-testfix-15dd28528": "0bd3fad5dab64800dfb8a39936754eebfb6d07738b866f9a16050fb560c8d22a",
+    "release-beta6-run-started-15dd28528-ci2": "fd784b51c844508b48fd80b8d4868474698b213524e13bff370eea7beaa468a9"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
