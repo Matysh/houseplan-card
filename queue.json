@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4822,
+  "revision": 4823,
   "nextTicket": 245,
   "nextFence": 245,
   "tasks": {
@@ -4003,6 +4003,10 @@
       "digest": "a00089f04e4cc07352da64aad7b0b72106dcfe84f8ddac372218a55dfa5019c2",
       "issue": 1314
     },
+    "github:42044257406:1:completions:message:5ca3e0949a52f26db7a7ab281c9b8e72ac4b1ed123b9dcdaa61cb3344e61b4b1": {
+      "digest": "56e8c8d79e8ab049461c031142da0e1a6ad2efe044df827db31b2bfb75827c00",
+      "issue": 1314
+    },
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
       "digest": "f66ad94ac29c34fcbf2fb5fb5f672e524702a9d25fd303bdd95fb74f965bf851",
       "issue": 1314,
@@ -4051,19 +4055,6 @@
           "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
         },
         "delivered": true
-      }
-    },
-    "finish:1ea4dda3-5a17-48d0-a258-0b9eb8105af5": {
-      "digest": "4ef26b31ee245445f3dc7e093049677961eed82693c09890924356ee63389ee1",
-      "issue": 1321,
-      "message": {
-        "kind": "queued",
-        "issue": 1321,
-        "at": 1793888457594,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "cbd16cee340b86df1ad1afcfd9695ab040d4ce29"
       }
     },
     "finish:1ea4dda3-5a17-48d0-a258-0b9eb8105af5:finish:1:admit": {
