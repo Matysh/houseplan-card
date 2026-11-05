@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept a node write ACK after an equal own echo with reordered object keys, retaining exact history and rejection of newer revisions, changed arrays, coordinates and opaque fields. [#1320](https://github.com/Matysh/houseplan-card/issues/1320)
+
 - Verify both owning floor halves and actual passage pixels in Static instead of the retired tunnel fill. [#1313](https://github.com/Matysh/houseplan-card/issues/1313)
 
 - Check the unified floor below Glow pools after #1250, retaining raster blend oracles, exact fill color/alpha and Flat/Static parity. [#1312](https://github.com/Matysh/houseplan-card/issues/1312)

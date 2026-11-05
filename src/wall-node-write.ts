@@ -47,6 +47,20 @@ export const nodeBasisHolds = (host: WallNodeWriteHost, basis: NodeWriteBasis): 
 };
 
 const failedQueues = new WeakSet<Promise<void>>();
+
+/** Exact JSON value equality: key order is transport formatting, array order and
+ * every stored value remain part of the supersession check. No hash fallback. */
+function sameJsonValue(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
+  if (Array.isArray(left) || Array.isArray(right)) return Array.isArray(left) && Array.isArray(right)
+    && left.length === right.length && left.every((value: unknown, index: number) => sameJsonValue(value, right[index]));
+  const a = left as Record<string, unknown>, b = right as Record<string, unknown>, keys = Object.keys(a);
+  return keys.length === Object.keys(b).length
+    && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && sameJsonValue(a[key], b[key]));
+}
+const sameSerializedJson = (left: string, right: string): boolean =>
+  left === right || sameJsonValue(JSON.parse(left), JSON.parse(right));
 /**
  * #843: everything this tab still has to say is written first. A failed own
  * write is never overtaken by the node request: this attempt is refused and
@@ -96,7 +110,8 @@ export async function writeWallNode(
     // A newer adoption always wins. Our own echo is safe but an unrelated local
     // edit must never be overwritten by a response to this frozen operation.
     const current = live();
-    if (host._cfgRev > response.rev || (current !== identity && current !== JSON.stringify(response.config)))
+    if (host._cfgRev > response.rev || (!sameSerializedJson(current, identity)
+        && !sameSerializedJson(current, JSON.stringify(response.config))))
       throw new Error('superseded-node-response');
     host._adoption.stageConfigCandidate(response.config);
     host._adoption.acceptConfigWrite(response.config, response);
