@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4657,
+  "revision": 4658,
   "nextTicket": 240,
   "nextFence": 240,
   "tasks": {
@@ -3633,14 +3633,20 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1317-help-paint",
-      "materialSha": "f5d2b04237206f4cb93d3484e1046feaea90775f",
+      "materialSha": "7cad147df2f62544206406a5c29c67471acd84d9",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 239,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793887019089,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "71dedb6dc4e93af42ecba97e763b75537be7dd88",
+      "changedFiles": [
+        "demo/helpers/settings-polish-955.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     },
     "1320": {
       "issue": 1320,
@@ -3816,13 +3822,18 @@
     "worker": "finish",
     "token": "239:finish:6f8f13ad-ca30-496a-b86b-d86908562b33:finish:1:admit",
     "fence": 239,
-    "materialSha": "f5d2b04237206f4cb93d3484e1046feaea90775f",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "7cad147df2f62544206406a5c29c67471acd84d9",
+    "expectedBase": "cc4654b3ca8dd40f4b8238d3b0abb70612829ade",
+    "phase": "testing",
     "admittedAt": 1793887023213,
-    "expiresAt": 1793887323213
+    "expiresAt": 1793887332470,
+    "patchId": "71dedb6dc4e93af42ecba97e763b75537be7dd88"
   },
   "events": {
+    "finish:6f8f13ad-ca30-496a-b86b-d86908562b33:finish:2:synchronized": {
+      "digest": "f42cbb9f5750ee2f876301f55e558ce140f281c7989b1d49296c950fee8a6c0d",
+      "issue": 1317
+    },
     "finish:6f8f13ad-ca30-496a-b86b-d86908562b33": {
       "digest": "8413c802b5b4e36b273d2a7f1ce431446da98680189b3eeef50ae6ab4f0dda97",
       "issue": 1317,
