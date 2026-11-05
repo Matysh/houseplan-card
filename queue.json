@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3467,
+  "revision": 3468,
   "nextTicket": 202,
   "nextFence": 201,
   "tasks": {
@@ -2022,7 +2022,10 @@
         "entry": 1,
         "detail": "Поведение изменённой области: failed; Backend изменённой области: failed",
         "eventId": "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return:return:1258"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793843935352,
+      "automationDetail": "Commit tracked task changes before finish"
     },
     "1261": {
       "issue": 1261,
@@ -3312,6 +3315,10 @@
     "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return": {
       "digest": "18299fb6fe993b7d1ff35d987103bcf57276598e03b6ae6083d96a7904ce96b6",
       "issue": 1294
+    },
+    "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75:finish:1:automation-pending": {
+      "digest": "cd5a5c633ba016eabeb61e80e7b43b1883de7577a7b9c28e514175710c662578",
+      "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
