@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3863,
+  "revision": 3864,
   "nextTicket": 215,
   "nextFence": 215,
   "tasks": {
@@ -3243,7 +3243,7 @@
       "ownerDecision": null,
       "ticket": 214,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793850204806,
       "reviewEntry": 1,
       "patchId": "7f5645dbdb6c24d7da895645fafdd631ada59b24",
@@ -3252,7 +3252,16 @@
         "docs/CHANGELOG.ru.md",
         "test/commit-physical-geometry.test.mjs",
         "test/helpers/geometry-commit-characterization.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T034337864-f89885d8",
+        "name": "Тесты для задачи #1298 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T034337864-f89885d8/report.json",
+        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
+        "status": "passed",
+        "finishedAt": "2026-11-05T03:45:13.333Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3365,9 +3374,9 @@
     "fence": 214,
     "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
     "expectedBase": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793850208311,
-    "expiresAt": 1793850567447,
+    "expiresAt": 1793853914540,
     "patchId": "7f5645dbdb6c24d7da895645fafdd631ada59b24"
   },
   "events": {
@@ -3414,6 +3423,34 @@
         "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:3:s6-complete": {
+      "digest": "018907c4a647e626b4f6ce8406510934fcd9579189fdd9cb203fc8b7e9b84e72",
+      "issue": 1298,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1298,
+        "at": 1793850314540,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T034337864-f89885d8",
+          "name": "Тесты для задачи #1298 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T034337864-f89885d8/report.json",
+          "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
+          "status": "passed",
+          "finishedAt": "2026-11-05T03:45:13.333Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Первоначальное предположение о продуктовом дефекте adoption снято чтением #1099. Контракт п.7 и AC8 запрещают изменения маркеров во время построения baseline/кандидатов. Успешное принятие pre-v9 документа и судьба маркеров при нём явно вынесены в «Не-скоуп», порядок adopt после проверок сохранён. FreezeGuard helper уже освобождает заморозку перед намеренным rollback writer. Раньше подставленный length давал отказ, теперь доказанное удаление принимает #1258 и тест по ошибке доходит с construction-only freeze до существующего намеренного adoption writer. Обычный pre-v9 вход без freeze успешно сохраняет правильные маркеры [{id:'m',space:'f'}]; потери данных продукта не обнаружено.\n\nВместо снятия freeze или изменения runtime:\n- В generic deletion-refusal входах использован angle, который #1258 не освобождает. Сохраняется вся конструкционная заморозка и точный rollback. Merge-refusal остаётся length, как раньше.\n- Исторический test/fixtures/1099-commit-characterization.json не меняется. expectedPassport переопределяет только два toast на junction.limit_angle; старые config/history fingerprints и все остальные случаи прежние.\n- Отдельные два length-входа принимают удаление по принятому контракту и проверяют пустую геометрию удалённой комнаты, точные очищенные маркеры, один history entry с полным roomReferences, исходный контур и неизменные полигоны посторонних комнат. Новый тест также утверждает, что исторический паспорт по-прежнему содержит прежний отказ length.\n\nВыбран show с независимым ревью. Слой S6 product нужен из-за production test-build/imports; это тестовая корректировка без product runtime/протокола/визуальных кадров, не требует новой классификации пользовательского изменения. Первичный FAIL CI сохранён, предположение о runtime bug в заголовке уточнено по доказательствам.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
