@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 445,
+  "revision": 446,
   "active": "v1.84.0-beta.8-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -19701,7 +19701,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.84.0-beta.8",
@@ -22649,7 +22649,8 @@
           "en": "## v1.84.0-beta.8 — 2026-11-05\n- Node hit radius borrows the already measured scale without a second viewport read; history and retained-paint test ports include the visible marker parameters. [#1324](https://github.com/Matysh/houseplan-card/issues/1324)\n\n- Public CI retains tested-product identity across golden/process changes while bundle preparation still includes every capture input. [#1322](https://github.com/Matysh/houseplan-card/issues/1322)\n- Wall-node dragging and context menus cover the complete painted marker at every zoom/grid size, including its stroke and integer context-menu coordinates, instead of falling through to the wall body. [#1259](https://github.com/Matysh/houseplan-card/issues/1259)"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.84.0-beta.8"
     }
   },
   "published": {
@@ -23489,7 +23490,8 @@
     "beta8-20261105-repair-review-accepted": "d67f6c69406f1793bef3ecf6f936c0e74d9aed53d1c962fede343e24fd652299",
     "beta8-20261105-publish-final:runner-report": "8777628edc487491b9f16d9eb25d7af144717f2f4b8d3c99f6f2e861c29b3fae",
     "beta8-20261105-publish-final:metrics": "e24b2043c6da41d378f97192b097f3ae8cd89ee7f5f25caafe194c49405a9546",
-    "beta8-20261105-publish-final:prepared:8cde19f0-a134-4420-bd84-d3cb209206da": "71b93e9c55219d93f092b2bc09e43b69e63af749622b21d6fe924f8a7e5eca6c"
+    "beta8-20261105-publish-final:prepared:8cde19f0-a134-4420-bd84-d3cb209206da": "71b93e9c55219d93f092b2bc09e43b69e63af749622b21d6fe924f8a7e5eca6c",
+    "beta8-20261105-publish-final:started:445": "4f7f58886168a04e131ca5ed1949bf4ef54ab2a4ce7123214ba986c8b20af10a"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
