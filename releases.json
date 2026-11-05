@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 341,
+  "revision": 342,
   "active": "v1.84.0-beta.6-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -12575,7 +12575,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.84.0-beta.6",
@@ -15148,7 +15148,8 @@
           "en": "## v1.84.0-beta.6 — 2026-11-05\n- Keep deletion characterization aligned with the accepted short-survivor rule: retain frozen-marker angle refusals and separately check accepted length-only deletion with exact marker cleanup/history. Product runtime is unchanged. [#1298](https://github.com/Matysh/houseplan-card/issues/1298)\n\n- Keep the external-screen smoke pointer pressed until its kiosk scale dialog is visible, releasing in finally instead of racing a fixed 3100 ms wait. [#1297](https://github.com/Matysh/houseplan-card/issues/1297)\n\n- Keep the native profile hold pressed until its public scale dialog appears in real HA E2E; retain delayed-timer regression evidence and the empty-space Undo readiness fix. [#1296](https://github.com/Matysh/houseplan-card/issues/1296)\n- Run the selective-invalidation timing family and connected-node profile without competing runner steps; keep ordinary checks parallel and retain all budgets as visible diagnostics in the shared process, with functional and measurement-validity failures still required. [#1295](https://github.com/Matysh/houseplan-card/issues/1295)\n\n- Wait for observed server-side decor defaults before the cold-remount cache smoke; avoid treating an async polling predicate as persistence completion and assert the stored style explicitly. [#1293](https://github.com/Matysh/houseplan-card/issues/1293)\n- Preserve unchanged exact ordinates during Resize of imported current graphs, preventing near-lattice decimal recovery from creating micro-crossings against fixed neighbours. [#1292](https://github.com/Matysh/houseplan-card/issues/1292)\n\n- Check snap junctions against their literal lattice wire, exercise Draw chain compaction through native clicks, and pin weather fixture dates across HA midnight. Product geometry and visual baselines remain unchanged. [#1294](https://github.com/Matysh/houseplan-card/issues/1294)\n- Smoothly recenter an automatically fitted plan when the summary panel appears or disappears. Rapid toggles retarget the current camera; manual views and reduced-motion preferences are preserved. [#1254](https://github.com/Matysh/houseplan-card/issues/1254)\n- Allow proved wall removal to leave an unchanged short segment without relaxing creation, movement, graph or opening validation. Preserve exact Undo/Redo and mirrored server acceptance. [#1258](https://github.com/Matysh/houseplan-card/issues/1258)"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.84.0-beta.6"
     }
   },
   "published": {
@@ -15866,7 +15867,8 @@
     "release-beta6-ci2-report-41963627462": "36d3db79c4118fd93e7bb353cd139fb7bd34793b063339ab216948e57ce407e8",
     "release:e61b2606-6edd-4f43-a1fb-050829444fdb:runner-report": "3b06aaffc57a961b8398cfe372fa175d9c4a371b0d92ddb23a676ce2ccf4de71",
     "release:e61b2606-6edd-4f43-a1fb-050829444fdb:metrics": "15ff0c5ce31ca0d25f85873c5fcfe095d6e93c3c97b6044fcb00b0fd85df8f78",
-    "release:e61b2606-6edd-4f43-a1fb-050829444fdb:prepared:6485ad2c-5614-455b-b185-f7423eb64043": "e494b979af5f4e1fd33ada81922c4a11ec83fd4cca4fcfd7e9257f0e283d4472"
+    "release:e61b2606-6edd-4f43-a1fb-050829444fdb:prepared:6485ad2c-5614-455b-b185-f7423eb64043": "e494b979af5f4e1fd33ada81922c4a11ec83fd4cca4fcfd7e9257f0e283d4472",
+    "release:e61b2606-6edd-4f43-a1fb-050829444fdb:started:341": "06b77cf1591ed7c4c289bd4907290f92dca828a44061cf5218a3adfccdf12689"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
