@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4597,
+  "revision": 4598,
   "nextTicket": 238,
   "nextFence": 238,
   "tasks": {
@@ -3879,6 +3879,10 @@
       "digest": "a1f270e9686926e24e6ea7f9f768f83adf615fc46d6c4850d27a936c695490bb",
       "issue": 1320
     },
+    "github:42039382458:1:completions:message:cb6a9e8592526df2a6595c019306682df904ef2421622bc0153d5b8c812fcb0e": {
+      "digest": "fe5e5f7a6a26915b8b8c0c9e0bb4659731916becea7eb3db2d8e43f94c06eefa",
+      "issue": 1320
+    },
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6": {
       "digest": "4ca7ae043aa45ab3db2b72b6a3baad5ec76b2cb872821d84e3a0e29946f5e8e5",
       "issue": 1320,
@@ -3925,7 +3929,8 @@
           "entry": 1,
           "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
           "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:b7d35d85-c073-4f03-9603-382d897d9e3d": {
