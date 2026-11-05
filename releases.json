@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 471,
+  "revision": 472,
   "active": "v1.84.0-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -27124,7 +27124,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.84.0",
@@ -30894,7 +30894,8 @@
     "stable1840-20261105-history-preserved": "df99f8066cced5cbf8a7077b1e7586aa4f98db45f7cd39720f00939a1a22af32",
     "stable1840-20261105-publish-history-corrected:runner-report": "77da49ed6248d5c7178065326f6a3c5fa1b5fd5c2164c803e6ace6dce97ffc27",
     "stable1840-20261105-publish-history-corrected:metrics": "e7fe216ec0ee1d85c9ed266c3cb0c502ace45345a08990ba4310c22c2361cf43",
-    "stable1840-20261105-publish-history-corrected:prepared:938c6ba8-0c69-444e-a8d2-1a375a9de4fe": "4de68f3ce268797ec023b688dea42d096b3aa0eb23092e5d814a9032e94f3a3a"
+    "stable1840-20261105-publish-history-corrected:prepared:938c6ba8-0c69-444e-a8d2-1a375a9de4fe": "4de68f3ce268797ec023b688dea42d096b3aa0eb23092e5d814a9032e94f3a3a",
+    "stable1840-20261105-publish-history-corrected:started:471": "aa342d0360d1a1d15ea490317d6c3a4875146dea5be38a81f546bfebbd5c57f6"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
