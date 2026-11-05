@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4414,
+  "revision": 4415,
   "nextTicket": 232,
   "nextFence": 232,
   "tasks": {
@@ -3414,31 +3414,24 @@
     },
     "1308": {
       "issue": 1308,
+      "branch": "codex/issue-1308-wall-corpus",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/issue-1308-wall-corpus",
-      "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 231,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793882167930,
-      "reviewEntry": 1,
-      "patchId": "e6eca6b0d09ebf9e305a4d6419246d6f31465f23",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "test/fixtures/845-wall-corpus-current-identities.json"
-      ],
-      "s6": {
-        "id": "20261105T123620757-8c11cdfc",
-        "name": "Тесты для задачи #1308 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261105T123620757-8c11cdfc/report.json",
-        "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
-        "status": "passed",
-        "finishedAt": "2026-11-05T12:36:26.302Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "f58821aa97edd2c5df40c8a300de079e30cdb464",
+      "mergedSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
+      "mergedAt": 1793882192864,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3573,65 +3566,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1308,
-    "worker": "finish",
-    "token": "231:finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:1:admit",
-    "fence": 231,
-    "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
-    "expectedBase": "f58821aa97edd2c5df40c8a300de079e30cdb464",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793882171764,
-    "expiresAt": 1793885787407,
-    "patchId": "e6eca6b0d09ebf9e305a4d6419246d6f31465f23"
-  },
-  "events": {
-    "finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:2:synchronized": {
-      "digest": "73f2d70e6383c29027ce36a047f8f7623498edd7ee018918ef19ae5bf55a78e3",
-      "issue": 1308
-    },
-    "github:42028511493:1:completions:message:a3e3834ad4090bfb2cb3cec0efcfdfa8061443f8640e178042aee3fa2efc645a": {
-      "digest": "d86be9887b3515f8c2e2964ba8f6014d03809fbf22f04a828c31fcd02234624d",
-      "issue": 1308
-    },
-    "github:42028511493:1:completions:message:edd65378977c3cb77aef312170da84ea6f1e00d61784cd27191a09e774a122c4": {
-      "digest": "926c1caa95e1bbe096437db2ae9d8cbacc63d2f0ec8295d87995f280c2462ba2",
-      "issue": 1308
-    },
-    "finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:3:s6-complete": {
-      "digest": "7b8629148494fbb201b800d187e32c9e2d19aae084220aad69075e2826c36569",
-      "issue": 1308
-    },
-    "finish:1c29c746-151f-4322-96d7-7e535de010d3": {
-      "digest": "640d5b61808992d3a0e76eee4c30fe388861c96c207f6ae4e9558813556ed099",
-      "issue": 1308,
-      "message": {
-        "kind": "queued",
-        "issue": 1308,
-        "at": 1793882167930,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
-        "delivered": true
-      }
-    },
-    "finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:1:admit": {
-      "digest": "867dc0c22318fbbd447f021005f982007ec0963b2f99fbd45e11500f24561a26",
-      "issue": 1308,
-      "message": {
-        "kind": "admitted",
-        "issue": 1308,
-        "at": 1793882171764,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
-        "phase": "sync",
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
