@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 438,
+  "revision": 439,
   "active": "v1.84.0-beta.8-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -19359,14 +19359,14 @@
       "kind": "beta",
       "branch": "release/v1.84.0-beta.8-20261105",
       "sourceSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
-      "sha": "fc915753646d14903f42e7671499bbd5bdacdab5",
+      "sha": "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "fc915753646d14903f42e7671499bbd5bdacdab5",
+        "candidate": "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855",
         "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
         "issues": [
           {
@@ -20523,6 +20523,13 @@
             "commits": [
               "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe"
             ]
+          },
+          {
+            "number": 1324,
+            "commits": [
+              "67eb0501db6141ca2d4c936a5c08a9d61bb369c8",
+              "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855"
+            ]
           }
         ]
       },
@@ -20680,9 +20687,10 @@
         1319,
         1320,
         1321,
-        1322
+        1322,
+        1324
       ],
-      "reviewRequired": false,
+      "reviewRequired": true,
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
@@ -20690,6 +20698,12 @@
         {
           "from": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
           "to": "fc915753646d14903f42e7671499bbd5bdacdab5",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "fc915753646d14903f42e7671499bbd5bdacdab5",
+          "to": "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -20705,14 +20719,7 @@
           "issue": 1324,
           "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T195120055-b0609ccb/report.json"
         }
-      ],
-      "shipReview": {
-        "sha": "fc915753646d14903f42e7671499bbd5bdacdab5",
-        "requestId": "ship-review:45e514d68bef2602c1f95a6ac2be54374076c3b672a9e4e0ae18b35b998a7b02",
-        "selectionDigest": "43751e5d5c7508c55704285d1dc0a98ea40470dc31fa860569a086b2bc931096",
-        "status": "accepted",
-        "inventoryComplete": true
-      }
+      ]
     }
   },
   "published": {
@@ -21545,7 +21552,8 @@
     "beta8-20261105-version-prepared": "2a80f709b5fe2f282310d4fb4a4865d083a80b6ae73e90081cf5f6e59199feb6",
     "ship-review:prepare:033087a5-665d-4a34-81d8-a462b02450ea": "70e220fa156f3557bf6b47c071c909d6af0849dc987edca274618866db7e602a",
     "ship-review:result:d2b94b84-ffcd-41a4-b303-bd46792a1407": "1353f092b246570b3c3e35bcb58d9a69ab3a57a53d2307114c7173bad32c3ab4",
-    "beta8-20261105-first-failure": "be063af237e66d1975efb3fa88bfc56855e739e00a97a3b2b52697199c693a76"
+    "beta8-20261105-first-failure": "be063af237e66d1975efb3fa88bfc56855e739e00a97a3b2b52697199c693a76",
+    "beta8-20261105-node-scale-repair": "1aefa7a5627f117fbac20ad701f2ef838939ebab1103deead6caa665b4110e14"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
