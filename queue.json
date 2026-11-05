@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4710,
+  "revision": 4711,
   "nextTicket": 241,
   "nextFence": 241,
   "tasks": {
@@ -3901,6 +3901,10 @@
       "digest": "17ba1dc29b175c922d9d0e499a6867af6b39d2845edaecb0e971478722d67b79",
       "issue": 1319
     },
+    "finish:763abc59-1247-49e9-9bc7-c6ac853bfeeb:finish:3:s6-label": {
+      "digest": "c325886f1cfadbc7a45b9c4e9722c8b5884813fc6acb5c716af44abe8a13f38f",
+      "issue": 1319
+    },
     "finish:763abc59-1247-49e9-9bc7-c6ac853bfeeb": {
       "digest": "77f9cb882c1be2bac4f4a06bb8438f010ebb1597ce7bf5d16dd5940053c6a47e",
       "issue": 1319,
@@ -3967,7 +3971,8 @@
         "resubmission": false,
         "reviewChanges": "В raster-ветке первый light-кадр сбрасывал View после предыдущих geometry-проверок, ждал только два RAF и сразу снимал координаты; screenshot с `animations: disabled` мог завершить конечный переход уже после этого. Второй dark-кадр и все geometry/pointer проверки проходили. Другой полный прогон тех же входов прошёл, что сохраняется как наблюдение, не как исправление исходной гонки.\n\nПравка ждёт существующий mode-transition flag и пять последовательных одинаковых снимков реальной матрицы SVG, прямоугольников устройств/label, line/arrow geometry и opacity/stroke перед чтением probe coordinates. Само ожидание ограничено прежним таймаутом 5 секунд; анимации не отключаются и камера не подменяется. Переиспользуется актуальная line/arrow DOM после обновления overlay. Все прежние pixel-oracles, допуски, светлая/тёмная тема, порядок label/endpoints/unrelated, контур стрелки и непрерывность core сохранены. Добавлен JSON receipt координат и результата, чтобы следующий отказ был проверяемым.\n\nS6 — существующий полный `smoke_zigbee_topology_hover`, типы/критичные данные/startup по общему runner. Продуктовый runtime не меняется. Для внимания: ожидание не должно фильтровать невыгодные пиксели или превращать постоянный сдвиг/неверный слой в PASS; оно фиксирует только фазу измерения.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
