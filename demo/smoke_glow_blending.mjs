@@ -76,6 +76,7 @@ try {
     const sameDim = await raster(false, true, [72, 88, 104], [72, 88, 104]);
     const fullBase = card.renderRoot.querySelector('.glow-base-layer .glow-base');
     const dataTunnel = card.renderRoot.querySelector('.opening-tunnels[data-layer="data"]');
+    const dataRoom = card.renderRoot.querySelector('[data-hp="room"]');
     const baseTunnel = card.renderRoot.querySelector('.opening-tunnels[data-layer="glow-base"]');
     const poolFrame = card.renderRoot.querySelector('.glow-pools-frame');
     const follows = (left, right) => !!left && !!right
@@ -155,7 +156,8 @@ try {
       poolFrameHasOpacity: poolFrame?.hasAttribute('opacity'),
       pools: card.renderRoot.querySelectorAll('.glow-pool').length,
       clippedPools,
-      dataBeforePools: follows(dataTunnel, poolFrame),
+      dataBeforePools: follows(dataRoom, poolFrame),
+      noRetiredDataTunnel: !dataTunnel && !customDataTunnel,
       fullBase: !!fullBase, baseTunnel: !!baseTunnel,
       staticBase: !!staticBase, staticOffPools, noStaticBaseTunnel,
       staticPools: staticPoolNodes.length, staticClippedPools,
@@ -164,8 +166,7 @@ try {
       customFill: customRoom?.style.getPropertyValue('--room-fill'),
       customOpacity: customRoom?.style.getPropertyValue('--room-fill-op'),
       customBase: !!customBase, customBaseTunnel: !!customBaseTunnel,
-      customLayerOrder: follows(customRoom, customDataTunnel)
-        && follows(customDataTunnel, customPoolFrame),
+      customLayerOrder: follows(customRoom, customPoolFrame),
       forward, reverse, fallback, sameDim,
     };
   }, fixture);
@@ -200,7 +201,8 @@ try {
     throw new Error(`same-colour dim overlap did not brighten without clipping: ${singleDim} -> ${overlapDim}`);
   if (!close(pixel(out.forward, 3), [106, 123, 140, 255])) throw new Error('non-pool sector/background changed');
   if (out.clippedPools !== out.pools) throw new Error(`lost per-source clips: ${out.clippedPools}/${out.pools}`);
-  if (!out.dataBeforePools) throw new Error('data/tunnel/pool layer order changed');
+  if (!out.dataBeforePools) throw new Error('room floor/pool layer order changed');
+  if (!out.noRetiredDataTunnel) throw new Error('retired data tunnel returned');
   if (out.fullBase || out.baseTunnel || out.staticBase || out.staticOffPools !== 0 || !out.noStaticBaseTunnel)
     throw new Error(`retired base or default static pools returned: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}, offPools=${out.staticOffPools}`);
   if (out.staticPools !== out.pools || out.staticClippedPools !== out.staticPools)

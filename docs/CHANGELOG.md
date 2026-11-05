@@ -3,6 +3,11 @@
 ## Unreleased
 
 ## v1.84.0-beta.7 — 2026-11-05
+- Verify both owning floor halves and actual passage pixels in Static instead of the retired tunnel fill. [#1313](https://github.com/Matysh/houseplan-card/issues/1313)
+
+- Check the unified floor below Glow pools after #1250, retaining raster blend oracles, exact fill color/alpha and Flat/Static parity. [#1312](https://github.com/Matysh/houseplan-card/issues/1312)
+
+- Accept the owner's reviewed Static opening-floor frame after #1250, preserving every other baseline and tolerance. [#1309](https://github.com/Matysh/houseplan-card/issues/1309)
 
 - Verify the unified floor and opening coverage in decor layer-order smoke after #1250, retaining raster probes and all layer ordering checks. [#1311](https://github.com/Matysh/houseplan-card/issues/1311)
 

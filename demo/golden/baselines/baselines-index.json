@@ -141,7 +141,7 @@
     "opening-placement-passage-thick-wall-dark": "7f90f35cece23ba101b62d4c90c944b177c75a7cd61861e28fd88eb78fd622f3",
     "opening-placement-passage-thick-wall-light": "30ccc24ad5a53ac5186cda702a2ce589773c6a10f99952463537175c1164e2c5",
     "opening-symbol-room-wall-light": "f7d781ca2749fa346cbfec7b51d18a45bf2c2c56d1c51677fb3891f2e8812656",
-    "static-wall-openings-house-phone-light": "66bbf2adb66a3dd68063e5a0dcbcf55a8ef4af96e1f4cab754e52cb2b2196964",
+    "static-wall-openings-house-phone-light": "0a202a736f6934d00f6008165c2cb534a4ca11859f28b813bc568fab972e395c",
     "static-wall-openings-content-desktop-light": "65d973f35fc7fcd312e28805b75ba2b6e85554741b3a03dce11beefd9070fbd5",
     "static-wall-openings-diagonal-house-dark": "b3f73d6e416a0e3dd01699302ab55c2325104cfbf127cb26f37a1ed54e8341d4",
     "static-wall-openings-line-plan-phone-light": "3c68045ee62ea95fe9ee5c604ac602db0f96f26272103307396eb2027b55c73c",
@@ -6661,6 +6661,26 @@
       },
       "host": "lovelace",
       "sourceSceneId": "ui-1081-grid-pan-dark"
+    },
+    "static-wall-openings-house-phone-light": {
+      "acceptedAt": "2026-11-05T12:48:23.108Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1309",
+      "reportSha256": "2fc5dabb6d953ea44e04ac2b86dcba29089b1eccfe18c9f797ae5a861d14af44",
+      "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
+      "sourceFingerprint": "33dc3313373c7e5e23156fe47176414236a44aa64cca82a09d68ef3a221d6fd7",
+      "matrixVersion": 110,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "33dc3313373c7e5e23156fe47176414236a44aa64cca82a09d68ef3a221d6fd7",
+        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
+        "ci": null
+      },
+      "host": "static",
+      "sourceSceneId": "static-wall-openings-house-phone-light"
     }
   }
 }
