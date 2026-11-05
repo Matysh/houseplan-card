@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4269,
+  "revision": 4270,
   "nextTicket": 228,
   "nextFence": 228,
   "tasks": {
@@ -3392,7 +3392,7 @@
       "ownerDecision": null,
       "ticket": 227,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793875399751,
       "reviewEntry": 2,
       "patchId": "0247e76f999a1421a3cb9eb2ce7115c34a0eb2f7",
@@ -3429,19 +3429,15 @@
         "tests_backend/test_wall_node_merge.py"
       ],
       "s6": {
-        "id": "20261105T103038785-645a14a7",
+        "id": "20261105T104333125-cd9bb67f",
         "name": "Тесты для задачи #1305 (перед ревью)",
-        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T103038785-645a14a7/report.json",
-        "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T104333125-cd9bb67f/report.json",
+        "materialSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
         "status": "passed",
-        "finishedAt": "2026-11-05T10:31:41.834Z",
+        "finishedAt": "2026-11-05T10:44:37.425Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1305:1:001c12d84178fb3166216f2e83b2119c692afe33:d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "at": 1793875194453
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -3578,9 +3574,9 @@
     "fence": 227,
     "materialSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
     "expectedBase": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793875403487,
-    "expiresAt": 1793875762430,
+    "expiresAt": 1793879078711,
     "patchId": "0247e76f999a1421a3cb9eb2ce7115c34a0eb2f7"
   },
   "events": {
@@ -3820,6 +3816,34 @@
           "finishedAt": "2026-11-05T10:31:41.834Z",
           "failures": []
         }
+      }
+    },
+    "finish:10e5e69e-fa0f-46ff-b1df-386020f9b660:finish:3:s6-complete": {
+      "digest": "dad5f8dc1f130848a6af4de7fa0bc60c166f196a95ff3ba4597eece4f0d46a79",
+      "issue": 1305,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1305,
+        "at": 1793875478711,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T104333125-cd9bb67f",
+          "name": "Тесты для задачи #1305 (перед ревью)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T104333125-cd9bb67f/report.json",
+          "materialSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
+          "status": "passed",
+          "finishedAt": "2026-11-05T10:44:37.425Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Реализация на базе dev `5588345f1`, ветка `codex/issue-1305-node-merge`. Принятое S4: round 3, [run 42004006001](https://github.com/Matysh/houseplan-card/actions/runs/42004006001). Контракт владельца об удалении непосредственного ребра S–T реализован атомарно.\n\nПодход: дополнительный `merge_node_id` в существующем node_move и независимая capability `wall_node_merge_api:1`; прежняя move API остаётся 1. `wall-node-merge.ts` и `wall_node_merge.py` независимо строят ограниченную композицию по двум IDs, удаляют прямые соединяющие рёбра/source, обновляют room cycles/dependencies/opening t/tq и выполняют существующую lossless compaction. Новый глобальный GraphOperation не вводился: используется разрешённая ТЗ эквивалентная ограниченная композиция существующих операций; generated runtime не меняется. Generic Move, Save и Optimize не получают разрешения на чужие контакты.\n\nВ held-pointer кадрах только admission/outline/кольцо неподвижной цели. На release строится полный candidate и выполняются клиентские physical/junction guards; сервер независимо повторяет graph/hosts/П1–П4, ACL/CAS и durable Store. `node_move_host_baseline` воспроизводит lineage из исходных IDs, включая компактацию с изменением host ID, в обоих направлениях. Нет оптимистичного serverCfg или шага истории до ACK; прежние writer/queue/history остаются владельцами.\n\nАвторские проверки: сборка/типы прошли; 77 Node-тестов затронутой области и 70 backend-тестов PASS (включая 11 новых authenticated HA WS/Store/reload/CAS/Undo/Redo случаев). Семь общих синтетических fixtures: полное TS/Python сравнение конфигурации 7/7 PASS. Native mouse smoke прошёл 4 успешных вида contraction, Escape, delayed ACK, точные Undo/Redo, valence refusal, click с соседом в 10 CSS px и отсутствие магнита на старом backend. На 5000 valid structural edges / 100 меняющихся held кадров: p95 12.7 ms, physicalChecks=0, writes=0, history=0. Release: одна полная клиентская проверка 15.6 ms; отпускание→ACK 9905 ms в native wire/production Python harness. Отдельная CPU-диагностика buildNodePreview в Node на той же сцене: baseline 214 ms / candidate 210 ms (не выдаётся за браузерные времена). Это browser wire harness с production Python proof, а не полный HA browser journey; реальные HA ACL/Store отдельно покрыты backend тестами. Первый финальный S6: 20261105T103038785-645a14a7, head d9cfb19015463f2560d60a86f4d42c97b2a7cdcb — 10/10 PASS: build/types, critical, startup, 135 affected Node, 71 backend и 3 browser smoke. После исправления r1 требуется применимый S6 нового head, который публикует finish.\n\nРазобраны реальные FAIL до передачи: неверный синтетический view_box/узкий host в smoke; неверная cm=0 opening fixture; тестовый helper pointerup ошибочно прыгал в origin; простой offset-click при новом учёте up мог породить ordinary Move — исправлен явным сохранением отсутствия жеста. Исходные логи сохранены в локальном artifacts/1305; ожидания безопасности не ослаблялись.\n\nДополнительно при самостоятельной проверке сохранён независимый действительный carrier у target: при схлопывании одной из двух intersection-опор остаётся on-edge по второй опоре. Добавлены зеркальные регрессионные тесты TS/Python.\n\nОсновные риски для ревью: exact q target/ось и третий совпадающий ID; ограничение допуска только пары IDs и отказ общих соседей/новых пересечений; room degeneration/проём на удаляемом ребре; independent host lineage/inverse legacy baseline; retired capability/ACL/конфликт и история до ACK; неизменность дальних узлов и retire broken supports #1303. Альтернатива отдельного endpoint/истории дублировала бы действующий механизм, глобальный allow-contact ослабил бы его.\n\nE2E вердикт **надо**, причины и конкретные изменения journeys записаны в [houseplan-e2e/task-impact/1305.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1305.md), commit 38cd10ac4771f4d19b9c83a7cead780f97ab1a98. Изменение journeys — перед бетой. Обновлены RU/EN guides/changelog, geometry contracts и release-ledger (major).\n\n### Исправления по предыдущему ревью\n\n**Код-ревью r1**: [run 42011482949](https://github.com/Matysh/houseplan-card/actions/runs/42011482949), changes_requested, переход S7 → S6 подтверждён.\n\n- Блокер: конструктор NodeMoveDependencies обходил старые зависимости после удаления source, до retarget, и падал на отсутствующей точке → helper для проверки нового carrier теперь получает только новую топологию без ещё не переписанных constraints. Исходные constraints по-прежнему именованно переписываются/снимаются следующим проходом; глобальная политика DAG не меняется.\n- Добавлен общий синтетический corpus 1305-node-merge-dependencies.json и зеркальные TS/Python регрессии: зависимость с ref.from=source сохраняется с точным новым параметром при прямом carrier либо снимается при изломе; дальние точки и исходный объект сохраняются. Адресно: 17 merge Node / 13 merge Python PASS. Повторный S6 выполнит finish на новом head.\n- Optional предложения про orphan wall compaction, причины отказа/координатную классификацию не объявляются реализованными в этом исправлении. Рекомендация профилировать обычный перенос взята отдельным анализом по прямому запросу владельца: старый legacy _nodes делает 12,497,500 попарных проверок на 5000 edges; один обычный CPU write вызывает validate_graph 12 раз на двух идентичных по содержимому графах. Это существовало до #1305 и не является основанием убрать проверки безопасности из merge.\n\n\n\nS4 r1 (42001092447): passing admission теперь фильтрует недостижимые T/X цели; во время r1 владелец разрешил удаление S–T ребра. Room/opening/dependency refusal и обязательная lossless compaction включены в контракт и код.\n\nS4 r2 (42002995046): захват merge только после raw displacement >3 CSS px и при строгой близости target относительно source. Pointerup учитывает собственные координаты, offset-click не сохраняет ничего. Общий сосед с новым duplicate endpoint pair даёт отказ. R3 принят; рекомендации по независимой host lineage и неоднозначным совпадающим IDs учтены.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
