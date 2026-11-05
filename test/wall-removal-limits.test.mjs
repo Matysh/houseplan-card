@@ -5,6 +5,7 @@ import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { removesOnlyLimitSegments, checkSegmentLengths } from '../test-build/junction-limits.js';
 import { CommandStack } from '../test-build/command-stack.js';
 import { PhysicalWriteHistory } from '../test-build/physical-write-history.js';
+import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 
 function source(current = true) {
   const config = { model_version: 10, spaces: [{ id: 'f', cell_cm: 5, rooms: [], partitions: [
@@ -77,7 +78,7 @@ test('#1258 a changed exact q endpoint cannot hide behind an identical Number pr
   space.plan_graph.edges = space.plan_graph.edges.filter(e => e.id === 'short');
   const edge = space.plan_graph.edges[0], node = space.plan_graph.nodes.find(n => n.id === edge.to);
   const almost = ['q', '191666666666666666667', '1000000000000000000000', '1', '10'];
-  assert.equal(Number(almost[1]) / Number(almost[2]), space.partitions[0].b[0]);
+  assert.deepEqual(pointToNumbers(decodePoint(almost)), space.partitions[0].b);
   node.p = almost;
   assert.equal(removesOnlyLimitSegments(before.spaces[0].partitions, space.partitions, 5, 5,
     before.spaces[0].plan_graph, space.plan_graph), false);
