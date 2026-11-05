@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3471,
+  "revision": 3472,
   "nextTicket": 203,
   "nextFence": 201,
   "tasks": {
@@ -2014,7 +2014,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793843808020,
       "reviewEntry": 2,
-      "patchId": "aee8c5267be6349e1ebc4814ea09562dee5cd64c",
+      "patchId": "e596fd87e9b2993ad8167983519036f342851b5c",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
         "docs/CHANGELOG.md",
@@ -2036,10 +2036,7 @@
         "entry": 1,
         "detail": "Поведение изменённой области: failed; Backend изменённой области: failed",
         "eventId": "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return:return:1258"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793843935352,
-      "automationDetail": "Commit tracked task changes before finish"
+      }
     },
     "1261": {
       "issue": 1261,
@@ -3277,10 +3274,11 @@
     "token": "200:finish:88a1a41a-a918-4bc9-ae1b-4aa41691569f:finish:1:admit",
     "fence": 200,
     "materialSha": "9254b3e4d0583a27f2288efa5f02d9a4f5ed0a35",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0bba0ce459b95291ffbe590b9827cc412fa85819",
+    "phase": "testing",
     "admittedAt": 1793843927932,
-    "expiresAt": 1793844350771
+    "expiresAt": 1793844365611,
+    "patchId": "e596fd87e9b2993ad8167983519036f342851b5c"
   },
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3341,6 +3339,10 @@
     },
     "finish:ff94fdb2-823c-4115-8035-26de2350d704": {
       "digest": "f60eeff3b4512f61175347c5b1c729e54d08cb60e6be62d9074e720dacd098f7",
+      "issue": 1258
+    },
+    "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75:finish:3:synchronized": {
+      "digest": "1e221449924e63390b5a69ec105ae873c0d7d1d39a59c3cf66f3bf407c444ad6",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
