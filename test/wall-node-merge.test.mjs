@@ -17,6 +17,19 @@ export function movePlan(space, p) { const nodes=structuralWallNodes(space),node
   assert.ok(node); return prepareNodeMove(space,node,nodes); }
 const targetOf=(plan,p)=>plan.nodes.find(n=>n.point.every((v,i)=>Math.abs(v-p[i])<1e-9));
 
+for(const c of JSON.parse(readFileSync(new URL('./fixtures/1305-node-merge-dependencies.json',import.meta.url))))
+test('1305 review r1: '+c.name,()=>{
+  const node=(id,x,y)=>({id,p:['l',String(x*240),String(y*240)]});
+  const edge=(id,from,to)=>({id,kind:'partition',from,to,cm:10});
+  const graph={version:1,nodes:[node('s',0,0),node('c',1,0),node('b',2,0),node('f',1,-1),
+    node('t',...c.target),node('u',c.target[0],c.target[1]+1)],
+    edges:[edge('sc','s','c'),edge('cb','c','b'),edge('fc','f','c'),edge('tu','t','u')],rooms:[],dependencies:[c.support]};
+  const space=projectGraphSpace({id:'f',rooms:[],openings:[],cell_cm:5},graph).space,before=structuredClone(space);
+  const result=applyNodeMerge(movePlan(space,[0,0]),'t',null);assert.equal(result.ok,true,JSON.stringify(result));
+  assert.deepEqual(result.space.plan_graph.dependencies,c.expected);assert.deepEqual(space,before);
+  for(const n of graph.nodes.filter(n=>n.id!=='s'))assert.deepEqual(result.space.plan_graph.nodes.find(q=>q.id===n.id),n);
+});
+
 test('1305 target retains its genuine support when its other carrier contracts',()=>{
   const node=(id,x,y)=>({id,p:['l',String(x*240),String(y*240)]});
   const edge=(id,from,to)=>({id,kind:'partition',from,to,cm:10});

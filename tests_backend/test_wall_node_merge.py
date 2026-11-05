@@ -12,6 +12,25 @@ from custom_components.houseplan.wall_node_move import NodeMoveError, node_move_
 from custom_components.houseplan.wall_node_merge import merge_graph_node_space
 
 CASES = json.loads((Path(__file__).parents[1] / "test/fixtures/1305-node-merge.json").read_text())
+DEPENDENCIES = json.loads((Path(__file__).parents[1] / "test/fixtures/1305-node-merge-dependencies.json").read_text())
+
+
+@pytest.mark.parametrize("case", DEPENDENCIES, ids=lambda c: c["name"])
+def test_source_support_is_rewritten_before_dependency_traversal(case):
+    def node(i,x,y):
+        return {"id":i,"p":["l",str(x*240),str(y*240)]}
+    def edge(i,a,b):
+        return {"id":i,"kind":"partition","from":a,"to":b,"cm":10}
+    tx,ty=case["target"]
+    graph={"version":1,"nodes":[node("s",0,0),node("c",1,0),node("b",2,0),node("f",1,-1),node("t",tx,ty),node("u",tx,ty+1)],
+           "edges":[edge("sc","s","c"),edge("cb","c","b"),edge("fc","f","c"),edge("tu","t","u")],"rooms":[],"dependencies":[case["support"]]}
+    graph["nodes"].sort(key=lambda n:n["id"]);graph["edges"].sort(key=lambda e:e["id"])
+    space=project_graph_space({"id":"f","rooms":[],"openings":[],"cell_cm":5},graph)["space"]
+    frozen=copy.deepcopy(space)
+    result=merge_graph_node_space(space,{"node_id":"s","merge_node_id":"t","point":[0,0],"target":case["target"],"target_p":["l",str(tx*240),str(ty*240)],"axis":None,"split_ids":{}})
+    assert result["plan_graph"]["dependencies"]==case["expected"]
+    assert space==frozen
+    assert {n["id"]:n["p"] for n in result["plan_graph"]["nodes"]}=={n["id"]:n["p"] for n in graph["nodes"] if n["id"]!="s"}
 
 
 def config(case):

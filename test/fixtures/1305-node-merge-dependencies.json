@@ -1,0 +1,14 @@
+[
+  {
+    "name": "retain a straight source-referencing carrier",
+    "target": [-1, 0],
+    "support": {"node":"c","kind":"on-edge","refs":[{"from":"s","to":"b"}],"parameters":[["1","2"]]},
+    "expected": [{"node":"c","kind":"on-edge","refs":[{"from":"t","to":"b"}],"parameters":[["2","3"]]}]
+  },
+  {
+    "name": "retire a source-referencing carrier bent by merge",
+    "target": [-1, 1],
+    "support": {"node":"c","kind":"on-edge","refs":[{"from":"s","to":"b"}],"parameters":[["1","2"]]},
+    "expected": []
+  }
+]

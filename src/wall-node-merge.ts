@@ -129,7 +129,10 @@ export function applyNodeMerge(plan: NodeMovePlan, targetId: string, axis: strin
     graph.nodes = graph.nodes.filter(n => n.id !== sourceId);
     for (const room of graph.rooms) room.edges = room.edges.filter(e => !removed.has(edgeKey(e)));
     verifyContacts(before, graph, sourceId, targetId);
-    const next = graphIndex(graph), carriers = new NodeMoveDependencies(graph, next, targetId);
+    // Rewritten edges already omit source, but the old constraints still name
+    // it. Carrier reachability needs only this topology; do not let the helper
+    // constructor inspect stale supports before we explicitly rewrite them.
+    const next = graphIndex(graph), carriers = new NodeMoveDependencies({ ...graph, dependencies: [] }, next, targetId);
     const previousCarrier = new NodeMoveDependencies(before, old, sourceId);
     graph.dependencies = before.dependencies.filter(d => d.node !== sourceId).flatMap(d => {
       const affected = d.refs.some(r => r.from === sourceId || r.to === sourceId || previousCarrier.hasCarrier(r, sourceId));
