@@ -65,7 +65,7 @@ async def test_deletion_cannot_hide_a_new_short_changed_wall(hass, hass_ws_clien
             edge["cm"] = 25
         else:
             node = next(n for n in graph["nodes"] if n["id"] == edge["to"])
-            node["p"][0] = ["45", "240"]
+            node["p"] = ["l", "45", "24"]
         candidate["spaces"][0] = project_graph_space(space, graph)["space"]
     await client.send_json_auto_id({"type": "houseplan/config/set", "config": candidate,
                                    "expected_rev": snapshot["rev"]})
