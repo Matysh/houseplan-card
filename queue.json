@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4504,
-  "nextTicket": 234,
+  "revision": 4505,
+  "nextTicket": 235,
   "nextFence": 234,
   "tasks": {
     "1126": {
@@ -3519,6 +3519,20 @@
         "status": "published",
         "sourceSha": "5dc83437f0ddc0b29b923aea7e077f90b8c283e8"
       }
+    },
+    "1312": {
+      "issue": 1312,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1312-glow-floor-smoke",
+      "materialSha": "f019def1923379ee8333669eff389f59b92375da",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 234,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793883064671,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3651,9 +3665,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1312
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:8538cc8c-4dd2-479d-a8a7-35167c43db15": {
+      "digest": "ccc11f9e570fa66779da92329d3c10e5a161d0931aa84be61bb4bfbf962c5381",
+      "issue": 1312,
+      "message": {
+        "kind": "queued",
+        "issue": 1312,
+        "at": 1793883064671,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f019def1923379ee8333669eff389f59b92375da"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
