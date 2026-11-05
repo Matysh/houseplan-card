@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4108,
-  "nextTicket": 221,
+  "revision": 4109,
+  "nextTicket": 222,
   "nextFence": 221,
   "tasks": {
     "1126": {
@@ -3342,6 +3342,20 @@
         "status": "published",
         "sourceSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373"
       }
+    },
+    "1304": {
+      "issue": 1304,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1304-i18n-mutation-baseline",
+      "materialSha": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 221,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793869344584,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3446,9 +3460,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1304
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:62086ecd-36d6-4745-850b-d6e7ddde7c6a": {
+      "digest": "1415ac7b6ac2f2d72c0c03820a66f1d60b88bc4df165888987a420058024d1a8",
+      "issue": 1304,
+      "message": {
+        "kind": "queued",
+        "issue": 1304,
+        "at": 1793869344584,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
     "status": "delivered",
