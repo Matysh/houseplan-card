@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4055,
+  "revision": 4056,
   "nextTicket": 220,
   "nextFence": 220,
   "tasks": {
@@ -3355,7 +3355,22 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793862642505,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c4318090a9f27fcf7fa5410bde4d17d14043ea57",
+      "changedFiles": [
+        "custom_components/houseplan/graph_node_write.py",
+        "demo/smoke_node_dependency_carrier.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/release-ledger/v1.83.0/1303.json",
+        "src/wall-node-dependencies.ts",
+        "src/wall-node-move.ts",
+        "test/fixtures/1303-bent-carrier.json",
+        "test/wall-node-dependencies.test.mjs",
+        "tests_backend/test_ha_wall_node_dependency_carrier.py",
+        "tests_backend/test_wall_node_dependency_carrier.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -3467,12 +3482,17 @@
     "token": "219:finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:1:admit",
     "fence": 219,
     "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+    "phase": "testing",
     "admittedAt": 1793862647315,
-    "expiresAt": 1793862947315
+    "expiresAt": 1793862953030,
+    "patchId": "c4318090a9f27fcf7fa5410bde4d17d14043ea57"
   },
   "events": {
+    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:2:synchronized": {
+      "digest": "5c22272d2b28470fe0940b55b946e9166b56b374288ce680ef3eb7fb3bd3e555",
+      "issue": 1303
+    },
     "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9": {
       "digest": "2a1150c412e08eca2ce6a745e3a08f3caccb293d8e7bd9cfbf55d470e1d100f6",
       "issue": 1303,
