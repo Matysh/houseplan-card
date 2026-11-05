@@ -10,6 +10,14 @@ use the existing canonical/projected frames. Fit/Home/double-tap request 100%;
 idle return and floor arrival restore the stored profile scale. Manual camera
 changes remain temporary and never write the ordinary View zoom preference.
 
+Summary show/hide (#1254) animates an already centred reference through the
+shared camera controller, using the UI Kit appear/leave durations. Rapid
+reversals retarget from the presented camera; manual gestures interrupt this
+automatic ownership. Cold fitting, saved zoom restoration, manual views and
+unaffected free areas retain their existing behavior. Reduced motion settles
+atomically. Viewport painting and pointer projection use the same live camera;
+there is no independent CSS scene translation or per-frame geometry/layout pass.
+
 Reference equality allows 0.01% scale error and one CSS pixel of centre error,
 with no active gesture/transition. Swipe and version reload use this reference,
 not the numeric internal zoom; reload also uses the effective profile/URL cycle.

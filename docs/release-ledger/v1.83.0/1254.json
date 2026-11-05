@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1254,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Polishes summary-aware automatic centring introduced by #1242 in the current 1.84 development cycle, after the previous stable.",
+  "summary": {
+    "ru": "Плавное центрирование плана при переключении сводной панели.",
+    "en": "Smooth plan recentering when toggling the summary panel."
+  }
+}

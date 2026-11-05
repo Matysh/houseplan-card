@@ -2679,6 +2679,7 @@ export class HouseplanCard extends LitElement {
   private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
   private _screenReference: ScreenCameraTarget | null = null;
   private _screenReferenceKey = '';
+  private _screenSummaryVisible = false;
   private _screenReferencePending = false;
   private _screenFitRequest: 'fit' | 'home' | 'double-tap' | null = null;
   private _screenCameraTransition = false;
@@ -2719,6 +2720,7 @@ export class HouseplanCard extends LitElement {
       // returning from an editor does not look like a fresh opening fit.
       if (this._mode !== 'view' && this._centerSummary) return;
       this._screenReference = null; this._screenReferenceKey = ''; this._screenReferencePending = false;
+      this._screenSummaryVisible = false;
       this._screenFitRequest = null; this._screenRecoveredCamera = false; this._screenRestoreZoom = null; return;
     }
     const stage = this._stageEl;
@@ -2741,7 +2743,14 @@ export class HouseplanCard extends LitElement {
     }
     const fullReference = !previous && !this._hasScreenProfile
       ? screenCameraTarget(vb, display, this._rotation, size, screenFreeArea(...size, null), 1) : null;
-    const follow = !this._screenRecoveredCamera && (this._screenReferencePending
+    // A rapid panel reversal still owns automatic centring. The visible
+    // intermediate frame is not a manual pan away from the reference.
+    const followingSummary = this._screenCameraTransition && this._screenCameraAutomatic
+      && this._cameraTransition.active && this._pointers.size === 0 && !this._panStart && !this._pinchStart;
+    const animateSummary = !!previous && this._centerSummary
+      && this._screenSummaryVisible !== !!geometry.panel && !this._screenReferencePending
+      && this._screenRestoreZoom === null;
+    const follow = !this._screenRecoveredCamera && (followingSummary || this._screenReferencePending
       || (!previous && (this._hasScreenProfile || !this._view || !!fullReference && onScreenReference(current, fullReference)))
       || !!previous && onScreenReference(current, previous,
       this._cameraTransition.active || this._pointers.size > 0));
@@ -2749,6 +2758,7 @@ export class HouseplanCard extends LitElement {
     const reference = screenCameraTarget(vb, display, this._rotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1);
     if (!reference) return;
     this._screenReference = reference; this._screenReferenceKey = key;
+    this._screenSummaryVisible = !!geometry.panel;
     this._screenRecoveredCamera = false;
     this._screenReferencePending = false; this._screenFitRequest = null;
     this._lastValidStageSize = size;
@@ -2759,7 +2769,9 @@ export class HouseplanCard extends LitElement {
       this._cancelCameraTransition(false);
       this._screenCameraTransition = true;
       this._screenCameraAutomatic = !explicit;
-      if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', explicit ? CAMERA_FIT_MS : 0)) {
+      const duration = explicit ? CAMERA_FIT_MS : animateSummary
+        ? geometry.panel ? controlMotion.appear.duration : controlMotion.leave.duration : 0;
+      if (!this._startCameraTransition(target.camera, target.fit, explicit ?? 'fit', duration)) {
         this._screenCameraTransition = false; this._screenCameraAutomatic = false;
       }
     } else if (previous) {
