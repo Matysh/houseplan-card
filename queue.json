@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4740,
-  "nextTicket": 241,
+  "revision": 4741,
+  "nextTicket": 242,
   "nextFence": 241,
   "tasks": {
     "1126": {
@@ -3606,6 +3606,20 @@
         "sourceSha": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f"
       }
     },
+    "1314": {
+      "issue": 1314,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1314-floor-golden",
+      "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 241,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793887842881,
+      "reviewEntry": 1
+    },
     "1316": {
       "issue": 1316,
       "branch": "codex/issue-1316-ha-cache-race",
@@ -3884,7 +3898,9 @@
       "runId": 42041178036
     }
   },
-  "waiting": [],
+  "waiting": [
+    1314
+  ],
   "active": null,
   "events": {
     "dev-build:42041594795:1:1319": {
@@ -3897,6 +3913,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488"
+      }
+    },
+    "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
+      "digest": "f66ad94ac29c34fcbf2fb5fb5f672e524702a9d25fd303bdd95fb74f965bf851",
+      "issue": 1314,
+      "message": {
+        "kind": "queued",
+        "issue": 1314,
+        "at": 1793887842881,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0"
       }
     }
   },
