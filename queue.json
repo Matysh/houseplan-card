@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3647,
-  "nextTicket": 209,
+  "revision": 3648,
+  "nextTicket": 210,
   "nextFence": 208,
   "tasks": {
     "1126": {
@@ -3261,6 +3261,20 @@
         "status": "published",
         "sourceSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f"
       }
+    },
+    "1296": {
+      "issue": 1296,
+      "track": "show",
+      "layer": "docs",
+      "branch": "codex/1296-profile-hold",
+      "materialSha": "fae42e689e2211bc6f9f52b303ce5edcd9ecedaf",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 209,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793846574846,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3379,7 +3393,8 @@
     }
   },
   "waiting": [
-    1292
+    1292,
+    1296
   ],
   "active": {
     "issue": 1258,
@@ -4006,6 +4021,19 @@
           "finishedAt": "2026-11-05T02:25:24.229Z",
           "failures": []
         }
+      }
+    },
+    "finish:8755c871-643f-449c-a884-36b56b352fd4": {
+      "digest": "3553c36b5a799f65b2950bdf85d2d6f4968312288c1508f8ef6ff9ce8da0e625",
+      "issue": 1296,
+      "message": {
+        "kind": "queued",
+        "issue": 1296,
+        "at": 1793846574846,
+        "entry": 1,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "fae42e689e2211bc6f9f52b303ce5edcd9ecedaf"
       }
     }
   },
