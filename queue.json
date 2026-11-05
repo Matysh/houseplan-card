@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4244,
+  "revision": 4245,
   "nextTicket": 227,
   "nextFence": 227,
   "tasks": {
@@ -3392,7 +3392,7 @@
       "ownerDecision": null,
       "ticket": 226,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793874515112,
       "reviewEntry": 1,
       "patchId": "001c12d84178fb3166216f2e83b2119c692afe33",
@@ -3427,9 +3427,15 @@
         "tests_backend/test_ha_wall_node_merge.py",
         "tests_backend/test_wall_node_merge.py"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1793874533739,
-      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-geometry-ci-20261102/test/wall-node-history.test.mjs'"
+      "s6": {
+        "id": "20261105T103038785-645a14a7",
+        "name": "Тесты для задачи #1305 (перед ревью)",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T103038785-645a14a7/report.json",
+        "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
+        "status": "passed",
+        "finishedAt": "2026-11-05T10:31:41.834Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3556,9 +3562,9 @@
     "fence": 226,
     "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
     "expectedBase": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793874519080,
-    "expiresAt": 1793874997228,
+    "expiresAt": 1793878302529,
     "patchId": "001c12d84178fb3166216f2e83b2119c692afe33"
   },
   "events": {
@@ -3669,6 +3675,34 @@
         "layer": "product",
         "materialSha": "c7a39ca7747e5fe6619a0ec78e5fa53d67292d10",
         "phase": "sync"
+      }
+    },
+    "finish:3777f4b4-6b6d-4292-85c1-d08006e508b0:finish:1:s6-complete": {
+      "digest": "68e3df5c24012febf76f83cd03a70f4115a9ad79e83790f91fc88f13911f3e21",
+      "issue": 1305,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1305,
+        "at": 1793874702529,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T103038785-645a14a7",
+          "name": "Тесты для задачи #1305 (перед ревью)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T103038785-645a14a7/report.json",
+          "materialSha": "d9cfb19015463f2560d60a86f4d42c97b2a7cdcb",
+          "status": "passed",
+          "finishedAt": "2026-11-05T10:31:41.834Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Реализация на базе dev `5588345f1`, ветка `codex/issue-1305-node-merge`. Принятое S4: round 3, [run 42004006001](https://github.com/Matysh/houseplan-card/actions/runs/42004006001). Контракт владельца об удалении непосредственного ребра S–T реализован атомарно.\n\nПодход: дополнительный `merge_node_id` в существующем node_move и независимая capability `wall_node_merge_api:1`; прежняя move API остаётся 1. `wall-node-merge.ts` и `wall_node_merge.py` независимо строят ограниченную композицию по двум IDs, удаляют прямые соединяющие рёбра/source, обновляют room cycles/dependencies/opening t/tq и выполняют существующую lossless compaction. Новый глобальный GraphOperation не вводился: используется разрешённая ТЗ эквивалентная ограниченная композиция существующих операций; generated runtime не меняется. Generic Move, Save и Optimize не получают разрешения на чужие контакты.\n\nВ held-pointer кадрах только admission/outline/кольцо неподвижной цели. На release строится полный candidate и выполняются клиентские physical/junction guards; сервер независимо повторяет graph/hosts/П1–П4, ACL/CAS и durable Store. `node_move_host_baseline` воспроизводит lineage из исходных IDs, включая компактацию с изменением host ID, в обоих направлениях. Нет оптимистичного serverCfg или шага истории до ACK; прежние writer/queue/history остаются владельцами.\n\nАвторские проверки: сборка/типы прошли; 77 Node-тестов затронутой области и 70 backend-тестов PASS (включая 11 новых authenticated HA WS/Store/reload/CAS/Undo/Redo случаев). Семь общих синтетических fixtures: полное TS/Python сравнение конфигурации 7/7 PASS. Native mouse smoke прошёл 4 успешных вида contraction, Escape, delayed ACK, точные Undo/Redo, valence refusal, click с соседом в 10 CSS px и отсутствие магнита на старом backend. На 5000 valid structural edges / 100 меняющихся held кадров: p95 12.9 ms, physicalChecks=0, writes=0, history=0. Это browser wire harness с production Python proof, а не полный HA browser journey; реальные HA ACL/Store отдельно покрыты backend тестами. Финальный S6 и его актуальный head публикует finish в штатной передаче.\n\nРазобраны реальные FAIL до передачи: неверный синтетический view_box/узкий host в smoke; неверная cm=0 opening fixture; тестовый helper pointerup ошибочно прыгал в origin; простой offset-click при новом учёте up мог породить ordinary Move — исправлен явным сохранением отсутствия жеста. Исходные логи сохранены в локальном artifacts/1305; ожидания безопасности не ослаблялись.\n\nОсновные риски для ревью: exact q target/ось и третий совпадающий ID; ограничение допуска только пары IDs и отказ общих соседей/новых пересечений; room degeneration/проём на удаляемом ребре; independent host lineage/inverse legacy baseline; retired capability/ACL/конфликт и история до ACK; неизменность дальних узлов и retire broken supports #1303. Альтернатива отдельного endpoint/истории дублировала бы действующий механизм, глобальный allow-contact ослабил бы его.\n\nE2E вердикт **надо**, причины и конкретные изменения journeys записаны в [houseplan-e2e/task-impact/1305.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1305.md), commit 38cd10ac4771f4d19b9c83a7cead780f97ab1a98. Изменение journeys — перед бетой. Обновлены RU/EN guides/changelog, geometry contracts и release-ledger (major).\n\n### Исправления по предыдущему ревью\n\nS4 r1 (42001092447): passing admission теперь фильтрует недостижимые T/X цели; во время r1 владелец разрешил удаление S–T ребра. Room/opening/dependency refusal и обязательная lossless compaction включены в контракт и код.\n\nS4 r2 (42002995046): захват merge только после raw displacement >3 CSS px и при строгой близости target относительно source. Pointerup учитывает собственные координаты, offset-click не сохраняет ничего. Общий сосед с новым duplicate endpoint pair даёт отказ. R3 принят; рекомендации по независимой host lineage и неоднозначным совпадающим IDs учтены.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
