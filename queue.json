@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4180,
+  "revision": 4181,
   "nextTicket": 224,
   "nextFence": 224,
   "tasks": {
@@ -3763,7 +3763,8 @@
           "entry": 2,
           "detail": "Браузер: opening tunnel fill: failed",
           "eventId": "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250"
-        }
+        },
+        "delivered": true
       }
     }
   },
