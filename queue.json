@@ -1,48 +1,9 @@
 {
   "schema": 1,
-  "revision": 5037,
+  "revision": 5038,
   "nextTicket": 248,
   "nextFence": 248,
   "tasks": {
-    "1127": {
-      "issue": 1127,
-      "branch": "codex/issue-1127-kiosk-switcher",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "a37a0460582fc2ed38d4de92f1608082521ea94d",
-      "mergedSha": "4f895343407cd730222fa3b47c188703332f16ce",
-      "mergedAt": 1793639593192,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": true,
-      "reviewRequest": "review:1127:1:c1f6eca923f68b8cb37ebf0272e2b04cbcdb06e3:a37a0460582fc2ed38d4de92f1608082521ea94d",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": true,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "milestoneTitle": "1.84.0",
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "4f895343407cd730222fa3b47c188703332f16ce"
-      }
-    },
     "1130": {
       "issue": 1130,
       "branch": "codex/issue-1130-low-signal",
@@ -3838,10 +3799,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
