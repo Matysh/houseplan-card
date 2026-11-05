@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4748,
+  "revision": 4749,
   "nextTicket": 242,
   "nextFence": 242,
   "tasks": {
@@ -3983,7 +3983,8 @@
           "entry": 1,
           "detail": "Открытие сохранённого плана в View: failed",
           "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
-        }
+        },
+        "delivered": true
       }
     }
   },
