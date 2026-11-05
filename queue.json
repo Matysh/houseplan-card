@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4019,
+  "revision": 4020,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -3361,9 +3361,6 @@
         "docs/testing/issue1302-static-handoff.md"
       ],
       "s6": null,
-      "automationError": "automation-error",
-      "automationSince": 1793859097812,
-      "automationDetail": "S6 needs its successful selected set; documentation has no runs",
       "reviewRound": 1,
       "reviewRequest": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88",
       "reviewMaterial": {
@@ -3498,7 +3495,7 @@
     "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88",
     "phase": "review",
     "admittedAt": 1793859083045,
-    "expiresAt": 1793862742312,
+    "expiresAt": 1793862766215,
     "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60",
     "reviewRequest": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88"
   },
@@ -3533,6 +3530,10 @@
     },
     "finish:a2a6e25a-9b43-4eee-8657-299b0204a259": {
       "digest": "ecec17dd01422367f126ee38f5b22fe7feb663e6f244491024919bc7baa22309",
+      "issue": 1302
+    },
+    "finish:13f68ee6-36ff-438f-8192-617e1208d5c6:finish:4:heartbeat": {
+      "digest": "cc928bfd95335b85aee37121466b11cb29e1208cf6197a07d5e200f2847a0220",
       "issue": 1302
     },
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6": {
