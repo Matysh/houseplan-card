@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4981,
+  "revision": 4982,
   "nextTicket": 248,
   "nextFence": 248,
   "tasks": {
@@ -1727,7 +1727,7 @@
       "ownerDecision": null,
       "ticket": 247,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793907643327,
       "reviewEntry": 1,
       "patchId": "408227b3ada85ae14b538867e98effaa921d429c",
@@ -1746,7 +1746,16 @@
         "test/wall-node-card-adapter.test.mjs",
         "test/wall-node-editor.test.mjs",
         "test/wall-node-move.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T194100142-d024e9cc",
+        "name": "Тесты для задачи #1259 (перед ревью)",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T194100142-d024e9cc/report.json",
+        "materialSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
+        "status": "passed",
+        "finishedAt": "2026-11-05T19:42:23.389Z",
+        "failures": []
+      }
     },
     "1261": {
       "issue": 1261,
@@ -4035,9 +4044,9 @@
     "fence": 247,
     "materialSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
     "expectedBase": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793907647218,
-    "expiresAt": 1793908006108,
+    "expiresAt": 1793911344647,
     "patchId": "408227b3ada85ae14b538867e98effaa921d429c"
   },
   "events": {
@@ -4074,6 +4083,34 @@
         "layer": "product",
         "materialSha": "cd1ab4659e5f3383c10bb0a695b44f60b060cbcb",
         "phase": "sync"
+      }
+    },
+    "finish:b9cdbc6d-7747-49aa-88b1-981432efec44:finish:3:s6-complete": {
+      "digest": "ee80d588a794fe586aaf6c65e468cdba97e4456798dc59bf5828d5d659a0cd85",
+      "issue": 1259,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1259,
+        "at": 1793907744647,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T194100142-d024e9cc",
+          "name": "Тесты для задачи #1259 (перед ревью)",
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T194100142-d024e9cc/report.json",
+          "materialSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
+          "status": "passed",
+          "finishedAt": "2026-11-05T19:42:23.389Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Общий `wallNodeHitRadius` задаёт `max(12 CSS px, видимый физический радиус + 2 CSS px)`; невидимая ручка, захват левой кнопкой, правый down и contextmenu используют этот радиус. Два пикселя покрывают обводку и проекцию целочисленных координат contextmenu: native regression зафиксировал клиентские (779,591) вместо дробных (779.63,591.91), из-за чего точного радиуса с одной половиной обводки оказалось недостаточно. Эта диагностика сохранена в artifacts/1259/context-failure-*.json. Внешний вид маркера, правила nearest/ambiguity (8 px), магнит слияния и writer не менялись.\n\nДо исправления два новых unit-регрессионных случая падают на прежнем продукте (край обоих концов не захватывается и расширенный picker не принимает радиус). После исправления адресные unit — 91/91 PASS. Новый native browser smoke — **16/16 PASS**: оба конца, cell_cm 1/5/30, несколько масштабов, повороты 0/90/270, DPR 1/2; Escape не пишет, outside не захватывает узел, настоящий mouse edge drag делает ровно одну accepted node-команду, меню работает до и после сохранения. После последней малой правки вычисление радиуса вынесено из цикла отрисовки; финальные S6 повторяет finish.\n\nКритичный риск: расширение зоны не должно выключить разрешение близких узлов, перехватить неподдерживаемый узел без понятного отказа или ослабить безопасность записи. Эти правила сохранены, отрицательные случаи и прежние node Move/Delete/Merge/rotation smokes включены в адресный S6. В companion E2E добавлена отдельная настоящая HA-проверка захвата видимого края, неподвижности другого конца и отмены без записи; она будет проверена на пакете перед бетой. Текущий результат native smoke не выдаётся за real HA E2E.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
