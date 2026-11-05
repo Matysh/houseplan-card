@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.84.0-beta.7 — 2026-11-05
+
 - Verify the unified floor and opening coverage in decor layer-order smoke after #1250, retaining raster probes and all layer ordering checks. [#1311](https://github.com/Matysh/houseplan-card/issues/1311)
 
 - Inventory the new partial #1303/#1305 fixtures in the complete wall identity corpus while preserving document passports, the historical oracle and idempotence guards. [#1308](https://github.com/Matysh/houseplan-card/issues/1308)
