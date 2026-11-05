@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3732,
+  "revision": 3733,
   "nextTicket": 211,
   "nextFence": 210,
   "tasks": {
@@ -3204,6 +3204,117 @@
         "materialSha": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
         "expectedBase": "644cae87c40425c31fb1b181574f48e434ffb8bd",
         "patchId": "6bc4a3c8defbd84561915b7bd89b8c5841f73089"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1296,
+        "requestId": "review:1296:1:6bc4a3c8defbd84561915b7bd89b8c5841f73089:644cae87c40425c31fb1b181574f48e434ffb8bd",
+        "kind": "code",
+        "base": "644cae87c40425c31fb1b181574f48e434ffb8bd",
+        "materialSha": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
+        "patchId": "6bc4a3c8defbd84561915b7bd89b8c5841f73089",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1296,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1296",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Исполняемая правка companion https://github.com/Matysh/houseplan-e2e/commit/ceec9aec155585096880863a076aaf9d2e81a0da : sizeDialog вместо отпускания через3100ms ждёт реальный видимый публичный диалог с pointer down, затем отпускает в finally также при отказе. Сохранён обычный timeout expect, assertions и настоящие pointer events. Просьба содержательно проверить и эту небольшую правку; полный diff helper включён в docs/testing/issue1296-profile-hold.md корневого материала, вместе с ограничениями доказательства. Продуктовый runtime не меняется.\n\nНа точном опубликованном ZIP beta.5 в собственном real HA2026.10.4 диагностически задержан только публичный callback setTimeout(3000) до3600ms в копии lab-теста. Старый helper: business0/1, setup3/3, FAIL именно отсутствующий kiosk dialog. Исправленный: business1/1, setup3/3; полный исходный deletion/new-ID/read-only journey, те же числа масштаба, locked controls и WS assertions; ноль skip/retry. Это доказательство класса гонки, не реконструкция точного исходного CPU/timeline. Companion contract lint57files PASS. Полные raw reports сохранены, собственные контейнеры удалены. Исправление empty-space Undo1736049 и прежний адресный real HA PASS учтены отдельно, не выданы за новый прогон.\n\nКорневой patch — чистая документация и RU/EN changelog; finish --track show выполняет обычное независимое ревью текста/переданного кода без root тестов/build/lint. Реальные проверки companion выполнены отдельно выше; нулевой root набор не называется проверкой внешнего кода. Дополнительного gateway/test-wrapper ради межрепозиторного изменения не добавляется."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Работу можно принять. Исправление в companion ceec9ae небольшое и попадает точно в причину. Раньше helper `sizeDialog` отпускал указатель через фиксированные 3100 ms. Продукт ставит на удержание таймер 3000 ms, и `pointerup` до его срабатывания корректно отменяет жест. Поэтому любое запаздывание callback больше чем на 100 ms под нагрузкой гарантированно приводило к отсутствию диалога. Теперь helper держит настоящую мышь, пока публичный диалог не станет видимым, и отпускает её в `finally`. Так тест повторяет реальное поведение пользователя, который держит палец до появления окна. Продукт этот сценарий явно поддерживает: отпускание после открытия модального окна уходит в modal barrier. Assertions не ослаблены, приватного открытия и повторов нет. Пустую готовность после Undo задача честно описывает как прежнее исправление 1736049, нового прогона по ней не заявлено. Блокеров нет. Отдельно отмечаю, что в корневом `demo/smoke_external_screens.mjs` осталась та же схема с фиксированными 3100 ms.",
+          "understanding": "Проблема: в полном stable-прогоне beta.5 сценарий удаления профиля, нового ID и режима только для чтения (`panel-profiles.viewer.spec.mjs`) не дождался kiosk scale dialog. При адресном повторе тот же сценарий прошёл.\n\nДо исправления: helper нажимал нативный указатель, ждал `waitForTimeout(3100)`, отпускал его и только потом проверял диалог. В продукте `KioskHoldGesture.arm` (src/kiosk-hold.ts:38-47) ставит `window.setTimeout` на `KIOSK_HOLD_MS = 3000`, а `pointerup`/`pointercancel` вызывают `cancel()` (src/houseplan-card.ts:7835, 7887, 8241, 8263). Если callback задерживается больше чем на 100 ms, отпускание отменяет жест и диалог не появляется. Это нормальное поведение продукта, а не его дефект.\n\nПосле исправления: указатель остаётся нажатым, пока выполняется `expect(dialog).toBeVisible()` с обычным timeout, а `mouse.up()` вызывается в `finally`. Корневой patch содержит только документацию: `docs/testing/issue1296-profile-hold.md` с diff helper и границами доказательства, плюс строки в RU/EN changelog. Код companion я разбирал по diff, приведённому в документе. Самостоятельно прочитать репозиторий houseplan-e2e инструменты не позволяют.\n\nЧто разобрал по исходникам продукта:\n- постановку удержания (src/houseplan-card.ts:7672-7686): только kiosk, только пустая stage, первый указатель;\n- callback при срабатывании (2927-2932): `interruptForModal(pointerId)`, `_interruptViewGesture`, `_kioskDialog = true`;\n- контракт в шапке src/kiosk-hold.ts:9-11: отпускание того же нажатия после открытия уходит в диалог, stage о нём не узнаёт.",
+          "analysis": [
+            {
+              "topic": "Причина нестабильности и соответствие пункту 1 приёмки",
+              "assessment": "Причина определена правильно: гонка фиксированного ожидания в тесте с таймером продукта на 3000 ms. Запас был всего 100 ms. Исполнитель не стал выдавать гипотезу за реконструкцию исходного CI: он воспроизвёл класс гонки, детерминированно задержав только callback с delay 3000 до 3600 ms. Старый helper на этом стенде падает именно отсутствием диалога, исправленный проходит весь сценарий. Для тестовой гонки такого доказательства достаточно. Исправление в runtime не требуется: отмена удержания при отпускании — заданное поведение.",
+              "evidence": "src/kiosk-hold.ts:13 (`KIOSK_HOLD_MS = 3000`), 38-54 (arm/cancel); docs/testing/issue1296-profile-hold.md, раздел Executed evidence: Original 0/1 FAIL kiosk dialog not found, Fixed 1/1, setup 3/3, ноль skip/retry. Результаты запусков взяты из контекста исполнителя, я их не воспроизводил."
+            },
+            {
+              "topic": "Безопасность отпускания уже после открытия диалога",
+              "assessment": "Это главный новый путь: раньше отпускание всегда шло до открытия модального окна, теперь — после. Продукт явно рассчитан на такой порядок. Callback передаёт pointer в `_touchClickGuard.interruptForModal` и снимает `_suppressClick`, чтобы последующий click поглотил modal barrier (#831). Комментарий в kiosk-hold прямо описывает, что release этого нажатия уходит в диалог. Значит, новый helper проверяет реалистичный пользовательский путь: человек держит палец, пока не увидит окно. Он не создаёт искусственного состояния. Дальнейшие шаги исправленного прогона (ползунки, locked controls, значения масштаба) работали с открытым диалогом, то есть хвостовой click его не закрыл.",
+              "evidence": "src/houseplan-card.ts:2927-2932; src/kiosk-hold.ts:8-11; diff helper в docs/testing/issue1296-profile-hold.md:15-30."
+            },
+            {
+              "topic": "Сохранность assertions и отсутствие маскировки",
+              "assessment": "Locator диалога, точка нажатия (x+8, y+8 от stage) и `expect(...).toBeVisible()` остались прежними. Таймаут не увеличен, повторов нет, принудительного открытия через приватное состояние нет. `finally` гарантирует, что при отказе следующий шаг не унаследует нажатую кнопку мыши. Комментарий в helper объясняет неочевидную причину и ограничение, а не пересказывает код, — такой комментарий стоит сохранить. Ограничение: теперь удержание и появление диалога должны уложиться в общий expect timeout companion. Значение этого таймаута в pinned материале не видно; при стандартных 5 s запас на запаздывание таймера около 2 s. Этого достаточно, и это наблюдаемая граница, а не бесконечное ожидание.",
+              "evidence": "docs/testing/issue1296-profile-hold.md:15-30; конфиг companion недоступен инструментам ревью."
+            },
+            {
+              "topic": "Пункт 3: space journey и честность границ",
+              "assessment": "Пустой Undo описан как уже сделанное исправление 1736049 с прежним адресным PASS: setup 3/3, business 2/3, оставшийся отказ относится к Resize/#1292. Новым прогоном это не выдаётся, полный stable-прогон не заявлен. Правка ceec9ae меняет только `tests/lib/panel-profiles.mjs`, так что прежний результат space journey не устаревает. Исходный FAILED не подменяется. Формулировки границ корректны.",
+              "evidence": "docs/testing/issue1296-profile-hold.md:52-59; тело задачи, раздел о companion 1736049."
+            },
+            {
+              "topic": "Корневой patch",
+              "assessment": "Только документация, root-проверки не нужны и не заявлены. Записи RU/EN в changelog по смыслу совпадают. Мелочи вроде слипшихся чисел (\"for3100ms\", \"passed57files\") и отсутствия перевода строки в конце файла на суть не влияют.",
+              "evidence": "docs/CHANGELOG.md:5, docs/CHANGELOG.ru.md:11, docs/testing/issue1296-profile-hold.md."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "В корневом документе стоит поправить слипшиеся числа и единицы (\"for3100ms\", \"its3000ms\", \"until3600ms\", \"passed57files\", \"scale100/100\") и добавить завершающий перевод строки. Это косметика, но документ задуман как постоянная запись доказательства, и её лучше читать без запинок."
+          ],
+          "boundaries": "Код companion (ceec9ae, 1736049, файл task-impact) инструментами недоступен. Helper я оценивал по полному diff, приведённому в docs/testing/issue1296-profile-hold.md, и не сверял его с самим коммитом. Выполненные результаты (old 0/1 FAIL, fixed 1/1 PASS, setup 3/3, contract lint 57 файлов, прежний адресный PASS space journey) взяты из контекста исполнителя и не воспроизводились. По правилам S7 я ничего не запускал. Значение expect timeout в companion не проверено. Продуктовую часть (src/kiosk-hold.ts, постановка, отмена и срабатывание удержания в src/houseplan-card.ts) прочитал по исходникам head.",
+          "outsideFindings": [
+            {
+              "title": "demo/smoke_external_screens.mjs: та же гонка — фиксированное удержание 3100 ms перед ожиданием kiosk dialog",
+              "kind": "infra",
+              "problem": "Корневой smoke нажимает мышь на stage, ждёт `waitForTimeout(3100)`, отпускает и только потом ждёт `hp-dialog[data-kind=\"kiosk\"]`. Если callback продуктового `setTimeout(3000)` под нагрузкой запаздывает больше чем на 100 ms, `pointerup` отменяет удержание и диалог не появляется: smoke падает по таймауту `waitFor()`. Механизм тот же, что в #1296, где класс гонки детерминированно воспроизведён задержкой callback.",
+              "evidence": "demo/smoke_external_screens.mjs:123-125; src/kiosk-hold.ts:13, 38-54 (отмена при release); доказательство класса гонки — docs/testing/issue1296-profile-hold.md.",
+              "suggestedFix": "Поступить так же, как в ceec9ae: после `mouse.down()` держать указатель, пока выполняется `locator('hp-dialog[data-kind=\"kiosk\"]').waitFor()`, а `mouse.up()` вызвать в `finally`."
+            }
+          ]
+        },
+        "usage": {
+          "input_tokens": 16,
+          "cache_creation_input_tokens": 29528,
+          "cache_read_input_tokens": 114390,
+          "output_tokens": 7162,
+          "output_tokens_details": {
+            "thinking_tokens": 1878
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 29528,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 854,
+              "cache_read_input_tokens": 20574,
+              "cache_creation_input_tokens": 13158,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 13158
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять. Исправление в companion ceec9ae небольшое и попадает точно в причину. Раньше helper `sizeDialog` отпускал указатель через фиксированные 3100 ms. Продукт ставит на удержание таймер 3000 ms, и `pointerup` до его срабатывания корректно отменяет жест. Поэтому любое запаздывание callback больше чем на 100 ms под нагрузкой гарантированно приводило к отсутствию диалога. Теперь helper держит настоящую мышь, пока публичный диалог не станет видимым, и отпускает её в `finally`. Так тест повторяет реальное поведение пользователя, который держит палец до появления окна. Продукт этот сценарий явно поддерживает: отпускание после открытия модального окна уходит в modal barrier. Assertions не ослаблены, приватного открытия и повторов нет. Пустую готовность после Undo задача честно описывает как прежнее исправление 1736049, нового прогона по ней не заявлено. Блокеров нет. Отдельно отмечаю, что в корневом `demo/smoke_external_screens.mjs` осталась та же схема с фиксированными 3100 ms.\n\n## Понимание решения\n\nПроблема: в полном stable-прогоне beta.5 сценарий удаления профиля, нового ID и режима только для чтения (`panel-profiles.viewer.spec.mjs`) не дождался kiosk scale dialog. При адресном повторе тот же сценарий прошёл.\n\nДо исправления: helper нажимал нативный указатель, ждал `waitForTimeout(3100)`, отпускал его и только потом проверял диалог. В продукте `KioskHoldGesture.arm` (src/kiosk-hold.ts:38-47) ставит `window.setTimeout` на `KIOSK_HOLD_MS = 3000`, а `pointerup`/`pointercancel` вызывают `cancel()` (src/houseplan-card.ts:7835, 7887, 8241, 8263). Если callback задерживается больше чем на 100 ms, отпускание отменяет жест и диалог не появляется. Это нормальное поведение продукта, а не его дефект.\n\nПосле исправления: указатель остаётся нажатым, пока выполняется `expect(dialog).toBeVisible()` с обычным timeout, а `mouse.up()` вызывается в `finally`. Корневой patch содержит только документацию: `docs/testing/issue1296-profile-hold.md` с diff helper и границами доказательства, плюс строки в RU/EN changelog. Код companion я разбирал по diff, приведённому в документе. Самостоятельно прочитать репозиторий houseplan-e2e инструменты не позволяют.\n\nЧто разобрал по исходникам продукта:\n- постановку удержания (src/houseplan-card.ts:7672-7686): только kiosk, только пустая stage, первый указатель;\n- callback при срабатывании (2927-2932): `interruptForModal(pointerId)`, `_interruptViewGesture`, `_kioskDialog = true`;\n- контракт в шапке src/kiosk-hold.ts:9-11: отпускание того же нажатия после открытия уходит в диалог, stage о нём не узнаёт.\n\n## Разбор решения\n\n### Причина нестабильности и соответствие пункту 1 приёмки\n\nПричина определена правильно: гонка фиксированного ожидания в тесте с таймером продукта на 3000 ms. Запас был всего 100 ms. Исполнитель не стал выдавать гипотезу за реконструкцию исходного CI: он воспроизвёл класс гонки, детерминированно задержав только callback с delay 3000 до 3600 ms. Старый helper на этом стенде падает именно отсутствием диалога, исправленный проходит весь сценарий. Для тестовой гонки такого доказательства достаточно. Исправление в runtime не требуется: отмена удержания при отпускании — заданное поведение.\n\nОснование: src/kiosk-hold.ts:13 (`KIOSK_HOLD_MS = 3000`), 38-54 (arm/cancel); docs/testing/issue1296-profile-hold.md, раздел Executed evidence: Original 0/1 FAIL kiosk dialog not found, Fixed 1/1, setup 3/3, ноль skip/retry. Результаты запусков взяты из контекста исполнителя, я их не воспроизводил.\n\n### Безопасность отпускания уже после открытия диалога\n\nЭто главный новый путь: раньше отпускание всегда шло до открытия модального окна, теперь — после. Продукт явно рассчитан на такой порядок. Callback передаёт pointer в `_touchClickGuard.interruptForModal` и снимает `_suppressClick`, чтобы последующий click поглотил modal barrier (#831). Комментарий в kiosk-hold прямо описывает, что release этого нажатия уходит в диалог. Значит, новый helper проверяет реалистичный пользовательский путь: человек держит палец, пока не увидит окно. Он не создаёт искусственного состояния. Дальнейшие шаги исправленного прогона (ползунки, locked controls, значения масштаба) работали с открытым диалогом, то есть хвостовой click его не закрыл.\n\nОснование: src/houseplan-card.ts:2927-2932; src/kiosk-hold.ts:8-11; diff helper в docs/testing/issue1296-profile-hold.md:15-30.\n\n### Сохранность assertions и отсутствие маскировки\n\nLocator диалога, точка нажатия (x+8, y+8 от stage) и `expect(...).toBeVisible()` остались прежними. Таймаут не увеличен, повторов нет, принудительного открытия через приватное состояние нет. `finally` гарантирует, что при отказе следующий шаг не унаследует нажатую кнопку мыши. Комментарий в helper объясняет неочевидную причину и ограничение, а не пересказывает код, — такой комментарий стоит сохранить. Ограничение: теперь удержание и появление диалога должны уложиться в общий expect timeout companion. Значение этого таймаута в pinned материале не видно; при стандартных 5 s запас на запаздывание таймера около 2 s. Этого достаточно, и это наблюдаемая граница, а не бесконечное ожидание.\n\nОснование: docs/testing/issue1296-profile-hold.md:15-30; конфиг companion недоступен инструментам ревью.\n\n### Пункт 3: space journey и честность границ\n\nПустой Undo описан как уже сделанное исправление 1736049 с прежним адресным PASS: setup 3/3, business 2/3, оставшийся отказ относится к Resize/#1292. Новым прогоном это не выдаётся, полный stable-прогон не заявлен. Правка ceec9ae меняет только `tests/lib/panel-profiles.mjs`, так что прежний результат space journey не устаревает. Исходный FAILED не подменяется. Формулировки границ корректны.\n\nОснование: docs/testing/issue1296-profile-hold.md:52-59; тело задачи, раздел о companion 1736049.\n\n### Корневой patch\n\nТолько документация, root-проверки не нужны и не заявлены. Записи RU/EN в changelog по смыслу совпадают. Мелочи вроде слипшихся чисел (\"for3100ms\", \"passed57files\") и отсутствия перевода строки в конце файла на суть не влияют.\n\nОснование: docs/CHANGELOG.md:5, docs/CHANGELOG.ru.md:11, docs/testing/issue1296-profile-hold.md.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В корневом документе стоит поправить слипшиеся числа и единицы (\"for3100ms\", \"its3000ms\", \"until3600ms\", \"passed57files\", \"scale100/100\") и добавить завершающий перевод строки. Это косметика, но документ задуман как постоянная запись доказательства, и её лучше читать без запинок.\n\n## Отдельные дефекты вне задачи\n\n### demo/smoke_external_screens.mjs: та же гонка — фиксированное удержание 3100 ms перед ожиданием kiosk dialog\n\nКорневой smoke нажимает мышь на stage, ждёт `waitForTimeout(3100)`, отпускает и только потом ждёт `hp-dialog[data-kind=\"kiosk\"]`. Если callback продуктового `setTimeout(3000)` под нагрузкой запаздывает больше чем на 100 ms, `pointerup` отменяет удержание и диалог не появляется: smoke падает по таймауту `waitFor()`. Механизм тот же, что в #1296, где класс гонки детерминированно воспроизведён задержкой callback.\n\nОснование: demo/smoke_external_screens.mjs:123-125; src/kiosk-hold.ts:13, 38-54 (отмена при release); доказательство класса гонки — docs/testing/issue1296-profile-hold.md.\n\nНаправление исправления: Поступить так же, как в ceec9ae: после `mouse.down()` держать указатель, пока выполняется `locator('hp-dialog[data-kind=\"kiosk\"]').waitFor()`, а `mouse.up()` вызвать в `finally`.\n\n## Границы анализа\n\nКод companion (ceec9ae, 1736049, файл task-impact) инструментами недоступен. Helper я оценивал по полному diff, приведённому в docs/testing/issue1296-profile-hold.md, и не сверял его с самим коммитом. Выполненные результаты (old 0/1 FAIL, fixed 1/1 PASS, setup 3/3, contract lint 57 файлов, прежний адресный PASS space journey) взяты из контекста исполнителя и не воспроизводились. По правилам S7 я ничего не запускал. Значение expect timeout в companion не проверено. Продуктовую часть (src/kiosk-hold.ts, постановка, отмена и срабатывание удержания в src/houseplan-card.ts) прочитал по исходникам head.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 644cae87c40425c31fb1b181574f48e434ffb8bd → fb04ca0fb54e1671bf5384ca404da67bccde0970\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1296, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nИсполняемая правка companion https://github.com/Matysh/houseplan-e2e/commit/ceec9aec155585096880863a076aaf9d2e81a0da : sizeDialog вместо отпускания через3100ms ждёт реальный видимый публичный диалог с pointer down, затем отпускает в finally также при отказе. Сохранён обычный timeout expect, assertions и настоящие pointer events. Просьба содержательно проверить и эту небольшую правку; полный diff helper включён в docs/testing/issue1296-profile-hold.md корневого материала, вместе с ограничениями доказательства. Продуктовый runtime не меняется.\n\nНа точном опубликованном ZIP beta.5 в собственном real HA2026.10.4 диагностически задержан только публичный callback setTimeout(3000) до3600ms в копии lab-теста. Старый helper: business0/1, setup3/3, FAIL именно отсутствующий kiosk dialog. Исправленный: business1/1, setup3/3; полный исходный deletion/new-ID/read-only journey, те же числа масштаба, locked controls и WS assertions; ноль skip/retry. Это доказательство класса гонки, не реконструкция точного исходного CPU/timeline. Companion contract lint57files PASS. Полные raw reports сохранены, собственные контейнеры удалены. Исправление empty-space Undo1736049 и прежний адресный real HA PASS учтены отдельно, не выданы за новый прогон.\n\nКорневой patch — чистая документация и RU/EN changelog; finish --track show выполняет обычное независимое ревью текста/переданного кода без root тестов/build/lint. Реальные проверки companion выполнены отдельно выше; нулевой root набор не называется проверкой внешнего кода. Дополнительного gateway/test-wrapper ради межрепозиторного изменения не добавляется.\n```\n\n</details>\n",
+        "createdAt": "2026-11-05T02:53:39.300Z",
+        "artifactId": 13383354451,
+        "runId": 41957899723,
+        "runAttempt": 1,
+        "completedAt": "2026-11-05T02:53:43Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41957899723",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "644cae87c40425c31fb1b181574f48e434ffb8bd"
       }
     }
   },
@@ -3333,9 +3444,9 @@
     "fence": 209,
     "materialSha": "fb04ca0fb54e1671bf5384ca404da67bccde0970",
     "expectedBase": "644cae87c40425c31fb1b181574f48e434ffb8bd",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793847037148,
-    "expiresAt": 1793850684598,
+    "expiresAt": 1793850837678,
     "patchId": "6bc4a3c8defbd84561915b7bd89b8c5841f73089",
     "reviewRequest": "review:1296:1:6bc4a3c8defbd84561915b7bd89b8c5841f73089:644cae87c40425c31fb1b181574f48e434ffb8bd"
   },
@@ -3370,6 +3481,10 @@
     },
     "finish:8755c871-643f-449c-a884-36b56b352fd4:finish:5:review-presentation": {
       "digest": "9c86d4ac3a41ec73d9475ed1e61ab205daa538b30091f70c1d4f69b5423f22b2",
+      "issue": 1296
+    },
+    "finish:8755c871-643f-449c-a884-36b56b352fd4:finish:5:review-complete": {
+      "digest": "84e02404be0c2ff50b9ae72b7bb42ddeab18a2e054761d2182725619ebf8f37f",
       "issue": 1296
     },
     "finish:8755c871-643f-449c-a884-36b56b352fd4": {
