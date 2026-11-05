@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 436,
+  "revision": 437,
   "active": "v1.84.0-beta.8-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -20699,7 +20699,7 @@
         "sha": "fc915753646d14903f42e7671499bbd5bdacdab5",
         "requestId": "ship-review:45e514d68bef2602c1f95a6ac2be54374076c3b672a9e4e0ae18b35b998a7b02",
         "selectionDigest": "43751e5d5c7508c55704285d1dc0a98ea40470dc31fa860569a086b2bc931096",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -21532,7 +21532,8 @@
     "beta7-20261105-publish-final:completion:e1e85a26-cd98-4869-9e4b-5abac0497e47": "15a1080febccccc17ff9a5b3afd839f801dc5bd1c09ee4c70194c97d132e8587",
     "beta8-20261105-create": "697e4f06cdf95d6f6a7bdcb5f0fbf96939d4c3572dfffbe59ce0fc7d1bf5ca39",
     "beta8-20261105-version-prepared": "2a80f709b5fe2f282310d4fb4a4865d083a80b6ae73e90081cf5f6e59199feb6",
-    "ship-review:prepare:033087a5-665d-4a34-81d8-a462b02450ea": "70e220fa156f3557bf6b47c071c909d6af0849dc987edca274618866db7e602a"
+    "ship-review:prepare:033087a5-665d-4a34-81d8-a462b02450ea": "70e220fa156f3557bf6b47c071c909d6af0849dc987edca274618866db7e602a",
+    "ship-review:result:d2b94b84-ffcd-41a4-b303-bd46792a1407": "1353f092b246570b3c3e35bcb58d9a69ab3a57a53d2307114c7173bad32c3ab4"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -32151,7 +32152,93 @@
           1257
         ]
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:45e514d68bef2602c1f95a6ac2be54374076c3b672a9e4e0ae18b35b998a7b02",
+        "candidateId": "v1.84.0-beta.8-20261105",
+        "base": "e2d2d613a27f9229bb6eb87d4f6e081261efee93",
+        "materialSha": "fc915753646d14903f42e7671499bbd5bdacdab5",
+        "selectionDigest": "43751e5d5c7508c55704285d1dc0a98ea40470dc31fa860569a086b2bc931096",
+        "releaseVersion": "v1.84.0-beta.8",
+        "workflowRunId": 42097755571,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "В пакете на ревью одна задача — #1322. Блокеров уровня High нет, бету можно выпускать. Правка снова делит входы на два набора: один нужен для подготовки бандла, другой определяет публичную идентичность продукта. После #1321 кеш product-build, demo-assets и E2E продолжает учитывать GOLDEN_CAPTURE_INPUTS. При этом `PUBLIC_PRODUCT_INPUTS` побайтно вернулся к составу до #1321, поэтому процессные правки golden runner и selections больше не переводят публичный CI-бейдж в «not tested». Существующий аудированный мост v1.83.1 снова совпадает со своим allowlist. Исторические факты и allowlist не менялись. Настоящее изменение продукта по-прежнему сбрасывает идентичность.",
+          "understanding": "Проблема. В #1321 `GOLDEN_CAPTURE_INPUTS` были добавлены в `buildInputs`. Это правильно для кеша: Rollup встраивает `sourceFingerprint`, а `scripts/source-fingerprint.mjs:72-76,110` хеширует `process-next/catalog/golden-runner.mjs`, `golden-selection.mjs` и `selections.mjs`. Но `PUBLIC_PRODUCT_INPUTS` строился из того же массива. Поэтому три процессных файла попали в идентичность публичного CI. `comparisonIdentity` в `process-next/lib/ci-status.mjs:67-79` требует, чтобы набор изменённых путей между проверенным SHA и equivalentProductSha точно совпадал с allowlist. Новые пути в снимке давали лишние отличия, и бейдж становился «not tested». Кроме того, любая будущая правка golden runner тоже сбрасывала бы бейдж.\n\nЧто стало. В `process-next/lib/catalog.mjs:17-25` прежний корпус вынесен в `buildSourceInputs`, а `buildInputs = [...buildSourceInputs, ...GOLDEN_CAPTURE_INPUTS]`. `PUBLIC_PRODUCT_INPUTS` теперь строится из `buildSourceInputs`. Я сравнил с версией до #1321 (d9cfb190): `PUBLIC_PRODUCT_INPUTS` совпадает с ней дословно. Все потребители `buildInputs` по-прежнему получают capture inputs: шаг product-build, demo-assets (`preparations`), `browserInputs` и `rootInputs` E2E. Поведение #1321 сохранено.\n\nЧто я проследил. Единственный потребитель `PUBLIC_PRODUCT_INPUTS` — `productSnapshot` в ci-status.mjs:20. Он отбирает файлы только через `matchesInputs`, без транзитивного обхода импортов, так что локальные импорты golden runner в публичную идентичность не попадают. Ещё я прочитал тесты `process-next/test/ci-status.test.mjs`.",
+          "analysis": [
+            {
+              "topic": "Разделение корпуса подготовки и публичной идентичности",
+              "assessment": "Решение минимальное и правильное. Кеш подготовки защищает конкретные байты dist, включая встроенный fingerprint, а публичный бейдж описывает поведение продукта. У этих задач разные цели, поэтому раздельные наборы входов оправданы. Восстановленный состав публичных входов дословно равен состоянию до #1321, поэтому аудированный мост v1.83.1 снова сходится без правки allowlist. Компромисс осознанный: публичная идентичность больше не совпадает с байтовой идентичностью dist, ведь встроенный fingerprint зависит от golden runner. Для бейджа это приемлемо: поведение продукта от этих файлов не зависит.",
+              "evidence": "process-next/lib/catalog.mjs:17-25 (head) и та же область в d9cfb190; ci-status.mjs:20, 67-79; scripts/source-fingerprint.mjs:72-76, 107-115."
+            },
+            {
+              "topic": "Регрессия #1321 не возвращается",
+              "assessment": "`buildInputs` по-прежнему передаётся в product-build, demo-assets, browserInputs и rootInputs E2E. Значит, изменение golden runner или selections, как и раньше, сбрасывает кеш подготовки. Адресный тест catalog.test.mjs:229-235 из #1321 проверяет именно это и не изменён.",
+              "evidence": "process-next/lib/catalog.mjs:20, 26 и функция `preparations`; process-next/test/catalog.test.mjs:229-235."
+            },
+            {
+              "topic": "Регрессионные тесты",
+              "assessment": "Тесты проверяют оба сценария из ТЗ. Первый: product identity не меняется, когда правят четыре файла в process-next/catalog, включая все три capture inputs, и сбрасывается при правке src, зависимостей или prebuild. Второй: если на коммите-мосте добавляются golden-runner и selections, аудированная эквивалентность с allowlist из одного пути остаётся «passing». Более поздняя правка вспомогательного скрипта или src по-прежнему не принимается. Эти отрицательные случаи сохранены.",
+              "evidence": "process-next/test/ci-status.test.mjs:40-52, 77-95."
+            },
+            {
+              "topic": "Результаты проверок",
+              "assessment": "Сам я ничего не запускал. По словам автора, ci-status и catalog прошли 21/21. Кроме того, автор в режиме только чтения выполнил `buildCiStatus` на реальном прогоне v1.83.1 и получил «passing» для main 3065d063. Это его утверждения из описания задачи, и по исходникам они правдоподобны.",
+              "evidence": "Тело задачи #1322, раздел «Реализация и проверки»."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Комментарий в `process-next/lib/catalog.mjs:16` («Rollup embeds these capture inputs») теперь стоит над `buildSourceInputs`, хотя capture inputs добавляются строкой ниже, в `buildInputs`. Стоит уточнить текст: `buildSourceInputs` задаёт поведение продукта и служит основой публичной идентичности, а `buildInputs` добавляет процессные capture inputs, которые попадают во встроенный fingerprint только ради кеша. Тогда следующая правка не сольёт наборы обратно. Цена — одна строка комментария."
+          ],
+          "boundaries": "Разобрана только ожидающая задача #1322 (коммит 88360cc3). Задачи из reused заново не ревьюились. Изменения я сопоставил с родительской версией catalog.mjs, версией до #1321 и потребителями в ci-status.mjs и source-fingerprint.mjs. Тесты, сборку и ci-status я не запускал: выводы о прохождении 21/21 и о «passing» на реальном v1.83.1 опираются на отчёт автора в задаче. Состояние реального evidence-файла v1.83.1 и данные GitHub API я не проверял."
+        },
+        "usage": {
+          "input_tokens": 16,
+          "cache_creation_input_tokens": 128736,
+          "cache_read_input_tokens": 744595,
+          "output_tokens": 5284,
+          "output_tokens_details": {
+            "thinking_tokens": 1318
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 128736,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 651,
+              "cache_read_input_tokens": 122215,
+              "cache_creation_input_tokens": 8242,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 8242
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.84.0-beta.8 — принято\n\n## Вывод\n\nВ пакете на ревью одна задача — #1322. Блокеров уровня High нет, бету можно выпускать. Правка снова делит входы на два набора: один нужен для подготовки бандла, другой определяет публичную идентичность продукта. После #1321 кеш product-build, demo-assets и E2E продолжает учитывать GOLDEN_CAPTURE_INPUTS. При этом `PUBLIC_PRODUCT_INPUTS` побайтно вернулся к составу до #1321, поэтому процессные правки golden runner и selections больше не переводят публичный CI-бейдж в «not tested». Существующий аудированный мост v1.83.1 снова совпадает со своим allowlist. Исторические факты и allowlist не менялись. Настоящее изменение продукта по-прежнему сбрасывает идентичность.\n\n## Понимание решения\n\nПроблема. В #1321 `GOLDEN_CAPTURE_INPUTS` были добавлены в `buildInputs`. Это правильно для кеша: Rollup встраивает `sourceFingerprint`, а `scripts/source-fingerprint.mjs:72-76,110` хеширует `process-next/catalog/golden-runner.mjs`, `golden-selection.mjs` и `selections.mjs`. Но `PUBLIC_PRODUCT_INPUTS` строился из того же массива. Поэтому три процессных файла попали в идентичность публичного CI. `comparisonIdentity` в `process-next/lib/ci-status.mjs:67-79` требует, чтобы набор изменённых путей между проверенным SHA и equivalentProductSha точно совпадал с allowlist. Новые пути в снимке давали лишние отличия, и бейдж становился «not tested». Кроме того, любая будущая правка golden runner тоже сбрасывала бы бейдж.\n\nЧто стало. В `process-next/lib/catalog.mjs:17-25` прежний корпус вынесен в `buildSourceInputs`, а `buildInputs = [...buildSourceInputs, ...GOLDEN_CAPTURE_INPUTS]`. `PUBLIC_PRODUCT_INPUTS` теперь строится из `buildSourceInputs`. Я сравнил с версией до #1321 (d9cfb190): `PUBLIC_PRODUCT_INPUTS` совпадает с ней дословно. Все потребители `buildInputs` по-прежнему получают capture inputs: шаг product-build, demo-assets (`preparations`), `browserInputs` и `rootInputs` E2E. Поведение #1321 сохранено.\n\nЧто я проследил. Единственный потребитель `PUBLIC_PRODUCT_INPUTS` — `productSnapshot` в ci-status.mjs:20. Он отбирает файлы только через `matchesInputs`, без транзитивного обхода импортов, так что локальные импорты golden runner в публичную идентичность не попадают. Ещё я прочитал тесты `process-next/test/ci-status.test.mjs`.\n\n## Разбор решения\n\n### Разделение корпуса подготовки и публичной идентичности\n\nРешение минимальное и правильное. Кеш подготовки защищает конкретные байты dist, включая встроенный fingerprint, а публичный бейдж описывает поведение продукта. У этих задач разные цели, поэтому раздельные наборы входов оправданы. Восстановленный состав публичных входов дословно равен состоянию до #1321, поэтому аудированный мост v1.83.1 снова сходится без правки allowlist. Компромисс осознанный: публичная идентичность больше не совпадает с байтовой идентичностью dist, ведь встроенный fingerprint зависит от golden runner. Для бейджа это приемлемо: поведение продукта от этих файлов не зависит.\n\nОснование: process-next/lib/catalog.mjs:17-25 (head) и та же область в d9cfb190; ci-status.mjs:20, 67-79; scripts/source-fingerprint.mjs:72-76, 107-115.\n\n### Регрессия #1321 не возвращается\n\n`buildInputs` по-прежнему передаётся в product-build, demo-assets, browserInputs и rootInputs E2E. Значит, изменение golden runner или selections, как и раньше, сбрасывает кеш подготовки. Адресный тест catalog.test.mjs:229-235 из #1321 проверяет именно это и не изменён.\n\nОснование: process-next/lib/catalog.mjs:20, 26 и функция `preparations`; process-next/test/catalog.test.mjs:229-235.\n\n### Регрессионные тесты\n\nТесты проверяют оба сценария из ТЗ. Первый: product identity не меняется, когда правят четыре файла в process-next/catalog, включая все три capture inputs, и сбрасывается при правке src, зависимостей или prebuild. Второй: если на коммите-мосте добавляются golden-runner и selections, аудированная эквивалентность с allowlist из одного пути остаётся «passing». Более поздняя правка вспомогательного скрипта или src по-прежнему не принимается. Эти отрицательные случаи сохранены.\n\nОснование: process-next/test/ci-status.test.mjs:40-52, 77-95.\n\n### Результаты проверок\n\nСам я ничего не запускал. По словам автора, ci-status и catalog прошли 21/21. Кроме того, автор в режиме только чтения выполнил `buildCiStatus` на реальном прогоне v1.83.1 и получил «passing» для main 3065d063. Это его утверждения из описания задачи, и по исходникам они правдоподобны.\n\nОснование: Тело задачи #1322, раздел «Реализация и проверки».\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Комментарий в `process-next/lib/catalog.mjs:16` («Rollup embeds these capture inputs») теперь стоит над `buildSourceInputs`, хотя capture inputs добавляются строкой ниже, в `buildInputs`. Стоит уточнить текст: `buildSourceInputs` задаёт поведение продукта и служит основой публичной идентичности, а `buildInputs` добавляет процессные capture inputs, которые попадают во встроенный fingerprint только ради кеша. Тогда следующая правка не сольёт наборы обратно. Цена — одна строка комментария.\n\n## Границы анализа\n\nРазобрана только ожидающая задача #1322 (коммит 88360cc3). Задачи из reused заново не ревьюились. Изменения я сопоставил с родительской версией catalog.mjs, версией до #1321 и потребителями в ci-status.mjs и source-fingerprint.mjs. Тесты, сборку и ci-status я не запускал: выводы о прохождении 21/21 и о «passing» на реальном v1.83.1 опираются на отчёт автора в задаче. Состояние реального evidence-файла v1.83.1 и данные GitHub API я не проверял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: e2d2d613a27f9229bb6eb87d4f6e081261efee93 → fc915753646d14903f42e7671499bbd5bdacdab5\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1322.\n\nКоммиты: 88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe.\n\nРанее принятое ревью сохранено для задач: #1157, #1186, #1187, #1189, #1191, #1193, #1194, #1195, #1196, #1198, #1201, #1203, #1206, #1208, #1209, #1212, #1213, #1214, #1218, #1219, #1221, #1223, #1228, #1229, #1231, #1233, #1240, #1243, #1248, #1256, #1262, #1263, #1268, #1270, #1271, #1272, #1275, #1276, #1278, #1279, #1280, #1289, #1297, #1304, #1307, #1308, #1309, #1311, #1312, #1313, #1314, #1316, #1317, #1318, #1321.\n\n</details>\n",
+        "createdAt": "2026-11-05T19:52:24.284Z",
+        "artifactId": 13447804070,
+        "runId": 42097755571,
+        "runAttempt": 1,
+        "completedAt": "2026-11-05T19:52:28Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42097755571"
+      }
     }
   }
 }
