@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4850,
+  "revision": 4851,
   "nextTicket": 245,
   "nextFence": 245,
   "tasks": {
@@ -3641,6 +3641,15 @@
         "entry": 1,
         "detail": "Открытие сохранённого плана в View: failed",
         "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
+      },
+      "s6": {
+        "id": "20261105T142323099-a07624cf",
+        "name": "Тесты для задачи #1314 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T142323099-a07624cf/report.json",
+        "materialSha": "10f2ade6a25b38802234a1355687237e915f4f13",
+        "status": "passed",
+        "finishedAt": "2026-11-05T14:24:03.267Z",
+        "failures": []
       }
     },
     "1316": {
@@ -3986,9 +3995,9 @@
     "fence": 244,
     "materialSha": "10f2ade6a25b38802234a1355687237e915f4f13",
     "expectedBase": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793888530942,
-    "expiresAt": 1793888898911,
+    "expiresAt": 1793892244602,
     "patchId": "4fbe16411194a27a9f2f956e03efa5b17ec3c2ed"
   },
   "events": {
@@ -4034,6 +4043,10 @@
     },
     "finish:990fc15f-39b8-4c78-aeb7-025a3afed120:finish:1:synchronized": {
       "digest": "e4ede244020f03101dc0807ea5bbb00474feb0ce8b6d207f54094bde738b47f5",
+      "issue": 1314
+    },
+    "finish:990fc15f-39b8-4c78-aeb7-025a3afed120:finish:2:s6-complete": {
+      "digest": "d70bee9011ad58e6a97b0eb580aef87813ebe7a02abd1bce7e9538eebbd224b3",
       "issue": 1314
     },
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
