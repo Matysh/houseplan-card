@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4267,
+  "revision": 4268,
   "nextTicket": 228,
   "nextFence": 228,
   "tasks": {
@@ -3395,7 +3395,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793875399751,
       "reviewEntry": 2,
-      "patchId": "001c12d84178fb3166216f2e83b2119c692afe33",
+      "patchId": "0247e76f999a1421a3cb9eb2ce7115c34a0eb2f7",
       "changedFiles": [
         "custom_components/houseplan/graph_node_write.py",
         "custom_components/houseplan/wall_node_merge.py",
@@ -3421,6 +3421,7 @@
         "src/wall-node-merge.ts",
         "src/wall-node-move.ts",
         "src/wall-node-refusal.ts",
+        "test/fixtures/1305-node-merge-dependencies.json",
         "test/fixtures/1305-node-merge.json",
         "test/wall-node-editor.test.mjs",
         "test/wall-node-merge.test.mjs",
@@ -3576,10 +3577,11 @@
     "token": "227:finish:10e5e69e-fa0f-46ff-b1df-386020f9b660:finish:1:admit",
     "fence": 227,
     "materialSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+    "phase": "testing",
     "admittedAt": 1793875403487,
-    "expiresAt": 1793875703487
+    "expiresAt": 1793875709489,
+    "patchId": "0247e76f999a1421a3cb9eb2ce7115c34a0eb2f7"
   },
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3680,6 +3682,10 @@
     },
     "github:42012593698:1:completions:metadata:33c8acd5-48be-4141-903c-3f15bbe89c1b:task-notice:1305::": {
       "digest": "32c9c2996c4f27427148136dee5d5d5d8b0d55c64cec051980f9f35cbf5443ce",
+      "issue": 1305
+    },
+    "finish:10e5e69e-fa0f-46ff-b1df-386020f9b660:finish:2:synchronized": {
+      "digest": "c0d78b0b65c45166c602776169b72fe9a350b0bc240c96c6c194722ce363eb55",
       "issue": 1305
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
