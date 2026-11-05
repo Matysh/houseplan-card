@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4021,
+  "revision": 4022,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -3367,6 +3367,110 @@
         "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
         "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88",
         "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1302,
+        "requestId": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88",
+        "kind": "code",
+        "base": "750d351f902f30474018b646f5e55e2462ba1b88",
+        "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+        "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1302,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1302",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Причина установлена по исходному CI trace: snapshot656549.096 содержит четыре Static host — две под HUI-HORIZONTAL-STACK-CARD и две в fixture DIV. После B auth_ok в656416.126 Houseplan GET продолжались с A IDs73/74,75/76; B выполнил registry IDs1/2. Удаление только дочерних карточек оставляло подключённый Lovelace, который пересоздавал A-пару. Исправление companion6452c23857420b43f14789f226ead3a76527049b отсоединяет корень home-assistant только этой тестовой страницы перед созданием пары. Настоящее A остаётся; B — второй реальный authenticated socket. Reload восстанавливает HA. Добавлены проверки ровно двух host и safe receipt в finally с hold-target, без auth/payload. Ни forced reads, ни fake replies/reset/retry, ни увеличение timeout не применялись. Вся старая цепочка real ACK/readback, A high-water/B low-rev, оба paints/reload сохранена. Адресный полный кейс на публичной beta.6 и HA2026.10.4 PASS:business1/1,setup3/3,skip/unexecuted/retry0, собственный AITT9A контейнер удалён адаптером. После HA прогона менялись лишь отступы и unit assertion safe metadata. Синтаксис двух файлов и4/4fixture unit PASS. Полный содержательный diff companion включён в root docs/testing/issue1302-static-handoff.md для независимого ревью; корневая часть документационная, лишних тестов не требует. Companion branch опубликована, main обновится только после принятого ревью; называть задачу завершённой до этой интеграции нельзя. Исходный FAILED stable сохраняется."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Рекомендую принять. Отказ в CI на шаге `wire.heldReads(2)` объясняется ошибкой тестовой фикстуры, а не дефектом продукта, и исправление устраняет именно эту причину. Lovelace оставался подключён к документу и пересоздавал свою пару карточек на соединении A. Общий модульный store в `src/config-store.ts` отправлял запросы Houseplan через то соединение, чей `hass` вызвал чтение, поэтому B не получал удерживаемых config/layout-запросов. Фикстура теперь отсоединяет корень `home-assistant` только этой тестовой страницы, проверяет, что Static host ровно два, и в `finally` сохраняет диагностику транспорта без auth и payload. Тестовый контракт не ослаблен: нет retry, увеличенного timeout, принудительных reads, фиктивных ответов или reset. Исходный FAIL сохранён отдельно, адресный PASS отмечен отдельно. Блокеров нет. Задачу нельзя считать завершённой, пока companion-ветка не влита в main, и сам автор это так и формулирует.",
+          "understanding": "Проблема. В пятом сценарии static-sync после передачи пары карточек на второе настоящее authenticated WebSocket-соединение B удержание reads, нацеленное на B (`holdReads(undefined, connectionB)`), не получило ни одного запроса. По trace автора, на странице было четыре host: две карточки Lovelace под `HUI-HORIZONTAL-STACK-CARD` и две в DIV фикстуры. Houseplan GET шли с ID соединения A (73/74, 75/76), а B выполнил только registry-запросы 1/2.\n\nДо исправления `ownStaticHosts` удалял только сами карточки. Приложение HA оставалось в документе, и при очередном обновлении hass Lovelace создавал карточки заново на A.\n\nПосле исправления фикстура проверяет, что исходных host ровно два, берёт `hass` из первой карточки, отсоединяет `document.querySelector('home-assistant')` и создаёт собственную пару в `#e2e-static-sync-host-handoff`. В spec после `openPairReady` и после `heldReads(2)` добавлены `toHaveCount(2)`, а тело теста обёрнуто в try/finally с `attachReceipt(..., 'handoff-finally.json')`. В `receipt()` добавлен `readHoldTarget` с номером соединения и типами запросов, без payload.\n\nКорневой коммит содержит только документацию: записи в CHANGELOG (en/ru) и `docs/testing/issue1302-static-handoff.md` с diff companion-коммита без пробельных изменений.\n\nЧто я разобрал по исходникам. `src/config-store.ts` (fetchFresh/getConfig): кэш, `subscribedConnection` и `inflight` у карточек общие на модуль. Соединение для чтения и подписки берётся из `hass`, переданного конкретному вызову, так что механизм «A-карточки перехватывают store» правдоподобен. Также я проверил, что в обычной работе HA у страницы один объект `Connection`, поэтому одновременное существование двух соединений возникает только в фикстуре.",
+          "analysis": [
+            {
+              "topic": "Причина: фикстура или продукт",
+              "assessment": "Вывод автора согласуется с кодом. Store один на модуль. `fetchFresh` вызывает `hass.callWS` того `hass`, через который пришёл вызов, а затем переключает `subscribedConnection` на `hass.connection`. Если на странице есть подключённые карточки и с hass A, и с hass B, то кто первым вызовет чтение, тот и определит соединение, и reads уйдут через A. Это совпадает с ID 73–76 на A в trace. В реальном HA все карточки страницы получают один и тот же объект Connection, который переподключается внутри себя, поэтому две живые authority на одной странице — артефакт фикстуры, а не пользовательский сценарий. Исправлять продукт по этому отказу не нужно.",
+              "evidence": "src/config-store.ts:76-177 (fetchFresh: `hass.callWS`, `subscribedConnection !== connection`), 180-199 (общие `inflight`/`cache`); docs/testing/issue1302-static-handoff.md:8-19 (четыре host, ID запросов A/B)."
+            },
+            {
+              "topic": "Механизм изоляции через отсоединение корня home-assistant",
+              "assessment": "Подход точнее прежнего. Когда отсоединён корень приложения, Lovelace может обновлять своих потомков, но они остаются вне документа. Lit-хосты не получают `connectedCallback`, поэтому не обращаются в store. Важная оговорка: соединение A при этом должно оставаться живым, иначе сценарий с high-water на A потерял бы смысл. Это подтверждают уже существующие проверки: `ownStaticHosts` возвращает `connectionUnchanged: true`, а после handoff ожидается событие с `connection === connectionA && rev === highWater`. Если бы HA закрывал соединение при отсоединении корня, сценарий упал бы. Работоспособность самого HA восстанавливается reload'ом в `assertReloadOracle`. Сохранить стоит явную проверку `if (!app) throw` вместо молчаливого пропуска: она не даст фикстуре тихо деградировать при изменении DOM HA.",
+              "evidence": "Diff companion в docs/testing/issue1302-static-handoff.md:79-97 (`all.length !== 2`, `app.remove()`, комментарий #1302 с причиной), 107-118 (`connectionUnchanged`, `heldReads(2)`, событие на connectionA)."
+            },
+            {
+              "topic": "Сохранность контракта сценария",
+              "assessment": "Требования приёмки 2 и 3 соблюдены. Второе настоящее authenticated-соединение, удержание реальных ответов, high-water на A, low-revision на B, оба Static paints и reload oracle не тронуты. Новые `toHaveCount(2)` только ужесточают сценарий: повторное появление лишних host теперь будет поймано в месте возникновения, а не превратится в 20 секунд ожидания нуля. Timeout, retry и fake replies не менялись.",
+              "evidence": "Hunks spec в docs/testing/issue1302-static-handoff.md:99-131."
+            },
+            {
+              "topic": "Диагностика при отказе (приёмка 1)",
+              "assessment": "Receipt в `finally` теперь сохраняется и при падении, а в нём есть `readHoldTarget` (connection/types), `heldReads`/`heldEvents` (только connection/type), connections/commands/results/events. Payload и auth не попадают. Unit-тест проверяет форму `readHoldTarget` и отсутствие маркера `private-fixture` в сериализованном receipt. Для будущего повторения отказа этого достаточно, чтобы различить «reads шли на другом соединении» и «reads не было вовсе».",
+              "evidence": "docs/testing/issue1302-static-handoff.md:55-77 (static-sync.test.mjs, `receipt()`)."
+            },
+            {
+              "topic": "Документация и разделение результатов",
+              "assessment": "Документ честно разделяет исходный полный FAILED, который остаётся, и адресный PASS, который не выдаётся за новый stable-аудит. В нём указаны шаги, выполненные после HA-прогона (отступы и unit assertion). Записи CHANGELOG прямо говорят, что runtime продукта не менялся, и оформлены так же, как соседние записи #1300/#1301.",
+              "evidence": "docs/testing/issue1302-static-handoff.md:33-48; docs/CHANGELOG.md:5, docs/CHANGELOG.ru.md:11."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "`await attachReceipt(...)` в `finally` выполняется и тогда, когда тест уже упал. Если само прикрепление бросит исключение (маловероятно, но, например, при сбое сериализации), Playwright покажет эту ошибку вместо исходного отказа сценария. Дешёвая страховка — обернуть вызов в `.catch(() => {})` или собственный try. Вред небольшой, поэтому это необязательно.",
+            "При успешном прогоне receipt прикрепляется дважды: штатный `attachReceipt` и `handoff-finally.json`. Если именованное штатное вложение никто не потребляет, его можно оставить только в `finally`. Если потребитель есть, текущий дубль безвреден."
+          ],
+          "boundaries": "Companion-репозитория `houseplan-e2e` в pinned-материале нет, поэтому исполняемое изменение (6452c238…) я оценивал только по diff, приведённому в `docs/testing/issue1302-static-handoff.md`, где пробельные изменения опущены. Полный текст `tests/lib/static-sync.mjs` и spec, включая `attachReceipt`, `statics`, `ownedStatics` и `handoffStaticConnection`, я не читал. Продуктовый механизм общего store разобран по `src/config-store.ts`. Trace CI и сырые результаты (`output/issue-1302/ha/...`) я не открывал. Результаты из контекста автора (адресный PASS на beta.6 ZIP a358da2e… и HA 2026.10.4, business 1/1, setup 3/3, retry 0; `node --check` и 4/4 unit) учтены как его сообщение, а не как доказательство, которое я проверил сам. Сборку и тесты, по правилам S7, я не запускал. Задача остаётся незавершённой, пока companion-ветка не влита в main.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 20,
+          "cache_creation_input_tokens": 30175,
+          "cache_read_input_tokens": 144220,
+          "output_tokens": 7868,
+          "output_tokens_details": {
+            "thinking_tokens": 2927
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 30175,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 793,
+              "cache_read_input_tokens": 21273,
+              "cache_creation_input_tokens": 13106,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 13106
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРекомендую принять. Отказ в CI на шаге `wire.heldReads(2)` объясняется ошибкой тестовой фикстуры, а не дефектом продукта, и исправление устраняет именно эту причину. Lovelace оставался подключён к документу и пересоздавал свою пару карточек на соединении A. Общий модульный store в `src/config-store.ts` отправлял запросы Houseplan через то соединение, чей `hass` вызвал чтение, поэтому B не получал удерживаемых config/layout-запросов. Фикстура теперь отсоединяет корень `home-assistant` только этой тестовой страницы, проверяет, что Static host ровно два, и в `finally` сохраняет диагностику транспорта без auth и payload. Тестовый контракт не ослаблен: нет retry, увеличенного timeout, принудительных reads, фиктивных ответов или reset. Исходный FAIL сохранён отдельно, адресный PASS отмечен отдельно. Блокеров нет. Задачу нельзя считать завершённой, пока companion-ветка не влита в main, и сам автор это так и формулирует.\n\n## Понимание решения\n\nПроблема. В пятом сценарии static-sync после передачи пары карточек на второе настоящее authenticated WebSocket-соединение B удержание reads, нацеленное на B (`holdReads(undefined, connectionB)`), не получило ни одного запроса. По trace автора, на странице было четыре host: две карточки Lovelace под `HUI-HORIZONTAL-STACK-CARD` и две в DIV фикстуры. Houseplan GET шли с ID соединения A (73/74, 75/76), а B выполнил только registry-запросы 1/2.\n\nДо исправления `ownStaticHosts` удалял только сами карточки. Приложение HA оставалось в документе, и при очередном обновлении hass Lovelace создавал карточки заново на A.\n\nПосле исправления фикстура проверяет, что исходных host ровно два, берёт `hass` из первой карточки, отсоединяет `document.querySelector('home-assistant')` и создаёт собственную пару в `#e2e-static-sync-host-handoff`. В spec после `openPairReady` и после `heldReads(2)` добавлены `toHaveCount(2)`, а тело теста обёрнуто в try/finally с `attachReceipt(..., 'handoff-finally.json')`. В `receipt()` добавлен `readHoldTarget` с номером соединения и типами запросов, без payload.\n\nКорневой коммит содержит только документацию: записи в CHANGELOG (en/ru) и `docs/testing/issue1302-static-handoff.md` с diff companion-коммита без пробельных изменений.\n\nЧто я разобрал по исходникам. `src/config-store.ts` (fetchFresh/getConfig): кэш, `subscribedConnection` и `inflight` у карточек общие на модуль. Соединение для чтения и подписки берётся из `hass`, переданного конкретному вызову, так что механизм «A-карточки перехватывают store» правдоподобен. Также я проверил, что в обычной работе HA у страницы один объект `Connection`, поэтому одновременное существование двух соединений возникает только в фикстуре.\n\n## Разбор решения\n\n### Причина: фикстура или продукт\n\nВывод автора согласуется с кодом. Store один на модуль. `fetchFresh` вызывает `hass.callWS` того `hass`, через который пришёл вызов, а затем переключает `subscribedConnection` на `hass.connection`. Если на странице есть подключённые карточки и с hass A, и с hass B, то кто первым вызовет чтение, тот и определит соединение, и reads уйдут через A. Это совпадает с ID 73–76 на A в trace. В реальном HA все карточки страницы получают один и тот же объект Connection, который переподключается внутри себя, поэтому две живые authority на одной странице — артефакт фикстуры, а не пользовательский сценарий. Исправлять продукт по этому отказу не нужно.\n\nОснование: src/config-store.ts:76-177 (fetchFresh: `hass.callWS`, `subscribedConnection !== connection`), 180-199 (общие `inflight`/`cache`); docs/testing/issue1302-static-handoff.md:8-19 (четыре host, ID запросов A/B).\n\n### Механизм изоляции через отсоединение корня home-assistant\n\nПодход точнее прежнего. Когда отсоединён корень приложения, Lovelace может обновлять своих потомков, но они остаются вне документа. Lit-хосты не получают `connectedCallback`, поэтому не обращаются в store. Важная оговорка: соединение A при этом должно оставаться живым, иначе сценарий с high-water на A потерял бы смысл. Это подтверждают уже существующие проверки: `ownStaticHosts` возвращает `connectionUnchanged: true`, а после handoff ожидается событие с `connection === connectionA && rev === highWater`. Если бы HA закрывал соединение при отсоединении корня, сценарий упал бы. Работоспособность самого HA восстанавливается reload'ом в `assertReloadOracle`. Сохранить стоит явную проверку `if (!app) throw` вместо молчаливого пропуска: она не даст фикстуре тихо деградировать при изменении DOM HA.\n\nОснование: Diff companion в docs/testing/issue1302-static-handoff.md:79-97 (`all.length !== 2`, `app.remove()`, комментарий #1302 с причиной), 107-118 (`connectionUnchanged`, `heldReads(2)`, событие на connectionA).\n\n### Сохранность контракта сценария\n\nТребования приёмки 2 и 3 соблюдены. Второе настоящее authenticated-соединение, удержание реальных ответов, high-water на A, low-revision на B, оба Static paints и reload oracle не тронуты. Новые `toHaveCount(2)` только ужесточают сценарий: повторное появление лишних host теперь будет поймано в месте возникновения, а не превратится в 20 секунд ожидания нуля. Timeout, retry и fake replies не менялись.\n\nОснование: Hunks spec в docs/testing/issue1302-static-handoff.md:99-131.\n\n### Диагностика при отказе (приёмка 1)\n\nReceipt в `finally` теперь сохраняется и при падении, а в нём есть `readHoldTarget` (connection/types), `heldReads`/`heldEvents` (только connection/type), connections/commands/results/events. Payload и auth не попадают. Unit-тест проверяет форму `readHoldTarget` и отсутствие маркера `private-fixture` в сериализованном receipt. Для будущего повторения отказа этого достаточно, чтобы различить «reads шли на другом соединении» и «reads не было вовсе».\n\nОснование: docs/testing/issue1302-static-handoff.md:55-77 (static-sync.test.mjs, `receipt()`).\n\n### Документация и разделение результатов\n\nДокумент честно разделяет исходный полный FAILED, который остаётся, и адресный PASS, который не выдаётся за новый stable-аудит. В нём указаны шаги, выполненные после HA-прогона (отступы и unit assertion). Записи CHANGELOG прямо говорят, что runtime продукта не менялся, и оформлены так же, как соседние записи #1300/#1301.\n\nОснование: docs/testing/issue1302-static-handoff.md:33-48; docs/CHANGELOG.md:5, docs/CHANGELOG.ru.md:11.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- `await attachReceipt(...)` в `finally` выполняется и тогда, когда тест уже упал. Если само прикрепление бросит исключение (маловероятно, но, например, при сбое сериализации), Playwright покажет эту ошибку вместо исходного отказа сценария. Дешёвая страховка — обернуть вызов в `.catch(() => {})` или собственный try. Вред небольшой, поэтому это необязательно.\n- При успешном прогоне receipt прикрепляется дважды: штатный `attachReceipt` и `handoff-finally.json`. Если именованное штатное вложение никто не потребляет, его можно оставить только в `finally`. Если потребитель есть, текущий дубль безвреден.\n\n## Границы анализа\n\nCompanion-репозитория `houseplan-e2e` в pinned-материале нет, поэтому исполняемое изменение (6452c238…) я оценивал только по diff, приведённому в `docs/testing/issue1302-static-handoff.md`, где пробельные изменения опущены. Полный текст `tests/lib/static-sync.mjs` и spec, включая `attachReceipt`, `statics`, `ownedStatics` и `handoffStaticConnection`, я не читал. Продуктовый механизм общего store разобран по `src/config-store.ts`. Trace CI и сырые результаты (`output/issue-1302/ha/...`) я не открывал. Результаты из контекста автора (адресный PASS на beta.6 ZIP a358da2e… и HA 2026.10.4, business 1/1, setup 3/3, retry 0; `node --check` и 4/4 unit) учтены как его сообщение, а не как доказательство, которое я проверил сам. Сборку и тесты, по правилам S7, я не запускал. Задача остаётся незавершённой, пока companion-ветка не влита в main.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 750d351f902f30474018b646f5e55e2462ba1b88 → 34631cb69c7b61327155c33d261811c0a9b66a9c\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1302, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина установлена по исходному CI trace: snapshot656549.096 содержит четыре Static host — две под HUI-HORIZONTAL-STACK-CARD и две в fixture DIV. После B auth_ok в656416.126 Houseplan GET продолжались с A IDs73/74,75/76; B выполнил registry IDs1/2. Удаление только дочерних карточек оставляло подключённый Lovelace, который пересоздавал A-пару. Исправление companion6452c23857420b43f14789f226ead3a76527049b отсоединяет корень home-assistant только этой тестовой страницы перед созданием пары. Настоящее A остаётся; B — второй реальный authenticated socket. Reload восстанавливает HA. Добавлены проверки ровно двух host и safe receipt в finally с hold-target, без auth/payload. Ни forced reads, ни fake replies/reset/retry, ни увеличение timeout не применялись. Вся старая цепочка real ACK/readback, A high-water/B low-rev, оба paints/reload сохранена. Адресный полный кейс на публичной beta.6 и HA2026.10.4 PASS:business1/1,setup3/3,skip/unexecuted/retry0, собственный AITT9A контейнер удалён адаптером. После HA прогона менялись лишь отступы и unit assertion safe metadata. Синтаксис двух файлов и4/4fixture unit PASS. Полный содержательный diff companion включён в root docs/testing/issue1302-static-handoff.md для независимого ревью; корневая часть документационная, лишних тестов не требует. Companion branch опубликована, main обновится только после принятого ревью; называть задачу завершённой до этой интеграции нельзя. Исходный FAILED stable сохраняется.\n```\n\n</details>\n",
+        "createdAt": "2026-11-05T06:14:17.686Z",
+        "artifactId": 13392648320,
+        "runId": 41978827131,
+        "runAttempt": 1,
+        "completedAt": "2026-11-05T06:14:23Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41978827131",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88"
       }
     }
   },
@@ -3494,9 +3598,9 @@
     "fence": 218,
     "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
     "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793859083045,
-    "expiresAt": 1793862766215,
+    "expiresAt": 1793862905560,
     "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60",
     "reviewRequest": "review:1302:1:c316430f0e06193d36979b1ffd174fdf3ddeba60:750d351f902f30474018b646f5e55e2462ba1b88"
   },
@@ -3539,6 +3643,10 @@
     },
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6:finish:6:review-presentation": {
       "digest": "beee3e33fc3622f33d97f75079a2fd302136e1f3bd75f7fe49f67548b0663d79",
+      "issue": 1302
+    },
+    "finish:13f68ee6-36ff-438f-8192-617e1208d5c6:finish:6:review-complete": {
+      "digest": "6deaad66766c43e97266f94f96e051c0ca56c43608f557b9f5c973c152161952",
       "issue": 1302
     },
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6": {
