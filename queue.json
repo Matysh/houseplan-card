@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3479,
+  "revision": 3480,
   "nextTicket": 204,
   "nextFence": 202,
   "tasks": {
@@ -3138,7 +3138,7 @@
       "ownerDecision": null,
       "ticket": 201,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793843924295,
       "reviewEntry": 2,
       "patchId": "f14918010fb6d54d9d05c12e0553c540bc8d020b",
@@ -3159,6 +3159,15 @@
         "entry": 1,
         "detail": "Браузер: plan snap overlay: failed",
         "eventId": "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return:return:1294"
+      },
+      "s6": {
+        "id": "20261105T020411817-bdd2e9f2",
+        "name": "Тесты для задачи #1294 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261105T020411817-bdd2e9f2/report.json",
+        "materialSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
+        "status": "passed",
+        "finishedAt": "2026-11-05T02:04:47.288Z",
+        "failures": []
       }
     }
   },
@@ -3275,9 +3284,9 @@
     "fence": 201,
     "materialSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
     "expectedBase": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793844108718,
-    "expiresAt": 1793844547483,
+    "expiresAt": 1793847888481,
     "patchId": "f14918010fb6d54d9d05c12e0553c540bc8d020b"
   },
   "events": {
@@ -3563,6 +3572,34 @@
         "layer": "product",
         "materialSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
         "phase": "sync"
+      }
+    },
+    "finish:88a1a41a-a918-4bc9-ae1b-4aa41691569f:finish:5:s6-complete": {
+      "digest": "37e7274f67c5565895f7b3c4efc9b0f77aaefd1d294f9f3f2857108ec3aaf9fb",
+      "issue": 1294,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1294,
+        "at": 1793844288481,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T020411817-bdd2e9f2",
+          "name": "Тесты для задачи #1294 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261105T020411817-bdd2e9f2/report.json",
+          "materialSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
+          "status": "passed",
+          "finishedAt": "2026-11-05T02:04:47.288Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Реализация меняет только три smoke, один адресный Node-тест и технические RU/EN changelog. Runtime/PNG не меняются. Snap использует буквальные `['l','176','144']` для hover и `['l','186','144']` для отдельного tap, общий incident node трёх рёбер и независимые lattice-проекции; полные половины/props сохранены, добавлены отрицательные проверки неправильного стыка и отсутствующей половины.\n\nChain теперь рисуется настоящими mouse clicks с переводом точных lattice-индексов через SVG CTM; толщина вводится через UI. До Finish действительно сохранены три отдельные записи и активная сессия, после Finish — один отрезок. Угол остаётся из двух записей, продолжение не меняет чужой угол, ID выбирается по прежнему canonical order. Это восстанавливает смысл исходной проверки, который normalizing fixture writer уже не мог моделировать. Рабочая линия вынесена из room-settings pill, поле толщины завершается Tab перед жестом.\n\nWeather фиксирует Date через Playwright setFixedTime (таймеры/rAF реальны), forecast anchored на московском текущем дне. Новый Node-контроль проверяет обе стороны московской полуночи, контраст с UTC, сортировку и отбрасывание прошлого/дублей. Альтернатива — генерировать прогноз по текущей HA-дате — сложнее и оставляет зависимость от времени запуска.\n\nПредварительный native chain smoke прошёл; формальный общий S6 будет выполнен командой finish в общей очереди. Для проверки тестовых изменений используется продуктовая адресная выборка с тремя browser smoke: infrastructure profile по действующей реализации не допускает browser checks. Дополнительный полный набор, golden и HA здесь не нужны.\n\nПервый формальный S6 завершён полностью: 8/9 шагов успешны, упал только второй snap-case. Исправлен авторский oracle, который ошибочно требовал узел 176 и для отдельного tap на 186; обе буквальные цели теперь различены без чтения фактической координаты как ожидания. Применимые успехи повторно использует finish. Материал исправления: c79e51d42. Новая передача не меняет runtime.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
