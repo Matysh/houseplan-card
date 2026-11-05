@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3461,
+  "revision": 3462,
   "nextTicket": 201,
   "nextFence": 200,
   "tasks": {
@@ -3288,6 +3288,10 @@
       "digest": "96105366116fd45e4342bdb59cc8cbbd717f356ef328b1d1433aa6e61a088583",
       "issue": 1258
     },
+    "github:41951947896:1:completions:message:3ee994b56796d90ec64d0c0eba842aeeaa9f0e5ba0fa75fcb02f7b585be75c56": {
+      "digest": "5d952c440421135b37fde88e04bcb1a50b11076553845985dcac30e340027d58",
+      "issue": 1294
+    },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
       "issue": 1258,
@@ -3348,7 +3352,8 @@
           "entry": 1,
           "detail": "Поведение изменённой области: failed; Backend изменённой области: failed",
           "eventId": "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return:return:1258"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:1:admit": {
