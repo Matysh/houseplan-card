@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3811,
+  "revision": 3812,
   "nextTicket": 214,
   "nextFence": 214,
   "tasks": {
@@ -3132,7 +3132,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1295-exclusive-perf",
-      "materialSha": "deceeaa0cfbbec8eb8cbbf4191005bb6c8c599d6",
+      "materialSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 213,
@@ -3150,13 +3150,14 @@
         "requestId": "review:1295:2:551f82e320b19acf7626d9feca138b8f8ed42a9b:fb04ca0fb54e1671bf5384ca404da67bccde0970",
         "transitionConfirmed": true
       },
-      "patchId": "551f82e320b19acf7626d9feca138b8f8ed42a9b",
+      "patchId": "30d4527b958c62633b23c561c560606dc356e949",
       "changedFiles": [
         ".github/workflows/process-next-fallback.yml",
         "demo/benchmark_selective_invalidation.mjs",
         "demo/helpers/README-node-performance.md",
         "demo/helpers/node-performance-report.mjs",
         "demo/smoke_selective_invalidation_history0.mjs",
+        "demo/smoke_selective_invalidation_history320.mjs",
         "demo/smoke_selective_invalidation_inactive.mjs",
         "demo/smoke_selective_invalidation_visible.mjs",
         "demo/smoke_wall_node_connected.mjs",
@@ -3364,11 +3365,12 @@
     "worker": "finish",
     "token": "213:finish:f3b0df80-8fcc-438d-99b6-431b9b656ae1:finish:1:admit",
     "fence": 213,
-    "materialSha": "deceeaa0cfbbec8eb8cbbf4191005bb6c8c599d6",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
+    "expectedBase": "0e2f92ff0387f747c65922d1184b780160e9cd1d",
+    "phase": "testing",
     "admittedAt": 1793848186293,
-    "expiresAt": 1793848486293
+    "expiresAt": 1793848495374,
+    "patchId": "30d4527b958c62633b23c561c560606dc356e949"
   },
   "events": {
     "github:41958169611:1:completions:message:ed28e223d2325cdaf25e6cc173b6300b36801cfc074d889c8f94918f6d486bea": {
@@ -3449,6 +3451,10 @@
     },
     "github:41959503186:1:completions:metadata:1cc75cc7-b759-47bc-a23e-2e9d0470ba1d:task-notice:1295::": {
       "digest": "13c44f8cd2f6e87031df714b3c7f2be71d864c8c3ff45f94015a1788b662c8a5",
+      "issue": 1295
+    },
+    "finish:f3b0df80-8fcc-438d-99b6-431b9b656ae1:finish:2:synchronized": {
+      "digest": "08d524f266eb4ceb6f01959958db3563b028000ef30a998ab0972d1d7680bc72",
       "issue": 1295
     },
     "finish:0f3f4b23-226f-4b40-8191-712b215ff58d": {
