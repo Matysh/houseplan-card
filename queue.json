@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3458,
-  "nextTicket": 200,
+  "revision": 3459,
+  "nextTicket": 201,
   "nextFence": 200,
   "tasks": {
     "1126": {
@@ -1992,14 +1992,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1258-safe-deletion",
-      "materialSha": "0496f718a735e5d5b00e6925ec0e8971240d2d48",
+      "materialSha": "9254b3e4d0583a27f2288efa5f02d9a4f5ed0a35",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 198,
-      "queued": false,
+      "ticket": 200,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793843719347,
-      "reviewEntry": 1,
+      "readyAt": 1793843808020,
+      "reviewEntry": 2,
       "patchId": "aee8c5267be6349e1ebc4814ea09562dee5cd64c",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
@@ -2013,7 +2013,6 @@
         "tests_backend/test_ha_wall_removal_limits.py",
         "tests_backend/test_junction_limits.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -3241,7 +3240,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1258
+  ],
   "active": {
     "issue": 1294,
     "worker": "finish",
@@ -3354,6 +3355,19 @@
         "layer": "product",
         "materialSha": "740492b5e5965b9577829add0570bebdffb14afd",
         "phase": "sync"
+      }
+    },
+    "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75": {
+      "digest": "f081ad1bcc52f0abb5b7c45c370043a27718ab8a410c82d021c4d720bfbc4f8d",
+      "issue": 1258,
+      "message": {
+        "kind": "queued",
+        "issue": 1258,
+        "at": 1793843808020,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9254b3e4d0583a27f2288efa5f02d9a4f5ed0a35"
       }
     }
   },
