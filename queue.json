@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4007,
-  "nextTicket": 218,
+  "revision": 4008,
+  "nextTicket": 219,
   "nextFence": 218,
   "tasks": {
     "1126": {
@@ -3339,6 +3339,20 @@
       "devBuild": {
         "status": "pending"
       }
+    },
+    "1302": {
+      "issue": 1302,
+      "track": "show",
+      "layer": "docs",
+      "branch": "codex/1302-static-handoff-evidence",
+      "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 218,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793859079710,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3443,9 +3457,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1302
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:13f68ee6-36ff-438f-8192-617e1208d5c6": {
+      "digest": "e40485629dbf322f3aca6c959ac1a3faa1ae427f2ca046f22ac4e1a8774132d8",
+      "issue": 1302,
+      "message": {
+        "kind": "queued",
+        "issue": 1302,
+        "at": 1793859079710,
+        "entry": 1,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "a137f4e50531cf5caa432a52f14a4d154aace5e3",
     "status": "delivered",
