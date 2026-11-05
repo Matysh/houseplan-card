@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3464,
+  "revision": 3465,
   "nextTicket": 201,
   "nextFence": 200,
   "tasks": {
@@ -3135,7 +3135,18 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "test/summary-weather.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793843873012,
+        "entry": 1,
+        "detail": "Браузер: plan snap overlay: failed",
+        "eventId": "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return:return:1294"
+      }
     }
   },
   "ownerDecisions": {},
@@ -3243,18 +3254,7 @@
   "waiting": [
     1258
   ],
-  "active": {
-    "issue": 1294,
-    "worker": "finish",
-    "token": "199:finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:1:admit",
-    "fence": 199,
-    "materialSha": "740492b5e5965b9577829add0570bebdffb14afd",
-    "expectedBase": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-    "phase": "testing",
-    "admittedAt": 1793843791234,
-    "expiresAt": 1793844149072,
-    "patchId": "8deb514d5127b5ab17620af56b649347e9d65705"
-  },
+  "active": null,
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
       "digest": "a3267a6cd7428e3ded61f5b48cd08a5bc3d20e9f699cb2281750a4f1f9f89f6b",
@@ -3298,6 +3298,10 @@
     },
     "github:41951947896:1:completions:message:4b334b274a4883ed81bad1bd7e808d0f30c312d687b65ba5721e71bdf205dd7c": {
       "digest": "7b02b7efa5994c5c3dff3bde11dff8b10a5d4fde7ad3c02919c039f73e7f4b8c",
+      "issue": 1294
+    },
+    "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return": {
+      "digest": "18299fb6fe993b7d1ff35d987103bcf57276598e03b6ae6083d96a7904ce96b6",
       "issue": 1294
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
@@ -3391,6 +3395,26 @@
         "layer": "product",
         "materialSha": "9254b3e4d0583a27f2288efa5f02d9a4f5ed0a35",
         "delivered": true
+      }
+    },
+    "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return:return:1294": {
+      "digest": "18299fb6fe993b7d1ff35d987103bcf57276598e03b6ae6083d96a7904ce96b6",
+      "issue": 1294,
+      "message": {
+        "kind": "return",
+        "issue": 1294,
+        "at": 1793843873012,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793843873012,
+          "entry": 1,
+          "detail": "Браузер: plan snap overlay: failed",
+          "eventId": "finish:516cdf37-8596-4689-99c3-ec9905713e3a:finish:3:return:return:1294"
+        }
       }
     }
   },
