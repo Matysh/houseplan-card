@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+## v1.84.0-beta.8 — 2026-11-05
 - Node hit radius borrows the already measured scale without a second viewport read; history and retained-paint test ports include the visible marker parameters. [#1324](https://github.com/Matysh/houseplan-card/issues/1324)
 
 - Public CI retains tested-product identity across golden/process changes while bundle preparation still includes every capture input. [#1322](https://github.com/Matysh/houseplan-card/issues/1322)

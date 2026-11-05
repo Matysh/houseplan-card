@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1324,
+  "baseStable": "v1.83.0",
+  "category": "line-fix",
+  "rationale": "Removes a duplicate viewport scale read introduced by the beta-only #1259 hit radius adapter and updates minimal test ports; mouse radius, geometry, history and writer authority remain unchanged.",
+  "summary": {
+    "ru": "Радиус захвата узла использует уже измеренный масштаб.",
+    "en": "Node hit radius reuses the already measured viewport scale."
+  }
+}
