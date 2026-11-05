@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+## v1.84.0-beta.7 — 2026-11-05
 - Native input timestamp calibration takes one complete fixed series of 128 probes instead of 32, preserving the 1 ms uncertainty limit, timing budgets and unavailable failures. [#1318](https://github.com/Matysh/houseplan-card/issues/1318)
 - Build/demo cache includes canonical golden capture inputs and local imports embedded in the bundle fingerprint, preventing stale preparation reuse after capture changes. [#1321](https://github.com/Matysh/houseplan-card/issues/1321)
 - Accept four additional owner-reviewed opening-floor frames, preserving every other PNG and tolerance. [#1314](https://github.com/Matysh/houseplan-card/issues/1314)
