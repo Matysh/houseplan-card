@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3451,
+  "revision": 3452,
   "nextTicket": 200,
   "nextFence": 199,
   "tasks": {
@@ -1999,7 +1999,20 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793843719347,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "aee8c5267be6349e1ebc4814ea09562dee5cd64c",
+      "changedFiles": [
+        "custom_components/houseplan/junction_limits.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/WALL-THICKNESS.md",
+        "docs/release-ledger/v1.83.0/1258.json",
+        "src/houseplan-editor-runtime.ts",
+        "src/junction-limits.ts",
+        "test/wall-removal-limits.test.mjs",
+        "tests_backend/test_ha_wall_removal_limits.py",
+        "tests_backend/test_junction_limits.py"
+      ]
     },
     "1261": {
       "issue": 1261,
@@ -3217,12 +3230,17 @@
     "token": "198:finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:1:admit",
     "fence": 198,
     "materialSha": "0496f718a735e5d5b00e6925ec0e8971240d2d48",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0bba0ce459b95291ffbe590b9827cc412fa85819",
+    "phase": "testing",
     "admittedAt": 1793843722872,
-    "expiresAt": 1793844022872
+    "expiresAt": 1793844028343,
+    "patchId": "aee8c5267be6349e1ebc4814ea09562dee5cd64c"
   },
   "events": {
+    "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
+      "digest": "a3267a6cd7428e3ded61f5b48cd08a5bc3d20e9f699cb2281750a4f1f9f89f6b",
+      "issue": 1258
+    },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
       "issue": 1258,
