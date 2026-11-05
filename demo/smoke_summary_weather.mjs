@@ -3,6 +3,8 @@ import { launch, check, finish } from './serve.mjs';
 import { mkdirSync } from 'node:fs';
 import { mdiWeatherCloudy, mdiWeatherPartlyCloudy, mdiWeatherRainy } from '@mdi/js';
 const { page, browser } = await launch({ width: 1280, height: 720 });
+// Date is fixed; timers/rAF remain real. Moscow is already on November 5.
+await page.clock.setFixedTime(new Date('2026-11-04T21:30:00Z'));
 mkdirSync('output/issue1174', { recursive: true });
 try {
   await page.waitForFunction(() => !!window.__card?._serverCfg && !!window.__card?.shadowRoot?.querySelector('.summary-control'));
@@ -55,7 +57,7 @@ try {
   }));
   await page.evaluate(async () => {
     const f = window.__weather1174;
-    const day = n => { const date = new Date(); date.setUTCHours(12, 0, 0, 0); date.setUTCDate(date.getUTCDate() + n); return date.toISOString(); };
+    const day = n => { const date = new Date('2026-11-05T12:00:00Z'); date.setUTCDate(date.getUTCDate() + n); return date.toISOString(); };
     f.subscriptions[0].callback({ type: 'daily', forecast: [
       { datetime: day(0), temperature: 10, templow: 4, condition: 'partlycloudy' },
       { datetime: day(1), temperature: 7, templow: 3, condition: 'rainy' },
@@ -77,7 +79,7 @@ try {
     ] }); await f.settle();
     const restored = hidden && f.subscriptions.length === before + 1 && f.widget().textContent.includes('+10°');
     // Restore the full three-day fixture for visual evidence.
-    const now = new Date(); now.setUTCHours(12, 0, 0, 0);
+    const now = new Date('2026-11-05T12:00:00Z');
     next.callback({ type: 'daily', forecast: [10, 7, 9].map((temperature, i) => {
       const date = new Date(now); date.setUTCDate(date.getUTCDate() + i);
       return { datetime: date.toISOString(), temperature, templow: [4, 3, 5][i], condition: ['partlycloudy', 'rainy', 'cloudy'][i] };

@@ -79,3 +79,18 @@ test('unsupported and unavailable sources never subscribe; rejection preserves c
   consumer.update({ ...hass, states: { 'weather.home': { attributes: { supported_features: 2 } } } }, 'weather.home', true);
   assert.equal(count, 1); consumer.stop();
 });
+
+test('#1294 forecast changes day at HA midnight, independently of the UTC date', () => {
+  const forecast = [
+    { datetime: '2026-11-06T12:00:00Z', temperature: 9 },
+    { datetime: '2026-11-03T12:00:00Z', temperature: -99 },
+    { datetime: '2026-11-05T12:00:00Z', temperature: 7 },
+    { datetime: '2026-11-05T13:00:00Z', temperature: 99 },
+    { datetime: '2026-11-04T12:00:00Z', temperature: 10 },
+    { datetime: '2026-11-07T12:00:00Z', temperature: 12 },
+  ];
+  const before = new Date('2026-11-04T20:59:59Z'), after = new Date('2026-11-04T21:00:01Z');
+  assert.deepEqual(weatherDays(forecast, before, 'Europe/Moscow').map(row => row.temperature), [10, 7, 9]);
+  assert.deepEqual(weatherDays(forecast, after, 'Europe/Moscow').map(row => row.temperature), [7, 9, 12]);
+  assert.deepEqual(weatherDays(forecast, after, 'UTC').map(row => row.temperature), [10, 7, 9]);
+});

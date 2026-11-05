@@ -214,20 +214,29 @@ const out = await page.evaluate(async () => {
   result.drawPathLength = card._path.length;
   result.drawCommitUsesExactLineNode = card._path.length === 2
     && close(card._path[1][0], linePoint[0]) && close(card._path[1][1], linePoint[1]);
-  const partitionSpanMatches = async (junctionX) => {
-    const parts = card._curSpaceCfg.partitions;
+  const partitionSpanMatches = async (junctionX, parts = card._curSpaceCfg.partitions) => {
     const original = JSON.parse(originalPartition);
     const left = parts.find(part => part.id === original.id);
     const right = parts.find(part => part.id !== original.id
       && part.a[0] === junctionX && part.a[1] === .6 && part.b[0] === .9 && part.b[1] === .6);
     const saved = parts.filter(part => part.id.startsWith('saved-'))
       .sort((a, b) => a.id.localeCompare(b.id));
-    return parts.length === 5 && !!right
+    const graph = card._curSpaceCfg.plan_graph;
+    // The authored fixture gives the selected node literally: 176/240,144/240.
+    // Recovering it by dividing the SVG double by 1000 introduces one ULP.
+    const junction = graph.nodes.filter(node => JSON.stringify(node.p) === '["l","176","144"]');
+    const incident = junction.length === 1 ? graph.edges.filter(edge => edge.kind === 'partition'
+      && (edge.from === junction[0].id || edge.to === junction[0].id)) : [];
+    return parts.length === 5 && !!right && incident.length === 3
+      && incident.some(edge => edge.id === original.id) && incident.some(edge => edge.id === right.id)
       && await window.sameSnapFixture(left, { ...original, b: [junctionX, .6] })
       && await window.sameSnapFixture(right, { ...original, id: right.id, a: [junctionX, .6] })
       && await window.sameSnapFixture(saved, cfg.spaces[0].partitions.filter(part => part.id.startsWith('saved-')));
   };
-  result.existingPartitionNodedAtExactAcceptedJunction = await partitionSpanMatches(linePoint[0] / 1000);
+  result.existingPartitionNodedAtExactAcceptedJunction = await partitionSpanMatches(176 / 240);
+  result.wrongJunctionIsRejectedByOracle = !await partitionSpanMatches(177 / 240);
+  result.missingSourceHalfIsRejectedByOracle = !await partitionSpanMatches(176 / 240,
+    card._curSpaceCfg.partitions.filter(part => part.id !== 'base-partition'));
 
   // Independent authored legacy input. Never delete current graph carriers by
   // editing their derived partition projection after the first accepted write.
