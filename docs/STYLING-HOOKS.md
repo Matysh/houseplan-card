@@ -598,3 +598,5 @@ without a hidden compatibility menu. `header-menu`, `header-menu-item` and
 Use the existing direct `mode-tab[data-mode]`, `space-settings`, `space-add`,
 `settings`, `pdf`, `support`, `hidden-devices`, `summary-settings` and
 `summary-toggle` hooks. Their presence still follows permissions and kiosk.
+
+Room floor paint may extend into its openings (#1250). The stable "[data-hp=room]" hook targets that visible paint; pointer hover and room-tap use the unchanged clean-floor hit surface. Do not rely on native :hover on the paint path; pointer hit surfaces and their attributes remain internal.

@@ -88,6 +88,7 @@ export { spaceModels } from './space-geometry';
 
 type StaticWallGeometry = ReturnType<typeof wallBodiesUnionPath>;
 type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry };
+const staticFloorFingerprintMemo = new WeakMap<object, string>();
 const staticRoomFloorPaintCache = new Map<string, { paint: Map<string, RoomFloorPaint>; cuts: number[][] }>();
 const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
 type StaticPhysicalBodiesEntry = { fingerprint: string; value: number[][][] };
@@ -563,7 +564,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       roomCustomFillOf(disp.customFill, room),
     )] as const;
   }));
-  const paintKey = `${space.id}|${cleanFloorFingerprint(spCfg)}`;
+  // Server records are immutable; HA ticks retain this exact object.
+  let floorFingerprint = staticFloorFingerprintMemo.get(spCfg);
+  if (!floorFingerprint) {
+    floorFingerprint = cleanFloorFingerprint(spCfg);
+    staticFloorFingerprintMemo.set(spCfg, floorFingerprint);
+  }
+  const paintKey = `${space.id}|${floorFingerprint}`;
   let floorEntry = walls.length && projectedOpenings.length ? lruGet(staticRoomFloorPaintCache, paintKey) : undefined;
   if (!floorEntry && walls.length && projectedOpenings.length) {
     const cuts = wallEdgeBodies(space.rooms, walls, zeroWalls.contour,
@@ -626,7 +633,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             points="${r.poly.map((p) => p.join(',')).join(' ')}"></polygon>`
         : svg`<rect class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
             x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"></rect>`;
-      const outline = paint && poly && disp.showBorders
+      const outline = paint && poly && disp.showBorders && !zeroWalls.contour.length
         ? svg`<path class="room-outline" fill="none" stroke=${disp.color} stroke-opacity=${disp.opacity}
             stroke-width=${gridVisualUnits(2.5, cellCm)}
             d=${outlineWithout(poly, zeroWalls.contour.concat(floorEntry?.cuts || []), GRID_PITCH * 0.02)

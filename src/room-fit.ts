@@ -168,7 +168,7 @@ export function planGestureOwnerFromPath(path: readonly unknown[]): PlanGestureO
       return roomId ? { kind: 'room', roomId } : { kind: 'interactive' };
     }
     if (pathMatches(node, ROOM_FIT_INTERACTIVE_OWNER)) return { kind: 'interactive' };
-    if (pathMatches(node, '[data-hp="room"][data-id]')) {
+    if (pathMatches(node, '[data-hp="room"][data-id], [data-hp-room-hit][data-id]')) {
       const roomId = node.getAttribute?.('data-id');
       return roomId ? { kind: 'room', roomId } : { kind: 'interactive' };
     }

@@ -160,6 +160,10 @@ test('#152 browser event path is the room authority and interactive children sup
   assert.equal(roomFitOwnerFromPath([pathNode(['button']), room]), null);
   assert.deepEqual(planGestureOwnerFromPath([stage]), { kind: 'background' });
   assert.deepEqual(planGestureOwnerFromPath([room, stage]), { kind: 'room', roomId: 'room-a' });
+  const hit = pathNode(['[data-hp-room-hit][data-id]'], 'room-a');
+  assert.equal(roomFitOwnerFromPath([hit, stage]), 'room-a');
+  assert.deepEqual(planGestureOwnerFromPath([pathNode(['.opening']), hit, stage]), { kind: 'interactive' });
+  assert.deepEqual(planGestureOwnerFromPath([pathNode(['.dev']), hit, stage]), { kind: 'interactive' });
   assert.deepEqual(planGestureOwnerFromPath([pathNode(['.dev']), room, stage]),
     { kind: 'interactive' });
   assert.deepEqual(planGestureOwnerFromPath([pathNode(['button']), stage]),

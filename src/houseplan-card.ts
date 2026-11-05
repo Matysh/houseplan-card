@@ -12046,7 +12046,7 @@ export class HouseplanCard extends LitElement {
               const hpArea = r.area || nothing;
               const shape = paint
                 ? svg`<path class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
-                    mask=${paint.extended ? `url(#${maskId})` : nothing}
+                    mask=${paint.extended && this._modeTransitionBusy ? `url(#${maskId})` : nothing}
                     data-hp="room" data-id=${hpId} data-area=${hpArea} d=${paint.path}></path>`
                 : obstaclePath && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
@@ -12088,7 +12088,7 @@ export class HouseplanCard extends LitElement {
                     d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
                     style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
-              const hit = paint ? svg`<path class="room-hit" d=${paint.basePath} fill="transparent"
+              const hit = paint ? svg`<path class="room-hit" data-hp-room-hit data-id=${hpId} d=${paint.basePath} fill="transparent"
                 fill-rule="evenodd" stroke="none" pointer-events="fill"
                 @pointerenter=${enterRoom} @pointermove=${tip}
                 @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;

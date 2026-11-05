@@ -4732,7 +4732,7 @@ export function openingInnerFaceOffsetFromIndex(
 export interface OpeningTunnelFace {
   side: -1 | 1;
   roomId: string;
-  /** One SVG path containing one contour per disconnected physical span. */
+  /** Legacy path for geometry compatibility/tests; room paint consumes contours. */
   d: string;
   /** Exact half ownership, without the old paint-only axis overlap. */
   contours: number[][][];
@@ -4805,7 +4805,8 @@ function tunnelFaceContours(side: -1 | 1, pieces: OpeningWallPiece[], overlap = 
 
   return components.map((component) => {
     const first = component[0], last = component[component.length - 1];
-    // Both half-faces are subpaths of one nonzero-filled path. Give them a
+    // Legacy path-only compatibility: both half-faces are subpaths of one
+    // nonzero-filled path. Give them a
     // real device-pixel overlap at ordinary wall depths: a 0.1 px overlap was
     // still rasterised as a faint centre seam by Chromium. Because winding is
     // identical this remains one alpha application, not a double-fill band.

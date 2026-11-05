@@ -87,6 +87,21 @@ await fills(same,same);
 await page.locator('houseplan-card [data-hp="rotate-right"]').click(); await settle();
 await probe('quarter-turn');
 await seed(true); await fills(same,same); await probe('diagonal',true);
+// Use a genuine browser hit-test: synthetic dispatch to the visual path would
+// miss a transparent hit-surface losing its room identity (#1250 review).
+await seed();
+await page.evaluate(() => window.__card._applyView(1,550,500)); await settle();
+const roomTap = await page.evaluate(() => {
+  const root=window.__card.renderRoot;
+  const matrix=root.querySelector('[data-hp="room"][data-id="Alpha"]').getScreenCTM();
+  const point=new DOMPoint(350,400).matrixTransform(matrix);
+  return {x:point.x,y:point.y,hit:root.elementFromPoint(point.x,point.y)?.classList.contains('room-hit')};
+});
+check('real room tap targets the unchanged clean-floor hit surface',roomTap.hit);
+await page.mouse.click(roomTap.x,roomTap.y);
+const focused=await page.waitForFunction(()=>window.__card._roomFocus?.roomId==='Alpha',undefined,{timeout:1800})
+  .then(()=>true,()=>false);
+check('real floor tap on a room with openings still fits that room',focused);
 await seed(); await fills(dark,dark);
 await page.evaluate(async () => {
   await window.__hpTest.setServerConfig(cfg=>{cfg.settings.volumetric_view=true;});
