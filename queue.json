@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4344,
+  "revision": 4345,
   "nextTicket": 230,
   "nextFence": 230,
   "tasks": {
@@ -3595,7 +3595,8 @@
       "presentation": {
         "round": 2,
         "occurredAt": "2026-11-05T12:15:35.663Z"
-      }
+      },
+      "runId": 42025631602
     }
   },
   "waiting": [],
@@ -3711,6 +3712,10 @@
     },
     "finish:e032a25c-71d3-4891-b8bd-55057414b9ef:finish:3:s6-label": {
       "digest": "bd6ce9ca716282b2c9fa853db7d5e4c6f42768bcea12b444e9e9b4825b72cef0",
+      "issue": 1306
+    },
+    "finish:e032a25c-71d3-4891-b8bd-55057414b9ef:finish:6:review-presentation": {
+      "digest": "7c1d11bf8728f8d9a4d49d4a8b74e4135ec3d607e2fa4778fd624a7fa2b5d479",
       "issue": 1306
     },
     "finish:cc51110e-5e69-4bbe-b7b6-5d863b35a685": {
