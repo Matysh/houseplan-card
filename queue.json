@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4979,
+  "revision": 4980,
   "nextTicket": 248,
   "nextFence": 248,
   "tasks": {
@@ -1722,14 +1722,31 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1259-node-hit",
-      "materialSha": "cd1ab4659e5f3383c10bb0a695b44f60b060cbcb",
+      "materialSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 247,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793907643327,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "408227b3ada85ae14b538867e98effaa921d429c",
+      "changedFiles": [
+        "demo/smoke_wall_node_hit.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.83.0/1259.json",
+        "src/grid-scale.ts",
+        "src/wall-node-card-adapter.ts",
+        "src/wall-node-editor.ts",
+        "src/wall-node-move.ts",
+        "test/grid-scale.test.mjs",
+        "test/toast-node-action.test.mjs",
+        "test/wall-node-card-adapter.test.mjs",
+        "test/wall-node-editor.test.mjs",
+        "test/wall-node-move.test.mjs"
+      ]
     },
     "1261": {
       "issue": 1261,
@@ -4016,13 +4033,18 @@
     "worker": "finish",
     "token": "247:finish:b9cdbc6d-7747-49aa-88b1-981432efec44:finish:1:admit",
     "fence": 247,
-    "materialSha": "cd1ab4659e5f3383c10bb0a695b44f60b060cbcb",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
+    "expectedBase": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
+    "phase": "testing",
     "admittedAt": 1793907647218,
-    "expiresAt": 1793907947218
+    "expiresAt": 1793907956016,
+    "patchId": "408227b3ada85ae14b538867e98effaa921d429c"
   },
   "events": {
+    "finish:b9cdbc6d-7747-49aa-88b1-981432efec44:finish:2:synchronized": {
+      "digest": "243a7fa6ad90e3919b72a58ec3a139ec850f9fa3605ea4eae4ffd1094abc9d0a",
+      "issue": 1259
+    },
     "finish:b9cdbc6d-7747-49aa-88b1-981432efec44": {
       "digest": "4541ac5fe9e04be25638ec9fbccf79aab6aef25c344c4fbcd8d548cee9a8c3c2",
       "issue": 1259,
