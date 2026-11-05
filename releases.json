@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 482,
+  "revision": 483,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -28700,14 +28700,16 @@
           "from": "f1e0d00668bd9aa18afa8d8db9abf1c36bee3855",
           "to": "578a288327597a5054e3b7360bb0bb864856a8df",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "626c645948d2f9ecab458b410497641fd3487c69"
         },
         {
           "from": "578a288327597a5054e3b7360bb0bb864856a8df",
           "to": "626c645948d2f9ecab458b410497641fd3487c69",
           "syncMode": "merge",
-          "status": "pending",
-          "tag": "v1.84.0"
+          "status": "ported",
+          "tag": "v1.84.0",
+          "devSha": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf"
         }
       ],
       "diagnostics": [],
@@ -30091,7 +30093,8 @@
           "status": "not-required"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf",
           "issue": 1326,
           "branch": "issue/1326-release-return-626c645948d2",
           "worktree": "/home/matysh/hp-beta6-release2/artifacts/process-next/return-worktrees/626c645948d2"
@@ -34977,7 +34980,8 @@
     "stable1840-20261105-publish-history-corrected:completion:947f0457-e16a-4968-a0a6-547f8256d4f8": "08cd57f506632ae5e8931115f8c03847cc96b6ee0be5c5311719243fa3775182",
     "stable1840-20261105-publish-history-corrected:completion:17effea2-ee53-454c-ac93-9756f3b64d2b": "335d869195e819bdc12a1e3096638d5b325b17356ebc0d2897866aa4cd6fc421",
     "stable1840-20261105-publish-history-corrected:completion:e380c719-b218-4108-94cc-09d4f678c240": "ec17124253098cc66022fcdf6864461f3200b431ee58bfdbaded8f4c10474eca",
-    "stable1840-20261105-publish-history-corrected:completion:8946bdec-7de2-418c-a18a-ad01cec9906d": "911d47be87b158dc785f293a975f66e4f3e2bbfb3aab7f9651c5f3cafbfbc805"
+    "stable1840-20261105-publish-history-corrected:completion:8946bdec-7de2-418c-a18a-ad01cec9906d": "911d47be87b158dc785f293a975f66e4f3e2bbfb3aab7f9651c5f3cafbfbc805",
+    "stable1840-20261105-publish-history-corrected:completion:d5e26fc4-396e-478d-9928-8d056214beaf": "708fe8bb8d81ce62cc2a63850cbf1d54388c1e3144bc371c47ba9534813a3c3b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
