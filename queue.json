@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3455,
+  "revision": 3456,
   "nextTicket": 200,
   "nextFence": 199,
   "tasks": {
@@ -2012,7 +2012,18 @@
         "test/wall-removal-limits.test.mjs",
         "tests_backend/test_ha_wall_removal_limits.py",
         "tests_backend/test_junction_limits.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793843767368,
+        "entry": 1,
+        "detail": "Поведение изменённой области: failed; Backend изменённой области: failed",
+        "eventId": "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return:return:1258"
+      }
     },
     "1261": {
       "issue": 1261,
@@ -3224,18 +3235,7 @@
   "waiting": [
     1294
   ],
-  "active": {
-    "issue": 1258,
-    "worker": "finish",
-    "token": "198:finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:1:admit",
-    "fence": 198,
-    "materialSha": "0496f718a735e5d5b00e6925ec0e8971240d2d48",
-    "expectedBase": "0bba0ce459b95291ffbe590b9827cc412fa85819",
-    "phase": "testing",
-    "admittedAt": 1793843722872,
-    "expiresAt": 1793844028343,
-    "patchId": "aee8c5267be6349e1ebc4814ea09562dee5cd64c"
-  },
+  "active": null,
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
       "digest": "a3267a6cd7428e3ded61f5b48cd08a5bc3d20e9f699cb2281750a4f1f9f89f6b",
@@ -3251,6 +3251,10 @@
     },
     "github:41951729949:1:completions:message:c851bbf894d1121c90975e81eb6004c7cc3157705a3e9aac668497e203fe9e77": {
       "digest": "15344ec28e7e7b3275e52066e2e225ae103e409d9cce3bcc44ad8f10519092dc",
+      "issue": 1258
+    },
+    "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return": {
+      "digest": "c749ce52e8025e0c4cb9a8e678c59749f3adf660bc36668b89668b10ece99fff",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
@@ -3294,6 +3298,26 @@
         "layer": "product",
         "materialSha": "740492b5e5965b9577829add0570bebdffb14afd",
         "delivered": true
+      }
+    },
+    "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return:return:1258": {
+      "digest": "c749ce52e8025e0c4cb9a8e678c59749f3adf660bc36668b89668b10ece99fff",
+      "issue": 1258,
+      "message": {
+        "kind": "return",
+        "issue": 1258,
+        "at": 1793843767368,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793843767368,
+          "entry": 1,
+          "detail": "Поведение изменённой области: failed; Backend изменённой области: failed",
+          "eventId": "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:3:return:return:1258"
+        }
       }
     }
   },
