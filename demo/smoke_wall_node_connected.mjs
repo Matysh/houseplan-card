@@ -385,9 +385,10 @@ try {
   await finish(browser, { writes: writes.length, rawReport: output });
   assert.equal(process.exitCode || 0, 0, 'connected-node harness/page-error verdict');
 } catch (error) {
+  const functionalFailureAfterTiming=report.executionPass===true;
   report.pass = false; report.executionPass = false;
   report.error = { name: error.name, message: error.message,
-    stage: error.clockProbes ? 'clock-calibration' : report.budgetFailures?.length && !report.functionalFailures?.length ? 'budget-verdict' : 'smoke' };
+    stage: error.clockProbes ? 'clock-calibration' : report.budgetFailures?.length && !report.functionalFailures?.length && !functionalFailureAfterTiming ? 'budget-verdict' : 'smoke' };
   if (error.clockProbes) report.clockFailure = { ...error.clockCalibration, message: error.message, probes: error.clockProbes };
   throw error;
 } finally {

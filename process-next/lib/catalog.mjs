@@ -169,6 +169,7 @@ function nodeStep(id, name, files, requires = []) {
 // Do not change their budgets or serialize ordinary behavioral smoke checks.
 const exclusiveSmokes = new Set([
   'demo/smoke_selective_invalidation_history0.mjs',
+  'demo/smoke_selective_invalidation_history320.mjs',
   'demo/smoke_selective_invalidation_inactive.mjs',
   'demo/smoke_selective_invalidation_visible.mjs',
   'demo/smoke_wall_node_connected.mjs',

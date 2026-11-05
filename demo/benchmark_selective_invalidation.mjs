@@ -98,7 +98,7 @@ export async function runSelectiveInvalidationGate({profile='visible',iterations
     fixture:'selective-invalidation/v1',
     sources:Object.fromEntries(sources.map(path=>[path,createHash('sha256').update(readFileSync(path)).digest('hex')])),
     manifest:JSON.parse(readFileSync('dist/houseplan-assets.json','utf8')),loads,samples,statistics:timingStatistics(samples),failures,budgetFailures,
-    timingDiagnostic:diagnosticTiming,timingStatus:budgetFailures.length?'exceeded':'within-budgets'};
+    timingDiagnostic:diagnosticTiming,timingStatus:failures.some(f=>!budgetFailures.includes(f))?'invalid':budgetFailures.length?'exceeded':'within-budgets'};
   mkdirSync(resolve(output,'..'),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({output,profile,samples:samples.length,failures,budgetFailures,timingDiagnostic:diagnosticTiming,timingStatus:report.timingStatus}));
   if(failures.length)process.exitCode=1;

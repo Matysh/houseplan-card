@@ -5,8 +5,7 @@
 - Keep the external-screen smoke pointer pressed until its kiosk scale dialog is visible, releasing in finally instead of racing a fixed 3100 ms wait. [#1297](https://github.com/Matysh/houseplan-card/issues/1297)
 
 - Keep the native profile hold pressed until its public scale dialog appears in real HA E2E; retain delayed-timer regression evidence and the empty-space Undo readiness fix. [#1296](https://github.com/Matysh/houseplan-card/issues/1296)
-- Run the four strict selective-invalidation/connected-node timing profiles without competing runner steps; keep ordinary checks parallel and retain all budgets. [#1295](https://github.com/Matysh/houseplan-card/issues/1295)
-- Run the four strict selective-invalidation/connected-node timing profiles without competing runner steps; keep ordinary checks parallel and retain all budgets as visible diagnostics in the shared process, with functional and measurement-validity failures still required. [#1295](https://github.com/Matysh/houseplan-card/issues/1295)
+- Run the selective-invalidation timing family and connected-node profile without competing runner steps; keep ordinary checks parallel and retain all budgets as visible diagnostics in the shared process, with functional and measurement-validity failures still required. [#1295](https://github.com/Matysh/houseplan-card/issues/1295)
 
 - Wait for observed server-side decor defaults before the cold-remount cache smoke; avoid treating an async polling predicate as persistence completion and assert the stored style explicitly. [#1293](https://github.com/Matysh/houseplan-card/issues/1293)
 - Preserve unchanged exact ordinates during Resize of imported current graphs, preventing near-lattice decimal recovery from creating micro-crossings against fixed neighbours. [#1292](https://github.com/Matysh/houseplan-card/issues/1292)

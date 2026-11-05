@@ -88,3 +88,15 @@ unpersisted and duplicate-write series, functional/clock errors and incomplete
 checks. The release relative-metrics algorithm and its blocking behavior are
 untouched. The task now includes smoke code and uses product S6 plus selected
 runner/catalog/fallback and verdict tests; it is no longer infrastructure-only.
+
+## Review correction
+
+The same shared timing contract also applies to history320. It now receives
+exclusive scheduling and the diagnostic flag, exactly like history0; the planner
+test expects all five profiles in task/stable. This is a complete family rule,
+not special treatment for the four files that happened to fail the first audit.
+Duplicate technical changelog entries were removed. An incomplete selective
+run now reports timingStatus=invalid rather than implying budgets were met;
+a connected harness/page failure after timing cannot be labelled budget-only.
+The separate release-measurements scheduling question remains outside this
+microbenchmark correction; its existing relative publication decision is unchanged.

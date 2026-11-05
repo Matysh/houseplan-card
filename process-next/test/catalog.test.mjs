@@ -203,9 +203,9 @@ test('new product/backend/browser tests are discovered without regenerating the 
   assert.match(ship.name, /перед слиянием/);
 });
 
-test('#1295 isolates exactly the four measured profiles in task and stable plans', async () => {
+test('#1295 isolates the complete selective timing family and connected profile in task and stable plans', async () => {
   // These are planner metadata, not imports/reads of the browser programs.
-  const files=['selective_invalidation_history0','selective_invalidation_inactive',
+  const files=['selective_invalidation_history0','selective_invalidation_history320','selective_invalidation_inactive',
     'selective_invalidation_visible','wall_node_connected'].map(name=>'demo/smoke_'+name+'.mjs');
   const expected=files.map(f=>`smoke:${f.replace('demo/','').replace('.mjs','')}`).sort();
   for(const event of ['task','stable']) {
