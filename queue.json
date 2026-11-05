@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4826,
+  "revision": 4827,
   "nextTicket": 245,
   "nextFence": 245,
   "tasks": {
@@ -3641,7 +3641,10 @@
         "entry": 1,
         "detail": "Открытие сохранённого плана в View: failed",
         "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793888542153,
+      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
     },
     "1316": {
       "issue": 1316,
@@ -4017,6 +4020,10 @@
     },
     "github:42044257406:1:completions:message:c5d8f328365750ebc99c88d30bf28bb6e48bac90b0ebb4bc6b6e7c437a0890b4": {
       "digest": "662edae9d289915e24fbbaddcac89b222f853d0b316ba05fa0bd07fc0870da7d",
+      "issue": 1314
+    },
+    "finish:0a08179f-e816-46c6-9ec9-0decd2cf7460:finish:2:automation-pending": {
+      "digest": "471dee1272f647de11ae8185d8b1bc739b56ab3cec3ce2701db993faa454804f",
       "issue": 1314
     },
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
