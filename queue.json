@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4709,
+  "revision": 4710,
   "nextTicket": 241,
   "nextFence": 241,
   "tasks": {
@@ -3688,7 +3688,7 @@
       "ownerDecision": null,
       "ticket": 240,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793887277584,
       "reviewEntry": 1,
       "patchId": "ab48493cf9106a22e79567f562154e90d75e7e96",
@@ -3696,7 +3696,16 @@
         "demo/smoke_zigbee_topology_hover.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T140135678-7c8a7086",
+        "name": "Тесты для задачи #1319 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261105T140135678-7c8a7086/report.json",
+        "materialSha": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
+        "status": "passed",
+        "finishedAt": "2026-11-05T14:02:12.602Z",
+        "failures": []
+      }
     },
     "1320": {
       "issue": 1320,
@@ -3874,9 +3883,9 @@
     "fence": 240,
     "materialSha": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
     "expectedBase": "7cad147df2f62544206406a5c29c67471acd84d9",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793887281812,
-    "expiresAt": 1793887591487,
+    "expiresAt": 1793890933882,
     "patchId": "ab48493cf9106a22e79567f562154e90d75e7e96"
   },
   "events": {
@@ -3931,6 +3940,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "7cad147df2f62544206406a5c29c67471acd84d9"
+      }
+    },
+    "finish:763abc59-1247-49e9-9bc7-c6ac853bfeeb:finish:3:s6-complete": {
+      "digest": "81e51366774dacfcec6524bfe5ec55a9312d3d0cb5b7c5d9b93c1eb84c5d5296",
+      "issue": 1319,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1319,
+        "at": 1793887333882,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T140135678-7c8a7086",
+          "name": "Тесты для задачи #1319 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261105T140135678-7c8a7086/report.json",
+          "materialSha": "eff0eaf61f976b854b70c8f2fdbc66f8b909b488",
+          "status": "passed",
+          "finishedAt": "2026-11-05T14:02:12.602Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "В raster-ветке первый light-кадр сбрасывал View после предыдущих geometry-проверок, ждал только два RAF и сразу снимал координаты; screenshot с `animations: disabled` мог завершить конечный переход уже после этого. Второй dark-кадр и все geometry/pointer проверки проходили. Другой полный прогон тех же входов прошёл, что сохраняется как наблюдение, не как исправление исходной гонки.\n\nПравка ждёт существующий mode-transition flag и пять последовательных одинаковых снимков реальной матрицы SVG, прямоугольников устройств/label, line/arrow geometry и opacity/stroke перед чтением probe coordinates. Само ожидание ограничено прежним таймаутом 5 секунд; анимации не отключаются и камера не подменяется. Переиспользуется актуальная line/arrow DOM после обновления overlay. Все прежние pixel-oracles, допуски, светлая/тёмная тема, порядок label/endpoints/unrelated, контур стрелки и непрерывность core сохранены. Добавлен JSON receipt координат и результата, чтобы следующий отказ был проверяемым.\n\nS6 — существующий полный `smoke_zigbee_topology_hover`, типы/критичные данные/startup по общему runner. Продуктовый runtime не меняется. Для внимания: ожидание не должно фильтровать невыгодные пиксели или превращать постоянный сдвиг/неверный слой в PASS; оно фиксирует только фазу измерения.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
