@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 338,
+  "revision": 339,
   "active": "v1.84.0-beta.6-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -14466,7 +14466,8 @@
     "release-beta6-run-started-15dd28528-ci2": "fd784b51c844508b48fd80b8d4868474698b213524e13bff370eea7beaa468a9",
     "ship-review:prepare:984782fb-dc95-4202-aa66-394f2475ab8c": "048b76e895ba81091855e2a71be6716eca5d16ed6649f6c37f96d0ed4f9850c2",
     "ship-review:result:2cd8839c-0ce3-4d84-a815-c085f223f532": "953811b5372a2bf95048b89cb360fd3b2415ad8b7b0fc895f46eda22b56adb31",
-    "release-beta6-ci2-report-41963627462": "36d3db79c4118fd93e7bb353cd139fb7bd34793b063339ab216948e57ce407e8"
+    "release-beta6-ci2-report-41963627462": "36d3db79c4118fd93e7bb353cd139fb7bd34793b063339ab216948e57ce407e8",
+    "release:e61b2606-6edd-4f43-a1fb-050829444fdb:runner-report": "3b06aaffc57a961b8398cfe372fa175d9c4a371b0d92ddb23a676ce2ccf4de71"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
